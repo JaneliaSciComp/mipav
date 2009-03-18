@@ -76,16 +76,16 @@ public class AlgorithmGrayScaleMorphology25D extends AlgorithmBase {
     public static final int FILL_HOLES = 13;
 
     /** DOCUMENT ME! */
-    public static final int SIZED_CIRCLE = 0;
+    public static final int SIZED_CIRCLE = AlgorithmMorphology25D.SIZED_CIRCLE;
 
     /** DOCUMENT ME! */
-    public static final int CONNECTED4 = 1;
+    public static final int CONNECTED4 = AlgorithmMorphology25D.CONNECTED4;
 
     /** DOCUMENT ME! */
-    public static final int CONNECTED8 = 2;
+    public static final int CONNECTED8 = AlgorithmMorphology25D.CONNECTED8;
 
     /** DOCUMENT ME! */
-    public static final int CONNECTED12 = 3;
+    public static final int CONNECTED12 = AlgorithmMorphology25D.CONNECTED12;
 
     /** DOCUMENT ME! */
     public static final int OUTER_EDGING = 0;
