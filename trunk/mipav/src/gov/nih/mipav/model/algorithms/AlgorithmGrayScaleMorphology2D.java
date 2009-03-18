@@ -1527,7 +1527,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
                 dilate(false, iterationsD);
                 break;
 
-            /*case CLOSE:
+            case CLOSE:
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 dilate(true, iterationsD);
                 setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
@@ -1543,7 +1543,7 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
                 dilate(false, iterationsD);
                 break;
 
-            case PARTICLE_ANALYSIS_NEW:
+            /*case PARTICLE_ANALYSIS_NEW:
                 // open
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 15));
                 fillHoles(true);
