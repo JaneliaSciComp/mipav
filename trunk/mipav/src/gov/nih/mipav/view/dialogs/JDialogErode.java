@@ -541,7 +541,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
         if (source == comboBoxKernelErode) {
 
-            if (comboBoxKernelErode.getSelectedIndex() == 2) {
+            if (comboBoxKernelErode.getSelectedIndex() == 3) {
                 textKernelSizeErode.setEnabled(true);
                 labelKernelSizeErode.setEnabled(true);
             } else {
@@ -572,8 +572,10 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
     /**
      * Accessor that sets the kernel type to use.
      *
-     * @param  krnl  the kernel type to use (either AlgorithmMorphology2D.CONNECTED4, AlgorithmMorphology2D.CONNECTED12,
+     * @param  krnl  the kernel type to use (either AlgorithmMorphology2D.CONNECTED4, 
+     *               AlgorithmMorphology2D.CONNECTED8, AlgorithmMorphology2D.CONNECTED12,
      *               AlgorithmMorphology2D.SIZED_CIRCLE, AlgorithmMorphology3D.CONNECTED6,
+     *               AlgorithmMorphology3D.CONNECTED26,
      *               AlgorithmMorphology3D.CONNECTED24, AlgorithmMorphology3D.SIZED_SPHERE (or the
      *               AlgorithmMorphology25D ones))
      */
@@ -601,10 +603,12 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
         if (image.getNDims() == 2) {
             comboBoxKernelErode.addItem("3x3 -  4 connected");
+            comboBoxKernelErode.addItem("3x3 - 8 connected");
             comboBoxKernelErode.addItem("5x5 - 12 connected");
             comboBoxKernelErode.addItem("User sized circle.");
         } else if (image.getNDims() == 3) {
             comboBoxKernelErode.addItem("3x3x3 -  6 connected (2.5D: 4)");
+            comboBoxKernelErode.addItem("3x3x3 - 26 connected (2.5D: 8)");
             comboBoxKernelErode.addItem("5x5x5 - 24 connected (2.5D: 12)");
             comboBoxKernelErode.addItem("User sized sphere.");
         }
@@ -818,6 +822,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 // convert to 2.5d kernel type
                 if (kernelErode == AlgorithmMorphology3D.CONNECTED6) {
                     kernelErode = AlgorithmMorphology25D.CONNECTED4;
+                } else if (kernelErode == AlgorithmMorphology3D.CONNECTED26) {
+                    kernelErode = AlgorithmMorphology25D.CONNECTED8;
                 } else if (kernelErode == AlgorithmMorphology3D.CONNECTED24) {
                     kernelErode = AlgorithmMorphology25D.CONNECTED12;
                 } else if (kernelErode == AlgorithmMorphology3D.SIZED_SPHERE) {
@@ -1123,6 +1129,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 // convert to 2.5d kernel type
                 if (kernelErode == AlgorithmMorphology3D.CONNECTED6) {
                     kernelErode = AlgorithmMorphology25D.CONNECTED4;
+                } else if (kernelErode == AlgorithmMorphology3D.CONNECTED26) {
+                    kernelErode = AlgorithmMorphology25D.CONNECTED8;
                 } else if (kernelErode == AlgorithmMorphology3D.CONNECTED24) {
                     kernelErode = AlgorithmMorphology25D.CONNECTED12;
                 } else if (kernelErode == AlgorithmMorphology3D.SIZED_SPHERE) {
@@ -1435,8 +1443,10 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
             if (comboBoxKernelErode.getSelectedIndex() == 0) {
                 kernelErode = AlgorithmMorphology2D.CONNECTED4;
             } else if (comboBoxKernelErode.getSelectedIndex() == 1) {
-                kernelErode = AlgorithmMorphology2D.CONNECTED12;
+                kernelErode = AlgorithmMorphology2D.CONNECTED8;
             } else if (comboBoxKernelErode.getSelectedIndex() == 2) {
+                kernelErode = AlgorithmMorphology2D.CONNECTED12;
+            } else if (comboBoxKernelErode.getSelectedIndex() == 3) {
                 kernelErode = AlgorithmMorphology2D.SIZED_CIRCLE;
             }
         } else if (image.getNDims() == 3) {
@@ -1444,8 +1454,10 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
             if (comboBoxKernelErode.getSelectedIndex() == 0) {
                 kernelErode = AlgorithmMorphology3D.CONNECTED6;
             } else if (comboBoxKernelErode.getSelectedIndex() == 1) {
-                kernelErode = AlgorithmMorphology3D.CONNECTED24;
+                kernelErode = AlgorithmMorphology3D.CONNECTED26;
             } else if (comboBoxKernelErode.getSelectedIndex() == 2) {
+                kernelErode = AlgorithmMorphology3D.CONNECTED24;
+            } else if (comboBoxKernelErode.getSelectedIndex() == 3) {
                 kernelErode = AlgorithmMorphology3D.SIZED_SPHERE;
             }
         }
