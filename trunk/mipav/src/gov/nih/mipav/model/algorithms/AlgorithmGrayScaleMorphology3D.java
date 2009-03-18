@@ -85,15 +85,15 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
     public static final int DISTANCE_MAP_FOR_SHAPE_INTERPOLATION = 13;
 
     /** DOCUMENT ME! */
-    public static final int SIZED_SPHERE = 0;
+    public static final int SIZED_SPHERE = AlgorithmMorphology3D.SIZED_SPHERE;
 
     /** DOCUMENT ME! */
-    public static final int CONNECTED6 = 1;
+    public static final int CONNECTED6 = AlgorithmMorphology3D.CONNECTED6;
 
     /** DOCUMENT ME! */
-    public static final int CONNECTED24 = 2;
+    public static final int CONNECTED24 = AlgorithmMorphology3D.CONNECTED24;
     
-    public static final int CONNECTED26 = 3;
+    public static final int CONNECTED26 = AlgorithmMorphology3D.CONNECTED26;
 
     /**
      * Parameter used in Find_Edges. Indicates that the edge extracted is formed from the voxels that are directly
