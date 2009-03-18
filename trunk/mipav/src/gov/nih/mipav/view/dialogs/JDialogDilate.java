@@ -537,7 +537,7 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
 
         if (source == comboBoxKernel) {
 
-            if (comboBoxKernel.getSelectedIndex() == 2) {
+            if (comboBoxKernel.getSelectedIndex() == 3) {
                 textKernelSize.setEnabled(true);
                 labelKernelSize.setEnabled(true);
             } else {
@@ -568,8 +568,10 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
     /**
      * Accessor that sets the kernel type to use.
      *
-     * @param  krnl  the kernel type to use (either AlgorithmMorphology2D.CONNECTED4, AlgorithmMorphology2D.CONNECTED12,
+     * @param  krnl  the kernel type to use (either AlgorithmMorphology2D.CONNECTED4, 
+     *               AlgorithmMorphology2D.CONNECTED8, AlgorithmMorphology2D.CONNECTED12,
      *               AlgorithmMorphology2D.SIZED_CIRCLE, AlgorithmMorphology3D.CONNECTED6,
+     *               AlgorithmMorphology3D.CONNECTED26,
      *               AlgorithmMorphology3D.CONNECTED24, AlgorithmMorphology3D.SIZED_SPHERE (or the ones in
      *               AlgorithmMorphology25D))
      */
@@ -597,10 +599,12 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
 
         if (image.getNDims() == 2) {
             comboBoxKernel.addItem("3x3 -  4 connected");
+            comboBoxKernel.addItem("3x3 -  8 connected");
             comboBoxKernel.addItem("5x5 - 12 connected");
             comboBoxKernel.addItem("User sized circle.");
         } else if (image.getNDims() == 3) {
             comboBoxKernel.addItem("3x3x3 -  6 connected (2.5D: 4)");
+            comboBoxKernel.addItem("3x3x3 - 26 connected (2.5D: 8)");
             comboBoxKernel.addItem("5x5x5 - 24 connected (2.5D: 12)");
             comboBoxKernel.addItem("User sized sphere.");
         }
@@ -827,6 +831,8 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                 // convert to 2.5d kernel type
                 if (kernel == AlgorithmMorphology3D.CONNECTED6) {
                     kernel = AlgorithmMorphology25D.CONNECTED4;
+                } else if (kernel == AlgorithmMorphology3D.CONNECTED26) {
+                    kernel = AlgorithmMorphology25D.CONNECTED8;
                 } else if (kernel == AlgorithmMorphology3D.CONNECTED24) {
                     kernel = AlgorithmMorphology25D.CONNECTED12;
                 } else if (kernel == AlgorithmMorphology3D.SIZED_SPHERE) {
@@ -1147,6 +1153,8 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                 // convert to 2.5d kernel type
                 if (kernel == AlgorithmMorphology3D.CONNECTED6) {
                     kernel = AlgorithmMorphology25D.CONNECTED4;
+                } else if (kernel == AlgorithmMorphology3D.CONNECTED26) {
+                    kernel = AlgorithmMorphology25D.CONNECTED8;
                 } else if (kernel == AlgorithmMorphology3D.CONNECTED24) {
                     kernel = AlgorithmMorphology25D.CONNECTED12;
                 } else if (kernel == AlgorithmMorphology3D.SIZED_SPHERE) {
@@ -1472,8 +1480,10 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
             if (comboBoxKernel.getSelectedIndex() == 0) {
                 kernel = AlgorithmMorphology2D.CONNECTED4;
             } else if (comboBoxKernel.getSelectedIndex() == 1) {
-                kernel = AlgorithmMorphology2D.CONNECTED12;
+                kernel = AlgorithmMorphology2D.CONNECTED8;
             } else if (comboBoxKernel.getSelectedIndex() == 2) {
+                kernel = AlgorithmMorphology2D.CONNECTED12;
+            } else if (comboBoxKernel.getSelectedIndex() == 3) {
                 kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
             }
         } else if (image.getNDims() == 3) {
@@ -1481,8 +1491,10 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
             if (comboBoxKernel.getSelectedIndex() == 0) {
                 kernel = AlgorithmMorphology3D.CONNECTED6;
             } else if (comboBoxKernel.getSelectedIndex() == 1) {
-                kernel = AlgorithmMorphology3D.CONNECTED24;
+                kernel = AlgorithmMorphology3D.CONNECTED26;
             } else if (comboBoxKernel.getSelectedIndex() == 2) {
+                kernel = AlgorithmMorphology3D.CONNECTED24;
+            } else if (comboBoxKernel.getSelectedIndex() == 3) {
                 kernel = AlgorithmMorphology3D.SIZED_SPHERE;
             }
         }
