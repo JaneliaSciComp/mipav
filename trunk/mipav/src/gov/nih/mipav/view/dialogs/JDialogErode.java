@@ -24,7 +24,7 @@ import javax.swing.*;
  * source image. In addition the user selects if the algorithm is applied to whole image or to the VOI regions. It
  * should be noted that the algorithms are executed in their own threads.
  *
- * @version  0.1 Nov 17, 1998
+ * @version  1.1 March 18, 2009
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
@@ -1450,13 +1450,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
             }
         }
         
-        if (binaryButton.isSelected()) {
-            binaryMorphology = true;
-        }
-        else {
-            binaryMorphology = false;
-        }
-
+        binaryMorphology = binaryButton.isSelected();
+        
         return true;
     }
 }
