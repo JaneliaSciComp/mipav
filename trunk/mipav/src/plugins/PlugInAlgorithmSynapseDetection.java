@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
  *
- * @version  March 10, 2009
+ * @version  March 19, 2009
  * @author   William Gandler
  * @see      AlgorithmBase
  *
@@ -203,8 +203,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private int length = xDim * yDim * zDim;
     private int xySlice = xDim * yDim;
     private byte buffer[] = new byte[length];
-    private byte greenBuffer[] = new byte[length];
-    private byte blueBuffer[] = new byte[length];
+    private byte greenBuffer[] = new byte[xySlice];
+    private byte blueBuffer[] = new byte[xySlice];
     private int threeBandMinXY;
     private int threeBandMinZ;
     private ModelImage maskImage = null;
@@ -231,9 +231,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
     private int onePreviousPos[] = null;
     private int presentPos[] = null;
     private int presentPosIndex = 0;
-    private int redObjects[];
-    private int greenObjects[];
-    private int blueObjects[];
+    private int colorObjects[];
     private int redObjectIndex = 0;
     private int greenObjectIndex = 0;
     private int blueObjectIndex = 0;
@@ -388,65 +386,68 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
             return;
         }
         
-        try {
-            srcImage.exportRGBData(2, 0, length, greenBuffer); // export green data
-        } catch (IOException error) {
-            buffer = null;
-            greenBuffer = null;
-            blueBuffer = null;
-            errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
-
-            return;
-        }
-        
-        try {
-            srcImage.exportRGBData(3, 0, length, blueBuffer); // export blue data
-        } catch (IOException error) {
-            buffer = null;
-            greenBuffer = null;
-            blueBuffer = null;
-            errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
-
-            return;
-        }
-        
-        // Classify all pixels as either BRIGHT_RED, RED, BRIGHT_GREEN, GREEN, BRIGHT_BLUE, BLUE, or NONE
-        // Note that when line profiles are taken thru a synapse the red and green have all sorts of
-        // different shapes but the blue is almost always a distinct short rectangular pulse, so the 
-        // presence of blue above a threshold intensity is the most significant factor.  A pixel is 
-        // counted as BRIGHT_BLUE as long as its blue value is >= blueIntensity even if the red and/or
-        // green values at that pixel location are greater or equal than the blue value.
-        for (pos = 0; pos < length; pos++) {
-            red = buffer[pos] & 0xff;
-            green = greenBuffer[pos] & 0xff;
-            blue = blueBuffer[pos] & 0xff;
-            if (blue >= blueBrightIntensity) {
-                buffer[pos] = BRIGHT_BLUE;
+        for (z = 0; z < zDim; z++) {
+            try {
+                srcImage.exportRGBData(2, 4*z*xySlice, xySlice, greenBuffer); // export green data
+            } catch (IOException error) {
+                buffer = null;
+                greenBuffer = null;
+                blueBuffer = null;
+                errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
+    
+                return;
             }
-            else if ((blue > red) && (blue > green) && (blue >= blueIntensity)) {
-                buffer[pos] = BLUE;
+            
+            try {
+                srcImage.exportRGBData(3, 4*z*xySlice, xySlice, blueBuffer); // export blue data
+            } catch (IOException error) {
+                buffer = null;
+                greenBuffer = null;
+                blueBuffer = null;
+                errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
+    
+                return;
             }
-            else if ((red > green) && (red > blue) && (red >= redIntensity)) {
-                if (red >= redBrightIntensity) {
-                    buffer[pos] = BRIGHT_RED;
+            
+            // Classify all pixels as either BRIGHT_RED, RED, BRIGHT_GREEN, GREEN, BRIGHT_BLUE, BLUE, or NONE
+            // Note that when line profiles are taken thru a synapse the red and green have all sorts of
+            // different shapes but the blue is almost always a distinct short rectangular pulse, so the 
+            // presence of blue above a threshold intensity is the most significant factor.  A pixel is 
+            // counted as BRIGHT_BLUE as long as its blue value is >= blueIntensity even if the red and/or
+            // green values at that pixel location are greater or equal than the blue value.
+            for (pos = 0; pos < xySlice; pos++) {
+                zPos = z*xySlice + pos;
+                red = buffer[zPos] & 0xff;
+                green = greenBuffer[pos] & 0xff;
+                blue = blueBuffer[pos] & 0xff;
+                if (blue >= blueBrightIntensity) {
+                    buffer[zPos] = BRIGHT_BLUE;
+                }
+                else if ((blue > red) && (blue > green) && (blue >= blueIntensity)) {
+                    buffer[zPos] = BLUE;
+                }
+                else if ((red > green) && (red > blue) && (red >= redIntensity)) {
+                    if (red >= redBrightIntensity) {
+                        buffer[zPos] = BRIGHT_RED;
+                    }
+                    else {
+                        buffer[zPos] = RED;
+                    }
+                }
+                else if ((green > red) && (green > blue) && (green >= greenIntensity)) {
+                    if (green >= greenBrightIntensity) {
+                        buffer[zPos] = BRIGHT_GREEN;
+                    }
+                    else {
+                        buffer[zPos] = GREEN;
+                    }
                 }
                 else {
-                    buffer[pos] = RED;
+                    buffer[zPos] = NONE;
                 }
-            }
-            else if ((green > red) && (green > blue) && (green >= greenIntensity)) {
-                if (green >= greenBrightIntensity) {
-                    buffer[pos] = BRIGHT_GREEN;
-                }
-                else {
-                    buffer[pos] = GREEN;
-                }
-            }
-            else {
-                buffer[pos] = NONE;
-            }
-           
-        } // for (pos = 0; pos < length; pos++)
+               
+            } // for (pos = 0; pos < xySlice; pos++)
+        } // for (z = 0; z < zDim; z++)
            
         greenBuffer = null;
         blueBuffer = null;
@@ -568,11 +569,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                            blueX = x;
                            blueY = y;
                            blueZ = z; 
-                           presentObjectIndex = blueObjects[pos];
+                           presentObjectIndex = colorObjects[pos];
                        }
                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                            if (bigBlueFraction) {
-                               presentObjectIndex = redObjects[pos];
+                               presentObjectIndex = colorObjects[pos];
                            }
                            else {
                                presentObjectIndex = 0;
@@ -580,7 +581,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                        }
                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                            if (bigBlueFraction) {
-                               presentObjectIndex = greenObjects[pos];
+                               presentObjectIndex = colorObjects[pos];
                            }
                            else {
                                presentObjectIndex = 0;
@@ -705,11 +706,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -717,7 +718,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -842,11 +843,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -854,7 +855,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -978,11 +979,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -990,7 +991,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1104,11 +1105,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1116,7 +1117,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1240,11 +1241,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1252,7 +1253,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1366,11 +1367,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1378,7 +1379,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1502,11 +1503,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1514,7 +1515,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1628,11 +1629,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1640,7 +1641,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1764,11 +1765,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1776,7 +1777,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1890,11 +1891,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -1902,7 +1903,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2025,11 +2026,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2037,7 +2038,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2151,11 +2152,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2163,7 +2164,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2286,11 +2287,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2298,7 +2299,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2412,11 +2413,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2424,7 +2425,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2547,11 +2548,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2559,7 +2560,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2675,11 +2676,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2687,7 +2688,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2803,11 +2804,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2815,7 +2816,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2938,11 +2939,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -2950,7 +2951,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3066,11 +3067,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3078,7 +3079,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3194,11 +3195,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3206,7 +3207,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3329,11 +3330,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3341,7 +3342,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3457,11 +3458,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3469,7 +3470,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3585,11 +3586,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3597,7 +3598,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3720,11 +3721,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3732,7 +3733,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3848,11 +3849,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3860,7 +3861,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3976,11 +3977,11 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueX = x;
                             blueY = y;
                             blueZ = z; 
-                            presentObjectIndex = blueObjects[pos];
+                            presentObjectIndex = colorObjects[pos];
                         }
                         else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = redObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -3988,7 +3989,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                         }
                         else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
                             if (bigBlueFraction) {
-                                presentObjectIndex = greenObjects[pos];
+                                presentObjectIndex = colorObjects[pos];
                             }
                             else {
                                 presentObjectIndex = 0;
@@ -4074,32 +4075,32 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         
         if (bigBlueFraction) {
             loopi:
-            for (i = 0; i < blueObjects.length; i++) {
+            for (i = 0; i < colorObjects.length; i++) {
                 for (j = 1; j < redObjectIndex; j++) {
                     for (k = 0; k < 5; k++) {
                         if (synapseBlueFound[5*j + k] == 0) {
                             // jump to the next j value
                             break;
                         }
-                        else if (synapseBlueFound[5*j + k]  == blueObjects[i]) {
+                        else if (synapseBlueFound[5*j + k]  == colorObjects[i]) {
                             // Move on to the nxt blueObject without zeroing this one.
                             continue loopi;
                         }
                     }
                 }
-                blueObjects[i] = 0;
+                colorObjects[i] = 0;
             }
         } // if (bigBluefraction)
         else {
-            for (i = 0; i < blueObjects.length; i++) {
-                if (synapseBlueFound[blueObjects[i]] == 0) {
-                    blueObjects[i] = 0;    
+            for (i = 0; i < colorObjects.length; i++) {
+                if (synapseBlueFound[colorObjects[i]] == 0) {
+                    colorObjects[i] = 0;    
                 }
             }
         }
         
         for (i = 0; i < length; i++) {
-            if (blueObjects[i] > 0) {
+            if (colorObjects[i] > 0) {
                 buffer[i] = (byte)255;
             }
             else {
@@ -4120,8 +4121,12 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         }      
         
         if (histoInfo) {
-            greenBuffer = new byte[length];
-            blueBuffer = new byte[length];
+            greenBuffer = new byte[xySlice];
+            blueBuffer = new byte[xySlice];
+            
+            redExtents = new float[256];
+            greenExtents = new float[256];
+            blueExtents = new float[256];
             
             try {
                 srcImage.exportRGBData(1, 0, length, buffer); // export red data
@@ -4134,51 +4139,52 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                 return;
             }
             
-            try {
-                srcImage.exportRGBData(2, 0, length, greenBuffer); // export green data
-            } catch (IOException error) {
-                buffer = null;
-                greenBuffer = null;
-                blueBuffer = null;
-                errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
-
-                return;
-            }
-            
-            try {
-                srcImage.exportRGBData(3, 0, length, blueBuffer); // export blue data
-            } catch (IOException error) {
-                buffer = null;
-                greenBuffer = null;
-                blueBuffer = null;
-                errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
-
-                return;
-            }
-            
-            redExtents = new float[256];
-            greenExtents = new float[256];
-            blueExtents = new float[256];
-            
-            for (pos = 0; pos < length; pos++) {
-                if (colorMask.get(pos)) {
-                    red = buffer[pos] & 0xff;
-                    green = greenBuffer[pos] & 0xff;
-                    blue = blueBuffer[pos] & 0xff;
-                    if (blue >= blueIntensity) {
-                        blueExtents[blue]++;
-                    }
-                    else if ((blue > red) && (blue > green)) {
-                        blueExtents[blue]++;
-                    }
-                    else if ((red > green) && (red > blue)) {
-                        redExtents[red]++;
-                    }
-                    else if ((green > red) && (green > blue)) {
-                        greenExtents[green]++;
-                    } 
-                } // if (colorMask.get(pos))
-            } // for (pos = 0; pos < length; pos++)
+            for (z = 0; z < zDim; z++) {
+                try {
+                    srcImage.exportRGBData(2, 4*z*xySlice, xySlice, greenBuffer); // export green data
+                } catch (IOException error) {
+                    buffer = null;
+                    greenBuffer = null;
+                    blueBuffer = null;
+                    errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
+    
+                    return;
+                }
+                
+                try {
+                    srcImage.exportRGBData(3, 4*z*xySlice, xySlice, blueBuffer); // export blue data
+                } catch (IOException error) {
+                    buffer = null;
+                    greenBuffer = null;
+                    blueBuffer = null;
+                    errorCleanUp("Algorithm SynapseDetection reports: source image locked", true);
+    
+                    return;
+                }
+                
+                
+                
+                for (pos = 0; pos < xySlice; pos++) {
+                    zPos = z * xySlice + pos;
+                    if (colorMask.get(zPos)) {
+                        red = buffer[zPos] & 0xff;
+                        green = greenBuffer[pos] & 0xff;
+                        blue = blueBuffer[pos] & 0xff;
+                        if (blue >= blueIntensity) {
+                            blueExtents[blue]++;
+                        }
+                        else if ((blue > red) && (blue > green)) {
+                            blueExtents[blue]++;
+                        }
+                        else if ((red > green) && (red > blue)) {
+                            redExtents[red]++;
+                        }
+                        else if ((green > red) && (green > blue)) {
+                            greenExtents[green]++;
+                        } 
+                    } // if (colorMask.get(pos))
+                } // for (pos = 0; pos < length; pos++)
+            } // for (z = 0; z < zDim; z++)
             colorMask = null;
             buffer = null;
             greenBuffer = null;
@@ -4437,12 +4443,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
         int highBlueY = 0;
         int lowBlueZ = 0;
         int highBlueZ = 0;
-        blueObjects = new int[length];
-        if (bigBlueFraction) {
-            redObjects = new int[length];
-            greenObjects = new int[length];
-        }
-        else {
+        colorObjects = new int[length];
+        if (!bigBlueFraction) {
             blueCountList = new ArrayList<Integer>();
             blueCenterXList = new ArrayList<Short>();
             blueCenterYList = new ArrayList<Short>();
@@ -4463,9 +4465,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                     i = yPos + x; 
                     maxXDel = Math.max(x, xDim - 1 - x);
                     maxDel = Math.max(maxXDel, maxYZDel);
-                    if (bigBlueFraction && (redObjects[i] == 0) && ((buffer[i] == RED) || (buffer[i] == BRIGHT_RED))) {
+                    if (bigBlueFraction && (colorObjects[i] == 0) && ((buffer[i] == RED) || (buffer[i] == BRIGHT_RED))) {
                         change = true;
-                        redObjects[i] = ++redObjectIndex;
+                        colorObjects[i] = ++redObjectIndex;
                         del = -1;
                         while (change) {
                             change = false;
@@ -4484,120 +4486,120 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                     y2Pos = z2Pos + y2 * xDim;
                                     for (x2 = xLow; x2 <= xHigh; x2++) {
                                         i2 = y2Pos + x2;
-                                        if (redObjects[i2] > 0) {
-                                            if ((x2 > 0) && (redObjects[i2-1] == 0) && ((buffer[i2-1] == BRIGHT_RED) || (buffer[i2-1] == RED))) {
-                                                redObjects[i2-1] = redObjectIndex;
+                                        if ((colorObjects[i2] > 0) && ((buffer[i2] == BRIGHT_RED) || (buffer[i2] == RED))) {
+                                            if ((x2 > 0) && (colorObjects[i2-1] == 0) && ((buffer[i2-1] == BRIGHT_RED) || (buffer[i2-1] == RED))) {
+                                                colorObjects[i2-1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim - 1) && (redObjects[i2+1] == 0) && ((buffer[i2+1] == BRIGHT_RED) || (buffer[i2+1] == RED))) {
-                                                redObjects[i2+1] = redObjectIndex;
+                                            if ((x2 < xDim - 1) && (colorObjects[i2+1] == 0) && ((buffer[i2+1] == BRIGHT_RED) || (buffer[i2+1] == RED))) {
+                                                colorObjects[i2+1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 > 0)&& (redObjects[i2-xDim] == 0) && ((buffer[i2-xDim] == BRIGHT_RED) || (buffer[i2-xDim] == RED))) {
-                                                redObjects[i2-xDim] = redObjectIndex;
+                                            if ((y2 > 0)&& (colorObjects[i2-xDim] == 0) && ((buffer[i2-xDim] == BRIGHT_RED) || (buffer[i2-xDim] == RED))) {
+                                                colorObjects[i2-xDim] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 < yDim - 1) && (redObjects[i2+xDim] == 0) && ((buffer[i2+xDim] == BRIGHT_RED) || (buffer[i2+xDim] == RED))) {
-                                                redObjects[i2+xDim] = redObjectIndex;
+                                            if ((y2 < yDim - 1) && (colorObjects[i2+xDim] == 0) && ((buffer[i2+xDim] == BRIGHT_RED) || (buffer[i2+xDim] == RED))) {
+                                                colorObjects[i2+xDim] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((z2 > 0) && (redObjects[i2-xySlice] == 0) && ((buffer[i2-xySlice] == BRIGHT_RED) || (buffer[i2-xySlice] == RED))) {
-                                                redObjects[i2-xySlice] = redObjectIndex;
+                                            if ((z2 > 0) && (colorObjects[i2-xySlice] == 0) && ((buffer[i2-xySlice] == BRIGHT_RED) || (buffer[i2-xySlice] == RED))) {
+                                                colorObjects[i2-xySlice] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((z2 < zDim - 1) && (redObjects[i2+xySlice] == 0) && ((buffer[i2+xySlice] == BRIGHT_RED) || (buffer[i2+xySlice] == RED))) {
-                                                redObjects[i2+xySlice] = redObjectIndex;
+                                            if ((z2 < zDim - 1) && (colorObjects[i2+xySlice] == 0) && ((buffer[i2+xySlice] == BRIGHT_RED) || (buffer[i2+xySlice] == RED))) {
+                                                colorObjects[i2+xySlice] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 > 0) && (redObjects[i2-xDim-1] == 0) && ((buffer[i2-xDim-1] == BRIGHT_RED) || (buffer[i2-xDim-1] == RED))) {
-                                                redObjects[i2-xDim-1] = redObjectIndex;
+                                            if ((x2 > 0) && (y2 > 0) && (colorObjects[i2-xDim-1] == 0) && ((buffer[i2-xDim-1] == BRIGHT_RED) || (buffer[i2-xDim-1] == RED))) {
+                                                colorObjects[i2-xDim-1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 < yDim - 1) && (redObjects[i2+xDim-1] == 0) && ((buffer[i2+xDim-1] == BRIGHT_RED) || (buffer[i2+xDim-1] == RED))) {
-                                                redObjects[i2+xDim-1] = redObjectIndex;
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (colorObjects[i2+xDim-1] == 0) && ((buffer[i2+xDim-1] == BRIGHT_RED) || (buffer[i2+xDim-1] == RED))) {
+                                                colorObjects[i2+xDim-1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim-1) && (y2 > 0) && (redObjects[i2-xDim+1] == 0) && ((buffer[i2-xDim+1] == BRIGHT_RED) || (buffer[i2-xDim+1] == RED))) {
-                                                redObjects[i2-xDim+1] = redObjectIndex;
+                                            if ((x2 < xDim-1) && (y2 > 0) && (colorObjects[i2-xDim+1] == 0) && ((buffer[i2-xDim+1] == BRIGHT_RED) || (buffer[i2-xDim+1] == RED))) {
+                                                colorObjects[i2-xDim+1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (redObjects[i2+xDim+1] == 0) && ((buffer[i2+xDim+1] == BRIGHT_RED) || (buffer[i2+xDim+1] == RED))) {
-                                                redObjects[i2+xDim+1] = redObjectIndex;
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (colorObjects[i2+xDim+1] == 0) && ((buffer[i2+xDim+1] == BRIGHT_RED) || (buffer[i2+xDim+1] == RED))) {
+                                                colorObjects[i2+xDim+1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (z2 > 0) && (redObjects[i2-xySlice-1] == 0) && ((buffer[i2-xySlice-1] == BRIGHT_RED) || (buffer[i2-xySlice-1] == RED))) {
-                                                redObjects[i2-xySlice-1] = redObjectIndex;
+                                            if ((x2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-1] == 0) && ((buffer[i2-xySlice-1] == BRIGHT_RED) || (buffer[i2-xySlice-1] == RED))) {
+                                                colorObjects[i2-xySlice-1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (z2 < zDim - 1) && (redObjects[i2+xySlice-1] == 0) && ((buffer[i2+xySlice-1] == BRIGHT_RED) || (buffer[i2+xySlice-1] == RED))) {
-                                                redObjects[i2+xySlice-1] = redObjectIndex;
+                                            if ((x2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-1] == 0) && ((buffer[i2+xySlice-1] == BRIGHT_RED) || (buffer[i2+xySlice-1] == RED))) {
+                                                colorObjects[i2+xySlice-1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim-1) && (z2 > 0) && (redObjects[i2-xySlice+1] == 0) && ((buffer[i2-xySlice+1] == BRIGHT_RED) || (buffer[i2-xySlice+1] == RED))) {
-                                                redObjects[i2-xySlice+1] = redObjectIndex;
+                                            if ((x2 < xDim-1) && (z2 > 0) && (colorObjects[i2-xySlice+1] == 0) && ((buffer[i2-xySlice+1] == BRIGHT_RED) || (buffer[i2-xySlice+1] == RED))) {
+                                                colorObjects[i2-xySlice+1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim - 1) && (z2 < zDim - 1) && (redObjects[i2+xySlice+1] == 0) && ((buffer[i2+xySlice+1] == BRIGHT_RED) || (buffer[i2+xySlice+1] == RED))) {
-                                                redObjects[i2+xySlice+1] = redObjectIndex;
+                                            if ((x2 < xDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+1] == 0) && ((buffer[i2+xySlice+1] == BRIGHT_RED) || (buffer[i2+xySlice+1] == RED))) {
+                                                colorObjects[i2+xySlice+1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 > 0) && (z2 > 0) && (redObjects[i2-xySlice-xDim] == 0) && ((buffer[i2-xySlice-xDim] == BRIGHT_RED) || (buffer[i2-xySlice-xDim] == RED))) {
-                                                redObjects[i2-xySlice-xDim] = redObjectIndex;
+                                            if ((y2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-xDim] == 0) && ((buffer[i2-xySlice-xDim] == BRIGHT_RED) || (buffer[i2-xySlice-xDim] == RED))) {
+                                                colorObjects[i2-xySlice-xDim] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 > 0) && (z2 < zDim - 1) && (redObjects[i2+xySlice-xDim] == 0) && ((buffer[i2+xySlice-xDim] == BRIGHT_RED) || (buffer[i2+xySlice-xDim] == RED))) {
-                                                redObjects[i2+xySlice-xDim] = redObjectIndex;
+                                            if ((y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim] == 0) && ((buffer[i2+xySlice-xDim] == BRIGHT_RED) || (buffer[i2+xySlice-xDim] == RED))) {
+                                                colorObjects[i2+xySlice-xDim] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 < yDim-1) && (z2 > 0) && (redObjects[i2-xySlice+xDim] == 0) && ((buffer[i2-xySlice+xDim] == BRIGHT_RED) || (buffer[i2-xySlice+xDim] == RED))) {
-                                                redObjects[i2-xySlice+xDim] = redObjectIndex;
+                                            if ((y2 < yDim-1) && (z2 > 0) && (colorObjects[i2-xySlice+xDim] == 0) && ((buffer[i2-xySlice+xDim] == BRIGHT_RED) || (buffer[i2-xySlice+xDim] == RED))) {
+                                                colorObjects[i2-xySlice+xDim] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 < yDim - 1) && (z2 < zDim - 1) && (redObjects[i2+xySlice+xDim] == 0) && ((buffer[i2+xySlice+xDim] == BRIGHT_RED) || (buffer[i2+xySlice+xDim] == RED))) {
-                                                redObjects[i2+xySlice+xDim] = redObjectIndex;
+                                            if ((y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim] == 0) && ((buffer[i2+xySlice+xDim] == BRIGHT_RED) || (buffer[i2+xySlice+xDim] == RED))) {
+                                                colorObjects[i2+xySlice+xDim] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 > 0) && (z2 > 0)&& (redObjects[i2-xySlice-xDim-1] == 0) && ((buffer[i2-xySlice-xDim-1] == BRIGHT_RED) || (buffer[i2-xySlice-xDim-1] == RED))) {
-                                                redObjects[i2-xySlice-xDim-1] = redObjectIndex;
+                                            if ((x2 > 0) && (y2 > 0) && (z2 > 0)&& (colorObjects[i2-xySlice-xDim-1] == 0) && ((buffer[i2-xySlice-xDim-1] == BRIGHT_RED) || (buffer[i2-xySlice-xDim-1] == RED))) {
+                                                colorObjects[i2-xySlice-xDim-1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 > 0) && (z2 < zDim - 1) && (redObjects[i2+xySlice-xDim-1] == 0) && ((buffer[i2+xySlice-xDim-1] == BRIGHT_RED) ||(buffer[i2+xySlice-xDim-1] == RED))) {
-                                                redObjects[i2+xySlice-xDim-1] = redObjectIndex;
+                                            if ((x2 > 0) && (y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim-1] == 0) && ((buffer[i2+xySlice-xDim-1] == BRIGHT_RED) ||(buffer[i2+xySlice-xDim-1] == RED))) {
+                                                colorObjects[i2+xySlice-xDim-1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 > 0)&& (redObjects[i2-xySlice+xDim-1] == 0) && ((buffer[i2-xySlice+xDim-1] == BRIGHT_RED) || (buffer[i2-xySlice+xDim-1] == RED))) {
-                                                redObjects[i2-xySlice+xDim-1] = redObjectIndex;
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 > 0)&& (colorObjects[i2-xySlice+xDim-1] == 0) && ((buffer[i2-xySlice+xDim-1] == BRIGHT_RED) || (buffer[i2-xySlice+xDim-1] == RED))) {
+                                                colorObjects[i2-xySlice+xDim-1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 < zDim - 1) && (redObjects[i2+xySlice+xDim-1] == 0) && ((buffer[i2+xySlice+xDim-1] == BRIGHT_RED) || (buffer[i2+xySlice+xDim-1] == RED))) {
-                                                redObjects[i2+xySlice+xDim-1] = redObjectIndex;
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim-1] == 0) && ((buffer[i2+xySlice+xDim-1] == BRIGHT_RED) || (buffer[i2+xySlice+xDim-1] == RED))) {
+                                                colorObjects[i2+xySlice+xDim-1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 > 0) && (redObjects[i2-xySlice-xDim+1] == 0) && ((buffer[i2-xySlice-xDim+1] == BRIGHT_RED) || (buffer[i2-xySlice-xDim+1] == RED))) {
-                                                redObjects[i2-xySlice-xDim+1] = redObjectIndex;
+                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-xDim+1] == 0) && ((buffer[i2-xySlice-xDim+1] == BRIGHT_RED) || (buffer[i2-xySlice-xDim+1] == RED))) {
+                                                colorObjects[i2-xySlice-xDim+1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 < zDim - 1) && (redObjects[i2+xySlice-xDim+1] == 0) && ((buffer[i2+xySlice-xDim+1] == BRIGHT_RED) || (buffer[i2+xySlice-xDim+1] == RED))) {
-                                                redObjects[i2+xySlice-xDim+1] = redObjectIndex;
+                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim+1] == 0) && ((buffer[i2+xySlice-xDim+1] == BRIGHT_RED) || (buffer[i2+xySlice-xDim+1] == RED))) {
+                                                colorObjects[i2+xySlice-xDim+1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 > 0) && (redObjects[i2-xySlice+xDim+1] == 0) && ((buffer[i2-xySlice+xDim+1] == BRIGHT_RED) ||(buffer[i2-xySlice+xDim+1] == RED))) {
-                                                redObjects[i2-xySlice+xDim+1] = redObjectIndex;
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 > 0) && (colorObjects[i2-xySlice+xDim+1] == 0) && ((buffer[i2-xySlice+xDim+1] == BRIGHT_RED) ||(buffer[i2-xySlice+xDim+1] == RED))) {
+                                                colorObjects[i2-xySlice+xDim+1] = redObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 < zDim - 1) && (redObjects[i2+xySlice+xDim+1] == 0) && ((buffer[i2+xySlice+xDim+1] == BRIGHT_RED) || (buffer[i2+xySlice+xDim+1] == RED))) {
-                                                redObjects[i2+xySlice+xDim+1] = redObjectIndex;
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim+1] == 0) && ((buffer[i2+xySlice+xDim+1] == BRIGHT_RED) || (buffer[i2+xySlice+xDim+1] == RED))) {
+                                                colorObjects[i2+xySlice+xDim+1] = redObjectIndex;
                                                 change = true;
                                             }
-                                        } // if (redObjects[i2] > 0)
+                                        } // if ((colorObjects[i2] > 0) && ((buffer[i2] == BRIGHT_RED) || (buffer[i2] == RED)))
                                     } // for (x2 = xLow; x2 <= xHigh; x2++)
                                 } // for (y2 = yLow; y2 <= yHigh; y2++)
                             } // for (z2 = zLow; z2 <= zHigh; z2++)
                         } // while (change)
-                    } // if (bigBlueFraction && (redObjects[i] == 0) && ((buffer[i] == RED) || (buffer[i] == BRIGHT_RED)))
-                    else if (bigBlueFraction && (greenObjects[i] == 0) && ((buffer[i] == GREEN) || (buffer[i] == BRIGHT_GREEN))) {
+                    } // if (bigBlueFraction && (colorObjects[i] == 0) && ((buffer[i] == RED) || (buffer[i] == BRIGHT_RED)))
+                    else if (bigBlueFraction && (colorObjects[i] == 0) && ((buffer[i] == GREEN) || (buffer[i] == BRIGHT_GREEN))) {
                         change = true;
-                        greenObjects[i] = ++greenObjectIndex;
+                        colorObjects[i] = ++greenObjectIndex;
                         del = -1;
                         while (change) {
                             change = false;
@@ -4616,120 +4618,120 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                     y2Pos = z2Pos + y2 * xDim;
                                     for (x2 = xLow; x2 <= xHigh; x2++) {
                                         i2 = y2Pos + x2;
-                                        if (greenObjects[i2] > 0) {
-                                            if ((x2 > 0) && (greenObjects[i2-1] == 0) && ((buffer[i2-1] == BRIGHT_GREEN) || (buffer[i2-1] == GREEN))) {
-                                                greenObjects[i2-1] = greenObjectIndex;
+                                        if ((colorObjects[i2] > 0) && ((buffer[i2] == BRIGHT_GREEN) || (buffer[i2] == GREEN))) {
+                                            if ((x2 > 0) && (colorObjects[i2-1] == 0) && ((buffer[i2-1] == BRIGHT_GREEN) || (buffer[i2-1] == GREEN))) {
+                                                colorObjects[i2-1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim - 1) && (greenObjects[i2+1] == 0) && ((buffer[i2+1] == BRIGHT_GREEN) || (buffer[i2+1] == GREEN))) {
-                                                greenObjects[i2+1] = greenObjectIndex;
+                                            if ((x2 < xDim - 1) && (colorObjects[i2+1] == 0) && ((buffer[i2+1] == BRIGHT_GREEN) || (buffer[i2+1] == GREEN))) {
+                                                colorObjects[i2+1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 > 0)&& (greenObjects[i2-xDim] == 0) && ((buffer[i2-xDim] == BRIGHT_GREEN) || (buffer[i2-xDim] == GREEN))) {
-                                                greenObjects[i2-xDim] = greenObjectIndex;
+                                            if ((y2 > 0)&& (colorObjects[i2-xDim] == 0) && ((buffer[i2-xDim] == BRIGHT_GREEN) || (buffer[i2-xDim] == GREEN))) {
+                                                colorObjects[i2-xDim] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 < yDim - 1) && (greenObjects[i2+xDim] == 0) && ((buffer[i2+xDim] == BRIGHT_GREEN) || (buffer[i2+xDim] == GREEN))) {
-                                                greenObjects[i2+xDim] = greenObjectIndex;
+                                            if ((y2 < yDim - 1) && (colorObjects[i2+xDim] == 0) && ((buffer[i2+xDim] == BRIGHT_GREEN) || (buffer[i2+xDim] == GREEN))) {
+                                                colorObjects[i2+xDim] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((z2 > 0) && (greenObjects[i2-xySlice] == 0) && ((buffer[i2-xySlice] == BRIGHT_GREEN) || (buffer[i2-xySlice] == GREEN))) {
-                                                greenObjects[i2-xySlice] = greenObjectIndex;
+                                            if ((z2 > 0) && (colorObjects[i2-xySlice] == 0) && ((buffer[i2-xySlice] == BRIGHT_GREEN) || (buffer[i2-xySlice] == GREEN))) {
+                                                colorObjects[i2-xySlice] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((z2 < zDim - 1) && (greenObjects[i2+xySlice] == 0) && ((buffer[i2+xySlice] == BRIGHT_GREEN) || (buffer[i2+xySlice] == GREEN))) {
-                                                greenObjects[i2+xySlice] = greenObjectIndex;
+                                            if ((z2 < zDim - 1) && (colorObjects[i2+xySlice] == 0) && ((buffer[i2+xySlice] == BRIGHT_GREEN) || (buffer[i2+xySlice] == GREEN))) {
+                                                colorObjects[i2+xySlice] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 > 0) && (greenObjects[i2-xDim-1] == 0) && ((buffer[i2-xDim-1] == BRIGHT_GREEN) || (buffer[i2-xDim-1] == GREEN))) {
-                                                greenObjects[i2-xDim-1] = greenObjectIndex;
+                                            if ((x2 > 0) && (y2 > 0) && (colorObjects[i2-xDim-1] == 0) && ((buffer[i2-xDim-1] == BRIGHT_GREEN) || (buffer[i2-xDim-1] == GREEN))) {
+                                                colorObjects[i2-xDim-1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 < yDim - 1) && (greenObjects[i2+xDim-1] == 0) && ((buffer[i2+xDim-1] == BRIGHT_GREEN) || (buffer[i2+xDim-1] == GREEN))) {
-                                                greenObjects[i2+xDim-1] = greenObjectIndex;
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (colorObjects[i2+xDim-1] == 0) && ((buffer[i2+xDim-1] == BRIGHT_GREEN) || (buffer[i2+xDim-1] == GREEN))) {
+                                                colorObjects[i2+xDim-1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim-1) && (y2 > 0) && (greenObjects[i2-xDim+1] == 0) && ((buffer[i2-xDim+1] == BRIGHT_GREEN) || (buffer[i2-xDim+1] == GREEN))) {
-                                                greenObjects[i2-xDim+1] = greenObjectIndex;
+                                            if ((x2 < xDim-1) && (y2 > 0) && (colorObjects[i2-xDim+1] == 0) && ((buffer[i2-xDim+1] == BRIGHT_GREEN) || (buffer[i2-xDim+1] == GREEN))) {
+                                                colorObjects[i2-xDim+1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (greenObjects[i2+xDim+1] == 0) && ((buffer[i2+xDim+1] == BRIGHT_GREEN) || (buffer[i2+xDim+1] == GREEN))) {
-                                                greenObjects[i2+xDim+1] = greenObjectIndex;
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (colorObjects[i2+xDim+1] == 0) && ((buffer[i2+xDim+1] == BRIGHT_GREEN) || (buffer[i2+xDim+1] == GREEN))) {
+                                                colorObjects[i2+xDim+1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (z2 > 0) && (greenObjects[i2-xySlice-1] == 0) && ((buffer[i2-xySlice-1] == BRIGHT_GREEN) || (buffer[i2-xySlice-1] == GREEN))) {
-                                                greenObjects[i2-xySlice-1] = greenObjectIndex;
+                                            if ((x2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-1] == 0) && ((buffer[i2-xySlice-1] == BRIGHT_GREEN) || (buffer[i2-xySlice-1] == GREEN))) {
+                                                colorObjects[i2-xySlice-1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (z2 < zDim - 1) && (greenObjects[i2+xySlice-1] == 0) && ((buffer[i2+xySlice-1] == BRIGHT_GREEN) || (buffer[i2+xySlice-1] == GREEN))) {
-                                                greenObjects[i2+xySlice-1] = greenObjectIndex;
+                                            if ((x2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-1] == 0) && ((buffer[i2+xySlice-1] == BRIGHT_GREEN) || (buffer[i2+xySlice-1] == GREEN))) {
+                                                colorObjects[i2+xySlice-1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim-1) && (z2 > 0) && (greenObjects[i2-xySlice+1] == 0) && ((buffer[i2-xySlice+1] == BRIGHT_GREEN) || (buffer[i2-xySlice+1] == GREEN))) {
-                                                greenObjects[i2-xySlice+1] = greenObjectIndex;
+                                            if ((x2 < xDim-1) && (z2 > 0) && (colorObjects[i2-xySlice+1] == 0) && ((buffer[i2-xySlice+1] == BRIGHT_GREEN) || (buffer[i2-xySlice+1] == GREEN))) {
+                                                colorObjects[i2-xySlice+1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim - 1) && (z2 < zDim - 1) && (greenObjects[i2+xySlice+1] == 0) && ((buffer[i2+xySlice+1] == BRIGHT_GREEN) || (buffer[i2+xySlice+1] == GREEN))) {
-                                                greenObjects[i2+xySlice+1] = greenObjectIndex;
+                                            if ((x2 < xDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+1] == 0) && ((buffer[i2+xySlice+1] == BRIGHT_GREEN) || (buffer[i2+xySlice+1] == GREEN))) {
+                                                colorObjects[i2+xySlice+1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 > 0) && (z2 > 0) && (greenObjects[i2-xySlice-xDim] == 0) && ((buffer[i2-xySlice-xDim] == BRIGHT_GREEN) || (buffer[i2-xySlice-xDim] == GREEN))) {
-                                                greenObjects[i2-xySlice-xDim] = greenObjectIndex;
+                                            if ((y2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-xDim] == 0) && ((buffer[i2-xySlice-xDim] == BRIGHT_GREEN) || (buffer[i2-xySlice-xDim] == GREEN))) {
+                                                colorObjects[i2-xySlice-xDim] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 > 0) && (z2 < zDim - 1) && (greenObjects[i2+xySlice-xDim] == 0) && ((buffer[i2+xySlice-xDim] == BRIGHT_GREEN) || (buffer[i2+xySlice-xDim] == GREEN))) {
-                                                greenObjects[i2+xySlice-xDim] = greenObjectIndex;
+                                            if ((y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim] == 0) && ((buffer[i2+xySlice-xDim] == BRIGHT_GREEN) || (buffer[i2+xySlice-xDim] == GREEN))) {
+                                                colorObjects[i2+xySlice-xDim] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 < yDim-1) && (z2 > 0) && (greenObjects[i2-xySlice+xDim] == 0) && ((buffer[i2-xySlice+xDim] == BRIGHT_GREEN) || (buffer[i2-xySlice+xDim] == GREEN))) {
-                                                greenObjects[i2-xySlice+xDim] = greenObjectIndex;
+                                            if ((y2 < yDim-1) && (z2 > 0) && (colorObjects[i2-xySlice+xDim] == 0) && ((buffer[i2-xySlice+xDim] == BRIGHT_GREEN) || (buffer[i2-xySlice+xDim] == GREEN))) {
+                                                colorObjects[i2-xySlice+xDim] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((y2 < yDim - 1) && (z2 < zDim - 1) && (greenObjects[i2+xySlice+xDim] == 0) && ((buffer[i2+xySlice+xDim] == BRIGHT_GREEN) || (buffer[i2+xySlice+xDim] == GREEN))) {
-                                                greenObjects[i2+xySlice+xDim] = greenObjectIndex;
+                                            if ((y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim] == 0) && ((buffer[i2+xySlice+xDim] == BRIGHT_GREEN) || (buffer[i2+xySlice+xDim] == GREEN))) {
+                                                colorObjects[i2+xySlice+xDim] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 > 0) && (z2 > 0)&& (greenObjects[i2-xySlice-xDim-1] == 0) && ((buffer[i2-xySlice-xDim-1] == BRIGHT_GREEN) || (buffer[i2-xySlice-xDim-1] == GREEN))) {
-                                                greenObjects[i2-xySlice-xDim-1] = greenObjectIndex;
+                                            if ((x2 > 0) && (y2 > 0) && (z2 > 0)&& (colorObjects[i2-xySlice-xDim-1] == 0) && ((buffer[i2-xySlice-xDim-1] == BRIGHT_GREEN) || (buffer[i2-xySlice-xDim-1] == GREEN))) {
+                                                colorObjects[i2-xySlice-xDim-1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 > 0) && (z2 < zDim - 1) && (greenObjects[i2+xySlice-xDim-1] == 0) && ((buffer[i2+xySlice-xDim-1] == BRIGHT_GREEN) ||(buffer[i2+xySlice-xDim-1] == GREEN))) {
-                                                greenObjects[i2+xySlice-xDim-1] = greenObjectIndex;
+                                            if ((x2 > 0) && (y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim-1] == 0) && ((buffer[i2+xySlice-xDim-1] == BRIGHT_GREEN) ||(buffer[i2+xySlice-xDim-1] == GREEN))) {
+                                                colorObjects[i2+xySlice-xDim-1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 > 0)&& (greenObjects[i2-xySlice+xDim-1] == 0) && ((buffer[i2-xySlice+xDim-1] == BRIGHT_GREEN) || (buffer[i2-xySlice+xDim-1] == GREEN))) {
-                                                greenObjects[i2-xySlice+xDim-1] = greenObjectIndex;
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 > 0)&& (colorObjects[i2-xySlice+xDim-1] == 0) && ((buffer[i2-xySlice+xDim-1] == BRIGHT_GREEN) || (buffer[i2-xySlice+xDim-1] == GREEN))) {
+                                                colorObjects[i2-xySlice+xDim-1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 < zDim - 1) && (greenObjects[i2+xySlice+xDim-1] == 0) && ((buffer[i2+xySlice+xDim-1] == BRIGHT_GREEN) || (buffer[i2+xySlice+xDim-1] == GREEN))) {
-                                                greenObjects[i2+xySlice+xDim-1] = greenObjectIndex;
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim-1] == 0) && ((buffer[i2+xySlice+xDim-1] == BRIGHT_GREEN) || (buffer[i2+xySlice+xDim-1] == GREEN))) {
+                                                colorObjects[i2+xySlice+xDim-1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 > 0) && (greenObjects[i2-xySlice-xDim+1] == 0) && ((buffer[i2-xySlice-xDim+1] == BRIGHT_GREEN) || (buffer[i2-xySlice-xDim+1] == GREEN))) {
-                                                greenObjects[i2-xySlice-xDim+1] = greenObjectIndex;
+                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-xDim+1] == 0) && ((buffer[i2-xySlice-xDim+1] == BRIGHT_GREEN) || (buffer[i2-xySlice-xDim+1] == GREEN))) {
+                                                colorObjects[i2-xySlice-xDim+1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 < zDim - 1) && (greenObjects[i2+xySlice-xDim+1] == 0) && ((buffer[i2+xySlice-xDim+1] == BRIGHT_GREEN) || (buffer[i2+xySlice-xDim+1] == GREEN))) {
-                                                greenObjects[i2+xySlice-xDim+1] = greenObjectIndex;
+                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim+1] == 0) && ((buffer[i2+xySlice-xDim+1] == BRIGHT_GREEN) || (buffer[i2+xySlice-xDim+1] == GREEN))) {
+                                                colorObjects[i2+xySlice-xDim+1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 > 0) && (greenObjects[i2-xySlice+xDim+1] == 0) && ((buffer[i2-xySlice+xDim+1] == BRIGHT_GREEN) ||(buffer[i2-xySlice+xDim+1] == GREEN))) {
-                                                greenObjects[i2-xySlice+xDim+1] = greenObjectIndex;
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 > 0) && (colorObjects[i2-xySlice+xDim+1] == 0) && ((buffer[i2-xySlice+xDim+1] == BRIGHT_GREEN) ||(buffer[i2-xySlice+xDim+1] == GREEN))) {
+                                                colorObjects[i2-xySlice+xDim+1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 < zDim - 1) && (greenObjects[i2+xySlice+xDim+1] == 0) && ((buffer[i2+xySlice+xDim+1] == BRIGHT_GREEN) || (buffer[i2+xySlice+xDim+1] == GREEN))) {
-                                                greenObjects[i2+xySlice+xDim+1] = greenObjectIndex;
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim+1] == 0) && ((buffer[i2+xySlice+xDim+1] == BRIGHT_GREEN) || (buffer[i2+xySlice+xDim+1] == GREEN))) {
+                                                colorObjects[i2+xySlice+xDim+1] = greenObjectIndex;
                                                 change = true;
                                             }
-                                        } // if (greenObjects[i2] > 0)
+                                        } // if ((colorObjects[i2] > 0) && ((buffer[i2] == BRIGHT_GREEN) || (buffer[i2] == GREEN))) 
                                     } // for (x2 = xLow; x2 <= xHigh; x2++)
                                 } // for (y2 = yLow; y2 <= yHigh; y2++)
                             } // for (z2 = zLow; z2 <= zHigh; z2++)
                         } // while (change)
-                    } // else if (bigBlueFraction && (greenObjects[i] == 0) && ((buffer[i] == GREEN) || (buffer[i] == BRIGHT_GREEN)))
-                    else if ((blueObjects[i] == 0) && ((buffer[i] == BLUE) || (buffer[i] == BRIGHT_BLUE))) {
+                    } // else if (bigBlueFraction && (colorObjects[i] == 0) && ((buffer[i] == GREEN) || (buffer[i] == BRIGHT_GREEN)))
+                    else if ((colorObjects[i] == 0) && ((buffer[i] == BLUE) || (buffer[i] == BRIGHT_BLUE))) {
                         change = true;
-                        blueObjects[i] = ++blueObjectIndex;
+                        colorObjects[i] = ++blueObjectIndex;
                         if (!bigBlueFraction) {
                             blueCount = 1;
                             centerBlueX = x;
@@ -4760,9 +4762,9 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                     y2Pos = z2Pos + y2 * xDim;
                                     for (x2 = xLow; x2 <= xHigh; x2++) {
                                         i2 = y2Pos + x2;
-                                        if (blueObjects[i2] > 0) {
-                                            if ((x2 > 0) && (blueObjects[i2-1] == 0) && ((buffer[i2-1] == BRIGHT_BLUE) || (buffer[i2-1] == BLUE))) {
-                                                blueObjects[i2-1] = blueObjectIndex;
+                                        if ((colorObjects[i2] > 0) && ((buffer[i2] == BRIGHT_BLUE) || (buffer[i2] == BLUE))) {
+                                            if ((x2 > 0) && (colorObjects[i2-1] == 0) && ((buffer[i2-1] == BRIGHT_BLUE) || (buffer[i2-1] == BLUE))) {
+                                                colorObjects[i2-1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -4789,8 +4791,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 < xDim - 1) && (blueObjects[i2+1] == 0) && ((buffer[i2+1] == BRIGHT_BLUE) || (buffer[i2+1] == BLUE))) {
-                                                blueObjects[i2+1] = blueObjectIndex;
+                                            if ((x2 < xDim - 1) && (colorObjects[i2+1] == 0) && ((buffer[i2+1] == BRIGHT_BLUE) || (buffer[i2+1] == BLUE))) {
+                                                colorObjects[i2+1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -4817,8 +4819,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((y2 > 0)&& (blueObjects[i2-xDim] == 0) && ((buffer[i2-xDim] == BRIGHT_BLUE) || (buffer[i2-xDim] == BLUE))) {
-                                                blueObjects[i2-xDim] = blueObjectIndex;
+                                            if ((y2 > 0)&& (colorObjects[i2-xDim] == 0) && ((buffer[i2-xDim] == BRIGHT_BLUE) || (buffer[i2-xDim] == BLUE))) {
+                                                colorObjects[i2-xDim] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -4845,8 +4847,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((y2 < yDim - 1) && (blueObjects[i2+xDim] == 0) && ((buffer[i2+xDim] == BRIGHT_BLUE) || (buffer[i2+xDim] == BLUE))) {
-                                                blueObjects[i2+xDim] = blueObjectIndex;
+                                            if ((y2 < yDim - 1) && (colorObjects[i2+xDim] == 0) && ((buffer[i2+xDim] == BRIGHT_BLUE) || (buffer[i2+xDim] == BLUE))) {
+                                                colorObjects[i2+xDim] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -4873,8 +4875,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((z2 > 0) && (blueObjects[i2-xySlice] == 0) && ((buffer[i2-xySlice] == BRIGHT_BLUE) || (buffer[i2-xySlice] == BLUE))) {
-                                                blueObjects[i2-xySlice] = blueObjectIndex;
+                                            if ((z2 > 0) && (colorObjects[i2-xySlice] == 0) && ((buffer[i2-xySlice] == BRIGHT_BLUE) || (buffer[i2-xySlice] == BLUE))) {
+                                                colorObjects[i2-xySlice] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -4901,8 +4903,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((z2 < zDim - 1) && (blueObjects[i2+xySlice] == 0) && ((buffer[i2+xySlice] == BRIGHT_BLUE) || (buffer[i2+xySlice] == BLUE))) {
-                                                blueObjects[i2+xySlice] = blueObjectIndex;
+                                            if ((z2 < zDim - 1) && (colorObjects[i2+xySlice] == 0) && ((buffer[i2+xySlice] == BRIGHT_BLUE) || (buffer[i2+xySlice] == BLUE))) {
+                                                colorObjects[i2+xySlice] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -4929,8 +4931,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 > 0) && (y2 > 0) && (blueObjects[i2-xDim-1] == 0) && ((buffer[i2-xDim-1] == BRIGHT_BLUE) || (buffer[i2-xDim-1] == BLUE))) {
-                                                blueObjects[i2-xDim-1] = blueObjectIndex;
+                                            if ((x2 > 0) && (y2 > 0) && (colorObjects[i2-xDim-1] == 0) && ((buffer[i2-xDim-1] == BRIGHT_BLUE) || (buffer[i2-xDim-1] == BLUE))) {
+                                                colorObjects[i2-xDim-1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -4957,8 +4959,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 > 0) && (y2 < yDim - 1) && (blueObjects[i2+xDim-1] == 0) && ((buffer[i2+xDim-1] == BRIGHT_BLUE) || (buffer[i2+xDim-1] == BLUE))) {
-                                                blueObjects[i2+xDim-1] = blueObjectIndex;
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (colorObjects[i2+xDim-1] == 0) && ((buffer[i2+xDim-1] == BRIGHT_BLUE) || (buffer[i2+xDim-1] == BLUE))) {
+                                                colorObjects[i2+xDim-1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -4985,8 +4987,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 < xDim-1) && (y2 > 0) && (blueObjects[i2-xDim+1] == 0) && ((buffer[i2-xDim+1] == BRIGHT_BLUE) || (buffer[i2-xDim+1] == BLUE))) {
-                                                blueObjects[i2-xDim+1] = blueObjectIndex;
+                                            if ((x2 < xDim-1) && (y2 > 0) && (colorObjects[i2-xDim+1] == 0) && ((buffer[i2-xDim+1] == BRIGHT_BLUE) || (buffer[i2-xDim+1] == BLUE))) {
+                                                colorObjects[i2-xDim+1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5013,8 +5015,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (blueObjects[i2+xDim+1] == 0) && ((buffer[i2+xDim+1] == BRIGHT_BLUE) || (buffer[i2+xDim+1] == BLUE))) {
-                                                blueObjects[i2+xDim+1] = blueObjectIndex;
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (colorObjects[i2+xDim+1] == 0) && ((buffer[i2+xDim+1] == BRIGHT_BLUE) || (buffer[i2+xDim+1] == BLUE))) {
+                                                colorObjects[i2+xDim+1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5041,8 +5043,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 > 0) && (z2 > 0) && (blueObjects[i2-xySlice-1] == 0) && ((buffer[i2-xySlice-1] == BRIGHT_BLUE) || (buffer[i2-xySlice-1] == BLUE))) {
-                                                blueObjects[i2-xySlice-1] = blueObjectIndex;
+                                            if ((x2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-1] == 0) && ((buffer[i2-xySlice-1] == BRIGHT_BLUE) || (buffer[i2-xySlice-1] == BLUE))) {
+                                                colorObjects[i2-xySlice-1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5069,8 +5071,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 > 0) && (z2 < zDim - 1) && (blueObjects[i2+xySlice-1] == 0) && ((buffer[i2+xySlice-1] == BRIGHT_BLUE) || (buffer[i2+xySlice-1] == BLUE))) {
-                                                blueObjects[i2+xySlice-1] = blueObjectIndex;
+                                            if ((x2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-1] == 0) && ((buffer[i2+xySlice-1] == BRIGHT_BLUE) || (buffer[i2+xySlice-1] == BLUE))) {
+                                                colorObjects[i2+xySlice-1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5097,8 +5099,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 < xDim-1) && (z2 > 0) && (blueObjects[i2-xySlice+1] == 0) && ((buffer[i2-xySlice+1] == BRIGHT_BLUE) || (buffer[i2-xySlice+1] == BLUE))) {
-                                                blueObjects[i2-xySlice+1] = blueObjectIndex;
+                                            if ((x2 < xDim-1) && (z2 > 0) && (colorObjects[i2-xySlice+1] == 0) && ((buffer[i2-xySlice+1] == BRIGHT_BLUE) || (buffer[i2-xySlice+1] == BLUE))) {
+                                                colorObjects[i2-xySlice+1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5125,8 +5127,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 < xDim - 1) && (z2 < zDim - 1) && (blueObjects[i2+xySlice+1] == 0) && ((buffer[i2+xySlice+1] == BRIGHT_BLUE) || (buffer[i2+xySlice+1] == BLUE))) {
-                                                blueObjects[i2+xySlice+1] = blueObjectIndex;
+                                            if ((x2 < xDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+1] == 0) && ((buffer[i2+xySlice+1] == BRIGHT_BLUE) || (buffer[i2+xySlice+1] == BLUE))) {
+                                                colorObjects[i2+xySlice+1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5153,8 +5155,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((y2 > 0) && (z2 > 0) && (blueObjects[i2-xySlice-xDim] == 0) && ((buffer[i2-xySlice-xDim] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim] == BLUE))) {
-                                                blueObjects[i2-xySlice-xDim] = blueObjectIndex;
+                                            if ((y2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-xDim] == 0) && ((buffer[i2-xySlice-xDim] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim] == BLUE))) {
+                                                colorObjects[i2-xySlice-xDim] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5181,8 +5183,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((y2 > 0) && (z2 < zDim - 1) && (blueObjects[i2+xySlice-xDim] == 0) && ((buffer[i2+xySlice-xDim] == BRIGHT_BLUE) || (buffer[i2+xySlice-xDim] == BLUE))) {
-                                                blueObjects[i2+xySlice-xDim] = blueObjectIndex;
+                                            if ((y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim] == 0) && ((buffer[i2+xySlice-xDim] == BRIGHT_BLUE) || (buffer[i2+xySlice-xDim] == BLUE))) {
+                                                colorObjects[i2+xySlice-xDim] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5209,8 +5211,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((y2 < yDim-1) && (z2 > 0) && (blueObjects[i2-xySlice+xDim] == 0) && ((buffer[i2-xySlice+xDim] == BRIGHT_BLUE) || (buffer[i2-xySlice+xDim] == BLUE))) {
-                                                blueObjects[i2-xySlice+xDim] = blueObjectIndex;
+                                            if ((y2 < yDim-1) && (z2 > 0) && (colorObjects[i2-xySlice+xDim] == 0) && ((buffer[i2-xySlice+xDim] == BRIGHT_BLUE) || (buffer[i2-xySlice+xDim] == BLUE))) {
+                                                colorObjects[i2-xySlice+xDim] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5237,8 +5239,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((y2 < yDim - 1) && (z2 < zDim - 1) && (blueObjects[i2+xySlice+xDim] == 0) && ((buffer[i2+xySlice+xDim] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim] == BLUE))) {
-                                                blueObjects[i2+xySlice+xDim] = blueObjectIndex;
+                                            if ((y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim] == 0) && ((buffer[i2+xySlice+xDim] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim] == BLUE))) {
+                                                colorObjects[i2+xySlice+xDim] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5265,8 +5267,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 > 0) && (y2 > 0) && (z2 > 0)&& (blueObjects[i2-xySlice-xDim-1] == 0) && ((buffer[i2-xySlice-xDim-1] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim-1] == BLUE))) {
-                                                blueObjects[i2-xySlice-xDim-1] = blueObjectIndex;
+                                            if ((x2 > 0) && (y2 > 0) && (z2 > 0)&& (colorObjects[i2-xySlice-xDim-1] == 0) && ((buffer[i2-xySlice-xDim-1] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim-1] == BLUE))) {
+                                                colorObjects[i2-xySlice-xDim-1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5293,8 +5295,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 > 0) && (y2 > 0) && (z2 < zDim - 1) && (blueObjects[i2+xySlice-xDim-1] == 0) && ((buffer[i2+xySlice-xDim-1] == BRIGHT_BLUE) ||(buffer[i2+xySlice-xDim-1] == BLUE))) {
-                                                blueObjects[i2+xySlice-xDim-1] = blueObjectIndex;
+                                            if ((x2 > 0) && (y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim-1] == 0) && ((buffer[i2+xySlice-xDim-1] == BRIGHT_BLUE) ||(buffer[i2+xySlice-xDim-1] == BLUE))) {
+                                                colorObjects[i2+xySlice-xDim-1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5321,8 +5323,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 > 0)&& (blueObjects[i2-xySlice+xDim-1] == 0) && ((buffer[i2-xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i2-xySlice+xDim-1] == BLUE))) {
-                                                blueObjects[i2-xySlice+xDim-1] = blueObjectIndex;
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 > 0)&& (colorObjects[i2-xySlice+xDim-1] == 0) && ((buffer[i2-xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i2-xySlice+xDim-1] == BLUE))) {
+                                                colorObjects[i2-xySlice+xDim-1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5349,8 +5351,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 < zDim - 1) && (blueObjects[i2+xySlice+xDim-1] == 0) && ((buffer[i2+xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim-1] == BLUE))) {
-                                                blueObjects[i2+xySlice+xDim-1] = blueObjectIndex;
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim-1] == 0) && ((buffer[i2+xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim-1] == BLUE))) {
+                                                colorObjects[i2+xySlice+xDim-1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5377,8 +5379,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 > 0) && (blueObjects[i2-xySlice-xDim+1] == 0) && ((buffer[i2-xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim+1] == BLUE))) {
-                                                blueObjects[i2-xySlice-xDim+1] = blueObjectIndex;
+                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-xDim+1] == 0) && ((buffer[i2-xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim+1] == BLUE))) {
+                                                colorObjects[i2-xySlice-xDim+1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5405,8 +5407,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 < zDim - 1) && (blueObjects[i2+xySlice-xDim+1] == 0) && ((buffer[i2+xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i2+xySlice-xDim+1] == BLUE))) {
-                                                blueObjects[i2+xySlice-xDim+1] = blueObjectIndex;
+                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim+1] == 0) && ((buffer[i2+xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i2+xySlice-xDim+1] == BLUE))) {
+                                                colorObjects[i2+xySlice-xDim+1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5433,8 +5435,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 > 0) && (blueObjects[i2-xySlice+xDim+1] == 0) && ((buffer[i2-xySlice+xDim+1] == BRIGHT_BLUE) ||(buffer[i2-xySlice+xDim+1] == BLUE))) {
-                                                blueObjects[i2-xySlice+xDim+1] = blueObjectIndex;
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 > 0) && (colorObjects[i2-xySlice+xDim+1] == 0) && ((buffer[i2-xySlice+xDim+1] == BRIGHT_BLUE) ||(buffer[i2-xySlice+xDim+1] == BLUE))) {
+                                                colorObjects[i2-xySlice+xDim+1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5461,8 +5463,8 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 < zDim - 1) && (blueObjects[i2+xySlice+xDim+1] == 0) && ((buffer[i2+xySlice+xDim+1] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim+1] == BLUE))) {
-                                                blueObjects[i2+xySlice+xDim+1] = blueObjectIndex;
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim+1] == 0) && ((buffer[i2+xySlice+xDim+1] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim+1] == BLUE))) {
+                                                colorObjects[i2+xySlice+xDim+1] = blueObjectIndex;
                                                 change = true;
                                                 if (!bigBlueFraction) {
                                                     blueCount++;
@@ -5489,7 +5491,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                                                     }
                                                 }
                                             }
-                                        } // if (blueObjects[i2] > 0)
+                                        } // if ((colorObjects[i2] > 0) && ((buffer[i2] == BRIGHT_BLUE) || (buffer[i2] == BLUE)))
                                     } // for (x2 = xLow; x2 <= xHigh; x2++)
                                 } // for (y2 = yLow; y2 <= yHigh; y2++)
                             } // for (z2 = zLow; z2 <= zHigh; z2++)
@@ -5506,7 +5508,7 @@ public class PlugInAlgorithmSynapseDetection extends AlgorithmBase {
                             blueYWidthList.add((short)(highBlueY - lowBlueY + 1));
                             blueZWidthList.add((short)(highBlueZ - lowBlueZ + 1));
                         }
-                    } // else if ((blueObjects[i] == 0) && ((buffer[i] == BLUE) || (buffer[i] == BRIGHT_BLUE)))
+                    } // else if ((colorObjects[i] == 0) && ((buffer[i] == BLUE) || (buffer[i] == BRIGHT_BLUE)))
                 } // for (x = 0; x < xDim; x++)
             } // for (y = 0; y < yDim; y++) 
         } // for (z = 0; z < zDim; z++)
