@@ -1722,6 +1722,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogMorphologicalFilter(this, getActiveImage());
         } else if (command.equals("morGradient")) {
             new JDialogMorphologicalGradient(this, getActiveImage());
+        } else if (command.equals("morLaplacian")) {
+            new JDialogMorphologicalLaplacian(this, getActiveImage());
+        } else if (command.equals("topHat")) {
+            new JDialogTopHat(this, getActiveImage());
+        } else if (command.equals("bottomHat")) {
+            new JDialogBottomHat(this, getActiveImage());
         } else if (command.equals("FG distance map")) {
             new JDialogDistanceMap(this, getActiveImage());
         } else if (command.equals("BG distance map")) {
