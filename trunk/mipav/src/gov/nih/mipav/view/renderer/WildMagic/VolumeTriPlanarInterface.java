@@ -2841,6 +2841,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         dualPane.setOneTouchExpandable(true);
         dualPane.setDividerSize(6);
         dualPane.setContinuousLayout(true);
+        dualPane.setResizeWeight(1);
         
         rightPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, dualPane, triImagePanel);
         rightPane.setOneTouchExpandable(true);
@@ -2927,18 +2928,18 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         m_kLightsPanel.resizePanel(maxPanelWidth, height);
         clipBox.resizePanel(maxPanelWidth, height);
         //multiHistogramGUI.resizePanel(maxPanelWidth, height);
+        
         if ( brainsurfaceFlattenerRender != null )
         {
             brainsurfaceFlattenerRender.resizePanel(maxPanelWidth, height);
+            dualPane.setDividerLocation( 0.5f );
         }
         if ( m_kFlyThroughRender != null )
         {
             flythruControl.resizePanel(maxPanelWidth, height);
+            dualPane.setDividerLocation( 0.5f );
         }
         
-        if ( m_kFlyThroughPanel != null || m_kBrainsurfaceFlattenerPanel != null  ) {
-        	dualPane.setDividerLocation( 0.5f );
-        }
         rightPane.setDividerLocation( 0.618f ); 
         
     }
