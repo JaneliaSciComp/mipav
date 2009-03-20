@@ -343,4 +343,13 @@ public abstract class VolumeObject
     {
         m_kTranslate.Add(kTranslate);
     }
+    
+    /**
+     * Return the translation vector.
+     * @return translation vector.
+     */
+    public Vector3f GetTranslate()
+    {
+        return new Vector3f(m_kTranslate);
+    }
 }

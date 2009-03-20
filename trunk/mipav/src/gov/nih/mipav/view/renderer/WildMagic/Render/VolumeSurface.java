@@ -444,15 +444,21 @@ public class VolumeSurface extends VolumeObject
                     }
                 }
             }
-            
+            m_kMesh.VBuffer.LoadSub( iMin, iMax );
+            /*
             float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(),
                                                                            iMin, iMax );
             FloatBuffer kData = FloatBuffer.wrap(afCompatible);
             kData.rewind();
             kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, iMin*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+*/
         }
         else
         {
+            m_kMesh.VBuffer.LoadSub( kRecord.iV0, kRecord.iV0 );
+            m_kMesh.VBuffer.LoadSub( kRecord.iV1, kRecord.iV1 );
+            m_kMesh.VBuffer.LoadSub( kRecord.iV2, kRecord.iV2 );
+            /*
             float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV0,
                                                                            kRecord.iV0);
             FloatBuffer kData = FloatBuffer.wrap(afCompatible);
@@ -472,6 +478,7 @@ public class VolumeSurface extends VolumeObject
             kData = FloatBuffer.wrap(afCompatible);
             kData.rewind();
             kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV2*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+            */
         }
     }
 
@@ -492,11 +499,15 @@ public class VolumeSurface extends VolumeObject
         {
             m_kMesh.VBuffer.SetColor4(0, i, m_akBackupColor[i]);
         }
+
+        m_kMesh.VBuffer.LoadSub( iMin, iMax );
+        /*
         float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(),
                 iMin, iMax );
         FloatBuffer kData = FloatBuffer.wrap(afCompatible);
         kData.rewind();
         kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, iMin*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+*/
     }
     
     /**
@@ -567,6 +578,7 @@ public class VolumeSurface extends VolumeObject
     public void Paint( Renderer kRenderer, PickRecord kRecord, ColorRGBA kPaintColor, int iBrushSize )
     {
         m_bPainted = true;
+        System.err.println( "Painting: " + m_kMesh.VBuffer.GetAttributes().GetCChannels(0) );
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV0, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV1, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV2, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
@@ -576,7 +588,6 @@ public class VolumeSurface extends VolumeObject
         if ( kIAttr == null )
         {
             kIAttr = m_kMesh.VBuffer.GetAttributes();
-            System.err.println("Attributes NULL");
         }
         if ( iBrushSize > 1 )
         {
@@ -603,15 +614,21 @@ public class VolumeSurface extends VolumeObject
                     }
                 }
             }
-            
+            m_kMesh.VBuffer.LoadSub( iMin, iMax );
+            /*
             float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(kIAttr,
                                                                            iMin, iMax );
             FloatBuffer kData = FloatBuffer.wrap(afCompatible);
             kData.rewind();
             kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, iMin*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+        */
         }
         else
         {
+            m_kMesh.VBuffer.LoadSub( kRecord.iV0, kRecord.iV0 );
+            m_kMesh.VBuffer.LoadSub( kRecord.iV1, kRecord.iV1 );
+            m_kMesh.VBuffer.LoadSub( kRecord.iV2, kRecord.iV2 );
+            /*
             float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(kIAttr, kRecord.iV0,
                                                                            kRecord.iV0);
             FloatBuffer kData = FloatBuffer.wrap(afCompatible);
@@ -629,6 +646,7 @@ public class VolumeSurface extends VolumeObject
             kData = FloatBuffer.wrap(afCompatible);
             kData.rewind();
             kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV2*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
+            */
         }
     }
     /* (non-Javadoc)

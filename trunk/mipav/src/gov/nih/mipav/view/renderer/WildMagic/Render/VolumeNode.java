@@ -86,6 +86,15 @@ public class VolumeNode extends VolumeObject
         m_kScene.UpdateGS();
     }
     
+    /**
+     * Return the translation vector.
+     * @return translation vector.
+     */
+    public Vector3f GetTranslate()
+    {
+        return new Vector3f(m_kNode.Local.GetTranslate());
+    }
+    
     /** Creates the scene graph. */
     private void CreateScene ( )
     {

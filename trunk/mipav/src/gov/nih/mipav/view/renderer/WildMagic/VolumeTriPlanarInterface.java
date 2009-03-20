@@ -602,7 +602,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             {
                 m_kFlyThroughRender = new FlyThroughRender( this, 
                                                             m_kAnimator, m_kVolumeImageA,
-                                                            m_kVolumeImageB);
+                                                            m_kVolumeImageB, raycastRenderWM.getTranslate());
                 TriMesh kSurface = raycastRenderWM.getSurface( surfaceGUI.getSelectedSurface() );
                 m_kFlyThroughRender.addSurface(kSurface, raycastRenderWM.getSurfaceCenter( surfaceGUI.getSelectedSurface()) );
                 bf_flyPanel.add( m_kFlyThroughRender.GetCanvas(), BorderLayout.CENTER );
@@ -2383,6 +2383,16 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     public void translateSurface(String kSurfaceName, Vector3f kTranslate)
     {
         raycastRenderWM.translateSurface(kSurfaceName, kTranslate);
+    }    
+    
+    /**
+     * Return the translation vector for the surface with the given name.
+     * @param kSurfaceName the surface to move.
+     * @return the translation vector
+     */
+    public Vector3f getTranslateSurface(String kSurfaceName)
+    {
+        return raycastRenderWM.getTranslateSurface(kSurfaceName);
     }
     
     /** 
