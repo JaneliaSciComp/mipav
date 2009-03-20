@@ -58,6 +58,7 @@ public class VolumeSlices extends VolumeObject
     {
         super(kImageA,kImageB,kTranslate,fX,fY,fZ);
 
+        //System.err.println( kTranslate.ToString() );
         m_akPlaneEffect = new VolumePlaneEffect[3];
         m_kVolumePreShader = new VolumePreRenderEffect[3];
         for ( int i = 0; i < 3; i++ )

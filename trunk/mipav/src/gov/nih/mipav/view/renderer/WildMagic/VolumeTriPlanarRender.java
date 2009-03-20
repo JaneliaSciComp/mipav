@@ -175,7 +175,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void addNode(Node kNode)
     {
-        m_kDisplayList.add( new VolumeNode( m_kVolumeImageA,
+        m_kDisplayList.add( 1, new VolumeNode( m_kVolumeImageA,
                 m_kTranslate,
                 m_fX, m_fY, m_fZ, kNode) );
         UpdateSceneRotation();
@@ -2102,6 +2102,26 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
     /**
+     * Return the translation vector for the surface with the given name.
+     * @param kSurfaceName the surface to move.
+     * @return the translation vector
+     */
+    public Vector3f getTranslateSurface(String kSurfaceName)
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    return m_kDisplayList.get(i).GetTranslate();
+                }
+            }
+        }
+        return new Vector3f(Vector3f.ZERO);
+    }
+    
+    /**
      * Undo applying the sculpt region to the volume.
      */
     public void undoSculpt()
@@ -2243,21 +2263,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         m_kTranslate = m_kVolumeRayCast.GetTranslate();
 
-        ModelImage kImage = m_kVolumeImageA.GetImage();
-        float fMaxX = (kImage.getExtents()[0] - 1) * kImage.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (kImage.getExtents()[1] - 1) * kImage.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (kImage.getExtents()[2] - 1) * kImage.getFileInfo(0).getResolutions()[2];
-
-        m_fMax = fMaxX;
-        if (fMaxY > m_fMax) {
-            m_fMax = fMaxY;
-        }
-        if (fMaxZ > m_fMax) {
-            m_fMax = fMaxZ;
-        }
-        m_fX = fMaxX/m_fMax;
-        m_fY = fMaxY/m_fMax;
-        m_fZ = fMaxZ/m_fMax;
+        m_fX = m_kVolumeImageA.GetScaleX();
+        m_fY = m_kVolumeImageA.GetScaleY();
+        m_fZ = m_kVolumeImageA.GetScaleZ();
 
         m_kSlices = new VolumeSlices( m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ );
         displayVolumeSlices( true );
