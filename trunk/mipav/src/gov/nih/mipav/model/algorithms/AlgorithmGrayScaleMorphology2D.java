@@ -22,6 +22,7 @@ import java.util.*;
  *
  * <ul>
  *   <li>Background Distance Map</li>
+ *   <li>Bottom hat</li>
  *   <li>close</li>
  *   <li>Delete objects</li>
  *   <li>dilate</li>
@@ -31,9 +32,11 @@ import java.util.*;
  *   <li>find edges</li>
  *   <li>Identify objects</li>
  *   <li>Morphological gradient</li>
+ *   <li>Morphological laplacian</li>
  *   <li>open</li>
  *   <li>Particle Analysis</li>
  *   <li>Skeletonize with pruning option</li>
+ *   <li>Top hat</li>
  *   <li>ultimate erode</li>
  * </ul>
  *
@@ -90,6 +93,12 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
     public static final int DISTANCE_MAP_FOR_SHAPE_INTERPOLATION = 14;
     
     public static final int MORPHOLOGICAL_GRADIENT = 15;
+    
+    public static final int TOP_HAT = 16;
+    
+    public static final int BOTTOM_HAT = 17;
+    
+    public static final int MORPHOLOGICAL_LAPLACIAN = 18;
 
     
     /** DOCUMENT ME! */
@@ -119,7 +128,8 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
     private String[] algorithmName = {
         "ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS", "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP",
         "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "PARTICLE_ANALYSIS_NEW", "FILL_HOLES",
-        "DISTANCE_MAP_FOR_SHAPE_INTERPOLATION", "MORPHOLOGICAL_GRADIENT"
+        "DISTANCE_MAP_FOR_SHAPE_INTERPOLATION", "MORPHOLOGICAL_GRADIENT", "TOP_HAT", "BOTTOM_HAT",
+        "MORPHOLOGICAL_LAPLACIAN"
     };
 
     /** kernel diameter. */
@@ -1581,7 +1591,116 @@ public class AlgorithmGrayScaleMorphology2D extends AlgorithmBase {
 
                 setCompleted(true);
                 break;
+                
+            case TOP_HAT:
+                // image - open of image
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
+                erode(true, iterationsE);
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                dilate(true, iterationsD);
+                imgBuffer2 = new double[imgBuffer.length];
+                System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
+                try { 
+                    srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    setCompleted(false);
 
+                    return;
+                }
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    imgBuffer[i] = imgBuffer[i] - imgBuffer2[i];
+                }
+                try {
+                    srcImage.importData(0, imgBuffer, true);
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+
+                setCompleted(true);
+                break;
+                
+            case BOTTOM_HAT:
+                // close of image - image
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
+                dilate(true, iterationsD);
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                erode(true, iterationsE);
+                imgBuffer2 = new double[imgBuffer.length];
+                System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
+                try { 
+                    srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    imgBuffer2[i] = imgBuffer2[i] - imgBuffer[i];
+                }
+                try {
+                    srcImage.importData(0, imgBuffer2, true);
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+
+                setCompleted(true);
+                break;
+                
+            case MORPHOLOGICAL_LAPLACIAN:
+                // (dilation of image - image) - (image - erosion of image)
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
+                dilate(true, 1);
+                imgBuffer2 = new double[imgBuffer.length];
+                System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
+                try { 
+                    srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                        ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                erode(true, 1);
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    imgBuffer2[i] = imgBuffer2[i] + imgBuffer[i];
+                }
+                try { 
+                    srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    imgBuffer2[i] = imgBuffer2[i] - 2 * imgBuffer[i];
+                }
+                try {
+                    srcImage.importData(0, imgBuffer2, true);
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+
+                setCompleted(true);
+                break;
             /*case PARTICLE_ANALYSIS_NEW:
                 // open
                 setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 15));
