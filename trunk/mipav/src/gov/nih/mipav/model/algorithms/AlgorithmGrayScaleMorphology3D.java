@@ -21,6 +21,7 @@ import java.util.*;
  *
  * <ul>
  *   <li>Background Distance Map</li>
+ *   <li>Bottom hat</li>
  *   <li>close</li>
  *   <li>Delete objects</li>
  *   <li>dilate</li>
@@ -30,9 +31,11 @@ import java.util.*;
  *   <li>find edges</li>
  *   <li>Identify objects</li>
  *   <li>Morphological gradient</li>
+ *   <li>Morphological laplacian</li.
  *   <li>open</li>
  *   <li>Particle Analysis</li>
  *   <li>Skeletonize with pruning option</li>
+ *   <li>Top hat</li>
  *   <li>ultimate erode</li>
  * </ul>
  *
@@ -86,6 +89,12 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
     public static final int DISTANCE_MAP_FOR_SHAPE_INTERPOLATION = 13;
     
     public static final int MORPHOLOGICAL_GRADIENT = 14;
+    
+    public static final int TOP_HAT = 15;
+    
+    public static final int BOTTOM_HAT = 16;
+    
+    public static final int MORPHOLOGICAL_LAPLACIAN = 17;
 
     /** DOCUMENT ME! */
     public static final int SIZED_SPHERE = AlgorithmMorphology3D.SIZED_SPHERE;
@@ -118,7 +127,8 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private String[] algorithmName = {
         "ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS", "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP",
-        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "FILL_HOLES", "MORPHOLOGICAL_GRADIENT"
+        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "FILL_HOLES", "MORPHOLOGICAL_GRADIENT",
+        "TOP_HAT", "BOTTOM_HAT", "MORPHOLOGICAL_LAPLACIAN"
     };
 
     /** DOCUMENT ME! */
@@ -906,7 +916,7 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 try { 
                     srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
                 } catch (IOException error) {
-                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
                     setCompleted(false);
 
                     return;
@@ -920,7 +930,120 @@ public class AlgorithmGrayScaleMorphology3D extends AlgorithmBase {
                 try {
                     srcImage.importData(0, imgBuffer2, true);
                 } catch (IOException error) {
-                    displayError("Algorithm GrayScaleMorphology2D: Image(s) locked");
+                    displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+
+                setCompleted(true);
+                break;
+                
+            case TOP_HAT:
+                // image - open of image
+                progressValues = getProgressValues();
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
+                erode(true);
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                dilate(true);
+                imgBuffer2 = new double[imgBuffer.length];
+                System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
+                try { 
+                    srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    imgBuffer[i] = imgBuffer[i] - imgBuffer2[i];
+                }
+                try {
+                    srcImage.importData(0, imgBuffer, true);
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+
+                setCompleted(true);
+                break;
+                
+            case BOTTOM_HAT:
+                // close of image - image
+                progressValues = getProgressValues();
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
+                dilate(true);
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                erode(true);
+                imgBuffer2 = new double[imgBuffer.length];
+                System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
+                try { 
+                    srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    imgBuffer2[i] = imgBuffer2[i] - imgBuffer[i];
+                }
+                try {
+                    srcImage.importData(0, imgBuffer2, true);
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+
+                setCompleted(true);
+                break;
+                
+            case MORPHOLOGICAL_LAPLACIAN:
+                // (dilation of image - image) - (image - erosion of image)
+                progressValues = getProgressValues();
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
+                dilate(true);
+                imgBuffer2 = new double[imgBuffer.length];
+                System.arraycopy(imgBuffer, 0, imgBuffer2, 0, imgBuffer.length);
+                try { 
+                    srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                        ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
+                erode(true);
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    imgBuffer2[i] = imgBuffer2[i] + imgBuffer[i];
+                }
+                try { 
+                    srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    imgBuffer2[i] = imgBuffer2[i] - 2 * imgBuffer[i];
+                }
+                try {
+                    srcImage.importData(0, imgBuffer2, true);
+                } catch (IOException error) {
+                    displayError("Algorithm GrayScaleMorphology3D: Image(s) locked");
                     setCompleted(false);
 
 
