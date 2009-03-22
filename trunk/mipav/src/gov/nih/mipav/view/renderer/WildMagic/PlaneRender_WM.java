@@ -25,10 +25,12 @@ import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Camera;
+import WildMagic.LibGraphics.Rendering.Camera.ViewFrustum;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
@@ -111,9 +113,6 @@ public class PlaneRender_WM extends GPURenderBase
     /** Width of the texture-mapped polygon: */
     private float m_fXRange;
 
-    /** X direction mouse translation. */
-    private float m_fXTranslate = 0.0f;
-
     /** lower y-bound of the texture-mapped polygon: */
     private float m_fY0;
 
@@ -122,9 +121,6 @@ public class PlaneRender_WM extends GPURenderBase
 
     /** Height of the texture-mapped polygon: */
     private float m_fYRange;
-
-    /** Y direction mouse translation. */
-    private float m_fYTranslate = 0.0f;
 
     /** Image scaling from Zoom:. */
     private float m_fZoomScale = 1.0f;
@@ -160,8 +156,6 @@ public class PlaneRender_WM extends GPURenderBase
     private int[] m_aiAxisOrder;
     /** ModelImage axis flip. */
     private boolean[] m_abAxisFlip;
-    /** Default field of view, changes with mouse zoom. */
-    private float m_fUpFOV = 65f;
     /** For zooming with the mouse. */
     private float m_fMouseY;
     
@@ -457,14 +451,16 @@ public class PlaneRender_WM extends GPURenderBase
         {
             if ( kEvent.getY() < m_fMouseY )
             {
-                m_fUpFOV += 2.0f;
+                m_fZoomScale += 0.05;
             }
             else if ( kEvent.getY() > m_fMouseY )
             {
-                m_fUpFOV -= 2.0f;
+                m_fZoomScale -= 0.05;
             }
-            m_fMouseY = kEvent.getY();
-            m_spkCamera.SetFrustum(m_fUpFOV,m_iWidth/(float)m_iHeight,1f,5.0f);
+            m_fZoomScale = Math.max( 0, m_fZoomScale );
+            float fRMax = (m_fZoomScale*m_fX)/2.0f;
+            float fUMax = fRMax * m_iHeight / (float)m_iWidth;
+            m_spkCamera.SetFrustum(-fRMax, fRMax,-fUMax, fUMax,1f,5.0f);
             m_pkRenderer.OnFrustumChange();
             m_bModified = true;
             GetCanvas().display();
@@ -479,6 +475,9 @@ public class PlaneRender_WM extends GPURenderBase
         /* If the button pressed is the left mouse button: */
         if ((kEvent.getButton() == MouseEvent.BUTTON1) && !kEvent.isShiftDown()) {
             m_bLeftMousePressed = true;
+            processLeftMouseDrag( kEvent );
+            m_bModified = true;
+            GetCanvas().display();
         }
 
         if ((kEvent.getButton() == MouseEvent.BUTTON3) && !kEvent.isShiftDown()) {
@@ -536,7 +535,9 @@ public class PlaneRender_WM extends GPURenderBase
             m_iHeight = iHeight;
             m_bModified = true;
             m_spkCamera.Perspective = false;
-            m_spkCamera.SetFrustum(m_fUpFOV,m_iWidth/(float)m_iHeight,1f,5.0f);
+            float fRMax = (m_fZoomScale*m_fX)/2.0f;
+            float fUMax = fRMax * iHeight / (float)iWidth;
+            m_spkCamera.SetFrustum(-fRMax, fRMax,-fUMax, fUMax,1f,5.0f);
             m_pkRenderer.OnFrustumChange();
         }
         
@@ -711,6 +712,16 @@ public class PlaneRender_WM extends GPURenderBase
         if (m_fYBox > m_fMaxBox) {
             m_fMaxBox = m_fYBox;
         }
+        
+        float fMaxZ = (m_aiLocalImageExtents[2] - 1) * afResolutions[2];
+        float fMax = m_fMaxBox;
+        if (fMaxZ > fMax) {
+            fMax = fMaxZ;
+        }
+        m_fX = m_fXBox/fMax;
+        m_fY = m_fYBox/fMax;
+        m_fZ = fMaxZ/fMax;
+        
 
         if ( kImage.getImageOrientation() != FileInfoBase.UNKNOWN_ORIENT )
         {
@@ -1106,11 +1117,8 @@ public class PlaneRender_WM extends GPURenderBase
         kLocal.X = (iX - fHalfWidth) / fHalfWidth;
         kLocal.Y = (iY - fHalfHeight) / fHalfWidth;
 
-        kLocal.X /= m_fZoomScale;
-        kLocal.Y /= m_fZoomScale;
-
-        kLocal.X -= m_fXTranslate;
-        kLocal.Y -= m_fYTranslate;
+        kLocal.X *= m_fZoomScale;
+        kLocal.Y *= m_fZoomScale;
 
         /* Bounds checking: */
         kLocal.X = Math.min( Math.max( kLocal.X, m_fX0 ), m_fX1 );
