@@ -5602,6 +5602,7 @@ public class FileTiff extends FileBase {
         int samplesPerPixel;
         int resolutionCount = 16; // xResolution = 2 * (4 bytes) + yResolution = 2 * (4 bytes)
         int rgbCount = 0; // Set to 6 for storage of 3 short bitsPerSample values
+        int x, y, i, j, n;
 
         // in ARGB, ARGB_USHORT, and ARGB_FLOAT
         int rgbFormat = 0; // Set to 6 for storage of 3 short sampleFormat values
@@ -5624,7 +5625,7 @@ public class FileTiff extends FileBase {
 
         if ((LUT != null) && !image.isColorImage()) {
 
-            for (int i = 0; i < image.getFileInfo().length; i++) {
+            for (i = 0; i < image.getFileInfo().length; i++) {
                 image.getFileInfo()[i].setPhotometric((short) 3);
             }
         }
@@ -5873,20 +5874,36 @@ public class FileTiff extends FileBase {
                         if (k == options.getEndSlice()) {
                             nextIFD = 0;
                         } else if (!options.isWritePackBit()) {
-                            nextIFD += ((2 + (nDirEntries * 12) + resolutionCount + 4 + rgbCount + rgbFormat +
-                                         intAlign + zResCount + tResCount) +
-                                        (bufferSize * bytesPerSample * samplesPerPixel));
+                            if (type == ModelStorageBase.BOOLEAN) {
+                                nextIFD += ((2 + (nDirEntries * 12) + resolutionCount + 4 + rgbCount + rgbFormat +
+                                        intAlign + zResCount + tResCount) +
+                                       extents[1] * ((extents[0] + 7) >> 3));    
+                            }
+                            else {
+                                nextIFD += ((2 + (nDirEntries * 12) + resolutionCount + 4 + rgbCount + rgbFormat +
+                                             intAlign + zResCount + tResCount) +
+                                            (bufferSize * bytesPerSample * samplesPerPixel));
+                            }
                         } else if (options.isWritePackBit()) {
                             nextIFD += ((2 + (nDirEntries * 12) + resolutionCount + 4 + rgbCount + rgbFormat +
                                          intAlign + zResCount + tResCount) + stripCount);
                         }
 
                         if (!options.isWritePackBit()) {
-                            imgOffset = 8 +
-                                        ((m + 1) *
-                                             (2 + (nDirEntries * 12) + resolutionCount + 4 + rgbCount + rgbFormat +
-                                                  intAlign + zResCount + tResCount)) +
-                                        (m * bufferSize * bytesPerSample * samplesPerPixel);
+                            if (type == ModelStorageBase.BOOLEAN) {
+                                imgOffset = 8 +
+                                            ((m + 1) *
+                                                 (2 + (nDirEntries * 12) + resolutionCount + 4 + rgbCount + rgbFormat +
+                                                      intAlign + zResCount + tResCount)) +
+                                            (m * extents[1] * ((extents[0] + 7) >> 3));
+                            }
+                            else {
+                                imgOffset = 8 +
+                                ((m + 1) *
+                                     (2 + (nDirEntries * 12) + resolutionCount + 4 + rgbCount + rgbFormat +
+                                          intAlign + zResCount + tResCount)) +
+                                (m * bufferSize * bytesPerSample * samplesPerPixel);    
+                            }
                         } else if (options.isWritePackBit()) {
                             imgOffset = 8 +
                                         ((m + 1) *
@@ -5900,10 +5917,35 @@ public class FileTiff extends FileBase {
                         try {
 
                             if (!options.isWritePackBit()) {
+                                if (type == ModelStorageBase.BOOLEAN) {
+                                    BitSet  bufferBitSet = new BitSet(bufferSize);
+                                    byte bufferByte[] = new byte[extents[1] * ((extents[0] + 7) >> 3)];
+                                    
+                                    try {
+                                        image.exportData(timeOffset + (k * bufferSize), bufferSize, bufferBitSet);
 
+                                        for (i = 0, n = 0, y = 0; y < extents[1]; y++) {
+                                            for (x = 0; x < extents[0]; x++, i++, n++) {
+                                                if (bufferBitSet.get(i)) {
+                                                    bufferByte[n >> 3] |= (1 << (7-(n % 8)));
+                                                }
+                                            }
+                                            if ((n % 8) != 0 ) {
+                                                n += (8 - (n % 8));
+                                            }
+                                        }
+                                            
+                                        raFile.write(bufferByte);
+                                        
+                                    } catch (IOException error) {
+                                        throw error;
+                                    }
+                                } // if (type == ModelStorageBase.BOOLEAN)
+                                else {
                                 // adjust for intAlign ????
-                                fileRW.writeImage(image, timeOffset + (k * bufferSize),
-                                                  timeOffset + (k * bufferSize) + bufferSize, 0);
+                                    fileRW.writeImage(image, timeOffset + (k * bufferSize),
+                                                      timeOffset + (k * bufferSize) + bufferSize, 0);
+                                }
                             } else {
                                 filePB.writePackBitImage(image, timeOffset + (k * bufferSize),
                                                          timeOffset + (k * bufferSize) + bufferSize);
@@ -9979,7 +10021,8 @@ public class FileTiff extends FileBase {
             switch (fileInfo.getDataType()) {
 
                 case ModelStorageBase.BOOLEAN:
-                    nLength = 8 * ((buffer.length + 63) >> 6);
+                    //nLength = 8 * ((buffer.length + 63) >> 6);
+                    nLength = yDim * ((xDim + 7) >> 3);
                     break;
 
                 case ModelStorageBase.BYTE:
@@ -16168,7 +16211,12 @@ public class FileTiff extends FileBase {
         }
 
         writeIFD(ROWS_PER_STRIP, LONG, 1, image.getExtents()[1], 0);
-        writeIFD(STRIP_BYTE_COUNTS, LONG, 1, theStripCount * bytesPerSample * samplesPerPixel, 0);
+        if (type == ModelStorageBase.BOOLEAN) {
+            writeIFD(STRIP_BYTE_COUNTS, LONG, 1, image.getExtents()[1] * ((image.getExtents()[0] + 7) >> 3), 0);    
+        }
+        else {
+            writeIFD(STRIP_BYTE_COUNTS, LONG, 1, theStripCount * bytesPerSample * samplesPerPixel, 0);
+        }
         writeIFD(XRESOLUTION, RATIONAL, 1, resolutionOffset, 0);
         writeIFD(YRESOLUTION, RATIONAL, 1, resolutionOffset + 8, 0);
 
