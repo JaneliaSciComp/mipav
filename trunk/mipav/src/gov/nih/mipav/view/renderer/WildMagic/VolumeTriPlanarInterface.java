@@ -2927,7 +2927,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         geodesicGUI.resizePanel(maxPanelWidth, height);
         m_kLightsPanel.resizePanel(maxPanelWidth, height);
         clipBox.resizePanel(maxPanelWidth, height);
-        //multiHistogramGUI.resizePanel(maxPanelWidth, height);
+        multiHistogramGUI.resizePanel(maxPanelWidth, height);
         
         if ( brainsurfaceFlattenerRender != null )
         {
