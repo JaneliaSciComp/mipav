@@ -112,6 +112,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     private boolean m_bCrop = false;
     /** Intensity level for GPU-surface extraction. */
     private int m_iExtractLevel = 1;
+    
+    /** sample rate when mouse is released. */
+    private float fSample_mouseReleased;
+    /** sampel rate when mouse is dragged. */
+    private float fSample_mouseDragged;
+    
     /**
      * Default Constructor.
      */
@@ -1107,6 +1113,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         m_kParent.setCameraParameters();
     	m_kParent.setObjectParameters();
+    	
+    	 m_kVolumeRayCast.setVolumeSamples( fSample_mouseDragged );
     }
 
 
@@ -1151,6 +1159,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void mouseReleased(MouseEvent e)
     {
     	super.mouseReleased(e);
+    	
+    	m_kVolumeRayCast.setVolumeSamples( fSample_mouseReleased );
     }
 
 
@@ -1946,10 +1956,24 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
-    public void setVolumeSamples( float fSample )
+    /** Set the sampling rate when the mouse is released. */
+    public void setVolumeSamplesMouseReleased( float fSample )
     {
-        m_kVolumeRayCast.setVolumeSamples( fSample );
+    	fSample_mouseReleased = fSample;
+    	if ( m_kVolumeRayCast != null )
+    		m_kVolumeRayCast.setVolumeSamples( fSample );
     }
+    
+    /** Set the sampling rate when the mouse is Dragged. */
+    public void setVolumeSamplesMouseDragged( float fSample )
+    {
+    	fSample_mouseDragged = fSample;
+    	if ( m_kVolumeRayCast != null )
+    		m_kVolumeRayCast.setVolumeSamples( fSample );
+    }
+    
+    
+    
     /** Turns on/off displaying the bounding box for the given plane.
      * @param i the plane index (0-3) in file coordinates.
      * @param bShow when true, the bounding box is displayed.

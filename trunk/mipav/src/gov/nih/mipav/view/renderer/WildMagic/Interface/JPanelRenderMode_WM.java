@@ -85,8 +85,11 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** Volume alpha-blending slider. */
     protected JSlider m_kVolumeBlendSlider;
     
-    /** Volume number of samples slider. */
-    protected JSlider m_kVolumeSamplesSlider;
+    /** Volume number of samples slider when mouse released. */
+    protected JSlider m_kVolumeSamplesSliderMouseReleased;
+    
+    /** Volume number of samples slider when mouse Dragged. */
+    protected JSlider m_kVolumeSamplesSliderMouseDragged;
     
     /** Button for extracting a TriMesh surface based on the ray-cast volume rendered in Surface mode */
     protected JButton m_kExtractTriMesh;
@@ -248,9 +251,13 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         {
         	rayBasedRenderWM.setVolumeBlend( m_kVolumeBlendSlider.getValue()/100.0f );
         }
-        if ( source == m_kVolumeSamplesSlider )
+        if ( source == m_kVolumeSamplesSliderMouseReleased )
         {
-            rayBasedRenderWM.setVolumeSamples( m_kVolumeSamplesSlider.getValue()/1000.0f );
+            rayBasedRenderWM.setVolumeSamplesMouseReleased( m_kVolumeSamplesSliderMouseReleased.getValue()/1000.0f );
+        }
+        if ( source == m_kVolumeSamplesSliderMouseDragged )
+        {
+            rayBasedRenderWM.setVolumeSamplesMouseDragged( m_kVolumeSamplesSliderMouseDragged.getValue()/1000.0f );
         }
     }
     
@@ -378,14 +385,27 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 1;
          blendPanel.add(m_kVolumeBlendSlider, gbc);         
          
-         JLabel kSamplesLabel = new JLabel("Volume Samples" );
+         JLabel kSamplesLabelMR = new JLabel("Volume Samples Mouse Released" );
          gbc.gridx = 0;
          gbc.gridy = 1;
-         blendPanel.add(kSamplesLabel, gbc);
-         m_kVolumeSamplesSlider = new JSlider( 0, 1000, (int)(m_kVolumeViewer.getImageA().getExtents()[2]*2.0f) );
-         m_kVolumeSamplesSlider.addChangeListener(this);
+         blendPanel.add(kSamplesLabelMR, gbc);
+         m_kVolumeSamplesSliderMouseReleased = new JSlider( 0, 1000, (int)(m_kVolumeViewer.getImageA().getExtents()[2]*2.0f) );
+         m_kVolumeSamplesSliderMouseReleased.addChangeListener(this);
+         rayBasedRenderWM.setVolumeSamplesMouseReleased( m_kVolumeSamplesSliderMouseReleased.getValue()/1000.0f );
          gbc.gridx = 1;
-         blendPanel.add(m_kVolumeSamplesSlider, gbc);
+         blendPanel.add(m_kVolumeSamplesSliderMouseReleased, gbc);
+         
+         JLabel kSamplesLabelMD = new JLabel("Volume Samples Mouse Rotation" );
+         gbc.gridx = 0;
+         gbc.gridy = 2;
+         blendPanel.add(kSamplesLabelMD, gbc);
+         m_kVolumeSamplesSliderMouseDragged = new JSlider( 0, 1000, (int)(m_kVolumeViewer.getImageA().getExtents()[2]*2.0f) );
+         m_kVolumeSamplesSliderMouseDragged.addChangeListener(this);
+         rayBasedRenderWM.setVolumeSamplesMouseDragged( m_kVolumeSamplesSliderMouseDragged.getValue()/1000.0f );
+         gbc.gridx = 1;
+         blendPanel.add(m_kVolumeSamplesSliderMouseDragged, gbc);
+         
+         
          
          JButton kShaderButton = new JButton( "Shader Parameters" );
          kShaderButton.addActionListener(this);
