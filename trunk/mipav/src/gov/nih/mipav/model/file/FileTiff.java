@@ -98,6 +98,11 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int DOUBLE = 12; // double precision 8 byte IEEE format
+    
+    /** The IFD type is identical to LONG, except that it is only used to point
+     *  to other valid IFDs
+     */
+    public static final int IFD = 13;
 
     /** Tiff Tags. */
     public static final int NEW_SUBFILE_TYPE = 254;
@@ -217,6 +222,8 @@ public class FileTiff extends FileBase {
     public static final int CLEAN_FAX_DATA = 327;
     
     public static final int CONSECUTIVE_BAD_FAX_LINES = 328;
+    
+    public static final int SUBIFDS = 330;
     
     public static final int INK_SET = 332;
     
@@ -6086,9 +6093,9 @@ public class FileTiff extends FileBase {
                 }
 
                 raFile.seek(saveLocus);
-            } else if ((type == LONG) && (count == 1)) {
+            } else if (((type == LONG) || (type == IFD)) && (count == 1)) {
                 valueArray[0] = getUInt(endianess);
-            } else if ((type == LONG) && (count >= 2)) {
+            } else if (((type == LONG) || (type == IFD)) && (count >= 2)) {
                 value_offset = getInt(endianess);
 
                 saveLocus = raFile.getFilePointer();
@@ -6303,6 +6310,12 @@ public class FileTiff extends FileBase {
                         Preferences.debug("FileTiff.openIFD: Type = DOUBLE  Count = " + count + "\n",
                                           Preferences.DEBUG_FILEIO);
                         break;
+                        
+                    case IFD:
+                        Preferences.debug("FileTiff.openIFD: Type = IFD  Count = " + count + "\n",
+                                Preferences.DEBUG_FILEIO);
+                        break;
+                        
                 }
             }
 
@@ -6687,6 +6700,19 @@ public class FileTiff extends FileBase {
                     }
 
                     samplesPerPixel = (int) valueArray[0];
+                    break;
+                    
+                case SUBIFDS:
+                    if ((type != LONG) && (type != IFD)) {
+                        throw new IOException("SUBIFDS has illegal type = " + type + "\n");
+                    }
+                    
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: Number of child IFDs = " + count + "\n");
+                        for (i1 = 0; i1 < count; i1++) {
+                            Preferences.debug("Child IFD " + (i1+1) + " is located at " + valueArray[i1] + "\n");
+                        }
+                    }
                     break;
 
                 case PLANAR_CONFIG:
