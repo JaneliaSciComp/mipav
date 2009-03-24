@@ -25,14 +25,14 @@ import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
-import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Camera;
-import WildMagic.LibGraphics.Rendering.Camera.ViewFrustum;
+import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
@@ -157,9 +157,14 @@ public class PlaneRender_WM extends GPURenderBase
     /** ModelImage axis flip. */
     private boolean[] m_abAxisFlip;
     /** For zooming with the mouse. */
+    private float m_fMouseX;
     private float m_fMouseY;
     
     private boolean m_bShowSurface = false;
+
+    private Camera m_spkVOICamera;
+    private boolean m_bDrawVOI = false;
+    private Polyline m_kCurrentVOI = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -298,6 +303,7 @@ public class PlaneRender_WM extends GPURenderBase
                 }
             }
             drawAxes();
+            drawVOI();
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
@@ -472,6 +478,9 @@ public class PlaneRender_WM extends GPURenderBase
      */
     public void mousePressed(MouseEvent kEvent) {
         super.mousePressed(kEvent);
+        m_fMouseX = kEvent.getX();
+        m_fMouseY = kEvent.getY();
+        //System.err.println( m_fMouseX + " " + m_fMouseY );
         /* If the button pressed is the left mouse button: */
         if ((kEvent.getButton() == MouseEvent.BUTTON1) && !kEvent.isShiftDown()) {
             m_bLeftMousePressed = true;
@@ -483,7 +492,7 @@ public class PlaneRender_WM extends GPURenderBase
         if ((kEvent.getButton() == MouseEvent.BUTTON3) && !kEvent.isShiftDown()) {
             m_bRightMousePressed = true;
         }
-        m_fMouseY = kEvent.getY();
+        
     }
 
     /* (non-Javadoc)
@@ -795,6 +804,9 @@ public class PlaneRender_WM extends GPURenderBase
         m_spkScreenCamera.SetFrustum(0.0f,1.0f,0.0f,1.0f,0.0f,1.0f);
         m_spkScreenCamera.SetFrame(Vector3f.ZERO,Vector3f.UNIT_Z,
                 Vector3f.UNIT_Y,Vector3f.UNIT_X);
+        
+        ZBufferState kZState = new ZBufferState();
+        kZState.Compare = ZBufferState.CompareMode.CF_ALWAYS;
 
         m_kXArrow = new TriMesh[2];
         m_kYArrow = new TriMesh[2];
@@ -803,10 +815,10 @@ public class PlaneRender_WM extends GPURenderBase
         kAttr.SetPChannels(3);
         kAttr.SetCChannels(0,3);
         VertexBuffer pkVBuffer = new VertexBuffer(kAttr,4);
-        pkVBuffer.SetPosition3(0, 0.05f,0.05f,0.0f);
-        pkVBuffer.SetPosition3(1, 0.15f,0.05f,0.0f);
-        pkVBuffer.SetPosition3(2, 0.15f,0.06f,0.0f);
-        pkVBuffer.SetPosition3(3, 0.05f,0.06f,0.0f);
+        pkVBuffer.SetPosition3(0, 0.05f,0.05f,0.5f);
+        pkVBuffer.SetPosition3(1, 0.15f,0.05f,0.5f);
+        pkVBuffer.SetPosition3(2, 0.15f,0.06f,0.5f);
+        pkVBuffer.SetPosition3(3, 0.05f,0.06f,0.5f);
         pkVBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][0] );
         pkVBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][0] );
         pkVBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][0] );
@@ -817,14 +829,15 @@ public class PlaneRender_WM extends GPURenderBase
         aiIndex[3] = 0;  aiIndex[4] = 2;  aiIndex[5] = 3;
         m_kXArrow[0] = new TriMesh( new VertexBuffer(pkVBuffer),new IndexBuffer(pkIBuffer));
         m_kXArrow[0].AttachEffect( new VertexColor3Effect() );
+        m_kXArrow[0].AttachGlobalState( kZState );
         m_kXArrow[0].UpdateGS();
         m_kXArrow[0].UpdateRS();
         m_pkRenderer.LoadResources(m_kXArrow[0]);
 
         pkVBuffer = new VertexBuffer(kAttr,3);
-        pkVBuffer.SetPosition3(0, 0.15f,0.04f,0.0f);
-        pkVBuffer.SetPosition3(1, 0.18f,0.055f,0.0f);
-        pkVBuffer.SetPosition3(2, 0.15f,0.07f,0.0f);
+        pkVBuffer.SetPosition3(0, 0.15f,0.04f,0.5f);
+        pkVBuffer.SetPosition3(1, 0.18f,0.055f,0.5f);
+        pkVBuffer.SetPosition3(2, 0.15f,0.07f,0.5f);
         pkVBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][0] );
         pkVBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][0] );
         pkVBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][0] );
@@ -833,6 +846,7 @@ public class PlaneRender_WM extends GPURenderBase
         aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
         m_kXArrow[1] = new TriMesh( new VertexBuffer(pkVBuffer),new IndexBuffer(pkIBuffer));
         m_kXArrow[1].AttachEffect( new VertexColor3Effect() );
+        m_kXArrow[1].AttachGlobalState( kZState );
         m_kXArrow[1].UpdateGS();
         m_kXArrow[1].UpdateRS();
         m_pkRenderer.LoadResources(m_kXArrow[1]);
@@ -840,10 +854,10 @@ public class PlaneRender_WM extends GPURenderBase
         // YArrow:
 
         pkVBuffer = new VertexBuffer(kAttr,4);
-        pkVBuffer.SetPosition3(0, 0.05f,0.05f,0.0f);
-        pkVBuffer.SetPosition3(1, 0.06f,0.05f,0.0f);
-        pkVBuffer.SetPosition3(2, 0.06f,0.15f,0.0f);
-        pkVBuffer.SetPosition3(3, 0.05f,0.15f,0.0f);
+        pkVBuffer.SetPosition3(0, 0.05f,0.05f,0.5f);
+        pkVBuffer.SetPosition3(1, 0.06f,0.05f,0.5f);
+        pkVBuffer.SetPosition3(2, 0.06f,0.15f,0.5f);
+        pkVBuffer.SetPosition3(3, 0.05f,0.15f,0.5f);
         pkVBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][1] );
         pkVBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][1] );
         pkVBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][1] );
@@ -854,14 +868,15 @@ public class PlaneRender_WM extends GPURenderBase
         aiIndex[3] = 0;  aiIndex[4] = 2;  aiIndex[5] = 3;
         m_kYArrow[0] = new TriMesh( new VertexBuffer(pkVBuffer),new IndexBuffer(pkIBuffer));
         m_kYArrow[0].AttachEffect( new VertexColor3Effect() );
+        m_kYArrow[0].AttachGlobalState( kZState );
         m_kYArrow[0].UpdateGS();
         m_kYArrow[0].UpdateRS();
         m_pkRenderer.LoadResources(m_kYArrow[0]);
 
         pkVBuffer = new VertexBuffer(kAttr,3);
-        pkVBuffer.SetPosition3(0, 0.04f,0.15f,0.0f);
-        pkVBuffer.SetPosition3(1, 0.07f,0.15f,0.0f);
-        pkVBuffer.SetPosition3(2, 0.055f,0.18f,0.0f);
+        pkVBuffer.SetPosition3(0, 0.04f,0.15f,0.5f);
+        pkVBuffer.SetPosition3(1, 0.07f,0.15f,0.5f);
+        pkVBuffer.SetPosition3(2, 0.055f,0.18f,0.5f);
         pkVBuffer.SetColor3(0,0,m_aakColors[m_iPlaneOrientation][1] );
         pkVBuffer.SetColor3(0,1,m_aakColors[m_iPlaneOrientation][1] );
         pkVBuffer.SetColor3(0,2,m_aakColors[m_iPlaneOrientation][1] );
@@ -870,6 +885,7 @@ public class PlaneRender_WM extends GPURenderBase
         aiIndex[0] = 0;  aiIndex[1] = 1;  aiIndex[2] = 2;
         m_kYArrow[1] = new TriMesh( new VertexBuffer(pkVBuffer),new IndexBuffer(pkIBuffer));
         m_kYArrow[1].AttachEffect( new VertexColor3Effect() );
+        m_kYArrow[1].AttachGlobalState( kZState );
         m_kYArrow[1].UpdateGS();
         m_kYArrow[1].UpdateRS();
         m_pkRenderer.LoadResources(m_kYArrow[1]);
@@ -899,19 +915,19 @@ public class PlaneRender_WM extends GPURenderBase
             }
 
             pkVBuffer = m_kYArrow[0].VBuffer;
-            pkVBuffer.SetPosition3(0, 0.05f,0.85f,0.0f);
-            pkVBuffer.SetPosition3(1, 0.06f,0.85f,0.0f);
-            pkVBuffer.SetPosition3(2, 0.06f,0.95f,0.0f);
-            pkVBuffer.SetPosition3(3, 0.05f,0.95f,0.0f);
+            pkVBuffer.SetPosition3(0, 0.05f,0.85f,0.5f);
+            pkVBuffer.SetPosition3(1, 0.06f,0.85f,0.5f);
+            pkVBuffer.SetPosition3(2, 0.06f,0.95f,0.5f);
+            pkVBuffer.SetPosition3(3, 0.05f,0.95f,0.5f);
             pkVBuffer.Release();
             m_kYArrow[0].UpdateGS();
             m_kYArrow[0].UpdateRS();
             m_pkRenderer.LoadResources(m_kYArrow[0]);
 
             pkVBuffer = m_kYArrow[1].VBuffer;
-            pkVBuffer.SetPosition3(0, 0.04f,0.85f,0.0f);
-            pkVBuffer.SetPosition3(1, 0.055f,0.82f,0.0f);
-            pkVBuffer.SetPosition3(2, 0.07f,0.85f,0.0f);
+            pkVBuffer.SetPosition3(0, 0.04f,0.85f,0.5f);
+            pkVBuffer.SetPosition3(1, 0.055f,0.82f,0.5f);
+            pkVBuffer.SetPosition3(2, 0.07f,0.85f,0.5f);
             pkVBuffer.Release();
             m_kYArrow[1].UpdateGS();
             m_kYArrow[1].UpdateRS();
@@ -1010,7 +1026,7 @@ public class PlaneRender_WM extends GPURenderBase
 
     /**
      * Dragging the mouse with the left-mouse button held down changes the
-     * positions of the X and Y cross bars, and therefor the ZSlice positions
+     * positions of the X and Y cross bars, and therefore the ZSlice positions
      * of the associated PlaneRenderWM objects and the TriPlanar Surface. The
      * new positions are calculated and passed onto the parent frame.
      *
@@ -1018,7 +1034,7 @@ public class PlaneRender_WM extends GPURenderBase
      */
     private void processLeftMouseDrag(MouseEvent kEvent) {
 
-        /* Calculate the center of the mouse in local coordineates, taking into
+        /* Calculate the center of the mouse in local coordinates, taking into
          * account zoom and translate: */
         Vector3f localPt = new Vector3f();
         this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt);
@@ -1030,7 +1046,14 @@ public class PlaneRender_WM extends GPURenderBase
         this.LocalToPatient( localPt, patientPt );
         Vector3f volumePt = new Vector3f();
         MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
-        m_kParent.setSliceFromPlane( volumePt );
+        if ( m_bDrawVOI )
+        {
+            createVOI( kEvent.getX(), kEvent.getY() );
+        }
+        else
+        {
+            m_kParent.setSliceFromPlane( volumePt );
+        }
     }
     
     
@@ -1156,4 +1179,88 @@ public class PlaneRender_WM extends GPURenderBase
         m_bShowSurface = bOn;
     }
     
+    public void doVOI( String kCommand )
+    {
+        if (kCommand.equals("RectVOI") ) 
+        {
+            m_bDrawVOI = true;
+            System.err.println( "RectVOI" );
+        } 
+        else if (kCommand.equals("EllipseVOI") ) {
+        } 
+        else if (kCommand.equals("Polyline") ) {
+        } 
+        else if (kCommand.equals("VOIColor") ) {
+        } 
+        else if (kCommand.equals("LevelSetVOI") ) {
+        } 
+        else if (kCommand.equals("cutVOI") ) {
+        } 
+        else if (kCommand.equals("copyVOI") ) {
+        } 
+        else if (kCommand.equals("pasteVOI") ) {
+        } 
+        else if (kCommand.equals("PropVOIUp") ) {
+        } 
+        else if (kCommand.equals("PropVOIDown") ) {
+        } 
+        else if (kCommand.equals("PropVOIAll") ) {
+        }
+    }
+    
+    private void createVOI( int iX, int iY )
+    {
+        if ( m_kCurrentVOI == null )
+        {
+            Attributes kAttr = new Attributes();
+            kAttr.SetPChannels(3);
+            kAttr.SetCChannels(0,3);
+
+            VertexBuffer kVBuffer = new VertexBuffer(kAttr, 4);
+            for ( int i = 0; i < 4; i++ )
+            {
+                kVBuffer.SetColor3( 0, i, 1, 0, 0 );
+            }
+            kVBuffer.SetPosition3( 0, m_fMouseX, m_fMouseY, 0 ) ;
+            kVBuffer.SetPosition3( 1, iX, m_fMouseY, 0 ) ;
+            kVBuffer.SetPosition3( 2, iX, iY, 0 ) ;
+            kVBuffer.SetPosition3( 3, m_fMouseX, iY, 0 ) ;
+
+            Polyline kRectVOI = new Polyline( kVBuffer, true, true );
+            kRectVOI.AttachEffect( new VertexColor3Effect() );
+            System.err.println( m_fMouseX + " " + m_fMouseY + " " + iX + " " + iY );
+            m_kCurrentVOI = kRectVOI;
+        }
+        else
+        {
+            VertexBuffer kVBuffer = m_kCurrentVOI.VBuffer;
+            kVBuffer.SetPosition3( 1, iX, m_fMouseY, 0 ) ;
+            kVBuffer.SetPosition3( 2, iX, iY, 0 ) ;
+            kVBuffer.SetPosition3( 3, m_fMouseX, iY, 0 ) ;
+            System.err.println( m_fMouseX + " " + m_fMouseY + " " + iX + " " + iY );
+            kVBuffer.Release();
+        }
+        m_kCurrentVOI.UpdateGS();
+        m_kCurrentVOI.UpdateRS();
+    }
+    
+    private void drawVOI()
+    {       
+        if ( m_kCurrentVOI != null )
+        {
+            if ( m_spkVOICamera == null )
+            {
+                // The screen camera is designed to map (x,y,z) in [0,1]^3 to (x',y,'z')
+                // in [-1,1]^2 x [0,1].
+                m_spkVOICamera = new Camera();
+                m_spkVOICamera.Perspective = false;
+                m_spkVOICamera.SetFrustum(-m_iWidth,m_iWidth,-m_iHeight,m_iHeight,0.0f,1.0f);
+                m_spkVOICamera.SetFrame(Vector3f.ZERO,Vector3f.UNIT_Z,
+                        Vector3f.UNIT_Y,Vector3f.UNIT_X);
+            }
+            m_pkRenderer.SetCamera(m_spkVOICamera);  
+            m_pkRenderer.Draw(m_kCurrentVOI);
+            m_pkRenderer.SetCamera(m_spkCamera);
+        }
+    }    
 }

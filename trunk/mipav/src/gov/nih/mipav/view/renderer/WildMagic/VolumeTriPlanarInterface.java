@@ -649,6 +649,28 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         } else if (command.equals("VOIToolbar") ) {
             boolean showVOI = menuObj.isMenuItemSelected("VOI toolbar");
             m_kVOIToolbar.setVisible(showVOI);
+        } else if (command.equals("RectVOI") ) {
+            doVOI(command);
+        } else if (command.equals("EllipseVOI") ) {
+            doVOI(command);
+        } else if (command.equals("Polyline") ) {
+            doVOI(command);
+        }  else if (command.equals("VOIColor") ) {
+            doVOI(command);
+        } else if (command.equals("LevelSetVOI") ) {
+            doVOI(command);
+        } else if (command.equals("cutVOI") ) {
+            doVOI(command);
+        } else if (command.equals("copyVOI") ) {
+            doVOI(command);
+        } else if (command.equals("pasteVOI") ) {
+            doVOI(command);
+        } else if (command.equals("PropVOIUp") ) {
+            doVOI(command);
+        } else if (command.equals("PropVOIDown") ) {
+            doVOI(command);
+        } else if (command.equals("PropVOIAll") ) {
+            doVOI(command);
         }
 
     }
@@ -2013,7 +2035,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     {
         raycastRenderWM.setMaterial(kSurfaceName, kMaterial);
     }
-    
+
     /**
      * Causes the bottom three panels to re-display.
      */
@@ -2025,6 +2047,22 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                 if ( m_akPlaneRender[i] != null )
                 {
                     m_akPlaneRender[i].SetModified(true);
+                }
+            }
+        }
+    } 
+    
+    /**
+     * Passes VOI-commands to the bottom three panels.
+     */
+    public void doVOI( String kCommand )
+    {
+        if ( m_akPlaneRender != null )
+        {
+            for (int i = 0; i < 3; i++) {
+                if ( m_akPlaneRender[i] != null )
+                {
+                    //m_akPlaneRender[i].doVOI(kCommand);
                 }
             }
         }

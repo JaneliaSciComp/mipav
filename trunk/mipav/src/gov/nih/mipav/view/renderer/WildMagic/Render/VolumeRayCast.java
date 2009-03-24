@@ -437,8 +437,8 @@ public class VolumeRayCast extends VolumeObject
         kRenderer.DrawScene(kCuller.GetVisibleSet());        
 
          // Draw scene polygon:
-         //kRenderer.SetCamera(m_spkScreenCamera);
-         //kRenderer.Draw(m_spkScenePolygon);
+        kRenderer.SetCamera(m_spkScreenCamera);
+        kRenderer.Draw(m_spkScenePolygon);
     }
 
     /**
