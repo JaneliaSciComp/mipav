@@ -138,6 +138,9 @@ public interface VOIStatisticList {
     
     /** Mode */
     String mode = "Mode Intensity";
+    
+    /** Mode Count */
+    String modeCount = "Mode Count";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -148,7 +151,7 @@ public interface VOIStatisticList {
         quantityDescription, volumeDescription, areaDescription, perimeterDescription, minIntensity, maxIntensity,
         avgIntensity, deviationDescription, sumIntensities, geometricCenterDescription, massCenterDescription,
         axisDescription, eccentricityDescription, majorAxisDescription, minorAxisDescription, skewnessDescription,
-        kurtosisDescription, largestSliceDistanceDescription, largestDistanceDescription, median, mode
+        kurtosisDescription, largestSliceDistanceDescription, largestDistanceDescription, median, mode, modeCount
     };
 
     /** number of statistics in the list. */

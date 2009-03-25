@@ -981,7 +981,31 @@ public class JDialogVOIStats extends JDialogBase
                         } else {
                             UI.setDataText("  Largest distance (only 3D)  \t= " + algoVOI.getLargestDistance() + "\n");
                         }
-                    }  
+                    }else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[19])) {
+
+                        if (image.isColorImage()) {
+                            UI.setDataText("  Median intesnity      \t= " + algoVOI.getMedianR() + " R, " +
+                                           algoVOI.getMedianG() + " G, " + algoVOI.getMedianB() + " B, " + "\n");
+                        } else {
+                            UI.setDataText("  Median intensity      \t= " + algoVOI.getMedian() + "\n");
+                        }
+                    }else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[20])) {
+
+                        if (image.isColorImage()) {
+                            UI.setDataText("  Mode intesnity      \t= " + algoVOI.getModeR() + " R, " +
+                                           algoVOI.getModeG() + " G, " + algoVOI.getModeB() + " B, " + "\n");
+                        } else {
+                            UI.setDataText("  Mode intensity      \t= " + algoVOI.getMode() + "\n");
+                        }
+                    }else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[21])) {
+
+                        if (image.isColorImage()) {
+                            UI.setDataText("  Mode count      \t= " + algoVOI.getModeCountR() + " R, " +
+                                           algoVOI.getModeCountG() + " G, " + algoVOI.getModeCountB() + " B, " + "\n");
+                        } else {
+                            UI.setDataText("  Mode count      \t= " + algoVOI.getModeCount() + "\n");
+                        }
+                    } 
                 }
             }
         } else if (source == checkboxExclude) {
