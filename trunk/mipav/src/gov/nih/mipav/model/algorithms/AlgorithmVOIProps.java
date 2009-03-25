@@ -189,6 +189,101 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.avgIntensity +
                                                                                                   "Red")).floatValue();
     } // {return avgIntenR;}
+    
+    
+    
+    /**
+     * Gets the median
+     *
+     * @return  DOCUMENT ME!
+     */
+    public float getMedian() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.median)).floatValue();
+    }
+
+    /**
+     * Gets the median of the Blue channel of image
+     * defined by the VOI.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public float getMedianB() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.median +
+                                                                                                  "Blue")).floatValue();
+    }
+
+    /**
+     * Gets the median of the Green channel of image
+     * defined by the VOI.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public float getMedianG() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.median +
+                                                                                                  "Green")).floatValue();
+    } 
+
+    /**
+     * Gets the median of the Red channel of image defined
+     * by the VOI.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public float getMedianR() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.median +
+                                                                                                  "Red")).floatValue();
+    } 
+    
+    
+    
+    
+    
+    /**
+     * Gets the mode
+     *
+     * @return  DOCUMENT ME!
+     */
+    public float getMode() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.mode)).floatValue();
+    }
+
+    /**
+     * Gets the mode of the Blue channel of image
+     * defined by the VOI.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public float getModeB() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.mode +
+                                                                                                  "Blue")).floatValue();
+    }
+
+    /**
+     * Gets the mode of the Green channel of image
+     * defined by the VOI.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public float getModeG() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.mode +
+                                                                                                  "Green")).floatValue();
+    } 
+
+    /**
+     * Gets the mode of the Red channel of image defined
+     * by the VOI.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public float getModeR() {
+        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.mode +
+                                                                                                  "Red")).floatValue();
+    } 
+    
+    
+    
+    
+    
 
     /**
      * Gets the the geometric center of the VOI ; return geometric center defined by the VOI.
@@ -781,6 +876,26 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         String unit3DStr = null;
         String unitStr = null;
         Vector3f centerPt;
+        
+        float totalMode = 0;
+        float totalMaxCount = 0;
+        float totalModeR = 0;
+        float totalMaxCountR = 0;
+        float totalModeG = 0;
+        float totalMaxCountG = 0;
+        float totalModeB = 0;
+        float totalMaxCountB = 0;
+        
+        float[] totalBuff = null;
+        float[] totalBuffR = null;
+        float[] totalBuffG = null;
+        float[] totalBuffB = null;
+        
+        double totalMedian = 0;
+        double totalMedianR = 0;
+        double totalMedianG = 0;
+        double totalMedianB = 0;
+        
 
         int length;
 
@@ -966,6 +1081,214 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 }
                             }
                         }
+                        
+                        
+                       //second pass...
+                        float[] buffR = new float[nVox];
+                        float[] buffG = new float[nVox];
+                        float[] buffB = new float[nVox];
+                        int k = 0;
+                        for (int i = 0; i < length; i += 4) {
+                            if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
+                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
+                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                            	buffR[k] = imgBuffer[i + 1];
+                            	buffG[k] = imgBuffer[i + 2];
+                            	buffB[k] = imgBuffer[i + 3];
+                                k++; 
+                            }
+                        }
+                        
+                        //red
+                        float[] sortedR = shellSort(buffR);
+                        if(totalBuffR == null) {
+                        	totalBuffR = sortedR;
+                        }else {
+                        	float[] tempR = totalBuffR;
+                        	int tempLengthR = tempR.length;
+                        	int sortedLengthR =  sortedR.length;
+                        	int newLengthR = tempLengthR + sortedLengthR;
+                        	totalBuffR = new float[newLengthR];
+                        	int counterR = 0;
+                        	for(int i=0;i<tempR.length;i++) {
+                        		totalBuffR[counterR] = tempR[i];
+                        		counterR++;
+                        	}
+                        	for(int i=counterR;i<sortedR.length;i++) {
+                        		totalBuffR[counterR] = sortedR[i];
+                        		counterR++;
+                        	}
+                        }
+                        
+                        int cntR = sortedR.length;
+                        double medianR;
+                        float tempR = 0;
+                        int countR = 0;
+                        float modeR = 0;
+                        float maxCountR = 0;
+                        for(int i=0;i<sortedR.length;i++) {
+                			if(i==0) {
+                				tempR = sortedR[i];
+                				countR = 1;
+                				modeR = tempR;
+                				maxCountR = 1;
+                			}else {
+                				if(sortedR[i] == tempR) {
+                					countR++;
+                					if(countR > maxCountR) {
+                						maxCountR = countR;
+                						modeR = tempR;
+                					}
+                					
+                				}else {
+                					tempR = sortedR[i];
+                					countR = 1;
+                				}
+                			} 
+                       }
+                       if (cntR%2 == 1) {
+                           medianR = sortedR[cntR/2] ;   
+                       }
+                       else {
+                           medianR = (sortedR[cntR/2] + sortedR[(cntR/2) - 1])/2.0;
+                       }
+
+                        
+                       //green
+                       float[] sortedG = shellSort(buffG);
+                       if(totalBuffG == null) {
+                       	totalBuffG = sortedG;
+                       }else {
+                       	float[] tempG = totalBuffG;
+                       	int tempLengthG = tempG.length;
+                       	int sortedLengthG =  sortedG.length;
+                       	int newLengthG = tempLengthG + sortedLengthG;
+                       	totalBuffG = new float[newLengthG];
+                       	int counterG = 0;
+                       	for(int i=0;i<tempG.length;i++) {
+                       		totalBuffG[counterG] = tempG[i];
+                       		counterG++;
+                       	}
+                       	for(int i=counterG;i<sortedG.length;i++) {
+                       		totalBuffG[counterG] = sortedG[i];
+                       		counterG++;
+                       	}
+                       }
+                       int cntG = sortedG.length;
+                       double medianG;
+                       float tempG = 0;
+                       int countG = 0;
+                       float modeG = 0;
+                       float maxCountG = 0;
+                       for(int i=0;i<sortedG.length;i++) {
+               			if(i==0) {
+               				tempG = sortedG[i];
+               				countG = 1;
+               				modeG = tempG;
+               				maxCountG = 1;
+               			}else {
+               				if(sortedG[i] == tempG) {
+               					countG++;
+               					if(countG > maxCountG) {
+               						maxCountG = countG;
+               						modeG = tempG;
+               					}
+               					
+               				}else {
+               					tempG = sortedG[i];
+               					countG = 1;
+               				}
+               			} 
+                      }
+                      if (cntG%2 == 1) {
+                          medianG = sortedG[cntG/2] ;   
+                      }
+                      else {
+                          medianG = (sortedG[cntG/2] + sortedG[(cntG/2) - 1])/2.0;
+                      }
+
+                      
+                      
+                      //blue
+                      float[] sortedB = shellSort(buffB);
+                      
+                      if(totalBuffB == null) {
+                      	totalBuffB = sortedB;
+                      }else {
+                      	float[] tempB = totalBuffB;
+                      	int tempLengthB = tempB.length;
+                      	int sortedLengthB =  sortedB.length;
+                      	int newLengthB = tempLengthB + sortedLengthB;
+                      	totalBuffB = new float[newLengthB];
+                      	int counterB = 0;
+                      	for(int i=0;i<tempB.length;i++) {
+                      		totalBuffB[counterB] = tempB[i];
+                      		counterB++;
+                      	}
+                      	for(int i=counterB;i<sortedB.length;i++) {
+                      		totalBuffB[counterB] = sortedB[i];
+                      		counterB++;
+                      	}
+                      }
+                      
+                      int cntB = sortedB.length;
+                      double medianB;
+                      float tempB = 0;
+                      int countB = 0;
+                      float modeB = 0;
+                      float maxCountB = 0;
+                      for(int i=0;i<sortedB.length;i++) {
+              			if(i==0) {
+              				tempB = sortedB[i];
+              				countB = 1;
+              				modeB = tempB;
+              				maxCountB = 1;
+              			}else {
+              				if(sortedB[i] == tempB) {
+              					countB++;
+              					if(countB > maxCountB) {
+              						maxCountB = countB;
+              						modeB = tempB;
+              					}
+              					
+              				}else {
+              					tempB = sortedB[i];
+              					countB = 1;
+              				}
+              			} 
+                     }
+                     if (cntB%2 == 1) {
+                         medianB = sortedB[cntB/2] ;   
+                     }
+                     else {
+                         medianB = (sortedB[cntB/2] + sortedB[(cntB/2) - 1])/2.0;
+                     }
+
+                        
+                        
+                     if(maxCountR > totalMaxCountR) {
+                  	   totalModeR = modeR;
+                  	   totalMaxCountR = maxCountR;
+                     } 
+                        
+                     if(maxCountG > totalMaxCountG) {
+                    	 totalModeG = modeG;
+                    	 totalMaxCountG = maxCountG;
+                     }    
+                        
+                     if(maxCountB > totalMaxCountB) {
+                    	totalModeB = modeB;
+                    	totalMaxCountB = maxCountB;
+                     }   
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
 
                         avgIntenR = sumR / nVox;
                         avgIntenG = sumG / nVox;
@@ -1023,9 +1346,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + "0;" + r, nf.format(sumG));
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "0;" + r, nf.format(sumB));
                         
+                        statProperty.setProperty(VOIStatisticList.median + "Red" + "0;" + r, nf.format(medianR));
+                        statProperty.setProperty(VOIStatisticList.median + "Green" + "0;" + r, nf.format(medianG));
+                        statProperty.setProperty(VOIStatisticList.median + "Blue" + "0;" + r, nf.format(medianB));
+                        
+                        statProperty.setProperty(VOIStatisticList.mode + "Red" + "0;" + r, nf.format(modeR));
+                        statProperty.setProperty(VOIStatisticList.mode + "Green" + "0;" + r, nf.format(modeG));
+                        statProperty.setProperty(VOIStatisticList.mode + "Blue" + "0;" + r, nf.format(modeB));
+                        
                     } else {
                         minIntensity = Double.MAX_VALUE;
                         maxIntensity = -Double.MAX_VALUE;
+                        
 
                         for (int i = 0; i < length; i++) {
 
@@ -1042,6 +1374,77 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 }
                             }
                         }
+                        
+                        
+                        //second pass...
+                        float[] buff = new float[nVox];
+                        int k = 0;
+                        for (int i = 0; i < length; i++) {
+                            if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
+                                buff[k] = imgBuffer[i];
+                                k++; 
+                            }
+                        }
+                        
+                        float[] sorted = shellSort(buff);
+                        
+                        if(totalBuff == null) {
+                        	totalBuff = sorted;
+                        }else {
+                        	float[] temp = totalBuff;
+                        	int tempLength = temp.length;
+                        	int sortedLength =  sorted.length;
+                        	int newLength = tempLength + sortedLength;
+                        	totalBuff = new float[newLength];
+                        	int counter = 0;
+                        	for(int i=0;i<temp.length;i++) {
+                        		totalBuff[counter] = temp[i];
+                        		counter++;
+                        	}
+                        	for(int i=counter;i<sorted.length;i++) {
+                        		totalBuff[counter] = sorted[i];
+                        		counter++;
+                        	}
+                        }
+                        
+                        int cnt = sorted.length;
+                        double median;
+                        float temp = 0;
+                        int count = 0;
+                        float mode = 0;
+                        float maxCount = 0;
+                        for(int i=0;i<sorted.length;i++) {
+                			if(i==0) {
+                				temp = sorted[i];
+                				count = 1;
+                				mode = temp;
+                				maxCount = 1;
+                			}else {
+                				if(sorted[i] == temp) {
+                					count++;
+                					if(count > maxCount) {
+                						maxCount = count;
+                						mode = temp;
+                					}
+                					
+                				}else {
+                					temp = sorted[i];
+                					count = 1;
+                				}
+                			} 
+                       }
+                       if (cnt%2 == 1) {
+                           median = sorted[cnt/2] ;   
+                       }
+                       else {
+                           median = (sorted[cnt/2] + sorted[(cnt/2) - 1])/2.0;
+                       }
+
+                       if(maxCount > totalMaxCount) {
+                    	   totalMode = mode;
+                    	   totalMaxCount = maxCount;
+                    	   
+                       }
 
                         avgInten = sum / nVox;
 
@@ -1061,6 +1464,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.avgIntensity + "0;" + r, nf.format(avgInten));
                         statProperty.setProperty(VOIStatisticList.quantityDescription + "0;" + r, nf.format(nVox));
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "0;" + r, nf.format(sum));
+                        statProperty.setProperty(VOIStatisticList.median + "0;" + r, nf.format(median));
+                        statProperty.setProperty(VOIStatisticList.mode + "0;" + r, nf.format(mode));
+                        
                     }
 
                     area = nVox * (fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1]);
@@ -1288,6 +1694,51 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
 
             }
+            
+           
+            
+            if (srcImage.isColorImage()) {
+            
+	            float[] totalSortedR = shellSort(totalBuffR);
+	            int totalCntR = totalSortedR.length;
+	            if (totalCntR%2 == 1) {
+	                totalMedianR = totalSortedR[totalCntR/2] ;   
+	            }
+	            else {
+	                totalMedianR = (totalSortedR[totalCntR/2] + totalSortedR[(totalCntR/2) - 1])/2.0;
+	            }
+	            
+	            float[] totalSortedG = shellSort(totalBuffG);
+	            int totalCntG = totalSortedG.length;
+	            if (totalCntG%2 == 1) {
+	                totalMedianG = totalSortedG[totalCntG/2] ;   
+	            }
+	            else {
+	                totalMedianG = (totalSortedG[totalCntG/2] + totalSortedG[(totalCntG/2) - 1])/2.0;
+	            }
+	            
+	            float[] totalSortedB = shellSort(totalBuffB);
+	            int totalCntB = totalSortedB.length;
+	            if (totalCntB%2 == 1) {
+	                totalMedianB = totalSortedB[totalCntB/2] ;   
+	            }
+	            else {
+	                totalMedianB = (totalSortedB[totalCntB/2] + totalSortedB[(totalCntB/2) - 1])/2.0;
+	            }
+            }else {
+            	
+            	 float[] totalSorted = shellSort(totalBuff);
+                 int totalCnt = totalSorted.length;
+                 if (totalCnt%2 == 1) {
+                     totalMedian = totalSorted[totalCnt/2] ;   
+                 }
+                 else {
+                     totalMedian = (totalSorted[totalCnt/2] + totalSorted[(totalCnt/2) - 1])/2.0;
+                 }
+            }
+            
+            
+            
 
             if (showTotals == true) {
                 statProperty.setProperty(VOIStatisticList.axisDescription + "Total", nf.format(totalAxis));
@@ -1356,6 +1807,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Red" + "Total", nf.format(totalSumR));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + "Total", nf.format(totalSumG));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "Total", nf.format(totalSumB));
+                    statProperty.setProperty(VOIStatisticList.mode + "Red" + "Total", nf.format(totalModeR));
+                    statProperty.setProperty(VOIStatisticList.mode + "Green" + "Total", nf.format(totalModeG));
+                    statProperty.setProperty(VOIStatisticList.mode + "Blue" + "Total", nf.format(totalModeB));
+                    statProperty.setProperty(VOIStatisticList.median + "Red" + "Total", nf.format(totalMedianR));
+                    statProperty.setProperty(VOIStatisticList.median + "Green" + "Total", nf.format(totalMedianG));
+                    statProperty.setProperty(VOIStatisticList.median + "Blue" + "Total", nf.format(totalMedianB));
                     // Centers of mass
                     xCOMR = totalXMassR * srcImage.getFileInfo(0).getResolutions()[0]/totalSumR;
                     yCOMR = totalYMassR * srcImage.getFileInfo(0).getResolutions()[1]/totalSumR;
@@ -1420,6 +1877,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Total",
                                              nf.format(moment4/(moment2 * moment2)));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Total", nf.format(totalSum));
+                    statProperty.setProperty(VOIStatisticList.mode + "Total", nf.format(totalMode));
                     // Center of mass
                     xCOM = totalXMass * srcImage.getFileInfo(0).getResolutions()[0]/totalSum;
                     yCOM = totalYMass * srcImage.getFileInfo(0).getResolutions()[1]/totalSum;
@@ -1535,6 +1993,132 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         }
                     }
                 }
+                
+                
+                
+                
+              //second pass...
+                float[] buffR = new float[nVox];
+                float[] buffG = new float[nVox];
+                float[] buffB = new float[nVox];
+                int k = 0;
+                for (int i = 0; i < length; i += 4) {
+                    if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
+                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
+                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                    	buffR[k] = imgBuffer[i + 1];
+                    	buffG[k] = imgBuffer[i + 2];
+                    	buffB[k] = imgBuffer[i + 3];
+                        k++; 
+                    }
+                }
+                
+                //red
+                float[] sortedR = shellSort(buffR);
+                int cntR = sortedR.length;
+                double medianR;
+                float tempR = 0;
+                int countR = 0;
+                float modeR = 0;
+                float maxCountR = 0;
+                for(int i=0;i<sortedR.length;i++) {
+        			if(i==0) {
+        				tempR = sortedR[i];
+        				countR = 1;
+        				modeR = tempR;
+        				maxCountR = 1;
+        			}else {
+        				if(sortedR[i] == tempR) {
+        					countR++;
+        					if(countR > maxCountR) {
+        						maxCountR = countR;
+        						modeR = tempR;
+        					}
+        					
+        				}else {
+        					tempR = sortedR[i];
+        					countR = 1;
+        				}
+        			} 
+               }
+               if (cntR%2 == 1) {
+                   medianR = sortedR[cntR/2] ;   
+               }
+               else {
+                   medianR = (sortedR[cntR/2] + sortedR[(cntR/2) - 1])/2.0;
+               }
+
+                
+               //green
+               float[] sortedG = shellSort(buffG);
+               int cntG = sortedG.length;
+               double medianG;
+               float tempG = 0;
+               int countG = 0;
+               float modeG = 0;
+               float maxCountG = 0;
+               for(int i=0;i<sortedG.length;i++) {
+       			if(i==0) {
+       				tempG = sortedG[i];
+       				countG = 1;
+       				modeG = tempG;
+       				maxCountG = 1;
+       			}else {
+       				if(sortedG[i] == tempG) {
+       					countG++;
+       					if(countG > maxCountG) {
+       						maxCountG = countG;
+       						modeG = tempG;
+       					}
+       					
+       				}else {
+       					tempG = sortedG[i];
+       					countG = 1;
+       				}
+       			} 
+              }
+              if (cntG%2 == 1) {
+                  medianG = sortedG[cntG/2] ;   
+              }
+              else {
+                  medianG = (sortedG[cntG/2] + sortedG[(cntG/2) - 1])/2.0;
+              }
+
+              
+              //blue
+              float[] sortedB = shellSort(buffB);
+              int cntB = sortedB.length;
+              double medianB;
+              float tempB = 0;
+              int countB = 0;
+              float modeB = 0;
+              float maxCountB = 0;
+              for(int i=0;i<sortedB.length;i++) {
+      			if(i==0) {
+      				tempB = sortedB[i];
+      				countB = 1;
+      				modeB = tempB;
+      				maxCountB = 1;
+      			}else {
+      				if(sortedB[i] == tempB) {
+      					countB++;
+      					if(countB > maxCountB) {
+      						maxCountB = countB;
+      						modeB = tempB;
+      					}
+      					
+      				}else {
+      					tempB = sortedB[i];
+      					countB = 1;
+      				}
+      			} 
+             }
+             if (cntB%2 == 1) {
+                 medianB = sortedB[cntB/2] ;   
+             }
+             else {
+                 medianB = (sortedB[cntB/2] + sortedB[(cntB/2) - 1])/2.0;
+             }
 
                 avgIntenR = sumR / nVox;
                 avgIntenG = sumG / nVox;
@@ -1553,6 +2137,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.sumIntensities + "Red" + "0;", nf.format(sumR));
                 statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + "0;", nf.format(sumG));
                 statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "0;", nf.format(sumB));
+                statProperty.setProperty(VOIStatisticList.median + "Red" + "0;", nf.format(medianR));
+                statProperty.setProperty(VOIStatisticList.median + "Green" + "0;", nf.format(medianG));
+                statProperty.setProperty(VOIStatisticList.median + "Blue" + "0;", nf.format(medianB));
+                statProperty.setProperty(VOIStatisticList.mode + "Red" + "0;", nf.format(modeR));
+                statProperty.setProperty(VOIStatisticList.mode + "Green" + "0;", nf.format(modeG));
+                statProperty.setProperty(VOIStatisticList.mode + "Blue" + "0;", nf.format(modeB));
 
                 statProperty.setProperty(VOIStatisticList.minIntensity + "Red", nf.format(minIntenRed));
                 statProperty.setProperty(VOIStatisticList.maxIntensity + "Red", nf.format(maxIntenRed));
@@ -1567,6 +2157,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.sumIntensities + "Red", nf.format(sumR));
                 statProperty.setProperty(VOIStatisticList.sumIntensities + "Green", nf.format(sumG));
                 statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue", nf.format(sumB));
+                statProperty.setProperty(VOIStatisticList.median + "Red", nf.format(medianR));
+                statProperty.setProperty(VOIStatisticList.median + "Green", nf.format(medianG));
+                statProperty.setProperty(VOIStatisticList.median + "Blue", nf.format(medianB));
+                statProperty.setProperty(VOIStatisticList.mode + "Red", nf.format(modeR));
+                statProperty.setProperty(VOIStatisticList.mode + "Green", nf.format(modeG));
+                statProperty.setProperty(VOIStatisticList.mode + "Blue", nf.format(modeB));
             } else {
 
                 for (int i = 0; i < length; i++) {
@@ -1584,6 +2180,72 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         }
                     }
                 }
+                
+                
+                
+              //second pass...
+                float[] buff = new float[nVox];
+                int k = 0;
+                for (int i = 0; i < length; i++) {
+                    if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
+                        buff[k] = imgBuffer[i];
+                        k++; 
+                    }
+                }
+                
+                float[] sorted = shellSort(buff);
+                if(totalBuff == null) {
+                	totalBuff = sorted;
+                }else {
+                	float[] temp = totalBuff;
+                	int tempLength = temp.length;
+                	int sortedLength =  sorted.length;
+                	int newLength = tempLength + sortedLength;
+                	totalBuff = new float[newLength];
+                	int counter = 0;
+                	for(int i=0;i<temp.length;i++) {
+                		totalBuff[counter] = temp[i];
+                		counter++;
+                	}
+                	for(int i=counter;i<sorted.length;i++) {
+                		totalBuff[counter] = sorted[i];
+                		counter++;
+                	}
+                }
+                int cnt = sorted.length;
+                double median;
+                float temp = 0;
+                int count = 0;
+                float mode = 0;
+                float maxCount = 0;
+                for(int i=0;i<sorted.length;i++) {
+        			if(i==0) {
+        				temp = sorted[i];
+        				count = 1;
+        				mode = temp;
+        				maxCount = 1;
+        			}else {
+        				if(sorted[i] == temp) {
+        					count++;
+        					if(count > maxCount) {
+        						maxCount = count;
+        						mode = temp;
+        					}
+        					
+        				}else {
+        					temp = sorted[i];
+        					count = 1;
+        				}
+        			} 
+               }
+               if (cnt%2 == 1) {
+                   median = sorted[cnt/2] ;   
+               }
+               else {
+                   median = (sorted[cnt/2] + sorted[(cnt/2) - 1])/2.0;
+               }
+
+               
 
                 avgInten = sum / nVox;
 
@@ -1592,12 +2254,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.avgIntensity + "0;", nf.format(avgInten));
                 statProperty.setProperty(VOIStatisticList.quantityDescription + "0;", nf.format(nVox));
                 statProperty.setProperty(VOIStatisticList.sumIntensities + "0;", nf.format(sum));
+                statProperty.setProperty(VOIStatisticList.median + "0;", nf.format(median));
+                statProperty.setProperty(VOIStatisticList.mode + "0;", nf.format(mode));
 
                 statProperty.setProperty(VOIStatisticList.minIntensity, nf.format(minIntensity));
                 statProperty.setProperty(VOIStatisticList.maxIntensity, nf.format(maxIntensity));
                 statProperty.setProperty(VOIStatisticList.avgIntensity, nf.format(avgInten));
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(nVox));
                 statProperty.setProperty(VOIStatisticList.sumIntensities, nf.format(sum));
+                statProperty.setProperty(VOIStatisticList.median, nf.format(median));
+                statProperty.setProperty(VOIStatisticList.mode, nf.format(mode));
             }
 
             area = nVox * (fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1]);
@@ -1830,6 +2496,28 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         String unit3DStr = null;
         String unitStr = null;
         Vector3f centerPt;
+        
+        
+        float totalMode = 0;
+        float totalMaxCount = 0;
+        float totalModeR = 0;
+        float totalMaxCountR = 0;
+        float totalModeG = 0;
+        float totalMaxCountG = 0;
+        float totalModeB = 0;
+        float totalMaxCountB = 0;
+        
+        float[] totalBuff = null;
+        float[] totalBuffR = null;
+        float[] totalBuffG = null;
+        float[] totalBuffB = null;
+        
+        double totalMedian = 0;
+        double totalMedianR = 0;
+        double totalMedianG = 0;
+        double totalMedianB = 0;
+        
+        
 
         Vector[] contours;
         BitSet mask;
@@ -2079,6 +2767,206 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 }
                             }
                         }
+                        
+                        
+                        
+                      //second pass...
+                        float[] buffR = new float[nVox];
+                        float[] buffG = new float[nVox];
+                        float[] buffB = new float[nVox];
+                        int k = 0;
+                        for (int i = 0; i < length; i += 4) {
+                            if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 1]) &&
+                                    !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 2]) &&
+                                    !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i + 3])) {
+                            	buffR[k] = imgBuffer[offset + i + 1];
+                            	buffG[k] = imgBuffer[offset + i + 2];
+                            	buffB[k] = imgBuffer[offset + i + 3];
+                                k++; 
+                            }
+                        }
+                        
+                        //red
+                        float[] sortedR = shellSort(buffR);
+                        if(totalBuffR == null) {
+                        	totalBuffR = sortedR;
+                        }else {
+                        	float[] tempR = totalBuffR;
+                        	int tempLengthR = tempR.length;
+                        	int sortedLengthR =  sortedR.length;
+                        	int newLengthR = tempLengthR + sortedLengthR;
+                        	totalBuffR = new float[newLengthR];
+                        	int counterR = 0;
+                        	for(int i=0;i<tempR.length;i++) {
+                        		totalBuffR[counterR] = tempR[i];
+                        		counterR++;
+                        	}
+                        	for(int i=counterR;i<sortedR.length;i++) {
+                        		totalBuffR[counterR] = sortedR[i];
+                        		counterR++;
+                        	}
+                        }
+                        
+                        int cntR = sortedR.length;
+                        double medianR;
+                        float tempR = 0;
+                        int countR = 0;
+                        float modeR = 0;
+                        float maxCountR = 0;
+                        for(int i=0;i<sortedR.length;i++) {
+                			if(i==0) {
+                				tempR = sortedR[i];
+                				countR = 1;
+                				modeR = tempR;
+                				maxCountR = 1;
+                			}else {
+                				if(sortedR[i] == tempR) {
+                					countR++;
+                					if(countR > maxCountR) {
+                						maxCountR = countR;
+                						modeR = tempR;
+                					}
+                					
+                				}else {
+                					tempR = sortedR[i];
+                					countR = 1;
+                				}
+                			} 
+                       }
+                       if (cntR%2 == 1) {
+                           medianR = sortedR[cntR/2] ;   
+                       }
+                       else {
+                           medianR = (sortedR[cntR/2] + sortedR[(cntR/2) - 1])/2.0;
+                       }
+
+                        
+                       //green
+                       float[] sortedG = shellSort(buffG);
+                       if(totalBuffG == null) {
+                          	totalBuffG = sortedG;
+                       }else {
+                          	float[] tempG = totalBuffG;
+                          	int tempLengthG = tempG.length;
+                          	int sortedLengthG =  sortedG.length;
+                          	int newLengthG = tempLengthG + sortedLengthG;
+                          	totalBuffG = new float[newLengthG];
+                          	int counterG = 0;
+                          	for(int i=0;i<tempG.length;i++) {
+                          		totalBuffG[counterG] = tempG[i];
+                          		counterG++;
+                          	}
+                          	for(int i=counterG;i<sortedG.length;i++) {
+                          		totalBuffG[counterG] = sortedG[i];
+                          		counterG++;
+                          	}
+                        }
+                       int cntG = sortedG.length;
+                       double medianG;
+                       float tempG = 0;
+                       int countG = 0;
+                       float modeG = 0;
+                       float maxCountG = 0;
+                       for(int i=0;i<sortedG.length;i++) {
+               			if(i==0) {
+               				tempG = sortedG[i];
+               				countG = 1;
+               				modeG = tempG;
+               				maxCountG = 1;
+               			}else {
+               				if(sortedG[i] == tempG) {
+               					countG++;
+               					if(countG > maxCountG) {
+               						maxCountG = countG;
+               						modeG = tempG;
+               					}
+               					
+               				}else {
+               					tempG = sortedG[i];
+               					countG = 1;
+               				}
+               			} 
+                      }
+                      if (cntG%2 == 1) {
+                          medianG = sortedG[cntG/2] ;   
+                      }
+                      else {
+                          medianG = (sortedG[cntG/2] + sortedG[(cntG/2) - 1])/2.0;
+                      }
+
+                      
+                      //blue
+                      float[] sortedB = shellSort(buffB);
+                      if(totalBuffB == null) {
+                        	totalBuffB = sortedB;
+                      }else {
+                        	float[] tempB = totalBuffB;
+                        	int tempLengthB = tempB.length;
+                        	int sortedLengthB =  sortedB.length;
+                        	int newLengthB = tempLengthB + sortedLengthB;
+                        	totalBuffB = new float[newLengthB];
+                        	int counterB = 0;
+                        	for(int i=0;i<tempB.length;i++) {
+                        		totalBuffB[counterB] = tempB[i];
+                        		counterB++;
+                        	}
+                        	for(int i=counterB;i<sortedB.length;i++) {
+                        		totalBuffB[counterB] = sortedB[i];
+                        		counterB++;
+                        	}
+                        }
+                      int cntB = sortedB.length;
+                      double medianB;
+                      float tempB = 0;
+                      int countB = 0;
+                      float modeB = 0;
+                      float maxCountB = 0;
+                      for(int i=0;i<sortedB.length;i++) {
+              			if(i==0) {
+              				tempB = sortedB[i];
+              				countB = 1;
+              				modeB = tempB;
+              				maxCountB = 1;
+              			}else {
+              				if(sortedB[i] == tempB) {
+              					countB++;
+              					if(countB > maxCountB) {
+              						maxCountB = countB;
+              						modeB = tempB;
+              					}
+              					
+              				}else {
+              					tempB = sortedB[i];
+              					countB = 1;
+              				}
+              			} 
+                     }
+                     if (cntB%2 == 1) {
+                         medianB = sortedB[cntB/2] ;   
+                     }
+                     else {
+                         medianB = (sortedB[cntB/2] + sortedB[(cntB/2) - 1])/2.0;
+                     }
+ 
+                        
+                     if(maxCountR > totalMaxCountR) {
+                    	   totalModeR = modeR;
+                    	   totalMaxCountR = maxCountR;
+                       } 
+                          
+                       if(maxCountG > totalMaxCountG) {
+                      	 totalModeG = modeG;
+                      	 totalMaxCountG = maxCountG;
+                       }    
+                          
+                       if(maxCountB > totalMaxCountB) {
+                      	totalModeB = modeB;
+                      	totalMaxCountB = maxCountB;
+                       }     
+                        
+                        
+                        
+                        
 
                         avgIntenR = sumR / nVox;
                         avgIntenG = sumG / nVox;
@@ -2128,6 +3016,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "Red"  + end, nf.format(sumR));
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "Green" + end, nf.format(sumG));
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + end, nf.format(sumB));
+                        
+                        statProperty.setProperty(VOIStatisticList.median + "Red" + end, nf.format(medianR));
+                        statProperty.setProperty(VOIStatisticList.median + "Green" + end, nf.format(medianG));
+                        statProperty.setProperty(VOIStatisticList.median + "Blue" + end, nf.format(medianB));
+                        
+                        statProperty.setProperty(VOIStatisticList.mode + "Red" + end, nf.format(modeR));
+                        statProperty.setProperty(VOIStatisticList.mode + "Green" + end, nf.format(modeG));
+                        statProperty.setProperty(VOIStatisticList.mode + "Blue" + end, nf.format(modeB));
                     } else {
                         minIntensity = Float.MAX_VALUE;
                         maxIntensity = -Float.MAX_VALUE;
@@ -2149,6 +3045,74 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 }
                             }
                         }
+                        
+                        //second pass...
+                        float[] buff = new float[nVox];
+                        int k = 0;
+                        for (int i = 0; i < length; i++) {
+                            if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i])) {
+                                buff[k] = imgBuffer[offset + i];
+                                k++; 
+                            }
+                        }
+                        
+                        float[] sorted = shellSort(buff);
+                        if(totalBuff == null) {
+                        	totalBuff = sorted;
+                        }else {
+                        	float[] temp = totalBuff;
+                        	int tempLength = temp.length;
+                        	int sortedLength =  sorted.length;
+                        	int newLength = tempLength + sortedLength;
+                        	totalBuff = new float[newLength];
+                        	int counter = 0;
+                        	for(int i=0;i<temp.length;i++) {
+                        		totalBuff[counter] = temp[i];
+                        		counter++;
+                        	}
+                        	for(int i=counter;i<sorted.length;i++) {
+                        		totalBuff[counter] = sorted[i];
+                        		counter++;
+                        	}
+                        }
+                        int cnt = sorted.length;
+                        double median;
+                        float temp = 0;
+                        int count = 0;
+                        float mode = 0;
+                        float maxCount = 0;
+                        for(int i=0;i<sorted.length;i++) {
+                			if(i==0) {
+                				temp = sorted[i];
+                				count = 1;
+                				mode = temp;
+                				maxCount = 1;
+                			}else {
+                				if(sorted[i] == temp) {
+                					count++;
+                					if(count > maxCount) {
+                						maxCount = count;
+                						mode = temp;
+                					}
+                					
+                				}else {
+                					temp = sorted[i];
+                					count = 1;
+                				}
+                			} 
+                       }
+                       if (cnt%2 == 1) {
+                           median = sorted[cnt/2] ;   
+                       }
+                       else {
+                           median = (sorted[cnt/2] + sorted[(cnt/2) - 1])/2.0;
+                       }
+
+                       if(maxCount > totalMaxCount) {
+                    	   totalMode = mode;
+                    	   totalMaxCount = maxCount;
+                    	   
+                       }
 
                         avgInten = sum / nVox;
 
@@ -2168,6 +3132,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.avgIntensity + end, nf.format(avgInten));
                         statProperty.setProperty(VOIStatisticList.quantityDescription + end, nf.format(nVox));
                         statProperty.setProperty(VOIStatisticList.sumIntensities + end, nf.format(sum));
+                        statProperty.setProperty(VOIStatisticList.median + end, nf.format(median));
+                        statProperty.setProperty(VOIStatisticList.mode + end, nf.format(mode));
                     }
 
                     area = nVox * (fileInfo[q].getResolutions()[0] * fileInfo[q].getResolutions()[1]);
@@ -2399,6 +3365,47 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     }
                 }
             }
+            
+            
+            
+            if (srcImage.isColorImage()) {
+            
+	            float[] totalSortedR = shellSort(totalBuffR);
+	            int totalCntR = totalSortedR.length;
+	            if (totalCntR%2 == 1) {
+	                totalMedianR = totalSortedR[totalCntR/2] ;   
+	            }
+	            else {
+	                totalMedianR = (totalSortedR[totalCntR/2] + totalSortedR[(totalCntR/2) - 1])/2.0;
+	            }
+	            
+	            float[] totalSortedG = shellSort(totalBuffG);
+	            int totalCntG = totalSortedG.length;
+	            if (totalCntG%2 == 1) {
+	                totalMedianG = totalSortedG[totalCntG/2] ;   
+	            }
+	            else {
+	                totalMedianG = (totalSortedG[totalCntG/2] + totalSortedG[(totalCntG/2) - 1])/2.0;
+	            }
+	            
+	            float[] totalSortedB = shellSort(totalBuffB);
+	            int totalCntB = totalSortedB.length;
+	            if (totalCntB%2 == 1) {
+	                totalMedianB = totalSortedB[totalCntB/2] ;   
+	            }
+	            else {
+	                totalMedianB = (totalSortedB[totalCntB/2] + totalSortedB[(totalCntB/2) - 1])/2.0;
+	            }
+            }else {
+            	float[] totalSorted = shellSort(totalBuff);
+                int totalCnt = totalSorted.length;
+                if (totalCnt%2 == 1) {
+                    totalMedian = totalSorted[totalCnt/2] ;   
+                }
+                else {
+                    totalMedian = (totalSorted[totalCnt/2] + totalSorted[(totalCnt/2) - 1])/2.0;
+                }
+            }
 
             if (showTotals == true) {
 
@@ -2478,6 +3485,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             nf.format(totalSumG));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "Total",
                             nf.format(totalSumB));
+                    statProperty.setProperty(VOIStatisticList.mode + "Red" + "Total", nf.format(totalModeR));
+                    statProperty.setProperty(VOIStatisticList.mode + "Green" + "Total", nf.format(totalModeG));
+                    statProperty.setProperty(VOIStatisticList.mode + "Blue" + "Total", nf.format(totalModeB));
+                    statProperty.setProperty(VOIStatisticList.median + "Red" + "Total", nf.format(totalMedianR));
+                    statProperty.setProperty(VOIStatisticList.median + "Green" + "Total", nf.format(totalMedianG));
+                    statProperty.setProperty(VOIStatisticList.median + "Blue" + "Total", nf.format(totalMedianB));
                     // Centers of mass
                     xCOMR = totalXMassR * srcImage.getFileInfo(0).getResolutions()[0]/totalSumR;
                     yCOMR = totalYMassR * srcImage.getFileInfo(0).getResolutions()[1]/totalSumR;
@@ -2542,6 +3555,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Total",
                                              nf.format(moment4/(moment2 * moment2)));
                     statProperty.setProperty(VOIStatisticList.sumIntensities + "Total", nf.format(totalSum));
+                    statProperty.setProperty(VOIStatisticList.mode + "Total", nf.format(totalMode));
+                    statProperty.setProperty(VOIStatisticList.median + "Total", nf.format(totalMedian));
                     // Center of mass
                     xCOM = totalXMass * srcImage.getFileInfo(0).getResolutions()[0]/totalSum;
                     yCOM = totalYMass * srcImage.getFileInfo(0).getResolutions()[1]/totalSum;
@@ -2649,6 +3664,130 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         }
                     }
                 }
+                
+                
+                
+              //second pass...
+                float[] buffR = new float[nVox];
+                float[] buffG = new float[nVox];
+                float[] buffB = new float[nVox];
+                int k = 0;
+                for (int i = 0; i < imgBuffer.length; i += 4) {
+                    if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
+                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
+                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                    	buffR[k] = imgBuffer[i + 1];
+                    	buffG[k] = imgBuffer[i + 2];
+                    	buffB[k] = imgBuffer[i + 3];
+                        k++; 
+                    }
+                }
+                
+                //red
+                float[] sortedR = shellSort(buffR);
+                int cntR = sortedR.length;
+                double medianR;
+                float tempR = 0;
+                int countR = 0;
+                float modeR = 0;
+                float maxCountR = 0;
+                for(int i=0;i<sortedR.length;i++) {
+        			if(i==0) {
+        				tempR = sortedR[i];
+        				countR = 1;
+        				modeR = tempR;
+        				maxCountR = 1;
+        			}else {
+        				if(sortedR[i] == tempR) {
+        					countR++;
+        					if(countR > maxCountR) {
+        						maxCountR = countR;
+        						modeR = tempR;
+        					}
+        					
+        				}else {
+        					tempR = sortedR[i];
+        					countR = 1;
+        				}
+        			} 
+               }
+               if (cntR%2 == 1) {
+                   medianR = sortedR[cntR/2] ;   
+               }
+               else {
+                   medianR = (sortedR[cntR/2] + sortedR[(cntR/2) - 1])/2.0;
+               }
+
+               //green
+               float[] sortedG = shellSort(buffG);
+               int cntG = sortedG.length;
+               double medianG;
+               float tempG = 0;
+               int countG = 0;
+               float modeG = 0;
+               float maxCountG = 0;
+               for(int i=0;i<sortedG.length;i++) {
+       			if(i==0) {
+       				tempG = sortedG[i];
+       				countG = 1;
+       				modeG = tempG;
+       				maxCountG = 1;
+       			}else {
+       				if(sortedG[i] == tempG) {
+       					countG++;
+       					if(countG > maxCountG) {
+       						maxCountG = countG;
+       						modeG = tempG;
+       					}
+       					
+       				}else {
+       					tempG = sortedG[i];
+       					countG = 1;
+       				}
+       			} 
+              }
+              if (cntG%2 == 1) {
+                  medianG = sortedG[cntG/2] ;   
+              }
+              else {
+                  medianG = (sortedG[cntG/2] + sortedG[(cntG/2) - 1])/2.0;
+              }
+
+              
+              //blue
+              float[] sortedB = shellSort(buffB);
+              int cntB = sortedB.length;
+              double medianB;
+              float tempB = 0;
+              int countB = 0;
+              float modeB = 0;
+              float maxCountB = 0;
+              for(int i=0;i<sortedB.length;i++) {
+      			if(i==0) {
+      				tempB = sortedB[i];
+      				countB = 1;
+      				modeB = tempB;
+      				maxCountB = 1;
+      			}else {
+      				if(sortedB[i] == tempB) {
+      					countB++;
+      					if(countB > maxCountB) {
+      						maxCountB = countB;
+      						modeB = tempB;
+      					}
+      					
+      				}else {
+      					tempB = sortedB[i];
+      					countB = 1;
+      				}
+      			} 
+             }
+             if (cntB%2 == 1) {
+                 medianB = sortedB[cntB/2] ;   
+             }
+             else {
+                 medianB = (sortedB[cntB/2] + sortedB[(cntB/2) - 1])/2.0;
+             }
 
                 avgIntenR = sumR / nVox;
                 avgIntenG = sumG / nVox;
@@ -2667,6 +3806,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.sumIntensities + "Red", nf.format(sumR));
                 statProperty.setProperty(VOIStatisticList.sumIntensities + "Green", nf.format(sumG));
                 statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue", nf.format(sumB));
+                statProperty.setProperty(VOIStatisticList.median + "Red", nf.format(medianR));
+                statProperty.setProperty(VOIStatisticList.median + "Green", nf.format(medianG));
+                statProperty.setProperty(VOIStatisticList.median + "Blue", nf.format(medianB));
+                
+                statProperty.setProperty(VOIStatisticList.mode + "Red", nf.format(modeR));
+                statProperty.setProperty(VOIStatisticList.mode + "Green", nf.format(modeG));
+                statProperty.setProperty(VOIStatisticList.mode + "Blue", nf.format(modeB));
             } else {
 
                 for (int i = 0; i < imgBuffer.length; i++) {
@@ -2684,6 +3830,53 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         }
                     }
                 }
+                
+                
+                
+                
+              //second pass...
+                float[] buff = new float[nVox];
+                int k = 0;
+                for (int i = 0; i < imgBuffer.length; i++) {
+                    if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
+                        buff[k] = imgBuffer[i];
+                        k++; 
+                    }
+                }
+                
+                float[] sorted = shellSort(buff);
+                int cnt = sorted.length;
+                double median;
+                float temp = 0;
+                int count = 0;
+                float mode = 0;
+                float maxCount = 0;
+                for(int i=0;i<sorted.length;i++) {
+        			if(i==0) {
+        				temp = sorted[i];
+        				count = 1;
+        				mode = temp;
+        				maxCount = 1;
+        			}else {
+        				if(sorted[i] == temp) {
+        					count++;
+        					if(count > maxCount) {
+        						maxCount = count;
+        						mode = temp;
+        					}
+        					
+        				}else {
+        					temp = sorted[i];
+        					count = 1;
+        				}
+        			} 
+               }
+               if (cnt%2 == 1) {
+                   median = sorted[cnt/2] ;   
+               }
+               else {
+                   median = (sorted[cnt/2] + sorted[(cnt/2) - 1])/2.0;
+               }
 
                 avgInten = sum / nVox;
 
@@ -2692,6 +3885,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.avgIntensity, nf.format(avgInten));
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(nVox));
                 statProperty.setProperty(VOIStatisticList.sumIntensities, nf.format(sum));
+                statProperty.setProperty(VOIStatisticList.median, nf.format(median));
+                statProperty.setProperty(VOIStatisticList.mode, nf.format(mode));
             }
 
             // calc the perimeter
@@ -3092,6 +4287,54 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         }
 
         return strs;
+    }
+    
+    
+    
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  buffer  float [] input buffer to be sorted Sort an array into ascending numerical order by Shell's method
+     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
+     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
+     */
+    private float[] shellSort(float[] buffer) {
+        int i, j, inc;
+        float v;
+        inc = 1;
+        
+        float[] buff = buffer;
+
+        int end = buff.length;
+
+        do {
+            inc *= 3;
+            inc++;
+        } while (inc <= end);
+
+        do {
+            inc /= 3;
+
+            for (i = inc + 1; i <= end; i++) {
+                v = buff[i - 1];
+                j = i;
+
+                while (buff[j - inc - 1] > v) {
+                	buff[j - 1] = buff[j - inc - 1];
+                    j -= inc;
+
+                    if (j <= inc) {
+                        break;
+                    }
+                }
+
+                buff[j - 1] = v;
+            }
+        } while (inc > 1);
+
+        
+        return buff;
     }
 
 
