@@ -620,7 +620,8 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("RGB -> HSB", null, 0, null, false),}),
                 menuBuilder.buildMenuItem("Correct image spacing", "CorrectSpace", 0, null, false),
                 menuBuilder.makeMenu("Crop", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Using parameters", "CropParam", 0, null, false),
+                        menuBuilder.buildMenuItem("Using boundary parameters", "CropBoundaryParam", 0, null, false),
+                        menuBuilder.buildMenuItem("Using point parameters", "CropPointParam", 0, null, false),
                         menuBuilder.buildMenuItem("Using VOI", "Crop", 0, null, false)}),
 
                 // menuBuilder.buildMenuItem("Dicom order", "DicomOrder", 0, null, false),
