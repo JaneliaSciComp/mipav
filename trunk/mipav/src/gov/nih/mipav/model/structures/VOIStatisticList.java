@@ -132,6 +132,12 @@ public interface VOIStatisticList {
     
     /** Largest line segment contained entirely within a 3D VOI */
     String largestDistanceDescription = "Largest distance";
+    
+    /** Median */
+    String median = "Median Intensity";
+    
+    /** Mode */
+    String mode = "Mode Intensity";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -142,7 +148,7 @@ public interface VOIStatisticList {
         quantityDescription, volumeDescription, areaDescription, perimeterDescription, minIntensity, maxIntensity,
         avgIntensity, deviationDescription, sumIntensities, geometricCenterDescription, massCenterDescription,
         axisDescription, eccentricityDescription, majorAxisDescription, minorAxisDescription, skewnessDescription,
-        kurtosisDescription, largestSliceDistanceDescription, largestDistanceDescription
+        kurtosisDescription, largestSliceDistanceDescription, largestDistanceDescription, median, mode
     };
 
     /** number of statistics in the list. */
