@@ -519,7 +519,7 @@ public class JDialogCropPointParam extends JDialogScriptableBase implements Algo
 
             return rightSideInput;
         } catch (NullPointerException npe) {
-            MipavUtil.displayError("JDialogCropParam reports: Unknown Error");
+            MipavUtil.displayError("JDialogCropPointParam reports: Unknown Error");
 
             return rightSideInput; // gotta have some thing returned
         }
