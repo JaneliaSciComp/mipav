@@ -758,7 +758,47 @@ public class JDialogVOIStats extends JDialogBase
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
                             }
-                        }  
+                        }  else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[19])) {
+        		       		if (image.isColorImage()) {
+        		       			name = statsList[j].getString();
+        		       			value = Float.toString(algoVOI.getMedianR()) + "R" + Float.toString(algoVOI.getMedianG()) +
+        		       				"G" + Float.toString(algoVOI.getMedianB()) +  "B";
+        		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+        		       		} else {
+            		       		name = statsList[j].getString();
+            		       		value = Float.toString(algoVOI.getMedian());
+            		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+            		       	 
+        		       		}
+        		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[20])) {
+        		       		if (image.isColorImage()) {
+        		       			name = statsList[j].getString();
+        		       			value = Float.toString(algoVOI.getModeR()) + "R" + Float.toString(algoVOI.getModeG()) +
+        		       				"G" + Float.toString(algoVOI.getModeB()) +  "B";
+        		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+        		       		} else {
+            		       		name = statsList[j].getString();
+            		       		value = Float.toString(algoVOI.getMode());
+            		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+            		       	 
+        		       		}
+        		       	} 
             		}
                 }
             	FileInfoBase.copyCoreInfo(image.getFileInfo(), fInfoBase);
