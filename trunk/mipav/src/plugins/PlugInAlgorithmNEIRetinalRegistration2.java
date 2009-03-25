@@ -24,11 +24,13 @@ import javax.swing.JTextArea;
  */
 public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
 
+	
     /** mpMap File **/
     private File mpMapFile;
     
     /** VOI File **/
     private File voiFile;
+    
     
     /** dots per pixel value **/
     private float dPerp;
@@ -38,6 +40,7 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
     
     /** IO **/
     private FileIO fileIO = new FileIO();
+    
     
     /** center of mass **/
     private Point cm;
@@ -129,6 +132,7 @@ public class PlugInAlgorithmNEIRetinalRegistration2 extends AlgorithmBase {
             image.exportData(0, image.getExtents()[0] * image.getExtents()[1], buffer);
         } catch (IOException e) {
         }
+        
         
         float total = 0, denom = 0;
         File data = new File(mpMapFile.getParent() + mpMapFile.separatorChar + "data.txt");

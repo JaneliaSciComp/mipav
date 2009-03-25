@@ -38,11 +38,14 @@ import java.lang.Math;
  */
 public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     
+	
+	
     /** Path of first directory */
     private String imagePath1; 
     
     /** Path of second directory */
     private String imagePath2;
+    
     
     /** Path of reference directory */
     private String refPath;
@@ -163,7 +166,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         for (int i = 0; i< listOfFiles1.length; i++){
             File testFile  = new File (f1.getPath(), listOfFiles1[i].getName());
             
-            if (testFile.exists() && testFile.getName().endsWith(".tif")){
+            if (testFile.exists() && (testFile.getName().endsWith(".tif") ||testFile.getName().endsWith(".TIF"))){
                 //If there is an image save both to list arrays
                 imgLoc1.add(testFile.getAbsolutePath());
                 
@@ -172,7 +175,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         for (int i = 0; i< listOfFiles2.length; i++){
             File testFile  = new File (f2.getPath(), listOfFiles2[i].getName());
             
-            if (testFile.exists() && testFile.getName().endsWith(".tif")){
+            if (testFile.exists() && (testFile.getName().endsWith(".tif") ||testFile.getName().endsWith(".TIF"))){
                 //If there is an image save both to list arrays
                 imgLoc2.add(testFile.getAbsolutePath());
                 
@@ -261,7 +264,10 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 toBeReg = fileIO.readImage((String)imgLoc1.get(j));
                 toBeReg.setResolutions(0, resol);
                 removeBack(toBeReg); //remove border
-                opts.setFileName("YellowRegistered" + (j+1));
+                //opts.setFileName("YellowRegistered" + (j+1));
+                String nameAndExt = listOfFiles1[j].getName();
+                String name = nameAndExt.substring(0, nameAndExt.lastIndexOf("."));
+                opts.setFileName(name + "_reg");
 
                 if (isThreadStopped()) {
                     return;
@@ -318,11 +324,11 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 fileIO.writeImage(doneReg, opts);
 
                 if (currCost > .35){  //may not be registered, alert user
-                    notReg.add("YellowRegistered" + (j+1));
+                    notReg.add(listOfFiles1[j].getName() + "_reg");
                 }
                 
                 outputbox.append("        ** Cost = " + currCost + " **\n");
-                imgLoc1.set(j, new File(outputfolder2, "YellowRegistered" + (j+1)).toString());   
+                imgLoc1.set(j, new File(outputfolder2, listOfFiles1[j].getName() + "_reg").toString());   
                 if (doneReg!=null){
                     doneReg.disposeLocal();
                     doneReg=null;
@@ -337,8 +343,11 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 toBeReg = fileIO.readImage((String)imgLoc2.get(j));
                 toBeReg.setResolutions(0, resol);
                 removeBack(toBeReg);
-                opts.setFileName("BlueRegistered" + (j+1));
-            
+                //opts.setFileName("BlueRegistered" + (j+1));
+                String nameAndExt = listOfFiles2[j].getName();
+                String name = nameAndExt.substring(0, nameAndExt.lastIndexOf("."));
+                opts.setFileName(name + "_reg");
+                
                 //register images
                 doneReg = registration(reference, toBeReg);
                 
@@ -386,7 +395,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
 
         
                 if (currCost > .35) //warn user if it may not be registered
-                    notReg.add("BlueRegistered" + (j+1));
+                    notReg.add(listOfFiles2[j].getName() + "_reg");
     
                 outputbox.append("        ** Cost= " + currCost + " **\n");
                 outputbox.setCaretPosition( outputbox.getText().length() );
@@ -394,7 +403,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                     doneReg.disposeLocal();
                     doneReg=null;
                 }
-                imgLoc2.set(j, new File(outputfolder3, "BlueRegistered" + (j+1)).toString());
+                imgLoc2.set(j, new File(outputfolder3, listOfFiles2[j].getName() + "_reg").toString());
             }
             if (notReg.size() == 0){//alert
                 outputbox.append("** All images are Registered **\n");//alert
@@ -503,7 +512,12 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
                 
                 //save MPmap
                 opts.setFileDirectory(outputfolder + outputfolder.separator);
-                opts.setFileName("MPMap Yellow" + (i+1) + " to Blue" + (j+1));
+                //opts.setFileName("MPMap Yellow" + (i+1) + " to Blue" + (j+1));
+                String nameAndExtY = listOfYellow[i].getName();
+                String nameY = nameAndExtY.substring(0, nameAndExtY.lastIndexOf("."));
+                String nameAndExtB = listOfBlue[j].getName();
+                String nameB = nameAndExtB.substring(0, nameAndExtB.lastIndexOf("."));
+                opts.setFileName("MPMAP_" + nameY + "_to_" + nameB);
                 fileIO.writeImage(mpMap, opts);
                 outputbox.append("done \n");
                 outputbox.append("**** Blue : (" + bMin + "," + bMax + ") \n");

@@ -6,6 +6,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -37,6 +38,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
 
     /** handle to the algorithm **/
     private PlugInAlgorithmNEIRetinalRegistration alg;
+    
     
     /** handle to the second algorithm**/
     private PlugInAlgorithmNEIRetinalRegistration2 alg2;
@@ -122,205 +124,166 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     
     public void init() {
         setForeground(Color.black);
-        setTitle("NEI Retinal Registration" + " v1.0");
+        setTitle("NEI Retinal Registration" + " v1.2");
         
         tabs = new JTabbedPane();
         
-        GridBagLayout mainPanelGridBagLayout = new GridBagLayout();
-        GridBagConstraints mainPanelConstraints = new GridBagConstraints();
-        mainPanelConstraints.anchor = GridBagConstraints.WEST;
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
         
         
         //First Tab for registration and MPmap creation
-        JPanel mainPanel = new JPanel(mainPanelGridBagLayout);
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        JPanel mainPanelA = new JPanel(new GridBagLayout());
+        JPanel mainPanelB = new JPanel(new GridBagLayout());
+        JPanel mainPanelC = new JPanel(new GridBagLayout());
         
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 1;
-        mainPanelConstraints.insets = new Insets(15,5,15,0);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(5,5,5,0);
         JLabel ImageDirLabel1 = new JLabel(" yellow directory : ");
-        mainPanel.add(ImageDirLabel1, mainPanelConstraints);
+        mainPanelA.add(ImageDirLabel1, gbc);
         
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 1;
-        mainPanelConstraints.gridwidth = 7;
-        mainPanelConstraints.insets = new Insets(15,5,15,20);
+        gbc.gridx = 1;
         ImageDirTextField1 = new JTextField(55);
-        mainPanel.add(ImageDirTextField1, mainPanelConstraints);
+        mainPanelA.add(ImageDirTextField1, gbc);
         
-        mainPanelConstraints.gridx = 8;
-        mainPanelConstraints.gridy = 1;
-        mainPanelConstraints.insets = new Insets(15,5,15,5);
+        gbc.gridx = 2;
         image1PathBrowseButton = new JButton("Browse");
         image1PathBrowseButton.addActionListener(this);
         image1PathBrowseButton.setActionCommand("imagePath1Browse");
-        mainPanel.add(image1PathBrowseButton, mainPanelConstraints);
+        mainPanelA.add(image1PathBrowseButton, gbc);
         
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 2;
-        mainPanelConstraints.insets = new Insets(15,5,15,0);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         JLabel ImageDirLabel2 = new JLabel(" blue directory : ");
-        mainPanel.add(ImageDirLabel2, mainPanelConstraints);
+        mainPanelA.add(ImageDirLabel2, gbc);
         
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 2;
-        mainPanelConstraints.gridwidth = 7;
-        mainPanelConstraints.insets = new Insets(15,5,15,0);
+        gbc.gridx = 1;
         ImageDirTextField2 = new JTextField(55);
-        mainPanel.add(ImageDirTextField2, mainPanelConstraints);
+        mainPanelA.add(ImageDirTextField2, gbc);
         
-        mainPanelConstraints.gridx = 8;
-        mainPanelConstraints.gridy = 2;
-        mainPanelConstraints.insets = new Insets(15,5,15,5);
+        gbc.gridx = 2;
         image2PathBrowseButton = new JButton("Browse");
         image2PathBrowseButton.addActionListener(this);
         image2PathBrowseButton.setActionCommand("imagePath2Browse");
-        mainPanel.add(image2PathBrowseButton, mainPanelConstraints);
+        mainPanelA.add(image2PathBrowseButton, gbc);
         
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.insets = new Insets(15,5,15,0);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         JLabel ImageRefLabel = new JLabel(" reference image : ");
-        mainPanel.add(ImageRefLabel, mainPanelConstraints);
+        mainPanelA.add(ImageRefLabel, gbc);
         
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.gridwidth = 7;
-        mainPanelConstraints.insets = new Insets(15,5,15,0);
+        gbc.gridx = 1;
         RefTextField = new JTextField(55);
-        mainPanel.add(RefTextField, mainPanelConstraints);
+        mainPanelA.add(RefTextField, gbc);
         
-        mainPanelConstraints.gridx = 8;
-        mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.insets = new Insets(15,5,15,5);
+        gbc.gridx = 2;
         refPathBrowseButton = new JButton("Browse");
         refPathBrowseButton.addActionListener(this);
         refPathBrowseButton.setActionCommand("imageRef2Browse");
-        mainPanel.add(refPathBrowseButton, mainPanelConstraints);
+        mainPanelA.add(refPathBrowseButton, gbc);
         
-        
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.insets = new Insets(15,0,5,0);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         JLabel epsYellowLabel = new JLabel(" epsYellow : ");
-        mainPanel.add(epsYellowLabel, mainPanelConstraints);
-        
-        mainPanelConstraints.gridx = 2;
-        mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.insets = new Insets(25,70,15,0);
+        mainPanelB.add(epsYellowLabel, gbc);
+     
+        gbc.gridx = 1;
         epsYText = new JTextField(5);
-        mainPanel.add(epsYText, mainPanelConstraints);
+        mainPanelB.add(epsYText, gbc);
 
-        mainPanelConstraints.gridx = 3;
-        mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.insets = new Insets(15,150,5,0);
+        gbc.gridx = 2;
         JLabel epsBlueLabel = new JLabel(" epsBlue : ");
-        mainPanel.add(epsBlueLabel, mainPanelConstraints);
+        mainPanelB.add(epsBlueLabel, gbc);
         
-        mainPanelConstraints.gridx = 4;
-        mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.insets = new Insets(25,210,15,0);
+        
+        gbc.gridx = 3;
         epsBText = new JTextField(5);
-        mainPanel.add(epsBText, mainPanelConstraints);
+        mainPanelB.add(epsBText, gbc);
         
-        
-        mainPanelConstraints.gridx = 5;
-        mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.insets = new Insets(25,285,15,0);
-        preReg = new JCheckBox("don't register image:   ");
+        gbc.gridx = 4;
+        preReg = new JCheckBox("don't register image:");
         preReg.addActionListener(this);
         preReg.setActionCommand("preReg");
         preReg.setHorizontalTextPosition(SwingConstants.LEFT);
-        mainPanel.add(preReg, mainPanelConstraints);
+        mainPanelB.add(preReg, gbc);
         
-        
-        mainPanelConstraints.gridx = 7;
-        mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.insets = new Insets(25,450,15,0);
-        toConcat = new JCheckBox("make concatenated  image:   ");
+        gbc.gridx = 5;
+        toConcat = new JCheckBox("make concatenated  image:");
         toConcat.setHorizontalTextPosition(SwingConstants.LEFT);
-        mainPanel.add(toConcat, mainPanelConstraints);
+        mainPanelB.add(toConcat, gbc);
         
-        
-        
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 5;
-        mainPanelConstraints.insets = new Insets(0,0,5,0);
-        JLabel yminLabel = new JLabel(" yMin : ");
-        mainPanel.add(yminLabel, mainPanelConstraints);
-        
-        mainPanelConstraints.gridx = 2;
-        mainPanelConstraints.gridy = 5;
-        mainPanelConstraints.insets = new Insets(10,70,15,0);
-        yminText = new JTextField(5);
-        mainPanel.add(yminText, mainPanelConstraints);
 
-        mainPanelConstraints.gridx = 3;
-        mainPanelConstraints.gridy = 5;
-        mainPanelConstraints.insets = new Insets(0,150,5,0);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel yminLabel = new JLabel(" yMin : ");
+        mainPanelB.add(yminLabel, gbc);
+        
+        gbc.gridx = 1;
+        yminText = new JTextField(5);
+        mainPanelB.add(yminText, gbc);
+
+        gbc.gridx = 2;
         JLabel ymaxLabel = new JLabel(" yMax : ");
-        mainPanel.add(ymaxLabel, mainPanelConstraints);
+        mainPanelB.add(ymaxLabel, gbc);
         
-        mainPanelConstraints.gridx = 4;
-        mainPanelConstraints.gridy = 5;
-        mainPanelConstraints.insets = new Insets(10,210,15,0);
+        gbc.gridx = 3;
         ymaxText = new JTextField(5);
-        mainPanel.add(ymaxText, mainPanelConstraints);
+        mainPanelB.add(ymaxText, gbc);
         
-        mainPanelConstraints.gridx = 5;
-        mainPanelConstraints.gridy = 5;
-        mainPanelConstraints.insets = new Insets(10,285,15,0);
+        gbc.gridx = 4;
+        gbc.anchor = GridBagConstraints.EAST;
+        JLabel typeText = new JLabel(" Min/Max Value Type:");
+        mainPanelB.add(typeText, gbc);
         
-        JLabel typeText = new JLabel("Min/Max Value Type: ");
-        mainPanel.add(typeText, mainPanelConstraints);
-        
-        mainPanelConstraints.insets = new Insets(10,420,15,0);
+        gbc.gridx = 5;
+        gbc.anchor = GridBagConstraints.WEST;
         typeMinMax = new JComboBox();
         typeMinMax.addItem("Percentile");
         typeMinMax.addItem("Intensity");
-        mainPanel.add(typeMinMax, mainPanelConstraints);
+        mainPanelB.add(typeMinMax, gbc);
         
-
+       
         
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 6;
-        mainPanelConstraints.insets = new Insets(0,0,5,0);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         JLabel minLabel = new JLabel(" bMin : ");
-        mainPanel.add(minLabel, mainPanelConstraints);
+        mainPanelB.add(minLabel, gbc);
         
-        mainPanelConstraints.gridx = 2;
-        mainPanelConstraints.gridy = 6;
-        mainPanelConstraints.insets = new Insets(10,70,15,0);
+        gbc.gridx = 1;
         bminText = new JTextField(5);
-        mainPanel.add(bminText, mainPanelConstraints);
+        mainPanelB.add(bminText, gbc);
 
-        mainPanelConstraints.gridx = 3;
-        mainPanelConstraints.gridy = 6;
-        mainPanelConstraints.insets = new Insets(0,150,5,0);
+        gbc.gridx = 2;
         JLabel bmaxLabel = new JLabel(" bMax : ");
-        mainPanel.add(bmaxLabel, mainPanelConstraints);
+        mainPanelB.add(bmaxLabel, gbc);
         
-        mainPanelConstraints.gridx = 4;
-        mainPanelConstraints.gridy = 6;
-        mainPanelConstraints.insets = new Insets(10,210,15,0);
+        gbc.gridx = 3;
         bmaxText = new JTextField(5);
-        mainPanel.add(bmaxText, mainPanelConstraints);
+        mainPanelB.add(bmaxText, gbc);
         
         
-        mainPanelConstraints.anchor = GridBagConstraints.CENTER;
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 7;
-        mainPanelConstraints.gridwidth = 9;
-        mainPanelConstraints.insets = new Insets(15,85,15,0) ;
-        outputTextArea = new JTextArea(15, 60);
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        outputTextArea = new JTextArea(10, 60);
         outputTextArea.setEditable(false);
         outputTextArea.setBackground(Color.lightGray);
         outputTextArea.setBorder(new LineBorder(Color.black));
         outputTextArea.setForeground(Color.black);
         scrollPane = new JScrollPane(outputTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-
-        mainPanel.add(scrollPane, mainPanelConstraints);
-
+        mainPanelC.add(scrollPane, gbc);
+        
+        mainPanel.add(mainPanelA, gbc);
+        gbc.gridy = 1;
+        mainPanel.add(mainPanelB, gbc);
+        gbc.gridy = 2;
+        mainPanel.add(mainPanelC, gbc);
+        
         
         JPanel OKCancelHelpPanel = new JPanel();
         buildOKButton();
@@ -332,82 +295,78 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         buildHelpButton();
         helpButton.setActionCommand("help");
         OKCancelHelpPanel.add(helpButton, BorderLayout.EAST);
-  
+ 
         tabs.addTab("Create MPmaps", null, mainPanel);
         
-        JPanel secondPanel = new JPanel(mainPanelGridBagLayout);
 
+        JPanel secondPanel = new JPanel(new GridBagLayout());
+        JPanel secondPanelA = new JPanel(new GridBagLayout());
+        JPanel secondPanelB = new JPanel(new GridBagLayout());
+        JPanel secondPanelC = new JPanel(new GridBagLayout());
 
-        mainPanelConstraints.anchor = GridBagConstraints.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        
         
         // Create Second tab for data creation
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.insets = new Insets(15,5,15,0);
         JLabel mapLabel = new JLabel(" mpMap File : ");
-        secondPanel.add(mapLabel, mainPanelConstraints);
+        secondPanelA.add(mapLabel, gbc);
         
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.gridwidth = 1;
-        mainPanelConstraints.insets = new Insets(15,5,15,20);
+        gbc.gridx = 1;
         mpMapText = new JTextField(55);
-        secondPanel.add(mpMapText, mainPanelConstraints);
+        secondPanelA.add(mpMapText, gbc);
         
-        mainPanelConstraints.gridx = 2;
-        mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.insets = new Insets(15,5,15,5);
+        
+        gbc.gridx = 2;
         mapBrowseButton = new JButton("Browse");
         mapBrowseButton.addActionListener(this);
         mapBrowseButton.setActionCommand("mapBrowse");
-        secondPanel.add(mapBrowseButton, mainPanelConstraints);
+        secondPanelA.add(mapBrowseButton, gbc);
         
-        mainPanelConstraints.gridx =0;
-        mainPanelConstraints.gridy = 1;
-        mainPanelConstraints.insets = new Insets(15,5,15,0);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         JLabel VOILabel = new JLabel(" VOI File : ");
-        secondPanel.add(VOILabel, mainPanelConstraints);
+        secondPanelA.add(VOILabel, gbc);
         
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 1;
-        mainPanelConstraints.gridwidth = 1;
-        mainPanelConstraints.insets = new Insets(15,5,15,20);
+        gbc.gridx = 1;
         VOIText = new JTextField(55);
-        secondPanel.add(VOIText, mainPanelConstraints);
+        secondPanelA.add(VOIText, gbc);
         
-        mainPanelConstraints.gridx = 2;
-        mainPanelConstraints.gridy = 1;
-        mainPanelConstraints.insets = new Insets(15,5,15,5);
+        gbc.gridx = 2;
         VOIBrowseButton = new JButton("Browse");
         VOIBrowseButton.addActionListener(this);
         VOIBrowseButton.setActionCommand("VOIBrowse");
-        secondPanel.add(VOIBrowseButton, mainPanelConstraints);
+        secondPanelA.add(VOIBrowseButton, gbc);
         
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 2;
-        mainPanelConstraints.insets = new Insets(15,5,15,0);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         JLabel dPerPLabel = new JLabel(" Degrees/Pixel : ");
-        secondPanel.add(dPerPLabel, mainPanelConstraints);
+        secondPanelB.add(dPerPLabel, gbc);
         
-        mainPanelConstraints.gridx = 1;
-        mainPanelConstraints.gridy = 2;
-        mainPanelConstraints.insets = new Insets(15,5,15,5);
+        gbc.gridx = 1;
         dPerPText = new JTextField(5);
-        secondPanel.add(dPerPText, mainPanelConstraints);
+        secondPanelB.add(dPerPText, gbc);
         
-        mainPanelConstraints.anchor = GridBagConstraints.CENTER;
-        mainPanelConstraints.gridx = 0;
-        mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.gridwidth = 2;
-        mainPanelConstraints.insets = new Insets(15,85,15,0) ;
-        outputTextArea2 = new JTextArea(15, 60);
+
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        outputTextArea2 = new JTextArea(10, 60);
         outputTextArea2.setEditable(false);
         outputTextArea2.setBackground(Color.lightGray);
         outputTextArea2.setBorder(new LineBorder(Color.black));
         outputTextArea2.setForeground(Color.black);
         scrollPane2 = new JScrollPane(outputTextArea2, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-        secondPanel.add(scrollPane2, mainPanelConstraints);
+        secondPanelC.add(scrollPane2, gbc);
+        
+        secondPanel.add(secondPanelA, gbc);
+        gbc.gridy = 1;
+        secondPanel.add(secondPanelB, gbc);
+        gbc.gridy = 2;
+        secondPanel.add(secondPanelC, gbc);
         
         tabs.addTab("Analyze mpMap", null, secondPanel);
         
@@ -416,8 +375,8 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         
 
         
-        
-        setSize(876,721);
+        pack();
+        //setSize(876,721);
         setResizable(false);
         setVisible(true);
        
