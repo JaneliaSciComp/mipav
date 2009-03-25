@@ -372,7 +372,7 @@ public class JDialogCropBoundaryParam extends JDialogScriptableBase implements A
                     cropAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog CropParam: unable to allocate enough memory");
+                MipavUtil.displayError("Dialog CropBoundaryParam: unable to allocate enough memory");
 
                 return;
             }
@@ -411,7 +411,7 @@ public class JDialogCropBoundaryParam extends JDialogScriptableBase implements A
                 }
 
             } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog CropParam: unable to allocate enough memory");
+                MipavUtil.displayError("Dialog CropBoundaryParam: unable to allocate enough memory");
 
                 return;
             }
@@ -467,7 +467,7 @@ public class JDialogCropBoundaryParam extends JDialogScriptableBase implements A
 
             return rightSideInput;
         } catch (NullPointerException npe) {
-            MipavUtil.displayError("JDialogCropParam reports: Unknown Error");
+            MipavUtil.displayError("JDialogCropBoundaryParam reports: Unknown Error");
 
             return rightSideInput; // gotta have some thing returned
         }
