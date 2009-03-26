@@ -15,6 +15,7 @@ void v_ConstantColor()
     }   
     else if ( UseConstantColor == 2.0 )
     {
-        gl_FrontColor.rgb = gl_Color;
+        gl_FrontColor.rgb = gl_Color.rgb;
     }   
+    gl_FrontColor.a = 1.0;
 }
