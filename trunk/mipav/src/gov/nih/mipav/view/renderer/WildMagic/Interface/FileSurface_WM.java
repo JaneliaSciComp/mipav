@@ -832,15 +832,15 @@ public class FileSurface_WM {
         }
         else if ( kExt.equals(".ply" ) )
         {
-            saveSinglePlyMesh(kName, kMesh);
+            saveSinglePlyMesh(kName, null, kMesh);
         }
         else if ( kExt.equals(".stla" ) )
         {
-        	saveSingleSTLMesh(kName, kMesh);
+        	saveSingleSTLMesh(kName, null, kMesh);
         }
         else if ( kExt.equals(".stlb" ) )
         {
-        	saveSingleSTLMesh(kName, kMesh);
+        	saveSingleSTLMesh(kName, null, kMesh);
         }
         else if ( kExt.equals(".txt" ) )
         {
@@ -946,13 +946,13 @@ public class FileSurface_WM {
         else if (kCommand.equals("LevelSTL")) {
 
             for (int i = 0; i < akSurfaces.length; i++) {
-            	saveSingleSTLMesh(null, akSurfaces[i]);
+            	saveSingleSTLMesh(null, kImage, akSurfaces[i]);
             }
         }
         else if (kCommand.equals("LevelPLY")) {
 
             for (int i = 0; i < akSurfaces.length; i++) {
-            	saveSinglePlyMesh(null, akSurfaces[i] );
+            	saveSinglePlyMesh(null, kImage, akSurfaces[i] );
             }
         }
     }
@@ -1737,10 +1737,11 @@ public class FileSurface_WM {
      * @param kOut output
      * @param kMesh TriMesh
      */
-    private static void printSTLAscii(PrintWriter kOut, TriMesh kMesh)
+    private static void printSTLAscii(PrintWriter kOut, ModelImage kImage, TriMesh kMesh)
     {
         int i;
         int index1, index2, index3;
+        VertexBuffer kVBuffer;
         int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
         int[] aiIndex = kMesh.IBuffer.GetData();
         Vector3f kVertex = new Vector3f();
@@ -1749,6 +1750,12 @@ public class FileSurface_WM {
         Vector3f kNormal2 = new Vector3f();
         Vector3f kNormal3 = new Vector3f();
 
+        if ( kImage != null ) {
+          kVBuffer = convertVertex(kImage, kMesh);
+        } else {
+          kVBuffer = kMesh.VBuffer;
+        }
+        
         kOut.println("solid");
         
         for (i = 0; i < iTriangleCount; i++) {
@@ -1756,9 +1763,9 @@ public class FileSurface_WM {
             index2 = aiIndex[((3 * i) + 1)];
             index3 = aiIndex[((3 * i) + 2)];
             
-            kMesh.VBuffer.GetPosition3(index1, kNormal1);
-            kMesh.VBuffer.GetPosition3(index2, kNormal2);
-            kMesh.VBuffer.GetPosition3(index3, kNormal3);
+            kVBuffer.GetPosition3(index1, kNormal1);
+            kVBuffer.GetPosition3(index2, kNormal2);
+            kVBuffer.GetPosition3(index3, kNormal3);
 	            
             // Compute facet normal
             kNormal.Set(0f, 0f, 0f);
@@ -1776,7 +1783,7 @@ public class FileSurface_WM {
             
             kOut.println("   outer loop");
             // index 1
-            kMesh.VBuffer.GetPosition3(index1, kVertex);
+            kVBuffer.GetPosition3(index1, kVertex);
             kOut.print("     vertex ");
             kOut.print(kVertex.X);
             kOut.print(' ');
@@ -1784,7 +1791,7 @@ public class FileSurface_WM {
             kOut.print(' ');
             kOut.println(kVertex.Z);
             // index 2
-            kMesh.VBuffer.GetPosition3(index2, kVertex);
+            kVBuffer.GetPosition3(index2, kVertex);
             kOut.print("     vertex ");
             kOut.print(kVertex.X);
             kOut.print(' ');
@@ -1792,7 +1799,7 @@ public class FileSurface_WM {
             kOut.print(' ');
             kOut.println(kVertex.Z);
             // index 3
-            kMesh.VBuffer.GetPosition3(index3, kVertex);
+            kVBuffer.GetPosition3(index3, kVertex);
             kOut.print("     vertex ");
             kOut.print(kVertex.X);
             kOut.print(' ');
@@ -1811,10 +1818,11 @@ public class FileSurface_WM {
      * @param kMesh TriMesh
      * @throws IOException I/O exception.
      */
-    private static void printSTLBinary( RandomAccessFile kOut, TriMesh kMesh ) throws IOException
+    private static void printSTLBinary( RandomAccessFile kOut, ModelImage kImage, TriMesh kMesh ) throws IOException
     {
         int index1, index2, index3;
         byte[] attribute = new byte[2];
+        VertexBuffer kVBuffer;
         int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
         int[] aiIndex = kMesh.IBuffer.GetData();
 	               
@@ -1824,6 +1832,13 @@ public class FileSurface_WM {
         Vector3f kNormal2 = new Vector3f();
         Vector3f kNormal3 = new Vector3f();
 	        
+        if (kImage != null) {
+			kVBuffer = convertVertex(kImage, kMesh);
+		} else {
+			kVBuffer = kMesh.VBuffer;
+		}
+          
+        
         // nothing header
         byte[] header = new byte[80];
         kOut.write(header);
@@ -1836,9 +1851,9 @@ public class FileSurface_WM {
             index2 = aiIndex[((3 * i) + 1)];
             index3 = aiIndex[((3 * i) + 2)];
 	            
-            kMesh.VBuffer.GetPosition3(index1, kNormal1);
-            kMesh.VBuffer.GetPosition3(index2, kNormal2);
-            kMesh.VBuffer.GetPosition3(index3, kNormal3);
+            kVBuffer.GetPosition3(index1, kNormal1);
+            kVBuffer.GetPosition3(index2, kNormal2);
+            kVBuffer.GetPosition3(index3, kNormal3);
 	            
             // Compute facet normal
             kNormal.Set(0f, 0f, 0f);
@@ -1853,19 +1868,19 @@ public class FileSurface_WM {
             kOut.write(FileBase.floatToBytes(kNormal.Z, false));
 	            
             // index 1
-            kMesh.VBuffer.GetPosition3(index1, kVertex);;            
+            kVBuffer.GetPosition3(index1, kVertex);;            
             kOut.write(FileBase.floatToBytes(kVertex.X, false));
             kOut.write(FileBase.floatToBytes(kVertex.Y, false));
             kOut.write(FileBase.floatToBytes(kVertex.Z, false));
 	                       
             // index 2
-            kMesh.VBuffer.GetPosition3(index2, kVertex);;
+            kVBuffer.GetPosition3(index2, kVertex);;
             kOut.write(FileBase.floatToBytes(kVertex.X, false));
             kOut.write(FileBase.floatToBytes(kVertex.Y, false));
             kOut.write(FileBase.floatToBytes(kVertex.Z, false));
 
             // index 3
-            kMesh.VBuffer.GetPosition3(index3, kVertex);
+            kVBuffer.GetPosition3(index3, kVertex);
             kOut.write(FileBase.floatToBytes(kVertex.X, false));
             kOut.write(FileBase.floatToBytes(kVertex.Y, false));
             kOut.write(FileBase.floatToBytes(kVertex.Z, false));
@@ -2602,9 +2617,11 @@ public class FileSurface_WM {
      * @param  kName file name.
      * @param  kMesh   Triangle mesh
      */
-    private static void saveSinglePlyMesh(String kName, TriMesh kMesh)
+    private static void saveSinglePlyMesh(String kName, ModelImage kImage, TriMesh kMesh)
     {
     	String name = kName;
+    	VertexBuffer kVBuffer;
+
     	if ( kName == null )
     	{
     		name = getFileName(false);
@@ -2630,9 +2647,17 @@ public class FileSurface_WM {
             kOut.println("property list uint8 int32 vertex_indices");
             kOut.println("end_header");
 	       
+            if (kImage != null) {
+    			kVBuffer = convertVertex(kImage, kMesh);
+    		} else {
+    			kVBuffer = kMesh.VBuffer;
+    		}
+              
+            
+            
             Vector3f kVertex = new Vector3f();
             for (int i = 0; i < iVertexCount; i++) {
-                kMesh.VBuffer.GetPosition3(i, kVertex);;   
+                kVBuffer.GetPosition3(i, kVertex);;   
                 kOut.print(kVertex.X);
                 kOut.print(' ');
                 kOut.print(kVertex.Y);
@@ -2663,7 +2688,7 @@ public class FileSurface_WM {
      * @param  kName file name.
      * @param  kMesh   Triangle mesh
      */
-    private static void saveSingleSTLMesh(String kName, TriMesh kMesh ) {
+    private static void saveSingleSTLMesh(String kName, ModelImage kImage, TriMesh kMesh ) {
     	String name = kName;
     	if ( kName == null )
     	{
@@ -2683,13 +2708,13 @@ public class FileSurface_WM {
             if ( bAscii )
             {
                 PrintWriter kOut = new PrintWriter(new FileWriter(name));
-                printSTLAscii(kOut, kMesh);
+                printSTLAscii(kOut, kImage, kMesh);
                 kOut.close();
             }
             else
             {
                 RandomAccessFile kOut = new RandomAccessFile(new File(name), "rw");  	    
-                printSTLBinary(kOut, kMesh);
+                printSTLBinary(kOut, kImage, kMesh);
                 kOut.close();
             }
 	   	    
@@ -2974,5 +2999,75 @@ public class FileSurface_WM {
             saveSingleMesh( surfaceName, kImage, true, kMesh );
         } catch ( IOException kError ) { }
     }
+    
+    /**
+     * Convert the vertex from display space to dicom space.
+     * @param kImage  ModelImage
+     * @param kMesh   Triangle mesh
+     * @return kVBuffer   Converted vertex buffer
+     */
+    private static VertexBuffer convertVertex(ModelImage kImage, TriMesh kMesh ) {
+    	float[] startLocation = kImage.getFileInfo(0).getOrigin();
+        int[] extents = kImage.getExtents();
+        int xDim = extents[0];
+        int yDim = extents[1];
+        int zDim = extents[2];
+        
+        float[] resols = kImage.getFileInfo()[0].getResolutions();
+        float xBox = (xDim - 1) * resols[0];
+        float yBox = (yDim - 1) * resols[1];
+        float zBox = (zDim - 1) * resols[2];
+        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+
+        int[] direction = MipavCoordinateSystems.getModelDirections(kImage);
+        float[] box = new float[]{ xBox, yBox, zBox };
+
+        //                 for (int i = 0; i < meshes.length; i++) {
+        VertexBuffer kVBuffer = new VertexBuffer( kMesh.VBuffer );
+
+        // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
+        // The loaded vertex is at 2.0f*pt.x*resX - (xDim-1)*resX
+        // The mesh files must save the verticies as
+        // pt.x*resX*direction[0] + startLocation
+        for (int j = 0; j < kVBuffer.GetVertexQuantity(); j++) {
+            kVBuffer.SetPosition3( j,
+                                   ((((kMesh.VBuffer.GetPosition3fX(j) * 2.0f * maxBox) + xBox) / 2.0f) * direction[0]) +
+                                   startLocation[0],
+                                   ((((kMesh.VBuffer.GetPosition3fY(j) * 2.0f * maxBox) + yBox) / 2.0f) * direction[1]) +
+                                   startLocation[1],
+                                   ((((kMesh.VBuffer.GetPosition3fZ(j) * 2.0f * maxBox) + zBox) / 2.0f) * direction[2]) +
+                                   startLocation[2] );
+
+            // flip y and z
+            //                         kVBuffer.SetPosition3( j, kVBuffer.GetPosition3fX(j),
+            //                                                (2 * startLocation[1]) + (box[1] * direction[1]) - kVBuffer.GetPosition3fY(j),
+            //                                                (2 * startLocation[2]) + (box[2] * direction[2]) - kVBuffer.GetPosition3fZ(j) );
+
+            if (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+
+                // Get the DICOM transform that describes the transformation from
+                // axial to this image orientation
+                TransMatrix dicomMatrix = kImage.getMatrix().clone();
+                float[] coord = new float[3];
+                float[] tCoord = new float[3];
+
+                // Change the voxel coordinate into millimeter space
+                coord[0] = (kVBuffer.GetPosition3fX(j) - startLocation[0]) / direction[0];
+                coord[1] = (kVBuffer.GetPosition3fY(j) - startLocation[1]) / direction[1];
+                coord[2] = (kVBuffer.GetPosition3fZ(j) - startLocation[2]) / direction[2];
+
+                // Convert the point to axial millimeter DICOM space
+                dicomMatrix.transform(coord, tCoord);
+
+                // Add in the DICOM origin
+                tCoord[0] = tCoord[0] + startLocation[0];
+                tCoord[1] = tCoord[1] + startLocation[1];
+                tCoord[2] = tCoord[2] + startLocation[2];
+                kVBuffer.SetPosition3(j, tCoord[0], tCoord[1], tCoord[2]);
+            }
+        }
+        return kVBuffer;
+    }
+    
 
 }
