@@ -10,6 +10,10 @@ import gov.nih.mipav.model.structures.*;
  * @author  mccreedy
  */
 public interface PlugInFile extends PlugIn {
+	
+	// ~ Static fields/initializers ------------------------------------------------------------------
+	
+	public static final String[] CATEGORY = {"File"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
