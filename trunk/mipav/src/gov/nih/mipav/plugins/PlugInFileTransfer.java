@@ -7,6 +7,10 @@ package gov.nih.mipav.plugins;
  * @author  Hailong Wang
  */
 public interface PlugInFileTransfer extends PlugIn {
+	
+	// ~ Static fields/initializers ------------------------------------------------------------------
+	
+	public static final String[] CATEGORY = {"File Transfer"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 

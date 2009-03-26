@@ -12,6 +12,10 @@ import java.awt.*;
  * DOCUMENT ME!
  */
 public interface PlugInView extends PlugIn {
+	
+	// ~ Static fields/initializers ------------------------------------------------------------------
+	
+	public static final String[] CATEGORY = {"View"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 

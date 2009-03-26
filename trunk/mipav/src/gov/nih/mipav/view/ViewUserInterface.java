@@ -23,6 +23,7 @@ import gov.nih.mipav.view.xcede.JXCEDEExplorer;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.*;
 
@@ -43,8 +44,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  */
 public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, ScriptRecordingListener {
 
-    // ~ Static fields/initializers
-    // -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers ------------------------------------------------------------------
 
     /**
      * A reference to the only ViewUserInterface object in MIPAV.
@@ -912,21 +912,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @return the new plugin menu
      */
     public JMenu buildPlugInsMenu(ActionListener al) {
-        String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins"
+    	String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins"
                 + File.separator;
 
         JMenu menu = ViewMenuBuilder.buildMenu("Plugins", 'P', false);
-
-        JMenu fileMenu = ViewMenuBuilder.buildMenu("File", 0, false);
-
-        JMenu algorithmMenu = ViewMenuBuilder.buildMenu("Algorithm", 0, false);
-
-        JMenu fileTransferMenu = ViewMenuBuilder.buildMenu("File Transfer", 0, false);
-
-        JMenu viewMenu = ViewMenuBuilder.buildMenu("View", 0, false);
-
-        JMenu genericMenu = ViewMenuBuilder.buildMenu("General", 0, false);
-
+        
         File pluginsDir = new File(userPlugins);
         if (pluginsDir.isDirectory()) {
 
@@ -935,135 +925,89 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                     if (f.getPath().endsWith(".class")) {
                         return true;
-                    } else {
-                        return false;
-                    }
+                    }   
+                    return false;
                 }
             });
 
-            String name;
-            JMenuItem menuItem = null;
-
+            String name, pluginName;
+            Field catField;
+            Class plugin;
+            String fieldName = "CATEGORY";
+            
             for (int i = 0; i < allFiles.length; i++) {
-                name = allFiles[i].getName();
+            	JMenu currentMenu = menu;
+            	name = allFiles[i].getName();
 
                 try {
-                    name = name.substring(0, name.indexOf(".class"));
-
-                    Class[] interfaceAr = Class.forName(name).getInterfaces();
-                    Class toCompare = null;
-                    for(int j=0; j<interfaceAr.length; j++) {
-                    	//extended interfaces are found by getIInterfaces
-                    	if(interfaceAr[j].getInterfaces()[0].equals(PlugIn.class)) {
-                    		toCompare = interfaceAr[j];
-                    	}
-                    }
-                    
-                    if ( (PlugInAlgorithm.class.equals(toCompare)) && ! (al instanceof ViewUserInterface)) {
-
-                        // System.err.println("adding " + name + " as PlugInAlgorithm");
-                        menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
-                                .length()), "PlugInAlgorithm"
-                                + name.substring(name.indexOf("PlugIn") + 6, name.length()), 0, al, null, false);
-                        algorithmMenu.add(menuItem);
-                        menuItem.setName(name);
-                    } else if (PlugInFile.class.equals(toCompare)) {
-                    	Object plugIn = Class.forName(name).newInstance();
-                        if ( ((PlugInFile) plugIn).canReadImages()) {
-                            menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
-                                    .length())
-                                    + " - read image", "PlugInFileRead"
-                                    + name.substring(name.indexOf("PlugIn") + 6, name.length()), 0, al, null, false);
-                            fileMenu.add(menuItem);
-                            menuItem.setName(name);
-                        }
-
-                        // if (!(al instanceof ViewUserInterface) && ((PlugInFile)plugIn).canWriteImages()) {
-                        if ( ((PlugInFile) plugIn).canWriteImages()) {
-
-                            // some sort of image has been loaded and could be writen out by a plugin
-                            menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
-                                    .length())
-                                    + " - write image", "PlugInFileWrite"
-                                    + name.substring(name.indexOf("PlugIn") + 6, name.length()), 0, al, null, false);
-                            fileMenu.add(menuItem);
-                            menuItem.setName(name);
-                        }
-                        // System.err.println("adding " + name + " as PlugInFile");
-                    } else if (PlugInFileTransfer.class.equals(toCompare)) {
-                        menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
-                                .length())
-                                + " - transfer files", "PlugInFileTransfer"
-                                + name.substring(name.indexOf("PlugIn") + 6, name.length()), 0, al, null, false);
-                        fileTransferMenu.add(menuItem);
-                        menuItem.setName(name);
-                    } else if (PlugInGeneric.class.equals(toCompare)) {
-                        menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
-                                .length()),
-                                "PlugInGeneric" + name.substring(name.indexOf("PlugIn") + 6, name.length()), 0, al,
-                                null, false);
-                        genericMenu.add(menuItem);
-                        menuItem.setName(name);
-                    } else if ( (PlugInView.class.equals(toCompare)) && ! (al instanceof ViewUserInterface)) {
-
-                        // System.err.println("adding " + name + " as PlugInView");
-                        menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name
-                                .length()), "PlugInView" + name.substring(name.indexOf("PlugIn") + 6, name.length()),
-                                0, al, null, false);
-
-                        viewMenu.add(menuItem);
-                        menuItem.setName(name);
-                    }
-                    
-                } catch (UnsupportedClassVersionError ucve) {
-                    Preferences
-                            .debug(
-                                    "Unable to load plugin: "
-                                            + name
-                                            + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
-                                    Preferences.DEBUG_MINOR);
-                    ucve.printStackTrace();
-                } catch (Exception ex) { // System.err.println(ex.toString());
-                    Preferences.debug("Unable to find plugin: " + name + " -- " + ex.getMessage() + "\n",
-                            Preferences.DEBUG_MINOR);
+                	name = name.substring(0, name.indexOf(".class"));
+                	pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
+                } catch(Exception e) {
+                	pluginName = name;
+                }
+                try {
+                	plugin = Class.forName(name);
+                	catField = plugin.getField(fieldName);
+                	String[] hier = (String[])catField.get(plugin);
+                	Class[] interList = plugin.getInterfaces();
+                	String interName = new String();
+                	for(int j=0; j<interList.length; j++) {
+                		if(interList[j].getName().contains("PlugIn")) {
+                			interName = interList[j].getName().substring(interList[j].getName().indexOf("PlugIn"));
+                		}
+                	}
+                	
+                	for(int j=0; j<hier.length; j++) {
+                		Component[] subComp = currentMenu.getMenuComponents();
+                		boolean subExists = false;
+                		for(int k=0; k<subComp.length; k++) {
+                			if(subComp[k] instanceof JMenu && ((JMenu)subComp[k]).getText().equals(hier[j])) {
+                				currentMenu = (JMenu) subComp[k];
+                				subExists = true;
+                				break;
+                			}
+                		}
+                		if(!subExists) {
+                			JMenu newMenu = ViewMenuBuilder.buildMenu(hier[j], 0, false);
+                			currentMenu.add(newMenu);
+                			currentMenu = newMenu;
+                		}
+                	}
+                	if(!(al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
+	                	currentMenu.add(ViewMenuBuilder.buildMenuItem(pluginName, 
+	                			interName+pluginName, 0, al, null, false));	
+                	}
+                
+                } catch(Exception e) {
+                	//usually this means other files/folders exist in the installed plugins directory besides plugin files
                 }
             }
-
         }
-
-        if ( ! (al instanceof ViewUserInterface)) {
-
-            if (algorithmMenu.getItemCount() > 0) {
-                menu.add(algorithmMenu);
-            }
+        
+        if(menu.getItemCount() > 0) {
+        	menu.addSeparator();
         }
-
-        if (fileMenu.getItemCount() > 0) {
-            menu.add(fileMenu);
-        }
-
-        if (fileTransferMenu.getItemCount() > 0) {
-            menu.add(fileTransferMenu);
-        }
-
-        if (genericMenu.getItemCount() > 0) {
-            menu.add(genericMenu);
-        }
-
-        if ( ! (al instanceof ViewUserInterface)) {
-
-            if (viewMenu.getItemCount() > 0) {
-                menu.add(viewMenu);
-            }
-        }
-
-        if (menu.getItemCount() > 0) {
-            menu.addSeparator();
-        }
-
+        
+        deleteMenu(menu);
+        
         menu.add(ViewMenuBuilder.buildMenuItem("Install plugin", "InstallPlugin", 0, al, null, false));
-
         return menu;
+    }
+    
+    /**
+     * Recursive deletion algorithm to delete JMenus which contain no JMenuItems exclusive of JMenus in any children.
+     * 
+     * @param menu The menu to run through deletion
+     */
+    private void deleteMenu(JMenu menu) {
+    	for(int i=0; i<menu.getItemCount(); i++) {
+        	if(menu.getItem(i) instanceof JMenu) {
+        		deleteMenu(((JMenu)menu.getItem(i))); 	
+        		if(((JMenu)menu.getItem(i)).getItemCount() == 0) {
+        			menu.remove(i);
+        		}		
+        	}
+        }
     }
 
     /**

@@ -15,6 +15,10 @@ import java.awt.*;
  * @author  mccreedy
  */
 public interface PlugInAlgorithm extends PlugIn {
+	
+	// ~ Static fields/initializers ------------------------------------------------------------------
+	
+	public static final String[] CATEGORY = {"Algorithm"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 

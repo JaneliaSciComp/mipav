@@ -8,6 +8,10 @@ package gov.nih.mipav.plugins;
  * @author  mccreedy
  */
 public interface PlugInGeneric extends PlugIn {
+	
+	// ~ Static fields/initializers ------------------------------------------------------------------
+	
+	public static final String[] CATEGORY = {"Generic"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
