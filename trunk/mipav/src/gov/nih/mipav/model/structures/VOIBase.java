@@ -99,7 +99,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     /** VOI Name (for group of contours, not specific to this base). */
     protected String name = null;
 
-    /** Flag used to inidicate if the cursor is near a point of the VOI member. */
+    /** Flag used to indicate if the cursor is near a point of the VOI member. */
     protected int nearPoint = NOT_A_POINT;
 
     /** General use color (red) used in VOI. */
@@ -187,6 +187,15 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public abstract Vector3f getActivePt();
 
+    /**
+     * Returns the point on the curve nearest the cursor, calculated by nearLine, etc.
+     * @return point on the curve nearest the cursor.
+     */
+    public int getNearPt()
+    {
+        return nearPoint;
+    }
+    
     /**
      * Return the VOI crop region's origin of rectangle.
      *

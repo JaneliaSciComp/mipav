@@ -991,59 +991,28 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         VOIToolBar.setBorderPainted(true);
         VOIToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         VOIToolBar.setFloatable(false);
-
-        //pointerVOIButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER, VOIGroup);
-        //VOIToolBar.add(pointerVOIButton);
-
-        //VOIToolBar.add(makeSeparator());
-        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_TEXT, VOIGroup));
         
-        //VOIToolBar.add(makeSeparator());
-        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_POINT, VOIGroup));
+        JToggleButton pointerButton = buildToggleButton(new UIParams("Default Pointer", "Default", UIParams.INVALID_MNEMONIC, 
+                "Default Mode", "pointer", true), VOIGroup);
+        VOIToolBar.add(pointerButton);
 
-        //JToggleButton polysliceButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_POLY_SLICE, VOIGroup);
+        VOIToolBar.add(makeSeparator());
 
-        // polysliceButton.setEnabled(false);
-        //polysliceButton.setEnabled(numberOfDimensions > 2);
-        //VOIToolBar.add(polysliceButton);
+        pointerVOIButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER, VOIGroup);
+        VOIToolBar.add(pointerVOIButton);
 
-
-        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LINE, VOIGroup));
-        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_PROTRACTOR, VOIGroup));
+        VOIToolBar.add(makeSeparator());
+        
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_RECTANGLE, VOIGroup));
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_ELLIPSE, VOIGroup));
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_POLYGON, VOIGroup));
 
 
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LEVELSET, VOIGroup));
-        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LIVEWIRE, VOIGroup));
-
-        //JToggleButton cubeVOIButton = buildToggleButton(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE, VOIGroup);
-        //VOIToolBar.add(cubeVOIButton);
-
-        //if (numberOfDimensions == 2) {
-        //    cubeVOIButton.setEnabled(false);
-        //}
-
         
-
-        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_SPLITTER, null));
-        
-        voiColorButton = new VOIColorButton(0);
-        VOIToolBar.add(makeSeparator());
-       
-       
-        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_NEW, VOIGroup));
-        //VOIToolBar.add(makeSeparator());
-        
-        //VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_PROPERTIES, VOIGroup));
-        VOIToolBar.add(voiColorButton);
-
         VOIToolBar.add(makeSeparator());
 
-        //VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_UNDO));
-
-        // VOIToolBar.add( buildButton( "deleteVOI", "Delete selected contour", "delete" ) );
+        VOIToolBar.add( buildButton( "deleteVOI", "Delete selected contour", "delete" ) );
         VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_CUT));
         VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_COPY));
         VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_PASTE));
@@ -1058,10 +1027,11 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
         VOIToolBar.add(propAllVOIButton);
         VOIToolBar.add(propUpVOIButton);
 
-        //VOIToolBar.add(makeSeparator());
-        //VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_QUICK_AND_OP));
-        //VOIToolBar.add(buildButton(CustomUIBuilder.PARAM_VOI_QUICK_NOT_OP));
+        VOIToolBar.add(makeSeparator());
 
+        VOIToolBar.add( buildTextButton( "make 3D-VOI Intersection", "", "3DVOIIntersect" ) );
+        VOIToolBar.add( buildTextButton( "make 3D-VOI Union", "", "3DVOIUnion" ) );
+        
         return VOIToolBar;
     }
 
