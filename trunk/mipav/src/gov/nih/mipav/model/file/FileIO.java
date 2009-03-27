@@ -8801,6 +8801,32 @@ public class FileIO {
      * @return Flag indicating that this was a successful write.
      */
     private boolean writeAnalyze(ModelImage image, FileWriteOptions options) {
+    	/*
+    	 * Analyze does not support unsigned short.  So...if image to be saved is
+    	 * unsigned short, check to see if the max of the image is <= max of unsigned short
+    	 * If that is true, then show a warning that says image will be saved as short
+    	 * If it is false, then show an error saying that user must first convert the data
+    	 * type other than unsigned short
+    	 * 
+    	 */
+    	if(image.getType() == ModelStorageBase.USHORT) {
+    		double max = image.getMax();
+    		if(max <= 32767) {
+    			//this means it will fit in to short
+    			int response = JOptionPane.showConfirmDialog(UI.getMainFrame(), "Analyze does not support Unsigned Short. However, the data will fit into Short. Do you wish to proceed?","Warning",JOptionPane.YES_NO_OPTION);
+				if (response == JOptionPane.NO_OPTION) {
+					return false;
+				}
+    		}else {
+    			MipavUtil.displayError("Analyze does not support Unsigned Short. You must convert the data type to something other than Unsigned Short");
+    			return false;
+    		}
+    	}
+    	
+    	
+    	
+    	
+    	
         FileAnalyze analyzeFile;
 
         if (Preferences.is(Preferences.PREF_SAVE_XML_ON_HDR_SAVE)) {
