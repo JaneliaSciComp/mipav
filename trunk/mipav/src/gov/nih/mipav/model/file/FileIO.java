@@ -8813,12 +8813,12 @@ public class FileIO {
     		double max = image.getMax();
     		if(max <= 32767) {
     			//this means it will fit in to short
-    			int response = JOptionPane.showConfirmDialog(UI.getMainFrame(), "Analyze does not support Unsigned Short. However, the data will fit into Short. Do you wish to proceed?","Warning",JOptionPane.YES_NO_OPTION);
+    			int response = JOptionPane.showConfirmDialog(UI.getMainFrame(), "Analyze 7.5 does not support Unsigned Short. However, the data will fit into Signed Short. Do you wish to proceed?","Warning",JOptionPane.YES_NO_OPTION);
 				if (response == JOptionPane.NO_OPTION) {
 					return false;
 				}
     		}else {
-    			MipavUtil.displayError("Analyze does not support Unsigned Short. You must convert the data type to something other than Unsigned Short");
+    			MipavUtil.displayError("Analyze 7.5 does not support Unsigned Short. You must convert the data type to something other than Unsigned Short");
     			return false;
     		}
     	}
