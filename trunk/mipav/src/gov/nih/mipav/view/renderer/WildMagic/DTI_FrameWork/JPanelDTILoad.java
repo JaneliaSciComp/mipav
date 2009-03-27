@@ -208,7 +208,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 				if(tractCheckBox.isSelected()) {
 					AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
 							parentFrame.getDTIimage(), parentFrame.getEVimage(), 
-							parentFrame.getParentDir() + "DTIImage.xml_tract");
+							m_kParentDir + "DTIImage.xml_tract");
 					kTractAlgorithm.run();
 					kTractAlgorithm.disposeLocal();
 					kTractAlgorithm = null;
@@ -794,6 +794,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         }
         // set up parent directory before calling calcEigenVectorImage:
         m_kParentDir = m_kParentDir.concat( File.separator + "DTIOutput" + File.separator);
+
         File kDir = new File( m_kParentDir );
         if ( !kDir.exists() )
         {
@@ -804,14 +805,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
         calcEigenVectorImage();
-        
-        /*
-        DialogDTIColorDisplay temp = new DialogDTIColorDisplay((ModelImage)(m_kEigenVectorImage.clone()),
-				(ModelImage)(m_kAnisotropyImage.clone()), null, false);
-        // temp.setVisible(false);
-        temp.captureImage();
-        resultImage = temp.getCaptureImage();
-        */
+       
         createRGBImage();
         
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
@@ -1084,6 +1078,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         m_kAnisotropyImage = kAlgorithm.getFAImage();
         kAlgorithm.disposeLocal();
         kAlgorithm = null;
+        
         
         // The resolutions should be reset after the FiberTracts are calculated (See JDialogDTIInput.java)
         if ( m_bUseXRes || m_bUseYRes || m_bUseZRes )
