@@ -431,4 +431,18 @@ implements ChangeListener {
         //	DTIimageLoadPanel.resizePanel(maxPanelWidth, height);
         //}
     }
+    
+
+    protected void create3DVOI( boolean bIntersection )
+    {
+        super.create3DVOI(bIntersection);
+        DTIparamsPanel.add3DVOI( m_kVOIName );
+    }
+    
+    public void removeSurface(String kSurfaceName)
+    {       
+        super.removeSurface(kSurfaceName);
+        DTIparamsPanel.remove3DVOI( kSurfaceName );
+    }
+    
 }
