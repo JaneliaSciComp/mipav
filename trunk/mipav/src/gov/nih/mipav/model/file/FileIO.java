@@ -8811,11 +8811,19 @@ public class FileIO {
     	 */
     	if(image.getType() == ModelStorageBase.USHORT) {
     		double max = image.getMax();
-    		if(max > 32767) {
+    		if(max <= 32767) {
+    			//this means it will fit in to short
+    			if(!quiet) {
+	    			int response = JOptionPane.showConfirmDialog(UI.getMainFrame(), "Analyze 7.5 does not support Unsigned Short. However, the data will fit into Signed Short. Do you wish to proceed?","Warning",JOptionPane.YES_NO_OPTION);
+					if (response == JOptionPane.NO_OPTION) {
+						return false;
+					}
+    			}
+    		}else {
     			if ( !quiet) {
     				MipavUtil.displayError("Analyze 7.5 does not support Unsigned Short. You must convert the data type to something other than Unsigned Short");
     			}
-    			return false;
+    				return false;
     		}
     	}
     	
