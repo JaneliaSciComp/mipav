@@ -78,16 +78,22 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
-    private void calc2D() {
+    private void calc3D() {
         long time;
         int z;
         short shortBuffer[];
         short shortOpen[];
         short shortClose[];
+        byte byteBuffer[];
         int extents2D[];
         ModelImage shortImage;
         int color;
-        
+        AlgorithmGrayScaleMorphology2D openAlgo2D;
+        AlgorithmGrayScaleMorphology2D closeAlgo2D;
+        int kernelSize;
+        int itersD = 1;
+        int itersE = 1;
+        int i;
 
         time = System.currentTimeMillis();
 
@@ -97,7 +103,7 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
             return;
         }
         
-        // Do 2.5D morphological preproocessing on red and green structures
+        // Do 2.5D morphological preprocessing on red and green structures
         // Use a disc
         // I = I + Itop - Ibottom
         // Itop = I - Iopen
@@ -106,44 +112,123 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         shortBuffer = new short[xySlice];
         shortOpen = new short[xySlice];
         shortClose = new short[xySlice];
+        byteBuffer = new byte[xySlice];
         extents2D = new int[2];
         extents2D[0] = xDim;
         extents2D[1] = yDim;
         shortImage = new ModelImage(ModelImage.SHORT, extents2D, "short_image");
-        for (z = 0; z < zDim; z++) {
-            // Do morphological preprocessing on red and green
-            for (color = 1; color <= 2; color++) {
-                try {
-                    srcImage.exportRGBData(1, 4*z*xySlice, xySlice, shortBuffer); // export red data
-                } catch (IOException error) {
-                    shortBuffer = null;
-                    errorCleanUp("Algorithm Axon extraction reports: source image locked", true);
+        for (color = 1; color <= 2; color++) {
+            if (((color == 1) && (redRadius >= 1)) || ((color == 2) && (greenRadius >= 1))) {
+                if (color == 1) {
+                    kernelSize = redRadius;
+                }
+                else {
+                    kernelSize = greenRadius;
+                }
+                for (z = 0; z < zDim; z++) {
+                    fireProgressStateChanged(100 *((color - 1)* zDim +  z)/(2 * zDim));
+                    // Do morphological preprocessing on red and green
+                    
+                        try {
+                            srcImage.exportRGBData(color, 4*z*xySlice, xySlice, shortBuffer); // export color data
+                        } catch (IOException error) {
+                            shortBuffer = null;
+                            shortOpen = null;
+                            shortClose = null;
+                            errorCleanUp("Algorithm Axon extraction reports: source image locked", true);
+                
+                            return;
+                        }
+                        
+                        System.arraycopy(shortBuffer, 0, shortOpen, 0, shortBuffer.length);
+                        System.arraycopy(shortBuffer, 0, shortClose, 0, shortBuffer.length);
+                        
+                        try {
+                            shortImage.importData(0, shortOpen, true);
+                        }
+                        catch(IOException error) {
+                            shortBuffer = null;
+                            shortOpen = null;
+                            shortClose = null;
+                            errorCleanUp("Algorithm Axon extraction reports: shortImage locked", true);
+                            
+                            return;
+                        }
+                        
+                        openAlgo2D = new AlgorithmGrayScaleMorphology2D(shortImage, AlgorithmMorphology2D.SIZED_CIRCLE, kernelSize, AlgorithmMorphology2D.OPEN,
+                                itersD, itersE, 0, 0, true);
+                        openAlgo2D.run();
+                        openAlgo2D.finalize();
+                        openAlgo2D = null;
+                        
+                        try {
+                            shortImage.exportData(0, xySlice, shortOpen);
+                        }
+                        catch(IOException error) {
+                            shortBuffer = null;
+                            shortOpen = null;
+                            shortClose = null;
+                            errorCleanUp("Algorithm Axon extraction reports: shortImage locked", true);
+                            
+                            return;
+                        }
+                        
+                        try {
+                            shortImage.importData(0, shortClose, true);
+                        }
+                        catch(IOException error) {
+                            shortBuffer = null;
+                            shortOpen = null;
+                            shortClose = null;
+                            errorCleanUp("Algorithm Axon extraction reports: shortImage locked", true);
+                            
+                            return;
+                        }
+                        
+                        closeAlgo2D = new AlgorithmGrayScaleMorphology2D(shortImage, AlgorithmMorphology2D.SIZED_CIRCLE, kernelSize, AlgorithmMorphology2D.CLOSE,
+                                itersD, itersE, 0, 0, true);
+                        closeAlgo2D.run();
+                        closeAlgo2D.finalize();
+                        closeAlgo2D = null;
+                        
+                        try {
+                            shortImage.exportData(0, xySlice, shortClose);
+                        }
+                        catch(IOException error) {
+                            shortBuffer = null;
+                            shortOpen = null;
+                            shortClose = null;
+                            errorCleanUp("Algorithm Axon extraction reports: shortImage locked", true);
+                            
+                            return;
+                        }
+                        
+                        for (i = 0; i < xySlice; i++) {
+                            shortBuffer[i] = (short)(3 * shortBuffer[i] - shortOpen[i] - shortClose[i]); 
+                            if (shortBuffer[i] > 255) {
+                                shortBuffer[i] = 255;
+                            }
+                            else if (shortBuffer[i] < 0) {
+                                shortBuffer[i] = 0;
+                            }
+                            byteBuffer[i] = (byte)(shortBuffer[i]);
+                        }
+                        
+                        try {
+                            srcImage.importRGBData(color, 4*z*xySlice, byteBuffer, false); // import color data
+                        } catch (IOException error) {
+                            shortBuffer = null;
+                            shortOpen = null;
+                            shortClose = null;
+                            errorCleanUp("Algorithm Axon extraction reports: source image locked", true);
+                
+                            return;
+                        }
+                    } // for (z = 0; z < zDim; z++)
+            } // if (((color == 1) && (redRadius >= 1)) || ((color == 2) && (greenRadius >= 1)))
+        } // for (color = 1; color <= 2; color++)
+        srcImage.calcMinMax();
         
-                    return;
-                }
-                
-                try {
-                    shortImage.importData(0, shortBuffer, true);
-                }
-                catch(IOException error) {
-                    shortBuffer = null;
-                    errorCleanUp("Algorithm Axon extraction reports: shortImage locked", true);
-                    
-                    return;
-                }
-                
-                try {
-                    shortImage.exportData(0, xySlice, shortBuffer);
-                }
-                catch(IOException error) {
-                    shortBuffer = null;
-                    errorCleanUp("Algorithm Axon extraction reports: shortImage locked", true);
-                    
-                    return;
-                }
-            
-            } // for (color = 1; color <= 2; color++)
-        } // for (z = 0; z < zDim; z++)
 
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
@@ -154,7 +239,7 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
-    private void calc3D() {
+    private void calc2D() {
         long time;
         
         
