@@ -15,6 +15,7 @@ import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface.IntVector;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -43,6 +44,8 @@ implements ItemListener, ListSelectionListener, ChangeListener {
 
     /** The list box in the dialog for fiber bundle tracts. */
     private JList m_kTractList;
+    /** The list box in the dialog for 3D VOIs. */
+    private JList m_kVOIList;
     /** Color button for changing the color of the fiber bundles. */
     private JButton m_kColorButton;
     /** Color button detault color: */
@@ -117,14 +120,33 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     private int centerIndex;
     private boolean loadingTrack = false;
 
+    private ColorRGB m_kCInclude = new ColorRGB(0,1,0);
+    private ColorRGB m_kCExclude = new ColorRGB(.5f,0,0);
+    private ColorRGB m_kCIgnore = new ColorRGB(.2f,.2f,.2f);
+    private JRadioButton m_kInclude;
+    private JRadioButton m_kExclude;
+    private JRadioButton m_kIgnore;
+    
+    private class VOIParams {
+        String Name;
+        boolean Include;
+        boolean Exclude;
+        boolean Ignore;
+        public VOIParams() {}
+        public String ToString()
+        {
+            return new String( Name + " " + Include + " " + Exclude + " " + Ignore );
+        }
+    }
+    private Vector<VOIParams> m_kVOIParamsList = null;
+    
     public JPanelDTIParametersPanel(VolumeTriPlanarInterfaceDTI _parentFrame, VolumeTriPlanarRender _m_kVolumeDisplay) {
         parentFrame = _parentFrame;
         m_kVolumeDisplay = _m_kVolumeDisplay;
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(createTractPanel());
-        createTractDialog();
-
+        mainPanel.add(createTractPanel(), BorderLayout.NORTH );
+        mainPanel.add(createTractDialog(), BorderLayout.SOUTH);
     }
 
     /**
@@ -147,7 +169,20 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     }
 
     public void valueChanged(ListSelectionEvent kEvent) {
-
+        if ( m_kVOIParamsList == null )
+        {
+            return;
+        }
+        if ( kEvent.getSource() == m_kVOIList )
+        {
+            int iVOI = m_kVOIList.getSelectedIndex();
+            if ( iVOI >= 0 && iVOI < m_kVOIParamsList.size() )
+            {
+                m_kInclude.setSelected(m_kVOIParamsList.get(iVOI).Include);
+                m_kExclude.setSelected(m_kVOIParamsList.get(iVOI).Exclude);
+                m_kIgnore.setSelected(m_kVOIParamsList.get(iVOI).Ignore);
+            }
+        }
     }
 
     public void actionPerformed(ActionEvent event) {
@@ -166,13 +201,33 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         } else if ( command.equals("DisplayAll") ) {
             displayAll = displayAllCheckBox.isSelected();
             invokeDisplayFunction();
-        } else if (command.equals("Add")) {
+        } else if (command.equals("tractLoad")) {
             loadingTrack = true;
             loadTractFile();
             loadingTrack = false;
             slicePickableCheckBox.setEnabled(true);
+        }  else if (command.equals("Add")) {
+            processTractFile();
         } else if (command.equals("Remove")) {
             removePolyline();
+        }  else if (command.equals("Include")) {
+            int iVOI = m_kVOIList.getSelectedIndex();
+            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
+            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
+            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
+            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCInclude );
+        }  else if (command.equals("Exclude")) {
+            int iVOI = m_kVOIList.getSelectedIndex();
+            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
+            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
+            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
+            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCExclude );
+        }  else if (command.equals("Ignore")) {
+            int iVOI = m_kVOIList.getSelectedIndex();
+            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
+            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
+            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
+            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCIgnore );
         } else if( command.equals("Pickable")) {
             ((VolumeTriPlanerRenderDTI)m_kVolumeDisplay).enableSlicePickable(slicePickableCheckBox.isSelected());	
         }
@@ -184,7 +239,57 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             updateTractCount();
         } 
     }
-
+    
+    public void add3DVOI( String kVOIName )
+    {
+        if ( m_kVOIList == null )
+        {
+            return;
+        }
+        DefaultListModel kList = (DefaultListModel) m_kVOIList.getModel();
+        int iSize = kList.getSize();
+        kList.add(iSize, kVOIName );
+        m_kVOIList.setSelectedIndex(iSize);
+        
+        if ( m_kVOIParamsList == null )
+        {
+            m_kVOIParamsList = new Vector<VOIParams>();
+        }
+        VOIParams kParams = new VOIParams();
+        kParams.Name = new String(kVOIName);
+        kParams.Include = m_kInclude.isSelected();
+        kParams.Exclude = m_kExclude.isSelected();
+        kParams.Ignore = m_kIgnore.isSelected();
+        m_kVOIParamsList.add( kParams );
+        parentFrame.setColor( kVOIName, m_kCInclude );
+    }
+    
+    public void remove3DVOI( String kVOIName )
+    {
+        if ( m_kVOIList == null )
+        {
+            return;
+        }
+        DefaultListModel kList = (DefaultListModel) m_kVOIList.getModel();
+        int iSize = kList.getSize();
+        for ( int i = 0; i < iSize; i++ )
+        {
+            if ( kList.get(i).equals( kVOIName ) )
+            {
+                kList.remove(i);
+                m_kVOIParamsList.remove( i );
+            }
+        }
+        if ( iSize != 1 )
+        {
+            m_kVOIList.setSelectedIndex(iSize-1);
+        }
+    }
+    
+    public int getVOIQuantity()
+    {
+        return m_kVOIParamsList.size();
+    }
 
     public void addFiberTract() {
         if ( slicePickableCheckBox.isSelected() ) {
@@ -255,24 +360,76 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        m_kTractPath = new JTextField(35);
+        m_kTractPath = new JTextField(15);
         m_kTractPath.setEditable(true);
         m_kTractPath.setBackground(Color.white);
         filesPanel.add(m_kTractPath, gbc);
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        JButton kTractBrowseButton = new JButton("Browse");
-        kTractBrowseButton.addActionListener(this);
-        kTractBrowseButton.setActionCommand("tractBrowse");
-        filesPanel.add(kTractBrowseButton, gbc);
+        JButton kTractLoadButton = new JButton("Load");
+        kTractLoadButton.addActionListener(this);
+        kTractLoadButton.setActionCommand("tractLoad");
+        filesPanel.add(kTractLoadButton, gbc);
 
+        
+
+        // list panel for surface filenames
+        m_kVOIList = new JList( new DefaultListModel() );
+        m_kVOIList.addListSelectionListener(this);
+        m_kVOIList.setPrototypeCellValue("aaaaaaaaaaaaaaaa.aaa    ");
+
+
+        JScrollPane kScrollPane = new JScrollPane(m_kVOIList);
+        JPanel scrollPanel = new JPanel();
+        scrollPanel.setLayout(new BorderLayout());
+        scrollPanel.add(kScrollPane);
+        scrollPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        
+
+        ButtonGroup kGroup = new ButtonGroup();
+        m_kInclude = new JRadioButton("Include");
+        m_kInclude.addActionListener(this);
+        m_kInclude.setActionCommand("Include");
+        m_kInclude.setFont(MipavUtil.font12B);
+        m_kInclude.setPreferredSize(MipavUtil.defaultButtonSize);
+        m_kInclude.setSelected(true);
+        kGroup.add(m_kInclude);
+
+        m_kExclude = new JRadioButton("Exclude");
+        m_kExclude.addActionListener(this);
+        m_kExclude.setActionCommand("Exclude");
+        m_kExclude.setFont(MipavUtil.font12B);
+        m_kExclude.setPreferredSize(MipavUtil.defaultButtonSize);
+        kGroup.add(m_kExclude);
+
+        m_kIgnore = new JRadioButton("Ignore");
+        m_kIgnore.addActionListener(this);
+        m_kIgnore.setActionCommand("Ignore");
+        m_kIgnore.setFont(MipavUtil.font12B);
+        m_kIgnore.setPreferredSize(MipavUtil.defaultButtonSize);
+        kGroup.add(m_kIgnore);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(m_kInclude);
+        buttonPanel.add(m_kExclude);
+        buttonPanel.add(m_kIgnore);
+
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BorderLayout());
+        listPanel.add(scrollPanel, BorderLayout.CENTER);
+        listPanel.add(buttonPanel, BorderLayout.SOUTH);
+        listPanel.setBorder(buildTitledBorder("3D VOI list"));
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
+        kTractPanel.add(listPanel, gbc);
+        gbc.gridy++;
         kTractPanel.add(kParamsPanel, gbc);
         gbc.gridy++;
         kTractPanel.add(filesPanel, gbc);
 
+        kTractPanel.setBorder(buildTitledBorder("Inclusion & Exclusion Parameters"));
         return kTractPanel;
     }
 
@@ -330,10 +487,9 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                 m_kTractFile = null;
                 return;
             }
-            // m_kTractPath.setText(chooser.getSelectedFile().getAbsolutePath());
+            m_kTractPath.setText(chooser.getSelectedFile().getAbsolutePath());
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser
                     .getCurrentDirectory().toString());
-            processTractFile();
         }
     }
 
@@ -415,11 +571,12 @@ implements ItemListener, ListSelectionListener, ChangeListener {
 
             int iNumTracts = 0;
 
-            ModelImage kVOIImage = null;
-            if (m_kUseVOICheck.isSelected()) {
-                kVOIImage = ViewUserInterface.getReference()
-                .getActiveImageFrame().getActiveImage()
-                .generateBinaryImage(false, true);
+            VolumeTriPlanarInterface.IntVector[] kVOIImage = null;
+            int iNum3DVOI = 0;
+            if (m_kUseVOICheck.isSelected() && (parentFrame != null))
+            {
+                kVOIImage = parentFrame.getVOIImage();
+                iNum3DVOI = parentFrame.get3DVOIQuantity();
             }
 
             int iDimX = 0, iDimY = 0, iDimZ = 0;
@@ -452,7 +609,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                 Vector<Integer> kTract = inputTract(kFileReader);
                 iBufferNext += kTract.size() * 4 + 4;
                 int iVQuantity = kTract.size();
-                if (contains(kVOIImage, kTract)) {
+                if (contains(kVOIImage, iNum3DVOI, kTract)) {
                     if ((iVQuantity > iTractMinLength)
                             && (iVQuantity < iTractMaxLength)) {
                         if (iNumTracts < iNumTractsLimit) {
@@ -789,7 +946,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         buttonPanel.add(addButton);
         buttonPanel.add(removeButton);
 
-        // list panel for surface filenames
+        // list panel for fiber tract names
         m_kTractList = new JList( new DefaultListModel() );
         m_kTractList.addListSelectionListener(this);
         m_kTractList.setPrototypeCellValue("aaaaaaaaaaaaaaaa.aaa    ");
@@ -1083,17 +1240,50 @@ implements ItemListener, ListSelectionListener, ChangeListener {
      * @return true if the tract passes through the VOI or if the VOIImage is
      *         null, false otherwise.
      */
-    private boolean contains(ModelImage kVOIImage, Vector<Integer> kTract) {
+    private boolean contains(VolumeTriPlanarInterface.IntVector[] kVOIImage, int iNumVOI, Vector<Integer> kTract) {
         if (kVOIImage == null) {
             return true;
         }
-        for (int i = 0; i < kTract.size(); i++) {
+        boolean[] abVisited = new boolean[iNumVOI];
+
+        for ( int j = 0; j < iNumVOI; j++ )
+        {
+            abVisited[j] = false;
+            //System.err.println( m_kVOIParamsList.get(j).ToString() );
+        }
+
+        int iVOI;
+        for (int i = 0; i < kTract.size(); i++)
+        {
             int iIndex = kTract.get(i);
-            if (kVOIImage.getBoolean(iIndex)) {
-                return true;
+            if ( kVOIImage[iIndex] != null )
+            {
+                for ( int j = 0; j < kVOIImage[iIndex].size(); j++ )
+                {
+                    iVOI = kVOIImage[iIndex].get(j);
+                    String kName = new String("VOI_" + iVOI);
+                    for ( int k = 0; k < m_kVOIParamsList.size(); k++ )
+                    {
+                        if ( m_kVOIParamsList.get(k).Name.equals(kName) )
+                        {
+                            abVisited[iVOI] = true;
+                        }
+                    }
+                }
             }
         }
-        return false;
+        for ( int j = 0; j < iNumVOI; j++ )
+        {
+            if ( abVisited[j] && m_kVOIParamsList.get(j).Exclude)
+            {
+                return false;
+            }
+            if ( m_kVOIParamsList.get(j).Include && !abVisited[j] )
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
 

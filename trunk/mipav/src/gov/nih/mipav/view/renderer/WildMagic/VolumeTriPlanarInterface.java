@@ -63,6 +63,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.swing.BorderFactory;
@@ -327,8 +328,20 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     /** Panel containing the position labels:. */
     private JPanel panelLabels = new JPanel();
     private JToolBar m_kVOIToolbar;
-    
-    private int m_iVOICount = 0;
+
+    protected int m_iVOICount = 0;
+    protected int m_iVOITotal = 0;
+    protected String m_kVOIName = "";
+    public class IntVector extends Vector<Integer>
+    {
+        public IntVector() {
+            super();
+        }
+        public IntVector(int initialsize) {
+            super(initialsize);
+        }
+    }
+    private IntVector[] m_kVOIImage = null;
     
     
     /**
@@ -1816,6 +1829,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     public void removeSurface(String kSurfaceName)
     {       
         raycastRenderWM.removeSurface(kSurfaceName);
+        deleteVOISurface(kSurfaceName);
     }
 
     /**
@@ -3049,7 +3063,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         viewToolBar.repaint();
     }
 
-    private void create3DVOI( boolean bIntersection )
+    protected void create3DVOI( boolean bIntersection )
     {
 
         if ( m_akPlaneRender != null )
@@ -3069,12 +3083,28 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             int[] aiExtents = kImage.getExtents();
             int length = aiExtents[0] * aiExtents[1] * aiExtents[2];
             int[] buffer = new int[length];
+            
+            if ( m_kVOIImage == null )
+            {
+                m_kVOIImage = new IntVector[length];
+            }
 
             for (int i = 0; i < length; i++) {
                 buffer[i] = kImage.getInt(i);
                 if ( bIntersection && (buffer[i] < 250) )
                 {
                     buffer[i] = 0;
+                }
+                if ( buffer[i] != 0 )
+                {
+                    if ( m_kVOIImage[i] == null )
+                    {
+                        m_kVOIImage[i] = new IntVector();
+                    }
+                    if ( !m_kVOIImage[i].contains( m_iVOICount ) )
+                    {
+                        m_kVOIImage[i].add( m_iVOICount );
+                    }
                 }
             }
             
@@ -3103,13 +3133,22 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                 if ( kMeshes[0] != null )
                 {
                     getVolumeGPU().displayVolumeRaycast(false);
-                    String kSurfaceName = new String( "VOI_" + m_iVOICount++ );;
-                    kMeshes[0].SetName( kSurfaceName );
+                    m_kVOIName = new String( "VOI_" + m_iVOICount++ );;
+                    kMeshes[0].SetName( m_kVOIName );
                     getSurfacePanel().addSurfaces(kMeshes);
                     getRendererGUI().setDisplaySurfaceCheck( true );
                     getRendererGUI().setDisplayVolumeCheck( false );
+                    m_iVOITotal++;
+                }
+                else
+                {
+                    m_kVOIName = "";
                 }
                 kVETMesh = null;
+            }
+            else
+            {
+                m_kVOIName = "";
             }
             kExtractor = null;
             kImage.disposeLocal();
@@ -3132,5 +3171,38 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                 }
             }
         }
+    }
+
+    private void deleteVOISurface( String kVOIName )
+    {
+        if ( m_kVOIImage == null )
+        {
+            return;
+        }
+        int iVOICount = Integer.valueOf(kVOIName.substring( 4 )).intValue();
+        m_iVOITotal--;
+        int[] aiExtents = imageA.getExtents();
+        int length = aiExtents[0] * aiExtents[1] * aiExtents[2];
+
+        for (int i = 0; i < length; i++) 
+        {
+            if ( m_kVOIImage[i] != null )
+            {
+                if ( m_kVOIImage[i].contains( iVOICount ) )
+                {
+                    m_kVOIImage[i].remove( iVOICount );
+                }
+            }
+        }
+    }
+
+    public IntVector[] getVOIImage()
+    {
+        return m_kVOIImage;
+    }
+    
+    public int get3DVOIQuantity()
+    {
+        return m_iVOITotal;
     }
 }
