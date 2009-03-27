@@ -257,6 +257,13 @@ public class PlugInDialogAxonExtraction extends JDialogScriptableBase implements
         mainPanel.setForeground(Color.black);
         mainPanel.setBorder(buildTitledBorder("Input parameters"));
         
+        JLabel infoLabel = new JLabel("Radius = 0 for no preprocessing");
+        infoLabel.setForeground(Color.black);
+        infoLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos++;
+        mainPanel.add(infoLabel, gbc);
+        
         redRadiusLabel = new JLabel("Preprocessing red strucure element radius");
         redRadiusLabel.setForeground(Color.black);
         redRadiusLabel.setFont(serif12);
