@@ -3190,7 +3190,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             {
                 if ( m_kVOIImage[i].contains( iVOICount ) )
                 {
-                    m_kVOIImage[i].remove( iVOICount );
+                    int iIndex = m_kVOIImage[i].indexOf( iVOICount );
+                    m_kVOIImage[i].remove(iIndex);
                 }
             }
         }
