@@ -3174,7 +3174,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 frame.setState( ((ViewJFrameBase) frame).getLastState());
             } else if (frame instanceof ViewJFrameMessage) {
                 frame.setState( ((ViewJFrameMessage) frame).getLastState());
-            } else {
+            } else if (!frame.equals(mainFrame)){
                 frame.setState(Frame.NORMAL);
             }
         }
@@ -3202,7 +3202,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 ((ViewJFrameMessage) frame).setLastState(frame.getState());
             }
 
-            frame.setState(Frame.ICONIFIED);
+            if (!frame.equals(mainFrame)) {
+                frame.setState(Frame.ICONIFIED);
+            }
         }
     }
 
