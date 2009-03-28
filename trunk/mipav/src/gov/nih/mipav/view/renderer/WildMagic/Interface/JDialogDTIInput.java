@@ -75,7 +75,7 @@ public class JDialogDTIInput extends JInterfaceBase
 
     /** Eigenvector image **/
     private ModelImage m_kEigenVectorImage;
-    
+
     /** Anisotropy image **/
     private ModelImage m_kAnisotropyImage;
 
@@ -805,6 +805,9 @@ public class JDialogDTIInput extends JInterfaceBase
         kAlgorithm.run();
         m_kEigenVectorImage = kAlgorithm.getEigenImage();
         m_kAnisotropyImage = kAlgorithm.getFAImage();
+        kAlgorithm.getTraceImage().saveImage( m_kParentDir, "TraceImage.xml", FileUtility.XML, false );
+        kAlgorithm.getRAImage().saveImage( m_kParentDir, "RAImage.xml", FileUtility.XML, false );
+        kAlgorithm.getVRImage().saveImage( m_kParentDir, "VRImage.xml", FileUtility.XML, false );
         kAlgorithm.disposeLocal();
         kAlgorithm = null;
         
