@@ -2671,11 +2671,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             float ignoreMax = selectedVOI.getMaximumIgnore();
 
             contours = selectedVOI.getCurves();
+            
+            long time2 = System.currentTimeMillis();
             largestDistance = selectedVOI.calcLargestDistance(srcImage.getExtents()[0],
                     srcImage.getExtents()[1],
                     srcImage.getFileInfo(0).getResolutions()[0],
                     srcImage.getFileInfo(0).getResolutions()[1],
                     srcImage.getFileInfo(0).getResolutions()[2]);
+            System.out.println("Total time: "+(System.currentTimeMillis() - time2));
             
             xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
             if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
