@@ -669,157 +669,162 @@ public class VOI extends ModelSerialCloneable {
         int k, num = 0;
         boolean okay;
         long time = System.currentTimeMillis();
-    	forj:
-        while((origPoint = orig.pop()) != null && (termPoint = term.pop()) != null) {
-        	num++;
-        	startX = xPoints[origPoint.intValue()];
-            startY = yPoints[origPoint.intValue()];
-            startZ = zPoints[origPoint.intValue()];
-            endX = xPoints[termPoint.intValue()];
-            endY = yPoints[termPoint.intValue()];
-            endZ = zPoints[termPoint.intValue()];
-            delX = endX - startX;
-            delY = endY - startY;
-            delZ = endZ - startZ;
-            distX = xRes * delX;
-            distY = yRes * delY;
-            distZ = zRes * delZ;
-            
-            if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ))) {
-                slope = delY/delX;
-                slope2 = delZ/delX;
-                if (endX >= startX) {
-                    for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
-                         z += 0.5 * slope2) {
-                        xRound = (int)Math.round(x);
-                        yRound = (int)Math.round(y);
-                        zRound = (int)Math.round(z);
-                        if ((zRound < 0) || (zRound >= zDim)) {
-                            continue forj;
-                        }
-                        okay = false;
-                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-                                okay = true;  
-                            }
-                        }
-                        if (!okay) {
-                            continue forj;
-                        }
-                    } // for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
-                } // if (endX >= startX)
-                else { // endX < startX
-                    for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
-                         z -= 0.5 * slope2) {
-                        xRound = (int)Math.round(x);
-                        yRound = (int)Math.round(y);
-                        zRound = (int)Math.round(z);
-                        if ((zRound < 0) || (zRound >= zDim)) {
-                            continue forj;
-                        }
-                        okay = false;
-                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-                                okay = true; 
-                            }
-                        }
-                        if (!okay) {
-                            continue forj;
-                        }
-                    } // for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
-                } // else endX < startX
-            } // if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ)))
-            else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ))){ 
-                slope = delX/delY;
-                slope2 = delZ/delY;
-                if (endY >= startY) {
-                    for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
-                         z += 0.5 * slope2) {
-                        xRound = (int)Math.round(x);
-                        yRound = (int)Math.round(y);
-                        zRound = (int)Math.round(z);
-                        if ((zRound < 0) || (zRound >= zDim)) {
-                            continue forj;
-                        }
-                        okay = false;
-                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-                                okay = true;         
-                            }
-                        }
-                        if (!okay) {
-                            continue forj;
-                        }
-                    } // for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
-                } // if (endX >= startX)
-                else { // endX < startX
-                    for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
-                         z -= 0.5 * slope2) {
-                        xRound = (int)Math.round(x);
-                        yRound = (int)Math.round(y);
-                        zRound = (int)Math.round(z);
-                        if ((zRound < 0) || (zRound >= zDim)) {
-                            continue forj;
-                        }
-                        okay = false;
-                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-                                okay = true;         
-                            }
-                        }
-                        if (!okay) {
-                            continue forj;
-                        }
-                    } // for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
-                } // else endX < startX    
-            } // else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ)))
-            else { // ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
-                slope = delX/delZ;
-                slope2 = delY/delZ;
-                if (endZ >= startZ) {
-                    for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,
-                    y += 0.5 * slope2) {
-                        xRound = (int)Math.round(x);
-                        yRound = (int)Math.round(y);
-                        zRound = (int)Math.round(z);
-                        if ((zRound < 0) || (zRound >= zDim)) {
-                            continue forj;
-                        }
-                        okay = false;
-                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-                                okay = true;         
-                            }
-                        }
-                        if (!okay) {
-                            continue forj;
-                        }
-                    } // for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,   
-                } // if (endZ >= startZ)
-                else { // endZ < startZ
-                    for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
-                    y -= 0.5 * slope2) {
-                        xRound = (int)Math.round(x);
-                        yRound = (int)Math.round(y);
-                        zRound = (int)Math.round(z);
-                        if ((zRound < 0) || (zRound >= zDim)) {
-                            continue forj;
-                        }
-                        okay = false;
-                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
-                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
-                                okay = true;         
-                            }
-                        }
-                        if (!okay) {
-                            continue forj;
-                        }
-                    } // for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
-                } // else (endZ < startZ)
-            } // else ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
-            System.out.println("Found in "+(System.currentTimeMillis() - time)+" using "+num+" elements\n");
-            return Math.sqrt(distX*distX + distY*distY + distZ*distZ);
-    	}
+        try {
+	    	forj:
+	        while((origPoint = orig.pop()) != null && (termPoint = term.pop()) != null) {
+	        	num++;
+	        	startX = xPoints[origPoint.intValue()];
+	            startY = yPoints[origPoint.intValue()];
+	            startZ = zPoints[origPoint.intValue()];
+	            endX = xPoints[termPoint.intValue()];
+	            endY = yPoints[termPoint.intValue()];
+	            endZ = zPoints[termPoint.intValue()];
+	            delX = endX - startX;
+	            delY = endY - startY;
+	            delZ = endZ - startZ;
+	            distX = xRes * delX;
+	            distY = yRes * delY;
+	            distZ = zRes * delZ;
+	            
+	            if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ))) {
+	                slope = delY/delX;
+	                slope2 = delZ/delX;
+	                if (endX >= startX) {
+	                    for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
+	                         z += 0.5 * slope2) {
+	                        xRound = (int)Math.round(x);
+	                        yRound = (int)Math.round(y);
+	                        zRound = (int)Math.round(z);
+	                        if ((zRound < 0) || (zRound >= zDim)) {
+	                            continue forj;
+	                        }
+	                        okay = false;
+	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
+	                                okay = true;  
+	                            }
+	                        }
+	                        if (!okay) {
+	                            continue forj;
+	                        }
+	                    } // for (x = startX + 0.5, y = startY + 0.5 * slope, z = startZ + 0.5 * slope2; x < endX; x += 0.5, y += 0.5 * slope,
+	                } // if (endX >= startX)
+	                else { // endX < startX
+	                    for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
+	                         z -= 0.5 * slope2) {
+	                        xRound = (int)Math.round(x);
+	                        yRound = (int)Math.round(y);
+	                        zRound = (int)Math.round(z);
+	                        if ((zRound < 0) || (zRound >= zDim)) {
+	                            continue forj;
+	                        }
+	                        okay = false;
+	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
+	                                okay = true; 
+	                            }
+	                        }
+	                        if (!okay) {
+	                            continue forj;
+	                        }
+	                    } // for (x = startX - 0.5, y = startY - 0.5 * slope, z = startZ - 0.5 * slope2; x > endX; x -= 0.5, y -= 0.5 * slope,
+	                } // else endX < startX
+	            } // if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ)))
+	            else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ))){ 
+	                slope = delX/delY;
+	                slope2 = delZ/delY;
+	                if (endY >= startY) {
+	                    for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
+	                         z += 0.5 * slope2) {
+	                        xRound = (int)Math.round(x);
+	                        yRound = (int)Math.round(y);
+	                        zRound = (int)Math.round(z);
+	                        if ((zRound < 0) || (zRound >= zDim)) {
+	                            continue forj;
+	                        }
+	                        okay = false;
+	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
+	                                okay = true;         
+	                            }
+	                        }
+	                        if (!okay) {
+	                            continue forj;
+	                        }
+	                    } // for (y = startY + 0.5, x = startX + 0.5 * slope, z = startX + 0.5 * slope2; y < endY; y += 0.5, x += 0.5 * slope,
+	                } // if (endX >= startX)
+	                else { // endX < startX
+	                    for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
+	                         z -= 0.5 * slope2) {
+	                        xRound = (int)Math.round(x);
+	                        yRound = (int)Math.round(y);
+	                        zRound = (int)Math.round(z);
+	                        if ((zRound < 0) || (zRound >= zDim)) {
+	                            continue forj;
+	                        }
+	                        okay = false;
+	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
+	                                okay = true;         
+	                            }
+	                        }
+	                        if (!okay) {
+	                            continue forj;
+	                        }
+	                    } // for (y = startY - 0.5, x = startX - 0.5 * slope, z = startZ - 0.5 * slope2; y > endY; y -= 0.5, x -= 0.5 * slope,
+	                } // else endX < startX    
+	            } // else if ((Math.abs(delY) >= Math.abs(delX)) && (Math.abs(delY) >= Math.abs(delZ)))
+	            else { // ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
+	                slope = delX/delZ;
+	                slope2 = delY/delZ;
+	                if (endZ >= startZ) {
+	                    for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,
+	                    y += 0.5 * slope2) {
+	                        xRound = (int)Math.round(x);
+	                        yRound = (int)Math.round(y);
+	                        zRound = (int)Math.round(z);
+	                        if ((zRound < 0) || (zRound >= zDim)) {
+	                            continue forj;
+	                        }
+	                        okay = false;
+	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
+	                                okay = true;         
+	                            }
+	                        }
+	                        if (!okay) {
+	                            continue forj;
+	                        }
+	                    } // for (z = startZ + 0.5, x = startX + 0.5 * slope, y = startY + 0.5 * slope2; z < endZ; z += 0.5, x += 0.5 * slope,   
+	                } // if (endZ >= startZ)
+	                else { // endZ < startZ
+	                    for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
+	                    y -= 0.5 * slope2) {
+	                        xRound = (int)Math.round(x);
+	                        yRound = (int)Math.round(y);
+	                        zRound = (int)Math.round(z);
+	                        if ((zRound < 0) || (zRound >= zDim)) {
+	                            continue forj;
+	                        }
+	                        okay = false;
+	                        for (k = 0; (k < curves[zRound].size()) && (!okay); k++) {
+	                            if (((VOIContour) (curves[zRound].elementAt(k))).contains(xRound, yRound, false)) { 
+	                                okay = true;         
+	                            }
+	                        }
+	                        if (!okay) {
+	                            continue forj;
+	                        }
+	                    } // for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
+	                } // else (endZ < startZ)
+	            } // else ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
+	            System.out.println("Found in "+(System.currentTimeMillis() - time)+" using "+num+" elements\n");
+	            return Math.sqrt(distX*distX + distY*distY + distZ*distZ);
+	        }
+        } catch(EmptyStackException e) {
+        	e.printStackTrace();
+        	return -1;
+        }
         return -1;
     }
      
