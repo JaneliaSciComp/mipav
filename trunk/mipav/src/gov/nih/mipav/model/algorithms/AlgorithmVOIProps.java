@@ -2779,6 +2779,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                                                                             srcImage.getFileInfo(0).getResolutions()[1]);
                         totalPerimeter += perimeter;
                         
+                        System.out.println("Examining contour "+q);
                         largestContourDistance = ((VOIContour) (contours[q].elementAt(r))).calcLargestSliceDistance(
                                 srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]);
                         largestAllSlicesDistance = Math.max(largestAllSlicesDistance, largestContourDistance);
@@ -4019,6 +4020,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     for (int r = 0; r < contours[q].size(); r++) {
                         totalPerimeter += ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
                                                                                                   srcImage.getFileInfo(0).getResolutions()[1]);
+                        System.out.println("Examining contour "+q);
                         largestAllSlicesDistance = Math.max(largestAllSlicesDistance, 
                                ((VOIContour)(contours[q].elementAt(r))).calcLargestSliceDistance(
                                        srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]));

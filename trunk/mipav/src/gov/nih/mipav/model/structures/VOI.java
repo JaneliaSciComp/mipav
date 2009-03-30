@@ -822,7 +822,6 @@ public class VOI extends ModelSerialCloneable {
 	            return Math.sqrt(distX*distX + distY*distY + distZ*distZ);
 	        }
         } catch(EmptyStackException e) {
-        	e.printStackTrace();
         	return -1;
         }
         return -1;
