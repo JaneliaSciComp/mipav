@@ -672,12 +672,12 @@ public class VOI extends ModelSerialCloneable {
     	forj:
         while((origPoint = orig.pop()) != null && (termPoint = term.pop()) != null) {
         	num++;
-        	startX = xPoints[origPoint];
-            startY = yPoints[origPoint];
-            startZ = zPoints[origPoint];
-            endX = xPoints[termPoint];
-            endY = yPoints[termPoint];
-            endZ = zPoints[termPoint];
+        	startX = xPoints[origPoint.intValue()];
+            startY = yPoints[origPoint.intValue()];
+            startZ = zPoints[origPoint.intValue()];
+            endX = xPoints[termPoint.intValue()];
+            endY = yPoints[termPoint.intValue()];
+            endZ = zPoints[termPoint.intValue()];
             delX = endX - startX;
             delY = endY - startY;
             delZ = endZ - startZ;
