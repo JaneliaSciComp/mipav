@@ -280,17 +280,16 @@ public class VOIContour extends VOIBase {
         double delY;
         double distX;
         double distY;
-        double x;
-        double y;
-        double slope;
-        int xRound;
-        int yRound;
         
+        Stack<Integer> orig = new Stack<Integer>();
+        Stack<Integer> term = new Stack<Integer>();
+        Preferences.debug("Traverse points\n");
+        
+        long time = System.currentTimeMillis();
         contains(0, 0, true);
         for (i = 0; i < xPts.length; i++) {
             startX = xPts[i];
             startY = yPts[i];
-            forj:
             for (j = i+1; j < xPts.length; j++) {
                 endX = xPts[j];
                 endY = yPts[j];
@@ -300,53 +299,96 @@ public class VOIContour extends VOIBase {
                 distY = yRes * delY;
                 distanceSq = distX*distX + distY*distY;
                 if (distanceSq > largestDistanceSq) {
-                    if (Math.abs(delX) >= Math.abs(delY)) {
-                        slope = delY/delX;
-                        if (endX >= startX) {
-                            for (x = startX + 0.5, y = startY + 0.5 * slope; x < endX; x += 0.5, y += 0.5 * slope) {
-                                xRound = (int)Math.round(x);
-                                yRound = (int)Math.round(y);
-                                if (!contains(xRound, yRound, false)) {
-                                    continue forj;         
-                                }
-                            } // for (x = startX + 0.5, y = startY + 0.5 * slope; x < endX; x += 0.5, y += 0.5 * slope)
-                        } // if (endX >= startX)
-                        else { // endX < startX
-                            for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope) {
-                                xRound = (int)Math.round(x);
-                                yRound = (int)Math.round(y);
-                                if (!contains(xRound, yRound, false)) {
-                                    continue forj;         
-                                }    
-                            } // for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope)
-                        } // else endX < startX
-                    } // if (Math.abs(delX) >= Math.abs(delY))
-                    else { // Math.abs(delX) < Math.abs(delY)
-                        slope = delX/delY;
-                        if (endY >= startY) {
-                            for (y = startY + 0.5, x = startX + 0.5 * slope; y < endY; y += 0.5, x += 0.5 * slope) {
-                                xRound = (int)Math.round(x);
-                                yRound = (int)Math.round(y);
-                                if (!contains(xRound, yRound, false)) {
-                                    continue forj;         
-                                }
-                            } // for (y = startY + 0.5, x = startX + 0.5 * slope; y < endY; y += 0.5, x += 0.5 * slope)
-                        } // if (endX >= startX)
-                        else { // endX < startX
-                            for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope) {
-                                xRound = (int)Math.round(x);
-                                yRound = (int)Math.round(y);
-                                if (!contains(xRound, yRound, false)) {
-                                    continue forj;         
-                                }    
-                            } // for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope)
-                        } // else endX < startX    
-                    } // else Math.abs(delX) < Math.abs(delY)
+                	orig.push(Integer.valueOf(i));
+                    term.push(Integer.valueOf(j));
                     largestDistanceSq = distanceSq;
                 } // if (distanceSq > largsestDistanceSq)
             } // for (j = i+1; j < xPts.length; j++)
         } // for (i = 0; i < xPts.length; i++)
-        return Math.sqrt(largestDistanceSq);
+        System.out.println("Completed points in "+(System.currentTimeMillis() - time)+"\tsize: "+orig.size()+"\n");
+        return getLargest(orig, term, xRes, yRes, xPts, yPts);
+    }
+    
+    /**
+     * 
+     * 2d version to find the largest distance of the collected values
+     * 
+     * @return
+     */
+    private double getLargest(Stack<Integer> orig, Stack<Integer> term, float xRes, float yRes, 
+    							float[] xPoints, float[] yPoints) {
+    	Integer origPoint, termPoint;
+    	double startX, startY;
+    	double endX, endY;
+    	double delX, delY;
+    	double distX, distY;
+    	double x, y;
+        double slope;
+        int xRound, yRound;
+        int num = 0;
+    	long time = System.currentTimeMillis();
+        try {
+	    	forj:
+	    	while((origPoint = orig.pop()) != null && (termPoint = term.pop()) != null) {
+	    		num++;
+	    		startX = xPoints[origPoint.intValue()];
+	            startY = yPoints[origPoint.intValue()];
+	            endX = xPoints[termPoint.intValue()];
+	            endY = yPoints[termPoint.intValue()];
+	            delX = endX - startX;
+	            delY = endY - startY;
+	            distX = xRes * delX;
+	            distY = yRes * delY;
+	    		if (Math.abs(delX) >= Math.abs(delY)) {
+	                slope = delY/delX;
+	                if (endX >= startX) {
+	                    for (x = startX + 0.5, y = startY + 0.5 * slope; x < endX; x += 0.5, y += 0.5 * slope) {
+	                        xRound = (int)Math.round(x);
+	                        yRound = (int)Math.round(y);
+	                        if (!contains(xRound, yRound, false)) {
+	                            continue forj;         
+	                        }
+	                    } // for (x = startX + 0.5, y = startY + 0.5 * slope; x < endX; x += 0.5, y += 0.5 * slope)
+	                } // if (endX >= startX)
+	                else { // endX < startX
+	                    for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope) {
+	                        xRound = (int)Math.round(x);
+	                        yRound = (int)Math.round(y);
+	                        if (!contains(xRound, yRound, false)) {
+	                            continue forj;         
+	                        }    
+	                    } // for (x = startX - 0.5, y = startY - 0.5 * slope; x > endX; x -= 0.5, y -= 0.5 * slope)
+	                } // else endX < startX
+	            } // if (Math.abs(delX) >= Math.abs(delY))
+	            else { // Math.abs(delX) < Math.abs(delY)
+	                slope = delX/delY;
+	                if (endY >= startY) {
+	                    for (y = startY + 0.5, x = startX + 0.5 * slope; y < endY; y += 0.5, x += 0.5 * slope) {
+	                        xRound = (int)Math.round(x);
+	                        yRound = (int)Math.round(y);
+	                        if (!contains(xRound, yRound, false)) {
+	                            continue forj;         
+	                        }
+	                    } // for (y = startY + 0.5, x = startX + 0.5 * slope; y < endY; y += 0.5, x += 0.5 * slope)
+	                } // if (endX >= startX)
+	                else { // endX < startX
+	                    for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope) {
+	                        xRound = (int)Math.round(x);
+	                        yRound = (int)Math.round(y);
+	                        if (!contains(xRound, yRound, false)) {
+	                            continue forj;         
+	                        }    
+	                    } // for (y = startY - 0.5, x = startX - 0.5 * slope; y > endY; y -= 0.5, x -= 0.5 * slope)
+	                } // else endX < startX    
+	            } // else Math.abs(delX) < Math.abs(delY)
+	    		System.out.println("Found at "+startX+", "+startY+" to "+endX+", "+endY);
+	    		System.out.println("Found in "+(System.currentTimeMillis() - time)+" using "+num+" elements\t is "+Math.sqrt(distX*distX + distY*distY)+"\n");
+	            return Math.sqrt(distX*distX + distY*distY);
+	    	}
+        } catch(EmptyStackException e) {
+        	return -1;
+        }
+        return -1;
     }
 
     /**
