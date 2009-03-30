@@ -1359,6 +1359,7 @@ public class VolumeSurface extends VolumeObject
         m_kWireframe = new WireframeState();
         m_kScene.AttachGlobalState(m_kWireframe);
     }
+    
     private void scaleMesh( float fValue, HashSet[] connections )
     {
         int iVQuantity = m_kMesh.VBuffer.GetVertexQuantity();
