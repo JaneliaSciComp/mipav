@@ -196,7 +196,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kDTIDisplay == null )
         {
             m_kDTIDisplay = new VolumeDTI( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
-            m_kDisplayList.add(m_kDisplayList.size(), m_kDTIDisplay);
+            m_kDisplayList.add(1, m_kDTIDisplay);
         }
         m_kDTIDisplay.addPolyline( kLine, iGroup );
         m_kDTIDisplay.SetDisplay( true );
@@ -232,7 +232,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kDTIDisplay == null )
         {
             m_kDTIDisplay = new VolumeDTI( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
-            m_kDisplayList.add(m_kDisplayList.size(), m_kDTIDisplay);
+            m_kDisplayList.add(1, m_kDTIDisplay);
         }
         m_kDTIDisplay.setCenterIndex(centerIndex);
         m_kDTIDisplay.addPolyline( kLine, iGroup );
@@ -1634,7 +1634,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kDTIDisplay == null )
         {
             m_kDTIDisplay = new VolumeDTI( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
-            m_kDisplayList.add(m_kDisplayList.size(), m_kDTIDisplay);
+            m_kDisplayList.add(1, m_kDTIDisplay);
         }
         m_kDTIDisplay.setDTIImage(kDTIImage);
     }

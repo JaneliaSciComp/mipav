@@ -144,8 +144,8 @@ public class VolumeDTI extends VolumeObject
         m_kVertexColor3Shader = new VertexColor3Effect();
         m_kAlpha = new AlphaState();
         m_kAlpha.BlendEnabled = true;
-        m_kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
-        m_kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+        //m_kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
+        //m_kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
     }
 
     /** Add a polyline to the display. Used to display fiber tract bundles.
