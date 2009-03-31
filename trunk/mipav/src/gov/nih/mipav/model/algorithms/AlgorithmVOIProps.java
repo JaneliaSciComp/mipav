@@ -59,6 +59,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
     /** Whether or not to exclude a range of values. */
     private int rangeFlag;
+    
+    /** Whether or not to calculate largest slice distance, true by default */
+    private boolean sliceDistanceFlag;
+    
+    /** Whether or not to calculate largest distance (only 3D), true by default */
+    private boolean distanceFlag;
 
     /** Vector of all Active VOIs. */
     private ViewVOIVector selectedVOIset;
@@ -113,6 +119,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         nf.setDecimalFormatSymbols(dfs);
 
         this.rangeFlag = rangeFlag;
+        this.sliceDistanceFlag = true;
+        this.distanceFlag = true;
         this.srcImage = srcImg;
         this.processType = pType;
 
@@ -513,15 +521,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     
     /**
      * Gets the largest line segment totally contained within a VOI slice (in terms of res).
+     * If this unexpectedly returns zero, make sure you have not inadvertently set sliceDistanceFlag to false.
      *
      * @return  String largest slice distance string
      */
     public String getLargestSliceDistance() {
-        return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.largestSliceDistanceDescription);
+    	return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.largestSliceDistanceDescription);
     } // {return largestSliceDistance;}
     
     /**
      * Gets the largest line segment totally contained within a 3D VOI (in terms of res).
+     * If this unexpectedly returns zero, make sure you have not inadvertently set distanceFlag to false.
      *
      * @return  String largest distance string
      */
@@ -848,6 +858,24 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     }
     
     /**
+     * Sets whether the largest slice distance is calculated.  Defaults
+     * to true, set to false if VOI will not complete.
+     * @param sliceDistanceFlag
+     */
+    public void setSliceDistanceFlag(boolean sliceDistanceFlag) {
+		this.sliceDistanceFlag = sliceDistanceFlag;
+	}
+
+    /**
+     * Sets whether the largest distance is calculated. Defaults to true,
+     * set to false if VOI will not complete.
+     * @param distanceFlag
+     */
+	public void setDistanceFlag(boolean distanceFlag) {
+		this.distanceFlag = distanceFlag;
+	}
+
+	/**
      * tells the algorithm to total the property calculations.
      *
      * @param  totals  DOCUMENT ME!
@@ -1101,10 +1129,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         perimeter = ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
                                                                                             srcImage.getFileInfo(0).getResolutions()[1]);
                         totalPerimeter += perimeter;
-                        largestContourDistance = ((VOIContour)(contours[q].elementAt(r))).calcLargestSliceDistance(srcImage.getFileInfo(0).getResolutions()[0],
-                                                                                                          srcImage.getFileInfo(0).getResolutions()[1]);
-                        largestSliceDistance = Math.max(largestContourDistance, largestSliceDistance);
-
+                        
+                        if(sliceDistanceFlag) {
+		                    largestContourDistance = ((VOIContour)(contours[q].elementAt(r))).calcLargestSliceDistance(srcImage.getFileInfo(0).getResolutions()[0],
+		                                                                                                      srcImage.getFileInfo(0).getResolutions()[1]);
+		                    largestSliceDistance = Math.max(largestContourDistance, largestSliceDistance);
+                        }
+                        
                         totalC = selectedVOI.getGeometricCenter();
 
                         ((VOIContour) (contours[q].elementAt(r))).setActive(true);
@@ -2035,9 +2066,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     for (int r = 0; r < contours[q].size(); r++) {
                         totalPerimeter += ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
                                                                                                   srcImage.getFileInfo(0).getResolutions()[1]);
-                        largestSliceDistance = Math.max(largestSliceDistance,
-                                          ((VOIContour)(contours[q].elementAt(r))).calcLargestSliceDistance(srcImage.getFileInfo(0).getResolutions()[0],
-                                                                                                  srcImage.getFileInfo(0).getResolutions()[1]));
+                        if(sliceDistanceFlag) {
+	                        largestSliceDistance = Math.max(largestSliceDistance,
+	                                          ((VOIContour)(contours[q].elementAt(r))).calcLargestSliceDistance(srcImage.getFileInfo(0).getResolutions()[0],
+	                                                                                                  srcImage.getFileInfo(0).getResolutions()[1]));
+                        }
                     }
                 }
 
@@ -2672,13 +2705,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             contours = selectedVOI.getCurves();
             
-            long time2 = System.currentTimeMillis();
-            largestDistance = selectedVOI.calcLargestDistance(srcImage.getExtents()[0],
-                    srcImage.getExtents()[1],
-                    srcImage.getFileInfo(0).getResolutions()[0],
-                    srcImage.getFileInfo(0).getResolutions()[1],
-                    srcImage.getFileInfo(0).getResolutions()[2]);
-            System.out.println("Total time: "+(System.currentTimeMillis() - time2));
+            if(distanceFlag) {
+	            long time2 = System.currentTimeMillis();
+	            largestDistance = selectedVOI.calcLargestDistance(srcImage.getExtents()[0],
+	                    srcImage.getExtents()[1],
+	                    srcImage.getFileInfo(0).getResolutions()[0],
+	                    srcImage.getFileInfo(0).getResolutions()[1],
+	                    srcImage.getFileInfo(0).getResolutions()[2]);
+	            System.out.println("Total time: "+(System.currentTimeMillis() - time2));
+            }
             
             xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
             if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -2779,11 +2814,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                                                                             srcImage.getFileInfo(0).getResolutions()[1]);
                         totalPerimeter += perimeter;
                         
-                        System.out.println("Examining contour "+q);
-                        largestContourDistance = ((VOIContour) (contours[q].elementAt(r))).calcLargestSliceDistance(
-                                srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]);
-                        largestAllSlicesDistance = Math.max(largestAllSlicesDistance, largestContourDistance);
-
+                        if(sliceDistanceFlag) {
+	                        System.out.println("Examining contour "+q);
+	                        largestContourDistance = ((VOIContour) (contours[q].elementAt(r))).calcLargestSliceDistance(
+	                                srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]);
+	                        largestAllSlicesDistance = Math.max(largestAllSlicesDistance, largestContourDistance);
+                        }
 
                         mask.clear(); // only works for Java1.4
 
@@ -4020,10 +4056,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     for (int r = 0; r < contours[q].size(); r++) {
                         totalPerimeter += ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
                                                                                                   srcImage.getFileInfo(0).getResolutions()[1]);
-                        System.out.println("Examining contour "+q);
-                        largestAllSlicesDistance = Math.max(largestAllSlicesDistance, 
-                               ((VOIContour)(contours[q].elementAt(r))).calcLargestSliceDistance(
-                                       srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]));
+                        if(sliceDistanceFlag) {
+	                        System.out.println("Examining contour "+q);
+	                        largestAllSlicesDistance = Math.max(largestAllSlicesDistance, 
+	                               ((VOIContour)(contours[q].elementAt(r))).calcLargestSliceDistance(
+	                                       srcImage.getFileInfo(0).getResolutions()[0], srcImage.getFileInfo(0).getResolutions()[1]));
+                        }
                     }
                 }
 

@@ -381,6 +381,11 @@ public class JDialogVOIStats extends JDialogBase
             // only loading the image works because we have been changing
             // the thing held BY the image.
             algoVOI = new AlgorithmVOIProps(image);
+            
+            //only calculate these if appropriate box is checked for speed.
+            algoVOI.setDistanceFlag(listPanel.getSelectedList(VOIStatisticList.largestDistanceDescription));
+            algoVOI.setSliceDistanceFlag(listPanel.getSelectedList(VOIStatisticList.largestSliceDistanceDescription));
+            
             algoVOI.setRunningInSeparateThread(false);
             algoVOI.run();
 
