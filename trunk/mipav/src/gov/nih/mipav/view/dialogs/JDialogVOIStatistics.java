@@ -328,6 +328,10 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         calculator = new AlgorithmVOIProps(image, processType, rangeFlag);
         calculator.setPrecisionDisplay(precision, doForce);
         calculator.addListener(this);
+        
+        //only calculate these if appropriate box is checked for speed.
+        calculator.setDistanceFlag(checkBoxPanel.getSelectedList(largestDistanceDescription));
+        calculator.setSliceDistanceFlag(checkBoxPanel.getSelectedList(largestSliceDistanceDescription));
 
         createProgressBar(image.getImageName(), calculator);
 
