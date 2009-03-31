@@ -557,30 +557,8 @@ public class VOI extends ModelSerialCloneable {
      */
     public double calcLargestDistance(int xDim, int yDim, float xRes, float yRes, float zRes) {
         double largestDistanceSq = 0.0f;
-        double distanceSq;
         int i;
         int j;
-        int k;
-        double startX;
-        double endX;
-        double startY;
-        double endY;
-        double startZ;
-        double endZ;
-        double delX;
-        double delY;
-        double delZ;
-        double distX;
-        double distY;
-        double distZ;
-        double x;
-        double y;
-        double z;
-        double slope;
-        double slope2;
-        int xRound;
-        int yRound;
-        int zRound;
         int slice;
         float xPts[];
         float yPts[];
@@ -589,7 +567,6 @@ public class VOI extends ModelSerialCloneable {
         int nPts = 0;
         int index = 0;
         int len;
-        boolean okay;
         
         if (curveType != CONTOUR) {
             MipavUtil.displayError("curveType is not the required CONTOUR for calcLargestDistance");
@@ -618,17 +595,103 @@ public class VOI extends ModelSerialCloneable {
                 }
             }
         }
-        
-        Stack<Integer> orig = new Stack<Integer>();
-        Stack<Integer> term = new Stack<Integer>();
-        Preferences.debug("Traverse points\n");
-        
         long time = System.currentTimeMillis();
-        for (i = 0; i < xPts.length; i++) {
+        double avg = 0, max = 0;
+        double[] maxAvg = determineMaxAvg(xRes, yRes, zRes, xPts, yPts, zPts);
+        max = maxAvg[0];
+        avg = maxAvg[1];
+        
+        Preferences.debug("Traverse points\n");
+        time = System.currentTimeMillis();
+        double a = 0, lowerBound = Double.MAX_VALUE, upperBound = Double.MAX_VALUE;
+        int iter = 0;
+        boolean terminal = false;
+        while(a == 0 && !terminal) {
+        	ArrayList<Integer> orig = new ArrayList<Integer>();
+            ArrayList<Integer> term = new ArrayList<Integer>();
+        	upperBound = lowerBound;
+        	lowerBound = Math.max(0, max-iter*(avg/Math.max(1, (int)Math.pow(xPts.length, 0.3)-9)));
+	        gatherBoundedPoints(orig, term, lowerBound-1, upperBound, xRes, yRes, zRes, xPts, yPts, zPts);
+	        time = System.currentTimeMillis();        
+	        Preferences.debug("Completed points in "+(System.currentTimeMillis() - time)+"\tsize: "+orig.size()+"\n");
+	        a = getLargest(orig, term, xRes, yRes, zRes, xPts, yPts, zPts);
+	        if(lowerBound == 0.0) {
+	        	terminal = true;
+	        }
+	        iter++;
+        }
+        return a;
+    }
+    
+    /**
+     * Gathers max and average statistics to build guessing intervals
+     */
+    private double[] determineMaxAvg(float xRes, float yRes, float zRes,
+    								float[] xPts, float[] yPts, int zPts[]) {
+    	double max = 0, avg = 0;
+    	int n = xPts.length;
+        Random r = new Random();
+        //note that a stop that yields a non-representative average is fine, since worst case is more computations
+        int stop = n < 100 ? (int)(n*0.50) : (int)(n*0.10);
+        int[] search = new int[stop];
+        int[] end = new int[stop];
+        double startX, startY, startZ;
+        double endX, endY, endZ;
+        double delX, delY, delZ;
+        double distX, distY, distZ;
+        double distanceSq;
+        int i, j;
+        for(i = 0; i<stop; i++) {
+        	search[i] = r.nextInt(n);
+        	end[i] = r.nextInt(n);
+        }
+        
+        int numBegin = 0, numEnd = 0;;
+        for (i = 0; i < search.length; i++) {
+            
+        	numBegin = search[i];
+        	startX = xPts[numBegin];
+            startY = yPts[numBegin];
+            startZ = zPts[numBegin];
+            for (j = 0; j < end.length; j++) {
+                numEnd = end[j];
+            	endX = xPts[numEnd];
+                endY = yPts[numEnd];
+                endZ = zPts[numEnd];
+                delX = endX - startX;
+                delY = endY - startY;
+                delZ = endZ - startZ;
+                distX = xRes * delX;
+                distY = yRes * delY;
+                distZ = zRes * delZ;
+                distanceSq = distX*distX + distY*distY + distZ*distZ;
+                avg = avg + distanceSq;
+                if (distanceSq > max) {
+                    max = distanceSq;
+                } // if (distanceSq > largsestDistanceSq)
+            } // for (j = i+1; j < xPts.length; j++)
+        } // for (i = 0; i < xPts.length; i++)
+        avg = avg / (end.length * search.length);
+        return new double[]{max, avg};
+    }
+    
+    /**
+     * Gathers the points that fall within the required bounds
+     */
+    private void gatherBoundedPoints(ArrayList<Integer> orig, ArrayList<Integer> term, 
+    							double lowerBound, double upperBound, 
+    							float xRes, float yRes, float zRes, 
+    							float[] xPts, float[] yPts, int zPts[]) {
+    	int i, j;
+    	double startX, startY, startZ;
+    	double endX, endY, endZ;
+    	double delX, delY, delZ;
+        double distX, distY, distZ;
+        double distanceSq;
+    	for (i = 0; i < xPts.length; i++) {
             startX = xPts[i];
             startY = yPts[i];
             startZ = zPts[i];
-            forj:
             for (j = i+1; j < xPts.length; j++) {
                 endX = xPts[j];
                 endY = yPts[j];
@@ -640,25 +703,22 @@ public class VOI extends ModelSerialCloneable {
                 distY = yRes * delY;
                 distZ = zRes * delZ;
                 distanceSq = distX*distX + distY*distY + distZ*distZ;
-                if (distanceSq > largestDistanceSq) {
-                	orig.push(Integer.valueOf(i));
-                    term.push(Integer.valueOf(j));
-                    largestDistanceSq = distanceSq;
+                if (distanceSq > lowerBound && distanceSq < upperBound) {
+                	orig.add(Integer.valueOf(i));
+                    term.add(Integer.valueOf(j));
                 } // if (distanceSq > largsestDistanceSq)
             } // for (j = i+1; j < xPts.length; j++)
         } // for (i = 0; i < xPts.length; i++)
-        Preferences.debug("Completed points in "+(System.currentTimeMillis() - time)+"\tsize: "+orig.size()+"\n");
-        return getLargest(orig, term, xRes, yRes, zRes, xPts, yPts, zPts);
     }
     
     /**
 	 * Finds the largest line that lies within entirerly within the VOI.
-     */
-     
-    private double getLargest(Stack<Integer> orig, Stack<Integer> term, 
+     */  
+    private double getLargest(ArrayList<Integer> orig, ArrayList<Integer> term, 
     							float xRes, float yRes, float zRes, 
     							float[] xPoints, float[] yPoints, int zPoints[]) {
-    	Integer origPoint, termPoint;
+    	int origPoint, termPoint;
+    	double largestDistanceSq = 0, distanceSq;
     	double startX, startY, startZ;
     	double endX, endY, endZ;
     	double delX, delY, delZ;
@@ -666,26 +726,26 @@ public class VOI extends ModelSerialCloneable {
     	double x, y, z;
         double slope, slope2;
         int xRound, yRound, zRound;
-        int k, num = 0;
+        int j, k, r;
         boolean okay;
-        long time = System.currentTimeMillis();
-        try {
-	    	forj:
-	        while((origPoint = orig.pop()) != null && (termPoint = term.pop()) != null) {
-	        	num++;
-	        	startX = xPoints[origPoint.intValue()];
-	            startY = yPoints[origPoint.intValue()];
-	            startZ = zPoints[origPoint.intValue()];
-	            endX = xPoints[termPoint.intValue()];
-	            endY = yPoints[termPoint.intValue()];
-	            endZ = zPoints[termPoint.intValue()];
-	            delX = endX - startX;
-	            delY = endY - startY;
-	            delZ = endZ - startZ;
-	            distX = xRes * delX;
-	            distY = yRes * delY;
-	            distZ = zRes * delZ;
-	            
+        forj:
+        for(j=0; j<orig.size(); j++) {
+        	origPoint = orig.get(j).intValue();
+        	startX = xPoints[origPoint];
+            startY = yPoints[origPoint];
+            startZ = zPoints[origPoint];
+            termPoint = term.get(j).intValue();
+            endX = xPoints[termPoint];
+            endY = yPoints[termPoint];
+            endZ = zPoints[termPoint];
+            delX = endX - startX;
+            delY = endY - startY;
+            delZ = endZ - startZ;
+            distX = xRes * delX;
+            distY = yRes * delY;
+            distZ = zRes * delZ;
+            distanceSq = distX*distX + distY*distY + distZ*distZ;
+            if(distanceSq > largestDistanceSq) {
 	            if ((Math.abs(delX) >= Math.abs(delY)) && (Math.abs(delX) >= Math.abs(delZ))) {
 	                slope = delY/delX;
 	                slope2 = delZ/delX;
@@ -818,13 +878,10 @@ public class VOI extends ModelSerialCloneable {
 	                    } // for (z = startZ - 0.5, x = startX - 0.5 * slope, y = startY - 0.5 * slope2; z > endZ; z -= 0.5, x -= 0.5 * slope,
 	                } // else (endZ < startZ)
 	            } // else ((Math.abs(delZ) >= Math.abs(delX)) && (Math.abs(delZ) >= Math.abs(delY))) 
-	            System.out.println("Found in "+(System.currentTimeMillis() - time)+" using "+num+" elements\n");
-	            return Math.sqrt(distX*distX + distY*distY + distZ*distZ);
-	        }
-        } catch(EmptyStackException e) {
-        	return -1;
+	            largestDistanceSq = distanceSq;
+        	}
         }
-        return -1;
+        return Math.sqrt(largestDistanceSq);
     }
      
 
