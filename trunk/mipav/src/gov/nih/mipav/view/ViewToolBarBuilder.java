@@ -1009,7 +1009,10 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
 
         VOIToolBar.add(buildToggleButton(CustomUIBuilder.PARAM_VOI_LEVELSET, VOIGroup));
-        
+
+        VOIToolBar.add(makeSeparator());
+
+        VOIToolBar.add( buildButton( "deleteAllVOI", "Delete all contours", "delete" ) );
         VOIToolBar.add(makeSeparator());
 
         VOIToolBar.add( buildButton( "deleteVOI", "Delete selected contour", "delete" ) );

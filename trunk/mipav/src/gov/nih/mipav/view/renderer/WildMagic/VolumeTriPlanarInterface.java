@@ -43,6 +43,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender;
@@ -681,6 +682,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             doVOI(command);
         } else if (command.equals("LevelSetVOI") ) {
             doVOI(command);
+        } else if (command.equals("deleteAllVOI") ) {
+            doVOI(command);
         } else if (command.equals("deleteVOI") ) {
             doVOI(command);
         }  else if (command.equals("cutVOI") ) {
@@ -723,9 +726,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      * from the other renderers: BrainSurfaceFlattener and Flythrough.
      * @param kNode
      */
-    public void addNode( Node kNode )
+    public VolumeObject addNode( Node kNode )
     {
-        raycastRenderWM.addNode( kNode );
+        return raycastRenderWM.addNode( kNode );
     }
 
     /**
@@ -1830,6 +1833,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     {       
         raycastRenderWM.removeSurface(kSurfaceName);
         deleteVOISurface(kSurfaceName);
+    }
+
+    public void removeNode(String kSurfaceName)
+    {       
+        raycastRenderWM.removeSurface(kSurfaceName);
     }
 
     /**

@@ -271,18 +271,15 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             return;
         }
         DefaultListModel kList = (DefaultListModel) m_kVOIList.getModel();
-        int iSize = kList.getSize();
-        for ( int i = 0; i < iSize; i++ )
+        if ( kList.contains( kVOIName ) )
         {
-            if ( kList.get(i).equals( kVOIName ) )
-            {
-                kList.remove(i);
-                m_kVOIParamsList.remove( i );
-            }
+            int i = kList.indexOf( kVOIName );
+            kList.remove(i);
+            m_kVOIParamsList.remove( i );
         }
-        if ( iSize != 1 )
+        if ( kList.size() != 1 )
         {
-            m_kVOIList.setSelectedIndex(iSize-1);
+            m_kVOIList.setSelectedIndex( kList.size()-1);
         }
     }
     
@@ -1266,7 +1263,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                     {
                         if ( m_kVOIParamsList.get(k).Name.equals(kName) )
                         {
-                            abVisited[iVOI] = true;
+                            abVisited[k] = true;
                         }
                     }
                 }
