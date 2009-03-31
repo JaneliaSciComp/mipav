@@ -808,6 +808,7 @@ public class JDialogDTIInput extends JInterfaceBase
         kAlgorithm.getTraceImage().saveImage( m_kParentDir, "TraceImage.xml", FileUtility.XML, false );
         kAlgorithm.getRAImage().saveImage( m_kParentDir, "RAImage.xml", FileUtility.XML, false );
         kAlgorithm.getVRImage().saveImage( m_kParentDir, "VRImage.xml", FileUtility.XML, false );
+        kAlgorithm.getADCImage().saveImage( m_kParentDir, "ADCImage.xml", FileUtility.XML, false );
         kAlgorithm.disposeLocal();
         kAlgorithm = null;
         

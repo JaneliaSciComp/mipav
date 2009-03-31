@@ -6,6 +6,7 @@ import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Spatial.CullingMode;
 
 public class VolumeNode extends VolumeObject
 {

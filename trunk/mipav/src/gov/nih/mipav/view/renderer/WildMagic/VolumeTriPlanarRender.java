@@ -14,6 +14,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageExtract;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageNormalGM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageSurfaceMask;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeOrientationCube;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeRayCast;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
@@ -179,12 +180,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Add a new scene-graph node to the display list.
      * @param kNode
      */
-    public void addNode(Node kNode)
+    public VolumeObject addNode(Node kNode)
     {
-        m_kDisplayList.add( 1, new VolumeNode( m_kVolumeImageA,
+        VolumeNode kVNode = new VolumeNode( m_kVolumeImageA,
                 m_kTranslate,
-                m_fX, m_fY, m_fZ, kNode) );
+                m_fX, m_fY, m_fZ, kNode);
+        m_kDisplayList.add( 1, kVNode );
         UpdateSceneRotation();
+        return kVNode;
     }
 
     /** Add a polyline to the display. Used to display fiber tract bundles.
@@ -1269,10 +1272,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             {
                 if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
                 {
-                    VolumeSurface kSurface = (VolumeSurface)m_kDisplayList.remove(i);
-                    kSurface.dispose();
-                    kSurface = null;
-                    m_bSurfaceUpdate = true;
+                    VolumeObject kObj = m_kDisplayList.remove(i);
+                    if ( kObj instanceof VolumeSurface )
+                    {
+                        m_bSurfaceUpdate = true;                        
+                    }
+                    kObj.dispose();
+                    kObj = null;
                 }
             }
         }

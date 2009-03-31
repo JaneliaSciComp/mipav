@@ -34,9 +34,9 @@ import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Camera;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.Rendering.ZBufferState;
-import WildMagic.LibGraphics.Rendering.WireframeState.FillMode;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
@@ -59,16 +59,173 @@ public class PlaneRender_WM extends GPURenderBase
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+    private class LocalVolumeVOI
+    {
+        public Vector<String> Name = new Vector<String>();
+        public PolylineVector Local = new PolylineVector();
+        public PolylineVector Volume = new PolylineVector();
+        private Vector3f m_kLocalPt = new Vector3f();
+        private Vector3f m_kVolumePt;
+        private int m_iCurrent;
+
+        private Vector3f m_kLocalCenter = new Vector3f();
+        
+        public LocalVolumeVOI( Polyline kLocal, String kName )
+        {
+            Name.add(kName);
+            Local.add(kLocal);
+            Volume.add( createVolumePolyline( kLocal.VBuffer ) );
+            m_iCurrent = 0;
+        }
+
+        public void add( Polyline kLocal, String kName  )
+        {
+            Name.add(kName);
+            Local.add(kLocal);
+            Volume.add( createVolumePolyline( kLocal.VBuffer ) );
+            m_iCurrent++;
+        }
+        
+
+        
+        public void addPoint( float fX, float fY, float fZ )
+        {
+        }
+
+        public Polyline getLocal( int i )
+        {
+            return Local.get(i);
+        }
+
+        public int GetVertexQuantity(int i)
+        {
+            return Local.get(i).VBuffer.GetVertexQuantity();
+        }
+
+
+
+        public void move( Vector3f kDiff )
+        {            
+            kDiff.Sub( m_kLocalCenter );
+            
+            VertexBuffer kLocalVBuffer = Local.get(0).VBuffer;     
+            VertexBuffer kVolumeVBuffer = Volume.get(0).VBuffer;     
+            int iNumPoints = kLocalVBuffer.GetVertexQuantity();
+            if ( iNumPoints > 0 )
+            {
+                for ( int i = 0; i < iNumPoints; i++ )
+                {
+                    Vector3f kPos = kLocalVBuffer.GetPosition3( i );
+                    kPos.Add(kDiff);
+                    kLocalVBuffer.SetPosition3( i, kPos ) ;
+
+                    kPos = VOIToFileCoordinates( kPos, true );
+                    kVolumeVBuffer.SetPosition3( i, kPos ) ;
+                }
+                kLocalVBuffer.Release();
+                kVolumeVBuffer.Release();
+                m_bUpdateVOI = true;
+            }
+        }
+
+        public void Release()
+        {
+            Local.get(m_iCurrent).VBuffer.Release();
+            Volume.get(m_iCurrent).VBuffer.Release();
+        }
+
+        public void setCenter( float fX, float fY, float fZ )
+        {
+            m_kLocalCenter.Set( fX, fY, fZ );
+        }
+
+        public void SetPosition( int iPos, float fX, float fY, float fZ )
+        {
+            if ( iPos < Local.get(m_iCurrent).VBuffer.GetVertexQuantity() )
+            {
+                m_kLocalPt.Set( fX, fY, fZ );
+                Local.get(m_iCurrent).VBuffer.SetPosition3( iPos, m_kLocalPt );
+                m_kVolumePt = VOIToFileCoordinates( m_kLocalPt, true );
+                Volume.get(m_iCurrent).VBuffer.SetPosition3( iPos, m_kVolumePt );
+                //System.err.println( iPos + " " + m_kVolumePt.ToString() );
+            }
+        }
+
+        public int size()
+        {
+            return Local.size();
+        }
+
+        public int slice(int i)
+        {
+            return (int)Local.get(i).VBuffer.GetPosition3(0).Z;
+        }
+
+        public void Update()
+        {
+            Local.get(m_iCurrent).UpdateGS();
+            Local.get(m_iCurrent).UpdateRS();
+            Volume.get(m_iCurrent).UpdateGS();
+            Volume.get(m_iCurrent).UpdateRS();
+        }
+
+
+        private Polyline createVolumePolyline( VertexBuffer kVBuffer )
+        {
+            int iNumPoints = kVBuffer.GetVertexQuantity();
+            VertexBuffer kVolumeVBuffer = new VertexBuffer( m_kVOIAttr, iNumPoints );
+            if ( iNumPoints > 0 )
+            {
+                for ( int i = 0; i < iNumPoints; i++ )
+                {
+                    Vector3f kPos = kVBuffer.GetPosition3(i);
+                    kVolumeVBuffer.SetPosition3( i, VOIToFileCoordinates( kPos, true ) );
+                    kVolumeVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
+                }
+            }
+            Polyline kPoly = new Polyline( kVolumeVBuffer, true, true );    
+            kPoly.AttachEffect( new VertexColor3Effect() );
+            kPoly.AttachGlobalState(m_kZState);
+            //kPoly.UpdateGS();
+            //kPoly.UpdateRS();
+            return kPoly;
+        }
+    }
+
+    private class LocalVolumeVOIVector extends Vector<LocalVolumeVOI>
+    {
+        /**  */
+        private static final long serialVersionUID = 5551644349599464551L;
+        public LocalVolumeVOIVector() {
+            super();
+        }
+        public LocalVolumeVOIVector(int initialsize) {
+            super(initialsize);
+        }
+    }
+    private class PolylineVector extends Vector<Polyline>
+    {
+        /**  */
+        private static final long serialVersionUID = -7579112007899203250L;
+        public PolylineVector() {
+            super();
+        }
+        public PolylineVector(int initialsize) {
+            super(initialsize);
+        }
+    }
+    
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2025132936439496099L;
-
     /** Camera Locations, for rendering the different Axial, Sagittal and Coronal views. */
     Vector3f[] m_akCLoc = { new Vector3f(-1.0f,0.0f,0.0f), new Vector3f(0.0f,-1.0f,0.0f), new Vector3f(0.0f,0.0f,-1.0f) };
+
     /** Camera Direction, UP, and Right vectors, for rendering the different Axial, Sagittal and Coronal views. */
     Vector3f[] m_akCoords = { new Vector3f(Vector3f.UNIT_X), new Vector3f(Vector3f.UNIT_Y), new Vector3f(Vector3f.UNIT_Z) };
-    
+
     /** Actual image orientation. */
     protected boolean m_bPatientOrientation = true;
+
     /** Which dimension of the ModelImage to render. */
     protected int m_iPlaneOrientation = 0;
 
@@ -121,10 +278,8 @@ public class PlaneRender_WM extends GPURenderBase
 
     /** lower y-bound of the texture-mapped polygon: */
     private float m_fY0;
-
     /** upper y-bound of the texture-mapped polygon: */
     private float m_fY1;
-
     /** Height of the texture-mapped polygon: */
     private float m_fYRange;
 
@@ -138,54 +293,62 @@ public class PlaneRender_WM extends GPURenderBase
     /** Current active image for manipulating the LUT by dragging with the
      * right-mouse down. */
     private ModelImage m_kActiveImage;
+
     /** x-axis label: */
     private String m_kLabelX = new String("X");
     private String m_kLabelXDisplay = new String("X");
-
+    
     /** y-axis label: */
     private String m_kLabelY = new String("Y");
-
     /** x-axis arrow */
     private TriMesh[] m_kXArrow;
     /** y-axis arrow */
     private TriMesh[] m_kYArrow;
-    
     /** Drawing the axis arrows in screen-space. */
     private Camera m_spkScreenCamera;
     private int m_iLabelX_SpacingX;
     private int m_iLabelX_SpacingY;
+
     private int m_iLabelY_SpacingX;
     private int m_iLabelY_SpacingY;
     private boolean m_bUpdateSpacing = false;
-
     /** ModelImage axis orientation. */
     private int[] m_aiAxisOrder;
+    
     /** ModelImage axis flip. */
     private boolean[] m_abAxisFlip;
+
     /** For zooming with the mouse. */
     private float m_fMouseX;
     private float m_fMouseY;
-    
     private boolean m_bShowSurface = false;
-
     private Camera m_spkVOICamera;
     private boolean m_bDrawVOI = false;
+
     private boolean m_bDrawRect = false;
     private boolean m_bDrawPolyline = false;
     private boolean m_bUpdateVOI = true;
-    private Polyline m_kCurrentVOI = null;
-    private PolylineVector m_kCurrentPoly = null;
-    private Polyline m_kCopyVOI = null;
-    private PolylineVector[] m_kVOIList = null;
-
     private boolean m_bPointer = false;
     private boolean m_bSelected = false;
+
     private TriMesh m_kBallPoint = null;
-    private Vector3f m_kCurrentCenter = new Vector3f();
-    private int m_iCurrentVOIPoint = -1;
     
+    private ZBufferState m_kZState = null;
+    private Attributes m_kVOIAttr = null;
+
+
+    private int m_iCurrentVOIPoint = -1;
     private Vector3f m_kPatientPt = new Vector3f();
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    private Vector3f m_kVolumeScale = new Vector3f();
+
+    private LocalVolumeVOI m_kCurrentVOI = null;
+    private LocalVolumeVOI m_kCopyVOI = null;
+
+    private LocalVolumeVOIVector[] m_kVOIList = null;
+
+    private boolean m_bFirstVOI = true;
+    
+    private int m_iVOICount = 0;
 
     /**
      * Default PlaneRender interface.
@@ -195,6 +358,7 @@ public class PlaneRender_WM extends GPURenderBase
         super();
     }
 
+    
     /**
      * @param kParent
      * @param kAnimator
@@ -223,23 +387,54 @@ public class PlaneRender_WM extends GPURenderBase
 
         setOrientation();
         m_kWinLevel = new WindowLevel();
-        
-        ModelImage kImageA = m_kVolumeImageA.GetImage();
-        float fMaxX = (kImageA.getExtents()[0] - 1) * kImageA.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (kImageA.getExtents()[1] - 1) * kImageA.getFileInfo(0).getResolutions()[1];
-        float fMaxZ = (kImageA.getExtents()[2] - 1) * kImageA.getFileInfo(0).getResolutions()[2];
-
-        m_fMax = fMaxX;
-        if (fMaxY > m_fMax) {
-            m_fMax = fMaxY;
-        }
-        if (fMaxZ > m_fMax) {
-            m_fMax = fMaxZ;
-        }
-        m_fX = fMaxX/m_fMax;
-        m_fY = fMaxY/m_fMax;
-        m_fZ = fMaxZ/m_fMax;
     }
+
+    /**
+     * Tests the distance for closeness; finds the length of the normal from (x,y) to the line (x1,y1) (x2,y2). Returns
+     * true if the distance is shorter than tol.
+     *
+     * @param   x    x coordinate of point to be tested
+     * @param   x1   x coordinate of first point in line
+     * @param   x2   x coordinate of second point in line
+     * @param   y    y coordinate of point to be tested
+     * @param   y1   y coordinate of first point in line
+     * @param   y2   y coordinate of second point in line
+     * @param   tol  distance to test against
+     *
+     * @return  true if the distance is shorter than tol.
+     */
+    public static synchronized boolean testDistance(int x, int x1, int x2, int y, int y1, int y2, double tol) {
+
+        // double hVx, hVy, aVx, aVy;
+        double lenH, lenH2, lenA, lenO;
+        lenH = MipavMath.distance(x1, x, y1, y);
+
+        if (lenH <= 0) {
+            return false;
+        }
+
+        lenH2 = MipavMath.distance(x, x2, y, y2);
+        lenA = MipavMath.distance(x1, x2, y1, y2);
+
+        if (lenA <= 0) {
+            return false;
+        }
+
+        // hVx = x - x1;
+        // hVy = y - y1;
+        // aVx = x2 - x1;
+        // aVy = y2 - y1;
+        // theta = Math.acos((hVx*aVx + hVy*aVy)/(lenH*lenA));
+        // lenO = lenH * Math.sin(theta);// * (lenH+lenH2+lenA);
+        // The above reduces to:
+        lenO = Math.abs(((y1 - y2) * x) + ((x2 - x1) * y) + ((x1 * y2) - (y1 * x2))) / lenA;
+
+        if ((lenO < tol) && (lenH < lenA) && (lenH2 < lenA)) {
+            return true;
+        }
+
+        return false;
+    }   
     
     /**
      * Adds the VolumeSlices object to the display list for rendering.
@@ -248,8 +443,9 @@ public class PlaneRender_WM extends GPURenderBase
     public void addSlices( VolumeSlices kVolumeSlice  )
     {
         m_kDisplayList.add(kVolumeSlice);
+        m_kTranslate = kVolumeSlice.GetTranslate();
     }
-
+        
     /**
      * Closes the frame.
      */
@@ -257,6 +453,35 @@ public class PlaneRender_WM extends GPURenderBase
         disposeLocal();
     }
 
+    /**
+     * Determines if the supplied point can be found within the points that define the contour.
+     *
+     * @return  true if point is within the contour
+     */
+    public boolean contains(int iX, int iY, VertexBuffer kVBuffer) {
+        boolean isInside = false;
+        float fX = iX + 0.49f; // Matt add doc !!!
+        float fY = iY + 0.49f;
+
+        int iNumPoints = kVBuffer.GetVertexQuantity();
+        int iLast = iNumPoints -1;
+        if ( iNumPoints > 0 )
+        {
+            for ( int i = 0; i < iNumPoints; i++ )
+            {
+                Vector3f kPos = kVBuffer.GetPosition3(i);
+                Vector3f kPosL = kVBuffer.GetPosition3(iLast);
+
+                if (((kPosL.Y <= fY) && (fY < kPos.Y) && (areaTwice(kPos.X, kPos.Y, kPosL.X, kPosL.Y, fX, fY) >= 0)) ||
+                        ((kPos.Y <= fY) && (fY < kPosL.Y) && (areaTwice(kPosL.X, kPosL.Y, kPos.X, kPos.Y, fX, fY) >= 0))) {
+                    isInside = !isInside;
+                }
+
+                iLast = i;
+            }
+        }
+        return isInside;
+    }
     
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
@@ -335,13 +560,13 @@ public class PlaneRender_WM extends GPURenderBase
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2)
     {
         m_bModified = true;
-    }   
-    
+    }
+
     public void displaySurface( boolean bOn )
     {
         m_bShowSurface = bOn;
     }
-        
+
     /**
      * Clean memory.
      */
@@ -395,6 +620,30 @@ public class PlaneRender_WM extends GPURenderBase
 
     public void doVOI( String kCommand )
     {
+        if ( m_bFirstVOI )
+        {
+            m_kZState = new ZBufferState();
+            m_kZState.Compare = ZBufferState.CompareMode.CF_ALWAYS;
+            m_kVOIAttr = new Attributes();
+            m_kVOIAttr.SetPChannels(3);
+            m_kVOIAttr.SetCChannels(0,3);
+            
+            m_bFirstVOI = false;
+            StandardMesh kSDMesh = new StandardMesh(m_kVOIAttr);
+            kSDMesh.SetInside(true);
+            m_kBallPoint = kSDMesh.Box(3, 3, 3);
+            m_kBallPoint.AttachEffect( new VertexColor3Effect() );
+            for ( int i = 0; i < m_kBallPoint.VBuffer.GetVertexQuantity(); i++ )
+            {
+                m_kBallPoint.VBuffer.SetColor3( 0, i, 1, 1, 1 );
+            }
+            m_kBallPoint.AttachGlobalState(m_kZState);
+            WireframeState kWState = new WireframeState();
+            kWState.Fill = WireframeState.FillMode.FM_LINE;
+            m_kBallPoint.AttachGlobalState(kWState);
+        }
+
+
         if (kCommand.equals("RectVOI") ) 
         {
             m_bDrawVOI = true;
@@ -418,6 +667,9 @@ public class PlaneRender_WM extends GPURenderBase
         } 
         else if (kCommand.equals("LevelSetVOI") ) {
         } 
+        else if (kCommand.equals("deleteAllVOI") ) {
+            deleteAllVOI();
+        }  
         else if (kCommand.equals("deleteVOI") ) {
             deleteVOI();
         } 
@@ -485,13 +737,12 @@ public class PlaneRender_WM extends GPURenderBase
         }    
         if ( m_kCurrentVOI != null )
         {
-            m_kCurrentVOI.UpdateGS();
-            m_kCurrentVOI.UpdateRS();
+            m_kCurrentVOI.Update();
         }
         m_bModified = true;
         GetCanvas().display();
     }
-    
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#GetCanvas()
      */
@@ -499,7 +750,7 @@ public class PlaneRender_WM extends GPURenderBase
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
-
+    
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
      */
@@ -552,6 +803,42 @@ public class PlaneRender_WM extends GPURenderBase
         m_kAnimator.add( GetCanvas() );
     }
 
+    /** 
+     * keyPressed callback.
+     * @param kKey the KeyEvent triggering the callback.
+     */
+    public void keyPressed(KeyEvent kKey)
+    {
+        char ucKey = kKey.getKeyChar();            
+        int iKey = kKey.getKeyCode();
+        if ( ucKey == KeyEvent.VK_DELETE )
+        {
+            deleteVOI();
+        }
+    }
+
+    public void make3DVOI( boolean bIntersection, ModelImage kVolume, int iValue )
+    {
+        if ( m_kVOIList != null )
+        {
+            for ( int i = 0; i < m_aiLocalImageExtents[2]; i++ )
+            {
+                if ( m_kVOIList[i] != null )
+                {
+                    for ( int j = 0; j < m_kVOIList[i].size(); j++ )
+                    {
+                        fillVolume( i, m_kVOIList[i].get(j).getLocal(0), kVolume, bIntersection, iValue );
+                        m_kParent.removeNode( m_kVOIList[i].get(j).Name.get(0) );
+                    }
+                    m_kVOIList[i].clear();
+                    m_kVOIList[i] = null;
+                }
+            }
+        }
+        m_kCopyVOI = null;
+        m_kCurrentVOI = null;
+    }
+
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
@@ -596,6 +883,14 @@ public class PlaneRender_WM extends GPURenderBase
         }
     }
 
+    public void mouseMoved(MouseEvent kEvent) 
+    {
+        if ( m_bPointer )
+        {
+            showSelectedVOI( kEvent.getX(), kEvent.getY() );
+        }
+    }
+
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
      */
@@ -634,6 +929,8 @@ public class PlaneRender_WM extends GPURenderBase
         
     }
 
+
+
     /* (non-Javadoc)
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseReleased(java.awt.event.MouseEvent)
      */
@@ -660,15 +957,53 @@ public class PlaneRender_WM extends GPURenderBase
             GetCanvas().display();
         }
     }
-
-    public void mouseMoved(MouseEvent kEvent) 
-    {
-        if ( m_bPointer )
-        {
-            showSelectedVOI( kEvent.getX(), kEvent.getY() );
-        }
-    }
     
+    /**
+     * Tests if a point is near the curve.
+     *
+     * @param   x    x coordinate of point
+     * @param   y    y coordinate of point
+     * @param   tol  tolerance indicating the capture range to the line the point.
+     *
+     * @return  returns boolean result of test
+     */
+    public boolean nearLine(int iX, int iY, VertexBuffer kVBuffer) {
+
+        Vector3f kVOIPoint = new Vector3f(iX, m_iHeight - iY, 0 );
+        int i;
+        int x1, y1, x2, y2;
+        int isize = kVBuffer.GetVertexQuantity();
+        for (i = 0; i < (isize - 1); i++)
+        {
+            Vector3f kPos0 = kVBuffer.GetPosition3(i);
+            x1 = MipavMath.round(kPos0.X);
+            y1 = MipavMath.round(kPos0.Y);
+            Vector3f kPos1 = kVBuffer.GetPosition3(i+1);
+            x2 = MipavMath.round(kPos1.X);
+            y2 = MipavMath.round(kPos1.Y);
+
+            if (testDistance((int)kVOIPoint.X, x1, x2, (int)kVOIPoint.Y, y1, y2, 3)) {
+                m_iCurrentVOIPoint = i;
+                return true;
+            }
+        }
+
+        Vector3f kPos0 = kVBuffer.GetPosition3(0);
+        x1 = MipavMath.round(kPos0.X);
+        y1 = MipavMath.round(kPos0.Y);
+        Vector3f kPos1 = kVBuffer.GetPosition3(isize - 1);
+        x2 = MipavMath.round(kPos1.X);
+        y2 = MipavMath.round(kPos1.Y);
+
+        if (testDistance((int)kVOIPoint.X, x1, x2, (int)kVOIPoint.Y, y1, y2, 3)) {
+            m_iCurrentVOIPoint = i;
+            return true;
+        }
+        m_iCurrentVOIPoint = -1;
+        return false;
+    }
+
+
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#reshape(javax.media.opengl.GLAutoDrawable, int, int, int, int)
      */
@@ -701,11 +1036,11 @@ public class PlaneRender_WM extends GPURenderBase
             float fRMax = (m_fZoomScale*m_fX)/2.0f;
             float fUMax = fRMax * iHeight / iWidth;
             m_spkCamera.SetFrustum(-fRMax, fRMax,-fUMax, fUMax,1f,5.0f);
-            m_pkRenderer.OnFrustumChange();
+            m_pkRenderer.OnFrustumChange();           
         }
         
     }
-
+    
     /**
      * Sets the background color for the frame and rendered image.
      *
@@ -784,6 +1119,7 @@ public class PlaneRender_WM extends GPURenderBase
         }
         m_spkCamera.SetFrame( kCLoc, kCDir, kCUp, kCRight );
     }
+    
 
     /**
      * Sets the color for the PlaneRender iView (AXIAL, SAGITTAL, CORONAL) slice.
@@ -816,9 +1152,6 @@ public class PlaneRender_WM extends GPURenderBase
             m_kYArrow[i].VBuffer.Release();
         }
     }
-
-
-
     /**
      * Turns displaying the Axis labels on or off:
      *
@@ -828,7 +1161,7 @@ public class PlaneRender_WM extends GPURenderBase
     public void showAxes(boolean bShow) {
         m_bDrawAxes = bShow;
     }
-    
+
     /**
      * Turns displaying the X and Y bars on or off:
      *
@@ -841,19 +1174,140 @@ public class PlaneRender_WM extends GPURenderBase
         }
     }
 
-
-    /** 
-     * keyPressed callback.
-     * @param kKey the KeyEvent triggering the callback.
+    /**
+     * fill: fill the sculpt outline drawn by the user. Pixels are determined to be inside or outside the sculpt region
+     * based on the parameters, aaiCrossingPoints and aiNumCrossings, using a scan-conversion algorithm that traverses
+     * each row and column of the bounding box of the sculpt region coloring inside points as it goes.
+     *
+     * @param  aaiCrossingPoints  DOCUMENT ME!
+     * @param  aiNumCrossings     DOCUMENT ME!
      */
-    public void keyPressed(KeyEvent kKey)
+    protected void fill(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+                        int iXMin, int iYMin, int iXMax, int iYMax, int iZ,
+                        ModelImage kVolume, boolean bIntersection, int iValue)
     {
-        char ucKey = kKey.getKeyChar();            
-        int iKey = kKey.getKeyCode();
-        if ( ucKey == KeyEvent.VK_DELETE )
-        {
-            deleteVOI();
+        Vector3f kLocalPt = new Vector3f();
+        Vector3f kVolumePt = new Vector3f();
+        int iColumn = 0;
+        //System.err.println( "fill " + iZ );
+        /* Loop over the width of the sculpt region bounding-box: */
+        for (int iX = iXMin; iX < iXMax; iX++) {
+            boolean bInside = false;
+
+            /* Loop over the height of the sculpt region bounding-box: */
+            for (int iY = iYMin; iY < iYMax; iY++) {
+
+                /* loop over each crossing point for this column: */
+                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
+
+                    if (iY == aaiCrossingPoints[iColumn][iCross]) {
+
+                        /* Each time an edge is cross the point alternates
+                         * from outside to inside: */
+                        bInside = !bInside;
+                    }
+                }
+
+                if (bInside == true) {
+
+                    /* The current pixel is inside the sculpt region.  Get the
+                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
+                     * the canvas image.
+                     */
+                    kLocalPt.Set(iX, iY, iZ);
+                    kVolumePt = VOIToFileCoordinates(kLocalPt, false);
+                    if ( bIntersection )
+                    {
+                        int iTemp = kVolume.getInt( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z );
+                        if ( iValue == 0 )
+                        {
+                            kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 85 );
+                        }
+                        else if ( iTemp != 0 )
+                        {
+                            kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 255 );
+                        }
+                    }
+                    else
+                    {
+                        kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 255 );
+                        //System.err.println( iZ );
+                    }
+                }
+            }
+
+            iColumn++;
         }
+    }
+    
+    /**
+     * This function computes the set of spans indicated by column crossings for the sculpt outline drawn by the user,
+     * by doing a polygon scan conversion in gridded space. The outline must be closed with last point = first point.
+     *
+     * @param  aaiCrossingPoints  DOCUMENT ME!
+     * @param  aiNumCrossings     DOCUMENT ME!
+     */
+    protected void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings,
+                                 int iXMin, int iYMin, int iXMax, int iYMax,
+                                 Vector3f[] kVolumePts, ModelImage kVolume)
+    {
+        int iNumPts = kVolumePts.length;
+
+        /*
+         * nudge the vertices off of the exact integer coords by a factor of 0.1 to avoid vertices on pixel centers,
+         * which would create spans of zero length
+         */
+        double dNudge = 0.1;       
+        double[][][] aaadEdgeList = new double[iNumPts][2][2];
+
+        for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
+            aaadEdgeList[iPoint][0][0] = kVolumePts[iPoint].X - dNudge;
+            aaadEdgeList[iPoint][0][1] = kVolumePts[iPoint].Y - dNudge;
+            aaadEdgeList[iPoint][1][0] = kVolumePts[iPoint + 1].X - dNudge;
+            aaadEdgeList[iPoint][1][1] = kVolumePts[iPoint + 1].Y - dNudge;
+        }
+
+        /*
+         * Compute the crossing points for this column and produce spans.
+         */
+        for (int iColumn = iXMin; iColumn <= iXMax; iColumn++) {
+            int iIndex = iColumn - iXMin;
+
+            /* for each edge, figure out if it crosses this column and add its
+             * crossing point to the list if so. */
+            aiNumCrossings[iIndex] = 0;
+
+            for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
+                double dX0 = aaadEdgeList[iPoint][0][0];
+                double dX1 = aaadEdgeList[iPoint][1][0];
+                double dY0 = aaadEdgeList[iPoint][0][1];
+                double dY1 = aaadEdgeList[iPoint][1][1];
+                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
+                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
+
+                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
+
+                    /* The edge crosses this column, so compute the
+                     * intersection.
+                     */
+                    double dDX = dX1 - dX0;
+                    double dDY = dY1 - dY0;
+                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
+                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
+
+                    double dYCross = (dM * iColumn) + dB;
+                    double dRound = 0.5;
+                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound)
+                                                                                      : (int) (dYCross + dRound);
+                    aiNumCrossings[iIndex]++;
+                }
+            }
+
+            /* sort the set of crossings for this column: */
+            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
+        }
+
+        aaadEdgeList = null;
     }
     
     /**
@@ -958,8 +1412,128 @@ public class PlaneRender_WM extends GPURenderBase
             m_iLabelY_SpacingY = 55;
         }
         
-    }
 
+        ModelImage kImageA = m_kVolumeImageA.GetImage();
+        float fMaxX = (kImageA.getExtents()[0] - 1) * kImageA.getFileInfo(0).getResolutions()[0];
+        float fMaxY = (kImageA.getExtents()[1] - 1) * kImageA.getFileInfo(0).getResolutions()[1];
+        fMaxZ = (kImageA.getExtents()[2] - 1) * kImageA.getFileInfo(0).getResolutions()[2];
+
+        fMax = fMaxX;
+        if (fMaxY > fMax) {
+            fMax = fMaxY;
+        }
+        if (fMaxZ > fMax) {
+            fMax = fMaxZ;
+        }
+        m_fX = fMaxX/fMax;
+        m_fY = fMaxY/fMax;
+        m_fZ = fMaxZ/fMax;
+        m_kVolumeScale.Set(m_fX/(kImageA.getExtents()[0] - 1), 
+                m_fY/(kImageA.getExtents()[1] - 1), 
+                m_fZ/(kImageA.getExtents()[2] - 1)  );
+        
+    }
+    
+    /**
+     * Sorts the edge crossing points in place.
+     *
+     * @param  aiList        list of positions
+     * @param  iNumElements  number of positions.
+     */
+    protected void sortCrossingPoints(int[] aiList, int iNumElements) {
+        boolean bDidSwap = true;
+
+        while (bDidSwap) {
+            bDidSwap = false;
+
+            for (int iPoint = 0; iPoint < (iNumElements - 1); iPoint++) {
+
+                if (aiList[iPoint] > aiList[iPoint + 1]) {
+                    int iTmp = aiList[iPoint];
+                    aiList[iPoint] = aiList[iPoint + 1];
+                    aiList[iPoint + 1] = iTmp;
+                    bDidSwap = true;
+                }
+            }
+        }
+    }
+    
+    private void addVOIPoint( int iX, int iY )
+    {
+        if ( m_kCurrentVOI == null )
+        {            
+            return;
+        }     
+        float fY = m_iHeight - iY;
+        VertexBuffer kVBuffer = new VertexBuffer( m_kCurrentVOI.getLocal(0).VBuffer.GetAttributes(),
+                                                  m_kCurrentVOI.getLocal(0).VBuffer.GetVertexQuantity() + 1 );     
+        int iNumPoints = kVBuffer.GetVertexQuantity();
+        if ( iNumPoints > 0 )
+        {
+            int i = 0;
+            int iCount = 0;
+            while ( i < iNumPoints )
+            {
+                kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
+                kVBuffer.SetPosition3( i++, m_kCurrentVOI.getLocal(0).VBuffer.GetPosition3(iCount++) );
+                if ( i == (m_iCurrentVOIPoint + 1 ) )
+                {
+                    kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
+                    kVBuffer.SetPosition3( i++, iX, fY, m_iSlice );
+                }         
+            }
+            m_bUpdateVOI = true;
+            m_kVOIList[m_iSlice].remove( m_kCurrentVOI );      
+            m_kParent.removeNode( m_kCurrentVOI.Name.get(0) );      
+
+            Polyline kRectVOI = new Polyline( kVBuffer, true, true );
+            kRectVOI.AttachEffect( new VertexColor3Effect() );
+            kRectVOI.SetName( m_kCurrentVOI.getLocal(0).GetName() );
+            kRectVOI.AttachGlobalState(m_kZState);            
+
+            m_kCurrentVOI = new LocalVolumeVOI( kRectVOI, kRectVOI.GetName() );
+            m_kVOIList[m_iSlice].add( m_kCurrentVOI ); 
+            
+
+            Node kNode = new Node();
+            kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
+            kNode.SetName(m_kCurrentVOI.Name.get(0));
+            m_kParent.addNode(kNode);
+            m_kParent.translateSurface( m_kCurrentVOI.Name.get(0), m_kTranslate );
+            
+            m_kCurrentVOI.Update();
+        }
+        m_iCurrentVOIPoint++;
+        m_kParent.setCursor(MipavUtil.crosshairCursor);        
+    }
+    
+    
+    /**
+     * Calculates twice the area (cross product of two vectors) of a triangle given three points. This is a private
+     * function only called by the function "contains".
+     *
+     * @param   ptAx  x-coordinate of the first point of the triangle
+     * @param   ptAy  y-coordinate of the first point of the triangle
+     * @param   ptBx  x-coordinate of the second point of the triangle
+     * @param   ptBy  y-coordinate of the second point of the triangle
+     * @param   ptCx  x-coordinate of the third point of the triangle
+     * @param   ptCy  y-coordinate of the third point of the triangle
+     *
+     * @return  twice the area of the triangle if CCw or -2*area if CW
+     */
+    private float areaTwice(float ptAx, float ptAy, float ptBx, float ptBy, float ptCx, float ptCy) {
+        return (((ptAx - ptCx) * (ptBy - ptCy)) - ((ptAy - ptCy) * (ptBx - ptCx)));
+    }
+    
+    private void copyVOI( )
+    {
+        if ( m_kCurrentVOI == null )
+        {
+            return;
+        }
+        m_kCopyVOI = new LocalVolumeVOI ( createPolyline( m_kCurrentVOI.getLocal(0).VBuffer, m_iSlice  ), "VOI" + m_iVOICount++ );
+    }
+    
     /**
      * Creates the TriMesh data structures for the axis arrows.
      */
@@ -1101,8 +1675,29 @@ public class PlaneRender_WM extends GPURenderBase
             m_kYArrow[1].UpdateRS();
             m_pkRenderer.LoadResources(m_kYArrow[1]);
         }
+    }    
+    
+    
+    private Polyline createPolyline( VertexBuffer kVBuffer, int iZ )
+    {
+        int iNumPoints = kVBuffer.GetVertexQuantity();
+        if ( iNumPoints > 0 )
+        {
+            for ( int i = 0; i < iNumPoints; i++ )
+            {
+                Vector3f kPos = kVBuffer.GetPosition3(i);
+                kPos.Z = iZ;
+                kVBuffer.SetPosition3(i, kPos);
+            }
+        }
+        Polyline kPoly = new Polyline( new VertexBuffer( kVBuffer ), true, true );    
+        kPoly.AttachEffect( new VertexColor3Effect() );
+        kPoly.AttachGlobalState(m_kZState);
+        kPoly.UpdateGS();
+        kPoly.UpdateRS();
+        return kPoly;
     }
-
+    
     /**
      * Initializes the display parameters.
      */
@@ -1123,99 +1718,53 @@ public class PlaneRender_WM extends GPURenderBase
               
         CreateLabels();
     }
-
+    
     private void createVOI( int iX, int iY )
     {
         float fYStart = m_iHeight - m_fMouseY;
         float fY = m_iHeight - iY;
 
+
+
         if ( m_bDrawRect )
         {
             if ( m_kCurrentVOI == null )
             {            
-                ZBufferState kZState = new ZBufferState();
-                kZState.Compare = ZBufferState.CompareMode.CF_ALWAYS;
-            
-                Attributes kAttr = new Attributes();
-                kAttr.SetPChannels(3);
-                kAttr.SetCChannels(0,3);
-
-                if ( m_kBallPoint == null )
-                {
-                    StandardMesh kSDMesh = new StandardMesh(kAttr);
-                    kSDMesh.SetInside(true);
-                    m_kBallPoint = kSDMesh.Box(3, 3, 3);
-                    m_kBallPoint.AttachEffect( new VertexColor3Effect() );
-                    for ( int i = 0; i < m_kBallPoint.VBuffer.GetVertexQuantity(); i++ )
-                    {
-                        m_kBallPoint.VBuffer.SetColor3( 0, i, 1, 1, 1 );
-                    }
-                    m_kBallPoint.AttachGlobalState(kZState);
-                    WireframeState kWState = new WireframeState();
-                    kWState.Fill = WireframeState.FillMode.FM_LINE;
-                    m_kBallPoint.AttachGlobalState(kWState);
-                }
-            
-            
-                VertexBuffer kVBuffer = new VertexBuffer(kAttr, 4);
+                VertexBuffer kVBuffer = new VertexBuffer(m_kVOIAttr, 4);
                 for ( int i = 0; i < 4; i++ )
                 {
                     kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
                 }
-                kVBuffer.SetPosition3( 0, m_fMouseX, fYStart, m_iSlice ) ;
-                kVBuffer.SetPosition3( 1, iX, fYStart, m_iSlice ) ;
-                kVBuffer.SetPosition3( 2, iX, fY, m_iSlice ) ;
-                kVBuffer.SetPosition3( 3, m_fMouseX, fY, m_iSlice ) ;
+                kVBuffer.SetPosition3( 0, m_fMouseX, fYStart, m_iSlice);
+                kVBuffer.SetPosition3( 1, iX, fYStart, m_iSlice);
+                kVBuffer.SetPosition3( 2, iX, fY, m_iSlice);
+                kVBuffer.SetPosition3( 3, m_fMouseX, fY, m_iSlice);
 
                 Polyline kRectVOI = new Polyline( kVBuffer, true, true );
                 kRectVOI.AttachEffect( new VertexColor3Effect() );
-                //System.err.println( m_fMouseX + " " + m_fMouseY + " " + iX + " " + iY );
-                m_kCurrentVOI = kRectVOI;
-                m_kCurrentVOI.AttachGlobalState(kZState);
+                kRectVOI.AttachGlobalState(m_kZState);
+
+                m_kCurrentVOI = new LocalVolumeVOI( kRectVOI, "VOITemp" );
+
+                 Node kNode = new Node();
+                 kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
+                 kNode.SetName(m_kCurrentVOI.Name.get(0));
+                 m_kParent.addNode(kNode);
+                 m_kParent.translateSurface( m_kCurrentVOI.Name.get(0), m_kTranslate );
             }
             else
             {
-                VertexBuffer kVBuffer = m_kCurrentVOI.VBuffer;
-                kVBuffer.SetPosition3( 1, iX, fYStart, m_iSlice ) ;
-                kVBuffer.SetPosition3( 2, iX, fY, m_iSlice ) ;
-                kVBuffer.SetPosition3( 3, m_fMouseX, fY, m_iSlice ) ;
-                //System.err.println( m_fMouseX + " " + m_fMouseY + " " + iX + " " + iY );
-                kVBuffer.Release();
+                m_kCurrentVOI.SetPosition( 1, iX, fYStart, m_iSlice);
+                m_kCurrentVOI.SetPosition( 2, iX, fY, m_iSlice);
+                m_kCurrentVOI.SetPosition( 3, m_fMouseX, fY, m_iSlice);
+                m_kCurrentVOI.Release();
             }
-            m_kCurrentVOI.UpdateGS();
-            m_kCurrentVOI.UpdateRS();
+            m_kCurrentVOI.Update();
         }
         else if ( m_bDrawPolyline )
         {
-            if ( m_kCurrentPoly == null )
-            {
-                m_kCurrentPoly = new PolylineVector();
-            }
 
-            ZBufferState kZState = new ZBufferState();
-            kZState.Compare = ZBufferState.CompareMode.CF_ALWAYS;
-            
-            Attributes kAttr = new Attributes();
-            kAttr.SetPChannels(3);
-            kAttr.SetCChannels(0,3);
-
-            if ( m_kBallPoint == null )
-            {
-                StandardMesh kSDMesh = new StandardMesh(kAttr);
-                kSDMesh.SetInside(true);
-                m_kBallPoint = kSDMesh.Box(3, 3, 3);
-                m_kBallPoint.AttachEffect( new VertexColor3Effect() );
-                for ( int i = 0; i < m_kBallPoint.VBuffer.GetVertexQuantity(); i++ )
-                {
-                    m_kBallPoint.VBuffer.SetColor3( 0, i, 1, 1, 1 );
-                }
-                m_kBallPoint.AttachGlobalState(kZState);
-                WireframeState kWState = new WireframeState();
-                kWState.Fill = WireframeState.FillMode.FM_LINE;
-                m_kBallPoint.AttachGlobalState(kWState);
-            }
-            
-            VertexBuffer kVBuffer = new VertexBuffer(kAttr, 2);
+            VertexBuffer kVBuffer = new VertexBuffer(m_kVOIAttr, 2);
             for ( int i = 0; i < 2; i++ )
             {
                 kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
@@ -1225,10 +1774,25 @@ public class PlaneRender_WM extends GPURenderBase
 
             Polyline kLine = new Polyline( kVBuffer, false, true );
             kLine.AttachEffect( new VertexColor3Effect() );
-            kLine.AttachGlobalState(kZState);
-            kLine.UpdateGS();
-            kLine.UpdateRS();
-            m_kCurrentPoly.add(kLine);
+            kLine.AttachGlobalState(m_kZState);
+
+            if ( m_kCurrentVOI == null )
+            {
+                m_kCurrentVOI = new LocalVolumeVOI( kLine, "VOITemp" );
+            }
+            else
+            {
+                m_kCurrentVOI.add( kLine, "VOITemp" + m_iVOICount++ );
+            }
+
+            Node kNode = new Node();
+            kNode.AttachChild(m_kCurrentVOI.Volume.lastElement() );
+            kNode.SetName(m_kCurrentVOI.Name.lastElement() );
+            m_kParent.addNode(kNode);
+            m_kParent.translateSurface( m_kCurrentVOI.Name.lastElement(), m_kTranslate );
+
+            m_kCurrentVOI.Update();
+
             m_fMouseX = iX;
             m_fMouseY = iY;
         }
@@ -1238,7 +1802,47 @@ public class PlaneRender_WM extends GPURenderBase
         m_bUpdateVOI = true;
     }
     
+    private void deleteAllVOI()
+    {
+        if ( m_kVOIList == null )
+        {
+            return;
+        }
+        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR)); 
+        m_kCurrentVOI = null;
+        for ( int i = 0; i < m_kVOIList.length; i++ )
+        {
+            if ( m_kVOIList[i] != null )
+            {
+                for ( int j = 0; j < m_kVOIList[i].size(); j++ )
+                {
+                    m_kParent.removeNode( m_kVOIList[i].get(j).Name.get(0) );
+                }
+                m_kVOIList[i].clear();
+            }
+        }
+        m_bUpdateVOI = false;
+        m_bModified = true;
+        GetCanvas().display();
+    }
+    
+    private void deleteVOI()
+    {
+        if ( (m_kCurrentVOI == null) || (m_kVOIList == null) || (m_kVOIList[m_iSlice] == null) )
+        {
+            return;
+        }
+        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        m_kParent.removeNode( m_kCurrentVOI.Name.get(0) );
+        m_kVOIList[m_iSlice].remove( m_kCurrentVOI );            
+        m_kCurrentVOI = null;
+        m_bUpdateVOI = false;
+        m_bModified = true;
+        GetCanvas().display();
+    }
 
+
+    
     /**
      * Called from the display function. Draws the axis arrows.
      */
@@ -1297,9 +1901,10 @@ public class PlaneRender_WM extends GPURenderBase
             m_pkRenderer.SetCamera(m_spkCamera);
         }
     }
+    
     private void drawVOI()
     {       
-        if ( (m_kCurrentVOI != null) || (m_kVOIList != null) || (m_kCurrentPoly != null))
+        if ( (m_kCurrentVOI != null) || (m_kVOIList != null) )
         {
             if ( m_spkVOICamera == null )
             {
@@ -1319,46 +1924,26 @@ public class PlaneRender_WM extends GPURenderBase
                 {
                     if ( m_kCurrentVOI != m_kVOIList[m_iSlice].get(i))
                     {
-                        m_pkRenderer.Draw(m_kVOIList[m_iSlice].get(i));
+                        m_pkRenderer.Draw(m_kVOIList[m_iSlice].get(i).getLocal(0));
                     }
                 }
             }          
             if ( (m_kCurrentVOI != null) )
             {                 
-                int iNumPoints = m_kCurrentVOI.VBuffer.GetVertexQuantity();
-                if ( iNumPoints > 0 )
-                {
-                    //System.err.println( m_iSlice + " " + m_kCurrentVOI.VBuffer.GetPosition3(0).Z );
-                    if ( m_iSlice == m_kCurrentVOI.VBuffer.GetPosition3(0).Z )
-                    {
-                        m_pkRenderer.Draw(m_kCurrentVOI);  
-                        for ( int i = 0; i < iNumPoints; i++ )
-                        {
-                            //System.err.println( m_kCurrentVOI.VBuffer.GetPosition3(i).ToString() );
-                            m_kBallPoint.Local.SetTranslate( m_kCurrentVOI.VBuffer.GetPosition3(i) );
-                            m_kBallPoint.UpdateGS();
-                            m_kCurrentVOI.UpdateRS();
-                            m_pkRenderer.Draw( m_kBallPoint );
-                        }
-                    }
-                }
-            }
-            if ( (m_kCurrentPoly != null) )
-            {                 
-                int iNumLines = m_kCurrentPoly.size();
+                int iNumLines = m_kCurrentVOI.size();
                 for ( int i = 0; i < iNumLines; i++ )
                 {
-                    int iNumPoints = m_kCurrentPoly.get(i).VBuffer.GetVertexQuantity();
+                    int iNumPoints = m_kCurrentVOI.GetVertexQuantity(i);
                     if ( iNumPoints > 0 )
                     {
                         //System.err.println( m_iSlice + " " + m_kCurrentVOI.VBuffer.GetPosition3(0).Z );
-                        if ( m_iSlice == m_kCurrentPoly.get(i).VBuffer.GetPosition3(0).Z )
+                        if ( m_iSlice == m_kCurrentVOI.slice(i) )
                         {
-                            m_pkRenderer.Draw(m_kCurrentPoly.get(i));  
+                            m_pkRenderer.Draw(m_kCurrentVOI.getLocal(i));  
                             for ( int j = 0; j < iNumPoints; j++ )
                             {
                                 //System.err.println( m_kCurrentVOI.VBuffer.GetPosition3(i).ToString() );
-                                m_kBallPoint.Local.SetTranslate( m_kCurrentPoly.get(i).VBuffer.GetPosition3(j) );
+                                m_kBallPoint.Local.SetTranslate( m_kCurrentVOI.getLocal(i).VBuffer.GetPosition3(j) );
                                 m_kBallPoint.UpdateGS();
                                 m_pkRenderer.Draw( m_kBallPoint );
                             }
@@ -1369,7 +1954,51 @@ public class PlaneRender_WM extends GPURenderBase
             m_pkRenderer.SetCamera(m_spkCamera);
         }
     }
+    
+    private void fillVolume( int iSlice, Polyline kPoly, ModelImage kVolume, boolean bIntersection, int iValue )
+    {
+        int iNumPoints = kPoly.VBuffer.GetVertexQuantity();
+        //System.err.println( "fillVolume " + iSlice + " " + iNumPoints );
+        if ( iNumPoints == 0 )
+        {
+            return;
+        }
+        Vector3f[] kVolumePts = new Vector3f[iNumPoints + 1];
+        int iXMin = Integer.MAX_VALUE;
+        int iYMin = Integer.MAX_VALUE;
+        int iXMax = Integer.MIN_VALUE;
+        int iYMax = Integer.MIN_VALUE;
+        for ( int i = 0; i < iNumPoints; i++ )
+        {
+            Vector3f kPt = kPoly.VBuffer.GetPosition3(i);
+            kPt.Z = iSlice;
+            kVolumePts[i] = kPt;//VOIToFileCoordinates( kPt );
+            iXMin = (int)Math.min( iXMin, kVolumePts[i].X );
+            iYMin = (int)Math.min( iYMin, kVolumePts[i].Y );
+            iXMax = (int)Math.max( iXMax, kVolumePts[i].X );
+            iYMax = (int)Math.max( iYMax, kVolumePts[i].Y );
+        }
+        Vector3f kPt = kPoly.VBuffer.GetPosition3(0);
+        kPt.Z = iSlice;
+        kVolumePts[iNumPoints] = kPt;//VOIToFileCoordinates( kPt );
+        iXMin = (int)Math.min( iXMin, kVolumePts[iNumPoints].X );
+        iYMin = (int)Math.min( iYMin, kVolumePts[iNumPoints].Y );
+        iXMax = (int)Math.max( iXMax, kVolumePts[iNumPoints].X );
+        iYMax = (int)Math.max( iYMax, kVolumePts[iNumPoints].Y );
+        iNumPoints++;
 
+        int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
+        int[] aiNumCrossings = new int[iXMax - iXMin + 1];
+
+        for (int i = 0; i < (iXMax - iXMin + 1); i++) {
+            aaiCrossingPoints[i] = new int[iNumPoints];
+        }
+
+        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, kVolumePts, kVolume);
+        fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)kVolumePts[0].Z, kVolume, bIntersection, iValue);
+        
+    }
+    
     /* Convert the position in LocalCoordinates (rendering space) into
      * PatientCoordinates:
      * @param localPt the current point in LocalCoordinates
@@ -1382,6 +2011,74 @@ public class PlaneRender_WM extends GPURenderBase
         patientPt.Z = localPt.Z * (m_aiLocalImageExtents[2] - 1);
     }
 
+    private void moveVOI( int iX, int iY )
+    {
+        float fY = m_iHeight - iY;
+        if ( m_kCurrentVOI == null )
+        {            
+            return;
+        }
+        Vector3f kDiff = new Vector3f( iX, fY, m_iSlice );
+        m_kCurrentVOI.move( kDiff );
+        m_kCurrentVOI.Update();
+
+        m_kCurrentVOI.setCenter( iX, fY, m_iSlice );
+        m_kParent.setCursor(MipavUtil.moveCursor);
+        m_bModified = true;
+        GetCanvas().display();
+    }
+    
+    
+    private void moveVOIPoint( int iX, int iY )
+    {
+        if ( m_kCurrentVOI == null )
+        {            
+            return;
+        }
+        float fY = m_iHeight - iY;
+        m_kCurrentVOI.SetPosition( m_iCurrentVOIPoint, iX, fY, m_iSlice );     
+        m_kCurrentVOI.Release();
+        m_kCurrentVOI.Update();
+        m_bUpdateVOI = true;
+        m_bModified = true;
+        GetCanvas().display();
+
+        m_kParent.setCursor(MipavUtil.crosshairCursor);
+    }
+    
+    private boolean nearPoint( int iX, int iY, VertexBuffer kVBuffer )
+    {
+        Vector3f kVOIPoint = new Vector3f(iX, m_iHeight - iY, m_iSlice );
+        int iNumPoints = kVBuffer.GetVertexQuantity();
+        if ( iNumPoints > 0 )
+        {
+            for ( int i = 0; i < iNumPoints; i++ )
+            {
+                Vector3f kPos = kVBuffer.GetPosition3(i);
+                Vector3f kDiff = new Vector3f();
+                kDiff.Sub( kPos, kVOIPoint );
+                if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
+                {
+                    m_iCurrentVOIPoint = i;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+
+    private void pasteVOI( int iSlice )
+    {
+        if ( m_kCopyVOI == null )
+        {
+            return;
+        }
+        m_kCurrentVOI = new LocalVolumeVOI( createPolyline( m_kCopyVOI.getLocal(0).VBuffer, iSlice  ), "VOI" + m_iVOICount++  );     
+        m_bUpdateVOI = true;
+        saveVOI( 0, 0, iSlice );
+    }
+    
     /**
      * Dragging the mouse with the left-mouse button held down changes the
      * positions of the X and Y cross bars, and therefore the ZSlice positions
@@ -1494,51 +2191,47 @@ public class PlaneRender_WM extends GPURenderBase
     {
         if ( m_kCurrentVOI != null )
         {
+            if ( m_kCurrentVOI.size() == 0 )
+            {
+                return;
+            }
             if ( m_kVOIList == null )
             {
-                m_kVOIList = new PolylineVector[m_aiLocalImageExtents[2]];
+                m_kVOIList = new LocalVolumeVOIVector[m_aiLocalImageExtents[2]];
             }
             if ( m_kVOIList[iSlice] == null )
             {
-                m_kVOIList[iSlice] = new PolylineVector();
+                m_kVOIList[iSlice] = new LocalVolumeVOIVector();
             }
             if ( !m_kVOIList[iSlice].contains( m_kCurrentVOI ) )
             {
+                String kName = new String(m_kCurrentVOI.Name.get(0));
+                int iNumLines = m_kCurrentVOI.size();
+                if ( iNumLines > 1 )
+                {    
+                    VertexBuffer kVBuffer = new VertexBuffer( m_kCurrentVOI.getLocal(0).VBuffer.GetAttributes(), iNumLines + 1 );
+                    for ( int i = 0; i < iNumLines; i++ )
+                    {
+                        kVBuffer.SetPosition3( i, m_kCurrentVOI.getLocal(i).VBuffer.GetPosition3(0) );
+                        kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
+                        m_kParent.removeNode( m_kCurrentVOI.Name.get(i) );  
+                    }
+                    kVBuffer.SetPosition3( iNumLines, m_kCurrentVOI.getLocal(iNumLines-1).VBuffer.GetPosition3(1) );
+                    kVBuffer.SetColor3( 0, iNumLines, m_aakColors[m_iPlaneOrientation][2] );
+                    Polyline kPoly = createPolyline( kVBuffer, m_iSlice);
+                    m_kCurrentVOI = new LocalVolumeVOI(kPoly, kName );
+                }
+                else
+                {
+                    m_kParent.removeNode( kName );  
+                }
+                Node kNode = new Node();
+                kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
+                kNode.SetName(kName);
+                m_kParent.addNode(kNode);
+                m_kParent.translateSurface( kName, m_kTranslate );
                 m_kVOIList[iSlice].add( m_kCurrentVOI );
             }
-        }
-        else if ( m_bDrawPolyline )
-        {
-            if ( m_kCurrentPoly == null )
-            {
-                return;
-            }
-            if ( m_kCurrentPoly.size() == 0 )
-            {
-                return;
-            }
-            if ( m_kVOIList == null )
-            {
-                m_kVOIList = new PolylineVector[m_aiLocalImageExtents[2]];
-            }
-            if ( m_kVOIList[iSlice] == null )
-            {
-                m_kVOIList[iSlice] = new PolylineVector();
-            }
-            int iNumLines = m_kCurrentPoly.size();
-            VertexBuffer kVBuffer = new VertexBuffer( m_kCurrentPoly.get(0).VBuffer.GetAttributes(), iNumLines + 1 );
-            for ( int i = 0; i < iNumLines; i++ )
-            {
-                kVBuffer.SetPosition3( i, m_kCurrentPoly.get(i).VBuffer.GetPosition3(0) );
-                kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-            }
-            kVBuffer.SetPosition3( iNumLines, m_kCurrentPoly.get(iNumLines-1).VBuffer.GetPosition3(1) );
-            kVBuffer.SetColor3( 0, iNumLines, m_aakColors[m_iPlaneOrientation][2] );
-            Polyline kPoly = createPolyline( kVBuffer, m_iSlice);
-            m_kCurrentVOI = kPoly;
-            m_kVOIList[iSlice].add( kPoly );
-            m_kCurrentPoly.clear();
-            m_kCurrentPoly = null;
         }
         m_bUpdateVOI = false;
     }
@@ -1573,7 +2266,8 @@ public class PlaneRender_WM extends GPURenderBase
         kLocal.Y = (kLocal.Y - m_fY0) / m_fYRange;
         kLocal.Z = iZ / (float)(m_aiLocalImageExtents[2] - 1);
     }
-    
+
+
     private void selectVOI( int iX, int iY )
     {
         float fY = m_iHeight - iY;
@@ -1583,47 +2277,16 @@ public class PlaneRender_WM extends GPURenderBase
         {
             for ( int i = 0; i < m_kVOIList[m_iSlice].size(); i++ )
             {
-                if ( contains( iX, (int)fY, m_kVOIList[m_iSlice].get(i).VBuffer ) )
+                if ( contains( iX, (int)fY, m_kVOIList[m_iSlice].get(i).getLocal(0).VBuffer ) )
                 {
                     m_kCurrentVOI = m_kVOIList[m_iSlice].get(i);
-                    m_kCurrentCenter.Set( iX, fY, m_iSlice );
+                    m_kCurrentVOI.setCenter( iX, fY, m_iSlice );
                     //System.err.println( "Selected: " + kCurve.getName() );
                     m_bSelected = true;
                     break;
                 }
             }
         }
-    }
-    
-    
-    private void showSelectedVOI( int iX, int iY )
-    {
-        if ( m_kCurrentVOI != null )
-        {
-            if ( nearPoint( iX, iY, m_kCurrentVOI.VBuffer ) )
-            {
-                m_kParent.setCursor(MipavUtil.crosshairCursor);
-                return;
-            }
-            else if ( nearLine( iX, iY, m_kCurrentVOI.VBuffer ) )
-            {
-                m_kParent.setCursor(MipavUtil.addPointCursor);
-                return;
-            }
-        }
-
-        if ( (m_kVOIList != null) && (m_kVOIList[m_iSlice] != null) )
-        {
-            for ( int i = 0; i < m_kVOIList[m_iSlice].size(); i++ )
-            {
-                if ( contains( iX, m_iHeight - iY, m_kVOIList[m_iSlice].get(i).VBuffer ) )
-                {
-                    m_kParent.setCursor(MipavUtil.moveCursor);
-                    return;
-                }
-            }
-        }    
-        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }
     
     /**
@@ -1646,8 +2309,39 @@ public class PlaneRender_WM extends GPURenderBase
             m_iSlice = iSlice;
         }
     }
-    
-    private Vector3f VOIToFileCoordinates( Vector3f kVOIPt )
+
+
+    private void showSelectedVOI( int iX, int iY )
+    {
+        if ( m_kCurrentVOI != null )
+        {
+            if ( nearPoint( iX, iY, m_kCurrentVOI.getLocal(0).VBuffer ) )
+            {
+                m_kParent.setCursor(MipavUtil.crosshairCursor);
+                return;
+            }
+            else if ( nearLine( iX, iY, m_kCurrentVOI.getLocal(0).VBuffer ) )
+            {
+                m_kParent.setCursor(MipavUtil.addPointCursor);
+                return;
+            }
+        }
+
+        if ( (m_kVOIList != null) && (m_kVOIList[m_iSlice] != null) )
+        {
+            for ( int i = 0; i < m_kVOIList[m_iSlice].size(); i++ )
+            {
+                if ( contains( iX, m_iHeight - iY, m_kVOIList[m_iSlice].get(i).getLocal(0).VBuffer ) )
+                {
+                    m_kParent.setCursor(MipavUtil.moveCursor);
+                    return;
+                }
+            }
+        }    
+        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    }
+
+    private Vector3f VOIToFileCoordinates( Vector3f kVOIPt, boolean bScale )
     {
         Vector3f localPt = new Vector3f();
         this.ScreenToLocal((int)kVOIPt.X, (int)(m_iHeight - kVOIPt.Y), (int)kVOIPt.Z, localPt);
@@ -1659,560 +2353,12 @@ public class PlaneRender_WM extends GPURenderBase
         this.LocalToPatient( localPt, patientPt );
         Vector3f volumePt = new Vector3f();
         MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+        if ( bScale )
+        {
+            volumePt.Mult( m_kVolumeScale );
+            //System.err.println( volumePt.ToString() );
+       }
         return volumePt; 
-    }    
-    
-    
-    private void moveVOI( int iX, int iY )
-    {
-        float fY = m_iHeight - iY;
-        if ( m_kCurrentVOI == null )
-        {            
-            return;
-        }
-        Vector3f kDiff = new Vector3f( iX, fY, m_iSlice );
-        kDiff.Sub( m_kCurrentCenter );
-        VertexBuffer kVBuffer = m_kCurrentVOI.VBuffer;     
-        int iNumPoints = kVBuffer.GetVertexQuantity();
-        if ( iNumPoints > 0 )
-        {
-            for ( int i = 0; i < iNumPoints; i++ )
-            {
-                Vector3f kPos = kVBuffer.GetPosition3( i );
-                kPos.Add(kDiff);
-                kVBuffer.SetPosition3( i, kPos ) ;
-            }
-            kVBuffer.Release();
-            m_bUpdateVOI = true;
-            m_kCurrentVOI.UpdateGS();
-            m_kCurrentVOI.UpdateRS();
-            m_bModified = true;
-            GetCanvas().display();
-        }
-        m_kCurrentCenter.Set( iX, fY, m_iSlice );
-        m_kParent.setCursor(MipavUtil.moveCursor);
-    }
-    
-    private void moveVOIPoint( int iX, int iY )
-    {
-        if ( m_kCurrentVOI == null )
-        {            
-            return;
-        }
-        float fY = m_iHeight - iY;
-        VertexBuffer kVBuffer = m_kCurrentVOI.VBuffer;     
-        int iNumPoints = kVBuffer.GetVertexQuantity();
-        if ( iNumPoints > 0 )
-        {
-            if ( m_iCurrentVOIPoint < iNumPoints )
-            {
-                kVBuffer.SetPosition3( m_iCurrentVOIPoint, iX, fY, m_iSlice );
-            }
-            kVBuffer.Release();
-            m_bUpdateVOI = true;
-            m_kCurrentVOI.UpdateGS();
-            m_kCurrentVOI.UpdateRS();
-            m_bModified = true;
-            GetCanvas().display();
-        }
-        m_kParent.setCursor(MipavUtil.crosshairCursor);
-    }
-    
-    private void addVOIPoint( int iX, int iY )
-    {
-        if ( m_kCurrentVOI == null )
-        {            
-            return;
-        }     
-        float fY = m_iHeight - iY;
-        VertexBuffer kVBuffer = new VertexBuffer( m_kCurrentVOI.VBuffer.GetAttributes(),
-                m_kCurrentVOI.VBuffer.GetVertexQuantity() + 1 );     
-        int iNumPoints = kVBuffer.GetVertexQuantity();
-        if ( iNumPoints > 0 )
-        {
-            int i = 0;
-            int iCount = 0;
-            while ( i < iNumPoints )
-            {
-                kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-                kVBuffer.SetPosition3( i++, m_kCurrentVOI.VBuffer.GetPosition3(iCount++) );
-                if ( i == (m_iCurrentVOIPoint + 1 ) )
-                {
-                    kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-                    kVBuffer.SetPosition3( i++, iX, fY, m_iSlice );
-                }         
-            }
-            m_bUpdateVOI = true;
-            m_kVOIList[m_iSlice].remove( m_kCurrentVOI );            
-
-            ZBufferState kZState = new ZBufferState();
-            kZState.Compare = ZBufferState.CompareMode.CF_ALWAYS;
-            Polyline kRectVOI = new Polyline( kVBuffer, true, true );
-            kRectVOI.AttachEffect( new VertexColor3Effect() );
-            kRectVOI.SetName( m_kCurrentVOI.GetName() );
-            m_kCurrentVOI = kRectVOI;
-            m_kCurrentVOI.AttachGlobalState(kZState);            
-            m_kCurrentVOI.UpdateGS();
-            m_kCurrentVOI.UpdateRS();
-            m_kVOIList[m_iSlice].add( m_kCurrentVOI ); 
-        }
-        m_iCurrentVOIPoint++;
-        m_kParent.setCursor(MipavUtil.crosshairCursor);        
-    }
-    
-    private void deleteVOI()
-    {
-        if ( (m_kCurrentVOI == null) || (m_kVOIList == null) || (m_kVOIList[m_iSlice] == null) )
-        {
-            return;
-        }
-        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-        m_kVOIList[m_iSlice].remove( m_kCurrentVOI );            
-        m_kCurrentVOI = null;
-        m_bUpdateVOI = false;
-        m_bModified = true;
-        GetCanvas().display();
     }
 
-
-    
-    private void copyVOI( )
-    {
-        if ( m_kCurrentVOI == null )
-        {
-            return;
-        }
-        m_kCopyVOI = createPolyline( m_kCurrentVOI.VBuffer, m_iSlice  );
-    }
-    
-    private void pasteVOI( int iSlice )
-    {
-        if ( m_kCopyVOI == null )
-        {
-            return;
-        }
-        m_kCurrentVOI = createPolyline( m_kCopyVOI.VBuffer, iSlice  );     
-        m_bUpdateVOI = true;
-        saveVOI( 0, 0, iSlice );
-    }
-    
-    private Polyline createPolyline( VertexBuffer kVBuffer, int iZ )
-    {
-        int iNumPoints = kVBuffer.GetVertexQuantity();
-        if ( iNumPoints > 0 )
-        {
-            for ( int i = 0; i < iNumPoints; i++ )
-            {
-                Vector3f kPos = kVBuffer.GetPosition3(i);
-                kPos.Z = iZ;
-                kVBuffer.SetPosition3(i, kPos);
-            }
-        }
-        ZBufferState kZState = new ZBufferState();
-        kZState.Compare = ZBufferState.CompareMode.CF_ALWAYS;
-        Polyline kPoly = new Polyline( new VertexBuffer( kVBuffer ), true, true );    
-        kPoly.AttachEffect( new VertexColor3Effect() );
-        kPoly.AttachGlobalState(kZState);
-        kPoly.UpdateGS();
-        kPoly.UpdateRS();
-        return kPoly;
-    }
-    
-    private boolean nearPoint( int iX, int iY, VertexBuffer kVBuffer )
-    {
-        Vector3f kVOIPoint = new Vector3f(iX, m_iHeight - iY, m_iSlice );
-        int iNumPoints = kVBuffer.GetVertexQuantity();
-        if ( iNumPoints > 0 )
-        {
-            for ( int i = 0; i < iNumPoints; i++ )
-            {
-                Vector3f kPos = kVBuffer.GetPosition3(i);
-                Vector3f kDiff = new Vector3f();
-                kDiff.Sub( kPos, kVOIPoint );
-                if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
-                {
-                    m_iCurrentVOIPoint = i;
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Tests if a point is near the curve.
-     *
-     * @param   x    x coordinate of point
-     * @param   y    y coordinate of point
-     * @param   tol  tolerance indicating the capture range to the line the point.
-     *
-     * @return  returns boolean result of test
-     */
-    public boolean nearLine(int iX, int iY, VertexBuffer kVBuffer) {
-
-        Vector3f kVOIPoint = new Vector3f(iX, m_iHeight - iY, 0 );
-        int i;
-        int x1, y1, x2, y2;
-        int isize = kVBuffer.GetVertexQuantity();
-        for (i = 0; i < (isize - 1); i++)
-        {
-            Vector3f kPos0 = kVBuffer.GetPosition3(i);
-            x1 = MipavMath.round(kPos0.X);
-            y1 = MipavMath.round(kPos0.Y);
-            Vector3f kPos1 = kVBuffer.GetPosition3(i+1);
-            x2 = MipavMath.round(kPos1.X);
-            y2 = MipavMath.round(kPos1.Y);
-
-            if (testDistance((int)kVOIPoint.X, x1, x2, (int)kVOIPoint.Y, y1, y2, 3)) {
-                m_iCurrentVOIPoint = i;
-                return true;
-            }
-        }
-
-        Vector3f kPos0 = kVBuffer.GetPosition3(0);
-        x1 = MipavMath.round(kPos0.X);
-        y1 = MipavMath.round(kPos0.Y);
-        Vector3f kPos1 = kVBuffer.GetPosition3(isize - 1);
-        x2 = MipavMath.round(kPos1.X);
-        y2 = MipavMath.round(kPos1.Y);
-
-        if (testDistance((int)kVOIPoint.X, x1, x2, (int)kVOIPoint.Y, y1, y2, 3)) {
-            m_iCurrentVOIPoint = i;
-            return true;
-        }
-        m_iCurrentVOIPoint = -1;
-        return false;
-    }
-    
-    
-    /**
-     * Tests the distance for closeness; finds the length of the normal from (x,y) to the line (x1,y1) (x2,y2). Returns
-     * true if the distance is shorter than tol.
-     *
-     * @param   x    x coordinate of point to be tested
-     * @param   x1   x coordinate of first point in line
-     * @param   x2   x coordinate of second point in line
-     * @param   y    y coordinate of point to be tested
-     * @param   y1   y coordinate of first point in line
-     * @param   y2   y coordinate of second point in line
-     * @param   tol  distance to test against
-     *
-     * @return  true if the distance is shorter than tol.
-     */
-    public static synchronized boolean testDistance(int x, int x1, int x2, int y, int y1, int y2, double tol) {
-
-        // double hVx, hVy, aVx, aVy;
-        double lenH, lenH2, lenA, lenO;
-        lenH = MipavMath.distance(x1, x, y1, y);
-
-        if (lenH <= 0) {
-            return false;
-        }
-
-        lenH2 = MipavMath.distance(x, x2, y, y2);
-        lenA = MipavMath.distance(x1, x2, y1, y2);
-
-        if (lenA <= 0) {
-            return false;
-        }
-
-        // hVx = x - x1;
-        // hVy = y - y1;
-        // aVx = x2 - x1;
-        // aVy = y2 - y1;
-        // theta = Math.acos((hVx*aVx + hVy*aVy)/(lenH*lenA));
-        // lenO = lenH * Math.sin(theta);// * (lenH+lenH2+lenA);
-        // The above reduces to:
-        lenO = Math.abs(((y1 - y2) * x) + ((x2 - x1) * y) + ((x1 * y2) - (y1 * x2))) / lenA;
-
-        if ((lenO < tol) && (lenH < lenA) && (lenH2 < lenA)) {
-            return true;
-        }
-
-        return false;
-    }
-    
-    /**
-     * Determines if the supplied point can be found within the points that define the contour.
-     *
-     * @return  true if point is within the contour
-     */
-    public boolean contains(int iX, int iY, VertexBuffer kVBuffer) {
-        boolean isInside = false;
-        float fX = iX + 0.49f; // Matt add doc !!!
-        float fY = iY + 0.49f;
-
-        int iNumPoints = kVBuffer.GetVertexQuantity();
-        int iLast = iNumPoints -1;
-        if ( iNumPoints > 0 )
-        {
-            for ( int i = 0; i < iNumPoints; i++ )
-            {
-                Vector3f kPos = kVBuffer.GetPosition3(i);
-                Vector3f kPosL = kVBuffer.GetPosition3(iLast);
-
-                if (((kPosL.Y <= fY) && (fY < kPos.Y) && (areaTwice(kPos.X, kPos.Y, kPosL.X, kPosL.Y, fX, fY) >= 0)) ||
-                        ((kPos.Y <= fY) && (fY < kPosL.Y) && (areaTwice(kPosL.X, kPosL.Y, kPos.X, kPos.Y, fX, fY) >= 0))) {
-                    isInside = !isInside;
-                }
-
-                iLast = i;
-            }
-        }
-        return isInside;
-    }
-    
-
-    /**
-     * Calculates twice the area (cross product of two vectors) of a triangle given three points. This is a private
-     * function only called by the function "contains".
-     *
-     * @param   ptAx  x-coordinate of the first point of the triangle
-     * @param   ptAy  y-coordinate of the first point of the triangle
-     * @param   ptBx  x-coordinate of the second point of the triangle
-     * @param   ptBy  y-coordinate of the second point of the triangle
-     * @param   ptCx  x-coordinate of the third point of the triangle
-     * @param   ptCy  y-coordinate of the third point of the triangle
-     *
-     * @return  twice the area of the triangle if CCw or -2*area if CW
-     */
-    private float areaTwice(float ptAx, float ptAy, float ptBx, float ptBy, float ptCx, float ptCy) {
-        return (((ptAx - ptCx) * (ptBy - ptCy)) - ((ptAy - ptCy) * (ptBx - ptCx)));
-    }
-    
-    public void make3DVOI( boolean bIntersection, ModelImage kVolume, int iValue )
-    {
-        if ( m_kVOIList != null )
-        {
-            for ( int i = 0; i < m_aiLocalImageExtents[2]; i++ )
-            {
-                if ( m_kVOIList[i] != null )
-                {
-                    for ( int j = 0; j < m_kVOIList[i].size(); j++ )
-                    {
-                        fillVolume( i, m_kVOIList[i].get(j), kVolume, bIntersection, iValue );
-                    }
-                    m_kVOIList[i].clear();
-                    m_kVOIList[i] = null;
-                }
-            }
-        }
-        m_kCopyVOI = null;
-        m_kCurrentVOI = null;
-    }
-    
-    private void fillVolume( int iSlice, Polyline kPoly, ModelImage kVolume, boolean bIntersection, int iValue )
-    {
-        int iNumPoints = kPoly.VBuffer.GetVertexQuantity();
-        //System.err.println( "fillVolume " + iSlice + " " + iNumPoints );
-        if ( iNumPoints == 0 )
-        {
-            return;
-        }
-        Vector3f[] kVolumePts = new Vector3f[iNumPoints + 1];
-        int iXMin = Integer.MAX_VALUE;
-        int iYMin = Integer.MAX_VALUE;
-        int iXMax = Integer.MIN_VALUE;
-        int iYMax = Integer.MIN_VALUE;
-        for ( int i = 0; i < iNumPoints; i++ )
-        {
-            Vector3f kPt = kPoly.VBuffer.GetPosition3(i);
-            kPt.Z = iSlice;
-            kVolumePts[i] = kPt;//VOIToFileCoordinates( kPt );
-            iXMin = (int)Math.min( iXMin, kVolumePts[i].X );
-            iYMin = (int)Math.min( iYMin, kVolumePts[i].Y );
-            iXMax = (int)Math.max( iXMax, kVolumePts[i].X );
-            iYMax = (int)Math.max( iYMax, kVolumePts[i].Y );
-        }
-        Vector3f kPt = kPoly.VBuffer.GetPosition3(0);
-        kPt.Z = iSlice;
-        kVolumePts[iNumPoints] = kPt;//VOIToFileCoordinates( kPt );
-        iXMin = (int)Math.min( iXMin, kVolumePts[iNumPoints].X );
-        iYMin = (int)Math.min( iYMin, kVolumePts[iNumPoints].Y );
-        iXMax = (int)Math.max( iXMax, kVolumePts[iNumPoints].X );
-        iYMax = (int)Math.max( iYMax, kVolumePts[iNumPoints].Y );
-        iNumPoints++;
-
-        int[][] aaiCrossingPoints = new int[iXMax - iXMin + 1][];
-        int[] aiNumCrossings = new int[iXMax - iXMin + 1];
-
-        for (int i = 0; i < (iXMax - iXMin + 1); i++) {
-            aaiCrossingPoints[i] = new int[iNumPoints];
-        }
-
-        outlineRegion(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, kVolumePts, kVolume);
-        fill(aaiCrossingPoints, aiNumCrossings, iXMin, iYMin, iXMax, iYMax, (int)kVolumePts[0].Z, kVolume, bIntersection, iValue);
-        
-    }
-    
-    /**
-     * fill: fill the sculpt outline drawn by the user. Pixels are determined to be inside or outside the sculpt region
-     * based on the parameters, aaiCrossingPoints and aiNumCrossings, using a scan-conversion algorithm that traverses
-     * each row and column of the bounding box of the sculpt region coloring inside points as it goes.
-     *
-     * @param  aaiCrossingPoints  DOCUMENT ME!
-     * @param  aiNumCrossings     DOCUMENT ME!
-     */
-    protected void fill(int[][] aaiCrossingPoints, int[] aiNumCrossings,
-                        int iXMin, int iYMin, int iXMax, int iYMax, int iZ,
-                        ModelImage kVolume, boolean bIntersection, int iValue)
-    {
-        Vector3f kLocalPt = new Vector3f();
-        Vector3f kVolumePt = new Vector3f();
-        int iColumn = 0;
-        //System.err.println( "fill " + iZ );
-        /* Loop over the width of the sculpt region bounding-box: */
-        for (int iX = iXMin; iX < iXMax; iX++) {
-            boolean bInside = false;
-
-            /* Loop over the height of the sculpt region bounding-box: */
-            for (int iY = iYMin; iY < iYMax; iY++) {
-
-                /* loop over each crossing point for this column: */
-                for (int iCross = 0; iCross < aiNumCrossings[iColumn]; iCross++) {
-
-                    if (iY == aaiCrossingPoints[iColumn][iCross]) {
-
-                        /* Each time an edge is cross the point alternates
-                         * from outside to inside: */
-                        bInside = !bInside;
-                    }
-                }
-
-                if (bInside == true) {
-
-                    /* The current pixel is inside the sculpt region.  Get the
-                     * image color from the canvas image and alpha-blend the sculpt color ontop, storing the result in
-                     * the canvas image.
-                     */
-                    kLocalPt.Set(iX, iY, iZ);
-                    kVolumePt = VOIToFileCoordinates(kLocalPt);
-                    if ( bIntersection )
-                    {
-                        int iTemp = kVolume.getInt( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z );
-                        if ( iValue == 0 )
-                        {
-                            kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 85 );
-                        }
-                        else if ( iTemp != 0 )
-                        {
-                            kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 255 );
-                        }
-                    }
-                    else
-                    {
-                        kVolume.set( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z, 255 );
-                        //System.err.println( iZ );
-                    }
-                }
-            }
-
-            iColumn++;
-        }
-    }
-    
-    /**
-     * This function computes the set of spans indicated by column crossings for the sculpt outline drawn by the user,
-     * by doing a polygon scan conversion in gridded space. The outline must be closed with last point = first point.
-     *
-     * @param  aaiCrossingPoints  DOCUMENT ME!
-     * @param  aiNumCrossings     DOCUMENT ME!
-     */
-    protected void outlineRegion(int[][] aaiCrossingPoints, int[] aiNumCrossings,
-                                 int iXMin, int iYMin, int iXMax, int iYMax,
-                                 Vector3f[] kVolumePts, ModelImage kVolume)
-    {
-        int iNumPts = kVolumePts.length;
-
-        /*
-         * nudge the vertices off of the exact integer coords by a factor of 0.1 to avoid vertices on pixel centers,
-         * which would create spans of zero length
-         */
-        double dNudge = 0.1;       
-        double[][][] aaadEdgeList = new double[iNumPts][2][2];
-
-        for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
-            aaadEdgeList[iPoint][0][0] = kVolumePts[iPoint].X - dNudge;
-            aaadEdgeList[iPoint][0][1] = kVolumePts[iPoint].Y - dNudge;
-            aaadEdgeList[iPoint][1][0] = kVolumePts[iPoint + 1].X - dNudge;
-            aaadEdgeList[iPoint][1][1] = kVolumePts[iPoint + 1].Y - dNudge;
-        }
-
-        /*
-         * Compute the crossing points for this column and produce spans.
-         */
-        for (int iColumn = iXMin; iColumn <= iXMax; iColumn++) {
-            int iIndex = iColumn - iXMin;
-
-            /* for each edge, figure out if it crosses this column and add its
-             * crossing point to the list if so. */
-            aiNumCrossings[iIndex] = 0;
-
-            for (int iPoint = 0; iPoint < (iNumPts - 1); iPoint++) {
-                double dX0 = aaadEdgeList[iPoint][0][0];
-                double dX1 = aaadEdgeList[iPoint][1][0];
-                double dY0 = aaadEdgeList[iPoint][0][1];
-                double dY1 = aaadEdgeList[iPoint][1][1];
-                double dMinX = (dX0 <= dX1) ? dX0 : dX1;
-                double dMaxX = (dX0 > dX1) ? dX0 : dX1;
-
-                if ((dMinX < iColumn) && (dMaxX > iColumn)) {
-
-                    /* The edge crosses this column, so compute the
-                     * intersection.
-                     */
-                    double dDX = dX1 - dX0;
-                    double dDY = dY1 - dY0;
-                    double dM = (dDX == 0) ? 0 : (dDY / dDX);
-                    double dB = (dDX == 0) ? 0 : (((dX1 * dY0) - (dY1 * dX0)) / dDX);
-
-                    double dYCross = (dM * iColumn) + dB;
-                    double dRound = 0.5;
-                    aaiCrossingPoints[iIndex][aiNumCrossings[iIndex]] = (dYCross < 0) ? (int) (dYCross - dRound)
-                                                                                      : (int) (dYCross + dRound);
-                    aiNumCrossings[iIndex]++;
-                }
-            }
-
-            /* sort the set of crossings for this column: */
-            sortCrossingPoints(aaiCrossingPoints[iIndex], aiNumCrossings[iIndex]);
-        }
-
-        aaadEdgeList = null;
-    }
-
-
-    /**
-     * Sorts the edge crossing points in place.
-     *
-     * @param  aiList        list of positions
-     * @param  iNumElements  number of positions.
-     */
-    protected void sortCrossingPoints(int[] aiList, int iNumElements) {
-        boolean bDidSwap = true;
-
-        while (bDidSwap) {
-            bDidSwap = false;
-
-            for (int iPoint = 0; iPoint < (iNumElements - 1); iPoint++) {
-
-                if (aiList[iPoint] > aiList[iPoint + 1]) {
-                    int iTmp = aiList[iPoint];
-                    aiList[iPoint] = aiList[iPoint + 1];
-                    aiList[iPoint + 1] = iTmp;
-                    bDidSwap = true;
-                }
-            }
-        }
-    }
-    
-    private class PolylineVector extends Vector<Polyline>
-    {
-        public PolylineVector() {
-            super();
-        }
-        public PolylineVector(int initialsize) {
-            super(initialsize);
-        }
-    }
 }

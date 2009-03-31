@@ -26,6 +26,8 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
     /** Output Functional Anisotropy Image: */
     private ModelImage m_kFAImage = null;
     /** Output Trace Image (before diagonalization of diffusion tensor): */
+    private ModelImage m_kADCImage = null;
+    /** Output Trace Image (before diagonalization of diffusion tensor): */
     private ModelImage m_kTraceImage = null;
     /** Output RA (Relative Anisotropy) Image: */
     private ModelImage m_kRAImage = null;
@@ -46,6 +48,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         m_kDTIImage = null;
         m_kEigenImage = null;
         m_kFAImage = null;
+        m_kADCImage = null;
         m_kTraceImage = null;
         m_kRAImage = null;
         m_kVRImage = null;
@@ -101,6 +104,14 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         return m_kVRImage;
     }
 
+    /** Returns the Apparent Diffusion Coefficient Image. 
+     * @return the Apparent Diffusion Coefficient Image. 
+     */
+    public ModelImage getADCImage()
+    {
+        return m_kADCImage;
+    }
+
 
     /** 
      * Calculates the eigen vector data from the dtiImage.
@@ -116,6 +127,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         int iSliceSize = m_kDTIImage.getExtents()[0] * m_kDTIImage.getExtents()[1];
         float[] afData = new float[iLen];
         float[] afTraceData = new float[iLen];
+        float[] afADCData = new float[iLen];
         float[] afRAData = new float[iLen];
         float[] afVRData = new float[iLen];
         float[] afDataCM = new float[iLen*9];
@@ -145,8 +157,9 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                                                  afTensorData[3], afTensorData[1], afTensorData[5], 
                                                  afTensorData[4], afTensorData[5], afTensorData[2] );
 
-                
+
                 afTraceData[i] = kMatrix.M00 + kMatrix.M11 + kMatrix.M22;
+                afADCData[i] = afTraceData[i]/3.0f;
                 
                 Matrix3f.EigenDecomposition( kMatrix, kEigenValues );
                 float fLambda1 = kEigenValues.M22;
@@ -249,6 +262,16 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             m_kVRImage = null;
         }
 
+        m_kADCImage = new ModelImage( ModelStorageBase.FLOAT,
+                                     extentsA,
+                                     new String( m_kDTIImage.getFileInfo(0).getFileName() + "ADC") );
+        try {
+            m_kADCImage.importData(0, afADCData, true);
+        } catch (IOException e) {
+            m_kADCImage.disposeLocal();
+            m_kADCImage = null;
+        }
+
         m_kEigenImage = new ModelImage( ModelStorageBase.FLOAT,
                                         extentsEV,
                                         new String( m_kDTIImage.getFileInfo(0).getFileName() + "EG") );
@@ -264,6 +287,9 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
 
         afData = null;
         afTraceData = null;
+        afADCData = null;
+        afVRData = null;
+        afRAData = null;
         afDataCM = null;
         afTensorData = null;
 
