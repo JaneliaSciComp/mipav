@@ -164,6 +164,8 @@ public class PlugInDialogDTIOverlay extends JDialogScriptableBase implements Alg
 			
 			
 			dispose();
+		}else {
+			setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 		}
 
 	}

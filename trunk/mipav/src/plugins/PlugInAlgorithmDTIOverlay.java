@@ -62,7 +62,8 @@ public class PlugInAlgorithmDTIOverlay extends AlgorithmBase {
 			fiberArray = reader.readColorVolumeMIPAV(filepath);
 		}
 		catch(IOException e) {
-    		System.out.println(e.toString());
+			MipavUtil.displayError(e.toString());
+			return;
     	}
 		
 		//first lets make sure that the src image's extents and the fiber array's extents match up
