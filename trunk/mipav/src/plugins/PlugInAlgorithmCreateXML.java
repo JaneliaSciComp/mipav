@@ -170,23 +170,28 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 			//character (up to length of the largest filename in the series)
 			String toCompare = strList[0];
 			int smallestMatch = strList[0].length(), largestRegion = strList[0].length();
-			for(int i=1; i<strList.length; i++) {
-				if(strList[i].length() > largestRegion) {
-					largestRegion = strList[i].length();
-				}
-				int largestMatch = 0;
-				for(int j=1; j<strList[i].length(); j++) {
-					if(toCompare.substring(0, j).equals(strList[i].substring(0, j))) {
-						largestMatch = j;
+			try {
+				for(int i=1; i<strList.length; i++) {
+					if(strList[i].length() > largestRegion) {
+						largestRegion = strList[i].length();
+					}
+					int largestMatch = 0;
+					for(int j=1; j<strList[i].length(); j++) {
+						if(toCompare.substring(0, j).equals(strList[i].substring(0, j))) {
+							largestMatch = j;
+						}
+					}
+					//if the largest match possible for these two strings was less than the previous
+					//largest match possible, then set the smallest match over all strings to the current 
+					//largest match, since the smallest match over all strings should be the smallest largest 
+					//set of characters.
+					if(largestMatch < smallestMatch) {
+						smallestMatch = largestMatch;
 					}
 				}
-				//if the largest match possible for these two strings was less than the previous
-				//largest match possible, then set the smallest match over all strings to the current 
-				//largest match, since the smallest match over all strings should be the smallest largest 
-				//set of characters.
-				if(largestMatch < smallestMatch) {
-					smallestMatch = largestMatch;
-				}
+			} catch(StringIndexOutOfBoundsException e) {
+				//No discernable pattern
+				return "*.*";
 			}
 			
 			//if next statement is true, then all files had in common points from 0 to
