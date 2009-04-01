@@ -1114,10 +1114,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 m_bPickPending = true;
             }
         }
-        m_kParent.setCameraParameters();
-    	m_kParent.setObjectParameters();
-    	
-    	 m_kVolumeRayCast.setVolumeSamples( fSample_mouseDragged );
+        
+        if ( m_kParent != null ) {
+        	m_kParent.setCameraParameters();
+        	m_kParent.setObjectParameters();
+        }
+    	if ( m_kVolumeRayCast != null ) {
+    		m_kVolumeRayCast.setVolumeSamples( fSample_mouseDragged );
+    	}
     }
 
 
@@ -1162,8 +1166,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void mouseReleased(MouseEvent e)
     {
     	super.mouseReleased(e);
-    	
-    	m_kVolumeRayCast.setVolumeSamples( fSample_mouseReleased );
+    	if ( m_kVolumeRayCast != null ) {
+    		m_kVolumeRayCast.setVolumeSamples( fSample_mouseReleased );
+    	}
     }
 
 
