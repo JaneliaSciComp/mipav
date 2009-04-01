@@ -343,7 +343,6 @@ implements ChangeListener {
             progressBar.setMessage("Constructing gpu renderer...");
             
             ((VolumeTriPlanerRenderDTI)raycastRenderWM).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
-
           
             progressBar.updateValueImmed(80);
             progressBar.setMessage("Constructing Lookup Table...");
@@ -391,6 +390,11 @@ implements ChangeListener {
                 kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
                 m_kVolumeImageB.UpdateImages(kTransfer, 0, null);
             }
+            // work around to fix the init panel viewing aspect ratio offset problem. 
+            m_kAnimator.start();
+            setSize(getSize().width+1, getSize().height+1);
+            resizePanel();
+            
         } finally {
             progressBar.dispose();
         }
