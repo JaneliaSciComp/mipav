@@ -390,9 +390,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         gbc.gridx = 0;
         gbc.gridy = 0;
                
-        JLabel kUseVOI = new JLabel("Use VOI:");
-        kParamsPanel.add(kUseVOI, gbc);
-        gbc.gridx++;
         m_kUseVOICheck = new JCheckBox("use voi");
         kParamsPanel.add(m_kUseVOICheck, gbc);
 
