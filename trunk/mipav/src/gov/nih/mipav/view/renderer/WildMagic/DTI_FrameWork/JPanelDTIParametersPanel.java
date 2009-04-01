@@ -145,8 +145,10 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         m_kVolumeDisplay = _m_kVolumeDisplay;
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(createTractPanel(), BorderLayout.NORTH );
-        mainPanel.add(createTractDialog(), BorderLayout.SOUTH);
+       
+        mainPanel.add(createLoadTractDialog(), BorderLayout.NORTH);
+        mainPanel.add(createTractDialog(), BorderLayout.CENTER);
+        mainPanel.add(createTractPanel(), BorderLayout.SOUTH );
     }
 
     /**
@@ -294,23 +296,17 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         } 
     }
 
-    /**
-     * Creates the user-interface for the Fiber Bundle Tract dialog.
-     * 
-     * @return JPanel containing the user-interface for the Fiber Bundle Tract
-     *         dialog.
-     */
-    private JPanel createTractDialog() {
-        GridBagLayout kGBL = new GridBagLayout();
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1;
-        gbc.weighty = 0;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-
-        JPanel kTractPanel = new JPanel(kGBL);
-
-        JPanel kParamsPanel = new JPanel(kGBL);
+    private JPanel createLoadTractDialog() {
+    	JPanel tractLoadPanel = new JPanel(new BorderLayout());
+    	
+    	 GridBagLayout kGBL = new GridBagLayout();
+         GridBagConstraints gbc = new GridBagConstraints();
+         gbc.fill = GridBagConstraints.HORIZONTAL;
+         gbc.weightx = 1;
+         gbc.weighty = 0;
+         gbc.anchor = GridBagConstraints.NORTHWEST;
+    	
+    	JPanel kParamsPanel = new JPanel(kGBL);
         gbc.gridx = 0;
         gbc.gridy = 0;
         JLabel kNumberTractsLimit = new JLabel(
@@ -339,15 +335,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         m_kTractsMax = new JTextField("100", 5);
         m_kTractsMax.setBackground(Color.white);
         kParamsPanel.add(m_kTractsMax, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        JLabel kUseVOI = new JLabel("Use VOI:");
-        kParamsPanel.add(kUseVOI, gbc);
-        gbc.gridx++;
-        m_kUseVOICheck = new JCheckBox("use voi");
-        kParamsPanel.add(m_kUseVOICheck, gbc);
-
+        
         JPanel filesPanel = new JPanel(kGBL);
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -368,9 +356,58 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         kTractLoadButton.addActionListener(this);
         kTractLoadButton.setActionCommand("tractLoad");
         filesPanel.add(kTractLoadButton, gbc);
-
         
+        Box contentBox = new Box(BoxLayout.Y_AXIS);
 
+        contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        contentBox.add(kParamsPanel);
+        contentBox.add(filesPanel);
+        
+        tractLoadPanel.add(contentBox, BorderLayout.NORTH);
+
+        tractLoadPanel.setBorder(buildTitledBorder("Load Fiber Tracts"));
+        
+        return tractLoadPanel;        	
+    }
+    
+    /**
+     * Creates the user-interface for the Fiber Bundle Tract dialog.
+     * 
+     * @return JPanel containing the user-interface for the Fiber Bundle Tract
+     *         dialog.
+     */
+    private JPanel createTractDialog() {
+        GridBagLayout kGBL = new GridBagLayout();
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+
+        JPanel kTractPanel = new JPanel(kGBL);
+
+        JPanel kParamsPanel = new JPanel(kGBL);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+               
+        JLabel kUseVOI = new JLabel("Use VOI:");
+        kParamsPanel.add(kUseVOI, gbc);
+        gbc.gridx++;
+        m_kUseVOICheck = new JCheckBox("use voi");
+        kParamsPanel.add(m_kUseVOICheck, gbc);
+
+        slicePickableCheckBox = new JCheckBox("Select Individual Tracts");
+        slicePickableCheckBox.setSelected(false);
+        slicePickableCheckBox.addActionListener(this);
+        slicePickableCheckBox.setActionCommand("Pickable");
+        slicePickableCheckBox.setEnabled(false);
+
+        JPanel slicePanel = new JPanel();
+        slicePanel.setLayout(new BorderLayout());
+        slicePanel.add(slicePickableCheckBox, BorderLayout.WEST);
+        slicePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        slicePanel.setAlignmentY(Component.TOP_ALIGNMENT);
+       
         // list panel for surface filenames
         m_kVOIList = new JList( new DefaultListModel() );
         m_kVOIList.addListSelectionListener(this);
@@ -424,8 +461,8 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         gbc.gridy++;
         kTractPanel.add(kParamsPanel, gbc);
         gbc.gridy++;
-        kTractPanel.add(filesPanel, gbc);
-
+        kTractPanel.add(slicePanel, gbc);
+        
         kTractPanel.setBorder(buildTitledBorder("Inclusion & Exclusion Parameters"));
         return kTractPanel;
     }
@@ -988,6 +1025,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         m_kAllEllipsoids.addActionListener(this);
         m_kAllEllipsoids.setActionCommand("AllEllipsoids");
         m_kAllEllipsoids.setSelected(false);
+        m_kAllEllipsoids.setEnabled(false);
 
         m_kDisplaySlider = new JSlider(1, 500, 450);
         m_kDisplaySlider.setEnabled(true);
@@ -1015,18 +1053,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         sliderPanel.add(m_kDisplaySlider, BorderLayout.CENTER);
         sliderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         sliderPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-
-        slicePickableCheckBox = new JCheckBox("Slice Pickable");
-        slicePickableCheckBox.setSelected(false);
-        slicePickableCheckBox.addActionListener(this);
-        slicePickableCheckBox.setActionCommand("Pickable");
-        slicePickableCheckBox.setEnabled(false);
-
-        JPanel slicePanel = new JPanel();
-        slicePanel.setLayout(new BorderLayout());
-        slicePanel.add(slicePickableCheckBox, BorderLayout.WEST);
-        slicePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        slicePanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
         ButtonGroup group1 = new ButtonGroup();
 
@@ -1076,7 +1102,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
         optionsPanel.add(colorPanel);
         optionsPanel.add(sliderPanel);
-        optionsPanel.add(slicePanel);
         optionsPanel.setBorder(buildTitledBorder("Fiber bundle options"));
 
         JPanel rightPanel = new JPanel();
