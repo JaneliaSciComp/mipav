@@ -2221,7 +2221,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             labelField[n].setText(label[n]);
             labelField[n].setFont(serif12);
             labelField[n].addActionListener(this);
-            labelField[n].setActionCommand("Label " + n);
+            labelField[n].setActionCommand("AdvancedPaint:Label " + n);
 
             if ( !flag) {
                 multiButton[n] = new BorderedButton( ((Integer) buttonTextArrayList.get(n - 1)).toString());
@@ -2232,7 +2232,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             multiButton[n].setName("multiButton:" + n);
             multiButton[n].addActionListener(this);
             multiButton[n].addMouseListener(this);
-            multiButton[n].setActionCommand("PaintMask " + n);
+            multiButton[n].setActionCommand("AdvancedPaint:PaintMask " + n);
             multiButton[n].setFont(MipavUtil.font10);
             multiButton[n].setMaximumSize(new Dimension(48, 20));
             multiButton[n].setPreferredSize(new Dimension(48, 20));
@@ -2246,7 +2246,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             listButton[n].setName("listButton:" + n);
             listButton[n].addActionListener(this);
             listButton[n].addMouseListener(this);
-            listButton[n].setActionCommand("PaintMask " + n);
+            listButton[n].setActionCommand("AdvancedPaint:PaintMask " + n);
             listButton[n].setFont(MipavUtil.font10);
             listButton[n].setMaximumSize(new Dimension(50, 18));
             listButton[n].setPreferredSize(new Dimension(50, 18));
@@ -2254,7 +2254,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             preserveBox[n] = new JCheckBox(MipavUtil.getIcon("unlocked.gif"));
             preserveBox[n].setSelectedIcon(MipavUtil.getIcon("locked.gif"));
             preserveBox[n].addActionListener(this);
-            preserveBox[n].setActionCommand("Preserve " + n);
+            preserveBox[n].setActionCommand("AdvancedPaint:Preserve " + n);
             preserveBox[n].setToolTipText("Lock the paint mask");
 
             if (n <= buttonTextArrayList.size()) {
