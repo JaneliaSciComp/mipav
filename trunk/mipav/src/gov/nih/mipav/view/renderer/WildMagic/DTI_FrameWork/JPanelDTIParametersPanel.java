@@ -390,7 +390,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         gbc.gridx = 0;
         gbc.gridy = 0;
                
-        m_kUseVOICheck = new JCheckBox("Use voi");
+        m_kUseVOICheck = new JCheckBox("Use VOI");
         kParamsPanel.add(m_kUseVOICheck, gbc);
 
         slicePickableCheckBox = new JCheckBox("Select Individual Tracts");
