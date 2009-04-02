@@ -804,13 +804,26 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         }
 
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
+        
         calcEigenVectorImage();
        
+        saveImageFiles();
+        
         createRGBImage();
         
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }
     
+    /**
+     * Save the EV, FA, DTI images. 
+     */
+    public void saveImageFiles() {
+    	
+    	m_kDTIImage.saveImage(m_kParentDir, "DTIImage.xml", FileUtility.XML, true);
+    	m_kEigenVectorImage.saveImage(m_kParentDir, "EigenVectorImage.xml", FileUtility.XML, true);
+    	m_kAnisotropyImage.saveImage(m_kParentDir, "AnisotropyImage.xml", FileUtility.XML, true);
+    	
+    }
     
     
     /** Calls AlgorithmDWI2DTI to create the diffusion tensor image. */
@@ -1002,6 +1015,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         // new ViewJFrameImage(m_kEigenVectorImage);
         // new ViewJFrameImage(m_kAnisotropyImage);
         // new ViewJFrameImage(resultImage);
+        
         
 		// return resultImage;
 	}

@@ -482,7 +482,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             kDTIName = kDTIName.substring(0, kDTIName.length()
                     - kTract.length());
             // Why disable the check?  Left later.  
-            if (parentFrame.getDTIimage() == null) {
+            // if (parentFrame.getDTIimage() == null) {
 
 	            FileIO fileIO = new FileIO();
 	            m_kDTIImage = fileIO.readImage(kDTIName, chooser
@@ -505,8 +505,8 @@ implements ItemListener, ListSelectionListener, ChangeListener {
 	                m_kDTIImage = null;
 	            }
 	
-	            setDTIImage(m_kDTIImage);
-            }
+	            setDTIImage(m_kDTIImage);   
+            // } 
 
             m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
             if (!m_kTractFile.exists() || !m_kTractFile.canRead()) {
