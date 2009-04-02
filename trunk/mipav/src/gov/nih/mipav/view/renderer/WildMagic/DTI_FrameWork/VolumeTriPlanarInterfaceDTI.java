@@ -249,7 +249,7 @@ implements ChangeListener {
                                            null, null);
         progressBar.updateValue(0, true);
         MipavUtil.centerOnScreen(progressBar);
-        progressBar.setVisible(true);
+        progressBar.setVisible(false);
         progressBar.updateValueImmed(1);
 
         try {
@@ -324,7 +324,7 @@ implements ChangeListener {
                                            null, null);
         progressBar.updateValue(0, true);
         MipavUtil.centerOnScreen(progressBar);
-        progressBar.setVisible(true);
+        progressBar.setVisible(false);
         progressBar.updateValueImmed(1);
 
         try {

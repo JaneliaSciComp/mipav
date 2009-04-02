@@ -204,7 +204,6 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 				setEVimage();
 				setFAimage();
 				setDTIColorImage();
-				// saveImages();
 				//if tract reconstruction checkbox is selectd, do the fiber calculation
 				if(tractCheckBox.isSelected()) {
 					AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
@@ -266,7 +265,6 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 				setEVimage();
 				setFAimage();
 				setDTIColorImage();
-				// saveImages();
 				//if tract reconstruction checkbox is selectd, do the fiber calculation
 				if(tractCheckBox.isSelected()) {
 					AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
