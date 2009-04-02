@@ -390,6 +390,7 @@ implements ChangeListener {
                 kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
                 m_kVolumeImageB.UpdateImages(kTransfer, 0, null);
             }
+            progressBar.dispose();
             // work around to fix the init panel viewing aspect ratio offset problem. 
             m_kAnimator.start();
             setSize(getSize().width+1, getSize().height+1);

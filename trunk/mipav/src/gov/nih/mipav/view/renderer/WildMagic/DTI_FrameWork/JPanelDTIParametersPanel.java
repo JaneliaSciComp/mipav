@@ -390,7 +390,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         gbc.gridx = 0;
         gbc.gridy = 0;
                
-        m_kUseVOICheck = new JCheckBox("Use VOI");
+        m_kUseVOICheck = new JCheckBox("Use voi");
         kParamsPanel.add(m_kUseVOICheck, gbc);
 
         slicePickableCheckBox = new JCheckBox("Select Individual Tracts");
@@ -482,31 +482,31 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             kDTIName = kDTIName.substring(0, kDTIName.length()
                     - kTract.length());
             // Why disable the check?  Left later.  
-            // if (parentFrame.getDTIimage() == null) {
+            if (parentFrame.getDTIimage() == null) {
 
-            FileIO fileIO = new FileIO();
-            m_kDTIImage = fileIO.readImage(kDTIName, chooser
-                    .getCurrentDirectory()
-                    + File.separator);
-            if (m_kDTIImage.getNDims() != 4) {
-                MipavUtil
-                .displayError("Diffusion Tensor file does not have correct dimensions");
-                if (m_kDTIImage != null) {
-                    m_kDTIImage.disposeLocal();
-                }
-                m_kDTIImage = null;
+	            FileIO fileIO = new FileIO();
+	            m_kDTIImage = fileIO.readImage(kDTIName, chooser
+	                    .getCurrentDirectory()
+	                    + File.separator);
+	            if (m_kDTIImage.getNDims() != 4) {
+	                MipavUtil
+	                .displayError("Diffusion Tensor file does not have correct dimensions");
+	                if (m_kDTIImage != null) {
+	                    m_kDTIImage.disposeLocal();
+	                }
+	                m_kDTIImage = null;
+	            }
+	            if (m_kDTIImage.getExtents()[3] != 6) {
+	                MipavUtil
+	                .displayError("Diffusion Tensor does not have correct dimensions");
+	                if (m_kDTIImage != null) {
+	                    m_kDTIImage.disposeLocal();
+	                }
+	                m_kDTIImage = null;
+	            }
+	
+	            setDTIImage(m_kDTIImage);
             }
-            if (m_kDTIImage.getExtents()[3] != 6) {
-                MipavUtil
-                .displayError("Diffusion Tensor does not have correct dimensions");
-                if (m_kDTIImage != null) {
-                    m_kDTIImage.disposeLocal();
-                }
-                m_kDTIImage = null;
-            }
-
-            setDTIImage(m_kDTIImage);
-            // }
 
             m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
             if (!m_kTractFile.exists() || !m_kTractFile.canRead()) {

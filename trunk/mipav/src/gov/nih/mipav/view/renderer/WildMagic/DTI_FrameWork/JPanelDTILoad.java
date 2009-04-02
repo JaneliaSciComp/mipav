@@ -204,7 +204,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 				setEVimage();
 				setFAimage();
 				setDTIColorImage();
-				saveImages();
+				// saveImages();
 				//if tract reconstruction checkbox is selectd, do the fiber calculation
 				if(tractCheckBox.isSelected()) {
 					AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
@@ -266,7 +266,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 				setEVimage();
 				setFAimage();
 				setDTIColorImage();
-				saveImages();
+				// saveImages();
 				//if tract reconstruction checkbox is selectd, do the fiber calculation
 				if(tractCheckBox.isSelected()) {
 					AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
@@ -509,6 +509,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 			m_kDTIImage = fileIO.readImage(chooser.getSelectedFile().getName(),
 					chooser.getCurrentDirectory() + File.separator);
 			m_kParentDir = chooser.getCurrentDirectory().getParent();
+			
 			if (m_kDTIImage.getNDims() != 4) {
 				MipavUtil
 						.displayError("Diffusion Tensor file does not have correct dimensions");
@@ -1091,16 +1092,6 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
             }
         }
     }    
-    
-    /**
-     * Save the EV, FA and DTI images. 
-     */
-    public void saveImages() {
-    	ModelImage.saveImage(parentFrame.getDTIimage(), parentFrame.getParentDir());
-    	ModelImage.saveImage(parentFrame.getEVimage(), parentFrame.getParentDir());
-    	ModelImage.saveImage(parentFrame.getFAimage(), parentFrame.getParentDir());
-    	
-    }
-    	
+  
     
 }
