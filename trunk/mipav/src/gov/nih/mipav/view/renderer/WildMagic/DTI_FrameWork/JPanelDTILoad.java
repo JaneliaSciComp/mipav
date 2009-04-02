@@ -199,16 +199,17 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 		else if ( command.equalsIgnoreCase("compute")) {
 			if(dtiRadio.isSelected()) {
 				processDTI();
+				setParentDir();
 				setDTIimage();
 				setEVimage();
 				setFAimage();
 				setDTIColorImage();
-				
+				saveImages();
 				//if tract reconstruction checkbox is selectd, do the fiber calculation
 				if(tractCheckBox.isSelected()) {
 					AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
 							parentFrame.getDTIimage(), parentFrame.getEVimage(), 
-							m_kParentDir + "DTIImage.xml_tract");
+							parentFrame.getParentDir() + "DTIImage.xml_tract");
 					kTractAlgorithm.run();
 					kTractAlgorithm.disposeLocal();
 					kTractAlgorithm = null;
@@ -265,7 +266,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 				setEVimage();
 				setFAimage();
 				setDTIColorImage();
-				
+				saveImages();
 				//if tract reconstruction checkbox is selectd, do the fiber calculation
 				if(tractCheckBox.isSelected()) {
 					AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
@@ -1091,7 +1092,15 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         }
     }    
     
-
+    /**
+     * Save the EV, FA and DTI images. 
+     */
+    public void saveImages() {
+    	ModelImage.saveImage(parentFrame.getDTIimage(), parentFrame.getParentDir());
+    	ModelImage.saveImage(parentFrame.getEVimage(), parentFrame.getParentDir());
+    	ModelImage.saveImage(parentFrame.getFAimage(), parentFrame.getParentDir());
+    	
+    }
     	
     
 }

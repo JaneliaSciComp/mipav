@@ -390,7 +390,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         gbc.gridx = 0;
         gbc.gridy = 0;
                
-        m_kUseVOICheck = new JCheckBox("use voi");
+        m_kUseVOICheck = new JCheckBox("Use VOI");
         kParamsPanel.add(m_kUseVOICheck, gbc);
 
         slicePickableCheckBox = new JCheckBox("Select Individual Tracts");
@@ -1058,7 +1058,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         radioLines.addItemListener(this);
         group1.add(radioLines);
 
-        radioEllipzoids = new JRadioButton("Ellipzoid", false);
+        radioEllipzoids = new JRadioButton("Ellipsoids", false);
         radioEllipzoids.setFont(MipavUtil.font12B);
         radioEllipzoids.addItemListener(this);
         group1.add(radioEllipzoids);

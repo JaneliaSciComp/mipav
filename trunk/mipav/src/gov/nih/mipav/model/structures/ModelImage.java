@@ -2630,6 +2630,28 @@ public class ModelImage extends ModelStorageBase {
     }
     
     /**
+     * Save the gradient magnitude image into the MIPAV specific dir.
+     *
+     * @param  gmImage  ModelImage gradient magnitude image to save
+     * @param  dir      Save ModelImage with specific directory.   
+     */
+    public static void saveImage(ModelImage kImage, String dir) {
+        String fName = kImage.getImageName();
+        String dName = dir;
+        FileIO fileIO = new FileIO();
+
+        fileIO.setQuiet(true);
+
+        FileWriteOptions options = new FileWriteOptions(false);
+
+        options.setFileDirectory(dName);
+        options.setFileName(fName);
+        options.setBeginSlice(0);
+        options.setEndSlice(kImage.getExtents()[2] - 1);
+        fileIO.writeImage(kImage, options);
+    }
+    
+    /**
      * Save the images transformation matrix in the working directory with the supplied fileName.
      *
      * @param  fileName  - fileName of transformation matrix
