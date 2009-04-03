@@ -214,22 +214,28 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             removePolyline();
         }  else if (command.equals("Include")) {
             int iVOI = m_kVOIList.getSelectedIndex();
-            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
-            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
-            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
-            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCInclude );
+            if ( m_kVOIParamsList != null ) {
+	            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
+	            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
+	            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
+	            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCInclude );
+            }
         }  else if (command.equals("Exclude")) {
             int iVOI = m_kVOIList.getSelectedIndex();
-            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
-            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
-            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
-            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCExclude );
+            if ( m_kVOIParamsList != null ) {
+	            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
+	            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
+	            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
+	            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCExclude );
+            }
         }  else if (command.equals("Ignore")) {
             int iVOI = m_kVOIList.getSelectedIndex();
-            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
-            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
-            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
-            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCIgnore );
+            if ( m_kVOIParamsList != null ) {
+	            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
+	            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
+	            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
+	            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCIgnore );
+            }
         } else if( command.equals("Pickable")) {
             ((VolumeTriPlanerRenderDTI)m_kVolumeDisplay).enableSlicePickable(slicePickableCheckBox.isSelected());	
         }
