@@ -204,6 +204,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 				setEVimage();
 				setFAimage();
 				setDTIColorImage();
+				saveImageFiles();
 				//if tract reconstruction checkbox is selectd, do the fiber calculation
 				if(tractCheckBox.isSelected()) {
 					AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
@@ -806,8 +807,6 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
         
         calcEigenVectorImage();
-       
-        saveImageFiles();
         
         createRGBImage();
         
@@ -819,9 +818,9 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
      */
     public void saveImageFiles() {
     	
-    	m_kDTIImage.saveImage(m_kParentDir, "DTIImage.xml", FileUtility.XML, true);
-    	m_kEigenVectorImage.saveImage(m_kParentDir, "EigenVectorImage.xml", FileUtility.XML, true);
-    	m_kAnisotropyImage.saveImage(m_kParentDir, "AnisotropyImage.xml", FileUtility.XML, true);
+    	m_kDTIImage.saveImage(parentFrame.getParentDir(), "DTIImage.xml", FileUtility.XML, true);
+    	m_kEigenVectorImage.saveImage(parentFrame.getParentDir(), "EigenVectorImage.xml", FileUtility.XML, true);
+    	m_kAnisotropyImage.saveImage(parentFrame.getParentDir(), "AnisotropyImage.xml", FileUtility.XML, true);
     	
     }
     
