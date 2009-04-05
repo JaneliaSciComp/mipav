@@ -242,6 +242,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kDTIDisplay.SetDisplay( true );
        
     }
+    
     /**
      * Apply the sculpt region to the volume.
      */
@@ -2493,4 +2494,32 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
+    /**
+     * Add tubes group color. 
+     * @param groupID   group ID
+     */
+    public void addTubesColorGroup(int groupID) {
+    	m_kDTIDisplay.addTubesColorGroup(groupID);
+    }
+    
+    /**
+     * Remomve tubes group color. 
+     * @param groupID   group ID
+     */
+    public void removeTubesColorGroup(int groupID) {
+    	m_kDTIDisplay.removeTubesColorGroup(groupID);
+    }
+    
+    /** Sets the polyline color for the specified fiber bundle tract group. 
+     * @param iGroup the fiber bundle group to set.
+     * @param kColor the new polyline color for the specified fiber bundle tract group. 
+     */
+    public void setTubesGroupColor( int iGroup, ColorRGB kColor )
+    {
+       m_kDTIDisplay.setTubesGroupColor(iGroup, kColor);
+    }
+    
+    public void setVolumeColor(boolean flag) {
+    	m_kDTIDisplay.setVolumeColor(flag);
+    }
 }

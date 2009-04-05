@@ -584,8 +584,10 @@ public class PlaneRender_WM extends GPURenderBase
         m_akCLoc = null;
         m_akCoords = null;
     
-        m_kWinLevel.disposeLocal();
-        m_kWinLevel = null;
+        if ( m_kWinLevel != null ) {
+        	m_kWinLevel.disposeLocal();
+        	m_kWinLevel = null;
+        }
 
         m_aiLocalImageExtents = null;
 

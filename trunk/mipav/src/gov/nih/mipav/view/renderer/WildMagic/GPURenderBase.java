@@ -139,8 +139,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kParent = null;
         m_kVolumeImageA = null;
         m_kVolumeImageB = null;
-        m_kAnimator.remove(GetCanvas());
-        m_kAnimator = null;
+        if ( m_kAnimator != null ) {
+        	m_kAnimator.remove(GetCanvas());
+        	m_kAnimator = null;
+        }
         if ( m_spkScene != null )
         {
             m_spkScene.dispose();
