@@ -195,6 +195,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                     "Pick fiber bundle color", new OkColorListener(),
                     new CancelListener());
         } else if (command.equals("VolumeColor")) {
+        	m_kVolumeDisplay.setVolumeColor(m_kUseVolumeColor.isSelected());
             if (m_kUseVolumeColor.isSelected()) {
                 setColor(null);
             } else {
@@ -614,6 +615,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             {
                 kVOIImage = parentFrame.getVOIImage();
                 iNum3DVOI = parentFrame.get3DVOIQuantity();
+                m_kUseVolumeColor.setSelected(false);
             }
 
             int iDimX = 0, iDimY = 0, iDimZ = 0;
@@ -665,11 +667,14 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         }
     }
 
-
+    public void addTubesColorGroup() {
+    	m_kVolumeDisplay.addTubesColorGroup(m_iBundleCount);
+    }
+    
     /** Updates the tract list user-interface. */
     public void addTract() {
         m_kBundleList.add(new Integer(m_iBundleCount));
-
+        addTubesColorGroup();
         DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
         int iSize = kList.getSize();
         kList.add(iSize, new String("FiberBundle" + m_iBundleCount));
@@ -931,6 +936,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                     m_kVolumeDisplay.removePolyline(j);	
                 }
                 m_kBundleList.remove(new Integer(iGroup));
+                m_kVolumeDisplay.removeTubesColorGroup(iGroup);
             }
             kList.remove(aiSelected[i]);
         }
@@ -1017,7 +1023,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         m_kUseVolumeColor = new JCheckBox("Use volume color" );
         m_kUseVolumeColor.addActionListener(this);
         m_kUseVolumeColor.setActionCommand("VolumeColor");
-        m_kUseVolumeColor.setSelected(true);
+        m_kUseVolumeColor.setSelected(false);
 
         m_kUseEllipsoids = new JCheckBox("Use Ellipsoids" );
         m_kUseEllipsoids.addActionListener(this);
@@ -1189,12 +1195,17 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                 int iLength = kName.length();
                 int iGroup = (new Integer(kName.substring(iHeaderLength,
                         iLength))).intValue();
+                System.err.println("iGroup = "+ iGroup);
                 if (color == null) {
                     m_kVolumeDisplay.setPolylineColor(iGroup, null);
+                    m_kVolumeDisplay.setTubesGroupColor(iGroup, null);
                 }
 
                 else if (!m_kUseVolumeColor.isSelected()) {
                     m_kVolumeDisplay.setPolylineColor(iGroup, new ColorRGB(
+                            color.getRed() / 255.0f, color.getGreen() / 255.0f,
+                            color.getBlue() / 255.0f));
+                    m_kVolumeDisplay.setTubesGroupColor(iGroup, new ColorRGB(
                             color.getRed() / 255.0f, color.getGreen() / 255.0f,
                             color.getBlue() / 255.0f));
                 }
@@ -1462,6 +1473,14 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         }
         kNext = null;
     }    
+    
+    
+    /**
+     * set the display volume color flags in the renderer. 
+     */
+    public void setVolumeColor() { 
+    	m_kVolumeDisplay.setVolumeColor(m_kUseVolumeColor.isSelected());
+    }
 
     /**
      * Sets the flags for the checkboxes.

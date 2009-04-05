@@ -43,6 +43,10 @@ public class VolumeDTI extends VolumeObject
     private HashMap<Integer,Node>  m_kTubes = null;
 
     private HashMap<Integer,Integer>  m_kTubeColors = null;
+    
+    private Vector<ColorRGB>  m_kTubeColorsConstant = null;
+    
+    private Vector<Integer>  m_kTubeColorsConstantIndex = null;
 
     /** Hashmap for multiple fiber bundles: */
     private HashMap<Integer,ShaderEffect>  m_kShaders = null;
@@ -121,6 +125,10 @@ public class VolumeDTI extends VolumeObject
     /** Color Shader for rendering the tracts. */
     private ShaderEffect m_kVertexColor3Shader;
     private int centerIndex;
+    
+    private Vector<ColorRGB> constantColor;
+    private int constantColorIndex = 0;
+    private boolean isUsingVolumeColor = false;
 
     /** Creates a new VolumeDTI object.
      * @param kImageA the VolumeImage containing shared data and textures for
@@ -134,6 +142,11 @@ public class VolumeDTI extends VolumeObject
     {
         super(kVolumeImage,kTranslate,fX,fY,fZ);
 
+        if( m_kVolumeImageA.GetImage().getExtents() == null ) {
+        	System.err.println("image extents == null");
+        	return;
+        }
+        
         m_iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
         m_iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
         m_iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
@@ -146,6 +159,12 @@ public class VolumeDTI extends VolumeObject
         m_kAlpha.BlendEnabled = true;
         //m_kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
         //m_kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+        
+        constantColor = new Vector<ColorRGB>();
+        for ( int i = 0; i < 100; i++ ) {
+        	constantColor.add(new ColorRGB((float)Math.random(), (float)Math.random(), (float)Math.random()));
+        }
+        
     }
 
     /** Add a polyline to the display. Used to display fiber tract bundles.
@@ -169,6 +188,8 @@ public class VolumeDTI extends VolumeObject
         if ( m_kTubes == null ) {
             m_kTubes = new HashMap<Integer,Node>();
             m_kTubeColors = new HashMap<Integer, Integer>();
+            m_kTubeColorsConstant = new Vector<ColorRGB>();
+            m_kTubeColorsConstantIndex = new Vector<Integer>();
         }        
         if ( m_iMaxGroups < iGroup )
         {
@@ -873,6 +894,7 @@ public class VolumeDTI extends VolumeObject
     public void setPolylineColor( int iGroup, ColorRGB kColor )
     {
         Integer kKey = new Integer(iGroup);
+        System.err.println("kKey = " + kKey);
         ShaderEffect kShader = m_kShaders.get(kKey);
         if ( kShader == null )
         {
@@ -906,6 +928,7 @@ public class VolumeDTI extends VolumeObject
 
             m_kEllipseConstantColor.remove( kKey );
             m_kEllipseConstantColor.put( kKey, kColor );
+            
         }
     }
     /** Display a fiber bundle tract with cylinders at each voxel.
@@ -1103,12 +1126,38 @@ public class VolumeDTI extends VolumeObject
         kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
         Integer iKey;
         int iIndex;
-        float fR,fG,fB;        
+        float fR,fG,fB;
+        ColorRGB groupColor;
         Iterator iIterator = m_kTubes.keySet().iterator();
-
+        Integer cKey = null;
+        Iterator cIter = m_kTubeColorsConstant.iterator();
+        Iterator cIterIndex = m_kTubeColorsConstantIndex.iterator();
+        /*
+        int count = 0;
+        if (!isUsingVolumeColor  ) {
+        	while ( cIterIndex.hasNext() ) {
+        		cKey = (Integer)cIterIndex.next();
+        		System.err.println("cKey  " + count + " = " + cKey);
+        		count++;
+        	}
+        }
+        */
+        cIter = m_kTubeColorsConstant.iterator();
+        cIterIndex = m_kTubeColorsConstantIndex.iterator();
+        
+        if ( !isUsingVolumeColor ) {
+        	if ( cIterIndex.hasNext() ) {
+        		cKey = (Integer)cIterIndex.next();
+        	} else {
+        		return;
+        	}
+        }
+        
+        m_kTubes.keySet();
+        
         TubeSurface kTube;
         
-        while ( iIterator.hasNext() )
+         while ( iIterator.hasNext() )
         {
             iKey = (Integer)iIterator.next();
             
@@ -1119,21 +1168,46 @@ public class VolumeDTI extends VolumeObject
                            
                 
                 iIndex = m_kTubeColors.get(iKey);
-                ColorRGB kColor1;
+                ColorRGB kColor1 = new ColorRGB(0f, 0f, 0f);
+                
                 if ( kImage.isColorImage() )
                 {
-                    fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
-                    fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
-                    fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-                    kColor1 = new ColorRGB(fR, fG, fB);
+	            	
+                    if ( !isUsingVolumeColor ) {
+                    
+	                    if ( iKey.intValue() <= cKey.intValue() ) {
+	                    	kColor1.R = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).R;
+	                    	kColor1.G = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).G;
+	                    	kColor1.B = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).B;
+	                    } else {
+	                        
+	                    	if ( cIterIndex.hasNext() ) {
+	                    		cKey = (Integer)cIterIndex.next();
+	                    		kColor1.R = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).R;
+	                    		kColor1.G = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).G;
+	                    		kColor1.B = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).B;
+	                    	} else {
+	                    		return;
+	                    	}
+	                    } 
+                    } else {
+                    	 fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
+    	                 fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
+    	                 fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
+    	                 // kColor1 = new ColorRGB(fR, fG, fB);
+    	                 kColor1.R = fR;
+    	                 kColor1.G = fG;
+    	                 kColor1.B = fB;
+                    }
+                    
                 }
                 else
                 {
                     fR = kImage.getFloat( iIndex );
                     kColor1 = new ColorRGB(fR, fR, fR);
-                }                
+                }                 
                 
-                
+                if ( kColor1.R == 0f && kColor1.G == 0f && kColor1.B == 0f) return;
                 
                 kTube.AttachGlobalState(m_kTubesMaterial);
                 
@@ -1162,4 +1236,48 @@ public class VolumeDTI extends VolumeObject
             
         }
     }
+    
+    /**
+     * Add the group color with given group ID
+     * @param groupID group ID
+     */
+    public void addTubesColorGroup(int groupID) {
+    	m_kTubeColorsConstant.add(constantColor.get(constantColorIndex));
+    	m_kTubeColorsConstantIndex.add(new Integer(groupID));
+    	constantColorIndex++;
+    }
+    
+    /**
+     * Remove the group color with given group ID
+     * @param groupID group ID
+     */
+    public void removeTubesColorGroup(int groupID) {
+    	// m_kTubeColorsConstant.put(new Integer(groupID), constantColor.get(constantColorIndex));
+    	
+    	m_kTubeColorsConstant.remove(m_kTubeColorsConstantIndex.indexOf(groupID));
+    	m_kTubeColorsConstantIndex.remove(m_kTubeColorsConstantIndex.indexOf(groupID));
+    	constantColorIndex--;
+    	if ( constantColorIndex == -1 ) constantColorIndex = 0;
+    }
+    
+    /** Sets the polyline color for the specified fiber bundle tract group. 
+     * @param iGroup the fiber bundle group to set.
+     * @param kColor the new polyline color for the specified fiber bundle tract group. 
+     */
+    public void setTubesGroupColor( int iGroup, ColorRGB kColor ) {
+    	// m_kTubeColorsConstant.put(iGroup, kColor);
+    	int index = m_kTubeColorsConstantIndex.indexOf(iGroup);
+    	m_kTubeColorsConstant.set(index, kColor);
+    	
+    	
+    }
+    
+    /**
+     * Set the flag to using volume color or not
+     * @param flag  true or false
+     */
+    public void setVolumeColor(boolean flag) {
+    	isUsingVolumeColor = flag;
+    }
+    
 }
