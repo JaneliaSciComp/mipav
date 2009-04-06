@@ -141,11 +141,6 @@ public class VolumeDTI extends VolumeObject
     public VolumeDTI( VolumeImage kVolumeImage, Vector3f kTranslate, float fX, float fY, float fZ )
     {
         super(kVolumeImage,kTranslate,fX,fY,fZ);
-
-        if( m_kVolumeImageA.GetImage().getExtents() == null ) {
-        	System.err.println("image extents == null");
-        	return;
-        }
         
         m_iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
         m_iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
