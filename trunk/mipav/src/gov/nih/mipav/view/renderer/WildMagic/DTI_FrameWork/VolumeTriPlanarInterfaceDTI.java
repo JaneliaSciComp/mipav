@@ -194,7 +194,7 @@ implements ChangeListener {
     
     public void setDTIParamsActive() {
     	insertTab("Fibers", DTIParametersPanel);
-    	tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
+    	tabbedPane.setSelectedIndex(tabbedPane.indexOfTab("Fibers") );
     }
     
     public JPanelDTIParametersPanel getParamPanel() {
