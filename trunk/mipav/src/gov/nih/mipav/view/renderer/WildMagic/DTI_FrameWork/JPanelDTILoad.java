@@ -213,8 +213,8 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
 					kTractAlgorithm.run();
 					kTractAlgorithm.disposeLocal();
 					kTractAlgorithm = null;
-					parentFrame.setDTIParamsActive();
 				}
+				parentFrame.setDTIParamsActive();
 			}else {
 				 if ( m_kBMatrix == null || m_aakDWIList == null )
 	                {

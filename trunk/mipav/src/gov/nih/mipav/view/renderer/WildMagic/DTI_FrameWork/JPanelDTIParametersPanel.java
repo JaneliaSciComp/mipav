@@ -1090,7 +1090,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         displayAllCheckBox.setSelected(false);
         displayAllCheckBox.addActionListener(this);
         displayAllCheckBox.setActionCommand("DisplayAll");
-        displayAllCheckBox.setEnabled(true);
+        displayAllCheckBox.setEnabled(false);
 
         JPanel glyphsPanel = new JPanel();
         glyphsPanel.setLayout(new BoxLayout(glyphsPanel, BoxLayout.X_AXIS));
@@ -1484,14 +1484,19 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     public synchronized void itemStateChanged(ItemEvent event) {
         if (radioLines.isSelected()) {
             displayMode = Polylines;
+            displayAllCheckBox.setEnabled(false);
         } else if ( radioEllipzoids.isSelected()) {
             displayMode = Ellipzoids;
+            displayAllCheckBox.setEnabled(true);
         } else if ( radioTubes.isSelected()) {
             displayMode = Tubes;
+            displayAllCheckBox.setEnabled(false);
         } else if ( radioCylinders.isSelected() ) {
             displayMode = Cylinders;
+            displayAllCheckBox.setEnabled(true);
         } else if ( radioArrows.isSelected()) {
             displayMode = Arrows;
+            displayAllCheckBox.setEnabled(true);
         }
         invokeDisplayFunction();
     }
