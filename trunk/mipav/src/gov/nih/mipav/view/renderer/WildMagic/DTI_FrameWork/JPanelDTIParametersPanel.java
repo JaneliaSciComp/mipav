@@ -166,7 +166,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         Object source = e.getSource();
 
         if (source == m_kDisplaySlider) {
-            // m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
+            m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
         }
     }
 
@@ -489,33 +489,27 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             String kTract = new String("_tract");
             kDTIName = kDTIName.substring(0, kDTIName.length()
                     - kTract.length());
-            // Why disable the check?  Left later.  
-            // if (parentFrame.getDTIimage() == null) {
+            FileIO fileIO = new FileIO();
+            m_kDTIImage = fileIO.readImage(kDTIName, chooser
+                    .getCurrentDirectory()
+                    + File.separator);
+            if (m_kDTIImage.getNDims() != 4) {
+                MipavUtil
+                .displayError("Diffusion Tensor file does not have correct dimensions");
+                if (m_kDTIImage != null) {
+                    m_kDTIImage.disposeLocal();
+                }
+            }
+            if (m_kDTIImage.getExtents()[3] != 6) {
+                MipavUtil
+                .displayError("Diffusion Tensor does not have correct dimensions");
+                if (m_kDTIImage != null) {
+                    m_kDTIImage.disposeLocal();
+                }   
+            }
 
-	            FileIO fileIO = new FileIO();
-	            m_kDTIImage = fileIO.readImage(kDTIName, chooser
-	                    .getCurrentDirectory()
-	                    + File.separator);
-	            if (m_kDTIImage.getNDims() != 4) {
-	                MipavUtil
-	                .displayError("Diffusion Tensor file does not have correct dimensions");
-	                if (m_kDTIImage != null) {
-	                    m_kDTIImage.disposeLocal();
-	                }
-	                m_kDTIImage = null;
-	            }
-	            if (m_kDTIImage.getExtents()[3] != 6) {
-	                MipavUtil
-	                .displayError("Diffusion Tensor does not have correct dimensions");
-	                if (m_kDTIImage != null) {
-	                    m_kDTIImage.disposeLocal();
-	                }
-	                m_kDTIImage = null;
-	            }
-	
-	            setDTIImage(m_kDTIImage);   
-            // } 
-
+            setDTIImage(m_kDTIImage);   
+       
             m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
             if (!m_kTractFile.exists() || !m_kTractFile.canRead()) {
                 m_kTractFile = null;
