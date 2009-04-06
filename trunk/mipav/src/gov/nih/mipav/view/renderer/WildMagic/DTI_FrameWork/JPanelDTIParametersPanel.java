@@ -1090,7 +1090,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         displayAllCheckBox.setSelected(false);
         displayAllCheckBox.addActionListener(this);
         displayAllCheckBox.setActionCommand("DisplayAll");
-        displayAllCheckBox.setEnabled(false);
+        displayAllCheckBox.setEnabled(true);
 
         JPanel glyphsPanel = new JPanel();
         glyphsPanel.setLayout(new BoxLayout(glyphsPanel, BoxLayout.X_AXIS));
