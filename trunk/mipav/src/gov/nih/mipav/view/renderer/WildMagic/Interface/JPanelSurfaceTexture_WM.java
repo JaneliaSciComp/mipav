@@ -492,6 +492,11 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
                 mainPanel.remove(mHistoLUT.getMainPanel());
                 mHistoLUT = null;
             }
+            
+            if (mHistoRGB != null) {
+                mainPanel.remove(mHistoRGB.getMainPanel());
+                mHistoRGB = null;
+            }
 
             /* Create LUT panel: */
             mHistoLUT = new JPanelHistoLUT(mLUTImageA, null, mLUTSeparate, null, true);
@@ -531,6 +536,11 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
                 mHistoRGB = null;
             }
 
+            if (mHistoLUT != null) {
+                mainPanel.remove(mHistoLUT.getMainPanel());
+                mHistoLUT = null;
+            }
+            
             /* Create LUT panel: */
             mHistoRGB = new JPanelHistoRGB(mLUTImageA, null, mRGBSeparate, null, true);
         }
@@ -538,7 +548,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
         if (!mImageA.isColorImage()) {
             mainPanel.add(mHistoLUT.getMainPanel(), BorderLayout.SOUTH);
         } else {
-            mainPanel.add(mHistoRGB.getMainPanel(), BorderLayout.SOUTH);
+        	mainPanel.add(mHistoRGB.getMainPanel(), BorderLayout.SOUTH);
         }
 
         mainPanel.updateUI();
