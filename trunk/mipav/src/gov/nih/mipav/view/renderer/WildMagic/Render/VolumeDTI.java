@@ -944,6 +944,22 @@ public class VolumeDTI extends VolumeObject
         float fR,fG,fB;
         TriMesh kCylinder;        
         Iterator kIterator = m_kCylinders.keySet().iterator();
+        
+        Integer cKey = null;
+        Iterator cIter = m_kTubeColorsConstant.iterator();
+        Iterator cIterIndex = m_kTubeColorsConstantIndex.iterator();
+        
+        cIter = m_kTubeColorsConstant.iterator();
+        cIterIndex = m_kTubeColorsConstantIndex.iterator();
+        
+        if ( !isUsingVolumeColor ) {
+        	if ( cIterIndex.hasNext() ) {
+        		cKey = (Integer)cIterIndex.next();
+        	} else {
+        		return;
+        	}
+        }
+        
         while ( kIterator.hasNext() )
         {
             kKey = (Integer)kIterator.next();
@@ -953,61 +969,69 @@ public class VolumeDTI extends VolumeObject
                 aiCylinders = kCylinderVector.get(i);
                 for ( int j = 0; j < aiCylinders.length; j++ )
                 {
-                    if ( aiCylinders[j] != -1 )
-                    {
-                        iIndex = aiCylinders[j];
-                        Integer kIndex = new Integer(iIndex);
-                        kColor = m_kEllipseConstantColor.get(kIndex);
-                       
-                        if ( kColor != null )
-                        {
-                            m_kColorEllipse = kColor;
-                        }
-                        else
-                        {
-                            if ( kImage.isColorImage() )
-                            {
-                                fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
-                                fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
-                                fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-                                m_kColorEllipse.R = fR;
-                                m_kColorEllipse.G = fG;
-                                m_kColorEllipse.B = fB;
-                            }
-                            else
-                            {
-                                fR = kImage.getFloat( iIndex );
-                                m_kColorEllipse.R = fR;
-                                m_kColorEllipse.G = fR;
-                                m_kColorEllipse.B = fR;
-                            }
-                        }
-                        
-                        kCylinder = m_kCylinder;
-                        kCylinder.Local = m_kEigenVectors.get(kIndex);
-                
-                        m_kEllipseMaterial.Ambient = m_kColorEllipse;
-                        m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-                        kScaleNode.SetChild(0, kCylinder);
-                        m_kScene.SetChild(0,kScaleNode);
-                        m_kScene.UpdateGS();
-                        m_kScene.DetachChild(kScaleNode);
-                        kScaleNode.DetachChild(kCylinder);
-                        kRenderer.Draw(kCylinder);
-                    }
-                }
+                    if (aiCylinders[j] != -1) {
+						iIndex = aiCylinders[j];
+						Integer kIndex = new Integer(iIndex);
+						kColor = m_kEllipseConstantColor.get(kIndex);
+
+						if (kColor != null) {
+							m_kColorEllipse = kColor;
+						} else {
+							if (kImage.isColorImage()) {
+								if (!isUsingVolumeColor) {
+
+									if (kKey.intValue() < cKey.intValue()) {
+										m_kColorEllipse = 
+											new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
+									} else {
+
+										if (cIterIndex.hasNext()) {
+											cKey = (Integer) cIterIndex.next();
+											m_kColorEllipse = 
+												new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
+
+										} else {
+											return;
+										}
+									}
+								} else {
+									fR = kImage.getFloat(iIndex * 4 + 1) / 255.0f;
+									fG = kImage.getFloat(iIndex * 4 + 2) / 255.0f;
+									fB = kImage.getFloat(iIndex * 4 + 3) / 255.0f;
+									m_kColorEllipse = new ColorRGB(fR, fG, fB);
+								}
+							} else {
+								fR = kImage.getFloat(iIndex);
+								m_kColorEllipse = new ColorRGB(fR, fR, fR);
+							}
+						}
+
+						kCylinder = m_kCylinder;
+						kCylinder.Local = m_kEigenVectors.get(kIndex);
+
+						m_kEllipseMaterial.Ambient = m_kColorEllipse;
+						m_kEllipseMaterial.Diffuse = m_kColorEllipse;
+						kScaleNode.SetChild(0, kCylinder);
+						m_kScene.SetChild(0, kScaleNode);
+						m_kScene.UpdateGS();
+						m_kScene.DetachChild(kScaleNode);
+						kScaleNode.DetachChild(kCylinder);
+						kRenderer.Draw(kCylinder);
+					}
+				}
             }
         }
     }
-    /** Display a fiber bundle tract with ellipsoids at each voxel.
-     */    
+    /**
+	 * Display a fiber bundle tract with ellipsoids at each voxel.
+	 */    
     private void DisplayEllipsoids( ModelImage kImage, Renderer kRenderer )
     {
         if ( m_kEllipsoids == null )
         {
             return;
         }
-        //kAlpha.BlendEnabled = true;
+        // kAlpha.BlendEnabled = true;
         Node kScaleNode = new Node();
         kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
         Integer kKey;
@@ -1018,6 +1042,23 @@ public class VolumeDTI extends VolumeObject
         float fR,fG,fB;
         TriMesh kEllipse;        
         Iterator kIterator = m_kEllipsoids.keySet().iterator();
+   
+        Integer cKey = null;
+        Iterator cIter = m_kTubeColorsConstant.iterator();
+        Iterator cIterIndex = m_kTubeColorsConstantIndex.iterator();
+        
+        cIter = m_kTubeColorsConstant.iterator();
+        cIterIndex = m_kTubeColorsConstantIndex.iterator();
+        
+        if ( !isUsingVolumeColor ) {
+        	if ( cIterIndex.hasNext() ) {
+        		cKey = (Integer)cIterIndex.next();
+        	} else {
+        		return;
+        	}
+        }
+        
+        
         while ( kIterator.hasNext() )
         {
             kKey = (Integer)kIterator.next();
@@ -1041,19 +1082,31 @@ public class VolumeDTI extends VolumeObject
                         {
                             if ( kImage.isColorImage() )
                             {
-                                fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
-                                fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
-                                fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-                                m_kColorEllipse.R = fR;
-                                m_kColorEllipse.G = fG;
-                                m_kColorEllipse.B = fB;
+                            	if ( !isUsingVolumeColor ) {
+                                    
+            	                    if ( kKey.intValue() < cKey.intValue() ) {
+            	                    	m_kColorEllipse = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
+            	                    } else {
+            	                        
+            	                    	if ( cIterIndex.hasNext() ) {
+            	                    		cKey = (Integer)cIterIndex.next();
+            	                    		m_kColorEllipse = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
+            	    	                    
+            	                    	} else {
+            	                    		return;
+            	                    	}
+            	                    } 
+                                } else {
+	                                fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
+	                                fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
+	                                fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
+	                                m_kColorEllipse = new ColorRGB(fR, fG, fB);
+                                }
                             }
                             else
                             {
                                 fR = kImage.getFloat( iIndex );
-                                m_kColorEllipse.R = fR;
-                                m_kColorEllipse.G = fR;
-                                m_kColorEllipse.B = fR;
+                                m_kColorEllipse = new ColorRGB(fR, fR, fR);
                             }
                         }
                         
@@ -1160,7 +1213,7 @@ public class VolumeDTI extends VolumeObject
 	            	
                     if ( !isUsingVolumeColor ) {
                     
-	                    if ( iKey.intValue() <= cKey.intValue() ) {
+	                    if ( iKey.intValue() < cKey.intValue() ) {
 	                    	kColor1 = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
 	                    } else {
 	                        
