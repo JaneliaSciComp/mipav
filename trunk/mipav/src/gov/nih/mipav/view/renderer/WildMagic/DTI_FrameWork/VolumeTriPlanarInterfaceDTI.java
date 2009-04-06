@@ -194,6 +194,7 @@ implements ChangeListener {
     
     public void setDTIParamsActive() {
     	insertTab("Fibers", DTIParametersPanel);
+    	tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
     
     public JPanelDTIParametersPanel getParamPanel() {
@@ -430,11 +431,7 @@ implements ChangeListener {
      */
     protected void resizePanel() {
         super.resizePanel();        
-        //int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
         panelToolbar.getHeight();
-        //if (DTIimageLoadPanel != null) {
-        //	DTIimageLoadPanel.resizePanel(maxPanelWidth, height);
-        //}
     }
     
 

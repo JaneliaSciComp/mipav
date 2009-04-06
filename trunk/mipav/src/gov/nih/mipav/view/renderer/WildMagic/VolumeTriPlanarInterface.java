@@ -2825,9 +2825,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
 
         redBorder = BorderFactory.createCompoundBorder(redline, compound);
 
-        buildLabelPanel();
+        
         if ( bVolumeViewer )
         {
+        	buildLabelPanel();
             buildHistoLUTPanel();
             buildOpacityPanel();
         }
