@@ -601,19 +601,26 @@ public class PlaneRender_WM extends GPURenderBase
         m_kLabelXDisplay = null;
         m_kLabelY = null;
 
-        for ( int i = 0; i < m_kXArrow.length; i++ )
-        {
-            m_kXArrow[i].dispose();
+        if ( m_kXArrow != null ) {
+	        for ( int i = 0; i < m_kXArrow.length; i++ )
+	        {
+	            m_kXArrow[i].dispose();
+	        }
+	        m_kXArrow = null;
         }
-        m_kXArrow = null;
-        for ( int i = 0; i < m_kYArrow.length; i++ )
-        {
-            m_kYArrow[i].dispose();
+        
+        if ( m_kYArrow != null ) {
+	        for ( int i = 0; i < m_kYArrow.length; i++ )
+	        {
+	            m_kYArrow[i].dispose();
+	        }
+	        m_kYArrow = null;
         }
-        m_kYArrow = null;
-    
-        m_spkScreenCamera.dispose();
-        m_spkScreenCamera = null;
+        
+        if ( m_spkScreenCamera != null ) {
+	        m_spkScreenCamera.dispose();
+	        m_spkScreenCamera = null;
+        }
         m_aiAxisOrder = null;
         m_abAxisFlip = null;
 

@@ -209,6 +209,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             loadTractFile();
             loadingTrack = false;
             slicePickableCheckBox.setEnabled(true);
+            processTractFile();
         }  else if (command.equals("Add")) {
             processTractFile();
         } else if (command.equals("Remove")) {
@@ -615,7 +616,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             {
                 kVOIImage = parentFrame.getVOIImage();
                 iNum3DVOI = parentFrame.get3DVOIQuantity();
-                m_kUseVolumeColor.setSelected(false);
+                m_kUseVolumeColor.setSelected(true);
             }
 
             int iDimX = 0, iDimY = 0, iDimZ = 0;
@@ -1023,7 +1024,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         m_kUseVolumeColor = new JCheckBox("Use volume color" );
         m_kUseVolumeColor.addActionListener(this);
         m_kUseVolumeColor.setActionCommand("VolumeColor");
-        m_kUseVolumeColor.setSelected(false);
+        m_kUseVolumeColor.setSelected(true);
 
         m_kUseEllipsoids = new JCheckBox("Use Ellipsoids" );
         m_kUseEllipsoids.addActionListener(this);
@@ -1195,7 +1196,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                 int iLength = kName.length();
                 int iGroup = (new Integer(kName.substring(iHeaderLength,
                         iLength))).intValue();
-                System.err.println("iGroup = "+ iGroup);
                 if (color == null) {
                     m_kVolumeDisplay.setPolylineColor(iGroup, null);
                     m_kVolumeDisplay.setTubesGroupColor(iGroup, null);

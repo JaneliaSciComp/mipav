@@ -128,7 +128,7 @@ public class VolumeDTI extends VolumeObject
     
     private Vector<ColorRGB> constantColor;
     private int constantColorIndex = 0;
-    private boolean isUsingVolumeColor = false;
+    private boolean isUsingVolumeColor = true;
 
     /** Creates a new VolumeDTI object.
      * @param kImageA the VolumeImage containing shared data and textures for
@@ -894,7 +894,6 @@ public class VolumeDTI extends VolumeObject
     public void setPolylineColor( int iGroup, ColorRGB kColor )
     {
         Integer kKey = new Integer(iGroup);
-        System.err.println("kKey = " + kKey);
         ShaderEffect kShader = m_kShaders.get(kKey);
         if ( kShader == null )
         {
@@ -1132,16 +1131,7 @@ public class VolumeDTI extends VolumeObject
         Integer cKey = null;
         Iterator cIter = m_kTubeColorsConstant.iterator();
         Iterator cIterIndex = m_kTubeColorsConstantIndex.iterator();
-        /*
-        int count = 0;
-        if (!isUsingVolumeColor  ) {
-        	while ( cIterIndex.hasNext() ) {
-        		cKey = (Integer)cIterIndex.next();
-        		System.err.println("cKey  " + count + " = " + cKey);
-        		count++;
-        	}
-        }
-        */
+       
         cIter = m_kTubeColorsConstant.iterator();
         cIterIndex = m_kTubeColorsConstantIndex.iterator();
         
@@ -1168,7 +1158,7 @@ public class VolumeDTI extends VolumeObject
                            
                 
                 iIndex = m_kTubeColors.get(iKey);
-                ColorRGB kColor1 = new ColorRGB(0f, 0f, 0f);
+                ColorRGB kColor1 = null;
                 
                 if ( kImage.isColorImage() )
                 {
@@ -1176,16 +1166,13 @@ public class VolumeDTI extends VolumeObject
                     if ( !isUsingVolumeColor ) {
                     
 	                    if ( iKey.intValue() <= cKey.intValue() ) {
-	                    	kColor1.R = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).R;
-	                    	kColor1.G = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).G;
-	                    	kColor1.B = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).B;
+	                    	kColor1 = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
 	                    } else {
 	                        
 	                    	if ( cIterIndex.hasNext() ) {
 	                    		cKey = (Integer)cIterIndex.next();
-	                    		kColor1.R = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).R;
-	                    		kColor1.G = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).G;
-	                    		kColor1.B = m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)).B;
+	                    		kColor1 = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
+	    	                    
 	                    	} else {
 	                    		return;
 	                    	}
@@ -1194,10 +1181,7 @@ public class VolumeDTI extends VolumeObject
                     	 fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
     	                 fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
     	                 fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-    	                 // kColor1 = new ColorRGB(fR, fG, fB);
-    	                 kColor1.R = fR;
-    	                 kColor1.G = fG;
-    	                 kColor1.B = fB;
+    	                 kColor1 = new ColorRGB(fR, fG, fB);
                     }
                     
                 }
@@ -1207,7 +1191,7 @@ public class VolumeDTI extends VolumeObject
                     kColor1 = new ColorRGB(fR, fR, fR);
                 }                 
                 
-                if ( kColor1.R == 0f && kColor1.G == 0f && kColor1.B == 0f) return;
+                if ( kColor1 == null ) return;
                 
                 kTube.AttachGlobalState(m_kTubesMaterial);
                 
