@@ -1041,10 +1041,4 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
         return label;
     }
     
-    public void turnonLight() {
-    	m_akLights[iSelect].On = onOffCheckBox.isSelected();
-        refreshControlPanel();
-        refreshLighting();
-    }
-    
 }
