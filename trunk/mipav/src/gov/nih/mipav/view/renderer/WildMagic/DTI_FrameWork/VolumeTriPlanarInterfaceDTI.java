@@ -392,6 +392,15 @@ implements ChangeListener {
                 m_kVolumeImageB.UpdateImages(kTransfer, 0, null);
             }
             progressBar.dispose();
+            
+            // MUST register frame to image models
+            imageA.addImageDisplayListener(this);
+
+            if (imageB != null) {
+                imageB.addImageDisplayListener(this);
+            }
+            
+            
             // work around to fix the init panel viewing aspect ratio offset problem. 
             m_kAnimator.start();
             setSize(getSize().width+1, getSize().height+1);
@@ -412,6 +421,18 @@ implements ChangeListener {
      */
     public void disposeLocal(boolean flag) {
         super.disposeLocal(flag);
+        
+        if (imageA != null) {
+            imageA.removeImageDisplayListener(this);
+            imageA.disposeLocal();
+            imageA = null;
+        }
+
+        if (imageB != null) {
+            imageB.removeImageDisplayListener(this);
+            imageB.disposeLocal();
+            imageB = null;
+        }
     }
 
     /**
