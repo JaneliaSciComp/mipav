@@ -610,7 +610,8 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             {
                 kVOIImage = parentFrame.getVOIImage();
                 iNum3DVOI = parentFrame.get3DVOIQuantity();
-                m_kUseVolumeColor.setSelected(true);
+                m_kUseVolumeColor.setSelected(false);
+                setVolumeColor();
             }
 
             int iDimX = 0, iDimY = 0, iDimZ = 0;
