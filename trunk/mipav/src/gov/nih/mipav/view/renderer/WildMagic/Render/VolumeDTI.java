@@ -980,7 +980,7 @@ public class VolumeDTI extends VolumeObject
 							if (kImage.isColorImage()) {
 								if (!isUsingVolumeColor) {
 
-									if (kKey.intValue() < cKey.intValue()) {
+									if (kKey.intValue() <= cKey.intValue()) {
 										m_kColorEllipse = 
 											new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
 									} else {
@@ -1084,7 +1084,7 @@ public class VolumeDTI extends VolumeObject
                             {
                             	if ( !isUsingVolumeColor ) {
                                     
-            	                    if ( kKey.intValue() < cKey.intValue() ) {
+            	                    if ( kKey.intValue() <= cKey.intValue() ) {
             	                    	m_kColorEllipse = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
             	                    } else {
             	                        
@@ -1213,7 +1213,7 @@ public class VolumeDTI extends VolumeObject
 	            	
                     if ( !isUsingVolumeColor ) {
                     
-	                    if ( iKey.intValue() < cKey.intValue() ) {
+	                    if ( iKey.intValue() <= cKey.intValue() ) {
 	                    	kColor1 = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
 	                    } else {
 	                        
