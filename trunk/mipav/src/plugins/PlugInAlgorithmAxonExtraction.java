@@ -8,6 +8,8 @@ import java.awt.*;
 import java.io.*;
 
 import java.util.*;
+import javax.swing.JOptionPane;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -85,6 +87,9 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         short shortOpen[];
         short shortClose[];
         byte byteBuffer[];
+        short redBuffer[];
+        short greenBuffer[];
+        short blueBuffer[];
         int extents2D[];
         ModelImage shortImage;
         int color;
@@ -94,6 +99,13 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         int itersD = 1;
         int itersE = 1;
         int i;
+        boolean pointsEntered;
+        Vector[] curves;
+        int nPts;
+        int s;
+        Vector3f[] pt = null;
+        Vector3f[] tmpPt = null;
+        int ptNum = 0;
 
         time = System.currentTimeMillis();
 
@@ -227,12 +239,86 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
                     } // for (z = 0; z < zDim; z++)
             } // if (((color == 1) && (redRadius >= 1)) || ((color == 2) && (greenRadius >= 1)))
         } // for (color = 1; color <= 2; color++)
+        shortBuffer = null;
+        shortOpen = null;
+        shortClose = null;
         srcImage.calcMinMax();
         
 
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
-        Preferences.debug("PlugInAlgorithmAxonExtraction elapsed time in seconds = " + (time/1000.0));
+        Preferences.debug("PlugInAlgorithmAxonExtraction preprocessing elapsed time in seconds = " + (time/1000.0));
+        
+        pointsEntered = false;
+        while (!pointsEntered) {
+        JOptionPane.showMessageDialog(null, "Click okay after entering extraction points", "Point Entry",
+                                      JOptionPane.PLAIN_MESSAGE);
+            if (srcImage.getVOIs().size() == 0) {
+                JOptionPane.showMessageDialog(null, "No extraction points were entered", "Points Not Entered",
+                                      JOptionPane.ERROR_MESSAGE);   
+            }
+            else {
+                pointsEntered = true;
+            }
+        } // while (!pointsEntered)
+        
+        curves = srcImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
+
+        nPts = 0;
+        for (i = 0; i < srcImage.getExtents()[2]; i++) {
+            nPts += curves[i].size();
+        }
+        Preferences.debug("nPts = " + nPts + "\n");
+        pt = new Vector3f[nPts];
+        
+        ptNum = 0;
+        for (s = 0; s < srcImage.getExtents()[2]; s++) {
+            tmpPt = srcImage.getVOIs().VOIAt(0).exportPoints(s);
+
+            for (i = 0; i < tmpPt.length; i++) {
+                pt[ptNum++] = tmpPt[i];
+            }
+        }
+        
+        redBuffer = new short[length];
+        try {
+            srcImage.exportRGBData(1, 0, length, redBuffer); // export red data
+        } catch (IOException error) {
+            redBuffer = null;
+            errorCleanUp("Algorithm Axon extraction reports: source image locked", true);
+
+            return;
+        }
+        
+        greenBuffer = new short[length];
+        try {
+            srcImage.exportRGBData(2, 0, length, greenBuffer); // export green data
+        } catch (IOException error) {
+            redBuffer = null;
+            greenBuffer = null;
+            errorCleanUp("Algorithm Axon extraction reports: source image locked", true);
+
+            return;
+        }
+        
+        blueBuffer = new short[length];
+        try {
+            srcImage.exportRGBData(3, 0, length, blueBuffer); // export blue data
+        } catch (IOException error) {
+            redBuffer = null;
+            greenBuffer = null;
+            blueBuffer = null;
+            errorCleanUp("Algorithm Axon extraction reports: source image locked", true);
+
+            return;
+        }
+        
+        time = System.currentTimeMillis();
+        fireProgressStateChanged(0);
+        
+        fireProgressStateChanged(100);
+        time = System.currentTimeMillis() - time;
+        Preferences.debug("PlugInAlgorithmAxonExtraction processing elapsed time in seconds = " + (time/1000.0));
         setCompleted(true);
     }
     
