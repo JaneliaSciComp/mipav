@@ -1140,7 +1140,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         radioArrows = new JRadioButton("Arrows", false);
         radioArrows.setFont(MipavUtil.font12B);
         radioArrows.addItemListener(this);
-        radioArrows.setEnabled(false);
         group1.add(radioArrows);
 
         displayAllCheckBox = new JCheckBox("Display All");
@@ -1790,6 +1789,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayCylinders(false);
             m_kVolumeDisplay.setDisplayAllCylinders(false);
             m_kVolumeDisplay.setDisplayTubes(false);
+            m_kVolumeDisplay.setDisplayArrows(false);
         } else if (displayMode == Ellipzoids && displayAll == true) {
             parentFrame.getLightControl().refreshLighting();
             Color color = m_kColorButton.getBackground();
@@ -1798,6 +1798,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayCylinders(false);
             m_kVolumeDisplay.setDisplayAllCylinders(false);
             m_kVolumeDisplay.setDisplayTubes(false);
+            m_kVolumeDisplay.setDisplayArrows(false);
         } else if (displayMode == Cylinders && displayAll == false) {
             parentFrame.getLightControl().refreshLighting();
             m_kVolumeDisplay.setDisplayCylinders(true);
@@ -1805,6 +1806,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayAllCylinders(false);
             m_kVolumeDisplay.setDisplayTubes(false);
+            m_kVolumeDisplay.setDisplayArrows(false);
         } else if (displayMode == Cylinders && displayAll == true) {
             parentFrame.getLightControl().refreshLighting();
             Color color = m_kColorButton.getBackground();
@@ -1813,6 +1815,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayAllEllipsoids(false);
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayTubes(false);
+            m_kVolumeDisplay.setDisplayArrows(false);
         }  else if (displayMode == Tubes /* && displayAll == false */) {
             parentFrame.getLightControl().refreshLighting();
             Color color = m_kColorButton.getBackground();
@@ -1821,12 +1824,23 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayCylinders(false);
             m_kVolumeDisplay.setDisplayAllEllipsoids(false);
             m_kVolumeDisplay.setDisplayEllipsoids(false);
+            m_kVolumeDisplay.setDisplayArrows(false);
+        }    else if (displayMode == Arrows /* && displayAll == false */) {
+            parentFrame.getLightControl().refreshLighting();
+            Color color = m_kColorButton.getBackground();
+            m_kVolumeDisplay.setDisplayTubes(false);
+            m_kVolumeDisplay.setDisplayAllCylinders(false);
+            m_kVolumeDisplay.setDisplayCylinders(false);
+            m_kVolumeDisplay.setDisplayAllEllipsoids(false);
+            m_kVolumeDisplay.setDisplayEllipsoids(false);
+            m_kVolumeDisplay.setDisplayArrows(true);
         }  else if (displayMode == Polylines ) {
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayAllEllipsoids(false);
             m_kVolumeDisplay.setDisplayCylinders(false);
             m_kVolumeDisplay.setDisplayAllCylinders(false);
             m_kVolumeDisplay.setDisplayTubes(false);
+            m_kVolumeDisplay.setDisplayArrows(false);
         }
     }
 

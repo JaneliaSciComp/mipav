@@ -1605,14 +1605,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-    /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
-     * @param bDisplay when true display the tracts with Cylinders.
+    /** Turns on/off displaying the fiber bundle tracts with tubes.
+     * @param bDisplay when true display the tracts with tubes.
      */
     public void setDisplayTubes( boolean bDisplay )
     {
         if ( m_kDTIDisplay != null )
         {
             m_kDTIDisplay.setDisplayTubes( bDisplay );
+        }
+    }
+
+    /** Turns on/off displaying the fiber bundle tracts with 3D arrows.
+     * @param bDisplay when true display the tracts with 3D arrows.
+     */
+    public void setDisplayArrows( boolean bDisplay )
+    {
+        if ( m_kDTIDisplay != null )
+        {
+            m_kDTIDisplay.setDisplayArrows( bDisplay );
         }
     }
     
