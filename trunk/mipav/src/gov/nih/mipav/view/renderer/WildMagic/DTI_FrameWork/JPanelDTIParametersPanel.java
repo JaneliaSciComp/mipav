@@ -102,9 +102,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     /** Which tensor nodes are already on the fiber bundle tract */
     private boolean[] m_abVisited = null;
 
-    /** Check box enable the slice pickable or not */
-    public JCheckBox slicePickableCheckBox;
-
     private JCheckBox m_kNegX;
     private JCheckBox m_kNegY;
     private JCheckBox m_kNegZ;
@@ -215,7 +212,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             loadingTrack = true;
             loadTractFile();
             loadingTrack = false;
-            slicePickableCheckBox.setEnabled(true);
+            ((VolumeTriPlanerRenderDTI)m_kVolumeDisplay).enableSlicePickable(true);	
             processTractFile();
         }  else if (command.equals("Add")) {
             processTractFile();
@@ -245,16 +242,12 @@ implements ItemListener, ListSelectionListener, ChangeListener {
 	            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
 	            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCIgnore );
             }
-        } else if( command.equals("Pickable")) {
-            ((VolumeTriPlanerRenderDTI)m_kVolumeDisplay).enableSlicePickable(slicePickableCheckBox.isSelected());	
-        }
+        } 
 
     }
 
     public void updateCounter() {
-        if ( slicePickableCheckBox.isSelected() ) {
             updateTractCount();
-        } 
     }
     
     public void add3DVOI( String kVOIName )
@@ -306,9 +299,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     }
 
     public void addFiberTract() {
-        if ( slicePickableCheckBox.isSelected() ) {
             addTract();
-        } 
     }
 
     private JPanel createLoadTractDialog() {
@@ -408,16 +399,11 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         m_kUseVOICheck = new JCheckBox("Use VOI");
         kParamsPanel.add(m_kUseVOICheck, gbc);
 
-        slicePickableCheckBox = new JCheckBox("Select Individual Tracts");
-        slicePickableCheckBox.setSelected(false);
-        slicePickableCheckBox.addActionListener(this);
-        slicePickableCheckBox.setActionCommand("Pickable");
-        slicePickableCheckBox.setEnabled(false);
-        
+        JLabel slicePicckableLabel = new JLabel("Ctrl and left mouse press to select the individual tract.");
 
         JPanel slicePanel = new JPanel();
         slicePanel.setLayout(new BorderLayout());
-        slicePanel.add(slicePickableCheckBox, BorderLayout.WEST);
+        slicePanel.add(slicePicckableLabel, BorderLayout.WEST);
         slicePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         slicePanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
