@@ -216,6 +216,39 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
      */
     private void CreateScene() {
         m_spkScene = new Node();
+
+        // start arrow node --------
+        Transformation trans = new Transformation();
+        float rotationRedian = 0.5f * (float) Math.PI;
+
+        Matrix3f matrix = new Matrix3f((float)Math.cos(rotationRedian),0.0f,(float)Math.sin(rotationRedian),
+                                       0.0f,1.0f,0.0f,
+                                       (float)-Math.sin(rotationRedian),0.0f,(float)Math.cos(rotationRedian));
+
+        trans.SetRotate(matrix);
+        //trans.SetTranslate(0.0f,0.0f,-0.25f);
+        
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetNChannels(3);
+        kAttr.SetTChannels(0,2);
+        StandardMesh kSM = new StandardMesh(kAttr);
+        kSM.SetTransformation(trans);
+
+        Node pkTrnNode = new Node();
+        TriMesh pkMesh = kSM.Cone(6,6,0.5f,0.5f, false);
+        pkMesh.Local.SetTranslate(-0.25f,0.0f,0.0f);
+        pkTrnNode.AttachChild(pkMesh);
+        
+        //trans.SetTranslate(0.0f,0.0f,0.25f);
+        TriMesh pkMesh2 = kSM.Cylinder(6,6,0.25f,0.5f, false);
+        pkMesh2.Local.SetTranslate(0.25f,0.0f,0.0f);
+        pkTrnNode.AttachChild(pkMesh2);
+
+        // end arrow node --------
+        m_spkScene.AttachChild(pkTrnNode);
+
+        /*
         Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
         kAttr.SetNChannels(3);
@@ -227,17 +260,19 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
         pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), new Vector3f(
                 -0.707f, 0.707f, 0f), false));
         m_spkScene.AttachChild(pkMesh);
+        */
 
         m_spkEffect = new IridescenceEffect("Leaf", "Gradient");
         m_spkEffect.SetInterpolateFactor(0.5f);
         final int iPassQuantity = m_spkEffect.GetPassQuantity();
         for (int iPass = 0; iPass < iPassQuantity; iPass++) {
             m_spkEffect.LoadPrograms(m_pkRenderer, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
-                    m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
+                                     m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
         }
 
         pkMesh.AttachEffect(m_spkEffect);
-        m_pkRenderer.SetColorMask(m_abColorMask[0], m_abColorMask[1], m_abColorMask[2], m_abColorMask[3]);
+        pkMesh2.AttachEffect(m_spkEffect);
+//         m_pkRenderer.SetColorMask(m_abColorMask[0], m_abColorMask[1], m_abColorMask[2], m_abColorMask[3]);
     }
 
     /**
