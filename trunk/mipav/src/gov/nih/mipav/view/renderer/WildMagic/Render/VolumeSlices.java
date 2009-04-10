@@ -266,6 +266,8 @@ public class VolumeSlices extends VolumeObject
         float fTCX = kCenter.X;
         float fTCY = kCenter.Y;
         float fTCZ = kCenter.Z;
+
+        //System.err.println( fTCX + " " + fTCY + " " + fTCZ );
         
         m_akPlanes[0].VBuffer.SetPosition3( 0, fX, 0, 0 ) ;
         m_akPlanes[0].VBuffer.SetPosition3( 1, fX, 0, m_fZ ) ;

@@ -76,9 +76,11 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
                             pickPoint.Add( kP2 );
 
                             pickPoint.Mult( new Vector3f( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ ));
+                            
                             int[] iExtents = m_kVolumeImageA.GetImage().getExtents();
-                            pickPoint.Mult( new Vector3f( iExtents[0], iExtents[1], iExtents[2] ));
+                            pickPoint.Mult( new Vector3f( iExtents[0]-1, iExtents[1]-1, iExtents[2]-1 ));
 
+                            //System.err.println( "Picked " + pickPoint.ToString() );
                             ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().diplayTract( (int)pickPoint.X, (int)pickPoint.Y, (int)pickPoint.Z);
 
                         }

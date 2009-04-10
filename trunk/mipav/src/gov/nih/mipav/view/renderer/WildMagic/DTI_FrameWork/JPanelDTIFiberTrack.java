@@ -49,8 +49,8 @@ public class JPanelDTIFiberTrack extends JInterfaceBase {
 		String command = event.getActionCommand();
 		if (command.equalsIgnoreCase("ComputerFT")) {
 			AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
-					parentFrame.getDTIimage(), parentFrame.getEVimage(), 
-					parentFrame.getParentDir() + "DTIImage.xml_tract");
+					parentFrame.getDTIimage(), parentFrame.getEVimage(), parentFrame.getEValueimage(), 
+					parentFrame.getParentDir() + "DTIImage.xml_tract", false, false, false);
 			kTractAlgorithm.run();
 			kTractAlgorithm.disposeLocal();
 			kTractAlgorithm = null;

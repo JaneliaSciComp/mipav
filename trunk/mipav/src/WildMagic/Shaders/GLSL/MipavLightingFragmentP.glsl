@@ -560,7 +560,6 @@ void p_MipavLightingFragmentP()
             LocalMaterialDiffuse = gl_Color;
         }
 
-
         // First light is static light:
         vec4 color0 = vec4(0.0,0.0,0.0,0.0);
         vec4 color1 = vec4(0.0,0.0,0.0,0.0);

@@ -10,6 +10,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.WindowLevel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 
 import java.awt.Cursor;
@@ -287,8 +288,6 @@ public class PlaneRender_WM extends GPURenderBase
     private float m_fZoomScale = 1.0f;
     /** Which slice is currently displayed in the XY plane. */
     private int m_iSlice;
-    /** Model coordinates for current cursor position. */
-    private float[] m_afModelPosition = new float[3];
 
     /** Current active image for manipulating the LUT by dragging with the
      * right-mouse down. */
@@ -340,6 +339,7 @@ public class PlaneRender_WM extends GPURenderBase
     private int m_iCurrentVOIPoint = -1;
     private Vector3f m_kPatientPt = new Vector3f();
     private Vector3f m_kVolumeScale = new Vector3f();
+    private Vector3f m_kVolumeScaleInv = new Vector3f();
 
     private LocalVolumeVOI m_kCurrentVOI = null;
     private LocalVolumeVOI m_kCopyVOI = null;
@@ -349,7 +349,8 @@ public class PlaneRender_WM extends GPURenderBase
     private boolean m_bFirstVOI = true;
     
     private int m_iVOICount = 0;
-
+    private Vector3f m_kCenter = new Vector3f();
+    
     /**
      * Default PlaneRender interface.
      */
@@ -529,8 +530,26 @@ public class PlaneRender_WM extends GPURenderBase
                         kSlices.ShowSlice(j, true);
                     }
                 }
-
-                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+                if ( m_kDisplayList.get(i) instanceof VolumeNode )
+                {
+                    VolumeNode kNode = (VolumeNode)m_kDisplayList.get(i);
+                    if ( kNode.GetNode().GetChild(0) instanceof Polyline )
+                    {
+                        Polyline kPoly = (Polyline)kNode.GetNode().GetChild(0);
+                        Vector3f kPos = FileCoordinatesToVOI( kPoly.VBuffer.GetPosition3(0), true );
+                        //System.err.print( m_iPlaneOrientation + "       " + kPos.Z + " " + m_kCenter.Z );
+                        if ( kPos.Z == m_kCenter.Z )
+                        {
+                            kNode.Render( m_pkRenderer, m_kCuller );
+                            //System.err.print("                Draw VOI" );
+                        }
+                        //System.err.println( "" );
+                    }
+                }
+                else
+                {
+                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+                }
 
                 m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(kSave);
                 m_kDisplayList.get(i).SetDisplay(bDisplaySave);
@@ -547,7 +566,7 @@ public class PlaneRender_WM extends GPURenderBase
                 }
             }
             drawAxes();
-            drawVOI();
+            ///drawVOI();
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
@@ -594,7 +613,6 @@ public class PlaneRender_WM extends GPURenderBase
         m_aaiColorSwap = null;
 
         m_kActiveLookupTable = null;
-        m_afModelPosition = null;
 
         m_kActiveImage = null;
         m_kLabelX = null;
@@ -837,7 +855,7 @@ public class PlaneRender_WM extends GPURenderBase
                     for ( int j = 0; j < m_kVOIList[i].size(); j++ )
                     {
                         fillVolume( i, m_kVOIList[i].get(j).getLocal(0), kVolume, bIntersection, iValue );
-                        m_kParent.removeNode( m_kVOIList[i].get(j).Name.get(0) );
+                        m_kDisplayList.remove(m_kParent.removeNode( m_kVOIList[i].get(j).Name.get(0) ));
                     }
                     m_kVOIList[i].clear();
                     m_kVOIList[i] = null;
@@ -889,6 +907,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_pkRenderer.OnFrustumChange();
             m_bModified = true;
             GetCanvas().display();
+            
         }
     }
 
@@ -1072,12 +1091,10 @@ public class PlaneRender_WM extends GPURenderBase
     {
         ModelImage kImage = m_kVolumeImageA.GetImage();
         m_bModified = true;
-        m_afModelPosition[0] = center.X/(kImage.getExtents()[0] -1);
-        m_afModelPosition[1] = center.Y/(kImage.getExtents()[1] -1);
-        m_afModelPosition[2] = center.Z/(kImage.getExtents()[2] -1);
         MipavCoordinateSystems.fileToPatient( center, m_kPatientPt, kImage, m_iPlaneOrientation );
         setSlice( m_kPatientPt.Z );
         GetCanvas().display();
+        m_kCenter.Mult( m_kPatientPt, m_kVolumeScale );
     }
 
     /**
@@ -1420,9 +1437,9 @@ public class PlaneRender_WM extends GPURenderBase
             m_iLabelY_SpacingX = 10;
             m_iLabelY_SpacingY = 55;
         }
-        
 
         ModelImage kImageA = m_kVolumeImageA.GetImage();
+        m_kCenter.Z = (kImageA.getExtents()[2] - 1)/2.0f;
         float fMaxX = (kImageA.getExtents()[0] - 1) * kImageA.getFileInfo(0).getResolutions()[0];
         float fMaxY = (kImageA.getExtents()[1] - 1) * kImageA.getFileInfo(0).getResolutions()[1];
         fMaxZ = (kImageA.getExtents()[2] - 1) * kImageA.getFileInfo(0).getResolutions()[2];
@@ -1440,7 +1457,10 @@ public class PlaneRender_WM extends GPURenderBase
         m_kVolumeScale.Set(m_fX/(kImageA.getExtents()[0] - 1), 
                 m_fY/(kImageA.getExtents()[1] - 1), 
                 m_fZ/(kImageA.getExtents()[2] - 1)  );
-        
+        m_kVolumeScaleInv.Copy( m_kVolumeScale );
+        m_kVolumeScaleInv.Invert();
+
+        m_kCenter.Mult( m_kVolumeScale );
     }
     
     /**
@@ -1493,7 +1513,7 @@ public class PlaneRender_WM extends GPURenderBase
             }
             m_bUpdateVOI = true;
             m_kVOIList[m_iSlice].remove( m_kCurrentVOI );      
-            m_kParent.removeNode( m_kCurrentVOI.Name.get(0) );      
+            m_kDisplayList.remove(m_kParent.removeNode( m_kCurrentVOI.Name.get(0) ));      
 
             Polyline kRectVOI = new Polyline( kVBuffer, true, true );
             kRectVOI.AttachEffect( new VertexColor3Effect() );
@@ -1507,7 +1527,7 @@ public class PlaneRender_WM extends GPURenderBase
             Node kNode = new Node();
             kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
             kNode.SetName(m_kCurrentVOI.Name.get(0));
-            m_kParent.addNode(kNode);
+            m_kDisplayList.add(m_kParent.addNode(kNode));
             m_kParent.translateSurface( m_kCurrentVOI.Name.get(0), m_kTranslate );
             
             m_kCurrentVOI.Update();
@@ -1753,12 +1773,12 @@ public class PlaneRender_WM extends GPURenderBase
                 kRectVOI.AttachEffect( new VertexColor3Effect() );
                 kRectVOI.AttachGlobalState(m_kZState);
 
-                m_kCurrentVOI = new LocalVolumeVOI( kRectVOI, "VOITemp" );
+                m_kCurrentVOI = new LocalVolumeVOI( kRectVOI, "VOITemp" + m_iPlaneOrientation );
 
                  Node kNode = new Node();
                  kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
                  kNode.SetName(m_kCurrentVOI.Name.get(0));
-                 m_kParent.addNode(kNode);
+                 m_kDisplayList.add( m_kParent.addNode(kNode) );
                  m_kParent.translateSurface( m_kCurrentVOI.Name.get(0), m_kTranslate );
             }
             else
@@ -1787,17 +1807,17 @@ public class PlaneRender_WM extends GPURenderBase
 
             if ( m_kCurrentVOI == null )
             {
-                m_kCurrentVOI = new LocalVolumeVOI( kLine, "VOITemp" );
+                m_kCurrentVOI = new LocalVolumeVOI( kLine, "VOITemp"  + m_iPlaneOrientation );
             }
             else
             {
-                m_kCurrentVOI.add( kLine, "VOITemp" + m_iVOICount++ );
+                m_kCurrentVOI.add( kLine, "VOITemp" + m_iPlaneOrientation + "_" + m_iVOICount++ );
             }
 
             Node kNode = new Node();
             kNode.AttachChild(m_kCurrentVOI.Volume.lastElement() );
             kNode.SetName(m_kCurrentVOI.Name.lastElement() );
-            m_kParent.addNode(kNode);
+            m_kDisplayList.add(m_kParent.addNode(kNode));
             m_kParent.translateSurface( m_kCurrentVOI.Name.lastElement(), m_kTranslate );
 
             m_kCurrentVOI.Update();
@@ -1825,7 +1845,7 @@ public class PlaneRender_WM extends GPURenderBase
             {
                 for ( int j = 0; j < m_kVOIList[i].size(); j++ )
                 {
-                    m_kParent.removeNode( m_kVOIList[i].get(j).Name.get(0) );
+                    m_kDisplayList.remove(m_kParent.removeNode( m_kVOIList[i].get(j).Name.get(0)) );
                 }
                 m_kVOIList[i].clear();
             }
@@ -1842,7 +1862,7 @@ public class PlaneRender_WM extends GPURenderBase
             return;
         }
         m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-        m_kParent.removeNode( m_kCurrentVOI.Name.get(0) );
+        m_kDisplayList.remove(m_kParent.removeNode( m_kCurrentVOI.Name.get(0) ));
         m_kVOIList[m_iSlice].remove( m_kCurrentVOI );            
         m_kCurrentVOI = null;
         m_bUpdateVOI = false;
@@ -1927,13 +1947,19 @@ public class PlaneRender_WM extends GPURenderBase
             }
             m_pkRenderer.SetCamera(m_spkVOICamera);  
 
+            Polyline kPoly = null;
             if ( (m_kVOIList != null) && (m_kVOIList[m_iSlice] != null) )
             {
                 for ( int i = 0; i < m_kVOIList[m_iSlice].size(); i++ )
                 {
                     if ( m_kCurrentVOI != m_kVOIList[m_iSlice].get(i))
                     {
-                        m_pkRenderer.Draw(m_kVOIList[m_iSlice].get(i).getLocal(0));
+                        kPoly = m_kVOIList[m_iSlice].get(i).getLocal(0);
+                        //kPoly.Local.SetScale( 1.0f/m_fZoomScale, 1.0f/m_fZoomScale, 1.0f/m_fZoomScale );
+                        kPoly.UpdateGS();
+                        m_pkRenderer.Draw(kPoly);
+                        kPoly.Local.SetScale( 1, 1, 1 );
+                        kPoly.UpdateGS();
                     }
                 }
             }          
@@ -1948,11 +1974,17 @@ public class PlaneRender_WM extends GPURenderBase
                         //System.err.println( m_iSlice + " " + m_kCurrentVOI.VBuffer.GetPosition3(0).Z );
                         if ( m_iSlice == m_kCurrentVOI.slice(i) )
                         {
-                            m_pkRenderer.Draw(m_kCurrentVOI.getLocal(i));  
+                            kPoly = m_kCurrentVOI.getLocal(i);
+                            //kPoly.Local.SetScale( 1.0f/m_fZoomScale, 1.0f/m_fZoomScale, 1.0f/m_fZoomScale );
+                            kPoly.UpdateGS();
+                            m_pkRenderer.Draw(kPoly);
+                            kPoly.Local.SetScale( 1, 1, 1 );
+                            kPoly.UpdateGS();
                             for ( int j = 0; j < iNumPoints; j++ )
                             {
                                 //System.err.println( m_kCurrentVOI.VBuffer.GetPosition3(i).ToString() );
                                 m_kBallPoint.Local.SetTranslate( m_kCurrentVOI.getLocal(i).VBuffer.GetPosition3(j) );
+                                //m_kBallPoint.Local.SetScale( 1.0f/m_fZoomScale, 1.0f/m_fZoomScale, 1.0f/m_fZoomScale );
                                 m_kBallPoint.UpdateGS();
                                 m_pkRenderer.Draw( m_kBallPoint );
                             }
@@ -2018,6 +2050,14 @@ public class PlaneRender_WM extends GPURenderBase
         patientPt.X = localPt.X * (m_aiLocalImageExtents[0] - 1);
         patientPt.Y = localPt.Y * (m_aiLocalImageExtents[1] - 1);
         patientPt.Z = localPt.Z * (m_aiLocalImageExtents[2] - 1);
+    }
+
+    
+    private void PatientToLocal( Vector3f patientPt, Vector3f localPt  )
+    {
+        localPt.X = patientPt.X / (m_aiLocalImageExtents[0] - 1);
+        localPt.Y = patientPt.Y / (m_aiLocalImageExtents[1] - 1);
+        localPt.Z = patientPt.Z / (m_aiLocalImageExtents[2] - 1);
     }
 
     private void moveVOI( int iX, int iY )
@@ -2223,7 +2263,7 @@ public class PlaneRender_WM extends GPURenderBase
                     {
                         kVBuffer.SetPosition3( i, m_kCurrentVOI.getLocal(i).VBuffer.GetPosition3(0) );
                         kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
-                        m_kParent.removeNode( m_kCurrentVOI.Name.get(i) );  
+                        m_kDisplayList.remove(m_kParent.removeNode( m_kCurrentVOI.Name.get(i) ));  
                     }
                     kVBuffer.SetPosition3( iNumLines, m_kCurrentVOI.getLocal(iNumLines-1).VBuffer.GetPosition3(1) );
                     kVBuffer.SetColor3( 0, iNumLines, m_aakColors[m_iPlaneOrientation][2] );
@@ -2232,12 +2272,12 @@ public class PlaneRender_WM extends GPURenderBase
                 }
                 else
                 {
-                    m_kParent.removeNode( kName );  
+                    m_kDisplayList.remove(m_kParent.removeNode( kName ));  
                 }
                 Node kNode = new Node();
                 kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
                 kNode.SetName(kName);
-                m_kParent.addNode(kNode);
+                m_kDisplayList.add(m_kParent.addNode(kNode));
                 m_kParent.translateSurface( kName, m_kTranslate );
                 m_kVOIList[iSlice].add( m_kCurrentVOI );
             }
@@ -2368,6 +2408,24 @@ public class PlaneRender_WM extends GPURenderBase
             //System.err.println( volumePt.ToString() );
        }
         return volumePt; 
+    }
+    
+
+
+    private Vector3f FileCoordinatesToVOI( Vector3f volumePt, boolean bScale )
+    {       
+        Vector3f kVOIPt = new Vector3f();
+        if ( bScale )
+        {
+            kVOIPt.Mult( volumePt, m_kVolumeScaleInv );
+            //System.err.println( volumePt.ToString() );
+        }
+        Vector3f patientPt = new Vector3f();      
+        MipavCoordinateSystems.fileToPatient( kVOIPt, patientPt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+
+        Vector3f localPt = new Vector3f();
+        localPt.Mult( patientPt, m_kVolumeScale );
+        return localPt; 
     }
 
 }

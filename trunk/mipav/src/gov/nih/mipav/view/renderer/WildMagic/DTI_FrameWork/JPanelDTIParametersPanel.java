@@ -10,6 +10,7 @@ import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 
@@ -101,8 +102,12 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     /** Which tensor nodes are already on the fiber bundle tract */
     private boolean[] m_abVisited = null;
 
-    /** Check boxe enable the slice pickable or not */
+    /** Check box enable the slice pickable or not */
     public JCheckBox slicePickableCheckBox;
+
+    private JCheckBox m_kNegX;
+    private JCheckBox m_kNegY;
+    private JCheckBox m_kNegZ;
 
     private JRadioButton radioLines;
     private JRadioButton radioEllipzoids;
@@ -126,6 +131,8 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     private JRadioButton m_kInclude;
     private JRadioButton m_kExclude;
     private JRadioButton m_kIgnore;
+    
+    private boolean m_bDTIImageSet = false;
     
     private class VOIParams {
         String Name;
@@ -406,12 +413,40 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         slicePickableCheckBox.addActionListener(this);
         slicePickableCheckBox.setActionCommand("Pickable");
         slicePickableCheckBox.setEnabled(false);
+        
 
         JPanel slicePanel = new JPanel();
         slicePanel.setLayout(new BorderLayout());
         slicePanel.add(slicePickableCheckBox, BorderLayout.WEST);
         slicePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         slicePanel.setAlignmentY(Component.TOP_ALIGNMENT);
+
+        m_kNegX = new JCheckBox("+/- x");
+        m_kNegX.setSelected(false);
+        m_kNegX.addActionListener(this);
+        m_kNegX.setActionCommand("NegX");
+        m_kNegX.setEnabled(true);
+
+        m_kNegY = new JCheckBox("+/- y");
+        m_kNegY.setSelected(false);
+        m_kNegY.addActionListener(this);
+        m_kNegY.setActionCommand("NegY");
+        m_kNegY.setEnabled(true);
+
+        m_kNegZ = new JCheckBox("+/- z");
+        m_kNegZ.setSelected(false);
+        m_kNegZ.addActionListener(this);
+        m_kNegZ.setActionCommand("NegZ");
+        m_kNegZ.setEnabled(true);
+
+
+        JPanel kVectorPanel = new JPanel();
+        kVectorPanel.setLayout(new BoxLayout(kVectorPanel, BoxLayout.X_AXIS));
+        kVectorPanel.add(m_kNegX);
+        kVectorPanel.add(m_kNegY);
+        kVectorPanel.add(m_kNegZ);
+        kVectorPanel.setBorder(buildTitledBorder("Vector component-wise negation"));
+
        
         // list panel for surface filenames
         m_kVOIList = new JList( new DefaultListModel() );
@@ -467,6 +502,8 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         kTractPanel.add(kParamsPanel, gbc);
         gbc.gridy++;
         kTractPanel.add(slicePanel, gbc);
+        gbc.gridy++;
+        kTractPanel.add(kVectorPanel, gbc);
         
         kTractPanel.setBorder(buildTitledBorder("Inclusion & Exclusion Parameters"));
         return kTractPanel;
@@ -507,8 +544,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                     m_kDTIImage.disposeLocal();
                 }   
             }
-
-            setDTIImage(m_kDTIImage);   
        
             m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
             if (!m_kTractFile.exists() || !m_kTractFile.canRead()) {
@@ -532,9 +567,9 @@ implements ItemListener, ListSelectionListener, ChangeListener {
      * @param kDTIImage
      *            new DTI image.
      */
-    protected void setDTIImage(ModelImage kDTIImage) {
+    protected void setDTIImage(ModelImage kDTIImage, boolean bNegX, boolean bNegY, boolean bNegZ) {
         m_kDTIImage = kDTIImage;
-        m_kVolumeDisplay.setDTIImage(m_kDTIImage);
+        m_kVolumeDisplay.setDTIImage(m_kDTIImage, bNegX, bNegY, bNegZ );
         m_kVolumeDisplay.setEllipseMod(m_kDisplaySlider.getValue());
     }
 
@@ -615,8 +650,9 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             }
 
             int iDimX = 0, iDimY = 0, iDimZ = 0;
+            boolean bNegX = false, bNegY = false, bNegZ = false;
             FileInputStream kFileReader = new FileInputStream(m_kTractFile);
-            int iBufferSize = 3 * 4;
+            int iBufferSize = 3 * 4 + 3;
 
             byte[] racBuffer = new byte[iBufferSize];
             kFileReader.read(racBuffer, 0, iBufferSize);
@@ -627,6 +663,9 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                 iDimX = acDataIn.readInt();
                 iDimY = acDataIn.readInt();
                 iDimZ = acDataIn.readInt();
+                bNegX = acDataIn.readBoolean();
+                bNegY = acDataIn.readBoolean();
+                bNegZ = acDataIn.readBoolean();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -634,6 +673,15 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             acDataIn = null;
             racBuffer = null;
 
+            m_kNegX.setSelected( bNegX );
+            m_kNegY.setSelected( bNegY );
+            m_kNegZ.setSelected( bNegZ );
+            if ( !m_bDTIImageSet )
+            {
+                m_bDTIImageSet = true;
+                setDTIImage(m_kDTIImage, bNegX, bNegY, bNegZ );   
+            }
+            
             int iLength = (int) m_kTractFile.length();
             int iBufferNext = iBufferSize;
             while (iBufferNext < iLength) {
@@ -690,6 +738,11 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         int iXBound = m_kImage.getExtents()[0];
         int iYBound = m_kImage.getExtents()[1];
         int iZBound = m_kImage.getExtents()[2];
+
+        float fXDelta = m_kImage.getFileInfo(0).getResolutions()[0];
+        float fYDelta = m_kImage.getFileInfo(0).getResolutions()[1];
+        float fZDelta = m_kImage.getFileInfo(0).getResolutions()[2];
+        
         float fMaxX = (float) (iXBound - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
         float fMaxY = (float) (iYBound - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
         float fMaxZ = (float) (iZBound - 1) * m_kImage.getFileInfo(0).getResolutions()[2];
@@ -744,12 +797,28 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                     kColor1 = new ColorRGB(fR, fR, fR);
                 }
 
-                float fX = (float)(iX)/(float)(iDimX);
-                float fY = (float)(iY)/(float)(iDimY);
-                float fZ = (float)(iZ)/(float)(iDimZ);
+                
+
+
+                float xBox = (iXBound - 1) * fXDelta;
+                float yBox = (iYBound - 1) * fYDelta;
+                float zBox = (iZBound - 1) * fZDelta;
+                float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+                
+                float fX = ((2.0f * (iX * fXDelta)) - xBox)/(2.0f*maxBox);
+                float fY = ((2.0f * (iY * fYDelta)) - yBox)/(2.0f*maxBox);
+                float fZ = ((2.0f * (iZ * fZDelta)) - zBox)/(2.0f*maxBox);
+                
+                /*
+                float fX = (float)(iX)/(float)(iDimX-1);
+                float fY = (float)(iY)/(float)(iDimY-1);
+                float fZ = (float)(iZ)/(float)(iDimZ-1);
 
                 pkVBuffer.SetPosition3(i,
                         (float)(fX-.5f), (float)(fY-.5f), (float)(fZ-.5f) );
+                        */
+                pkVBuffer.SetPosition3(i,
+                        fX, fY, fZ ); 
                 pkVBuffer.SetColor3(0,i, new ColorRGB(fX, fY, fZ));
                 pkVBuffer.SetColor3(1,i, kColor1 );
                 iTractCount++;
@@ -763,6 +832,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         // addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
         // apply B-spline filter to smooth the track
         if ( iVQuantity >= 7 ) {
+            //addPolyline(new Polyline(pkVBuffer, bClosed, bContiguous ));
             addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity, iDimX, iDimY, iDimZ), bClosed, bContiguous ));
             m_iBundleCount++;
         }
@@ -1242,6 +1312,8 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         try {
             kFileReader.read(racBuffer, 0, iBufferSize);
         } catch (IOException e1) {
+        } catch (OutOfMemoryError e1) {
+            System.err.println( iBufferSize );
         }
         acBufferIn = new ByteArrayInputStream(racBuffer);
         acDataIn = new DataInputStream(acBufferIn);
@@ -1326,15 +1398,19 @@ implements ItemListener, ListSelectionListener, ChangeListener {
      */
     public void diplayTract(int iX, int iY, int iZ)
     {
+        //System.err.println( "Picked " + iX + " " + iY + " " + iZ );
         m_kDTIImage = parentFrame.getDTIimage();
         int iDimX = m_kDTIImage.getExtents()[0];
         int iDimY = m_kDTIImage.getExtents()[1];
         int iDimZ = m_kDTIImage.getExtents()[2];
         int iLen = m_kDTIImage.getExtents()[0] *
         m_kDTIImage.getExtents()[1] * m_kDTIImage.getExtents()[2];
-
         float[] afVectorData = new float[3];
-
+/*
+        iX = iDimX/3;
+        iY = iDimY/3;
+        iZ = iDimZ/3;
+  */      
         m_abVisited  = new boolean[iLen];
         for ( int i = 0; i < iLen; i++ )
         {
@@ -1358,6 +1434,20 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                 bAllZero = false;
             }
         }
+        
+        if ( m_kNegX.isSelected() )
+        {
+            afVectorData[0] *= -1;
+        }
+        if ( m_kNegY.isSelected() )
+        {
+            afVectorData[1] *= -1;
+        }
+        if ( m_kNegZ.isSelected() )
+        {
+            afVectorData[2] *= -1;
+        }
+        
         if ( !bAllZero )
         {        
             kPos.Set( iX, iY, iZ );
@@ -1370,9 +1460,12 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             kV1.Normalize();
             kV2.Normalize();
 
-            traceTract( kTract, kPos, kV1, m_kDTIImage, true );
+            traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV1), parentFrame.getEVimage(), parentFrame.getEValueimage(), true );
+
+            //traceTract( kTract, kPos, kV1, m_kDTIImage, true );
             m_abVisited[i] = true;
-            traceTract( kTract, kPos, kV2, m_kDTIImage, false );
+            //traceTract( kTract, kPos, kV2, m_kDTIImage, false );
+            traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV2), parentFrame.getEVimage(), parentFrame.getEValueimage(), false );
             int iVQuantity = kTract.size();
             addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
         }
@@ -1381,7 +1474,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     /** Traces a single fiber bundle tract starting at the input
      * position and following the input direction.
      * @param kTract fiber bundle tract, new positions are stored in this tract as the fiber is traced.
-     * @param kStart starting positon of the tract.
+     * @param kStart starting position of the tract.
      * @param kDir direction from the position.
      * @param dtiImage Diffusion Tensor image used to calculate next direction of tract.
      * @param bDir boolean when true the positions are added to the
@@ -1408,6 +1501,11 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         int i;
         boolean bAllZero = true;
 
+        Matrix3f kEigenValues = new Matrix3f();
+        Vector3f kV0 = new Vector3f();
+        Vector3f kV1 = new Vector3f();
+        Vector3f kV2 = new Vector3f();
+        
         while ( !bDone )
         {
         	kNext.Add( kStart, kDir );
@@ -1438,9 +1536,205 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                 kMatrix.Set( afTensorData[0], afTensorData[3], afTensorData[4],
                         afTensorData[3], afTensorData[1], afTensorData[5], 
                         afTensorData[4], afTensorData[5], afTensorData[2] );
-
+                
                 kMatrix.Mult(kDir, kOut);
                 kOut.Normalize();
+
+//                 if ( kDir.Angle(kOut) > (3.0f*Math.PI/4.0f) )
+//                 {
+//                 }
+//                 else if ( kDir.Angle(kOut) > (Math.PI/2.0f) )
+//                 {
+//                     kOut.Neg();
+//                 }
+                        
+                        
+                if ( m_abVisited[i] )
+                {
+                    bDone = true;
+                    break;
+                }
+                m_abVisited[i] = true;
+
+                if ( bDir )
+                {
+                    kTract.add( i );
+                }
+                else
+                {
+                    kTract.add( 0, i );
+                }
+                //System.err.println( iX + " " + iY + " " + iZ );
+
+                //kStart = kNext;
+                //kDir = kOut;
+                kStart.Copy(kNext);
+                kDir.Copy(kOut);
+
+                
+                /*
+                if ( Matrix3f.EigenDecomposition( kMatrix, kEigenValues ) )
+                {
+                    float fLambda1 = kEigenValues.M22;
+                    float fLambda2 = kEigenValues.M11;
+                    float fLambda3 = kEigenValues.M00;
+                    kMatrix.GetColumn(2,kV0);
+                    kMatrix.GetColumn(1,kV1);
+                    kMatrix.GetColumn(0,kV2);
+
+                    //kV0.Normalize();
+                    //kV1.Normalize();
+                    //kV2.Normalize();
+
+                    //kMatrix.SetColumn(0,kV1);
+                    //kMatrix.SetColumn(1,kV2);
+                    //kMatrix.SetColumn(2,kV3);
+                    //kMatrix = new Matrix3f(kV1,kV2,kV3,false);
+
+                    if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
+                    {
+                        kStart.Copy(kNext);
+                    }
+                    else if ( (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
+                    {
+                        kMatrix = new Matrix3f(kV0,kV1,kV2,false);
+                        kMatrix.Mult(kDir, kOut);
+                        kOut.Normalize();
+
+                        if ( kDir.Angle(kOut) > (3.0f*Math.PI/4.0f) )
+                        {
+                        }
+                        else if ( kDir.Angle(kOut) > (Math.PI/2.0f) )
+                        {
+                            kOut.Neg();
+                        }
+                        
+                        
+                        if ( m_abVisited[i] )
+                        {
+                            bDone = true;
+                            break;
+                        }
+                        m_abVisited[i] = true;
+
+                        if ( bDir )
+                        {
+                            kTract.add( i );
+                        }
+                        else
+                        {
+                            kTract.add( 0, i );
+                        }
+                        //System.err.println( iX + " " + iY + " " + iZ );
+
+                        //kStart = kNext;
+                        //kDir = kOut;
+                        kStart.Copy(kNext);
+                        kDir.Copy(kOut);
+                    }
+                    else
+                    {
+                        bDone = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    bDone = true;
+                    break;
+                }
+                */
+            }
+            else
+            {
+                bDone = true;
+                break;
+            }
+        }
+        kNext = null;
+    }    
+    
+    
+    private void traceTract2( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
+            ModelImage eigenImage, ModelImage eigenValueImage, boolean bDir )
+    {
+        int iDimX = eigenImage.getExtents()[0];
+        int iDimY = eigenImage.getExtents()[1];
+        int iDimZ = eigenImage.getExtents()[2];
+        int iLen = eigenImage.getExtents()[0] * eigenImage.getExtents()[1] * eigenImage.getExtents()[2];
+
+        float[] afVectorData = new float[6];
+
+        boolean bDone = false;
+        Vector3f kOut = new Vector3f();
+        Vector3f kNext = new Vector3f();
+        int iX, iY, iZ, i;
+        float fLambda1, fLambda2, fLambda3;
+        float fDot, fAngle;
+        boolean bAllZero = true;
+
+        while ( !bDone )
+        {
+            kNext.Add( kStart, kDir );
+            iX = Math.round(kNext.X);
+            iY = Math.round(kNext.Y);
+            iZ = Math.round(kNext.Z);
+            i = iZ * (iDimY*iDimX) + iY * iDimX + iX;
+
+            if ( (iZ < 0) || (iZ >= iDimZ) ||
+                    (iY < 0) || (iY >= iDimY) ||
+                    (iX < 0) || (iX >= iDimX)  )
+            {
+                bDone = true;
+                break;
+            }
+            
+            bAllZero = true;
+            for ( int j = 0; j < 3; j++ )
+            {
+                afVectorData[j] = eigenImage.getFloat(i + j*iLen);
+                if ( afVectorData[j] != 0 )
+                {
+                    bAllZero = false;
+                }
+            }
+            if ( m_kNegX.isSelected() )
+            {
+                afVectorData[0] *= -1;
+            }
+            if ( m_kNegY.isSelected() )
+            {
+                afVectorData[1] *= -1;
+            }
+            if ( m_kNegZ.isSelected() )
+            {
+                afVectorData[2] *= -1;
+            }
+
+            fLambda1 = eigenValueImage.getFloat(i*4+1);
+            fLambda2 = eigenValueImage.getFloat(i*4+2);
+            fLambda3 = eigenValueImage.getFloat(i*4+3);
+            
+
+            if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
+            {
+                bDone = true;
+                break;
+            }
+            else if ( !bAllZero && (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
+            {
+                kOut.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
+                fDot = kDir.Dot( kOut );
+                if ( fDot < 0 )
+                {
+                    kOut.Neg();
+                }
+                fAngle = Vector3f.Angle(kDir,kOut);
+                if ( fAngle > (Math.PI/4.0f) )
+                {
+                    bDone = true;
+                    break;
+                }
 
                 if ( m_abVisited[i] )
                 {
@@ -1457,13 +1751,13 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                 {
                     kTract.add( 0, i );
                 }
-
-                kStart = kNext;
-                kDir = kOut;
+                kStart.Copy(kNext);
+                kDir.Copy(kOut);
             }
             else
             {
                 bDone = true;
+                break;
             }
         }
         kNext = null;
