@@ -39,6 +39,8 @@ implements ChangeListener {
 
     /** Eigenvector image **/
     private ModelImage m_kEigenVectorImage;
+    /** EigenValue image **/
+    private ModelImage m_kEigenValueImage;
     
     /** Anisotropy image **/
     private ModelImage m_kAnisotropyImage;
@@ -99,7 +101,11 @@ implements ChangeListener {
     }
     
     public void setEVimage(ModelImage _m_kEigenVectorImage) {
-    	m_kEigenVectorImage = _m_kEigenVectorImage;
+        m_kEigenVectorImage = _m_kEigenVectorImage;
+    }
+    
+    public void setEValueimage(ModelImage _m_kEigenValueImage) {
+        m_kEigenValueImage = _m_kEigenValueImage;
     }
     
     public void setFAimage(ModelImage _m_kAnisotropyImage) {
@@ -153,6 +159,10 @@ implements ChangeListener {
     
     public ModelImage getEVimage() { 
        return m_kEigenVectorImage;
+    }
+    
+    public ModelImage getEValueimage() { 
+       return m_kEigenValueImage;
     }
     
     public ModelImage getFAimage() { 
@@ -362,6 +372,7 @@ implements ChangeListener {
             buildSurfacePanel();
             buildGeodesic();
             buildSculpt();
+            buildSurfaceTexturePanel();
             buildMultiHistogramPanel();
             
             panelAxial = new JPanel(new BorderLayout());
@@ -378,6 +389,10 @@ implements ChangeListener {
             triImagePanel.add(panelSagittal);
             triImagePanel.add(panelCoronal);
 
+            gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
+            gpuPanel.setVisible(true);
+            raycastRenderWM.setVisible(true);
+            
             int triImagePanelWidth = (int) (screenWidth * 0.51f);
             int triImagePanelHeight = (int) (screenHeight * 0.25f);
 
@@ -406,10 +421,35 @@ implements ChangeListener {
             setSize(getSize().width+1, getSize().height+1);
             resizePanel();
             
+            // After the whole WM rendering framework built, force updating the color LUT table in order to 
+            // update both the volume viewer and tri-planar viewer.  Otherwise, the render volume turns to be black.
+            if ( panelHistoLUT != null ) 
+                panelHistoLUT.updateComponentLUT();
+            
         } finally {
             progressBar.dispose();
         }
 
+        // MUST register frame to image models
+        imageA.addImageDisplayListener(this);
+
+        if (imageB != null) {
+            imageB.addImageDisplayListener(this);
+        }
+
+        if (imageA.isColorImage()) {
+            setRGBTA(RGBTA);
+
+            if ((imageB != null) && imageB.isColorImage()) {
+                setRGBTB(RGBTB);
+            }
+
+            updateImages(true);
+        }
+        else
+        {
+            updateImages(true);
+        }
     }
     
  

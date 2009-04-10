@@ -98,6 +98,7 @@ public class VolumeSurface extends VolumeObject
                         (m_kMesh.VBuffer.GetPosition3fX(i)  - kTranslate.X) * 1.0f/m_fX,
                         (m_kMesh.VBuffer.GetPosition3fY(i)  - kTranslate.Y) * 1.0f/m_fY,
                         (m_kMesh.VBuffer.GetPosition3fZ(i)  - kTranslate.Z) * 1.0f/m_fZ);
+                //System.err.println( "Set TexCoord: " + m_kMesh.VBuffer.GetTCoord3(0, i).ToString() );
             }
             m_akBackupColor[i] = new ColorRGBA();
             m_kMesh.VBuffer.GetColor4( 0, i, m_akBackupColor[i]);

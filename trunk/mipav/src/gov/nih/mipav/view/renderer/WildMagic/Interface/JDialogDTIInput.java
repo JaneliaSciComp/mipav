@@ -75,6 +75,8 @@ public class JDialogDTIInput extends JInterfaceBase
 
     /** Eigenvector image **/
     private ModelImage m_kEigenVectorImage;
+    /** EigenValue image **/
+    private ModelImage m_kEigenValueImage;
 
     /** Anisotropy image **/
     private ModelImage m_kAnisotropyImage;
@@ -809,13 +811,16 @@ public class JDialogDTIInput extends JInterfaceBase
         kAlgorithm.getRAImage().saveImage( m_kParentDir, "RAImage.xml", FileUtility.XML, false );
         kAlgorithm.getVRImage().saveImage( m_kParentDir, "VRImage.xml", FileUtility.XML, false );
         kAlgorithm.getADCImage().saveImage( m_kParentDir, "ADCImage.xml", FileUtility.XML, false );
+        m_kEigenValueImage = kAlgorithm.getEigenValueImage();
+        m_kEigenValueImage.saveImage( m_kParentDir, "EVImage.xml", FileUtility.XML, false );
         kAlgorithm.disposeLocal();
         kAlgorithm = null;
         
         if ( (m_kReconstructTracts != null) && m_kReconstructTracts.isSelected() )
         {
             AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(m_kDTIImage, m_kEigenVectorImage,
-                                                                      m_kParentDir + "DTIImage.xml_tract" );
+                    m_kEigenValueImage,
+                    m_kParentDir + "DTIImage.xml_tract", false, false, false );
             kTractAlgorithm.run();
             kTractAlgorithm.disposeLocal();
             kTractAlgorithm = null;
@@ -1591,7 +1596,7 @@ public class JDialogDTIInput extends JInterfaceBase
         m_kDTIImage = kDTIImage;
         if ( rayBasedRenderWM != null )
         {
-            rayBasedRenderWM.setDTIImage( m_kDTIImage );
+            rayBasedRenderWM.setDTIImage( m_kDTIImage, false, false, false );
             rayBasedRenderWM.setEllipseMod( m_kDisplaySlider.getValue() );
         }
     }

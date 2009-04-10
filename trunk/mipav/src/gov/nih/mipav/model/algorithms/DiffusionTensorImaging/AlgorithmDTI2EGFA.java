@@ -23,6 +23,8 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
     private ModelImage m_kDTIImage = null;
     /** Output EigenVector Image: */
     private ModelImage m_kEigenImage = null;
+    /** Output EigenValue Image: */
+    private ModelImage m_kEigenValueImage = null;
     /** Output Functional Anisotropy Image: */
     private ModelImage m_kFAImage = null;
     /** Output Trace Image (before diagonalization of diffusion tensor): */
@@ -47,11 +49,30 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
     {
         m_kDTIImage = null;
         m_kEigenImage = null;
+        m_kEigenValueImage = null;
         m_kFAImage = null;
-        m_kADCImage = null;
-        m_kTraceImage = null;
-        m_kRAImage = null;
-        m_kVRImage = null;
+
+        if ( m_kADCImage !=  null )
+        {
+            m_kADCImage.disposeLocal();
+            m_kADCImage = null;
+        }
+        if ( m_kTraceImage !=  null )
+        {
+            m_kTraceImage.disposeLocal();
+            m_kTraceImage = null;
+        }
+        if ( m_kRAImage !=  null )
+        {
+            m_kRAImage.disposeLocal();
+            m_kRAImage = null;
+        }
+        if ( m_kVRImage !=  null )
+        {
+            m_kVRImage.disposeLocal();
+            m_kVRImage = null;
+        }
+        System.gc();
     }
 
     /** Run the DTI -> EigenVector Functional Anisotropy algorithm. */
@@ -70,6 +91,15 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
     public ModelImage getEigenImage()
     {
         return m_kEigenImage;
+    }
+
+
+    /** Returns the Eigen Value Image. 
+     * @return the Eigen Value Image. 
+     */
+    public ModelImage getEigenValueImage()
+    {
+        return m_kEigenValueImage;
     }
 
     /** Returns the Functional Anisotropy Image. 
@@ -130,6 +160,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         float[] afADCData = new float[iLen];
         float[] afRAData = new float[iLen];
         float[] afVRData = new float[iLen];
+        float[] afEigenValues = new float[iLen*4];
         float[] afDataCM = new float[iLen*9];
         float[] afTensorData = new float[6];
 
@@ -165,6 +196,10 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 float fLambda1 = kEigenValues.M22;
                 float fLambda2 = kEigenValues.M11;
                 float fLambda3 = kEigenValues.M00;
+                afEigenValues[i*4 + 0] = 0;
+                afEigenValues[i*4 + 1] = fLambda1;
+                afEigenValues[i*4 + 2] = fLambda2;
+                afEigenValues[i*4 + 3] = fLambda3;
                 kMatrix.GetColumn(2,kV1);
                 kMatrix.GetColumn(1,kV2);
                 kMatrix.GetColumn(0,kV3);
@@ -189,6 +224,10 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 afTraceData[i] = 0;
                 afRAData[i] = 0;
                 afVRData[i] = 0;
+                afEigenValues[i*4 + 0] = 0;
+                afEigenValues[i*4 + 1] = 0;
+                afEigenValues[i*4 + 2] = 0;
+                afEigenValues[i*4 + 3] = 0;
             }
 
             afDataCM[i + 0*iLen] = kV1.X;
@@ -280,6 +319,16 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         } catch (IOException e) {
             m_kEigenImage.disposeLocal();
             m_kEigenImage = null;
+        }
+
+        m_kEigenValueImage = new ModelImage( ModelStorageBase.ARGB_FLOAT,
+                extentsA,
+                                        new String( m_kDTIImage.getFileInfo(0).getFileName() + "EV") );
+        try {
+            m_kEigenValueImage.importData(0, afEigenValues, true);
+        } catch (IOException e) {
+            m_kEigenValueImage.disposeLocal();
+            m_kEigenValueImage = null;
         }
 
         extentsEV = null;

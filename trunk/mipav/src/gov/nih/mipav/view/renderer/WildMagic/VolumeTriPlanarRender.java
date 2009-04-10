@@ -175,21 +175,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
-
-    /**
-     * Add a new scene-graph node to the display list.
-     * @param kNode
-     */
-    public VolumeObject addNode(Node kNode)
-    {
-        VolumeNode kVNode = new VolumeNode( m_kVolumeImageA,
-                m_kTranslate,
-                m_fX, m_fY, m_fZ, kNode);
-        m_kDisplayList.add( 1, kVNode );
-        UpdateSceneRotation();
-        return kVNode;
-    }
-
     /** Add a polyline to the display. Used to display fiber tract bundles.
      * @param kLine new polyline to display.
      * @param iGroup the group the polyline belongs to.
@@ -240,7 +225,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kDTIDisplay.setCenterIndex(centerIndex);
         m_kDTIDisplay.addPolyline( kLine, iGroup );
         m_kDTIDisplay.SetDisplay( true );
-       
+        UpdateSceneRotation();
+        /*
+        TriMesh[] akMeshes = new TriMesh[1];
+        akMeshes[0] = m_kDTIDisplay.createTube(kLine);
+        akMeshes[0].SetName( "TUBE" );
+        m_kParent.getSurfacePanel().addSurfaces(akMeshes);
+        */
     }
     
     /**
@@ -1641,14 +1632,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /** Sets the DTI Image for displaying the tensors as ellipsoids.
      * @param kDTIImage.
      */
-    public void setDTIImage( ModelImage kDTIImage )
+    public void setDTIImage( ModelImage kDTIImage, boolean bNegX, boolean bNegY, boolean bNegZ )
     {
         if ( m_kDTIDisplay == null )
         {
             m_kDTIDisplay = new VolumeDTI( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
             m_kDisplayList.add(1, m_kDTIDisplay);
         }
-        m_kDTIDisplay.setDTIImage(kDTIImage);
+        m_kDTIDisplay.setDTIImage(kDTIImage, bNegX, bNegY, bNegZ, m_pkRenderer );
+        m_bSurfaceUpdate = true;
     }
 
 

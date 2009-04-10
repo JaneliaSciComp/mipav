@@ -6,7 +6,9 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
@@ -190,6 +192,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         super.dispose();
     }
 
+
+    /**
+     * Add a new scene-graph node to the display list.
+     * @param kNode
+     */
+    public VolumeObject AddNode(Node kNode)
+    {
+        VolumeNode kVNode = new VolumeNode( m_kVolumeImageA,
+                m_kTranslate,
+                m_fX, m_fY, m_fZ, kNode);
+        m_kDisplayList.add( 1, kVNode );
+        UpdateSceneRotation();
+        return kVNode;
+    }
+
     /**
      * Returns the GLCanvas in the m_pkRenderer object.
      * @return OpenGLRenderer.GLCanvas
@@ -221,12 +238,52 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         return m_akLights;
     }
+
+
+    /**
+     * Sets blending between imageA and imageB.
+     * @param fValue the blend value (0-1)
+     */
+    public VolumeNode GetNode( String kSurfaceName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    VolumeObject kObj = m_kDisplayList.get(i);
+                    if ( kObj instanceof VolumeSurface )
+                    {
+                        return (VolumeNode)kObj;                  
+                    }
+                }
+            }
+        }
+        return null;
+    }
     
     /**
      * @return translation vector center of the volume rendered scene.
      */
     public Vector3f getTranslate() {
     	return m_kTranslate;
+    }
+
+    public VolumeObject RemoveNode( String kNodeName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kNodeName))
+                {
+                    VolumeObject kObj = m_kDisplayList.remove(i);
+                    return kObj;
+                }
+            }
+        }
+        return null;
     }
 
     /**

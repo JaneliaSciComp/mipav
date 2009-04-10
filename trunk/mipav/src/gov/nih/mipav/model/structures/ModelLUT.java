@@ -294,7 +294,8 @@ public class ModelLUT extends ModelStorageBase {
             remappedLUTMin[count++] = (byte) ( (remappedValue & 0x000000ff));
 
             // Alpha
-            remappedLUTMin[count++] = (byte) (255);
+            //remappedLUTMin[count++] = (byte) (255);
+            count++;
         }
         //return remappedLUTMin;
     }
