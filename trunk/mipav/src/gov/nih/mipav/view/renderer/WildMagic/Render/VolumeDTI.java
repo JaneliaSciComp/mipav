@@ -1059,7 +1059,7 @@ public class VolumeDTI extends VolumeObject
 							if (kImage.isColorImage()) {
 								if (!isUsingVolumeColor) {
 
-									if (kKey.intValue() <= cKey.intValue()) {
+									if (kKey.intValue() < cKey.intValue()) {
 										m_kColorEllipse = 
 											new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
 									} else {
@@ -1163,10 +1163,10 @@ public class VolumeDTI extends VolumeObject
                             {
                             	if ( !isUsingVolumeColor ) {
                                     
-            	                    if ( kKey.intValue() <= cKey.intValue() ) {
+            	                    if ( kKey.intValue() < cKey.intValue() ) {
             	                    	m_kColorEllipse = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
             	                    } else {
-            	                        
+            	                       
             	                    	if ( cIterIndex.hasNext() ) {
             	                    		cKey = (Integer)cIterIndex.next();
             	                    		m_kColorEllipse = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
@@ -1176,7 +1176,7 @@ public class VolumeDTI extends VolumeObject
             	                    	}
             	                    } 
                                 } else {
-	                                fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
+                                	fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
 	                                fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
 	                                fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
 	                                m_kColorEllipse = new ColorRGB(fR, fG, fB);
@@ -1296,7 +1296,7 @@ public class VolumeDTI extends VolumeObject
 	            	
                     if ( !isUsingVolumeColor ) {
                     
-	                    if ( iKey.intValue() <= cKey.intValue() ) {
+	                    if ( iKey.intValue() < cKey.intValue() ) {
 	                    	kColor1 = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
 	                    } else {
 	                        
@@ -1312,7 +1312,11 @@ public class VolumeDTI extends VolumeObject
                     	 fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
     	                 fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
     	                 fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-    	                 kColor1 = new ColorRGB(fR, fG, fB);
+    	                 if ( fR == 0 && fG == 0 && fB == 0 ) {
+    	                	 kColor1 = new ColorRGB(0.93f, 0.71f, 0.71f); // rosybrown
+    	                 } else {
+    	                	 kColor1 = new ColorRGB(fR, fG, fB);
+    	                 }
                     }
                     
                 }
