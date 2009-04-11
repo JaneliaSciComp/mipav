@@ -1112,7 +1112,8 @@ public class VolumeDTI extends VolumeObject
 						}
 
 						kCylinder = m_kCylinder;
-						kCylinder.Local.Copy(m_kEigenVectors.get(kKey));
+						// kCylinder.Local.Copy(m_kEigenVectors.get(kKey));
+						kCylinder.Local = m_kEigenVectors.get(kIndex);
 
 						m_kEllipseMaterial.Ambient = m_kColorEllipse;
 						m_kEllipseMaterial.Diffuse = m_kColorEllipse;
