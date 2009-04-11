@@ -696,15 +696,11 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             e.printStackTrace();
         }
     }
-
-    public void addTubesColorGroup() {
-    	m_kVolumeDisplay.addTubesColorGroup(m_iBundleCount);
-    }
     
     /** Updates the tract list user-interface. */
     public void addTract() {
         m_kBundleList.add(new Integer(m_iBundleCount));
-        addTubesColorGroup();
+        m_kVolumeDisplay.addGroupColor();
         DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
         int iSize = kList.getSize();
         kList.add(iSize, new String("FiberBundle" + m_iBundleCount));
@@ -988,7 +984,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                     m_kVolumeDisplay.removePolyline(j);	
                 }
                 m_kBundleList.remove(new Integer(iGroup));
-                m_kVolumeDisplay.removeTubesColorGroup(iGroup);
+                m_kVolumeDisplay.removeGroupColor();
             }
             kList.remove(aiSelected[i]);
         }

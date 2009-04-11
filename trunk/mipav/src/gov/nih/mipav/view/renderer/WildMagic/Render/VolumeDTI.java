@@ -43,6 +43,7 @@ public class VolumeDTI extends VolumeObject
     /** Hashmap for multiple tube type fiber bundles: */
     private HashMap<Integer,Node>  m_kTubes = null;
 
+    /** Hash map for tube color, volume color ( or seeding point color ). */
     private HashMap<Integer,Integer>  m_kTubeColors = null;
     
     private Vector<ColorRGB>  m_kTubeColorsConstant = null;
@@ -128,13 +129,26 @@ public class VolumeDTI extends VolumeObject
     
     /** Color Shader for rendering the tracts. */
     private ShaderEffect m_kVertexColor3Shader;
+    
+    /** Seeding point index */
     private int centerIndex;
     
+    /** Randomly add group color. */
     private Vector<ColorRGB> constantColor;
-    private int constantColorIndex = 0;
+    
+    /** flag to indicate to use volume color or not */
     private boolean isUsingVolumeColor = true;
+    
+    /** Group constant color */
+    private HashMap<Integer,Integer>  groupConstantColor = null;
+    
+    /** current group index */
+    private int currentGroupIndex = 0;
 
+    /** arrow glyphs */
     private TriMesh m_kArrow;
+    
+    /** cone glyphs */
     private TriMesh m_kCone;
 
     /** Creates a new VolumeDTI object.
@@ -197,6 +211,7 @@ public class VolumeDTI extends VolumeObject
         }
         if ( m_kTubes == null ) {
             m_kTubes = new HashMap<Integer,Node>();
+            groupConstantColor = new HashMap<Integer,Integer>();
             m_kTubeColors = new HashMap<Integer, Integer>();
             m_kTubeColorsConstant = new Vector<ColorRGB>();
             m_kTubeColorsConstantIndex = new Vector<Integer>();
@@ -267,12 +282,12 @@ public class VolumeDTI extends VolumeObject
         }
         
         if ( m_kTubes.containsKey( iIGroup ) )
-        {
+        {   
         	kTubeNode = m_kTubes.get(iIGroup);
             kTubeNode.AttachChild(createTube(kLine));
             kTubeNode.UpdateGS();
             kTubeNode.UpdateRS();
-            //m_kTubeColors.put(new Integer(iIGroup), new Integer(centerIndex));
+                       
         }
         
         if ( kTractNode == null )
@@ -302,6 +317,7 @@ public class VolumeDTI extends VolumeObject
              kTubeNode.UpdateGS();
              kTubeNode.UpdateRS();
              m_kTubes.put( new Integer(iIGroup), kTubeNode );
+             groupConstantColor.put(new Integer(iIGroup), new Integer(currentGroupIndex));
              m_kTubeColors.put(new Integer(iIGroup), new Integer(centerIndex));
         }
     }
@@ -597,6 +613,8 @@ public class VolumeDTI extends VolumeObject
             return;
         }
         Node kTubeNode = m_kTubes.remove(kGroup);
+        groupConstantColor.remove(kGroup);
+        
         m_kTubeColors.remove(kGroup);
         if ( kTubeNode == null )
         {
@@ -620,6 +638,7 @@ public class VolumeDTI extends VolumeObject
         if ( m_kTubes.size() == 0 )
         {
             m_kTubes = null;
+            groupConstantColor = null;
             m_kTubeColors = null;
         }
         
@@ -1047,32 +1066,22 @@ public class VolumeDTI extends VolumeObject
         Node kScaleNode = new Node();
         //kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
         Integer kKey;
+        Integer cKey;
+        
         Vector<int[]> kCylinderVector;
         int[] aiCylinders;
         int iIndex;
         ColorRGB kColor;
         float fR,fG,fB;
         TriMesh kCylinder;        
+        
         Iterator kIterator = m_kCylinders.keySet().iterator();
-        
-        Integer cKey = null;
-        Iterator cIter = m_kTubeColorsConstant.iterator();
-        Iterator cIterIndex = m_kTubeColorsConstantIndex.iterator();
-        
-        cIter = m_kTubeColorsConstant.iterator();
-        cIterIndex = m_kTubeColorsConstantIndex.iterator();
-        
-        if ( !isUsingVolumeColor ) {
-        	if ( cIterIndex.hasNext() ) {
-        		cKey = (Integer)cIterIndex.next();
-        	} else {
-        		return;
-        	}
-        }
-        
+        Iterator cIterator = groupConstantColor.keySet().iterator();
+      
         while ( kIterator.hasNext() )
         {
             kKey = (Integer)kIterator.next();
+            cKey = (Integer)cIterator.next();
             kCylinderVector = m_kCylinders.get(kKey);
             for ( int i = 0; i < kCylinderVector.size(); i++ )
             {
@@ -1089,21 +1098,7 @@ public class VolumeDTI extends VolumeObject
 						} else {
 							if (kImage.isColorImage()) {
 								if (!isUsingVolumeColor) {
-
-									if (kKey.intValue() < cKey.intValue()) {
-										m_kColorEllipse = 
-											new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
-									} else {
-
-										if (cIterIndex.hasNext()) {
-											cKey = (Integer) cIterIndex.next();
-											m_kColorEllipse = 
-												new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
-
-										} else {
-											return;
-										}
-									}
+									m_kColorEllipse = constantColor.get(groupConstantColor.get(cKey).intValue());
 								} else {
 									fR = kImage.getFloat(iIndex * 4 + 1) / 255.0f;
 									fG = kImage.getFloat(iIndex * 4 + 2) / 255.0f;
@@ -1145,6 +1140,7 @@ public class VolumeDTI extends VolumeObject
         Node kScaleNode = new Node();
         //kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
         Integer kKey;
+        Integer cKey;
         Vector<int[]> kEllipseVector;
         int[] aiEllipsoids;
         int iIndex;
@@ -1152,26 +1148,12 @@ public class VolumeDTI extends VolumeObject
         float fR,fG,fB;
         TriMesh kEllipse;        
         Iterator kIterator = m_kEllipsoids.keySet().iterator();
-   
-        Integer cKey = null;
-        Iterator cIter = m_kTubeColorsConstant.iterator();
-        Iterator cIterIndex = m_kTubeColorsConstantIndex.iterator();
-        
-        cIter = m_kTubeColorsConstant.iterator();
-        cIterIndex = m_kTubeColorsConstantIndex.iterator();
-        
-        if ( !isUsingVolumeColor ) {
-            if ( cIterIndex.hasNext() ) {
-                cKey = (Integer)cIterIndex.next();
-            } else {
-                return;
-            }
-        }
-        
-        
+        Iterator cIterator = groupConstantColor.keySet().iterator();
+
         while ( kIterator.hasNext() )
         {
             kKey = (Integer)kIterator.next();
+            cKey = (Integer)cIterator.next();
             kEllipseVector = m_kEllipsoids.get(kKey);
             for ( int i = 0; i < kEllipseVector.size(); i++ )
             {
@@ -1193,19 +1175,7 @@ public class VolumeDTI extends VolumeObject
                             if ( kImage.isColorImage() )
                             {
                                 if ( !isUsingVolumeColor ) {
-                                    
-            	                    if ( kKey.intValue() < cKey.intValue() ) {
-            	                    	m_kColorEllipse = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
-            	                    } else {
-            	                       
-            	                    	if ( cIterIndex.hasNext() ) {
-            	                    		cKey = (Integer)cIterIndex.next();
-            	                    		m_kColorEllipse = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
-            	    	                    
-            	                    	} else {
-            	                    		return;
-            	                    	}
-            	                    } 
+                                	m_kColorEllipse = constantColor.get(groupConstantColor.get(cKey).intValue());
                                 } else {
                                 	fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
 	                                fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
@@ -1254,32 +1224,21 @@ public class VolumeDTI extends VolumeObject
         Node kScaleNode = new Node();
         //kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
         Integer kKey;
+        Integer cKey;
         Vector<int[]> kEllipseVector;
         int[] aiEllipsoids;
         int iIndex;
         ColorRGB kColor;
         float fR,fG,fB; 
         Iterator kIterator = m_kEllipsoids.keySet().iterator();
+        Iterator cIterator = groupConstantColor.keySet().iterator();
    
-        Integer cKey = null;
-        Iterator cIter = m_kTubeColorsConstant.iterator();
-        Iterator cIterIndex = m_kTubeColorsConstantIndex.iterator();
-        
-        cIter = m_kTubeColorsConstant.iterator();
-        cIterIndex = m_kTubeColorsConstantIndex.iterator();
-        
-        if ( !isUsingVolumeColor ) {
-            if ( cIterIndex.hasNext() ) {
-                cKey = (Integer)cIterIndex.next();
-            } else {
-                return;
-            }
-        }
         TriMesh kCone;
         Node kArrow;
         while ( kIterator.hasNext() )
         {
             kKey = (Integer)kIterator.next();
+            cKey = (Integer)cIterator.next();
             kEllipseVector = m_kEllipsoids.get(kKey);
             for ( int i = 0; i < kEllipseVector.size(); i++ )
             {
@@ -1301,19 +1260,7 @@ public class VolumeDTI extends VolumeObject
                             if ( kImage.isColorImage() )
                             {
                                 if ( !isUsingVolumeColor ) {
-                                    
-                                    if ( kKey.intValue() <= cKey.intValue() ) {
-                                        m_kColorEllipse = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
-                                    } else {
-                                        
-                                        if ( cIterIndex.hasNext() ) {
-                                            cKey = (Integer)cIterIndex.next();
-                                            m_kColorEllipse = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
-                                            
-                                        } else {
-                                            return;
-                                        }
-                                    } 
+                                	m_kColorEllipse = constantColor.get(groupConstantColor.get(cKey).intValue());
                                 } else {
                                     fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
                                     fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
@@ -1403,24 +1350,12 @@ public class VolumeDTI extends VolumeObject
         Node kTubeNode;
         //kScaleNode.Local.SetScale( m_fX, m_fY, m_fZ );
         Integer iKey;
+        Integer cKey;
         int iIndex;
         float fR,fG,fB;
-        ColorRGB groupColor;
-        Iterator iIterator = m_kTubes.keySet().iterator();
-        Integer cKey = null;
-        Iterator cIter = m_kTubeColorsConstant.iterator();
-        Iterator cIterIndex = m_kTubeColorsConstantIndex.iterator();
-       
-        cIter = m_kTubeColorsConstant.iterator();
-        cIterIndex = m_kTubeColorsConstantIndex.iterator();
         
-        if ( !isUsingVolumeColor ) {
-        	if ( cIterIndex.hasNext() ) {
-        		cKey = (Integer)cIterIndex.next();
-        	} else {
-        		return;
-        	}
-        }
+        Iterator iIterator = m_kTubes.keySet().iterator();
+        Iterator cIterator = groupConstantColor.keySet().iterator();
         
         m_kTubes.keySet();
         
@@ -1429,6 +1364,7 @@ public class VolumeDTI extends VolumeObject
          while ( iIterator.hasNext() )
         {
             iKey = (Integer)iIterator.next();
+            cKey = (Integer)cIterator.next();
             
             kTubeNode = m_kTubes.get(iKey);
             
@@ -1443,19 +1379,7 @@ public class VolumeDTI extends VolumeObject
                 {
 	            	
                     if ( !isUsingVolumeColor ) {
-                    
-	                    if ( iKey.intValue() < cKey.intValue() ) {
-	                    	kColor1 = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
-	                    } else {
-	                        
-	                    	if ( cIterIndex.hasNext() ) {
-	                    		cKey = (Integer)cIterIndex.next();
-	                    		kColor1 = new ColorRGB(m_kTubeColorsConstant.get(m_kTubeColorsConstantIndex.indexOf(cKey)));
-	    	                    
-	                    	} else {
-	                    		return;
-	                    	}
-	                    } 
+                    	kColor1 = constantColor.get(groupConstantColor.get(cKey).intValue());
                     } else {
                     	 fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
     	                 fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
@@ -1478,22 +1402,15 @@ public class VolumeDTI extends VolumeObject
                 
                 kTube.AttachGlobalState(m_kTubesMaterial);
                 
-                //kTube.AttachEffect(textureEffect);
                 kTube.DetachAllEffects();
                 kTube.AttachEffect(m_kLightShader);
                 
                 kTube.UpdateRS();
-                
-                //kTube.UpdateSurface();
-                //kTube.VBuffer.Release();
-
+               
                 m_kTubesMaterial.Ambient = kColor1;
-                //m_kTubesMaterial.Ambient = new ColorRGB(ColorRGB.BLACK);
                 m_kTubesMaterial.Diffuse = kColor1;
-                //m_kTubesMaterial.Diffuse = new ColorRGB(ColorRGB.WHITE); 
                 m_kTubesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
                 m_kTubesMaterial.Specular = new ColorRGB(ColorRGB.WHITE); 
-                //m_kTubesMaterial.Specular = new ColorRGB(ColorRGB.BLACK);
                 m_kTubesMaterial.Alpha = 1.0f;
                 m_kTubesMaterial.Shininess = 100f;
                
@@ -1510,30 +1427,17 @@ public class VolumeDTI extends VolumeObject
     }
     
     /**
-     * Add the group color with given group ID
-     * @param groupID group ID
+     * advance the group color index.
      */
-    public void addTubesColorGroup(int groupID) {
-        if ( m_kTubeColorsConstant == null || constantColor == null || m_kTubeColorsConstantIndex == null)
-        {
-            return;
-        }
-    	m_kTubeColorsConstant.add(constantColor.get(constantColorIndex));
-    	m_kTubeColorsConstantIndex.add(new Integer(groupID));
-    	constantColorIndex++;
+    public void addGroupColor() {
+    	currentGroupIndex++;
     }
     
     /**
-     * Remove the group color with given group ID
-     * @param groupID group ID
+     * reduce the group color index.
      */
-    public void removeTubesColorGroup(int groupID) {
-    	// m_kTubeColorsConstant.put(new Integer(groupID), constantColor.get(constantColorIndex));
-    	
-    	m_kTubeColorsConstant.remove(m_kTubeColorsConstantIndex.indexOf(groupID));
-    	m_kTubeColorsConstantIndex.remove(m_kTubeColorsConstantIndex.indexOf(groupID));
-    	constantColorIndex--;
-    	if ( constantColorIndex == -1 ) constantColorIndex = 0;
+    public void removeGroupColor() {
+    	currentGroupIndex--;
     }
     
     /** Sets the polyline color for the specified fiber bundle tract group. 
@@ -1541,11 +1445,7 @@ public class VolumeDTI extends VolumeObject
      * @param kColor the new polyline color for the specified fiber bundle tract group. 
      */
     public void setTubesGroupColor( int iGroup, ColorRGB kColor ) {
-    	// m_kTubeColorsConstant.put(iGroup, kColor);
-    	int index = m_kTubeColorsConstantIndex.indexOf(iGroup);
-    	m_kTubeColorsConstant.set(index, kColor);
-    	
-    	
+    	constantColor.set(groupConstantColor.get(iGroup-1).intValue(), kColor);
     }
     
     /**

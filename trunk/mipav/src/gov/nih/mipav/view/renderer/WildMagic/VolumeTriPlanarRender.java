@@ -2501,16 +2501,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Add tubes group color. 
      * @param groupID   group ID
      */
-    public void addTubesColorGroup(int groupID) {
-    	m_kDTIDisplay.addTubesColorGroup(groupID);
+    public void addGroupColor() {
+    	m_kDTIDisplay.addGroupColor();
     }
     
     /**
-     * Remomve tubes group color. 
-     * @param groupID   group ID
+     * reduce the group color index
      */
-    public void removeTubesColorGroup(int groupID) {
-    	m_kDTIDisplay.removeTubesColorGroup(groupID);
+    public void removeGroupColor() {
+    	m_kDTIDisplay.removeGroupColor();
     }
     
     /** Sets the polyline color for the specified fiber bundle tract group. 
