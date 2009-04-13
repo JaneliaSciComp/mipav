@@ -23,10 +23,8 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
-
-
-
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );               
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );  
     }
 
     public void loadImage( VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 

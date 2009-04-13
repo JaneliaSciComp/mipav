@@ -22,7 +22,8 @@ public class PlaneRenderDTI extends PlaneRender_WM
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );     
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );          
     }
 
     

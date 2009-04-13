@@ -122,6 +122,11 @@ implements ChangeListener {
     	m_kDTIColorImage = _m_kDTIColorImage;
     	m_kDTIColorImage.setExtents(_m_kDTIColorImage.getExtents());
     	m_kDTIColorImage.calcMinMax();
+    	if ( imageA != null )
+    	{
+    	    imageA.disposeLocal();
+    	    imageA = null;
+    	}
     	imageA = _m_kDTIColorImage;
     	
     	  if (imageA.isColorImage()) {
@@ -461,17 +466,31 @@ implements ChangeListener {
      */
     public void disposeLocal(boolean flag) {
         super.disposeLocal(flag);
-        
-        if (imageA != null) {
-            imageA.removeImageDisplayListener(this);
-            imageA.disposeLocal();
-            imageA = null;
-        }
 
-        if (imageB != null) {
-            imageB.removeImageDisplayListener(this);
-            imageB.disposeLocal();
-            imageB = null;
+        if ( m_kEigenVectorImage != null )
+        {
+            m_kEigenVectorImage.disposeLocal();
+            m_kEigenVectorImage = null;
+        }
+        if ( m_kEigenValueImage != null )
+        {
+            m_kEigenValueImage.disposeLocal();
+            m_kEigenValueImage = null;
+        }
+        if ( m_kAnisotropyImage != null )
+        {
+            m_kAnisotropyImage.disposeLocal();
+            m_kAnisotropyImage = null;
+        }
+        if ( m_kDTIImage != null )
+        {
+            m_kDTIImage.disposeLocal();
+            m_kDTIImage = null;
+        }
+        if ( m_kDTIColorImage != null )
+        {
+            m_kDTIColorImage.disposeLocal();
+            m_kDTIColorImage = null;
         }
     }
 

@@ -263,7 +263,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
 
         m_kFAImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
-                                     new String( m_kDTIImage.getFileInfo(0).getFileName() + "FA") );
+                                     ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "FA") );
         try {
             m_kFAImage.importData(0, afData, true);
         } catch (IOException e) {
@@ -273,7 +273,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
 
         m_kTraceImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
-                                     new String( m_kDTIImage.getFileInfo(0).getFileName() + "Trace") );
+                                     ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "Trace") );
         try {
             m_kTraceImage.importData(0, afTraceData, true);
         } catch (IOException e) {
@@ -283,7 +283,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
 
         m_kRAImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
-                                     new String( m_kDTIImage.getFileInfo(0).getFileName() + "RA") );
+                                     ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "RA") );
         try {
             m_kRAImage.importData(0, afRAData, true);
         } catch (IOException e) {
@@ -293,7 +293,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
 
         m_kVRImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
-                                     new String( m_kDTIImage.getFileInfo(0).getFileName() + "VR") );
+                                     ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "VR") );
         try {
             m_kVRImage.importData(0, afVRData, true);
         } catch (IOException e) {
@@ -303,7 +303,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
 
         m_kADCImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
-                                     new String( m_kDTIImage.getFileInfo(0).getFileName() + "ADC") );
+                                     ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "ADC") );
         try {
             m_kADCImage.importData(0, afADCData, true);
         } catch (IOException e) {
@@ -313,7 +313,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
 
         m_kEigenImage = new ModelImage( ModelStorageBase.FLOAT,
                                         extentsEV,
-                                        new String( m_kDTIImage.getFileInfo(0).getFileName() + "EG") );
+                                        ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "EG") );
         try {
             m_kEigenImage.importData(0, afDataCM, true);
         } catch (IOException e) {
@@ -323,7 +323,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
 
         m_kEigenValueImage = new ModelImage( ModelStorageBase.ARGB_FLOAT,
                 extentsA,
-                                        new String( m_kDTIImage.getFileInfo(0).getFileName() + "EV") );
+                                        ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "EV") );
         try {
             m_kEigenValueImage.importData(0, afEigenValues, true);
         } catch (IOException e) {

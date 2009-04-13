@@ -695,7 +695,7 @@ public class VolumeDTI extends VolumeObject
             DisplayTubes(m_kVolumeImageA.GetImage(), kRenderer);
         }
         else if ( m_bDisplayArrows ) {
-            //DisplayArrows(m_kVolumeImageA.GetImage(), kRenderer);
+            DisplayArrows(m_kVolumeImageA.GetImage(), kRenderer);
         }
         else 
         {
@@ -923,12 +923,12 @@ public class VolumeDTI extends VolumeObject
                 					   (float)-Math.sin(rotationRedian),0.0f,(float)Math.cos(rotationRedian));
 
         trans.SetRotate(matrix);
-  
+
+        kSM.SetInside(false);
         StandardMesh cylinder = new StandardMesh(kAttr);
         kSM.SetInside(true);
-        cylinder.SetTransformation(trans);
+        //cylinder.SetTransformation(trans);
         m_kCylinder = cylinder.Cylinder(64,64,1.0f,2f,false);
-        
 
         m_kAllEllipsoidsShader = new MipavLightingEffect( );
         
@@ -979,6 +979,7 @@ public class VolumeDTI extends VolumeObject
         m_kCone.Local.SetTranslate(-0.5f,0.0f,0.0f);
         m_kCone.AttachGlobalState(m_kEllipseMaterial);
         m_kCone.AttachEffect(m_kLightShader);
+        m_kCone.UpdateGS();
         m_kCone.UpdateRS();
         
 
@@ -986,6 +987,7 @@ public class VolumeDTI extends VolumeObject
         m_kArrow.Local.SetTranslate(0.5f,0.0f,0.0f);
         m_kArrow.AttachGlobalState(m_kEllipseMaterial);
         m_kArrow.AttachEffect(m_kLightShader);
+        m_kArrow.UpdateGS();
         m_kArrow.UpdateRS();
     }
     /** Set the m_iEllipsoidMod value. 
@@ -1112,16 +1114,14 @@ public class VolumeDTI extends VolumeObject
 						}
 
 						kCylinder = m_kCylinder;
-						// kCylinder.Local.Copy(m_kEigenVectors.get(kKey));
-						kCylinder.Local = m_kEigenVectors.get(kIndex);
+                        //kCylinder.Local.Copy(m_kEigenVectors.get(kIndex));
+                        kCylinder.Local = m_kEigenVectors.get(kIndex);
 
 						m_kEllipseMaterial.Ambient = m_kColorEllipse;
 						m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-						kScaleNode.SetChild(0, kCylinder);
-						m_kScene.SetChild(0, kScaleNode);
+						m_kScene.SetChild(0, kCylinder);
 						m_kScene.UpdateGS();
-						m_kScene.DetachChild(kScaleNode);
-						kScaleNode.DetachChild(kCylinder);
+						m_kScene.DetachChild(kCylinder);
 						kRenderer.Draw(kCylinder);
 					}
 				}
@@ -1196,15 +1196,13 @@ public class VolumeDTI extends VolumeObject
                         //        m_kEigenVectors.get(kIndex).GetScale().Z );
                         
                         kEllipse = m_kSphere;
-                        kEllipse.Local = m_kEigenVectors.get(kIndex);
+                        kEllipse.Local.Copy(m_kEigenVectors.get(kIndex));
                 
                         m_kEllipseMaterial.Ambient = m_kColorEllipse;
                         m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-                        kScaleNode.SetChild(0, kEllipse);
-                        m_kScene.SetChild(0,kScaleNode);
+                        m_kScene.SetChild(0,kEllipse);
                         m_kScene.UpdateGS();
-                        m_kScene.DetachChild(kScaleNode);
-                        kScaleNode.DetachChild(kEllipse);
+                        m_kScene.DetachChild(kEllipse);
                         kRenderer.Draw(kEllipse);
                     }
                 }
@@ -1235,7 +1233,7 @@ public class VolumeDTI extends VolumeObject
         Iterator cIterator = groupConstantColor.keySet().iterator();
    
         TriMesh kCone;
-        Node kArrow;
+        Node kArrow = new Node();
         while ( kIterator.hasNext() )
         {
             kKey = (Integer)kIterator.next();
@@ -1276,30 +1274,19 @@ public class VolumeDTI extends VolumeObject
                             }
                         }
 
-                        kCone = m_kCone;
-                        kCone.Local.Copy(m_kEigenVectors.get(kIndex));
-                        kCone.Local.SetTranslate(0.5f,0.0f,0.0f);
+                        kArrow.Local.Copy(m_kEigenVectors.get(kIndex));
+                        kArrow.AttachChild( m_kCone );
+                        kArrow.AttachChild( m_kArrow );
+                        
                         m_kEllipseMaterial.Ambient = m_kColorEllipse;
                         m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-                        kScaleNode.SetChild(0, kCone);
-                        m_kScene.SetChild(0,kScaleNode);
+                        m_kScene.SetChild(0,kArrow);
                         m_kScene.UpdateGS();
-                        m_kScene.DetachChild(kScaleNode);
-                        kScaleNode.DetachChild(kCone);
-                        kRenderer.Draw(kCone);
-                        
-                        kCone = m_kArrow;
-                        kCone.Local.Copy(m_kEigenVectors.get(kIndex));
-                        kCone.Local.SetTranslate(-0.5f,0.0f,0.0f);
-                        m_kEllipseMaterial.Ambient = m_kColorEllipse;
-                        m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-                        kScaleNode.SetChild(0, kCone);
-                        m_kScene.SetChild(0,kScaleNode);
-                        m_kScene.UpdateGS();
-                        m_kScene.DetachChild(kScaleNode);
-                        kScaleNode.DetachChild(kCone);
-                        kRenderer.Draw(kCone);
-                        
+                        m_kScene.DetachChild(kArrow);
+                        kArrow.DetachChild(m_kCone);
+                        kRenderer.Draw(m_kCone);
+                        kArrow.DetachChild(m_kArrow);
+                        kRenderer.Draw(m_kArrow);
                     }
                 }
             }

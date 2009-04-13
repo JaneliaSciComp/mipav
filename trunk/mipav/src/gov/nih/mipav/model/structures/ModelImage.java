@@ -3948,7 +3948,7 @@ public class ModelImage extends ModelStorageBase {
      *
      * @return  The new image name.
      */
-    private static String makeImageName(String imageName, String ext) {
+    public static String makeImageName(String imageName, String ext) {
         String name;
         int index;
 
