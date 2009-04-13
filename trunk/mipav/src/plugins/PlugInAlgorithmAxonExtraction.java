@@ -14,7 +14,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  *
- * @version  March 26, 2009
+ * @version  April 14, 2009
  * @author   William Gandler
  * @see      AlgorithmBase
  *
@@ -106,6 +106,24 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         Vector3f[] pt = null;
         Vector3f[] tmpPt = null;
         int ptNum = 0;
+        int pos;
+        int redPts = 0;
+        int greenPts = 0;
+        int bluePts = 0;
+        int indeterminateColorPts = 0;
+        int redNum = 0;
+        int greenNum = 0;
+        int redX[] = null;
+        int redY[] = null;
+        int redZ[] = null;
+        int greenX[] = null;
+        int greenY[] = null;
+        int greenZ[] = null;
+        int c;
+        int cPts;
+        int cX[];
+        int cY[];
+        int cZ[];
 
         time = System.currentTimeMillis();
 
@@ -262,6 +280,9 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
             }
         } // while (!pointsEntered)
         
+        time = System.currentTimeMillis();
+        fireProgressStateChanged(0);
+        
         curves = srcImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
 
         nPts = 0;
@@ -313,8 +334,106 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
             return;
         }
         
-        time = System.currentTimeMillis();
-        fireProgressStateChanged(0);
+        for (i = 0; i < nPts; i++) {
+            pos = Math.round(pt[i].X) + xDim * Math.round(pt[i].Y) + xySlice * Math.round(pt[i].Z);
+            if ((redBuffer[pos] > greenBuffer[pos]) && (redBuffer[pos] > blueBuffer[pos])) {
+                redPts++;
+            }
+            else if ((greenBuffer[pos] > redBuffer[pos]) && (greenBuffer[pos] > blueBuffer[pos])) {
+                greenPts++;
+            }
+            else if ((blueBuffer[pos] > redBuffer[pos]) && (blueBuffer[pos] > greenBuffer[pos])) {
+                bluePts++;
+            }
+            else {
+                indeterminateColorPts++;
+            }
+        }
+        
+        if (redPts == 0) {
+            Preferences.debug("No red presynaptic points were selected for extraction\n");
+        }
+        else if (redPts == 1) {
+            Preferences.debug("1 red presynaptic point was selected for extraction\n");
+        }
+        else {
+            Preferences.debug(redPts + " presynaptic points were selected for extraction\n");
+        }
+        
+        if (greenPts == 0) {
+            Preferences.debug("No green postsynaptic points were selected for extraction\n");
+        }
+        else if (greenPts == 1) {
+            Preferences.debug("1 green postsynaptic point was selected for extraction \n");
+        }
+        else {
+            Preferences.debug(greenPts + " postsynaptic points were selected for extraction\n");
+        }
+        
+        if (bluePts == 0) {
+            Preferences.debug("No blue presynaptic swelling points were selected\n");
+        }
+        else if (bluePts == 1) {
+            Preferences.debug("1 blue presynaptic swelling point will not be extracted\n");
+        }
+        else {
+            Preferences.debug(bluePts + " blue synaptic swelling points will not be extracted\n");
+        }
+        
+        if (indeterminateColorPts == 0) {
+            Preferences.debug("No points of indeterminate color were selected\n");
+        }
+        else if (indeterminateColorPts == 1) {
+            Preferences.debug("1 point of indeterminate color will not be extracted\n");
+        }
+        else {
+            Preferences.debug(indeterminateColorPts + " points of indeterminate color will not be extracted\n");
+        }
+        
+        if (redPts > 0) {
+            redX = new int[redPts];
+            redY = new int[redPts];
+            redZ = new int[redPts];
+        }
+        if (greenPts > 0) {
+            greenX = new int[greenPts];
+            greenY = new int[greenPts];
+            greenZ = new int[greenPts];
+        }
+        
+        for (i = 0; i < nPts; i++) {
+            pos = Math.round(pt[i].X) + xDim * Math.round(pt[i].Y) + xySlice * Math.round(pt[i].Z);
+            if ((redBuffer[pos] > greenBuffer[pos]) && (redBuffer[pos] > blueBuffer[pos])) {
+                redX[redNum] = Math.round(pt[i].X);
+                redY[redNum] = Math.round(pt[i].Y);
+                redZ[redNum++] = Math.round(pt[i].Z);
+            }
+            else if ((greenBuffer[pos] > redBuffer[pos]) && (greenBuffer[pos] > blueBuffer[pos])) {
+                greenX[greenNum] = Math.round(pt[i].X);
+                greenY[greenNum] = Math.round(pt[i].Y);
+                greenZ[greenNum++] = Math.round(pt[i].Z);    
+            }
+        } // for (i = 0; i < nPts; i++)
+        
+        for (c = 1; c <= 2; c++) {
+            if (((c == 1) && (redPts >= 1)) || ((c == 2) && (greenPts >= 1))) {
+                if (c == 1) {
+                    cPts = redPts;
+                    cX = redX;
+                    cY = redY;
+                    cZ = redZ;
+                }
+                else {
+                    cPts = greenPts;
+                    cX = greenX;
+                    cY = greenY;
+                    cZ = greenZ;
+                }
+                for (i = 0; i < cPts; i++) {
+                    
+                } // for (i = 0; i < cPts; i++)
+            } // if (((c == 1) && (redPts >= 1)) || ((c == 2) && (greenPts >= 1))) {
+        } // for (c = 1; c <= 2; c++)
         
         fireProgressStateChanged(100);
         time = System.currentTimeMillis() - time;
