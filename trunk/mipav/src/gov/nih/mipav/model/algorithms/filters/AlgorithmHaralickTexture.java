@@ -12,9 +12,9 @@ import java.io.*;
 /**
  * DOCUMENT ME!
  *
- * @version  0.3 November 24, 2008
+ * @version  0.4 April 14, 2009
  * @author   William Gandler This code is based on the material in the GLCM Texture Tutorial by Myrka Hall-Beyer at
- *           http://www.fp.ucalgary.ca/mhallbey/tutorial.html.
+ *           http://www.fp.ucalgary.ca/mhallbey/tutorial.htm.
  *
  *           <p>The Haralick features are based on the frequency of occurrence of the pixel intensity values of 2 pixels
  *           an offset distance apart. The offset distance will almost always be 1. The frequency of occurrence is
@@ -22,7 +22,7 @@ import java.io.*;
  *           1)/2 at the edge of the image, since results are only calculated for pixels over which the entire square
  *           window can be placed. The values in this outer band have been left at zero.</p>
  *
- *           <p>The user selects 1 or more of the 5 direction possibilities and 1 or more of the 12 operator
+ *           <p>The user selects 1 or more of the 5 direction possibilities and 1 or more of the 14 operator
  *           possibilities. The number of floating point Haralick texture images created equals the number of directions
  *           selected times the number of operators selected. The result image dimensions are the same as the source
  *           window dimensions.</p>
@@ -49,6 +49,11 @@ import java.io.*;
  *          concludes: "... any value of G greater than 24 is advocated.  However, large values of G (greater than 64) are
  *          deemed unnecessary since they do not improve the classification accuracy and are computationally costly.
  *          Setting G to a value under twenty-four can produce unreliable results."
+ *          
+ *          Cluster shade is defined in "Urban and Non Urban Area Classification by Texture Characteristics and
+ *          Data Fusion" by D. I. Morales, M. Moctezuma, and F. Parmiggiani.  Shade and promenance are defined in
+ *          "Improving Co-occurrence Matrix Feature Discrimination" by Ross F. Walker, Paul Jackway, and
+ *          I. D. Longstaff.
  */
 public class AlgorithmHaralickTexture extends AlgorithmBase {
     
@@ -137,6 +142,22 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * i,j of Probability(i,j) * (j - glcm mean) * (j - glcm mean).
      */
     private boolean variance;
+    
+    /**
+     * If true calculate the cluster shade Sum over i,j of ((i + j - x mean - y mean)**3) * Probability(i,j)
+     * For the symmetrical glcm x mean = y mean = glcm mean
+     * Sum over i,j over ((i + j - 2 * glcm mean)**3) * Probability(i,j)
+     * It is a measure of the degree to which the outliers in the histogram favor one side or another
+     * of the statistical mean.
+     */
+    private boolean shade;
+    
+    /**
+     * If true calculate the cluster promenance Sum over i,j of ((i + j - x mean - y mean)**4) * Probability(i,j)
+     * For the symmetrical glcm x mean = y mean = glcm mean
+     * Sum over i,j of ((i + j - 2 * glcm mean)**4) * Probability(i,j)
+     */
+    private boolean promenance;
 
     /** Size of square window used in calculating each glcm matrix - must be an odd number. */
     private int windowSize = 7;
@@ -170,19 +191,18 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * @param              maxProbability     true if maximum probability calculated
      * @param              entropy            true if entropy calculated
      * @param              mean               true if gray level coordinate matrix mean calculated
-     * @param              variance           DOCUMENT ME!
-     * @param              standardDeviation  DOCUMENT ME!
-     * @param              correlation        DOCUMENT ME!
-     *
-     * @variance           true if gray level coordinate matrix variance calculated
-     * @standardDeviation  true if gray level coordinate matrix standard deviation calculated
-     * @coorelation        true if gray level coordinate matrix correlation calculated
+     * @param              variance           true if gray level coordinate matrix variance calculated
+     * @param              standardDeviation  true if gray level coordinate matrix standard deviation calculated
+     * @param              correlation        true if gray level coordinate matrix correlation calculated
+     * @param              shade              true if cluster shade calculated
+     * @param              promenance         true if cluster promenance calculated
      */
     public AlgorithmHaralickTexture(ModelImage[] destImg, ModelImage srcImg, int windowSize, int offsetDistance, int greyLevels,
                                     boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
                                     boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
-                                    boolean variance, boolean standardDeviation, boolean correlation) {
+                                    boolean variance, boolean standardDeviation, boolean correlation,
+                                    boolean shade, boolean promenance) {
         super(null, srcImg);
         destImage = destImg;
         this.windowSize = windowSize;
@@ -205,6 +225,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         this.variance = variance;
         this.standardDeviation = standardDeviation;
         this.correlation = correlation;
+        this.shade = shade;
+        this.promenance = promenance;
     }
     
     /**
@@ -230,19 +252,18 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * @param              maxProbability     true if maximum probability calculated
      * @param              entropy            true if entropy calculated
      * @param              mean               true if gray level coordinate matrix mean calculated
-     * @param              variance           DOCUMENT ME!
-     * @param              standardDeviation  DOCUMENT ME!
-     * @param              correlation        DOCUMENT ME!
-     *
-     * @variance           true if gray level coordinate matrix variance calculated
-     * @standardDeviation  true if gray level coordinate matrix standard deviation calculated
-     * @coorelation        true if gray level coordinate matrix correlation calculated
+     * @param              variance           true if gray level coordinate matrix variance calculated
+     * @param              standardDeviation  true if gray level coordinate matrix standard deviation calculated
+     * @param              correlation        true if gray level coordinate matrix correlation calculated
+     * @param              shade              true if cluster shade calculated
+     * @param              promenance         true if cluster promenance calculated     
      */
     public AlgorithmHaralickTexture(ModelImage[] destImg, ModelImage srcImg, int RGBOffset, int windowSize, int offsetDistance, int greyLevels,
                                     boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
                                     boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
-                                    boolean variance, boolean standardDeviation, boolean correlation) {
+                                    boolean variance, boolean standardDeviation, boolean correlation,
+                                    boolean shade, boolean promenance) {
         super(null, srcImg);
         destImage = destImg;
         this.RGBOffset = RGBOffset;
@@ -266,6 +287,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         this.variance = variance;
         this.standardDeviation = standardDeviation;
         this.correlation = correlation;
+        this.shade = shade;
+        this.promenance = promenance;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -358,6 +381,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         boolean rescale = false;
         double range = imageMax - imageMin;
         double factor = (greyLevels - 1)/range;
+        float sum;
+        float product;
         
         if ((srcImage.getType() == ModelStorageBase.FLOAT) || (srcImage.getType() == ModelStorageBase.DOUBLE) ||
             (srcImage.getType() == ModelStorageBase.ARGB_FLOAT)) {
@@ -467,6 +492,14 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         }
 
         if (correlation) {
+            numOperators++;
+        }
+        
+        if (shade) {
+            numOperators++;
+        }
+        
+        if (promenance) {
             numOperators++;
         }
 
@@ -774,7 +807,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
                         currentResult++;
                     } // if (entropy)
 
-                    if (mean || variance || standardDeviation || correlation) {
+                    if (mean || variance || standardDeviation || correlation || shade || promenance) {
                         glcmMean = 0.0f;
 
                         for (i = 0; i < matrixSize; i++) {
@@ -812,7 +845,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
                             resultBuffer[currentResult][pos] = (float) Math.sqrt(glcmVariance);
                             currentResult++;
                         }
-                    } // if (variance || standardDeviation)
+                    } // if (variance || standardDeviation || correlation)
 
                     if (correlation) {
 
@@ -835,6 +868,27 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
                         currentResult++;
                     } // if (correlation)
+                    
+                    if (shade) {
+                        for (i = 0; i < matrixSize; i++) {
+                            for (j = 0; j < matrixSize; j++) {
+                                sum = (i + j - 2 * glcmMean);
+                                resultBuffer[currentResult][pos] += glcm[i][j] * sum * sum * sum;
+                            }
+                        }
+                        currentResult++;
+                    } // if (shade)
+                    
+                    if (promenance) {
+                        for (i = 0; i < matrixSize; i++) {
+                            for (j = 0; j < matrixSize; j++) {
+                                sum = (i + j - 2 * glcmMean);
+                                product = sum * sum;
+                                resultBuffer[currentResult][pos] += glcm[i][j] * product * product;
+                            }
+                        }
+                        currentResult++;    
+                    } // if (promenance)
                 } // for (iDir = 0; iDir < numDirections; iDir++)
             } // for (x = xStart; x <= xEnd; x++)
         } // for (y = yStart; y <= yEnd && !threadStopped; y++)
