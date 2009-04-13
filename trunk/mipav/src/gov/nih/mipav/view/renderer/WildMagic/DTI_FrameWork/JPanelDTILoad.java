@@ -157,6 +157,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         computeButton.setToolTipText("Compute");
         computeButton.addActionListener(this);
         computeButton.setActionCommand("compute");
+        computeButton.setEnabled(false);
 
         mainPanelGBC.gridx = 0;
         mainPanelGBC.gridy = 3;
@@ -327,7 +328,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         m_kNegY.setEnabled(true);
 
         m_kNegZ = new JCheckBox("+/- z");
-        m_kNegZ.setSelected(false);
+        m_kNegZ.setSelected(true);
         m_kNegZ.addActionListener(this);
         m_kNegZ.setActionCommand("NegZ");
         m_kNegZ.setEnabled(true);
