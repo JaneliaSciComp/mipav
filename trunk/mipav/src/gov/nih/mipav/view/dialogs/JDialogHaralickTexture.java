@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  *
- * @version  0.3 Nov 24, 2008
+ * @version  0.4 April 14, 2009
  * @author   William Gandler
  * @see      AlgorithmHaralickTexture
  */
@@ -198,6 +198,14 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JCheckBox varianceCheckBox;
+    
+    private boolean shade = false;
+    
+    private JCheckBox shadeCheckBox;
+    
+    private boolean promenance = false;
+    
+    private JCheckBox promenanceCheckBox;
 
     /** DOCUMENT ME! */
     private int windowSize;
@@ -350,6 +358,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         str += variance + delim;
         str += standardDeviation + delim;
         str += correlation + delim;
+        str += shade + delim;
+        str += promenance;
 
         return str;
     }
@@ -393,6 +403,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                 varianceCheckBox.setSelected(MipavUtil.getBoolean(st));
                 standardDeviationCheckBox.setSelected(MipavUtil.getBoolean(st));
                 correlationCheckBox.setSelected(MipavUtil.getBoolean(st));
+                shadeCheckBox.setSelected(MipavUtil.getBoolean(st));
+                promenanceCheckBox.setSelected(MipavUtil.getBoolean(st));
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -571,6 +583,23 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     public void setVariance(boolean variance) {
         this.variance = variance;
     }
+    
+    /**
+     * Accessor that sets if the cluster shade is calculated
+     * @param shade
+     */
+    public void setShade(boolean shade) {
+        this.shade = shade;
+    }
+    
+    
+    /**
+     * Accessor that sets if the cluster promenance is calculated
+     * @param promenance
+     */
+    public void setPromenance(boolean promenance) {
+        this.promenance = promenance;
+    }
 
     /**
      * Accessor that sets the window size.
@@ -626,6 +655,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         boolean doneVariance;
         boolean doneStandardDeviation;
         boolean doneCorrelation;
+        boolean doneShade;
+        boolean donePromenance;
 
         try {
             resultImage = new ModelImage[resultNumber];
@@ -662,6 +693,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                 doneVariance = false;
                 doneStandardDeviation = false;
                 doneCorrelation = false;
+                doneShade = false;
+                donePromenance = false;
 
                 for (j = 0; j < numOperators; j++) {
                     index = j + (i * numOperators);
@@ -702,6 +735,12 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                     } else if (correlation && (!doneCorrelation)) {
                         opString = "_correlation";
                         doneCorrelation = true;
+                    } else if (shade && (!doneShade)) {
+                        opString = "_shade";
+                        doneShade = true;
+                    } else if (promenance && (!donePromenance)) {
+                        opString = "_promenance";
+                        donePromenance = true;
                     }
 
                     name[index] = makeImageName(image.getImageName(), dirString + opString);
@@ -715,13 +754,13 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                         greyLevels, ns, nesw, ew,
                         senw, invariantDir, contrast, dissimilarity, homogeneity,
                         inverseOrder1, asm, energy, maxProbability, entropy, mean,
-                        variance, standardDeviation, correlation);    
+                        variance, standardDeviation, correlation, shade, promenance);    
             }
             else {
                 textureAlgo = new AlgorithmHaralickTexture(resultImage, image, windowSize, offsetDistance, greyLevels, ns, nesw, ew,
                                                            senw, invariantDir, contrast, dissimilarity, homogeneity,
                                                            inverseOrder1, asm, energy, maxProbability, entropy, mean,
-                                                           variance, standardDeviation, correlation);
+                                                           variance, standardDeviation, correlation, shade, promenance);
             }
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -808,6 +847,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         setVariance(scriptParameters.getParams().getBoolean("do_calc_variance"));
         setStandardDeviation(scriptParameters.getParams().getBoolean("do_calc_standard_deviation"));
         setCorrelation(scriptParameters.getParams().getBoolean("do_calc_correlation"));
+        setShade(scriptParameters.getParams().getBoolean("do_calc_shade"));
+        setPromenance(scriptParameters.getParams().getBoolean("do_calc_promenance"));
 
         if ((windowSize % 2) == 0) {
             throw new ParameterException("window_size", "Window size must not be even");
@@ -861,6 +902,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_standard_deviation",
                                                                        standardDeviation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_correlation", correlation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_shade", shade));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_promenance", promenance));
     }
 
     /**
@@ -947,6 +990,14 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         }
 
         if (correlation) {
+            numOps++;
+        }
+        
+        if (shade) {
+            numOps++;
+        }
+        
+        if (promenance) {
             numOps++;
         }
 
@@ -1187,6 +1238,20 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         gbc3.gridy = 11;
         operatorPanel.add(correlationCheckBox, gbc3);
         correlationCheckBox.setSelected(false);
+        
+        shadeCheckBox = new JCheckBox("Cluster shade");
+        shadeCheckBox.setFont(serif12);
+        gbc3.gridx = 0;
+        gbc3.gridy = 12;
+        operatorPanel.add(shadeCheckBox, gbc3);
+        shadeCheckBox.setSelected(false);
+        
+        promenanceCheckBox = new JCheckBox("Cluster promenance");
+        promenanceCheckBox.setFont(serif12);
+        gbc3.gridx = 0;
+        gbc3.gridy = 13;
+        operatorPanel.add(promenanceCheckBox, gbc3);
+        promenanceCheckBox.setSelected(false);
 
         gbc.gridx = 0;
         gbc.gridy = ypos++;
@@ -1326,6 +1391,10 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         standardDeviation = standardDeviationCheckBox.isSelected();
 
         correlation = correlationCheckBox.isSelected();
+        
+        shade = shadeCheckBox.isSelected();
+        
+        promenance = promenanceCheckBox.isSelected();
 
         numOperators = getNumOperators();
 
