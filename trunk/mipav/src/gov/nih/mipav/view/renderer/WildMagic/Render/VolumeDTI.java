@@ -98,6 +98,9 @@ public class VolumeDTI extends VolumeObject
 
     /** Material properties of the Tubes. */
     private MaterialState m_kTubesMaterial;
+    
+    /** Material properties of the tract lines. */
+    private MaterialState m_kLinesMaterial;
 
     /** EigenVector values for displaying ellipsoids. */
     private HashMap<Integer,Transformation>  m_kEigenVectors = null;
@@ -274,11 +277,12 @@ public class VolumeDTI extends VolumeObject
             kTractNode.AttachChild(kLine);
             kTractNode.UpdateGS();
             kTractNode.UpdateRS();
-
+            /*
             Vector<int[]> kEllipseVector = m_kEllipsoids.get(iIGroup);
             kEllipseVector.add(aiEllipsoids);
             Vector<int[]> kCylinderVector = m_kCylinders.get(iIGroup);
             kCylinderVector.add(aiCylinders);
+            */
         }
         
         if ( m_kTubes.containsKey( iIGroup ) )
@@ -960,6 +964,14 @@ public class VolumeDTI extends VolumeObject
         m_kTubesMaterial.Alpha = 1f;
         m_kTubesMaterial.Shininess = 500f;
         
+        m_kLinesMaterial = new MaterialState();
+        m_kLinesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        m_kLinesMaterial.Ambient = new ColorRGB(0.24725f,0.2245f,0.0645f);
+        m_kLinesMaterial.Diffuse = new ColorRGB(0.34615f,0.3143f,0.0903f);
+        m_kLinesMaterial.Specular = new ColorRGB(1f,1f,1f);
+        m_kLinesMaterial.Alpha = 1f;
+        m_kLinesMaterial.Shininess = 500f;
+        
         
         m_kSphere.AttachGlobalState(m_kEllipseMaterial);
         // m_kSphere.AttachEffect(m_kAllEllipsoidsShader);
@@ -1300,31 +1312,66 @@ public class VolumeDTI extends VolumeObject
     {
         Iterator kIterator = m_kTracts.keySet().iterator();
         Integer iKey;
+        Integer cKey;
         Node kTractNode;
         Polyline kTract;
         ShaderEffect kShader;
+        int iIndex;
+        Iterator cIterator = groupConstantColor.keySet().iterator();
         
         //kAlpha.BlendEnabled = true;
         while ( kIterator.hasNext() )
         {
             iKey = (Integer)kIterator.next();
+            cKey = (Integer)cIterator.next();
+            
             kTractNode = m_kTracts.get(iKey);
             kShader = kInputShader;
+            
+            iIndex = m_kTubeColors.get(iKey);
+            ColorRGB kColor1 = null;
+            
             if ( kShader == null )
             {
                 kShader = m_kShaders.get(iKey);
             }
             for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
             {
-                kTract = (Polyline)kTractNode.GetChild(i);
-                kTract.DetachAllEffects();
-                kTract.AttachEffect( kShader );
-                
-                m_kScene.SetChild(0,kTract);
-                m_kScene.UpdateGS();
-                kRenderer.Draw(kTract);
-                m_kScene.DetachChild(kTract);
-                kTract.DetachEffect( kShader );
+            	if (!isUsingVolumeColor) {
+
+					kColor1 = constantColor.get(groupConstantColor.get(cKey).intValue());
+
+					kTract = (Polyline) kTractNode.GetChild(i);
+					kTract.AttachGlobalState(m_kLinesMaterial);
+					kTract.DetachAllEffects();
+					kTract.AttachEffect(m_kLightShader);
+
+					kTract.UpdateRS();
+
+					m_kLinesMaterial.Ambient = kColor1;
+					m_kLinesMaterial.Diffuse = kColor1;
+					m_kLinesMaterial.Emissive = kColor1;
+					m_kLinesMaterial.Specular = new ColorRGB(ColorRGB.WHITE);
+					m_kLinesMaterial.Alpha = 1.0f;
+					m_kLinesMaterial.Shininess = 100f;
+
+					m_kScene.SetChild(0, kTract);
+					m_kScene.UpdateGS();
+					kRenderer.Draw(kTract);
+					m_kScene.DetachChild(kTract);
+					kTract.DetachEffect(m_kLightShader);
+
+				} else {
+	                kTract = (Polyline)kTractNode.GetChild(i);
+	                kTract.DetachAllEffects();
+	                kTract.AttachEffect( kShader );
+	                
+	                m_kScene.SetChild(0,kTract);
+	                m_kScene.UpdateGS();
+	                kRenderer.Draw(kTract);
+	                m_kScene.DetachChild(kTract);
+	                kTract.DetachEffect( kShader );
+            	}
             }
         }
     }
