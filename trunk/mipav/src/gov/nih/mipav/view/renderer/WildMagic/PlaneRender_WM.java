@@ -1497,7 +1497,7 @@ public class PlaneRender_WM extends GPURenderBase
 
         m_kCenter.Mult( m_kVolumeScale );
         
-        initDataBuffer();
+        //initDataBuffer();
     }
     
     /**
