@@ -511,7 +511,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
             float fMaxB = (float) mImageA.getMaxB();
 
             int[] iExtents = { 256, 256 };
-            mLUTImageA = new ModelImage(ModelStorageBase.ARGB_FLOAT, iExtents, "temp");
+            mLUTImageA = new ModelImage(ModelStorageBase.ARGB_FLOAT, iExtents, "SurfaceTextureLUT");
             mLUTImageA.addImageDisplayListener(this);
 
             for (int j = 0; j < 256; j++) {

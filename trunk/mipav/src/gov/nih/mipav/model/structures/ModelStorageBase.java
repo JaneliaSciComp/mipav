@@ -2767,6 +2767,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return extentsReturn;
     }
 
+    public final int[] getExtentsSize(int orientation) {
+
+        int[] aiSizes = new int[]
+                                { 1, dimExtents[0], dimExtents[0] * dimExtents[1] };
+        
+        int[] extentsSizesReturn = new int[3];
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+
+        for (int i = 0; i < 3; i++) {
+            extentsSizesReturn[i] = aiSizes[aiAxisOrder[i]];
+        }
+
+        return extentsSizesReturn;
+    }
+
     /**
      * Accessor that returns the fileInfo array (one per slice).
      *

@@ -665,7 +665,9 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             if ( !m_bDTIImageSet )
             {
                 m_bDTIImageSet = true;
-                setDTIImage(m_kDTIImage, bNegX, bNegY, bNegZ );   
+                setDTIImage(m_kDTIImage, bNegX, bNegY, bNegZ );
+                // don't load any tracts the first time.
+                iNumTractsLimit = 0;
             }
             
             int iLength = (int) m_kTractFile.length();

@@ -912,7 +912,8 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         destExtents[2] = m_kEigenVectorImage.getExtents()[2];
         destExtents[3] = 3;
 
-        ModelImage decImage = new ModelImage(ModelStorageBase.FLOAT, destExtents, m_kEigenVectorImage.getImageName() + "_DEC");
+        ModelImage decImage = new ModelImage(ModelStorageBase.FLOAT, destExtents, 
+                ModelImage.makeImageName(m_kEigenVectorImage.getImageName(), "_DEC" ));
 
         //buffer
         float[] buffer;
@@ -953,7 +954,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         ModelImage[] channelImages = new ModelImage[decImage.getExtents()[3]];
         for(int i=0;i<decImage.getExtents()[3];i++) {
             int num = i + 1;
-            String resultString = decImage.getImageName() + "_Vol=" + num;
+            String resultString = ModelImage.makeImageName( decImage.getImageName(), "_Vol=" + num);
             channelImages[i] = new ModelImage(decImage.getType(), destExtents, resultString);
             AlgorithmSubset subsetAlgo = new AlgorithmSubset(decImage, channelImages[i], AlgorithmSubset.REMOVE_T, i);
             subsetAlgo.setRunningInSeparateThread(false);
@@ -964,7 +965,8 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         decImage = null;
 
         //set up result image
-        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, channelImages[0].getExtents(),m_kEigenVectorImage.getImageName() + "_ColorDisplay");
+        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, channelImages[0].getExtents(),
+                ModelImage.makeImageName( m_kEigenVectorImage.getImageName(), "_ColorDisplay") );
 
 
         //cocatenate channel images into an RGB image

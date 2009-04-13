@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.PointStack;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.WindowLevel;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
@@ -20,7 +21,11 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.BitSet;
+import java.util.Stack;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -33,6 +38,7 @@ import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Camera;
+import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
@@ -236,6 +242,9 @@ public class PlaneRender_WM extends GPURenderBase
     /** The image dimensions in x,y,z:. */
     private int[] m_aiLocalImageExtents;
 
+    /** The image dimension factors in x,y,z:. */
+    private int[] m_aiLocalImageFactors;
+
     /** Set of colors used to draw the axis labels. */
     private ColorRGB[][] m_aakColors = { { new ColorRGB(1, 1, 0), new ColorRGB(0, 1, 0), new ColorRGB(1, 0, 0) },
                                          { new ColorRGB(1, 1, 0), new ColorRGB(1, 0, 0), new ColorRGB(0, 1, 0) },
@@ -325,6 +334,7 @@ public class PlaneRender_WM extends GPURenderBase
     private boolean m_bDrawVOI = false;
 
     private boolean m_bDrawRect = false;
+    private boolean m_bDrawLevelSet = false;
     private boolean m_bDrawPolyline = false;
     private boolean m_bUpdateVOI = true;
     private boolean m_bPointer = false;
@@ -350,6 +360,10 @@ public class PlaneRender_WM extends GPURenderBase
     
     private int m_iVOICount = 0;
     private Vector3f m_kCenter = new Vector3f();
+    private PointStack levelSetStack = new PointStack(500);
+    private BitSet map = null;
+    private Stack<int[]> stack = new Stack<int[]>();
+    private byte[] m_aucData;
     
     /**
      * Default PlaneRender interface.
@@ -679,6 +693,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_bSelected = false;
             m_bDrawRect = true;
             m_bDrawPolyline = false;
+            m_bDrawLevelSet = false;
         } 
         else if (kCommand.equals("EllipseVOI") ) {
         } 
@@ -689,10 +704,18 @@ public class PlaneRender_WM extends GPURenderBase
             m_bSelected = false;
             m_bDrawRect = false;
             m_bDrawPolyline = true;
+            m_bDrawLevelSet = false;
         } 
         else if (kCommand.equals("VOIColor") ) {
         } 
         else if (kCommand.equals("LevelSetVOI") ) {
+            m_bDrawVOI = true;
+            m_bPointer = false;
+            m_kCurrentVOI = null;
+            m_bSelected = false;
+            m_bDrawRect = false;
+            m_bDrawPolyline = false;
+            m_bDrawLevelSet = true;
         } 
         else if (kCommand.equals("deleteAllVOI") ) {
             deleteAllVOI();
@@ -900,14 +923,7 @@ public class PlaneRender_WM extends GPURenderBase
             {
                 m_fZoomScale -= 0.05;
             }
-            m_fZoomScale = Math.max( 0, m_fZoomScale );
-            float fRMax = (m_fZoomScale*m_fX)/2.0f;
-            float fUMax = fRMax * m_iHeight / m_iWidth;
-            m_spkCamera.SetFrustum(-fRMax, fRMax,-fUMax, fUMax,1f,5.0f);
-            m_pkRenderer.OnFrustumChange();
-            m_bModified = true;
-            GetCanvas().display();
-            
+            zoom( );            
         }
     }
 
@@ -984,6 +1000,23 @@ public class PlaneRender_WM extends GPURenderBase
             m_bModified = true;
             GetCanvas().display();
         }
+    }
+    
+
+    /* (non-Javadoc)
+     * @see java.awt.event.MouseWheelListener#mouseWheelMoved(java.awt.event.MouseWheelEvent)
+     */
+    public void mouseWheelMoved(MouseWheelEvent e)
+    {
+        if ( e.getWheelRotation() == 1 )
+        {
+            m_fZoomScale -= 0.05;
+        }
+        else 
+        {
+            m_fZoomScale += 0.05; 
+        }
+        zoom( );    
     }
     
     /**
@@ -1352,7 +1385,9 @@ public class PlaneRender_WM extends GPURenderBase
         m_aiAxisOrder = MipavCoordinateSystems.getAxisOrder(kImage, m_iPlaneOrientation);
         m_abAxisFlip = MipavCoordinateSystems.getAxisFlip(kImage, m_iPlaneOrientation);
         m_aiLocalImageExtents = kImage.getExtents( m_iPlaneOrientation );
-
+        m_aiLocalImageFactors = kImage.getExtentsSize( m_iPlaneOrientation );
+        map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
+        
         float[] afResolutions = kImage.getResolutions( 0, m_iPlaneOrientation );
 
         if ((afResolutions[0] == 0.0f) || (afResolutions[1] == 0.0f) || (afResolutions[2] == 0.0f)) {
@@ -1461,6 +1496,8 @@ public class PlaneRender_WM extends GPURenderBase
         m_kVolumeScaleInv.Invert();
 
         m_kCenter.Mult( m_kVolumeScale );
+        
+        initDataBuffer();
     }
     
     /**
@@ -1790,6 +1827,27 @@ public class PlaneRender_WM extends GPURenderBase
             }
             m_kCurrentVOI.Update();
         }
+        /*
+        else if ( m_bDrawLevelSet )
+        {
+            if ( m_kCurrentVOI != null )
+            {            
+                String kName = new String(m_kCurrentVOI.Name.get(0));
+                m_kDisplayList.remove(m_kParent.removeNode( kName ));  
+            }
+            m_kCurrentVOI = singleLevelSet(iX, fY);
+            if ( m_kCurrentVOI == null )
+            {
+                return;
+            }
+            Node kNode = new Node();
+            kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
+            kNode.SetName(m_kCurrentVOI.Name.get(0));
+            m_kDisplayList.add( m_kParent.addNode(kNode) );
+            m_kParent.translateSurface( m_kCurrentVOI.Name.get(0), m_kTranslate );
+            m_kCurrentVOI.Update();
+        }
+        */
         else if ( m_bDrawPolyline )
         {
 
@@ -2428,4 +2486,424 @@ public class PlaneRender_WM extends GPURenderBase
         return localPt; 
     }
 
+    private void zoom()
+    {
+        m_fZoomScale = Math.max( 0, m_fZoomScale );
+        float fRMax = (m_fZoomScale*m_fX)/2.0f;
+        float fUMax = fRMax * m_iHeight / m_iWidth;
+        m_spkCamera.SetFrustum(-fRMax, fRMax,-fUMax, fUMax,1f,5.0f);
+        m_pkRenderer.OnFrustumChange();
+        m_bModified = true;
+        GetCanvas().display();
+    }
+    
+    
+    
+    
+    
+    
+    
+
+
+    /**
+     * This method calculates the average pixel value based on the four neighbors (N, S, E, W).
+     *
+     * @param   index  the center pixel where the average pixel value is to be calculated.
+     *
+     * @return  the average pixel value as a float.
+     */
+    private float avgPix(int iX, int iY, int iZ)
+    {
+        int[] extents = m_kVolumeImageA.GetImage().getExtents();
+        
+        Vector3f kPatientPt = new Vector3f( iX, iY, iZ );
+        Vector3f kVolumePt = new Vector3f();
+        MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+
+        int index = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+
+        if ((index > extents[0]) && (index < (m_kVolumeImageA.GetImage().getSize() - extents[0]))) {
+
+            int sum = (m_aucData[index] & 0x00ff);
+
+            kPatientPt.Set( iX, iY-1, iZ );
+            MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+            index = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+            sum += (m_aucData[index] & 0x00ff);
+
+            kPatientPt.Set( iX-1, iY, iZ );
+            MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+            index = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+            sum += (m_aucData[index] & 0x00ff);
+
+            kPatientPt.Set( iX+1, iY, iZ );
+            MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+            index = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+            sum += (m_aucData[index] & 0x00ff);
+
+            kPatientPt.Set( iX, iY+1, iZ );
+            MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+            index = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+            sum += (m_aucData[index] & 0x00ff);
+
+            return sum / 5.0f;
+        } 
+        return (m_aucData[index] & 0x00ff);
+    }
+    
+    
+    /**
+     * Generates the possible paths of the level set and pushes them onto a stack. Looks in the 8 neighborhood
+     * directions for the possible paths.
+     *
+     * @param  index  image location
+     * @param  i      DOCUMENT ME!
+     */
+    private void paths(int iX, int iY, int iZ, int i, float level) {
+
+        int[] intPtr = null;
+
+        try {
+            intPtr = new int[1];
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ComponentEditImage.mouseDragged");
+
+            return;
+        }
+
+        intPtr[0] = levelSetStack.size() - 1;
+        int[] extents = m_kVolumeImageA.GetImage().getExtents();  
+        Vector3f kVolumePt = new Vector3f();
+        Vector3f kPatientPt = new Vector3f();    
+        kPatientPt.Set(iX-1,iY-1,iZ);
+        MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );     
+        int indexMM = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+        
+        kPatientPt.Set(iX+1,iY-1,iZ);
+        MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );     
+        int indexMP = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+        
+        kPatientPt.Set(iX+1,iY+1,iZ);
+        MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );     
+        int indexPP = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+        
+        kPatientPt.Set(iX-1,iY+1,iZ);
+        MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );     
+        int indexPM = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+        
+        kPatientPt.Set(iX,iY+1,iZ);
+        MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );     
+        int indexP_ = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+        
+        kPatientPt.Set(iX,iY-1,iZ);
+        MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );     
+        int indexM_ = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+        
+        kPatientPt.Set(iX+1,iY,iZ);
+        MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );     
+        int index_P = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+        
+        kPatientPt.Set(iX-1,iY,iZ);
+        MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );     
+        int index_M = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+        
+        if ((i != 0) && (m_aucData[indexMM] <= level) && (map.get(indexMM) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 1) && (m_aucData[indexM_] <= level) && (map.get(indexM_) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 2) && (m_aucData[indexMP] <= level) && (map.get(indexMP) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 3) && (m_aucData[index_P] <= level) && (map.get(index_P) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 4) && (m_aucData[indexPP] <= level) && (map.get(indexPP) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 5) && (m_aucData[indexP_] <= level) && (map.get(indexP_) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 6) && (m_aucData[indexPM] <= level) && (map.get(indexPM) == false)) {
+            stack.push(intPtr);
+        } else if ((i != 7) && (m_aucData[index_M] <= level) && (map.get(index_M) == false)) {
+            stack.push(intPtr);
+        }
+    }
+
+    /**
+     * Creates a single level set. Takes a starting point and finds a closed path along the levelset back to the
+     * starting point.
+     *
+     * @param  startPtX  the start point
+     * @param  startPtY  the start point
+     * @param  level     the level of the level set
+     */
+    private LocalVolumeVOI singleLevelSet(float startPtX, float startPtY ) {
+        double distance;
+        stack.removeAllElements();
+
+        for (int i = 0; i < map.size(); i++) {
+            map.clear(i);
+        }
+
+        Vector3f kVOIPt = new Vector3f( startPtX, startPtY, m_iSlice );
+        Vector3f kVolumePt = VOIToFileCoordinates( kVOIPt, false );
+        Vector3f kPatientPt = new Vector3f();
+        MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+
+        int x = (int) ( kPatientPt.X + 0.5);
+        int y = (int) ( kPatientPt.Y + 0.5);
+        int z = (int)kPatientPt.Z;
+        
+        
+        int[] extents = m_kVolumeImageA.GetImage().getExtents();
+        int index = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+        int level = (m_aucData[index] & 0x00ff);
+        
+        
+        levelSetStack.reset();
+        levelSetStack.addPoint(x, y);
+        map.set(index);
+
+        int dir = -1;
+        float diff = 100000;
+        int mapIndex = 0;
+        Vector3f kMapP = new Vector3f();
+        Vector3f kMapV = new Vector3f();
+        
+        do {
+            kPatientPt.Set( x, y, z );
+            MipavCoordinateSystems.patientToFile( kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
+            index = (int)(kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);
+
+            if ((x >= 2) && (x < (m_aiLocalImageExtents[0] - 2)) && (y >= 2) && (y < (m_aiLocalImageExtents[1] - 2))) {
+                kMapP.Set( x, y-1, z);   
+                MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                if ((avgPix(x, y - 1, z) >= level) &&
+                    ((avgPix(x + 1, y - 1, z) < level) || (avgPix(x, y, z) < level) ||
+                     (avgPix(x-1, y-1,z) < level) || (avgPix(x, y-2,z) < level)) &&
+                    (map.get(mapIndex) == false)) {
+                    dir = 1;
+                    diff = Math.abs(avgPix(x, y-1,z) - avgPix(x, y, z));
+                }
+                kMapP.Set( x+1, y-1, z);   
+                MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                if ((avgPix(x+1, y -1, x) >= level) &&
+                    ((avgPix(x+2, y-1, z) < level) || (avgPix(x+1,y,z) < level) ||
+                     (avgPix(x,y-1,z) < level) || (avgPix(x+1,y-2,z) < level)) &&
+                    (map.get(mapIndex) == false)) {
+                    
+                    if (Math.abs(avgPix(x+1,y-1,z) - avgPix(x,y,z)) < diff) {
+                        dir = 2;
+                        diff = Math.abs(avgPix(x+1,y-1,z) - avgPix(x,y,z));
+                    }
+                }
+                kMapP.Set( x+1, y, z);   
+                MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                if ((avgPix(x+1,y,z) >= level) &&
+                    ((avgPix(x+2,y,z) < level) || (avgPix(x+1,y+1,z) < level) || (avgPix(x,y,z) < level) ||
+                     (avgPix(x+1,y-1,z) < level)) && (map.get(mapIndex) == false)) {
+                    
+                    if (Math.abs(avgPix(x+1,y,z) - avgPix(x,y,z)) < diff) {
+                        dir = 3;
+                        diff = Math.abs(avgPix(x+1,y,z) - avgPix(x,y,z));
+                    }
+                }
+                kMapP.Set( x+1, y+1, z);   
+                MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                if ((avgPix(x+1,y+1,x) >= level) &&
+                    ((avgPix(x+2,y+1,z) < level) || (avgPix(x+1,y+2,z)) < level) ||
+                     (avgPix(x+y,y,z) < level) || (avgPix(x,y+1,z) < level) &&
+                    (map.get(mapIndex) == false)) {
+                    
+                    if (Math.abs(avgPix(x+1,y+1,z) - avgPix(x,y,z)) < diff) {
+                        dir = 4;
+                        diff = Math.abs(avgPix(x+1,y+1,z) - avgPix(x,y,z));
+                    }
+                }
+                kMapP.Set( x, y+1, z);   
+                MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                if ((avgPix(x,y+1,z) >= level) &&
+                    ((avgPix(x+y,y+1,z) < level) || (avgPix(x,y+2,z) < level) ||
+                     (avgPix(x-1,y+1,z) < level) || (avgPix(x,y,z) < level)) &&
+                    (map.get(mapIndex) == false)) {
+                    
+                    if (Math.abs(avgPix(x,y+1,z) - avgPix(x,y,z)) < diff) {
+                        dir = 5;
+                        diff = Math.abs(avgPix(x,y+1,z) - avgPix(x,y,z));
+                    }
+                }
+                kMapP.Set( x-1, y+1, z);   
+                MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                if ((avgPix(x-1,y+1,z) >= level) &&
+                    ((avgPix(x,y+1,z) < level) || (avgPix(x-1,y+2,z) < level) ||
+                     (avgPix(x-2,y+1,z) < level) || (avgPix(x-1,y,z) < level)) &&
+                    (map.get(mapIndex) == false)) {
+                    
+                    if (Math.abs(avgPix(x-1,y+1,z) - avgPix(x,y,z)) < diff) {
+                        dir = 6;
+                        diff = Math.abs(avgPix(x-1,y+1,z) - avgPix(x,y,z));
+                    }
+                }
+                kMapP.Set( x-1, y, z);   
+                MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                if ((avgPix(x-1,y,z) >= level) &&
+                    ((avgPix(x,y,z) < level) || (avgPix(x-y,y+1,z) < level) || (avgPix(x-2,y,z) < level) ||
+                     (avgPix(x-1,y-1,z) < level)) && (map.get(mapIndex) == false)) {
+                    
+                    if (Math.abs(avgPix(x-1,y,z) - avgPix(x,y,z)) < diff) {
+                        dir = 7;
+                        diff = Math.abs(avgPix(x-1,y,z) - avgPix(x,y,z));
+                    }
+                }
+                kMapP.Set( x-1, y-1, z);   
+                MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                if ((avgPix(x-y,y-1,z) >= level) &&
+                    ((avgPix(x,y-1,z) < level) || (avgPix(x-1,y,z) < level) ||
+                     (avgPix(x-2,y-1,z) < level) || (avgPix(x-1,y-2,z) < level)) &&
+                    map.get(mapIndex)) {
+                    
+                    if (Math.abs(avgPix(x-1,y-1,z) - avgPix(x,y,z)) < diff) {
+                        dir = 0;
+                        // diff = Math.abs(imageBufferActive[index-xDim-1] - imageBufferActive[index]);
+                    }
+                }
+
+                diff = 1000000;
+
+                if (dir == 1) {
+                    // x = x;
+                    y = y - 1;               
+                    kMapP.Set( x, y, z);   
+                    MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                    mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                    map.set(mapIndex);
+                    paths(x,y,z, 1, level);
+                } else if (dir == 2) {
+                    x = x + 1;
+                    y = y - 1;               
+                    kMapP.Set( x, y, z);   
+                    MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                    mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                    map.set(mapIndex);
+                    paths(x,y,z, 2, level);
+                } else if (dir == 3) {
+                    x = x + 1;
+                    // y = y;               
+                    kMapP.Set( x, y, z);   
+                    MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                    mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                    map.set(mapIndex);
+                    paths(x,y,z, 3, level);
+                } else if (dir == 4) {
+                    x = x + 1;
+                    y = y + 1;               
+                    kMapP.Set( x, y, z);   
+                    MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                    mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                    map.set(mapIndex);
+                    paths(x,y,z, 4, level);
+                } else if (dir == 5) {
+                    // x = x;
+                    y = y + 1;               
+                    kMapP.Set( x, y, z);   
+                    MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                    mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                    map.set(mapIndex);
+                    paths(x,y,z, 5, level);
+                } else if (dir == 6) {
+                    x = x - 1;
+                    y = y + 1;               
+                    kMapP.Set( x, y, z);   
+                    MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                    mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                    map.set(mapIndex);
+                    paths(x,y,z, 6, level);
+                } else if (dir == 7) {
+                    x = x - 1;
+                    // y = y;               
+                    kMapP.Set( x, y, z);   
+                    MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                    mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                    map.set(mapIndex);
+                    paths(x,y,z, 7, level);
+                } else if (dir == 0) {
+                    x = x - 1;
+                    y = y - 1;               
+                    kMapP.Set( x, y, z);   
+                    MipavCoordinateSystems.patientToFile( kMapP, kMapV, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );         
+                    mapIndex = (int)(kMapV.Z * extents[0] * extents[1] + kMapV.Y * extents[0] + kMapV.X);
+                    map.set(mapIndex);
+                    paths(x,y,z, 0, level);
+                } else {
+
+                    if (!stack.empty()) {
+                        int ptr = ((int[]) stack.pop())[0];
+                        x = levelSetStack.getPointX(ptr);
+                        y = levelSetStack.getPointY(ptr);
+                        levelSetStack.setIndex(ptr);
+                    } else {
+                        x = y = -1;
+                    }
+                }
+
+                dir = -1;
+            } else { // near edge of image
+                levelSetStack.reset();
+
+                break;
+            }
+
+            if ((x == -1) || (y == -1)) {
+                levelSetStack.reset();
+
+                break;
+            }
+
+            levelSetStack.addPoint(x, y);
+            distance = ((x - kPatientPt.X) * (x - kPatientPt.X)) + ((y - kPatientPt.Y) * (y - kPatientPt.Y));
+            if ((distance < 2.1) && (levelSetStack.size() < 10)) {
+                distance = 10;
+            }
+        } while (distance > 2.1);
+
+
+        if (levelSetStack.size() != 0) {
+            
+            VertexBuffer kVBuffer = new VertexBuffer( m_kVOIAttr, levelSetStack.size() + 1 );
+            for ( int i = 0; i < levelSetStack.size(); i++ )
+            {
+                kPatientPt.Set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_iSlice );
+                //kPatientPt.Mult( m_kVolumeScale );
+                
+                kVBuffer.SetPosition3( i, kPatientPt );
+                kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
+            }
+            kPatientPt.Set( levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_iSlice );   
+            //kPatientPt.Mult( m_kVolumeScale );
+            kVBuffer.SetPosition3( levelSetStack.size(), kPatientPt );
+            kVBuffer.SetColor3( 0, levelSetStack.size(), m_aakColors[m_iPlaneOrientation][2] );
+            Polyline kPoly = createPolyline( kVBuffer, m_iSlice);
+            return new LocalVolumeVOI(kPoly, "VOITemp" + m_iPlaneOrientation );
+        } 
+        return null;
+    }
+    
+    private void initDataBuffer()
+    {
+
+        m_aucData = new byte[m_aiLocalImageExtents[0]*m_aiLocalImageExtents[1]*m_aiLocalImageExtents[2]];
+        try {
+            m_kVolumeImageA.GetImage().exportData( 0, m_kVolumeImageA.GetImage().getSize(), m_aucData );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    
 }

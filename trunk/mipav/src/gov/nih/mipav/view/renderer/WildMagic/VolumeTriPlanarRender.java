@@ -116,7 +116,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     /** sample rate when mouse is released. */
     private float fSample_mouseReleased;
-    /** sampel rate when mouse is dragged. */
+    /** sample rate when mouse is dragged. */
     private float fSample_mouseDragged;
     
     /**
