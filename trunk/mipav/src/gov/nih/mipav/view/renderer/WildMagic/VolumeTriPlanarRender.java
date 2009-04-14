@@ -2506,6 +2506,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
     /**
+     * reduce the fiber tract color index
+     * @param groupID   group ID
+     */
+    public void removeTractColor(Integer index) {
+    	m_kDTIDisplay.removeTractColor(index);
+    }
+    
+    /**
      * reduce the group color index
      */
     public void removeGroupColor() {
@@ -2520,6 +2528,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
        m_kDTIDisplay.setTubesGroupColor(iGroup, kColor);
     }
+    
+    /** Get the group color with given group ID. 
+     * @param groupID  given group id
+     * @return  ColorRGB group color
+     */
+    public ColorRGB getGroupColor(int groupID) {
+    	return m_kDTIDisplay.getGroupColor(groupID);
+    }
+    
     
     public void setVolumeColor(boolean flag) {
     	m_kDTIDisplay.setVolumeColor(flag);
