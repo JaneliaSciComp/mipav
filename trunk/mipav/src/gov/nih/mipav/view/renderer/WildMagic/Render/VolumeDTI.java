@@ -1112,6 +1112,7 @@ public class VolumeDTI extends VolumeObject
 						} else {
 							if (kImage.isColorImage()) {
 								if (!isUsingVolumeColor) {
+									if ( cKey == null ) continue;
 									m_kColorEllipse = constantColor.get(groupConstantColor.get(cKey).intValue());
 								} else {
 									fR = kImage.getFloat(iIndex * 4 + 1) / 255.0f;
@@ -1188,6 +1189,7 @@ public class VolumeDTI extends VolumeObject
                             if ( kImage.isColorImage() )
                             {
                                 if ( !isUsingVolumeColor ) {
+                                	if ( cKey == null ) continue;
                                 	m_kColorEllipse = constantColor.get(groupConstantColor.get(cKey).intValue());
                                 } else {
                                 	fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
@@ -1271,6 +1273,7 @@ public class VolumeDTI extends VolumeObject
                             if ( kImage.isColorImage() )
                             {
                                 if ( !isUsingVolumeColor ) {
+                                	if ( cKey == null ) continue;
                                 	m_kColorEllipse = constantColor.get(groupConstantColor.get(cKey).intValue());
                                 } else {
                                     fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
@@ -1338,7 +1341,7 @@ public class VolumeDTI extends VolumeObject
             for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
             {
             	if (!isUsingVolumeColor) {
-
+            		if ( cKey == null ) continue;
 					kColor1 = constantColor.get(groupConstantColor.get(cKey).intValue());
 
 					kTract = (Polyline) kTractNode.GetChild(i);
@@ -1414,6 +1417,7 @@ public class VolumeDTI extends VolumeObject
                 {
 	            	
                     if ( !isUsingVolumeColor ) {
+                    	if ( cKey == null ) continue;
                     	kColor1 = constantColor.get(groupConstantColor.get(cKey).intValue());
                     } else {
                     	 fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
@@ -1469,10 +1473,29 @@ public class VolumeDTI extends VolumeObject
     }
     
     /**
-     * reduce the group color index.
+     * remove the group color index.
+     */
+    public void removeTractColor(Integer iGroup) {
+    	groupConstantColor.remove(iGroup);
+    }
+    
+    
+    /**
+     * Find the min available group index;
      */
     public void removeGroupColor() {
+    	Iterator cIterator = groupConstantColor.keySet().iterator();
+    	Integer cKey;
+    	
     	currentGroupIndex--;
+    	while ( cIterator.hasNext() )
+        {
+             cKey = (Integer)cIterator.next();
+             if ( groupConstantColor.get(cKey).intValue() ==  currentGroupIndex ) {
+            	 currentGroupIndex++;
+             }
+        }
+    	
     }
     
     /** Sets the polyline color for the specified fiber bundle tract group. 
@@ -1480,7 +1503,16 @@ public class VolumeDTI extends VolumeObject
      * @param kColor the new polyline color for the specified fiber bundle tract group. 
      */
     public void setTubesGroupColor( int iGroup, ColorRGB kColor ) {
-    	constantColor.set(groupConstantColor.get(iGroup-1).intValue(), kColor);
+    	if ( groupConstantColor.get(iGroup-1) != null )
+    		constantColor.set(groupConstantColor.get(iGroup-1).intValue(), kColor);
+    }
+    
+    /** Get the group color with given group ID. 
+     * @param groupID  given group id
+     * @return  ColorRGB group color
+     */
+    public ColorRGB getGroupColor(int iGroup) {
+    	return constantColor.get(groupConstantColor.get(iGroup-1).intValue());
     }
     
     /**

@@ -175,7 +175,24 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     }
 
     public void valueChanged(ListSelectionEvent kEvent) {
-        if ( m_kVOIParamsList == null )
+        
+    	if ( kEvent.getSource() == m_kTractList ) {
+        	int index = m_kTractList.getSelectedIndex();
+        	if ( index != -1 ) {
+	        	DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
+	            String bundleName = (String)kList.get(index);
+	    		int endIndex = bundleName.length();
+	    		int startIndex = new String("FiberBundle").length();
+	    		String temp = bundleName.substring(startIndex, endIndex);
+	    		int gid = Integer.valueOf(temp);
+           
+            	ColorRGB color = m_kVolumeDisplay.getGroupColor(gid);
+            	m_kColorButton.setBackground(new Color(color.R, color.G, color.B));
+            }
+            
+        }
+    	
+    	if ( m_kVOIParamsList == null )
         {
             return;
         }
@@ -986,21 +1003,18 @@ implements ItemListener, ListSelectionListener, ChangeListener {
                     m_kVolumeDisplay.removePolyline(j);	
                 }
                 m_kBundleList.remove(new Integer(iGroup));
-                m_kVolumeDisplay.removeGroupColor();
+                m_kVolumeDisplay.removeTractColor(new Integer(iGroup));
             }
             kList.remove(aiSelected[i]);
+            m_kVolumeDisplay.removeGroupColor();
         }
 
         if (kList.size() == 0) {
-            /*
-			if (m_kDTIImage != null) {
-				m_kDTIImage.disposeLocal();
-			}
-			m_kDTIImage = null;
-             */
+        	m_kTractList.setSelectedIndex(0);
         
         } else {
-            m_kTractList.setSelectedIndex(kList.size());
+        	int index = kList.size()-1;
+        	m_kTractList.setSelectedIndex(index);
         }
         updateTractCount();
     }	
@@ -1790,7 +1804,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayArrows(false);
         } else if (displayMode == Ellipzoids && displayAll == true) {
             parentFrame.getLightControl().refreshLighting();
-            Color color = m_kColorButton.getBackground();
             m_kVolumeDisplay.setDisplayAllEllipsoids(true);
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayCylinders(false);
@@ -1807,7 +1820,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayArrows(false);
         } else if (displayMode == Cylinders && displayAll == true) {
             parentFrame.getLightControl().refreshLighting();
-            Color color = m_kColorButton.getBackground();
             m_kVolumeDisplay.setDisplayAllCylinders(true);
             m_kVolumeDisplay.setDisplayCylinders(false);
             m_kVolumeDisplay.setDisplayAllEllipsoids(false);
@@ -1816,7 +1828,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayArrows(false);
         }  else if (displayMode == Tubes /* && displayAll == false */) {
             parentFrame.getLightControl().refreshLighting();
-            Color color = m_kColorButton.getBackground();
             m_kVolumeDisplay.setDisplayTubes(true);
             m_kVolumeDisplay.setDisplayAllCylinders(false);
             m_kVolumeDisplay.setDisplayCylinders(false);
@@ -1825,7 +1836,6 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayArrows(false);
         }    else if (displayMode == Arrows /* && displayAll == false */) {
             parentFrame.getLightControl().refreshLighting();
-            Color color = m_kColorButton.getBackground();
             m_kVolumeDisplay.setDisplayTubes(false);
             m_kVolumeDisplay.setDisplayAllCylinders(false);
             m_kVolumeDisplay.setDisplayCylinders(false);
@@ -1833,6 +1843,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayArrows(true);
         }  else if (displayMode == Polylines ) {
+        	parentFrame.getLightControl().refreshLighting();
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayAllEllipsoids(false);
             m_kVolumeDisplay.setDisplayCylinders(false);
