@@ -505,8 +505,8 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         kTractPanel.add(kParamsPanel, gbc);
         gbc.gridy++;
         kTractPanel.add(slicePanel, gbc);
-        gbc.gridy++;
-        kTractPanel.add(kVectorPanel, gbc);
+        // gbc.gridy++;
+        // kTractPanel.add(kVectorPanel, gbc);
         
         kTractPanel.setBorder(buildTitledBorder("Inclusion & Exclusion Parameters"));
         return kTractPanel;

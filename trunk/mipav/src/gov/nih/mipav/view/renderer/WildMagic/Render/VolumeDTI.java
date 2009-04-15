@@ -1350,8 +1350,8 @@ public class VolumeDTI extends VolumeObject
 
 					kTract.UpdateRS();
 
-					m_kLinesMaterial.Ambient = kColor1; // new ColorRGB(ColorRGB.BLACK);
-					m_kLinesMaterial.Diffuse = kColor1; // new ColorRGB(ColorRGB.BLACK);
+					m_kLinesMaterial.Ambient = kColor1; 
+					m_kLinesMaterial.Diffuse = kColor1;
 					m_kLinesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
 					m_kLinesMaterial.Specular = new ColorRGB(ColorRGB.BLACK);
 					m_kLinesMaterial.Alpha = 1.0f;
