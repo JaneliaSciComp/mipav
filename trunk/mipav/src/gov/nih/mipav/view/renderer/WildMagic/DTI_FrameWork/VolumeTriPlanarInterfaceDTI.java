@@ -423,8 +423,6 @@ implements ChangeListener {
             
             // work around to fix the init panel viewing aspect ratio offset problem. 
             m_kAnimator.start();
-            setSize(getSize().width + 50, getSize().height + panelToolbar.getHeight()*2);
-            resizePanel();
             getLightControl().refreshLighting();
             
             // After the whole WM rendering framework built, force updating the color LUT table in order to 
