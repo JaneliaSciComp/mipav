@@ -812,16 +812,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         //extra threads cannot be silently ignored, so maximum is set
         calcGroup.enumerate(activeGroup);
         for(int i=0; i<activeGroup.length; i++) {
-        	if(activeGroup[i] != null) {
+        	if(activeGroup[i] != null && activeGroup[i].isAlive()) {
         		try {
-        			activeGroup[i].join();
         			Preferences.debug("Waiting for "+activeGroup[i].getName()+" to finish.\n");
+        			activeGroup[i].join();
+        			Preferences.debug("Still waiting for "+activeGroup[i].getName()+" to finish.\n");
         		} catch(InterruptedException e) {
         			System.err.println("Thread waiting process did not complete normally.");
         			System.err.println("Please restart calculation process.");
         		}
         	}
         }
+        
+        setCompleted(true);
     }
 
     /**
@@ -2551,8 +2554,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
 
             }
-
-            setCompleted(true);
     	}
     }
     
@@ -4264,8 +4265,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             System.out.println("Time required to calculate "+selectedVOI.getName()+": "+(System.currentTimeMillis() - time));
-
-            setCompleted(true);
         }
     }
     
