@@ -642,7 +642,6 @@ public class VolumeDTI extends VolumeObject
         if ( m_kTubes.size() == 0 )
         {
             m_kTubes = null;
-            groupConstantColor = null;
             m_kTubeColors = null;
         }
         
@@ -1476,7 +1475,10 @@ public class VolumeDTI extends VolumeObject
      * remove the group color index.
      */
     public void removeTractColor(Integer iGroup) {
-    	groupConstantColor.remove(iGroup);
+    	if ( groupConstantColor.containsKey( iGroup ) )
+        {
+    		groupConstantColor.remove(iGroup);
+        }
     }
     
     
