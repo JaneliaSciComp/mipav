@@ -425,6 +425,7 @@ implements ChangeListener {
             m_kAnimator.start();
             setSize(getSize().width + 50, getSize().height + panelToolbar.getHeight()*2);
             resizePanel();
+            getLightControl().refreshLighting();
             
             // After the whole WM rendering framework built, force updating the color LUT table in order to 
             // update both the volume viewer and tri-planar viewer.  Otherwise, the render volume turns to be black.
