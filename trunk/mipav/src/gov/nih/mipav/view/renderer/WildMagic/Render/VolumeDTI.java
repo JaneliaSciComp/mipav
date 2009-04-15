@@ -277,12 +277,12 @@ public class VolumeDTI extends VolumeObject
             kTractNode.AttachChild(kLine);
             kTractNode.UpdateGS();
             kTractNode.UpdateRS();
-            /*
+           
             Vector<int[]> kEllipseVector = m_kEllipsoids.get(iIGroup);
             kEllipseVector.add(aiEllipsoids);
             Vector<int[]> kCylinderVector = m_kCylinders.get(iIGroup);
             kCylinderVector.add(aiCylinders);
-           */
+          
         }
         
         if ( m_kTubes.containsKey( iIGroup ) )
@@ -291,6 +291,8 @@ public class VolumeDTI extends VolumeObject
             kTubeNode.AttachChild(createTube(kLine));
             kTubeNode.UpdateGS();
             kTubeNode.UpdateRS();
+            groupConstantColor.put(new Integer(iIGroup), new Integer(currentGroupIndex));
+            // m_kTubeColors.put(new Integer(iIGroup), new Integer(centerIndex));
                        
         }
         
@@ -313,6 +315,9 @@ public class VolumeDTI extends VolumeObject
             String kShaderName = new String( "ConstantColor" );
             VertexColor3Effect kPolylineShader = new VertexColor3Effect( kShaderName, true );
             m_kShaders.put( new Integer(iIGroup), kPolylineShader );
+            
+            groupConstantColor.put(new Integer(iIGroup), new Integer(currentGroupIndex));
+            
         }
         
         if ( kTubeNode == null ) {
@@ -1436,7 +1441,7 @@ public class VolumeDTI extends VolumeObject
                     kColor1 = new ColorRGB(fR, fR, fR);
                 }                 
                 
-                if ( kColor1 == null ) return;
+                // if ( kColor1 == null ) return;
                 
                 kTube.AttachGlobalState(m_kTubesMaterial);
                 
