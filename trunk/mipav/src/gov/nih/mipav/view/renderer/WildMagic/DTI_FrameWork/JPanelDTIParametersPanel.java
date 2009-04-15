@@ -31,7 +31,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 public class JPanelDTIParametersPanel extends JInterfaceBase 
-implements ItemListener, ListSelectionListener, ChangeListener {
+implements ListSelectionListener, ChangeListener {
     /**
      * 
      */
@@ -106,11 +106,14 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     private JCheckBox m_kNegY;
     private JCheckBox m_kNegZ;
 
+    /*
     private JRadioButton radioLines;
     private JRadioButton radioEllipzoids;
     private JRadioButton radioCylinders;
     private JRadioButton radioTubes;
     private JRadioButton radioArrows;
+    */
+    
     private JCheckBox displayAllCheckBox;
     private int displayMode;
     private static int Polylines = 0;
@@ -130,6 +133,9 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     private JRadioButton m_kIgnore;
     
     private boolean m_bDTIImageSet = false;
+    
+    /** list to hold the glyphs type name */
+    private JComboBox glyphsList;
     
     private class VOIParams {
         String Name;
@@ -210,57 +216,92 @@ implements ItemListener, ListSelectionListener, ChangeListener {
 
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
-        String command = event.getActionCommand();
-        if (command.equals("ChangeColor")) {
-            m_kColorChooser = new ViewJColorChooser(new Frame(),
-                    "Pick fiber bundle color", new OkColorListener(),
-                    new CancelListener());
-        } else if (command.equals("VolumeColor")) {
-        	m_kVolumeDisplay.setVolumeColor(m_kUseVolumeColor.isSelected());
-            if (m_kUseVolumeColor.isSelected()) {
-                setColor(null);
-            } else {
-                setColor(m_kColorButton.getBackground());
-            }
-        } else if ( command.equals("DisplayAll") ) {
-            displayAll = displayAllCheckBox.isSelected();
-            invokeDisplayFunction();
-        } else if (command.equals("tractLoad")) {
-            loadingTrack = true;
-            loadTractFile();
-            loadingTrack = false;
-            ((VolumeTriPlanerRenderDTI)m_kVolumeDisplay).enableSlicePickable(true);	
-            processTractFile();
-        }  else if (command.equals("Add")) {
-            processTractFile();
-        } else if (command.equals("Remove")) {
-            removePolyline();
-        }  else if (command.equals("Include")) {
-            int iVOI = m_kVOIList.getSelectedIndex();
-            if ( m_kVOIParamsList != null ) {
-	            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
-	            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
-	            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
-	            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCInclude );
-            }
-        }  else if (command.equals("Exclude")) {
-            int iVOI = m_kVOIList.getSelectedIndex();
-            if ( m_kVOIParamsList != null ) {
-	            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
-	            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
-	            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
-	            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCExclude );
-            }
-        }  else if (command.equals("Ignore")) {
-            int iVOI = m_kVOIList.getSelectedIndex();
-            if ( m_kVOIParamsList != null ) {
-	            m_kVOIParamsList.get(iVOI).Include = m_kInclude.isSelected(); 
-	            m_kVOIParamsList.get(iVOI).Exclude = m_kExclude.isSelected(); 
-	            m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected(); 
-	            parentFrame.setColor( m_kVOIParamsList.get(iVOI).Name, m_kCIgnore );
-            }
-        } 
-
+        String command;       
+        
+        if (source instanceof JComboBox) {
+			JComboBox cb = (JComboBox)source;
+			command = (String) cb.getSelectedItem();
+			if (command.equals("Lines")) {
+				displayMode = Polylines;
+				displayAllCheckBox.setEnabled(false);
+			} else if (command.equals("Ellipsoids")) {
+				displayMode = Ellipzoids;
+				displayAllCheckBox.setEnabled(true);
+			} else if (command.equals("Cylinders")) {
+				displayMode = Cylinders;
+				displayAllCheckBox.setEnabled(false);
+			} else if (command.equals("Tubes")) {
+				displayMode = Tubes;
+				displayAllCheckBox.setEnabled(true);
+			} else if (command.equals("Arrows")) {
+				displayMode = Arrows;
+				displayAllCheckBox.setEnabled(true);
+			}
+			invokeDisplayFunction();
+		} else {
+			command = event.getActionCommand();
+			if (command.equals("ChangeColor")) {
+				m_kColorChooser = new ViewJColorChooser(new Frame(),
+						"Pick fiber bundle color", new OkColorListener(),
+						new CancelListener());
+			} else if (command.equals("VolumeColor")) {
+				m_kVolumeDisplay.setVolumeColor(m_kUseVolumeColor.isSelected());
+				if (m_kUseVolumeColor.isSelected()) {
+					setColor(null);
+				} else {
+					setColor(m_kColorButton.getBackground());
+				}
+			} else if (command.equals("DisplayAll")) {
+				displayAll = displayAllCheckBox.isSelected();
+				invokeDisplayFunction();
+			} else if (command.equals("tractLoad")) {
+				loadingTrack = true;
+				loadTractFile();
+				loadingTrack = false;
+				((VolumeTriPlanerRenderDTI) m_kVolumeDisplay)
+						.enableSlicePickable(true);
+				processTractFile();
+			} else if (command.equals("Add")) {
+				processTractFile();
+			} else if (command.equals("Remove")) {
+				removePolyline();
+			} else if (command.equals("Include")) {
+				int iVOI = m_kVOIList.getSelectedIndex();
+				if (m_kVOIParamsList != null) {
+					m_kVOIParamsList.get(iVOI).Include = m_kInclude
+							.isSelected();
+					m_kVOIParamsList.get(iVOI).Exclude = m_kExclude
+							.isSelected();
+					m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected();
+					parentFrame.setColor(m_kVOIParamsList.get(iVOI).Name,
+							m_kCInclude);
+				}
+			} else if (command.equals("Exclude")) {
+				int iVOI = m_kVOIList.getSelectedIndex();
+				if (m_kVOIParamsList != null) {
+					m_kVOIParamsList.get(iVOI).Include = m_kInclude
+							.isSelected();
+					m_kVOIParamsList.get(iVOI).Exclude = m_kExclude
+							.isSelected();
+					m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected();
+					parentFrame.setColor(m_kVOIParamsList.get(iVOI).Name,
+							m_kCExclude);
+				}
+			} else if (command.equals("Ignore")) {
+				int iVOI = m_kVOIList.getSelectedIndex();
+				if (m_kVOIParamsList != null) {
+					m_kVOIParamsList.get(iVOI).Include = m_kInclude
+							.isSelected();
+					m_kVOIParamsList.get(iVOI).Exclude = m_kExclude
+							.isSelected();
+					m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected();
+					parentFrame.setColor(m_kVOIParamsList.get(iVOI).Name,
+							m_kCIgnore);
+				}
+			}
+		}
+        
+      
     }
 
     public void updateCounter() {
@@ -1126,56 +1167,37 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         sliderPanel.add(m_kDisplaySlider, BorderLayout.CENTER);
         sliderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         sliderPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-
-        ButtonGroup group1 = new ButtonGroup();
-
-        radioLines = new JRadioButton("Lines", true);
-        radioLines.setFont(MipavUtil.font12B);
-        radioLines.addItemListener(this);
-        group1.add(radioLines);
-
-        radioEllipzoids = new JRadioButton("Ellipsoids", false);
-        radioEllipzoids.setFont(MipavUtil.font12B);
-        radioEllipzoids.addItemListener(this);
-        group1.add(radioEllipzoids);
-
-        radioCylinders = new JRadioButton("Cylinders", false);
-        radioCylinders.setFont(MipavUtil.font12B);
-        radioCylinders.addItemListener(this);
-        group1.add(radioCylinders);
-
-        radioTubes = new JRadioButton("Tubes", false);
-        radioTubes.setFont(MipavUtil.font12B);
-        radioTubes.addItemListener(this);
-        group1.add(radioTubes);
-
-        radioArrows = new JRadioButton("Arrows", false);
-        radioArrows.setFont(MipavUtil.font12B);
-        radioArrows.addItemListener(this);
-        group1.add(radioArrows);
-
+        
+        
+        JLabel glyphsLabel = new JLabel("Glyphs : ");
+        glyphsLabel.setFont(MipavUtil.font12B);
+        glyphsLabel.setForeground(Color.black);
+        
+        String[] glyphStrings = { "Lines", "Ellipsoids", "Cylinders", "Tubes", "Arrows" };
+        glyphsList = new JComboBox(glyphStrings);
+        glyphsList.setSize(new Dimension(20, 22));
+        glyphsList.setSelectedIndex(0);
+        glyphsList.addActionListener(this);
+        
         displayAllCheckBox = new JCheckBox("Display All");
         displayAllCheckBox.setSelected(false);
         displayAllCheckBox.addActionListener(this);
         displayAllCheckBox.setActionCommand("DisplayAll");
         displayAllCheckBox.setEnabled(false);
-
+        
         JPanel glyphsPanel = new JPanel();
-        glyphsPanel.setLayout(new BoxLayout(glyphsPanel, BoxLayout.X_AXIS));
-        glyphsPanel.add(radioLines);
-        glyphsPanel.add(radioEllipzoids);
-        glyphsPanel.add(radioCylinders);
-        glyphsPanel.add(radioTubes);
-        glyphsPanel.add(radioArrows);
-        glyphsPanel.add(displayAllCheckBox, BorderLayout.CENTER);
-        glyphsPanel.setBorder(buildTitledBorder("Glyphs & Streamlines"));
-
+        glyphsPanel.setLayout(new BorderLayout());
+        glyphsPanel.add(glyphsLabel, BorderLayout.WEST);
+        glyphsPanel.add(glyphsList, BorderLayout.CENTER);
+        glyphsPanel.add(displayAllCheckBox, BorderLayout.EAST);
+        
         JPanel optionsPanel = new JPanel();
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
         optionsPanel.add(colorPanel);
         optionsPanel.add(sliderPanel);
-        optionsPanel.setBorder(buildTitledBorder("Fiber bundle options"));
-
+        optionsPanel.add(glyphsPanel);
+        optionsPanel.setBorder(buildTitledBorder("Fiber bundle & Glyph options"));
+        
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new BorderLayout());
         rightPanel.add(optionsPanel, BorderLayout.NORTH);
@@ -1185,8 +1207,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
         contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         contentBox.add(listPanel);
         contentBox.add(rightPanel);
-        contentBox.add(glyphsPanel);
-
+        
         mainScrollPanel.add(contentBox, BorderLayout.NORTH);
 
         kTractPanel.add(scroller, BorderLayout.CENTER);
@@ -1768,31 +1789,7 @@ implements ItemListener, ListSelectionListener, ChangeListener {
     	m_kVolumeDisplay.setVolumeColor(m_kUseVolumeColor.isSelected());
     }
 
-    /**
-     * Sets the flags for the checkboxes.
-     *
-     * @param  event  event that triggered this function
-     */
-    public synchronized void itemStateChanged(ItemEvent event) {
-        if (radioLines.isSelected()) {
-            displayMode = Polylines;
-            displayAllCheckBox.setEnabled(false);
-        } else if ( radioEllipzoids.isSelected()) {
-            displayMode = Ellipzoids;
-            displayAllCheckBox.setEnabled(true);
-        } else if ( radioTubes.isSelected()) {
-            displayMode = Tubes;
-            displayAllCheckBox.setEnabled(false);
-        } else if ( radioCylinders.isSelected() ) {
-            displayMode = Cylinders;
-            displayAllCheckBox.setEnabled(true);
-        } else if ( radioArrows.isSelected()) {
-            displayMode = Arrows;
-            displayAllCheckBox.setEnabled(true);
-        }
-        invokeDisplayFunction();
-    }
-
+    
     public void invokeDisplayFunction() {
         if ( displayMode == Ellipzoids && displayAll == false) {
             parentFrame.getLightControl().refreshLighting();
