@@ -157,10 +157,11 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         computeButton.setToolTipText("Compute");
         computeButton.addActionListener(this);
         computeButton.setActionCommand("compute");
+        computeButton.setVisible(true);
         computeButton.setEnabled(false);
 
         mainPanelGBC.gridx = 0;
-        mainPanelGBC.gridy = 3;
+        mainPanelGBC.gridy = 4;
         mainPanelGBC.insets = new Insets(20,0,0,0);
         mainPanelGBC.fill = GridBagConstraints.NONE;
         mainPanel.add(computeButton,mainPanelGBC);
