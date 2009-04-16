@@ -471,8 +471,6 @@ uniform vec4 Light3WorldPosition;
 uniform vec4 Light3WorldDirection;
                      
 uniform vec3 CameraModelPosition;
-uniform vec3 CameraWorldPosition;
-uniform mat4 WMatrix;
 uniform mat4 WVPMatrix;
 
 
@@ -596,10 +594,11 @@ void p_MipavLightingFragmentP()
         color.a = Blend;  
 
         // Test normals:
-        //        kVertexColor -= (color0 + color1 + color2 + color3);
-        //        kVertexColor.r += (kInNormal.x + 1.0)/2.0;
-        //        kVertexColor.g += (kInNormal.y + 1.0)/2.0;
-        //        kVertexColor.b += (kInNormal.z + 1.0)/2.0;
+//         color -= (color0 + color1 + color2 + color3);
+//         color.r += (kInNormal.x + 1.0)/2.0;
+//         color.g += (kInNormal.y + 1.0)/2.0;
+//         color.b += (kInNormal.z + 1.0)/2.0;
+//         color.a = 1.0;
 
         if ( color.a == 0.0 )
         {

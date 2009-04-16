@@ -380,7 +380,7 @@ public class JDialogDTIInput extends JInterfaceBase
 	{
             if ( rayBasedRenderWM != null )
             {
-                rayBasedRenderWM.setDisplayAllEllipsoids( m_kAllEllipsoids.isSelected() );
+                rayBasedRenderWM.setDisplayAllGlyphs( m_kAllEllipsoids.isSelected() );
             }
 	}
 	else if ( kCommand.equals("Add") )

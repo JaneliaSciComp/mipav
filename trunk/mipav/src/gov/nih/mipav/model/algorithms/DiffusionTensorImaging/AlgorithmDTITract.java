@@ -21,6 +21,8 @@ public class AlgorithmDTITract extends AlgorithmBase
 
     /** Input Diffusion Tensor Image: */
     private ModelImage m_kDTIImage = null;
+    /** Input FA Image: */
+    private ModelImage m_kFAImage = null;
     /** Input EigenVector Image: */
     private ModelImage m_kEigenImage = null;
     /** Input EigenValue Image: */
@@ -35,6 +37,9 @@ public class AlgorithmDTITract extends AlgorithmBase
     private boolean m_bNegX = false;
     private boolean m_bNegY = false;
     private boolean m_bNegZ = false;
+    private float m_fFAMin = 0;
+    private float m_fFAMax = 1;
+    private float m_fAngleMax = (float)Math.PI/4.0f;
 
 
 
@@ -51,6 +56,27 @@ public class AlgorithmDTITract extends AlgorithmBase
         m_bNegX = bNegX;
         m_bNegY = bNegY;
         m_bNegZ = bNegZ;
+    }
+
+    /** Initialize the Algorithm with the input DTI Image:
+     * @param kDTIImage input DTI Image.
+     */
+    public AlgorithmDTITract( ModelImage kDTIImage, ModelImage kFAImage, ModelImage kEigenImage, ModelImage kEigenValueImage,
+                              String kFile, boolean bNegX, boolean bNegY, boolean bNegZ,
+                              float fFAMin, float fFAMax, float fMaxAngle )
+    {
+        m_kDTIImage = kDTIImage;
+        m_kFAImage = kFAImage;
+        m_kEigenImage = kEigenImage;
+        m_kEigenValueImage = kEigenValueImage;
+        m_kOutputFile = kFile;
+        m_bNegX = bNegX;
+        m_bNegY = bNegY;
+        m_bNegZ = bNegZ;
+        m_fFAMin = fFAMin;
+        m_fFAMax = fFAMax;
+        m_fAngleMax = (float)(fMaxAngle*Math.PI/180.0f);
+        //System.err.println( m_fFAMin + " " + m_fFAMax + " " + m_fAngleMax + " " + fMaxAngle );
     }
 
     /** Clean up memory. */
@@ -158,9 +184,9 @@ public class AlgorithmDTITract extends AlgorithmBase
                         kV1.Normalize();
                         kV2.Normalize();
 
-                        traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV1), m_kEigenImage, m_kEigenValueImage, true );
+                        traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV1), m_kEigenImage, m_kEigenValueImage, m_kFAImage, true );
                         m_abVisited[i] = true;
-                        traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV2), m_kEigenImage, m_kEigenValueImage, false );
+                        traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV2), m_kEigenImage, m_kEigenValueImage, m_kFAImage, false );
                         
                         
                         //traceTract( kTract, kPos, kV1, m_kDTIImage, true );
@@ -277,7 +303,7 @@ public class AlgorithmDTITract extends AlgorithmBase
     }
 
     private void traceTract2( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
-            ModelImage eigenImage, ModelImage eigenValueImage, boolean bDir )
+            ModelImage eigenImage, ModelImage eigenValueImage, ModelImage kFAImage, boolean bDir )
     {
         int iDimX = eigenImage.getExtents()[0];
         int iDimY = eigenImage.getExtents()[1];
@@ -294,6 +320,7 @@ public class AlgorithmDTITract extends AlgorithmBase
         float fDot, fAngle;
         boolean bAllZero = true;
 
+        float fFA;
         while ( !bDone )
         {
             kNext.Add( kStart, kDir );
@@ -308,6 +335,16 @@ public class AlgorithmDTITract extends AlgorithmBase
             {
                 bDone = true;
                 break;
+            }
+
+            if ( kFAImage != null )
+            {
+                fFA = kFAImage.getFloat(i);
+                if ( (fFA < m_fFAMin) || (fFA > m_fFAMax) )
+                {
+                    bDone = true;
+                    break;
+                }
             }
             
             bAllZero = true;
@@ -351,7 +388,7 @@ public class AlgorithmDTITract extends AlgorithmBase
                     kOut.Neg();
                 }
                 fAngle = Vector3f.Angle(kDir,kOut);
-                if ( fAngle > (Math.PI/4.0f) )
+                if ( fAngle > m_fAngleMax )
                 {
                     bDone = true;
                     break;

@@ -15,6 +15,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import WildMagic.LibFoundation.Mathematics.GMatrixf;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogDirectResample;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 
@@ -129,6 +130,9 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
     private JCheckBox m_kNegX;
     private JCheckBox m_kNegY;
     private JCheckBox m_kNegZ;
+    private JTextField m_kFAMinThreshold;
+    private JTextField m_kFAMaxThreshold;
+    private JTextField m_kMaxAngle;
 
     private AlgorithmDWI2DTI kAlgorithm;
 
@@ -208,6 +212,32 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         } else if(command.equalsIgnoreCase("browseMaskImage")) {
             loadDWIMaskFile();
         }
+        else if ( command.equals( "FAMINChanged" ) )
+        {
+            if (!JDialogBase.testParameter(m_kFAMinThreshold.getText(), 0.0f, 1.0f))
+            {
+                m_kFAMinThreshold.requestFocus();
+                m_kFAMinThreshold.selectAll();
+            }
+        }
+
+        else if ( command.equals( "FAMAXChanged" ) )
+        {
+            if (!JDialogBase.testParameter(m_kFAMaxThreshold.getText(), 0.0f, 1.0f))
+            {
+                m_kFAMaxThreshold.requestFocus();
+                m_kFAMaxThreshold.selectAll();
+            }
+        }
+
+        else if ( command.equals( "MaxAngleChanged" ) )
+        {
+            if (!JDialogBase.testParameter(m_kMaxAngle.getText(), 0.0f, 180f))
+            {
+                m_kMaxAngle.requestFocus();
+                m_kMaxAngle.selectAll();
+            }
+        }
         else if ( command.equalsIgnoreCase("compute")) {
             if(dtiRadio.isSelected()) {
                 processDTI();
@@ -218,13 +248,17 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
                 setFAimage();
                 setDTIColorImage();
                 saveImageFiles();
+                float fFAMin = Float.valueOf(m_kFAMinThreshold.getText()).floatValue();
+                float fFAMax = Float.valueOf(m_kFAMaxThreshold.getText()).floatValue();
+                float fMaxAngle = Float.valueOf(m_kMaxAngle.getText()).floatValue();
                 //if tract reconstruction checkbox is selectd, do the fiber calculation
                 if(tractCheckBox.isSelected()) {
                     AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
-                            parentFrame.getDTIimage(), parentFrame.getEVimage(), 
+                            parentFrame.getDTIimage(), parentFrame.getFAimage(), parentFrame.getEVimage(), 
                             parentFrame.getEValueimage(),
                             parentFrame.getParentDir() + "DTIImage.xml_tract",
-                            m_kNegX.isSelected(), m_kNegY.isSelected(), m_kNegZ.isSelected() );
+                            m_kNegX.isSelected(), m_kNegY.isSelected(), m_kNegZ.isSelected(),
+                            fFAMin, fFAMax, fMaxAngle );
                     kTractAlgorithm.run();
                     kTractAlgorithm.disposeLocal();
                     kTractAlgorithm = null;
@@ -301,7 +335,6 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
     public void buildOptionsPanel() {
         JPanel optionsPanel = new JPanel();
         optionsPanel.setLayout(new GridBagLayout());
-        optionsPanel.setBorder(buildTitledBorder(" Options "));
 
         GridBagConstraints gbc = new GridBagConstraints();
 
@@ -311,7 +344,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.insets = new Insets(0,0,10,0);
+        //gbc.insets = new Insets(0,0,10,0);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         optionsPanel.add(tractCheckBox, gbc);
 
@@ -340,15 +373,52 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         kVectorPanel.add(m_kNegX);
         kVectorPanel.add(m_kNegY);
         kVectorPanel.add(m_kNegZ);
-        kVectorPanel.setBorder(buildTitledBorder("Vector component-wise negation"));
 
+        m_kFAMinThreshold = new JTextField("0.0", 4);
+        m_kFAMinThreshold.setActionCommand("FAMINChanged");
+        m_kFAMinThreshold.addActionListener(this);
+        m_kFAMaxThreshold = new JTextField("1.0", 4);
+        m_kFAMaxThreshold.setActionCommand("FAMAXChanged");
+        m_kFAMaxThreshold.addActionListener(this);
+        m_kMaxAngle = new JTextField("45", 4);
+        m_kMaxAngle.setActionCommand("MaxAngleChanged");
+        m_kMaxAngle.addActionListener(this);
+        JPanel kTrackPanel = new JPanel(new GridBagLayout());
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        kTrackPanel.add(new JLabel( "FA Threshold Min:"), gbc);
+        gbc.gridx = 2;
+        kTrackPanel.add( m_kFAMinThreshold, gbc );
+        gbc.gridx = 0;
+        gbc.gridy++;
+        kTrackPanel.add(new JLabel( "FA Threshold Max:"), gbc);
+        gbc.gridx = 2;
+        kTrackPanel.add( m_kFAMaxThreshold, gbc );
+        gbc.gridx = 0;
+        gbc.gridy++;
+        kTrackPanel.add(new JLabel( "Maximum Angle"), gbc);
+        gbc.gridx = 2;
+        kTrackPanel.add( m_kMaxAngle, gbc );
+        
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JPanel kTractOPtionsPanel = new JPanel();
+        kTractOPtionsPanel.setLayout(new GridBagLayout());
+        kTractOPtionsPanel.add(optionsPanel,gbc);
+        gbc.gridy = 1;
+        kTractOPtionsPanel.add(kVectorPanel,gbc);
+        gbc.gridy = 2;
+        kTractOPtionsPanel.add(kTrackPanel,gbc);
+        kTractOPtionsPanel.setBorder(buildTitledBorder("Fiber Track Recontruction Options"));
+        
+        
         mainPanelGBC.gridx = 0;
         mainPanelGBC.gridy = 2;
         mainPanelGBC.insets = new Insets(10,0,0,0);
         mainPanelGBC.fill = GridBagConstraints.HORIZONTAL;
-        mainPanel.add(optionsPanel,mainPanelGBC);
-        mainPanelGBC.gridy = 3;
-        mainPanel.add(kVectorPanel,mainPanelGBC);
+        mainPanel.add(kTractOPtionsPanel,mainPanelGBC);
     }
 
 
