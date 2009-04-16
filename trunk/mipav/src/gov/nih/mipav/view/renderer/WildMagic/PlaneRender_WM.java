@@ -852,6 +852,9 @@ public class PlaneRender_WM extends GPURenderBase
         InitializeObjectMotion(m_spkScene);
 
         m_kAnimator.add( GetCanvas() );
+        m_kParent.setSliceFromPlane( new Vector3f( (m_kVolumeImageA.GetImage().getExtents()[0] - 1)/2.0f,
+                (m_kVolumeImageA.GetImage().getExtents()[1] - 1)/2.0f,
+                (m_kVolumeImageA.GetImage().getExtents()[2] - 1)/2.0f ) );
     }
 
     /** 

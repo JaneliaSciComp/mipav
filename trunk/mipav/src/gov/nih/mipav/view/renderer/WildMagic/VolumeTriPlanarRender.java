@@ -1561,27 +1561,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kVolumeRayCast.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
     }
 
-    /** Turns on/off displaying all the ellipsoids.
-     * @param bDisplay when true display all the cylinders in the volume.
+    /** Turns on/off displaying all the glyphs.
+     * @param bDisplay when true display all the glyphs in the volume.
      */
-    public void setDisplayAllCylinders( boolean bDisplay )
+    public void setDisplayAllGlyphs( boolean bDisplay )
     {
         if ( m_kDTIDisplay != null )
         {
-            m_kDTIDisplay.setDisplayAllCylinders(bDisplay);
+            m_kDTIDisplay.setDisplayAllGlyphs(bDisplay);
         }
     }
     
-    /** Turns on/off displaying all the ellipsoids.
-     * @param bDisplay when true display all the ellipsods in the volume.
-     */
-    public void setDisplayAllEllipsoids( boolean bDisplay )
-    {
-        if ( m_kDTIDisplay != null )
-        {
-            m_kDTIDisplay.setDisplayAllEllipsoids(bDisplay);
-        }
-    }
     
     /** Turns on/off displaying the fiber bundle tracts with ellipsoids.
      * @param bDisplay when true display the tracts with Cylinders.

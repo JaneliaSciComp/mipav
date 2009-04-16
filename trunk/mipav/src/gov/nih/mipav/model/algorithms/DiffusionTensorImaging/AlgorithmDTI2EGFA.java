@@ -163,6 +163,9 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         float[] afEigenValues = new float[iLen*4];
         float[] afDataCM = new float[iLen*9];
         float[] afTensorData = new float[6];
+        
+        float fFAMin = Float.MAX_VALUE;
+        float fFAMax = -Float.MAX_VALUE;
 
         ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating Eigen Vectors ",
                                                              "calculating eigen vectors...", 0, 100, true);
@@ -229,6 +232,15 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 afEigenValues[i*4 + 2] = 0;
                 afEigenValues[i*4 + 3] = 0;
             }
+            
+            if ( afData[i] < fFAMin )
+            {
+                fFAMin = afData[i];
+            }
+            if ( afData[i] > fFAMax )
+            {
+                fFAMax = afData[i];
+            }
 
             afDataCM[i + 0*iLen] = kV1.X;
             afDataCM[i + 1*iLen] = kV1.Y;
@@ -270,6 +282,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             m_kFAImage.disposeLocal();
             m_kFAImage = null;
         }
+        //System.err.println( fFAMin + " " + fFAMax );
 
         m_kTraceImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,

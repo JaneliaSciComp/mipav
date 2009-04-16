@@ -14,6 +14,7 @@ import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.*;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface.IntVector;
@@ -106,6 +107,10 @@ implements ListSelectionListener, ChangeListener {
     private JCheckBox m_kNegY;
     private JCheckBox m_kNegZ;
 
+    private JTextField m_kFAMinThreshold;
+    private JTextField m_kFAMaxThreshold;
+    private JTextField m_kMaxAngle;
+
     /*
     private JRadioButton radioLines;
     private JRadioButton radioEllipzoids;
@@ -131,6 +136,9 @@ implements ListSelectionListener, ChangeListener {
     private JRadioButton m_kInclude;
     private JRadioButton m_kExclude;
     private JRadioButton m_kIgnore;
+    private float m_fFAMin = 0.0f;
+    private float m_fFAMax = 1.0f;
+    private float m_fMaxAngle = (float)Math.PI/4.0f;
     
     private boolean m_bDTIImageSet = false;
     
@@ -175,7 +183,8 @@ implements ListSelectionListener, ChangeListener {
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
 
-        if (source == m_kDisplaySlider) {
+        if ((source == m_kDisplaySlider) && !m_kDisplaySlider.getValueIsAdjusting()) {
+            System.err.println( m_kDisplaySlider.getValue() );
             m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
         }
     }
@@ -299,6 +308,46 @@ implements ListSelectionListener, ChangeListener {
 							m_kCIgnore);
 				}
 			}
+	        else if ( command.equals( "FAMINChanged" ) )
+	        {
+	            if (!JDialogBase.testParameter(m_kFAMinThreshold.getText(), 0.0f, 1.0f))
+	            {
+	                m_kFAMinThreshold.requestFocus();
+	                m_kFAMinThreshold.selectAll();
+	            }
+	            else
+	            {
+	                m_fFAMin = Float.valueOf(m_kFAMinThreshold.getText()).floatValue();
+	            }
+	        }
+
+	        else if ( command.equals( "FAMAXChanged" ) )
+	        {
+	            if (!JDialogBase.testParameter(m_kFAMaxThreshold.getText(), 0.0f, 1.0f))
+	            {
+	                m_kFAMaxThreshold.requestFocus();
+	                m_kFAMaxThreshold.selectAll();
+	            }
+	            else
+	            {
+	                m_fFAMax = Float.valueOf(m_kFAMaxThreshold.getText()).floatValue();
+	            }
+	        }
+
+	        else if ( command.equals( "MaxAngleChanged" ) )
+	        {
+	            if (!JDialogBase.testParameter(m_kMaxAngle.getText(), 0.0f, 180f))
+	            {
+	                m_kMaxAngle.requestFocus();
+	                m_kMaxAngle.selectAll();
+	            }
+	            else
+	            {
+	                m_fMaxAngle = Float.valueOf(m_kMaxAngle.getText()).floatValue();
+	                m_fMaxAngle = (float)(m_fMaxAngle*Math.PI/180.0f);
+	            }
+	        }
+
 		}
         
       
@@ -490,6 +539,34 @@ implements ListSelectionListener, ChangeListener {
         kVectorPanel.add(m_kNegY);
         kVectorPanel.add(m_kNegZ);
         kVectorPanel.setBorder(buildTitledBorder("Vector component-wise negation"));
+        
+
+        m_kFAMinThreshold = new JTextField("0.0", 4);
+        m_kFAMinThreshold.setActionCommand("FAMINChanged");
+        m_kFAMinThreshold.addActionListener(this);
+        m_kFAMaxThreshold = new JTextField("1.0", 4);
+        m_kFAMaxThreshold.setActionCommand("FAMAXChanged");
+        m_kFAMaxThreshold.addActionListener(this);
+        m_kMaxAngle = new JTextField("45", 4);
+        m_kMaxAngle.setActionCommand("MaxAngleChanged");
+        m_kMaxAngle.addActionListener(this);
+        JPanel kTrackPanel = new JPanel(new GridBagLayout());
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        kTrackPanel.add(new JLabel( "FA Threshold Min:"), gbc);
+        gbc.gridx = 2;
+        kTrackPanel.add( m_kFAMinThreshold, gbc );
+        gbc.gridx = 0;
+        gbc.gridy++;
+        kTrackPanel.add(new JLabel( "FA Threshold Max:"), gbc);
+        gbc.gridx = 2;
+        kTrackPanel.add( m_kFAMaxThreshold, gbc );
+        gbc.gridx = 0;
+        gbc.gridy++;
+        kTrackPanel.add(new JLabel( "Maximum Angle"), gbc);
+        gbc.gridx = 2;
+        kTrackPanel.add( m_kMaxAngle, gbc );
+        kTrackPanel.setBorder(buildTitledBorder("Fiber Generation Options for Interactive Fiber Selection"));
 
        
         // list panel for surface filenames
@@ -548,6 +625,10 @@ implements ListSelectionListener, ChangeListener {
         kTractPanel.add(slicePanel, gbc);
         // gbc.gridy++;
         // kTractPanel.add(kVectorPanel, gbc);
+
+        gbc.gridy++;
+        kTractPanel.add(kTrackPanel, gbc);
+        
         
         kTractPanel.setBorder(buildTitledBorder("Inclusion & Exclusion Parameters"));
         return kTractPanel;
@@ -1478,12 +1559,14 @@ implements ListSelectionListener, ChangeListener {
             kV1.Normalize();
             kV2.Normalize();
 
-            traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV1), parentFrame.getEVimage(), parentFrame.getEValueimage(), true );
+            traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV1), 
+                    parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), true );
 
             //traceTract( kTract, kPos, kV1, m_kDTIImage, true );
             m_abVisited[i] = true;
             //traceTract( kTract, kPos, kV2, m_kDTIImage, false );
-            traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV2), parentFrame.getEVimage(), parentFrame.getEValueimage(), false );
+            traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV2), 
+                    parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), false );
             int iVQuantity = kTract.size();
             addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
         }
@@ -1674,7 +1757,7 @@ implements ListSelectionListener, ChangeListener {
     
     
     private void traceTract2( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
-            ModelImage eigenImage, ModelImage eigenValueImage, boolean bDir )
+            ModelImage eigenImage, ModelImage eigenValueImage, ModelImage kFAImage, boolean bDir )
     {
         int iDimX = eigenImage.getExtents()[0];
         int iDimY = eigenImage.getExtents()[1];
@@ -1688,7 +1771,7 @@ implements ListSelectionListener, ChangeListener {
         Vector3f kNext = new Vector3f();
         int iX, iY, iZ, i;
         float fLambda1, fLambda2, fLambda3;
-        float fDot, fAngle;
+        float fDot, fAngle, fFA;
         boolean bAllZero = true;
 
         while ( !bDone )
@@ -1705,6 +1788,16 @@ implements ListSelectionListener, ChangeListener {
             {
                 bDone = true;
                 break;
+            }
+
+            if ( kFAImage != null )
+            {
+                fFA = kFAImage.getFloat(i);
+                if ( (fFA < m_fFAMin) || (fFA > m_fFAMax) )
+                {
+                    bDone = true;
+                    break;
+                }
             }
             
             bAllZero = true;
@@ -1748,7 +1841,7 @@ implements ListSelectionListener, ChangeListener {
                     kOut.Neg();
                 }
                 fAngle = Vector3f.Angle(kDir,kOut);
-                if ( fAngle > (Math.PI/4.0f) )
+                if ( fAngle > m_fMaxAngle )
                 {
                     bDone = true;
                     break;
@@ -1794,57 +1887,50 @@ implements ListSelectionListener, ChangeListener {
         if ( displayMode == Ellipzoids && displayAll == false) {
             parentFrame.getLightControl().refreshLighting();
             m_kVolumeDisplay.setDisplayEllipsoids(true);
-            m_kVolumeDisplay.setDisplayAllEllipsoids(false);
+            m_kVolumeDisplay.setDisplayAllGlyphs(false);
             m_kVolumeDisplay.setDisplayCylinders(false);
-            m_kVolumeDisplay.setDisplayAllCylinders(false);
             m_kVolumeDisplay.setDisplayTubes(false);
             m_kVolumeDisplay.setDisplayArrows(false);
         } else if (displayMode == Ellipzoids && displayAll == true) {
             parentFrame.getLightControl().refreshLighting();
-            m_kVolumeDisplay.setDisplayAllEllipsoids(true);
-            m_kVolumeDisplay.setDisplayEllipsoids(false);
+            m_kVolumeDisplay.setDisplayAllGlyphs(true);
+            m_kVolumeDisplay.setDisplayEllipsoids(true);
             m_kVolumeDisplay.setDisplayCylinders(false);
-            m_kVolumeDisplay.setDisplayAllCylinders(false);
             m_kVolumeDisplay.setDisplayTubes(false);
             m_kVolumeDisplay.setDisplayArrows(false);
         } else if (displayMode == Cylinders && displayAll == false) {
             parentFrame.getLightControl().refreshLighting();
             m_kVolumeDisplay.setDisplayCylinders(true);
-            m_kVolumeDisplay.setDisplayAllEllipsoids(false);
+            m_kVolumeDisplay.setDisplayAllGlyphs(false);
             m_kVolumeDisplay.setDisplayEllipsoids(false);
-            m_kVolumeDisplay.setDisplayAllCylinders(false);
             m_kVolumeDisplay.setDisplayTubes(false);
             m_kVolumeDisplay.setDisplayArrows(false);
         } else if (displayMode == Cylinders && displayAll == true) {
             parentFrame.getLightControl().refreshLighting();
-            m_kVolumeDisplay.setDisplayAllCylinders(true);
-            m_kVolumeDisplay.setDisplayCylinders(false);
-            m_kVolumeDisplay.setDisplayAllEllipsoids(false);
+            m_kVolumeDisplay.setDisplayAllGlyphs(true);
+            m_kVolumeDisplay.setDisplayCylinders(true);
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayTubes(false);
             m_kVolumeDisplay.setDisplayArrows(false);
         }  else if (displayMode == Tubes /* && displayAll == false */) {
             parentFrame.getLightControl().refreshLighting();
             m_kVolumeDisplay.setDisplayTubes(true);
-            m_kVolumeDisplay.setDisplayAllCylinders(false);
+            m_kVolumeDisplay.setDisplayAllGlyphs(false);
             m_kVolumeDisplay.setDisplayCylinders(false);
-            m_kVolumeDisplay.setDisplayAllEllipsoids(false);
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayArrows(false);
         }    else if (displayMode == Arrows /* && displayAll == false */) {
             parentFrame.getLightControl().refreshLighting();
             m_kVolumeDisplay.setDisplayTubes(false);
-            m_kVolumeDisplay.setDisplayAllCylinders(false);
+            m_kVolumeDisplay.setDisplayAllGlyphs(false);
             m_kVolumeDisplay.setDisplayCylinders(false);
-            m_kVolumeDisplay.setDisplayAllEllipsoids(false);
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayArrows(true);
         }  else if (displayMode == Polylines ) {
         	parentFrame.getLightControl().refreshLighting();
             m_kVolumeDisplay.setDisplayEllipsoids(false);
-            m_kVolumeDisplay.setDisplayAllEllipsoids(false);
+            m_kVolumeDisplay.setDisplayAllGlyphs(false);
             m_kVolumeDisplay.setDisplayCylinders(false);
-            m_kVolumeDisplay.setDisplayAllCylinders(false);
             m_kVolumeDisplay.setDisplayTubes(false);
             m_kVolumeDisplay.setDisplayArrows(false);
         }

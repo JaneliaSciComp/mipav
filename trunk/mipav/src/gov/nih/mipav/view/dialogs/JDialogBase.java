@@ -1151,7 +1151,7 @@ public abstract class JDialogBase extends JDialog
      *
      * @return  <code>true</code> if parameters passed range test, <code>false</code> if failed.
      */
-    protected boolean testParameter(String str, double minValue, double maxValue) {
+    public static boolean testParameter(String str, double minValue, double maxValue) {
         double tmp;
 
         try {
@@ -1162,9 +1162,8 @@ public abstract class JDialogBase extends JDialog
                                        String.valueOf(maxValue));
 
                 return false;
-            } else {
-                return true;
-            }
+            } 
+            return true;
         } catch (NumberFormatException error) {
             MipavUtil.displayError("Must enter numeric value");
 
