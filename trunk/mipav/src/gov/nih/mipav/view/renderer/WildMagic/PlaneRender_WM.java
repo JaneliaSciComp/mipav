@@ -105,6 +105,11 @@ public class PlaneRender_WM extends GPURenderBase
             return Local.get(i);
         }
 
+        public Polyline getVolume( int i )
+        {
+            return Volume.get(i);
+        }
+
         public int GetVertexQuantity(int i)
         {
             return Local.get(i).VBuffer.GetVertexQuantity();
@@ -581,7 +586,7 @@ public class PlaneRender_WM extends GPURenderBase
                 }
             }
             drawAxes();
-            ///drawVOI();
+            //drawVOI();
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
@@ -1098,7 +1103,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_iHeight = iHeight;
             m_bModified = true;
             m_spkCamera.Perspective = false;
-            float fRMax = (m_fZoomScale*m_fX)/2.0f;
+            float fRMax = (m_fZoomScale*Math.max(m_fX, m_fY))/2.0f;
             float fUMax = fRMax * iHeight / iWidth;
             m_spkCamera.SetFrustum(-fRMax, fRMax,-fUMax, fUMax,1f,5.0f);
             m_pkRenderer.OnFrustumChange();           
@@ -1478,24 +1483,12 @@ public class PlaneRender_WM extends GPURenderBase
         }
 
         ModelImage kImageA = m_kVolumeImageA.GetImage();
-        m_kCenter.Z = (kImageA.getExtents()[2] - 1)/2.0f;
-        float fMaxX = (kImageA.getExtents()[0] - 1) * kImageA.getFileInfo(0).getResolutions()[0];
-        float fMaxY = (kImageA.getExtents()[1] - 1) * kImageA.getFileInfo(0).getResolutions()[1];
-        fMaxZ = (kImageA.getExtents()[2] - 1) * kImageA.getFileInfo(0).getResolutions()[2];
-
-        fMax = fMaxX;
-        if (fMaxY > fMax) {
-            fMax = fMaxY;
-        }
-        if (fMaxZ > fMax) {
-            fMax = fMaxZ;
-        }
-        m_fX = fMaxX/fMax;
-        m_fY = fMaxY/fMax;
-        m_fZ = fMaxZ/fMax;
-        m_kVolumeScale.Set(m_fX/(kImageA.getExtents()[0] - 1), 
-                m_fY/(kImageA.getExtents()[1] - 1), 
-                m_fZ/(kImageA.getExtents()[2] - 1)  );
+        //System.err.println( m_iPlaneOrientation + " " + m_fX + " " + m_fY + " " + m_fZ + " " + fMax );
+        
+        
+        m_kVolumeScale.Set(m_kVolumeImageA.GetScaleX()/(kImageA.getExtents()[0] - 1), 
+                m_kVolumeImageA.GetScaleY()/(kImageA.getExtents()[1] - 1), 
+                m_kVolumeImageA.GetScaleZ()/(kImageA.getExtents()[2] - 1)  );
         m_kVolumeScaleInv.Copy( m_kVolumeScale );
         m_kVolumeScaleInv.Invert();
 
@@ -1994,66 +1987,28 @@ public class PlaneRender_WM extends GPURenderBase
     
     private void drawVOI()
     {       
-        if ( (m_kCurrentVOI != null) || (m_kVOIList != null) )
+        if ( m_kCurrentVOI != null )
         {
-            if ( m_spkVOICamera == null )
+            int iNumLines = m_kCurrentVOI.size();
+            for ( int i = 0; i < iNumLines; i++ )
             {
-                // The screen camera is designed to map (x,y,z) in [0,1]^3 to (x',y,'z')
-                // in [-1,1]^2 x [0,1].
-                m_spkVOICamera = new Camera();
-                m_spkVOICamera.Perspective = false;
-                m_spkVOICamera.SetFrustum(0,m_iWidth,0,m_iHeight,-10.0f, m_aiLocalImageExtents[2] + 10.0f);
-                m_spkVOICamera.SetFrame(Vector3f.ZERO,Vector3f.UNIT_Z,
-                        Vector3f.UNIT_Y,Vector3f.UNIT_X);
-            }
-            m_pkRenderer.SetCamera(m_spkVOICamera);  
-
-            Polyline kPoly = null;
-            if ( (m_kVOIList != null) && (m_kVOIList[m_iSlice] != null) )
-            {
-                for ( int i = 0; i < m_kVOIList[m_iSlice].size(); i++ )
+                int iNumPoints = m_kCurrentVOI.GetVertexQuantity(i);
+                if ( iNumPoints > 0 )
                 {
-                    if ( m_kCurrentVOI != m_kVOIList[m_iSlice].get(i))
+                    //System.err.println( m_iSlice + " " + m_kCurrentVOI.VBuffer.GetPosition3(0).Z );
+                    if ( m_iSlice == m_kCurrentVOI.slice(i) )
                     {
-                        kPoly = m_kVOIList[m_iSlice].get(i).getLocal(0);
-                        //kPoly.Local.SetScale( 1.0f/m_fZoomScale, 1.0f/m_fZoomScale, 1.0f/m_fZoomScale );
-                        kPoly.UpdateGS();
-                        m_pkRenderer.Draw(kPoly);
-                        kPoly.Local.SetScale( 1, 1, 1 );
-                        kPoly.UpdateGS();
-                    }
-                }
-            }          
-            if ( (m_kCurrentVOI != null) )
-            {                 
-                int iNumLines = m_kCurrentVOI.size();
-                for ( int i = 0; i < iNumLines; i++ )
-                {
-                    int iNumPoints = m_kCurrentVOI.GetVertexQuantity(i);
-                    if ( iNumPoints > 0 )
-                    {
-                        //System.err.println( m_iSlice + " " + m_kCurrentVOI.VBuffer.GetPosition3(0).Z );
-                        if ( m_iSlice == m_kCurrentVOI.slice(i) )
+                        for ( int j = 0; j < iNumPoints; j++ )
                         {
-                            kPoly = m_kCurrentVOI.getLocal(i);
-                            //kPoly.Local.SetScale( 1.0f/m_fZoomScale, 1.0f/m_fZoomScale, 1.0f/m_fZoomScale );
-                            kPoly.UpdateGS();
-                            m_pkRenderer.Draw(kPoly);
-                            kPoly.Local.SetScale( 1, 1, 1 );
-                            kPoly.UpdateGS();
-                            for ( int j = 0; j < iNumPoints; j++ )
-                            {
-                                //System.err.println( m_kCurrentVOI.VBuffer.GetPosition3(i).ToString() );
-                                m_kBallPoint.Local.SetTranslate( m_kCurrentVOI.getLocal(i).VBuffer.GetPosition3(j) );
-                                //m_kBallPoint.Local.SetScale( 1.0f/m_fZoomScale, 1.0f/m_fZoomScale, 1.0f/m_fZoomScale );
-                                m_kBallPoint.UpdateGS();
-                                m_pkRenderer.Draw( m_kBallPoint );
-                            }
+                            //System.err.println( m_kCurrentVOI.VBuffer.GetPosition3(i).ToString() );
+                            m_kBallPoint.Local.SetTranslate( m_kCurrentVOI.getVolume(i).VBuffer.GetPosition3(j) );
+                            //m_kBallPoint.Local.SetScale( 1.0f/m_fZoomScale, 1.0f/m_fZoomScale, 1.0f/m_fZoomScale );
+                            m_kBallPoint.UpdateGS();
+                            m_pkRenderer.Draw( m_kBallPoint );
                         }
                     }
                 }
             }
-            m_pkRenderer.SetCamera(m_spkCamera);
         }
     }
     
@@ -2356,24 +2311,30 @@ public class PlaneRender_WM extends GPURenderBase
      */
     private void ScreenToLocal(int iX, int iY, int iZ, Vector3f kLocal )
     {
+        //System.err.println( "ScreenToLocal " + iX + " " + iY );
         iX = Math.min( m_iWidth,  Math.max( 0, iX ) );
         iY = Math.min( m_iHeight, Math.max( 0, iY ) );
+        //System.err.println( "              " + iX + " " + iY );
         float fHalfWidth = ((float) m_iWidth-1) / 2.0f;
         float fHalfHeight = ((float) m_iHeight-1) / 2.0f;
 
         kLocal.X = (iX - fHalfWidth) / fHalfWidth;
         kLocal.Y = (iY - fHalfHeight) / fHalfWidth;
+        //System.err.println( "              " + kLocal.X + " " + kLocal.Y );
 
         kLocal.X *= m_fZoomScale;
         kLocal.Y *= m_fZoomScale;
+        //System.err.println( "              " + kLocal.X + " " + kLocal.Y );
 
         /* Bounds checking: */
         kLocal.X = Math.min( Math.max( kLocal.X, m_fX0 ), m_fX1 );
         kLocal.Y = Math.min( Math.max( kLocal.Y, m_fY0 ), m_fY1 );
+        //System.err.println( "              " + kLocal.X + " " + kLocal.Y + " " + m_fX0 + " " + m_fX1 + " " + m_fY0 + " " + m_fY1 );
 
         /* Normalize: */
         kLocal.X = (kLocal.X - m_fX0) / m_fXRange;
         kLocal.Y = (kLocal.Y - m_fY0) / m_fYRange;
+        //System.err.println( "              " + kLocal.X + " " + kLocal.Y );
         kLocal.Z = iZ / (float)(m_aiLocalImageExtents[2] - 1);
     }
 
@@ -2508,7 +2469,7 @@ public class PlaneRender_WM extends GPURenderBase
     private void zoom()
     {
         m_fZoomScale = Math.max( 0, m_fZoomScale );
-        float fRMax = (m_fZoomScale*m_fX)/2.0f;
+        float fRMax = (m_fZoomScale*Math.max(m_fX, m_fY))/2.0f;
         float fUMax = fRMax * m_iHeight / m_iWidth;
         m_spkCamera.SetFrustum(-fRMax, fRMax,-fUMax, fUMax,1f,5.0f);
         m_pkRenderer.OnFrustumChange();
