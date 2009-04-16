@@ -255,7 +255,7 @@ implements ListSelectionListener, ChangeListener {
 			} else if (command.equals("VolumeColor")) {
 				m_kVolumeDisplay.setVolumeColor(m_kUseVolumeColor.isSelected());
 				if (m_kUseVolumeColor.isSelected()) {
-					setColor(null);
+					setColor(m_kColorButton.getBackground());
 				} else {
 					setColor(m_kColorButton.getBackground());
 				}
@@ -627,6 +627,7 @@ implements ListSelectionListener, ChangeListener {
         kTractPanel.add(slicePanel, gbc);
         //gbc.gridy++;
         //kTractPanel.add(kVectorPanel, gbc);
+
         gbc.gridy++;
         kTractPanel.add(kTrackPanel, gbc);
         
@@ -841,7 +842,7 @@ implements ListSelectionListener, ChangeListener {
     
     /** Updates the tract list user-interface. */
     public void addTract() {
-    	m_iBundleCount--;
+    	// m_iBundleCount--;
         m_kBundleList.add(new Integer(m_iBundleCount));
         m_kVolumeDisplay.addGroupColor();
         DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
@@ -1123,11 +1124,15 @@ implements ListSelectionListener, ChangeListener {
                     start = (new Integer(kName.substring(iHeaderLength,
                             iLength))).intValue();
                 }
+                System.err.println("start = " + start + " iGroup = " + iGroup);
                 for ( int j = start; j < iGroup; j++ ) {
                     m_kVolumeDisplay.removePolyline(j);	
+                    m_kVolumeDisplay.removeTractColor(j);
                 }
+               
                 m_kBundleList.remove(new Integer(iGroup));
-                m_kVolumeDisplay.removeTractColor(new Integer(iGroup));
+                System.err.println("iGroup = " + iGroup);
+               
             }
             kList.remove(aiSelected[i]);
             m_kVolumeDisplay.removeGroupColor();
