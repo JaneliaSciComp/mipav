@@ -186,7 +186,7 @@ public class VolumeDTI extends VolumeObject
     public void addPolyline( Polyline kLine, int iGroup )
     {
         
-
+        //System.err.println( iGroup );
         float fXDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
         float fYDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
         float fZDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
@@ -265,23 +265,17 @@ public class VolumeDTI extends VolumeObject
         Integer iIGroup = new Integer(iGroup);
         if ( m_kTracts.containsKey( iIGroup ) )
         {
-            kTractNode = m_kTracts.get(iIGroup);
-            kTractNode.AttachChild(kLine);
-            kTractNode.UpdateGS();
-            kTractNode.UpdateRS();
+            return;
         }
         
         if ( m_kTubes.containsKey( iIGroup ) )
         {   
-        	kTubeNode = m_kTubes.get(iIGroup);
-            kTubeNode.AttachChild(createTube(kLine));
-            kTubeNode.UpdateGS();
-            kTubeNode.UpdateRS();
-                       
+            return;                       
         }
         
         if ( kTractNode == null )
         {
+            //System.err.println( "kTractNode null " + iIGroup );
             kTractNode = new Node();
             kTractNode.AttachChild(kLine);
             kTractNode.UpdateGS();
@@ -1297,7 +1291,11 @@ public class VolumeDTI extends VolumeObject
      * @return  ColorRGB group color
      */
     public ColorRGB getGroupColor(int iGroup) {
-    	return new ColorRGB(constantColor.get(groupConstantColor.get(iGroup-1).intValue()));
+        if ( groupConstantColor.get(iGroup-1) != null )
+        {
+            return new ColorRGB(constantColor.get(groupConstantColor.get(iGroup-1).intValue()));
+        }
+        return null;
     }
    
     /**

@@ -2492,7 +2492,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @param groupID   group ID
      */
     public void addGroupColor() {
-    	m_kDTIDisplay.addGroupColor();
+        if ( m_kDTIDisplay != null )
+        {
+            m_kDTIDisplay.addGroupColor();
+        }
     }
     
     /**
@@ -2500,14 +2503,20 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @param groupID   group ID
      */
     public void removeTractColor(Integer index) {
-    	m_kDTIDisplay.removeTractColor(index);
+        if ( m_kDTIDisplay != null )
+        {
+            m_kDTIDisplay.removeTractColor(index);
+        }
     }
     
     /**
      * reduce the group color index
      */
     public void removeGroupColor() {
-    	m_kDTIDisplay.removeGroupColor();
+        if ( m_kDTIDisplay != null )
+        {
+            m_kDTIDisplay.removeGroupColor();
+        }
     }
     
     /** Sets the polyline color for the specified fiber bundle tract group. 
@@ -2516,7 +2525,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void setTubesGroupColor( int iGroup, ColorRGB kColor )
     {
-       m_kDTIDisplay.setTubesGroupColor(iGroup, kColor);
+        if ( m_kDTIDisplay != null )
+        {
+            m_kDTIDisplay.setTubesGroupColor(iGroup, kColor);
+        }
     }
     
     /** Get the group color with given group ID. 
@@ -2524,11 +2536,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @return  ColorRGB group color
      */
     public ColorRGB getGroupColor(int groupID) {
-    	return m_kDTIDisplay.getGroupColor(groupID);
+        if ( m_kDTIDisplay != null )
+        {
+            return m_kDTIDisplay.getGroupColor(groupID);
+        }
+        return null;
     }
     
     
     public void setVolumeColor(boolean flag) {
-    	m_kDTIDisplay.setVolumeColor(flag);
+        if ( m_kDTIDisplay != null )
+        {
+            m_kDTIDisplay.setVolumeColor(flag);
+        }
     }
 }
