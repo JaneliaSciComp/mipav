@@ -184,7 +184,7 @@ implements ListSelectionListener, ChangeListener {
         Object source = e.getSource();
 
         if ((source == m_kDisplaySlider) && !m_kDisplaySlider.getValueIsAdjusting()) {
-            System.err.println( m_kDisplaySlider.getValue() );
+            //System.err.println( m_kDisplaySlider.getValue() );
             m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
         }
     }
@@ -717,7 +717,6 @@ implements ListSelectionListener, ChangeListener {
             return iMin;
         }
         boolean bFound = false;
-        /*
 		for (int i = 0; i < kBundleList.size(); i++) {
 			iMin = i;
 			bFound = false;
@@ -730,12 +729,7 @@ implements ListSelectionListener, ChangeListener {
 				return iMin;
 			}
 		}
-         */
-        for (int i = 0; i < kBundleList.size(); i++) {
-            iMin = kBundleList.get(i).intValue();
-        }
-        iMin++;
-        return iMin;
+        return kBundleList.size();
     }
 
 
@@ -843,7 +837,6 @@ implements ListSelectionListener, ChangeListener {
     /** Updates the tract list user-interface. */
     public void addTract() {
     	// m_iBundleCount--;
-        m_kBundleList.add(new Integer(m_iBundleCount));
         m_kVolumeDisplay.addGroupColor();
         DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
         int iSize = kList.getSize();
@@ -960,6 +953,7 @@ implements ListSelectionListener, ChangeListener {
         if ( iVQuantity >= 7 ) {
             //addPolyline(new Polyline(pkVBuffer, bClosed, bContiguous ));
             addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity, iDimX, iDimY, iDimZ), bClosed, bContiguous ));
+            m_kBundleList.add(new Integer(m_iBundleCount));
             m_iBundleCount++;
         }
     }
