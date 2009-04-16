@@ -1001,8 +1001,10 @@ public class PlaneRender_WM extends GPURenderBase
             m_bLeftMousePressed = false;
         }
         m_bFirstDrag = true;
-        m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-        //m_kParent.
+        if ( !m_bPointer )
+        {
+            m_kParent.setDefaultCursor( );
+        }
         m_bDrawVOI = false;
         if ( m_bUpdateVOI )
         {
