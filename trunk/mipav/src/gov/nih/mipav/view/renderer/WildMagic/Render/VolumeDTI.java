@@ -17,6 +17,7 @@ import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
+import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.Texture;
@@ -77,12 +78,7 @@ public class VolumeDTI extends VolumeObject
     /** When true display the fiber tracts with arrows instead of lines: */
     private boolean m_bDisplayArrows = false;
 
-    /** Shader for displaying the ellipsoids with the Mipav lights. */
-    private MipavLightingEffect m_kAllEllipsoidsShader = null;
-
     private SurfaceLightingEffect m_kLightShader;
-
-    private TextureEffect textureEffect;
     
     /** Keeps track of the color assigned the polylines. */
     private HashMap<Integer,ColorRGB> m_kEllipseConstantColor;
@@ -453,11 +449,6 @@ public class VolumeDTI extends VolumeObject
         m_kEigenVectors = null;
         m_kEllipseConstantColor = null;
 
-        if ( m_kAllEllipsoidsShader != null )
-        {
-            m_kAllEllipsoidsShader.dispose();
-            m_kAllEllipsoidsShader = null;
-        }
         if ( m_kEllipseMaterial != null )
         {
             m_kEllipseMaterial.dispose();
@@ -830,10 +821,12 @@ public class VolumeDTI extends VolumeObject
         kAttr.SetPChannels(3);
         kAttr.SetNChannels(3);
 
+        CullState kCull = new CullState();
+        kCull.Enabled = true;
+        kCull.FrontFace = CullState.FrontMode.FT_CW;
         StandardMesh kSM = new StandardMesh(kAttr);
-        kSM.SetInside(true);
         m_kSphere = kSM.Sphere(64,64,1f);
-        //kSM.ReverseTriangleOrder(m_kSphere.GetTriangleQuantity(), m_kSphere.IBuffer.GetData() );
+        m_kSphere.AttachGlobalState(kCull);
         
         Transformation trans = new Transformation();
         float rotationRedian = 0.5f * (float) Math.PI;
@@ -842,27 +835,18 @@ public class VolumeDTI extends VolumeObject
                 					   0.0f,1.0f,0.0f,
                 					   (float)-Math.sin(rotationRedian),0.0f,(float)Math.cos(rotationRedian));
 
-        trans.SetRotate(matrix);
-        
-        //kSM.SetInside(false);
-        //StandardMesh cylinder = new StandardMesh(kAttr);
-        //kSM.SetInside(true);
-        //cylinder.SetTransformation(trans);
+        trans.SetRotate(matrix);        
+        kSM.SetTransformation(trans);
         m_kCylinder = kSM.Cylinder(64,64,1.0f,2f,false);
-        //kSM.ReverseTriangleOrder(m_kCylinder.GetTriangleQuantity(), m_kCylinder.IBuffer.GetData() );
+        m_kCylinder.AttachGlobalState(kCull);
 
-        m_kAllEllipsoidsShader = new MipavLightingEffect( );
         
-        m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
-        m_kLightShader.SetPerPixelLighting( kRenderer, true );
-        m_kLightShader.SetSurfaceTexture(false, false, false);
-        
-        
-        textureEffect = new TextureEffect("Water");
-        Texture pkTexture = textureEffect.GetPTexture(0,0);
-        pkTexture.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
-        pkTexture.SetWrapType(0,Texture.WrapType.REPEAT);
-        pkTexture.SetWrapType(1,Texture.WrapType.REPEAT);
+        m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );    
+        int iPassQuantity = m_kLightShader.GetPassQuantity();
+        for (int iPass = 0; iPass < iPassQuantity; iPass++) {
+            m_kLightShader.LoadPrograms(kRenderer, iPass, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),
+                    kRenderer.GetMaxVShaderImages(), kRenderer.GetMaxPShaderImages());
+        }
         
         m_kEllipseMaterial = new MaterialState();
         m_kEllipseMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
@@ -891,14 +875,10 @@ public class VolumeDTI extends VolumeObject
         
         
         m_kSphere.AttachGlobalState(m_kEllipseMaterial);
-        // m_kSphere.AttachEffect(m_kAllEllipsoidsShader);
-        //m_kSphere.AttachEffect(textureEffect);
         m_kSphere.AttachEffect(m_kLightShader);
         m_kSphere.UpdateRS();
         
         m_kCylinder.AttachGlobalState(m_kEllipseMaterial);
-        // m_kCylinder.AttachEffect(m_kAllEllipsoidsShader);
-        //m_kCylinder.AttachEffect(textureEffect);
         m_kCylinder.AttachEffect(m_kLightShader);
         m_kCylinder.UpdateRS();
         
@@ -933,10 +913,6 @@ public class VolumeDTI extends VolumeObject
      */
     public void SetLight( String kLightType, float[] afType )
     {
-        if ( m_kAllEllipsoidsShader != null )
-        {
-            m_kAllEllipsoidsShader.SetLight(kLightType, afType);
-        }
         if ( m_kLightShader != null )
         {
             m_kLightShader.SetLight(kLightType, afType);
@@ -1007,6 +983,10 @@ public class VolumeDTI extends VolumeObject
         Iterator kIterator = m_kGlyphs.keySet().iterator();
         Iterator cIterator = groupConstantColor.keySet().iterator();
         int iCount = 0;
+        //if ( m_bDisplayEllipsoids )
+        {
+            m_kLightShader.SetReverseFace(1);
+        }
         while ( kIterator.hasNext() )
         {
             kKey = (Integer)kIterator.next();
@@ -1108,6 +1088,7 @@ public class VolumeDTI extends VolumeObject
             }
             iCount++;
         }
+        m_kLightShader.SetReverseFace(0);
     }
     
      
