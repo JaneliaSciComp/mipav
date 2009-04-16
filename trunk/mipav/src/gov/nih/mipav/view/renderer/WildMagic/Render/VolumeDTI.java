@@ -1259,10 +1259,9 @@ public class VolumeDTI extends VolumeObject
      * remove the group color index.
      */
     public void removeTractColor(Integer iGroup) {
-    	if ( groupConstantColor.containsKey( iGroup ) )
-        {
+    	
     		groupConstantColor.remove(iGroup);
-        }
+        
     }
     
     
@@ -1289,8 +1288,8 @@ public class VolumeDTI extends VolumeObject
      * @param kColor the new polyline color for the specified fiber bundle tract group. 
      */
     public void setTubesGroupColor( int iGroup, ColorRGB kColor ) {
-    	if ( groupConstantColor.get(iGroup) != null )
-    		constantColor.put(groupConstantColor.get(iGroup).intValue(), kColor);
+    	if ( groupConstantColor.get(iGroup-1) != null )
+    		constantColor.put(groupConstantColor.get(iGroup-1).intValue(), kColor);
     }
     
     /** Get the group color with given group ID. 
@@ -1298,7 +1297,7 @@ public class VolumeDTI extends VolumeObject
      * @return  ColorRGB group color
      */
     public ColorRGB getGroupColor(int iGroup) {
-    	return new ColorRGB(constantColor.get(groupConstantColor.get(iGroup).intValue()));
+    	return new ColorRGB(constantColor.get(groupConstantColor.get(iGroup-1).intValue()));
     }
    
     /**
@@ -1308,6 +1307,7 @@ public class VolumeDTI extends VolumeObject
     public void setVolumeColor(boolean flag) {
     	isUsingVolumeColor = flag;
     }
+    
     
 }
 
