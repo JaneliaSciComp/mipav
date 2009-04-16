@@ -1144,8 +1144,8 @@ public class VolumeDTI extends VolumeObject
 
 					m_kScene.SetChild(0, kTract);
 					m_kScene.UpdateGS();
-					kRenderer.Draw(kTract);
 					m_kScene.DetachChild(kTract);
+                    kRenderer.Draw(kTract);
 					kTract.DetachEffect(m_kLightShader);
 
 				} else {
@@ -1155,8 +1155,8 @@ public class VolumeDTI extends VolumeObject
 	                
 	                m_kScene.SetChild(0,kTract);
 	                m_kScene.UpdateGS();
-	                kRenderer.Draw(kTract);
 	                m_kScene.DetachChild(kTract);
+                    kRenderer.Draw(kTract);
 	                kTract.DetachEffect( kShader );
             	}
             }
