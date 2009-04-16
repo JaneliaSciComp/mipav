@@ -1,20 +1,24 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.dialogs.*;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 import java.io.*;
 
 import java.util.*;
 import javax.swing.JOptionPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
  *
- * @version  April 14, 2009
+ * @version  April 16, 2009
  * @author   William Gandler
  * @see      AlgorithmBase
  *
@@ -124,6 +128,7 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         int cX[];
         int cY[];
         int cZ[];
+        JDialogSetPoints choice;
 
         time = System.currentTimeMillis();
 
@@ -268,12 +273,20 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         Preferences.debug("PlugInAlgorithmAxonExtraction preprocessing elapsed time in seconds = " + (time/1000.0));
         
         pointsEntered = false;
+        
+        
+   
         while (!pointsEntered) {
-        JOptionPane.showMessageDialog(null, "Click okay after entering extraction points", "Point Entry",
-                                      JOptionPane.PLAIN_MESSAGE);
+            choice = new JDialogSetPoints(srcImage.getParentFrame()); 
+            
+            while (!choice.okayPressed() ) {
+                ;
+            }
+            
             if (srcImage.getVOIs().size() == 0) {
                 JOptionPane.showMessageDialog(null, "No extraction points were entered", "Points Not Entered",
                                       JOptionPane.ERROR_MESSAGE);   
+          
             }
             else {
                 pointsEntered = true;
@@ -283,7 +296,7 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         time = System.currentTimeMillis();
         fireProgressStateChanged(0);
         
-        curves = srcImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
+        curves = srcImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slices
 
         nPts = 0;
         for (i = 0; i < srcImage.getExtents()[2]; i++) {
@@ -458,6 +471,84 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         Preferences.debug("PlugInAlgorithmAxonExtraction elapsed time in seconds = " + (time/1000.0));
         setCompleted(true);
         
+    }
+    
+    /**
+     * Confirmation Dialog on which the user hits okay when extraction points are selected.
+     */
+    class JDialogSetPoints extends JDialogBase {
+
+        //~ Instance fields ------------------------------------------------------------------------------------------------
+
+        
+        
+        /** Whether the window was closed through the user clicking the OK button (and not just killing the dialog). */
+        private boolean okayPressed = false;
+        
+        
+        //~ Constructors ---------------------------------------------------------------------------------------------------
+
+        /**
+         * Creates new dialog.
+         *
+         * @param  theParentFrame  Parent frame of dialog.
+         */
+        public JDialogSetPoints(Frame theParentFrame) {
+            super(theParentFrame, false);
+            init();
+            setVisible(true);
+        }
+
+        //~ Methods --------------------------------------------------------------------------------------------------------
+
+        /**
+         * Checks to see if the OK or Cancel buttons were pressed.
+         *
+         * @param  event  Event that triggered this function.
+         */
+        public void actionPerformed(ActionEvent event) {
+
+            if (event.getSource() == OKButton) {
+
+                okayPressed = true;
+            }
+
+            dispose();
+        }
+
+        /**
+         * Was the okay button pressed.
+         *
+         * @return  boolean was okay pressed
+         */
+        public boolean okayPressed() {
+            return okayPressed;
+        }
+
+        /**
+         * Creates and displays dialog.
+         */
+        private void init() {
+            JLabel saveLabel;
+            setTitle("Extraction Point Entry");
+
+            
+            saveLabel = new JLabel("Click okay after entering extraction points ");
+            saveLabel.setFont(serif12);
+            saveLabel.setForeground(Color.black);
+            
+
+            JPanel buttonPanel = new JPanel();
+            buildOKButton();
+            buttonPanel.add(OKButton);
+
+            mainDialogPanel.add(saveLabel);
+            mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+            getContentPane().add(mainDialogPanel);
+
+            pack();
+        }
     }
     
 }
