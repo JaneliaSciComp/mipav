@@ -131,9 +131,6 @@ public class VolumeDTI extends VolumeObject
     /** Seeding point index */
     private int centerIndex;
     
-    /** Randomly add group color. */
-    private Vector<ColorRGB> constantColor;
-    
     /** flag to indicate to use volume color or not */
     private boolean isUsingVolumeColor = true;
     
@@ -149,6 +146,11 @@ public class VolumeDTI extends VolumeObject
     /** cone glyphs */
     private TriMesh m_kCone;
 
+    /** Randomly add group color. */
+    private HashMap<Integer, ColorRGB> constantColor;
+    
+    
+    
     /** Creates a new VolumeDTI object.
      * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
@@ -174,9 +176,9 @@ public class VolumeDTI extends VolumeObject
         //m_kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
         //m_kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
         
-        constantColor = new Vector<ColorRGB>();
+        constantColor = new HashMap<Integer, ColorRGB>();
         for ( int i = 0; i < 100; i++ ) {
-        	constantColor.add(new ColorRGB((float)Math.random(), (float)Math.random(), (float)Math.random()));
+        	constantColor.put(new Integer(i), new ColorRGB((float)Math.random(), (float)Math.random(), (float)Math.random()));
         }
         
     }
@@ -271,9 +273,6 @@ public class VolumeDTI extends VolumeObject
             kTractNode.AttachChild(kLine);
             kTractNode.UpdateGS();
             kTractNode.UpdateRS();
-           
-            Vector<int[]> kGlyphVector = m_kGlyphs.get(iIGroup);
-            kGlyphVector.add(aiEllipsoids);          
         }
         
         if ( m_kTubes.containsKey( iIGroup ) )
@@ -282,8 +281,6 @@ public class VolumeDTI extends VolumeObject
             kTubeNode.AttachChild(createTube(kLine));
             kTubeNode.UpdateGS();
             kTubeNode.UpdateRS();
-            groupConstantColor.put(new Integer(iIGroup), new Integer(currentGroupIndex));
-            // m_kTubeColors.put(new Integer(iIGroup), new Integer(centerIndex));
                        
         }
         
@@ -298,13 +295,10 @@ public class VolumeDTI extends VolumeObject
             Vector<int[]> kGlyphVector = new Vector<int[]>();
             kGlyphVector.add(aiEllipsoids);
             m_kGlyphs.put( new Integer(iIGroup), kGlyphVector );
-
             String kShaderName = new String( "ConstantColor" );
             VertexColor3Effect kPolylineShader = new VertexColor3Effect( kShaderName, true );
             m_kShaders.put( new Integer(iIGroup), kPolylineShader );
-            
-            groupConstantColor.put(new Integer(iIGroup), new Integer(currentGroupIndex));
-            
+           
         }
         
         if ( kTubeNode == null ) {
@@ -991,6 +985,8 @@ public class VolumeDTI extends VolumeObject
             
         }
     }
+
+
     /**
      * Display a fiber bundle tract with a Glyph.
      */    
@@ -1031,7 +1027,19 @@ public class VolumeDTI extends VolumeObject
 
                             if ( kColor != null )
                             {
+
+                                if ( !isUsingVolumeColor ) {
+                                	if ( cKey == null ) continue;
+                                	m_kColorEllipse = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
+                                } else {
+                                	fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
+	                                fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
+	                                fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
+	                                m_kColorEllipse = new ColorRGB(fR, fG, fB);
+                                }
+
                                 m_kColorEllipse = kColor;
+
                             }
                             else
                             {
@@ -1059,7 +1067,19 @@ public class VolumeDTI extends VolumeObject
                             //        m_kEigenVectors.get(kIndex).GetScale().Z );
                             if ( m_bDisplayEllipsoids )
                             {
+
+                                if ( !isUsingVolumeColor ) {
+                                	if ( cKey == null ) continue;
+                                	m_kColorEllipse = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
+                                } else {
+                                    fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
+                                    fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
+                                    fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
+                                    m_kColorEllipse = new ColorRGB(fR, fG, fB);
+                                }
+
                                 kGlyph = m_kSphere;
+
                             }
                             else if ( m_bDisplayCylinders )
                             {
@@ -1125,17 +1145,17 @@ public class VolumeDTI extends VolumeObject
             {
             	if (!isUsingVolumeColor) {
             		if ( cKey == null ) continue;
-					kColor1 = constantColor.get(groupConstantColor.get(cKey).intValue());
-
-					kTract = (Polyline) kTractNode.GetChild(i);
+            		kColor1 = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
+					
+            		kTract = (Polyline) kTractNode.GetChild(i);
 					kTract.AttachGlobalState(m_kLinesMaterial);
 					kTract.DetachAllEffects();
 					kTract.AttachEffect(m_kLightShader);
 
 					kTract.UpdateRS();
 
-					m_kLinesMaterial.Ambient = kColor1; 
-					m_kLinesMaterial.Diffuse = kColor1;
+					m_kLinesMaterial.Ambient = new ColorRGB(kColor1.R, kColor1.G, kColor1.B); 
+					m_kLinesMaterial.Diffuse = new ColorRGB(kColor1.R, kColor1.G, kColor1.B);
 					m_kLinesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
 					m_kLinesMaterial.Specular = new ColorRGB(ColorRGB.BLACK);
 					m_kLinesMaterial.Alpha = 1.0f;
@@ -1201,7 +1221,7 @@ public class VolumeDTI extends VolumeObject
 	            	
                     if ( !isUsingVolumeColor ) {
                     	if ( cKey == null ) continue;
-                    	kColor1 = constantColor.get(groupConstantColor.get(cKey).intValue());
+                    	kColor1 = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
                     } else {
                     	 fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
     	                 fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
@@ -1220,7 +1240,6 @@ public class VolumeDTI extends VolumeObject
                     kColor1 = new ColorRGB(fR, fR, fR);
                 }                 
                 
-                // if ( kColor1 == null ) return;
                 
                 kTube.AttachGlobalState(m_kTubesMaterial);
                 
@@ -1229,8 +1248,8 @@ public class VolumeDTI extends VolumeObject
                 
                 kTube.UpdateRS();
                
-                m_kTubesMaterial.Ambient = kColor1;
-                m_kTubesMaterial.Diffuse = kColor1;
+                m_kTubesMaterial.Ambient = new ColorRGB(kColor1);
+                m_kTubesMaterial.Diffuse = new ColorRGB(kColor1);
                 m_kTubesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
                 m_kTubesMaterial.Specular = new ColorRGB(ColorRGB.WHITE); 
                 m_kTubesMaterial.Alpha = 1.0f;
@@ -1289,8 +1308,8 @@ public class VolumeDTI extends VolumeObject
      * @param kColor the new polyline color for the specified fiber bundle tract group. 
      */
     public void setTubesGroupColor( int iGroup, ColorRGB kColor ) {
-    	if ( groupConstantColor.get(iGroup-1) != null )
-    		constantColor.set(groupConstantColor.get(iGroup-1).intValue(), kColor);
+    	if ( groupConstantColor.get(iGroup) != null )
+    		constantColor.put(groupConstantColor.get(iGroup).intValue(), kColor);
     }
     
     /** Get the group color with given group ID. 
@@ -1298,9 +1317,9 @@ public class VolumeDTI extends VolumeObject
      * @return  ColorRGB group color
      */
     public ColorRGB getGroupColor(int iGroup) {
-    	return constantColor.get(groupConstantColor.get(iGroup-1).intValue());
+    	return new ColorRGB(constantColor.get(groupConstantColor.get(iGroup).intValue()));
     }
-    
+   
     /**
      * Set the flag to using volume color or not
      * @param flag  true or false
@@ -1310,3 +1329,4 @@ public class VolumeDTI extends VolumeObject
     }
     
 }
+
