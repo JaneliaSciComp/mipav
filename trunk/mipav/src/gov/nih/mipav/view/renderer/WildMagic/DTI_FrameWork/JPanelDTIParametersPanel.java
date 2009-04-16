@@ -200,8 +200,7 @@ implements ListSelectionListener, ChangeListener {
 	    		int startIndex = new String("FiberBundle").length();
 	    		String temp = bundleName.substring(startIndex, endIndex);
 	    		int gid = Integer.valueOf(temp);
-           
-            	ColorRGB color = m_kVolumeDisplay.getGroupColor(gid);
+                ColorRGB color = m_kVolumeDisplay.getGroupColor(gid);
             	m_kColorButton.setBackground(new Color(color.R, color.G, color.B));
             }
             
@@ -840,6 +839,7 @@ implements ListSelectionListener, ChangeListener {
     
     /** Updates the tract list user-interface. */
     public void addTract() {
+    	m_iBundleCount--;
         m_kBundleList.add(new Integer(m_iBundleCount));
         m_kVolumeDisplay.addGroupColor();
         DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
@@ -1362,7 +1362,6 @@ implements ListSelectionListener, ChangeListener {
                         iLength))).intValue();
                 if (color == null) {
                     m_kVolumeDisplay.setPolylineColor(iGroup, null);
-                    m_kVolumeDisplay.setTubesGroupColor(iGroup, null);
                 }
 
                 else if (!m_kUseVolumeColor.isSelected()) {
