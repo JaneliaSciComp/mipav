@@ -678,7 +678,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_bFirstVOI = false;
             StandardMesh kSDMesh = new StandardMesh(m_kVOIAttr);
             kSDMesh.SetInside(true);
-            m_kBallPoint = kSDMesh.Box(3, 3, 3);
+            m_kBallPoint = kSDMesh.Box(1.0f/m_aiLocalImageExtents[0], 1.0f/m_aiLocalImageExtents[1], 1.0f/m_aiLocalImageExtents[2]);
             m_kBallPoint.AttachEffect( new VertexColor3Effect() );
             for ( int i = 0; i < m_kBallPoint.VBuffer.GetVertexQuantity(); i++ )
             {
@@ -1002,6 +1002,7 @@ public class PlaneRender_WM extends GPURenderBase
         }
         m_bFirstDrag = true;
         m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+        //m_kParent.
         m_bDrawVOI = false;
         if ( m_bUpdateVOI )
         {
@@ -1998,10 +1999,12 @@ public class PlaneRender_WM extends GPURenderBase
                     //System.err.println( m_iSlice + " " + m_kCurrentVOI.VBuffer.GetPosition3(0).Z );
                     if ( m_iSlice == m_kCurrentVOI.slice(i) )
                     {
+                        Vector3f kTranslate = new Vector3f();
                         for ( int j = 0; j < iNumPoints; j++ )
                         {
                             //System.err.println( m_kCurrentVOI.VBuffer.GetPosition3(i).ToString() );
-                            m_kBallPoint.Local.SetTranslate( m_kCurrentVOI.getVolume(i).VBuffer.GetPosition3(j) );
+                            kTranslate.Add( m_kTranslate, m_kCurrentVOI.getVolume(i).VBuffer.GetPosition3(j) );
+                            m_kBallPoint.Local.SetTranslate( m_kTranslate );
                             //m_kBallPoint.Local.SetScale( 1.0f/m_fZoomScale, 1.0f/m_fZoomScale, 1.0f/m_fZoomScale );
                             m_kBallPoint.UpdateGS();
                             m_pkRenderer.Draw( m_kBallPoint );
