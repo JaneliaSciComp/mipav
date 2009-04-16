@@ -537,7 +537,7 @@ implements ListSelectionListener, ChangeListener {
         kVectorPanel.add(m_kNegX);
         kVectorPanel.add(m_kNegY);
         kVectorPanel.add(m_kNegZ);
-        kVectorPanel.setBorder(buildTitledBorder("Vector component-wise negation"));
+        //kVectorPanel.setBorder(buildTitledBorder("Vector component-wise negation"));
         
 
         m_kFAMinThreshold = new JTextField("0.0", 4);
@@ -552,17 +552,19 @@ implements ListSelectionListener, ChangeListener {
         JPanel kTrackPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
-        kTrackPanel.add(new JLabel( "FA Threshold Min:"), gbc);
+        kTrackPanel.add( kVectorPanel, gbc );
+        gbc.gridy++;
+        kTrackPanel.add(new JLabel( "FA Threshold Min (0.0-1.0):"), gbc);
         gbc.gridx = 2;
         kTrackPanel.add( m_kFAMinThreshold, gbc );
         gbc.gridx = 0;
         gbc.gridy++;
-        kTrackPanel.add(new JLabel( "FA Threshold Max:"), gbc);
+        kTrackPanel.add(new JLabel( "FA Threshold Max (0.0-1.0):"), gbc);
         gbc.gridx = 2;
         kTrackPanel.add( m_kFAMaxThreshold, gbc );
         gbc.gridx = 0;
         gbc.gridy++;
-        kTrackPanel.add(new JLabel( "Maximum Angle"), gbc);
+        kTrackPanel.add(new JLabel( "Maximum Angle (0.0-180.0):"), gbc);
         gbc.gridx = 2;
         kTrackPanel.add( m_kMaxAngle, gbc );
         kTrackPanel.setBorder(buildTitledBorder("Fiber Generation Options for Interactive Fiber Selection"));
@@ -570,6 +572,7 @@ implements ListSelectionListener, ChangeListener {
        
         // list panel for surface filenames
         m_kVOIList = new JList( new DefaultListModel() );
+        m_kVOIList.setVisibleRowCount(3);
         m_kVOIList.addListSelectionListener(this);
         m_kVOIList.setPrototypeCellValue("aaaaaaaaaaaaaaaa.aaa    ");
 
@@ -622,9 +625,8 @@ implements ListSelectionListener, ChangeListener {
         kTractPanel.add(kParamsPanel, gbc);
         gbc.gridy++;
         kTractPanel.add(slicePanel, gbc);
-        // gbc.gridy++;
-        // kTractPanel.add(kVectorPanel, gbc);
-
+        //gbc.gridy++;
+        //kTractPanel.add(kVectorPanel, gbc);
         gbc.gridy++;
         kTractPanel.add(kTrackPanel, gbc);
         
@@ -1177,6 +1179,7 @@ implements ListSelectionListener, ChangeListener {
 
         // list panel for fiber tract names
         m_kTractList = new JList( new DefaultListModel() );
+        m_kTractList.setVisibleRowCount(3);
         m_kTractList.addListSelectionListener(this);
         m_kTractList.setPrototypeCellValue("aaaaaaaaaaaaaaaa.aaa    ");
 

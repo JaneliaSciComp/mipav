@@ -386,17 +386,17 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         JPanel kTrackPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
-        kTrackPanel.add(new JLabel( "FA Threshold Min:"), gbc);
+        kTrackPanel.add(new JLabel( "FA Threshold Min (0.0-1.0):"), gbc);
         gbc.gridx = 2;
         kTrackPanel.add( m_kFAMinThreshold, gbc );
         gbc.gridx = 0;
         gbc.gridy++;
-        kTrackPanel.add(new JLabel( "FA Threshold Max:"), gbc);
+        kTrackPanel.add(new JLabel( "FA Threshold Max (0.0-1.0):"), gbc);
         gbc.gridx = 2;
         kTrackPanel.add( m_kFAMaxThreshold, gbc );
         gbc.gridx = 0;
         gbc.gridy++;
-        kTrackPanel.add(new JLabel( "Maximum Angle"), gbc);
+        kTrackPanel.add(new JLabel( "Maximum Angle (0.0-180.0):"), gbc);
         gbc.gridx = 2;
         kTrackPanel.add( m_kMaxAngle, gbc );
         
