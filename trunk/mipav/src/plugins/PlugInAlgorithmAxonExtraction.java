@@ -86,13 +86,13 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
      */
     private void calc3D() {
         long time;
-        int z;
+        int x, y, z;
         short shortBuffer[];
         short shortOpen[];
         short shortClose[];
         byte byteBuffer[];
-        short redBuffer[];
-        short greenBuffer[];
+        float redBuffer[];
+        float greenBuffer[];
         short blueBuffer[];
         int extents2D[];
         ModelImage shortImage;
@@ -129,6 +129,23 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
         int cY[];
         int cZ[];
         JDialogSetPoints choice;
+        float colorBuffer[];
+        float sigmas[] = new float[3];
+        ModelImage colorImage;
+        AlgorithmHessian hessianAlgo;
+        double[][] hess = null;
+        AlgorithmEigensolver eigenSystemAlgo = null;
+        double[] evals = new double[3];
+        double[] magEvals = new double[3];
+        double lambda1;
+        double lambda2;
+        double lambda3;
+        double magLambda2;
+        double similarity[];
+        double maxSimilarity = 0.0;
+        int zPos;
+        int yPos;
+        double cost[];
 
         time = System.currentTimeMillis();
 
@@ -314,7 +331,7 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
             }
         }
         
-        redBuffer = new short[length];
+        redBuffer = new float[length];
         try {
             srcImage.exportRGBData(1, 0, length, redBuffer); // export red data
         } catch (IOException error) {
@@ -324,7 +341,7 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
             return;
         }
         
-        greenBuffer = new short[length];
+        greenBuffer = new float[length];
         try {
             srcImage.exportRGBData(2, 0, length, greenBuffer); // export green data
         } catch (IOException error) {
@@ -428,19 +445,153 @@ public class PlugInAlgorithmAxonExtraction extends AlgorithmBase {
             }
         } // for (i = 0; i < nPts; i++)
         
+        sigmas[0] = 0.5f;
+        sigmas[1] = 0.5f;
+        sigmas[2] = 0.5f;
+        colorImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), "colorImage");
+        eigenSystemAlgo = new AlgorithmEigensolver(3);
+        similarity = new double[length];
+        cost = new double[length];
         for (c = 1; c <= 2; c++) {
+            maxSimilarity = 0.0;
             if (((c == 1) && (redPts >= 1)) || ((c == 2) && (greenPts >= 1))) {
                 if (c == 1) {
                     cPts = redPts;
                     cX = redX;
                     cY = redY;
                     cZ = redZ;
+                    colorBuffer = redBuffer;
                 }
                 else {
                     cPts = greenPts;
                     cX = greenX;
                     cY = greenY;
                     cZ = greenZ;
+                    colorBuffer = greenBuffer;
+                }
+                try {
+                    colorImage.importData(0, colorBuffer, true);
+                }
+                catch(IOException e) {
+                    MipavUtil.displayError("IOException on colorImage.importData(0, colorBuffer, true");
+                    setCompleted(false);
+                    return;
+                }
+                hessianAlgo = new AlgorithmHessian(colorImage, sigmas);
+                for (z = 0; z < zDim; z++) {
+                    zPos = z * xySlice;
+                    for (y = 0; y < yDim; y++) {
+                        yPos = zPos + y * xDim;
+                        for (x = 0; x < xDim; x++) {
+                            pos = yPos + x;
+                            // get the Hessian at this point
+                            hess = hessianAlgo.hessian3D(colorBuffer, srcImage.getExtents(), x, y, z);
+
+                            // fill up the eigenSolver matrix with the hessian
+                            eigenSystemAlgo.setMatrix(0, 0, hess[0][0]);
+                            eigenSystemAlgo.setMatrix(0, 1, hess[0][1]);
+                            eigenSystemAlgo.setMatrix(0, 2, hess[0][2]);
+
+                            eigenSystemAlgo.setMatrix(1, 0, hess[1][0]);
+                            eigenSystemAlgo.setMatrix(1, 1, hess[1][1]);
+                            eigenSystemAlgo.setMatrix(1, 2, hess[1][2]);
+
+                            eigenSystemAlgo.setMatrix(2, 0, hess[2][0]);
+                            eigenSystemAlgo.setMatrix(2, 1, hess[2][1]);
+                            eigenSystemAlgo.setMatrix(2, 2, hess[2][2]);
+
+                            // OK, solve the eigen system
+                            eigenSystemAlgo.solve();
+                            
+                            // extract the eigenvalues from the AlgorithmEigensolver
+                            evals[0] = eigenSystemAlgo.getEigenvalue(0);
+                            magEvals[0] = Math.abs(evals[0]);
+
+                            evals[1] = eigenSystemAlgo.getEigenvalue(1);
+                            magEvals[1] = Math.abs(evals[1]);
+
+                            evals[2] = eigenSystemAlgo.getEigenvalue(2);
+                            magEvals[2] = Math.abs(evals[2]);
+                            
+                            // magLamda1 >= magLambda2 >= magLambda3
+                            if ((magEvals[0] >= magEvals[1]) && (magEvals[0] >= magEvals[2])) {
+                                lambda1 = evals[0];
+                                if (magEvals[1] >= magEvals[2]) {
+                                    lambda2 = evals[1];
+                                    magLambda2 = magEvals[1];
+                                    lambda3 = evals[2];
+                                }
+                                else {
+                                    lambda2 = evals[2];
+                                    magLambda2 = magEvals[2];
+                                    lambda3 = evals[1];
+                                }
+                            } // if ((magEvals[0] >= magEvals[1]) && (magEvals[0] >= magEvals[2]))
+                            else if ((magEvals[1] >= magEvals[0]) && (magEvals[1] >= magEvals[2])) {
+                                lambda1 = evals[1];
+                                if (magEvals[0] >= magEvals[2]) {
+                                    lambda2 = evals[0];
+                                    magLambda2 = magEvals[0];
+                                    lambda3 = evals[2];
+                                }
+                                else {
+                                    lambda2 = evals[2];
+                                    magLambda2 = magEvals[2];
+                                    lambda3 = evals[0];  
+                                }
+                            } // else if ((magEvals[1] >= magEvals[0]) && (magEvals[1] >= magEvals[2]))
+                            else {
+                                lambda1 = evals[2];
+                                if (magEvals[0] >= magEvals[1]) {
+                                    lambda2 = evals[0];
+                                    magLambda2 = magEvals[0];
+                                    lambda3 = evals[1];
+                                }
+                                else {
+                                    lambda2 = evals[1];
+                                    magLambda2 = magEvals[1];
+                                    lambda3 = evals[0];  
+                                }
+                            } // else
+                            if ((lambda1 < 0) && (lambda2 < 0)) {
+                                if (lambda3 <= 0) {
+                                    similarity[pos] = magLambda2 + lambda3;
+                                }
+                                else if (lambda3 < 4.0*magLambda2) {
+                                    similarity[pos] = magLambda2 - lambda3/4.0;
+                                }
+                                else {
+                                    similarity[pos] = 0.0;
+                                }
+                            } // if ((lambda1 < 0) && (lambda2 < 0))
+                            else {
+                                similarity[pos] = 0.0;
+                            }
+                            if (similarity[pos] > maxSimilarity) {
+                                maxSimilarity = similarity[pos];
+                            }
+                        } // for (x = 0; x < xDim; x++)
+                    } // for (y = 0; y < yDim; y++)
+                } // for (z = 0; z < zDim; z++)
+                if (c == 1) {
+                    for (pos = 0; pos < length; pos++) {
+                        if ((greenBuffer[pos] > redBuffer[pos]) || (blueBuffer[pos] > redBuffer[pos])) {
+                            cost[pos] = 1.0;
+                        }
+                        else {
+                            cost[pos] = 1.0 - similarity[pos]/maxSimilarity;
+                        }
+                    }
+                } // if (c == 1) 
+                else {
+                    for (pos = 0; pos < length; pos++) {
+                        if ((redBuffer[pos] > greenBuffer[pos]) || (blueBuffer[pos] > greenBuffer[pos])) {
+                            cost[pos] = 1.0;
+                        }
+                        else {
+                            cost[pos] = 1.0 - similarity[pos]/maxSimilarity;
+                        }
+                    }    
                 }
                 for (i = 0; i < cPts; i++) {
                     
