@@ -318,32 +318,28 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         }
 
         // Convolve the result image from above with the Y dimension kernel
-        double[] yrowBuffer = new double[yoffset];
-        double[] yresultBuffer = new double[yoffset];
-        for (int z = 0; (z < zDim) && !threadStopped; z++) {
-        	for (int x = 0; (x < xDim) && !threadStopped; x++) {
-				if ((z*xDim +x) % progressStep == 0) {
-					fireProgressStateChanged((int)progress++);
-				}
-				MipavUtil.rowCopy(inputBuffer, x+z*xoffset*yoffset, yrowBuffer, 0, yoffset, xoffset, cFactor);
-				convolve(yrowBuffer, kernelBuffer[1], yresultBuffer);
-				MipavUtil.rowCopy(yresultBuffer, 0, inputBuffer, x+z*xoffset*yoffset, yoffset, cFactor, xoffset);
+        double[] yrowBuffer = new double[yoffset*cFactor];
+        double[] yresultBuffer = new double[yoffset*cFactor];
+	     for ( int row = 0; (row < zDim * xDim ) && !threadStopped; row++ ) {
+			if (row % progressStep == 0) {
+				fireProgressStateChanged((int)progress++);
 			}
-        }
-
+			MipavUtil.rowCopy(inputBuffer, row, yrowBuffer, 0, yoffset, xoffset, cFactor);
+			convolve(yrowBuffer, kernelBuffer[1], yresultBuffer);
+			MipavUtil.rowCopy(yresultBuffer, 0, inputBuffer, row, yoffset, cFactor, xoffset);
+	    }
+		
         // Convolve the result image from above with the Z dimension kernel
         if (zDim > 1 && kernelBuffer.length > 2) {
-            double[] zrowBuffer = new double[zoffset];
-            double[] zresultBuffer = new double[zoffset];
+            double[] zrowBuffer = new double[zoffset*cFactor];
+            double[] zresultBuffer = new double[zoffset*cFactor];
 			for (int row = 0; (row < xDim * yDim) && !threadStopped; row++) {
 				if (row % progressStep == 0) {
 					fireProgressStateChanged((int)progress++);
 				}
-				MipavUtil.rowCopy(inputBuffer, row, zrowBuffer, 0, zoffset,
-						xoffset * yoffset, cFactor);
+				MipavUtil.rowCopy(inputBuffer, row, zrowBuffer, 0, zoffset, yoffset, cFactor);
 				convolve(zrowBuffer, kernelBuffer[2], zresultBuffer);
-				MipavUtil.rowCopy(zresultBuffer, 0, inputBuffer, row, zoffset,
-						cFactor, xoffset * yoffset);
+				MipavUtil.rowCopy(zresultBuffer, 0, inputBuffer, row, zoffset, cFactor, yoffset);
 			}
 		}
     }
