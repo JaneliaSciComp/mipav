@@ -340,12 +340,17 @@ public class PlaneRender_WM extends GPURenderBase
     private boolean m_bDrawVOI = false;
 
     private boolean m_bDrawRect = false;
-    private boolean m_bDrawLevelSet = false;
+    private boolean m_bDrawOval = false;
     private boolean m_bDrawPolyline = false;
+    private boolean m_bDrawLevelSet = false;
     private boolean m_bUpdateVOI = true;
     private boolean m_bPointer = false;
     private boolean m_bSelected = false;
 
+    private int m_iCirclePts = 32;
+    private double[] m_adCos = new double[m_iCirclePts];
+    private double[] m_adSin = new double[m_iCirclePts];
+    
     private TriMesh m_kBallPoint = null;
     
     private ZBufferState m_kZState = null;
@@ -689,6 +694,12 @@ public class PlaneRender_WM extends GPURenderBase
             kWState.Fill = WireframeState.FillMode.FM_LINE;
             m_kBallPoint.AttachGlobalState(kWState);
             m_kBallPoint.UpdateRS();
+            
+            for ( int i = 0; i < m_iCirclePts; i++ )
+            {
+                m_adCos[i] = Math.cos( Math.PI * 2.0 * i/(float)m_iCirclePts );
+                m_adSin[i] = Math.sin( Math.PI * 2.0 * i/(float)m_iCirclePts);
+            }
         }
 
 
@@ -699,10 +710,20 @@ public class PlaneRender_WM extends GPURenderBase
             m_kCurrentVOI = null;
             m_bSelected = false;
             m_bDrawRect = true;
+            m_bDrawOval = false;
             m_bDrawPolyline = false;
             m_bDrawLevelSet = false;
         } 
         else if (kCommand.equals("EllipseVOI") ) {
+            m_bDrawVOI = true;
+            m_bPointer = false;
+            m_kCurrentVOI = null;
+            m_bSelected = false;
+            m_bDrawRect = false;
+            m_bDrawOval = true;
+            m_bDrawPolyline = false;
+            m_bDrawLevelSet = false;
+        
         } 
         else if (kCommand.equals("Polyline") ) {
             m_bDrawVOI = true;
@@ -710,6 +731,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_kCurrentVOI = null;
             m_bSelected = false;
             m_bDrawRect = false;
+            m_bDrawOval = false;
             m_bDrawPolyline = true;
             m_bDrawLevelSet = false;
         } 
@@ -721,6 +743,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_kCurrentVOI = null;
             m_bSelected = false;
             m_bDrawRect = false;
+            m_bDrawOval = false;
             m_bDrawPolyline = false;
             m_bDrawLevelSet = true;
         } 
@@ -1823,7 +1846,49 @@ public class PlaneRender_WM extends GPURenderBase
             {
                 m_kCurrentVOI.SetPosition( 1, iX, fYStart, m_iSlice);
                 m_kCurrentVOI.SetPosition( 2, iX, fY, m_iSlice);
-                m_kCurrentVOI.SetPosition( 3, m_fMouseX, fY, m_iSlice);
+                m_kCurrentVOI.SetPosition( 3, m_fMouseX, fY, m_iSlice);       
+                VertexBuffer kVBuffer = m_kCurrentVOI.getLocal(0).VBuffer;   
+                for ( int i = 0; i < 4; i++ )
+                {
+                    System.err.println( kVBuffer.GetPosition3(i).ToString());
+                }
+                m_kCurrentVOI.Release();
+            }
+            m_kCurrentVOI.Update();
+        }
+        else if ( m_bDrawOval )
+        {
+            float fRadiusX = Math.abs(m_fMouseX - iX);
+            float fRadiusY = Math.abs(fYStart - fY);
+            if ( m_kCurrentVOI == null )
+            {            
+                VertexBuffer kVBuffer = new VertexBuffer(m_kVOIAttr, m_iCirclePts);
+                for ( int i = 0; i < m_iCirclePts; i++ )
+                {
+                    kVBuffer.SetPosition3( i, (float)(m_fMouseX + fRadiusX * m_adCos[i]),
+                            (float)(fYStart + fRadiusY * m_adSin[i]), m_iSlice);
+                    kVBuffer.SetColor3( 0, i, m_aakColors[m_iPlaneOrientation][2] );
+                }
+
+                Polyline kRectVOI = new Polyline( kVBuffer, true, true );
+                kRectVOI.AttachEffect( new VertexColor3Effect() );
+                kRectVOI.AttachGlobalState(m_kZState);
+
+                m_kCurrentVOI = new LocalVolumeVOI( kRectVOI, "VOITemp" + m_iPlaneOrientation );
+
+                 Node kNode = new Node();
+                 kNode.AttachChild(m_kCurrentVOI.Volume.get(0) );
+                 kNode.SetName(m_kCurrentVOI.Name.get(0));
+                 m_kDisplayList.add( m_kParent.addNode(kNode) );
+                 m_kParent.translateSurface( m_kCurrentVOI.Name.get(0), m_kTranslate );
+            }
+            else
+            {
+                for ( int i = 0; i < m_iCirclePts; i++ )
+                {
+                    m_kCurrentVOI.SetPosition( i, (float)(m_fMouseX + fRadiusX * m_adCos[i]),
+                            (float)(fYStart + fRadiusY * m_adSin[i]), m_iSlice);
+                }
                 m_kCurrentVOI.Release();
             }
             m_kCurrentVOI.Update();
