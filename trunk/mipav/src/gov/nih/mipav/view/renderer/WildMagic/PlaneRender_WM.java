@@ -34,12 +34,12 @@ import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Camera;
-import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
@@ -558,7 +558,7 @@ public class PlaneRender_WM extends GPURenderBase
                         Polyline kPoly = (Polyline)kNode.GetNode().GetChild(0);
                         Vector3f kPos = FileCoordinatesToVOI( kPoly.VBuffer.GetPosition3(0), true );
                         //System.err.print( m_iPlaneOrientation + "       " + kPos.Z + " " + m_kCenter.Z );
-                        if ( kPos.Z == m_kCenter.Z )
+                        if ( Math.abs( kPos.Z - m_kCenter.Z) < Mathf.ZERO_TOLERANCE )
                         {
                             kNode.Render( m_pkRenderer, m_kCuller );
                             //System.err.print("                Draw VOI" );
@@ -586,7 +586,7 @@ public class PlaneRender_WM extends GPURenderBase
                 }
             }
             drawAxes();
-            //drawVOI();
+            drawVOI();
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
@@ -678,7 +678,7 @@ public class PlaneRender_WM extends GPURenderBase
             m_bFirstVOI = false;
             StandardMesh kSDMesh = new StandardMesh(m_kVOIAttr);
             kSDMesh.SetInside(true);
-            m_kBallPoint = kSDMesh.Box(1.0f/m_aiLocalImageExtents[0], 1.0f/m_aiLocalImageExtents[1], 1.0f/m_aiLocalImageExtents[2]);
+            m_kBallPoint = kSDMesh.Box(1.0f/100f, 1.0f/100f, 1.0f/100f);
             m_kBallPoint.AttachEffect( new VertexColor3Effect() );
             for ( int i = 0; i < m_kBallPoint.VBuffer.GetVertexQuantity(); i++ )
             {
@@ -688,6 +688,7 @@ public class PlaneRender_WM extends GPURenderBase
             WireframeState kWState = new WireframeState();
             kWState.Fill = WireframeState.FillMode.FM_LINE;
             m_kBallPoint.AttachGlobalState(kWState);
+            m_kBallPoint.UpdateRS();
         }
 
 
@@ -1998,16 +1999,14 @@ public class PlaneRender_WM extends GPURenderBase
                 int iNumPoints = m_kCurrentVOI.GetVertexQuantity(i);
                 if ( iNumPoints > 0 )
                 {
-                    //System.err.println( m_iSlice + " " + m_kCurrentVOI.VBuffer.GetPosition3(0).Z );
                     if ( m_iSlice == m_kCurrentVOI.slice(i) )
                     {
                         Vector3f kTranslate = new Vector3f();
                         for ( int j = 0; j < iNumPoints; j++ )
                         {
-                            //System.err.println( m_kCurrentVOI.VBuffer.GetPosition3(i).ToString() );
-                            kTranslate.Add( m_kTranslate, m_kCurrentVOI.getVolume(i).VBuffer.GetPosition3(j) );
-                            m_kBallPoint.Local.SetTranslate( m_kTranslate );
-                            //m_kBallPoint.Local.SetScale( 1.0f/m_fZoomScale, 1.0f/m_fZoomScale, 1.0f/m_fZoomScale );
+                            kTranslate.Copy( m_kCurrentVOI.getVolume(i).VBuffer.GetPosition3(j) );
+                            kTranslate.Add( m_kTranslate );
+                            m_kBallPoint.Local.SetTranslate( kTranslate );
                             m_kBallPoint.UpdateGS();
                             m_pkRenderer.Draw( m_kBallPoint );
                         }
