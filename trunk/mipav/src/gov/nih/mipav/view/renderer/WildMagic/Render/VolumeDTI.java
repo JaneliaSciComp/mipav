@@ -137,7 +137,7 @@ public class VolumeDTI extends VolumeObject
     private int currentGroupIndex = 0;
 
     /** arrow glyphs */
-    private TriMesh m_kArrow;
+    private Node m_kArrow;
     
     /** cone glyphs */
     private TriMesh m_kCone;
@@ -401,9 +401,16 @@ public class VolumeDTI extends VolumeObject
                 }
                 else if ( m_bDisplayArrows )
                 {
-                    kGlyph = m_kCylinder;
-                    //kArrow.AttachChild( m_kCone );
-                    //kArrow.AttachChild( m_kArrow );
+                    m_kArrow.Local.Copy(m_kEigenVectors.get(kKey));
+
+                    m_kEllipseMaterial.Ambient = m_kColorEllipse;
+                    m_kEllipseMaterial.Diffuse = m_kColorEllipse;
+                    m_kScene.SetChild(0,m_kArrow);
+                    m_kScene.UpdateGS();
+                    m_kScene.DetachChild(m_kArrow);
+                    kRenderer.Draw((TriMesh)m_kArrow.GetChild(0));
+                    kRenderer.Draw((TriMesh)m_kArrow.GetChild(1));
+                    iDisplayed++;
                 }
                 if ( kGlyph != null )
                 {
@@ -822,17 +829,21 @@ public class VolumeDTI extends VolumeObject
         m_kSphere = kSM.Sphere(64,64,1f);
         m_kSphere.AttachGlobalState(kCull);
         
-        Transformation trans = new Transformation();
-        float rotationRedian = 0.5f * (float) Math.PI;
-
-        Matrix3f matrix = new Matrix3f((float)Math.cos(rotationRedian),0.0f,(float)Math.sin(rotationRedian),
-                					   0.0f,1.0f,0.0f,
-                					   (float)-Math.sin(rotationRedian),0.0f,(float)Math.cos(rotationRedian));
-
-        trans.SetRotate(matrix);        
-        kSM.SetTransformation(trans);
         m_kCylinder = kSM.Cylinder(64,64,1.0f,2f,false);
         m_kCylinder.AttachGlobalState(kCull);
+        Vector3f kPos = new Vector3f();
+        Matrix3f matrix = new Matrix3f(0f,0.0f,1f,
+                                       0.0f,1.0f,0.0f,
+                                       -1f,0.0f,0f);
+        for ( int i = 0; i < m_kCylinder.VBuffer.GetVertexQuantity(); i++ )
+        {
+            kPos = m_kCylinder.VBuffer.GetPosition3(i);
+            matrix.Mult(kPos, kPos);
+            m_kCylinder.VBuffer.SetPosition3(i, kPos);
+            kPos = m_kCylinder.VBuffer.GetNormal3(i);
+            matrix.Mult(kPos, kPos);
+            m_kCylinder.VBuffer.SetNormal3(i, kPos);            
+        }
 
         
         m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );    
@@ -876,23 +887,68 @@ public class VolumeDTI extends VolumeObject
         m_kCylinder.AttachEffect(m_kLightShader);
         m_kCylinder.UpdateRS();
         
-        
-        kSM.SetInside(false);
-        m_kCone = kSM.Cone(6,6,0.5f,1.0f, false);
-        m_kCone.Local.SetTranslate(-0.5f,0.0f,0.0f);
-        m_kCone.AttachGlobalState(m_kEllipseMaterial);
-        m_kCone.AttachEffect(m_kLightShader);
-        m_kCone.UpdateGS();
-        m_kCone.UpdateRS();
-        
-
-        m_kArrow = kSM.Cylinder(6,6,0.25f,1.0f, false);
-        m_kArrow.Local.SetTranslate(0.5f,0.0f,0.0f);
-        m_kArrow.AttachGlobalState(m_kEllipseMaterial);
-        m_kArrow.AttachEffect(m_kLightShader);
-        m_kArrow.UpdateGS();
-        m_kArrow.UpdateRS();
+        MakeArrow();
     }
+    
+    
+
+    private void MakeArrow()
+    {
+        m_kArrow = new Node();
+        Vector3f kPos = new Vector3f();
+        Matrix3f matrix = new Matrix3f(0f,0.0f,1f,
+                                       0.0f,1.0f,0.0f,
+                                       -1f,0.0f,0f);
+
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetNChannels(3);
+
+        CullState kCull = new CullState();
+        kCull.Enabled = true;
+        kCull.FrontFace = CullState.FrontMode.FT_CW;
+        StandardMesh kSM = new StandardMesh(kAttr);
+
+        TriMesh pkMesh = kSM.Cone(64,64,1.0f,1.0f, false);
+        m_kArrow.AttachChild(pkMesh);
+        
+        for ( int i = 0; i < pkMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+            kPos = pkMesh.VBuffer.GetPosition3(i);
+            matrix.Mult(kPos, kPos);
+            kPos.X -=.5;
+            pkMesh.VBuffer.SetPosition3(i, kPos);
+            kPos = pkMesh.VBuffer.GetNormal3(i);
+            matrix.Mult(kPos, kPos);
+            pkMesh.VBuffer.SetNormal3(i, kPos);            
+        }
+
+        TriMesh pkMesh2 = kSM.Cylinder(64,64,0.5f,1.0f,false);
+        for ( int i = 0; i < pkMesh2.VBuffer.GetVertexQuantity(); i++ )
+        {
+            kPos = pkMesh2.VBuffer.GetPosition3(i);
+            matrix.Mult(kPos, kPos);
+            kPos.X +=.5;
+            pkMesh2.VBuffer.SetPosition3(i, kPos);
+            kPos = pkMesh2.VBuffer.GetNormal3(i);
+            matrix.Mult(kPos, kPos);
+            pkMesh2.VBuffer.SetNormal3(i, kPos);            
+        }
+        
+        m_kArrow.AttachChild(pkMesh2);
+
+        pkMesh.AttachEffect(m_kLightShader);
+        pkMesh2.AttachEffect(m_kLightShader);        
+        pkMesh.AttachGlobalState(m_kEllipseMaterial);
+        pkMesh2.AttachGlobalState(m_kEllipseMaterial);    
+        pkMesh.AttachGlobalState(kCull);      
+        pkMesh2.AttachGlobalState(kCull);    
+        pkMesh.UpdateRS();
+        pkMesh2.UpdateRS();
+    }   
+    
+    
+    
     /** Set the m_iEllipsoidMod value. 
      * @param iMod new m_iEllipsoidMod value.
      */
@@ -1061,9 +1117,15 @@ public class VolumeDTI extends VolumeObject
                             }
                             else if ( m_bDisplayArrows )
                             {
-                                kGlyph = m_kCylinder;
-                                //kArrow.AttachChild( m_kCone );
-                                //kArrow.AttachChild( m_kArrow );
+                                m_kArrow.Local.Copy(m_kEigenVectors.get(kIndex));
+
+                                m_kEllipseMaterial.Ambient = m_kColorEllipse;
+                                m_kEllipseMaterial.Diffuse = m_kColorEllipse;
+                                m_kScene.SetChild(0,m_kArrow);
+                                m_kScene.UpdateGS();
+                                m_kScene.DetachChild(m_kArrow);
+                                kRenderer.Draw((TriMesh)m_kArrow.GetChild(0));
+                                kRenderer.Draw((TriMesh)m_kArrow.GetChild(1));
                             }
                             if ( kGlyph != null )
                             {
