@@ -434,13 +434,7 @@ implements ChangeListener {
             progressBar.dispose();
         }
 
-        // MUST register frame to image models
-        imageA.addImageDisplayListener(this);
-
-        if (imageB != null) {
-            imageB.addImageDisplayListener(this);
-        }
-
+       
         if (imageA.isColorImage()) {
             setRGBTA(RGBTA);
 
@@ -481,16 +475,47 @@ implements ChangeListener {
             m_kAnisotropyImage.disposeLocal();
             m_kAnisotropyImage = null;
         }
+        
+        if ( DTIparamsPanel != null ) {
+        	DTIparamsPanel.disposeLocal();
+        	DTIparamsPanel = null;
+        }
+        
+        if ( DTIimageLoadPanel != null ) {
+        	DTIimageLoadPanel.disposeLocal();
+        	DTIimageLoadPanel = null;
+        }
+        
         if ( m_kDTIImage != null )
         {
+        	m_kDTIImage.removeImageDisplayListener(this);
             m_kDTIImage.disposeLocal();
             m_kDTIImage = null;
         }
+        
+        
+        
+        if ( imageA != null ) {
+        	imageA.removeImageDisplayListener(this);
+        	imageA.disposeLocal();
+        	imageA = null;
+        }
+        
+        if ( imageB != null ) {
+        	imageB.removeImageDisplayListener(this);
+        	imageB.disposeLocal();
+        	imageB = null;
+        }
+        
         if ( m_kDTIColorImage != null )
         {
+        	m_kDTIColorImage.removeImageDisplayListener(this);
             m_kDTIColorImage.disposeLocal();
             m_kDTIColorImage = null;
         }
+        
+      
+        
     }
 
     /**

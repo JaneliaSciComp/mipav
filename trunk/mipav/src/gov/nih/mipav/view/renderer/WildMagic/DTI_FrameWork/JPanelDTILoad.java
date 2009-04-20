@@ -145,6 +145,16 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         init();
     }
 
+    
+    /**
+     * Dispose memory.
+     */
+    public void disposeLocal() {
+    	if ( resultImage != null ) {
+    		resultImage.disposeLocal();
+    		resultImage = null;
+    	}
+    }
 
     public void init() {
         mainPanelGBC = new GridBagConstraints();
