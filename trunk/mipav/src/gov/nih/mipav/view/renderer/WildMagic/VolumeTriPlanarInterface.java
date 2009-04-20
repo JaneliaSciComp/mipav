@@ -2949,7 +2949,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         JPanel tabPanel = new JPanel(new BorderLayout());
 
         tabPanel.add(tabbedPane);
-        tabPanel.setMinimumSize(new Dimension(maxPanelWidth, 789));
+        tabPanel.setMinimumSize(new Dimension(maxPanelWidth, 820));
 
         JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabPanel, rightPane);
 

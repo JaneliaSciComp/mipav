@@ -64,8 +64,9 @@ implements ListSelectionListener, ChangeListener {
     private JCheckBox m_kTubes;
     /** Checkbox for displaying all tensors as ellipsoids. */
     private JCheckBox m_kAllCylinders;
-    /** User-control over the number of ellipsoids displayed in GPUVolumeRender */
+    /** User-control over the number of glyphs displayed in GPUVolumeRender */
     private JSlider m_kDisplaySlider;
+    private JLabel m_kSliderLabel;
 
     private VolumeTriPlanarInterfaceDTI parentFrame;
 
@@ -183,9 +184,20 @@ implements ListSelectionListener, ChangeListener {
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
 
-        if ((source == m_kDisplaySlider) && !m_kDisplaySlider.getValueIsAdjusting()) {
-            //System.err.println( m_kDisplaySlider.getValue() );
-            m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() );
+        if ( source == m_kDisplaySlider )
+        {
+            if ( !m_kDisplaySlider.getValueIsAdjusting())
+            {
+                m_kVolumeDisplay.setEllipseMod( m_kDisplaySlider.getValue() + 1 );
+            }
+            if ( m_kDisplaySlider.getValue() == 0 )
+            {
+                m_kSliderLabel.setText( "Display Glphs every step: ");
+            }
+            else if ( m_kDisplaySlider.getValue() < 100 )
+            {
+                m_kSliderLabel.setText( "Display Glphs every " + (m_kDisplaySlider.getValue() + 1) + " steps: ");
+            }
         }
     }
 
@@ -1224,16 +1236,18 @@ implements ListSelectionListener, ChangeListener {
         m_kAllEllipsoids.setSelected(false);
         m_kAllEllipsoids.setEnabled(false);
 
-        m_kDisplaySlider = new JSlider(1, 500, 450);
+        m_kDisplaySlider = new JSlider(0, 100, 1);
         m_kDisplaySlider.setEnabled(true);
-        m_kDisplaySlider.setMinorTickSpacing(10);
+        m_kDisplaySlider.setMajorTickSpacing(25);
+        m_kDisplaySlider.setMinorTickSpacing(5);
         m_kDisplaySlider.setPaintTicks(true);
+        m_kDisplaySlider.setPaintLabels(true);
         m_kDisplaySlider.addChangeListener(this);
         m_kDisplaySlider.setVisible(true);
 
-        JLabel kSliderLabel = new JLabel("Display ellipsoids every X step: ");
-        kSliderLabel.setFont(MipavUtil.font12B);
-        kSliderLabel.setForeground(Color.black);
+        m_kSliderLabel = new JLabel("Display Glphs every step: ");
+        m_kSliderLabel.setFont(MipavUtil.font12B);
+        m_kSliderLabel.setForeground(Color.black);
 
 
         JPanel colorPanel = new JPanel();
@@ -1246,8 +1260,8 @@ implements ListSelectionListener, ChangeListener {
 
         JPanel sliderPanel = new JPanel();
         sliderPanel.setLayout(new BorderLayout());
-        sliderPanel.add(kSliderLabel, BorderLayout.WEST);
-        sliderPanel.add(m_kDisplaySlider, BorderLayout.CENTER);
+        sliderPanel.add(m_kSliderLabel, BorderLayout.WEST);
+        sliderPanel.add(m_kDisplaySlider, BorderLayout.SOUTH);
         sliderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         sliderPanel.setAlignmentY(Component.TOP_ALIGNMENT);
         
@@ -1274,11 +1288,18 @@ implements ListSelectionListener, ChangeListener {
         glyphsPanel.add(glyphsList, BorderLayout.CENTER);
         glyphsPanel.add(displayAllCheckBox, BorderLayout.EAST);
         
-        JPanel optionsPanel = new JPanel();
-        optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
-        optionsPanel.add(colorPanel);
-        optionsPanel.add(sliderPanel);
-        optionsPanel.add(glyphsPanel);
+        
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        JPanel optionsPanel = new JPanel(new GridBagLayout());
+        optionsPanel.add(colorPanel, gbc); gbc.gridy++;
+        optionsPanel.add(sliderPanel, gbc); gbc.gridy++;
+        optionsPanel.add(glyphsPanel, gbc); gbc.gridy++;
         optionsPanel.setBorder(buildTitledBorder("Fiber bundle & Glyph options"));
         
         JPanel rightPanel = new JPanel();

@@ -1042,13 +1042,13 @@ public class VolumeDTI extends VolumeObject
             kKey = (Integer)kIterator.next();
             cKey = (Integer)cIterator.next();
             kGlyphVector = m_kGlyphs.get(kKey);     
-            if ( (iCount%m_iEllipsoidMod) == 0 )
-            {                           
-                for ( int i = 0; i < kGlyphVector.size(); i++ )
+            for ( int i = 0; i < kGlyphVector.size(); i++ )
+            {
+                aiEllipsoids = kGlyphVector.get(i);
+                for ( int j = 0; j < aiEllipsoids.length; j++ )
                 {
-                    aiEllipsoids = kGlyphVector.get(i);
-                    for ( int j = 0; j < aiEllipsoids.length; j++ )
-                    {
+                    if ( (iCount%m_iEllipsoidMod) == 0 )
+                    {                           
                         if ( aiEllipsoids[j] != -1 )
                         {
                             iIndex = aiEllipsoids[j];
@@ -1059,13 +1059,13 @@ public class VolumeDTI extends VolumeObject
                             {
 
                                 if ( !isUsingVolumeColor ) {
-                                	if ( cKey == null ) continue;
-                                	m_kColorEllipse = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
+                                    if ( cKey == null ) continue;
+                                    m_kColorEllipse = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
                                 } else {
-                                	fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
-	                                fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
-	                                fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-	                                m_kColorEllipse = new ColorRGB(fR, fG, fB);
+                                    fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
+                                    fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
+                                    fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
+                                    m_kColorEllipse = new ColorRGB(fR, fG, fB);
                                 }
 
                                 m_kColorEllipse = kColor;
@@ -1099,8 +1099,8 @@ public class VolumeDTI extends VolumeObject
                             {
 
                                 if ( !isUsingVolumeColor ) {
-                                	if ( cKey == null ) continue;
-                                	m_kColorEllipse = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
+                                    if ( cKey == null ) continue;
+                                    m_kColorEllipse = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
                                 } else {
                                     fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
                                     fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
@@ -1140,9 +1140,9 @@ public class VolumeDTI extends VolumeObject
                             }
                         }
                     }
+                    iCount++;
                 }
             }
-            iCount++;
         }
         m_kLightShader.SetReverseFace(0);
     }
