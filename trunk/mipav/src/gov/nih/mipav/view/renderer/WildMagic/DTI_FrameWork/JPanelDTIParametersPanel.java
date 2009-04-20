@@ -1920,10 +1920,17 @@ implements ListSelectionListener, ChangeListener {
             m_kVolumeDisplay.setDisplayCylinders(false);
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayArrows(false);
-        }    else if (displayMode == Arrows /* && displayAll == false */) {
+        }  else if (displayMode == Arrows  && displayAll == false ) {
             parentFrame.getLightControl().refreshLighting();
             m_kVolumeDisplay.setDisplayTubes(false);
             m_kVolumeDisplay.setDisplayAllGlyphs(false);
+            m_kVolumeDisplay.setDisplayCylinders(false);
+            m_kVolumeDisplay.setDisplayEllipsoids(false);
+            m_kVolumeDisplay.setDisplayArrows(true);
+        }  else if (displayMode == Arrows  && displayAll == true ) {
+            parentFrame.getLightControl().refreshLighting();
+            m_kVolumeDisplay.setDisplayTubes(false);
+            m_kVolumeDisplay.setDisplayAllGlyphs(true);
             m_kVolumeDisplay.setDisplayCylinders(false);
             m_kVolumeDisplay.setDisplayEllipsoids(false);
             m_kVolumeDisplay.setDisplayArrows(true);
