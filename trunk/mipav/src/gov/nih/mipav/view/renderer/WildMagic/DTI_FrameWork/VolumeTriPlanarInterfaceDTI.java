@@ -509,6 +509,9 @@ implements ChangeListener {
      * Method that resizes the frame and adjusts the rows, columns as needed.
      */
     protected void resizePanel() {
+        int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+            panelToolbar.getHeight();
+        DTIparamsPanel.resizePanel(maxPanelWidth, height);
         super.resizePanel();        
         panelToolbar.getHeight();
     }

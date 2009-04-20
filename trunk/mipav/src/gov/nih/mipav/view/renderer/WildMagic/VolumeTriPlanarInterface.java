@@ -2659,6 +2659,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     public void windowActivated(WindowEvent event) {
         setModified();
         super.windowActivated(event);
+        resizePanel();
     }
     
     /* (non-Javadoc)
