@@ -67,8 +67,12 @@ public class JPanelSigmas extends JPanel implements FocusListener, ItemListener 
      * @param  enable3D  whether to enable the 3D components
      */
     public void enable3DComponents(boolean enable3D) {
-        correctionFactorLabel.setEnabled(enable3D);
-        correctionFactorCheckbox.setEnabled(enable3D);
+        if (correctionFactorLabel != null) {
+            correctionFactorLabel.setEnabled(enable3D);
+        }
+        if (correctionFactorCheckbox != null) {
+            correctionFactorCheckbox.setEnabled(enable3D);
+        }
         labelGaussZ.setEnabled(enable3D);
         textGaussZ.setEnabled(enable3D);
     }
