@@ -246,19 +246,34 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
      */
     private void gradientMagnitude(float[] img, float[] mag) {
         int row, col, cIndex;
-        float lVal, rVal, tVal, bVal;
+        float gradX;
+        float gradY;
 
         for (row = 0; row < yDim; row++) {
             cIndex = row * xDim;
 
-            for (col = 0, cIndex += col; col < xDim; cIndex++, col++) {
-
-                rVal = getVal(img, col + 1, row);
-                lVal = getVal(img, col - 1, row);
-                bVal = getVal(img, col, row + 1);
-                tVal = getVal(img, col, row - 1);
-
-                mag[cIndex] = (float) Math.sqrt(((rVal - lVal) * (rVal - lVal)) + ((tVal - bVal) * (tVal - bVal)));
+            for (col = 0; col < xDim; cIndex++, col++) {
+                
+                if (col == 0) {
+                    gradX = 2 * (img[cIndex + 1] - img[cIndex]);    
+                }
+                else if (col == (xDim - 1)) {
+                    gradX = 2 * (img[cIndex] - img[cIndex - 1]);
+                }
+                else {
+                    gradX = img[cIndex + 1] - img[cIndex - 1];
+                }
+                if (row == 0) {
+                    gradY = 2 * (img[cIndex + xDim] - img[cIndex]);
+                }
+                else if (row == (yDim - 1)) {
+                    gradY = 2 * (img[cIndex] - img[cIndex - xDim]);
+                }
+                else {
+                    gradY = img[cIndex + xDim] - img[cIndex - xDim];
+                }
+                
+                mag[cIndex] = (float) Math.sqrt((gradX * gradX) + (gradY * gradY));
             } // for (col = 0; ...)
         } // for (row = 0; ...)
     } // end gradientMagnitude(...)
@@ -272,7 +287,9 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
      */
     private void gradientMagnitude3D(float[] img, float[] mag) {
         int slice, row, col, cIndex, sIndex;
-        float lVal, rVal, tVal, bVal, zLowVal, zHighVal;
+        float gradX;
+        float gradY;
+        float gradZ;
         int sliceSize = yDim * xDim;
 
         for (slice = 0; slice < zDim; slice++) {
@@ -281,17 +298,38 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             for (row = 0; row < yDim; row++) {
                 cIndex = sIndex + (row * xDim);
 
-                for (col = 0, cIndex += col; col < xDim; cIndex++, col++) {
+                for (col = 0; col < xDim; cIndex++, col++) {
+                    if (col == 0) {
+                        gradX = 2 * (img[cIndex + 1] - img[cIndex]);    
+                    }
+                    else if (col == (xDim - 1)) {
+                        gradX = 2 * (img[cIndex] - img[cIndex - 1]);
+                    }
+                    else {
+                        gradX = img[cIndex + 1] - img[cIndex - 1];
+                    }
+                    if (row == 0) {
+                        gradY = 2 * (img[cIndex + xDim] - img[cIndex]);
+                    }
+                    else if (row == (yDim - 1)) {
+                        gradY = 2 * (img[cIndex] - img[cIndex - xDim]);
+                    }
+                    else {
+                        gradY = img[cIndex + xDim] - img[cIndex - xDim];
+                    }
+                    if (slice == 0) {
+                        gradZ = 2 * (img[cIndex + sliceSize] - img[cIndex]);
+                    }
+                    else if (slice == (zDim - 1)) {
+                        gradZ = 2 * (img[cIndex] - img[cIndex - sliceSize]);
+                    }
+                    else {
+                        gradZ = img[cIndex + sliceSize] - img[cIndex - sliceSize];
+                    }
+                    
 
-                    rVal = getVal(img, col + 1, row, slice);
-                    lVal = getVal(img, col - 1, row, slice);
-                    bVal = getVal(img, col, row + 1, slice);
-                    tVal = getVal(img, col, row - 1, slice);
-                    zLowVal = getVal(img, col, row, slice - 1);
-                    zHighVal = getVal(img, col, row, slice + 1);
-
-                    mag[cIndex] = (float) Math.sqrt(((rVal - lVal) * (rVal - lVal)) + ((tVal - bVal) * (tVal - bVal)) +
-                                                    ((zHighVal - zLowVal) * (zHighVal - zLowVal)));
+                    mag[cIndex] = (float) Math.sqrt((gradX * gradX) + (gradY * gradY) +
+                                                    (gradZ * gradZ));
                 } // for (col = 0; ...)
             } // for (row = 0; ...)
         } // for (slice = 0; ...)
