@@ -888,6 +888,10 @@ public class VolumeDTI extends VolumeObject
         m_kCylinder.UpdateRS();
         
         MakeArrow();
+        
+        afTensorData = null;
+        kDTIImage.disposeLocal();
+        kDTIImage = null;
     }
     
     

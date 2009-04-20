@@ -171,6 +171,30 @@ implements ListSelectionListener, ChangeListener {
     }
 
     /**
+     * Dispose memory.
+     *
+     */
+    public void disposeLocal() {
+       
+       if ( m_kDTIImage != null ) {
+    	   m_kDTIImage.disposeLocal();
+    	   m_kDTIImage = null;
+       }
+    	
+       
+       
+       if ( m_kVOIParamsList != null )
+    	   m_kVOIParamsList = null;
+    	
+    	
+       if ( m_kVolumeDisplay != null ) {
+    	   m_kVolumeDisplay.dispose();
+    	   m_kVolumeDisplay = null;
+       }
+       
+    }
+    
+    /**
      * Color chooser for when the user wants to change the color of the fiber
      * bundle tracts.
      */
@@ -678,6 +702,7 @@ implements ListSelectionListener, ChangeListener {
             kDTIName = kDTIName.substring(0, kDTIName.length()
                     - kTract.length());
             FileIO fileIO = new FileIO();
+           
             m_kDTIImage = fileIO.readImage(kDTIName, chooser
                     .getCurrentDirectory()
                     + File.separator);
@@ -686,6 +711,7 @@ implements ListSelectionListener, ChangeListener {
                 .displayError("Diffusion Tensor file does not have correct dimensions");
                 if (m_kDTIImage != null) {
                     m_kDTIImage.disposeLocal();
+                    m_kDTIImage = null;
                 }
             }
             if (m_kDTIImage.getExtents()[3] != 6) {
@@ -693,6 +719,7 @@ implements ListSelectionListener, ChangeListener {
                 .displayError("Diffusion Tensor does not have correct dimensions");
                 if (m_kDTIImage != null) {
                     m_kDTIImage.disposeLocal();
+                    m_kDTIImage = null;
                 }   
             }
        
@@ -855,6 +882,11 @@ implements ListSelectionListener, ChangeListener {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        
+        if ( m_kDTIImage != null ) {
+        	m_kDTIImage.disposeLocal();
+        	m_kDTIImage = null;
         }
     }
     
