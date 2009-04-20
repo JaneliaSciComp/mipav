@@ -201,6 +201,18 @@ implements ListSelectionListener, ChangeListener {
         }
     }
 
+    /**
+     * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
+     *
+     * @param  panelWidth   DOCUMENT ME!
+     * @param  frameHeight  DOCUMENT ME!
+     */
+    public void resizePanel(int panelWidth, int frameHeight) {
+        mainPanel.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
+        mainPanel.setSize(new Dimension(panelWidth, frameHeight - 40));
+        mainPanel.revalidate();
+    }
+
     public void valueChanged(ListSelectionEvent kEvent) {
         
     	if ( kEvent.getSource() == m_kTractList ) {
