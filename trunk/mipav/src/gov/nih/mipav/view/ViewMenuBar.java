@@ -164,6 +164,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Median", null, 0, null, false),
                         menuBuilder.buildMenuItem("Mode", null, 0, null, false),
                         menuBuilder.buildMenuItem("Nonlinear noise reduction", "NLNR", 0, null, false),
+                        menuBuilder.buildMenuItem("Nonlocal means filter", "nlMeansFilter", 0, null, false),
                         menuBuilder.buildMenuItem("Nonmaximum suppression", "nmsuppression", 0, null, false),
                         menuBuilder.buildMenuItem("Regularized isotropic diffusion", "RegIsoDiff", 0, null, false),
                         menuBuilder.buildMenuItem("Slice averaging", "sliceAveraging", 0, null, false),
@@ -862,6 +863,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Adaptive path smooth", false);
             menuBuilder.setMenuItemEnabled("Nonlinear noise reduction", false);
+            menuBuilder.setMenuItemEnabled("Nonlocal means filter", false);
             menuBuilder.setMenuItemEnabled("Point area average intensities", false);
             menuBuilder.setMenuItemEnabled("Principal component", false);
             menuBuilder.setMenuItemEnabled("Quantify using mask", false);
@@ -1004,6 +1006,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
             menuBuilder.setMenuItemEnabled("Noise", false);
             menuBuilder.setMenuItemEnabled("Nonlinear noise reduction", false);
+            menuBuilder.setMenuItemEnabled("Nonlocal means filter", false);
             menuBuilder.setMenuItemEnabled("Nonmaximum suppression", false);
             menuBuilder.setMenuItemEnabled("Zero X non-maximum suppression", false);
             menuBuilder.setMenuItemEnabled("Single channel", false);
