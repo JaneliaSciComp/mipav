@@ -947,6 +947,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
                 try {
                 	plugin = Class.forName(name);
+                	plugin.newInstance();   //instantiated to allow loading into SCRIPT_ACTION_LOCATIONS
                 	catField = plugin.getField(fieldName);
                 	String[] hier = (String[])catField.get(plugin);
                 	Class[] interList = plugin.getInterfaces();
