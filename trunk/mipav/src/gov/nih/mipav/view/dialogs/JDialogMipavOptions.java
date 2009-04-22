@@ -93,6 +93,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** Multi-Threading Enabled Check Box */
     private JCheckBox multiThreadingEnabledCheckBox;
+    
+    /** Dicom Receiver check box */
+    private JCheckBox dicomReceiverOnStart;
 
     /** DOCUMENT ME! */
     private JCheckBox debugFileIOBox;
@@ -345,6 +348,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         otherPanel.setLayout(gbl);
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.NORTHWEST;
+        makeDicomReceiverOnStartOptions(gbc, gbl);
         makeMultiThreadingEnabledOptions(gbc, gbl);
         makeSaveDefaultsOptions(gbc, gbl);
         makeProvenanceOptions(gbc, gbl);
@@ -507,6 +511,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, String.valueOf(showOutputWindow.isSelected()));
             Preferences.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED, String.valueOf(multiThreadingEnabledCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, String.valueOf(dicomReceiverOnStart.isSelected()));
 
             Preferences.setProperty(Preferences.PREF_SHOW_SPLASH, String.valueOf(displaySplash.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_LINE_ANGLE, String.valueOf(showLineVOIAngleBox.isSelected()));
@@ -1621,6 +1626,21 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices.
         saveDefaultsCheckBox.setSelected(Preferences.is(Preferences.PREF_SAVE_DEFAULTS));
+    }
+    
+    protected void makeDicomReceiverOnStartOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+    	dicomReceiverOnStart = new JCheckBox("Start DICOM receiver on start-up");
+    	dicomReceiverOnStart.setFont(MipavUtil.font12);
+    	dicomReceiverOnStart.setForeground(Color.black);
+    	dicomReceiverOnStart.addActionListener(this);
+    	gbc.insets = new Insets(0, 0, 0, 0);
+    	gbc.gridwidth = GridBagConstraints.REMAINDER;
+    	gbc.anchor = GridBagConstraints.WEST;
+    	gbl.setConstraints(dicomReceiverOnStart, gbc);
+    	otherPanel.add(dicomReceiverOnStart);
+    	
+    	//preset the choices.
+    	dicomReceiverOnStart.setSelected(Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER));
     }
 
     protected void makeMultiThreadingEnabledOptions(GridBagConstraints gbc, GridBagLayout gbl) {
