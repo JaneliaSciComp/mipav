@@ -856,7 +856,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         		}
         		userInterface.setDICOMCatcher(rec = new DICOM_Receiver(storageKey));
         	}
-        	userInterface.getMenuBuilder().setMenuItemSelected("Enable DICOM receiver", rec.isAlive());
+        	userInterface.getMenuBuilder().setMenuItemSelected("Activate DICOM receiver", rec.isAlive());
         	if(rec.isAlive()) {
         		((JButton)source).setText("Deactivate");
         		((JButton)source).setActionCommand("Deactivate");
@@ -874,7 +874,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             	userInterface.getNDARPipeline().uninstall();
             } 
 
-        	userInterface.getMenuBuilder().setMenuItemSelected("Enable DICOM receiver", false);
+        	userInterface.getMenuBuilder().setMenuItemSelected("Activate DICOM receiver", false);
             ((JButton)source).setText("Activate");
     		((JButton)source).setActionCommand("Activate");
         }

@@ -377,7 +377,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             if ( ((JCheckBoxMenuItem) source).isSelected()) {
-                JCheckBoxMenuItem itemDicom = (JCheckBoxMenuItem) menuBuilder.getMenuItem("Enable DICOM receiver");
+                JCheckBoxMenuItem itemDicom = (JCheckBoxMenuItem) menuBuilder.getMenuItem("Activate DICOM receiver");
 
                 if ( !itemDicom.isSelected()) {
 

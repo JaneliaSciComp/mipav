@@ -401,7 +401,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
 
                     DICOMcatcher = new DICOM_Receiver();
-                    menuBuilder.setMenuItemSelected("Enable DICOM receiver", DICOMcatcher.isAlive());
+                    menuBuilder.setMenuItemSelected("Activate DICOM receiver", DICOMcatcher.isAlive());
                 } else {
 
                     if (DICOMcatcher != null) {
@@ -420,20 +420,20 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } else {
 
                 // this was a shortcut stroke to get here...toggle the switch
-                if (menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
+                if (menuBuilder.isMenuItemSelected("Activate DICOM receiver")) {
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop(); 
                     }
 
                     DICOMcatcher = new DICOM_Receiver();
-                    menuBuilder.setMenuItemSelected("Enable DICOM receiver", DICOMcatcher.isAlive());
+                    menuBuilder.setMenuItemSelected("Activate DICOM receiver", DICOMcatcher.isAlive());
                 } else {
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
                     }
-                    menuBuilder.setMenuItemSelected("Enable DICOM receiver", false);
+                    menuBuilder.setMenuItemSelected("Activate DICOM receiver", false);
 
                     // Also need to disable the auto upload to srb function.
                     menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
@@ -475,14 +475,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                 if (pipeline.setup()) {
 
-                    if ( !menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
+                    if ( !menuBuilder.isMenuItemSelected("Activate DICOM receiver")) {
 
                         if (DICOMcatcher != null) {
                             DICOMcatcher.setStop();
                         }
 
                         DICOMcatcher = new DICOM_Receiver();
-                        menuBuilder.setMenuItemSelected("Enable DICOM receiver", DICOMcatcher.isAlive());
+                        menuBuilder.setMenuItemSelected("Activate DICOM receiver", DICOMcatcher.isAlive());
 
                         pipeline.install(DICOMcatcher);
                         // note: activating the auto srb upload does not imply
@@ -3333,14 +3333,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         if (Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER)) {
             DICOMcatcher = new DICOM_Receiver();
-            menuBuilder.setMenuItemSelected("Enable DICOM receiver", DICOMcatcher.isAlive());
+            menuBuilder.setMenuItemSelected("Activate DICOM receiver", DICOMcatcher.isAlive());
         } else {
 
             if (DICOMcatcher != null) {
                 DICOMcatcher.setStop();
             }
 
-            menuBuilder.setMenuItemSelected("Enable DICOM receiver", false);
+            menuBuilder.setMenuItemSelected("Activate DICOM receiver", false);
         }
     }
 
