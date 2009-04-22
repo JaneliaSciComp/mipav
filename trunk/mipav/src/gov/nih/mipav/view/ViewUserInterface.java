@@ -398,15 +398,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
 
                     DICOMcatcher = new DICOM_Receiver();
-                    menuBuilder.setMenuItemEnabled("DICOM database access", true);
                 } else {
                     Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
                     }
-
-                    menuBuilder.setMenuItemEnabled("DICOM database access", false);
 
                     // Also need to disable the auto upload to srb function.
                     menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
@@ -431,15 +428,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
 
                     DICOMcatcher = new DICOM_Receiver();
-                    menuBuilder.setMenuItemEnabled("DICOM database access", true);
                 } else {
                     Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
                     }
-
-                    menuBuilder.setMenuItemEnabled("DICOM database access", false);
 
                     // Also need to disable the auto upload to srb function.
                     menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
@@ -488,7 +482,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         }
 
                         DICOMcatcher = new DICOM_Receiver();
-                        menuBuilder.setMenuItemEnabled("DICOM database access", true);
                         menuBuilder.setMenuItemSelected("Enable DICOM receiver", true);
 
                         pipeline.install(DICOMcatcher);
@@ -3333,7 +3326,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         if (Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER)) {
             DICOMcatcher = new DICOM_Receiver();
-            menuBuilder.setMenuItemEnabled("DICOM database access", true);
             menuBuilder.setMenuItemSelected("Enable DICOM receiver", true);
         } else {
 
@@ -3341,7 +3333,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 DICOMcatcher.setStop();
             }
 
-            menuBuilder.setMenuItemEnabled("DICOM database access", false);
             menuBuilder.setMenuItemSelected("Enable DICOM receiver", false);
         }
     }
