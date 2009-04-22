@@ -388,10 +388,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             return;
         } else if (command.equals("Dicom")) {
 
+        	if(Preferences.is(Preferences.PREF_ASK_DICOM_RECEIVER)) {
+        		new DicomQueryListener().queryForDicomAutostart();
+        	}
+        	
             if (source instanceof JCheckBoxMenuItem) {
 
                 if ( ((JCheckBoxMenuItem) source).isSelected()) {
-                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
@@ -400,7 +403,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     DICOMcatcher = new DICOM_Receiver();
                     menuBuilder.setMenuItemSelected("Enable DICOM receiver", DICOMcatcher.isAlive());
                 } else {
-                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
@@ -419,7 +421,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                 // this was a shortcut stroke to get here...toggle the switch
                 if (menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
-                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop(); 
@@ -428,7 +429,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     DICOMcatcher = new DICOM_Receiver();
                     menuBuilder.setMenuItemSelected("Enable DICOM receiver", DICOMcatcher.isAlive());
                 } else {
-                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
@@ -3818,7 +3818,55 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         System.exit(0);
     }
+    
+    private class DicomQueryListener implements ActionListener {
+        
+    	private JCheckBox checkBox;
+    	
+    	private JDialog dialog;
+    	
+	    /**
+	     * Ask user whether the dicom receiver should be enabled on startup.
+	     */
+	    private void queryForDicomAutostart() {
+	    	
+	    	String message = "Would you like to have the DICOM receiver begin when MIPAV starts?";
+	    	dialog = new JDialog();
+	    	dialog.setLayout(new BorderLayout());
+	    	dialog.setTitle("Auto-start option");
+	    	JPanel messagePanel = new JPanel();
+	    	messagePanel.add(new JLabel(message));
+	    	dialog.add(messagePanel, BorderLayout.NORTH);
+	    	JPanel checkBoxPanel = new JPanel();
+	    	checkBox = new JCheckBox("Click here to stop this message from displaying.");
+	    	checkBoxPanel.add(checkBox);
+	    	dialog.add(checkBoxPanel, BorderLayout.CENTER);
+	    	JPanel yesNoPanel = new JPanel();
+	    	JButton yes = new JButton("Yes");
+	    	yes.addActionListener(this);
+	    	JButton no = new JButton("No");
+	    	no.addActionListener(this);
+	    	yesNoPanel.add(yes);
+	    	yesNoPanel.add(no);
+	    	dialog.add(yesNoPanel, BorderLayout.SOUTH);
+	    	dialog.setLocationRelativeTo(null);
+	    	dialog.pack();
+	    	dialog.setVisible(true);
+	    	
+	    }
 
+		public void actionPerformed(ActionEvent e) {
+			if(e.getActionCommand().equals("Yes")) {
+				Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
+			} else if(e.getActionCommand().equals("No")) {
+				Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
+			}
+			Preferences.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, Boolean.valueOf(!checkBox.isSelected()).toString());
+			
+			dialog.dispose();
+		}
+    }
+    
     /**
      * This is the getter for providedOutputDir providedOutputDir: This boolean tells if the user has provided an
      * ouputDir parameter as a command line argument when running a script
