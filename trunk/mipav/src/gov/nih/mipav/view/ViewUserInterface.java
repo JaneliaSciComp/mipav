@@ -398,6 +398,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
 
                     DICOMcatcher = new DICOM_Receiver();
+                    menuBuilder.setMenuItemSelected("Enable DICOM receiver", DICOMcatcher.isAlive());
                 } else {
                     Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
@@ -482,7 +483,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         }
 
                         DICOMcatcher = new DICOM_Receiver();
-                        menuBuilder.setMenuItemSelected("Enable DICOM receiver", true);
+                        menuBuilder.setMenuItemSelected("Enable DICOM receiver", DICOMcatcher.isAlive());
 
                         pipeline.install(DICOMcatcher);
                         // note: activating the auto srb upload does not imply
