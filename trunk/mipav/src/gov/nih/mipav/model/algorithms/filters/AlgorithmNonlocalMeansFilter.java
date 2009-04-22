@@ -30,7 +30,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
     private int similarityWindowSide;
     
     /** The degree of filtering of the obtained image.  When we know the standard deviation of the noise,
-     *  sigma, the value of filterParameter.  A good value is between 10*sigma and 15*sigma.
+     *  sigma, the value of filterParameter should be set equal to sigma.
      */
     private float filterParameter;
 
@@ -168,6 +168,8 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         for (i = 0; i < kernel.length; i++) {
             kernel[i] /= kernelSum;
         }
+        
+        filterParameter = filterParameter * filterParameter;
         for (z = 0; z < zDim; z++) {
             try {
                 srcImage.exportData(z*length, length, input);
@@ -387,6 +389,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             kernel[i] /= kernelSum;
         }
         
+        filterParameter = filterParameter * filterParameter;
         try {
             srcImage.exportData(0, length, input);
         }
