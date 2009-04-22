@@ -74,8 +74,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     /** DOCUMENT ME! */
     private int similarityWindowSide = 7;
 
-    /** DOCUMENT ME! */
-    private float filterParameter = 25.0f;
+    /** Should be set equal to the noise standard deviation */
+    private float filterParameter = 10.0f;
 
     /** DOCUMENT ME! */
     private int searchWindowSide = 15;
@@ -552,11 +552,11 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
         gbc2.gridx = 0;
         gbc2.gridy = 2;
-        labelFilterParameter = createLabel("Filter Parameter (10 times noise stdDev) ");
+        labelFilterParameter = createLabel("Filter Parameter (Noise stdDev) ");
         paramPanel.add(labelFilterParameter, gbc2);
 
         gbc2.gridx = 1;
-        textFilterParameter = createTextField("25.0");
+        textFilterParameter = createTextField("10.0");
         paramPanel.add(textFilterParameter, gbc2);
 
         
