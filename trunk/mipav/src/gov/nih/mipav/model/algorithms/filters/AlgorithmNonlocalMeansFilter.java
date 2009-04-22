@@ -368,7 +368,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         W2 = new double[similarityCubed];
         for (d = 1; d <= halfSimilarity; d++) {
             value = 2*d + 1;
-            value = value * value * value;
+            value = value * value;
             value = 1.0/value;
             for (z = -d; z <= d; z++) {
                 for (y = -d; y <= d; y++) {
