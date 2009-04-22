@@ -2735,6 +2735,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         }
 
         storageTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        storageTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         storageTable.getColumn("Default").setMinWidth(50);
         storageTable.getColumn("Default").setMaxWidth(50);
         storageTable.getColumn("AE Title").setMinWidth(150);
