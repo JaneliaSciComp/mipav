@@ -163,6 +163,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
      * @return  flag indicating whether or not the thread is alive
      */
     public boolean isAlive() {
+    	
         return runner.isAlive();
     }
 
@@ -173,24 +174,6 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
 
         // accept storage SOP UIDs listed in pdu.addAllSupportedAbstractSyntaxes().
         addAllSupportedAbstractSyntaxes();
-
-        // Create an unconnected server socket to the port.
-        try {
-            recSocket = new ServerSocket(port);
-        } catch (Exception e) {
-
-            if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
-                Preferences.debug("DICOMReceiver.mipavReciever: Fatal: MIPAV's receiver failed to start: " + e + "\n");
-            }
-
-            MipavUtil.displayError("MIPAV's receiver failed to start: " + e);
-
-            return;
-        }
-
-        if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
-            Preferences.debug("DICOMReceiver.mipavReciever: Listening on port " + port + ". \n");
-        }
 
         // synchronous routine for handling connection requests
         while (runner.keepGoing()) {
@@ -698,6 +681,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
 
         try {
             runner = new RunnerThread(this);
+            
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: DICOMReceiver.start");
 
@@ -708,6 +692,10 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
 
         if (storageProperty != null) {
             port = Integer.valueOf(parseServerInfo(storageProperty)[3]).intValue();
+            boolean bindSuccess = createServerSocket();
+            if(!bindSuccess) {
+            	return; //returns w/o starting dicom receiver, could optionally have a dialog here to modify the storage destinations
+            }
         } else {
             MipavUtil.displayError("Cannot find port number from preference file.  Go to DICOM\n" +
                                    "database access and set storage destination properties.");
@@ -732,6 +720,39 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         }
 
         return;
+    }
+    
+    /**
+     * Creates the initial server socket binded to the given port.  If unable to be created,
+     * will return without having started the dicom receiver.
+     * @param port
+     */
+    private boolean createServerSocket() {
+    	// Create an unconnected server socket to the port.
+        try {
+            recSocket = new ServerSocket(port);
+        } catch(BindException e) {
+        	MipavUtil.displayError("Port "+port+" is already in use by another instance of MIPAV. Please use\n"+
+        			"the DICOM Communication Panel to choose a new storage destination");
+        
+        	return false;
+    	} catch (Exception e) {
+
+            if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+                Preferences.debug("DICOMReceiver.mipavReciever: Fatal: MIPAV's receiver failed to start: " + e + "\n");
+            }
+
+            MipavUtil.displayError("MIPAV's receiver failed to start: " + e);
+
+            return false;
+        }
+    	if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+            Preferences.debug("DICOMReceiver.mipavReciever: Listening on port " + port + ". \n");
+        }
+    	
+    	return true;
+
+        
     }
 
 
