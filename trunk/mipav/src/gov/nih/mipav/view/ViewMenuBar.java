@@ -1033,8 +1033,7 @@ public class ViewMenuBar {
             }
         }
 
-        menuBuilder.setMenuItemEnabled("DICOM database access", Preferences
-                .is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER));
+        menuBuilder.setMenuItemEnabled("DICOM database access", true);
     }
 
     /**
@@ -1167,7 +1166,6 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Two MRI images", true);
         menuBuilder.setMenuItemEnabled("Hough transform", true);
         menuBuilder.setMenuItemEnabled("Color edge", true);
-
         menuBuilder.setMenuItemEnabled("DICOM database access", true);
     }
 }

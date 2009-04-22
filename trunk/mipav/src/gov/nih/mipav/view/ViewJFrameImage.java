@@ -329,15 +329,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
                 userInterface.setDICOMCatcher(new DICOM_Receiver());
-                menuBuilder.setMenuItemEnabled("DICOM database access", true);
             } else {
                 Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
                 if (userInterface.getDICOMCatcher() != null) {
                     userInterface.getDICOMCatcher().setStop();
                 }
-
-                menuBuilder.setMenuItemEnabled("DICOM database access", false);
 
                 /**
                  * Also need to disable the auto upload to srb function.
@@ -389,7 +386,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                     itemDicom.setSelected(true);
                     userInterface.setDICOMCatcher(new DICOM_Receiver());
-                    menuBuilder.setMenuItemEnabled("DICOM database access", true);
                 }
 
                 pipeline.install(userInterface.getDICOMCatcher());
