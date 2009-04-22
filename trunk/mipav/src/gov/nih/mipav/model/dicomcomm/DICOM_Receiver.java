@@ -732,7 +732,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         try {
             recSocket = new ServerSocket(port);
         } catch(BindException e) {
-        	MipavUtil.displayError("Port "+port+" is already in use by another instance of MIPAV. Please use\n"+
+        	MipavUtil.displayWarning("Port "+port+" is already in use by another instance of MIPAV. Please use\n"+
         			"the DICOM Communication Panel to choose a new storage destination");
         
         	return false;
@@ -742,7 +742,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                 Preferences.debug("DICOMReceiver.mipavReciever: Fatal: MIPAV's receiver failed to start: " + e + "\n");
             }
 
-            MipavUtil.displayError("MIPAV's receiver failed to start: " + e);
+            MipavUtil.displayWarning("MIPAV's receiver failed to start: " + e);
 
             return false;
         }
