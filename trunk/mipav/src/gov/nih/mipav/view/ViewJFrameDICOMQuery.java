@@ -563,25 +563,6 @@ public class ViewJFrameDICOMQuery extends JFrame
 
                 Preferences.save();
                 table.repaint();
-
-                if (event.getSource().equals(editStore)) {
-
-                    if (userInterface.getDICOMCatcher() != null) {
-                        userInterface.getDICOMCatcher().resetPort(Integer.valueOf((String) values[3]).intValue());
-                    } else {
-
-                        try {
-
-                            if (userInterface.getDICOMCatcher() == null) {
-                                userInterface.setDICOMCatcher(new DICOM_Receiver());
-                            }
-                        } catch (OutOfMemoryError error) {
-                            MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.SetAs");
-
-                            return;
-                        }
-                    }
-                }
             }
         } else if (command.equals("Delete")) {
             int row, option;
@@ -690,25 +671,6 @@ public class ViewJFrameDICOMQuery extends JFrame
             Preferences.setProperty(key, newValue);
 
             Preferences.save();
-
-            if (event.getSource().equals(setStore)) {
-
-                if (userInterface.getDICOMCatcher() != null) {
-                    userInterface.getDICOMCatcher().resetPort(Integer.valueOf(port).intValue());
-                } else {
-
-                    try {
-
-                        if (userInterface.getDICOMCatcher() == null) {
-                            userInterface.setDICOMCatcher(new DICOM_Receiver());
-                        }
-                    } catch (OutOfMemoryError error) {
-                        MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.SetAs");
-
-                        return;
-                    }
-                }
-            }
 
             serverTable.repaint();
         } else if (command.equals("ClearTable")) {
