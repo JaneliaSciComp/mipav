@@ -1032,9 +1032,6 @@ public class ViewMenuBar {
                 menuBuilder.setMenuItemEnabled("Principal component", false);
             }
         }
-
-        menuBuilder.setMenuItemEnabled("DICOM database access", Preferences
-                .is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER));
     }
 
     /**
