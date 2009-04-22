@@ -418,23 +418,22 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } else {
 
                 // this was a shortcut stroke to get here...toggle the switch
-                menuBuilder.setMenuItemSelected("Enable DICOM receiver", !menuBuilder
-                        .isMenuItemSelected("Enable DICOM receiver"));
-
                 if (menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
                     Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
 
                     if (DICOMcatcher != null) {
-                        DICOMcatcher.setStop();
+                        DICOMcatcher.setStop(); 
                     }
 
                     DICOMcatcher = new DICOM_Receiver();
+                    menuBuilder.setMenuItemSelected("Enable DICOM receiver", DICOMcatcher.isAlive());
                 } else {
                     Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
                     }
+                    menuBuilder.setMenuItemSelected("Enable DICOM receiver", false);
 
                     // Also need to disable the auto upload to srb function.
                     menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
@@ -1357,6 +1356,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
+	 * Returns the interface's menu builder.
+	 */
+	public ViewMenuBuilder getMenuBuilder() {
+		return menuBuilder;
+	}
+
+	/**
      * Accessor that returns the message frame.
      * 
      * @return The message frame.
