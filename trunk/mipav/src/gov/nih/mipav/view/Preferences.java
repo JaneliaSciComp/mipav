@@ -293,8 +293,11 @@ public class Preferences {
     /** Constant that indicates the default dicom storage directory. */
     public static final String PREF_DICOM_STORAGE_DIR = "Storage1";
 
-    /** Constant that indicates whether to enable the dicom receiver. */
+    /** Constant that indicates whether to enable the dicom receiver on startup. */
     public static final String PREF_AUTOSTART_DICOM_RECEIVER = "EnableDICOMReceiver";
+    
+    /** Constant that indicates whether to ask about starting dicom receiver on startup. */
+    public static final String PREF_ASK_DICOM_RECEIVER = "AskToEnableDICOMReceiver";
 
     /** Constant that indicates the active image color. */
     public static final String PREF_ACTIVE_IMAGE_COLOR = "ActiveImageColor";
@@ -543,6 +546,7 @@ public class Preferences {
         defaultProps = new Properties();
 
         defaultProps.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
+        defaultProps.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, "true");
         defaultProps.setProperty(Preferences.PREF_TRIM, "0.3");
         defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false");
         defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, System.getProperty("user.dir") + File.separator

@@ -315,9 +315,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("SaveXCEDESchema")) {
             userInterface.saveXCEDESchema();
         } else if (command.equals("Dicom")) {
+        	if(Preferences.is(Preferences.PREF_ASK_DICOM_RECEIVER)) {
+        		new DicomQueryListener().queryForDicomAutostart();
+        	}
 
             if ( ((JCheckBoxMenuItem) source).isSelected()) {
-                Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
 
                 if (userInterface.getDICOMCatcher() != null) {
 
@@ -330,7 +332,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 userInterface.setDICOMCatcher(new DICOM_Receiver());
             } else {
-                Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
 
                 if (userInterface.getDICOMCatcher() != null) {
                     userInterface.getDICOMCatcher().setStop();
@@ -5515,7 +5516,57 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             decSlice();
         }
     }
+    
+    private class DicomQueryListener implements ActionListener {
+        
+    	private JCheckBox checkBox;
+    	
+    	private JDialog dialog;
+    	
+	    /**
+	     * Ask user whether the dicom receiver should be enabled on startup.
+	     */
+	    private void queryForDicomAutostart() {
+	    	
+	    	String message = "Would you like to have the DICOM receiver begin when MIPAV starts?";
+	    	dialog = new JDialog();
+	    	dialog.setLayout(new BorderLayout());
+	    	dialog.setTitle("Auto-start option");
+	    	JPanel messagePanel = new JPanel();
+	    	messagePanel.add(new JLabel(message));
+	    	dialog.add(messagePanel, BorderLayout.NORTH);
+	    	JPanel checkBoxPanel = new JPanel();
+	    	checkBox = new JCheckBox("Click here to stop this message from displaying.");
+	    	checkBoxPanel.add(checkBox);
+	    	dialog.add(checkBoxPanel, BorderLayout.CENTER);
+	    	JPanel yesNoPanel = new JPanel();
+	    	JButton yes = new JButton("Yes");
+	    	yes.addActionListener(this);
+	    	JButton no = new JButton("No");
+	    	no.addActionListener(this);
+	    	yesNoPanel.add(yes);
+	    	yesNoPanel.add(no);
+	    	dialog.add(yesNoPanel, BorderLayout.SOUTH);
+	    	dialog.setLocationRelativeTo(null);
+	    	dialog.pack();
+	    	dialog.setVisible(true);
+	    	
+	    }
 
+		public void actionPerformed(ActionEvent e) {
+			if(e.getActionCommand().equals("Yes")) {
+				Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
+			} else if(e.getActionCommand().equals("No")) {
+				Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
+			}
+			Preferences.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, Boolean.valueOf(!checkBox.isSelected()).toString());
+			
+			dialog.dispose();
+		}
+    }
+
+    
+    
     // ~ Inner Classes
     // --------------------------------------------------------------------------------------------------
 
