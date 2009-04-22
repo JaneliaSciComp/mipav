@@ -161,8 +161,8 @@ public class ViewJFrameDICOMQuery extends JFrame
     /** DOCUMENT ME! */
     private JTable serverTable;
 
-    /** DOCUMENT ME! */
-    private JButton set, createStore, editStore, deleteStore, setStore, cancel, help1, help2, help3, help4;
+    /** Buttons used for the host tab */
+    private JButton set, activateStore, createStore, editStore, deleteStore, setStore, cancel, help1, help2, help3, help4;
 
     /** DOCUMENT ME! */
     private String SOPInstanceUID = "";
@@ -323,6 +323,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         // Object source = event.getSource();
         String s;
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         s = "";
 
@@ -877,6 +878,43 @@ public class ViewJFrameDICOMQuery extends JFrame
             MipavUtil.showHelp("10305");
         } else if (command.equals("Help4")) {
             MipavUtil.showHelp("10304");  
+        } else if (command.equals("Activate")) {
+        	int selected = storageTable.getSelectedRow();
+        	DICOM_Receiver rec;
+        	if (userInterface.getDICOMCatcher() != null) {
+        		userInterface.getDICOMCatcher().setStop();
+            }
+        	if(selected == -1) {
+        		userInterface.setDICOMCatcher(rec = new DICOM_Receiver());
+        	} else {
+        		String storageKey = new String();
+        		//should not store default property
+        		for(int i=1; i<storageModel.getColumnCount(); i++) { 
+        			storageKey += storageModel.getValueAt(selected, i) +";";
+        		}
+        		userInterface.setDICOMCatcher(rec = new DICOM_Receiver(storageKey));
+        	}
+        	userInterface.getMenuBuilder().setMenuItemSelected("Enable DICOM receiver", rec.isAlive());
+        	if(rec.isAlive()) {
+        		((JButton)source).setText("Deactivate");
+        		((JButton)source).setActionCommand("Deactivate");
+        		
+        	}
+        } else if (command.equals("Deactivate")) {
+        	if (userInterface.getDICOMCatcher() != null) {
+        		userInterface.getDICOMCatcher().setStop();
+        	}
+
+            // Also need to disable the auto upload to srb function.
+            userInterface.getMenuBuilder().setMenuItemSelected("Enable auto SRB upload", false);
+
+            if (userInterface.getNDARPipeline() != null) {
+            	userInterface.getNDARPipeline().uninstall();
+            } 
+
+        	userInterface.getMenuBuilder().setMenuItemSelected("Enable DICOM receiver", false);
+            ((JButton)source).setText("Activate");
+    		((JButton)source).setActionCommand("Activate");
         }
         
     }
@@ -2669,6 +2707,18 @@ public class ViewJFrameDICOMQuery extends JFrame
             rowData = new Object[5];
             storageModel = new ViewTableModel();
             storageTable = new JTable(storageModel);
+            if(userInterface.getDICOMCatcher() != null) {
+            	if(userInterface.getDICOMCatcher().isAlive()) {
+            		activateStore = new JButton("Deactivate");
+            		activateStore.setActionCommand("Deactivate");
+            	} else {
+            		activateStore = new JButton("Activate");
+            		activateStore.setActionCommand("Activate");
+            	}
+            } else {
+            	activateStore = new JButton("Activate");
+            	activateStore.setActionCommand("Activate");
+            }
             createStore = new JButton("Create");
             editStore = new JButton("Edit");
             deleteStore = new JButton("Delete");
@@ -2742,18 +2792,27 @@ public class ViewJFrameDICOMQuery extends JFrame
         storageTable.getTableHeader().addMouseListener(this);
         scrollPane.setBackground(Color.black);
 
-        gbc = setGBC(0, 0, 5, 3);
+        gbc = setGBC(0, 0, 6, 3);
         gbc.weightx = 100;
         gbc.weighty = 100;
         gbc.fill = GridBagConstraints.BOTH;
 
         storagePanel.add(scrollPane, gbc);
 
+        activateStore.setFont(font12B);
+        activateStore.addActionListener(this);
+        gbc = setGBC(0, 3, 1, 1);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        
+        storagePanel.add(activateStore, gbc);
+        
         createStore.setFont(font12B);
         createStore.setActionCommand("Create");
         //createStore.setBackground(Color.gray.brighter());
         createStore.addActionListener(this);
-        gbc = setGBC(0, 3, 1, 1);
+        gbc = setGBC(1, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
@@ -2765,7 +2824,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         //editStore.setBackground(Color.gray.brighter());
         editStore.addActionListener(this);
         editStore.setEnabled(false);
-        gbc = setGBC(1, 3, 1, 1);
+        gbc = setGBC(2, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
@@ -2777,7 +2836,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         //deleteStore.setBackground(Color.gray.brighter());
         deleteStore.addActionListener(this);
         deleteStore.setEnabled(false);
-        gbc = setGBC(2, 3, 1, 1);
+        gbc = setGBC(3, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
@@ -2789,7 +2848,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         //setStore.setBackground(Color.gray.brighter());
         setStore.addActionListener(this);
         setStore.setEnabled(false);
-        gbc = setGBC(3, 3, 1, 1);
+        gbc = setGBC(4, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
@@ -2801,7 +2860,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         help4.setActionCommand("Help4");
         //set.setBackground(Color.gray.brighter());
         help4.addActionListener(this);
-        gbc = setGBC(4, 3, 1, 1);
+        gbc = setGBC(5, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
