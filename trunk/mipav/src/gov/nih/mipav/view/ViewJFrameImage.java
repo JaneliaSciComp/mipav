@@ -314,41 +314,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.openXCEDESchema();
         } else if (command.equals("SaveXCEDESchema")) {
             userInterface.saveXCEDESchema();
-        } else if (command.equals("Dicom")) {
-
-            if ( ((JCheckBoxMenuItem) source).isSelected()) {
-
-                if (userInterface.getDICOMCatcher() != null) {
-
-                    userInterface.getDICOMCatcher().setStop();
-
-                    try {
-                        wait(2000);
-                    } catch (Exception ex) {}
-                }
-
-                userInterface.setDICOMCatcher(new DICOM_Receiver());
-            } else {
-
-                if (userInterface.getDICOMCatcher() != null) {
-                    userInterface.getDICOMCatcher().setStop();
-                }
-
-
-                /**
-                 * Also need to disable the auto upload to srb function.
-                 */
-                JCheckBoxMenuItem menuItemAutoUpload = (JCheckBoxMenuItem) menuBuilder
-                        .getMenuItem("Auto Upload on|off");
-
-                if (menuItemAutoUpload.isSelected()) {
-                    menuItemAutoUpload.setSelected(false);
-                }
-
-                if (userInterface.getNDARPipeline() != null) {
-                    userInterface.getNDARPipeline().uninstall();
-                }
-            }
         } else if (command.startsWith("LastImage")) {
             int number = Integer.valueOf(command.substring(10)).intValue();
             userInterface.openLastImage(number);
@@ -375,18 +340,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             if ( ((JCheckBoxMenuItem) source).isSelected()) {
-                JCheckBoxMenuItem itemDicom = (JCheckBoxMenuItem) menuBuilder.getMenuItem("Enable DICOM receiver");
-
-                if ( !itemDicom.isSelected()) {
-
-                    if (userInterface.getDICOMCatcher() != null) {
-                        userInterface.getDICOMCatcher().setStop();
-                    }
-
-                    itemDicom.setSelected(true);
-                    userInterface.setDICOMCatcher(new DICOM_Receiver());
+                if (userInterface.getDICOMCatcher() != null) {
+                    userInterface.getDICOMCatcher().setStop();
                 }
-
+                
+                userInterface.setDICOMCatcher(new DICOM_Receiver());
+                
                 pipeline.install(userInterface.getDICOMCatcher());
             } else {
                 pipeline.uninstall();
