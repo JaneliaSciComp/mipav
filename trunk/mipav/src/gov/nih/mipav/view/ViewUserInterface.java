@@ -3326,7 +3326,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         if (Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER)) {
             DICOMcatcher = new DICOM_Receiver();
-            menuBuilder.setMenuItemSelected("Enable DICOM receiver", true);
+            menuBuilder.setMenuItemSelected("Enable DICOM receiver", DICOMcatcher.isAlive());
         } else {
 
             if (DICOMcatcher != null) {
