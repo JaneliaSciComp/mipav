@@ -43,6 +43,9 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
 
     /** DOCUMENT ME! */
     private String defaultStorageDir;
+    
+    /**A semicolon delimited list of the storage properties to use for this receiver*/
+    private String storageProperty;
 
     /** DOCUMENT ME! */
     private Vector fileNameList = new Vector();
@@ -74,7 +77,12 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
      * Constructor that starts the thread.
      */
     public DICOM_Receiver() {
-        super();
+        this(Preferences.getProperty(Preferences.getDefaultStorageKey()));
+    }
+    
+    public DICOM_Receiver(String storageKey) {
+    	super();
+        storageProperty = storageKey;
         verification = new DICOM_Verification(null, null);
         start(Thread.MIN_PRIORITY);
     }
@@ -688,8 +696,6 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
             return;
         }
 
-        String storageProperty = Preferences.getProperty(Preferences.getDefaultStorageKey());
-
         if (storageProperty != null) {
             port = Integer.valueOf(parseServerInfo(storageProperty)[3]).intValue();
             boolean bindSuccess = createServerSocket();
@@ -732,8 +738,8 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         try {
             recSocket = new ServerSocket(port);
         } catch(BindException e) {
-        	MipavUtil.displayWarning("Port "+port+" is already in use by another instance of MIPAV. Please use\n"+
-        			"the DICOM Communication Panel to choose a new storage destination");
+        	MipavUtil.displayWarning("Port "+port+" is already in use by another DICOM receiver. Please use\n"+
+        			"the DICOM Communication Panel to choose a new storage destination.");
         
         	return false;
     	} catch (Exception e) {
