@@ -386,6 +386,71 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             ProvenanceRecorder.getReference().addLine(new ActionCollectGarbage());
             ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
             return;
+        } else if (command.equals("Dicom")) {
+
+            if (source instanceof JCheckBoxMenuItem) {
+
+                if ( ((JCheckBoxMenuItem) source).isSelected()) {
+                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
+
+                    if (DICOMcatcher != null) {
+                        DICOMcatcher.setStop();
+                    }
+
+                    DICOMcatcher = new DICOM_Receiver();
+                    menuBuilder.setMenuItemEnabled("DICOM database access", true);
+                } else {
+                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
+
+                    if (DICOMcatcher != null) {
+                        DICOMcatcher.setStop();
+                    }
+
+                    menuBuilder.setMenuItemEnabled("DICOM database access", false);
+
+                    // Also need to disable the auto upload to srb function.
+                    menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
+
+                    if (pipeline != null) {
+                        pipeline.uninstall();
+                        pipeline = null;
+                    }
+                }
+
+            } else {
+
+                // this was a shortcut stroke to get here...toggle the switch
+                menuBuilder.setMenuItemSelected("Enable DICOM receiver", !menuBuilder
+                        .isMenuItemSelected("Enable DICOM receiver"));
+
+                if (menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
+                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
+
+                    if (DICOMcatcher != null) {
+                        DICOMcatcher.setStop();
+                    }
+
+                    DICOMcatcher = new DICOM_Receiver();
+                    menuBuilder.setMenuItemEnabled("DICOM database access", true);
+                } else {
+                    Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
+
+                    if (DICOMcatcher != null) {
+                        DICOMcatcher.setStop();
+                    }
+
+                    menuBuilder.setMenuItemEnabled("DICOM database access", false);
+
+                    // Also need to disable the auto upload to srb function.
+                    menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
+
+                    if (pipeline != null) {
+                        pipeline.uninstall();
+                        pipeline = null;
+                    }
+                }
+
+            }
         } else if (command.equals("Exit")) {
             windowClosing(null);
         } else if (command.equals("OpenNewImage")) {
@@ -415,16 +480,25 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 pipeline = new NDARPipeline();
 
                 if (pipeline.setup()) {
-                    if (DICOMcatcher != null) {
-                        DICOMcatcher.setStop();
+
+                    if ( !menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
+
+                        if (DICOMcatcher != null) {
+                            DICOMcatcher.setStop();
+                        }
+
+                        DICOMcatcher = new DICOM_Receiver();
+                        menuBuilder.setMenuItemEnabled("DICOM database access", true);
+                        menuBuilder.setMenuItemSelected("Enable DICOM receiver", true);
+
+                        pipeline.install(DICOMcatcher);
+                        // note: activating the auto srb upload does not imply
+                        // wanting the pacs to always start. the user
+                        // must still explictly enable its auto-start
+
+                        // Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
                     }
 
-                    DICOMcatcher = new DICOM_Receiver();
-
-                    pipeline.install(DICOMcatcher);
-                    // note: activating the auto srb upload does not imply
-                    // wanting the pacs to always start. the user
-                    // must still explictly enable its auto-start
                     return;
                 }
 
@@ -1286,15 +1360,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public JFrame getMainFrame() {
         return (mainFrame);
-    }
-    
-    /**
-     * Accessor that returns the menu builder that changes available options based on
-     * actions performed
-     */
-    
-    public ViewMenuBuilder getMenuBuilder() {
-    	return (menuBuilder);
     }
 
     /**
@@ -3268,10 +3333,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         if (Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER)) {
             DICOMcatcher = new DICOM_Receiver();
+            menuBuilder.setMenuItemEnabled("DICOM database access", true);
+            menuBuilder.setMenuItemSelected("Enable DICOM receiver", true);
         } else {
+
             if (DICOMcatcher != null) {
                 DICOMcatcher.setStop();
             }
+
+            menuBuilder.setMenuItemEnabled("DICOM database access", false);
+            menuBuilder.setMenuItemSelected("Enable DICOM receiver", false);
         }
     }
 
