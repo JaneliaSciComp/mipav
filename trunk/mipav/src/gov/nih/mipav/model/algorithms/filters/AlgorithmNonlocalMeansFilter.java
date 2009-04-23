@@ -11,8 +11,14 @@ import java.io.*;
 
 /**
  This is a port of the 09/03/2006 NLmeansfilter.m and UNLmeansfilter2.m on 02/15/2008 by Jose Vicente
- Manjon Herrera & Antoni Buades.  The code is an implementation of the algorithm in the article
+ Manjon Herrera & Antoni Buades.  The code in NLmeansfilter.m is an implementation of the algorithm in the article
  "A non-local algorithm for image denoising" by Antoni Buades and Jean-Michel Morel.
+ The code in UNLmeansfilter2.m is an implementation of the algortihm in the article 
+ "MRI denoising using non-Local Means" by Jose Manjon, Jose Carbonell-Caballero, Juan J. Lull, 
+ Gracian Garcia-Marti, Luis Marti-Bonmati, Montserratt Robles, Medical Image Analysis 12 (2008), 
+ pp. 514-523.
+ unbiased nonlocal means (value) = sqrt((nonlocal means (value))**2 - 2* sigma**2)
+ For Rician noise standard deviation = sqrt(background mean/2)
  */
 public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
 
@@ -34,7 +40,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
      */
     private float noiseStandardDeviation;
     
-    /** Used only with Rician noise filter */
+    /** Used only with Rician noise filter.  Should theoretically be around sqrt(2). */
     private float degreeOfFiltering;
     
     /** If treu, use unbiased version of NLM to deal with Rician noise in MRI */
@@ -496,7 +502,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             for (i = 1; i <= yDim; i++) {
                 fireProgressStateChanged(100 * (z*yDim + (i - 1)) /(yDim * zDim));
                 i1 = i + halfSimilarity;
-                rmin = Math.max(i1 - halfSearch, halfSimilarity + 1);
+                //rmin = Math.max(i1 - halfSearch, halfSimilarity + 1);
                 rmax = Math.min(i1 + halfSearch, yDim + halfSimilarity);
                 for (j = 1; j <= xDim; j++) {  
                     j1 = j + halfSimilarity;
@@ -509,9 +515,10 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                     
                     smin = Math.max(j1 - halfSearch, halfSimilarity + 1);
                     smax = Math.min(j1 + halfSearch, xDim + halfSimilarity);
-                    for (r = rmin; r <= rmax; r++) {
+                    for (r = i1; r <= rmax; r++) {
                         for (s = smin; s <= smax; s++) {
-                            if ((r == i1) && (s == j1)) {
+                            // Processing symmetrically the window so only have the distances have to be explored
+                            if ((s <= j1) && (r == i1)) {
                                 continue;
                             }
                             
@@ -1239,7 +1246,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         for (h = 1; h <= zDim; h++) {
             fireProgressStateChanged(100 * (h - 1) /zDim);
             h1 = h + halfSimilarity;
-            qmin = Math.max(h1 - halfSearch, halfSimilarity + 1);
+            //qmin = Math.max(h1 - halfSearch, halfSimilarity + 1);
             qmax = Math.min(h1 + halfSearch, zDim + halfSimilarity);
             for (i = 1; i <= yDim; i++) {
                 i1 = i + halfSimilarity;
@@ -1259,10 +1266,11 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                     
                     smin = Math.max(j1 - halfSearch, halfSimilarity + 1);
                     smax = Math.min(j1 + halfSearch, xDim + halfSimilarity);
-                    for (q = qmin; q <= qmax; q++) {
+                    for (q = h1; q <= qmax; q++) {
                         for (r = rmin; r <= rmax; r++) {
                             for (s = smin; s <= smax; s++) {
-                                if ((q == h1) && (r == i1) && (s == j1)) {
+                                // Processing symmetrically the window so only have the distances have to be explored
+                                if ((q == h1) && (r == i1) && (s <= j1)) {
                                     continue;
                                 }
                                 
