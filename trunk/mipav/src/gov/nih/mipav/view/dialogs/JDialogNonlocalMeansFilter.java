@@ -94,6 +94,16 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JTextField textSearchWindowSide;
+    
+    private JLabel labelDegree;
+    
+    private JTextField textDegree;
+    
+    private float degreeOfFiltering = 1.0f;
+    
+    private JCheckBox doRicianCheckBox;
+    
+    private boolean doRician = false;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -132,6 +142,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -142,6 +153,15 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else if (source.equals(doRicianCheckBox)) {
+            if (doRicianCheckBox.isSelected()) {
+                labelDegree.setEnabled(true);
+                textDegree.setEnabled(true);
+            }
+            else {
+                labelDegree.setEnabled(false);
+                textDegree.setEnabled(false);
+            }
         }
     }
 
@@ -230,6 +250,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         str += searchWindowSide + delim;
         str += similarityWindowSide + delim;
         str += noiseStandardDeviation + delim;
+        str += degreeOfFiltering + delim;
+        str += doRician + delim;
         str += image25D;
 
         return str;
@@ -258,6 +280,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 textSearchWindowSide.setText("" + MipavUtil.getInt(st));
                 textSimilarityWindowSide.setText("" + MipavUtil.getInt(st));
                 textNoiseStandardDeviation.setText("" +  MipavUtil.getFloat(st));
+                textDegree.setText("" + MipavUtil.getFloat(st));
+                doRicianCheckBox.setSelected(MipavUtil.getBoolean(st));
                 image25DCheckBox.setSelected(MipavUtil.getBoolean(st));
 
                 if (MipavUtil.getBoolean(st)) {
@@ -319,7 +343,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     }
 
     /**
-     * Accessor that sets the filter parameter.
+     * Accessor that sets the noise standard deviation.
      *
      * @param  noiseStandardDeviation  Value to set noiseStandardDeviation to.
      */
@@ -334,6 +358,22 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
      */
     public void setSearchWindowSide(int searchWindowSide) {
         this.searchWindowSide = searchWindowSide;
+    }
+    
+    /**
+     * Accessor that sets degree of filtering
+     * @param degreeOfFiltering
+     */
+    public void setDegreeOfFiltering(float degreeOfFiltering) {
+        this.degreeOfFiltering = degreeOfFiltering;
+    }
+    
+    /**
+     * Accessor that sets doRician
+     * @param doRician
+     */
+    public void setDoRician(boolean doRician) {
+        this.doRician = doRician;
     }
 
     /**
@@ -370,8 +410,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 // resultImage.setImageName(name);
                 // Make algorithm
                 nlMeansFilterAlgo = new AlgorithmNonlocalMeansFilter(resultImage, image, searchWindowSide,
-                                                                         similarityWindowSide,
-                                                                         noiseStandardDeviation, image25D);
+                                         similarityWindowSide, noiseStandardDeviation, 
+                                         degreeOfFiltering, doRician, image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -408,8 +448,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 nlMeansFilterAlgo = new AlgorithmNonlocalMeansFilter(null, image, searchWindowSide, 
-                                                                         similarityWindowSide, noiseStandardDeviation,
-                                                                         image25D);
+                                        similarityWindowSide, noiseStandardDeviation,
+                                        degreeOfFiltering, doRician, image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -478,6 +518,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         searchWindowSide = scriptParameters.getParams().getInt("search_window_side");
         similarityWindowSide = scriptParameters.getParams().getInt("similarity_window_side");
         noiseStandardDeviation = scriptParameters.getParams().getFloat("noise_standard_deviation");
+        degreeOfFiltering = scriptParameters.getParams().getFloat("degree_of_filtering");
+        doRician = scriptParameters.getParams().getBoolean("do_rician");
         image25D = scriptParameters.doProcess3DAs25D();
     }
 
@@ -492,6 +534,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("search_window_side", searchWindowSide));
         scriptParameters.getParams().put(ParameterFactory.newParameter("similarity_window_side", similarityWindowSide));
         scriptParameters.getParams().put(ParameterFactory.newParameter("nose_standard_deviation", noiseStandardDeviation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("degree_of_filtering", degreeOfFiltering));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_rician", doRician));
         scriptParameters.storeProcess3DAs25D(image25D);
     }
 
@@ -559,13 +603,28 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         textNoiseStandardDeviation = createTextField("10.0");
         paramPanel.add(textNoiseStandardDeviation, gbc2);
 
+        gbc2.gridx = 0;
+        gbc2.gridy = 3;
+        labelDegree = createLabel("Degree of filtering ");
+        labelDegree.setEnabled(false);
+        paramPanel.add(labelDegree, gbc2);
         
+        gbc2.gridx = 1;
+        textDegree = createTextField("1.0");
+        textDegree.setEnabled(false);
+        paramPanel.add(textDegree, gbc2);
         
-
+        gbc2.gridx = 0;
+        gbc2.gridy = 4;
+        doRicianCheckBox = new JCheckBox("Deal with Rician noise in MRI");
+        doRicianCheckBox.setFont(serif12);
+        doRicianCheckBox.setSelected(false);
+        doRicianCheckBox.addActionListener(this);
+        paramPanel.add(doRicianCheckBox, gbc2);
         
         if (image.getNDims() > 2) {
             gbc2.gridx = 0;
-            gbc2.gridy = 3;
+            gbc2.gridy = 5;
             gbc2.gridwidth = 2;
 
             image25DCheckBox = new JCheckBox("Process each slice independently (2.5D)");
@@ -686,6 +745,20 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
             textNoiseStandardDeviation.selectAll();
 
             return false;
+        }
+        
+        doRician = doRicianCheckBox.isSelected();
+        
+        if (doRician) {
+            tmpStr = textDegree.getText();
+            if (testParameter(tmpStr, 0.1, 10.0)) {
+                degreeOfFiltering = Float.valueOf(tmpStr).floatValue();    
+            }
+            else {
+                MipavUtil.displayError("Degree of filtering must be between 0.1 and 10.0");
+                textDegree.requestFocus();
+                textDegree.selectAll();
+            }
         }
 
         if (image.getNDims() > 2) {
