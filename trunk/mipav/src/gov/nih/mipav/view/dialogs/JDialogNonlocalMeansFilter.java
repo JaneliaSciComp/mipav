@@ -613,7 +613,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         paramPanel.add(labelDegree, gbc2);
         
         gbc2.gridx = 1;
-        textDegree = createTextField("1.0");
+        textDegree = createTextField("1.414");
         textDegree.setEnabled(doRician);
         paramPanel.add(textDegree, gbc2);
         
@@ -754,11 +754,11 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         
         if (doRician) {
             tmpStr = textDegree.getText();
-            if (testParameter(tmpStr, 0.1, 10.0)) {
+            if (testParameter(tmpStr, 1.0, 10.0)) {
                 degreeOfFiltering = Float.valueOf(tmpStr).floatValue();    
             }
             else {
-                MipavUtil.displayError("Degree of filtering must be between 0.1 and 10.0");
+                MipavUtil.displayError("Degree of filtering must be between 1.0 and 10.0");
                 textDegree.requestFocus();
                 textDegree.selectAll();
             }
