@@ -60,7 +60,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     private JLabel labelSimilarityWindowSide;
 
     /** DOCUMENT ME! */
-    private JLabel labelFilterParameter;
+    private JLabel labelNoiseStandardDeviation;
 
     /** DOCUMENT ME! */
     private JLabel labelSearchWindowSide;
@@ -75,7 +75,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     private int similarityWindowSide = 7;
 
     /** Should be set equal to the noise standard deviation */
-    private float filterParameter = 10.0f;
+    private float noiseStandardDeviation = 10.0f;
 
     /** DOCUMENT ME! */
     private int searchWindowSide = 15;
@@ -90,7 +90,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     private JTextField textSimilarityWindowSide;
 
     /** DOCUMENT ME! */
-    private JTextField textFilterParameter;
+    private JTextField textNoiseStandardDeviation;
 
     /** DOCUMENT ME! */
     private JTextField textSearchWindowSide;
@@ -229,7 +229,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         String str = new String();
         str += searchWindowSide + delim;
         str += similarityWindowSide + delim;
-        str += filterParameter + delim;
+        str += noiseStandardDeviation + delim;
         str += image25D;
 
         return str;
@@ -257,7 +257,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
                 textSearchWindowSide.setText("" + MipavUtil.getInt(st));
                 textSimilarityWindowSide.setText("" + MipavUtil.getInt(st));
-                textFilterParameter.setText("" +  MipavUtil.getFloat(st));
+                textNoiseStandardDeviation.setText("" +  MipavUtil.getFloat(st));
                 image25DCheckBox.setSelected(MipavUtil.getBoolean(st));
 
                 if (MipavUtil.getBoolean(st)) {
@@ -321,10 +321,10 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     /**
      * Accessor that sets the filter parameter.
      *
-     * @param  filterParameter  Value to set filterParameter to.
+     * @param  noiseStandardDeviation  Value to set noiseStandardDeviation to.
      */
-    public void setFilterParameter(int filterParameter) {
-        this.filterParameter = filterParameter;
+    public void setNoiseStandardDeviation(int noiseStandardDeviation) {
+        this.noiseStandardDeviation = noiseStandardDeviation;
     }
 
     /**
@@ -371,7 +371,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 // Make algorithm
                 nlMeansFilterAlgo = new AlgorithmNonlocalMeansFilter(resultImage, image, searchWindowSide,
                                                                          similarityWindowSide,
-                                                                         filterParameter, image25D);
+                                                                         noiseStandardDeviation, image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -408,7 +408,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 nlMeansFilterAlgo = new AlgorithmNonlocalMeansFilter(null, image, searchWindowSide, 
-                                                                         similarityWindowSide, filterParameter,
+                                                                         similarityWindowSide, noiseStandardDeviation,
                                                                          image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
@@ -477,7 +477,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
         searchWindowSide = scriptParameters.getParams().getInt("search_window_side");
         similarityWindowSide = scriptParameters.getParams().getInt("similarity_window_side");
-        filterParameter = scriptParameters.getParams().getFloat("filter_parameter");
+        noiseStandardDeviation = scriptParameters.getParams().getFloat("noise_standard_deviation");
         image25D = scriptParameters.doProcess3DAs25D();
     }
 
@@ -491,7 +491,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("search_window_side", searchWindowSide));
         scriptParameters.getParams().put(ParameterFactory.newParameter("similarity_window_side", similarityWindowSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_parameter", filterParameter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("nose_standard_deviation", noiseStandardDeviation));
         scriptParameters.storeProcess3DAs25D(image25D);
     }
 
@@ -552,12 +552,12 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
         gbc2.gridx = 0;
         gbc2.gridy = 2;
-        labelFilterParameter = createLabel("Filter Parameter (Noise stdDev) ");
-        paramPanel.add(labelFilterParameter, gbc2);
+        labelNoiseStandardDeviation = createLabel("Noise standard deviation ");
+        paramPanel.add(labelNoiseStandardDeviation, gbc2);
 
         gbc2.gridx = 1;
-        textFilterParameter = createTextField("10.0");
-        paramPanel.add(textFilterParameter, gbc2);
+        textNoiseStandardDeviation = createTextField("10.0");
+        paramPanel.add(textNoiseStandardDeviation, gbc2);
 
         
         
@@ -676,14 +676,14 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
             return false;
         }
 
-        tmpStr = textFilterParameter.getText();
+        tmpStr = textNoiseStandardDeviation.getText();
 
         if (testParameter(tmpStr, 0.001, 1000.0)) {
-            filterParameter = Float.valueOf(tmpStr).floatValue();
+            noiseStandardDeviation = Float.valueOf(tmpStr).floatValue();
         } else {
             MipavUtil.displayError("Radius must be between 0.001 and 1000.0");
-            textFilterParameter.requestFocus();
-            textFilterParameter.selectAll();
+            textNoiseStandardDeviation.requestFocus();
+            textNoiseStandardDeviation.selectAll();
 
             return false;
         }
