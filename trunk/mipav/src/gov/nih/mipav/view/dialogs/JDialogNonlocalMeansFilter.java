@@ -281,7 +281,10 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 textSimilarityWindowSide.setText("" + MipavUtil.getInt(st));
                 textNoiseStandardDeviation.setText("" +  MipavUtil.getFloat(st));
                 textDegree.setText("" + MipavUtil.getFloat(st));
-                doRicianCheckBox.setSelected(MipavUtil.getBoolean(st));
+                doRician = MipavUtil.getBoolean(st);
+                doRicianCheckBox.setSelected(doRician);
+                textDegree.setEnabled(doRician);
+                labelDegree.setEnabled(doRician);
                 image25DCheckBox.setSelected(MipavUtil.getBoolean(st));
 
                 if (MipavUtil.getBoolean(st)) {
@@ -606,12 +609,12 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         gbc2.gridx = 0;
         gbc2.gridy = 3;
         labelDegree = createLabel("Degree of filtering ");
-        labelDegree.setEnabled(false);
+        labelDegree.setEnabled(doRician);
         paramPanel.add(labelDegree, gbc2);
         
         gbc2.gridx = 1;
         textDegree = createTextField("1.0");
-        textDegree.setEnabled(false);
+        textDegree.setEnabled(doRician);
         paramPanel.add(textDegree, gbc2);
         
         gbc2.gridx = 0;
