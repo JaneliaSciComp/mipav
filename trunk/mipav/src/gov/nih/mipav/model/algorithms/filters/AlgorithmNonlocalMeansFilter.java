@@ -29,10 +29,10 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
      */
     private int similarityWindowSide;
     
-    /** The degree of filtering of the obtained image.  When we know the standard deviation of the noise,
-     *  sigma, the value of filterParameter should be set equal to sigma.
+    /**
+     * Noise standard deviation
      */
-    private float filterParameter;
+    private float noiseStandardDeviation;
 
     /** In 3D if do25D == true, process each slice separately. */
     private boolean do25D = true;
@@ -48,15 +48,15 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
      * @param  srcImg            2D source image
      * @param  searchWindowSide  Side of the learning window of pixels which will be averaged
      * @param  similarityWindowSide Side of the comparsion window
-     * @param  filterParameter   The degree of filtering of the obtained image
+     * @param  noiseStandardDeviation   Noise standard deviation
      * @param  do25D             If true, do slice by slice filtering
      */
     public AlgorithmNonlocalMeansFilter(ModelImage destImage, ModelImage srcImg, int searchWindowSide, 
-                                       int similarityWindowSide, float filterParameter, boolean do25D) {
+                                       int similarityWindowSide, float noiseStandardDeviation, boolean do25D) {
         super(destImage, srcImg);
         this.searchWindowSide = searchWindowSide;
         this.similarityWindowSide = similarityWindowSide;
-        this.filterParameter = filterParameter;
+        this.noiseStandardDeviation = noiseStandardDeviation;
         this.do25D = do25D;
     }
 
@@ -130,6 +130,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         double w12;
         double w;
         long time;
+        double filterParameter;
         
         time = System.currentTimeMillis();
         fireProgressStateChanged(0, srcImage.getImageName(), "Nonlocal means filter");
@@ -169,7 +170,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             kernel[i] /= kernelSum;
         }
         
-        filterParameter = filterParameter * filterParameter;
+        filterParameter = noiseStandardDeviation * noiseStandardDeviation;
         for (z = 0; z < zDim; z++) {
             try {
                 srcImage.exportData(z*length, length, input);
@@ -347,6 +348,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         double w12;
         double w;
         long time;
+        double filterParameter;
         
         time = System.currentTimeMillis();
         fireProgressStateChanged(0, srcImage.getImageName(), "Nonlocal means filter");
@@ -389,7 +391,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             kernel[i] /= kernelSum;
         }
         
-        filterParameter = filterParameter * filterParameter;
+        filterParameter = noiseStandardDeviation * noiseStandardDeviation;
         try {
             srcImage.exportData(0, length, input);
         }
