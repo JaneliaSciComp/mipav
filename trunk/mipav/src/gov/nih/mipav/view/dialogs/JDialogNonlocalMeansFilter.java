@@ -536,7 +536,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("search_window_side", searchWindowSide));
         scriptParameters.getParams().put(ParameterFactory.newParameter("similarity_window_side", similarityWindowSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("nose_standard_deviation", noiseStandardDeviation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("noise_standard_deviation", noiseStandardDeviation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("degree_of_filtering", degreeOfFiltering));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_rician", doRician));
         scriptParameters.storeProcess3DAs25D(image25D);
