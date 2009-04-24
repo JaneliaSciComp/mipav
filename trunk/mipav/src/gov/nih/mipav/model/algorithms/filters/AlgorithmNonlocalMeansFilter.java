@@ -354,7 +354,6 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         double W2[];
         double kernelSum;
         double sweight[];
-        int rmin;
         int rmax;
         int smin;
         int smax;
@@ -502,7 +501,6 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
             for (i = 1; i <= yDim; i++) {
                 fireProgressStateChanged(100 * (z*yDim + (i - 1)) /(yDim * zDim));
                 i1 = i + halfSimilarity;
-                //rmin = Math.max(i1 - halfSearch, halfSimilarity + 1);
                 rmax = Math.min(i1 + halfSearch, yDim + halfSimilarity);
                 for (j = 1; j <= xDim; j++) {  
                     j1 = j + halfSimilarity;
@@ -951,9 +949,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         double W2[];
         double kernelSum;
         double sweight[];
-        int qmin;
         int qmax;
-        int rmin;
         int rmax;
         int smin;
         int smax;
@@ -1246,11 +1242,9 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
         for (h = 1; h <= zDim; h++) {
             fireProgressStateChanged(100 * (h - 1) /zDim);
             h1 = h + halfSimilarity;
-            //qmin = Math.max(h1 - halfSearch, halfSimilarity + 1);
             qmax = Math.min(h1 + halfSearch, zDim + halfSimilarity);
             for (i = 1; i <= yDim; i++) {
                 i1 = i + halfSimilarity;
-                rmin = Math.max(i1 - halfSearch, halfSimilarity + 1);
                 rmax = Math.min(i1 + halfSearch, yDim + halfSimilarity);
                 for (j = 1; j <= xDim; j++) {  
                     j1 = j + halfSimilarity;
