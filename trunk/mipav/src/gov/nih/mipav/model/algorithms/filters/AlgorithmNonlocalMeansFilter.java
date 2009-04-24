@@ -1210,7 +1210,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                     else {
                         xp1 = x + 1;
                     }
-                    aux[x + y * padXDim] = avConstant * 
+                    aux[x + y * padXDim + z * padSliceSize] = avConstant * 
                     (input2[xm1 + ym1 * padXDim + zm1 * padSliceSize] +
                      input2[x + ym1 * padXDim + zm1 * padSliceSize] +
                      input2[xp1 + ym1 * padXDim + zm1 * padSliceSize] +
@@ -1267,7 +1267,7 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
                     smin = Math.max(j1 - halfSearch, halfSimilarity + 1);
                     smax = Math.min(j1 + halfSearch, xDim + halfSimilarity);
                     for (q = h1; q <= qmax; q++) {
-                        for (r = rmin; r <= rmax; r++) {
+                        for (r = i1; r <= rmax; r++) {
                             for (s = smin; s <= smax; s++) {
                                 // Processing symmetrically the window so only have the distances have to be explored
                                 if ((q == h1) && (r == i1) && (s <= j1)) {
