@@ -54,10 +54,10 @@ public class AlgorithmNonlocalMeansFilter extends AlgorithmBase {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates a new AlgorithmAdaptivePathSmooth object.
+     * Creates a new AlgorithmNonlocalMeans object.
      *
      * @param  destImage         denoised image
-     * @param  srcImg            2D source image
+     * @param  srcImg            2D or 3D source image
      * @param  searchWindowSide  Side of the learning window of pixels which will be averaged
      * @param  similarityWindowSide Side of the comparsion window
      * @param  noiseStandardDeviation   Noise standard deviation
