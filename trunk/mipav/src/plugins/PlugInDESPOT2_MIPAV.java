@@ -616,9 +616,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 			}
 			
 			try {
-				if (calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], false);
-				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], false);
-				if (invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], false);
+				if (calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], true);
+				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
+				if (invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], true);
 			} catch(IOException e) {
 				e.printStackTrace();
 				MipavUtil.displayError("Data could not be imported into result image");
@@ -834,9 +834,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 			}
 			
 			try {
-				if (calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], false);
-				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], false);
-				if (invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], false);
+				if (calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], true);
+				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
+				if (invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], true);
 			} catch(IOException e) {
 				e.printStackTrace();
 				MipavUtil.displayError("Data could not be imported into result image");
@@ -1150,9 +1150,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 			}
 			
 			try {
-				if (calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], false);
-				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], false);
-				if (invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], false);
+				if (calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], true);
+				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
+				if (invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], true);
 			} catch(IOException e) {
 				e.printStackTrace();
 				MipavUtil.displayError("Data could not be imported into result image");
@@ -1626,10 +1626,10 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 			
 			try {
 				// add data to the final stacks
-				if (calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Field[k], false);
-				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moField[k], false);
-				if (invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Field[k], false);
-				if (calculateBo) boResultStack.importData(image.getSliceSize()*k, boField[k], false);
+				if (calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Field[k], true);
+				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moField[k], true);
+				if (invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Field[k], true);
+				if (calculateBo) boResultStack.importData(image.getSliceSize()*k, boField[k], true);
 			} catch(IOException e) {
 				e.printStackTrace();
 				MipavUtil.displayError("Data could not be imported into result image");

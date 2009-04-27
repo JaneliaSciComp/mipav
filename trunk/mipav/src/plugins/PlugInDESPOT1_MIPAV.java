@@ -1284,10 +1284,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric {
 			
 			//adds data to the end of an image
 			try {
-				if (calculateT1) t1ResultStack.importData(image.getSliceSize()*k, t1Values[k], false);
-				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], false);
-				if (invertT1toR1) r1ResultStack.importData(image.getSliceSize()*k, r1Values[k], false);
-				if (showB1Map) b1ResultStack.importData(image.getSliceSize()*k, b1field[k], false);
+				if (calculateT1) t1ResultStack.importData(image.getSliceSize()*k, t1Values[k], true);
+				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
+				if (invertT1toR1) r1ResultStack.importData(image.getSliceSize()*k, r1Values[k], true);
+				if (showB1Map) b1ResultStack.importData(image.getSliceSize()*k, b1field[k], true);
 			} catch(IOException e) {
 				e.printStackTrace();
 				MipavUtil.displayError("Data could not be imported into result image");
@@ -1561,9 +1561,9 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric {
 			}
 			
 			try {
-				t1ResultStack.importData(image.getSliceSize()*k, t1Values[k], false);
-				moResultStack.importData(image.getSliceSize()*k, moValues[k], false);
-				r1ResultStack.importData(image.getSliceSize()*k, r1Values[k], false);
+				t1ResultStack.importData(image.getSliceSize()*k, t1Values[k], true);
+				moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
+				r1ResultStack.importData(image.getSliceSize()*k, r1Values[k], true);
 			} catch (IOException e) {
 				e.printStackTrace();
 				MipavUtil.displayError("Could not import result image data.");
