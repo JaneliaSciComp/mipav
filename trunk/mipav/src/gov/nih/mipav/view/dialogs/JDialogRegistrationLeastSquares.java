@@ -313,7 +313,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         try {
 
             if (baseImage.getVOIs().size() == 0) {
-                MipavUtil.displayError("Select coordinates before clicking OK");
+                MipavUtil.displayError("Select points before clicking OK");
 
                 return;
             } else {
