@@ -2408,10 +2408,16 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 						listenerList.get(i).actionPerformed(e);
 					} else {
 						exit = ExitStatus.OK_FAIL;
+						return;
 					}
 				}
-				exit = ExitStatus.OK_SUCCESS;
-				parent.dispose();
+				if(passedListeners) {
+					exit = ExitStatus.OK_SUCCESS;
+					parent.dispose();
+				} else {	
+					exit = ExitStatus.OK_FAIL;
+					return;
+				}
 			} else if(e.getSource().equals(cancel)) {
 				exit = ExitStatus.CANCEL;
 				parent.dispose();
