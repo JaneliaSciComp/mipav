@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -202,6 +203,9 @@ public class JDialogSwapDims extends JDialogScriptableBase implements AlgorithmI
         parentFrame = image.getParentFrame();
 
         imageName = image.getImageName();
+		
+		swapType = scriptParameters.getParams().getInt("swap_type");
+		
         setModal(false);
         doClose = false;
     }
@@ -212,5 +216,7 @@ public class JDialogSwapDims extends JDialogScriptableBase implements AlgorithmI
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeImageInRecorder(resultImage);
+		
+		scriptParameters.getParams().put(ParameterFactory.newParameter("swap_type", swapType));
     }
 }
