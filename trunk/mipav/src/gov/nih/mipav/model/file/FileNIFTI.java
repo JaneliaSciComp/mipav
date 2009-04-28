@@ -1893,7 +1893,16 @@ public class FileNIFTI extends FileBase {
             Preferences.debug("qoffset_x = " + qoffset_x + "\n");
             Preferences.debug("qoffset_y = " + qoffset_y + "\n");
             Preferences.debug("qoffset_z = " + qoffset_z + "\n");
-
+            Preferences.debug("qfac = " + qfac + "\n");
+            Preferences.debug("r00 = " + r00 + "\n");
+            Preferences.debug("r01 = " + r01 + "\n");
+            Preferences.debug("r02 = " + r02 + "\n");
+            Preferences.debug("r10 = " + r10 + "\n");
+            Preferences.debug("r11 = " + r11 + "\n");
+            Preferences.debug("r12 = " + r12 + "\n");
+            Preferences.debug("r20 = " + r20 + "\n");
+            Preferences.debug("r21 = " + r21 + "\n");
+            Preferences.debug("r22 = " + r22 + "\n");
         } // if (qform_code > 0)
         else if (sform_code > 0) { // qform_code = 0, so only 1 matrix
             srow_x = new float[4];
