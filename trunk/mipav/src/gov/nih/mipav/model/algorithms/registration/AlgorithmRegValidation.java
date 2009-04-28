@@ -12,6 +12,8 @@ import gov.nih.mipav.view.*;
 
 
 /**
+ * Uses a selected <code>RegistrationMeasure</code> and the user-specified points to
+ * output the relevant measure back to the user.
  * 
  * @author   senseneyj
  */
@@ -25,14 +27,15 @@ public class AlgorithmRegValidation extends AlgorithmBase {
     /** The number of dimensions (2D or 3D). */
     private int dim;
 
-
     /** Input point set A (2D or 3D) */
     private double[][] pointSetA;
     
     /** Input point set B (2D or 3D) */
     private double[][] pointSetB;
 
-
+    /**The measure to use for analysis. */
+    private RegistrationMeasure measure;
+    
     /** The transformation matrix that describes the transform from point set B to point set A. */
     private TransMatrix xfrmBA;
 

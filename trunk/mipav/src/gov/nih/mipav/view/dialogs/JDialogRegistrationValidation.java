@@ -125,7 +125,7 @@ public class JDialogRegistrationValidation extends JDialogScriptableBase impleme
      * @param  _ri             DOCUMENT ME!
      */
     public JDialogRegistrationValidation(Frame theParentFrame, ModelImage _mi, ModelImage _ri) {
-        matchImage = _mi;
+    	matchImage = _mi;
         baseImage = _ri;
         DIM = 3;
         userInterface = ViewUserInterface.getReference();
