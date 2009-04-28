@@ -577,8 +577,12 @@ public class JDialogRegistrationValidation extends JDialogScriptableBase impleme
         imageMax = matchImage.getMax();
         dataType = matchImage.getFileInfo()[0].getDataType();
         setForeground(Color.black);
-        setTitle("Least Squares Registration");
+        setTitle("Registration validation");
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
+        JPanel topImagePanel = new JPanel();
+        topImagePanel.setBorder(MipavUtil.buildTitledBorder("Image registration"));
+        topImagePanel.setLayout(new BorderLayout());
         String matchName = matchImage.getImageName();
 
         JLabel labelImage = new JLabel("Register [" + matchName + "] to:");
@@ -642,8 +646,14 @@ public class JDialogRegistrationValidation extends JDialogScriptableBase impleme
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(valueText, gbc);
+        
+        topImagePanel.add(imagePanel, BorderLayout.CENTER);
+        topImagePanel.add(outPanel, BorderLayout.SOUTH);
+        
+        JPanel wholeImageReg = new JPanel();
+        wholeImageReg.setBorder(MipavUtil.buildTitledBorder("Whole image validation methods"));
 
-        getContentPane().add(imagePanel, BorderLayout.NORTH);
+        getContentPane().add(topImagePanel, BorderLayout.NORTH);
         getContentPane().add(outPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
