@@ -282,6 +282,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null, false),
                         menuBuilder.buildMenuItem("Time series optimized automatic registration", "TSOAR", 0, null,
                                 false),
+                        menuBuilder.buildMenuItem("Registration Validation", "RegValidation", 0, null, false),
 
                         // menuBuilder.buildMenuItem("Turbo", "Turbo", 0,
                         // null, false),

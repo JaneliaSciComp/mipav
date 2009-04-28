@@ -1884,6 +1884,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } else {
                 MipavUtil.displayError("There are no other images to register.");
             }
+        } else if (command.equals("RegValidation")) {
+
+            if (isMultipleImages() == true) {
+                new JDialogRegistrationValidation(this, getActiveImage());
+            } else {
+                MipavUtil.displayError("There is no registered image for validation.");
+            }
         } else if (command.equals("TPSpline")) {
 
             if (isMultipleImages() == true) {
