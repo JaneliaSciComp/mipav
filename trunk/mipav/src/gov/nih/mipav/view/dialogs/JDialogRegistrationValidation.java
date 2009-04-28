@@ -19,13 +19,12 @@ import javax.swing.*;
 
 
 /**
- * Dialog to get user input, then call algorithmRegLeastSquares. Selects image is match image, the image that gets transformed
+ * Dialog to get user input, then call algorithmRegValidation. Selects image is match image, the image that gets transformed
  * until it is registered to the base image. Algorithms are executed in their own thread.
- *
- * @version  0.1 May 19, 1999
- * @author   Delia McGarry
+ * 
+ * @author   senseneyj
  */
-public class JDialogRegistrationLeastSquares extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogRegistrationValidation extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -103,7 +102,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogRegistrationLeastSquares() { }
+    public JDialogRegistrationValidation() { }
 
     /**
      * Creates new registration dialog to get base image name.
@@ -111,7 +110,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public JDialogRegistrationLeastSquares(Frame theParentFrame, ModelImage im) {
+    public JDialogRegistrationValidation(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         matchImage = im;
         userInterface = ViewUserInterface.getReference();
@@ -119,13 +118,13 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
     }
 
     /**
-     * Creates a new JDialogRegistrationLeastSquares object.
+     * Creates a new JDialogRegistrationValidation object.
      *
      * @param  theParentFrame  DOCUMENT ME!
      * @param  _mi             DOCUMENT ME!
      * @param  _ri             DOCUMENT ME!
      */
-    public JDialogRegistrationLeastSquares(Frame theParentFrame, ModelImage _mi, ModelImage _ri) {
+    public JDialogRegistrationValidation(Frame theParentFrame, ModelImage _mi, ModelImage _ri) {
         matchImage = _mi;
         baseImage = _ri;
         DIM = 3;
