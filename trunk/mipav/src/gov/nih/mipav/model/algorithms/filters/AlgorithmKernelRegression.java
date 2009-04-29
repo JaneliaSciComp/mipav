@@ -73,6 +73,16 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
     private float verticalGradient[];
     
     private int extents[];
+    
+    private int xDim;
+    
+    private int yDim;
+    
+    private int zDim;
+    
+    private float C[][][][][];
+    
+    private boolean I[];
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -128,6 +138,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
      */
     public void runAlgorithm() {
         long time;
+        int i;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -139,6 +150,14 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         fireProgressStateChanged(0, srcImage.getImageName(), "Kernel regression filter");
         
         nDims = srcImage.getNDims();
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        if (nDims == 3) {
+            zDim = srcImage.getExtents()[2];
+        }
+        else {
+            zDim = 1;
+        } 
         
         if (method == REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC) {
             if ((nDims == 2) || do25D) {
@@ -163,7 +182,15 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         } // if (method == REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC)
         else if (method == ITERATIVE_STEERING_KERNEL_SECOND_ORDER) {
             if ((nDims == 2) || do25D) {
-                ckr2Regular();   
+                ckr2Regular(); 
+                I = new boolean[horizontalGradient.length];
+                for (i = 0; i < I.length; i++) {
+                    I[i] = true;
+                }
+                for (i = 1; i <= iterations; i++) {
+                    // Compute steering matrix
+                    steering();
+                }
             } // if ((nDims == 2) || do25D)
         } // else if (method == ITERATIVE_STEERING_KERNEL_SECOND_ORDER)
         
@@ -178,9 +205,6 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
     
     /*  2D processing on a second order classic kernel regression function for regularly sampled data */
     private void ckr2Regular() {
-        int xDim;
-        int yDim;
-        int zDim;
         int length;
         float input[];
         int upscaleSquared = upscale * upscale;
@@ -217,16 +241,8 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         int yy;
         int k;
         
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
         input = new float[length];
-        if (nDims == 3) {
-            zDim = srcImage.getExtents()[2];
-        }
-        else {
-            zDim = 1;
-        } 
         output = new float[upscaleSquared * length * zDim];
         horizontalGradient = new float[upscaleSquared * length * zDim];
         verticalGradient = new float[upscaleSquared * length * zDim];
@@ -387,6 +403,180 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         } // for (z = 0; z < zDim; z++)
         
     } // ckr2Regular
+    
+    private void steering() {
+        int win;
+        float K[];
+        int y;
+        int x;
+        int winSquared;
+        int delX;
+        int delY;
+        int delYSquared;
+        float zx[];
+        float zy[];
+        int z;
+        int padXDim;
+        int padYDim;
+        int zPos;
+        float gx[];
+        float gy[];
+        int i;
+        int j;
+        double G[][];
+        int len;
+        Matrix matG;
+        SingularValueDecomposition SVD;
+        double s[][];
+        double v[][];
+        double S1;
+        double S2;
+        double v1[][] = new double[2][2];
+        double v2[][] = new double[2][2];
+        double con;
+        
+        C = new float[2][2][extents[1]][extents[0]][zDim];
+        
+        if ((windowSize % 2) == 0) {
+            windowSize++;
+        }
+        win = (windowSize - 1)/2;
+        winSquared = win * win;
+        // Create a 2D circular averaging filter (pillbox) within the square matrix of size 2*win +1 = windowSize
+        K = new float[windowSize * windowSize];
+        for (y = 0; y < windowSize; y++) {
+            delY = y - win;
+            delYSquared = delY * delY;
+            for (x = 0; x < windowSize; x++) {
+                delX = x - win; 
+                if ((delX * delX + delYSquared) <= winSquared) {
+                    K[x + windowSize * y] = 1.0f;
+                }
+            }
+        }
+        
+        padXDim = extents[0] + 2 * win;
+        padYDim = extents[1] + 2 * win;
+        zx = new float[padXDim * padYDim];
+        zy = new float[padXDim * padYDim];
+        gx = new float[windowSize * windowSize];
+        gy = new float[windowSize * windowSize];
+        for (z = 0; z < zDim; z++) {
+            // Mirror the horizontal and vertical gradients
+            zPos = z * extents[0] * extents[1];
+            for (y = 0; y < extents[1]; y++) {
+                for (x = 0; x < extents[0]; x++) {
+                    zx[x + win + padXDim*(y + win)] = 
+                    horizontalGradient[x + y * extents[0] + zPos];
+                    zy[x + win + padXDim*(y + win)] = 
+                    verticalGradient[x + y * extents[0] + zPos];
+                }
+            }
+            
+            for (y = 0; y < extents[1]; y++) {
+                for (x = 0; x < win; x++) {
+                    // left side mirror reflection
+                    zx[x + padXDim*(y + win)] =
+                    horizontalGradient[(win - x) + extents[0] * y + zPos];
+                    zy[x + padXDim*(y + win)] =
+                    verticalGradient[(win - x) + extents[0] * y + zPos];
+                    // right side mirror reflection
+                    zx[x + extents[0] + win + padXDim * (y + win)] =
+                    horizontalGradient[extents[0] - 2 - x + extents[0] * y + zPos];
+                    zy[x + extents[0] + win + padXDim * (y + win)] =
+                    verticalGradient[extents[0] - 2 - x + extents[0] * y + zPos];
+                }
+            }
+            for (y = 0; y < win; y++) {
+                for (x = 0; x < extents[0]; x++) {
+                    // top side mirror reflection
+                    zx[x + win + padXDim * y] = 
+                    horizontalGradient[x + extents[0] * (win - y) + zPos];
+                    zy[x + win + padXDim * y] = 
+                    verticalGradient[x + extents[0] * (win - y) + zPos];
+                    // bottom side mirror reflection
+                    zx[x + win + padXDim * (y + extents[1] + win)] =
+                    horizontalGradient[x + extents[0] * (extents[1] - 2 - y) + zPos];
+                    zy[x + win + padXDim * (y + extents[1] + win)] =
+                    verticalGradient[x + extents[0] * (extents[1] - 2 - y) + zPos];
+                }
+            }
+            for (y = 0; y < win; y++) {
+                for (x = 0; x < win; x++) {
+                    // left top mirror reflection
+                    zx[x + padXDim * y] = 
+                    horizontalGradient[(win - x) + extents[0] * (win - y) + zPos];
+                    zy[x + padXDim * y] = 
+                    verticalGradient[(win - x) + extents[0] * (win - y) + zPos];
+                    // left bottom mirror reflection
+                    zx[x + padXDim * (y + extents[1] + win)] = 
+                    horizontalGradient[(win - x) + extents[0] * (extents[1] - 2 - y) + zPos];
+                    zy[x + padXDim * (y + extents[1] + win)] = 
+                    verticalGradient[(win - x) + extents[0] * (extents[1] - 2 - y) + zPos];
+                    // right top mirror reflection
+                    zx[x + extents[0] + win + padXDim * y] =
+                    horizontalGradient[extents[0] - 2 - x + extents[0] * (win - y) + zPos];
+                    zy[x + extents[0] + win + padXDim * y] =
+                    verticalGradient[extents[0] - 2 - x + extents[0] * (win - y) + zPos];
+                    // right bottom mirror reflection
+                    zx[x + extents[0] + win + padXDim * (y + extents[1] + win)] =
+                    horizontalGradient[extents[0] - 2 - x + extents[0] * (extents[1] - 2 - y) + zPos];
+                    zy[x + extents[0] + win + padXDim * (y + extents[1] + win)] =
+                    verticalGradient[extents[0] - 2 - x + extents[0] * (extents[1] - 2 - y) + zPos];
+                }
+            } 
+            
+            for (y = 1; y <= extents[1]; y++) {
+                for (x = 1; x <= extents[0]; x++) {
+                    if (!I[x - 1 + extents[0] * (y - 1)]) {
+                        continue;
+                    }
+                    
+                    // Put all the columns of gx and gy into a single column
+                    for (i = 0; i < windowSize; i++) {
+                        for (j = 0; j < windowSize; j++) {
+                            gx[i + j * windowSize] = zx[x - 1 + j + padXDim * (y - 1 + i)] *
+                                                      K[j + i * windowSize];
+                            gy[i + j * windowSize] = zy[x - 1 + j + padXDim * (y - 1 + i)] *
+                                                      K[j + i * windowSize];
+                        }
+                    }
+                    
+                    G = new double[windowSize * windowSize][2];
+                    for (i = 0; i < windowSize; i++) {
+                        G[i][0] = gx[i];
+                        G[i][1] = gy[i];
+                    }
+                    
+                    len = 0;
+                    for (i = 0; i < K.length; i++) {
+                        len += K[i];
+                    }
+                    matG = new Matrix(G);
+                    SVD = matG.svd();
+                    s = SVD.getS().getArray();
+                    v = SVD.getV().getArray();
+                    S1 = (s[0][0] + lambda)/(s[1][1] + lambda);
+                    S2 = (s[1][1] + lambda)/(s[0][0] + lambda);
+                    con = Math.pow(((s[0][0] * s[1][1] + 1.0E-7)/len), alpha);
+                    v1[0][0] = S1*v[0][0]*v[0][0];
+                    v1[0][1] = S1*v[0][0]*v[1][0];
+                    v1[1][0] = S1*v[1][0]*v[0][0];
+                    v1[1][1] = S1*v[1][0]*v[1][0];
+                    v2[0][0] = S2*v[0][1]*v[0][1];
+                    v2[0][1] = S2*v[0][1]*v[1][1];
+                    v2[1][0] = S2*v[1][1]*v[0][1];
+                    v2[1][1] = S2*v[1][1]*v[1][1];
+                    for (j = 0; j < 2; j++) {
+                        for (i = 0; i < 2; i++) {
+                            C[j][i][y-1][x-1][z] = (float)((v1[j][i] + v2[j][i])*con);   
+                        }
+                    }
+                    
+                } // for (x = 1; x <= extents[0]; x++)
+            } // for (y = 1; y <= extents[1]; y++)
+        } // for (z = 0; z < zDim; z++)
+    } // steering
 
 
 }
