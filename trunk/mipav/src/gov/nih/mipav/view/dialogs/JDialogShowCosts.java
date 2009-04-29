@@ -33,12 +33,8 @@ public class JDialogShowCosts extends JDialogBase {
     /** DOCUMENT ME! */
     private AlgorithmCostFunctions2D algoCost2D = null;
 
-
-    /** DOCUMENT ME! */
+    /** Number of bins for each image */
     private int bin1, bin2;
-
-    /** DOCUMENT ME! */
-    private boolean bin1Default, bin2Default;
 
     /** DOCUMENT ME! */
     private JLabel bin1Label, bin2Label;
@@ -52,7 +48,7 @@ public class JDialogShowCosts extends JDialogBase {
     /** DOCUMENT ME! */
     private boolean doLinearRescale = true;
 
-    /** DOCUMENT ME! */
+    /** Active image when algorithm is called. */
     private ModelImage firstImage;
 
     /** DOCUMENT ME! */
@@ -64,22 +60,22 @@ public class JDialogShowCosts extends JDialogBase {
     /** DOCUMENT ME! */
     private JCheckBox linearCheckbox;
 
-    /** DOCUMENT ME! */
+    /** Initial guesses for bin values */
     private double possibleIntValues1, possibleIntValues2;
 
-    /** DOCUMENT ME! */
+    /** The registered image as specified by user through gui */
     private ModelImage secondImage = null;
 
-    /** DOCUMENT ME! */
+    /** Holds extents, other info about firstImage and SecondImage */
     private ModelSimpleImage simpleImg1, simpleImg2;
 
-    /** DOCUMENT ME! */
+    /** Optional smooth parameter for both cost functions */
     private float smoothSize = 1;
 
-    /** DOCUMENT ME! */
+    /** Identity matrix for testing cost */
     private TransMatrix tMatrix;
 
-    /** DOCUMENT ME! */
+    /** The MIPAV user interface */
     private ViewUserInterface UI;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -247,30 +243,12 @@ public class JDialogShowCosts extends JDialogBase {
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param  bin1Default  DOCUMENT ME!
-     */
-    public void setBin1Default(boolean bin1Default) {
-        this.bin1Default = bin1Default;
-    }
-
-    /**
      * Accessor that sets bin2.
      *
      * @param  bin2  DOCUMENT ME!
      */
     public void setBin2(int bin2) {
         this.bin2 = bin2;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  bin2Default  DOCUMENT ME!
-     */
-    public void setBin2Default(boolean bin2Default) {
-        this.bin2Default = bin2Default;
     }
 
     /**
