@@ -47,6 +47,8 @@ public class JDialogRegistrationValidation extends JDialogScriptableBase impleme
 
     /** DOCUMENT ME! */
     private boolean lsCompleted = false;
+    
+    private AlgorithmOptimizeFunctionBase imageAlgo = null;
 
     /** Algorithm to run from this dialog. */
     private AlgorithmRegLeastSquares LSMatch = null;
@@ -85,6 +87,51 @@ public class JDialogRegistrationValidation extends JDialogScriptableBase impleme
     private double imageMax;
     
     private int dataType;
+    
+    /** Number of bins for each image */
+    private int bin1, bin2;
+
+    /** DOCUMENT ME! */
+    private JLabel bin1Label, bin2Label;
+
+    /** DOCUMENT ME! */
+    private JTextField bin1Text, bin2Text;
+
+    /** DOCUMENT ME! */
+    private String currentCostFunct;
+
+    /** DOCUMENT ME! */
+    private boolean doLinearRescale = true;
+
+    /** Active image when algorithm is called. */
+    private ModelImage firstImage;
+
+    /** DOCUMENT ME! */
+    private JComboBox imageComboBox;
+
+    /** DOCUMENT ME! */
+    private JLabel labelImage;
+
+    /** DOCUMENT ME! */
+    private JCheckBox linearCheckbox;
+
+    /** Initial guesses for bin values */
+    private double possibleIntValues1, possibleIntValues2;
+
+    /** The registered image as specified by user through gui */
+    private ModelImage secondImage = null;
+
+    /** Holds extents, other info about firstImage and SecondImage */
+    private ModelSimpleImage simpleImg1, simpleImg2;
+
+    /** Optional smooth parameter for both cost functions */
+    private float smoothSize = 1;
+
+    /** Identity matrix for testing cost */
+    private TransMatrix tMatrix;
+
+    /** The MIPAV user interface */
+    private ViewUserInterface UI;
     
     /**
      * Tells how to select fill value for out of bounds data
@@ -572,6 +619,12 @@ public class JDialogRegistrationValidation extends JDialogScriptableBase impleme
      * Initializes GuserInterface components and displays dialog.
      */
     private void init() {
+    	if (firstImage.getNDims() > 2) {
+            tMatrix = new TransMatrix(4);
+        } else {
+            tMatrix = new TransMatrix(3);
+
+        }
         matchImage.calcMinMax();
         imageMin = matchImage.getMin();
         imageMax = matchImage.getMax();
@@ -580,7 +633,23 @@ public class JDialogRegistrationValidation extends JDialogScriptableBase impleme
         setTitle("Registration validation");
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        JPanel topImagePanel = new JPanel();
+        JPanel topImagePanel = buildTopImagePanel();
+        
+        JPanel wholeImagePanel = buildWholeRegMethodsPanel();
+        
+        
+        
+        
+        getContentPane().add(topImagePanel, BorderLayout.NORTH);
+        getContentPane().add(wholeImagePanel, BorderLayout.CENTER);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
+
+        pack();
+        setVisible(true);
+    }
+    
+    private JPanel buildTopImagePanel() {
+    	JPanel topImagePanel = new JPanel();
         topImagePanel.setBorder(MipavUtil.buildTitledBorder("Image registration"));
         topImagePanel.setLayout(new BorderLayout());
         String matchName = matchImage.getImageName();
@@ -650,15 +719,50 @@ public class JDialogRegistrationValidation extends JDialogScriptableBase impleme
         topImagePanel.add(imagePanel, BorderLayout.CENTER);
         topImagePanel.add(outPanel, BorderLayout.SOUTH);
         
-        JPanel wholeImageReg = new JPanel();
+        return topImagePanel;
+    }
+    
+    private JPanel buildWholeRegMethodsPanel() {
+    	JPanel wholeImageReg = new JPanel();
         wholeImageReg.setBorder(MipavUtil.buildTitledBorder("Whole image validation methods"));
+        
+        return wholeImageReg;
+        
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  costChoice  DOCUMENT ME!
+     */
+    private void callImageAlgorithm(int costChoice) {
 
-        getContentPane().add(topImagePanel, BorderLayout.NORTH);
-        getContentPane().add(outPanel, BorderLayout.CENTER);
-        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
+        try {
 
-        pack();
-        setVisible(true);
+            // Make algorithm
+            if (firstImage.getNDims() > 2) {
+                imageAlgo = new AlgorithmCostFunctions(simpleImg1, simpleImg2, costChoice, bin1, smoothSize);
+            } else {
+                imageAlgo = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, costChoice, bin1, smoothSize);
+            }
+        } catch (OutOfMemoryError x) {
+            System.gc();
+            MipavUtil.displayError("Dialog Show Costs: unable to allocate enough memory");
+
+            return;
+        }
+
+        double cost = imageAlgo.cost(tMatrix);
+
+        UI.setDataText(currentCostFunct + ":\t" + cost + "\n");
+
+        if(imageAlgo != null) {
+        	if(imageAlgo instanceof AlgorithmCostFunctions) {
+        		((AlgorithmCostFunctions) imageAlgo).disposeLocal();
+        	} else if(imageAlgo instanceof AlgorithmCostFunctions2D) {
+        		((AlgorithmCostFunctions2D) imageAlgo).disposeLocal();
+        	}
+        }
     }
     
     /**
