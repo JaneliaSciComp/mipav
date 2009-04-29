@@ -1512,7 +1512,10 @@ public class Geodesic_WM {
 
     public void setPickedPoint( PickRecord kPickPoint, TriMesh kMesh )
     {               
-        
+        if ( kMesh == null )
+        {
+            return;
+        }
 //         System.err.println( kPickPoint.B0 + " " + kPickPoint.B1 + " " + kPickPoint.B2 );
 //         System.err.println( kMesh.VBuffer.GetPosition3fX( kPickPoint.iV0 ) + " " + 
 //                 kMesh.VBuffer.GetPosition3fY( kPickPoint.iV0 ) + " " +

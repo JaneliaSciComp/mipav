@@ -97,7 +97,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     private int m_iBrushSize = 1;
     
     /** Geodesic enabled on/off. */
-    private boolean m_bGeodesicEnabled = false;
+    protected boolean m_bGeodesicEnabled = false;
 
     /** Stereo on/off. */
     private boolean m_bStereo = false;

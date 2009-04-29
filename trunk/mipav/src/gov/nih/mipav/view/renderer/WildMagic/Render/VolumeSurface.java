@@ -135,6 +135,10 @@ public class VolumeSurface extends VolumeObject
      */
     public void AddGeodesic( Geometry kMesh, int iGroup )
     {
+
+        kMesh.AttachGlobalState(m_kMaterial);  
+        kMesh.UpdateRS();
+            
         //kMesh.Local.SetTranslate(m_kTranslate.add(kMesh.Local.GetTranslate()));
         kMesh.AttachEffect( m_kLightShader );
         if ( m_akGeodesicNodes[iGroup] == null )
@@ -146,6 +150,7 @@ public class VolumeSurface extends VolumeObject
             }
         }
         m_akGeodesicNodes[iGroup].AttachChild( kMesh );
+        m_kScene.UpdateRS();
     }
 
     /* (non-Javadoc)
@@ -766,11 +771,12 @@ public class VolumeSurface extends VolumeObject
         kMesh.UpdateMS();
 
         kMesh.AttachGlobalState(m_kMaterial);
+        //kMesh.UpdateGS();
         kMesh.AttachEffect(m_kLightShader);
         kMesh.UpdateRS();
         
         m_kScene.SetChild(0, kMesh);
-        m_kScene.UpdateGS();
+        //m_kScene.UpdateGS();
         m_kScene.UpdateRS();
         
         m_kMesh = null;

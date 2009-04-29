@@ -343,6 +343,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
 
     protected int m_iVOITotal = 0;
     protected String m_kVOIName = "";
+    protected Vector<String> m_kVOINameList = new Vector<String>();
     /** Panel containing the position labels:. */
     private JPanel panelLabels = new JPanel();
     private JToolBar m_kVOIToolbar;
@@ -3045,7 +3046,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                 if ( kMeshes[0] != null )
                 {
                     getVolumeGPU().displayVolumeRaycast(false);
-                    m_kVOIName = new String( "VOI_" + m_iVOICount++ );;
+                    m_kVOIName = new String( "VOI_" + m_iVOICount++ );
+                    m_kVOINameList.add(m_kVOIName);
                     kMeshes[0].SetName( m_kVOIName );
                     getSurfacePanel().addSurfaces(kMeshes);
                     getRendererGUI().setDisplaySurfaceCheck( true );
@@ -3205,6 +3207,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         {
             return;
         }
+        if ( !m_kVOINameList.contains(kVOIName) )
+        {
+            return;
+        }
+        m_kVOINameList.remove(m_kVOIName);
         int iVOICount = Integer.valueOf(kVOIName.substring( 4 )).intValue();
         m_iVOITotal--;
         int[] aiExtents = imageA.getExtents();
