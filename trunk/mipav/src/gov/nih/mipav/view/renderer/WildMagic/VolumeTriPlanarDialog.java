@@ -9,8 +9,6 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -29,11 +27,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
-
-import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
-import WildMagic.LibGraphics.Shaders.ImageCatalog;
-import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
-import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 
 
 /**

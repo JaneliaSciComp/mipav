@@ -41,6 +41,11 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
     {
         super.Pick();
 
+        if ( m_bGeodesicEnabled )
+        {
+            return;
+        }
+        
         Vector3f kPos = new Vector3f(0,0,10);
         Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
 
@@ -97,6 +102,10 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
     public void mousePressed(MouseEvent e)
     {
         super.mousePressed(e);
+        if ( m_bGeodesicEnabled )
+        {
+            return;
+        }
         if ( e.isControlDown() && m_bSlicePickEnabled )
         {
             m_iXPick = e.getX();
@@ -113,6 +122,10 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
     public void mouseReleased(MouseEvent e)
     {
         super.mouseReleased(e);
+        if ( m_bGeodesicEnabled )
+        {
+            return;
+        }
         if ( updatingFiberTrack && m_bSlicePickEnabled ) {
             ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().addFiberTract();
             updatingFiberTrack = false;
@@ -124,6 +137,10 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
      */
     public void mouseDragged(MouseEvent e)
     {
+        if ( m_bGeodesicEnabled )
+        {
+            return;
+        }
         if ( !getSculptEnabled() )
         {
             super.mouseDragged(e);
