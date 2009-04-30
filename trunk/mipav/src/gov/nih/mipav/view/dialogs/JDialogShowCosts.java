@@ -53,6 +53,10 @@ public class JDialogShowCosts extends JDialogBase {
 
     /** Whether linear scaling of selected image should be performed. */
     private JCheckBox linearCheckbox;
+    
+    /** Whether the available cost functions should be performed */
+    private JCheckBox doCorrelationRatioSmoothed, doMutualInfoSmoothed,
+    					doNormMutualInfoSmoothed, doNormXCorr;
 
     /** Initial guesses for bin values */
     private double possibleIntValues1, possibleIntValues2;
@@ -109,43 +113,50 @@ public class JDialogShowCosts extends JDialogBase {
                 progressBar.setLocation(xScreen / 2, yScreen / 2);
                 progressBar.setVisible(true);
 
-                progressBar.setMessage("Calculating correlation ratio");
-                currentCostFunct = "Correlation Ratio Smoothed";
-
-                if (firstImage.getNDims() > 2) {
-                    callAlgorithm(AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED);
-                } else {
-                    callAlgorithm(AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED);
+                if(doCorrelationRatioSmoothed.isSelected()) {
+                	progressBar.setMessage("Calculating correlation ratio");
+                    currentCostFunct = "Correlation Ratio Smoothed";
+	                if (firstImage.getNDims() > 2) {
+	                    callAlgorithm(AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED);
+	                } else {
+	                    callAlgorithm(AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED);
+	                }
                 }
 
-                progressBar.setMessage("Calculating mutual information");
                 progressBar.updateValueImmed(25);
-                currentCostFunct = "Mutual Information Smoothed";
 
-                if (firstImage.getNDims() > 2) {
-                    callAlgorithm(AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED);
-                } else {
-                    callAlgorithm(AlgorithmCostFunctions2D.MUTUAL_INFORMATION_SMOOTHED);
+                if(doMutualInfoSmoothed.isSelected()) {
+                	progressBar.setMessage("Calculating mutual information");
+                	currentCostFunct = "Mutual Information Smoothed";
+	                if (firstImage.getNDims() > 2) {
+	                    callAlgorithm(AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED);
+	                } else {
+	                    callAlgorithm(AlgorithmCostFunctions2D.MUTUAL_INFORMATION_SMOOTHED);
+	                }
                 }
 
-                progressBar.setMessage("Calculating normalized mutual information");
                 progressBar.updateValueImmed(50);
-                currentCostFunct = "Normalized Mutual Information Smoothed";
 
-                if (firstImage.getNDims() > 2) {
-                    callAlgorithm(AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED);
-                } else {
-                    callAlgorithm(AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED);
+                if(doNormMutualInfoSmoothed.isSelected()) {
+                	progressBar.setMessage("Calculating normalized mutual information");
+                	currentCostFunct = "Normalized Mutual Information Smoothed";
+	                if (firstImage.getNDims() > 2) {
+	                    callAlgorithm(AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED);
+	                } else {
+	                    callAlgorithm(AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED);
+	                }
                 }
 
                 progressBar.setMessage("Calculating normalized cross correlation");
                 progressBar.updateValueImmed(75);
                 currentCostFunct = "Normalized Cross Correlation Smoothed";
 
-                if (firstImage.getNDims() > 2) {
-                    callAlgorithm(AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED);
-                } else {
-                    callAlgorithm(AlgorithmCostFunctions2D.NORMALIZED_XCORRELATION_SMOOTHED);
+                if(doNormXCorr.isSelected()) {
+	                if (firstImage.getNDims() > 2) {
+	                    callAlgorithm(AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED);
+	                } else {
+	                    callAlgorithm(AlgorithmCostFunctions2D.NORMALIZED_XCORRELATION_SMOOTHED);
+	                }
                 }
 
                 progressBar.updateValue(100, true);
@@ -391,6 +402,29 @@ public class JDialogShowCosts extends JDialogBase {
         imagePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         imagePanel.add(labelImage);
         imagePanel.add(imageComboBox);
+        
+        /**set up available costs panel*/
+        JPanel availableCostsPanel = new JPanel();
+        availableCostsPanel.setLayout(new BoxLayout(availableCostsPanel, BoxLayout.Y_AXIS));
+        availableCostsPanel.setBorder(MipavUtil.buildTitledBorder("Available cost functions"));
+        
+        doCorrelationRatioSmoothed = new JCheckBox("Calculate correlation ratio");
+        doCorrelationRatioSmoothed.setSelected(true);
+        doCorrelationRatioSmoothed.setFont(serif12);
+        doMutualInfoSmoothed = new JCheckBox("Calculate mutual information");
+        doMutualInfoSmoothed.setSelected(true);
+        doMutualInfoSmoothed.setFont(serif12);
+        doNormMutualInfoSmoothed = new JCheckBox("Calculate normalized mutual information");
+        doNormMutualInfoSmoothed.setSelected(true);
+        doNormMutualInfoSmoothed.setFont(serif12);
+        doNormXCorr = new JCheckBox("Calculate normalized cross correlation");
+        doNormXCorr.setSelected(true);
+        doNormXCorr.setFont(serif12);
+        
+        availableCostsPanel.add(doCorrelationRatioSmoothed);
+        availableCostsPanel.add(doMutualInfoSmoothed);
+        availableCostsPanel.add(doNormMutualInfoSmoothed);
+        availableCostsPanel.add(doNormXCorr);
 
         /* Set up the grid bag */
         GridBagConstraints gbc = new GridBagConstraints();
@@ -479,12 +513,24 @@ public class JDialogShowCosts extends JDialogBase {
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
-
-        getContentPane().add(imagePanel, BorderLayout.NORTH);
-        getContentPane().add(rescalePanel, BorderLayout.CENTER);
-        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
+        
+        gbc = new GridBagConstraints();
+        getContentPane().setLayout(new GridBagLayout());
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        
+        getContentPane().add(imagePanel, gbc);
+        gbc.gridy = 1;
+        getContentPane().add(availableCostsPanel, gbc);
+        gbc.gridy = 2;
+        getContentPane().add(rescalePanel, gbc);
+        gbc.gridy = 3;
+        getContentPane().add(buttonPanel, gbc);
+        
         pack();
+        validate();
         setVisible(true);
     }
 
