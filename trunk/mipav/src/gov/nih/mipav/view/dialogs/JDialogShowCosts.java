@@ -27,37 +27,31 @@ public class JDialogShowCosts extends JDialogBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private AlgorithmCostFunctions algoCost = null;
-
-    /** DOCUMENT ME! */
-    private AlgorithmCostFunctions2D algoCost2D = null;
+    /** Is either a AlgorithmCostFunction or a AlgorithmCostFunctions2D depending on images */
+    private AlgorithmOptimizeFunctionBase algoCost = null;
 
     /** Number of bins for each image */
     private int bin1, bin2;
 
-    /** DOCUMENT ME! */
-    private JLabel bin1Label, bin2Label;
-
-    /** DOCUMENT ME! */
+    /** User input of bins */
     private JTextField bin1Text, bin2Text;
 
-    /** DOCUMENT ME! */
+    /** The current cost function */
     private String currentCostFunct;
 
-    /** DOCUMENT ME! */
+    /** Result of checkbox for linear rescaling of selected image */
     private boolean doLinearRescale = true;
 
     /** Active image when algorithm is called. */
     private ModelImage firstImage;
 
-    /** DOCUMENT ME! */
+    /** Image list for user to pick registered image */
     private JComboBox imageComboBox;
 
-    /** DOCUMENT ME! */
+    /** The registered image */
     private JLabel labelImage;
 
-    /** DOCUMENT ME! */
+    /** Whether linear scaling of selected image should be performed. */
     private JCheckBox linearCheckbox;
 
     /** Initial guesses for bin values */
@@ -332,7 +326,7 @@ public class JDialogShowCosts extends JDialogBase {
             if (firstImage.getNDims() > 2) {
                 algoCost = new AlgorithmCostFunctions(simpleImg1, simpleImg2, costChoice, bin1, smoothSize);
             } else {
-                algoCost2D = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, costChoice, bin1, smoothSize);
+                algoCost = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, costChoice, bin1, smoothSize);
             }
         } catch (OutOfMemoryError x) {
             System.gc();
@@ -343,22 +337,17 @@ public class JDialogShowCosts extends JDialogBase {
 
         double cost;
 
-        if (firstImage.getNDims() > 2) {
-            cost = algoCost.cost(tMatrix);
-        } else {
-            cost = algoCost2D.cost(tMatrix);
-        }
-
+        cost = algoCost.cost(tMatrix);
+        
         UI.setDataText(currentCostFunct + ":\t" + cost + "\n");
 
-        if (algoCost != null) {
-            algoCost.disposeLocal();
-            algoCost = null;
-        }
-
-        if (algoCost2D != null) {
-            algoCost2D.disposeLocal();
-            algoCost2D = null;
+        if(algoCost != null) {
+        	if(algoCost instanceof AlgorithmCostFunctions) {
+        		((AlgorithmCostFunctions) algoCost).disposeLocal();
+        	} else if(algoCost instanceof AlgorithmCostFunctions2D) {
+        		((AlgorithmCostFunctions2D) algoCost).disposeLocal();
+        	}
+        	algoCost = null;
         }
     }
 
@@ -457,7 +446,7 @@ public class JDialogShowCosts extends JDialogBase {
         }
 
         /* Set up interface for changing number of bins - bin labels and text */
-        bin1Label = new JLabel("Image 1 bin number ");
+        JLabel bin1Label = new JLabel("Image 1 bin number ");
         bin1Label.setForeground(Color.black);
         bin1Label.setFont(serif12);
         rescalePanel.add(bin1Label, gbc);
@@ -471,7 +460,7 @@ public class JDialogShowCosts extends JDialogBase {
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        bin2Label = new JLabel("Image 2 bin number ");
+        JLabel bin2Label = new JLabel("Image 2 bin number ");
         bin2Label.setForeground(Color.black);
         bin2Label.setFont(serif12);
         rescalePanel.add(bin2Label, gbc);
