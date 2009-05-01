@@ -35,7 +35,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Base image - register match image to base image. */
-    private ModelImage baseImage;
+    protected ModelImage baseImage;
 
     /** Combo box with image names for choosing base image. */
     private JComboBox comboBoxImage;
@@ -53,10 +53,10 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
     private AlgorithmRegLeastSquares LSMatch = null;
 
     /** Match image - register match image to base image. */
-    private ModelImage matchImage;
+    protected ModelImage matchImage;
 
     /** Result image - image returned from registration algorithm. */
-    private ModelImage resultImage = null;
+    protected ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
     private TransMatrix resultMatrix = null;
@@ -572,15 +572,28 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
     /**
      * Initializes GuserInterface components and displays dialog.
      */
-    private void init() {
-        matchImage.calcMinMax();
-        imageMin = matchImage.getMin();
-        imageMax = matchImage.getMax();
-        dataType = matchImage.getFileInfo()[0].getDataType();
+    protected void init() {
         setForeground(Color.black);
         setTitle("Least Squares Registration");
 
-        String matchName = matchImage.getImageName();
+        JPanel imagePanel = buildImagePanel();
+        
+        JPanel extentsPanel = buildExtentsPanel();
+
+        getContentPane().add(imagePanel, BorderLayout.NORTH);
+        getContentPane().add(extentsPanel, BorderLayout.CENTER);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
+
+        pack();
+        setVisible(true);
+    }
+    
+    protected JPanel buildImagePanel() {
+    	matchImage.calcMinMax();
+        imageMin = matchImage.getMin();
+        imageMax = matchImage.getMax();
+        dataType = matchImage.getFileInfo()[0].getDataType();
+    	String matchName = matchImage.getImageName();
 
         JLabel labelImage = new JLabel("Register [" + matchName + "] to:");
         labelImage.setForeground(Color.black);
@@ -591,7 +604,11 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         imagePanel.add(labelImage);
         imagePanel.add(comboBoxImage);
         
-        JPanel outPanel = new JPanel(new GridBagLayout());
+        return imagePanel;
+    }
+    
+    protected JPanel buildExtentsPanel() {
+    	JPanel extentsPanel = new JPanel(new GridBagLayout());
         outOfBoundsLabel = new JLabel("Out of bounds data:");
         outOfBoundsLabel.setForeground(Color.black);
         outOfBoundsLabel.setFont(serif12);
@@ -626,30 +643,25 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = insets;
-        outPanel.add(outOfBoundsLabel, gbc);
+        extentsPanel.add(outOfBoundsLabel, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        outPanel.add(outOfBoundsComboBox, gbc);
+        extentsPanel.add(outOfBoundsComboBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
-        outPanel.add(valueLabel, gbc);
+        extentsPanel.add(valueLabel, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        outPanel.add(valueText, gbc);
-
-        getContentPane().add(imagePanel, BorderLayout.NORTH);
-        getContentPane().add(outPanel, BorderLayout.CENTER);
-        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
-
-        pack();
-        setVisible(true);
+        extentsPanel.add(valueText, gbc);
+        
+        return extentsPanel;
     }
     
     /**
