@@ -94,7 +94,7 @@ public class JDialogKernelRegression extends JDialogScriptableBase
     private JTextField textIterations;
     
     /** Total number of iterations */
-    private int iterations = 15;
+    private int iterations = 4;
     
     private JLabel labelWindowSize;
     
@@ -766,7 +766,7 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         paramPanel.add(labelIterations, gbc2);
         
         gbc2.gridx = 1;
-        textIterations = createTextField("15");
+        textIterations = createTextField("4");
         paramPanel.add(textIterations, gbc2);
         
         gbc2.gridx = 0;
