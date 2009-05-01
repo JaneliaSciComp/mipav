@@ -158,6 +158,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Gaussian blur", null, 0, null, false),
                         menuBuilder.buildMenuItem("Gradient magnitude", null, 0, null, false),
                         menuBuilder.buildMenuItem("Haralick texture", "Haralick", 0, null, false),
+                        menuBuilder.buildMenuItem("Kernel regression", "kernelRegression", 0, null, false),
                         menuBuilder.buildMenuItem("Laplacian", null, 0, null, false),
                         menuBuilder.buildMenuItem("Local normalization", null, 0, null, false),
                         menuBuilder.buildMenuItem("Mean", null, 0, null, false),
@@ -863,6 +864,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Adaptive path smooth", false);
+            menuBuilder.setMenuItemEnabled("Kernel regression", false);
             menuBuilder.setMenuItemEnabled("Nonlinear noise reduction", false);
             menuBuilder.setMenuItemEnabled("Nonlocal means filter", false);
             menuBuilder.setMenuItemEnabled("Point area average intensities", false);
@@ -998,6 +1000,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Grays -> RGB", false);
             menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", false);
+            menuBuilder.setMenuItemEnabled("Kernel regression", false);
             menuBuilder.setMenuItemEnabled("Laplacian", false);
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
