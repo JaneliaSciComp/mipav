@@ -183,6 +183,23 @@ public class JDialogKernelRegression extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else if ((source.equals(iterSteering2)) || (source.equals(regSampled2Classic))) {
+            if (iterSteering2.isSelected()) {
+                textIterativeGlobal.setEnabled(true);
+                textIterativeKernel.setEnabled(true);
+                textIterations.setEnabled(true);
+                textWindowSize.setEnabled(true);
+                textLambda.setEnabled(true);
+                textAlpha.setEnabled(true);    
+            }
+            else if (regSampled2Classic.isSelected()) {
+                textIterativeGlobal.setEnabled(false);
+                textIterativeKernel.setEnabled(false);
+                textIterations.setEnabled(false);
+                textWindowSize.setEnabled(false);
+                textLambda.setEnabled(false);
+                textAlpha.setEnabled(false);        
+            }
         }
     }
 
