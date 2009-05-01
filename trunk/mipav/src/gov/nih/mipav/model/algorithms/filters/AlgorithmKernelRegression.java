@@ -137,6 +137,9 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
     public void runAlgorithm() {
         long time;
         int i;
+        int j;
+        float min;
+        float max;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -178,11 +181,12 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                     I[i] = true;
                 }
                 for (i = 1; i <= iterations; i++) {
+                    fireProgressStateChanged((i - 1) * 100/iterations);
                     // Compute steering matrix
                     steering();
                     skr2Regular();
-                    for (i = 0; i < output.length; i++) {
-                        input[i] = output[i];
+                    for (j = 0; j < output.length; j++) {
+                        input[j] = output[j];
                     }
                 } // for (i = 1; i <= iterations; i++)
             } // if ((nDims == 2) || do25D)
@@ -195,6 +199,55 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
             else {
                 if (upscale != 1) {
                     srcImage.reallocate(srcImage.getType(), extents);
+                }
+                switch(srcImage.getType()) {
+                    case ModelStorageBase.BOOLEAN:
+                        min = 0;
+                        max = 1;
+                        break;
+                    case ModelStorageBase.BYTE:
+                        min = -128;
+                        max = 127;
+                        break;
+                    case ModelStorageBase.UBYTE:
+                        min = 0;
+                        max = 255;
+                        break;
+                    case ModelStorageBase.SHORT:
+                        min = -32768;
+                        max = 32767;
+                        break;
+                    case ModelStorageBase.USHORT:
+                        min = 0;
+                        max = 65535;
+                        break;
+                    case ModelStorageBase.INTEGER:
+                        min = Integer.MIN_VALUE;
+                        max = Integer.MAX_VALUE;
+                        break;
+                    case ModelStorageBase.UINTEGER:
+                        min = 0;
+                        max = 4294967295L;
+                        break;
+                    case ModelStorageBase.LONG:
+                        min = Long.MIN_VALUE;
+                        max = Long.MAX_VALUE;
+                        break;
+                    case ModelStorageBase.FLOAT:
+                    case ModelStorageBase.DOUBLE:
+                    default:
+                        min = -Float.MAX_VALUE;
+                        max = Float.MAX_VALUE;
+                        break;
+                        
+                }
+                for (i = 0; i < output.length; i++) {
+                    if (output[i] < min) {
+                        output[i] = min;
+                    }
+                    else if (output[i] > max) {
+                        output[i] = max;
+                    }
                 }
                 srcImage.importData(0, output, true);
             }
@@ -323,7 +376,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                 prod = ((((matXx.transpose()).times(matXw)).inverse()).times(matXw.transpose())).getArray();
                 for (y = 0; y < 6; y++) {
                     for (x = 0; x < initialKernelSizeSquared; x++) {
-                        A[y][x][i][j] = (float)prod[y][x];
+                        A[y][x][i-1][j-1] = (float)prod[y][x];
                     }
                 }
             } // for (j = 1; j <= upscale; j++)
@@ -556,7 +609,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                         }
                     }
                     
-                    for (i = 0; i < windowSize; i++) {
+                    for (i = 0; i < windowSize*windowSize; i++) {
                         G[i][0] = gx[i];
                         G[i][1] = gy[i];
                     }
