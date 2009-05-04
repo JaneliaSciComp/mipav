@@ -29,6 +29,8 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
     public static final int REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC = 1;
     
     public static final int ITERATIVE_STEERING_KERNEL_SECOND_ORDER = 2;
+    
+    public static final int STEERING_KERNEL_SECOND_ORDER_L1_NORM = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -37,6 +39,9 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
     private float initialGlobalSmoothing;
     
     private float iterativeGlobalSmoothing;
+    
+    /** Global smoothing parameter in skr2L1_regular in STEERING_KERNEL_SECOND_ORDER_L1_NORM */
+    private float iterativeGlobalSmoothing2;
     
     private int upscale;
     
@@ -48,6 +53,11 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
     /** The total number of iterations */
     private int iterations;
     
+    /** Iterations of the steepest descent method in L1 steering kernel regression
+     *  in skr2L1_regular in STEERING_KERNEL_SECOND_ORDER_L1_NORM
+     */
+    private int iterations2;
+    
     /** The size of the local orientation analysis window */
     private int windowSize;
     
@@ -56,6 +66,10 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
     
     /** The structure sensitive parameter */
     private float alpha;
+    
+    private float classicStepSize;
+    
+    private float steeringStepSize;
 
     /** In 3D if do25D == true, process each slice separately. */
     private boolean do25D = true;
@@ -94,30 +108,38 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
      * @param  srcImg            2D or 3D source image
      * @param  initialGlobalSmoothing
      * @param  iterativeGlobalSmoothing
+     * @param  iterativeGlobalSmoothing2 Global smoothing in L1 steering kernel regression
      * @param  upscale           Upscaling factor
      * @param  initialKernelSize
      * @param  iterativeKernelSize
      * @param  iterations        Total number of iterations
+     * @param  iterations2       Iterations in L1 steering kernel regression
      * @param  windowSize        Size of the local orientation analysis window
      * @param  lambda            Regularization for the elongation parameter
      * @param  alpha             Structure sensitive parameter
+     * @param  classicStepSize
+     * @param  steeringStepSize
      * @param  do25D             If true, do slice by slice filtering
      */
     public AlgorithmKernelRegression(ModelImage destImage, ModelImage srcImg, int method,
-            float initialGlobalSmoothing, float iterativeGlobalSmoothing,
-            int upscale, int initialKernelSize, int iterativeKernelSize, int iterations,
-            int windowSize, float lambda, float alpha, boolean do25D) {
+            float initialGlobalSmoothing, float iterativeGlobalSmoothing, float iterativeGlobalSmoothing2, 
+            int upscale, int initialKernelSize, int iterativeKernelSize, int iterations, int iterations2, 
+            int windowSize, float lambda, float alpha, float classicStepSize, float steeringStepSize, boolean do25D) {
         super(destImage, srcImg);
         this.method = method;
         this.initialGlobalSmoothing = initialGlobalSmoothing;
         this.iterativeGlobalSmoothing = iterativeGlobalSmoothing;
+        this.iterativeGlobalSmoothing2 = iterativeGlobalSmoothing2;
         this.upscale = upscale;
         this.initialKernelSize = initialKernelSize;
         this.iterativeKernelSize = iterativeKernelSize;
         this.iterations = iterations;
+        this.iterations2 = iterations2;
         this.windowSize = windowSize;
         this.lambda = lambda;
         this.alpha = alpha;
+        this.classicStepSize = classicStepSize;
+        this.steeringStepSize = steeringStepSize;
         this.do25D = do25D;
     }
 
