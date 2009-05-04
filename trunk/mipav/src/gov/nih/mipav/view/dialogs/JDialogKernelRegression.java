@@ -716,7 +716,7 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         methodGroup.add(regSampled2Classic);
         paramPanel.add(regSampled2Classic, gbc2);
 
-        gbc.gridy = yPos++;
+        gbc2.gridy = yPos++;
         labelInitialGlobal = createLabel("Initial global smoothing");
         paramPanel.add(labelInitialGlobal, gbc2);
 
