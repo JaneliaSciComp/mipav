@@ -62,13 +62,21 @@ public class JDialogKernelRegression extends JDialogScriptableBase
     
     private JTextField textInitialGlobal;
     
+    /** 0.8 for STEERING_KERNEL_SECOND_ORDER_L1_NORM */
     private float initialGlobalSmoothing = 0.5f;
     
     private JLabel labelIterativeGlobal;
     
     private JTextField textIterativeGlobal;
     
+    /** 1.5 for STEERING_KERNEL_SECOND_ORDER_L1_NORM */
     private float iterativeGlobalSmoothing = 2.4f;
+    
+    private JLabel labelIterativeGlobal2;
+    
+    private JTextField textIterativeGlobal2;
+    
+    private float iterativeGlobalSmoothing2 = 1.75f;
     
     private JLabel labelUpscale;
     
@@ -93,8 +101,19 @@ public class JDialogKernelRegression extends JDialogScriptableBase
     
     private JTextField textIterations;
     
+    /** iterations = 750 in ckr2L1_regular for steepest descent method in L1 classic kernel regression in
+     *  STEERING_KERNEL_SECOND_ORDER_L1_NORM.
+     */
     /** Total number of iterations */
     private int iterations = 4;
+    
+    private JLabel labelIterations2;
+     
+    private JTextField textIterations2;
+    
+    /** Iterations in skr2L1_regular for steepest descent method in L1 steering kernel regression in
+     *  STEERING_KERNEL_SECOND_ORDER_L1_NORM. */
+    private int iterations2 = 300;
     
     private JLabel labelWindowSize;
     
@@ -122,6 +141,20 @@ public class JDialogKernelRegression extends JDialogScriptableBase
     private JRadioButton iterSteering2;
     
     private JRadioButton regSampled2Classic;
+    
+    private JRadioButton steering2L1Norm;
+    
+    private JLabel labelClassicStep;
+    
+    private JTextField textClassicStep;
+    
+    private float classicStepSize = 0.1f;
+    
+    private JLabel labelSteeringStep;
+    
+    private JTextField textSteeringStep;
+    
+    private float steeringStepSize = 0.1f;
 
     /** DOCUMENT ME! */
     private JRadioButton newImage;
@@ -183,22 +216,53 @@ public class JDialogKernelRegression extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
-        } else if ((source.equals(iterSteering2)) || (source.equals(regSampled2Classic))) {
+        } else if ((source.equals(iterSteering2)) || (source.equals(regSampled2Classic)) ||
+                   (source.equals(steering2L1Norm))) {
             if (iterSteering2.isSelected()) {
+                labelIterativeGlobal.setText("Iterative global smoothing ");
                 textIterativeGlobal.setEnabled(true);
+                textIterativeGlobal.setText("2.4");
+                textIterativeGlobal2.setEnabled(false);
                 textIterativeKernel.setEnabled(true);
+                labelIterations.setText("Iterations ");
                 textIterations.setEnabled(true);
+                textIterations.setText("4");
+                textIterations2.setEnabled(false);
                 textWindowSize.setEnabled(true);
                 textLambda.setEnabled(true);
-                textAlpha.setEnabled(true);    
+                textAlpha.setEnabled(true); 
+                textClassicStep.setEnabled(false);
+                textSteeringStep.setEnabled(false);
             }
             else if (regSampled2Classic.isSelected()) {
+                labelIterativeGlobal.setText("Iterative global smoothing ");
                 textIterativeGlobal.setEnabled(false);
+                textIterativeGlobal2.setEnabled(false);
                 textIterativeKernel.setEnabled(false);
+                labelIterations.setText("Iterations ");
                 textIterations.setEnabled(false);
+                textIterations2.setEnabled(false);
                 textWindowSize.setEnabled(false);
                 textLambda.setEnabled(false);
-                textAlpha.setEnabled(false);        
+                textAlpha.setEnabled(false);
+                textClassicStep.setEnabled(false);
+                textSteeringStep.setEnabled(false);
+            }
+            else if (steering2L1Norm.isSelected()) {
+                labelIterativeGlobal.setText("Global smoothing for L1 classic kernel regression ");
+                textIterativeGlobal.setEnabled(true);
+                textIterativeGlobal.setText("1.5");
+                textIterativeGlobal2.setEnabled(true);
+                textIterativeKernel.setEnabled(true);
+                labelIterations.setText("Iterations for L1 classic kernel regression ");
+                textIterations.setEnabled(true);
+                textIterations.setText("750");
+                textIterations2.setEnabled(true);
+                textWindowSize.setEnabled(true);
+                textLambda.setEnabled(true);
+                textAlpha.setEnabled(true); 
+                textClassicStep.setEnabled(true);
+                textSteeringStep.setEnabled(true);
             }
         }
     }
@@ -288,13 +352,17 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         str += method + delim;
         str += initialGlobalSmoothing + delim;
         str += iterativeGlobalSmoothing + delim;
+        str += iterativeGlobalSmoothing2 + delim;
         str += upscale + delim;
         str += initialKernelSize + delim;
         str += iterativeKernelSize + delim;
         str += iterations + delim;
+        str += iterations2 + delim;
         str += windowSize + delim;
         str += lambda + delim;
         str += alpha + delim;
+        str += classicStepSize + delim;
+        str += steeringStepSize + delim;
         str += image25D;
 
         return str;
@@ -324,35 +392,72 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER) {
                     iterSteering2.setSelected(true);
                     regSampled2Classic.setSelected(false);
+                    steering2L1Norm.setSelected(false);
                 }
                 else if (method == AlgorithmKernelRegression.REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC) {
                     iterSteering2.setSelected(false);
                     regSampled2Classic.setSelected(true);
+                    steering2L1Norm.setSelected(false);
+                }
+                else if (method == AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM) {
+                    iterSteering2.setSelected(false);
+                    regSampled2Classic.setSelected(false);
+                    steering2L1Norm.setSelected(true);    
                 }
                 textInitialGlobal.setText("" + MipavUtil.getFloat(st));
                 textIterativeGlobal.setText("" + MipavUtil.getFloat(st));
+                textIterativeGlobal2.setText("" + MipavUtil.getFloat(st));
                 textUpscale.setText("" + MipavUtil.getInt(st));
                 textInitialKernel.setText("" +  MipavUtil.getInt(st));
                 textIterativeKernel.setText("" + MipavUtil.getInt(st));
                 textIterations.setText("" + MipavUtil.getInt(st));
+                textIterations2.setText("" + MipavUtil.getInt(st));
                 textWindowSize.setText("" + MipavUtil.getInt(st));
                 textLambda.setText("" + MipavUtil.getFloat(st));
                 textAlpha.setText("" + MipavUtil.getFloat(st));
+                textClassicStep.setText("" + MipavUtil.getFloat(st));
+                textSteeringStep.setText("" + MipavUtil.getFloat(st));
                 if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER) {
+                    labelIterativeGlobal.setText("Iterative global smoothing ");
                     textIterativeGlobal.setEnabled(true);
+                    textIterativeGlobal2.setEnabled(false);
                     textIterativeKernel.setEnabled(true);
+                    labelIterations.setText("Iterations ");
                     textIterations.setEnabled(true);
+                    textIterations2.setEnabled(false);
                     textWindowSize.setEnabled(true);
                     textLambda.setEnabled(true);
                     textAlpha.setEnabled(true);
+                    textClassicStep.setEnabled(false);
+                    textSteeringStep.setEnabled(false);
                 }
                 else if (method == AlgorithmKernelRegression.REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC) {
+                    labelIterativeGlobal.setText("Iterative global smoothing ");
                     textIterativeGlobal.setEnabled(false);
+                    textIterativeGlobal2.setEnabled(false);
                     textIterativeKernel.setEnabled(false);
+                    labelIterations.setText("Iterations ");
                     textIterations.setEnabled(false);
+                    textIterations2.setEnabled(false);
                     textWindowSize.setEnabled(false);
                     textLambda.setEnabled(false);
-                    textAlpha.setEnabled(false);    
+                    textAlpha.setEnabled(false);
+                    textClassicStep.setEnabled(false);
+                    textSteeringStep.setEnabled(false);
+                }
+                else if (method == AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM) {
+                    labelIterativeGlobal.setText("Global smoothing for L1 classic kernel regression ");
+                    textIterativeGlobal.setEnabled(true);
+                    textIterativeGlobal2.setEnabled(true);
+                    textIterativeKernel.setEnabled(true);
+                    labelIterations.setText("Iterations for L1 classic kernel regression ");
+                    textIterations.setEnabled(true);
+                    textIterations2.setEnabled(true);
+                    textWindowSize.setEnabled(true);
+                    textLambda.setEnabled(true);
+                    textAlpha.setEnabled(true); 
+                    textClassicStep.setEnabled(true);
+                    textSteeringStep.setEnabled(true);
                 }
                 image25DCheckBox.setSelected(MipavUtil.getBoolean(st));
 
@@ -431,6 +536,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
     
     /**
      * 
+     * @param iterativeGlobalSmoothing2
+     */
+    public void setIterativeGlobalSmoothing2(float iterativeGlobalSmoothing2) {
+        this.iterativeGlobalSmoothing2 = iterativeGlobalSmoothing2;
+    }
+    
+    /**
+     * 
      * @param upscale
      */
     public void setUpscale(int upscale) {
@@ -463,6 +576,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
     
     /**
      * 
+     * @param iterations2
+     */
+    public void setIterations2(int iterations2) {
+        this.iterations2 = iterations2;
+    }
+    
+    /**
+     * 
      * @param windowSize
      */
     public void setWindowSize(int windowSize) {
@@ -483,6 +604,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
      */
     public void setAlpha(float alpha) {
         this.alpha = alpha;
+    }
+    
+    public void setClassicStepSize(float classicStepSize) {
+        this.classicStepSize = classicStepSize;
+    }
+    
+    public void setSteeringStepSize(float steeringStepSize) {
+        this.steeringStepSize = steeringStepSize;
     }
 
     
@@ -520,9 +649,9 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 // resultImage.setImageName(name);
                 // Make algorithm
                 kernelRegressionAlgo = new AlgorithmKernelRegression(resultImage, image, method,
-                        initialGlobalSmoothing, iterativeGlobalSmoothing,
-                        upscale, initialKernelSize, iterativeKernelSize, iterations,
-                        windowSize, lambda, alpha, image25D);
+                        initialGlobalSmoothing, iterativeGlobalSmoothing, iterativeGlobalSmoothing2, 
+                        upscale, initialKernelSize, iterativeKernelSize, iterations, iterations2, 
+                        windowSize, lambda, alpha, classicStepSize, steeringStepSize, image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -559,9 +688,9 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 kernelRegressionAlgo = new AlgorithmKernelRegression(null, image, method,
-                        initialGlobalSmoothing, iterativeGlobalSmoothing,
-                        upscale, initialKernelSize, iterativeKernelSize, iterations,
-                        windowSize, lambda, alpha, image25D);
+                        initialGlobalSmoothing, iterativeGlobalSmoothing, iterativeGlobalSmoothing2, 
+                        upscale, initialKernelSize, iterativeKernelSize, iterations, iterations2, 
+                        windowSize, lambda, alpha, classicStepSize, steeringStepSize, image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -630,13 +759,17 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         method = scriptParameters.getParams().getInt("_method");
         initialGlobalSmoothing = scriptParameters.getParams().getFloat("initial_global_smoothing");
         iterativeGlobalSmoothing = scriptParameters.getParams().getFloat("iterative_global_smoothing");
+        iterativeGlobalSmoothing2 = scriptParameters.getParams().getFloat("iterative_global_smoothing2");
         upscale = scriptParameters.getParams().getInt("_upscale");
         initialKernelSize = scriptParameters.getParams().getInt("initial_kernel_size");
         iterativeKernelSize = scriptParameters.getParams().getInt("iterative_kernel_size");
         iterations = scriptParameters.getParams().getInt("_iterations");
+        iterations2 = scriptParameters.getParams().getInt("_iterations2");
         windowSize = scriptParameters.getParams().getInt("window_size");
         lambda = scriptParameters.getParams().getFloat("_lambda");
         alpha = scriptParameters.getParams().getFloat("_alpha");
+        classicStepSize = scriptParameters.getParams().getFloat("classic_step_size");
+        steeringStepSize = scriptParameters.getParams().getFloat("steering_step_size");
         image25D = scriptParameters.doProcess3DAs25D();
     }
 
@@ -651,13 +784,17 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("_method", method));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_global_smoothing", initialGlobalSmoothing));
         scriptParameters.getParams().put(ParameterFactory.newParameter("iterative_global_smoothing", iterativeGlobalSmoothing));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("iterative_global_smoothing2", iterativeGlobalSmoothing2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("_upscale", upscale));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_kernel_scale", initialKernelSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("iterative_kernel_size", iterativeKernelSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("_iterations", iterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("_iterations2", iterations2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("window_size", windowSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("_lambda", lambda));
         scriptParameters.getParams().put(ParameterFactory.newParameter("_alpha", alpha));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("classic_step_size", classicStepSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("steering_step_size", steeringStepSize));
         scriptParameters.storeProcess3DAs25D(image25D);
     }
 
@@ -715,6 +852,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         regSampled2Classic.addActionListener(this);
         methodGroup.add(regSampled2Classic);
         paramPanel.add(regSampled2Classic, gbc2);
+        
+        gbc2.gridy = yPos++;
+        steering2L1Norm = new JRadioButton("Steering Kernel Second Order with L1 Norm", false);
+        steering2L1Norm.setFont(serif12);
+        steering2L1Norm.setForeground(Color.black);
+        steering2L1Norm.addActionListener(this);
+        methodGroup.add(steering2L1Norm);
+        paramPanel.add(steering2L1Norm, gbc2);
 
         gbc2.gridy = yPos++;
         labelInitialGlobal = createLabel("Initial global smoothing");
@@ -732,6 +877,17 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         gbc2.gridx = 1;
         textIterativeGlobal = createTextField("2.4");
         paramPanel.add(textIterativeGlobal, gbc2);
+        
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos++;
+        labelIterativeGlobal2 = createLabel("Global smoothing for L1 steering kernel regression");
+        paramPanel.add(labelIterativeGlobal2, gbc2);
+        labelIterativeGlobal2.setEnabled(false);
+        
+        gbc2.gridx = 1;
+        textIterativeGlobal2 = createTextField("1.75");
+        paramPanel.add(textIterativeGlobal2, gbc2);
+        textIterativeGlobal2.setEnabled(false);
 
         gbc2.gridx = 0;
         gbc2.gridy = yPos++;
@@ -771,6 +927,15 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         
         gbc2.gridx = 0;
         gbc2.gridy = yPos++;
+        labelIterations2 = createLabel("Iterations for L1 steering kernel regression ");
+        paramPanel.add(labelIterations2, gbc2);
+        
+        gbc2.gridx = 1;
+        textIterations2 = createTextField("300");
+        paramPanel.add(textIterations2, gbc2);
+        
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos++;
         labelWindowSize = createLabel("Size of local orientation analyis window");
         paramPanel.add(labelWindowSize, gbc2);
         
@@ -795,6 +960,24 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         gbc2.gridx = 1;
         textAlpha = createTextField("0.5");
         paramPanel.add(textAlpha, gbc2);
+        
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos++;
+        labelClassicStep = createLabel("Step size for L1 classic kernel regression ");
+        paramPanel.add(labelClassicStep, gbc2);
+        
+        gbc2.gridx = 1;
+        textClassicStep = createTextField("0.1");
+        paramPanel.add(textClassicStep, gbc2);
+        
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos++;
+        labelSteeringStep = createLabel("Step size for L1 steering kernel regression ");
+        paramPanel.add(labelSteeringStep, gbc2);
+        
+        gbc2.gridx = 1;
+        textSteeringStep = createTextField("0.1");
+        paramPanel.add(textSteeringStep, gbc2);
         
         if (image.getNDims() > 2) {
             gbc2.gridx = 0;
@@ -871,6 +1054,9 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         else if (regSampled2Classic.isSelected()) {
             method = AlgorithmKernelRegression.REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC;
         }
+        else if (steering2L1Norm.isSelected()) {
+            method = AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM;
+        }
 
         tmpStr = textInitialGlobal.getText();
 
@@ -914,14 +1100,15 @@ public class JDialogKernelRegression extends JDialogScriptableBase
             return false;
         }
         
-        if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER) {
+        if ((method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER) ||
+            (method == AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM)) {
             tmpStr = textIterations.getText();
             
-            if (testParameter(tmpStr, 1, 100)) {
+            if (testParameter(tmpStr, 1, 10000)) {
                 iterations = Integer.valueOf(tmpStr).intValue();
             }
             else {
-                MipavUtil.displayError("Iterations must be between 1 and 100");
+                MipavUtil.displayError("Iterations must be between 1 and 10000");
                 textIterations.requestFocus();
                 textIterations.selectAll();
                 return false;
@@ -996,7 +1183,54 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 textIterativeKernel.selectAll();
                 return false;
             }
-        } // if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER)
+        } // if ((method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER) ||
+        
+        if (method == AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM) {
+            tmpStr = textIterations2.getText();
+            
+            if (testParameter(tmpStr, 1, 10000)) {
+                iterations2 = Integer.valueOf(tmpStr).intValue();
+            }
+            else {
+                MipavUtil.displayError("Iterations2 must be between 1 and 10000");
+                textIterations2.requestFocus();
+                textIterations2.selectAll();
+                return false;
+            }
+            
+            tmpStr = textIterativeGlobal2.getText();
+            if (testParameter(tmpStr, 0.01, 100.0)) {
+                iterativeGlobalSmoothing2 = Float.valueOf(tmpStr).floatValue();
+            }
+            else {
+                MipavUtil.displayError("Iterative global smoothing 2 must be between 0.01 and 100.0");
+                textIterativeGlobal2.requestFocus();
+                textIterativeGlobal2.selectAll();
+                return false;
+            }   
+
+            tmpStr = textClassicStep.getText();
+            if (testParameter(tmpStr, 1.0E-8, 1.0)) {
+                classicStepSize = Float.valueOf(tmpStr).floatValue();
+            }
+            else {
+                MipavUtil.displayError("Classic step size must be between 1.0E-8 and 1.0");
+                textClassicStep.requestFocus();
+                textClassicStep.selectAll();
+                return false;
+            }
+            
+            tmpStr = textSteeringStep.getText();
+            if (testParameter(tmpStr, 1.0E-8, 1.0)) {
+                steeringStepSize = Float.valueOf(tmpStr).floatValue();
+            }
+            else {
+                MipavUtil.displayError("Steering step size must be between 1.0E-8 and 1.0");
+                textSteeringStep.requestFocus();
+                textSteeringStep.selectAll();
+                return false;
+            }
+        } // if (method == AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM)
 
         if (image.getNDims() > 2) {
             image25D = image25DCheckBox.isSelected();
