@@ -511,7 +511,7 @@ public class JDialogKernelRegression extends JDialogScriptableBase
 
                 // Make result image of float type
                 if (image.isColorImage()) {
-                    resultImage = new ModelImage(ModelImage.ARGB, destExtents, name);
+                    resultImage = new ModelImage(image.getType(), destExtents, name);
                 } else {
                     resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name);
                 }
