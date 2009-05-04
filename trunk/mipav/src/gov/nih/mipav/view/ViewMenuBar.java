@@ -1000,7 +1000,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Grays -> RGB", false);
             menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", false);
-            menuBuilder.setMenuItemEnabled("Kernel regression", false);
             menuBuilder.setMenuItemEnabled("Laplacian", false);
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
