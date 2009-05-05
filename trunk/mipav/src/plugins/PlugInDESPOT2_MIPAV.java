@@ -1,5 +1,6 @@
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,6 +12,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -85,6 +87,8 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
     private String[] titles;
 	
     public void run() {
+    	System.out.println("This is the plugin result");
+    	
     	Enumeration<String> imageEnum = ViewUserInterface.getReference().getRegisteredImageNames();
         ArrayList<String> imageList = new ArrayList<String>();
         while(imageEnum.hasMoreElements()) {
@@ -2319,7 +2323,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 		}
 		
 		public JCheckBox buildCheckBox(String label, boolean selected) {
-			JPanel checkPanel = new JPanel();
+			FlowLayout f = new FlowLayout();
+			f.setAlignment(FlowLayout.LEFT);
+			JPanel checkPanel = new JPanel(f);
 			JCheckBox checkBox = new JCheckBox(label);
 			checkBox.setSelected(selected);
 			checkPanel.add(checkBox);
@@ -2327,7 +2333,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 		}
 		
 		public JTextField buildField(String labelText, String initText) {
-			JPanel panel = new JPanel();
+			FlowLayout f = new FlowLayout();
+			f.setAlignment(FlowLayout.LEFT);
+			JPanel panel = new JPanel(f);
 	    	JLabel label = new JLabel(labelText);
 	    	JTextField text = new JTextField(initText);
 	    	text.setColumns(8);
@@ -2375,7 +2383,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 		}
 		
 		public JComboBox buildComboBox(String labelText, Object[] options) {
-			JPanel panel = new JPanel();
+			FlowLayout f = new FlowLayout();
+			f.setAlignment(FlowLayout.LEFT);
+			JPanel panel = new JPanel(f);
 			JLabel label = new JLabel(labelText);
 			JComboBox comboBox = new JComboBox(options);
 			panel.add(label);
@@ -2384,7 +2394,7 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 		}
 		
 		public JComboBox buildComboBox(String labelText, Object[] options, int numDefault) {
-			JComboBox comboBox = buildComboBox(labelText, options);
+			JComboBox comboBox = buildComboBox(labelText, options); //call default
 			comboBox.setSelectedIndex(numDefault);
 			return comboBox;
 		}
