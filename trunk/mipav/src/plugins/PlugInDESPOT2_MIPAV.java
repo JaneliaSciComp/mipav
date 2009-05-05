@@ -23,6 +23,7 @@ import gov.nih.mipav.plugins.PlugInGeneric;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.ViewVOIVector;
 
 /** This plugin calculates the T2 relaxation time from any number of SSFP images acquired with phase-cycling and a known T1 and B1 map. **/
 /* written: March 17, 2007 : S. Deoni
