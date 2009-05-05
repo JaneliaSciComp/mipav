@@ -219,49 +219,79 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         } else if ((source.equals(iterSteering2)) || (source.equals(regSampled2Classic)) ||
                    (source.equals(steering2L1Norm))) {
             if (iterSteering2.isSelected()) {
+                labelIterativeGlobal.setEnabled(true);
                 labelIterativeGlobal.setText("Iterative global smoothing ");
                 textIterativeGlobal.setEnabled(true);
                 textIterativeGlobal.setText("2.4");
+                labelIterativeGlobal2.setEnabled(false);
                 textIterativeGlobal2.setEnabled(false);
+                labelIterativeKernel.setEnabled(true);
                 textIterativeKernel.setEnabled(true);
+                labelIterations.setEnabled(true);
                 labelIterations.setText("Iterations ");
                 textIterations.setEnabled(true);
                 textIterations.setText("4");
+                labelIterations2.setEnabled(false);
                 textIterations2.setEnabled(false);
+                labelWindowSize.setEnabled(true);
                 textWindowSize.setEnabled(true);
+                labelLambda.setEnabled(true);
                 textLambda.setEnabled(true);
+                labelAlpha.setEnabled(true);
                 textAlpha.setEnabled(true); 
+                labelClassicStep.setEnabled(false);
                 textClassicStep.setEnabled(false);
+                labelSteeringStep.setEnabled(false);
                 textSteeringStep.setEnabled(false);
             }
             else if (regSampled2Classic.isSelected()) {
+                labelIterativeGlobal.setEnabled(false);
                 labelIterativeGlobal.setText("Iterative global smoothing ");
                 textIterativeGlobal.setEnabled(false);
+                labelIterativeGlobal2.setEnabled(false);
                 textIterativeGlobal2.setEnabled(false);
+                labelIterativeKernel.setEnabled(false);
                 textIterativeKernel.setEnabled(false);
                 labelIterations.setText("Iterations ");
+                labelIterations.setEnabled(false);
                 textIterations.setEnabled(false);
+                labelIterations2.setEnabled(false);
                 textIterations2.setEnabled(false);
+                labelWindowSize.setEnabled(false);
                 textWindowSize.setEnabled(false);
+                labelLambda.setEnabled(false);
                 textLambda.setEnabled(false);
+                labelAlpha.setEnabled(false);
                 textAlpha.setEnabled(false);
+                labelClassicStep.setEnabled(false);
                 textClassicStep.setEnabled(false);
+                labelSteeringStep.setEnabled(false);
                 textSteeringStep.setEnabled(false);
             }
             else if (steering2L1Norm.isSelected()) {
+                labelIterativeGlobal.setEnabled(true);
                 labelIterativeGlobal.setText("Global smoothing for L1 classic kernel regression ");
                 textIterativeGlobal.setEnabled(true);
                 textIterativeGlobal.setText("1.5");
+                labelIterativeGlobal2.setEnabled(true);
                 textIterativeGlobal2.setEnabled(true);
+                labelIterativeKernel.setEnabled(true);
                 textIterativeKernel.setEnabled(true);
                 labelIterations.setText("Iterations for L1 classic kernel regression ");
+                labelIterations.setEnabled(true);
                 textIterations.setEnabled(true);
                 textIterations.setText("750");
+                labelIterations2.setEnabled(true);
                 textIterations2.setEnabled(true);
+                labelWindowSize.setEnabled(true);
                 textWindowSize.setEnabled(true);
+                labelLambda.setEnabled(true);
                 textLambda.setEnabled(true);
-                textAlpha.setEnabled(true); 
+                labelAlpha.setEnabled(true);
+                textAlpha.setEnabled(true);
+                labelClassicStep.setEnabled(true);
                 textClassicStep.setEnabled(true);
+                labelSteeringStep.setEnabled(true);
                 textSteeringStep.setEnabled(true);
             }
         }
@@ -419,44 +449,73 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 textSteeringStep.setText("" + MipavUtil.getFloat(st));
                 if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER) {
                     labelIterativeGlobal.setText("Iterative global smoothing ");
+                    labelIterativeGlobal.setEnabled(true);
                     textIterativeGlobal.setEnabled(true);
+                    labelIterativeGlobal2.setEnabled(false);
                     textIterativeGlobal2.setEnabled(false);
+                    labelIterativeKernel.setEnabled(true);
                     textIterativeKernel.setEnabled(true);
                     labelIterations.setText("Iterations ");
+                    labelIterations.setEnabled(true);
                     textIterations.setEnabled(true);
+                    labelIterations2.setEnabled(false);
                     textIterations2.setEnabled(false);
+                    labelWindowSize.setEnabled(true);
                     textWindowSize.setEnabled(true);
+                    labelLambda.setEnabled(true);
                     textLambda.setEnabled(true);
+                    labelAlpha.setEnabled(true);
                     textAlpha.setEnabled(true);
+                    labelClassicStep.setEnabled(false);
                     textClassicStep.setEnabled(false);
+                    labelSteeringStep.setEnabled(false);
                     textSteeringStep.setEnabled(false);
                 }
                 else if (method == AlgorithmKernelRegression.REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC) {
                     labelIterativeGlobal.setText("Iterative global smoothing ");
+                    labelIterativeGlobal.setEnabled(false);
                     textIterativeGlobal.setEnabled(false);
+                    labelIterativeGlobal2.setEnabled(false);
                     textIterativeGlobal2.setEnabled(false);
+                    labelIterativeKernel.setEnabled(false);
                     textIterativeKernel.setEnabled(false);
                     labelIterations.setText("Iterations ");
                     textIterations.setEnabled(false);
+                    labelIterations2.setEnabled(false);
                     textIterations2.setEnabled(false);
+                    labelWindowSize.setEnabled(false);
                     textWindowSize.setEnabled(false);
+                    labelLambda.setEnabled(false);
                     textLambda.setEnabled(false);
+                    labelAlpha.setEnabled(false);
                     textAlpha.setEnabled(false);
+                    labelClassicStep.setEnabled(false);
                     textClassicStep.setEnabled(false);
+                    labelSteeringStep.setEnabled(false);
                     textSteeringStep.setEnabled(false);
                 }
                 else if (method == AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM) {
                     labelIterativeGlobal.setText("Global smoothing for L1 classic kernel regression ");
+                    labelIterativeGlobal.setEnabled(true);
                     textIterativeGlobal.setEnabled(true);
+                    labelIterativeGlobal2.setEnabled(true);
                     textIterativeGlobal2.setEnabled(true);
+                    labelIterativeKernel.setEnabled(true);
                     textIterativeKernel.setEnabled(true);
                     labelIterations.setText("Iterations for L1 classic kernel regression ");
+                    labelIterations.setEnabled(true);
                     textIterations.setEnabled(true);
+                    labelIterations2.setEnabled(true);
                     textIterations2.setEnabled(true);
+                    labelWindowSize.setEnabled(true);
                     textWindowSize.setEnabled(true);
+                    labelLambda.setEnabled(true);
                     textLambda.setEnabled(true);
+                    labelAlpha.setEnabled(true);
                     textAlpha.setEnabled(true); 
+                    labelClassicStep.setEnabled(true);
                     textClassicStep.setEnabled(true);
+                    labelSteeringStep.setEnabled(true);
                     textSteeringStep.setEnabled(true);
                 }
                 image25DCheckBox.setSelected(MipavUtil.getBoolean(st));
@@ -928,10 +987,12 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         gbc2.gridx = 0;
         gbc2.gridy = yPos++;
         labelIterations2 = createLabel("Iterations for L1 steering kernel regression ");
+        labelIterations2.setEnabled(false);
         paramPanel.add(labelIterations2, gbc2);
         
         gbc2.gridx = 1;
         textIterations2 = createTextField("300");
+        textIterations2.setEnabled(false);
         paramPanel.add(textIterations2, gbc2);
         
         gbc2.gridx = 0;
@@ -964,19 +1025,23 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         gbc2.gridx = 0;
         gbc2.gridy = yPos++;
         labelClassicStep = createLabel("Step size for L1 classic kernel regression ");
+        labelClassicStep.setEnabled(false);
         paramPanel.add(labelClassicStep, gbc2);
         
         gbc2.gridx = 1;
         textClassicStep = createTextField("0.1");
+        textClassicStep.setEnabled(false);
         paramPanel.add(textClassicStep, gbc2);
         
         gbc2.gridx = 0;
         gbc2.gridy = yPos++;
         labelSteeringStep = createLabel("Step size for L1 steering kernel regression ");
+        labelSteeringStep.setEnabled(false);
         paramPanel.add(labelSteeringStep, gbc2);
         
         gbc2.gridx = 1;
         textSteeringStep = createTextField("0.1");
+        textSteeringStep.setEnabled(false);
         paramPanel.add(textSteeringStep, gbc2);
         
         if (image.getNDims() > 2) {
