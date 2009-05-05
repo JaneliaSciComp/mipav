@@ -231,7 +231,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             userInterfaceReference = new ViewUserInterface();
             ProvenanceRecorder.getReference().addLine(new ActionStartMipav());
         }
-
+        
         return userInterfaceReference;
     }
 
@@ -905,6 +905,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @return the new plugin menu
      */
     public JMenu buildPlugInsMenu(ActionListener al) {
+    	
     	String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins"
                 + File.separator;
 
@@ -968,8 +969,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 		}
                 	}
                 	if(!(al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
-	                	currentMenu.add(ViewMenuBuilder.buildMenuItem(pluginName, 
-	                			interName+pluginName, 0, al, null, false));	
+	                	JMenuItem pluginMenuItem = menuBuilder.buildMenuItem(pluginName, 
+	                			interName+pluginName, 0, null, false);
+	                	pluginMenuItem.setName(pluginName);
+	                	pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
+                		currentMenu.add(pluginMenuItem);	
                 	}
                 
                 } catch(Exception e) {
@@ -984,7 +988,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         
         deleteMenu(menu);
         
-        menu.add(ViewMenuBuilder.buildMenuItem("Install plugin", "InstallPlugin", 0, al, null, false));
+        menu.add(menuBuilder.buildMenuItem("Install plugin", "InstallPlugin", 0, null, false));
+        
+        menu.add(menuBuilder.buildMenuItem("Uninstall plugin", "UninstallPlugin", 0, null, false));
         return menu;
     }
     
@@ -1802,7 +1808,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     while (e.hasMoreElements()) {
 
                         try {
-                            String name = (String) e.nextElement();
+                            String name = e.nextElement();
                             ModelImage img = this.getRegisteredImageByName(name);
 
                             // get frame for image
@@ -2555,7 +2561,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             return;
         }
 
-        if (frame == (Frame) (imageFrameVector.elementAt(0))) {
+        if (frame == (imageFrameVector.elementAt(0))) {
             return;
         }
 
@@ -2980,7 +2986,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             setControls();
             setTitle(" ");
         } else {
-            topFrame = (Frame) imageFrameVector.elementAt(0);
+            topFrame = imageFrameVector.elementAt(0);
 
             if (topFrame instanceof ViewJFrameBase) {
                 ((ViewJFrameBase) (topFrame)).setControls();
