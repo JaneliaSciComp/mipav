@@ -154,8 +154,10 @@ public class JDialogRegistrationValidation extends JDialogRegistrationLeastSquar
                 progressBar.setLocation(xScreen / 2, yScreen / 2);
                 progressBar.setVisible(true);
 
+                //match image is the active image when the plugin was started
                 runCostFunctions(matchImage);
                 
+                //base image is the image it was being registered against
                 runCostFunctions(baseImage);
 
                 progressBar.updateValue(100, true);
