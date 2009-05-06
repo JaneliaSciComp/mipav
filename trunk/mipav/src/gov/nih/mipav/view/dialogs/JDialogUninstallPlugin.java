@@ -97,6 +97,14 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     		   if(JOptionPane.showConfirmDialog(mainDialogPanel, "Do you want to uninstall the selected plugin(s)?", "Uninstall plugin", JOptionPane.YES_NO_OPTION) == 
        		   	JOptionPane.YES_OPTION) {
     			   uninstallPlugins();
+    			   ui.buildMenu();
+    			   ui.setControls();
+    			   pluginTree.setModel(new JTree(buildPluginsTree()).getModel());
+    	    	   pluginTree.setRootVisible(false);
+    	           for(int i=0; i<pluginTree.getRowCount(); i++) {
+    	           		pluginTree.expandRow(i);
+    	           }
+    			   dispose();
     		   } else {
     			   dispose();
     		   }
@@ -111,6 +119,13 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     		   return;
     	   }
     	   uninstallPlugins();
+    	   ui.buildMenu();
+    	   ui.setControls();
+    	   pluginTree.setModel(new JTree(buildPluginsTree()).getModel());
+    	   pluginTree.setRootVisible(false);
+           for(int i=0; i<pluginTree.getRowCount(); i++) {
+           		pluginTree.expandRow(i);
+           }
        }
     }
 
@@ -178,8 +193,6 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     	JMenu plugin = (JMenu)ui.getMenuBuilder().getMenuItem("Plugins");
     	DefaultMutableTreeNode root = new DefaultMutableTreeNode("Plugins");
     	for(int i=0; i<plugin.getItemCount(); i++) {
-    		JMenuItem item;
-    		System.out.println(i+": "+(item = plugin.getItem(i)));
     		if(plugin.getItem(i) instanceof JMenu) {
     			root.add(createBranch((JMenu) plugin.getItem(i)));
     		} else if(plugin.getItem(i) != null && !(plugin.getItem(i).equals(ui.getMenuBuilder().getMenuItem("Install plugin")) 
@@ -215,14 +228,50 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     
     private void uninstallPlugins() {
     	TreeNode[] selectedPlugins = getSelectedPlugins();
+    	String[] deleteStatus = new String[selectedPlugins.length];
+    	int numYes = 0, numNo = 0;
     	for(int i=0; i<selectedPlugins.length; i++) {
-    		System.out.println("Uninstalling plugin "+selectedPlugins[i].toString());
+    		if(deletePluginDependents(selectedPlugins[i].toString()) && 
+    				deletePluginFile(selectedPlugins[i].toString())) {
+    			deleteStatus[i] = selectedPlugins[i].toString()+" was successfully deleted.";
+    			numYes++;
+    		} else {
+    			deleteStatus[i] = selectedPlugins[i].toString()+" could not be deleted.";
+    			numNo++;
+    		}
     	}
+    	String message = "Plugin uninstall results:\t  ("+numYes+" deleted, "+numNo+" failed)\n";
+    	for(int i=0; i<deleteStatus.length; i++) {
+    		message += deleteStatus[i]+"\n";
+    	}
+    	MipavUtil.displayInfo(message);
+    }
+    
+    private boolean deletePluginDependents(String name) {
+    	String pluginName = "PlugIn"+name;
+    	try {
+			Class plugin = Class.forName(pluginName);
+			//work on dependents, possibly using/generating manifest
+			return true;
+		} catch (ClassNotFoundException e) {
+			return false;
+		}
+    }
+    
+    private boolean deletePluginFile(String name) {
+    	String pluginName = "PlugIn"+name;
+		File f = new File(pluginDir + pluginName+".class");
+		if(f.exists()) {
+			return f.delete();
+		} 	
+		return false;
     }
     
     private TreeNode[] getSelectedPlugins() {
     	ArrayList<TreeNode> selectedList = new ArrayList<TreeNode>();
     	TreePath[] selectedPaths = pluginTree.getSelectionModel().getSelectionPaths();
+    	if(selectedPaths == null)
+    		return new TreeNode[0];
     	for(int i=0; i<selectedPaths.length; i++) {
     		if(selectedPaths[i].getLastPathComponent() instanceof TreeNode) {
     			if(((TreeNode)selectedPaths[i].getLastPathComponent()).isLeaf()) {
