@@ -15,6 +15,10 @@ import java.util.*;
 import java.util.zip.*;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 
 
 /**
@@ -32,22 +36,24 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -8736744495208652866L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+	private static final String UNINSTALL = "Uninstall plugin(s)";
 
-    /** DOCUMENT ME! */
-    private JButton browseButton;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private Vector files = new Vector();
 
-    /** DOCUMENT ME! */
+    /** The default location of MIPAV's plugin directory */
     private String pluginDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" +
                                File.separator;
 
     /** DOCUMENT ME! */
     private JTextField textName;
+    
+    /** The JTree that describes the plugin structure **/
+    private JTree pluginTree;
 
-    /** DOCUMENT ME! */
+    /** The main user interface */
     private ViewUserInterface ui;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -58,6 +64,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
      */
     public JDialogUninstallPlugin(String name) {
     	System.out.println("Reached "+name);
+    	ui = ViewUserInterface.getReference();
     }
     
     /**
@@ -85,7 +92,26 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
      * @param  event  event that triggered function
      */
     public void actionPerformed(ActionEvent event) {
-       
+       if(event.getSource().equals(OKButton)) {
+    	   if(pluginTree.getSelectionModel().getSelectionPaths() != null && isPluginSelected()) {
+    		   if(JOptionPane.showConfirmDialog(mainDialogPanel, "Do you want to uninstall the selected plugin(s)?", "Uninstall plugin", JOptionPane.YES_NO_OPTION) == 
+       		   	JOptionPane.YES_OPTION) {
+    			   uninstallPlugins();
+    		   } else {
+    			   dispose();
+    		   }
+    	   } else {
+    		   dispose();
+    	   }
+       } else if(event.getSource().equals(cancelButton)) {
+    	   dispose();
+       } else if(event.getActionCommand().equals(UNINSTALL)) {
+    	   if(!isPluginSelected()) {
+    		   MipavUtil.displayInfo("No plugins are selected.");
+    		   return;
+    	   }
+    	   uninstallPlugins();
+       }
     }
 
     /**
@@ -94,47 +120,41 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     private void init() {
         setForeground(Color.black);
         addNotify();
-        setTitle("Install Plugin");
+        setTitle("Uninstall Plugin(s)");
 
-        JPanel mainPanel = new JPanel(new GridBagLayout());
+        JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("Install Plugin Parameters"));
+        mainPanel.setBorder(buildTitledBorder("Select plugins to uninstall"));
 
         JLabel labelType = new JLabel("Plugin Type");
         labelType.setForeground(Color.black);
         labelType.setFont(serif12);
 
-        textName = new JTextField(15);
-        textName.setText(".class, .jar, .zip, .tar, .tar.gz");
-        textName.setFont(serif12);
-        textName.setEnabled(false);
-
-        browseButton = new JButton("Browse");
-        browseButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        browseButton.setFont(serif12B);
-        browseButton.addActionListener(this);
-
-        Insets insets = new Insets(0, 2, 0, 2);
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.insets = insets;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.WEST;
-
-        mainPanel.add(browseButton, gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        mainPanel.add(textName, gbc);
+        TreeNode root = buildPluginsTree();
+        
+        pluginTree = new JTree(root);
+        pluginTree.setRootVisible(false);
+        for(int i=0; i<pluginTree.getRowCount(); i++) {
+        	pluginTree.expandRow(i);
+        }
+        
+        JScrollPane scroll = new JScrollPane(pluginTree);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scroll.setMinimumSize(new Dimension(450, 300));
+        scroll.setPreferredSize(new Dimension(450, 300));
+        mainPanel.add(scroll);
 
         JPanel buttonPanel = new JPanel();
+        JButton uninstall = new JButton(UNINSTALL);
+        uninstall.setActionCommand(UNINSTALL);
+        uninstall.addActionListener(this);
+        uninstall.setMinimumSize(MipavUtil.defaultButtonSize);
+        uninstall.setPreferredSize(new Dimension(180, 30));
+        uninstall.setFont(serif12B);
+        buttonPanel.add(uninstall);
         buildOKButton();
+        OKButton.setText("Done");
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
@@ -152,96 +172,68 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     }
     
     /**
-     * Called by either userInterface (this) or by another actionlistener (ViewJFrameImage) to build the plugins menu
-     * bar.
-     * 
-     * @param al the listener that wants to know about actions on the plugins menu
-     * 
-     * @return the new plugin menu
+     * Starts process to build exact copy of installed plugin structure as tree nodes.
      */
-    /*public JTree buildPlugInsTree(ActionListener al) {
-    	String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins"
-                + File.separator;
-
-        JMenu menu = ViewMenuBuilder.buildMenu("Plugins", 'P', false);
-        
-        File pluginsDir = new File(userPlugins);
-        if (pluginsDir.isDirectory()) {
-
-            File[] allFiles = pluginsDir.listFiles(new FileFilter() {
-                public boolean accept(File f) {
-
-                    if (f.getPath().endsWith(".class")) {
-                        return true;
-                    }   
-                    return false;
-                }
-            });
-
-            String name, pluginName;
-            Field catField;
-            Class plugin;
-            String fieldName = "CATEGORY";
-            
-            for (int i = 0; i < allFiles.length; i++) {
-            	JMenu currentMenu = menu;
-            	name = allFiles[i].getName();
-
-                try {
-                	name = name.substring(0, name.indexOf(".class"));
-                	pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
-                } catch(Exception e) {
-                	pluginName = name;
-                }
-                try {
-                	plugin = Class.forName(name);
-                	plugin.newInstance();   //instantiated to allow loading into SCRIPT_ACTION_LOCATIONS
-                	catField = plugin.getField(fieldName);
-                	String[] hier = (String[])catField.get(plugin);
-                	Class[] interList = plugin.getInterfaces();
-                	String interName = new String();
-                	for(int j=0; j<interList.length; j++) {
-                		if(interList[j].getName().contains("PlugIn")) {
-                			interName = interList[j].getName().substring(interList[j].getName().indexOf("PlugIn"));
-                		}
-                	}
-                	
-                	for(int j=0; j<hier.length; j++) {
-                		Component[] subComp = currentMenu.getMenuComponents();
-                		boolean subExists = false;
-                		for(int k=0; k<subComp.length; k++) {
-                			if(subComp[k] instanceof JMenu && ((JMenu)subComp[k]).getText().equals(hier[j])) {
-                				currentMenu = (JMenu) subComp[k];
-                				subExists = true;
-                				break;
-                			}
-                		}
-                		if(!subExists) {
-                			JMenu newMenu = ViewMenuBuilder.buildMenu(hier[j], 0, false);
-                			currentMenu.add(newMenu);
-                			currentMenu = newMenu;
-                		}
-                	}
-                	if(!(al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
-	                	currentMenu.add(ViewMenuBuilder.buildMenuItem(pluginName, 
-	                			interName+pluginName, 0, al, null, false));	
-                	}
-                
-                } catch(Exception e) {
-                	//usually this means other files/folders exist in the installed plugins directory besides plugin files
-                }
-            }
-        }
-        
-        if(menu.getItemCount() > 0) {
-        	menu.addSeparator();
-        }
-        
-        deleteMenu(menu);
-        
-        menu.add(ViewMenuBuilder.buildMenuItem("Install plugin", "InstallPlugin", 0, al, null, false));
-        
-        menu.add(ViewMenuBuilder.buildMenuItem("Uninstall plugin", "UninstallPlugin", 0, al, null, false));
-        return menu;
-    }*/
+    private MutableTreeNode buildPluginsTree() {
+    	JMenu plugin = (JMenu)ui.getMenuBuilder().getMenuItem("Plugins");
+    	DefaultMutableTreeNode root = new DefaultMutableTreeNode("Plugins");
+    	for(int i=0; i<plugin.getItemCount(); i++) {
+    		JMenuItem item;
+    		System.out.println(i+": "+(item = plugin.getItem(i)));
+    		if(plugin.getItem(i) instanceof JMenu) {
+    			root.add(createBranch((JMenu) plugin.getItem(i)));
+    		} else if(plugin.getItem(i) != null && !(plugin.getItem(i).equals(ui.getMenuBuilder().getMenuItem("Install plugin")) 
+    							|| plugin.getItem(i).equals(ui.getMenuBuilder().getMenuItem("Uninstall plugin")))) {
+    			root.add(new DefaultMutableTreeNode(plugin.getItem(i).getName()));
+    		}
+    	}
+    	return root;
+    }
+    
+    /**
+     * Helper method for creating sub-menus of the plugin.
+     */
+    private MutableTreeNode createBranch(JMenu menu) {
+    	DefaultMutableTreeNode root = new DefaultMutableTreeNode(menu.getText());
+    	for(int i=0; i<menu.getItemCount(); i++) {
+    		if(menu.getItem(i) instanceof JMenu) {
+    			root.add(createBranch((JMenu) menu.getItem(i)));
+    		} else if(menu.getItem(i) != null) {
+    			root.add(new DefaultMutableTreeNode(menu.getItem(i).getName()));
+    		}
+    	}
+    	return root;
+    }
+    
+    /**
+     * Whether plugins are selected in the JTree, equivalent to whether a leaf is selected in the JTree
+     */
+    
+    private boolean isPluginSelected() {
+    	return getSelectedPlugins().length > 0;
+    }
+    
+    private void uninstallPlugins() {
+    	TreeNode[] selectedPlugins = getSelectedPlugins();
+    	for(int i=0; i<selectedPlugins.length; i++) {
+    		System.out.println("Uninstalling plugin "+selectedPlugins[i].toString());
+    	}
+    }
+    
+    private TreeNode[] getSelectedPlugins() {
+    	ArrayList<TreeNode> selectedList = new ArrayList<TreeNode>();
+    	TreePath[] selectedPaths = pluginTree.getSelectionModel().getSelectionPaths();
+    	for(int i=0; i<selectedPaths.length; i++) {
+    		if(selectedPaths[i].getLastPathComponent() instanceof TreeNode) {
+    			if(((TreeNode)selectedPaths[i].getLastPathComponent()).isLeaf()) {
+    				selectedList.add((TreeNode)selectedPaths[i].getLastPathComponent());
+    			}
+    		}
+    	}  
+    	TreeNode[] selectedArr = new TreeNode[selectedList.size()];
+    	for(int i=0; i<selectedArr.length; i++) {
+    		selectedArr[i] = selectedList.get(i);
+    	}
+    	return selectedArr;
+    }
 }
