@@ -896,7 +896,7 @@ public class ViewMenuBuilder {
                 // System.err.println("Saved file menu");
                 this.fileMenu = menu;
             }
-
+            
             return menu;
         } catch (OutOfMemoryError error) {
             System.gc();
