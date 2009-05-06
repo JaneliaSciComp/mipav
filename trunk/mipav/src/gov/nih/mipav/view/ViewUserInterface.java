@@ -677,7 +677,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             pluginsMenu = buildPlugInsMenu(this);
             openingMenuBar.add(pluginsMenu, index);
             getMainFrame().pack();
-        } else if (command.equals("About")) {
+        }else if (command.equals("UninstallPlugin")) {
+        	JDialogUninstallPlugin uninstPlugin = new JDialogUninstallPlugin(mainFrame);
+        	uninstPlugin.setVisible(true);
+        	
+        	int index = openingMenuBar.getComponentIndex(pluginsMenu);
+            openingMenuBar.remove(pluginsMenu);
+            pluginsMenu = buildPlugInsMenu(this);
+            openingMenuBar.add(pluginsMenu, index);
+            getMainFrame().pack();
+
+    	} else if (command.equals("About")) {
             about();
         } else if (command.equals("License")) {
             showLicense();
