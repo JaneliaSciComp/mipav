@@ -197,7 +197,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         }
         else {
             zDim = 1;
-        } 
+        }
         
         if (method == REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC) {
             if ((nDims == 2) || do25D) {
