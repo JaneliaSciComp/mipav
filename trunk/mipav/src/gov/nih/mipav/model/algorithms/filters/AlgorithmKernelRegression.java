@@ -24,6 +24,25 @@ import Jama.*;
    Atlanta, Georgia, October, 2006.
    3.) Takeda, H., M.S. Thesis, "Kernel Regression for Image Processing and Reconstruction",
    Electrical Engineering, UC Santa Cruz, March, 2006.
+   
+   There was some question of whether to interchange vertical and horizontal gradients.  
+   For ITERATIVE_STEERING_KERNEL_SECOND_ORDER for 256 by 256 blakc and white test images consisting of only
+   horizontal gradient, horizontal gradient plus noise, vertical gradient, vertical gradient plus noise
+   tested for mean squared error between original gradient image and filtered image.  Present order was best.
+   Used Gaussian noise set at 80 in test generator.  Images went from 0 at one side to 255 at the other.
+   Mean squared errors:
+   Horizontal gradient
+   1 2    0.147917
+   2 1    0.15333
+   Horizontal gradient plus noise
+   1 2    27.91358
+   2 1    31.66997
+   Vertical gradient
+   1 2    0.1627
+   2 1    0.152878
+   Vertical gradient plus noise
+   1 2    26.1865
+   2 1    29.8788
  */
 public class AlgorithmKernelRegression extends AlgorithmBase {
     public static final int REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC = 1;
