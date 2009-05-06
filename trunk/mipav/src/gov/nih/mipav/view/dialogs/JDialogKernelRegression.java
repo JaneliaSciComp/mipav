@@ -1121,6 +1121,10 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         }
         else if (steering2L1Norm.isSelected()) {
             method = AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM;
+            if (image.isColorImage()) {
+                MipavUtil.displayError("Cannot select Steering Kernel Second Order with L1 Norm for color image");
+                return false;
+            }
         }
 
         tmpStr = textInitialGlobal.getText();
