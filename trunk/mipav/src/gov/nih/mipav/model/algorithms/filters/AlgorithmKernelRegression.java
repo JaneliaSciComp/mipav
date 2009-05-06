@@ -178,6 +178,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         boolean adaptiveSize;
         int maximumSize;
         boolean wholeImage;
+        boolean sliceBySlice;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -279,8 +280,15 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
             maximumSize = 0; // If adaptiveSize is true, the maximum size the kernel mask can be increased to.
             wholeImage = true; // Median filtering will be performed on the whole image
             Preferences.debug("\nEntering AlgorithmMedian\n");
-            algoMedian = new AlgorithmMedian(medianImage, srcImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
-                                             maximumSize, wholeImage);
+            if (nDims == 2) {
+                algoMedian = new AlgorithmMedian(medianImage, srcImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
+                                                 maximumSize, wholeImage);
+            }
+            else {
+                sliceBySlice = true;
+                algoMedian = new AlgorithmMedian(medianImage, srcImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
+                        maximumSize, sliceBySlice, wholeImage);    
+            }
             algoMedian.run();
             algoMedian.finalize();
             algoMedian = null;
@@ -751,8 +759,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                         XwT[4][y] = Xx[y][4] * W[y];
                         XwT[5][y] = Xx[y][5] * W[y];
                     } // for (y = 0; y < iterativeKernelSizeSquared; y++)
-                   
-                
+                    
                     for (y = 1; y <= yDim; y++) {
                         yy = (y - 1) * upscale + i;
                         for (x = 1; x <= xDim; x++) {
@@ -1662,7 +1669,6 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         double C12M[];
         double C22M[];
         double sqrtDetCM[];
-        double A[][];
         int i;
         int j;
         int iterativeKernelSizeSquared = iterativeKernelSize * iterativeKernelSize;
@@ -1670,11 +1676,6 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         double tt[];
         double W[];
         double escale = -0.5/(iterativeGlobalSmoothing2 * iterativeGlobalSmoothing2);
-        double Xw[][];
-        Matrix matXx;
-        Matrix matXw;
-        double prod[][];
-        Matrix matProd;
         int z;
         int padXDim;
         int padYDim;
@@ -1700,7 +1701,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         int it;
         int jj;
         
-        length = xDim * xDim;
+        length = xDim * yDim;
         input = new float[length];
         output = new float[upscaleSquared * length * zDim];
         
@@ -1734,8 +1735,6 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         inputp = new float[iterativeKernelSizeSquared];
         tt = new double[iterativeKernelSizeSquared];
         W = new double[iterativeKernelSizeSquared];
-        Xw = new double[iterativeKernelSizeSquared][6];
-        A = new double[6][iterativeKernelSizeSquared];
         Xx = new double[iterativeKernelSizeSquared][6];
         xx1 = new float[iterativeKernelSizeSquared];
         xx2 = new float[iterativeKernelSizeSquared];
@@ -1922,7 +1921,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                             
                             // Steepest descent iterations
                             for (k = 0; k < 6; k++) {
-                                b[k] = zInit[6*(x - 1 + xDim * (y - 1 ) + length*z) + k];
+                                b[k] = zInit[6*(xx - 1 + extents[0] * (yy - 1) + extents[0]*extents[1]*z) + k];
                             }
                             
                             for (it = 1; it <= iterations2; it++) {
@@ -1950,7 +1949,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                                     b[jj] += steeringStepSize * XwT6[jj];
                                 } // for (jj = 0; jj < 6; j++)
                             } // for (it = 1; it <= iterations2; it++)
-                            output[(xx - 1) + upscale * xDim * (yy - 1) + upscaleSquared * length * z] = b[0];
+                            output[(xx - 1) + extents[0] * (yy - 1) + upscaleSquared * length * z] = b[0];
                             //for (k = 0; k < 6; k++) {
                                 //output[6*(x + xDim * y + length*z) + k] = b[k];
                             //}
