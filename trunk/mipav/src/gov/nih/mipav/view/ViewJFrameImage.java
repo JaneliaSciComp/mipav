@@ -2785,7 +2785,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.equals("InstallPlugin")) {
             JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(this);
-
             instPlugin.setVisible(true);
 
             int index = menuBar.getComponentIndex(menuBarMaker.getPlugInMenu());
@@ -2796,7 +2795,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.getMainFrame().setJMenuBar(menuBar);
             userInterface.getMainFrame().pack();
 
-        } else if (command.equals("CaptureTiff")) {
+        } else if (command.equals("UninstallPlugin")) {
+        	JDialogUninstallPlugin uninstPlugin = new JDialogUninstallPlugin(this);
+        	uninstPlugin.setVisible(true);
+        	
+        	int index = menuBar.getComponentIndex(menuBarMaker.getPlugInMenu());
+
+            menuBar.remove(index);
+            menuBarMaker.setPlugInMenu(userInterface.buildPlugInsMenu(this));
+            menuBar.add(menuBarMaker.getPlugInMenu(), index);
+            userInterface.getMainFrame().setJMenuBar(menuBar);
+            userInterface.getMainFrame().pack();
+
+    	} else if (command.equals("CaptureTiff")) {
             JDialogCaptureScreen screenCapture = new JDialogCaptureScreen(this);
 
             screenCapture.setVisible(true);
