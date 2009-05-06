@@ -909,7 +909,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     	String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins"
                 + File.separator;
 
-        JMenu menu = ViewMenuBuilder.buildMenu("Plugins", 'P', false);
+        JMenu menu = menuBuilder.makeMenu("Plugins", 'P', false, new JComponent[]{});
         
         File pluginsDir = new File(userPlugins);
         if (pluginsDir.isDirectory()) {
@@ -991,6 +991,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         menu.add(menuBuilder.buildMenuItem("Install plugin", "InstallPlugin", 0, null, false));
         
         menu.add(menuBuilder.buildMenuItem("Uninstall plugin", "UninstallPlugin", 0, null, false));
+       
         return menu;
     }
     
