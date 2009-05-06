@@ -101,6 +101,8 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     			   ui.setControls();
     			   pluginTree.setModel(new JTree(buildPluginsTree()).getModel());
     	    	   pluginTree.setRootVisible(false);
+    	    	   pluginTree.setMinimumSize(new Dimension(450, 300));
+    	    	   pluginTree.setPreferredSize(new Dimension(450, 300));
     	           for(int i=0; i<pluginTree.getRowCount(); i++) {
     	           		pluginTree.expandRow(i);
     	           }
@@ -123,6 +125,8 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     	   ui.setControls();
     	   pluginTree.setModel(new JTree(buildPluginsTree()).getModel());
     	   pluginTree.setRootVisible(false);
+    	   pluginTree.setMinimumSize(new Dimension(450, 300));
+    	   pluginTree.setPreferredSize(new Dimension(450, 300));
            for(int i=0; i<pluginTree.getRowCount(); i++) {
            		pluginTree.expandRow(i);
            }
@@ -152,12 +156,14 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         for(int i=0; i<pluginTree.getRowCount(); i++) {
         	pluginTree.expandRow(i);
         }
+        pluginTree.setMinimumSize(new Dimension(450, 300));
+        pluginTree.setPreferredSize(new Dimension(450, 300));
         
         JScrollPane scroll = new JScrollPane(pluginTree);
         scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         scroll.setMinimumSize(new Dimension(450, 300));
-        scroll.setPreferredSize(new Dimension(450, 300));
+        //scroll.setPreferredSize(new Dimension(450, 300));
         mainPanel.add(scroll);
 
         JPanel buttonPanel = new JPanel();
@@ -178,7 +184,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         panel.add(mainPanel);
 
-        mainDialogPanel.add(panel);
+        mainDialogPanel.add(panel, BorderLayout.CENTER);
         mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         getContentPane().add(mainDialogPanel);
