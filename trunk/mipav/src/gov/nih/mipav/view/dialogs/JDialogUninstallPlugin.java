@@ -121,6 +121,9 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     		   return;
     	   }
     	   uninstallPlugins();
+    	   if(ui.getRegisteredImagesNum() > 0) {
+    		   
+    	   }
     	   ui.buildMenu();
     	   ui.setControls();
     	   pluginTree.setModel(new JTree(buildPluginsTree()).getModel());
@@ -196,7 +199,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
      * Starts process to build exact copy of installed plugin structure as tree nodes.
      */
     private MutableTreeNode buildPluginsTree() {
-    	JMenu plugin = (JMenu)ui.getMenuBuilder().getMenuItem("Plugins");
+    	JMenu plugin = buildPlugInsMenu(this);
     	DefaultMutableTreeNode root = new DefaultMutableTreeNode("Plugins");
     	for(int i=0; i<plugin.getItemCount(); i++) {
     		if(plugin.getItem(i) instanceof JMenu) {
@@ -290,5 +293,115 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     		selectedArr[i] = selectedList.get(i);
     	}
     	return selectedArr;
+    }
+    
+    /**
+     * A custom build PluginsMenu to allow for PluginAlgorithms to be shown
+     * even when no image is displayed
+     * 
+     * @param al the listener that wants to know about actions on the plugins menu
+     * 
+     * @return the new plugin menu
+     */
+    private JMenu buildPlugInsMenu(ActionListener al) {
+    	
+    	String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins"
+                + File.separator;
+
+        JMenu menu = ViewMenuBuilder.buildMenu("Plugins", 'P', false);
+        
+        File pluginsDir = new File(userPlugins);
+        if (pluginsDir.isDirectory()) {
+
+            File[] allFiles = pluginsDir.listFiles(new FileFilter() {
+                public boolean accept(File f) {
+
+                    if (f.getPath().endsWith(".class")) {
+                        return true;
+                    }   
+                    return false;
+                }
+            });
+
+            String name, pluginName;
+            Field catField;
+            Class plugin;
+            String fieldName = "CATEGORY";
+            
+            for (int i = 0; i < allFiles.length; i++) {
+            	JMenu currentMenu = menu;
+            	name = allFiles[i].getName();
+
+                try {
+                	name = name.substring(0, name.indexOf(".class"));
+                	pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
+                } catch(Exception e) {
+                	pluginName = name;
+                }
+                try {
+                	plugin = Class.forName(name);
+                	plugin.newInstance();   //instantiated to allow loading into SCRIPT_ACTION_LOCATIONS
+                	catField = plugin.getField(fieldName);
+                	String[] hier = (String[])catField.get(plugin);
+                	Class[] interList = plugin.getInterfaces();
+                	String interName = new String();
+                	for(int j=0; j<interList.length; j++) {
+                		if(interList[j].getName().contains("PlugIn")) {
+                			interName = interList[j].getName().substring(interList[j].getName().indexOf("PlugIn"));
+                		}
+                	}
+                	
+                	for(int j=0; j<hier.length; j++) {
+                		Component[] subComp = currentMenu.getMenuComponents();
+                		boolean subExists = false;
+                		for(int k=0; k<subComp.length; k++) {
+                			if(subComp[k] instanceof JMenu && ((JMenu)subComp[k]).getText().equals(hier[j])) {
+                				currentMenu = (JMenu) subComp[k];
+                				subExists = true;
+                				break;
+                			}
+                		}
+                		if(!subExists) {
+                			JMenu newMenu = ViewMenuBuilder.buildMenu(hier[j], 0, false);
+                			currentMenu.add(newMenu);
+                			currentMenu = newMenu;
+                		}
+                	}
+
+                	JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, 
+                			interName+pluginName, 0, al, null, false);
+                	pluginMenuItem.setName(pluginName);
+                	pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
+            		currentMenu.add(pluginMenuItem);	
+                
+                } catch(Exception e) {
+                	//usually this means other files/folders exist in the installed plugins directory besides plugin files
+                }
+            }
+        }
+        
+        if(menu.getItemCount() > 0) {
+        	menu.addSeparator();
+        }
+        
+        deleteMenu(menu);
+        
+        return menu;
+    }
+    
+    /**
+     * Recursive deletion algorithm to delete JMenus which contain no JMenuItems exclusive of JMenus in any children.
+     * 
+     * @param menu The menu to run through deletion
+     */
+    private void deleteMenu(JMenu menu) {
+    	for(int i=0; i<menu.getItemCount(); i++) {
+        	if(menu.getItem(i) instanceof JMenu) {
+        		deleteMenu(((JMenu)menu.getItem(i))); 	
+        		if(((JMenu)menu.getItem(i)).getItemCount() == 0) {
+        			menu.remove(i);
+        		}		
+        	}
+        }
     }
 }
