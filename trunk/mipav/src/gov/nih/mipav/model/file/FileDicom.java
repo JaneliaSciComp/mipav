@@ -697,50 +697,44 @@ public class FileDicom extends FileDicomBase {
                     if ( !name.equals(IMAGE_TAG)) {
                         data = getByte(tagVM, elementLength, endianess);
                         tagTable.setValue(key, data, elementLength);
-
-                        if (tagVM == 1) {
-                            // Preferences.debug(((FileDicomTag)(fileInfo.getEntry(name))).getName() + "\t\t(" +
-                            // name + ");\t (byte) value = " + ((Byte)(data)).byteValue() + " element length = 2"
-                            // + "\n", Preferences.DEBUG_FILEIO);
-                        }
                     }
                 } else if (type.equals(TYPE_SHORT)) {
                     data = getShort(tagVM, elementLength, endianess);
                     tagTable.setValue(key, data, elementLength);
 
-                    if (tagVM == 1) {
+                    
                         Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (short) value = "
-                                + ((Short) (data)).shortValue() + " element length = 2" + "\n",
+                                + data + " element length = "+ elementLength + "\n",
                                 Preferences.DEBUG_FILEIO);
-                    }
+                    
                 } else if (type.equals(TYPE_INT)) {
                     data = getInteger(tagVM, elementLength, endianess);
                     tagTable.setValue(key, data, elementLength);
 
-                    if (tagVM == 1) {
+                    
 
                         Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (int) value = "
-                                + ((Integer) (data)).intValue() + " element length = 4" + "\n",
+                                + data + " element length = "+ elementLength + "\n",
                                 Preferences.DEBUG_FILEIO);
-                    }
+                    
                 } else if (type.equals(TYPE_FLOAT)) {
                     data = getFloat(tagVM, elementLength, endianess);
                     tagTable.setValue(key, data, elementLength);
 
-                    if (tagVM == 1) {
+                    
                         Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (float) value = "
-                                + ((Float) (data)).floatValue() + " element length = 4" + "\n",
+                                + data + " element length = "+elementLength + "\n",
                                 Preferences.DEBUG_FILEIO);
-                    }
+                    
                 } else if (type.equals(TYPE_DOUBLE)) {
                     data = getDouble(tagVM, elementLength, endianess);
                     tagTable.setValue(key, data, elementLength);
 
-                    if (tagVM == 1) {
+                    
                         Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (double) value = "
-                                + ((Double) (data)).doubleValue() + " element length = 8" + "\n",
+                                + data + " element length = "+elementLength + "\n",
                                 Preferences.DEBUG_FILEIO);
-                    }
+                    
                 }
                 // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
                 else if (type.equals(TYPE_SEQUENCE) || ( (type == TYPE_UNKNOWN) && (elementLength == -1))) {
@@ -3145,7 +3139,7 @@ public class FileDicom extends FileDicomBase {
             }
         } else if (length == 2) {
             readObject = new Short((short) getUnsignedShort(endianess));
-        }
+        } 
 
         return readObject;
     }
@@ -3400,7 +3394,7 @@ public class FileDicom extends FileDicomBase {
                     outputFile.writeBytes("\0");
                 }
             } else if (type.equals(TYPE_FLOAT)) {
-
+            	
                 if ( (vm > 1) || (nValues > 1)) {
                     Float[] data = (Float[]) dicomTags[i].getValue(false);
 
