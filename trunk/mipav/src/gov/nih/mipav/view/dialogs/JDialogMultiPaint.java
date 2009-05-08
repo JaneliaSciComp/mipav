@@ -341,7 +341,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         } else if (command.equals("AdvancedPaint:Help")) {
             MipavUtil.showHelp("PT0003");
         } else if (command.startsWith("AdvancedPaint:PaintMask")) {
-
             int num = Integer.valueOf(command.substring(command.indexOf(" ") + 1)).intValue();
             newSelection = num;
             int colorNum = 1;
@@ -1408,7 +1407,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
         }
 
-        ((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
+        //((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);   commented out to fix bug 283
 
         if (indeterminateProgressBar != null) {
             indeterminateProgressBar.setIndeterminate(false);
