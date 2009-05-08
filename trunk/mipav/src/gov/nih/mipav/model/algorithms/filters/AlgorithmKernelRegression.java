@@ -61,6 +61,12 @@ import Jama.*;
    4.) JFK_denoise.m Film grain removal from color image.
    Note the MATLAB package converts to YCrCb whereas I convert to CIELab for better luminance separation.
    
+   ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR uses ckr2_irregular followed by a variable number of
+   iterations of the 2 routines steering and skr2_irregular to handle files with missing data points.
+   The upscaling factor always = 1 for this method.
+   Test file corresponding to ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR:
+   Lena_irregular.m
+   
    REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC corresponds to the first routine in ITERATIVE_STEERING_KERNEL_SECOND_ORDER,
    ckr2_regular.
    
@@ -80,11 +86,35 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
     
     public static final int ITERATIVE_STEERING_KERNEL_SECOND_ORDER = 2;
     
-    public static final int STEERING_KERNEL_SECOND_ORDER_L1_NORM = 3;
+    public static final int ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR = 3;
+    
+    public static final int STEERING_KERNEL_SECOND_ORDER_L1_NORM = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    /** 1 of 4 possible sets of routines to be executed */
     private int method;
+    
+    /** True if irregularly sampled data uses NaNs for missing samples */
+    private boolean hasNaN;
+    
+    /** True if irregularly sampled data uses infinities for missing samples */
+    private boolean hasInfinity;
+    
+    /** True if irregularly sampled data uses numbers >= greaterEqualValue for missing samples */
+    private boolean hasGreaterEqual;
+    
+    private double greaterEqualValue;
+    
+    /** True if irregularly sampled data uses numbers == equalValue for missing samples */
+    private boolean hasEqual;
+    
+    private double equalValue;
+    
+    /** True if irregularly sampled data uses numbers <= lesserEqualValue for missing samples */
+    private boolean hasLesserEqual;
+    
+    private double lesserEqualValue;
     
     private float initialGlobalSmoothing;
     
@@ -160,6 +190,17 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
      *
      * @param  destImage         denoised image
      * @param  srcImg            2D or 3D source image
+     * @param  method 1 of 4 possible sets of routines to be executed
+     * @param  hasNaN true if irregularly sampled data uses NaN for missing values
+     * @param  hasInfinity true if irregularly sampled data uses infinity for missing values
+     * @param  hasGreaterEqual true if irregularly sampled data uses values >= greaterEqualValue for
+     *                         missing values
+     * @param  greaterEqualValue
+     * @param  hasEqual true if irregularly sampled data uses values == equalValue for missing values
+     * @param  equalValue
+     * @param  hasLesserEqual true if irregularly sampled data uses values <= lesserEqualValue for
+     *                         missing values
+     * @param  lesserEqualValue
      * @param  initialGlobalSmoothing
      * @param  iterativeGlobalSmoothing
      * @param  iterativeGlobalSmoothing2 Global smoothing in L1 steering kernel regression
@@ -176,11 +217,21 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
      * @param  do25D             If true, do slice by slice filtering
      */
     public AlgorithmKernelRegression(ModelImage destImage, ModelImage srcImg, int method,
+            boolean hasNaN, boolean hasInfinity, boolean hasGreaterEqual, double greaterEqualValue,
+            boolean hasEqual, double equalValue, boolean hasLesserEqual, double lesserEqualValue,
             float initialGlobalSmoothing, float iterativeGlobalSmoothing, float iterativeGlobalSmoothing2, 
             int upscale, int initialKernelSize, int iterativeKernelSize, int iterations, int iterations2, 
             int windowSize, float lambda, float alpha, float classicStepSize, float steeringStepSize, boolean do25D) {
         super(destImage, srcImg);
         this.method = method;
+        this.hasNaN = hasNaN;
+        this.hasInfinity = hasInfinity;
+        this.hasGreaterEqual = hasGreaterEqual;
+        this.greaterEqualValue = greaterEqualValue;
+        this.hasEqual = hasEqual;
+        this.equalValue = equalValue;
+        this.hasLesserEqual = hasLesserEqual;
+        this.lesserEqualValue = lesserEqualValue;
         this.initialGlobalSmoothing = initialGlobalSmoothing;
         this.iterativeGlobalSmoothing = iterativeGlobalSmoothing;
         this.iterativeGlobalSmoothing2 = iterativeGlobalSmoothing2;
@@ -229,6 +280,11 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         int maximumSize;
         boolean wholeImage;
         boolean sliceBySlice;
+        float floatBuffer[];
+        int intBuffer[];
+        double doubleBuffer[];
+        long longBuffer[];
+        int c;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -271,12 +327,11 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                     scaleMax = Math.max(255.0, imageMax);
                     convertRGBtoCIELab();
                     ckr2RegularCIELab(1);
-                    // output and input are upscaled if upscale > 1.
                     input = new float[output.length];
                     for (i = 0; i < output.length; i++) {
                         input[i] = output[i];
                     }
-                    I = new boolean[horizontalGradient.length];
+                    I = new boolean[xDim * yDim * zDim];
                     for (i = 0; i < I.length; i++) {
                         I[i] = true;
                     }
@@ -297,12 +352,11 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                 } // if (srcImage.isColorImage())
                 else { // not color image
                     ckr2Regular(1);
-                    // output and input are upscaled if upscale > 1.
                     input = new float[output.length];
                     for (i = 0; i < output.length; i++) {
                         input[i] = output[i];
                     }
-                    I = new boolean[horizontalGradient.length];
+                    I = new boolean[xDim * yDim * zDim];
                     for (i = 0; i < I.length; i++) {
                         I[i] = true;
                     }
@@ -323,6 +377,291 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                 } // else not color image
             } // if ((nDims == 2) || do25D)
         } // else if (method == ITERATIVE_STEERING_KERNEL_SECOND_ORDER)
+        else if (method == ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR) {
+            if ((nDims == 2) || do25D) {
+                if (srcImage.isColorImage()) {
+                    I = new boolean[xDim * yDim * zDim];
+                    for (i = 0; i < I.length; i++) {
+                        I[i] = true;
+                    }
+                    if (srcImage.getType() == ModelStorageBase.ARGB_FLOAT) {
+                        floatBuffer = new float[4 * xDim * yDim * zDim];
+                        try {
+                            srcImage.exportData(0, 4 * xDim * yDim * zDim, floatBuffer);
+                        }
+                        catch(IOException e) {
+                            MipavUtil.displayError(
+                            "IOException on srcImage.exportData(0, 4 * xDim * yDim * zDim, floatBuffer");
+                            setCompleted(false);
+                            return;
+                        }
+                        if (hasNaN) {
+                            for (c = 1; c <= 3; c++) {
+                                for (i = 0; i < xDim * yDim * zDim; i++) {
+                                    if (Float.isNaN(floatBuffer[4*i + c])) {
+                                        I[i] = false;
+                                    }
+                                }
+                            } // for (c = 1; c <= 3; c++)
+                        } // if (hasNaN)
+                        if (hasInfinity) {
+                            for (c = 1; c <= 3; c++) {
+                                for (i = 0; i < xDim * yDim * zDim; i++) {
+                                    if (Float.isInfinite(floatBuffer[4*i + c])) {
+                                        I[i] = false;
+                                    }
+                                }
+                            } // for (c = 1; c <= 3; c++)    
+                        } // if (hasInfinity)
+                        if (hasGreaterEqual) {
+                            for (c = 1; c <= 3; c++) {
+                                for (i = 0; i < xDim * yDim * zDim; i++) {
+                                    if (floatBuffer[4*i + c] >= greaterEqualValue) {
+                                        I[i] = false;
+                                    }
+                                }
+                            } // for (c = 1; c <= 3; c++)        
+                        } // if (hasGreaterEqual)
+                        if (hasEqual) {
+                            for (c = 1; c <= 3; c++) {
+                                for (i = 0; i < xDim * yDim * zDim; i++) {
+                                    if (floatBuffer[4*i + c] == equalValue) {
+                                        I[i] = false;
+                                    }
+                                }
+                            } // for (c = 1; c <= 3; c++)        
+                        } // if (hasEqual)
+                        if (hasLesserEqual) {
+                            for (c = 1; c <= 3; c++) {
+                                for (i = 0; i < xDim * yDim * zDim; i++) {
+                                    if (floatBuffer[4*i + c] <= lesserEqualValue) {
+                                        I[i] = false;
+                                    }
+                                }
+                            } // for (c = 1; c <= 3; c++)        
+                        } // if (hasLesserEqual)
+                        floatBuffer = null;
+                    } // if (srcImage.getType() == ModelStorageBase.ARGB_FLOAT)
+                    else { // srcImage.getType() == ModelStorageBase.ARGB_USHORT || ARGB
+                        intBuffer = new int[4 * xDim * yDim * zDim];
+                        try {
+                            srcImage.exportData(0, 4 * xDim * yDim * zDim, intBuffer);
+                        }
+                        catch(IOException e) {
+                            MipavUtil.displayError(
+                            "IOException on srcImage.exportData(0, 4 * xDim * yDim * zDim, intBuffer");
+                            setCompleted(false);
+                            return;
+                        }
+                        if (hasGreaterEqual) {
+                            for (c = 1; c <= 3; c++) {
+                                for (i = 0; i < xDim * yDim * zDim; i++) {
+                                    if (intBuffer[4*i + c] >= greaterEqualValue) {
+                                        I[i] = false;
+                                    }
+                                }
+                            } // for (c = 1; c <= 3; c++)        
+                        } // if (hasGreaterEqual)
+                        if (hasEqual) {
+                            for (c = 1; c <= 3; c++) {
+                                for (i = 0; i < xDim * yDim * zDim; i++) {
+                                    if (intBuffer[4*i + c] == equalValue) {
+                                        I[i] = false;
+                                    }
+                                }
+                            } // for (c = 1; c <= 3; c++)        
+                        } // if (hasEqual)
+                        if (hasLesserEqual) {
+                            for (c = 1; c <= 3; c++) {
+                                for (i = 0; i < xDim * yDim * zDim; i++) {
+                                    if (intBuffer[4*i + c] <= lesserEqualValue) {
+                                        I[i] = false;
+                                    }
+                                }
+                            } // for (c = 1; c <= 3; c++)        
+                        } // if (hasLesserEqual) 
+                        intBuffer = null;
+                    } // else srcImage.getType() == ModelStorageBase.ARGB_USHORT || ARGB
+                    srcImage.calcMinMax();
+                    imageMax = srcImage.getMax();
+                    scaleMax = Math.max(255.0, imageMax);
+                    convertRGBtoCIELab();
+                    ckr2IrregularCIELab();
+                    // output and input are upscaled if upscale > 1.
+                    input = new float[output.length];
+                    for (i = 0; i < output.length; i++) {
+                        input[i] = output[i];
+                    }
+                    for (i = 1; i <= iterations; i++) {
+                        fireProgressStateChanged((i - 1) * 100/iterations);
+                        // Compute steering matrix
+                        steering();
+                        if (i < iterations) {
+                            skr2RegularCIELab(1);
+                            for (j = 0; j < output.length; j++) {
+                                input[j] = output[j];
+                            }
+                        }
+                        else {
+                            skr2IrregularCIELab();
+                        }
+                    } // for (i = 1; i <= iterations; i++)
+                } // if (srcImage.isColorImage())
+                else { // not color image
+                    I = new boolean[xDim * yDim * zDim];
+                    for (i = 0; i < I.length; i++) {
+                        I[i] = true;
+                    }
+                    if (srcImage.getType() == ModelStorageBase.DOUBLE) {
+                        doubleBuffer = new double[xDim * yDim * zDim];
+                        try {
+                            srcImage.exportData(0, xDim * yDim * zDim, doubleBuffer);
+                        }
+                        catch(IOException e) {
+                            MipavUtil.displayError("IOException on srcImage.exportData(0, xDim * yDim * zDim, doubleBuffer");
+                            setCompleted(false);
+                            return;
+                        }
+                       if (hasNaN) {
+                           for (i = 0; i < xDim * yDim * zDim; i++) {
+                               if (Double.isNaN(doubleBuffer[i])) {
+                                   I[i] = false;
+                               }
+                           }
+                       } // if (hasNaN)
+                       if (hasInfinity) {
+                           for (i = 0; i < xDim * yDim * zDim; i++) {
+                               if (Double.isInfinite(doubleBuffer[i])) {
+                                   I[i] = false;
+                               }
+                           }    
+                       } // if (hasInfinity)
+                       if (hasGreaterEqual) {
+                           for (i = 0; i < xDim * yDim * zDim; i++) {
+                               if (doubleBuffer[i] >= greaterEqualValue) {
+                                   I[i] = false;
+                               }
+                           }
+                       } // if (hasGreaterEqual)
+                       if (hasEqual) {
+                           for (i = 0; i < xDim * yDim * zDim; i++) {
+                               if (doubleBuffer[i] == equalValue) {
+                                   I[i] = false;
+                               }
+                           }
+                       } // if (hasEqual)
+                       if (hasLesserEqual) {
+                           for (i = 0; i < xDim * yDim * zDim; i++) {
+                               if (doubleBuffer[i] <= lesserEqualValue) {
+                                   I[i] = false;
+                               }
+                           }
+                       } // if (hasLesserEqual)
+                       doubleBuffer = null;
+                    } // if (srcImage.getType() == ModelStorageBase.DOUBLE)
+                    else if (srcImage.getType() == ModelStorageBase.FLOAT) {
+                        floatBuffer = new float[xDim * yDim * zDim];
+                        try {
+                            srcImage.exportData(0, xDim * yDim * zDim, floatBuffer);
+                        }
+                        catch(IOException e) {
+                            MipavUtil.displayError("IOException on srcImage.exportData(0, xDim * yDim * zDim, floatBuffer");
+                            setCompleted(false);
+                            return;
+                        }
+                       if (hasNaN) {
+                           for (i = 0; i < xDim * yDim * zDim; i++) {
+                               if (Float.isNaN(floatBuffer[i])) {
+                                   I[i] = false;
+                               }
+                           }
+                       } // if (hasNaN)
+                       if (hasInfinity) {
+                           for (i = 0; i < xDim * yDim * zDim; i++) {
+                               if (Float.isInfinite(floatBuffer[i])) {
+                                   I[i] = false;
+                               }
+                           }    
+                       } // if (hasInfinity)
+                       if (hasGreaterEqual) {
+                           for (i = 0; i < xDim * yDim * zDim; i++) {
+                               if (floatBuffer[i] >= greaterEqualValue) {
+                                   I[i] = false;
+                               }
+                           }
+                       } // if (hasGreaterEqual)
+                       if (hasEqual) {
+                           for (i = 0; i < xDim * yDim * zDim; i++) {
+                               if (floatBuffer[i] == equalValue) {
+                                   I[i] = false;
+                               }
+                           }
+                       } // if (hasEqual)
+                       if (hasLesserEqual) {
+                           for (i = 0; i < xDim * yDim * zDim; i++) {
+                               if (floatBuffer[i] <= lesserEqualValue) {
+                                   I[i] = false;
+                               }
+                           }
+                       } // if (hasLesserEqual)
+                       floatBuffer = null;    
+                    } // else if (srcImage.getType() == ModelStorageBase.FLOAT)
+                    else { // not DOUBLE or FLOAT
+                        longBuffer = new long[xDim * yDim * zDim];
+                        try {
+                            srcImage.exportData(0, xDim * yDim * zDim, longBuffer);
+                        }
+                        catch(IOException e) {
+                            MipavUtil.displayError("IOException on srcImage.exportData(0, xDim * yDim * zDim, longBuffer");
+                            setCompleted(false);
+                            return;
+                        }
+                        if (hasGreaterEqual) {
+                            for (i = 0; i < xDim * yDim * zDim; i++) {
+                                if (longBuffer[i] >= greaterEqualValue) {
+                                    I[i] = false;
+                                }
+                            }
+                        } // if (hasGreaterEqual)
+                        if (hasEqual) {
+                            for (i = 0; i < xDim * yDim * zDim; i++) {
+                                if (longBuffer[i] == equalValue) {
+                                    I[i] = false;
+                                }
+                            }
+                        } // if (hasEqual)
+                        if (hasLesserEqual) {
+                            for (i = 0; i < xDim * yDim * zDim; i++) {
+                                if (longBuffer[i] <= lesserEqualValue) {
+                                    I[i] = false;
+                                }
+                            }
+                        } // if (hasLesserEqual)
+                        longBuffer = null;    
+                    } // else not DOUBLE or FLOAT
+                    ckr2Irregular();
+                    // output and input are upscaled if upscale > 1.
+                    input = new float[output.length];
+                    for (i = 0; i < output.length; i++) {
+                        input[i] = output[i];
+                    }
+                    for (i = 1; i <= iterations; i++) {
+                        fireProgressStateChanged((i - 1) * 100/iterations);
+                        // Compute steering matrix
+                        steering();
+                        if (i < iterations) {
+                            skr2Regular(1);
+                            for (j = 0; j < output.length; j++) {
+                                input[j] = output[j];
+                            }
+                        }
+                        else {
+                            skr2Irregular();
+                        }
+                    } // for (i = 1; i <= iterations; i++)
+                } // else not color image
+            } // if ((nDims == 2) || do25D)
+        } // else if (method == ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR)
         else if (method == STEERING_KERNEL_SECOND_ORDER_L1_NORM) {
             medianImage = (ModelImage)srcImage.clone();
             medianIters = 1; // Iterations of the median filter
@@ -360,7 +699,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
             for (i = 0; i < output.length; i++) {
                 zInit[i] = output[i];
             }
-            I = new boolean[horizontalGradient.length];
+            I = new boolean[xDim * yDim * zDim];
             for (i = 0; i < I.length; i++) {
                 I[i] = true;
             }
@@ -652,6 +991,465 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         } // for (z = 0; z < zDim; z++)
         
     } // ckr2Regular
+    
+    /*  2D processing on a second order classic kernel regression function for irregularly sampled data */
+    private void ckr2Irregular() {
+        int length;
+        int radius;
+        float x1[];
+        float x2[];
+        float x1Col[];
+        float x2Col[];
+        int x;
+        int y;
+        double A[][];
+        int initialKernelSizeSquared = initialKernelSize * initialKernelSize;
+        double Xx[][];
+        double tt[];
+        double W[];
+        double WI[];
+        double escale = -0.5/(initialGlobalSmoothing * initialGlobalSmoothing);
+        double Xw[][];
+        Matrix matXx;
+        Matrix matXw;
+        double prod[][];
+        int z;
+        int padXDim;
+        int padYDim;
+        float input2[];
+        float inputp[];
+        int xp;
+        int yp;
+        int k;
+        boolean I2[];
+        Matrix matProd;
+        
+        length = xDim * yDim;
+        input = new float[length];
+        output = new float[length * zDim];
+        horizontalGradient = new float[length * zDim];
+        verticalGradient = new float[length * zDim];
+        if (nDims == 3) {
+            extents = new int[3];
+            extents[0] = xDim;
+            extents[1] = yDim;
+            extents[2] = zDim;
+        }
+        else {
+            extents = new int[2];
+            extents[0] = xDim;
+            extents[1] = yDim;
+        }
+        
+        // Create the equivalent kernels
+        radius = (initialKernelSize - 1)/2;
+        x1 = new float[initialKernelSize * initialKernelSize];
+        x2 = new float[initialKernelSize * initialKernelSize];
+        x1Col = new float[initialKernelSize * initialKernelSize];
+        x2Col = new float[initialKernelSize * initialKernelSize];
+        for (y = 0; y < initialKernelSize; y++) {
+            for (x = 0; x < initialKernelSize; x++) {
+                x2[x + y * initialKernelSize] = -radius + x;
+                x2Col[y + x * initialKernelSize] = -radius + x;
+                x1[x + y * initialKernelSize] = -radius + y;
+                x1Col[y + x * initialKernelSize] = -radius + y;
+            }
+        }
+        A = new double[6][initialKernelSizeSquared];
+        tt = new double[initialKernelSizeSquared];
+        W = new double[initialKernelSizeSquared];
+        WI = new double[initialKernelSizeSquared];
+        Xx = new double[initialKernelSizeSquared][6];
+        Xw = new double[initialKernelSizeSquared][6];
+        
+        for (y = 0; y < initialKernelSizeSquared; y++) {
+            Xx[y][0] = 1.0;
+            Xx[y][1] = x1Col[y];
+            Xx[y][2] = x2Col[y];
+            Xx[y][3] = x1Col[y] * x1Col[y];
+            Xx[y][4] = x1Col[y] * x2Col[y];
+            Xx[y][5] = x2Col[y] * x2Col[y];
+            // The weight matrix (Gaussian kernel function)
+            tt[y] = x1[y] * x1[y] + x2[y] * x2[y];
+            W[y] = Math.exp(escale * tt[y]);
+        } // for (y = 0; y < initialKernelSizeSquared; y++)    
+        
+        padXDim = xDim + 2 * radius;
+        padYDim = yDim + 2 * radius;
+        input2 = new float[padXDim * padYDim];
+        I2 = new boolean[padXDim * padYDim];
+        
+        // Mirror the I array
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                I2[x + radius + padXDim*(y + radius)] = I[x + y * xDim];
+            }
+        }
+        
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < radius; x++) {
+                // left side mirror reflection
+                I2[x + padXDim*(y + radius)] = I[(radius - x) + xDim * y];
+                // right side mirror reflection
+                I2[x + xDim + radius + padXDim * (y + radius)] =
+                I[xDim - 2 - x + xDim * y];
+            }
+        }
+        for (y = 0; y < radius; y++) {
+            for (x = 0; x < xDim; x++) {
+                // top side mirror reflection
+                I2[x + radius + padXDim * y] = I[x + xDim * (radius - y)];
+                // bottom side mirror reflection
+                I2[x + radius + padXDim * (y + yDim + radius)] =
+                I[x + xDim * (yDim - 2 - y)];
+            }
+        }
+        for (y = 0; y < radius; y++) {
+            for (x = 0; x < radius; x++) {
+                // left top mirror reflection
+                I2[x + padXDim * y] = I[(radius - x) + xDim * (radius - y)];
+                // left bottom mirror reflection
+                I2[x + padXDim * (y + yDim + radius)] = 
+                I[(radius - x) + xDim * (yDim - 2 - y)];
+                // right top mirror reflection
+                I2[x + xDim + radius + padXDim * y] =
+                I[xDim - 2 - x + xDim * (radius - y)];
+                // right bottom mirror reflection
+                I2[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                I[xDim - 2 - x + xDim * (yDim - 2 - y)];
+            }
+        }
+        inputp = new float[initialKernelSizeSquared];
+        for (z = 0; z < zDim; z++) {
+            try {
+                srcImage.exportData(z*length, length, input);
+            }
+            catch (IOException e) {
+                MipavUtil.displayError("IOException on srcImage.exportData(z*length, length, input)");
+                setCompleted(false);
+                return;
+            }
+            
+            // Mirror the input image
+            for (y = 0; y < yDim; y++) {
+                for (x = 0; x < xDim; x++) {
+                    input2[x + radius + padXDim*(y + radius)] = input[x + y * xDim];
+                }
+            }
+            
+            for (y = 0; y < yDim; y++) {
+                for (x = 0; x < radius; x++) {
+                    // left side mirror reflection
+                    input2[x + padXDim*(y + radius)] = input[(radius - x) + xDim * y];
+                    // right side mirror reflection
+                    input2[x + xDim + radius + padXDim * (y + radius)] =
+                    input[xDim - 2 - x + xDim * y];
+                }
+            }
+            for (y = 0; y < radius; y++) {
+                for (x = 0; x < xDim; x++) {
+                    // top side mirror reflection
+                    input2[x + radius + padXDim * y] = input[x + xDim * (radius - y)];
+                    // bottom side mirror reflection
+                    input2[x + radius + padXDim * (y + yDim + radius)] =
+                    input[x + xDim * (yDim - 2 - y)];
+                }
+            }
+            for (y = 0; y < radius; y++) {
+                for (x = 0; x < radius; x++) {
+                    // left top mirror reflection
+                    input2[x + padXDim * y] = input[(radius - x) + xDim * (radius - y)];
+                    // left bottom mirror reflection
+                    input2[x + padXDim * (y + yDim + radius)] = 
+                    input[(radius - x) + xDim * (yDim - 2 - y)];
+                    // right top mirror reflection
+                    input2[x + xDim + radius + padXDim * y] =
+                    input[xDim - 2 - x + xDim * (radius - y)];
+                    // right bottom mirror reflection
+                    input2[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                    input[xDim - 2 - x + xDim * (yDim - 2 - y)];
+                }
+            }
+            
+            // Estimate the image and its first gradients
+            for (y = 0; y < yDim; y++) {
+                for (x = 0; x < xDim; x++) {
+                    for (yp = 0; yp < initialKernelSize; yp++) {
+                        for (xp = 0; xp < initialKernelSize; xp++) {
+                            // Store inputp in one long column
+                            inputp[yp + xp * initialKernelSize] = input2[x + xp + padXDim * (y + yp)];
+                            // Zero weights where there is no sample
+                            if (I2[x + xp + padXDim * (y + yp)]) {
+                                // Put WI in long column
+                                WI[yp + xp * initialKernelSize] = W[xp + initialKernelSize * yp];
+                            }
+                            else {
+                                WI[yp + xp * initialKernelSize] = 0;
+                            }
+                        }
+                    }
+                    
+                    for (k = 0; k < initialKernelSizeSquared; k++) {
+                        // Equivalent kernel
+                        Xw[k][0] = WI[k];
+                        Xw[k][1] = Xx[k][1] * WI[k];
+                        Xw[k][2] = Xx[k][2] * WI[k];
+                        Xw[k][3] = Xx[k][3] * WI[k];
+                        Xw[k][4] = Xx[k][4] * WI[k];
+                        Xw[k][5] = Xx[k][5] * WI[k];
+                    } // for (k = 0; k < initialKernelSizeSquared; k++)
+                    
+                    matXx = new Matrix(Xx);
+                    matXw = new Matrix(Xw);
+                    prod = ((matXx.transpose()).times(matXw)).getArray();
+                    for (k = 0; k < 6; k++) {
+                        prod[k][k] += 1.0E-5;
+                    }
+                    matProd = new Matrix(prod);
+                    A = ((matProd.inverse()).times(matXw.transpose())).getArray();
+                    
+                    output[x + xDim * y + length*z] = 0;
+                    verticalGradient[x + xDim * y + length*z] = 0;
+                    horizontalGradient[x + xDim * y + length*z] = 0;
+                            for (k = 0; k < initialKernelSizeSquared; k++) {
+                                output[x + xDim * y + length*z] += A[0][k] * inputp[k];
+                                verticalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
+                                horizontalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                            }
+                       
+                } // for (x = 0; x < xDim; x++)
+            } // for (y = 0; y < yDim; y++)
+        } // for (z = 0; z < zDim; z++)
+        
+    } // ckr2Irregular
+    
+    /*  2D processing on a second order classic kernel regression function for irregularly sampled color data */
+    private void ckr2IrregularCIELab() {
+        int length;
+        int radius;
+        float x1[];
+        float x2[];
+        float x1Col[];
+        float x2Col[];
+        int x;
+        int y;
+        double A[][];
+        int initialKernelSizeSquared = initialKernelSize * initialKernelSize;
+        double Xx[][];
+        double tt[];
+        double W[];
+        double WI[];
+        double escale = -0.5/(initialGlobalSmoothing * initialGlobalSmoothing);
+        double Xw[][];
+        Matrix matXx;
+        Matrix matXw;
+        double prod[][];
+        int z;
+        int padXDim;
+        int padYDim;
+        float input2[];
+        float inputp[];
+        int xp;
+        int yp;
+        int k;
+        boolean I2[];
+        Matrix matProd;
+        int c;
+        
+        length = xDim * yDim;
+        output = new float[4 * length * zDim];
+        horizontalGradient = new float[length * zDim];
+        verticalGradient = new float[length * zDim];
+        if (nDims == 3) {
+            extents = new int[3];
+            extents[0] = xDim;
+            extents[1] = yDim;
+            extents[2] = zDim;
+        }
+        else {
+            extents = new int[2];
+            extents[0] = xDim;
+            extents[1] = yDim;
+        }
+        
+        // Create the equivalent kernels
+        radius = (initialKernelSize - 1)/2;
+        x1 = new float[initialKernelSize * initialKernelSize];
+        x2 = new float[initialKernelSize * initialKernelSize];
+        x1Col = new float[initialKernelSize * initialKernelSize];
+        x2Col = new float[initialKernelSize * initialKernelSize];
+        for (y = 0; y < initialKernelSize; y++) {
+            for (x = 0; x < initialKernelSize; x++) {
+                x2[x + y * initialKernelSize] = -radius + x;
+                x2Col[y + x * initialKernelSize] = -radius + x;
+                x1[x + y * initialKernelSize] = -radius + y;
+                x1Col[y + x * initialKernelSize] = -radius + y;
+            }
+        }
+        A = new double[6][initialKernelSizeSquared];
+        tt = new double[initialKernelSizeSquared];
+        W = new double[initialKernelSizeSquared];
+        WI = new double[initialKernelSizeSquared];
+        Xx = new double[initialKernelSizeSquared][6];
+        Xw = new double[initialKernelSizeSquared][6];
+        
+        for (y = 0; y < initialKernelSizeSquared; y++) {
+            Xx[y][0] = 1.0;
+            Xx[y][1] = x1Col[y];
+            Xx[y][2] = x2Col[y];
+            Xx[y][3] = x1Col[y] * x1Col[y];
+            Xx[y][4] = x1Col[y] * x2Col[y];
+            Xx[y][5] = x2Col[y] * x2Col[y];
+            // The weight matrix (Gaussian kernel function)
+            tt[y] = x1[y] * x1[y] + x2[y] * x2[y];
+            W[y] = Math.exp(escale * tt[y]);
+        } // for (y = 0; y < initialKernelSizeSquared; y++)    
+        
+        padXDim = xDim + 2 * radius;
+        padYDim = yDim + 2 * radius;
+        input2 = new float[padXDim * padYDim];
+        I2 = new boolean[padXDim * padYDim];
+        
+        // Mirror the I array
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                I2[x + radius + padXDim*(y + radius)] = I[x + y * xDim];
+            }
+        }
+        
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < radius; x++) {
+                // left side mirror reflection
+                I2[x + padXDim*(y + radius)] = I[(radius - x) + xDim * y];
+                // right side mirror reflection
+                I2[x + xDim + radius + padXDim * (y + radius)] =
+                I[xDim - 2 - x + xDim * y];
+            }
+        }
+        for (y = 0; y < radius; y++) {
+            for (x = 0; x < xDim; x++) {
+                // top side mirror reflection
+                I2[x + radius + padXDim * y] = I[x + xDim * (radius - y)];
+                // bottom side mirror reflection
+                I2[x + radius + padXDim * (y + yDim + radius)] =
+                I[x + xDim * (yDim - 2 - y)];
+            }
+        }
+        for (y = 0; y < radius; y++) {
+            for (x = 0; x < radius; x++) {
+                // left top mirror reflection
+                I2[x + padXDim * y] = I[(radius - x) + xDim * (radius - y)];
+                // left bottom mirror reflection
+                I2[x + padXDim * (y + yDim + radius)] = 
+                I[(radius - x) + xDim * (yDim - 2 - y)];
+                // right top mirror reflection
+                I2[x + xDim + radius + padXDim * y] =
+                I[xDim - 2 - x + xDim * (radius - y)];
+                // right bottom mirror reflection
+                I2[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                I[xDim - 2 - x + xDim * (yDim - 2 - y)];
+            }
+        }
+        inputp = new float[initialKernelSizeSquared];
+        for (c = 1; c <= 3; c++) {
+            for (z = 0; z < zDim; z++) {
+                
+                // Mirror the input image
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < xDim; x++) {
+                        input2[x + radius + padXDim*(y + radius)] = input[4* (x + y * xDim + z * length) + c];
+                    }
+                }
+                
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < radius; x++) {
+                        // left side mirror reflection
+                        input2[x + padXDim*(y + radius)] = input[4 *((radius - x) + xDim * y + z * length) + c];
+                        // right side mirror reflection
+                        input2[x + xDim + radius + padXDim * (y + radius)] =
+                        input[4* (xDim - 2 - x + xDim * y + z * length) + c];
+                    }
+                }
+                for (y = 0; y < radius; y++) {
+                    for (x = 0; x < xDim; x++) {
+                        // top side mirror reflection
+                        input2[x + radius + padXDim * y] = input[4 * (x + xDim * (radius - y) + z * length) + c];
+                        // bottom side mirror reflection
+                        input2[x + radius + padXDim * (y + yDim + radius)] =
+                        input[4 * (x + xDim * (yDim - 2 - y) + z * length) + c];
+                    }
+                }
+                for (y = 0; y < radius; y++) {
+                    for (x = 0; x < radius; x++) {
+                        // left top mirror reflection
+                        input2[x + padXDim * y] = input[4 * ((radius - x) + xDim * (radius - y) + z * length) + c];
+                        // left bottom mirror reflection
+                        input2[x + padXDim * (y + yDim + radius)] = 
+                        input[4 * ((radius - x) + xDim * (yDim - 2 - y) + z * length) + c];
+                        // right top mirror reflection
+                        input2[x + xDim + radius + padXDim * y] =
+                        input[4 * (xDim - 2 - x + xDim * (radius - y) + z * length) + c];
+                        // right bottom mirror reflection
+                        input2[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                        input[4 * (xDim - 2 - x + xDim * (yDim - 2 - y) + z * length) + c];
+                    }
+                }
+                
+                // Estimate the image and its first gradients
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < xDim; x++) {
+                        for (yp = 0; yp < initialKernelSize; yp++) {
+                            for (xp = 0; xp < initialKernelSize; xp++) {
+                                // Store inputp in one long column
+                                inputp[yp + xp * initialKernelSize] = input2[x + xp + padXDim * (y + yp)];
+                                // Zero weights where there is no sample
+                                if (I2[x + xp + padXDim * (y + yp)]) {
+                                    // Put WI in long column
+                                    WI[yp + xp * initialKernelSize] = W[xp + initialKernelSize * yp];
+                                }
+                                else {
+                                    WI[yp + xp * initialKernelSize] = 0;
+                                }
+                            }
+                        }
+                        
+                        for (k = 0; k < initialKernelSizeSquared; k++) {
+                            // Equivalent kernel
+                            Xw[k][0] = WI[k];
+                            Xw[k][1] = Xx[k][1] * WI[k];
+                            Xw[k][2] = Xx[k][2] * WI[k];
+                            Xw[k][3] = Xx[k][3] * WI[k];
+                            Xw[k][4] = Xx[k][4] * WI[k];
+                            Xw[k][5] = Xx[k][5] * WI[k];
+                        } // for (k = 0; k < initialKernelSizeSquared; k++)
+                        
+                        matXx = new Matrix(Xx);
+                        matXw = new Matrix(Xw);
+                        prod = ((matXx.transpose()).times(matXw)).getArray();
+                        for (k = 0; k < 6; k++) {
+                            prod[k][k] += 1.0E-5;
+                        }
+                        matProd = new Matrix(prod);
+                        A = ((matProd.inverse()).times(matXw.transpose())).getArray();
+                        
+                        output[4 *(x + xDim * y + length*z) + c] = 0;
+                        if (c == 1) {
+                            verticalGradient[x + xDim * y + length*z] = 0;
+                            horizontalGradient[x + xDim * y + length*z] = 0;
+                        }
+                        for (k = 0; k < initialKernelSizeSquared; k++) {
+                            output[4 * (x + xDim * y + length*z) + c] += A[0][k] * inputp[k];
+                            if (c == 1) {
+                                verticalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
+                                horizontalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                            }
+                        }   
+                    } // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+            } // for (z = 0; z < zDim; z++)
+        } // for (c = 1; c <= 3; c++)
+        
+    } // ckr2IrregularCIELab
     
     /** Second order classic kernel regression function with L1-norm for regularly sampled data */
     private void ckr2L1Regular() {
@@ -1453,7 +2251,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         } // for (z = 0; z < zDim; z++)
     } // steering
 
-    /*  2D processing on a second order classic kernel regression function for regularly sampled data */
+    /*  2D processing on a second order steering kernel regression function for regularly sampled data */
     private void skr2Regular(int upscale) {
         int length;
         int radius;
@@ -1746,7 +2544,548 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         
     } // skr2Regular
     
-    /*  2D processing on a second order classic kernel regression function with L1 norm for regularly sampled data */
+    /*  2D processing on a second order steering kernel regression function for irregularly sampled data */
+    private void skr2Irregular() {
+        int length;
+        int radius;
+        float x1[];
+        float x2[];
+        float x1Col[];
+        float x2Col[];
+        int x;
+        int y;
+        double C11[];
+        double C12[];
+        double C22[];
+        double CC[][];
+        Matrix matCC;
+        double sqrtDetC[];
+        float inputM[];
+        double C11M[];
+        double C12M[];
+        double C22M[];
+        double sqrtDetCM[];
+        double A[][];
+        int iterativeKernelSizeSquared = iterativeKernelSize * iterativeKernelSize;
+        double Xx[][];
+        double tt[];
+        double WI[];
+        double escale = -0.5/(iterativeGlobalSmoothing * iterativeGlobalSmoothing);
+        double Xw[][];
+        Matrix matXx;
+        Matrix matXw;
+        double prod[][];
+        Matrix matProd;
+        int z;
+        int padXDim;
+        int padYDim;
+        float inputp[];
+        int xp;
+        int yp;
+        int k;
+        
+        if (nDims == 3) {
+            extents = new int[3];
+            extents[0] = xDim;
+            extents[1] = yDim;
+            extents[2] = zDim;
+        }
+        else {
+            extents = new int[2];
+            extents[0] = xDim;
+            extents[1] = yDim;
+        }
+        
+        length = xDim * yDim;
+        output = new float[length * zDim];
+        horizontalGradient = new float[length * zDim];
+        verticalGradient = new float[length * zDim];
+        
+        // Create the equivalent kernels
+        radius = (iterativeKernelSize - 1)/2;
+        x1 = new float[iterativeKernelSize * iterativeKernelSize];
+        x2 = new float[iterativeKernelSize * iterativeKernelSize];
+        x1Col = new float[iterativeKernelSize * iterativeKernelSize];
+        x2Col = new float[iterativeKernelSize * iterativeKernelSize];
+        for (y = 0; y < iterativeKernelSize; y++) {
+            for (x = 0; x < iterativeKernelSize; x++) {
+                x2[x + y * iterativeKernelSize] = -radius + x;
+                x2Col[y + x * iterativeKernelSize] = -radius + x;
+                x1[x + y * iterativeKernelSize] = -radius + y;
+                x1Col[y + x * iterativeKernelSize] = -radius + y;
+            }
+        }
+        
+        Xx = new double[iterativeKernelSizeSquared][6];
+        for (y = 0; y < iterativeKernelSizeSquared; y++) {
+            Xx[y][0] = 1.0;
+            Xx[y][1] = x1Col[y];
+            Xx[y][2] = x2Col[y];
+            Xx[y][3] = x1Col[y] * x1Col[y];
+            Xx[y][4] = x1Col[y] * x2Col[y];
+            Xx[y][5] = x2Col[y] * x2Col[y];
+        } // for (y = 0; y < iterativeKernelSizeSquared; y++)  
+        
+        C11 = new double[length];
+        C12 = new double[length];
+        C22 = new double[length];
+        CC = new double[2][2];
+        sqrtDetC = new double[length];
+        padXDim = xDim + 2 * radius;
+        padYDim = extents[1] + 2 * radius;
+        inputM = new float[padXDim * padYDim];
+        C11M = new double[padXDim * padYDim];
+        C12M = new double[padXDim * padYDim];
+        C22M = new double[padXDim * padYDim];
+        sqrtDetCM = new double[padXDim * padYDim];
+        inputp = new float[iterativeKernelSizeSquared];
+        tt = new double[iterativeKernelSizeSquared];
+        WI = new double[iterativeKernelSizeSquared];
+        Xw = new double[iterativeKernelSizeSquared][6];
+        A = new double[6][iterativeKernelSizeSquared];
+        for (z = 0; z < zDim; z++) {
+            for (y = 0; y < yDim; y++) {
+                for (x = 0; x < xDim; x++) {
+                    // precalculation for covariance matrices
+                    if (!I[x + y * xDim + z * length]) {
+                        continue;
+                    }
+                    C11[x + y * xDim] = C[0][0][y][x][z];
+                    C12[x + y * xDim] = C[0][1][y][x][z];
+                    C22[x + y * xDim] = C[1][1][y][x][z];
+                    CC[0][0] = C[0][0][y][x][z];
+                    CC[0][1] = C[0][1][y][x][z];
+                    CC[1][0] = C[1][0][y][x][z];
+                    CC[1][1] = C[1][1][y][x][z];
+                    matCC = new Matrix(CC);
+                    sqrtDetC[x + y * xDim] = Math.sqrt(matCC.det());
+                } // for (x = 0; x < xDim; x++)
+            } // for (y = 0; y < yDim; y++)
+            
+            // Mirroring
+            for (y = 0; y < yDim; y++) {
+                for (x = 0; x < xDim; x++) {
+                    inputM[x + radius + padXDim*(y + radius)] = input[x + y * xDim + z * length];
+                    C11M[x + radius + padXDim*(y + radius)] = C11[x + y * xDim];
+                    C12M[x + radius + padXDim*(y + radius)] = C12[x + y * xDim];
+                    C22M[x + radius + padXDim*(y + radius)] = C22[x + y * xDim];
+                    sqrtDetCM[x + radius + padXDim*(y + radius)] = sqrtDetC[x + y * xDim];
+                }
+            }
+            
+            for (y = 0; y < yDim; y++) {
+                for (x = 0; x < radius; x++) {
+                    // left side mirror reflection
+                    inputM[x + padXDim*(y + radius)] = input[(radius - x) + xDim * y + z * length];
+                    C11M[x + padXDim*(y + radius)] = C11[(radius - x) + xDim * y];
+                    C12M[x + padXDim*(y + radius)] = C12[(radius - x) + xDim * y];
+                    C22M[x + padXDim*(y + radius)] = C22[(radius - x) + xDim * y];
+                    sqrtDetCM[x + padXDim*(y + radius)] = sqrtDetC[(radius - x) + xDim * y];
+                    // right side mirror reflection
+                    inputM[x + xDim + radius + padXDim * (y + radius)] =
+                    input[xDim - 2 - x + xDim * y + z * length];
+                    C11M[x + xDim + radius + padXDim * (y + radius)] =
+                    C11[xDim - 2 - x + xDim * y];
+                    C12M[x + xDim + radius + padXDim * (y + radius)] =
+                    C12[xDim - 2 - x + xDim * y];
+                    C22M[x + xDim + radius + padXDim * (y + radius)] =
+                    C22[xDim - 2 - x + xDim * y];
+                    sqrtDetCM[x + xDim + radius + padXDim * (y + radius)] =
+                    sqrtDetC[xDim - 2 - x + xDim * y];
+                }
+            }
+            for (y = 0; y < radius; y++) {
+                for (x = 0; x < xDim; x++) {
+                    // top side mirror reflection
+                    inputM[x + radius + padXDim * y] = input[x + xDim * (radius - y) + z * length];
+                    C11M[x + radius + padXDim * y] = C11[x + xDim * (radius - y)];
+                    C12M[x + radius + padXDim * y] = C12[x + xDim * (radius - y)];
+                    C22M[x + radius + padXDim * y] = C22[x + xDim * (radius - y)];
+                    sqrtDetCM[x + radius + padXDim * y] = sqrtDetC[x + xDim * (radius - y)];
+                    // bottom side mirror reflection
+                    inputM[x + radius + padXDim * (y + yDim + radius)] =
+                    input[x + xDim * (yDim - 2 - y) + z * length];
+                    C11M[x + radius + padXDim * (y + yDim + radius)] =
+                    C11[x + xDim * (yDim - 2 - y)];
+                    C12M[x + radius + padXDim * (y + yDim + radius)] =
+                    C12[x + xDim * (yDim - 2 - y)];
+                    C22M[x + radius + padXDim * (y + yDim + radius)] =
+                    C22[x + xDim * (yDim - 2 - y)];
+                    sqrtDetCM[x + radius + padXDim * (y + yDim + radius)] =
+                    sqrtDetC[x + xDim * (yDim - 2 - y)];
+                }
+            }
+            for (y = 0; y < radius; y++) {
+                for (x = 0; x < radius; x++) {
+                    // left top mirror reflection
+                    inputM[x + padXDim * y] = input[(radius - x) + xDim * (radius - y) + z * length];
+                    C11M[x + padXDim * y] = C11[(radius - x) + xDim * (radius - y)];
+                    C12M[x + padXDim * y] = C12[(radius - x) + xDim * (radius - y)];
+                    C22M[x + padXDim * y] = C22[(radius - x) + xDim * (radius - y)];
+                    sqrtDetCM[x + padXDim * y] = sqrtDetC[(radius - x) + xDim * (radius - y)];
+                    // left bottom mirror reflection
+                    inputM[x + padXDim * (y + yDim + radius)] = 
+                    input[(radius - x) + xDim * (yDim - 2 - y) + z * length];
+                    C11M[x + padXDim * (y + yDim + radius)] = 
+                    C11[(radius - x) + xDim * (yDim - 2 - y)];
+                    C12M[x + padXDim * (y + yDim + radius)] = 
+                    C12[(radius - x) + xDim * (yDim - 2 - y)];
+                    C22M[x + padXDim * (y + yDim + radius)] = 
+                    C22[(radius - x) + xDim * (yDim - 2 - y)];
+                    sqrtDetCM[x + padXDim * (y + yDim + radius)] = 
+                    sqrtDetC[(radius - x) + xDim * (yDim - 2 - y)];
+                    // right top mirror reflection
+                    inputM[x + xDim + radius + padXDim * y] =
+                    input[xDim - 2 - x + xDim * (radius - y) + z * length];
+                    C11M[x + xDim + radius + padXDim * y] =
+                    C11[xDim - 2 - x + xDim * (radius - y)];
+                    C12M[x + xDim + radius + padXDim * y] =
+                    C12[xDim - 2 - x + xDim * (radius - y)];
+                    C22M[x + xDim + radius + padXDim * y] =
+                    C22[xDim - 2 - x + xDim * (radius - y)];
+                    sqrtDetCM[x + xDim + radius + padXDim * y] =
+                    sqrtDetC[xDim - 2 - x + xDim * (radius - y)];
+                    // right bottom mirror reflection
+                    inputM[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                    input[xDim - 2 - x + xDim * (yDim - 2 - y) + z * length];
+                    C11M[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                    C11[xDim - 2 - x + xDim * (yDim - 2 - y)];
+                    C12M[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                    C12[xDim - 2 - x + xDim * (yDim - 2 - y)];
+                    C22M[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                    C22[xDim - 2 - x + xDim * (yDim - 2 - y)];
+                    sqrtDetCM[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                    sqrtDetC[xDim - 2 - x + xDim * (yDim - 2 - y)];
+                }
+            }
+            
+            // Estimate an image and its first gradients
+            for (y = 0; y < yDim; y++) {
+                for (x = 0; x < xDim; x++) {
+                    for (yp = 0; yp < iterativeKernelSize; yp++) {
+                        for (xp = 0; xp < iterativeKernelSize; xp++) {
+                            // Store inputp in one long column
+                            inputp[yp + xp * iterativeKernelSize] = inputM[x + xp + padXDim * (y + yp)];
+                            tt[xp + yp * iterativeKernelSize] = x1[xp + yp * iterativeKernelSize] *
+                            (C11M[x + xp + padXDim * (y + yp)] * x1[xp + yp * iterativeKernelSize] +
+                             C12M[x + xp + padXDim * (y + yp)] * x2[xp + yp * iterativeKernelSize]) +
+                            x2[xp + yp * iterativeKernelSize] * 
+                            (C12M[x + xp + padXDim * (y + yp)] * x1[xp + yp * iterativeKernelSize] +
+                             C22M[x + xp + padXDim * (y + yp)] * x2[xp + yp * iterativeKernelSize]);
+                            // Put WI into 1 long column
+                            WI[yp + xp * iterativeKernelSize] = Math.exp(escale * tt[xp + yp * iterativeKernelSize]) *
+                            sqrtDetCM[x + xp + padXDim * (y + yp)];
+                        } // for (xp = 0; xp < iterativeKernelSize; xp++)
+                    } // for (yp = 0; yp < iterativeKernelSize; yp++)
+                    
+                    for (k = 0; k < iterativeKernelSizeSquared; k++) {
+                        // Equivalent kernel
+                        Xw[k][0] = WI[k];
+                        Xw[k][1] = Xx[k][1] * WI[k];
+                        Xw[k][2] = Xx[k][2] * WI[k];
+                        Xw[k][3] = Xx[k][3] * WI[k];
+                        Xw[k][4] = Xx[k][4] * WI[k];
+                        Xw[k][5] = Xx[k][5] * WI[k];
+                    } // for (k = 0; k < iterativeKernelSizeSquared; k++)
+                    matXx = new Matrix(Xx);
+                    matXw = new Matrix(Xw);
+                    prod = ((matXx.transpose()).times(matXw)).getArray();
+                    for (k = 0; k < 6; k++) {
+                        prod[k][k] += 1.0E-5;
+                    }
+                    matProd = new Matrix(prod);
+                    A = ((matProd.inverse()).times(matXw.transpose())).getArray();
+                    
+                    output[x + xDim * y + length*z] = 0;
+                    verticalGradient[x + xDim * y + length*z] = 0;
+                    horizontalGradient[x + xDim * y + length*z] = 0;
+                    for (k = 0; k < iterativeKernelSizeSquared; k++) {
+                        output[x + xDim * y + length*z] += A[0][k] * inputp[k];
+                        verticalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
+                        horizontalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                    }
+                    
+                } // for (x = 0; x < xDim; x++)
+            } // for (y = 0; y < yDim; y++)
+        } // for (z = 0; z < zDim; z++)
+        
+    } // skr2Irregular
+    
+    /*  2D processing on a second order steering kernel regression function for irregularly sampled CIELab data */
+    private void skr2IrregularCIELab() {
+        int length;
+        int radius;
+        float x1[];
+        float x2[];
+        float x1Col[];
+        float x2Col[];
+        int x;
+        int y;
+        double C11[];
+        double C12[];
+        double C22[];
+        double CC[][];
+        Matrix matCC;
+        double sqrtDetC[];
+        float inputM[];
+        double C11M[];
+        double C12M[];
+        double C22M[];
+        double sqrtDetCM[];
+        double A[][];
+        int iterativeKernelSizeSquared = iterativeKernelSize * iterativeKernelSize;
+        double Xx[][];
+        double tt[];
+        double WI[];
+        double escale = -0.5/(iterativeGlobalSmoothing * iterativeGlobalSmoothing);
+        double Xw[][];
+        Matrix matXx;
+        Matrix matXw;
+        double prod[][];
+        Matrix matProd;
+        int z;
+        int padXDim;
+        int padYDim;
+        float inputp[];
+        int xp;
+        int yp;
+        int k;
+        int c;
+        
+        if (nDims == 3) {
+            extents = new int[3];
+            extents[0] = xDim;
+            extents[1] = yDim;
+            extents[2] = zDim;
+        }
+        else {
+            extents = new int[2];
+            extents[0] = xDim;
+            extents[1] = yDim;
+        }
+        
+        length = xDim * yDim;
+        output = new float[4 * length * zDim];
+        horizontalGradient = new float[length * zDim];
+        verticalGradient = new float[length * zDim];
+        
+        // Create the equivalent kernels
+        radius = (iterativeKernelSize - 1)/2;
+        x1 = new float[iterativeKernelSize * iterativeKernelSize];
+        x2 = new float[iterativeKernelSize * iterativeKernelSize];
+        x1Col = new float[iterativeKernelSize * iterativeKernelSize];
+        x2Col = new float[iterativeKernelSize * iterativeKernelSize];
+        for (y = 0; y < iterativeKernelSize; y++) {
+            for (x = 0; x < iterativeKernelSize; x++) {
+                x2[x + y * iterativeKernelSize] = -radius + x;
+                x2Col[y + x * iterativeKernelSize] = -radius + x;
+                x1[x + y * iterativeKernelSize] = -radius + y;
+                x1Col[y + x * iterativeKernelSize] = -radius + y;
+            }
+        }
+        
+        Xx = new double[iterativeKernelSizeSquared][6];
+        for (y = 0; y < iterativeKernelSizeSquared; y++) {
+            Xx[y][0] = 1.0;
+            Xx[y][1] = x1Col[y];
+            Xx[y][2] = x2Col[y];
+            Xx[y][3] = x1Col[y] * x1Col[y];
+            Xx[y][4] = x1Col[y] * x2Col[y];
+            Xx[y][5] = x2Col[y] * x2Col[y];
+        } // for (y = 0; y < iterativeKernelSizeSquared; y++)  
+        
+        C11 = new double[length];
+        C12 = new double[length];
+        C22 = new double[length];
+        CC = new double[2][2];
+        sqrtDetC = new double[length];
+        padXDim = xDim + 2 * radius;
+        padYDim = extents[1] + 2 * radius;
+        inputM = new float[padXDim * padYDim];
+        C11M = new double[padXDim * padYDim];
+        C12M = new double[padXDim * padYDim];
+        C22M = new double[padXDim * padYDim];
+        sqrtDetCM = new double[padXDim * padYDim];
+        inputp = new float[iterativeKernelSizeSquared];
+        tt = new double[iterativeKernelSizeSquared];
+        WI = new double[iterativeKernelSizeSquared];
+        Xw = new double[iterativeKernelSizeSquared][6];
+        A = new double[6][iterativeKernelSizeSquared];
+        for (c = 1; c <= 3; c++) {
+            for (z = 0; z < zDim; z++) {
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < xDim; x++) {
+                        // precalculation for covariance matrices
+                        if (!I[x + y * xDim + z * length]) {
+                            continue;
+                        }
+                        C11[x + y * xDim] = C[0][0][y][x][z];
+                        C12[x + y * xDim] = C[0][1][y][x][z];
+                        C22[x + y * xDim] = C[1][1][y][x][z];
+                        CC[0][0] = C[0][0][y][x][z];
+                        CC[0][1] = C[0][1][y][x][z];
+                        CC[1][0] = C[1][0][y][x][z];
+                        CC[1][1] = C[1][1][y][x][z];
+                        matCC = new Matrix(CC);
+                        sqrtDetC[x + y * xDim] = Math.sqrt(matCC.det());
+                    } // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+                
+                // Mirroring
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < xDim; x++) {
+                        inputM[x + radius + padXDim*(y + radius)] = input[4 *(x + y * xDim + z * length) + c];
+                        C11M[x + radius + padXDim*(y + radius)] = C11[x + y * xDim];
+                        C12M[x + radius + padXDim*(y + radius)] = C12[x + y * xDim];
+                        C22M[x + radius + padXDim*(y + radius)] = C22[x + y * xDim];
+                        sqrtDetCM[x + radius + padXDim*(y + radius)] = sqrtDetC[x + y * xDim];
+                    }
+                }
+                
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < radius; x++) {
+                        // left side mirror reflection
+                        inputM[x + padXDim*(y + radius)] = input[4 * ((radius - x) + xDim * y + z * length) + c];
+                        C11M[x + padXDim*(y + radius)] = C11[(radius - x) + xDim * y];
+                        C12M[x + padXDim*(y + radius)] = C12[(radius - x) + xDim * y];
+                        C22M[x + padXDim*(y + radius)] = C22[(radius - x) + xDim * y];
+                        sqrtDetCM[x + padXDim*(y + radius)] = sqrtDetC[(radius - x) + xDim * y];
+                        // right side mirror reflection
+                        inputM[x + xDim + radius + padXDim * (y + radius)] =
+                        input[4 * (xDim - 2 - x + xDim * y + z * length) + c];
+                        C11M[x + xDim + radius + padXDim * (y + radius)] =
+                        C11[xDim - 2 - x + xDim * y];
+                        C12M[x + xDim + radius + padXDim * (y + radius)] =
+                        C12[xDim - 2 - x + xDim * y];
+                        C22M[x + xDim + radius + padXDim * (y + radius)] =
+                        C22[xDim - 2 - x + xDim * y];
+                        sqrtDetCM[x + xDim + radius + padXDim * (y + radius)] =
+                        sqrtDetC[xDim - 2 - x + xDim * y];
+                    }
+                }
+                for (y = 0; y < radius; y++) {
+                    for (x = 0; x < xDim; x++) {
+                        // top side mirror reflection
+                        inputM[x + radius + padXDim * y] = input[4 *(x + xDim * (radius - y) + z * length) + c];
+                        C11M[x + radius + padXDim * y] = C11[x + xDim * (radius - y)];
+                        C12M[x + radius + padXDim * y] = C12[x + xDim * (radius - y)];
+                        C22M[x + radius + padXDim * y] = C22[x + xDim * (radius - y)];
+                        sqrtDetCM[x + radius + padXDim * y] = sqrtDetC[x + xDim * (radius - y)];
+                        // bottom side mirror reflection
+                        inputM[x + radius + padXDim * (y + yDim + radius)] =
+                        input[4 * (x + xDim * (yDim - 2 - y) + z * length) + c];
+                        C11M[x + radius + padXDim * (y + yDim + radius)] =
+                        C11[x + xDim * (yDim - 2 - y)];
+                        C12M[x + radius + padXDim * (y + yDim + radius)] =
+                        C12[x + xDim * (yDim - 2 - y)];
+                        C22M[x + radius + padXDim * (y + yDim + radius)] =
+                        C22[x + xDim * (yDim - 2 - y)];
+                        sqrtDetCM[x + radius + padXDim * (y + yDim + radius)] =
+                        sqrtDetC[x + xDim * (yDim - 2 - y)];
+                    }
+                }
+                for (y = 0; y < radius; y++) {
+                    for (x = 0; x < radius; x++) {
+                        // left top mirror reflection
+                        inputM[x + padXDim * y] = input[4* ((radius - x) + xDim * (radius - y) + z * length) + c];
+                        C11M[x + padXDim * y] = C11[(radius - x) + xDim * (radius - y)];
+                        C12M[x + padXDim * y] = C12[(radius - x) + xDim * (radius - y)];
+                        C22M[x + padXDim * y] = C22[(radius - x) + xDim * (radius - y)];
+                        sqrtDetCM[x + padXDim * y] = sqrtDetC[(radius - x) + xDim * (radius - y)];
+                        // left bottom mirror reflection
+                        inputM[x + padXDim * (y + yDim + radius)] = 
+                        input[4 * ((radius - x) + xDim * (yDim - 2 - y) + z * length) + c];
+                        C11M[x + padXDim * (y + yDim + radius)] = 
+                        C11[(radius - x) + xDim * (yDim - 2 - y)];
+                        C12M[x + padXDim * (y + yDim + radius)] = 
+                        C12[(radius - x) + xDim * (yDim - 2 - y)];
+                        C22M[x + padXDim * (y + yDim + radius)] = 
+                        C22[(radius - x) + xDim * (yDim - 2 - y)];
+                        sqrtDetCM[x + padXDim * (y + yDim + radius)] = 
+                        sqrtDetC[(radius - x) + xDim * (yDim - 2 - y)];
+                        // right top mirror reflection
+                        inputM[x + xDim + radius + padXDim * y] =
+                        input[4 * (xDim - 2 - x + xDim * (radius - y) + z * length) + c];
+                        C11M[x + xDim + radius + padXDim * y] =
+                        C11[xDim - 2 - x + xDim * (radius - y)];
+                        C12M[x + xDim + radius + padXDim * y] =
+                        C12[xDim - 2 - x + xDim * (radius - y)];
+                        C22M[x + xDim + radius + padXDim * y] =
+                        C22[xDim - 2 - x + xDim * (radius - y)];
+                        sqrtDetCM[x + xDim + radius + padXDim * y] =
+                        sqrtDetC[xDim - 2 - x + xDim * (radius - y)];
+                        // right bottom mirror reflection
+                        inputM[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                        input[4 * (xDim - 2 - x + xDim * (yDim - 2 - y) + z * length) + c];
+                        C11M[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                        C11[xDim - 2 - x + xDim * (yDim - 2 - y)];
+                        C12M[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                        C12[xDim - 2 - x + xDim * (yDim - 2 - y)];
+                        C22M[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                        C22[xDim - 2 - x + xDim * (yDim - 2 - y)];
+                        sqrtDetCM[x + xDim + radius + padXDim * (y + yDim + radius)] =
+                        sqrtDetC[xDim - 2 - x + xDim * (yDim - 2 - y)];
+                    }
+                }
+                
+                // Estimate an image and its first gradients
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < xDim; x++) {
+                        for (yp = 0; yp < iterativeKernelSize; yp++) {
+                            for (xp = 0; xp < iterativeKernelSize; xp++) {
+                                // Store inputp in one long column
+                                inputp[yp + xp * iterativeKernelSize] = inputM[x + xp + padXDim * (y + yp)];
+                                tt[xp + yp * iterativeKernelSize] = x1[xp + yp * iterativeKernelSize] *
+                                (C11M[x + xp + padXDim * (y + yp)] * x1[xp + yp * iterativeKernelSize] +
+                                 C12M[x + xp + padXDim * (y + yp)] * x2[xp + yp * iterativeKernelSize]) +
+                                x2[xp + yp * iterativeKernelSize] * 
+                                (C12M[x + xp + padXDim * (y + yp)] * x1[xp + yp * iterativeKernelSize] +
+                                 C22M[x + xp + padXDim * (y + yp)] * x2[xp + yp * iterativeKernelSize]);
+                                // Put WI into 1 long column
+                                WI[yp + xp * iterativeKernelSize] = Math.exp(escale * tt[xp + yp * iterativeKernelSize]) *
+                                sqrtDetCM[x + xp + padXDim * (y + yp)];
+                            } // for (xp = 0; xp < iterativeKernelSize; xp++)
+                        } // for (yp = 0; yp < iterativeKernelSize; yp++)
+                        
+                        for (k = 0; k < iterativeKernelSizeSquared; k++) {
+                            // Equivalent kernel
+                            Xw[k][0] = WI[k];
+                            Xw[k][1] = Xx[k][1] * WI[k];
+                            Xw[k][2] = Xx[k][2] * WI[k];
+                            Xw[k][3] = Xx[k][3] * WI[k];
+                            Xw[k][4] = Xx[k][4] * WI[k];
+                            Xw[k][5] = Xx[k][5] * WI[k];
+                        } // for (k = 0; k < iterativeKernelSizeSquared; k++)
+                        matXx = new Matrix(Xx);
+                        matXw = new Matrix(Xw);
+                        prod = ((matXx.transpose()).times(matXw)).getArray();
+                        for (k = 0; k < 6; k++) {
+                            prod[k][k] += 1.0E-5;
+                        }
+                        matProd = new Matrix(prod);
+                        A = ((matProd.inverse()).times(matXw.transpose())).getArray();
+                        
+                        output[4 * (x + xDim * y + length*z) + c] = 0;
+                        if (c == 1) {
+                            verticalGradient[x + xDim * y + length*z] = 0;
+                            horizontalGradient[x + xDim * y + length*z] = 0;
+                        }
+                        for (k = 0; k < iterativeKernelSizeSquared; k++) {
+                            output[4 * (x + xDim * y + length*z) + c] += A[0][k] * inputp[k];
+                            if (c == 1) {
+                                verticalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
+                                horizontalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                            }
+                        }
+                        
+                    } // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+            } // for (z = 0; z < zDim; z++)
+        } // for (c = 1; c <= 3; c++)
+        
+    } // skr2Irregular
+    
+    /*  2D processing on a second order steering kernel regression function with L1 norm for regularly sampled data */
     private void skr2L1Regular() {
         int length;
         int radius;
@@ -2057,7 +3396,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
             
     } // skr2L1Regular
     
-    /*  2D processing on a second order classic kernel regression function for regularly sampled CIELab data */
+    /*  2D processing on a second order steering kernel regression function for regularly sampled CIELab data */
     private void skr2RegularCIELab(int upscale) {
         int length;
         int radius;
