@@ -616,6 +616,25 @@ public class MipavUtil extends JComponent {
             throw new TokenizerException("Unable to parse float value: " + str);
         }
     }
+    
+    /**
+     * Get a double value from a string tokenizer.
+     * 
+     * @param st the tokenizer to get the double from
+     * 
+     * @throws TokenizerException thrown if the string retrieved is not a double value
+     * 
+     * @return a double value
+     */
+    public static final double getDouble(StringTokenizer st) throws TokenizerException {
+        String str = st.nextToken();
+
+        try {
+            return Double.parseDouble(str);
+        } catch (NumberFormatException nfe) {
+            throw new TokenizerException("Unable to parse double value: " + str);
+        }
+    }
 
     /**
      * Finds the icon of the specified name. Uses the PlaceHolder class, which is in the same directory as the icons, to
