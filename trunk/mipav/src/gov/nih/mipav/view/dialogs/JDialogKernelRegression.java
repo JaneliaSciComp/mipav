@@ -140,6 +140,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
     
     private JRadioButton iterSteering2;
     
+    private JRadioButton iterIrregular;
+    
     private JRadioButton regSampled2Classic;
     
     private JRadioButton steering2L1Norm;
@@ -155,6 +157,39 @@ public class JDialogKernelRegression extends JDialogScriptableBase
     private JTextField textSteeringStep;
     
     private float steeringStepSize = 0.1f;
+    
+    private JCheckBox NaNCheckBox;
+    
+    private boolean hasNaN = false;
+    
+    private JCheckBox infinityCheckBox;
+    
+    private boolean hasInfinity = false;
+    
+    private JCheckBox greaterEqualCheckBox;
+    
+    private boolean hasGreaterEqual = false;
+    
+    private JTextField textGreaterEqual;
+    
+    private double greaterEqualValue = 0.0;
+    
+    private JCheckBox equalCheckBox;
+    
+    private boolean hasEqual = false;
+    
+    private JTextField textEqual;
+    
+    private double equalValue = 0.0;
+    
+    private JCheckBox lesserEqualCheckBox;
+    
+    private boolean hasLesserEqual = false;
+    
+    private JTextField textLesserEqual;
+    
+    private double lesserEqualValue = 0.0;
+    
 
     /** DOCUMENT ME! */
     private JRadioButton newImage;
@@ -216,8 +251,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
-        } else if ((source.equals(iterSteering2)) || (source.equals(regSampled2Classic)) ||
-                   (source.equals(steering2L1Norm))) {
+        } else if ((source.equals(iterSteering2)) || (source.equals(iterIrregular)) || 
+                   (source.equals(regSampled2Classic)) || (source.equals(steering2L1Norm))) {
             if (iterSteering2.isSelected()) {
                 labelIterativeGlobal.setEnabled(true);
                 labelIterativeGlobal.setText("Iterative global smoothing ");
@@ -225,6 +260,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 textIterativeGlobal.setText("2.4");
                 labelIterativeGlobal2.setEnabled(false);
                 textIterativeGlobal2.setEnabled(false);
+                labelUpscale.setEnabled(true);
+                textUpscale.setEnabled(true);
                 labelIterativeKernel.setEnabled(true);
                 textIterativeKernel.setEnabled(true);
                 labelIterations.setEnabled(true);
@@ -243,6 +280,73 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 textClassicStep.setEnabled(false);
                 labelSteeringStep.setEnabled(false);
                 textSteeringStep.setEnabled(false);
+                NaNCheckBox.setEnabled(false);
+                infinityCheckBox.setEnabled(false);
+                greaterEqualCheckBox.setEnabled(false);
+                textGreaterEqual.setEnabled(false);
+                equalCheckBox.setEnabled(false);
+                textEqual.setEnabled(false);
+                lesserEqualCheckBox.setEnabled(false);
+                textLesserEqual.setEnabled(false);
+            }
+            else if (iterIrregular.isSelected()) {
+                labelIterativeGlobal.setEnabled(true);
+                labelIterativeGlobal.setText("Iterative global smoothing ");
+                textIterativeGlobal.setEnabled(true);
+                textIterativeGlobal.setText("2.4");
+                labelIterativeGlobal2.setEnabled(false);
+                textIterativeGlobal2.setEnabled(false);
+                labelUpscale.setEnabled(false);
+                textUpscale.setEnabled(false);
+                textUpscale.setText("1");
+                labelIterativeKernel.setEnabled(true);
+                textIterativeKernel.setEnabled(true);
+                labelIterations.setEnabled(true);
+                labelIterations.setText("Iterations ");
+                textIterations.setEnabled(true);
+                textIterations.setText("4");
+                labelIterations2.setEnabled(false);
+                textIterations2.setEnabled(false);
+                labelWindowSize.setEnabled(true);
+                textWindowSize.setEnabled(true);
+                labelLambda.setEnabled(true);
+                textLambda.setEnabled(true);
+                labelAlpha.setEnabled(true);
+                textAlpha.setEnabled(true); 
+                labelClassicStep.setEnabled(false);
+                textClassicStep.setEnabled(false);
+                labelSteeringStep.setEnabled(false);
+                textSteeringStep.setEnabled(false); 
+                if ((image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE) ||
+                    (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
+                    NaNCheckBox.setEnabled(true);
+                    infinityCheckBox.setEnabled(true);    
+                }
+                else {
+                    NaNCheckBox.setEnabled(false);
+                    infinityCheckBox.setEnabled(false);
+                }
+                greaterEqualCheckBox.setEnabled(true);
+                if (greaterEqualCheckBox.isSelected()) {
+                    textGreaterEqual.setEnabled(true);
+                }
+                else {
+                    textGreaterEqual.setEnabled(false);
+                }
+                equalCheckBox.setEnabled(true);
+                if (equalCheckBox.isSelected()) {
+                    textEqual.setEnabled(true);
+                }
+                else {
+                    textEqual.setEnabled(false);
+                }
+                lesserEqualCheckBox.setEnabled(true);
+                if (lesserEqualCheckBox.isSelected()) {
+                    textLesserEqual.setEnabled(true);
+                }
+                else {
+                    textLesserEqual.setEnabled(false);
+                }
             }
             else if (regSampled2Classic.isSelected()) {
                 labelIterativeGlobal.setEnabled(false);
@@ -250,6 +354,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 textIterativeGlobal.setEnabled(false);
                 labelIterativeGlobal2.setEnabled(false);
                 textIterativeGlobal2.setEnabled(false);
+                labelUpscale.setEnabled(true);
+                textUpscale.setEnabled(true);
                 labelIterativeKernel.setEnabled(false);
                 textIterativeKernel.setEnabled(false);
                 labelIterations.setText("Iterations ");
@@ -267,6 +373,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 textClassicStep.setEnabled(false);
                 labelSteeringStep.setEnabled(false);
                 textSteeringStep.setEnabled(false);
+                NaNCheckBox.setEnabled(false);
+                infinityCheckBox.setEnabled(false);
+                greaterEqualCheckBox.setEnabled(false);
+                textGreaterEqual.setEnabled(false);
+                equalCheckBox.setEnabled(false);
+                textEqual.setEnabled(false);
+                lesserEqualCheckBox.setEnabled(false);
+                textLesserEqual.setEnabled(false);
             }
             else if (steering2L1Norm.isSelected()) {
                 labelIterativeGlobal.setEnabled(true);
@@ -275,6 +389,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 textIterativeGlobal.setText("1.5");
                 labelIterativeGlobal2.setEnabled(true);
                 textIterativeGlobal2.setEnabled(true);
+                labelUpscale.setEnabled(true);
+                textUpscale.setEnabled(true);
                 labelIterativeKernel.setEnabled(true);
                 textIterativeKernel.setEnabled(true);
                 labelIterations.setText("Iterations for L1 classic kernel regression ");
@@ -293,6 +409,38 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 textClassicStep.setEnabled(true);
                 labelSteeringStep.setEnabled(true);
                 textSteeringStep.setEnabled(true);
+                NaNCheckBox.setEnabled(false);
+                infinityCheckBox.setEnabled(false);
+                greaterEqualCheckBox.setEnabled(false);
+                textGreaterEqual.setEnabled(false);
+                equalCheckBox.setEnabled(false);
+                textEqual.setEnabled(false);
+                lesserEqualCheckBox.setEnabled(false);
+                textLesserEqual.setEnabled(false);
+            }
+        }
+        else if (source.equals(greaterEqualCheckBox)) {
+            if (greaterEqualCheckBox.isSelected()) {
+                textGreaterEqual.setEnabled(true);
+            }
+            else {
+                textGreaterEqual.setEnabled(false);
+            }
+        }
+        else if (source.equals(equalCheckBox)) {
+            if (equalCheckBox.isSelected()) {
+                textEqual.setEnabled(true);
+            }
+            else {
+                textEqual.setEnabled(false);
+            }
+        }
+        else if (source.equals(lesserEqualCheckBox)) {
+            if (lesserEqualCheckBox.isSelected()) {
+                textLesserEqual.setEnabled(true);
+            }
+            else {
+                textLesserEqual.setEnabled(false);
             }
         }
     }
@@ -380,6 +528,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
 
         String str = new String();
         str += method + delim;
+        str += hasNaN + delim;
+        str += hasInfinity + delim;
+        str += hasGreaterEqual + delim;
+        str += greaterEqualValue + delim;
+        str += hasEqual + delim;
+        str += equalValue + delim;
+        str += hasLesserEqual + delim;
+        str += lesserEqualValue + delim;
         str += initialGlobalSmoothing + delim;
         str += iterativeGlobalSmoothing + delim;
         str += iterativeGlobalSmoothing2 + delim;
@@ -421,19 +577,39 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 method = MipavUtil.getInt(st);
                 if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER) {
                     iterSteering2.setSelected(true);
+                    iterIrregular.setSelected(false);
                     regSampled2Classic.setSelected(false);
                     steering2L1Norm.setSelected(false);
                 }
+                else if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR) {
+                    iterSteering2.setSelected(false);
+                    iterIrregular.setSelected(true);
+                    regSampled2Classic.setSelected(false);
+                    steering2L1Norm.setSelected(false);    
+                }
                 else if (method == AlgorithmKernelRegression.REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC) {
                     iterSteering2.setSelected(false);
+                    iterIrregular.setSelected(false);
                     regSampled2Classic.setSelected(true);
                     steering2L1Norm.setSelected(false);
                 }
                 else if (method == AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM) {
                     iterSteering2.setSelected(false);
+                    iterIrregular.setSelected(false);
                     regSampled2Classic.setSelected(false);
                     steering2L1Norm.setSelected(true);    
                 }
+                NaNCheckBox.setSelected(MipavUtil.getBoolean(st));
+                infinityCheckBox.setSelected(MipavUtil.getBoolean(st));
+                hasGreaterEqual = MipavUtil.getBoolean(st);
+                greaterEqualCheckBox.setSelected(hasGreaterEqual);
+                textGreaterEqual.setText("" + MipavUtil.getDouble(st));
+                hasEqual = MipavUtil.getBoolean(st);
+                equalCheckBox.setSelected(hasEqual);
+                textEqual.setText("" + MipavUtil.getDouble(st));
+                hasLesserEqual = MipavUtil.getBoolean(st);
+                lesserEqualCheckBox.setSelected(hasLesserEqual);
+                textLesserEqual.setText("" + MipavUtil.getDouble(st));
                 textInitialGlobal.setText("" + MipavUtil.getFloat(st));
                 textIterativeGlobal.setText("" + MipavUtil.getFloat(st));
                 textIterativeGlobal2.setText("" + MipavUtil.getFloat(st));
@@ -447,12 +623,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 textAlpha.setText("" + MipavUtil.getFloat(st));
                 textClassicStep.setText("" + MipavUtil.getFloat(st));
                 textSteeringStep.setText("" + MipavUtil.getFloat(st));
-                if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER) {
+                if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER){
                     labelIterativeGlobal.setText("Iterative global smoothing ");
                     labelIterativeGlobal.setEnabled(true);
                     textIterativeGlobal.setEnabled(true);
                     labelIterativeGlobal2.setEnabled(false);
                     textIterativeGlobal2.setEnabled(false);
+                    labelUpscale.setEnabled(true);
+                    textUpscale.setEnabled(true);
                     labelIterativeKernel.setEnabled(true);
                     textIterativeKernel.setEnabled(true);
                     labelIterations.setText("Iterations ");
@@ -470,6 +648,56 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                     textClassicStep.setEnabled(false);
                     labelSteeringStep.setEnabled(false);
                     textSteeringStep.setEnabled(false);
+                    NaNCheckBox.setEnabled(false);
+                    infinityCheckBox.setEnabled(false);
+                    greaterEqualCheckBox.setEnabled(false);
+                    textGreaterEqual.setEnabled(false);
+                    equalCheckBox.setEnabled(false);
+                    textEqual.setEnabled(false);
+                    lesserEqualCheckBox.setEnabled(false);
+                    textLesserEqual.setEnabled(false);
+                }
+                else if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR) {
+                    labelIterativeGlobal.setText("Iterative global smoothing ");
+                    labelIterativeGlobal.setEnabled(true);
+                    textIterativeGlobal.setEnabled(true);
+                    labelIterativeGlobal2.setEnabled(false);
+                    textIterativeGlobal2.setEnabled(false);
+                    labelUpscale.setEnabled(false);
+                    textUpscale.setEnabled(false);
+                    textUpscale.setText("1");
+                    labelIterativeKernel.setEnabled(true);
+                    textIterativeKernel.setEnabled(true);
+                    labelIterations.setText("Iterations ");
+                    labelIterations.setEnabled(true);
+                    textIterations.setEnabled(true);
+                    labelIterations2.setEnabled(false);
+                    textIterations2.setEnabled(false);
+                    labelWindowSize.setEnabled(true);
+                    textWindowSize.setEnabled(true);
+                    labelLambda.setEnabled(true);
+                    textLambda.setEnabled(true);
+                    labelAlpha.setEnabled(true);
+                    textAlpha.setEnabled(true);
+                    labelClassicStep.setEnabled(false);
+                    textClassicStep.setEnabled(false);
+                    labelSteeringStep.setEnabled(false);
+                    textSteeringStep.setEnabled(false);
+                    if ((image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE) ||
+                        (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
+                        NaNCheckBox.setEnabled(true);
+                        infinityCheckBox.setEnabled(true);    
+                    }
+                    else {
+                        NaNCheckBox.setEnabled(false);
+                        infinityCheckBox.setEnabled(false);
+                    }
+                    greaterEqualCheckBox.setEnabled(true);
+                    textGreaterEqual.setEnabled(hasGreaterEqual);
+                    equalCheckBox.setEnabled(true);
+                    textEqual.setEnabled(hasEqual);
+                    lesserEqualCheckBox.setEnabled(true);
+                    textLesserEqual.setEnabled(hasLesserEqual);
                 }
                 else if (method == AlgorithmKernelRegression.REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC) {
                     labelIterativeGlobal.setText("Iterative global smoothing ");
@@ -477,6 +705,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                     textIterativeGlobal.setEnabled(false);
                     labelIterativeGlobal2.setEnabled(false);
                     textIterativeGlobal2.setEnabled(false);
+                    labelUpscale.setEnabled(true);
+                    textUpscale.setEnabled(true);
                     labelIterativeKernel.setEnabled(false);
                     textIterativeKernel.setEnabled(false);
                     labelIterations.setText("Iterations ");
@@ -493,6 +723,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                     textClassicStep.setEnabled(false);
                     labelSteeringStep.setEnabled(false);
                     textSteeringStep.setEnabled(false);
+                    NaNCheckBox.setEnabled(false);
+                    infinityCheckBox.setEnabled(false);
+                    greaterEqualCheckBox.setEnabled(false);
+                    textGreaterEqual.setEnabled(false);
+                    equalCheckBox.setEnabled(false);
+                    textEqual.setEnabled(false);
+                    lesserEqualCheckBox.setEnabled(false);
+                    textLesserEqual.setEnabled(false);
                 }
                 else if (method == AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM) {
                     labelIterativeGlobal.setText("Global smoothing for L1 classic kernel regression ");
@@ -500,6 +738,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                     textIterativeGlobal.setEnabled(true);
                     labelIterativeGlobal2.setEnabled(true);
                     textIterativeGlobal2.setEnabled(true);
+                    labelUpscale.setEnabled(true);
+                    textUpscale.setEnabled(true);
                     labelIterativeKernel.setEnabled(true);
                     textIterativeKernel.setEnabled(true);
                     labelIterations.setText("Iterations for L1 classic kernel regression ");
@@ -517,6 +757,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                     textClassicStep.setEnabled(true);
                     labelSteeringStep.setEnabled(true);
                     textSteeringStep.setEnabled(true);
+                    NaNCheckBox.setEnabled(false);
+                    infinityCheckBox.setEnabled(false);
+                    greaterEqualCheckBox.setEnabled(false);
+                    textGreaterEqual.setEnabled(false);
+                    equalCheckBox.setEnabled(false);
+                    textEqual.setEnabled(false);
+                    lesserEqualCheckBox.setEnabled(false);
+                    textLesserEqual.setEnabled(false);
                 }
                 image25DCheckBox.setSelected(MipavUtil.getBoolean(st));
 
@@ -665,12 +913,84 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         this.alpha = alpha;
     }
     
+    /**
+     * 
+     * @param classicStepSize
+     */
     public void setClassicStepSize(float classicStepSize) {
         this.classicStepSize = classicStepSize;
     }
     
+    /**
+     * 
+     * @param steeringStepSize
+     */
     public void setSteeringStepSize(float steeringStepSize) {
         this.steeringStepSize = steeringStepSize;
+    }
+    
+    /**
+     * 
+     * @param hasNaN
+     */
+    public void setHasNaN(boolean hasNaN) {
+        this.hasNaN = hasNaN;
+    }
+    
+    /**
+     * 
+     * @param hasInfinity
+     */
+    public void setHasInfinity(boolean hasInfinity) {
+        this.hasInfinity = hasInfinity;
+    }
+    
+    /**
+     * 
+     * @param hasGreaterEqual
+     */
+    public void setHasGreaterEqual(boolean hasGreaterEqual) {
+        this.hasGreaterEqual = hasGreaterEqual;
+    }
+    
+    /**
+     * 
+     * @param greaterEqualValue
+     */
+    public void setGreaterEqualValue(double greaterEqualValue) {
+        this.greaterEqualValue = greaterEqualValue;
+    }
+    
+    /**
+     * 
+     * @param hasEqual
+     */
+    public void setHasEqual(boolean hasEqual) {
+        this.hasEqual = hasEqual;
+    }
+    
+    /**
+     * 
+     * @param equalValue
+     */
+    public void setEqualValue(double equalValue) {
+        this.equalValue = equalValue;
+    }
+    
+    /**
+     * 
+     * @param hasLesserEqual
+     */
+    public void setHasLesserEqual(boolean hasLesserEqual) {
+        this.hasLesserEqual = hasLesserEqual;
+    }
+    
+    /**
+     * 
+     * @param lesserEqualValue
+     */
+    public void setLesserEqualValue(double lesserEqualValue) {
+        this.lesserEqualValue = lesserEqualValue;
     }
 
     
@@ -708,6 +1028,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 // resultImage.setImageName(name);
                 // Make algorithm
                 kernelRegressionAlgo = new AlgorithmKernelRegression(resultImage, image, method,
+                        hasNaN, hasInfinity, hasGreaterEqual, greaterEqualValue, hasEqual,
+                        equalValue, hasLesserEqual, lesserEqualValue,
                         initialGlobalSmoothing, iterativeGlobalSmoothing, iterativeGlobalSmoothing2, 
                         upscale, initialKernelSize, iterativeKernelSize, iterations, iterations2, 
                         windowSize, lambda, alpha, classicStepSize, steeringStepSize, image25D);
@@ -747,6 +1069,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 kernelRegressionAlgo = new AlgorithmKernelRegression(null, image, method,
+                        hasNaN, hasInfinity, hasGreaterEqual, greaterEqualValue, hasEqual,
+                        equalValue, hasLesserEqual, lesserEqualValue,
                         initialGlobalSmoothing, iterativeGlobalSmoothing, iterativeGlobalSmoothing2, 
                         upscale, initialKernelSize, iterativeKernelSize, iterations, iterations2, 
                         windowSize, lambda, alpha, classicStepSize, steeringStepSize, image25D);
@@ -816,6 +1140,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         }
 
         method = scriptParameters.getParams().getInt("_method");
+        hasNaN = scriptParameters.getParams().getBoolean("has_NaN");
+        hasInfinity = scriptParameters.getParams().getBoolean("has_infinity");
+        hasGreaterEqual = scriptParameters.getParams().getBoolean("has_greater_equal");
+        greaterEqualValue = scriptParameters.getParams().getDouble("greater_equal_value");
+        hasEqual = scriptParameters.getParams().getBoolean("has_equal");
+        equalValue = scriptParameters.getParams().getDouble("equal_value");
+        hasLesserEqual = scriptParameters.getParams().getBoolean("has_lesser_equal");
+        lesserEqualValue = scriptParameters.getParams().getDouble("lesser_equal_value");
         initialGlobalSmoothing = scriptParameters.getParams().getFloat("initial_global_smoothing");
         iterativeGlobalSmoothing = scriptParameters.getParams().getFloat("iterative_global_smoothing");
         iterativeGlobalSmoothing2 = scriptParameters.getParams().getFloat("iterative_global_smoothing2");
@@ -841,6 +1173,14 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("_method", method));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("has_NaN", hasNaN));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("has_infinity", hasInfinity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("has_greater_equal", hasGreaterEqual));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("greater_equal_value", greaterEqualValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("has_equal", hasEqual));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("equal_value", equalValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("has_lesser_equal", hasLesserEqual));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("lesser_equal_value", lesserEqualValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_global_smoothing", initialGlobalSmoothing));
         scriptParameters.getParams().put(ParameterFactory.newParameter("iterative_global_smoothing", iterativeGlobalSmoothing));
         scriptParameters.getParams().put(ParameterFactory.newParameter("iterative_global_smoothing2", iterativeGlobalSmoothing2));
@@ -904,6 +1244,73 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         methodGroup.add(iterSteering2);
         paramPanel.add(iterSteering2, gbc2);
         
+        gbc2.gridy = yPos++;
+        iterIrregular = new JRadioButton("Iterative Steering for Irregular Sampling", false);
+        iterIrregular.setFont(serif12);
+        iterIrregular.setForeground(Color.black);
+        iterIrregular.addActionListener(this);
+        methodGroup.add(iterIrregular);
+        paramPanel.add(iterIrregular, gbc2);
+        
+        gbc2.gridy = yPos++;
+        NaNCheckBox = new JCheckBox("NaN ", false);
+        NaNCheckBox.setEnabled(false);
+        NaNCheckBox.setFont(serif12);
+        NaNCheckBox.setForeground(Color.black);
+        paramPanel.add(NaNCheckBox, gbc2);
+        
+        gbc2.gridy = yPos++;
+        infinityCheckBox = new JCheckBox("Infinity ", false);
+        infinityCheckBox.setEnabled(false);
+        infinityCheckBox.setFont(serif12);
+        infinityCheckBox.setForeground(Color.black);
+        paramPanel.add(infinityCheckBox, gbc2);
+        
+        gbc2.gridy = yPos++;
+        greaterEqualCheckBox = new JCheckBox("Value >= ", false);
+        greaterEqualCheckBox.setEnabled(false);
+        greaterEqualCheckBox.setFont(serif12);
+        greaterEqualCheckBox.setForeground(Color.black);
+        greaterEqualCheckBox.addActionListener(this);
+        paramPanel.add(greaterEqualCheckBox, gbc2);
+        
+        gbc2.gridx = 1;
+        textGreaterEqual = createTextField("0");
+        textGreaterEqual.setColumns(10);
+        textGreaterEqual.setEnabled(false);
+        paramPanel.add(textGreaterEqual, gbc2);
+        
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos++;
+        equalCheckBox = new JCheckBox("Value = ", false);
+        equalCheckBox.setEnabled(false);
+        equalCheckBox.setFont(serif12);
+        equalCheckBox.setForeground(Color.black);
+        equalCheckBox.addActionListener(this);
+        paramPanel.add(equalCheckBox, gbc2);
+        
+        gbc2.gridx = 1;
+        textEqual = createTextField("0");
+        textEqual.setColumns(10);
+        textEqual.setEnabled(false);
+        paramPanel.add(textEqual, gbc2);
+        
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos++;
+        lesserEqualCheckBox = new JCheckBox("Value <= ", false);
+        lesserEqualCheckBox.setEnabled(false);
+        lesserEqualCheckBox.setFont(serif12);
+        lesserEqualCheckBox.setForeground(Color.black);
+        lesserEqualCheckBox.addActionListener(this);
+        paramPanel.add(lesserEqualCheckBox, gbc2);
+        
+        gbc2.gridx = 1;
+        textLesserEqual = createTextField("0");
+        textLesserEqual.setColumns(10);
+        textLesserEqual.setEnabled(false);
+        paramPanel.add(textLesserEqual, gbc2);
+        
+        gbc2.gridx = 0;
         gbc2.gridy = yPos++;
         regSampled2Classic = new JRadioButton("Regularly Sampled Second Order Classic", false);
         regSampled2Classic.setFont(serif12);
@@ -1116,6 +1523,9 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         if (iterSteering2.isSelected()) {
             method = AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER;
         }
+        else if (iterIrregular.isSelected()) {
+            method = AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR;
+        }
         else if (regSampled2Classic.isSelected()) {
             method = AlgorithmKernelRegression.REGULARLY_SAMPLED_SECOND_ORDER_CLASSIC;
         }
@@ -1253,6 +1663,54 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 return false;
             }
         } // if ((method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER) ||
+        
+        if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR) {
+            hasNaN = NaNCheckBox.isSelected();
+            
+            hasInfinity = infinityCheckBox.isSelected();
+            
+            hasGreaterEqual = greaterEqualCheckBox.isSelected();
+            if (hasGreaterEqual) {
+                tmpStr = textGreaterEqual.getText();
+                if (testParameter(tmpStr, -Double.MAX_VALUE, Double.MAX_VALUE)) {
+                    greaterEqualValue = Double.valueOf(tmpStr).doubleValue();
+                }
+                else {
+                    MipavUtil.displayError(">= field does not have a valid value");
+                    textGreaterEqual.requestFocus();
+                    textGreaterEqual.selectAll();
+                    return false;
+                }
+            } // if (hasGreaterEqual)
+            
+            hasEqual = equalCheckBox.isSelected();
+            if (hasEqual) {
+                tmpStr = textEqual.getText();
+                if (testParameter(tmpStr, -Double.MAX_VALUE, Double.MAX_VALUE)) {
+                    equalValue = Double.valueOf(tmpStr).doubleValue();
+                }
+                else {
+                    MipavUtil.displayError("= field does not have a valid value");
+                    textEqual.requestFocus();
+                    textEqual.selectAll();
+                    return false;
+                }
+            } // if (hasEqual)
+            
+            hasLesserEqual = lesserEqualCheckBox.isSelected();
+            if (hasLesserEqual) {
+                tmpStr = textLesserEqual.getText();
+                if (testParameter(tmpStr, -Double.MAX_VALUE, Double.MAX_VALUE)) {
+                    lesserEqualValue = Double.valueOf(tmpStr).doubleValue();
+                }
+                else {
+                    MipavUtil.displayError("<= field does not have a valid value");
+                    textLesserEqual.requestFocus();
+                    textLesserEqual.selectAll();
+                    return false;
+                }
+            } // if (hasLesserEqual)
+        } // if (method == AlgorithmKernelRegression.ITERATIVE_STEERING_KERNEL_SECOND_ORDER_IRREGULAR)
         
         if (method == AlgorithmKernelRegression.STEERING_KERNEL_SECOND_ORDER_L1_NORM) {
             tmpStr = textIterations2.getText();
