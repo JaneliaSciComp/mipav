@@ -352,8 +352,6 @@ public class JPanelListController extends JPanel implements ActionListener, List
         }
     }
 
-    // will do for now....
-    // check on the lists; should they be non-null first?
     /**
      * A convenience method to set the to-list-A buttons (both selected and all) to the given enabled status.
      *
@@ -364,8 +362,6 @@ public class JPanelListController extends JPanel implements ActionListener, List
         sendAllToListA.setEnabled(b);
     }
 
-    // will do for now....
-    // check on the lists; should they be non-null first?
     /**
      * A method to set the delete button to the given enabled status. By default, the delete button is not enabled when
      * this object is created.
@@ -376,8 +372,6 @@ public class JPanelListController extends JPanel implements ActionListener, List
         deleteSelection.setEnabled(b);
     }
 
-    // will do for now....
-    // check on the lists; should they be non-null first?
     /**
      * A convenience method to set the to-list-B buttons (both selected and all) to the given enabled status.
      *
@@ -386,6 +380,36 @@ public class JPanelListController extends JPanel implements ActionListener, List
     public void setForwardArrowEnabled(boolean b) {
         sendSelectionToListB.setEnabled(b);
         sendAllToListB.setEnabled(b);
+    }
+    
+    /**
+     * A convenience method to set the to-list-A buttons (both selected and all) to the given visible status.
+     *
+     * @param  v  Whether to make buttons visible
+     */
+    public void setBackArrowVisble(boolean v) {
+        sendSelectionToListA.setVisible(v);
+        sendAllToListA.setVisible(v);
+    }
+
+    /**
+     * A method to set the delete button to the given enabled status. By default, the delete button is visible when
+     * this object is created.
+     *
+     * @param  v  Whether to make button visible
+     */
+    public void setDeleteVisble(boolean v) {
+        deleteSelection.setVisible(v);
+    }
+
+    /**
+     * A convenience method to set the to-list-B buttons (both selected and all) to the given visible status.
+     *
+     * @param  v  Whether to make buttons visible
+     */
+    public void setForwardArrowVisible(boolean v) {
+        sendSelectionToListB.setVisible(v);
+        sendAllToListB.setVisible(v);
     }
 
     /**
