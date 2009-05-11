@@ -267,7 +267,12 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 labelIterations.setEnabled(true);
                 labelIterations.setText("Iterations ");
                 textIterations.setEnabled(true);
-                textIterations.setText("4");
+                if (image.isColorImage()) {
+                    textIterations.setText("2");
+                }
+                else {
+                    textIterations.setText("4");
+                }
                 labelIterations2.setEnabled(false);
                 textIterations2.setEnabled(false);
                 labelWindowSize.setEnabled(true);
@@ -304,7 +309,12 @@ public class JDialogKernelRegression extends JDialogScriptableBase
                 labelIterations.setEnabled(true);
                 labelIterations.setText("Iterations ");
                 textIterations.setEnabled(true);
-                textIterations.setText("4");
+                if (image.isColorImage()) {
+                    textIterations.setText("2");
+                }
+                else {
+                    textIterations.setText("4");
+                }
                 labelIterations2.setEnabled(false);
                 textIterations2.setEnabled(false);
                 labelWindowSize.setEnabled(true);
@@ -1388,7 +1398,12 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         paramPanel.add(labelIterations, gbc2);
         
         gbc2.gridx = 1;
-        textIterations = createTextField("4");
+        if (image.isColorImage()) {
+            textIterations = createTextField("2");    
+        }
+        else {
+            textIterations = createTextField("4");
+        }
         paramPanel.add(textIterations, gbc2);
         
         gbc2.gridx = 0;
