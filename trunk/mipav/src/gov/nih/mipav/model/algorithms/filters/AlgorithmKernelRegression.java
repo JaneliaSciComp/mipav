@@ -30,13 +30,13 @@ import Jama.*;
    
    6 MATLAB example files for using the routines were included in the package.  4 of the 6 files use ckr2_regular followed
    by a variable number of iterations of the 2 routines steering and skr2_regular.  This is the method selected by
-   ITERATIVE_STEERING_KERNEL_SECOND_ORDER.  There seems to be an error in these files. ckr2_regular and skr2_regular 
+   ITERATIVE_STEERING_KERNEL_SECOND_ORDER.  ckr2_regular and skr2_regular 
    output estimated image, vertical gradient, horizontal gradient.  Tracing thru the code shows the horizontal gradient 
    outputs go into the zy image gradient in steering and the vertical gradient goes into the zx image gradient in 
-   steering.  I put vertical gradient into zy and horizontal gradient in zx.  This corresponds to order 1 2.   
+   steering.  I maintained this order of vertical = 2 and horizontal = 1.   
    For ITERATIVE_STEERING_KERNEL_SECOND_ORDER for 256 by 256 black and white test images consisting of only
    horizontal gradient, horizontal gradient plus noise, vertical gradient, vertical gradient plus noise, I
-   tested for mean squared error between original gradient image and filtered image.  Present order was best.
+   tested for mean squared error between original gradient image and filtered image.  Reverse order seemed best.
    Used Gaussian noise set at 80 in test generator.  Images went from 0 at one side to 255 at the other.
    Mean squared errors:
    Horizontal gradient
@@ -51,6 +51,24 @@ import Jama.*;
    Vertical gradient plus noise
    1 2    26.1865
    2 1    29.8788
+   So at first it seemed that the order should be reversed to 1 2.  But then I checked 
+   ITER_STEERING_KEERNEL_SECOND_ORDER with 4 iterations on 5 black and white photos with Gaussian noise = 80.
+   cap17black.fits 256 X 256
+   1  2   71.088
+   2  1   61.555
+   einstein.tif 256 X 256
+   1  2   158.718
+   2  1    75.609
+   airfield 512 X 512
+   1  2   135.985
+   2  1   129.268
+   boats 512 X 512
+   1  2    79.584
+   2  1    64.735
+   bridge 512 X 512
+   1  2   157.756
+   2  1   138.601
+   So leave order as originally found.
    Test files corresponding to ITERATIVE_STEERING_KERNEL_SECOND_ORDER:
    1.) Lena_denoise.m  Denoises Gaussian noise in black and white image .
    2.) Pepper_deblock.m Deblocking example in black and white image.
@@ -980,9 +998,9 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                                 output[xx - 1 + extents[0] * (yy - 1) + extents[0]*extents[1]*z] +=
                                 A[0][k][i-1][j-1] * inputp[k];
                                 verticalGradient[xx - 1 + extents[0] * (yy - 1) + extents[0]*extents[1]*z] +=
-                                A[1][k][i-1][j-1] * inputp[k];
-                                horizontalGradient[xx - 1 + extents[0] * (yy - 1) + extents[0]*extents[1]*z] +=
                                 A[2][k][i-1][j-1] * inputp[k];
+                                horizontalGradient[xx - 1 + extents[0] * (yy - 1) + extents[0]*extents[1]*z] +=
+                                A[1][k][i-1][j-1] * inputp[k];
                             }
                         } // for (j = 1; j <= upscale; j++)
                     } // for (i = 1; i <= upscale; i++)
@@ -1213,8 +1231,8 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                     horizontalGradient[x + xDim * y + length*z] = 0;
                             for (k = 0; k < initialKernelSizeSquared; k++) {
                                 output[x + xDim * y + length*z] += A[0][k] * inputp[k];
-                                verticalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
-                                horizontalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                                verticalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                                horizontalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
                             }
                        
                 } // for (x = 0; x < xDim; x++)
@@ -1440,8 +1458,8 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                         for (k = 0; k < initialKernelSizeSquared; k++) {
                             output[4 * (x + xDim * y + length*z) + c] += A[0][k] * inputp[k];
                             if (c == 1) {
-                                verticalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
-                                horizontalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                                verticalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                                horizontalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
                             }
                         }   
                     } // for (x = 0; x < xDim; x++)
@@ -1657,8 +1675,8 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                             for (k = 0; k < 6; k++) {
                                 output[6*(xx - 1 + extents[0] * (yy - 1) + extents[0]*extents[1]*z) + k] = b[k];
                             }
-                            verticalGradient[xx - 1  + extents[0] * (yy - 1) + extents[0] * extents[1] * z] = b[1];
-                            horizontalGradient[xx - 1 + extents[0] * (yy - 1) + extents[0] * extents[1]* z] = b[2];
+                            verticalGradient[xx - 1  + extents[0] * (yy - 1) + extents[0] * extents[1] * z] = b[2];
+                            horizontalGradient[xx - 1 + extents[0] * (yy - 1) + extents[0] * extents[1]* z] = b[1];
                         } // for (x = 1; x <= xDim; x++)
                     } // for (y = 1; y <= yDim; y++)
                 } // for (j = 1; j <= upscale; j++)
@@ -2063,9 +2081,9 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                                     A[0][k][i-1][j-1] * inputp[k];
                                     if (c == 1) {
                                         verticalGradient[xx - 1 + extents[0] * (yy - 1) + extents[0]*extents[1]*z] +=
-                                        A[1][k][i-1][j-1] * inputp[k];
-                                        horizontalGradient[xx - 1 + extents[0] * (yy - 1) + extents[0]*extents[1]*z] +=
                                         A[2][k][i-1][j-1] * inputp[k];
+                                        horizontalGradient[xx - 1 + extents[0] * (yy - 1) + extents[0]*extents[1]*z] +=
+                                        A[1][k][i-1][j-1] * inputp[k];
                                     }
                                 }
                             } // for (j = 1; j <= upscale; j++)
@@ -2533,8 +2551,8 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                             horizontalGradient[xx - 1 + (yy - 1) * extents[0] + z * upscaleSquared * length] = 0;
                             for (k = 0; k < iterativeKernelSizeSquared; k++) {
                                 output[xx - 1 + (yy - 1) * extents[0] + z * upscaleSquared * length] += A[0][k] * inputp[k];
-                                verticalGradient[xx - 1 + (yy - 1) * extents[0] + z * upscaleSquared * length] += A[1][k] * inputp[k];
-                                horizontalGradient[xx - 1 + (yy - 1) * extents[0] + z * upscaleSquared * length] += A[2][k] * inputp[k];    
+                                verticalGradient[xx - 1 + (yy - 1) * extents[0] + z * upscaleSquared * length] += A[2][k] * inputp[k];
+                                horizontalGradient[xx - 1 + (yy - 1) * extents[0] + z * upscaleSquared * length] += A[1][k] * inputp[k];    
                             }
                         } // for (x = 1; x <= xDim; x++)
                     } // for (y = 1; y <= yDim; y++)
@@ -2801,8 +2819,8 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                     horizontalGradient[x + xDim * y + length*z] = 0;
                     for (k = 0; k < iterativeKernelSizeSquared; k++) {
                         output[x + xDim * y + length*z] += A[0][k] * inputp[k];
-                        verticalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
-                        horizontalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                        verticalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                        horizontalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
                     }
                     
                 } // for (x = 0; x < xDim; x++)
@@ -3073,8 +3091,8 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                         for (k = 0; k < iterativeKernelSizeSquared; k++) {
                             output[4 * (x + xDim * y + length*z) + c] += A[0][k] * inputp[k];
                             if (c == 1) {
-                                verticalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
-                                horizontalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                                verticalGradient[x + xDim * y + length*z] += A[2][k] * inputp[k];
+                                horizontalGradient[x + xDim * y + length*z] += A[1][k] * inputp[k];
                             }
                         }
                         
@@ -3685,9 +3703,9 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                                     A[0][k] * inputp[k];
                                     if (c == 1) {
                                         verticalGradient[xx - 1 + (yy - 1) * extents[0] + z * upscaleSquared * length] += 
-                                        A[1][k] * inputp[k];
-                                        horizontalGradient[xx - 1 + (yy - 1) * extents[0] + z * upscaleSquared * length] += 
                                         A[2][k] * inputp[k];
+                                        horizontalGradient[xx - 1 + (yy - 1) * extents[0] + z * upscaleSquared * length] += 
+                                        A[1][k] * inputp[k];
                                     }
                                 }
                             } // for (x = 1; x <= xDim; x++)
