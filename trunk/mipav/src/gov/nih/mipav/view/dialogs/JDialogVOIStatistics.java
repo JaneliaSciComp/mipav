@@ -1572,6 +1572,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         JPanelAddRemoveVOI() {
             super();
             setBackArrowEnabled(false);
+            setBackArrowVisble(false);
             setDeleteEnabled(true);
         }
 
