@@ -37,7 +37,10 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     private static final long serialVersionUID = -8736744495208652866L;
 
 	private static final String UNINSTALL = "Uninstall plugin(s)";
+	
 	private static final String INSTALL = "Install plugin(s)";
+	
+	private static final String MANIFEST = "Manifest" + File.separator + "mf_plugin.mf";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -48,7 +51,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     private String pluginDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" +
                                File.separator;
 
-    /** DOCUMENT ME! */
+    /** File list for installing plugins */
     private JTextField textName;
     
     /** The JTree that describes the plugin structure **/
@@ -57,6 +60,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     /** The main user interface */
     private ViewUserInterface ui;
 
+    /**Browse button for installing plugins**/
 	private JButton browseButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -68,9 +72,13 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     public JDialogUninstallPlugin(String name) {
     	System.out.println("Reached "+name);
     	ui = ViewUserInterface.getReference();
+    	
+    	if(!manifestExists()) {
+    		createManifest();
+    	}
     }
-    
-    /**
+
+	/**
      * Creates new dialog.
      *
      * @param  theParentFrame  Parent frame
@@ -78,6 +86,10 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     public JDialogUninstallPlugin(JFrame theParentFrame) {
         super(theParentFrame, false);
         ui = ViewUserInterface.getReference();
+        if(!manifestExists()) {
+    		createManifest();
+    	}
+        
         init();
     }
 
@@ -439,7 +451,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         labelType.setFont(serif12);
 
         textName = new JTextField(15);
-        textName.setText(".class, .jar, .zip, .tar, .tar.gz");
+        textName.setText("Select directory to browse");
         textName.setFont(serif12);
         textName.setEnabled(false);
 
@@ -651,6 +663,8 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
                 	pluginMenuItem.setName(pluginName);
                 	pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
             		currentMenu.add(pluginMenuItem);	
+            		addManifestEntry(plugin);
+            			
                 
                 } catch(Exception e) {
                 	//usually this means other files/folders exist in the installed plugins directory besides plugin files
@@ -667,7 +681,12 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         return menu;
     }
     
-    /**
+    private void addManifestEntry(Class plugin) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
      * Recursive deletion algorithm to delete JMenus which contain no JMenuItems exclusive of JMenus in any children.
      * 
      * @param menu The menu to run through deletion
@@ -682,6 +701,27 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         	}
         }
     }
+    
+    /**
+     * Creates the manifest file upon dialog startup.
+     */
+    private void createManifest() {
+		File f = new File(pluginDir + MANIFEST);
+		try {
+			f.createNewFile();
+		} catch (IOException e) {
+			MipavUtil.displayInfo("Could not create manifest file.  Plugin dependents will not be stored.");
+			e.printStackTrace();
+		}
+	}
+
+    /**
+     * Checks for manifest file existance.
+     * @return
+     */
+	private boolean manifestExists() {
+		return new File(pluginDir + MANIFEST).exists();
+	}
     
     /**
      * DOCUMENT ME!
