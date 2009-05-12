@@ -42,7 +42,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private Vector files = new Vector();
+    private Vector<File> files = new Vector<File>();
 
     /** The default location of MIPAV's plugin directory */
     private String pluginDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" +
@@ -148,11 +148,11 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     		   return;
     	   }
     	   uninstallPlugins();
-    	   if(ui.getRegisteredImagesNum() > 0) {
-    		   
-    	   }
-    	   ui.buildMenu();
-    	   ui.setControls();
+    	   
+    	   updateMenuBar();
+    	   
+    	   Vector<Frame> imageFrames = ui.getImageFrameVector();
+
     	   pluginTree.setModel(new JTree(buildPluginsTree()).getModel());
     	   pluginTree.setRootVisible(false);
     	   pluginTree.setMinimumSize(new Dimension(800, 300));
@@ -160,11 +160,8 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
            		pluginTree.expandRow(i);
            }
        } else if(event.getActionCommand().equals(INSTALL)) {
-    	   int i;
-
            if (files.size() == 0) {
                MipavUtil.displayError("Please select PlugIn file(s)");
-
                return;
            }
 
@@ -172,175 +169,15 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
            if (!new File(pluginDir).isDirectory()) {
                new File(pluginDir).mkdirs();
            }
+           
+           installPlugins();
+           
+           updateMenuBar();
 
-           FileOutputStream fw = null; // for outputting copied file
-           FileInputStream fr = null; // for inputting the source plugin file
-           BufferedInputStream br = null; // buffers are used to speed up the process
-           BufferedOutputStream bw = null;
-           ZipEntry entry = null;
-           ZipInputStream zIn = null;
-
-           byte[] buf = null;
-           int len;
-
-           for (i = 0; i < files.size(); i++) {
-               File currentFile = (File) files.elementAt(i);
-
-               if (currentFile.getName().endsWith(".class")) {
-
-                   try {
-                       fr = new FileInputStream(currentFile); // sets the fileinput to the directory chosen from the
-                                                              // browse option
-                       fw = new FileOutputStream(pluginDir + File.separatorChar + currentFile.getName()); // the location to be copied is MIPAV's class path
-
-                       br = new BufferedInputStream(fr);
-                       bw = new BufferedOutputStream(fw);
-
-                       int fileLength = (int) currentFile.length();
-
-                       byte[] byteBuff = new byte[fileLength];
-
-                       if (fileLength != 0) {
-
-                           while (br.read(byteBuff, 0, fileLength) != -1) {
-                               bw.write(byteBuff, 0, fileLength);
-                           }
-                       }
-
-                   } catch (FileNotFoundException fnfe) {
-                       MipavUtil.displayError("InstallPlugin: " + fnfe);
-                       dispose();
-
-                       return;
-                   } catch (IOException ioe) {
-                       MipavUtil.displayError("Error reading/writing plugin files.  Try manually copying .class files to " +
-                                              pluginDir);
-                       dispose();
-
-                       return;
-                   } finally {
-
-                       try {
-
-                           if (br != null) {
-                               br.close();
-                           }
-
-                           if (bw != null) {
-                               bw.close();
-                           }
-                       } catch (IOException ioe) {
-                           ioe.printStackTrace();
-                       }
-                   }
-               }
-               // must be a .jar or .zip so extract files
-               else if (currentFile.getName().endsWith(".zip") || currentFile.getName().endsWith(".jar")) {
-
-                   try {
-                       zIn = new ZipInputStream(new FileInputStream(currentFile));
-                       entry = null;
-
-                       // if the entry is a directory of is a class file, extract it
-                       while ((entry = zIn.getNextEntry()) != null) {
-
-                           if (entry.isDirectory()) {
-                               String dirname = pluginDir + File.separator +
-                                                entry.getName().substring(0, entry.getName().length() - 1);
-                               new File(dirname).mkdir();
-                           } else {
-
-                               try {
-                                   new File(pluginDir + File.separator + entry.getName()).getParentFile().mkdirs();
-                               } catch (Exception ex) {
-                                   // do nothing...no parent dir here
-                               }
-
-                               fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
-
-                               // Transfer bytes from the ZIP file to the output file
-                               buf = new byte[1024];
-
-                               while ((len = zIn.read(buf)) > 0) {
-                                   fw.write(buf, 0, len);
-                               }
-
-                               fw.close();
-
-                           }
-                       }
-
-                   } catch (Exception e) {
-                       e.printStackTrace();
-                   } finally {
-
-                       try {
-
-                           if (zIn != null) {
-                               zIn.close();
-                           }
-
-                           if (fw != null) {
-                               fw.close();
-                           }
-                       } catch (IOException ioe) {
-                           ioe.printStackTrace();
-                       }
-                   }
-
-               } else if (currentFile.getName().endsWith(".tar") || currentFile.getName().endsWith(".tar.gz")) {
-
-                   try {
-                       readTar(getInputStream(currentFile.getPath()), pluginDir);
-                   } catch (Exception e) {
-                       e.printStackTrace();
-                   }
-               }
-           }
-
-           try {
-
-               if (zIn != null) {
-                   zIn.close();
-               }
-
-               if (fw != null) {
-                   fw.close();
-               }
-
-               if (bw != null) {
-                   bw.close();
-               }
-
-               if (br != null) {
-                   br.close();
-               }
-           } catch (IOException ioe) {
-               ioe.printStackTrace();
-           }
-
-           // updates menubar for each image
-           Vector imageFrames = ui.getImageFrameVector();
-
-           if (imageFrames.size() < 1) {
-               ui.buildMenu();
-               ui.setControls();
-           } else {
-
-               for (i = 0; i < imageFrames.size(); i++) {
-                   ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
-               }
-           }
-
-           if(ui.getRegisteredImagesNum() > 0) {
-    		   
-    	   }
-    	   ui.buildMenu();
-    	   ui.setControls();
     	   pluginTree.setModel(new JTree(buildPluginsTree()).getModel());
     	   pluginTree.setRootVisible(false);
     	   pluginTree.setMinimumSize(new Dimension(800, 300));
-           for(i=0; i<pluginTree.getRowCount(); i++) {
+           for(int i=0; i<pluginTree.getRowCount(); i++) {
            		pluginTree.expandRow(i);
            }
            
@@ -349,7 +186,176 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
            return;
        }
     }
+    
+    private void installPlugins() {
+    	FileOutputStream fw = null; // for outputting copied file
+        FileInputStream fr = null; // for inputting the source plugin file
+        BufferedInputStream br = null; // buffers are used to speed up the process
+        BufferedOutputStream bw = null;
+        ZipEntry entry = null;
+        ZipInputStream zIn = null;
 
+        byte[] buf = null;
+        int len, i;
+
+        for (i = 0; i < files.size(); i++) {
+            File currentFile = (File) files.elementAt(i);
+
+            if (currentFile.getName().endsWith(".class")) {
+
+                try {
+                    fr = new FileInputStream(currentFile); // sets the fileinput to the directory chosen from the
+                                                           // browse option
+                    fw = new FileOutputStream(pluginDir + File.separatorChar + currentFile.getName()); // the location to be copied is MIPAV's class path
+
+                    br = new BufferedInputStream(fr);
+                    bw = new BufferedOutputStream(fw);
+
+                    int fileLength = (int) currentFile.length();
+
+                    byte[] byteBuff = new byte[fileLength];
+
+                    if (fileLength != 0) {
+
+                        while (br.read(byteBuff, 0, fileLength) != -1) {
+                            bw.write(byteBuff, 0, fileLength);
+                        }
+                    }
+
+                } catch (FileNotFoundException fnfe) {
+                    MipavUtil.displayError("InstallPlugin: " + fnfe);
+                    dispose();
+
+                    return;
+                } catch (IOException ioe) {
+                    MipavUtil.displayError("Error reading/writing plugin files.  Try manually copying .class files to " +
+                                           pluginDir);
+                    dispose();
+
+                    return;
+                } finally {
+
+                    try {
+
+                        if (br != null) {
+                            br.close();
+                        }
+
+                        if (bw != null) {
+                            bw.close();
+                        }
+                    } catch (IOException ioe) {
+                        ioe.printStackTrace();
+                    }
+                }
+            }
+            // must be a .jar or .zip so extract files
+            else if (currentFile.getName().endsWith(".zip") || currentFile.getName().endsWith(".jar")) {
+
+                try {
+                    zIn = new ZipInputStream(new FileInputStream(currentFile));
+                    entry = null;
+
+                    // if the entry is a directory of is a class file, extract it
+                    while ((entry = zIn.getNextEntry()) != null) {
+
+                        if (entry.isDirectory()) {
+                            String dirname = pluginDir + File.separator +
+                                             entry.getName().substring(0, entry.getName().length() - 1);
+                            new File(dirname).mkdir();
+                        } else {
+
+                            try {
+                                new File(pluginDir + File.separator + entry.getName()).getParentFile().mkdirs();
+                            } catch (Exception ex) {
+                                // do nothing...no parent dir here
+                            }
+
+                            fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
+
+                            // Transfer bytes from the ZIP file to the output file
+                            buf = new byte[1024];
+
+                            while ((len = zIn.read(buf)) > 0) {
+                                fw.write(buf, 0, len);
+                            }
+
+                            fw.close();
+
+                        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+
+                    try {
+
+                        if (zIn != null) {
+                            zIn.close();
+                        }
+
+                        if (fw != null) {
+                            fw.close();
+                        }
+                    } catch (IOException ioe) {
+                        ioe.printStackTrace();
+                    }
+                }
+
+            } else if (currentFile.getName().endsWith(".tar") || currentFile.getName().endsWith(".tar.gz")) {
+
+                try {
+                    readTar(getInputStream(currentFile.getPath()), pluginDir);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        try {
+
+            if (zIn != null) {
+                zIn.close();
+            }
+
+            if (fw != null) {
+                fw.close();
+            }
+
+            if (bw != null) {
+                bw.close();
+            }
+
+            if (br != null) {
+                br.close();
+            }
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+    }
+
+    private void updateMenuBar() {
+    	// updates menubar for each image
+        Vector imageFrames = ui.getImageFrameVector();
+
+        if (imageFrames.size() < 1) {
+            ui.buildMenu();
+            ui.setControls();
+        } else {
+
+            for (int i = 0; i < imageFrames.size(); i++) {
+                ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
+            }
+        }
+
+        if(ui.getRegisteredImagesNum() > 0) {
+ 		   
+ 	   }
+ 	   ui.buildMenu();
+ 	   ui.setControls();
+    }
+    
     /**
      * Sets up GUI dialog.
      */
@@ -493,7 +499,9 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     		if(menu.getItem(i) instanceof JMenu) {
     			root.add(createBranch((JMenu) menu.getItem(i)));
     		} else if(menu.getItem(i) != null) {
-    			root.add(new DefaultMutableTreeNode(menu.getItem(i).getName()));
+    			DefaultMutableTreeNode d = null;
+    			root.add(d = new DefaultMutableTreeNode(menu.getItem(i).getName()));
+    			
     		}
     	}
     	return root;
