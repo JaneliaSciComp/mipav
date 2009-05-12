@@ -979,8 +979,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 		}
                 	}
                 	if(!(al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
-	                	JMenuItem pluginMenuItem = menuBuilder.buildMenuItem(pluginName, 
-	                			interName+pluginName, 0, null, false);
+	                	JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, 
+	                			interName+pluginName, 0, al, null, false);
 	                	pluginMenuItem.setName(pluginName);
 	                	pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
                 		currentMenu.add(pluginMenuItem);	
