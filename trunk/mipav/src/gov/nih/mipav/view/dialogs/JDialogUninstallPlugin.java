@@ -352,8 +352,6 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         if(ui.getRegisteredImagesNum() > 0) {
  		   
  	   }
- 	   ui.buildMenu();
- 	   ui.setControls();
     }
     
     /**
