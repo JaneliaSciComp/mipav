@@ -248,6 +248,9 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         } else {
             tagList = (Hashtable<FileDicomKey,FileDicomTag>) this.tagTable.clone();
         }
+        
+        //pixel data should never be an element in the tag list.
+        FileDicomTag t = tagList.remove(new FileDicomKey(0x7FE0,0x0010));
 
         return tagList;
     }

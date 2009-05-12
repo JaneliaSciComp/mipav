@@ -174,7 +174,12 @@ public class FileDicomTag extends ModelSerialCloneable {
         } else if (tagInfo.getType().equalsIgnoreCase("otherByteString")) {
             dataItems = getValueList().length;
         } else { // ????
-            dataItems = getValueList().length;
+        	Object[] obj = getValueList();
+        	for(int i=0; i<obj.length; i++) {
+        		if(obj[i] != null) {
+        			dataItems++;
+        		}
+        	}
         }
 
         return (dataItems * sizeof());
@@ -261,7 +266,12 @@ public class FileDicomTag extends ModelSerialCloneable {
                 final StringTokenizer backslash = new StringTokenizer((String) value, "\\");
                 quantity = backslash.countTokens();
             } else {
-                quantity = getValueList().length;
+            	Object[] obj = getValueList();
+            	for(int i=0; i<obj.length; i++) {
+            		if(obj[i] != null) {
+            			quantity++;
+            		}
+            	}
             }
         } catch (final NullPointerException npe) {
 
@@ -323,6 +333,8 @@ public class FileDicomTag extends ModelSerialCloneable {
             } else {
                 returnValue = value;
             }
+        } else if (parse && (vr != null) && (keyword != null) && (value == null)) {
+        	returnValue = "";
         } else {
             returnValue = value;
         }
@@ -363,7 +375,9 @@ public class FileDicomTag extends ModelSerialCloneable {
         try {
             final String type = tagInfo.getType();
 
-            if (type.equals("typeString")) {
+            if(value == null) {
+            	stuff[0] = null;
+            } else if (type.equals("typeString")) {
 
                 // split by '\' separator chars--
                 // so we do not use java 1.4 req meth:
@@ -389,7 +403,7 @@ public class FileDicomTag extends ModelSerialCloneable {
                     stuff = (Short[]) value;
                 } catch (final ClassCastException cce) {
                     stuff[0] = value;
-                }
+                } 
             } else if (type.equals("typeInt")) {
 
                 // cast items into array, if they can't be, use as array of one.
@@ -732,7 +746,11 @@ public class FileDicomTag extends ModelSerialCloneable {
             if (val instanceof Short[]) {
                 retval = 2;
             } else {
-                retval = ((String) (val[0])).length();
+            	try {
+            		retval = ((String) (val[0])).length();
+            	} catch(NullPointerException e) {
+            		retval = 0;
+            	}
             }
         } else if (type.equalsIgnoreCase("otherByteString") || type.equalsIgnoreCase("typeUnknown")) {
             final Object[] val = getValueList();

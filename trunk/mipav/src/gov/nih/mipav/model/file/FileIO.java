@@ -3233,11 +3233,16 @@ public class FileIO {
 
                     try {
 
-                        if (tagValues[q].toString().indexOf(0) != -1) {
+                    	if (tagValues[q] == null || tagValues[q].toString().indexOf(0) != -1) {
 
                             // if there are NULL characters, remove them
                             // before saving the value
-                            StringBuffer noNulls = new StringBuffer(tagValues[q].toString());
+                    		StringBuffer noNulls;
+                    		try {
+	                    		noNulls = new StringBuffer(tagValues[q].toString());
+                    		} catch(NullPointerException e1) {
+                    			noNulls = new StringBuffer("");
+                    		}
 
                             try {
 

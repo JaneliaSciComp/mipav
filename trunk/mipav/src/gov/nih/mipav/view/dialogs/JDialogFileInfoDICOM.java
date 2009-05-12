@@ -239,8 +239,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         for (int q = 0; q < num; q++) {
 
                             if (tagVals[q] != null) {
-                                dispString += tagVals[q].toString();
-
+                            	try {
+                            		dispString += tagVals[q].toString();
+                            	} catch(NullPointerException e1) {
+                            		dispString += "";
+                            	}
+                            		
                                 if ((q + 1) < num) {
                                     dispString += ", ";
                                 }
@@ -491,8 +495,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     }
 
                     for (int q = 0; q < num; q++) {
-                        dispString += tagVals[q].toString();
-
+                    	try {
+                    		dispString += tagVals[q].toString();
+                    	} catch(NullPointerException e1) {
+                    		dispString += "";
+                    	}
+                    		
                         if ((q + 1) < num) {
                             dispString += ", ";
                         }
