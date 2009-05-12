@@ -80,6 +80,14 @@ public class FileRawChunk extends FileBase {
 
     /** DOCUMENT ME! */
     private int type = 0;
+    
+    // Default of 63 and 6 for 8 byte units.  For Analyze FileAnalyze sets to 7 and 3
+    // for byte units.
+    /** Used in reading and writing boolean */
+    private int minimumBitsMinus1 = 63;
+    
+    /** Used in reading and writing boolean */
+    private int shiftToDivide = 6;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -186,6 +194,22 @@ public class FileRawChunk extends FileBase {
 
         super.finalize();
     }
+    
+    /**
+     * Used in reading and writing boolean
+     * @param minimumBitsMinus1
+     */
+    public void setMinimumBitsMinus1(int minimumBitsMinus1) {
+        this.minimumBitsMinus1 = minimumBitsMinus1;
+    }
+    
+    /**
+     * Used in reading and writing boolean
+     * @param shiftToDivide
+     */
+    public void setShiftToDivide(int shiftToDivide) {
+        this.shiftToDivide = shiftToDivide;
+    }
 
     /**
      * Gets the Bitset buffer (binary image).
@@ -269,7 +293,7 @@ public class FileRawChunk extends FileBase {
         if (type == ModelStorageBase.BOOLEAN) {
 
             if ((compressionType == FileInfoBase.COMPRESSION_NONE) &&
-                    ((start + (8 * ((length + 63) >> 6))) > raFile.length())) {
+                    ((start + (8 * ((length + minimumBitsMinus1) >> shiftToDivide))) > raFile.length())) {
                 throw new IOException("End bound exceeds EOF");
             }
         } else {
@@ -291,7 +315,7 @@ public class FileRawChunk extends FileBase {
 
                         // new BitSet(size) = new long[(size+63)>>6]
                         bufferBitSet = new BitSet(bufferSize);
-                        bufferByte = new byte[8 * ((bufferSize + 63) >> 6)];
+                        bufferByte = new byte[8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)];
                         break;
 
                     case ModelStorageBase.BYTE:
@@ -1505,7 +1529,7 @@ public class FileRawChunk extends FileBase {
 
                         // new BitSet(size) = new long[(size+63)>>6]
                         bufferBitSet = new BitSet(bufferSize);
-                        bufferByte = new byte[8 * ((bufferSize + 63) >> 6)];
+                        bufferByte = new byte[8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)];
                         break;
 
                     case ModelStorageBase.BYTE:
