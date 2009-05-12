@@ -4810,6 +4810,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void updateMenubar() {
         menuBuilder.updateQuickList();
+        
+        //update plugins menu
+        int index = menuBar.getComponentIndex(menuBarMaker.getPlugInMenu());
+        menuBar.remove(index);
+        menuBarMaker.setPlugInMenu(userInterface.buildPlugInsMenu(this));
+        menuBar.add(menuBarMaker.getPlugInMenu(), index);
+        userInterface.getMainFrame().setJMenuBar(menuBar);
+        userInterface.getMainFrame().pack();
+        
     }
 
     /**
