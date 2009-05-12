@@ -1,13 +1,16 @@
 package gov.nih.mipav.model.algorithms.DiffusionTensorImaging;
 
-import java.io.*;
-
-
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
-import WildMagic.LibFoundation.Mathematics.*;
+
+import java.awt.Dimension;
+import java.io.IOException;
+
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -75,14 +78,12 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         System.gc();
     }
 
-    /** Run the DTI -> EigenVector Functional Anisotropy algorithm. */
-    public void runAlgorithm()
+    /** Returns the Apparent Diffusion Coefficient Image. 
+     * @return the Apparent Diffusion Coefficient Image. 
+     */
+    public ModelImage getADCImage()
     {
-        if ( m_kDTIImage == null )
-        {
-            return;
-        }
-        calcEigenVectorFA();
+        return m_kADCImage;
     }
 
     /** Returns the Eigen Vector Image. 
@@ -110,20 +111,20 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         return m_kFAImage;
     }
 
-    /** Returns the Trace Image. 
-     * @return the Trace Image. 
-     */
-    public ModelImage getTraceImage()
-    {
-        return m_kTraceImage;
-    }
-
     /** Returns the Relative Anisotropy Image. 
      * @return the Relative Anisotropy Image. 
      */
     public ModelImage getRAImage()
     {
         return m_kRAImage;
+    }
+
+    /** Returns the Trace Image. 
+     * @return the Trace Image. 
+     */
+    public ModelImage getTraceImage()
+    {
+        return m_kTraceImage;
     }
 
     /** Returns the Volume Ratio Image. 
@@ -134,12 +135,14 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         return m_kVRImage;
     }
 
-    /** Returns the Apparent Diffusion Coefficient Image. 
-     * @return the Apparent Diffusion Coefficient Image. 
-     */
-    public ModelImage getADCImage()
+    /** Run the DTI -> EigenVector Functional Anisotropy algorithm. */
+    public void runAlgorithm()
     {
-        return m_kADCImage;
+        if ( m_kDTIImage == null )
+        {
+            return;
+        }
+        calcEigenVectorFA();
     }
 
 
@@ -163,9 +166,6 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         float[] afEigenValues = new float[iLen*4];
         float[] afDataCM = new float[iLen*9];
         float[] afTensorData = new float[6];
-        
-        float fFAMin = Float.MAX_VALUE;
-        float fFAMax = -Float.MAX_VALUE;
 
         ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating Eigen Vectors ",
                                                              "calculating eigen vectors...", 0, 100, true);
@@ -219,7 +219,18 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                                                 (fLambda3 - fLambda)*(fLambda3 - fLambda)   ) / 
                                                 Math.sqrt( 3.0f * fLambda ));
                 afVRData[i] = (fLambda1*fLambda2*fLambda3)/(fLambda*fLambda*fLambda);
-                
+
+                afDataCM[i + 0*iLen] = kV1.X;
+                afDataCM[i + 1*iLen] = kV1.Y;
+                afDataCM[i + 2*iLen] = kV1.Z;
+
+                afDataCM[i + 3*iLen] = kV2.X;
+                afDataCM[i + 4*iLen] = kV2.Y;
+                afDataCM[i + 5*iLen] = kV2.Z;
+
+                afDataCM[i + 6*iLen] = kV3.X;
+                afDataCM[i + 7*iLen] = kV3.Y;
+                afDataCM[i + 8*iLen] = kV3.Z;
             }
             else
             {
@@ -231,32 +242,23 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 afEigenValues[i*4 + 1] = 0;
                 afEigenValues[i*4 + 2] = 0;
                 afEigenValues[i*4 + 3] = 0;
-            }
-            
-            if ( afData[i] < fFAMin )
-            {
-                fFAMin = afData[i];
-            }
-            if ( afData[i] > fFAMax )
-            {
-                fFAMax = afData[i];
-            }
 
-            afDataCM[i + 0*iLen] = kV1.X;
-            afDataCM[i + 1*iLen] = kV1.Y;
-            afDataCM[i + 2*iLen] = kV1.Z;
+                afDataCM[i + 0*iLen] = 0;
+                afDataCM[i + 1*iLen] = 0;
+                afDataCM[i + 2*iLen] = 0;
 
-            afDataCM[i + 3*iLen] = kV2.X;
-            afDataCM[i + 4*iLen] = kV2.Y;
-            afDataCM[i + 5*iLen] = kV2.Z;
+                afDataCM[i + 3*iLen] = 0;
+                afDataCM[i + 4*iLen] = 0;
+                afDataCM[i + 5*iLen] = 0;
 
-            afDataCM[i + 6*iLen] = kV3.X;
-            afDataCM[i + 7*iLen] = kV3.Y;
-            afDataCM[i + 8*iLen] = kV3.Z;
+                afDataCM[i + 6*iLen] = 0;
+                afDataCM[i + 7*iLen] = 0;
+                afDataCM[i + 8*iLen] = 0;
+            }
 
             if ( (i%iSliceSize) == 0 )
             {
-                int iValue = (int)(100 * (float)(i+1)/(float)iLen);
+                int iValue = (int)(100 * (float)(i+1)/iLen);
                 kProgressBar.updateValueImmed( iValue );
             }
         }
@@ -273,6 +275,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         int[] extentsA = new int[]{m_kDTIImage.getExtents()[0], m_kDTIImage.getExtents()[1], m_kDTIImage.getExtents()[2]};
 
 
+        /** Fractional Anisotropy Image */
         m_kFAImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
                                      ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "FA") );
@@ -282,8 +285,18 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             m_kFAImage.disposeLocal();
             m_kFAImage = null;
         }
-        //System.err.println( fFAMin + " " + fFAMax );
+        if ( m_kFAImage != null )
+        {           
+            //new ViewJFrameImage(m_kFAImage, null, new Dimension(610, 200), false);
+        }
+        else
+        {
+            System.err.println( "null" );
+        }
 
+        
+        
+        /** Trace Image */
         m_kTraceImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
                                      ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "Trace") );
@@ -293,7 +306,18 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             m_kTraceImage.disposeLocal();
             m_kTraceImage = null;
         }
+        if ( m_kTraceImage != null )
+        {
+            //new ViewJFrameImage(m_kTraceImage, null, new Dimension(610, 200), false);
+        }
+        else
+        {
+            System.err.println( "null" );
+        }
+        
+        
 
+        /** RA Image */
         m_kRAImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
                                      ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "RA") );
@@ -303,7 +327,18 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             m_kRAImage.disposeLocal();
             m_kRAImage = null;
         }
+        if ( m_kRAImage != null )
+        {
+            //new ViewJFrameImage(m_kRAImage, null, new Dimension(610, 200), false);
+        }
+        else
+        {
+            System.err.println( "null" );
+        }
+        
+        
 
+        /** Volume Ratio Image */
         m_kVRImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
                                      ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "VR") );
@@ -314,6 +349,17 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             m_kVRImage = null;
         }
 
+        if ( m_kVRImage != null )
+        {
+           //new ViewJFrameImage(m_kVRImage, null, new Dimension(610, 200), false);
+        }
+        else
+        {
+            System.err.println( "null" );
+        }
+        
+
+        /** ADC Image */
         m_kADCImage = new ModelImage( ModelStorageBase.FLOAT,
                                      extentsA,
                                      ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "ADC") );
@@ -323,7 +369,17 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             m_kADCImage.disposeLocal();
             m_kADCImage = null;
         }
-
+        if ( m_kADCImage != null )
+        {
+           //new ViewJFrameImage(m_kADCImage, null, new Dimension(610, 200), false);
+        }
+        else
+        {
+            System.err.println( "null" );
+        }
+   
+        
+        /** Eigen Vector Image */
         m_kEigenImage = new ModelImage( ModelStorageBase.FLOAT,
                                         extentsEV,
                                         ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "EG") );
@@ -333,7 +389,17 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             m_kEigenImage.disposeLocal();
             m_kEigenImage = null;
         }
+        if ( m_kEigenImage != null )
+        {
+           //new ViewJFrameImage(m_kEigenImage, null, new Dimension(610, 200), false);
+        }
+        else
+        {
+            System.err.println( "null" );
+        }
+        
 
+        /** Eigen Value Image */
         m_kEigenValueImage = new ModelImage( ModelStorageBase.ARGB_FLOAT,
                 extentsA,
                                         ModelImage.makeImageName( m_kDTIImage.getFileInfo(0).getFileName(), "EV") );
@@ -343,7 +409,15 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             m_kEigenValueImage.disposeLocal();
             m_kEigenValueImage = null;
         }
-
+        if ( m_kEigenValueImage != null )
+        {
+            // looks good...
+           //new ViewJFrameImage(m_kEigenValueImage, null, new Dimension(610, 200), false);
+        }
+        else
+        {
+            System.err.println( "null" );
+        }
         extentsEV = null;
         extentsA = null;
 
