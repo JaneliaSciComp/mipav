@@ -62,6 +62,14 @@ public class FileRaw extends FileBase {
     private boolean zeroLengthFlag = true;
     
     private String dataFileName[] = null;
+    
+    // Default of 63 and 6 for 8 byte units.  For Analyze FileAnalyze sets to 7 and 3
+    // for byte units.
+    /** Used in reading and writing boolean */
+    private int minimumBitsMinus1 = 63;
+    
+    /** Used in reading and writing boolean */
+    private int shiftToDivide = 6;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -187,6 +195,28 @@ public class FileRaw extends FileBase {
             super.finalize();
         } catch (Throwable er) { }
     }
+    
+    /**
+     * Used in reading and writing boolean
+     * @param minimumBitsMinus1
+     */
+    public void setMinimumBitsMinus1(int minimumBitsMinus1) {
+        this.minimumBitsMinus1 = minimumBitsMinus1;
+        if (fileRW != null) {
+            fileRW.setMinimumBitsMinus1(minimumBitsMinus1);
+        }
+    }
+    
+    /**
+     * Used in reading and writing boolean
+     * @param shiftToDivide
+     */
+    public void setShiftToDivide(int shiftToDivide) {
+        this.shiftToDivide = shiftToDivide;
+        if (fileRW != null) {
+            fileRW.setShiftToDivide(shiftToDivide);
+        }
+    }
 
     /**
      * Accessor that returns the number of image slices saved.
@@ -283,7 +313,8 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.BOOLEAN:
                     try {
-                        fileRW.readImage(ModelStorageBase.BOOLEAN, (k * 8 * ((bufferSize + 63) >> 6)) + offset,
+                        fileRW.readImage(ModelStorageBase.BOOLEAN,
+                                        (k * 8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)) + offset,
                                          bufferSize);
 
                         image.importData(k * bufferSize, fileRW.getBitSetBuffer(), false);
@@ -744,7 +775,8 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.BOOLEAN:
                         try {
-                            fileRW.readImage(ModelStorageBase.BOOLEAN, (k * 8 * ((bufferSize + 63) >> 6)) + offset,
+                            fileRW.readImage(ModelStorageBase.BOOLEAN,
+                                            (k * 8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)) + offset,
                                              bufferSize);
                             for (i = 0; i < bufferSize; i++) {
                                 if (fileRW.getBitSetBuffer().get(i)) {
