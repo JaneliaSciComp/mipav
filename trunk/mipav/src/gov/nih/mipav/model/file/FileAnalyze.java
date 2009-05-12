@@ -1049,6 +1049,10 @@ public class FileAnalyze extends FileBase {
 
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
+            if (image.getType() == ModelStorageBase.BOOLEAN) {
+                rawFile.setMinimumBitsMinus1(7);
+                rawFile.setShiftToDivide(3);
+            }
             linkProgress(rawFile);
 
             int offset = (int) Math.abs(vox_offset);
@@ -1119,6 +1123,10 @@ public class FileAnalyze extends FileBase {
 
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
+            if (image.getType() == ModelStorageBase.BOOLEAN) {
+                rawFile.setMinimumBitsMinus1(7);
+                rawFile.setShiftToDivide(3);
+            }
 
             int offset = (int) Math.abs(vox_offset);
             rawFile.readImage(buffer, offset, fileInfo.getDataType());
@@ -1212,6 +1220,10 @@ public class FileAnalyze extends FileBase {
         if (options.isMultiFile()) {
             FileRaw rawFile;
             rawFile = new FileRaw(image.getFileInfo(0));
+            if (image.getType() == ModelStorageBase.BOOLEAN) {
+                rawFile.setMinimumBitsMinus1(7);
+                rawFile.setShiftToDivide(3);
+            }
             rawFile.setZeroLengthFlag(true);
             linkProgress(rawFile);
             flipTopBottom(image);
@@ -1230,6 +1242,10 @@ public class FileAnalyze extends FileBase {
             try {
                 FileRaw rawFile;
                 rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                if (image.getType() == ModelStorageBase.BOOLEAN) {
+                    rawFile.setMinimumBitsMinus1(7);
+                    rawFile.setShiftToDivide(3);
+                }
                 rawFile.setZeroLengthFlag(true);
                 linkProgress(rawFile);
 
