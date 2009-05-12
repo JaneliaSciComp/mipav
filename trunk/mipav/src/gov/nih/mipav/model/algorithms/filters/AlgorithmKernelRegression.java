@@ -52,7 +52,7 @@ import Jama.*;
    1 2    26.1865
    2 1    29.8788
    So at first it seemed that the order should be reversed to 1 2.  But then I checked 
-   ITER_STEERING_KEERNEL_SECOND_ORDER with 4 iterations on 5 black and white photos with Gaussian noise = 80.
+   ITER_STEERING_KEERNEL_SECOND_ORDER with 4 iterations on 6 black and white photos with Gaussian noise = 80.
    cap17black.fits 256 X 256
    1  2   71.088
    2  1   61.555
@@ -68,6 +68,9 @@ import Jama.*;
    bridge 512 X 512
    1  2   157.756
    2  1   138.601
+   0136_0002_1 library card with bar codes
+   1  2   235.137
+   2  1    80.278
    So leave order as originally found.
    Test files corresponding to ITERATIVE_STEERING_KERNEL_SECOND_ORDER:
    1.) Lena_denoise.m  Denoises Gaussian noise in black and white image .
@@ -515,7 +518,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                         // Compute steering matrix
                         steering();
                         if (i < iterations) {
-                            skr2RegularCIELab(1);
+                            skr2IrregularCIELab();
                             for (j = 0; j < output.length; j++) {
                                 input[j] = output[j];
                             }
@@ -668,7 +671,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                         // Compute steering matrix
                         steering();
                         if (i < iterations) {
-                            skr2Regular(1);
+                            skr2Irregular();
                             for (j = 0; j < output.length; j++) {
                                 input[j] = output[j];
                             }
