@@ -173,6 +173,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
     private float steeringStepSize;
 
     /** In 3D if do25D == true, process each slice separately. */
+    /** Currently only do5D = true is implemented. */
     private boolean do25D = true;
 
     private int nDims;
@@ -193,6 +194,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
     
     private float C[][][][][];
     
+    /** True if data is present at a point, false if data is missing at a point */
     private boolean I[];
     
     private float input[];
@@ -275,8 +277,34 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
+        int i, j, k;
         srcImage = null;
         destImage = null;
+        I = null;
+        input = null;
+        zInit = null;
+        if (medianImage != null) {
+            medianImage.disposeLocal();
+            medianImage = null;
+        }
+        if (C != null) {
+           for (i = 0; i < C[i].length; i++) {
+               for (j = 0; j < C[i][j].length; j++) {
+                   for (k = 0; k < C[i][j][k].length; k++) {
+                       C[i][j][k] = null;
+                   }
+               }
+           }
+           for (i = 0; i < C[i].length; i++) {
+               for (j = 0; j < C[i][j].length; j++) {
+                   C[i][j] = null;
+               }
+           }
+           for (i = 0; i < C[i].length; i++) {
+               C[i] = null;
+           }
+           C = null;
+        } // if (C != null)
        
         super.finalize();
     }
@@ -508,7 +536,6 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                     scaleMax = Math.max(255.0, imageMax);
                     convertRGBtoCIELab();
                     ckr2IrregularCIELab();
-                    // output and input are upscaled if upscale > 1.
                     input = new float[output.length];
                     for (i = 0; i < output.length; i++) {
                         input[i] = output[i];
@@ -661,7 +688,6 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                         longBuffer = null;    
                     } // else not DOUBLE or FLOAT
                     ckr2Irregular();
-                    // output and input are upscaled if upscale > 1.
                     input = new float[output.length];
                     for (i = 0; i < output.length; i++) {
                         input[i] = output[i];
@@ -670,14 +696,11 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                         fireProgressStateChanged((i - 1) * 100/iterations);
                         // Compute steering matrix
                         steering();
-                        if (i < iterations) {
-                            skr2Irregular();
+                        skr2Irregular();
+                        if (i < iterations) {  
                             for (j = 0; j < output.length; j++) {
                                 input[j] = output[j];
                             }
-                        }
-                        else {
-                            skr2Irregular();
                         }
                     } // for (i = 1; i <= iterations; i++)
                 } // else not color image
@@ -709,6 +732,8 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
             
             Preferences.debug("Entering ckr2allRegular\n");
             ckr2allRegular();
+            medianImage.disposeLocal();
+            medianImage = null;
             zInit = new float[output.length];
             for (i = 0; i < output.length; i++) {
                 zInit[i] = output[i];
@@ -889,7 +914,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                 for (y = 0; y < initialKernelSize; y++) {
                     for (x = 0; x < initialKernelSize; x++) {
                         // Store in xx1 and xx2 as one long column formed from the columns of the
-                        // 2D xx1 and xx2
+                        // 2D x1 and x2
                         xx1[x * initialKernelSize + y] = 
                         x1[upscale - j + x * upscale + upKernelSize * (upscale - i + y * upscale)];
                         xx2[x * initialKernelSize + y] =
@@ -1609,7 +1634,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                     for (y = 0; y < iterativeKernelSize; y++) {
                         for (x = 0; x < iterativeKernelSize; x++) {
                             // Store in xx1 and xx2 as one long column formed from the columns of the
-                            // 2D xx1 and xx2
+                            // 2D x1 and x2
                             xx1[x * iterativeKernelSize + y] = 
                             x1[upscale - j + x * upscale + upKernelSize * (upscale - i + y * upscale)];
                             xx2[x * iterativeKernelSize + y] =
@@ -1641,7 +1666,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                             for (yp = 0; yp < iterativeKernelSize; yp++) {
                                 for (xp = 0; xp < iterativeKernelSize; xp++) {
                                     // Store inputp in one long column
-                                    inputp[yp + xp * iterativeKernelSize] = input2[x - 1+ xp + padXDim * (y - 1 + yp)];
+                                    inputp[yp + xp * iterativeKernelSize] = input2[x - 1 + xp + padXDim * (y - 1 + yp)];
                                 }
                             } 
                             
@@ -1765,7 +1790,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                 for (y = 0; y < initialKernelSize; y++) {
                     for (x = 0; x < initialKernelSize; x++) {
                         // Store in xx1 and xx2 as one long column formed from the columns of the
-                        // 2D xx1 and xx2
+                        // 2D x1 and x2
                         xx1[x * initialKernelSize + y] = 
                         x1[upscale - j + x * upscale + upKernelSize * (upscale - i + y * upscale)];
                         xx2[x * initialKernelSize + y] =
@@ -1976,7 +2001,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                 for (y = 0; y < initialKernelSize; y++) {
                     for (x = 0; x < initialKernelSize; x++) {
                         // Store in xx1 and xx2 as one long column formed from the columns of the
-                        // 2D xx1 and xx2
+                        // 2D x1 and x2
                         xx1[x * initialKernelSize + y] = 
                         x1[upscale - j + x * upscale + upKernelSize * (upscale - i + y * upscale)];
                         xx2[x * initialKernelSize + y] =
@@ -2098,6 +2123,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         
     } // ckr2RegularCIELab
     
+    /** Compute steering matrices */
     private void steering() {
         int win;
         float K[];
@@ -2261,12 +2287,11 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                     v2[0][1] = S2*v[0][1]*v[1][1];
                     v2[1][0] = S2*v[1][1]*v[0][1];
                     v2[1][1] = S2*v[1][1]*v[1][1];
-                    for (j = 0; j < 2; j++) {
-                        for (i = 0; i < 2; i++) {
-                            C[j][i][y-1][x-1][z] = (float)((v1[j][i] + v2[j][i])*con);   
+                    for (i = 0; i < 2; i++) {
+                        for (j = 0; j < 2; j++) {
+                            C[i][j][y-1][x-1][z] = (float)((v1[i][j] + v2[i][j])*con);   
                         }
-                    }
-                    
+                    } 
                 } // for (x = 1; x <= extents[0]; x++)
             } // for (y = 1; y <= extents[1]; y++)
         } // for (z = 0; z < zDim; z++)
@@ -2496,11 +2521,11 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
                             xx1Col[x * iterativeKernelSize + y] = 
                             x1[upscale - j + x * upscale + upKernelSize * (upscale - i + y * upscale)];
                             xx1[y * iterativeKernelSize + x] = 
-                                x1[upscale - j + x * upscale + upKernelSize * (upscale - i + y * upscale)];
+                            x1[upscale - j + x * upscale + upKernelSize * (upscale - i + y * upscale)];
                             xx2Col[x * iterativeKernelSize + y] =
                             x2[upscale - j + x * upscale + upKernelSize * (upscale - i + y * upscale)];
                             xx2[y * iterativeKernelSize + x] =
-                                x2[upscale - j + x * upscale + upKernelSize * (upscale - i + y * upscale)];
+                            x2[upscale - j + x * upscale + upKernelSize * (upscale - i + y * upscale)];
                         } // for (x = 0; x < iterativeKernelSize; x++)
                     } // for (y = 0; y < iterativeKernelSize; y++)
                     for (y = 0; y < iterativeKernelSizeSquared; y++) {
@@ -2653,7 +2678,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         CC = new double[2][2];
         sqrtDetC = new double[length];
         padXDim = xDim + 2 * radius;
-        padYDim = extents[1] + 2 * radius;
+        padYDim = yDim + 2 * radius;
         inputM = new float[padXDim * padYDim];
         C11M = new double[padXDim * padYDim];
         C12M = new double[padXDim * padYDim];
@@ -2921,7 +2946,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         CC = new double[2][2];
         sqrtDetC = new double[length];
         padXDim = xDim + 2 * radius;
-        padYDim = extents[1] + 2 * radius;
+        padYDim = yDim + 2 * radius;
         inputM = new float[padXDim * padYDim];
         C11M = new double[padXDim * padYDim];
         C12M = new double[padXDim * padYDim];
