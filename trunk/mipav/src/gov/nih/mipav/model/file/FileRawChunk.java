@@ -372,6 +372,11 @@ public class FileRawChunk extends FileBase {
                         bufferShort = new short[bufferSize];
                         bufferByte = new byte[2 * bufferSize];
                         break;
+                        
+                    case ModelStorageBase.ARGB_FLOAT:
+                        bufferFloat = new float[bufferSize];
+                        bufferByte = new byte[4 * bufferSize];
+                        break;
 
                     case ModelStorageBase.COMPLEX:
                         bufferFloat = new float[bufferSize];
@@ -957,6 +962,64 @@ public class FileRawChunk extends FileBase {
                 }
 
                 break;
+                
+            case ModelStorageBase.ARGB_FLOAT:
+                try {
+
+                    if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                        raFile.read(bufferByte);
+                    } else {
+
+                        try {
+                            int max = bufferByte.length;
+                            int counter = 0;
+                            int len = max;
+                            int tempVal = 0;
+
+                            while (counter < max) {
+                                tempVal = inflaterStream.read(bufferByte, counter, len);
+
+                                if (tempVal == -1) {
+                                    break;
+                                }
+
+                                counter += tempVal;
+                                len = (max - counter);
+                            }
+                        } catch (EOFException eofex) {
+                            break;
+                        }
+                    }
+                    
+                    int tmpInt;
+
+                    if (endianess == BIG_ENDIAN) {
+
+                        for (i = 0, index = 0; i < bufferSize; i++) {
+                            b1 = bufferByte[index++] & 0xff;
+                            b2 = bufferByte[index++] & 0xff;
+                            b3 = bufferByte[index++] & 0xff;
+                            b4 = bufferByte[index++] & 0xff;
+                            tmpInt =  ((b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+                            bufferFloat[i] = Float.intBitsToFloat(tmpInt);
+                        }
+                    } else {
+
+                        for (i = 0, index = 0; i < bufferSize; i++) {
+                            b1 = bufferByte[index++] & 0xff;
+                            b2 = bufferByte[index++] & 0xff;
+                            b3 = bufferByte[index++] & 0xff;
+                            b4 = bufferByte[index++] & 0xff;
+                            tmpInt =  ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                            bufferFloat[i] = Float.intBitsToFloat(tmpInt);
+                        }
+                    }
+                } catch (IOException error) {
+                    throw error;
+                }
+
+                break;
+
 
             default:
                 throw new IOException();
