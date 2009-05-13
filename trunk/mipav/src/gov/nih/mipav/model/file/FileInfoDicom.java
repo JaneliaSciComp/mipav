@@ -806,7 +806,7 @@ public class FileInfoDicom extends FileInfoBase {
                 }
 
                 if (f2 != null) {
-                    setResolutions(f2.floatValue(), 0);
+                    setResolutions(f2.floatValue(), 1);
                 }
             } else {
                 setResolutions(1.0f, 1);
