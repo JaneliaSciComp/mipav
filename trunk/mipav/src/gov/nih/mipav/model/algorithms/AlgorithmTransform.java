@@ -4928,6 +4928,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         TransMatrix xfrm = null;
         TransMatrix trans;
         TransMatrix xfrmC;
+        byte byteBuf[] = null;
+        byte byteBuf2[] = null;
 
         if ((DIM >= 3) && (!do25D)) {
             imgLength = iXdim * iYdim * iZdim;
@@ -4981,13 +4983,26 @@ public class AlgorithmTransform extends AlgorithmBase {
                 imgLength = imgLength * 4;
             }
 
-            imgBuf = new float[imgLength];
-            srcImage.exportData(0, imgLength, imgBuf);
+            if ((srcImage.getType() == ModelStorageBase.ARGB) && (interp == TRILINEAR)) {
+                // Reduce needed memory by a factor of 4
+                byteBuf = new byte[imgLength];
+                srcImage.exportData(0, imgLength, byteBuf);
+            }
+            else {
+                imgBuf = new float[imgLength];
+                srcImage.exportData(0, imgLength, imgBuf);
+            }
 
             if (bufferFactor == 4) {
 
                 if ((DIM >= 3) && (!do25D)) {
-                    imgBuf2 = new float[4 * oXdim * oYdim * oZdim];
+                    if (srcImage.getType() == ModelStorageBase.ARGB) {
+                        // Reduce needed memory by a factor of 4
+                        byteBuf2 = new byte[4 * oXdim * oYdim * oZdim];
+                    }
+                    else {
+                        imgBuf2 = new float[4 * oXdim * oYdim * oZdim];
+                    }
                 } else {
                     imgBuf2 = new float[4 * oXdim * oYdim];
                 }
@@ -5279,7 +5294,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
             } else if (DIM == 4) {
                 if (interp == TRILINEAR) {
-                    transformTrilinear4DC(imgBuf, imgBuf2, xfrm);
+                    if (srcImage.getType() == ModelStorageBase.ARGB) {
+                        // Save a factor of 4 in memory
+                        transformTrilinear4DByteC(byteBuf, byteBuf2, xfrm);    
+                    }
+                    else {
+                        transformTrilinear4DC(imgBuf, imgBuf2, xfrm);
+                    }
                 } else if (interp == BSPLINE3) {
                     transformBspline4DC(imgBuf, xfrm, 3);
                 } else if (interp == BSPLINE4) {
@@ -5302,10 +5323,20 @@ public class AlgorithmTransform extends AlgorithmBase {
             } else if (DIM == 3) {
 
                 if (interp == TRILINEAR) {
-                    transformTrilinearC(imgBuf, imgBuf2, xfrm);
-
-                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
-                        transform3DVOI(srcImage, imgBuf, xfrm);
+                    if (srcImage.getType() == ModelStorageBase.ARGB) {
+                        // Save a factor of 4 in memory
+                        transformTrilinearByteC(byteBuf, byteBuf2, xfrm);
+                        
+                        if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                            transform3DVOIByte(srcImage, byteBuf, xfrm);
+                        }    
+                    }
+                    else {
+                        transformTrilinearC(imgBuf, imgBuf2, xfrm);
+    
+                        if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
+                            transform3DVOI(srcImage, imgBuf, xfrm);
+                        }
                     }
                 } else if (interp == BSPLINE3) {
                     transformBspline3DC(imgBuf, xfrm, 3);
@@ -5642,7 +5673,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         tmpMask.disposeLocal();
         maskImage.disposeLocal();
     }
-
+    
     /**
      * Transforms and resamples a 3D VOI using nearest neighbor interpolation.
      *
@@ -5757,6 +5788,172 @@ public class AlgorithmTransform extends AlgorithmBase {
                                 Y0pos = Math.min((int) (Y + 0.5f), iYdim - 1) * iXdim;
                                 Z0pos = Math.min((int) (Z + 0.5f), iZdim - 1) * sliceSize;
                                 value = imgBuffer[Z0pos + Y0pos + X0pos];
+                            } // end if Z in bounds
+                        } // end if Y in bounds
+                    } // end if X in bounds
+
+                    tmpMask.set(i, j, k, value);
+                } // end for k
+            } // end for j
+        } // end for i
+
+        if (threadStopped) {
+            return;
+        }
+
+        // ******* Make algorithm for VOI extraction.
+        tmpMask.calcMinMax();
+
+        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+
+        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+        VOIExtAlgo.run();
+
+        VOIVector resultVOIs = tmpMask.getVOIs();
+        VOIVector srcVOIs = image.getVOIs();
+
+        for (int ii = 0; ii < resultVOIs.size(); ii++) {
+            int id = ((VOI) (resultVOIs.elementAt(ii))).getID();
+
+            for (int jj = 0; jj < srcVOIs.size(); jj++) {
+
+                if (((VOI) (srcVOIs.elementAt(jj))).getID() == id) {
+                    ((VOI) (resultVOIs.elementAt(ii))).setName(((VOI) (srcVOIs.elementAt(jj))).getName());
+                }
+            }
+        }
+
+        destImage.setVOIs(tmpMask.getVOIs());
+        tmpMask.disposeLocal();
+        maskImage.disposeLocal();
+    }
+    
+    /**
+     * Transforms and resamples a 3D VOI using nearest neighbor interpolation.
+     *
+     * <ol>
+     *   <li>Export VOIs as a mask image</li>
+     *   <li>Transform mask</li>
+     *   <li>Extract VOI contours from mask image and put in new image.</li>
+     * </ol>
+     *
+     * @param  image      Image where VOIs are stored
+     * @param  imgBuffer  Image array 
+     * @param  kTM       Transformation matrix to be applied
+     * use byte imgBuffer to save a factor of 4 in memory in 3D ARGB color images.
+     */
+    private void transform3DVOIByte(ModelImage image, byte[] imgBuffer, TransMatrix kTM) {
+
+        int i, j, k;
+        int iAdj, jAdj, kAdj;
+        int X0pos, Y0pos, Z0pos;
+        float X, Y, Z;
+        float value;
+        int sliceSize;
+        float imm, jmm, kmm;
+        float k1, k2, k3, j1, j2, j3;
+        float byteFillValue;
+        
+        if (fillValue > 255.0f) {
+            byteFillValue = 255.0f;
+        }
+        else if (fillValue < 0.0f) {
+            byteFillValue = 0.0f;
+        }
+        else {
+            byteFillValue = Math.round(fillValue);
+        }
+
+        sliceSize = iXdim * iYdim;
+
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        ModelImage tmpMask;
+
+        int mod = Math.max(1, oXdim / 50);
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
+
+        maskImage = image.generateShortImage(1);
+        tmpMask = new ModelImage(ModelImage.SHORT, destImage.getExtents(), "VOI Mask");
+
+        try {
+            maskImage.exportData(0, iXdim * iYdim * iZdim, imgBuffer); // locks and releases lock
+        } catch (IOException error) {
+            displayError("Algorithm VOI transform: Image(s) locked");
+            setCompleted(false);
+
+            return;
+        }
+
+        float invXRes = 1 / iXres;
+        float invYRes = 1 / iYres;
+        float invZRes = 1 / iZres;
+
+        for (k = 0; (k < oZdim) && !threadStopped; k++) {
+
+            if (((k % mod) == 0)) {
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
+            }
+
+            if (pad) {
+                kAdj = k - margins[2];
+            } else {
+                kAdj = k;
+            }
+
+            kmm = kAdj * oZres;
+            k1 = (kmm * T02) + T03;
+            k2 = (kmm * T12) + T13;
+            k3 = (kmm * T22) + T23;
+
+            for (j = 0; (j < oYdim) && !threadStopped; j++) {
+
+                if (pad) {
+                    jAdj = j - margins[1];
+                } else {
+                    jAdj = j;
+                }
+
+                jmm = jAdj * oYres;
+                j1 = (jmm * T01) + k1;
+                j2 = (jmm * T11) + k2;
+                j3 = (jmm * T21) + k3;
+
+                for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                    // transform i,j,k
+                    if (pad) {
+                        iAdj = i - margins[0];
+                    } else {
+                        iAdj = i;
+                    }
+
+                    imm = iAdj * oXres;
+                    value = byteFillValue; // if voxel is transformed out of bounds
+                    X = (j1 + (imm * T00)) * invXRes;
+
+                    if ((X >= -0.5) && (X < iXdim)) {
+                        Y = (j2 + (imm * T10)) * invYRes;
+
+                        if ((Y >= -0.5) && (Y < iYdim)) {
+                            Z = (j3 + (imm * T20)) * invZRes;
+
+                            if ((Z >= -0.5) && (Z < iZdim)) {
+                                X0pos = Math.min((int) (X + 0.5f), iXdim - 1);
+                                Y0pos = Math.min((int) (Y + 0.5f), iYdim - 1) * iXdim;
+                                Z0pos = Math.min((int) (Z + 0.5f), iZdim - 1) * sliceSize;
+                                value = (imgBuffer[Z0pos + Y0pos + X0pos] & 0xff);
                             } // end if Z in bounds
                         } // end if Y in bounds
                     } // end if X in bounds
@@ -12603,6 +12800,242 @@ public class AlgorithmTransform extends AlgorithmBase {
     }
     
     /**
+     * Transforms and resamples 4 dimensional color ARGB object using trilinear interpolation.
+     *
+     * @param  imgBuffer  Image array
+     * @param  imgBuf2
+     * @param  kTM       Transformation matrix to be applied
+     * Byte buffers are used to reduce memory requirements by a factor of 4
+     */
+    private void transformTrilinear4DByteC(byte[] imgBuffer, byte [] imgBuffer2, TransMatrix kTM) {
+        int i, j, k, l;
+        int iAdj, jAdj, kAdj;
+        float X, Y, Z;
+        int x0, y0, z0;
+        int temp;
+        int sliceSize;
+        int oSliceSize;
+        int oVolSize;
+        float imm, jmm, kmm;
+        float k1, k2, k3, j1, j2, j3;
+        byte byteFillValue;
+        
+        if (fillValue > 255.0f) {
+            byteFillValue = (byte)255;
+        }
+        else if (fillValue < 0.0f) {
+            byteFillValue = 0;
+        }
+        else {
+            byteFillValue = (byte)(fillValue + 0.5f);
+        }
+
+        sliceSize = iXdim * iYdim;
+        oSliceSize = oXdim * oYdim;
+        oVolSize = oSliceSize * oZdim;
+
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        int deltaX, deltaY, deltaZ;
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
+
+        int position1, position2;
+        float b1, b2;
+        float dx, dy, dz, dx1, dy1;
+
+        float invXRes = 1 / iXres;
+        float invYRes = 1 / iYres;
+        float invZRes = 1 / iZres;
+
+        for (l = 0; (l < oTdim) && !threadStopped; l++) {
+            fireProgressStateChanged(Math.round((float) l / oTdim * 100));
+
+            for (k = 0; (k < oZdim) && !threadStopped; k++) {
+                if (pad) {
+                    kAdj = k - margins[2];
+                }
+                else {
+                    kAdj = k;
+                }
+                kmm = kAdj * oZres;
+                k1 = (kmm * T02) + T03;
+                k2 = (kmm * T12) + T13;
+                k3 = (kmm * T22) + T23;
+
+                for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                    if (pad) {
+                        jAdj = j - margins[1];
+                    }
+                    else {
+                        jAdj = j;
+                    }
+                    jmm = jAdj * oYres;
+                    j1 = (jmm * T01) + k1;
+                    j2 = (jmm * T11) + k2;
+                    j3 = (jmm * T21) + k3;
+
+                    for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                        // transform i,j,k
+                        temp = 4 * (i + (j * oXdim) + (k * oSliceSize));
+                        imgBuffer2[temp] = byteFillValue; // if voxel is transformed out of bounds
+                        imgBuffer2[temp + 1] = byteFillValue;
+                        imgBuffer2[temp + 2] = byteFillValue;
+                        imgBuffer2[temp + 3] = byteFillValue;
+                        if (pad) {
+                            iAdj = i - margins[0];
+                        }
+                        else {
+                            iAdj = i;
+                        }
+                        imm = iAdj * oXres;
+                        X = (j1 + (imm * T00)) * invXRes;
+
+                        if ((X > -0.5f) && (X < iXdim)) {
+                            Y = (j2 + (imm * T10)) * invYRes;
+
+                            if ((Y > -0.5f) && (Y < iYdim)) {
+                                Z = (j3 + (imm * T20)) * invZRes;
+
+                                if ((Z > -0.5f) && (Z < iZdim)) {
+
+                                    if (X <= 0) {
+                                        x0 = 0;
+                                        dx = 0;
+                                        deltaX = 0;
+                                    } else if (X >= (iXdim - 1)) {
+                                        x0 = iXdim - 1;
+                                        dx = 0;
+                                        deltaX = 0;
+                                    } else {
+                                        x0 = (int) X;
+                                        dx = X - x0;
+                                        deltaX = 1;
+                                    }
+
+                                    if (Y <= 0) {
+                                        y0 = 0;
+                                        dy = 0;
+                                        deltaY = 0;
+                                    } else if (Y >= (iYdim - 1)) {
+                                        y0 = iYdim - 1;
+                                        dy = 0;
+                                        deltaY = 0;
+                                    } else {
+                                        y0 = (int) Y;
+                                        dy = Y - y0;
+                                        deltaY = iXdim;
+                                    }
+
+                                    if (Z <= 0) {
+                                        z0 = 0;
+                                        dz = 0;
+                                        deltaZ = 0;
+                                    } else if (Z >= (iZdim - 1)) {
+                                        z0 = iZdim - 1;
+                                        dz = 0;
+                                        deltaZ = 0;
+                                    } else {
+                                        z0 = (int) Z;
+                                        dz = Z - z0;
+                                        deltaZ = sliceSize;
+                                    }
+
+                                    dx1 = 1 - dx;
+                                    dy1 = 1 - dy;
+
+                                    position1 = (z0 * sliceSize) + (y0 * iXdim) + x0;
+                                    position2 = position1 + deltaZ;
+
+                                    b1 = (dy1 * ((dx1 * (imgBuffer[4*position1] & 0xff)) + (dx * (imgBuffer[4*(position1 + deltaX)] & 0xff)))) +
+                                         (dy *
+                                              ((dx1 * (imgBuffer[4*(position1 + deltaY)] & 0xff)) +
+                                                   (dx * (imgBuffer[4*(position1 + deltaY + deltaX)] & 0xff))));
+
+                                    b2 = (dy1 * ((dx1 * (imgBuffer[4*position2] & 0xff)) + (dx * (imgBuffer[4*(position2 + deltaX)] & 0xff)))) +
+                                         (dy *
+                                              ((dx1 * (imgBuffer[4*(position2 + deltaY)] & 0xff)) +
+                                                   (dx * (imgBuffer[4*(position2 + deltaY + deltaX)] & 0xff))));
+
+                                    imgBuffer2[temp] = (byte)(((1 - dz) * b1) + (dz * b2) + 0.5f);
+                                    
+                                    b1 = (dy1 * ((dx1 * (imgBuffer[4*position1+1] & 0xff)) + (dx * (imgBuffer[4*(position1 + deltaX)+1] & 0xff)))) +
+                                    (dy *
+                                         ((dx1 * (imgBuffer[4*(position1 + deltaY)+1] & 0xff)) +
+                                              (dx * (imgBuffer[4*(position1 + deltaY + deltaX)+1] & 0xff))));
+
+                                    b2 = (dy1 * ((dx1 * (imgBuffer[4*position2+1] & 0xff)) + (dx * (imgBuffer[4*(position2 + deltaX)+1] & 0xff)))) +
+                                    (dy *
+                                         ((dx1 * (imgBuffer[4*(position2 + deltaY)+1] & 0xff)) +
+                                              (dx * (imgBuffer[4*(position2 + deltaY + deltaX)+1] & 0xff))));
+
+                                    imgBuffer2[temp+1] = (byte)(((1 - dz) * b1) + (dz * b2) + 0.5f);
+                                    
+                                    b1 = (dy1 * ((dx1 * (imgBuffer[4*position1+2] & 0xff)) + (dx * (imgBuffer[4*(position1 + deltaX)+2] & 0xff)))) +
+                                    (dy *
+                                         ((dx1 * (imgBuffer[4*(position1 + deltaY)+2] & 0xff)) +
+                                              (dx * (imgBuffer[4*(position1 + deltaY + deltaX)+2] & 0xff))));
+
+                                    b2 = (dy1 * ((dx1 * (imgBuffer[4*position2+2] & 0xff)) + (dx * (imgBuffer[4*(position2 + deltaX)+2] & 0xff)))) +
+                                    (dy *
+                                         ((dx1 * (imgBuffer[4*(position2 + deltaY)+2] & 0xff)) +
+                                              (dx * (imgBuffer[4*(position2 + deltaY + deltaX)+2] & 0xff))));
+
+                                    imgBuffer2[temp+2] = (byte)(((1 - dz) * b1) + (dz * b2) + 0.5f);
+                                    
+                                    b1 = (dy1 * ((dx1 * (imgBuffer[4*position1+3] & 0xff)) + (dx * (imgBuffer[4*(position1 + deltaX)+3] & 0xff)))) +
+                                    (dy *
+                                         ((dx1 * (imgBuffer[4*(position1 + deltaY)+3] & 0xff)) +
+                                              (dx * (imgBuffer[4*(position1 + deltaY + deltaX)+3] & 0xff))));
+
+                                    b2 = (dy1 * ((dx1 * (imgBuffer[4*position2+3] & 0xff)) + (dx * (imgBuffer[4*(position2 + deltaX)+3] & 0xff)))) +
+                                    (dy *
+                                         ((dx1 * (imgBuffer[4*(position2 + deltaY)+3] & 0xff)) +
+                                              (dx * (imgBuffer[4*(position2 + deltaY + deltaX)+3] & 0xff))));
+
+                                    imgBuffer2[temp+3] = (byte)(((1 - dz) * b1) + (dz * b2) + 0.5f);
+                                } // end if Z in bounds
+                            } // end if Y in bounds
+                        } // end if X in bounds
+                    } // end for i
+                } // end for j
+            } // end for k
+            
+            try {
+                destImage.importData(4 * l * oVolSize, imgBuffer2, false);
+            }
+            catch (IOException error) {
+                MipavUtil.displayError("AlgorithmTransform: IOException on destImage.importData");
+            }
+
+            if (l < (oTdim - 1)) {
+
+                try {
+                    srcImage.exportData((l + 1) * imgLength, imgLength, imgBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+
+                    return;
+                }
+            } // end if (l < (oTdim - 1))
+        } // end for l
+        destImage.calcMinMax();
+    }
+    
+    /**
      * Transforms and resamples 4 dimensional color object using trilinear interpolation.
      *
      * @param  imgBuffer  Image array
@@ -13015,6 +13448,227 @@ public class AlgorithmTransform extends AlgorithmBase {
                                            (dx * imgBuffer[4*(position2 + deltaY + deltaX)+3])));
 
                                  imgBuffer2[temp8+3] = ((1 - dz) * b1) + (dz * b2);
+
+                            } // end if Z in bounds
+                        } // end if Y in bounds
+                    } // end if X in bounds
+                } // end for k
+            } // end for j
+        } // end for i
+
+        if (threadStopped) {
+            return;
+        }
+
+        try {
+            destImage.importData(0, imgBuffer2, true);
+        } catch (IOException error) {
+            MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");
+        }
+    }
+    
+    /**
+     * Transforms and resamples volume using trilinear interpolation This version is used with ARGB color images.
+     * Use byte[] rather than float[] to save memory
+     *
+     * @param  imgBuffer   Input image array
+     * @param  imgBuffer2  Output image array
+     * @param  kTM        Transformation matrix to be applied
+     */
+    private void transformTrilinearByteC(byte[] imgBuffer, byte[] imgBuffer2, TransMatrix kTM) {
+        int i, j, k;
+        int iAdj, jAdj, kAdj;
+        float X, Y, Z;
+        int x0, y0, z0;
+        int sliceSize, osliceSize;
+        float imm, jmm, kmm;
+        float temp1, temp2, temp3;
+        int temp8;
+        int deltaX, deltaY, deltaZ;
+        int position1, position2;
+        float b1, b2;
+        float dx, dy, dz, dx1, dy1;
+        byte byteFillValue;
+        
+        if (fillValue > 255.0f) {
+            byteFillValue = (byte)255;
+        }
+        else if (fillValue < 0.0f) {
+            byteFillValue = 0;
+        }
+        else {
+            byteFillValue = (byte)(fillValue + 0.5f);
+        }
+        
+
+        sliceSize = iXdim * iYdim;
+        osliceSize = oXdim * oYdim;
+
+        float i1, i2, i3, j1, j2, j3;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
+
+        for (i = 0; (i < oXdim) && !threadStopped; i++) {
+            fireProgressStateChanged(Math.round((float) i / (oXdim) * 100));
+
+            if (pad) {
+                iAdj = i - margins[0];
+            } else {
+                iAdj = i;
+            }
+
+            imm = iAdj * oXres;
+            i1 = (imm * T00) + T03;
+            i2 = (imm * T10) + T13;
+            i3 = (imm * T20) + T23;
+
+            for (j = 0; (j < oYdim) && !threadStopped; j++) {
+
+                if (pad) {
+                    jAdj = j - margins[1];
+                } else {
+                    jAdj = j;
+                }
+
+                jmm = jAdj * oYres;
+                j1 = jmm * T01;
+                j2 = jmm * T11;
+                j3 = jmm * T21;
+                temp1 = i3 + j3;
+                temp2 = i2 + j2;
+                temp3 = i1 + j1;
+
+                for (k = 0; (k < oZdim) && !threadStopped; k++) {
+                    
+                    // transform i,j,k
+                    temp8 = 4 * (i + (j * oXdim) + (k * osliceSize));
+                    imgBuffer2[temp8] = byteFillValue; // if voxel is transformed out of bounds
+                    imgBuffer2[temp8 + 1] = byteFillValue;
+                    imgBuffer2[temp8 + 2] = byteFillValue;
+                    imgBuffer2[temp8 + 3] = byteFillValue;
+                    if (pad) {
+                        kAdj = k - margins[2];
+                    } else {
+                        kAdj = k;
+                    }
+
+                    kmm = kAdj * oZres;
+                    X = (temp3 + (kmm * T02)) / iXres;
+
+                    if ((X > -0.5f) && (X < iXdim)) {
+                        Y = (temp2 + (kmm * T12)) / iYres;
+
+                        if ((Y > -0.5f) && (Y < iYdim)) {
+                            Z = (temp1 + (kmm * T22)) / iZres;
+
+                            if ((Z > -0.5f) && (Z < iZdim)) {
+                                if (X <= 0) {
+                                    x0 = 0;
+                                    dx = 0;
+                                    deltaX = 0;
+                                } else if (X >= (iXdim - 1)) {
+                                    x0 = iXdim - 1;
+                                    dx = 0;
+                                    deltaX = 0;
+                                } else {
+                                    x0 = (int) X;
+                                    dx = X - x0;
+                                    deltaX = 1;
+                                }
+
+                                if (Y <= 0) {
+                                    y0 = 0;
+                                    dy = 0;
+                                    deltaY = 0;
+                                } else if (Y >= (iYdim - 1)) {
+                                    y0 = iYdim - 1;
+                                    dy = 0;
+                                    deltaY = 0;
+                                } else {
+                                    y0 = (int) Y;
+                                    dy = Y - y0;
+                                    deltaY = iXdim;
+                                }
+
+                                if (Z <= 0) {
+                                    z0 = 0;
+                                    dz = 0;
+                                    deltaZ = 0;
+                                } else if (Z >= (iZdim - 1)) {
+                                    z0 = iZdim - 1;
+                                    dz = 0;
+                                    deltaZ = 0;
+                                } else {
+                                    z0 = (int) Z;
+                                    dz = Z - z0;
+                                    deltaZ = sliceSize;
+                                }
+
+                                dx1 = 1 - dx;
+                                dy1 = 1 - dy;
+
+                                position1 = (z0 * sliceSize) + (y0 * iXdim) + x0;
+                                position2 = position1 + deltaZ;
+
+                                b1 = (dy1 * ((dx1 * (imgBuffer[4*position1] & 0xff)) + (dx * (imgBuffer[4*(position1 + deltaX)] & 0xff)))) +
+                                     (dy *
+                                          ((dx1 * (imgBuffer[4*(position1 + deltaY)] & 0xff)) +
+                                               (dx * (imgBuffer[4*(position1 + deltaY + deltaX)] & 0xff))));
+
+                                b2 = (dy1 * ((dx1 * (imgBuffer[4*position2] & 0xff)) + (dx * (imgBuffer[4*(position2 + deltaX)] & 0xff)))) +
+                                     (dy *
+                                          ((dx1 * (imgBuffer[4*(position2 + deltaY)] & 0xff)) +
+                                               (dx * (imgBuffer[4*(position2 + deltaY + deltaX)] & 0xff))));
+
+                                imgBuffer2[temp8] = (byte)(((1 - dz) * b1) + (dz * b2) + 0.5f);
+                                
+                                b1 = (dy1 * ((dx1 * (imgBuffer[4*position1+ 1]& 0xff)) + (dx * (imgBuffer[4*(position1 + deltaX)+1] & 0xff)))) +
+                                (dy *
+                                     ((dx1 * (imgBuffer[4*(position1 + deltaY)+1] & 0xff)) +
+                                          (dx * (imgBuffer[4*(position1 + deltaY + deltaX)+1] & 0xff))));
+
+                                b2 = (dy1 * ((dx1 * (imgBuffer[4*position2+1] & 0xff)) + (dx * (imgBuffer[4*(position2 + deltaX)+1] & 0xff)))) +
+                                (dy *
+                                     ((dx1 * (imgBuffer[4*(position2 + deltaY)+1] & 0xff)) +
+                                          (dx * (imgBuffer[4*(position2 + deltaY + deltaX)+1] & 0xff))));
+
+                                imgBuffer2[temp8+1] = (byte)(((1 - dz) * b1) + (dz * b2) + 0.5f);
+                                
+                                b1 = (dy1 * ((dx1 * (imgBuffer[4*position1+2] & 0xff)) + (dx * (imgBuffer[4*(position1 + deltaX)+2] & 0xff)))) +
+                                (dy *
+                                     ((dx1 * (imgBuffer[4*(position1 + deltaY)+2] & 0xff)) +
+                                          (dx * (imgBuffer[4*(position1 + deltaY + deltaX)+2] & 0xff))));
+
+                                b2 = (dy1 * ((dx1 * (imgBuffer[4*position2+2] & 0xff)) + (dx * (imgBuffer[4*(position2 + deltaX)+2] & 0xff)))) +
+                                (dy *
+                                     ((dx1 * (imgBuffer[4*(position2 + deltaY)+2] & 0xff)) +
+                                          (dx * (imgBuffer[4*(position2 + deltaY + deltaX)+2] & 0xff))));
+
+                                 imgBuffer2[temp8+2] = (byte)(((1 - dz) * b1) + (dz * b2) + 0.5f);
+                                 
+                                 b1 = (dy1 * ((dx1 * (imgBuffer[4*position1+3] & 0xff)) + (dx * (imgBuffer[4*(position1 + deltaX)+3] & 0xff)))) +
+                                 (dy *
+                                      ((dx1 * (imgBuffer[4*(position1 + deltaY)+3] & 0xff)) +
+                                           (dx * (imgBuffer[4*(position1 + deltaY + deltaX)+3] & 0xff))));
+
+                                 b2 = (dy1 * ((dx1 * (imgBuffer[4*position2+3] & 0xff)) + (dx * (imgBuffer[4*(position2 + deltaX)+3] & 0xff)))) +
+                                 (dy *
+                                      ((dx1 * (imgBuffer[4*(position2 + deltaY)+3] & 0xff)) +
+                                           (dx * (imgBuffer[4*(position2 + deltaY + deltaX)+3] & 0xff))));
+
+                                 imgBuffer2[temp8+3] = (byte)(((1 - dz) * b1) + (dz * b2) + 0.5f);
 
                             } // end if Z in bounds
                         } // end if Y in bounds
