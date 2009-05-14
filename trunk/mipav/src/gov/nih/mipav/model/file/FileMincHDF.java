@@ -800,11 +800,35 @@ public class FileMincHDF extends FileBase {
         final String[] spaceTypeString = new String[] {"native____"};
         final String[] alignmentString = new String[] {"centre"};
         String[] unitsString;
+        double[][] scannerArray = null;
 
         final H5ScalarDS xSpaceObj = (H5ScalarDS) fileFormat.createScalarDS("xspace", dimGroup, datatype, dims,
                 maxdims, null, 0, null);
         final DefaultMutableTreeNode xSpaceNode = new DefaultMutableTreeNode(xSpaceObj);
         model.insertNodeInto(xSpaceNode, dimNode, dimNode.getChildCount());
+        
+        if ((image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) 
+            ||  (image.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+            scannerArray = new double[4][4];
+            (image.getMatrix()).copyMatrix(scannerArray);
+            // MINC is L->R and P->A while MIPAV is R->L and A->P, so multiply first 2 rows by -1
+            for (int i = 0; i <= 1; i++) {
+                for (int j = 0; j < 3; j ++) {
+                    scannerArray[i][j] *= -1;
+                }
+            }
+            // Normalize each column length to be unit length
+            for (int j = 0; j < 3; j++) {
+                double length = 0.0;
+                for (int i = 0; i < 3; i++) {
+                    length += scannerArray[i][j] * scannerArray[i][j];
+                }
+                length = Math.sqrt(length);
+                for (int i = 0; i < 3; i++) {
+                    scannerArray[i][j] /= length;
+                }
+            }
+        }
 
         // build xspace, yspace and zspace starts and steps
 
@@ -948,7 +972,13 @@ public class FileMincHDF extends FileBase {
         attrDims[0] = 3;
         Attribute dirCosinesAttr = new Attribute("direction_cosines", dType, attrDims);
         // create an array here
-        double[] dirCosines = new double[] {1, 0, 0};
+        double[] dirCosines;
+        if (scannerArray != null) {
+            dirCosines = new double[] {scannerArray[0][0], scannerArray[1][0], scannerArray[2][0]};    
+        }
+        else {
+            dirCosines = new double[] {1, 0, 0};
+        }
         dirCosinesAttr.setValue(dirCosines);
         xSpaceObj.writeMetadata(dirCosinesAttr);
 
@@ -1010,7 +1040,12 @@ public class FileMincHDF extends FileBase {
         ySpaceObj.writeMetadata(startAttr);
 
         // direction_cosines
-        dirCosines = new double[] {0, 1, 0};
+        if (scannerArray != null) {
+            dirCosines = new double[] {scannerArray[0][1], scannerArray[1][1], scannerArray[2][1]};       
+        }
+        else {
+            dirCosines = new double[] {0, 1, 0};
+        }
         dType = fileFormat.createDatatype(Datatype.CLASS_FLOAT, 8, Datatype.NATIVE, Datatype.SIGN_NONE);
         attrDims[0] = 3;
         dirCosinesAttr = new Attribute("direction_cosines", dType, attrDims);
@@ -1071,7 +1106,12 @@ public class FileMincHDF extends FileBase {
             zSpaceObj.writeMetadata(startAttr);
 
             // direction_cosines
-            dirCosines = new double[] {0, 0, 1};
+            if (scannerArray != null) {
+                dirCosines = new double[] {scannerArray[0][2], scannerArray[1][2], scannerArray[2][2]};  
+            }
+            else {
+                dirCosines = new double[] {0, 0, 1};
+            }
             dType = fileFormat.createDatatype(Datatype.CLASS_FLOAT, 8, Datatype.NATIVE, Datatype.SIGN_NONE);
             attrDims[0] = 3;
             dirCosinesAttr = new Attribute("direction_cosines", dType, attrDims);
