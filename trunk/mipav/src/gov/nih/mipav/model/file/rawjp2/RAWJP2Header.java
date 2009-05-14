@@ -59,10 +59,14 @@ public class RAWJP2Header {
 	}
 	public int setImgExtents(int[] s) {
 		if (s.length < 3){
-			return -1;
+	//		return -1;
 		}
 				
-		imgExtents[0] = s[0];imgExtents[1] = s[1];imgExtents[2] = s[2];
+		imgExtents[0] = s[0];imgExtents[1] = s[1];
+		
+		if (s.length >= 3)
+		imgExtents[2] = s[2];
+		
 		numOfSlices= imgExtents[2];
 		
 //		calPtArr();
