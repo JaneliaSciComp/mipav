@@ -99,7 +99,8 @@ public class ManifestFile {
 		} else {
 			manifestInfo = parseManifestInfo();
 		}
-
+		
+		timeLoaded = System.currentTimeMillis();
 	}
 	
 	private HashMap<Class, ArrayList<Class>> parseManifestInfo() {
