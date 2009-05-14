@@ -1419,7 +1419,7 @@ public class Preferences {
 
                     for (int i = 0; i < numTokens; i++) {
                         testStr = tok.nextToken();
-                        shortName = testStr.substring(0, testStr.indexOf(","));
+                        shortName = testStr.substring(0, testStr.lastIndexOf(","));
 
                         if (new File(shortName).exists() && (numList < maxList)) {
                             numList++;
@@ -1469,8 +1469,8 @@ public class Preferences {
 
                     if (images[i].length() > 25) {
 
-                        descriptors = images[i].substring(images[i].indexOf(","));
-                        images[i] = images[i].substring(0, images[i].indexOf(","));
+                        descriptors = images[i].substring(images[i].lastIndexOf(","));
+                        images[i] = images[i].substring(0, images[i].lastIndexOf(","));
 
                         // separate fileName and directory
                         int index = images[i].lastIndexOf(File.separatorChar);
@@ -2776,6 +2776,7 @@ public class Preferences {
 
         newProp = new String(newName);
 
+
         String added = null;
 
         int commaIndex = -1;
@@ -2795,8 +2796,7 @@ public class Preferences {
 
                     while ( (i < quickListNumber) && tok.hasMoreTokens()) {
                         quickListToken = tok.nextToken();
-
-                        commaIndex = quickListToken.indexOf(",");
+                        commaIndex = quickListToken.lastIndexOf(",");
 
                         added = quickListToken.substring(0, commaIndex);
                         multiFile = quickListToken.endsWith("M");
@@ -2815,7 +2815,9 @@ public class Preferences {
                         }
                     }
                 }
-            } catch (Exception ex) {}
+            } catch (Exception ex) {
+            	ex.printStackTrace();
+            }
         }
 
         // System.err.println("New quicklist string is: " + newProp);
