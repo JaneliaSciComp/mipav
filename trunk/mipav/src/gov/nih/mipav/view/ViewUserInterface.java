@@ -1936,7 +1936,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             multiFile = true;
         }
 
-        temp = temp.substring(0, temp.indexOf(","));
+        temp = temp.substring(0, temp.lastIndexOf(","));
 
         int idx = temp.lastIndexOf(File.separator);
         String dir = temp.substring(0, idx) + File.separatorChar;
