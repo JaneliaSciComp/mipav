@@ -131,6 +131,7 @@ public class FileTypeTable {
         FILE_EXT_TABLE.put(".CUR", FileUtility.JIMI);
 
         FILE_TYPE_TABLE.put(FileUtility.JPEG, new FileTypeInfo("JPEG", ".jpg,.jpeg"));
+        FILE_TYPE_TABLE.put(FileUtility.JP2, new FileTypeInfo("JPEG2000", ".jp2"));
 
         FILE_TYPE_TABLE.put(FileUtility.LSM, new FileTypeInfo("LSM", ".lsm"));
         FILE_TYPE_TABLE.put(FileUtility.LSM_MULTIFILE, new FileTypeInfo("LSM multifile", ".lsm"));
