@@ -86,6 +86,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
 
     /** mipav data provenance (*.xmp) files */
     public static final int DATA_PROVENANCE = 23;
+    
+    public static final int TIFF = 24;
 
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
@@ -109,7 +111,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "VOI Files (*.voi)", // VOI
             "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files",
             "XML-based Clinical and Experimental Data Exchange Schema(*.bxh)", // XCEDE schema
-            "User Defined", "R-table (*.rtb)", "Data provenance (*.xmp)"}; // NLT
+            "User Defined", "R-table (*.rtb)", "Data provenance (*.xmp)", // NLT
+            "TIFF files (*.tif; *.tiff)"};
 
     /** short description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
@@ -131,7 +134,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "Transfer Function Files", // FUNCT
             "VOI Files", // VOI
             "Nonlinear Transformation Files", // NLT
-            "Dynamic", "Plugin", "XCEDE Schema", "User Defined", "R-table", "Data provenance"};
+            "Dynamic", "Plugin", "XCEDE Schema", "User Defined", "R-table", "Data provenance", "TIFF"};
 
     /** array of user defined extensions */
     private static String[] userDefinedExtensions;
@@ -304,6 +307,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
                 && ( (extension.equals(".gif")) || (extension.equals(".jpeg")) || (extension.equals(".jpg"))
                         || (extension.equals(".pict")) || (extension.equals(".psd")) || (extension.equals(".tif")) || (extension
                         .equals(".tiff")))) {
+            return true;
+        } else if ( (filterType == TIFF) 
+                && ((extension.equals(".tif")) || (extension.equals(".tiff")))) {
             return true;
         } else if ( (filterType == TECH)
                 && ( (extension.equals(".img")) || (extension.equals(".ima")) || (extension.equals(".dcm"))
