@@ -327,14 +327,195 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             return;
         }*/
         if(source == OKButton) {
+        	//TODO: Install plugins
         	JList selected = selectorPanel.getSelectedFiles();
         	for(int i=0; i<selected.getModel().getSize(); i++) {
         		System.out.println(selected.getModel().getElementAt(i));
         	}
+        	installPlugins();
         } else if (source == cancelButton) {
             dispose();
         }
     }
+    
+    private void installPlugins() {
+    	int i;
+
+        if (files.size() == 0) {
+            MipavUtil.displayError("Please select PlugIn file(s)");
+
+            return;
+        }
+
+        // make the plugins directory if it does not exist
+        if (!new File(pluginDir).isDirectory()) {
+            new File(pluginDir).mkdirs();
+        }
+
+        FileOutputStream fw = null; // for outputting copied file
+        FileInputStream fr = null; // for inputting the source plugin file
+        BufferedInputStream br = null; // buffers are used to speed up the process
+        BufferedOutputStream bw = null;
+        ZipEntry entry = null;
+        ZipInputStream zIn = null;
+
+        byte[] buf = null;
+        int len;
+
+        for (i = 0; i < files.size(); i++) {
+            File currentFile = (File) files.elementAt(i);
+
+            if (currentFile.getName().endsWith(".class")) {
+
+                try {
+                    fr = new FileInputStream(currentFile); // sets the fileinput to the directory chosen from the
+                                                           // browse option
+                    fw = new FileOutputStream(pluginDir + File.separatorChar + currentFile.getName()); // the location to be copied is MIPAV's class path
+
+                    br = new BufferedInputStream(fr);
+                    bw = new BufferedOutputStream(fw);
+
+                    int fileLength = (int) currentFile.length();
+
+                    byte[] byteBuff = new byte[fileLength];
+
+                    if (fileLength != 0) {
+
+                        while (br.read(byteBuff, 0, fileLength) != -1) {
+                            bw.write(byteBuff, 0, fileLength);
+                        }
+                    }
+
+                } catch (FileNotFoundException fnfe) {
+                    MipavUtil.displayError("InstallPlugin: " + fnfe);
+                    dispose();
+
+                    return;
+                } catch (IOException ioe) {
+                    MipavUtil.displayError("Error reading/writing plugin files.  Try manually copying .class files to " +
+                                           pluginDir);
+                    dispose();
+
+                    return;
+                } finally {
+
+                    try {
+
+                        if (br != null) {
+                            br.close();
+                        }
+
+                        if (bw != null) {
+                            bw.close();
+                        }
+                    } catch (IOException ioe) {
+                        ioe.printStackTrace();
+                    }
+                }
+            }
+            // must be a .jar or .zip so extract files
+            else if (currentFile.getName().endsWith(".zip") || currentFile.getName().endsWith(".jar")) {
+
+                try {
+                    zIn = new ZipInputStream(new FileInputStream(currentFile));
+                    entry = null;
+
+                    // if the entry is a directory of is a class file, extract it
+                    while ((entry = zIn.getNextEntry()) != null) {
+
+                        if (entry.isDirectory()) {
+                            String dirname = pluginDir + File.separator +
+                                             entry.getName().substring(0, entry.getName().length() - 1);
+                            new File(dirname).mkdir();
+                        } else {
+
+                            try {
+                                new File(pluginDir + File.separator + entry.getName()).getParentFile().mkdirs();
+                            } catch (Exception ex) {
+                                // do nothing...no parent dir here
+                            }
+
+                            fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
+
+                            // Transfer bytes from the ZIP file to the output file
+                            buf = new byte[1024];
+
+                            while ((len = zIn.read(buf)) > 0) {
+                                fw.write(buf, 0, len);
+                            }
+
+                            fw.close();
+
+                        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+
+                    try {
+
+                        if (zIn != null) {
+                            zIn.close();
+                        }
+
+                        if (fw != null) {
+                            fw.close();
+                        }
+                    } catch (IOException ioe) {
+                        ioe.printStackTrace();
+                    }
+                }
+
+            } else if (currentFile.getName().endsWith(".tar") || currentFile.getName().endsWith(".tar.gz")) {
+
+                try {
+                    readTar(getInputStream(currentFile.getPath()), pluginDir);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        try {
+
+            if (zIn != null) {
+                zIn.close();
+            }
+
+            if (fw != null) {
+                fw.close();
+            }
+
+            if (bw != null) {
+                bw.close();
+            }
+
+            if (br != null) {
+                br.close();
+            }
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+
+        // updates menubar for each image
+        Vector imageFrames = ui.getImageFrameVector();
+
+        if (imageFrames.size() < 1) {
+            ui.buildMenu();
+            ui.setControls();
+        } else {
+
+            for (i = 0; i < imageFrames.size(); i++) {
+                ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
+            }
+        }
+
+        dispose();
+
+        return;
+    }
+                                
 
     /**
      * Sets up GUI dialog.
@@ -343,9 +524,21 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         setForeground(Color.black);
         addNotify();
         setTitle("Install Plugin");
-
+        
         JPanel mainPanel = new JPanel();
         mainPanel.setForeground(Color.black);
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+
+        JLabel intro = new JLabel("<html><center>This interface allows for batch installation of plugins into MIPAV.  <br>"+
+        		"You may select Java class files or container files.  "+
+        		"These include *.class, *.tar.gz, *.zip, *.jar files and directories.<br>"+
+        		"Detected plugins that will likely install correctly are displayed in <font color=\"blue\">blue</font>.<br>"+
+        		"Plugins that may not have all their components listed are displayed in <font color=\"red\">red</font>.</center></html>  ");
+        intro.setBorder(new EmptyBorder(10, 75, 0, 75));
+        //intro.setMinimumSize(new Dimension(700, 50));
+        //intro.setPreferredSize(new Dimension(700, 50));
+        mainDialogPanel.add(intro, BorderLayout.NORTH);
+        
         
         selectorPanel = new ClassSelectorPanel();
         selectorPanel.setVisible(true);
@@ -379,7 +572,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	
     	private static final String DELETE = "Delete";
     	
-    	private final Dimension DEFAULT_DIM = new Dimension(400, 200);
+    	private static final String INIT_TEXT = "Select a directory to search for plugins";
     	
     	private JTree fileTree;
     	
@@ -388,6 +581,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	private JTextField initDir;
     	
     	private JList selected;
+
+		private JScrollPane scrollPane;
     	
 		public ClassSelectorPanel() {
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -402,9 +597,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			dirSelectPanel.add(browseButton);
 			
 			JLabel dirLabel = new JLabel("Current directory: ");
+			dirLabel.setBorder(new EmptyBorder(0, 20, 0, 5));
 			dirSelectPanel.add(dirLabel);
 			
-			initDir = new JTextField("Select a directory to search for plugins");
+			initDir = new JTextField(INIT_TEXT);
 			initDir.setFont(MipavUtil.font12);
 			dirSelectPanel.add(initDir);
 			add(dirSelectPanel);
@@ -426,14 +622,18 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			selected.setModel(new DefaultListModel());
 			selected.setMinimumSize(new Dimension(300, 800));
 			selected.setPreferredSize(new Dimension(300, 800));
-			JScrollPane scrollPane = new JScrollPane(selected);
-			scrollPane.setMinimumSize(new Dimension(300, 400)); //TODO: Fix dim
+			scrollPane = new JScrollPane(selected);
+			scrollPane.setMinimumSize(new Dimension(300, 350)); //TODO: Fix dim
+			scrollPane.setPreferredSize(new Dimension(300, 350)); //TODO: Fix dim
 			scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 			fileListPanel.add(scrollPane);
 			mainSelectorPanel.add(fileListPanel);
+			mainSelectorPanel.setMinimumSize(new Dimension(300, 375)); //TODO: Fix dim
+			mainSelectorPanel.setPreferredSize(new Dimension(300, 375)); //TODO: Fix dim
 			add(mainSelectorPanel);
-			
+			setMinimumSize(new Dimension(700, 450));
+			setPreferredSize(new Dimension(700, 450));
 			pack();
 		}
 		
@@ -481,16 +681,31 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	            }
 			} else if(e.getActionCommand().equals(MOVE_RIGHT)) {
 				TreePath[] paths = fileTree.getSelectionModel().getSelectionPaths();
-				String[] selectedString = new String[paths.length];
 				for(int i=0; i<paths.length; i++) {
-					if(!((DefaultListModel)selected.getModel()).contains(((JFileTreeNode)paths[i].getLastPathComponent()).getFile().getName())) {
-						((DefaultListModel)selected.getModel()).addElement(((JFileTreeNode)paths[i].getLastPathComponent()).getFile().getName());
+					String name = "";
+					if(!initDir.getText().equals(INIT_TEXT)) {
+						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(initDir.getText().length()+1);
+					} else {
+						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(File.listRoots()[1].toString().length());
+					} if(!((DefaultListModel)selected.getModel()).contains(name)) {
+						((DefaultListModel)selected.getModel()).addElement(name);
+						files.add(((JFileTreeNode)paths[i].getLastPathComponent()).getFile());
 					}
-				}				
+				}	
+				selected.validate(); //TODO: This resizing doesn't seem to work
+				selected.updateUI();
+				scrollPane.validate();
+				scrollPane.updateUI();
 			} else if(e.getActionCommand().equals(DELETE)) {
 				Object[] numSelected = selected.getSelectedValues();
+				int[] selectedIndex = selected.getSelectedIndices();
 				for(int i=0; i<numSelected.length; i++) {
 					((DefaultListModel)selected.getModel()).removeElement(numSelected[i]);
+					files.remove(selectedIndex[0]);
+					selectedIndex = selected.getSelectedIndices();
+				}
+				for(int i=0; i<files.size(); i++) {
+					System.out.println(i+": "+files.get(i));
 				}
 			}
 		}
