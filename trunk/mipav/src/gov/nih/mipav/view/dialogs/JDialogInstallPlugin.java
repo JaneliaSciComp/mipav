@@ -15,6 +15,7 @@ import java.util.zip.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -39,7 +40,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     private static final long serialVersionUID = -8736744495208652866L;
     
 	/** File system view. */
-	private static FileSystemView fsv = FileSystemView.getFileSystemView();
+	private static FileSystemView fileSystem = FileSystemView.getFileSystemView();
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -353,6 +354,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         OKButton.setText("Install Plugin(s)");
+        OKButton.setPreferredSize(new Dimension(160, 30));
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
@@ -377,11 +379,13 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	
     	private static final String DELETE = "Delete";
     	
+    	private final Dimension DEFAULT_DIM = new Dimension(400, 200);
+    	
     	private JTree fileTree;
     	
     	private JFileTreePanel subFilePanel;
     	
-    	private JLabel initDir;
+    	private JTextField initDir;
     	
     	private JList selected;
     	
@@ -397,7 +401,11 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			browseButton.setActionCommand(BROWSE);
 			dirSelectPanel.add(browseButton);
 			
-			initDir = new JLabel("Select an initial directory");
+			JLabel dirLabel = new JLabel("Current directory: ");
+			dirSelectPanel.add(dirLabel);
+			
+			initDir = new JTextField("Select a directory to search for plugins");
+			initDir.setFont(MipavUtil.font12);
 			dirSelectPanel.add(initDir);
 			add(dirSelectPanel);
 			
@@ -415,7 +423,13 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			JPanel fileListPanel = new JPanel();
 			fileListPanel.setBorder(MipavUtil.buildTitledBorder("Selected class files"));
 			selected = new JList();
+			selected.setModel(new DefaultListModel());
+			selected.setMinimumSize(new Dimension(300, 800));
+			selected.setPreferredSize(new Dimension(300, 800));
 			JScrollPane scrollPane = new JScrollPane(selected);
+			scrollPane.setMinimumSize(new Dimension(300, 400)); //TODO: Fix dim
+			scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 			fileListPanel.add(scrollPane);
 			mainSelectorPanel.add(fileListPanel);
 			add(mainSelectorPanel);
@@ -462,17 +476,21 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	                File selectedFile = chooser.getSelectedFile();
 	                
 	                fileTree = subFilePanel.setRootDir(selectedFile);
+	                
+	                initDir.setText(selectedFile.toString());
 	            }
 			} else if(e.getActionCommand().equals(MOVE_RIGHT)) {
 				TreePath[] paths = fileTree.getSelectionModel().getSelectionPaths();
 				String[] selectedString = new String[paths.length];
 				for(int i=0; i<paths.length; i++) {
-					((DefaultListModel)selected.getModel()).addElement(paths[i].getLastPathComponent().toString());
+					if(!((DefaultListModel)selected.getModel()).contains(((JFileTreeNode)paths[i].getLastPathComponent()).getFile().getName())) {
+						((DefaultListModel)selected.getModel()).addElement(((JFileTreeNode)paths[i].getLastPathComponent()).getFile().getName());
+					}
 				}				
 			} else if(e.getActionCommand().equals(DELETE)) {
-				int[] numSelected = selected.getSelectedIndices();
+				Object[] numSelected = selected.getSelectedValues();
 				for(int i=0; i<numSelected.length; i++) {
-					((DefaultListModel)selected.getModel()).remove(numSelected[i]);
+					((DefaultListModel)selected.getModel()).removeElement(numSelected[i]);
 				}
 			}
 		}
@@ -496,7 +514,12 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     		tree = new JTree(rootTreeNode);
     		tree.setCellRenderer(new JFileTreeCellRenderer());
     		tree.setRootVisible(false);
+    		tree.setMinimumSize(new Dimension(300, 800)); //TODO: Fix dim
+    		tree.setPreferredSize(new Dimension(300, 800));
     		JScrollPane scrollPane = new JScrollPane(tree);
+    		scrollPane.setMinimumSize(new Dimension(300, 400));
+    		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     		add(scrollPane, BorderLayout.CENTER);
     	}
     	
@@ -506,8 +529,9 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	
     	public JTree setRootDir(File rootDir) {
     		JFileTreeNode rootTreeNode = new JFileTreeNode(rootDir);
-    		tree = new JTree(rootTreeNode);
-    		tree.setCellRenderer(new JFileTreeCellRenderer());
+    		JTree tempTree = new JTree(rootTreeNode);
+    		
+    		tree.setModel(tempTree.getModel());
     		tree.setRootVisible(false);
     		
     		return tree;
@@ -534,7 +558,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     				if (node.isRoot) {
     					filename = rootNameCache.get(file);
     					if (filename == null) {
-    						filename = fsv.getSystemDisplayName(file);
+    						filename = fileSystem.getSystemDisplayName(file);
     						rootNameCache.put(file, filename);
     					}
     				} else {
@@ -546,7 +570,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     			if (file != null) {
     				Icon icon = iconCache.get(filename);
     				if (icon == null) {
-    					icon = fsv.getSystemIcon(file);
+    					icon = fileSystem.getSystemIcon(file);
     					this.iconCache.put(filename, icon);
     				}
     				result.setIcon(icon);
@@ -555,98 +579,104 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     		}
     	}
 
-    	/**
-    	 * A node in the file tree.
-    	 * 
-    	 * @author senseneyj
-    	 */
-    	private class JFileTreeNode implements TreeNode {
-
-    		private File file;
-
-    		private File[] children;
-
-    		private TreeNode parent;
-
-    		/** Whether root of file system */
-    		private boolean isRoot;
-
-    		/**
-    		 * Creates a new file tree node.
-    		 * 
-    		 * @param file Node file
-    		 * @param isFileSystemRoot whether the file is a file system root
-    		 * @param parent parent node
-    		 */
-    		public JFileTreeNode(File file, boolean isFileSystemRoot, TreeNode parent) {
-    			this.file = file;
-    			this.isRoot = isFileSystemRoot;
-    			this.parent = parent;
-    			this.children = file.listFiles();
-    			if (this.children == null) {
-    				this.children = new File[0];
-    			}
-    		}
-
-    		/**
-    		 * Creates a new file tree node.
-    		 */
-    		public JFileTreeNode(File child) {
-    			this.file = null;
-    			this.parent = null;
-    			this.children = new File[1];
-    			this.children[0] = child;
-    		}
-    		
-    		public Enumeration<?> children() {
-    			final int elementCount = children.length;
-    			return new Enumeration<File>() {
-    				int count = 0;
-
-    				public boolean hasMoreElements() {
-    					return count < elementCount;
-    				}
-
-    				public File nextElement() {
-    					if (this.count < elementCount) {
-    						return JFileTreeNode.this.children[count++];
-    					}
-    					throw new NoSuchElementException("Vector Enumeration");
-    				}
-    			};
-    		}
-
-    		public boolean getAllowsChildren() {
-    			return true;
-    		}
-
-    		public TreeNode getChildAt(int childIndex) {
-    			return new JFileTreeNode(children[childIndex], parent == null, this);
-    		}
-
-    		public int getChildCount() {
-    			return children.length;
-    		}
-
-    		public int getIndex(TreeNode node) {
-    			JFileTreeNode subNode = (JFileTreeNode) node;
-    			for (int i = 0; i < children.length; i++) {
-    				if (subNode.file.equals(children[i])) {
-    					return i;
-    				}
-    			}
-    			return -1;
-    		}
-
-    		public TreeNode getParent() {
-    			return this.parent;
-    		}
-
-    		public boolean isLeaf() {
-    			return (getChildCount() == 0);
-    		}
+    	
     	}
     }
+
+/**
+ * A node in the file tree.
+ * 
+ * @author senseneyj
+ */
+class JFileTreeNode implements TreeNode {
+
+	File file;
+
+	File[] children;
+
+	TreeNode parent;
+
+	/** Whether root of file system */
+	boolean isRoot;
+
+	/**
+	 * Creates a new file tree node.
+	 * 
+	 * @param file Node file
+	 * @param isFileSystemRoot whether the file is a file system root
+	 * @param parent parent node
+	 */
+	public JFileTreeNode(File file, boolean isFileSystemRoot, TreeNode parent) {
+		this.file = file;
+		this.isRoot = isFileSystemRoot;
+		this.parent = parent;
+		this.children = file.listFiles();
+		if (this.children == null) {
+			this.children = new File[0];
+		}
+	}
+
+	/**
+	 * Creates a new file tree node.
+	 */
+	public JFileTreeNode(File child) {
+		this.file = null;
+		this.parent = null;
+		this.children = new File[1];
+		this.children[0] = child;
+	}
+	
+	public Enumeration<?> children() {
+		final int elementCount = children.length;
+		return new Enumeration<File>() {
+			int count = 0;
+
+			public boolean hasMoreElements() {
+				return count < elementCount;
+			}
+
+			public File nextElement() {
+				if (this.count < elementCount) {
+					return JFileTreeNode.this.children[count++];
+				}
+				throw new NoSuchElementException("Vector Enumeration");
+			}
+		};
+	}
+	
+	public File getFile() {
+		return file;
+	}
+
+	public boolean getAllowsChildren() {
+		return true;
+	}
+
+	public TreeNode getChildAt(int childIndex) {
+		return new JFileTreeNode(children[childIndex], parent == null, this);
+	}
+
+	public int getChildCount() {
+		return children.length;
+	}
+
+	public int getIndex(TreeNode node) {
+		JFileTreeNode subNode = (JFileTreeNode) node;
+		for (int i = 0; i < children.length; i++) {
+			if (subNode.file.equals(children[i])) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public TreeNode getParent() {
+		return this.parent;
+	}
+
+	public boolean isLeaf() {
+		return (getChildCount() == 0);
+	}
 }
 
 
