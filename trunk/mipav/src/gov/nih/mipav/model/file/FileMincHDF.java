@@ -816,8 +816,15 @@ public class FileMincHDF extends FileBase {
         
         if ((image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) 
             ||  (image.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
-            scannerArray = new double[4][4];
-            (image.getMatrix()).copyMatrix(scannerArray);
+            Preferences.debug("Copying direction cosines from SCANNER ANATOMICAL matrix\n");
+            scannerArray = new double[3][3];
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    scannerArray[i][j] = image.getMatrix().get(i, j);
+                    Preferences.debug("scannerArray[" + i + "][" + j +"] = " + scannerArray[i][j] + " ");
+                }
+                Preferences.debug("\n");
+            }
             // MINC is L->R and P->A while MIPAV is R->L and A->P, so multiply first 2 rows by -1
             for (int i = 0; i <= 1; i++) {
                 for (int j = 0; j < 3; j ++) {
