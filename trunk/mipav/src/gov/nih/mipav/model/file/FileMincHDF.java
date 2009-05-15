@@ -4,6 +4,7 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
 import java.util.*;
@@ -262,6 +263,12 @@ public class FileMincHDF extends FileBase {
                 rootNode, FileMincHDF.NODE_IMAGE).getChildAt(0), FileMincHDF.LEAF_IMAGE);
 
         List<Attribute> imageMetaData;
+        if (imageNode == null) {
+            System.out.println("imageNode == null");
+        }
+        else if (imageNode.getUserObject() == null) {
+            System.out.println("imageNode.getUserObject() == null");
+        }
         imageMetaData = ((HObject) imageNode.getUserObject()).getMetadata();
 
         final Iterator<Attribute> it = imageMetaData.iterator();
@@ -1251,6 +1258,16 @@ public class FileMincHDF extends FileBase {
         int tsign = 0;
         int tsize = 0;
         switch (mDataType) {
+            case ModelStorageBase.UBYTE:
+                tclass = Datatype.CLASS_INTEGER;
+                tsize = 1;
+                tsign = Datatype.SIGN_NONE;
+                break;
+            case ModelStorageBase.BYTE:
+                tclass = Datatype.CLASS_INTEGER;
+                tsize = 1;
+                tsign = Datatype.SIGN_2;
+                break;
             case ModelStorageBase.USHORT:
                 tclass = Datatype.CLASS_INTEGER;
                 tsize = 1 << 1;
@@ -1282,7 +1299,8 @@ public class FileMincHDF extends FileBase {
                 tsign = Datatype.SIGN_2;
                 break;
             default:
-                System.err.println("not valid yet...");
+                System.err.println("First switch(mDataType) not valid yet mDataType = " + mDataType);
+                Preferences.debug("First switch(mDataType) not valid mDataType = " + mDataType + "\n");
                 return;
         }
 
@@ -1332,6 +1350,10 @@ public class FileMincHDF extends FileBase {
 
         Object dataImportObj = null;
         switch (mDataType) {
+            case ModelStorageBase.UBYTE:
+            case ModelStorageBase.BYTE:
+                dataImportObj = new byte[sliceSize];
+                break;
             case ModelStorageBase.USHORT:
             case ModelStorageBase.SHORT:
                 dataImportObj = new short[sliceSize];
@@ -1347,7 +1369,8 @@ public class FileMincHDF extends FileBase {
                 dataImportObj = new double[sliceSize];
                 break;
             default:
-                System.err.println("not valid yet...:" + mDataType);
+                System.err.println("Second switch(mDataType) not valid yet mDataType = " + mDataType);
+                Preferences.debug("Second switch(mDataType) not valid mDataType = " + mDataType + "\n");
                 return;
         }
 
@@ -1356,6 +1379,10 @@ public class FileMincHDF extends FileBase {
             // System.err.println(imageData.getStartDims()[0]);
             // data = imageData.read();
             switch (mDataType) {
+                case ModelStorageBase.UBYTE:
+                case ModelStorageBase.BYTE:
+                    image.exportData(j * sliceSize, sliceSize, (byte[]) dataImportObj);
+                    break;
                 case ModelStorageBase.USHORT:
                 case ModelStorageBase.SHORT:
                     image.exportData(j * sliceSize, sliceSize, (short[]) dataImportObj);
@@ -1371,7 +1398,9 @@ public class FileMincHDF extends FileBase {
                     image.exportData(j * sliceSize, sliceSize, (double[]) dataImportObj);
                     break;
                 default:
-                    System.err.println("not valid yet...");
+                    System.err.println("Third switch(mDataType) not valid yet mDataType = " + mDataType);
+                    Preferences.debug("j = " + j + "\n");
+                    Preferences.debug("Third switch(mDataType) not valid mDataType = " + mDataType + "\n");
                     return;
             }
             imageObj.write(dataImportObj);
@@ -1584,6 +1613,7 @@ public class FileMincHDF extends FileBase {
      */
     public void writeImage(final ModelImage image, final FileWriteOptions options) throws Exception {
 
+        Preferences.debug("Entering writeImage\n");
         final FileInfoBase fileInfo = image.getFileInfo()[0];
         final String fullPath = fileDir + File.separator + fileName;
 
@@ -1622,6 +1652,7 @@ public class FileMincHDF extends FileBase {
             buildInfoNode(image, format, mincNode, model);
         }
 
+        Preferences.debug("Entering buildImageNode\n");
         buildImageNode(image, options, format, mincNode, model);
 
         h5File.close();
