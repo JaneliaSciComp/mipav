@@ -618,8 +618,7 @@ public class FileInfoMinc extends FileInfoBase {
         }
 
         // System.out.println("convert: locs:\t" + startLocs[0] + " " + startLocs[1] + " " + startLocs[2]);
-
-        TransMatrix matrix = new TransMatrix(getExtents().length + 1);
+        TransMatrix matrix = new TransMatrix(Math.min(4, getExtents().length + 1));
         matrix.MakeIdentity();
 
         for (int i = 0; i < varArray.length; i++) {
