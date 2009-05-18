@@ -1418,6 +1418,517 @@ public class FileTiff extends FileBase {
         return image;
     }
     
+    public int[] getExtents() throws IOException {
+        int[] imgExtents;
+        int totalSize;
+
+        try {
+            file = new File(fileDir + fileName);
+            raFile = new RandomAccessFile(file, "r");
+            
+            fileLength = raFile.length();
+
+            short byteOrder = raFile.readShort();
+
+            if (byteOrder == 0x4949) {
+                endianess = FileBase.LITTLE_ENDIAN;
+            } else if (byteOrder == 0x4d4d) {
+                endianess = FileBase.BIG_ENDIAN;
+            } else {
+                raFile.close();
+                throw new IOException("TIFF Read Header: Error - first 2 bytes are an illegal " + byteOrder);
+            }
+
+            int magicTIFFNumber = getUnsignedShort(endianess);
+
+            if (magicTIFFNumber != 42) {
+                raFile.close();
+                throw new IOException("Tiff Read Header: Error - Invalid Magic number = " + magicTIFFNumber);
+            }
+
+            long saveLoc = raFile.getFilePointer();
+            fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF); // dummy fileInfo
+            fileInfo.setEndianess(endianess);
+            imageSlice = 0;
+            IFDoffsets[imageSlice] = getInt(endianess);
+
+            boolean moreIFDs = true;
+            imgResols = new float[5];
+            Preferences.debug("\n ************** FileTiff.openIFD: Opening = " + fileName + "\n",
+                              Preferences.DEBUG_FILEIO);
+            tileOffsetNumber = 0;
+            tileByteNumber = 0;
+            foundTag43314 = false;
+
+            while ((moreIFDs) && (!foundTag43314)) { // Find number of images!!
+                raFile.seek(IFDoffsets[imageSlice]);
+                moreIFDs = openIFD(fileInfo);
+            }
+
+            if (foundTag43314) {
+                raFile.seek(516);
+                imageSlice = getUnsignedShort(BIG_ENDIAN);
+            }
+
+            Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
+
+            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) &&
+                                 (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) &&
+                                 (!SGILogCompression) && (!SGILog24Compression) && (!packBit) && haveTileOffsets) {
+                if (chunky) {
+                   tilesPerSlice = tilesAcross * tilesDown;
+                }
+                else {
+                    tilesPerSlice = samplesPerPixel * tilesAcross * tilesDown;
+                }
+                imageSlice = tilesPerImage / tilesPerSlice;
+                // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
+            } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression)&& (!fax3Compression) && (!fax4Compression) 
+            else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
+                     modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression ||
+                     SGILog24Compression) {
+                // set the tile width to the xDim for use in LZW Decoder or zlib deflater or fax decompression
+                if (!haveTileWidth) {
+                    tileWidth = xDim;
+                }
+          
+                // Code to put all the rows in 1 strip often uses rowsPerStrip = 2**32 -1
+                // which shows up as -1.
+                if (!haveTileLength && haveRowsPerStrip && (rowsPerStrip != -1)) {
+                    tileLength = rowsPerStrip;
+                }
+                else if (!haveTileLength) {
+                    tileLength = yDim;
+                }
+                
+                if ((tileOffsets == null) || (tileByteCounts == null)) {
+                    totalSize = 0;
+                    for (int i = 0; i < imageSlice; i++) {
+                        totalSize += dataOffsets[i].size();
+                    }
+                    tileOffsets = new int[totalSize];
+                    tileByteCounts = new int[totalSize];
+                    tileMaxByteCount = 0;
+    
+                    for (int i = 0, k = 0; i < imageSlice; i++) {
+                        for (int j = 0; j < dataOffsets[i].size(); j++) {
+                            tileOffsets[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).index;
+                            tileByteCounts[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).byteCount;
+        
+                            if (tileByteCounts[k] > tileMaxByteCount) {
+                                tileMaxByteCount = tileByteCounts[k];
+                            }
+                            k++;
+                        }
+                    }
+                }
+                else {
+                    tileMaxByteCount = 0;
+                    for (int k = 0; k < tileByteCounts.length; k++) {
+                        if (tileByteCounts[k] > tileMaxByteCount) {
+                            tileMaxByteCount = tileByteCounts[k];
+                        }
+                    }
+                }
+
+                // System.err.println("Number of tile offsets: " + tileOffsets.length);
+                tilesAcross = (xDim + tileWidth - 1) / tileWidth;
+                tilesDown = (yDim + tileLength - 1) / tileLength;
+
+                // tileSize = tileWidth * tileHeight * numBands;
+                if (chunky) {
+                    tilesPerSlice = tilesAcross * tilesDown;
+                 }
+                 else {
+                     tilesPerSlice = samplesPerPixel * tilesAcross * tilesDown;
+                 }
+                //System.err.println("Tiles Across: " + tilesAcross + " tiles down: " + tilesDown);
+                // System.err.println("TileMaxByteCount: " + tileMaxByteCount);
+            }
+
+            // System.err.println("Tile width: " + tileWidth + " samples per pixel: " + samplesPerPixel);
+            //System.err.println("Image slice: " + imageSlice);
+            imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
+            Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
+
+            if (haveMultiSpectraImage && (imageSlice > 1)) {
+                imgExtents = new int[4];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = imageSlice;
+                imgExtents[3] = bitsPerSample.length;
+            } // if (haveMultiSpectraImage)
+            else if (haveMultiSpectraImage) {
+                imgExtents = new int[3];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = bitsPerSample.length;
+            }
+            else if (imageSlice > 1) {
+                imgExtents = new int[3];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = imageSlice;
+            } else {
+                imgExtents = new int[2];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+            }
+            
+            raFile.close();
+            
+        } catch (OutOfMemoryError error) {
+
+            byteBuffer = null;
+            System.gc();
+            throw error;
+        }
+        return imgExtents;
+    }
+    
+    /**
+     * Used for reading overlapping volumes from a large file for PlugInLargeSynapse
+     * @param xStart
+     * @param xLength
+     * @param yStart
+     * @param yLength
+     * @param zStart
+     * @param zLength
+     * @param redIntensity
+     * @param greenIntensity
+     * @param blueIntensity
+     * @param redBrightIntensity
+     * @param greenBrightIntensity
+     * @param blueBrightIntensity
+     * @return
+     */
+    public byte[] readSynapseBuffer(int xStart, int xLength, int yStart, int yLength, int zStart, int zLength,
+            int redIntensity, int greenIntensity, int blueIntensity, int redBrightIntensity,
+            int greenBrightIntensity, int blueBrightIntensity) 
+                                    throws IOException {
+        
+        final byte NONE = 0;
+        final byte RED = 1;
+        final byte GREEN = 2;
+        final byte BLUE = 3;
+        final byte BRIGHT_RED = 4;
+        final byte BRIGHT_GREEN = 5;
+        final byte BRIGHT_BLUE = 6;
+        byte buffer[] = new byte[xLength * yLength * zLength];
+        int[] imgExtents;
+        int totalSize;
+        int x;
+        int y;
+        int zPos;
+        int yPos;
+        int pos;
+        int red;
+        int green;
+        int blue;
+
+        try {
+            file = new File(fileDir + fileName);
+            raFile = new RandomAccessFile(file, "r");
+            
+            fileLength = raFile.length();
+
+            short byteOrder = raFile.readShort();
+
+            if (byteOrder == 0x4949) {
+                endianess = FileBase.LITTLE_ENDIAN;
+            } else if (byteOrder == 0x4d4d) {
+                endianess = FileBase.BIG_ENDIAN;
+            } else {
+                raFile.close();
+                throw new IOException("TIFF Read Header: Error - first 2 bytes are an illegal " + byteOrder);
+            }
+
+            int magicTIFFNumber = getUnsignedShort(endianess);
+
+            if (magicTIFFNumber != 42) {
+                raFile.close();
+                throw new IOException("Tiff Read Header: Error - Invalid Magic number = " + magicTIFFNumber);
+            }
+
+            long saveLoc = raFile.getFilePointer();
+            fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF); // dummy fileInfo
+            fileInfo.setEndianess(endianess);
+            imageSlice = 0;
+            IFDoffsets[imageSlice] = getInt(endianess);
+
+            boolean moreIFDs = true;
+            imgResols = new float[5];
+            Preferences.debug("\n ************** FileTiff.openIFD: Opening = " + fileName + "\n",
+                              Preferences.DEBUG_FILEIO);
+            tileOffsetNumber = 0;
+            tileByteNumber = 0;
+            foundTag43314 = false;
+
+            while ((moreIFDs) && (!foundTag43314)) { // Find number of images!!
+                raFile.seek(IFDoffsets[imageSlice]);
+                moreIFDs = openIFD(fileInfo);
+            }
+
+            if (foundTag43314) {
+                raFile.seek(516);
+                imageSlice = getUnsignedShort(BIG_ENDIAN);
+            }
+
+            Preferences.debug("Just past init IFD read", Preferences.DEBUG_FILEIO);
+
+            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) &&
+                                 (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) &&
+                                 (!SGILogCompression) && (!SGILog24Compression) && (!packBit) && haveTileOffsets) {
+                if (chunky) {
+                   tilesPerSlice = tilesAcross * tilesDown;
+                }
+                else {
+                    tilesPerSlice = samplesPerPixel * tilesAcross * tilesDown;
+                }
+                imageSlice = tilesPerImage / tilesPerSlice;
+                // System.err.println("DoTile: tilesPerSlice: " + tilesPerSlice + " imageSlice: " + imageSlice);
+            } // if (haveTileWidth && (!lzwCompression) && (!zlibCompression)&& (!fax3Compression) && (!fax4Compression) 
+            else if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
+                     modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression ||
+                     SGILog24Compression) {
+                // set the tile width to the xDim for use in LZW Decoder or zlib deflater or fax decompression
+                if (!haveTileWidth) {
+                    tileWidth = xDim;
+                }
+          
+                // Code to put all the rows in 1 strip often uses rowsPerStrip = 2**32 -1
+                // which shows up as -1.
+                if (!haveTileLength && haveRowsPerStrip && (rowsPerStrip != -1)) {
+                    tileLength = rowsPerStrip;
+                }
+                else if (!haveTileLength) {
+                    tileLength = yDim;
+                }
+                
+                if ((tileOffsets == null) || (tileByteCounts == null)) {
+                    totalSize = 0;
+                    for (int i = 0; i < imageSlice; i++) {
+                        totalSize += dataOffsets[i].size();
+                    }
+                    tileOffsets = new int[totalSize];
+                    tileByteCounts = new int[totalSize];
+                    tileMaxByteCount = 0;
+    
+                    for (int i = 0, k = 0; i < imageSlice; i++) {
+                        for (int j = 0; j < dataOffsets[i].size(); j++) {
+                            tileOffsets[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).index;
+                            tileByteCounts[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).byteCount;
+        
+                            if (tileByteCounts[k] > tileMaxByteCount) {
+                                tileMaxByteCount = tileByteCounts[k];
+                            }
+                            k++;
+                        }
+                    }
+                }
+                else {
+                    tileMaxByteCount = 0;
+                    for (int k = 0; k < tileByteCounts.length; k++) {
+                        if (tileByteCounts[k] > tileMaxByteCount) {
+                            tileMaxByteCount = tileByteCounts[k];
+                        }
+                    }
+                }
+
+                // System.err.println("Number of tile offsets: " + tileOffsets.length);
+                tilesAcross = (xDim + tileWidth - 1) / tileWidth;
+                tilesDown = (yDim + tileLength - 1) / tileLength;
+
+                // tileSize = tileWidth * tileHeight * numBands;
+                if (chunky) {
+                    tilesPerSlice = tilesAcross * tilesDown;
+                 }
+                 else {
+                     tilesPerSlice = samplesPerPixel * tilesAcross * tilesDown;
+                 }
+                //System.err.println("Tiles Across: " + tilesAcross + " tiles down: " + tilesDown);
+                // System.err.println("TileMaxByteCount: " + tileMaxByteCount);
+            }
+
+            // System.err.println("Tile width: " + tileWidth + " samples per pixel: " + samplesPerPixel);
+            //System.err.println("Image slice: " + imageSlice);
+            imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
+            Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
+
+            if (haveMultiSpectraImage && (imageSlice > 1)) {
+                imgExtents = new int[4];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = imageSlice;
+                imgExtents[3] = bitsPerSample.length;
+            } // if (haveMultiSpectraImage)
+            else if (haveMultiSpectraImage) {
+                imgExtents = new int[3];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = bitsPerSample.length;
+            }
+            else if (imageSlice > 1) {
+                imgExtents = new int[3];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+                imgExtents[2] = imageSlice;
+            } else {
+                imgExtents = new int[2];
+                imgExtents[0] = xDim;
+                imgExtents[1] = yDim;
+            }
+
+            fileInfo.setExtents(imgExtents);
+
+            imageSlice = 0;
+            raFile.seek(saveLoc);
+            moreIFDs = true;
+
+            int i = 0;
+            tileOffsetNumber = 0;
+            tileByteNumber = 0;
+
+            if (!foundTag43314) {
+                while (moreIFDs){
+                    fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
+                    fileInfo.setExtents(imgExtents);
+                    raFile.seek(IFDoffsets[imageSlice]);
+                    moreIFDs = openIFD(fileInfo);
+
+                    // Set the resolutions
+                    fileInfo.setResolutions(imgResols);
+
+                    i++;
+                } // while (moreIFDs)
+            } // if (!foundTag43314)
+            else { // foundTag43314
+                fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
+                fileInfo.setExtents(imgExtents);
+                fileInfo.setDataType(image.getType());
+                imageSlice = imgExtents[2];
+
+                for (i = 0; i < imageSlice; i++) {
+                    dataOffsets[i] = new Vector();
+                    dataOffsets[i].addElement(new Index(768 + (i * xDim * yDim)));
+                    ((Index) (dataOffsets[i].elementAt(0))).byteCount = xDim * yDim;
+                }
+            } // else foundTag43314
+
+            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && 
+               (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) && 
+                (!SGILogCompression) && (!SGILog24Compression) && haveTileOffsets) {
+                imageSlice = tilesPerImage / tilesPerSlice;
+            }
+
+            if (lzwCompression) {
+                // lzwDecoder = new TIFFLZWDecoder(tileWidth, predictor, samplesPerPixel);
+                // System.err.println("Created LZW Decoder");
+            }
+            else if (zlibCompression) {
+                zlibDecompresser = new Inflater();
+            }
+            else if (fax3Compression || fax4Compression) {
+                fax34Init();   
+            }
+
+            int bufferSize;
+            int sliceSize = imgExtents[0] * imgExtents[1];
+
+            if (imgExtents.length == 3) {
+                bufferSize = imgExtents[0] * imgExtents[1] * imgExtents[2];
+            } else {
+                bufferSize = imgExtents[0] * imgExtents[1];
+            }
+
+            if (ModelImage.isColorImage(fileInfo.getDataType())) {
+                bufferSize *= 4;
+                sliceSize *= 4;
+            }
+            
+            if (haveMultiSpectraImage) {
+                sliceSize *= bitsPerSample.length;
+            }
+
+            // long secondTime = System.currentTimeMillis();
+            // System.err.println("Time elapsed reading IFDs: " + ((secondTime - firstTime) / 1000));
+            // System.err.println("pbar visible: " + pBarVisible);
+
+            if (sliceBufferFloat == null) {
+                sliceBufferFloat = new float[sliceSize];
+            }
+
+
+            for (i = zStart; i < zLength; i++) {
+                    zPos = (i - zStart)* xLength * yLength;
+
+                    if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
+                        modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression ||
+                        SGILog24Compression) {
+                        readTileBuffer(i, sliceBufferFloat);
+                    } else {
+
+                        readBuffer(i, sliceBufferFloat); // Slice a time;
+                    }
+                    
+                    for (y = yStart; y < yLength; y++) {
+                        yPos = zPos + (y - yStart) * xLength;
+                        for (x = xStart; x < xStart; x++) {
+                            pos = yPos + (x - xStart);
+                            red = Math.round(sliceBufferFloat[1 + 4 *(x + y * xDim)]);
+                            green = Math.round(sliceBufferFloat[2 + 4 * (x + y * xDim)]);
+                            blue = Math.round(sliceBufferFloat[3 + 4 * (x + y * xDim)]);
+                            
+                            if (blue >= blueBrightIntensity) {
+                                buffer[pos] = BRIGHT_BLUE;
+                            }
+                            else if ((blue > red) && (blue > green) && (blue >= blueIntensity)) {
+                                buffer[pos] = BLUE;
+                            }
+                            else if ((red > green) && (red > blue) && (red >= redIntensity)) {
+                                if (red >= redBrightIntensity) {
+                                    buffer[pos] = BRIGHT_RED;
+                                }
+                                else {
+                                    buffer[pos] = RED;
+                                }
+                            }
+                            else if ((green > red) && (green > blue) && (green >= greenIntensity)) {
+                                if (green >= greenBrightIntensity) {
+                                    buffer[pos] = BRIGHT_GREEN;
+                                }
+                                else {
+                                    buffer[pos] = GREEN;
+                                }
+                            }
+                            else {
+                                buffer[pos] = NONE;
+                            }
+                        }
+                    }
+                
+            }
+            
+            if (haveChangedPhotometricTo1) {
+                // Changed to black is zero
+                fileInfo.setPhotometric((short)1);
+            }
+
+            fileInfo.setExtents(imgExtents);
+            raFile.close();
+            
+        } catch (IOException e) {
+            throw new IOException("FileTiff: read: " + e);    
+        } catch (OutOfMemoryError error) {
+
+            byteBuffer = null;
+            System.gc();
+            throw error;
+        }
+
+        return buffer;
+    }
+    
     // Convert CIELAB to XYZ and convert XYZ to RGB
     // R position has CIE_L*, G position has CIE-a*, B position has CIE-b*
     // For 8 bits:
