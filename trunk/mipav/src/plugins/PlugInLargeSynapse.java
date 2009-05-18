@@ -26,21 +26,56 @@ public class PlugInLargeSynapse implements PlugInGeneric {
     
     private FileTiff tiffFile;
     
+    /** Length of a processed square within a slice */
+    private int xyProcessLength;
+    
+    /** Overlap length in a processed square in a slice */
+    private int xyOverlapLength;
+    
+    /** Height of a processed volume across slices */
+    private int zProcessLength;
+    
+    /** Overlap of processed volume heights across slices */
+    private int zOverlapLength;
+    
+    /** Minimum number of red pixels along line */
     private int redMin;
     
+    /** Maximum number of pixels along line */
     private int redMax;
     
+    /** Minimum number of green pixels along line */
     private int greenMin;
     
+    /** Maximum number of pixels along line */
     private int greenMax;
     
+    /** Minimum number of blue pixels along line within slice*/
     private int blueMinXY;
     
+    /** Maximum number of blue pixels along line within slice*/
     private int blueMaxXY;
     
+    /** Minimum number of blue pixels along line between slices*/
     private int blueMinZ;
     
+    /** Maximum number of blue pixels along line between slices*/
     private int blueMaxZ;
+    
+    /** Minimum intensity values */
+    private int redIntensity;
+    
+    private int redBrightIntensity;
+    
+    private int greenIntensity;
+    
+    private int greenBrightIntensity;
+    
+    private int blueIntensity;
+    
+    private int blueBrightIntensity;
+    
+    private boolean histoInfo;
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -64,6 +99,14 @@ public class PlugInLargeSynapse implements PlugInGeneric {
             Preferences.debug("directory = " + directory + "\n");
             inputFileName = largeSynapseDialog.getInputFileName();
             Preferences.debug("input fileName = " + inputFileName + "\n");
+            xyProcessLength = largeSynapseDialog.getXYProcessLength();
+            Preferences.debug("xyProcessLength = " + xyProcessLength + "\n");
+            xyOverlapLength = largeSynapseDialog.getXYOverlapLength();
+            Preferences.debug("xyOverlapLength = " + xyOverlapLength + "\n");
+            zProcessLength = largeSynapseDialog.getZProcessLength();
+            Preferences.debug("zProcessLength = " + zProcessLength + "\n");
+            zOverlapLength = largeSynapseDialog.getZOverlapLength();
+            Preferences.debug("zOverlapLength = " + zOverlapLength + "\n");
             redMin = largeSynapseDialog.getRedMin();
             Preferences.debug("redMin = " + redMin + "\n");
             redMax = largeSynapseDialog.getRedMax();
@@ -80,6 +123,20 @@ public class PlugInLargeSynapse implements PlugInGeneric {
             Preferences.debug("blueMinZ = " + blueMinZ + "\n");
             blueMaxZ = largeSynapseDialog.getBlueMaxZ();
             Preferences.debug("blueMaxZ = " + blueMaxZ + "\n");
+            redIntensity = largeSynapseDialog.getRedIntensity();
+            Preferences.debug("redIntensity = " + redIntensity + "\n");
+            redBrightIntensity = largeSynapseDialog.getRedBrightIntensity();
+            Preferences.debug("redBrightIntensity = " + redBrightIntensity + "\n");
+            greenIntensity = largeSynapseDialog.getGreenIntensity();
+            Preferences.debug("greenIntensity = " + greenIntensity + "\n");
+            greenBrightIntensity = largeSynapseDialog.getGreenBrightIntensity();
+            Preferences.debug("greenBrightIntensity = " + greenBrightIntensity + "\n");
+            blueIntensity = largeSynapseDialog.getBlueIntensity();
+            Preferences.debug("blueIntensity = " + blueIntensity + "\n");
+            blueBrightIntensity = largeSynapseDialog.getBlueBrightIntensity();
+            Preferences.debug("blueBrightIntensity = " + blueBrightIntensity + "\n");
+            histoInfo = largeSynapseDialog.getHistoInfo();
+            Preferences.debug("histoInfo = " + histoInfo + "\n");
             try {
                 tiffFile = new FileTiff(inputFileName, directory);
             }
