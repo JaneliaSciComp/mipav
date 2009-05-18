@@ -10,6 +10,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.*;
 
@@ -21,7 +22,7 @@ import javax.swing.*;
  *
  
  */
-public class PlugInDialogLargeSynapse extends JDialogScriptableBase  {
+public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
     
@@ -127,8 +128,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase  {
     /** Button to browse for the TIFF file */
     private JButton browseButton;
     
-    private PlugInLargeSynapse largeSynapsePlugin;
-    
     /** Whether the dialog exited successfully */
     private boolean successfulExit = false;
     
@@ -163,6 +162,8 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase  {
     
     /** Overlap of processed volume heights across slices */
     private int zOverlapLength = 12;
+    
+    private PlugInAlgorithmLargeSynapse algoLargeSynapse;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -177,9 +178,8 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase  {
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogLargeSynapse(boolean modal, PlugInLargeSynapse largeSynapsePlugin) {
+    public PlugInDialogLargeSynapse(boolean modal) {
         super(modal);
-        this.largeSynapsePlugin = largeSynapsePlugin;
         init();
     }
 
@@ -333,10 +333,32 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase  {
     protected void callAlgorithm() {
 
         try {
-        
-            setVisible(false); // Hide dialog
-            successfulExit = true;
-            largeSynapsePlugin.runPlugin();    //continues execution of plugin with successful exit
+            
+            //          Make algorithm.
+            algoLargeSynapse = new PlugInAlgorithmLargeSynapse(directory, inputFileName, xyProcessLength,
+                    xyOverlapLength, zProcessLength, zOverlapLength, redMin, redMax,
+                    greenMin, greenMax, blueMinXY, blueMaxXY, blueMinZ, blueMaxZ,
+                    redIntensity, greenIntensity, blueIntensity, redBrightIntensity,
+                    greenBrightIntensity, blueBrightIntensity, histoInfo);
+            
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed of failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            algoLargeSynapse.addListener(this);
+            
+            createProgressBar("Synapse detection", algoLargeSynapse);
+            
+            setVisible(false);
+            
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (algoLargeSynapse.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                algoLargeSynapse.run();
+            }
         
         } catch (OutOfMemoryError x) {
             
@@ -345,6 +367,20 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase  {
         }
 
     } // end callAlgorithm()
+    
+    /**
+     * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
+     * it has completed or failed to complete, so that the dialog can display the result image and/or clean up.
+     *
+     * @param  algorithm  Algorithm that caused the event.
+     */
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+        
+        progressBar.dispose();
+        algoLargeSynapse.finalize();
+        algoLargeSynapse = null;
+        
+    }
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
