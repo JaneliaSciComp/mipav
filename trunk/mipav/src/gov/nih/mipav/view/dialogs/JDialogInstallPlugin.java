@@ -620,20 +620,14 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			fileListPanel.setBorder(MipavUtil.buildTitledBorder("Selected class files"));
 			selected = new JList();
 			selected.setModel(new DefaultListModel());
-			selected.setMinimumSize(new Dimension(300, 800));
-			selected.setPreferredSize(new Dimension(300, 800));
 			scrollPane = new JScrollPane(selected);
-			scrollPane.setMinimumSize(new Dimension(300, 350)); //TODO: Fix dim
-			scrollPane.setPreferredSize(new Dimension(300, 350)); //TODO: Fix dim
 			scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+			fileListPanel.setPreferredSize(new Dimension(300, 350));
 			fileListPanel.add(scrollPane);
 			mainSelectorPanel.add(fileListPanel);
-			mainSelectorPanel.setMinimumSize(new Dimension(300, 375)); //TODO: Fix dim
-			mainSelectorPanel.setPreferredSize(new Dimension(300, 375)); //TODO: Fix dim
 			add(mainSelectorPanel);
-			setMinimumSize(new Dimension(700, 450));
-			setPreferredSize(new Dimension(700, 450));
+			validate();
 			pack();
 		}
 		
@@ -691,11 +685,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 						((DefaultListModel)selected.getModel()).addElement(name);
 						files.add(((JFileTreeNode)paths[i].getLastPathComponent()).getFile());
 					}
-				}	
-				selected.validate(); //TODO: This resizing doesn't seem to work
-				selected.updateUI();
-				scrollPane.validate();
-				scrollPane.updateUI();
+				}
 			} else if(e.getActionCommand().equals(DELETE)) {
 				Object[] numSelected = selected.getSelectedValues();
 				int[] selectedIndex = selected.getSelectedIndices();
@@ -706,6 +696,13 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 				}
 				for(int i=0; i<files.size(); i++) {
 					System.out.println(i+": "+files.get(i));
+				}
+				JList temp = new JList();
+				DefaultListModel m;
+				temp.setModel(m = new DefaultListModel());
+				//TODO: Future DefaultListModels are expected to be collections show addAll should be implemented.
+				for(int i=0; i<files.size(); i++) {
+					m.add(i, files.get(i));
 				}
 			}
 		}
@@ -729,13 +726,11 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     		tree = new JTree(rootTreeNode);
     		tree.setCellRenderer(new JFileTreeCellRenderer());
     		tree.setRootVisible(false);
-    		tree.setMinimumSize(new Dimension(300, 800)); //TODO: Fix dim
-    		tree.setPreferredSize(new Dimension(300, 800));
     		JScrollPane scrollPane = new JScrollPane(tree);
-    		scrollPane.setMinimumSize(new Dimension(300, 400));
     		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    		add(scrollPane, BorderLayout.CENTER);
+    		setPreferredSize(new Dimension(300, 350));
+			add(scrollPane, BorderLayout.CENTER);
     	}
     	
     	public JTree getFileTree() {
