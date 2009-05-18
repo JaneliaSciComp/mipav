@@ -1258,6 +1258,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.equals("ProstateMergedVOIs")) {
             saveMergedVOIs();
+        } else if (command.equals("ProstateReconstruct")) {
+        	reconstructSurfaceFromVOIs();
         } else if (command.equals("SaveVOIIntensities")) {
             saveVOIIntensities();
         } else if (command.equals("Snake")) {

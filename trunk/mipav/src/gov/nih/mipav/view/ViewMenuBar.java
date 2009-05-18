@@ -798,8 +798,10 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Trim parameter", "Trim", 0, null, true),
                                 separator,
                                 menuBuilder.buildMenuItem("Cardiology VOI", "Cardio", 0, null, true),
-                                menuBuilder.buildMenuItem("Prostate VOI", "ProstateMergedVOIs", 0, null, true),        
-                                
+                                menuBuilder.makeMenu("Prostate VOI", true, new JMenuItem[] {
+                                		menuBuilder.buildMenuItem("Merge VOIs", "ProstateMergedVOIs", 0, null, false),
+                                		menuBuilder.buildMenuItem("Surface Reconstruction", "ProstateReconstruct", 0, null, false)
+                                }),
                                 separator,
                                 menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Open VOI intensity graph", "OpenNewGraph", 0,

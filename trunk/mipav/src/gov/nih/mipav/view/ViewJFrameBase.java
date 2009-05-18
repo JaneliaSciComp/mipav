@@ -2248,6 +2248,15 @@ public abstract class ViewJFrameBase extends JFrame
     }
     
     /**
+     * Reconstruct the prostate surface from the coarse VOIs cloudy points.  
+     */
+    public void reconstructSurfaceFromVOIs() {
+    	JDialogBase reconstructSurfaceDialog = new JDialogSurfaceReconstruction(this);
+    	reconstructSurfaceDialog.validate();
+    }
+    
+    
+    /**
      * This method saves all VOIs for the active image to a given directory.
      *
      * @param  voiDir  directory that contains VOIs for this image.
