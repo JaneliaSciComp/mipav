@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
@@ -10,6 +11,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogGradientMagnitude;
 import gov.nih.mipav.view.dialogs.JDialogLaplacian;
+import gov.nih.mipav.view.dialogs.JDialogSubset;
 
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -32,7 +34,7 @@ public class VolumeImage
     private Texture m_kOpacityMapTarget_GM = null;
 
     /** Data storage for volume: */
-    private GraphicsImage m_kVolume;
+    private GraphicsImage[] m_kVolume;
     /** Texture object for data: */
     private Texture m_kVolumeTarget;
     
@@ -52,12 +54,12 @@ public class VolumeImage
     private Texture m_kOpacityMapTarget;
     
     /** Data storage for volume gradient magnitude: */
-    private GraphicsImage m_kVolumeGM;
+    private GraphicsImage[] m_kVolumeGM;
     /** Texture object for data: */
     private Texture m_kVolumeGMTarget;
     
     /** Data storage for volume  second derivative: */
-    private GraphicsImage m_kVolumeGMGM;
+    private GraphicsImage[] m_kVolumeGMGM;
     /** Texture object for data: */
     private Texture m_kVolumeGMGMTarget;
 
@@ -72,9 +74,16 @@ public class VolumeImage
     private float m_fX = 1, m_fY = 1, m_fZ = 1;
     private String m_kPostfix = null;
     
-    private GraphicsImage m_kHisto = null;
+    private GraphicsImage[] m_kHisto = null;
+    /** Texture object for data: */
+    private Texture m_kHistoTarget;
     private Vector2f[] m_akHistoTCoord = new Vector2f[4];
     private float m_fDRRNormalize = 255.0f;
+
+    private int m_iTimeSlice = 0;
+    private int m_iTimeSteps = 0;
+    
+    private ModelImage[] m_akImages;
     
     /**
      * Constructor. Stores the ModelImage Volume data.
@@ -96,13 +105,42 @@ public class VolumeImage
 
         /* Map the ModelImage volume data to a texture image, including for
          * the ModelImage gradient magnitude data: */
-        m_kVolume = UpdateData(m_kImage, null, m_kVolumeTarget, kPostfix );
+        int[] aiExtents = m_kImage.getExtents();
+        int iNDims = aiExtents.length;
+        if ( iNDims == 3 )
+        {
+            m_iTimeSteps = 1;
+            m_kVolume = new GraphicsImage[1];
+            m_kVolumeGM = new GraphicsImage[1];
+            m_kVolumeGMGM = new GraphicsImage[1];
+            m_kVolume[0] = UpdateData(m_kImage, m_iTimeSlice, null, null, m_kVolumeTarget, kPostfix );
+        }
+        else
+        {
+            m_iTimeSteps = aiExtents[3];
+            int[] aiSubset = new int[]{aiExtents[0], aiExtents[1], aiExtents[2]};
+            
+            m_akImages = new ModelImage[ m_iTimeSteps ];            
+            
+            m_kVolume = new GraphicsImage[m_iTimeSteps];
+            m_kVolumeGM = new GraphicsImage[m_iTimeSteps];
+            m_kVolumeGMGM = new GraphicsImage[m_iTimeSteps];
+            for ( int i = 0; i < m_kVolume.length; i++ )
+            {
+                m_akImages[i] = new ModelImage( m_kImage.getType(), aiSubset, JDialogBase.makeImageName(m_kImage.getImageName(), "_" + i) );
+            
+                m_kVolume[i] = UpdateData(m_kImage, i, m_akImages[i], null, m_kVolumeTarget, kPostfix );      
+                
+                m_akImages[i].copyFileTypeInfo(m_kImage);
+                m_akImages[i].calcMinMax();
+            }
+        }
         //new ViewJFrameImage(CreateImageFromTexture(m_kVolume), null, new java.awt.Dimension(610, 200), false);
         GradientMagnitudeImage(m_kImage, kPostfix);
         GenerateHistogram( m_kVolume, m_kVolumeGM, kPostfix );
         
         m_kVolumeTarget = new Texture();
-        m_kVolumeTarget.SetImage(m_kVolume);
+        m_kVolumeTarget.SetImage(m_kVolume[0]);
         m_kVolumeTarget.SetShared(true);
         m_kVolumeTarget.SetFilterType(Texture.FilterType.LINEAR);
         m_kVolumeTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
@@ -231,6 +269,45 @@ public class VolumeImage
         ModelLUT.exportIndexedLUTMin( kRGBT, kImage.GetData() );
         kTexture.Reload(true);
     }
+    
+
+    public void update4D( boolean bForward )
+    {
+        if (  m_iTimeSteps == 1 )
+        {
+            return;
+        }
+        if ( bForward )
+        {
+            m_iTimeSlice++;
+        }
+        else
+        {
+            m_iTimeSlice--;
+        }
+        if ( m_iTimeSlice >= m_iTimeSteps )
+        {
+            m_iTimeSlice = 0;
+        }
+        if ( m_iTimeSlice < 0 )
+        {
+            m_iTimeSlice = m_iTimeSteps-1;
+        }
+        
+
+        m_kVolumeTarget.SetImage(m_kVolume[m_iTimeSlice]);
+        m_kVolumeTarget.Release();
+        m_kVolumeGMTarget.SetImage(m_kVolumeGM[m_iTimeSlice]);
+        m_kVolumeGMTarget.Release();
+        m_kVolumeGMGMTarget.SetImage(m_kVolumeGMGM[m_iTimeSlice]);
+        m_kVolumeGMGMTarget.Release();
+        
+        m_kHistoTarget.SetImage( m_kHisto[m_iTimeSlice] );
+        m_kHistoTarget.Release();
+        
+        //VolumeImage.UpdateData( m_kImage, m_iTimeSlice, m_kVolume[m_iTimeSlice], m_kVolumeTarget, m_kPostfix );
+    }
+    
 
     /**
      * Update the image volume data on the GPU.
@@ -239,7 +316,7 @@ public class VolumeImage
      * @param kVolumeTexture the volume data texture.
      * @param kPostFix the postfix string for the image name.
      */
-    public static GraphicsImage UpdateData( ModelImage kImage, GraphicsImage kVolumeImage,
+    public static GraphicsImage UpdateData( ModelImage kImage, int iTimeSlice, ModelImage kNewImage, GraphicsImage kVolumeImage,
             Texture kVolumeTexture, String kPostFix )
     {
         int iXBound = kImage.getExtents()[0];
@@ -247,12 +324,14 @@ public class VolumeImage
         int iZBound = kImage.getExtents()[2];
 
         byte[] aucData = null;
+        int iSize = iXBound*iYBound*iZBound;
         if ( kImage.isColorImage() )
         {
-            aucData = new byte[4*iXBound*iYBound*iZBound];
+            iSize *= 4;
+            aucData = new byte[iSize];
             try {
-                kImage.exportData( 0, kImage.getSize(), aucData );
-                for ( int i = 0; i < kImage.getSize(); i += 4)
+                kImage.exportData( iTimeSlice * iSize, iSize, aucData );
+                for ( int i = 0; i < iSize; i += 4)
                 {
                     byte tmp = aucData[i];
                     aucData[i] = aucData[i+1];
@@ -277,9 +356,9 @@ public class VolumeImage
         }
         else
         {
-            aucData = new byte[iXBound*iYBound*iZBound];
+            aucData = new byte[iSize];
             try {
-                kImage.exportData( 0, kImage.getSize(), aucData );
+                kImage.exportData( iTimeSlice * iSize, iSize, aucData );
                 if ( kVolumeImage == null )
                 {
                 kVolumeImage =
@@ -296,7 +375,12 @@ public class VolumeImage
             }
 
         }
-
+        if ( kNewImage != null )
+        {
+            try {
+                kNewImage.importData( 0, aucData, true );
+            } catch (IOException e) {}
+        }
         if ( kVolumeTexture != null )
         {
             kVolumeTexture.Release();
@@ -401,7 +485,10 @@ public class VolumeImage
     {
         m_kImage = null;
 
-        m_kVolume.dispose();
+        for ( int i = 0; i < m_kVolume.length; i++ )
+        {
+            m_kVolume[i].dispose();
+        }
         m_kVolume = null;
         m_kVolumeTarget.dispose();
         m_kVolumeTarget = null;
@@ -421,12 +508,18 @@ public class VolumeImage
         m_kOpacityMapTarget.dispose();
         m_kOpacityMapTarget = null;
     
-        m_kVolumeGM.dispose();
+        for ( int i = 0; i < m_kVolumeGM.length; i++ )
+        {
+            m_kVolumeGM[i].dispose();
+        }
         m_kVolumeGM = null;
         m_kVolumeGMTarget.dispose();
         m_kVolumeGMTarget = null;
     
-        m_kVolumeGMGM.dispose();
+        for ( int i = 0; i < m_kVolumeGMGM.length; i++ )
+        {
+            m_kVolumeGMGM[i].dispose();
+        }
         m_kVolumeGMGM = null;
         m_kVolumeGMGMTarget.dispose();
         m_kVolumeGMGMTarget = null;
@@ -447,7 +540,10 @@ public class VolumeImage
         m_kLUT = null;
         m_kPostfix = null;
     
-        m_kHisto.dispose();
+        for ( int i = 0; i < m_kHisto.length; i++ )
+        {
+            m_kHisto[i].dispose();
+        }
         m_kHisto = null;
         m_akHistoTCoord = null;
     }
@@ -531,9 +627,9 @@ public class VolumeImage
     }
     
     
-    public GraphicsImage GetHisto()
+    public String GetHistoName()
     {
-        return m_kHisto;
+        return m_kHisto[m_iTimeSlice].GetName();
     }
 
     public Vector2f[] GetHistoTCoords()
@@ -720,7 +816,7 @@ public class VolumeImage
     public void UpdateData( ModelImage kImage, String kPostfix )
     {
         m_kImage = kImage;
-        VolumeImage.UpdateData( m_kImage, m_kVolume, m_kVolumeTarget, kPostfix );
+        VolumeImage.UpdateData( m_kImage, m_iTimeSlice, m_akImages[m_iTimeSlice], m_kVolume[m_iTimeSlice], m_kVolumeTarget, kPostfix );
     }    
     /**
      * Update the LUT for the ModelImage.
@@ -760,208 +856,266 @@ public class VolumeImage
     }
 
 
-    private void GenerateHistogram( GraphicsImage kImage, GraphicsImage kImageGM, String kPostFix )
+    private void GenerateHistogram( GraphicsImage[] kImage, GraphicsImage[] kImageGM, String kPostFix )
     {
-        float[] afCount = new float[256*256];
-        for(int i=0; i<256*256; ++i) {
-            afCount[i] = 0;
-        }
-
-        short a1, a2;
-        byte[] abHistoData = kImageGM.GetData();
-        byte[] abData = kImage.GetData();
-        if ( m_kImage.isColorImage() )
+        int iTMinX = 255, iTMaxX = 0;
+        int iTMinY = 255, iTMaxY = 0;
+        m_kHisto = new GraphicsImage[m_iTimeSteps];
+        for ( int t = 0; t < m_iTimeSteps; t ++ )
         {
-            int iHisto = 0;
-            for ( int i = 0; i < abData.length; i +=4 )
-            {
-                int iR = (abData[i]);
-                int iG = (abData[i+1]);
-                int iB = (abData[i+2]);
-                a1 = (short)(iR * 0.299 + iG * 0.587 + iB * 0.114);
-                a1 = (short)(a1 & 0x00ff);
-
-                iR = (abHistoData[i]);
-                iG = (abHistoData[i+1]);
-                iB = (abHistoData[i+2]);
-                a2 = (short)(iR * 0.299 + iG * 0.587 + iB * 0.114);
-                a2 = (short)(a2 & 0x00ff);
-                afCount[a1 +  a2 * 256] += 1;
-                iHisto++;
+            float[] afCount = new float[256*256];
+            for(int i=0; i<256*256; ++i) {
+                afCount[i] = 0;
             }
-        }
-        else
-        {
-            int iHisto = 0;
-            for ( int i = 0; i < abData.length; i++)
-            {
-                a1 = (abData[i]);
-                a1 = (short)(a1 & 0x00ff);
-                a2 = (abHistoData[iHisto]);
-                a2 = (short)(a2 & 0x00ff);
-                afCount[a1 +  a2 * 256] += 1;
-                iHisto++;
-            }
-        }
-        float max = 0;
-        for(int i = 0; i< 256*256; ++i)
-        {
-            afCount[i] = (float)Math.log(afCount[i]);
-            max = Math.max(afCount[i], max);
-        }           
 
-        byte[] abHisto = new byte[256*256];
-        for(int i = 0; i< 256*256; ++i)
-        {
-            abHisto[i] = new Float(afCount[i]/max*255f).byteValue();
-        }
-        afCount = null;
-        
-        int iMinX = 255, iMaxX = 0;
-        int iIndex = 0;
-        for( int i=0; i< 256; i++ )
-        {
-            for( int j = 0; j < 256; j++ )
-            {    
-                iIndex = i*256 + j;
-                if ( abHisto[iIndex] != 0 )
+            short a1, a2;
+            byte[] abHistoData = kImageGM[t].GetData();
+            byte[] abData = kImage[t].GetData();
+            if ( m_kImage.isColorImage() )
+            {
+                int iHisto = 0;
+                for ( int i = 0; i < abData.length; i +=4 )
                 {
-                    if ( iMinX > j )
-                    {
-                        iMinX = j;
-                    }
-                    if ( j > iMaxX )
-                    {
-                        iMaxX = j;
-                    }
+                    int iR = (abData[i]);
+                    int iG = (abData[i+1]);
+                    int iB = (abData[i+2]);
+                    a1 = (short)(iR * 0.299 + iG * 0.587 + iB * 0.114);
+                    a1 = (short)(a1 & 0x00ff);
+
+                    iR = (abHistoData[i]);
+                    iG = (abHistoData[i+1]);
+                    iB = (abHistoData[i+2]);
+                    a2 = (short)(iR * 0.299 + iG * 0.587 + iB * 0.114);
+                    a2 = (short)(a2 & 0x00ff);
+                    afCount[a1 +  a2 * 256] += 1;
+                    iHisto++;
                 }
             }
-        }
+            else
+            {
+                int iHisto = 0;
+                for ( int i = 0; i < abData.length; i++)
+                {
+                    a1 = (abData[i]);
+                    a1 = (short)(a1 & 0x00ff);
+                    a2 = (abHistoData[iHisto]);
+                    a2 = (short)(a2 & 0x00ff);
+                    afCount[a1 +  a2 * 256] += 1;
+                    iHisto++;
+                }
+            }
+            float max = 0;
+            for(int i = 0; i< 256*256; ++i)
+            {
+                afCount[i] = (float)Math.log(afCount[i]);
+                max = Math.max(afCount[i], max);
+            }           
 
-        int iMinY = 255, iMaxY = 0;
-        for( int j = 0; j < 256; j++ )
-        { 
+            byte[] abHisto = new byte[256*256];
+            for(int i = 0; i< 256*256; ++i)
+            {
+                abHisto[i] = new Float(afCount[i]/max*255f).byteValue();
+            }
+            afCount = null;
+
+            int iMinX = 255, iMaxX = 0;
+            int iIndex = 0;
             for( int i=0; i< 256; i++ )
             {
-                iIndex = i*256 + j;
-                if ( abHisto[iIndex] != 0 )
-                {
-                    if ( iMinY > i )
+                for( int j = 0; j < 256; j++ )
+                {    
+                    iIndex = i*256 + j;
+                    if ( abHisto[iIndex] != 0 )
                     {
-                        iMinY = i;
-                    }
-                    if ( i > iMaxY )
-                    {
-                        iMaxY = i;
+                        if ( iMinX > j )
+                        {
+                            iMinX = j;
+                        }
+                        if ( j > iMaxX )
+                        {
+                            iMaxX = j;
+                        }
                     }
                 }
             }
+
+            int iMinY = 255, iMaxY = 0;
+            for( int j = 0; j < 256; j++ )
+            { 
+                for( int i=0; i< 256; i++ )
+                {
+                    iIndex = i*256 + j;
+                    if ( abHisto[iIndex] != 0 )
+                    {
+                        if ( iMinY > i )
+                        {
+                            iMinY = i;
+                        }
+                        if ( i > iMaxY )
+                        {
+                            iMaxY = i;
+                        }
+                    }
+                }
+            }
+            if ( iTMinX > iMinX )
+            {
+                iTMinX = iMinX;
+            }
+            if ( iTMaxX < iMaxX )
+            {
+                iTMaxX = iMaxX;
+            }
+            
+            if ( iTMinY > iMinY )
+            {
+                iTMinY = iMinY;
+            }
+            if ( iTMaxY < iMaxY )
+            {
+                iTMaxY = iMaxY;
+            }
+            
+            System.err.println( iMinX + ", " + iMinY + "    " + iMaxX + ", " + iMaxY );
+            //iMinX = 0; iMaxX = 255;
+            //iMinY = 0; iMaxY = 255;
+
+            m_kHisto[t] = 
+                new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
+                        256,256, null, new String("VolumeImageHisto" + kPostFix) );
+            m_kHisto[t].SetData( abHisto, 256, 256 );
         }
-
-        //System.err.println( iMinX + ", " + iMinY + "    " + iMaxX + ", " + iMaxY );
-        //iMinX = 0; iMaxX = 255;
-        //iMinY = 0; iMaxY = 255;
-        m_akHistoTCoord[0] = new Vector2f( iMinX/255.0f, iMinY/255.0f );
-        m_akHistoTCoord[1] = new Vector2f( iMaxX/255.0f, iMinY/255.0f );
-        m_akHistoTCoord[2] = new Vector2f( iMaxX/255.0f, iMaxY/255.0f );
-        m_akHistoTCoord[3] = new Vector2f( iMinX/255.0f, iMaxY/255.0f );
         
-        m_kHisto = 
-            new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
-                    256,256, null, new String("VolumeImageHisto" + kPostFix) );
-        m_kHisto.SetData( abHisto, 256, 256 );
-    }
 
+        m_kHistoTarget = new Texture();
+        m_kHistoTarget.SetImage(m_kHisto[0]);
+        m_kHistoTarget.SetShared(true);
+        m_kHistoTarget.SetFilterType(Texture.FilterType.LINEAR);
+        m_kHistoTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+        m_kHistoTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+        m_kHistoTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
+        
+        m_akHistoTCoord[0] = new Vector2f( iTMinX/255.0f, iTMinY/255.0f );
+        m_akHistoTCoord[1] = new Vector2f( iTMaxX/255.0f, iTMinY/255.0f );
+        m_akHistoTCoord[2] = new Vector2f( iTMaxX/255.0f, iTMaxY/255.0f );
+        m_akHistoTCoord[3] = new Vector2f( iTMinX/255.0f, iTMaxY/255.0f );
+        
+        System.err.println( iTMinX + ", " + iTMinY + "    " + iTMaxX + ", " + iTMaxY );
+    }
 
     private void GradientMagnitudeImage(ModelImage kImage, String kPostfix)
     {
-        ModelImage kImageGM = (ModelImage)kImage.clone();
-        JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude( null, kImageGM );
-        kCalcMagnitude.setVisible(false);
-        kCalcMagnitude.setOutputNewImage( false );
-        kCalcMagnitude.setDisplayProgressBar( false );
-        kCalcMagnitude.setSeparateThread( false );
-        kCalcMagnitude.actionPerformed( new ActionEvent(this, 0, "OK" ) );
-        kCalcMagnitude = null;        
-        if ( kImageGM == null )
+        for ( int i = 0; i < m_iTimeSteps; i++ )
         {
-            System.err.println( "Gradient magnitude calculation returned null" );
-            m_kVolumeGM =  VolumeImage.UpdateData( kImage, null, m_kVolumeGMTarget, "GM"+kPostfix );
-        }
-        else {
-            m_kVolumeGM =  VolumeImage.UpdateData( kImageGM, null, m_kVolumeGMTarget, "GM"+kPostfix );
+            ModelImage kImageGM = null;
+            if ( m_iTimeSteps == 1 )
+            {
+                kImageGM = (ModelImage)kImage.clone();
+            }
+            else
+            {
+                kImageGM = (ModelImage)m_akImages[i].clone();
+            }
+            JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude( null, kImageGM );
+            kCalcMagnitude.setVisible(false);
+            kCalcMagnitude.setOutputNewImage( false );
+            kCalcMagnitude.setDisplayProgressBar( false );
+            kCalcMagnitude.setSeparateThread( false );
+            kCalcMagnitude.actionPerformed( new ActionEvent(this, 0, "OK" ) );
+            kCalcMagnitude = null;        
+            if ( kImageGM == null )
+            {
+                System.err.println( "Gradient magnitude calculation returned null" );
+                m_kVolumeGM[i] = VolumeImage.UpdateData( kImage, i, null, null, m_kVolumeGMTarget, "GM"+kPostfix );
+            }
+            else {
+                m_kVolumeGM[i] = VolumeImage.UpdateData( kImageGM, 0, null, null, m_kVolumeGMTarget, "GM"+kPostfix );
+            }
+            
+            ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
+            if ( kImageFrame != null )
+            {
+                kImageFrame.close();
+            }
+            else if ( kImageGM != null )
+            {
+                kImageGM.disposeLocal();
+                kImageGM = null;
+            }
         }
         m_kVolumeGMTarget = new Texture();
-        m_kVolumeGMTarget.SetImage(m_kVolumeGM);
+        m_kVolumeGMTarget.SetImage(m_kVolumeGM[0]);
         m_kVolumeGMTarget.SetShared(true);
         m_kVolumeGMTarget.SetFilterType(Texture.FilterType.LINEAR);
         m_kVolumeGMTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
 
-        ModelImage kImageGMGM = (ModelImage)kImage.clone();     
-        JDialogLaplacian kCalcLaplacian = new JDialogLaplacian( null, kImageGMGM );
-        kCalcLaplacian.setVisible(false);
-        kCalcLaplacian.setOutputNewImage( false );
-        kCalcLaplacian.setDisplayProgressBar(false);
-        kCalcLaplacian.setSeparateThread( false );
-        kCalcLaplacian.actionPerformed( new ActionEvent(this, 0, "OK" ) );
-
-        if ( kImageGMGM != null )
+        for ( int i = 0; i < m_iTimeSteps; i++ )
         {
-            kImageGMGM.calcMinMax();
-            AlgorithmChangeType changeTypeAlgo = null;          
-            if ( kImageGMGM.isColorImage() )
+            ModelImage kImageGMGM = null;
+            if ( m_iTimeSteps == 1 )
             {
-                changeTypeAlgo = new AlgorithmChangeType(kImageGMGM, ModelStorageBase.ARGB, 
-                        kImageGMGM.getMin(), kImageGMGM.getMax(), 
-                        0, 255, false);
+                kImageGMGM = (ModelImage)kImage.clone();
             }
             else
             {
-                changeTypeAlgo = new AlgorithmChangeType(kImageGMGM, ModelStorageBase.UBYTE, 
-                        kImageGMGM.getMin(), kImageGMGM.getMax(), 
-                        0, 255, false);
+                kImageGMGM = (ModelImage)m_akImages[i].clone();
+            }    
+            JDialogLaplacian kCalcLaplacian = new JDialogLaplacian( null, kImageGMGM );
+            kCalcLaplacian.setVisible(false);
+            kCalcLaplacian.setOutputNewImage( false );
+            kCalcLaplacian.setDisplayProgressBar(false);
+            kCalcLaplacian.setSeparateThread( false );
+            kCalcLaplacian.actionPerformed( new ActionEvent(this, 0, "OK" ) );
+
+            if ( kImageGMGM != null )
+            {
+                kImageGMGM.calcMinMax();
+                AlgorithmChangeType changeTypeAlgo = null;          
+                if ( kImageGMGM.isColorImage() )
+                {
+                    changeTypeAlgo = new AlgorithmChangeType(kImageGMGM, ModelStorageBase.ARGB, 
+                            kImageGMGM.getMin(), kImageGMGM.getMax(), 
+                            0, 255, false);
+                }
+                else
+                {
+                    changeTypeAlgo = new AlgorithmChangeType(kImageGMGM, ModelStorageBase.UBYTE, 
+                            kImageGMGM.getMin(), kImageGMGM.getMax(), 
+                            0, 255, false);
+                }
+                changeTypeAlgo.setRunningInSeparateThread(false);
+                changeTypeAlgo.run();            
+                m_kVolumeGMGM[i] = VolumeImage.UpdateData( kImageGMGM, 0, null, null, m_kVolumeGMGMTarget, "GMGM"+kPostfix );
             }
-            changeTypeAlgo.setRunningInSeparateThread(false);
-            changeTypeAlgo.run();            
-            m_kVolumeGMGM =  VolumeImage.UpdateData( kImageGMGM, null, m_kVolumeGMGMTarget, "GMGM"+kPostfix );
-        }
-        else
-        {
-            System.err.println( "Laplacian calculation returned null" );
-            m_kVolumeGMGM = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
-                    kImage.getExtents()[0],kImage.getExtents()[1],kImage.getExtents()[2],(byte[])null,
-                    new String("VolumeImageGMGM"+kPostfix+kPostfix));
+            else
+            {
+                System.err.println( "Laplacian calculation returned null" );
+                m_kVolumeGMGM[i] = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
+                        kImage.getExtents()[0],kImage.getExtents()[1],kImage.getExtents()[2],(byte[])null,
+                        new String("VolumeImageGMGM"+kPostfix+kPostfix));
+            }
+            ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGMGM);
+            if ( kImageFrame != null )
+            {
+                kImageFrame.close();
+            }
+            else if ( kImageGMGM != null )
+            {
+                kImageGMGM.disposeLocal();
+                kImageGMGM = null;
+            }
         }
         m_kVolumeGMGMTarget = new Texture();
-        m_kVolumeGMGMTarget.SetImage(m_kVolumeGMGM);
+        m_kVolumeGMGMTarget.SetImage(m_kVolumeGMGM[0]);
         m_kVolumeGMGMTarget.SetShared(true);
         m_kVolumeGMGMTarget.SetFilterType(Texture.FilterType.LINEAR);
         m_kVolumeGMGMTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMGMTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kVolumeGMGMTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
 
-        ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
-        if ( kImageFrame != null )
-        {
-            kImageFrame.close();
-        }
-        else if ( kImageGM != null )
-        {
-            kImageGM.disposeLocal();
-            kImageGM = null;
-        }
-        kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGMGM);
-        if ( kImageFrame != null )
-        {
-            kImageFrame.close();
-        }
-        else if ( kImageGMGM != null )
-        {
-            kImageGMGM.disposeLocal();
-            kImageGMGM = null;
-        }
+
     }
     
     /**
@@ -1053,17 +1207,16 @@ public class VolumeImage
         int iZBound = m_kImage.getExtents()[2];
 
         byte[] aucData = null;
+        int iSize = iXBound*iYBound*iZBound;
         if ( m_kImage.isColorImage() )
         {
-            aucData = new byte[4*iXBound*iYBound*iZBound];
-        }
-        else
-        {
-            aucData = new byte[iXBound*iYBound*iZBound];
+            iSize *= 4;
         }
 
+        aucData = new byte[iSize];
+
         try {
-            m_kImage.exportData( 0, m_kImage.getSize(), aucData );
+            m_kImage.exportData( 0, iSize, aucData );
         } catch (IOException e) {
             e.printStackTrace();
         }

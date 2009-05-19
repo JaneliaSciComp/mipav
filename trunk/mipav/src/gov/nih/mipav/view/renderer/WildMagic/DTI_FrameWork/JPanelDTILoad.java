@@ -257,7 +257,6 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
                 setEValueimage();
                 setFAimage();
                 setDTIColorImage();
-                saveImageFiles();
                 float fFAMin = Float.valueOf(m_kFAMinThreshold.getText()).floatValue();
                 float fFAMax = Float.valueOf(m_kFAMaxThreshold.getText()).floatValue();
                 float fMaxAngle = Float.valueOf(m_kMaxAngle.getText()).floatValue();
@@ -940,18 +939,6 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }
 
-    /**
-     * Save the EV, FA, DTI images. 
-     */
-    public void saveImageFiles() {
-
-        m_kDTIImage.saveImage(parentFrame.getParentDir(), "DTIImage.xml", FileUtility.XML, true);
-        m_kEigenVectorImage.saveImage(parentFrame.getParentDir(), "EigenVectorImage.xml", FileUtility.XML, true);
-        m_kAnisotropyImage.saveImage(parentFrame.getParentDir(), "AnisotropyImage.xml", FileUtility.XML, true);
-
-    }
-
-
     /** Calls AlgorithmDWI2DTI to create the diffusion tensor image. */
     private void processDWI()
     {
@@ -1224,6 +1211,9 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         kAlgorithm.getADCImage().saveImage( m_kParentDir, "ADCImage.xml", FileUtility.XML, false );
         m_kEigenValueImage = kAlgorithm.getEigenValueImage();
         m_kEigenValueImage.saveImage( m_kParentDir, "EigenValueImage.xml", FileUtility.XML, false );
+        m_kDTIImage.saveImage(m_kParentDir, "DTIImage.xml", FileUtility.XML, true);
+        m_kEigenVectorImage.saveImage(m_kParentDir, "EigenVectorImage.xml", FileUtility.XML, true);
+        m_kAnisotropyImage.saveImage(m_kParentDir, "AnisotropyImage.xml", FileUtility.XML, true);
         kAlgorithm.disposeLocal();
         kAlgorithm = null;
 

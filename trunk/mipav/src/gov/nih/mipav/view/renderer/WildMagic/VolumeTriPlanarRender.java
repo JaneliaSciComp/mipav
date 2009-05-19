@@ -119,6 +119,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /** sample rate when mouse is dragged. */
     private float fSample_mouseDragged;
     
+    private boolean m_bPlay4D = false;
+    
     /**
      * Default Constructor.
      */
@@ -422,6 +424,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             VolumeImageExtract.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), m_iExtractLevel);
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             m_bExtract = false;
+        }
+        if ( m_bPlay4D )
+        {
+            update4D( true );
         }
     }
 
@@ -972,6 +978,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 m_kVolumeRayCast.SetDisplaySecond( m_bDisplaySecond );
             }
             return;
+        case '3':
+            update4D( false );
+            return;
+        case '4':
+            update4D( true );
+            return;
+        case '5':
+            m_bPlay4D = !m_bPlay4D;
+            return;
         case 'e':
             m_bExtract = true;
             return;
@@ -1191,6 +1206,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void redrawSurfaceTexture()
     {
         m_bSurfaceUpdate = true;
+    }
+    
+    public void play4D( boolean bOn )
+    {
+        m_bPlay4D = bOn;
     }
 
     /**
@@ -2185,6 +2205,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kVolumeImageB.ReleaseVolume();
         }
+        m_kParent.setModified();
+    }
+    
+    private void update4D( boolean bForward )
+    {
+        m_kVolumeImageA.update4D(bForward);
         m_kParent.setModified();
     }
     

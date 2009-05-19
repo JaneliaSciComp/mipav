@@ -260,11 +260,11 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
                 ClassificationWidget kLev = null;
                 if ( m_kWidgetType.equals( "Square" ) )
                 {
-                    kLev = new SquareClassificationWidget(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHisto().GetName(), m_iWidth, m_iHeight);
+                    kLev = new SquareClassificationWidget(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHistoName(), m_iWidth, m_iHeight);
                 }
                 else
                 {
-                    kLev = new TriangleClassificationWidget(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHisto().GetName(), m_iWidth, m_iHeight);
+                    kLev = new TriangleClassificationWidget(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHistoName(), m_iWidth, m_iHeight);
                 }
                 m_spkScene.AttachChild(  kLev.getWidget() );
                 m_spkScene.UpdateGS();
@@ -370,7 +370,7 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     {
         CreatePlaneNode();
         //m_spkEffect = new VertexColor3Effect();
-        m_spkEffect = new TextureEffect( m_kVolumeImage.GetHisto().GetName() );
+        m_spkEffect = new TextureEffect( m_kVolumeImage.GetHistoName() );
         //m_spkEffect = new VolumePlaneEffect( m_kVolumeImage, null, true );
         m_pkPlane.AttachEffect(m_spkEffect);
         m_pkRenderer.LoadResources(m_pkPlane);
