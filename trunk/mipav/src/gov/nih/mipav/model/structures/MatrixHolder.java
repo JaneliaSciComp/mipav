@@ -152,7 +152,7 @@ public class MatrixHolder extends ModelSerialCloneable {
     }
 
     /**
-     * Gets the composite (dynamically built) matrix made by multiplying in reverse order the image's matrices.
+     * Gets the composite (dynamically built) matrix made by multiplying in forward order the image's matrices.
      *
      * @param   useDICOM  whether to include the scanner anatomical matrix (if available)
      *
@@ -168,7 +168,7 @@ public class MatrixHolder extends ModelSerialCloneable {
         String[] keys = keySet.toArray(new String[] { });
         TransMatrix tempMatrix = null;
 
-        for (int i = keys.length - 1; i >= 0; i--) {
+        for (int i = 0; i < keys.length; i++) {
             tempMatrix = matrixMap.get(keys[i]);
                      
             //if the composite matrix is not the same size as the matrix stored, change the composite matrix to be 
