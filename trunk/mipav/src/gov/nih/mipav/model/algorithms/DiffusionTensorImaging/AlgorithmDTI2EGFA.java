@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.DiffusionTensorImaging;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -188,51 +189,57 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             if ( !bAllZero )
             {
                 kMatrix.Set( afTensorData[0], afTensorData[3], afTensorData[4],
-                                                 afTensorData[3], afTensorData[1], afTensorData[5], 
-                                                 afTensorData[4], afTensorData[5], afTensorData[2] );
+                             afTensorData[3], afTensorData[1], afTensorData[5], 
+                             afTensorData[4], afTensorData[5], afTensorData[2] );
 
 
                 afTraceData[i] = kMatrix.M00 + kMatrix.M11 + kMatrix.M22;
                 afADCData[i] = afTraceData[i]/3.0f;
                 
-                Matrix3f.EigenDecomposition( kMatrix, kEigenValues );
-                float fLambda1 = kEigenValues.M22;
-                float fLambda2 = kEigenValues.M11;
-                float fLambda3 = kEigenValues.M00;
-                afEigenValues[i*4 + 0] = 0;
-                afEigenValues[i*4 + 1] = fLambda1;
-                afEigenValues[i*4 + 2] = fLambda2;
-                afEigenValues[i*4 + 3] = fLambda3;
-                kMatrix.GetColumn(2,kV1);
-                kMatrix.GetColumn(1,kV2);
-                kMatrix.GetColumn(0,kV3);
-                
-                afData[i] = (float)(Math.sqrt(1.0/2.0) *
-                        ( ( Math.sqrt( (fLambda1 - fLambda2)*(fLambda1 - fLambda2) +
-                                (fLambda2 - fLambda3)*(fLambda2 - fLambda3) +
-                                (fLambda3 - fLambda1)*(fLambda3 - fLambda1)   ) ) /
-                                ( Math.sqrt( fLambda1*fLambda1 + fLambda2*fLambda2 + fLambda3*fLambda3 ) ) ) );
-                
-                float fLambda = (fLambda1 + fLambda2 + fLambda3)/3.0f;
-                afRAData[i] = (float)(Math.sqrt((fLambda1 - fLambda)*(fLambda1 - fLambda) + 
-                                                (fLambda2 - fLambda)*(fLambda2 - fLambda) +
-                                                (fLambda3 - fLambda)*(fLambda3 - fLambda)   ) / 
-                                                Math.sqrt( 3.0f * fLambda ));
-                afVRData[i] = (fLambda1*fLambda2*fLambda3)/(fLambda*fLambda*fLambda);
+                if ( Matrix3f.EigenDecomposition( kMatrix, kEigenValues ) )
+                {
+                    float fLambda1 = kEigenValues.M22;
+                    float fLambda2 = kEigenValues.M11;
+                    float fLambda3 = kEigenValues.M00;
+                    afEigenValues[i*4 + 0] = 0;
+                    afEigenValues[i*4 + 1] = fLambda1;
+                    afEigenValues[i*4 + 2] = fLambda2;
+                    afEigenValues[i*4 + 3] = fLambda3;
+                    kMatrix.GetColumn(2,kV1);
+                    kMatrix.GetColumn(1,kV2);
+                    kMatrix.GetColumn(0,kV3);
 
-                afDataCM[i + 0*iLen] = kV1.X;
-                afDataCM[i + 1*iLen] = kV1.Y;
-                afDataCM[i + 2*iLen] = kV1.Z;
+                    afData[i] = (float)(Math.sqrt(1.0/2.0) *
+                            ( ( Math.sqrt( (fLambda1 - fLambda2)*(fLambda1 - fLambda2) +
+                                    (fLambda2 - fLambda3)*(fLambda2 - fLambda3) +
+                                    (fLambda3 - fLambda1)*(fLambda3 - fLambda1)   ) ) /
+                                    ( Math.sqrt( fLambda1*fLambda1 + fLambda2*fLambda2 + fLambda3*fLambda3 ) ) ) );
 
-                afDataCM[i + 3*iLen] = kV2.X;
-                afDataCM[i + 4*iLen] = kV2.Y;
-                afDataCM[i + 5*iLen] = kV2.Z;
+                    float fLambda = (fLambda1 + fLambda2 + fLambda3)/3.0f;
+                    afRAData[i] = (float)(Math.sqrt((fLambda1 - fLambda)*(fLambda1 - fLambda) + 
+                            (fLambda2 - fLambda)*(fLambda2 - fLambda) +
+                            (fLambda3 - fLambda)*(fLambda3 - fLambda)   ) / 
+                            Math.sqrt( 3.0f * fLambda ));
+                    afVRData[i] = (fLambda1*fLambda2*fLambda3)/(fLambda*fLambda*fLambda);                
 
-                afDataCM[i + 6*iLen] = kV3.X;
-                afDataCM[i + 7*iLen] = kV3.Y;
-                afDataCM[i + 8*iLen] = kV3.Z;
+                    afDataCM[i + 0*iLen] = kV1.X;
+                    afDataCM[i + 1*iLen] = kV1.Y;
+                    afDataCM[i + 2*iLen] = kV1.Z;
+
+                    afDataCM[i + 3*iLen] = -kV2.X;
+                    afDataCM[i + 4*iLen] = -kV2.Y;
+                    afDataCM[i + 5*iLen] = -kV2.Z;
+
+                    afDataCM[i + 6*iLen] = kV3.X;
+                    afDataCM[i + 7*iLen] = kV3.Y;
+                    afDataCM[i + 8*iLen] = kV3.Z;
+                }
+                else
+                {
+                    bAllZero = true;
+                }
             }
-            else
+            if ( bAllZero )
             {
                 afData[i] = 0;
                 afTraceData[i] = 0;
@@ -288,6 +295,13 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         if ( m_kFAImage != null )
         {           
             //new ViewJFrameImage(m_kFAImage, null, new Dimension(610, 200), false);
+            m_kFAImage.setExtents(extentsA);
+            m_kFAImage.copyFileTypeInfo(m_kDTIImage);        
+            //copy core file info over
+            FileInfoBase[] fileInfoBases = m_kFAImage.getFileInfo();
+            for (int i=0;i<fileInfoBases.length;i++) {
+                fileInfoBases[i].setExtents(extentsA);
+            }
         }
         else
         {
@@ -309,6 +323,13 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         if ( m_kTraceImage != null )
         {
             //new ViewJFrameImage(m_kTraceImage, null, new Dimension(610, 200), false);
+            m_kTraceImage.setExtents(extentsA);
+            m_kTraceImage.copyFileTypeInfo(m_kDTIImage);        
+            //copy core file info over
+            FileInfoBase[] fileInfoBases = m_kTraceImage.getFileInfo();
+            for (int i=0;i<fileInfoBases.length;i++) {
+                fileInfoBases[i].setExtents(extentsA);
+            }
         }
         else
         {
@@ -330,6 +351,13 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         if ( m_kRAImage != null )
         {
             //new ViewJFrameImage(m_kRAImage, null, new Dimension(610, 200), false);
+            m_kRAImage.setExtents(extentsA);
+            m_kRAImage.copyFileTypeInfo(m_kDTIImage);        
+            //copy core file info over
+            FileInfoBase[] fileInfoBases = m_kRAImage.getFileInfo();
+            for (int i=0;i<fileInfoBases.length;i++) {
+                fileInfoBases[i].setExtents(extentsA);
+            }
         }
         else
         {
@@ -352,6 +380,13 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         if ( m_kVRImage != null )
         {
            //new ViewJFrameImage(m_kVRImage, null, new Dimension(610, 200), false);
+            m_kVRImage.setExtents(extentsA);
+            m_kVRImage.copyFileTypeInfo(m_kDTIImage);        
+            //copy core file info over
+            FileInfoBase[] fileInfoBases = m_kVRImage.getFileInfo();
+            for (int i=0;i<fileInfoBases.length;i++) {
+                fileInfoBases[i].setExtents(extentsA);
+            }
         }
         else
         {
@@ -372,6 +407,13 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         if ( m_kADCImage != null )
         {
            //new ViewJFrameImage(m_kADCImage, null, new Dimension(610, 200), false);
+            m_kADCImage.setExtents(extentsA);
+            m_kADCImage.copyFileTypeInfo(m_kDTIImage);        
+            //copy core file info over
+            FileInfoBase[] fileInfoBases = m_kADCImage.getFileInfo();
+            for (int i=0;i<fileInfoBases.length;i++) {
+                fileInfoBases[i].setExtents(extentsA);
+            }
         }
         else
         {
@@ -392,6 +434,13 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         if ( m_kEigenImage != null )
         {
            //new ViewJFrameImage(m_kEigenImage, null, new Dimension(610, 200), false);
+            m_kEigenImage.setExtents(extentsEV);
+            m_kEigenImage.copyFileTypeInfo(m_kDTIImage);        
+            //copy core file info over
+            FileInfoBase[] fileInfoBases = m_kEigenImage.getFileInfo();
+            for (int i=0;i<fileInfoBases.length;i++) {
+                fileInfoBases[i].setExtents(extentsEV);
+            }
         }
         else
         {
@@ -412,7 +461,15 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         if ( m_kEigenValueImage != null )
         {
             // looks good...
-           //new ViewJFrameImage(m_kEigenValueImage, null, new Dimension(610, 200), false);
+            m_kEigenValueImage.setExtents(extentsA);
+            m_kEigenValueImage.copyFileTypeInfo(m_kDTIImage);        
+            //copy core file info over
+            FileInfoBase[] fileInfoBases = m_kEigenValueImage.getFileInfo();
+            for (int i=0;i<fileInfoBases.length;i++) {
+                fileInfoBases[i].setExtents(extentsA);
+            }
+            
+           new ViewJFrameImage(m_kEigenValueImage, null, new Dimension(610, 200), false);
         }
         else
         {

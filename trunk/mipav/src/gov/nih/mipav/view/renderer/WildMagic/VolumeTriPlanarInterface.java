@@ -349,6 +349,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     private JToolBar m_kVOIToolbar;
     private IntVector[] m_kVOIImage = null;
     
+    private JToolBar m_k4DToolbar;
+    private boolean m_b4D = false;
+    
     
     /**
      * Specific constructor call from the VolumeViewerDTI.   
@@ -677,6 +680,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         } else if (command.equals("VOIToolbar") ) {
             boolean showVOI = menuObj.isMenuItemSelected("VOI toolbar");
             m_kVOIToolbar.setVisible(showVOI);
+        } else if (command.equals("4DToolbar") && m_b4D) {
+            boolean show4D = menuObj.isMenuItemSelected("4D toolbar");
+            m_k4DToolbar.setVisible(show4D);
         } else if (command.equals("RectVOI") ) {
             doVOI(command);
         } else if (command.equals("EllipseVOI") ) {
@@ -711,6 +717,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             create3DVOI(true);
         } else if (command.equals("3DVOIUnion") ) {
             create3DVOI(false);
+        } else if (command.equals("Play4D")) {
+            raycastRenderWM.play4D(true);
+        } else if (command.equals("Stop4D")) {
+            raycastRenderWM.play4D(false);
         }
 
     }
@@ -2652,7 +2662,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         raycastRenderWM.GetCanvas().display();
         setModified();
     }
-
     
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#windowActivated(java.awt.event.WindowEvent)
@@ -2707,7 +2716,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                                      }));
         menuBar.add(menuObj.makeMenu("Toolbars", false,
                                      new JMenuItem[] {
-                menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", false)
+                menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", false),
+                menuObj.buildCheckBoxMenuItem("4D toolbar", "4DToolbar", false)
                 //menuObj.buildCheckBoxMenuItem("RFA toolbar", "RFAToolbar", false)
                                      }));
 
@@ -2814,7 +2824,42 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         m_kVOIToolbar = toolBarObj.buildVolumeTriPlanarVOIToolBar();
         m_kVOIToolbar.setVisible(false);
         panelToolbar.add(m_kVOIToolbar, gbc);
+        
+        
 
+        if ( imageA.getExtents().length > 3 )
+        {
+            if ( imageA.getExtents()[3]  != 0 )
+            {
+                m_b4D = true;
+                gbc.gridy++;
+                System.err.println( "Build4D");
+                m_k4DToolbar = new JToolBar();
+                m_k4DToolbar.setBorder(etchedBorder);
+                m_k4DToolbar.setBorderPainted(true);
+                m_k4DToolbar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
+                m_k4DToolbar.setFloatable(false);
+
+
+                JButton playButton = new JButton("Play");
+                playButton.addActionListener(this);
+                playButton.setActionCommand("Play4D");
+                playButton.setFont(MipavUtil.font12B);
+                playButton.setPreferredSize(MipavUtil.defaultButtonSize);
+
+                JButton stopButton = new JButton("Stop");
+                stopButton.addActionListener(this);
+                stopButton.setActionCommand("Stop4D");
+                stopButton.setFont(MipavUtil.font12B);
+                stopButton.setPreferredSize(MipavUtil.defaultButtonSize);
+
+                m_k4DToolbar.add( playButton );
+                m_k4DToolbar.add( stopButton );
+                m_k4DToolbar.setVisible(false);
+                panelToolbar.add(m_k4DToolbar, gbc);
+
+            }
+        }
     }
     
     /**
@@ -2874,6 +2919,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         buildGeodesic();
         buildSculpt();
         buildCustumBlendPanel();
+        
 
         setTitle();
 

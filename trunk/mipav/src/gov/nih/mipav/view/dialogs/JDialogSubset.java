@@ -228,7 +228,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    protected void callAlgorithm() {
+    public void callAlgorithm() {
 
         destExtents = new int[3];
 

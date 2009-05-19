@@ -2908,12 +2908,14 @@ public class PlaneRender_WM extends GPURenderBase
     
     private void initDataBuffer()
     {
-        m_aucData = new byte[m_aiLocalImageExtents[0]*m_aiLocalImageExtents[1]*m_aiLocalImageExtents[2]];
+        int iSize = m_aiLocalImageExtents[0]*m_aiLocalImageExtents[1]*m_aiLocalImageExtents[2];
+        m_aucData = new byte[iSize];
         if ( m_kVolumeImageA.GetImage().isColorImage() )
         {
-            byte[] aucTemp = new byte[4*m_aiLocalImageExtents[0]*m_aiLocalImageExtents[1]*m_aiLocalImageExtents[2]];
+            iSize *= 4;
+            byte[] aucTemp = new byte[iSize];
             try {
-                m_kVolumeImageA.GetImage().exportData( 0, m_kVolumeImageA.GetImage().getSize(), aucTemp );
+                m_kVolumeImageA.GetImage().exportData( 0, iSize, aucTemp );
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -2925,7 +2927,7 @@ public class PlaneRender_WM extends GPURenderBase
         else
         {
             try {
-                m_kVolumeImageA.GetImage().exportData( 0, m_kVolumeImageA.GetImage().getSize(), m_aucData );
+                m_kVolumeImageA.GetImage().exportData( 0, iSize, m_aucData );
             } catch (IOException e) {
                 e.printStackTrace();
             } 

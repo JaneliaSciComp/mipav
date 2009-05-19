@@ -179,14 +179,14 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         res = imageA.getFileInfo(0).getResolutions();
         nDim = extents.length;
 
-        if (nDim != 3) {
-            MipavUtil.displayError("The volume renderer only supports 3D image volumes.");
+        if (nDim < 3) {
+            MipavUtil.displayError("The volume renderer only supports 3D or 4D image volumes.");
 
             return;
         }
 
         // Checking to see if the image has all dimensions that are a power of 2.
-        for (int i = 0; i < extents.length; i++) {
+        for (int i = 0; i < 3; i++) {
             volExtents[i] = dimPowerOfTwo(extents[i]);
             volSize *= volExtents[i];
             newRes[i] = (res[i] * extents[i]) / volExtents[i];
