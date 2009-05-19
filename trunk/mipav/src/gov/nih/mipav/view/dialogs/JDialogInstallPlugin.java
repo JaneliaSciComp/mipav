@@ -1,6 +1,12 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.plugins.ManifestFile;
+import gov.nih.mipav.plugins.PlugIn;
+import gov.nih.mipav.plugins.PlugInAlgorithm;
+import gov.nih.mipav.plugins.PlugInFile;
+import gov.nih.mipav.plugins.PlugInGeneric;
+import gov.nih.mipav.plugins.PlugInView;
 import gov.nih.mipav.view.*;
 
 import com.ice.tar.*;
@@ -9,11 +15,15 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URLClassLoader;
 
 import java.util.*;
 import java.util.zip.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileSystemView;
@@ -21,6 +31,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+
+import sun.swing.DefaultLookup;
 
 
 /**
@@ -44,22 +56,26 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** The GUI browse button */
     private JButton browseButton;
 
-    /** DOCUMENT ME! */
-    private Vector files = new Vector();
+    /** The class, zip, jar etc files that were selected before they were unzipped */
+    private Vector<File> files = new Vector<File>();
+    
+    /** The results of working with the <code>files</code> in a temporary class environment */
+    private Vector<Color> filesColor = new Vector<Color>();
 
-    /** DOCUMENT ME! */
+    /** The default storage location of plugins */
     private String pluginDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" +
                                File.separator;
 
-    /** DOCUMENT ME! */
+    /** The current directory */
     private JTextField textName;
 
-    /** DOCUMENT ME! */
+    /** The default user interface */
     private ViewUserInterface ui;
 
+    /** The sub-gui **/
 	private ClassSelectorPanel selectorPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -498,6 +514,72 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             ioe.printStackTrace();
         }
 
+        for(int i1=0; i1<files.size(); i1++) {
+        	System.out.println(i1+", "+files.get(i1));
+        	String name = files.get(i1).getName();
+        	name = name.substring(0, name.indexOf(".class"));
+        	try {
+				Class c = ClassLoader.getSystemClassLoader().loadClass(name);
+				boolean isPlugin = false;
+				Class[] inter = c.getInterfaces();
+				for(int j=0; j<inter.length; j++) {
+					if(inter[j].equals(PlugInAlgorithm.class) || inter[j].equals(PlugInGeneric.class) || inter[j].equals(PlugInFile.class) || 
+							inter[j].equals(PlugIn.class) || inter[j].equals(PlugInView.class)) {
+						isPlugin = true;
+					}
+				}
+				
+				if(isPlugin) {
+					Class[] dep = gatherDependents(c);
+					
+					ManifestFile mf = ManifestFile.getReference();
+					mf.addEntry(c, dep);
+					
+					try {
+						c.newInstance();
+					} catch (InstantiationException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IllegalAccessException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch(Exception e) {
+						System.out.println("Success: "+e.getMessage());
+						e.printStackTrace();
+					}
+
+					Class.forName(c.getCanonicalName());
+					
+				}
+				
+				Field[] f = null;
+				Class[] dep = c.getDeclaredClasses();
+				Class[] hmm = c.getClasses();
+				Method[] bo = c.getDeclaredMethods();
+				
+				for(int i2=0; i2<bo.length; i2++) {
+					System.out.println(bo[i2]);
+				}
+				try {
+					f = c.getDeclaredFields();
+				} catch(NoClassDefFoundError e) {
+					e.printStackTrace();
+				}
+				
+				
+				for(int j=0; j<dep.length; j++) {
+					System.out.println("j: "+j+", "+dep[j]);
+				}
+				for(int j=0; j<hmm.length; j++) {
+					System.out.println("j: "+j+", "+hmm[j]);
+				}
+			} catch (ClassNotFoundException e) {
+				System.out.println("Class not found");
+				e.printStackTrace();
+			}
+        	
+        }
+        
         // updates menubar for each image
         Vector imageFrames = ui.getImageFrameVector();
 
@@ -511,9 +593,26 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             }
         }
 
-        dispose();
+        //dispose();
 
         return;
+    }
+    
+    /**
+     * Gets the dependents of a given class, defined as those classes which exist solely in the pluginDir path
+     * and should be uninstalled.
+     * 
+     * @param c
+     * @return
+     */
+    private Class[] gatherDependents(Class c) {
+    	ArrayList<Class> dep = new ArrayList<Class>();
+    	
+    	Class[] depAr = new Class[dep.size()];
+    	for(int i=0; i<dep.size(); i++) {
+    		depAr[i] =  dep.get(i);
+    	}
+    	return depAr;
     }
                                 
 
@@ -620,6 +719,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			fileListPanel.setBorder(MipavUtil.buildTitledBorder("Selected class files"));
 			selected = new JList();
 			selected.setModel(new DefaultListModel());
+			selected.setCellRenderer(new FileCellRenderer());
 			scrollPane = new JScrollPane(selected);
 			scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -686,6 +786,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 						files.add(((JFileTreeNode)paths[i].getLastPathComponent()).getFile());
 					}
 				}
+				
+				filesColor = buildColorTable(files);
 			} else if(e.getActionCommand().equals(DELETE)) {
 				Object[] numSelected = selected.getSelectedValues();
 				int[] selectedIndex = selected.getSelectedIndices();
@@ -704,9 +806,161 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 				for(int i=0; i<files.size(); i++) {
 					m.add(i, files.get(i));
 				}
+				
+				filesColor = buildColorTable(files);
 			}
 		}
     }
+    
+    private Vector<Color> buildColorTable(Vector<File> allFiles) {
+    	Vector<Color> vectorColors = new Vector<Color>();
+    	
+    	/*for(int i1=0; i1<files.size(); i1++) {
+        	System.out.println(i1+", "+files.get(i1));
+        	String name = files.get(i1).getName();
+        	name = name.substring(0, name.indexOf(".class"));
+        	try {
+				Class c = ClassLoader.getSystemClassLoader().loadClass(name);
+				boolean isPlugin = false;
+				Class[] inter = c.getInterfaces();
+				for(int j=0; j<inter.length; j++) {
+					if(inter[j].equals(PlugInAlgorithm.class) || inter[j].equals(PlugInGeneric.class) || inter[j].equals(PlugInFile.class) || 
+							inter[j].equals(PlugIn.class) || inter[j].equals(PlugInView.class)) {
+						isPlugin = true;
+					}
+				}
+				
+				if(isPlugin) {
+					Class[] dep = gatherDependents(c);
+					
+					ManifestFile mf = ManifestFile.getReference();
+					mf.addEntry(c, dep);
+					
+					try {
+						c.newInstance();
+					} catch (InstantiationException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IllegalAccessException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch(Exception e) {
+						System.out.println("Success: "+e.getMessage());
+						e.printStackTrace();
+					}
+
+					Class.forName(c.getCanonicalName());
+					
+				}
+				
+				Field[] f = null;
+				Class[] dep = c.getDeclaredClasses();
+				Class[] hmm = c.getClasses();
+				Method[] bo = c.getDeclaredMethods();
+				
+				for(int i2=0; i2<bo.length; i2++) {
+					System.out.println(bo[i2]);
+				}
+				try {
+					f = c.getDeclaredFields();
+				} catch(NoClassDefFoundError e) {
+					e.printStackTrace();
+				}
+				
+				
+				for(int j=0; j<dep.length; j++) {
+					System.out.println("j: "+j+", "+dep[j]);
+				}
+				for(int j=0; j<hmm.length; j++) {
+					System.out.println("j: "+j+", "+hmm[j]);
+				}
+			} catch (ClassNotFoundException e) {
+				System.out.println("Class not found");
+				e.printStackTrace();
+			}
+        	
+        }*/
+    	
+    	for(int i=0; i<allFiles.size(); i++) {
+    		vectorColors.add(Color.red);
+    	}
+    	
+    	return vectorColors;
+    }
+    
+    private class FileCellRenderer extends JLabel implements ListCellRenderer {
+
+     public FileCellRenderer () {
+         setOpaque(true);
+     }
+
+     public Component getListCellRendererComponent(JList list, Object value, int index, boolean selected,  boolean chf) {
+    	 setComponentOrientation(list.getComponentOrientation());
+
+         Color bg = null;
+
+         JList.DropLocation dropLocation = list.getDropLocation();
+         if (dropLocation != null
+                 && !dropLocation.isInsert()
+                 && dropLocation.getIndex() == index) {
+
+             bg = DefaultLookup.getColor(this, ui, "List.dropCellBackground");
+             selected = true;
+         }
+
+	 	if (selected) {
+	        setBackground(bg == null ? list.getSelectionBackground() : bg);
+	 	} else {
+	 	    setBackground(list.getBackground());
+	 	}
+	 	
+	 	setForeground(filesColor.get(index));
+         
+	 	if (value instanceof Icon) {
+	 	    setIcon((Icon)value);
+	 	    setText("");
+	 	} else {
+	 	    setIcon(null);
+	 	    setText((value == null) ? "" : value.toString());
+	 	}
+
+	 	setEnabled(list.isEnabled());
+	 	setFont(list.getFont());
+         
+         Border border = null;
+         if (chf) {
+             if (selected) {
+                 border = DefaultLookup.getBorder(this, ui, "List.focusSelectedCellHighlightBorder");
+             }
+             if (border == null) {
+                 border = DefaultLookup.getBorder(this, ui, "List.focusCellHighlightBorder");
+             }
+         } else {
+             border = getNoFocusBorder();
+         }
+	 	setBorder(border);
+	
+	 	return this;
+      }
+     
+     private Border getNoFocusBorder() {
+         Border border = DefaultLookup.getBorder(this, ui, "List.cellNoFocusBorder");
+         if (System.getSecurityManager() != null) {
+             if (border != null) {
+            	 return border;
+             }
+             return new EmptyBorder(1, 1, 1, 1);
+         } else {
+             if (border != null) {
+                 return border;
+             }
+             return new EmptyBorder(1, 1, 1, 1);
+         }
+     }
+   }
+    
+    
+
     
     /**
 	 * A generic file tree.
