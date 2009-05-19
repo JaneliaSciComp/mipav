@@ -899,15 +899,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
          Color bg = null;
 
-         JList.DropLocation dropLocation = list.getDropLocation();
-         if (dropLocation != null
-                 && !dropLocation.isInsert()
-                 && dropLocation.getIndex() == index) {
-
-             bg = DefaultLookup.getColor(this, ui, "List.dropCellBackground");
-             selected = true;
-         }
-
 	 	if (selected) {
 	        setBackground(bg == null ? list.getSelectionBackground() : bg);
 	 	} else {
@@ -928,35 +919,19 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	 	setFont(list.getFont());
          
          Border border = null;
-         if (chf) {
-             if (selected) {
-                 border = DefaultLookup.getBorder(this, ui, "List.focusSelectedCellHighlightBorder");
-             }
-             if (border == null) {
-                 border = DefaultLookup.getBorder(this, ui, "List.focusCellHighlightBorder");
-             }
-         } else {
-             border = getNoFocusBorder();
-         }
-	 	setBorder(border);
+         if(chf) {
+        	 if(selected) {
+        		 border = new LineBorder(new Color(99, 130, 191), 1);
+        	 } else {
+        		 border = new EmptyBorder(1, 1, 1, 1);
+        	 } 
+        } else {
+        	border = new EmptyBorder(1, 1, 1, 1);
+        }
+        setBorder(border);
 	
 	 	return this;
       }
-     
-     private Border getNoFocusBorder() {
-         Border border = DefaultLookup.getBorder(this, ui, "List.cellNoFocusBorder");
-         if (System.getSecurityManager() != null) {
-             if (border != null) {
-            	 return border;
-             }
-             return new EmptyBorder(1, 1, 1, 1);
-         } else {
-             if (border != null) {
-                 return border;
-             }
-             return new EmptyBorder(1, 1, 1, 1);
-         }
-     }
    }
     
     
