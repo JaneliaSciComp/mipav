@@ -209,6 +209,10 @@ public class CustomUIBuilder {
 	public static final UIParams PARAM_IMAGE_FLIP_HORIZONTAL = new UIParams("ImageFlipY", "Flip horizontally", "fliphoriz");
 	public static final UIParams PARAM_IMAGE_FLIP_VERTICAL = new UIParams("ImageFlipX", "Flip vertically", "flipvert");
 	
+	/** DICOMDIR buttons */
+	public static final UIParams PARAM_DATA_DICOMDIR_OPEN_DICOMDIR = new UIParams("Open DICOMDIR", "Open new DICOMDIR", "open");
+	public static final UIParams PARAM_DATA_DICOMDIR_OPEN_Images = new UIParams("Open Images", "Open Images", "openintosingle");
+	
 	/** Data provenance buttons */
 	public static final UIParams PARAM_DATA_PROVENANCE_OPEN = new UIParams("Open", "Open mipav data-provenance file", "open");
 	public static final UIParams PARAM_DATA_PROVENANCE_SAVE = new UIParams("Save", "Save mipav data-provenance file", "save");
