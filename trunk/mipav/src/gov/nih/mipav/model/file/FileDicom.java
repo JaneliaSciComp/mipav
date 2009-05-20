@@ -85,6 +85,8 @@ public class FileDicom extends FileDicomBase {
     private boolean encapsulated = false;
     
     private boolean encapsulatedJP2 = false;
+    
+    private boolean notDir = true;
 
     /** Directory of the image file. */
     private String fileDir;
@@ -118,6 +120,11 @@ public class FileDicom extends FileDicomBase {
 
     /** True if in a sequence tag. */
     private boolean inSQ = false;
+    
+    private FileDicomTagTable tagTable;
+    
+    private FileDicomSQ dirInfo;
+
 
     /** Buffer used when reading in encapsulated JPEG images. */
     private int[] jpegData = null;
@@ -320,6 +327,15 @@ public class FileDicom extends FileDicomBase {
     public final FileInfoBase getFileInfo() {
         return fileInfo;
     }
+    
+    /**
+     * Accessor that returns the DICOMDIR sequence file info.
+     * 
+     * @return Structure containing the file info.
+     */
+    public final FileDicomSQ getDirFileInfo() {
+        return dirInfo;
+    }
 
     /**
      * returns the ModelLUT, if there, which might be specified by the <code>0028,1201</code>, <code>0028,1202</code>,
@@ -493,6 +509,10 @@ public class FileDicom extends FileDicomBase {
     public final boolean isQuiet() {
         return quiet;
     }
+    
+    public final boolean isDir() {
+        return !notDir;
+    }
 
     /**
      * Reads in all the tags available in the file and stores them in the Hashtable in FileInfoDicom. This method
@@ -594,7 +614,7 @@ public class FileDicom extends FileDicomBase {
 
         fileInfo.setDataType(ModelStorageBase.SHORT); // Default file type
 
-        FileDicomTagTable tagTable = fileInfo.getTagTable();
+        tagTable = fileInfo.getTagTable();
 
         while (flag == true) {
 
@@ -619,6 +639,7 @@ public class FileDicom extends FileDicomBase {
 
             FileDicomKey key = new FileDicomKey(name);
             int tagVM;
+            int dirLength;
 
             // Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " +
             // elementLength + "\n", Preferences.DEBUG_FILEIO);
@@ -743,10 +764,19 @@ public class FileDicom extends FileDicomBase {
                     // save these values because they'll change as the sequence is read in below.
                     Preferences
                             .debug("Sequence Tags: (" + name + "); length = " + len + "\n", Preferences.DEBUG_FILEIO);
-
-                    Object sq = getSequence(endianess, len);
+                   
+                    Object sq;
+                    
+                    if (name.equals("0004,1220")){
+                    	dirInfo = (FileDicomSQ) getSequence(endianess, len);
+                    	 sq = new FileDicomSQ();
+                    }
+                    else         	
+                    	sq = getSequence(endianess, len);
+                    
                     // System.err.print( "SEQUENCE DONE: Sequence Tags: (" + name + "); length = " +
                     // Integer.toString(len, 0x10) + "\n");
+                    
 
                     try {
                         tagTable.setValue(key, sq, elementLength);
@@ -783,6 +813,10 @@ public class FileDicom extends FileDicomBase {
                 fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 0);
             } else if (name.equals("0018,602E")) {
                 fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 1);
+            } else if (name.equals("0004,1220")) {
+                Preferences.debug("DICOMDIR Found! \n");
+                flag = false;
+                notDir = false;
             } else if (name.equals("0002,0010")) {
 
                 // Transfer Syntax UID: DICOM part 10 page 13, part 5 p. 42-48, Part 6 p. 53
@@ -987,178 +1021,187 @@ public class FileDicom extends FileDicomBase {
         }
         // Done reading tags
 
-        String photometricInterp = null;
-
-        if (tagTable.getValue("0028,0004") != null) {
-            fileInfo.photometricInterp = ((String) (tagTable.getValue("0028,0004"))).trim();
-            photometricInterp = fileInfo.photometricInterp.trim();
+        if (notDir)
+	        {
+	        String photometricInterp = null;
+	
+	        if (tagTable.getValue("0028,0004") != null) {
+	            fileInfo.photometricInterp = ((String) (tagTable.getValue("0028,0004"))).trim();
+	            photometricInterp = fileInfo.photometricInterp.trim();
+	        }
+	
+	        if (photometricInterp == null) { // Default to MONOCROME2 and hope for the best
+	            photometricInterp = new String("MONOCHROME2");
+	        }
+	
+	        if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+	                && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) && (fileInfo.bitsAllocated == 8)) {
+	            fileInfo.setDataType(ModelStorageBase.UBYTE);
+	            fileInfo.displayType = ModelStorageBase.UBYTE;
+	            fileInfo.bytesPerPixel = 1;
+	        } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+	                && (fileInfo.pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (fileInfo.bitsAllocated == 8)) {
+	            fileInfo.setDataType(ModelStorageBase.BYTE);
+	            fileInfo.displayType = ModelStorageBase.BYTE;
+	            fileInfo.bytesPerPixel = 1;
+	        } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+	                && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) && (fileInfo.bitsAllocated > 8)) {
+	            fileInfo.setDataType(ModelStorageBase.USHORT);
+	            fileInfo.displayType = ModelStorageBase.USHORT;
+	            fileInfo.bytesPerPixel = 2;
+	        } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+	                && (fileInfo.pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (fileInfo.bitsAllocated > 8)) {
+	            fileInfo.setDataType(ModelStorageBase.SHORT);
+	            fileInfo.displayType = ModelStorageBase.SHORT;
+	            fileInfo.bytesPerPixel = 2;
+	        }
+	        // add something for RGB DICOM images - search on this !!!!
+	        else if (photometricInterp.equals("RGB") && (fileInfo.bitsAllocated == 8)) {
+	            fileInfo.setDataType(ModelStorageBase.ARGB);
+	            fileInfo.displayType = ModelStorageBase.ARGB;
+	            fileInfo.bytesPerPixel = 3;
+	
+	            if (tagTable.getValue("0028,0006") != null) {
+	                fileInfo.planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
+	            } else {
+	                fileInfo.planarConfig = 0; // rgb, rgb, rgb
+	            }
+	        } else if (photometricInterp.equals("YBR_FULL_422") && (fileInfo.bitsAllocated == 8) && encapsulated) {
+	            fileInfo.setDataType(ModelStorageBase.ARGB);
+	            fileInfo.displayType = ModelStorageBase.ARGB;
+	            fileInfo.bytesPerPixel = 3;
+	
+	            if (tagTable.getValue("0028,0006") != null) {
+	                fileInfo.planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
+	            } else {
+	                fileInfo.planarConfig = 0; // rgb, rgb, rgb
+	            }
+	        } else if (photometricInterp.equals("PALETTE COLOR")
+	                && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) && (fileInfo.bitsAllocated == 8)) {
+	            fileInfo.setDataType(ModelStorageBase.UBYTE);
+	            fileInfo.displayType = ModelStorageBase.UBYTE;
+	            fileInfo.bytesPerPixel = 1;
+	
+	            int[] dimExtents = new int[2];
+	            dimExtents[0] = 4;
+	            dimExtents[1] = 256;
+	            lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
+	
+	            for (int q = 0; q < dimExtents[1]; q++) {
+	                lut.set(0, q, 1); // the alpha channel is preloaded.
+	            }
+	            // sets the LUT to exist; we wait for the pallete tags to
+	            // describe what the lut should actually look like.
+	        } else {
+	            Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation", Preferences.DEBUG_FILEIO);
+	
+	            if (raFile != null) {
+	                raFile.close();
+	            }
+	
+	            return false;
+	        }
+	
+	        if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
+	            fileInfo.displayType = ModelStorageBase.FLOAT;
+	            // a bit of a hack - indicates Model image should be reallocated to float for PET image the data is stored
+	            // as 2 bytes (short) but is "normalized" using the slope parameter required for PET images (intercept
+	            // always 0 for PET).
+	        }
+	
+	        if ( ( (fileInfo.getDataType() == ModelStorageBase.UBYTE) || (fileInfo.getDataType() == ModelStorageBase.USHORT))
+	                && (fileInfo.getRescaleIntercept() < 0)) {
+	            // this performs a similar method as the pet adjustment for float images stored on disk as short to read in
+	            // signed byte and signed short images stored on disk as unsigned byte or unsigned short with a negative
+	            // rescale intercept
+	            if (fileInfo.getDataType() == ModelStorageBase.UBYTE) {
+	                fileInfo.displayType = ModelStorageBase.BYTE;
+	            } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
+	                fileInfo.displayType = ModelStorageBase.SHORT;
+	            }
+	        }
+	
+	        if (tagTable.getValue("0028,1201") != null) {
+	
+	            // red channel LUT
+	            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1201"));
+	            Object[] values = tag.getValueList();
+	            int lutVals = values.length;
+	
+	            // load LUT.
+	            if (values instanceof Byte[]) {
+	
+	                for (int qq = 0; qq < lutVals; qq++) {
+	                    lut.set(1, qq, ((Byte) values[qq]).intValue());
+	                }
+	            } else {
+	
+	                for (int qq = 0; qq < lutVals; qq++) {
+	                    lut.set(1, qq, ((Short) values[qq]).intValue());
+	                }
+	            }
+	        }
+	
+	        if (tagTable.getValue("0028,1202") != null) {
+	
+	            // green channel LUT
+	            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1202"));
+	            Object[] values = tag.getValueList();
+	            int lutVals = values.length;
+	
+	            // load LUT.
+	            if (values instanceof Byte[]) {
+	
+	                for (int qq = 0; qq < lutVals; qq++) {
+	                    lut.set(2, qq, ((Byte) values[qq]).intValue());
+	                }
+	            } else {
+	
+	                for (int qq = 0; qq < lutVals; qq++) {
+	                    lut.set(2, qq, ((Short) values[qq]).intValue());
+	                }
+	            }
+	        }
+	
+	        if (tagTable.getValue("0028,1203") != null) {
+	
+	            // blue channel LUT
+	            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1203"));
+	            Object[] values = tag.getValueList();
+	            int lutVals = values.length;
+	
+	            // load LUT.
+	            if (values instanceof Byte[]) {
+	
+	                for (int qq = 0; qq < lutVals; qq++) {
+	                    lut.set(3, qq, ((Byte) values[qq]).intValue());
+	                }
+	            } else {
+	
+	                for (int qq = 0; qq < lutVals; qq++) {
+	                    lut.set(3, qq, ((Short) values[qq]).intValue());
+	                }
+	            }
+	
+	            // here we make the lut indexed because we know that
+	            // all the LUT tags are in the LUT.
+	            lut.makeIndexedLUT(null);
+	        }
+	
+	        hasHeaderBeenRead = true;
+	
+	        if ( (loadTagBuffer == true) && (raFile != null)) {
+	            raFile.close();
+	        }
+	
+	        return true;
         }
-
-        if (photometricInterp == null) { // Default to MONOCROME2 and hope for the best
-            photometricInterp = new String("MONOCHROME2");
+        else
+        {
+        	for(int i = 0; i < dirInfo.getSequenceLength(); i++)
+        	Preferences.debug("Yo....." + dirInfo.getItem(i).getItemDisplay().toString() + "\n");
+        	return true;
         }
-
-        if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) && (fileInfo.bitsAllocated == 8)) {
-            fileInfo.setDataType(ModelStorageBase.UBYTE);
-            fileInfo.displayType = ModelStorageBase.UBYTE;
-            fileInfo.bytesPerPixel = 1;
-        } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                && (fileInfo.pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (fileInfo.bitsAllocated == 8)) {
-            fileInfo.setDataType(ModelStorageBase.BYTE);
-            fileInfo.displayType = ModelStorageBase.BYTE;
-            fileInfo.bytesPerPixel = 1;
-        } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) && (fileInfo.bitsAllocated > 8)) {
-            fileInfo.setDataType(ModelStorageBase.USHORT);
-            fileInfo.displayType = ModelStorageBase.USHORT;
-            fileInfo.bytesPerPixel = 2;
-        } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                && (fileInfo.pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (fileInfo.bitsAllocated > 8)) {
-            fileInfo.setDataType(ModelStorageBase.SHORT);
-            fileInfo.displayType = ModelStorageBase.SHORT;
-            fileInfo.bytesPerPixel = 2;
-        }
-        // add something for RGB DICOM images - search on this !!!!
-        else if (photometricInterp.equals("RGB") && (fileInfo.bitsAllocated == 8)) {
-            fileInfo.setDataType(ModelStorageBase.ARGB);
-            fileInfo.displayType = ModelStorageBase.ARGB;
-            fileInfo.bytesPerPixel = 3;
-
-            if (tagTable.getValue("0028,0006") != null) {
-                fileInfo.planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
-            } else {
-                fileInfo.planarConfig = 0; // rgb, rgb, rgb
-            }
-        } else if (photometricInterp.equals("YBR_FULL_422") && (fileInfo.bitsAllocated == 8) && encapsulated) {
-            fileInfo.setDataType(ModelStorageBase.ARGB);
-            fileInfo.displayType = ModelStorageBase.ARGB;
-            fileInfo.bytesPerPixel = 3;
-
-            if (tagTable.getValue("0028,0006") != null) {
-                fileInfo.planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
-            } else {
-                fileInfo.planarConfig = 0; // rgb, rgb, rgb
-            }
-        } else if (photometricInterp.equals("PALETTE COLOR")
-                && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) && (fileInfo.bitsAllocated == 8)) {
-            fileInfo.setDataType(ModelStorageBase.UBYTE);
-            fileInfo.displayType = ModelStorageBase.UBYTE;
-            fileInfo.bytesPerPixel = 1;
-
-            int[] dimExtents = new int[2];
-            dimExtents[0] = 4;
-            dimExtents[1] = 256;
-            lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
-
-            for (int q = 0; q < dimExtents[1]; q++) {
-                lut.set(0, q, 1); // the alpha channel is preloaded.
-            }
-            // sets the LUT to exist; we wait for the pallete tags to
-            // describe what the lut should actually look like.
-        } else {
-            Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation", Preferences.DEBUG_FILEIO);
-
-            if (raFile != null) {
-                raFile.close();
-            }
-
-            return false;
-        }
-
-        if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
-            fileInfo.displayType = ModelStorageBase.FLOAT;
-            // a bit of a hack - indicates Model image should be reallocated to float for PET image the data is stored
-            // as 2 bytes (short) but is "normalized" using the slope parameter required for PET images (intercept
-            // always 0 for PET).
-        }
-
-        if ( ( (fileInfo.getDataType() == ModelStorageBase.UBYTE) || (fileInfo.getDataType() == ModelStorageBase.USHORT))
-                && (fileInfo.getRescaleIntercept() < 0)) {
-            // this performs a similar method as the pet adjustment for float images stored on disk as short to read in
-            // signed byte and signed short images stored on disk as unsigned byte or unsigned short with a negative
-            // rescale intercept
-            if (fileInfo.getDataType() == ModelStorageBase.UBYTE) {
-                fileInfo.displayType = ModelStorageBase.BYTE;
-            } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
-                fileInfo.displayType = ModelStorageBase.SHORT;
-            }
-        }
-
-        if (tagTable.getValue("0028,1201") != null) {
-
-            // red channel LUT
-            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1201"));
-            Object[] values = tag.getValueList();
-            int lutVals = values.length;
-
-            // load LUT.
-            if (values instanceof Byte[]) {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(1, qq, ((Byte) values[qq]).intValue());
-                }
-            } else {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(1, qq, ((Short) values[qq]).intValue());
-                }
-            }
-        }
-
-        if (tagTable.getValue("0028,1202") != null) {
-
-            // green channel LUT
-            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1202"));
-            Object[] values = tag.getValueList();
-            int lutVals = values.length;
-
-            // load LUT.
-            if (values instanceof Byte[]) {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(2, qq, ((Byte) values[qq]).intValue());
-                }
-            } else {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(2, qq, ((Short) values[qq]).intValue());
-                }
-            }
-        }
-
-        if (tagTable.getValue("0028,1203") != null) {
-
-            // blue channel LUT
-            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1203"));
-            Object[] values = tag.getValueList();
-            int lutVals = values.length;
-
-            // load LUT.
-            if (values instanceof Byte[]) {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(3, qq, ((Byte) values[qq]).intValue());
-                }
-            } else {
-
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(3, qq, ((Short) values[qq]).intValue());
-                }
-            }
-
-            // here we make the lut indexed because we know that
-            // all the LUT tags are in the LUT.
-            lut.makeIndexedLUT(null);
-        }
-
-        hasHeaderBeenRead = true;
-
-        if ( (loadTagBuffer == true) && (raFile != null)) {
-            raFile.close();
-        }
-
-        return true;
     }
 
     /**
@@ -1534,7 +1577,7 @@ public class FileDicom extends FileDicomBase {
      * file is opened for reading only; it cannot be written to). A new file info is created with this file info and the
      * old DICOM dictionary is used. Finally, the endianess is set to be little-endian.
      * 
-     * <p>
+     * <p> 
      * Should an out-of-memory condition occur an IOException will be thrown.
      * </p>
      * 
