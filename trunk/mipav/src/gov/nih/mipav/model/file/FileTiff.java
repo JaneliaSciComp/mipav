@@ -1587,44 +1587,34 @@ public class FileTiff extends FileBase {
     }
     
     /**
-     * Used for reading overlapping volumes from a large file for PlugInLargeSynapse
+     * Used for reading overlapping volumes from files for PlugInAlgorithmLargeSynapse
      * @param xStart
      * @param xLength
      * @param yStart
      * @param yLength
-     * @param zStart
-     * @param zLength
-     * @param redIntensity
-     * @param greenIntensity
-     * @param blueIntensity
-     * @param redBrightIntensity
-     * @param greenBrightIntensity
-     * @param blueBrightIntensity
      * @return
      */
-    public byte[] readSynapseBuffer(int xStart, int xLength, int yStart, int yLength, int zStart, int zLength,
-            int redIntensity, int greenIntensity, int blueIntensity, int redBrightIntensity,
-            int greenBrightIntensity, int blueBrightIntensity) 
+    public void readSynapseBuffer(short buffer[], int xStart, int xLength, int yStart, int yLength) 
                                     throws IOException {
         
-        final byte NONE = 0;
-        final byte RED = 1;
-        final byte GREEN = 2;
-        final byte BLUE = 3;
-        final byte BRIGHT_RED = 4;
-        final byte BRIGHT_GREEN = 5;
-        final byte BRIGHT_BLUE = 6;
-        byte buffer[] = new byte[xLength * yLength * zLength];
         int[] imgExtents;
         int totalSize;
         int x;
         int y;
-        int zPos;
         int yPos;
         int pos;
-        int red;
-        int green;
-        int blue;
+        int j;
+        short sliceBufferShort[];
+        int b1, b2;
+        int nIndex;
+        int a;
+        int idx = 0;
+        int currentIndex = 0;
+        int firstIndex;
+        int nBytes;
+        int nLength;
+        int totalLength;
+        int lastIndex;
 
         try {
             file = new File(fileDir + fileName);
@@ -1715,7 +1705,7 @@ public class FileTiff extends FileBase {
                     tileMaxByteCount = 0;
     
                     for (int i = 0, k = 0; i < imageSlice; i++) {
-                        for (int j = 0; j < dataOffsets[i].size(); j++) {
+                        for (j = 0; j < dataOffsets[i].size(); j++) {
                             tileOffsets[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).index;
                             tileByteCounts[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).byteCount;
         
@@ -1815,106 +1805,76 @@ public class FileTiff extends FileBase {
                 }
             } // else foundTag43314
 
-            if (haveTileWidth && (!lzwCompression) && (!zlibCompression) && (!fax3Compression) && (!fax4Compression) && 
-               (!modHuffmanCompression) && (!jpegCompression) && (!ThunderScanCompression) && 
-                (!SGILogCompression) && (!SGILog24Compression) && haveTileOffsets) {
-                imageSlice = tilesPerImage / tilesPerSlice;
-            }
-
-            if (lzwCompression) {
-                // lzwDecoder = new TIFFLZWDecoder(tileWidth, predictor, samplesPerPixel);
-                // System.err.println("Created LZW Decoder");
-            }
-            else if (zlibCompression) {
-                zlibDecompresser = new Inflater();
-            }
-            else if (fax3Compression || fax4Compression) {
-                fax34Init();   
-            }
-
-            int bufferSize;
-            int sliceSize = imgExtents[0] * imgExtents[1];
-
-            if (imgExtents.length == 3) {
-                bufferSize = imgExtents[0] * imgExtents[1] * imgExtents[2];
-            } else {
-                bufferSize = imgExtents[0] * imgExtents[1];
-            }
-
-            if (ModelImage.isColorImage(fileInfo.getDataType())) {
-                bufferSize *= 4;
-                sliceSize *= 4;
-            }
             
-            if (haveMultiSpectraImage) {
-                sliceSize *= bitsPerSample.length;
+
+            int sliceSize = imgExtents[0] * imgExtents[1];
+            sliceBufferShort = new short[sliceSize];
+            nIndex = dataOffsets[0].size();
+            firstIndex = ((Index) (dataOffsets[0].elementAt(0))).index;
+            lastIndex = ((Index) (dataOffsets[0].elementAt(nIndex - 1))).index;
+            if (((Index) (dataOffsets[0].elementAt(nIndex - 1))).byteCount == 0) {
+                nLength = 2 * buffer.length;
+                totalLength = nLength + lastIndex - firstIndex;
+            } // if (((Index) (dataOffsets[slice].elementAt(nIndex - 1))).byteCount == 0)
+            else {
+                totalLength = (lastIndex - firstIndex) + ((Index) (dataOffsets[0].elementAt(nIndex - 1))).byteCount;
             }
+            byteBuffer = new byte[totalLength];
 
-            // long secondTime = System.currentTimeMillis();
-            // System.err.println("Time elapsed reading IFDs: " + ((secondTime - firstTime) / 1000));
-            // System.err.println("pbar visible: " + pBarVisible);
+            //System.err.println("first index: " + firstIndex + ", last index: " + lastIndex + ", totalLength: " +
+            //totalLength);
+            // System.err.println("packbit is: " + packBit);
+            raFile.seek(firstIndex);
+            raFile.read(byteBuffer, 0, totalLength);
+            i = 0;
+            for (a = 0; a < nIndex; a++, idx++) {
 
-            if (sliceBufferFloat == null) {
-                sliceBufferFloat = new float[sliceSize];
-            }
+                try {
 
+                    // System.err.println("Seeking to: " + ( (Index) (dataOffsets[slice].elementAt(idx))).index);
+                    currentIndex = ((Index) (dataOffsets[0].elementAt(idx))).index - firstIndex;
+                    //System.out.println("CurrentIndex = " + currentIndex);
 
-            for (i = zStart; i < zLength; i++) {
-                    zPos = (i - zStart)* xLength * yLength;
+                    // raFile.seek( ( (Index) (dataOffsets[slice].elementAt(idx))).index);
+                    nBytes = ((Index) (dataOffsets[0].elementAt(idx))).byteCount;
 
-                    if (haveTileWidth || lzwCompression || zlibCompression || fax3Compression || fax4Compression ||
-                        modHuffmanCompression || jpegCompression || ThunderScanCompression || SGILogCompression ||
-                        SGILog24Compression) {
-                        readTileBuffer(i, sliceBufferFloat);
-                    } else {
-
-                        readBuffer(i, sliceBufferFloat); // Slice a time;
+                    //System.err.println("doing nBytes: " + nBytes);
+                    if (nBytes == 0) {
+                        nBytes = sliceBufferShort.length;
                     }
-                    
-                    for (y = yStart; y < yLength; y++) {
-                        yPos = zPos + (y - yStart) * xLength;
-                        for (x = xStart; x < xStart; x++) {
-                            pos = yPos + (x - xStart);
-                            red = Math.round(sliceBufferFloat[1 + 4 *(x + y * xDim)]);
-                            green = Math.round(sliceBufferFloat[2 + 4 * (x + y * xDim)]);
-                            blue = Math.round(sliceBufferFloat[3 + 4 * (x + y * xDim)]);
-                            
-                            if (blue >= blueBrightIntensity) {
-                                buffer[pos] = BRIGHT_BLUE;
-                            }
-                            else if ((blue > red) && (blue > green) && (blue >= blueIntensity)) {
-                                buffer[pos] = BLUE;
-                            }
-                            else if ((red > green) && (red > blue) && (red >= redIntensity)) {
-                                if (red >= redBrightIntensity) {
-                                    buffer[pos] = BRIGHT_RED;
-                                }
-                                else {
-                                    buffer[pos] = RED;
-                                }
-                            }
-                            else if ((green > red) && (green > blue) && (green >= greenIntensity)) {
-                                if (green >= greenBrightIntensity) {
-                                    buffer[pos] = BRIGHT_GREEN;
-                                }
-                                else {
-                                    buffer[pos] = GREEN;
-                                }
-                            }
-                            else {
-                                buffer[pos] = NONE;
-                            }
+
+            
+                    for (j = 0; j < nBytes; j += 2, i++) {
+                
+                
+
+                        b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                        b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+        
+                        if (endianess) {
+                            sliceBufferShort[i] = (short)((b1 << 8) | b2);
+                        } else {
+                            sliceBufferShort[i] = (short)((b2 << 8) | b1);
                         }
                     }
-                
-            }
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    throw error;
+                }
+            } // for (a = 0; a < nIndex; a++, idx++)
             
-            if (haveChangedPhotometricTo1) {
-                // Changed to black is zero
-                fileInfo.setPhotometric((short)1);
+            
+            for (y = yStart; y < yLength; y++) {
+                yPos = (y - yStart) * xLength;
+                for (x = xStart; x < xStart; x++) {
+                    pos = yPos + (x - xStart);
+                    buffer[pos] = sliceBufferShort[x + y * xDim];
+                    
+                }
             }
-
-            fileInfo.setExtents(imgExtents);
+                
+            
+            
             raFile.close();
             
         } catch (IOException e) {
@@ -1926,7 +1886,7 @@ public class FileTiff extends FileBase {
             throw error;
         }
 
-        return buffer;
+        return;
     }
     
     // Convert CIELAB to XYZ and convert XYZ to RGB
