@@ -682,11 +682,11 @@ public class FileIO {
             }
 
             // need to let the reference tag table know about the tag tables which refer to it
-            FileDicomTagTable[] childrenTagTables = new FileDicomTagTable[savedFileInfos.length - 1];
+            FileDicomTagTable[] childrenTagTables = new FileDicomTagTable[savedFileInfos.length-1];
 
             for (int i = 0, j = 0; i < savedFileInfos.length; i++) {
 
-                if (savedFileInfos[i] != refFileInfo) {
+                if (savedFileInfos[i] != refFileInfo  && childrenTagTables.length != 0) {
                     childrenTagTables[j] = savedFileInfos[i].getTagTable();
                     j++;
                 }
