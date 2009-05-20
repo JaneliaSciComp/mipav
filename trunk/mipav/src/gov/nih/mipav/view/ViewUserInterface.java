@@ -457,6 +457,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             buildTreeDialog();
         } else if (command.equals("BrowseDICOM")) {
             buildDICOMFrame();
+        } else if (command.equals("BrowseDICOMDIR")) {
+            buildDICOMDIRFrame();
         } else if (command.equals("OpenSRBFile")) {
             openSRBFile();
         } else if (command.equals("SaveSRBFile")) {
@@ -861,6 +863,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (dir != null) {
             new ViewJFrameDICOMParser(dir);
         }
+    }
+    
+    /**
+     * Builds the image tree dialog and displays it.
+     */
+    public void buildDICOMDIRFrame() {
+
+			new JDialogDicomDir(this.getMainFrame());
     }
 
     /**
