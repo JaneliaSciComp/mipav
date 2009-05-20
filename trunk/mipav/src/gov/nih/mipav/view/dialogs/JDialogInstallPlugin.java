@@ -470,7 +470,9 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			if(e.getActionCommand().equals(BROWSE)) {
 				JFileChooser chooser = new JFileChooser();
 
-                if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+				if(Preferences.getPluginInstallDirectory() != null) {
+                	chooser.setCurrentDirectory(new File(Preferences.getPluginInstallDirectory()));
+                } else if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
                     chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
                 } else {
                     chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
@@ -480,8 +482,9 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
 	            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 	                File selectedFile = chooser.getSelectedFile();
-	                
+
 	                fileTree = subFilePanel.setRootDir(selectedFile);
+	                Preferences.setPluginInstallDirectory(selectedFile);
 	                
 	                initDir.setText(selectedFile.toString());
 	            }
@@ -509,6 +512,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					files.remove(selectedIndex[0]);
 					selectedIndex = selected.getSelectedIndices();
 				}
+
 				for(int i=0; i<files.size(); i++) {
 					System.out.println(i+": "+files.get(i));
 				}

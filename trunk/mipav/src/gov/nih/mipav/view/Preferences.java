@@ -283,6 +283,9 @@ public class Preferences {
 
     /** Constant that indicates the current image directory. */
     public static final String PREF_IMAGE_DIR = "ImageDirectory";
+    
+    /** Constant that indicates the current directory where plugins can be installed from. */
+    public static final String PREF_PLUGIN_INSTALL_DIR = "PluginInstallDirectory";
 
     /** Constant that indicates the last used VOI text color. */
     public static final String PREF_VOI_TEXT_COLOR = "VOITextColor";
@@ -1816,6 +1819,23 @@ public class Preferences {
 
         return str;
     }
+    
+
+    /**
+     * Returns the directory last used for installing plugins.
+     * 
+     * @return the directory last used for installing plugins.
+     */
+    public static String getPluginInstallDirectory() {
+
+        String str = Preferences.getProperty(Preferences.PREF_PLUGIN_INSTALL_DIR);
+
+        if (str != null) {
+            return str;
+        } else {
+            return (System.getProperties().getProperty("user.dir"));
+        }
+    }
 
     /**
      * Accessor to get DICOM image server's port for selected AETitle.
@@ -2965,6 +2985,22 @@ public class Preferences {
         }
     }
 
+    
+    /**
+     * Sets the plugin install directory.
+     */
+    public static void setPluginInstallDirectory(File pluginInstallDirectory) {
+    	if(pluginInstallDirectory == null) {
+    		return;
+    	}
+    	
+    	if(pluginInstallDirectory.isDirectory()) {
+    		setProperty(Preferences.PREF_PLUGIN_INSTALL_DIR, pluginInstallDirectory.getAbsolutePath());
+    	} else {
+    		setProperty(Preferences.PREF_PLUGIN_INSTALL_DIR, pluginInstallDirectory.getParent());
+    	}
+    }
+    
     /**
      * Change the file name of the preferences file we should use (without any path).
      * 
