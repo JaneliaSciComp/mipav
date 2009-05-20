@@ -192,6 +192,9 @@ public class ManifestFile {
 					out.write(DEPENDENT_ENTRY+DELIMITER+dependents.get(i).toString()+LINE_DELIM);
 				}
 				out.write(LINE_DELIM);
+				
+				out.flush();
+				out.close();
 			}
 		
 		} catch (FileNotFoundException e) {
