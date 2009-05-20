@@ -1,5 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.BallPivoting;
 
+
+
 import java.util.*;
 
 /* Ball pivoting algorithm:
@@ -85,6 +87,7 @@ public class BallPivoting extends AdvancingFront {
 		Vector<Point3> points = new Vector<Point3>();      
 		Vector<Float> dists = new Vector<Float>();
 
+		Vertex.LastBitFlag();
 		usedBit = Vertex.NewBitFlag();
 		for(i = 0; i < (int)this.mesh.vert.size(); i++) {
 			vi = this.mesh.vert.elementAt(i);
