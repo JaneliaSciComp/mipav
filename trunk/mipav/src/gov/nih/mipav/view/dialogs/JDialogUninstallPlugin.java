@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.plugins.ManifestFile;
 import gov.nih.mipav.view.*;
 
 import com.ice.tar.*;
@@ -107,52 +108,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
      * @param  event  event that triggered function
      */
     public void actionPerformed(ActionEvent event) {
-    	if (event.getSource().equals(browseButton)) {
-
-            try {
-
-                // Check if this is running on a Windows machine:
-                JFileChooser chooser = new JFileChooser();
-                chooser.setDialogTitle("Select Plugin File(s)");
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.PLUGIN)); // shows only files with .class, .jar, .zip extensions
-                chooser.setCurrentDirectory(new File(System.getProperty("user.dir") + File.separator + "plugins"));
-                chooser.setMultiSelectionEnabled(true);
-
-                int returnValue = chooser.showOpenDialog(this);
-
-                if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    files.removeAllElements();
-                    textName.setText("");
-                    textName.setToolTipText(null);
-
-                    File[] fileArray = chooser.getSelectedFiles();
-                    String fileNames = new String();
-
-                    for (int i = 0; i < fileArray.length; i++) {
-                        files.add(fileArray[i]);
-                        fileNames += fileArray[i].getName() + " ";
-                    }
-
-                    if (files.size() > 0) {
-                        textName.setText(fileNames);
-
-                        if (fileNames.length() > 100) {
-                            textName.setToolTipText(fileNames.substring(0, 99) + "...");
-                        } else {
-                            textName.setToolTipText(fileNames);
-                        }
-                    }
-
-                } else {
-                    return;
-                }
-            } catch (OutOfMemoryError e) {
-                MipavUtil.displayError("Out of memory");
-
-                return;
-            }
-
-        } else if(event.getSource().equals(cancelButton)) {
+    	if(event.getSource().equals(cancelButton)) {
     	   dispose();
        } else if(event.getActionCommand().equals(UNINSTALL)) {
     	   if(!isPluginSelected()) {
@@ -171,180 +127,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
            for(int i=0; i<pluginTree.getRowCount(); i++) {
            		pluginTree.expandRow(i);
            }
-       } else if(event.getActionCommand().equals(INSTALL)) {
-           if (files.size() == 0) {
-               MipavUtil.displayError("Please select PlugIn file(s)");
-               return;
-           }
-
-           // make the plugins directory if it does not exist
-           if (!new File(pluginDir).isDirectory()) {
-               new File(pluginDir).mkdirs();
-           }
-           
-           installPlugins();
-           
-           updateMenuBar();
-
-    	   pluginTree.setModel(new JTree(buildPluginsTree()).getModel());
-    	   pluginTree.setRootVisible(false);
-    	   pluginTree.setMinimumSize(new Dimension(800, 300));
-           for(int i=0; i<pluginTree.getRowCount(); i++) {
-           		pluginTree.expandRow(i);
-           }
-           
-           textName.setText(".class, .jar, .zip, .tar, .tar.gz");
-
-           return;
-       }
-    }
-    
-    private void installPlugins() {
-    	FileOutputStream fw = null; // for outputting copied file
-        FileInputStream fr = null; // for inputting the source plugin file
-        BufferedInputStream br = null; // buffers are used to speed up the process
-        BufferedOutputStream bw = null;
-        ZipEntry entry = null;
-        ZipInputStream zIn = null;
-
-        byte[] buf = null;
-        int len, i;
-
-        for (i = 0; i < files.size(); i++) {
-            File currentFile = (File) files.elementAt(i);
-
-            if (currentFile.getName().endsWith(".class")) {
-
-                try {
-                    fr = new FileInputStream(currentFile); // sets the fileinput to the directory chosen from the
-                                                           // browse option
-                    fw = new FileOutputStream(pluginDir + File.separatorChar + currentFile.getName()); // the location to be copied is MIPAV's class path
-
-                    br = new BufferedInputStream(fr);
-                    bw = new BufferedOutputStream(fw);
-
-                    int fileLength = (int) currentFile.length();
-
-                    byte[] byteBuff = new byte[fileLength];
-
-                    if (fileLength != 0) {
-
-                        while (br.read(byteBuff, 0, fileLength) != -1) {
-                            bw.write(byteBuff, 0, fileLength);
-                        }
-                    }
-
-                } catch (FileNotFoundException fnfe) {
-                    MipavUtil.displayError("InstallPlugin: " + fnfe);
-                    dispose();
-
-                    return;
-                } catch (IOException ioe) {
-                    MipavUtil.displayError("Error reading/writing plugin files.  Try manually copying .class files to " +
-                                           pluginDir);
-                    dispose();
-
-                    return;
-                } finally {
-
-                    try {
-
-                        if (br != null) {
-                            br.close();
-                        }
-
-                        if (bw != null) {
-                            bw.close();
-                        }
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
-                    }
-                }
-            }
-            // must be a .jar or .zip so extract files
-            else if (currentFile.getName().endsWith(".zip") || currentFile.getName().endsWith(".jar")) {
-
-                try {
-                    zIn = new ZipInputStream(new FileInputStream(currentFile));
-                    entry = null;
-
-                    // if the entry is a directory of is a class file, extract it
-                    while ((entry = zIn.getNextEntry()) != null) {
-
-                        if (entry.isDirectory()) {
-                            String dirname = pluginDir + File.separator +
-                                             entry.getName().substring(0, entry.getName().length() - 1);
-                            new File(dirname).mkdir();
-                        } else {
-
-                            try {
-                                new File(pluginDir + File.separator + entry.getName()).getParentFile().mkdirs();
-                            } catch (Exception ex) {
-                                // do nothing...no parent dir here
-                            }
-
-                            fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
-
-                            // Transfer bytes from the ZIP file to the output file
-                            buf = new byte[1024];
-
-                            while ((len = zIn.read(buf)) > 0) {
-                                fw.write(buf, 0, len);
-                            }
-
-                            fw.close();
-
-                        }
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-
-                    try {
-
-                        if (zIn != null) {
-                            zIn.close();
-                        }
-
-                        if (fw != null) {
-                            fw.close();
-                        }
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
-                    }
-                }
-
-            } else if (currentFile.getName().endsWith(".tar") || currentFile.getName().endsWith(".tar.gz")) {
-
-                try {
-                    readTar(getInputStream(currentFile.getPath()), pluginDir);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        try {
-
-            if (zIn != null) {
-                zIn.close();
-            }
-
-            if (fw != null) {
-                fw.close();
-            }
-
-            if (bw != null) {
-                bw.close();
-            }
-
-            if (br != null) {
-                br.close();
-            }
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
+       } 
     }
 
     private void updateMenuBar() {
@@ -401,18 +184,8 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         subPanel.add(scroll);
         subPanel.setBorder(buildTitledBorder("Select plugins to uninstall"));
         mainPanel.add(subPanel);
-        
-        JPanel installPanel = buildInstallPanel();
-        mainPanel.add(installPanel);
 
         JPanel buttonPanel = new JPanel();
-        JButton install = new JButton(INSTALL);
-        install.setActionCommand(INSTALL);
-        install.addActionListener(this);
-        install.setMinimumSize(MipavUtil.defaultButtonSize);
-        install.setPreferredSize(new Dimension(180, 30));
-        install.setFont(serif12B);
-        buttonPanel.add(install);
         
         JButton uninstall = new JButton(UNINSTALL);
         uninstall.setActionCommand(UNINSTALL);
@@ -436,50 +209,6 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         getContentPane().add(mainDialogPanel);
 
         pack();
-    }
-    
-    /**
-     * Builds the install plugin panel
-     */
-    private JPanel buildInstallPanel() {
-    	JPanel mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("Install Plugin Parameters"));
-
-        JLabel labelType = new JLabel("Plugin Type");
-        labelType.setForeground(Color.black);
-        labelType.setFont(serif12);
-
-        textName = new JTextField(15);
-        textName.setText("Select directory to browse");
-        textName.setFont(serif12);
-        textName.setEnabled(false);
-
-        browseButton = new JButton("Browse");
-        browseButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        browseButton.setFont(serif12B);
-        browseButton.addActionListener(this);
-
-        Insets insets = new Insets(0, 2, 0, 2);
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.insets = insets;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.WEST;
-
-        mainPanel.add(browseButton, gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        mainPanel.add(textName, gbc);
-
-        return mainPanel;
     }
     
     
@@ -550,11 +279,23 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     	String pluginName = "PlugIn"+name;
     	try {
 			Class plugin = Class.forName(pluginName);
-			//work on dependents, possibly using/generating manifest
-			return true;
+			ManifestFile mf = ManifestFile.getReference();
+			ArrayList<Class> allDep = mf.removeEntry(plugin);
+			for(int i=0; i<allDep.size(); i++) {
+				if(isInPluginFolder(allDep.get(i))) {
+					File f = new File(pluginDir+allDep.get(i).getName()+".class");
+					boolean delete = f.delete();
+					System.out.println(allDep.get(i)+" deleted "+delete);
+				}
+			}
 		} catch (ClassNotFoundException e) {
 			return false;
 		}
+		return true;
+    }
+    
+    private boolean isInPluginFolder(Class c) {
+    	return true;
     }
     
     private boolean deletePluginFile(String name) {
