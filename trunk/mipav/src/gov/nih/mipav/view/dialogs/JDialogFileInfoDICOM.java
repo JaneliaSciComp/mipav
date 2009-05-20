@@ -516,7 +516,635 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             }
         }
 
-        sort(tagsModel, 1, false, true);
+       sort(tagsModel, 1, false, true);
+    }
+    
+    /**
+     * Shows the "Other Image Information", with or without private tags.
+     *
+     * @param  tagsModel  DOCUMENT ME!
+     * @param  DicomInfo  DOCUMENT ME!
+     * @param  show       boolean that indicates whether or not to show private tags
+     */
+    public static void showTagsNoCheckbox(ViewTableModel tagsModel, FileInfoDicom DicomInfo, boolean show) {
+        Enumeration e;
+        String name;
+        FileDicomKey key;
+        String[] tags = null;
+        Object[] rowData = {"", "", "" };
+        Hashtable tagsList = DicomInfo.getTagTable().getTagList();
+        
+        //check preferences to see if any dicom tags were selected for saving
+        String prefTagsString = Preferences.getProperty(Preferences.SAVE_DICOM_TAGS);
+    	if(prefTagsString != null && (!prefTagsString.trim().equals(""))) {
+    		tags = prefTagsString.split(";");
+    	}
+        
+        // go through the hashlist, and for each element you find, copy it
+        // into the table, showing full info if it was coded
+        int ii;
+        
+        for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++) {
+            key = (FileDicomKey) e.nextElement();
+            name = key.getKey();
+
+            if (((FileDicomTag) tagsList.get(key)).getValue(true) != null) {
+            	String tagName = "(" + name + ")";
+                rowData[0] = tagName;
+                rowData[1] = ((FileDicomTag) tagsList.get(key)).getName();
+                
+                String vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
+                int vm = ((FileDicomTag) tagsList.get(key)).getValueMultiplicity();
+
+
+                if (rowData[1].equals("Private Tag") || vr.equals("OB")) {
+
+                    // System.out.println("OB/Priv: "+name + ".." +((FileDicomTag)tagsList.get(key)).getValue(true));
+                    // if (rowData[1].equals("Private Tag") || vr.equals("OB") || vm > 1) {
+                    if (((FileDicomTag) tagsList.get(key)).getValue(false) instanceof Byte[]) {
+                        // if (key.equals("0008,0040")) {   System.err.println("IN JdialogFileInfo looking at
+                        // 0008,0040");   System.err.println("value: " + ((FileDicomTag)
+                        // tagsList.get(key)).getValue(false).toString()); }
+
+                        Byte[] bytesV = (Byte[]) ((FileDicomTag) tagsList.get(key)).getValue(false);
+                        byte[] bytesValue = new byte[bytesV.length];
+
+                        if ((bytesValue != null) && (bytesV != null)) {
+
+                            // System.out.println(" length = " + bytesV.length);
+                            for (int k = 0; k < bytesV.length; k++) {
+                                bytesValue[k] = bytesV[k].byteValue();
+                            }
+
+                            if (bytesV.length == 0) {
+                                rowData[2] = "";
+                            } else if ((bytesValue[0] > 32) && (bytesValue[0] < 127)) {
+                                rowData[2] = new String(bytesValue);
+                            } else {
+                                rowData[2] = convertType(bytesValue, DicomInfo.getEndianess(), vm);
+                            }
+                        }
+                    } else if(vr.equals("SQ")) {
+                        FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
+                        Vector display = sq.getSequenceDisplay();
+
+                        rowData[2] = "";
+
+                        for (Enumeration f = display.elements(); f.hasMoreElements();) {
+                        	if(addRow(rowData, show)) {
+	                        	tagsModel.addRow(rowData);
+	
+	                            StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+	
+	                            rowData[1] = st.nextToken();
+	
+	                            if (st.hasMoreTokens()) {
+	                                rowData[2] = st.nextToken();
+	                            }
+                        	} else {
+                        		f.nextElement();
+                        	}
+                        }
+                	} else {
+
+                        FileDicomTag t;
+                        Object[] tagVals;
+
+                        t = (FileDicomTag) tagsList.get(key);
+                        tagVals = t.getValueList();
+
+                        String dispString = "";
+                        int num = t.getNumberOfValues();
+
+                        if (num == 0) {
+                            Preferences.debug("No Multiplicity: " + name + "  " + t.getValue(true) +
+                                              ", check that this is not an error.\n");
+                        }
+
+                        for (int q = 0; q < num; q++) {
+
+                            if (tagVals[q] != null) {
+                            	try {
+                            		dispString += tagVals[q].toString();
+                            	} catch(NullPointerException e1) {
+                            		dispString += "";
+                            	}
+                            		
+                                if ((q + 1) < num) {
+                                    dispString += ", ";
+                                }
+                            }
+                        }
+
+                        rowData[2] = dispString;
+                    }
+                    // // vm = 2 for patient orientation
+                    // if (!name.equals("0020,0020")) {
+                    // if (vm > 1 && vr == "SS") { // hack Neva fix this!!!
+                    // System.out.println("Inside NEVA hack.  Neva, fix this!!!");
+                    // System.out.println("Wait.  Check it out.  The code asks if "+
+                    // " the string var vr \"==\" SS.  Wonder when the \n" +
+                    // " String's hashcode will -ever- be equal to \"SS\"."+
+                    // "  Or Maybe Never.  This should be fixed.");
+                    // short[] values = (short[])((FileDicomTag)tagsList.get(key)).getValue(false);
+                    // for (int k = 0; k < vm; k++) {
+                    // rowData[2] = values[k] + " ";
+                    // }
+                    // }
+                    // else {
+                    // rowData[2] = ((FileDicomTag)tagsList.get(key)).getValue(true).toString();
+                    // }
+                    // }
+                    // }
+                } // special cases which contain coded information:
+                else if (vr.equals("PN")) {
+                    String s = (String) ((FileDicomTag) tagsList.get(key)).getValue(true);
+
+                    rowData[2] = s.replace('^', ',');
+                } else if (name.equals("0008,0060")) {
+
+                    switch (DicomInfo.getModality()) {
+
+                        case 1:
+                            rowData[2] = "BIOMAGENETIC_IMAGING";
+                            break;
+
+                        case 2:
+                            rowData[2] = "COLOR_FLOW_DOPPLER";
+                            break;
+
+                        case 3:
+                            rowData[2] = "COMPUTED_RADIOGRAPHY";
+                            break;
+
+                        case 4:
+                            rowData[2] = "COMPUTED_TOMOGRAPHY";
+                            break;
+
+                        case 5:
+                            rowData[2] = "DUPLEX_DOPPLER";
+                            break;
+
+                        case 6:
+                            rowData[2] = "DIAPHANOGRAPHY";
+                            break;
+
+                        case 7:
+                            rowData[2] = "DIGITAL_RADIOGRAPHY";
+                            break;
+
+                        case 8:
+                            rowData[2] = "ENDOSCOPY";
+                            break;
+
+                        case 9:
+                            rowData[2] = "GENERAL_MICROSCOPY";
+                            break;
+
+                        case 10:
+                            rowData[2] = "HARDCODY";
+                            break;
+
+                        case 11:
+                            rowData[2] = "INTRAORAL_RADIOGRAPHY";
+                            break;
+
+                        case 12:
+                            rowData[2] = "LASER_SURFACE_SCAN";
+                            break;
+
+                        case 13:
+                            rowData[2] = "MAGNETIC_RESONANCE_ANGIOGRAPHY";
+                            break;
+
+                        case 14:
+                            rowData[2] = "MAMMOGRAPHY";
+                            break;
+
+                        case 15:
+                            rowData[2] = "MAGNETIC_RESONANCE";
+                            break;
+
+                        case 16:
+                            rowData[2] = "MAGNETIC_RESONANCE_SPECTROSCOPY";
+                            break;
+
+                        case 17:
+                            rowData[2] = "NUCLEAR_MEDICINE";
+                            break;
+
+                        case 18:
+                            rowData[2] = "OTHER";
+                            break;
+
+                        case 19:
+                            rowData[2] = "POSITRON_EMISSION_TOMOGRAPHY";
+                            break;
+
+                        case 20:
+                            rowData[2] = "PANORAMIC_XRAY";
+                            break;
+
+                        case 21:
+                            rowData[2] = "RADIO_FLUOROSCOPY";
+                            break;
+
+                        case 22:
+                            rowData[2] = "RADIOGRAPHIC_IMAGING";
+                            break;
+
+                        case 23:
+                            rowData[2] = "RADIOTHERAPY_DOSE";
+                            break;
+
+                        case 24:
+                            rowData[2] = "RADIOTHERAPY_IMAGE";
+                            break;
+
+                        case 25:
+                            rowData[2] = "RADIOTHERAPY_PLAN";
+                            break;
+
+                        case 26:
+                            rowData[2] = "RADIOTHERAPY_RECORD";
+                            break;
+
+                        case 27:
+                            rowData[2] = "RADIOTHERAPY_STRUCTURE_SET";
+                            break;
+
+                        case 28:
+                            rowData[2] = "SLIDE_MICROSCOPY";
+                            break;
+
+                        case 29:
+                            rowData[2] = "SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY";
+                            break;
+
+                        case 30:
+                            rowData[2] = "THERMOGRAPHY";
+                            break;
+
+                        case 31:
+                            rowData[2] = "ULTRASOUND";
+                            break;
+
+                        case 32:
+                            rowData[2] = "XRAY_ANGIOGRAPHY";
+                            break;
+
+                        case 33:
+                            rowData[2] = "EXTERNAL_CAMERA_PHOTOGRAPHY";
+                            break;
+
+                        case 34:
+                            rowData[2] = "UNKNOWN";
+                            break;
+
+                        default:
+                            rowData[2] = "UNKNOWN";
+                            break;
+                    }
+                } else if (name.equals("0008,0064")) {
+                    String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
+
+                    if (s.equals("DV")) {
+                        rowData[2] = "Digitized Video";
+                    } else if (s.equals("DI")) {
+                        rowData[2] = "Digital Interface";
+                    } else if (s.equals("DF")) {
+                        rowData[2] = "Digitized Film";
+                    } else if (s.equals("WSD")) {
+                        rowData[2] = "Workstation";
+                    }
+                } else if (name.equals("0018,5100")) {
+                    String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
+
+                    if (s.equals("HFP")) {
+                        rowData[2] = "Head First-Prone";
+                    } else if (s.equals("HFS")) {
+                        rowData[2] = "Head First-Supine";
+                    } else if (s.equals("HFDR")) {
+                        rowData[2] = "Head First-Decubitus Right";
+                    } else if (s.equals("HFDL")) {
+                        rowData[2] = "Head First-Decubitus Left";
+                    } else if (s.equals("FFP")) {
+                        rowData[2] = "Feet First-Prone";
+                    } else if (s.equals("FFS")) {
+                        rowData[2] = "Feet First-Supine";
+                    } else if (s.equals("FFDR")) {
+                        rowData[2] = "Feet First-Decubitus Right";
+                    } else if (s.equals("FFDL")) {
+                        rowData[2] = "Feet First-Decubitus Left";
+                    } else {
+                        rowData[2] = s;
+                    }
+                } else if (vr.equals("SQ")) {
+
+                    // System.err.println("Key  = " + key);
+                    FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
+                    Vector display = sq.getSequenceDisplay();
+
+                    rowData[2] = "";
+
+                    for (Enumeration f = display.elements(); f.hasMoreElements();) {
+                    	if(addRow(rowData, show)) {
+                        	tagsModel.addRow(rowData);
+
+	                        StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+	
+	                        rowData[1] = st.nextToken();
+	
+	                        if (st.hasMoreTokens()) {
+	                            rowData[1] = st.nextToken();
+	                        }
+                    	} else {
+                    		f.nextElement();
+                    	}
+                    }
+                } // standard tag.  add tag.get(key).getValue(true) as-is to the table
+                else { // if ( ((FileDicomTag) tagsList.get(key)).getMultiplicity() > 1) {
+
+                    FileDicomTag t;
+                    Object[] tagVals;
+
+                    t = (FileDicomTag) tagsList.get(key);
+                    tagVals = t.getValueList();
+
+                    String dispString = "";
+                    int num = t.getNumberOfValues();
+
+                    if (num == 0) {
+                        Preferences.debug("No Multiplicity: " + name + "  " + t.getValue(true) +
+                                          ", check that this is not an error.\n");
+                    }
+
+                    for (int q = 0; q < num; q++) {
+                    	try {
+                    		dispString += tagVals[q].toString();
+                    	} catch(NullPointerException e1) {
+                    		dispString += "";
+                    	}
+                    		
+                        if ((q + 1) < num) {
+                            dispString += ", ";
+                        }
+                    }
+
+                    rowData[2] = dispString;
+                }
+
+                //instances where rowData will be a private tag are checked here for showTags
+                if(addRow(rowData, show)) {
+                	tagsModel.addRow(rowData);
+                }
+            }
+        }
+
+       sort(tagsModel, 0, false, true);
+    }
+    
+    /**
+     * Shows the "Other Image Information", with or without private tags.
+     *
+     * @param  tagsModel  DOCUMENT ME!
+     * @param  DicomInfo  DOCUMENT ME!
+     * @param  show       boolean that indicates whether or not to show private tags
+     */
+    public static void showTags(ViewTableModel tagsModel, FileDicomItem DicomInfo, boolean show) {
+        Iterator<String> e;
+        String name;
+        String key;
+        String[] tags = null;
+        Object[] rowData = {"", "", "" };
+        TreeMap<String, FileDicomTag> tagsList = DicomInfo.getDataSet();
+        
+        //check preferences to see if any dicom tags were selected for saving
+        String prefTagsString = Preferences.getProperty(Preferences.SAVE_DICOM_TAGS);
+    	if(prefTagsString != null && (!prefTagsString.trim().equals(""))) {
+    		tags = prefTagsString.split(";");
+    	}
+        NavigableSet<String> set = tagsList.descendingKeySet();
+        // go through the hashlist, and for each element you find, copy it
+        // into the table, showing full info if it was coded
+        int ii;
+        
+        for (ii = 0, e = set.descendingIterator(); e.hasNext(); ii++) {
+            key =  e.next();
+            name = key;
+
+            if (((FileDicomTag) tagsList.get(key)).getValue(true) != null) {
+            	String tagName = "(" + name + ")";
+                rowData[0] = tagName;
+                rowData[1] = ((FileDicomTag) tagsList.get(key)).getName();
+                
+                String vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
+                int vm = ((FileDicomTag) tagsList.get(key)).getValueMultiplicity();
+
+
+                if (rowData[1].equals("Private Tag") || vr.equals("OB")) {
+
+                    // System.out.println("OB/Priv: "+name + ".." +((FileDicomTag)tagsList.get(key)).getValue(true));
+                    // if (rowData[1].equals("Private Tag") || vr.equals("OB") || vm > 1) {
+                    if (((FileDicomTag) tagsList.get(key)).getValue(false) instanceof Byte[]) {
+                        // if (key.equals("0008,0040")) {   System.err.println("IN JdialogFileInfo looking at
+                        // 0008,0040");   System.err.println("value: " + ((FileDicomTag)
+                        // tagsList.get(key)).getValue(false).toString()); }
+
+                        Byte[] bytesV = (Byte[]) ((FileDicomTag) tagsList.get(key)).getValue(false);
+                        byte[] bytesValue = new byte[bytesV.length];
+
+                        if ((bytesValue != null) && (bytesV != null)) {
+
+                            // System.out.println(" length = " + bytesV.length);
+                            for (int k = 0; k < bytesV.length; k++) {
+                                bytesValue[k] = bytesV[k].byteValue();
+                            }
+
+                            if (bytesV.length == 0) {
+                                rowData[2] = "";
+                            } else if ((bytesValue[0] > 32) && (bytesValue[0] < 127)) {
+                                rowData[2] = new String(bytesValue);
+                            } else {
+                                rowData[2] = convertType(bytesValue, true, vm);
+                            }
+                        }
+                    } else if(vr.equals("SQ")) {
+                        FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
+                        Vector display = sq.getSequenceDisplay();
+
+                        rowData[2] = "";
+
+                        for (Enumeration f = display.elements(); f.hasMoreElements();) {
+                        	if(addRow(rowData, show)) {
+	                        	tagsModel.addRow(rowData);
+	
+	                            StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+	
+	                            rowData[1] = st.nextToken();
+	
+	                            if (st.hasMoreTokens()) {
+	                                rowData[2] = st.nextToken();
+	                            }
+                        	} else {
+                        		f.nextElement();
+                        	}
+                        }
+                	} else {
+
+                        FileDicomTag t;
+                        Object[] tagVals;
+
+                        t = (FileDicomTag) tagsList.get(key);
+                        tagVals = t.getValueList();
+
+                        String dispString = "";
+                        int num = t.getNumberOfValues();
+
+                        if (num == 0) {
+                            Preferences.debug("No Multiplicity: " + name + "  " + t.getValue(true) +
+                                              ", check that this is not an error.\n");
+                        }
+
+                        for (int q = 0; q < num; q++) {
+
+                            if (tagVals[q] != null) {
+                            	try {
+                            		dispString += tagVals[q].toString();
+                            	} catch(NullPointerException e1) {
+                            		dispString += "";
+                            	}
+                            		
+                                if ((q + 1) < num) {
+                                    dispString += ", ";
+                                }
+                            }
+                        }
+
+                        rowData[2] = dispString;
+                    }
+                    // // vm = 2 for patient orientation
+                    // if (!name.equals("0020,0020")) {
+                    // if (vm > 1 && vr == "SS") { // hack Neva fix this!!!
+                    // System.out.println("Inside NEVA hack.  Neva, fix this!!!");
+                    // System.out.println("Wait.  Check it out.  The code asks if "+
+                    // " the string var vr \"==\" SS.  Wonder when the \n" +
+                    // " String's hashcode will -ever- be equal to \"SS\"."+
+                    // "  Or Maybe Never.  This should be fixed.");
+                    // short[] values = (short[])((FileDicomTag)tagsList.get(key)).getValue(false);
+                    // for (int k = 0; k < vm; k++) {
+                    // rowData[2] = values[k] + " ";
+                    // }
+                    // }
+                    // else {
+                    // rowData[2] = ((FileDicomTag)tagsList.get(key)).getValue(true).toString();
+                    // }
+                    // }
+                    // }
+                } // special cases which contain coded information:
+                else if (vr.equals("PN")) {
+                    String s = (String) ((FileDicomTag) tagsList.get(key)).getValue(true);
+
+                    rowData[2] = s.replace('^', ',');
+                } else if (name.equals("0008,0060")) {
+                            rowData[2] = DicomInfo.getTag("0008,0060");
+                } else if (name.equals("0008,0064")) {
+                    String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
+
+                    if (s.equals("DV")) {
+                        rowData[2] = "Digitized Video";
+                    } else if (s.equals("DI")) {
+                        rowData[2] = "Digital Interface";
+                    } else if (s.equals("DF")) {
+                        rowData[2] = "Digitized Film";
+                    } else if (s.equals("WSD")) {
+                        rowData[2] = "Workstation";
+                    }
+                } else if (name.equals("0018,5100")) {
+                    String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
+
+                    if (s.equals("HFP")) {
+                        rowData[2] = "Head First-Prone";
+                    } else if (s.equals("HFS")) {
+                        rowData[2] = "Head First-Supine";
+                    } else if (s.equals("HFDR")) {
+                        rowData[2] = "Head First-Decubitus Right";
+                    } else if (s.equals("HFDL")) {
+                        rowData[2] = "Head First-Decubitus Left";
+                    } else if (s.equals("FFP")) {
+                        rowData[2] = "Feet First-Prone";
+                    } else if (s.equals("FFS")) {
+                        rowData[2] = "Feet First-Supine";
+                    } else if (s.equals("FFDR")) {
+                        rowData[2] = "Feet First-Decubitus Right";
+                    } else if (s.equals("FFDL")) {
+                        rowData[2] = "Feet First-Decubitus Left";
+                    } else {
+                        rowData[2] = s;
+                    }
+                } else if (vr.equals("SQ")) {
+
+                    // System.err.println("Key  = " + key);
+                    FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
+                    Vector display = sq.getSequenceDisplay();
+
+                    rowData[2] = "";
+
+                    for (Enumeration f = display.elements(); f.hasMoreElements();) {
+                    	if(addRow(rowData, show)) {
+                        	tagsModel.addRow(rowData);
+
+	                        StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+	
+	                        rowData[1] = st.nextToken();
+	
+	                        if (st.hasMoreTokens()) {
+	                            rowData[2] = st.nextToken();
+	                        }
+                    	} else {
+                    		f.nextElement();
+                    	}
+                    }
+                } // standard tag.  add tag.get(key).getValue(true) as-is to the table
+                else { // if ( ((FileDicomTag) tagsList.get(key)).getMultiplicity() > 1) {
+
+                    FileDicomTag t;
+                    Object[] tagVals;
+
+                    t = (FileDicomTag) tagsList.get(key);
+                    tagVals = t.getValueList();
+
+                    String dispString = "";
+                    int num = t.getNumberOfValues();
+
+                    if (num == 0) {
+                        Preferences.debug("No Multiplicity: " + name + "  " + t.getValue(true) +
+                                          ", check that this is not an error.\n");
+                    }
+
+                    for (int q = 0; q < num; q++) {
+                    	try {
+                    		dispString += tagVals[q].toString();
+                    	} catch(NullPointerException e1) {
+                    		dispString += "";
+                    	}
+                    		
+                        if ((q + 1) < num) {
+                            dispString += ", ";
+                        }
+                    }
+
+                    rowData[2] = dispString;
+                }
+
+                //instances where rowData will be a private tag are checked here for showTags
+                if(addRow(rowData, show)) {
+                	tagsModel.addRow(rowData);
+                }
+            }
+        }
+
+        sort(tagsModel, 0, false, true);
     }
     
     /**
