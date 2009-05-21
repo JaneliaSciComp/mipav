@@ -343,7 +343,7 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
                         Preferences.debug("main loop xstart = " + xstart + "\n");
                         xLength = Math.min(xyProcessLength, xDim - 1 - xstart + 1);
                         for (z = zstart; z < zstart + zProcessLength; z++) {
-                            zOffset = z * processSquare;
+                            zOffset = (z - zstart)* processSquare;
                             planeString = Integer.toString(z);
                             digitLength = planeString.length();
                             leadingZeros = planeDigits - digitLength;
