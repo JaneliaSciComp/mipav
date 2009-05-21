@@ -187,9 +187,9 @@ public class ManifestFile {
 		
 			if(out != null) {
 
-				out.write(PLUGIN_ENTRY+DELIMITER+c.toString()+LINE_DELIM);
+				out.write(PLUGIN_ENTRY+DELIMITER+c.getName()+LINE_DELIM);
 				for(int i=0; i<dependents.size(); i++) {	
-					out.write(DEPENDENT_ENTRY+DELIMITER+dependents.get(i).toString()+LINE_DELIM);
+					out.write(DEPENDENT_ENTRY+DELIMITER+dependents.get(i).getName()+LINE_DELIM);
 				}
 				out.write(LINE_DELIM);
 				
