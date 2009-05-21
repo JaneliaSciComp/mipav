@@ -296,16 +296,43 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
 		return true;
     }
     
-    private boolean helpPluginSearch(File f, Class c) {
+    private boolean helpPluginSearch(File f, String className) {
     	boolean found = false;
     	File plugin = new File(pluginDir);
     	File[] fList = plugin.listFiles();
+    	String fileName;
     	for(int i=0; i<fList.length; i++) {
     		if(fList[i].isDirectory()) {
-    			found = helpPluginSearch(fList[i], c);
+    			found = helpPluginSearch(fList[i], className);
     		} else if(fList[i].getName().contains(".class")) {
-    			String name = c.getName();
-    			found = fList[i].getName().equals(c.getName());
+    			fileName = fList[i].getName().substring(0, fList[i].getName().indexOf(".class"));
+    			found = fileName.equals(className);
+    		}
+    		
+    		if(found) {
+    			return found; //true
+    		}
+    	}
+    	return found; //false
+    }
+    
+    /**
+     * Determines whether the <code>className</code> is in the plugin folder.
+     * 
+     * @param className
+     * @return
+     */
+    private boolean isInPluginFolder(String className) {
+    	boolean found = false;
+    	File plugin = new File(pluginDir);
+    	File[] fList = plugin.listFiles();
+    	String fileName;
+    	for(int i=0; i<fList.length; i++) {
+    		if(fList[i].isDirectory()) {
+    			found = helpPluginSearch(fList[i], className);
+    		} else if(fList[i].getName().contains(".class")) {
+    			fileName = fList[i].getName().substring(0, fList[i].getName().indexOf(".class"));
+    			found = fileName.equals(className);
     		}
     		
     		if(found) {
@@ -322,23 +349,13 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
      * @return
      */
     private boolean isInPluginFolder(Class c) {
-    	boolean found = false;
-    	File plugin = new File(pluginDir);
-    	File[] fList = plugin.listFiles();
-    	String fileName, className = c.getSimpleName();
-    	for(int i=0; i<fList.length; i++) {
-    		if(fList[i].isDirectory()) {
-    			found = helpPluginSearch(fList[i], c);
-    		} else if(fList[i].getName().contains(".class")) {
-    			fileName = fList[i].getName().substring(0, fList[i].getName().indexOf(".class"));
-    			found = fileName.equals(className);
-    		}
-    		
-    		if(found) {
-    			return found; //true
-    		}
-    	}
+    	boolean found = isInPluginFolder(c.getSimpleName());
     	
+    	if(found) {
+			return found; //true
+		}
+    	
+    	File plugin = new File(pluginDir);
     	URL fileLoc = null;
     	try {
     		fileLoc = c.getProtectionDomain().getCodeSource().getLocation();
