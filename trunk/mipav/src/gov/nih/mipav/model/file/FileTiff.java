@@ -1020,7 +1020,7 @@ public class FileTiff extends FileBase {
 
             while ((moreIFDs) && (!foundTag43314)) { // Find number of images!!
                 raFile.seek(IFDoffsets[imageSlice]);
-                moreIFDs = openIFD(fileInfo);
+                moreIFDs = openIFD(fileInfo, true);
             }
 
             if (foundTag43314) {
@@ -1158,7 +1158,7 @@ public class FileTiff extends FileBase {
                     fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
                     fileInfo.setExtents(imgExtents);
                     raFile.seek(IFDoffsets[imageSlice]);
-                    moreIFDs = openIFD(fileInfo);
+                    moreIFDs = openIFD(fileInfo, true);
 
                     // Set the resolutions
                     fileInfo.setResolutions(imgResols);
@@ -1462,7 +1462,7 @@ public class FileTiff extends FileBase {
 
             while ((moreIFDs) && (!foundTag43314)) { // Find number of images!!
                 raFile.seek(IFDoffsets[imageSlice]);
-                moreIFDs = openIFD(fileInfo);
+                moreIFDs = openIFD(fileInfo, false);
             }
 
             if (foundTag43314) {
@@ -1656,7 +1656,7 @@ public class FileTiff extends FileBase {
 
             while ((moreIFDs) && (!foundTag43314)) { // Find number of images!!
                 raFile.seek(IFDoffsets[imageSlice]);
-                moreIFDs = openIFD(fileInfo);
+                moreIFDs = openIFD(fileInfo, false);
             }
 
             if (foundTag43314) {
@@ -1784,7 +1784,7 @@ public class FileTiff extends FileBase {
                     fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
                     fileInfo.setExtents(imgExtents);
                     raFile.seek(IFDoffsets[imageSlice]);
-                    moreIFDs = openIFD(fileInfo);
+                    moreIFDs = openIFD(fileInfo, false);
 
                     // Set the resolutions
                     fileInfo.setResolutions(imgResols);
@@ -6489,7 +6489,7 @@ public class FileTiff extends FileBase {
      *
      * @exception  IOException  if there is an error reading the file
      */
-    private boolean openIFD(FileInfoTiff fileInfo) throws IOException {
+    private boolean openIFD(FileInfoTiff fileInfo, boolean debuggingOkay) throws IOException {
         int i;
         int iExifStart = 0;
         int i1;
@@ -6507,7 +6507,7 @@ public class FileTiff extends FileBase {
         long preExifLocus = 0L;
         int sampleFormat = 1; // 1 is default for unsigned integers
         int expectedCount;
-        boolean debuggingFileIO = Preferences.debugLevel(Preferences.DEBUG_FILEIO);
+        boolean debuggingFileIO = debuggingOkay && Preferences.debugLevel(Preferences.DEBUG_FILEIO);
         int exifDirEntries = 0;
         boolean zero;
         fileInfo.setEndianess(endianess);
