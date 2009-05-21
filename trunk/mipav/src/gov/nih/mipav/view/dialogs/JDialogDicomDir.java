@@ -736,7 +736,6 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     }
 
 
-	@Override
 	public Dimension getPanelSize() {
 		return new Dimension(imagePanel.getBounds().width, imagePanel.getBounds().height);
 	}
