@@ -1209,11 +1209,26 @@ public class ModelImage extends ModelStorageBase {
         int iBlue = 0;
         int iNewColor = 0;
 
-        if (this.isColorImage()) {
+        if (this.getType() == ModelStorageBase.ARGB) {
             iRed = this.getC(iIndex, 1).byteValue();
             iGreen = this.getC(iIndex, 2).byteValue();
             iBlue = this.getC(iIndex, 3).byteValue();
-        } else {
+        } else if (this.getType() == ModelStorageBase.ARGB_USHORT) {
+            Number kRed = new Double(255 * (this.getC(iIndex, 1).shortValue() - this.getMin()) / (this.getMax() - this.getMin()));
+            iRed = kRed.byteValue(); 
+            Number kGreen = new Double(255 * (this.getC(iIndex, 2).shortValue() - this.getMin()) / (this.getMax() - this.getMin()));
+            iGreen = kGreen.byteValue();
+            Number kBlue = new Double(255 * (this.getC(iIndex, 3).shortValue() - this.getMin()) / (this.getMax() - this.getMin()));
+            iBlue = kBlue.byteValue();   
+        } else if (this.getType() == ModelStorageBase.ARGB_FLOAT) {
+            Number kRed = new Double(255 * (this.getC(iIndex, 1).floatValue() - this.getMin()) / (this.getMax() - this.getMin()));
+            iRed = kRed.byteValue(); 
+            Number kGreen = new Double(255 * (this.getC(iIndex, 2).floatValue() - this.getMin()) / (this.getMax() - this.getMin()));
+            iGreen = kGreen.byteValue();
+            Number kBlue = new Double(255 * (this.getC(iIndex, 3).floatValue() - this.getMin()) / (this.getMax() - this.getMin()));
+            iBlue = kBlue.byteValue();   
+        }
+        else {
             Number kGray = new Double(255 * (this.getFloat(iIndex) - this.getMin()) / (this.getMax() - this.getMin()));
             iRed = kGray.byteValue();
             iGreen = iRed;
