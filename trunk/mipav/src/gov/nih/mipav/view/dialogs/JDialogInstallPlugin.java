@@ -17,6 +17,8 @@ import java.awt.event.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLClassLoader;
 
 import java.util.*;
@@ -186,6 +188,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     private void installPlugins() {
     	moveFiles();
 
+    	ArrayList<String> installSimpleName = new ArrayList<String>();
         for(int i=0; i<files.size(); i++) {
         	String name = files.get(i).getName();
         	name = name.substring(0, name.indexOf(".class"));
@@ -202,7 +205,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 				
 				if(isPlugin) {
 					Class[] dep = gatherDependents(c);
-					
+					installSimpleName.add(name);
 					ManifestFile mf = ManifestFile.getReference();
 					mf.addEntry(c, dep); //if exists will only modi
 				}
@@ -226,7 +229,19 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             }
         }
 
-        //dispose();
+        String install = new String();
+        if(installSimpleName.size() == 0) {
+        	install = "No plugins were installed, please select valid MIPAV plugin files.";
+        } else {
+        	install = "<html>The following plugins were successfully installed:<br>";
+        	for(int i=0; i<installSimpleName.size(); i++) {
+        		install += installSimpleName.get(i)+"<br>";
+        	}
+        	install += "</html>";
+        	selectorPanel.clearList();
+        }
+        
+        MipavUtil.displayInfo(install);
 
         return;
     }
@@ -250,6 +265,13 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	    			try {
 						Class initDep = Class.forName(simpleFileName);
 						dep.add(initDep);
+						
+						ArrayList<Class> subDep = gatherSubClassDependents(initDep);
+						for(int k=0; k<subDep.size(); k++) {
+							if(!dep.contains(subDep.get(k))) {
+								dep.add(subDep.get(k));
+							}
+						}
 	    			} catch (ClassNotFoundException e) {
 						e.printStackTrace();
 					}
@@ -311,7 +333,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
 		Field[] f = c.getDeclaredFields();
 		for(int i=0; i<f.length; i++) {
-			if(isInPluginFolder(f[i].getClass()) && !dep.contains(f[i].getClass())) {
+			if(isInPluginFolder(f[i].getType()) && !dep.contains(f[i].getType())) {
 				dep.add(possibleDep[i]);
 				
 				ArrayList<Class> subDep = gatherSubClassDependents(possibleDep[i]);
@@ -447,6 +469,12 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			return selected;
 		}
 		
+		public void clearList() {
+			selected.setModel(new DefaultListModel());
+			files = new Vector<File>();
+			filesColor = new Vector<Color>();
+		}
+		
 		private JPanel buildSelectOptionsPanel() {
 			JPanel selectOptionsPanel = new JPanel();
 			selectOptionsPanel.setLayout(new BoxLayout(selectOptionsPanel, BoxLayout.Y_AXIS));
@@ -519,7 +547,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 				JList temp = new JList();
 				DefaultListModel m;
 				temp.setModel(m = new DefaultListModel());
-				//TODO: Future DefaultListModels are expected to be collections show addAll should be implemented.
+				//TODO: Future DefaultListModels are expected to be collections so addAll should be implemented.
 				for(int i=0; i<files.size(); i++) {
 					m.add(i, files.get(i));
 				}
@@ -710,8 +738,67 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	return;
     }
     
+    private boolean helpPluginSearch(File f, Class c) {
+    	boolean found = false;
+    	File plugin = new File(pluginDir);
+    	File[] fList = plugin.listFiles();
+    	for(int i=0; i<fList.length; i++) {
+    		if(fList[i].isDirectory()) {
+    			found = helpPluginSearch(fList[i], c);
+    		} else if(fList[i].getName().contains(".class")) {
+    			String name = c.getName();
+    			found = fList[i].getName().equals(c.getName());
+    		}
+    		
+    		if(found) {
+    			return found; //true
+    		}
+    	}
+    	return found; //false
+    }
+    
+    /**
+     * Determines whether <code>c</code> is in the current plugin folder.
+     * 
+     * @param c
+     * @return
+     */
     private boolean isInPluginFolder(Class c) {
-    	return false;
+    	boolean found = false;
+    	File plugin = new File(pluginDir);
+    	File[] fList = plugin.listFiles();
+    	String fileName, className = c.getSimpleName();
+    	for(int i=0; i<fList.length; i++) {
+    		if(fList[i].isDirectory()) {
+    			found = helpPluginSearch(fList[i], c);
+    		} else if(fList[i].getName().contains(".class")) {
+    			fileName = fList[i].getName().substring(0, fList[i].getName().indexOf(".class"));
+    			found = fileName.equals(className);
+    		}
+    		
+    		if(found) {
+    			return found; //true
+    		}
+    	}
+    	
+    	URL fileLoc = null;
+    	try {
+    		fileLoc = c.getProtectionDomain().getCodeSource().getLocation();
+    	} catch (NullPointerException e) {
+    		return false;
+    	}
+    		
+    	try {
+			if(fileLoc.toString().contains(plugin.toURI().toURL().toString())) {
+				return true;
+			} else {
+				return false;
+			}
+		} catch (MalformedURLException e) {
+			//pluginDir needs to specify a valid location
+			e.printStackTrace();
+			return false;
+		}
     }
     
     private boolean examineClass(Class c) {
