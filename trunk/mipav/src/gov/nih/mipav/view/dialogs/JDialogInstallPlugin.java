@@ -265,8 +265,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	    		if(!simpleFileName.equals("PlugIn"+simpleName) && simpleFileName.contains(simpleName)) {
 	    			try {
 						Class initDep = Class.forName(simpleFileName);
-						dep.add(initDep);
-						
+						if(!dep.contains(initDep)) {
+							dep.add(initDep);
+						}
+							
 						ArrayList<Class> subDep = gatherSubClassDependents(initDep);
 						for(int k=0; k<subDep.size(); k++) {
 							if(!dep.contains(subDep.get(k))) {
@@ -282,8 +284,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 		
 		Class[] possibleDep = c.getDeclaredClasses();
 		for(int j=0; j<possibleDep.length; j++) {
-			if(isInPluginFolder(possibleDep[j]) && !dep.contains(possibleDep[j])) {
-				dep.add(possibleDep[j]);
+			if(isInPluginFolder(possibleDep[j])) {
+				if(!dep.contains(possibleDep[j])) {
+					dep.add(possibleDep[j]);
+				}
 				
 				ArrayList<Class> subDep = gatherSubClassDependents(possibleDep[j]);
 				for(int k=0; k<subDep.size(); k++) {
@@ -296,10 +300,12 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
 		Field[] f = c.getDeclaredFields();
 		for(int i=0; i<f.length; i++) {
-			if(isInPluginFolder(f[i].getClass()) && !dep.contains(f[i].getClass())) {
-				dep.add(possibleDep[i]);
+			if(isInPluginFolder(f[i].getType())) {
+				if(!dep.contains(f[i].getType())) {
+					dep.add(f[i].getType());
+				}
 				
-				ArrayList<Class> subDep = gatherSubClassDependents(possibleDep[i]);
+				ArrayList<Class> subDep = gatherSubClassDependents(f[i].getType());
 				for(int k=0; k<subDep.size(); k++) {
 					if(!dep.contains(subDep.get(k))) {
 						dep.add(subDep.get(k));
@@ -320,9 +326,11 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	
     	Class[] possibleDep = c.getDeclaredClasses();
 		for(int j=0; j<possibleDep.length; j++) {
-			if(isInPluginFolder(possibleDep[j]) && !dep.contains(possibleDep[j])) {
-				dep.add(possibleDep[j]);
-				
+			if(isInPluginFolder(possibleDep[j])) {
+				if(!dep.contains(possibleDep[j])) {
+					dep.add(possibleDep[j]);
+				}
+					
 				ArrayList<Class> subDep = gatherSubClassDependents(possibleDep[j]);
 				for(int k=0; k<subDep.size(); k++) {
 					if(!dep.contains(subDep.get(k))) {
@@ -334,9 +342,11 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
 		Field[] f = c.getDeclaredFields();
 		for(int i=0; i<f.length; i++) {
-			if(isInPluginFolder(f[i].getType()) && !dep.contains(f[i].getType())) {
-				dep.add(f[i].getType());
-				
+			if(isInPluginFolder(f[i].getType())) {
+				if(!dep.contains(f[i].getType())) {
+					dep.add(f[i].getType());
+				}
+					
 				ArrayList<Class> subDep = gatherSubClassDependents(f[i].getType());
 				for(int k=0; k<subDep.size(); k++) {
 					if(!dep.contains(subDep.get(k))) {
@@ -522,11 +532,18 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 				ArrayList<String> conflict = new ArrayList<String>();
 				for(int i=0; i<paths.length; i++) {
 					String name = "";
+					
+					if(((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().equals(initDir.getText())) {
+						continue; //shouldn't be able to select root
+					}
+					
 					if(!initDir.getText().equals(INIT_TEXT)) {
 						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(initDir.getText().length()+1);
 					} else {
 						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(File.listRoots()[1].toString().length());
-					} if(!((DefaultListModel)selected.getModel()).contains(name)) {
+					} 
+					
+					if(!((DefaultListModel)selected.getModel()).contains(name)) {
 						if(!isInPluginFolder(name)) {
 							((DefaultListModel)selected.getModel()).addElement(name);
 							files.add(((JFileTreeNode)paths[i].getLastPathComponent()).getFile());

@@ -337,7 +337,9 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
      * @return
      */
     private boolean isInPluginFolder(Class c) {
-    	boolean found = isInPluginFolder(c.getSimpleName());
+    	String name = c.getCanonicalName();
+    	name = name.replace(".", "$");
+    	boolean found = isInPluginFolder(name);
     	
     	if(found) {
 			return found; //true
