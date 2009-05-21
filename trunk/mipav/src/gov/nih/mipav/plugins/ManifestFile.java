@@ -117,7 +117,7 @@ public class ManifestFile {
 				ArrayList<Class> currentPlugin = new ArrayList<Class>();
 				Class pluginClass = null, dependentClass = null;
 				while((nextLine = in.readLine()) != null) {
-					if((beginIndex = nextLine.indexOf(PLUGIN_ENTRY+DELIMITER)) != -1) { //line-delim has been stripped
+					if(!inPlugin && (beginIndex = nextLine.indexOf(PLUGIN_ENTRY+DELIMITER)) != -1) { //line-delim has been stripped
 						try {
 							pluginClass = Class.forName(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
 							inPlugin = true;
@@ -126,12 +126,22 @@ public class ManifestFile {
 							e.printStackTrace();
 						}
 					} else if(inPlugin) {
-						if(nextLine.equals("")) {
+						if(nextLine.contains(PLUGIN_ENTRY)) {
 							manifestInfo.put(pluginClass, currentPlugin);
 							pluginClass = null;
-							currentPlugin = null;
+							currentPlugin = new ArrayList<Class>();
 							inPlugin = false;
-						} else {
+							
+							if((beginIndex = nextLine.indexOf(PLUGIN_ENTRY+DELIMITER)) != -1) { //line-delim has been stripped
+								try {
+									pluginClass = Class.forName(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
+									inPlugin = true;
+								} catch (ClassNotFoundException e) {
+									MipavUtil.displayInfo(nextLine+" could not be read as a class. Please check your class path");
+									e.printStackTrace();
+								}
+							} 
+						} else if (nextLine.contains(DEPENDENT_ENTRY)){
 							beginIndex = nextLine.indexOf(DEPENDENT_ENTRY);
 							try {
 								dependentClass = Class.forName(nextLine.substring(beginIndex + DEPENDENT_ENTRY.length() + DELIMITER.length()));
@@ -142,6 +152,10 @@ public class ManifestFile {
 							}
 						}
 					} 
+				}
+				
+				if(pluginClass != null && manifestInfo.get(pluginClass) == null) {
+					manifestInfo.put(pluginClass, currentPlugin);
 				}
 				
 				in.close();
@@ -249,19 +263,21 @@ public class ManifestFile {
 	private void removeFromFile(Class c) {
 		BufferedReader in = null;
 		BufferedWriter out = null;
+		File temp = null;
 		try {
 			in = new BufferedReader(new FileReader(manifest));
-			out = new BufferedWriter(new FileWriter(manifest));
+			out = new BufferedWriter(new FileWriter(temp = new File(manifest.getAbsolutePath()+manifest.getName()+".tmp")));
 		
 			if(in != null && out != null) {
 				String nextLine = new String();
 				boolean inPlugin = false;
 				while((nextLine = in.readLine()) != null) {
-					if(nextLine.equals(PLUGIN_ENTRY+DELIMITER+c.toString())) { //line-delim has been stripped
+					if(nextLine.equals(PLUGIN_ENTRY+DELIMITER+c.getName())) { //line-delim has been stripped
 						inPlugin = true;
 					} else if(inPlugin) {
-						if(nextLine.equals("")) {
+						if(nextLine.contains(PLUGIN_ENTRY)) {
 							inPlugin = false;
+							out.write(nextLine+LINE_DELIM); //line-delim has been stripped
 						}
 					} else {
 						out.write(nextLine+LINE_DELIM); //line-delim has been stripped
@@ -272,6 +288,37 @@ public class ManifestFile {
 				
 				out.flush();
 				out.close();
+			}
+			
+			writeTmpToManifest(temp);
+		} catch (FileNotFoundException e) {
+			MipavUtil.displayInfo("Unable to locate manifest file.");
+			e.printStackTrace();
+		} catch (IOException e) {
+			MipavUtil.displayInfo("Unable to write to manifest file.");
+			e.printStackTrace();
+		}
+	}
+	
+	private void writeTmpToManifest(File temp) {
+		BufferedReader in = null;
+		BufferedWriter out = null;
+		try {
+			in = new BufferedReader(new FileReader(temp));
+			out = new BufferedWriter(new FileWriter(manifest));
+			
+			if(in != null && out != null) {
+				String nextLine = new String();
+				while((nextLine = in.readLine()) != null) {
+					out.write(nextLine+LINE_DELIM);
+				}
+				
+				in.close();
+				
+				out.flush();
+				out.close();
+				
+				temp.delete();
 			}
 		} catch (FileNotFoundException e) {
 			MipavUtil.displayInfo("Unable to locate manifest file.");
@@ -296,16 +343,18 @@ public class ManifestFile {
 		ArrayList<Class> pluginInfo = getEntry(c);
 		BufferedReader in = null;
 		BufferedWriter out = null;
+		File temp = null;
+		
 		try {
 			in = new BufferedReader(new FileReader(manifest));
-			out = new BufferedWriter(new FileWriter(manifest));
+			out = new BufferedWriter(new FileWriter(temp = new File(manifest.getAbsolutePath()+manifest.getName()+".tmp")));
 		
 		
 			if(in != null && out != null) {
 				String nextLine = new String();
 				boolean inPlugin = false;
 				while((nextLine = in.readLine()) != null) {
-					if(nextLine.equals(PLUGIN_ENTRY+DELIMITER+c.toString())) {
+					if(nextLine.equals(PLUGIN_ENTRY+DELIMITER+c.getName())) {
 		
 					inPlugin = true;
 					} else if(inPlugin) {
@@ -315,8 +364,9 @@ public class ManifestFile {
 								out.write(DEPENDENT_ENTRY+DELIMITER+dependents[i].toString()+LINE_DELIM);
 							}
 						}
-						if(nextLine.equals("")) {
+						if(nextLine.contains(PLUGIN_ENTRY)) {
 							inPlugin = false;
+							out.write(nextLine+LINE_DELIM);
 						}
 					} else {
 						out.write(nextLine+LINE_DELIM);
@@ -327,8 +377,9 @@ public class ManifestFile {
 				
 				out.flush();
 				out.close();
+				
+				writeTmpToManifest(temp);
 			}
-		
 		} catch (FileNotFoundException e) {
 			MipavUtil.displayInfo("Unable to locate manifest file.");
 			e.printStackTrace();

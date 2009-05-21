@@ -756,8 +756,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     
     private boolean helpPluginSearch(File f, String className) {
     	boolean found = false;
-    	File plugin = new File(pluginDir);
-    	File[] fList = plugin.listFiles();
+    	File[] fList = f.listFiles();
     	String fileName;
     	for(int i=0; i<fList.length; i++) {
     		if(fList[i].isDirectory()) {
