@@ -186,6 +186,24 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     }
     
     private void installPlugins() {
+    	ArrayList<String> conflict = new ArrayList<String>();
+    	for(int i=0; i<files.size(); i++) {
+        	String name = files.get(i).getName();
+        	name = name.contains(".class") ? name.substring(0, name.indexOf(".class")) : name;
+        	if(isInPluginFolder(name)) {
+        		conflict.add(name);
+        	}
+    	}
+    	
+    	if(conflict.size() > 0) {
+    		String conflictList = new String();
+    		for(int i=0; i<conflict.size(); i++) {
+    			conflictList += conflict.get(i)+"<br>";
+    		}
+    		
+    		MipavUtil.displayInfo("<html>The following class files conflict: <br>"+conflictList+"</html>");
+    	}
+    	
     	moveFiles();
 
     	ArrayList<String> installSimpleName = new ArrayList<String>();
@@ -738,16 +756,43 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	return;
     }
     
-    private boolean helpPluginSearch(File f, Class c) {
+    private boolean helpPluginSearch(File f, String className) {
     	boolean found = false;
     	File plugin = new File(pluginDir);
     	File[] fList = plugin.listFiles();
+    	String fileName;
     	for(int i=0; i<fList.length; i++) {
     		if(fList[i].isDirectory()) {
-    			found = helpPluginSearch(fList[i], c);
+    			found = helpPluginSearch(fList[i], className);
     		} else if(fList[i].getName().contains(".class")) {
-    			String name = c.getName();
-    			found = fList[i].getName().equals(c.getName());
+    			fileName = fList[i].getName().substring(0, fList[i].getName().indexOf(".class"));
+    			found = fileName.equals(className);
+    		}
+    		
+    		if(found) {
+    			return found; //true
+    		}
+    	}
+    	return found; //false
+    }
+    
+    /**
+     * Determines whether the <code>className</code> is in the plugin folder.
+     * 
+     * @param className
+     * @return
+     */
+    private boolean isInPluginFolder(String className) {
+    	boolean found = false;
+    	File plugin = new File(pluginDir);
+    	File[] fList = plugin.listFiles();
+    	String fileName;
+    	for(int i=0; i<fList.length; i++) {
+    		if(fList[i].isDirectory()) {
+    			found = helpPluginSearch(fList[i], className);
+    		} else if(fList[i].getName().contains(".class")) {
+    			fileName = fList[i].getName().substring(0, fList[i].getName().indexOf(".class"));
+    			found = fileName.equals(className);
     		}
     		
     		if(found) {
@@ -764,23 +809,13 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
      * @return
      */
     private boolean isInPluginFolder(Class c) {
-    	boolean found = false;
-    	File plugin = new File(pluginDir);
-    	File[] fList = plugin.listFiles();
-    	String fileName, className = c.getSimpleName();
-    	for(int i=0; i<fList.length; i++) {
-    		if(fList[i].isDirectory()) {
-    			found = helpPluginSearch(fList[i], c);
-    		} else if(fList[i].getName().contains(".class")) {
-    			fileName = fList[i].getName().substring(0, fList[i].getName().indexOf(".class"));
-    			found = fileName.equals(className);
-    		}
-    		
-    		if(found) {
-    			return found; //true
-    		}
-    	}
+    	boolean found = isInPluginFolder(c.getSimpleName());
     	
+    	if(found) {
+			return found; //true
+		}
+    	
+    	File plugin = new File(pluginDir);
     	URL fileLoc = null;
     	try {
     		fileLoc = c.getProtectionDomain().getCodeSource().getLocation();
