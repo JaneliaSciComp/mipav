@@ -50,7 +50,7 @@ import sun.swing.DefaultLookup;
 public class JDialogInstallPlugin extends JDialogBase implements ActionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-
+	
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -8736744495208652866L;
     
@@ -478,7 +478,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			selected = new JList();
 			selected.setModel(new DefaultListModel());
 			selected.setCellRenderer(new FileCellRenderer());
-			scrollPane = new JScrollPane(selected);
+			JScrollPane scrollPane = new JScrollPane(selected);
+			scrollPane.setPreferredSize(new Dimension(288, 317));
 			scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 			fileListPanel.setPreferredSize(new Dimension(300, 350));
@@ -922,6 +923,9 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 						Class[] dep = null;
 						try {
 							dep = gatherDependents(c);
+							if(dep != null) {
+								vectorColors.set(i, Color.blue);
+							}
 						} catch(NoClassDefFoundError e) {
 							Preferences.debug("Missing required class "+e.getMessage());
 							vectorColors.set(i, Color.red);
@@ -998,6 +1002,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
     	/** The file tree. */
     	private JTree tree;
+		
 
     	public JFileTreePanel() {
     		this.setLayout(new BorderLayout());
