@@ -252,10 +252,10 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     	for(int i=0; i<selectedPlugins.length; i++) {
     		if(deletePluginDependents(selectedPlugins[i].toString()) && 
     				deletePluginFile(selectedPlugins[i].toString())) {
-    			deleteStatus[i] = selectedPlugins[i].toString()+" was successfully deleted.";
+    			deleteStatus[i] = "PlugIn"+selectedPlugins[i].toString()+" was successfully deleted.";
     			numYes++;
     		} else {
-    			deleteStatus[i] = selectedPlugins[i].toString()+" could not be deleted.";
+    			deleteStatus[i] = "PlugIn"+selectedPlugins[i].toString()+" could not be deleted.";
     			numNo++;
     		}
     	}
@@ -471,7 +471,6 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
                 	pluginMenuItem.setName(pluginName);
                 	pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
             		currentMenu.add(pluginMenuItem);	
-            		addManifestEntry(plugin);
             			
                 
                 } catch(Exception e) {
@@ -488,11 +487,6 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         
         return menu;
     }
-    
-    private void addManifestEntry(Class plugin) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	/**
      * Recursive deletion algorithm to delete JMenus which contain no JMenuItems exclusive of JMenus in any children.
