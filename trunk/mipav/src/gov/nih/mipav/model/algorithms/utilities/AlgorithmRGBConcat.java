@@ -38,6 +38,9 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
     
     /** flag for performing bounds checking...normally should be set to true unless negative numbers are desired**/
     private boolean performBoundsChecking;
+    
+    /** ARGB, ARGB_USHORT, or ARGB_FLOAT */
+    private int dataType;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -47,16 +50,18 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
      * @param  srcImgR  image model where result image of the Red channel is to be stored
      * @param  srcImgG  image model where result image of the Green channel is to be stored
      * @param  srcImgB  image model where result image of the Blue channel is to be stored
+     * @param  dataType Tells if srcImage will become ARGB, ARGB_USHORT, or ARGB_FLOAT
      * @param  remap    if true and srcImage data max is < 255 data will be remapped [0-255] else if image max > 255
      *                  data will automatically be remapped [0-255].
      * @param performBoundsChecking  flag for performing bounds checking...normally should be set to true unless negative numbers are desired             
      */
-    public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, boolean remap, boolean performBoundsChecking) {
+    public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, int dataType, boolean remap, boolean performBoundsChecking) {
 
         srcImageR = srcImgR; // Put results in red   destination image.
         srcImageG = srcImgG; // Put results in green destination image.
         srcImageB = srcImgB; // Put results in blue  destination image.
         destImage = null;
+        this.dataType = dataType;
         reMap = remap;
         this.performBoundsChecking = performBoundsChecking;
     }
@@ -78,6 +83,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         srcImageG = srcImgG; // Put results in green destination image.
         srcImageB = srcImgB; // Put results in blue  destination image.
         destImage = destImg;
+        this.dataType = destImage.getType();
         reMap = remap;
         this.performBoundsChecking = performBoundsChecking;
     }
@@ -157,6 +163,17 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         float maxB = (float) srcImageB.getMax();
 
         int nImages = 1;
+        float upperLimit;
+        
+        if (dataType == ModelStorageBase.ARGB) {
+            upperLimit = 255.0f;
+        }
+        else if (dataType == ModelStorageBase.ARGB_USHORT) {
+            upperLimit = 65535.0f;
+        }
+        else {
+            upperLimit = Float.MAX_VALUE;
+        }
 
         try {
             length = 4 * destImage.getSliceSize();
@@ -265,28 +282,28 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
                         fireProgressStateChanged(Math.round((float) (i + (j * length)) / ((nImages * length) - 1) * 100));
                     }
 
-                    buffer[i] = 255;
+                    buffer[i] = upperLimit;
                     if(performBoundsChecking) {
 	                    if (bufferR[id] < 0) {
 	                        buffer[i + 1] = 0;
-	                    } else if (bufferR[id] > 255) {
-	                        buffer[i + 1] = 255;
+	                    } else if (bufferR[id] > upperLimit) {
+	                        buffer[i + 1] = upperLimit;
 	                    } else {
 	                        buffer[i + 1] = bufferR[id];
 	                    }
 	
 	                    if (bufferG[id] < 0) {
 	                        buffer[i + 2] = 0;
-	                    } else if (bufferG[id] > 255) {
-	                        buffer[i + 2] = 255;
+	                    } else if (bufferG[id] > upperLimit) {
+	                        buffer[i + 2] = upperLimit;
 	                    } else {
 	                        buffer[i + 2] = bufferG[id];
 	                    }
 	
 	                    if (bufferB[id] < 0) {
 	                        buffer[i + 3] = 0;
-	                    } else if (bufferB[id] > 255) {
-	                        buffer[i + 3] = 255;
+	                    } else if (bufferB[id] > upperLimit) {
+	                        buffer[i + 3] = upperLimit;
 	                    } else {
 	                        buffer[i + 3] = bufferB[id];
 	                    }
@@ -359,7 +376,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
      */
     private void calcStoreInPlace() {
 
-        int i, j, n;
+        int i, n;
         int id;
 
         int length, srcLength, totSrcLength; // total number of data-elements (pixels) in image
@@ -377,6 +394,17 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         int[] extents;
         String imageName;
         FileInfoBase[] fInfoBase = null;
+        float upperLimit;
+        
+        if (dataType == ModelStorageBase.ARGB) {
+            upperLimit = 255.0f;
+        }
+        else if (dataType == ModelStorageBase.ARGB_USHORT) {
+            upperLimit = 65535.0f;
+        }
+        else {
+            upperLimit = Float.MAX_VALUE;
+        }
 
         int nImages = 1;
 
@@ -534,28 +562,28 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
                     fireProgressStateChanged(Math.round((float) (i) / (totLength - 1) * 100));
                 }
 
-                buffer[i] = 255;
+                buffer[i] = upperLimit;
                 if(performBoundsChecking) {
 	                if (bufferR[id] < 0) {
 	                    buffer[i + 1] = 0;
-	                } else if (bufferR[id] > 255) {
-	                    buffer[i + 1] = 255;
+	                } else if (bufferR[id] > upperLimit) {
+	                    buffer[i + 1] = upperLimit;
 	                } else {
 	                    buffer[i + 1] = bufferR[id];
 	                }
 	
 	                if (bufferG[id] < 0) {
 	                    buffer[i + 2] = 0;
-	                } else if (bufferG[id] > 255) {
-	                    buffer[i + 2] = 255;
+	                } else if (bufferG[id] > upperLimit) {
+	                    buffer[i + 2] = upperLimit;
 	                } else {
 	                    buffer[i + 2] = bufferG[id];
 	                }
 	
 	                if (bufferB[id] < 0) {
 	                    buffer[i + 3] = 0;
-	                } else if (bufferB[id] > 255) {
-	                    buffer[i + 3] = 255;
+	                } else if (bufferB[id] > upperLimit) {
+	                    buffer[i + 3] = upperLimit;
 	                } else {
 	                    buffer[i + 3] = bufferB[id];
 	                }
@@ -594,7 +622,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         bufferG = null;
         bufferB = null;
 
-        srcImageR = new ModelImage(ModelStorageBase.ARGB, extents, imageName);
+        srcImageR = new ModelImage(dataType, extents, imageName);
 
         for (n = 0; n < srcImageR.getFileInfo().length; n++) {
             srcImageR.setFileInfo(fInfoBase[n], n);
