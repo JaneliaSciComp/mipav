@@ -186,23 +186,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     }
     
     private void installPlugins() {
-    	ArrayList<String> conflict = new ArrayList<String>();
-    	for(int i=0; i<files.size(); i++) {
-        	String name = files.get(i).getName();
-        	name = name.contains(".class") ? name.substring(0, name.indexOf(".class")) : name;
-        	if(isInPluginFolder(name)) {
-        		conflict.add(name);
-        	}
-    	}
-    	
-    	if(conflict.size() > 0) {
-    		String conflictList = new String();
-    		for(int i=0; i<conflict.size(); i++) {
-    			conflictList += conflict.get(i)+"<br>";
-    		}
-    		
-    		MipavUtil.displayInfo("<html>The following class files conflict: <br>"+conflictList+"</html>");
-    	}
     	
     	moveFiles();
 
@@ -536,6 +519,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	            }
 			} else if(e.getActionCommand().equals(MOVE_RIGHT)) {
 				TreePath[] paths = fileTree.getSelectionModel().getSelectionPaths();
+				ArrayList<String> conflict = new ArrayList<String>();
 				for(int i=0; i<paths.length; i++) {
 					String name = "";
 					if(!initDir.getText().equals(INIT_TEXT)) {
@@ -543,10 +527,24 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					} else {
 						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(File.listRoots()[1].toString().length());
 					} if(!((DefaultListModel)selected.getModel()).contains(name)) {
-						((DefaultListModel)selected.getModel()).addElement(name);
-						files.add(((JFileTreeNode)paths[i].getLastPathComponent()).getFile());
+						if(!isInPluginFolder(name)) {
+							((DefaultListModel)selected.getModel()).addElement(name);
+							files.add(((JFileTreeNode)paths[i].getLastPathComponent()).getFile());
+						} else {
+							conflict.add(name);
+						}
 					}
 				}
+				
+				if(conflict.size() > 0) {
+		    		String conflictList = new String();
+		    		for(int i=0; i<conflict.size(); i++) {
+		    			conflictList += conflict.get(i)+"<br>";
+		    		}
+		    		
+		    		MipavUtil.displayInfo("<html>The following files are already in the plugin directory: <br>"+conflictList+"</html>");
+		    	}
+				
 				ArrayList<File> allFiles = moveFiles();
 				filesColor = buildColorTable(files);
 				removeFiles(allFiles);

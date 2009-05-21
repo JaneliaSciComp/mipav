@@ -40,10 +40,6 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     private static final long serialVersionUID = -8736744495208652866L;
 
 	private static final String UNINSTALL = "Uninstall plugin(s)";
-	
-	private static final String INSTALL = "Install plugin(s)";
-	
-	private static final String MANIFEST = "Manifest" + File.separator + "mf_plugin.mf";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -75,10 +71,6 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     public JDialogUninstallPlugin(String name) {
     	System.out.println("Reached "+name);
     	ui = ViewUserInterface.getReference();
-    	
-    	if(!manifestExists()) {
-    		createManifest();
-    	}
     }
 
 	/**
@@ -89,9 +81,6 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     public JDialogUninstallPlugin(JFrame theParentFrame) {
         super(theParentFrame, false);
         ui = ViewUserInterface.getReference();
-        if(!manifestExists()) {
-    		createManifest();
-    	}
         
         init();
     }
@@ -520,27 +509,6 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         	}
         }
     }
-    
-    /**
-     * Creates the manifest file upon dialog startup.
-     */
-    private void createManifest() {
-		File f = new File(pluginDir + MANIFEST);
-		try {
-			f.createNewFile();
-		} catch (IOException e) {
-			MipavUtil.displayInfo("Could not create manifest file.  Plugin dependents will not be stored.");
-			e.printStackTrace();
-		}
-	}
-
-    /**
-     * Checks for manifest file existance.
-     * @return
-     */
-	private boolean manifestExists() {
-		return new File(pluginDir + MANIFEST).exists();
-	}
     
     /**
      * DOCUMENT ME!
