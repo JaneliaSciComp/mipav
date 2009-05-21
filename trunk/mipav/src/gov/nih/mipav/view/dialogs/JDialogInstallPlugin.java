@@ -335,9 +335,9 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 		Field[] f = c.getDeclaredFields();
 		for(int i=0; i<f.length; i++) {
 			if(isInPluginFolder(f[i].getType()) && !dep.contains(f[i].getType())) {
-				dep.add(possibleDep[i]);
+				dep.add(f[i].getType());
 				
-				ArrayList<Class> subDep = gatherSubClassDependents(possibleDep[i]);
+				ArrayList<Class> subDep = gatherSubClassDependents(f[i].getType());
 				for(int k=0; k<subDep.size(); k++) {
 					if(!dep.contains(subDep.get(k))) {
 						dep.add(subDep.get(k));
