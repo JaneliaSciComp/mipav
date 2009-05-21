@@ -11,6 +11,8 @@ import java.awt.event.*;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import java.util.*;
 import java.util.zip.*;
@@ -294,8 +296,67 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
 		return true;
     }
     
+    private boolean helpPluginSearch(File f, Class c) {
+    	boolean found = false;
+    	File plugin = new File(pluginDir);
+    	File[] fList = plugin.listFiles();
+    	for(int i=0; i<fList.length; i++) {
+    		if(fList[i].isDirectory()) {
+    			found = helpPluginSearch(fList[i], c);
+    		} else if(fList[i].getName().contains(".class")) {
+    			String name = c.getName();
+    			found = fList[i].getName().equals(c.getName());
+    		}
+    		
+    		if(found) {
+    			return found; //true
+    		}
+    	}
+    	return found; //false
+    }
+    
+    /**
+     * Determines whether <code>c</code> is in the current plugin folder.
+     * 
+     * @param c
+     * @return
+     */
     private boolean isInPluginFolder(Class c) {
-    	return true;
+    	boolean found = false;
+    	File plugin = new File(pluginDir);
+    	File[] fList = plugin.listFiles();
+    	String fileName, className = c.getSimpleName();
+    	for(int i=0; i<fList.length; i++) {
+    		if(fList[i].isDirectory()) {
+    			found = helpPluginSearch(fList[i], c);
+    		} else if(fList[i].getName().contains(".class")) {
+    			fileName = fList[i].getName().substring(0, fList[i].getName().indexOf(".class"));
+    			found = fileName.equals(className);
+    		}
+    		
+    		if(found) {
+    			return found; //true
+    		}
+    	}
+    	
+    	URL fileLoc = null;
+    	try {
+    		fileLoc = c.getProtectionDomain().getCodeSource().getLocation();
+    	} catch (NullPointerException e) {
+    		return false;
+    	}
+    		
+    	try {
+			if(fileLoc.toString().contains(plugin.toURI().toURL().toString())) {
+				return true;
+			} else {
+				return false;
+			}
+		} catch (MalformedURLException e) {
+			//pluginDir needs to specify a valid location
+			e.printStackTrace();
+			return false;
+		}
     }
     
     private boolean deletePluginFile(String name) {
