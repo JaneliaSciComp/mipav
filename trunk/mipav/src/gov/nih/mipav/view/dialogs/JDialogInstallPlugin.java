@@ -187,7 +187,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     
     private void installPlugins() {
     	
-    	moveFiles();
+    	ArrayList<File> files = moveFiles();
 
     	ArrayList<String> installSimpleName = new ArrayList<String>();
         for(int i=0; i<files.size(); i++) {
@@ -205,10 +205,23 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 				}
 				
 				if(isPlugin) {
-					Class[] dep = gatherDependents(c);
-					installSimpleName.add(name);
-					ManifestFile mf = ManifestFile.getReference();
-					mf.addEntry(c, dep); //if exists will only modi
+					Class[] dep = null;
+					try {
+						dep = gatherDependents(c);
+					} catch(NoClassDefFoundError e) { 
+						removeFiles(files);
+						MipavUtil.displayInfo("Unable to install plugin "+name+". "+e.getLocalizedMessage()+" could not be found.");
+						e.printStackTrace();
+					} catch(Throwable e) {
+						removeFiles(files);
+						MipavUtil.displayInfo("Unable to install plugin "+name+".  Make sure you have included all needed class files.");
+						e.printStackTrace();
+					}
+					if(dep != null) {
+						installSimpleName.add(name);
+						ManifestFile mf = ManifestFile.getReference();
+						mf.addEntry(c, dep); //if exists will only modi
+					}
 				}
 			} catch (ClassNotFoundException e) {
 				System.out.println("Class not found");
@@ -376,7 +389,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         		"You may select Java class files or container files.  "+
         		"These include *.class, *.tar.gz, *.zip, *.jar files.<br>"+
         		"Detected plugins that will likely install correctly are displayed in <font color=\"blue\">blue</font>.<br>"+
-        		"Plugins that may not have all their components listed are displayed in <font color=\"red\">red</font>.</center></html>  ");
+        		"Plugins and any problem components listed are displayed in <font color=\"red\">red</font>.</center></html>  ");
         intro.setBorder(new EmptyBorder(10, 75, 0, 75));
         //intro.setMinimumSize(new Dimension(700, 50));
         //intro.setPreferredSize(new Dimension(700, 50));
@@ -889,8 +902,12 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     			Class c = null;
 				try {
 					c = Class.forName(name.substring(0, name.indexOf(".class")));
-				} catch (ClassNotFoundException e) {
+				} catch (ClassNotFoundException e) { //likely class issue
 					e.printStackTrace();
+					vectorColors.set(i, Color.red);
+				} catch(NoClassDefFoundError e) { //likely class issue
+					e.printStackTrace();
+					vectorColors.set(i, Color.red);
 				}
 				if(c != null) {
 					boolean isPlugin = false;
@@ -902,34 +919,16 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 						} 
 					}
 					if(isPlugin) {
+						Class[] dep = null;
 						try {
-							c.newInstance();
-						} catch (Exception e) {
-							vectorColors.set(i, Color.red);
-							e.printStackTrace();
-						} 
-						
-						Class[] possibleDep = c.getDeclaredClasses();
-						for(int j=0; j<possibleDep.length; j++) {
-							if(isInPluginFolder(possibleDep[j])) {
-								boolean compiles = examineClass(possibleDep[j]);
-								if(!compiles) {
-									vectorColors.set(i, Color.red);
-								}
-							}
-						}
-	
-						try {
-							Field[] f = c.getDeclaredFields();
+							dep = gatherDependents(c);
 						} catch(NoClassDefFoundError e) {
+							Preferences.debug("Missing required class "+e.getMessage());
 							vectorColors.set(i, Color.red);
-							e.printStackTrace();
+						} catch(Throwable e) {
+							vectorColors.set(i, Color.red);
 						}
-						
-						if(!vectorColors.get(i).equals(Color.red)) {
-							vectorColors.set(i, Color.blue);
-						}
-					} 
+					}
 				}
     		}
     	}
