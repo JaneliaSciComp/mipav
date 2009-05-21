@@ -55,6 +55,19 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxImageRed;
+    
+    private JRadioButton radioARGB;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioARGB_FLOAT;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioARGB_USHORT;
+    
+    private ButtonGroup colorGroup;
+    
+    /** ARGB, ARGB_USHORT, or ARGB_FLOAT for color image */
+    private int dataType;
 
     /** DOCUMENT ME! */
     private ButtonGroup destinationGroup;
@@ -234,6 +247,14 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
     public void setGreenImage(ModelImage im) {
         imageG = im;
     }
+    
+    /**
+     * Accessor that sets whether color image type is ARGB, ARGB_USHORT, or ARGB_FLOAT
+     * @param dataType
+     */
+    public void setDataType(int dataType) {
+        this.dataType = dataType;
+    }
 
     /**
      * Accessor that sets the remap mode.
@@ -254,7 +275,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
 
             try {
                 System.gc();
-                resultImage = new ModelImage(ModelImage.ARGB, imageR.getExtents(),
+                resultImage = new ModelImage(dataType, imageR.getExtents(),
                                              makeImageName(imageR.getImageName(), "_rgb"));
 
                 // Make algorithm
@@ -301,7 +322,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 // Make algorithm
-                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, remapMode, true);
+                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, dataType, remapMode, true);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -362,6 +383,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         parentFrame = imageR.getParentFrame();
         setGreenImage(scriptParameters.retrieveImage("green_image"));
         setBlueImage(scriptParameters.retrieveImage("blue_image"));
+        setDataType(scriptParameters.getParams().getInt("data_type"));
 
         if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
             setDisplayLocNew();
@@ -379,6 +401,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         scriptParameters.storeImage(imageR, "red_image");
         scriptParameters.storeImage(imageG, "green_image");
         scriptParameters.storeImage(imageB, "blue_image");
+        scriptParameters.getParams().put(ParameterFactory.newParameter("data_type", dataType));
 
         scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
 
@@ -515,7 +538,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        JPanel inputPanel = new JPanel(new GridLayout(4, 2));
+        JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setForeground(Color.black);
         inputPanel.setBorder(buildTitledBorder("Images"));
         mainPanel.add(inputPanel, gbc);
@@ -523,34 +546,67 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         JLabel labelImageRed = new JLabel("Image (red)");
         labelImageRed.setForeground(Color.black);
         labelImageRed.setFont(serif12);
-        inputPanel.add(labelImageRed);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        inputPanel.add(labelImageRed, gbc);
 
         buildComboBoxImage(RED);
         comboBoxImageRed.addItemListener(this);
-        inputPanel.add(comboBoxImageRed);
+        gbc.gridx = 1;
+        inputPanel.add(comboBoxImageRed, gbc);
 
         JLabel labelImageGreen = new JLabel("Image (green)");
         labelImageGreen.setForeground(Color.black);
         labelImageGreen.setFont(serif12);
-        inputPanel.add(labelImageGreen);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        inputPanel.add(labelImageGreen, gbc);
 
         buildComboBoxImage(GREEN);
         comboBoxImageGreen.addItemListener(this);
 
-        inputPanel.add(comboBoxImageGreen);
+        gbc.gridx = 1;
+        inputPanel.add(comboBoxImageGreen, gbc);
 
         JLabel labelImageBlue = new JLabel("Image (blue)");
         labelImageBlue.setForeground(Color.black);
         labelImageBlue.setFont(serif12);
-        inputPanel.add(labelImageBlue);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        inputPanel.add(labelImageBlue, gbc);
 
         buildComboBoxImage(BLUE);
         comboBoxImageBlue.addItemListener(this);
-        inputPanel.add(comboBoxImageBlue);
+        gbc.gridx = 1;
+        inputPanel.add(comboBoxImageBlue, gbc);
+        
+        radioARGB = new JRadioButton("ARGB", true);
+        radioARGB.setFont(serif12);
+        radioARGB.addItemListener(this);
+        colorGroup = new ButtonGroup();
+        colorGroup.add(radioARGB);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        inputPanel.add(radioARGB, gbc);
+
+        radioARGB_USHORT = new JRadioButton("ARGB_USHORT", false);
+        radioARGB_USHORT.setFont(serif12);
+        radioARGB_USHORT.addItemListener(this);
+        colorGroup.add(radioARGB_USHORT);
+        gbc.gridy = 4;
+        inputPanel.add(radioARGB_USHORT, gbc);
+
+        radioARGB_FLOAT = new JRadioButton("ARGB_FLOAT", false);
+        radioARGB_FLOAT.setFont(serif12);
+        radioARGB_FLOAT.addItemListener(this);
+        colorGroup.add(radioARGB_FLOAT);
+        gbc.gridy = 5;
+        inputPanel.add(radioARGB_FLOAT, gbc);
 
         cBoxRemap = new JCheckBox("Remap data (0-255)", true);
         cBoxRemap.setFont(serif12);
-        inputPanel.add(cBoxRemap);
+        gbc.gridy = 6;
+        inputPanel.add(cBoxRemap, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -602,6 +658,16 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
     private boolean setVariables() {
         String tmpStr;
         blank = new ModelImage(ModelImage.SHORT, imageR.getExtents(), makeImageName(imageR.getImageName(), ""));
+        
+        if (radioARGB.isSelected()) {
+            dataType = ModelStorageBase.ARGB;
+        }
+        else if (radioARGB_USHORT.isSelected()) {
+            dataType = ModelStorageBase.ARGB_USHORT;
+        }
+        else {
+            dataType = ModelStorageBase.ARGB_FLOAT;
+        }
 
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
