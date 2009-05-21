@@ -20,6 +20,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
+import javax.swing.table.JTableHeader;
 
 
 /**
@@ -674,18 +675,27 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      *
      * @return  DOCUMENT ME!
      */
-    protected JPanel buildLogPanel() {
+    protected JScrollPane buildLogPanel() {
         JPanel logpan = new JPanel(new BorderLayout());
-
+        
         logModel = new ViewTableModel();
         logTable = new JTable(logModel);
+        JTableHeader header = logTable.getTableHeader();
         logTable.setFont(MipavUtil.font12);
+        
+        Box scrollingBox = new Box(BoxLayout.Y_AXIS);
+        
+        scrollingBox.add(header);
+        scrollingBox.add(logTable);
+        
 
-        JScrollPane lpane = new JScrollPane(logTable);
+        JScrollPane lpane = new JScrollPane(scrollingBox, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         lpane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
+        lpane.getHorizontalScrollBar().addAdjustmentListener(new ScrollCorrector());
         logpan.add(lpane, BorderLayout.CENTER);
 
-        return logpan;
+        return lpane;
     }
 
     /**
@@ -1461,10 +1471,9 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
                     rowData[k] = "";
                 }
 
-                logModel.addRow(rowData);
+
             }
         }
-
         // finalise the output details
     }
 
