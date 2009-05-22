@@ -1563,6 +1563,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // JDialogImageMath math =
             new JDialogImageMath(this, getActiveImage());
+        } else if (command.equals("Lightbox Generator")) {
+            new JDialogLightboxGen(this, getActiveImage());
         } else if (command.equals("matchImages")) {
             new JDialogMatchImages(this, getActiveImage());
         } else if (command.equals("maximumIntensityProjection")) {

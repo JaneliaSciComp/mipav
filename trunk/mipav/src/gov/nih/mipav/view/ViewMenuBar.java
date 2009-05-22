@@ -638,6 +638,7 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Image calculator - Bulk Images", "BulkCalculator", 0, null, false),
                 menuBuilder.buildMenuItem("Image math", null, 0, null, false),
                 menuBuilder.buildMenuItem("Invert", null, 0, null, false),
+                menuBuilder.buildMenuItem("Lightbox Generator", null, 0, null, false),
                 menuBuilder.buildMenuItem("Match images", "matchImages", 0, null, false),
                 menuBuilder.buildMenuItem("Maximum intensity projection (MIP)", "maximumIntensityProjection", 0, null,
                         false),
@@ -1166,6 +1167,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Filters (homomorphic)", true);
         menuBuilder.setMenuItemEnabled("Grays -> RGB", true);
         menuBuilder.setMenuItemEnabled("Image math", true);
+        menuBuilder.setMenuItemEnabled("Lightbox Generator", true);
         menuBuilder.setMenuItemEnabled("Local normalization", true);
         menuBuilder.setMenuItemEnabled("Nonmaximum suppression", true);
         menuBuilder.setMenuItemEnabled("Single MRI image", true);
