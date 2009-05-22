@@ -601,7 +601,171 @@ public class FileNIFTI extends FileBase {
         }
     }
 
-    
+    /**
+     * Flips image. NIFTI stores its data "upside down".
+     *
+     * @param   image  Image to flip.
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public void flipTopBottom(ModelImage image) throws IOException {
+
+        try {
+            int nBuffers;
+            int bufferSize;
+            float[] buffer = null;
+            float[] resultBuffer = null;
+
+            if (image.getNDims() > 1) {
+                bufferSize = image.getSliceSize();
+            } else {
+                bufferSize = image.getExtents()[0];
+            }
+
+            if (image.getNDims() == 5) {
+                nBuffers = image.getExtents()[4] * image.getExtents()[3] * image.getExtents()[2];
+
+            } else if (image.getNDims() == 4) {
+                nBuffers = image.getExtents()[3] * image.getExtents()[2];
+            } else if (image.getNDims() == 3) {
+                nBuffers = image.getExtents()[2];
+            } else {
+                nBuffers = 1;
+            }
+
+            if (image.isColorImage()) {
+
+                buffer = new float[bufferSize * 4];
+                resultBuffer = new float[bufferSize * 4];
+                bufferSize = bufferSize * 4;
+
+                int i, j, k;
+                int xDim = image.getExtents()[0] * 4;
+                int yDim = image.getExtents()[1];
+
+                for (k = 0; k < nBuffers; k++) {
+                    image.exportData(k * bufferSize, bufferSize, buffer);
+
+                    for (j = 0; j < yDim; j++) {
+
+                        for (i = 0; i < xDim; i += 4) {
+                            resultBuffer[(j * xDim) + i] = 255;
+                            resultBuffer[(j * xDim) + i + 1] = buffer[((yDim - 1 - j) * xDim) + i + 1];
+                            resultBuffer[(j * xDim) + i + 2] = buffer[((yDim - 1 - j) * xDim) + i + 2];
+                            resultBuffer[(j * xDim) + i + 3] = buffer[((yDim - 1 - j) * xDim) + i + 3];
+                        }
+                    }
+
+                    image.importData(k * bufferSize, resultBuffer, false);
+                }
+            } else {
+                buffer = new float[bufferSize];
+                resultBuffer = new float[bufferSize];
+
+                int i, j, k;
+                int xDim = image.getExtents()[0];
+                int yDim = image.getExtents()[1];
+
+                for (k = 0; k < nBuffers; k++) {
+                    image.exportData(k * bufferSize, bufferSize, buffer);
+
+                    for (j = 0; j < yDim; j++) {
+
+                        for (i = 0; i < xDim; i++) {
+                            resultBuffer[(j * xDim) + i] = buffer[((yDim - 1 - j) * xDim) + i];
+                        }
+                    }
+
+                    image.importData(k * bufferSize, resultBuffer, false);
+                }
+            }
+        } catch (IOException error) {
+            throw new IOException("FileNIFTI.flipTopBottom: " + error);
+        } catch (OutOfMemoryError error) {
+            throw (error);
+        }
+    }
+
+    /**
+     * Flips image. NIFTI stores its data "upside down".
+     *
+     * @param   buffer    Buffer holding image to flip.
+     * @param   fileInfo  File info structure for image to flip.
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public void flipTopBottom(float[] buffer, FileInfoNIFTI fileInfo) throws IOException {
+        int nBuffers;
+        int bufferSize;
+        float[] resultBuffer = null;
+
+        try {
+
+            if ((fileInfo.getExtents().length - 1) > 1) {
+                bufferSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
+            } else {
+                bufferSize = fileInfo.getExtents()[0];
+            }
+
+            if ((fileInfo.getExtents().length - 1) == 5) {
+                nBuffers = fileInfo.getExtents()[4] * fileInfo.getExtents()[3] * fileInfo.getExtents()[2];
+
+            } else if ((fileInfo.getExtents().length - 1) == 4) {
+                nBuffers = fileInfo.getExtents()[3] * fileInfo.getExtents()[2];
+            } else if ((fileInfo.getExtents().length - 1) == 3) {
+                nBuffers = fileInfo.getExtents()[2];
+            } else {
+                nBuffers = 1;
+            }
+
+            if (fileInfo.getDataType() == ModelStorageBase.ARGB) {
+
+                resultBuffer = new float[bufferSize * 4];
+                bufferSize = bufferSize * 4;
+
+                int i, j, k;
+                int xDim = image.getExtents()[0] * 4;
+                int yDim = image.getExtents()[1];
+
+                for (k = 0; k < nBuffers; k++) {
+
+                    for (j = 0; j < yDim; j++) {
+
+                        for (i = 0; i < xDim; i += 4) {
+                            resultBuffer[(j * xDim) + i] = 255;
+                            resultBuffer[(k * bufferSize) + (j * xDim) + i + 1] = buffer[(k * bufferSize) +
+                                                                                         ((yDim - 1 - j) * xDim) + i + 1];
+                            resultBuffer[(k * bufferSize) + (j * xDim) + i + 2] = buffer[(k * bufferSize) +
+                                                                                         ((yDim - 1 - j) * xDim) + i + 2];
+                            resultBuffer[(k * bufferSize) + (j * xDim) + i + 3] = buffer[(k * bufferSize) +
+                                                                                         ((yDim - 1 - j) * xDim) + i + 3];
+                        }
+                    }
+                }
+            } else {
+                resultBuffer = new float[buffer.length];
+
+                int i, j, k;
+                int xDim = fileInfo.getExtents()[0];
+                int yDim = fileInfo.getExtents()[1];
+
+                for (k = 0; k < nBuffers; k++) {
+
+                    for (j = 0; j < yDim; j++) {
+
+                        for (i = 0; i < xDim; i++) {
+                            resultBuffer[(k * bufferSize) + (j * xDim) + i] = buffer[(k * bufferSize) +
+                                                                                     ((yDim - 1 - j) * xDim) + i];
+                        }
+                    }
+                }
+            }
+        } catch (OutOfMemoryError error) {
+            throw (error);
+        }
+
+        System.arraycopy(resultBuffer, 0, buffer, 0, buffer.length); // buffer = resultBuffer;
+    }
     
     /**
      * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
@@ -2051,6 +2215,7 @@ public class FileNIFTI extends FileBase {
         boolean doChangeType;
         AlgorithmChangeType changeTypeAlgo;
         fileInfo = new FileInfoNIFTI(fileName, fileDir, FileUtility.NIFTI);
+        boolean flip = false;
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" NIFTI header file error"));
@@ -2075,6 +2240,35 @@ public class FileNIFTI extends FileBase {
         } catch (OutOfMemoryError error) {
             throw (error);
         }
+        
+        axisOrientation = fileInfo.getAxisOrientation();
+        if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) &&
+           ((axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_I2S_TYPE))) {
+            flip = true;
+            if (axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) {
+                axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+            }
+            else {
+                axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
+            }
+            fileInfo.setAxisOrientation(axisOrientation);
+            LPSOrigin = fileInfo.getOrigin();
+            LPSOrigin[1] = -LPSOrigin[1];
+            fileInfo.setOrigin(LPSOrigin[1], 1);
+            
+            matrix.Set(0, 1, -matrix.Get(0, 1));
+            matrix.Set(1, 1, -matrix.Get(1, 1));
+            matrix.Set(2, 1, -matrix.Get(2, 1)); 
+            matrix.Set(1, 3, -matrix.Get(1, 3)); 
+                          
+            if (matrix2 != null) {
+                matrix2.Set(0, 1, -matrix2.Get(0, 1));
+                matrix2.Set(1, 1, -matrix2.Get(1, 1));
+                matrix2.Set(2, 1, -matrix2.Get(2, 1)); 
+                matrix2.Set(1, 3, -matrix2.Get(1, 3));  
+            } // if (matrix2 != null)
+                    
+        } // if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) &&
 
         updateUnitsOfMeasure(fileInfo, image);
         updateorigins(image.getFileInfo());
@@ -2191,7 +2385,11 @@ public class FileNIFTI extends FileBase {
 
                 scale(image);
             } // if ((scl_slope != 0.0) && ((scl_slope != 1.0f) || (scl_inter != 0.0f)) &&
-
+            
+            if (flip) {
+                 flipTopBottom(image);
+            }
+            
             if (one) {
                 fileInfo.setExtents(extents);
             }
@@ -2260,6 +2458,7 @@ public class FileNIFTI extends FileBase {
                     buffer[i] = (buffer[i] * scl_slope) + scl_inter;
                 }
             } // if ((scl_slope != 0.0) && ((scl_slope != 1.0f) || (scl_inter != 0.0f)))
+            
             rawFile.raFile.close();
             fireProgressStateChanged(100);
         } catch (IOException error) {
