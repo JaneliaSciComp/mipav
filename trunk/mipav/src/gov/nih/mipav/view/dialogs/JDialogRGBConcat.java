@@ -68,6 +68,18 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
     
     /** ARGB, ARGB_USHORT, or ARGB_FLOAT for color image */
     private int dataType;
+    
+    private ButtonGroup remapGroup;
+    
+    private JRadioButton radioCommon;
+    
+    private JRadioButton radioSeparate;
+    
+    private boolean commonMapping = true;
+    
+    private JTextField textRemap;
+    
+    private float remapHighestValue;
 
     /** DOCUMENT ME! */
     private ButtonGroup destinationGroup;
@@ -264,6 +276,22 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
     public void setRemapMode(boolean flag) {
         remapMode = flag;
     }
+    
+    /**
+     * 
+     * @param commonMapping
+     */
+    public void setCommonMapping(boolean commonMapping) {
+        this.commonMapping = commonMapping;
+    }
+   
+    /**
+     * 
+     * @param remapHighestValue
+     */
+    public void setRemapHighestValue(float remapHighestValue) {
+        this.remapHighestValue = remapHighestValue;
+    }
 
     /**
      * Once all the necessary variables are set, call the RGBConcat algorithm based on what type of image this is and
@@ -279,7 +307,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                                              makeImageName(imageR.getImageName(), "_rgb"));
 
                 // Make algorithm
-                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode, true);
+                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode, commonMapping,
+                                                  remapHighestValue, true);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -322,7 +351,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 // Make algorithm
-                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, dataType, remapMode, true);
+                mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, dataType, remapMode, commonMapping,
+                                                  remapHighestValue, true);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -392,6 +422,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         }
 
         setRemapMode(scriptParameters.getParams().getBoolean("do_remap_values"));
+        setCommonMapping(scriptParameters.getParams().getBoolean("common_mapping"));
+        setRemapHighestValue(scriptParameters.getParams().getInt("remap_highest_value"));
     }
 
     /**
@@ -406,6 +438,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_remap_values", remapMode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("common_mapping", commonMapping));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("remap_highest_value", remapHighestValue));
     }
 
     /**
@@ -602,11 +636,31 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         colorGroup.add(radioARGB_FLOAT);
         gbc.gridy = 5;
         inputPanel.add(radioARGB_FLOAT, gbc);
-
-        cBoxRemap = new JCheckBox("Remap data (0-255)", true);
-        cBoxRemap.setFont(serif12);
+        
+        radioCommon = new JRadioButton("Remap images using the same scale for all colors", true);
+        radioCommon.setFont(serif12);
+        remapGroup = new ButtonGroup();
+        remapGroup.add(radioCommon);
         gbc.gridy = 6;
+        inputPanel.add(radioCommon, gbc);
+        
+        radioSeparate = new JRadioButton("Remap images using a separate scale for each color", false);
+        radioSeparate.setFont(serif12);
+        remapGroup.add(radioSeparate);
+        gbc.gridy = 7;
+        inputPanel.add(radioSeparate, gbc);
+
+        cBoxRemap = new JCheckBox("Remap data (0- ", true);
+        cBoxRemap.setFont(serif12);
+        gbc.gridy = 8;
         inputPanel.add(cBoxRemap, gbc);
+        
+        textRemap = new JTextField(10);
+        textRemap.setText("255");
+        textRemap.setFont(serif12);
+        textRemap.setForeground(Color.black);
+        gbc.gridx = 1;
+        inputPanel.add(textRemap, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -657,17 +711,23 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
      */
     private boolean setVariables() {
         String tmpStr;
+        float upperLimit;
         blank = new ModelImage(ModelImage.SHORT, imageR.getExtents(), makeImageName(imageR.getImageName(), ""));
         
         if (radioARGB.isSelected()) {
             dataType = ModelStorageBase.ARGB;
+            upperLimit = 255.0f;
         }
         else if (radioARGB_USHORT.isSelected()) {
             dataType = ModelStorageBase.ARGB_USHORT;
+            upperLimit = 65535.0f;
         }
         else {
             dataType = ModelStorageBase.ARGB_FLOAT;
+            upperLimit = Float.MAX_VALUE;
         }
+        
+        commonMapping = radioCommon.isSelected();
 
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
@@ -679,6 +739,23 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
             remapMode = true;
         } else {
             remapMode = false;
+        }
+        
+        if (remapMode) {
+            tmpStr = textRemap.getText();
+            remapHighestValue = Float.parseFloat(tmpStr);
+            if (remapHighestValue <= 0.0f) {
+                MipavUtil.displayError("Remap value must be positive");
+                textRemap.requestFocus();
+                textRemap.selectAll();
+                return false;
+            }
+            else if (remapHighestValue > upperLimit) {
+                MipavUtil.displayError("Remap value cannot be greater than " + upperLimit);
+                textRemap.requestFocus();
+                textRemap.selectAll();
+                return false;
+            }
         }
 
         Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
