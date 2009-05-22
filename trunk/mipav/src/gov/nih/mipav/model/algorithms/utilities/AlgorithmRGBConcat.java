@@ -22,10 +22,18 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
     private ModelImage destImage;
 
     /**
-     * Flag indicating whether of not to remap the data. If true and srcImage data max is < 255 data will be remapped
-     * [0-255] else if image max > 255 data will automatically be remapped [0-255].
+     * Flag indicating whether of not to remap the data. If true and srcImage data max is < remapHighestValue
+     *  data will be remapped [0-remapHighestValue] else if image max > remapHighestValue data will
+     *  automatically be remapped [0-remapHighestValue].
      */
     private boolean reMap = false;
+    
+    /** If true, map all colors based on image min and max.  If false, map each color separately based on its own min
+     *  and max.
+     */
+    public boolean commonMapping = true;
+    
+    private float remapHighestValue = 255.0f;
 
     /** Source gray scale image to be stored in the BLUE channel. */
     private ModelImage srcImageB;
@@ -51,11 +59,14 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
      * @param  srcImgG  image model where result image of the Green channel is to be stored
      * @param  srcImgB  image model where result image of the Blue channel is to be stored
      * @param  dataType Tells if srcImage will become ARGB, ARGB_USHORT, or ARGB_FLOAT
-     * @param  remap    if true and srcImage data max is < 255 data will be remapped [0-255] else if image max > 255
-     *                  data will automatically be remapped [0-255].
+     * @param  remap    if true and srcImage data max is < remapHighestValue data will be remapped [0-remapHighestValue]
+     *                  else if image max > remapHighestValue data will automatically be remapped [0-remapHighestValue].
+     * @param  commonMapping
+     * @param  remapHighestValue The highest value that will occur if remapping occurs
      * @param performBoundsChecking  flag for performing bounds checking...normally should be set to true unless negative numbers are desired             
      */
-    public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, int dataType, boolean remap, boolean performBoundsChecking) {
+    public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, int dataType, boolean remap, 
+                              boolean commonMapping, float remapHighestValue, boolean performBoundsChecking) {
 
         srcImageR = srcImgR; // Put results in red   destination image.
         srcImageG = srcImgG; // Put results in green destination image.
@@ -63,6 +74,8 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         destImage = null;
         this.dataType = dataType;
         reMap = remap;
+        this.commonMapping = commonMapping;
+        this.remapHighestValue = remapHighestValue;
         this.performBoundsChecking = performBoundsChecking;
     }
 
@@ -73,11 +86,14 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
      * @param  srcImgG  image model where result image of the Green channel is to be stored
      * @param  srcImgB  image model where result image of the Blue channel is to be stored
      * @param  destImg  destination image image model
-     * @param  remap    if true and srcImage data max is < 255 data will be remapped [0-255] else if image max > 255
-     *                  data will automatically be remapped [0-255].
+     * @param  remap    if true and srcImage data max is < remapHighestValue data will be remapped [0-remapHighestValue]
+     *                  else if image max > remapHighestValue data will automatically be remapped [0-remapHighestValue].
+     * @param  commonMapping
+     * @param  remapHighestValue The highest value that will occur if remapping occurs
+     * * @param performBoundsChecking  flag for performing bounds checking...normally should be set to true unless negative numbers are desired 
      */
     public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, ModelImage destImg,
-                              boolean remap, boolean performBoundsChecking) {
+                              boolean remap, boolean commonMapping, float remapHighestValue, boolean performBoundsChecking) {
 
         srcImageR = srcImgR; // Put results in red   destination image.
         srcImageG = srcImgG; // Put results in green destination image.
@@ -85,6 +101,8 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         destImage = destImg;
         this.dataType = destImage.getType();
         reMap = remap;
+        this.commonMapping = commonMapping;
+        this.remapHighestValue = remapHighestValue;
         this.performBoundsChecking = performBoundsChecking;
     }
 
@@ -161,6 +179,8 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         float maxG = (float) srcImageG.getMax();
         float minB = (float) srcImageB.getMin();
         float maxB = (float) srcImageB.getMax();
+        float min = Math.min(minR, Math.min(minG, minB));
+        float max = Math.min(maxR, Math.max(maxG, maxB));
 
         int nImages = 1;
         float upperLimit;
@@ -208,18 +228,23 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
         int mod = (nImages * length) / 20;
 
+        float diff = max - min;
         float diffR = maxR - minR;
         float diffG = maxG - minG;
         float diffB = maxB - minB;
 
+        if (diff == 0) {
+            diff = 1;
+        }
+        
         if (diffR == 0) {
             diffR = 1;
         }
-
+        
         if (diffG == 0) {
             diffG = 1;
         }
-
+        
         if (diffB == 0) {
             diffB = 1;
         }
@@ -257,10 +282,17 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
                         fireProgressStateChanged(Math.round((float) (i + (j * length)) / ((nImages * length) - 1) * 100));
                     }
 
-                    buffer[i] = 255;
-                    buffer[i + 1] = ((bufferR[id] - minR) / (diffR)) * 255;
-                    buffer[i + 2] = ((bufferG[id] - minG) / (diffG)) * 255;
-                    buffer[i + 3] = ((bufferB[id] - minB) / (diffB)) * 255;
+                    buffer[i] = remapHighestValue;
+                    if (commonMapping) {
+                        buffer[i + 1] = ((bufferR[id] - min) / (diff)) * remapHighestValue;
+                        buffer[i + 2] = ((bufferG[id] - min) / (diff)) * remapHighestValue;
+                        buffer[i + 3] = ((bufferB[id] - min) / (diff)) * remapHighestValue;
+                    }
+                    else {
+                        buffer[i + 1] = ((bufferR[id] - minR) / (diffR)) * remapHighestValue;
+                        buffer[i + 2] = ((bufferG[id] - minG) / (diffG)) * remapHighestValue;
+                        buffer[i + 3] = ((bufferB[id] - minB) / (diffB)) * remapHighestValue;    
+                    }
                 }
 
                 if (threadStopped) {
@@ -391,6 +423,8 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         float maxG = (float) srcImageG.getMax();
         float minB = (float) srcImageB.getMin();
         float maxB = (float) srcImageB.getMax();
+        float min = Math.min(minR, Math.min(minG, minB));
+        float max = Math.min(maxR, Math.max(maxG, maxB));
         int[] extents;
         String imageName;
         FileInfoBase[] fInfoBase = null;
@@ -460,18 +494,23 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
         
 
+        float diff = max - min;
         float diffR = maxR - minR;
         float diffG = maxG - minG;
         float diffB = maxB - minB;
 
+        if (diff == 0) {
+            diff = 1;
+        }
+        
         if (diffR == 0) {
             diffR = 1;
         }
-
+        
         if (diffG == 0) {
             diffG = 1;
         }
-
+        
         if (diffB == 0) {
             diffB = 1;
         }
@@ -537,10 +576,17 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
                     fireProgressStateChanged(Math.round((float) (i) / (totLength - 1) * 100));
                 }
 
-                buffer[i] = 255;
-                buffer[i + 1] = ((bufferR[id] - minR) / (diffR)) * 255;
-                buffer[i + 2] = ((bufferG[id] - minG) / (diffG)) * 255;
-                buffer[i + 3] = ((bufferB[id] - minB) / (diffB)) * 255;
+                buffer[i] = remapHighestValue;
+                if (commonMapping) {
+                    buffer[i + 1] = ((bufferR[id] - min) / (diff)) * remapHighestValue;
+                    buffer[i + 2] = ((bufferG[id] - min) / (diff)) * remapHighestValue;
+                    buffer[i + 3] = ((bufferB[id] - min) / (diff)) * remapHighestValue;
+                }
+                else {
+                    buffer[i + 1] = ((bufferR[id] - minR) / (diffR)) * remapHighestValue;
+                    buffer[i + 2] = ((bufferG[id] - minG) / (diffG)) * remapHighestValue;
+                    buffer[i + 3] = ((bufferB[id] - minB) / (diffB)) * remapHighestValue;    
+                }
             }
 
             if (threadStopped) {
