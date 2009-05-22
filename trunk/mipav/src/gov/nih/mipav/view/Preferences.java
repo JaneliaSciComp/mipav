@@ -85,6 +85,8 @@ public class Preferences {
     /** Constant that indicates the saving of the xml thumbnail during a save. */
     public static final String PREF_SAVE_XML_THUMBNAIL = "SaveXMLThumbnail";
     
+    public static final String PREF_FLIP_NIFTI_READ = "FlipNIFTIRead";
+    
     /** Constant that indicates the file temp directory. */
     public static final String PREF_FILE_TEMP_DIR = "fileTempDir";
 
@@ -577,6 +579,7 @@ public class Preferences {
         /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head) */
         defaultProps.setProperty(Preferences.PREF_FILENAME_FILTER, "8"); // 8 = ViewImageFileFilter.TECH
         defaultProps.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, "false");
+        defaultProps.setProperty(Preferences.PREF_FLIP_NIFTI_READ, "true");
         defaultProps.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, "false");
         defaultProps.setProperty(Preferences.PREF_OVERWRITE_STATISTICS, "false");
         defaultProps.setProperty(Preferences.PREF_LAST_X_IMAGES, "");
