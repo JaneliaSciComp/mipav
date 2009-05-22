@@ -1,20 +1,13 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.*;
-
-import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.view.ViewJFrameImage;
 
-import gov.nih.mipav.view.*;
-
-import java.io.*;
-
-import java.lang.Object;
+import java.io.IOException;
 import java.util.Arrays;
-
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -23,7 +16,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * @author morseaj
  */
 
-public class LightboxGenerator  {
+public class LightboxGenerator  extends AlgorithmBase{
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -142,119 +135,128 @@ public class LightboxGenerator  {
      * Accessor that returns the number of image slices saved.
      *
      * @return  The number of images.
-     * @throws IOException 
      */
-    public void run() throws IOException
-    {
-    	
-    	int dim[] = new int[2];
-    	dim[0] = newWidth;
-    	dim[1] = newHeight;
-    	
-    	ModelImage newImage = (ModelImage) original.clone();
-    	newImage.setImageName(original.getImageName()+"_LightBox");
-    	float blank[] = new float[original.getSize()];
-    	Arrays.fill(blank, 0);
-    	newImage.importData(0, blank, false);
-    	newImage.setExtents(dim);
-    	
-    	int currentSlice = startSlice;
-    	int numPerRow = original.getExtents()[0];
-    	int numPerColumn = original.getExtents()[1];
-    	int numPerSlice = numPerRow*numPerColumn;
-    	int mult = 1;
-    	
-    	//if image is in color
-    	if (original.isColorImage())
-    	{
-    		numPerRow = numPerRow*4;
-    		numPerSlice = numPerSlice*4;
-    		mult = 4;
-    	}
-    	
-    	float currentImageData[] = new float[numPerSlice];
-    	float currentRowData[] = new float[numPerRow];
-    	
-
-    	//export slice
-    	original.exportData(startSlice*numPerSlice, numPerSlice, currentImageData);
 
 
-    	//create lightbox image
-    	for(int i = 0; i < rows; i++)
-    	{        	
-    		for(int j = 0; j < columns; j++)
-    		{
-				for(int jj = 0; jj < numPerColumn; jj++)
-				{
-					System.arraycopy(currentImageData, jj*numPerRow, currentRowData, 0, numPerRow);
-					newImage.importData(((numPerColumn + thickness) * newWidth * i * mult) + ((numPerRow+thickness) * j)+ (newWidth*jj*mult) + (newWidth*mult) + (thickness*newWidth) +thickness , currentRowData, false);
-					Arrays.fill(currentRowData, 0);
-				}	
+	public void runAlgorithm() {
+    	try {
+	    	int dim[] = new int[2];
+	    	dim[0] = newWidth;
+	    	dim[1] = newHeight;
+	    	
+	    	fireProgressStateChanged(10, original.getImageName(), "Creating Lightbox Image...");
+	    	
+	    	ModelImage newImage = (ModelImage) original.clone();
+	    	newImage.setImageName(original.getImageName()+"_LightBox");
+	    	float blank[] = new float[original.getSize()];
+	    	Arrays.fill(blank, 0);
+				newImage.importData(0, blank, false);
+	    	newImage.setExtents(dim);
+	    	newImage.recomputeDataSize();
+	    	
+	    	int currentSlice = startSlice;
+	    	int numPerRow = original.getExtents()[0];
+	    	int numPerColumn = original.getExtents()[1];
+	    	int numPerSlice = numPerRow*numPerColumn;
+	    	int mult = 1;
+	    	
+	    	//if image is in color
+	    	if (original.isColorImage())
+	    	{
+	    		numPerRow = numPerRow*4;
+	    		numPerSlice = numPerSlice*4;
+	    		mult = 4;
+	    	}
+	    	
+	    	float currentImageData[] = new float[numPerSlice];
+	    	float currentRowData[] = new float[numPerRow];
+	    	
+	
+	    	//export slice
+	    	original.exportData(startSlice*numPerSlice, numPerSlice, currentImageData);
+	
+	
+	    	//create lightbox image
+	    	for(int i = 0; i < rows; i++)
+	    	{        	
+	    		for(int j = 0; j < columns; j++)
+	    		{
+	    			
+	    			fireProgressStateChanged(10+ (((i*j)+j)/(columns*rows))*70);
+					for(int jj = 0; jj < numPerColumn; jj++)
+					{
+						System.arraycopy(currentImageData, jj*numPerRow, currentRowData, 0, numPerRow);
+						newImage.importData(((numPerColumn + thickness) * newWidth * i * mult) + ((numPerRow+thickness) * j)+ (newWidth*jj*mult) + (thickness*newWidth) +thickness , currentRowData, false);
+						Arrays.fill(currentRowData, 0);
+					}	
+	
+			    	
+					currentSlice++;
+					if (currentSlice <= endSlice)	
+					{
+						Arrays.fill(currentImageData, 0);
+						original.exportData(currentSlice*numPerSlice, numPerSlice, currentImageData);
+					}
+					else
+					{
+						i = rows;
+						j = columns;
+					}
+	    		}
+	
+	    	}
+	    	newImage.calcMinMax();
+	    	
+	    	//convert to RGB
+	    	
+	    	ModelImage newRGB = new ModelImage(ModelImage.ARGB, newImage.getExtents(), newImage.getImageName());
+	    	AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(newImage, newImage, newImage, newRGB, true, true);
+	    	mathAlgo.run();
+	    	fireProgressStateChanged(90);
+	    	newImage.disposeLocal();
+	    	
+	    	//add borders
+	    	
+	    	byte[] borderRow = new byte[newWidth*thickness];
+	    	byte[] borderColumn = new byte[thickness];
+	                       
+	    	for(int i = 0; i <= rows; i++)
+	    	{
+	
+	    		
+	    		Arrays.fill(borderRow, borderR);
+	    		newRGB.importRGBData(1, (i*newWidth*4*(numPerColumn+thickness)), borderRow, false);
+	    		Arrays.fill(borderRow, borderG);
+	    		newRGB.importRGBData(2, (i*newWidth*4*(numPerColumn+thickness)), borderRow, false);
+	    		Arrays.fill(borderRow, borderB);
+	    		newRGB.importRGBData(3, (i*newWidth*4*(numPerColumn+thickness)), borderRow, false);
+	    	}
+	    	fireProgressStateChanged(95);
+	    	for(int i = 0; i < newHeight; i++)
+	    	{
+	    		for(int j = 0; j <= newWidth; j=j+(numPerRow+thickness))
+	    		{
+		    		Arrays.fill(borderColumn, borderR);
+		    		newRGB.importRGBData(1, j*4 + (i*newWidth*4), borderColumn, false);
+		    		Arrays.fill(borderColumn, borderG);
+		    		newRGB.importRGBData(2, j*4 + (i*newWidth*4), borderColumn, false);
+		    		Arrays.fill(borderColumn, borderB);
+		    		newRGB.importRGBData(3, j*4 + (i*newWidth*4), borderColumn, false);
+	    		}
+	    	}
+	    	
+	    	
+	    	newRGB.calcMinMax();
+	    	
+	    	if (display)
+	    	new ViewJFrameImage(newRGB);
+	    	fireProgressStateChanged(100);
+	    	finalImage = newRGB;
+	    	
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	
 
-		    	
-				currentSlice++;
-				if (currentSlice <= endSlice)	
-				{
-					Arrays.fill(currentImageData, 0);
-					original.exportData(currentSlice*numPerSlice, numPerSlice, currentImageData);
-				}
-				else
-				{
-					i = rows;
-					j = columns;
-				}
-    		}
-
-    	}
-    	newImage.calcMinMax();
-    	
-    	//convert to RGB
-    	
-    	ModelImage newRGB = new ModelImage(ModelImage.ARGB, newImage.getExtents(), newImage.getImageName());
-    	AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(newImage, newImage, newImage, newRGB, true, true);
-    	mathAlgo.run();
-    	
-    	newImage.disposeLocal();
-    	
-    	//add borders
-    	
-    	byte[] borderRow = new byte[newWidth*thickness];
-    	byte[] borderColumn = new byte[thickness];
-                       
-    	for(int i = 0; i <= rows; i++)
-    	{
-
-    		
-    		Arrays.fill(borderRow, borderR);
-    		newRGB.importRGBData(1, (i*newWidth*4*(numPerColumn+thickness)), borderRow, false);
-    		Arrays.fill(borderRow, borderG);
-    		newRGB.importRGBData(2, (i*newWidth*4*(numPerColumn+thickness)), borderRow, false);
-    		Arrays.fill(borderRow, borderB);
-    		newRGB.importRGBData(3, (i*newWidth*4*(numPerColumn+thickness)), borderRow, false);
-    	}
-    	
-    	for(int i = 0; i < newHeight; i++)
-    	{
-    		for(int j = 0; j <= newWidth; j=j+(numPerRow+thickness))
-    		{
-	    		Arrays.fill(borderColumn, borderR);
-	    		newRGB.importRGBData(1, j*4 + (i*newWidth*4), borderColumn, false);
-	    		Arrays.fill(borderColumn, borderG);
-	    		newRGB.importRGBData(2, j*4 + (i*newWidth*4), borderColumn, false);
-	    		Arrays.fill(borderColumn, borderB);
-	    		newRGB.importRGBData(3, j*4 + (i*newWidth*4), borderColumn, false);
-    		}
-    	}
-    	
-    	
-    	newRGB.calcMinMax();
-    	
-    	if (display)
-    	new ViewJFrameImage(newRGB);
-    	
-    	finalImage = newRGB;
-    	
-
-    }
+	}
 }
