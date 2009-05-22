@@ -209,6 +209,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** DOCUMENT ME! */
     private JCheckBox saveThumbnailCheckBox;
+    
+    private JCheckBox flipNIFTIReadCheckBox;
 
     /** DOCUMENT ME! */
     private JCheckBox saveXMLOnHDRSaveCheckBox;
@@ -329,6 +331,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeSaveXMLOnHDRSaveOptions(gbc, gbl);
         makeSaveXMLThumbnailOptions(gbc, gbl);
         makeFrameRateOptions(gbc, gbl);
+        makeFlipNIFTIReadOptions(gbc, gbl);
 
         fileMiscPanel.setLayout(gbl);
         fileMiscPanel.setBorder(buildTitledBorder("Misc"));
@@ -547,6 +550,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_SAVE_DEFAULTS, String.valueOf(saveDefaultsCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_PROMPT_OVERWRITE, String.valueOf(savePromptOverwriteBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, String.valueOf(saveThumbnailCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_FLIP_NIFTI_READ, String.valueOf(flipNIFTIReadCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_FILENAME_FILTER, String.valueOf(fileFilter));
             if(fileTempDirField.getText().length() > 0){
                 Preferences.setFileTempDir(fileTempDirField.getText());
@@ -1801,6 +1805,27 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices.
         saveThumbnailCheckBox.setSelected(Preferences.is(Preferences.PREF_SAVE_XML_THUMBNAIL));
+    }
+    
+    /**
+     * Makes the "Flip Y axis on NIFTI read of IS and PA" option line in the globalChangesPanel.
+     *
+     * @param  gbc  the constraints used in the globalChangesPanel
+     * @param  gbl  the layout used in the globablChangesPanel
+     */
+    protected void makeFlipNIFTIReadOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+        flipNIFTIReadCheckBox = new JCheckBox("Flip Y Axis on NIFTI read of IS and PA");
+        flipNIFTIReadCheckBox.setFont(MipavUtil.font12);
+        flipNIFTIReadCheckBox.setForeground(Color.black);
+        flipNIFTIReadCheckBox.addActionListener(this);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(flipNIFTIReadCheckBox, gbc);
+        fileSavePanel.add(flipNIFTIReadCheckBox);
+
+        // preset the choices.
+        flipNIFTIReadCheckBox.setSelected(Preferences.is(Preferences.PREF_FLIP_NIFTI_READ));
     }
 
     
