@@ -807,6 +807,19 @@ public class FileNIFTI extends FileBase {
         return fileInfo;
     }
     
+    /**
+     * 
+     * @return
+     */
+    public TransMatrix getMatrix() {
+        return matrix;
+    }
+    
+    
+    public TransMatrix getMatrix2() {
+        return matrix2;
+    }
+    
 
 	/**
      * Reads the NIFTI header and stores the information in fileInfo.
@@ -2458,6 +2471,34 @@ public class FileNIFTI extends FileBase {
                     buffer[i] = (buffer[i] * scl_slope) + scl_inter;
                 }
             } // if ((scl_slope != 0.0) && ((scl_slope != 1.0f) || (scl_inter != 0.0f)))
+            axisOrientation = fileInfo.getAxisOrientation();
+            if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) &&
+               ((axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_I2S_TYPE))) {
+                if (axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) {
+                    axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+                }
+                else {
+                    axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
+                }
+                fileInfo.setAxisOrientation(axisOrientation);
+                LPSOrigin = fileInfo.getOrigin();
+                LPSOrigin[1] = -LPSOrigin[1];
+                fileInfo.setOrigin(LPSOrigin[1], 1);
+                
+                matrix.Set(0, 1, -matrix.Get(0, 1));
+                matrix.Set(1, 1, -matrix.Get(1, 1));
+                matrix.Set(2, 1, -matrix.Get(2, 1)); 
+                matrix.Set(1, 3, -matrix.Get(1, 3)); 
+                              
+                if (matrix2 != null) {
+                    matrix2.Set(0, 1, -matrix2.Get(0, 1));
+                    matrix2.Set(1, 1, -matrix2.Get(1, 1));
+                    matrix2.Set(2, 1, -matrix2.Get(2, 1)); 
+                    matrix2.Set(1, 3, -matrix2.Get(1, 3));  
+                } // if (matrix2 != null)
+
+                flipTopBottom(buffer, fileInfo);        
+            } // if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) &&
             
             rawFile.raFile.close();
             fireProgressStateChanged(100);
