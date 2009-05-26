@@ -210,7 +210,8 @@ public class LightboxGenerator  extends AlgorithmBase{
 	    	//convert to RGB
 	    	
 	    	ModelImage newRGB = new ModelImage(ModelImage.ARGB, newImage.getExtents(), newImage.getImageName());
-	    	AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(newImage, newImage, newImage, newRGB, true, true);
+	    	AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(newImage, newImage, newImage, newRGB, true, true,
+                                                                 255.0f, true);
 	    	mathAlgo.run();
 	    	fireProgressStateChanged(90);
 	    	newImage.disposeLocal();
