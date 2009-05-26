@@ -6822,6 +6822,8 @@ public class FileIO {
         ModelImage image = null;
         FileNIFTI imageFile;
         FileInfoNIFTI fileInfo;
+        TransMatrix matrix = null;
+        TransMatrix matrix2 = null;
 
         int length = 0;
         float[] buffer;
@@ -7006,6 +7008,10 @@ public class FileIO {
                 }
 
                 ((FileNIFTI) imageFile).readImage(buffer);
+                if (imageCount == 0) {
+                    matrix = ((FileNIFTI) imageFile).getMatrix();
+                    matrix2 = ((FileNIFTI) imageFile).getMatrix2();
+                }
                 image.importData(imageCount * length, buffer, false);
 
                 if (image.getExtents().length > 3) {
@@ -7019,6 +7025,7 @@ public class FileIO {
                 }
 
                 imageCount++;
+                
             } catch (IOException error) {
 
                 if ( !quiet) {
@@ -7113,6 +7120,11 @@ public class FileIO {
 
                 image.setFileInfo(fileInfoArr[i], i); // copying...
             }
+        }
+        
+        image.setMatrix(matrix);
+        if (matrix2 != null) {
+            image.getMatrixHolder().addMatrix(matrix2);
         }
 
         return image;
