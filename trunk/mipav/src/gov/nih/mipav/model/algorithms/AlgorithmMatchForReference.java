@@ -161,7 +161,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
             }
 
             // Make algorithm
-            mathAlgo = new AlgorithmRGBConcat(adjImage, adjImage, adjImage, tempImage, true, true);
+            mathAlgo = new AlgorithmRGBConcat(adjImage, adjImage, adjImage, tempImage, true, true, 255.0f, true);
             mathAlgo.setRunningInSeparateThread(runningInSeparateThread);
             mathAlgo.run();
 
