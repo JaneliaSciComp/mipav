@@ -252,7 +252,7 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
             System.out.println("red channel image is " + imageR.getImageName());
             System.out.println("green channel image is " + imageG.getImageName());
             System.out.println("blue channel image is " + imageB.getImageName());
-            mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode, true);
+            mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode, false, 255.0f, true);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
