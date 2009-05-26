@@ -145,6 +145,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -155,6 +156,17 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
             dispose();
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("U4015");
+        } else if (source == cBoxRemap) {
+            if (cBoxRemap.isSelected()) {
+                textRemap.setEnabled(true);
+                radioCommon.setEnabled(true);
+                radioSeparate.setEnabled(true);
+            }
+            else {
+                textRemap.setEnabled(false);
+                radioCommon.setEnabled(false);
+                radioSeparate.setEnabled(false);    
+            }
         }
     }
 
@@ -616,7 +628,6 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         
         radioARGB = new JRadioButton("ARGB", true);
         radioARGB.setFont(serif12);
-        radioARGB.addItemListener(this);
         colorGroup = new ButtonGroup();
         colorGroup.add(radioARGB);
         gbc.gridx = 0;
@@ -625,34 +636,20 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
 
         radioARGB_USHORT = new JRadioButton("ARGB_USHORT", false);
         radioARGB_USHORT.setFont(serif12);
-        radioARGB_USHORT.addItemListener(this);
         colorGroup.add(radioARGB_USHORT);
         gbc.gridy = 4;
         inputPanel.add(radioARGB_USHORT, gbc);
 
         radioARGB_FLOAT = new JRadioButton("ARGB_FLOAT", false);
         radioARGB_FLOAT.setFont(serif12);
-        radioARGB_FLOAT.addItemListener(this);
         colorGroup.add(radioARGB_FLOAT);
         gbc.gridy = 5;
         inputPanel.add(radioARGB_FLOAT, gbc);
-        
-        radioCommon = new JRadioButton("Remap images using the same scale for all colors", true);
-        radioCommon.setFont(serif12);
-        remapGroup = new ButtonGroup();
-        remapGroup.add(radioCommon);
-        gbc.gridy = 6;
-        inputPanel.add(radioCommon, gbc);
-        
-        radioSeparate = new JRadioButton("Remap images using a separate scale for each color", false);
-        radioSeparate.setFont(serif12);
-        remapGroup.add(radioSeparate);
-        gbc.gridy = 7;
-        inputPanel.add(radioSeparate, gbc);
 
         cBoxRemap = new JCheckBox("Remap data (0- ", true);
         cBoxRemap.setFont(serif12);
-        gbc.gridy = 8;
+        cBoxRemap.addActionListener(this);
+        gbc.gridy = 6;
         inputPanel.add(cBoxRemap, gbc);
         
         textRemap = new JTextField(10);
@@ -661,6 +658,20 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         textRemap.setForeground(Color.black);
         gbc.gridx = 1;
         inputPanel.add(textRemap, gbc);
+        
+        radioCommon = new JRadioButton("Remap images using the same scale for all colors", true);
+        radioCommon.setFont(serif12);
+        remapGroup = new ButtonGroup();
+        remapGroup.add(radioCommon);
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        inputPanel.add(radioCommon, gbc);
+        
+        radioSeparate = new JRadioButton("Remap images using a separate scale for each color", false);
+        radioSeparate.setFont(serif12);
+        remapGroup.add(radioSeparate);
+        gbc.gridy = 8;
+        inputPanel.add(radioSeparate, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
