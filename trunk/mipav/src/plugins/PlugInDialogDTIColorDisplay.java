@@ -1381,7 +1381,7 @@ public class PlugInDialogDTIColorDisplay extends ViewJFrameBase implements Algor
 
         // cocatenate channel images into an RGB image
         AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(channelImages[0], channelImages[1], channelImages[2],
-                resultImage, false, false);
+                resultImage, false, true, 255.0f, false);
         mathAlgo.setRunningInSeparateThread(false);
         mathAlgo.run();
 
