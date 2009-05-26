@@ -1896,7 +1896,7 @@ public class FileImageXML extends FileXML {
                 ModelImage tempConcat = new ModelImage(ModelStorageBase.ARGB, thumbnailImage.getExtents(),
                         "thumbnail_rgb");
                 AlgorithmRGBConcat algoRGB = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage, thumbnailImage,
-                        tempConcat, true, true);
+                        tempConcat, true, true, 255.0f, true);
 
                 algoRGB.run();
                 thumbnailImage.disposeLocal();
