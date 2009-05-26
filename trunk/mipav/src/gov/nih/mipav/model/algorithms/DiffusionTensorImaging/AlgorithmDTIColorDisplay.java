@@ -133,9 +133,9 @@ public class AlgorithmDTIColorDisplay extends AlgorithmBase {
                 .getImageName()
                 + "_ColorDisplay");
 
-        // cocatenate channel images into an RGB image
+        // concatenate channel images into an RGB image
         mathAlgo = new AlgorithmRGBConcat(channelImages[0], channelImages[1], channelImages[2], resultImage, remapMode,
-                false);
+                true, 255.0f, false);
         mathAlgo.setRunningInSeparateThread(false);
         mathAlgo.run();
 
