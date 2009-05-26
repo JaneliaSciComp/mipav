@@ -7,10 +7,12 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -19,10 +21,13 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
 /**
  * @author pandyan
@@ -108,7 +113,30 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
     /** BLANK String **/
     private final static String BLANK = "blank";
     
+    private JRadioButton radioARGB;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioARGB_FLOAT;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioARGB_USHORT;
     
+    private ButtonGroup colorGroup;
+    
+    /** ARGB, ARGB_USHORT, or ARGB_FLOAT for color image */
+    private int dataType;
+    
+    private ButtonGroup remapGroup;
+    
+    private JRadioButton radioCommon;
+    
+    private JRadioButton radioSeparate;
+    
+    private boolean commonMapping = true;
+    
+    private JTextField textRemap;
+    
+    private float remapHighestValue;
     
     
     
@@ -184,14 +212,57 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 	        	channelColorsComboBoxes[i].setSelectedIndex(2);
 	        }
 	        inputPanel.add(channelColorsComboBoxes[i],gbc);
-		}
-		gbc.gridx = 0;
-        gbc.gridy = i + 1;
+        }
         gbc.insets = new Insets(3, 10, 3, 3);
         gbc.anchor = GridBagConstraints.WEST;
-        remapCheckBox = new JCheckBox("Remap data (0-255)", true);
+        
+        radioARGB = new JRadioButton("ARGB", true);
+        radioARGB.setFont(serif12);
+        colorGroup = new ButtonGroup();
+        colorGroup.add(radioARGB);
+        gbc.gridx = 0;
+        gbc.gridy = i+1;
+        inputPanel.add(radioARGB, gbc);
+
+        radioARGB_USHORT = new JRadioButton("ARGB_USHORT", false);
+        radioARGB_USHORT.setFont(serif12);
+        colorGroup.add(radioARGB_USHORT);
+        gbc.gridy = i+2;
+        inputPanel.add(radioARGB_USHORT, gbc);
+
+        radioARGB_FLOAT = new JRadioButton("ARGB_FLOAT", false);
+        radioARGB_FLOAT.setFont(serif12);
+        colorGroup.add(radioARGB_FLOAT);
+        gbc.gridy = i+3;
+        inputPanel.add(radioARGB_FLOAT, gbc);
+
+        remapCheckBox = new JCheckBox("Remap data (0- ", true);
         remapCheckBox.setFont(serif12);
-		inputPanel.add(remapCheckBox,gbc);	
+        remapCheckBox.addActionListener(this);
+        gbc.gridy = i+4;
+        inputPanel.add(remapCheckBox, gbc);
+        
+        textRemap = new JTextField(10);
+        textRemap.setText("255");
+        textRemap.setFont(serif12);
+        textRemap.setForeground(Color.black);
+        gbc.gridx = 1;
+        inputPanel.add(textRemap, gbc);
+        
+        radioCommon = new JRadioButton("Remap images using the same scale for all colors", true);
+        radioCommon.setFont(serif12);
+        remapGroup = new ButtonGroup();
+        remapGroup.add(radioCommon);
+        gbc.gridx = 0;
+        gbc.gridy = i+5;
+        inputPanel.add(radioCommon, gbc);
+        
+        radioSeparate = new JRadioButton("Remap images using a separate scale for each color", false);
+        radioSeparate.setFont(serif12);
+        remapGroup.add(radioSeparate);
+        gbc.gridy = i+6;
+        inputPanel.add(radioSeparate, gbc);
+        	
 		mainPanel.add(inputPanel);
 		OKCancelPanel = new JPanel();
         buildOKButton();
@@ -246,13 +317,14 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 	protected void callAlgorithm() {
 		try {
             System.gc();
-            resultImage = new ModelImage(ModelImage.ARGB, channelImages[0].getExtents(),
+            resultImage = new ModelImage(dataType, channelImages[0].getExtents(),
                                          makeImageName(image.getImageName(), "_rgb"));
 
             System.out.println("red channel image is " + imageR.getImageName());
             System.out.println("green channel image is " + imageG.getImageName());
             System.out.println("blue channel image is " + imageB.getImageName());
-            mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode, false, 255.0f, true);
+            mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode, commonMapping,
+                                              remapHighestValue, true);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -372,7 +444,10 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 			imageB = blank;
 		}
 		
+        setDataType(scriptParameters.getParams().getInt("data_type"));
         setRemapMode(scriptParameters.getParams().getBoolean("do_remap_values"));
+        setCommonMapping(scriptParameters.getParams().getBoolean("common_mapping"));
+        setRemapHighestValue(scriptParameters.getParams().getInt("remap_highest_value"));
 	}
 
 	
@@ -384,7 +459,10 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 		scriptParameters.getParams().put(ParameterFactory.newParameter("vol1Channel", vol1Channel));
 		scriptParameters.getParams().put(ParameterFactory.newParameter("vol2Channel", vol2Channel));	
 		scriptParameters.getParams().put(ParameterFactory.newParameter("vol3Channel", vol3Channel));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("data_type", dataType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_remap_values", remapMode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("common_mapping", commonMapping));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("remap_highest_value", remapHighestValue));
 	}
 
 	
@@ -393,6 +471,7 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 	 */
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
+        Object source = e.getSource();
 		if(command.equalsIgnoreCase("ok")) {
 			boolean success = setVariables();
 			if(success) {
@@ -406,7 +485,18 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 		else if (command.equalsIgnoreCase("help")) {
 			MipavUtil.showHelp("U4008");
 		}
-
+        else if (source == remapCheckBox) {
+            if (remapCheckBox.isSelected()) {
+                textRemap.setEnabled(true);
+                radioCommon.setEnabled(true);
+                radioSeparate.setEnabled(true);
+            }
+            else {
+                textRemap.setEnabled(false);
+                radioCommon.setEnabled(false);
+                radioSeparate.setEnabled(false);    
+            }
+        }
 	}
 	
 	
@@ -416,7 +506,8 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 	 * @return boolean
 	 */
 	public boolean setVariables() {
-		
+		String tmpStr;
+        float upperLimit;
 		//check that there is not more than 1 red channel or more than 1 green channel
 		//or more than 1 blue channel set
 		int numReds = 0;
@@ -489,6 +580,38 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
         } else {
             remapMode = false;
         }
+        
+        if (radioARGB.isSelected()) {
+            dataType = ModelStorageBase.ARGB;
+            upperLimit = 255.0f;
+        }
+        else if (radioARGB_USHORT.isSelected()) {
+            dataType = ModelStorageBase.ARGB_USHORT;
+            upperLimit = 65535.0f;
+        }
+        else {
+            dataType = ModelStorageBase.ARGB_FLOAT;
+            upperLimit = Float.MAX_VALUE;
+        }
+        
+        commonMapping = radioCommon.isSelected();
+        
+        if (remapMode) {
+            tmpStr = textRemap.getText();
+            remapHighestValue = Float.parseFloat(tmpStr);
+            if (remapHighestValue <= 0.0f) {
+                MipavUtil.displayError("Remap value must be positive");
+                textRemap.requestFocus();
+                textRemap.selectAll();
+                return false;
+            }
+            else if (remapHighestValue > upperLimit) {
+                MipavUtil.displayError("Remap value cannot be greater than " + upperLimit);
+                textRemap.requestFocus();
+                textRemap.selectAll();
+                return false;
+            }
+        }
 		
 		return true;
 	}
@@ -543,6 +666,14 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 	public void setVol3Channel(String vol3Channel) {
 		this.vol3Channel = vol3Channel;
 	}
+    
+    /**
+     * Accessor that sets whether color image type is ARGB, ARGB_USHORT, or ARGB_FLOAT
+     * @param dataType
+     */
+    public void setDataType(int dataType) {
+        this.dataType = dataType;
+    }
 
 	/**
      * Accessor that sets the remap mode.
@@ -551,6 +682,22 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
      */
     public void setRemapMode(boolean flag) {
         remapMode = flag;
+    }
+    
+    /**
+     * 
+     * @param commonMapping
+     */
+    public void setCommonMapping(boolean commonMapping) {
+        this.commonMapping = commonMapping;
+    }
+   
+    /**
+     * 
+     * @param remapHighestValue
+     */
+    public void setRemapHighestValue(float remapHighestValue) {
+        this.remapHighestValue = remapHighestValue;
     }
 	
     /**
