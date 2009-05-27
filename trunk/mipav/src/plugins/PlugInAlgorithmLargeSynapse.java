@@ -16,7 +16,8 @@ import java.awt.*;
 
 /**
  * This is simple plugin that sweeps the images with sets of 16 parallel lines to find all red, blue, green synapses.
- * File names are of the form AT_jcTCs153_-0006_p0c2.tif
+ * The image will be contained in 1 large 8 bit color TIFF file made from source files described below:
+ * Source file names are of the form AT_jcTCs153_-0006_p0c2.tif
  * 0006 is the plane number.  There are 27 files in each plane, composed of 3 colors * 9 tiles.
  * p0 - p8 are the tiles,
  * p0 upper left
@@ -29,9 +30,10 @@ import java.awt.*;
  * p7 bottom center
  * p8 bottom right
  * Each tile has a 20% overlap for alignment purposes.  20 % is from the distance of the microscopic stage.
- * It's quite far from exact in terms of exact pixel number.  Alignment would be required.
+ * It's quite far from exact in terms of exact pixel number.  Alignment is required.
+ * Also the different planes must be aligned with each other.  Planes are translated and rotated so that p0
+ * in 1 plane may become p4 in another plane.
  * Each individual file is 1388 by 1040 pixels.
- * Automatic alignemt not feasible.  Solve 9 different problems.
  * c1-c3 are colors with
  * c1 green channel
  * c2 red channel
@@ -41,6 +43,11 @@ import java.awt.*;
  * Actually the pixel size is 100 nm., while the optical resolution is 200 nm.
  * Now around a couple of hundred planes will be used, but wish to increase it to up to 2-3 thousand
  * with 100 nm. distance.  Pixel size will then be 100 nm. in all three directions.
+ * However, the large 8 bit color files I receive will have all the registration performed.
+ * Note that Java can only index arrays with signed integers, so it can only go from 0 to 2**31 - 1 = 2,147,483,647 =
+ * 2.147E9.
+ * JC wishes to use files with 5000 X 5000 X 5000 pixels = 1.25E11 pixels.  Since ARGB has 4 bytes per pixel, this
+ * requires 5E11 bytes.
  *
  * @see  PlugInGeneric
  */
@@ -226,70 +233,16 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
         int blue;
         int pos;
         int zOffset;
+        ModelImage redImage;
+        ModelImage greenImage;
+        ModelImage blueImage;
+        ModelImage p0Image;
+        ModelImage p3Image;
+        int tileSequence[] = new int[9];
+        int tileSequenceIndex;
+        int tileNumber;
         
-        hyphenIndex = inputFileName.lastIndexOf("-");
-        if (hyphenIndex < 0) {
-            MipavUtil.displayError("Expected hyphen not found in TIFF file name");
-            return;
-        }
-        lastUnderlineIndex = inputFileName.lastIndexOf("_");
-        if (lastUnderlineIndex < 0) {
-            MipavUtil.displayError("No underline found in TIFF file name");
-            return;
-        }
-        if (lastUnderlineIndex < hyphenIndex) {
-            MipavUtil.displayError("No underline follows hyphen in TIFF file name");
-            return;
-        }
-        baseString = inputFileName.substring(0, hyphenIndex+1);
-        Preferences.debug("Base string used in file sequencing = " + baseString + "\n");
-        planeString = inputFileName.substring(hyphenIndex+1,lastUnderlineIndex);
-        Preferences.debug("planeString in selected file = " + planeString + "\n");
-        planeDigits = planeString.length();
-        firstPlaneNumber = Integer.parseInt(planeString);
-        found = false;
-        planeNumber = 0;
-        while ((!found) && (planeNumber < firstPlaneNumber)){
-            planeString = Integer.toString(planeNumber);
-            digitLength = planeString.length();
-            leadingZeros = planeDigits - digitLength;
-            for (i = 0; i < leadingZeros; i++) {
-                planeString = "0" + planeString;
-            }
-            testName = baseString + planeString + "_p0c1";
-            testFile = new File(directory + testName);
-            if (testFile.exists()) {
-                found = true;
-                firstPlaneNumber = planeNumber;
-            }
-            else {
-                planeNumber++;
-            }
-        } // ((!found) && (planeNumber < firstPlaneNumber))
-        Preferences.debug("The first plane number = " + firstPlaneNumber + "\n");
-        found = true;
-        planeNumber = firstPlaneNumber + 1;
-        lastPlaneNumber = firstPlaneNumber;
-        while (found){
-            planeString = Integer.toString(planeNumber);
-            digitLength = planeString.length();
-            leadingZeros = planeDigits - digitLength;
-            for (i = 0; i < leadingZeros; i++) {
-                planeString = "0" + planeString;
-            }
-            testName = baseString + planeString + "_p0c1";
-            testFile = new File(directory + testName);
-            if (testFile.exists()) {
-                planeNumber++;
-            }
-            else {
-                found = false;
-                lastPlaneNumber = planeNumber - 1;
-            }
-        } // (found)
-        Preferences.debug("The last plane number = " + lastPlaneNumber + "\n");
-        zDim = lastPlaneNumber - firstPlaneNumber + 1;
-        Preferences.debug("zDim = " + zDim + "\n");
+        
         try {
             tiffFile = new FileTiff(inputFileName, directory);
         }
@@ -297,6 +250,8 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
             MipavUtil.displayError("IOException on tiffFile = new FileTiff(inputFileName, directory");
             return;
         }
+        tiffFile.setSynapseIntensities(redIntensity, greenIntensity, blueIntensity, redBrightIntensity,
+                                       greenBrightIntensity, blueBrightIntensity);
         try {
             imgExtents = tiffFile.getExtents();
         }
@@ -304,149 +259,45 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
             MipavUtil.displayError("IOException on imgExtents = tiffFile.getExtents()");
             return;
         }
-        tiffFile.finalize();
-        tiffFile = null;
+        
         xDim = imgExtents[0];
         Preferences.debug("\nxDim = " + xDim + "\n");
         yDim = imgExtents[1];
         Preferences.debug("yDim = " + yDim + "\n");
+        zDim = imgExtents[2];
+        Preferences.debug("zDim = " + zDim + "\n");
+        
+       
         zIncrement = zProcessLength - zOverlapLength;
         xyIncrement = xyProcessLength - xyOverlapLength;
         processSquare = xyProcessLength * xyProcessLength;
         processVolume = processSquare * zProcessLength;
-        redBuffer = new short[processSquare];
-        greenBuffer = new short[processSquare];
-        blueBuffer = new short[processSquare];
         buffer = new byte[processVolume];
-        for (tile = 0; tile < 9; tile++) {
-            if ((tile == 0) || (tile == 3) || (tile == 8)) {
-                xLower = 0;
-            }
-            else {
-                xLower = xDim/5;
-            }
-            if ((tile == 0) || (tile == 1) || (tile == 2)) {
-                yLower = 0;
-            }
-            else {
-                yLower = yDim/5;
-            }
-            tileString = Integer.toString(tile);
-            for (zstart = firstPlaneNumber; zstart <= lastPlaneNumber; zstart += zIncrement) {
-                fireProgressStateChanged(100 * (zDim * tile + (zstart - firstPlaneNumber))/(9 * zDim));
-                Preferences.debug("main loop zstart = " + zstart + "\n");
-                zLength = Math.min(zProcessLength, zDim - 1 - zstart + 1);
-                for (ystart = yLower; ystart < yDim; ystart += xyIncrement) {
-                    Preferences.debug("main loop ystart = " + ystart + "\n");
-                    yLength = Math.min(xyProcessLength, yDim - 1 - ystart + 1);
-                    for (xstart = xLower; xstart < xDim; xstart += xyIncrement) {
-                        Preferences.debug("main loop xstart = " + xstart + "\n");
-                        xLength = Math.min(xyProcessLength, xDim - 1 - xstart + 1);
-                        for (z = zstart; z < zstart + zProcessLength; z++) {
-                            zOffset = (z - zstart)* processSquare;
-                            planeString = Integer.toString(z);
-                            digitLength = planeString.length();
-                            leadingZeros = planeDigits - digitLength;
-                            for (i = 0; i < leadingZeros; i++) {
-                                planeString = "0" + planeString;
-                            }
-                            // red
-                            fileName = baseString + planeString + "_p" + tileString + "c2";
-                            try {
-                                tiffFile = new FileTiff(inputFileName, directory);
-                            }
-                            catch(IOException e) {
-                                MipavUtil.displayError("IOException on tiffFile = new FileTiff(fileName, directory");
-                                return;
-                            }
-                            try {
-                                tiffFile.readSynapseBuffer(redBuffer, xstart, xLength, ystart, yLength);
-                            }
-                            catch (IOException e) {
-                                MipavUtil.displayError("IOException on tiffFile.readSynapseBuffer");
-                                return;
-                            }
-                            tiffFile.finalize();
-                            tiffFile = null;
-                            // green
-                            fileName = baseString + planeString + "_p" + tileString + "c1";
-                            try {
-                                tiffFile = new FileTiff(inputFileName, directory);
-                            }
-                            catch(IOException e) {
-                                MipavUtil.displayError("IOException on tiffFile = new FileTiff(fileName, directory");
-                                return;
-                            }
-                            try {
-                                tiffFile.readSynapseBuffer(greenBuffer, xstart, xLength, ystart, yLength);
-                            }
-                            catch (IOException e) {
-                                MipavUtil.displayError("IOException on tiffFile.readSynapseBuffer");
-                                return;
-                            }
-                            tiffFile.finalize();
-                            tiffFile = null;
-                            // blue
-                            fileName = baseString + planeString + "_p" + tileString + "c3";
-                            try {
-                                tiffFile = new FileTiff(inputFileName, directory);
-                            }
-                            catch(IOException e) {
-                                MipavUtil.displayError("IOException on tiffFile = new FileTiff(fileName, directory");
-                                return;
-                            }
-                            try {
-                                tiffFile.readSynapseBuffer(blueBuffer, xstart, xLength, ystart, yLength);
-                            }
-                            catch (IOException e) {
-                                MipavUtil.displayError("IOException on tiffFile.readSynapseBuffer");
-                                return;
-                            }
-                            tiffFile.finalize();
-                            tiffFile = null;
-                            // Classify all pixels as either BRIGHT_RED, RED, BRIGHT_GREEN, GREEN, BRIGHT_BLUE, BLUE, or NONE
-                            // Note that when line profiles are taken thru a synapse the red and green have all sorts of
-                            // different shapes but the blue is almost always a distinct short rectangular pulse, so the 
-                            // presence of blue above a threshold intensity is the most significant factor.  A pixel is 
-                            // counted as BRIGHT_BLUE as long as its blue value is >= blueIntensity even if the red and/or
-                            // green values at that pixel location are greater or equal than the blue value.
-                            for (pos = 0; pos < processSquare; pos++) {
-                                zPos = pos + zOffset;
-                                red = redBuffer[pos] & 0xff;
-                                green = greenBuffer[pos] & 0xff;
-                                blue = blueBuffer[pos] & 0xff;
-                                if (blue >= blueBrightIntensity) {
-                                    buffer[zPos] = BRIGHT_BLUE;
-                                }
-                                else if ((blue > red) && (blue > green) && (blue >= blueIntensity)) {
-                                    buffer[zPos] = BLUE;
-                                }
-                                else if ((red > green) && (red > blue) && (red >= redIntensity)) {
-                                    if (red >= redBrightIntensity) {
-                                        buffer[zPos] = BRIGHT_RED;
-                                    }
-                                    else {
-                                        buffer[zPos] = RED;
-                                    }
-                                }
-                                else if ((green > red) && (green > blue) && (green >= greenIntensity)) {
-                                    if (green >= greenBrightIntensity) {
-                                        buffer[zPos] = BRIGHT_GREEN;
-                                    }
-                                    else {
-                                        buffer[zPos] = GREEN;
-                                    }
-                                }
-                                else {
-                                    buffer[zPos] = NONE;
-                                }
-                               
-                            } // for (pos = 0; pos < processSquare; pos++)
-                        } 
-                    } // for (xstart = 0; xstart < xDim; xstart += xyIncrement)
-                } // for (ystart = 0; ystart < yDim; ystart += xyIncrement)
-            } // for (zstart = 0; zstart < zDim; zstart += zIncrement)
-        } // for (tile = 0; tile < 9; tile++)
+        
+        for (zstart = 0; zstart < zDim; zstart += zIncrement) {
+            fireProgressStateChanged(100 * zstart/ zDim);
+            Preferences.debug("main loop zstart = " + zstart + "\n");
+            zLength = Math.min(zProcessLength, zDim - zstart);
+            for (ystart = 0; ystart < yDim; ystart += xyIncrement) {
+                Preferences.debug("main loop ystart = " + ystart + "\n");
+                yLength = Math.min(xyProcessLength, yDim - ystart);
+                for (xstart = 0; xstart < xDim; xstart += xyIncrement) {
+                    Preferences.debug("main loop xstart = " + xstart + "\n");
+                    xLength = Math.min(xyProcessLength, xDim - xstart);
+                    
+                    try {
+                        tiffFile.readSynapseBuffer(buffer, xstart, xLength, ystart, yLength, zstart,
+                                                   zLength);
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on tiffFile.readSynapseBuffer");
+                        return;
+                    }
+                        
+                        
+                } // for (xstart = 0; xstart < xDim; xstart += xyIncrement)
+            } // for (ystart = 0; ystart < yDim; ystart += xyIncrement)
+        } // for (zstart = 0; zstart < zDim; zstart += zIncrement)
         
         return;
     }
