@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Stores the default manifest file as a static reference, or optionally can be used for creating custom manifest files.
@@ -238,7 +239,8 @@ public class ManifestFile {
 	
 	/**
 	 * Removes class c and its dependents from the manifest, does in fact write to the file. If c does not appear to be a plugin 
-	 * in the manifest, refreshes and returns null if not found.
+	 * in the manifest, refreshes and returns null if not found.  Returns all dependents that are not currently used by
+	 * another entry in the manifest (either as a plugin or one of a plugin's dependents).
 	 * 
 	 * @param c
 	 * @return 
@@ -251,6 +253,34 @@ public class ManifestFile {
 		ArrayList<Class> dep = manifestInfo.remove(c);
 		if(dep != null) {
 			removeFromFile(c);
+		}
+		
+		boolean depExists;
+		Class currentClass;
+		int i = 0;
+depQ:	while(dep.size() > i) {
+			depExists = false;
+			currentClass = dep.get(i);
+			Iterator<Class> itr = manifestInfo.keySet().iterator();
+			while(itr.hasNext()) {
+				Class plugin = itr.next();
+				if(plugin.equals(currentClass)) {
+					depExists = true;
+					break depQ;
+				}
+				ArrayList<Class> depList = manifestInfo.get(plugin);
+				for(int j=0; j<depList.size(); j++) {
+					if(depList.get(j).equals(currentClass)) {
+						depExists = true;
+						break depQ;
+					}
+				}
+			}
+			if(depExists) {
+				dep.remove(currentClass);
+			} else {
+				i++;
+			}
 		}
 		
 		return dep;
