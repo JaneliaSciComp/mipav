@@ -80,9 +80,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
     /** The sub-gui **/
 	private ClassSelectorPanel selectorPanel;
-	
-	/**Custom class loader for loading plugins that are in the process of being installed. */
-	private PluginClassLoader pluginLoader;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -94,7 +91,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     public JDialogInstallPlugin(JFrame theParentFrame) {
         super(theParentFrame, false);
         ui = ViewUserInterface.getReference();
-        pluginLoader = new PluginClassLoader();
         init();
     }
 
@@ -198,7 +194,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         	String name = files.get(i).getName();
         	name = name.substring(0, name.indexOf(".class"));
         	try {
-				Class c = pluginLoader.loadClass(name);
+				Class c = ClassLoader.getSystemClassLoader().loadClass(name);
 				boolean isPlugin = false;
 				Class[] inter = c.getInterfaces();
 				for(int j=0; j<inter.length; j++) {
@@ -231,6 +227,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 				System.out.println("Class not found");
 				e.printStackTrace();
 			}
+        	
         }
         
         // updates menubar for each image
@@ -240,6 +237,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             ui.buildMenu();
             ui.setControls();
         } else {
+
             for (int i = 0; i < imageFrames.size(); i++) {
                 ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
             }
@@ -279,10 +277,11 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     			String simpleFileName = allPluginFiles[i].getName().substring(0, allPluginFiles[i].getName().indexOf(".class"));
 	    		if(!simpleFileName.equals("PlugIn"+simpleName) && simpleFileName.contains(simpleName)) {
 	    			try {
-						Class initDep = pluginLoader.loadClass(simpleFileName);
+						Class initDep = Class.forName(simpleFileName);
 						if(!dep.contains(initDep)) {
 							dep.add(initDep);
-						}							
+						}
+							
 						ArrayList<Class> subDep = gatherSubClassDependents(initDep);
 						for(int k=0; k<subDep.size(); k++) {
 							if(!dep.contains(subDep.get(k))) {
@@ -318,6 +317,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 				if(!dep.contains(f[i].getType())) {
 					dep.add(f[i].getType());
 				}
+				
 				ArrayList<Class> subDep = gatherSubClassDependents(f[i].getType());
 				for(int k=0; k<subDep.size(); k++) {
 					if(!dep.contains(subDep.get(k))) {
@@ -326,6 +326,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 				}
 			}
 		}
+    	
     	Class[] depAr = new Class[dep.size()];
     	for(int i=0; i<dep.size(); i++) {
     		depAr[i] =  dep.get(i);
@@ -367,6 +368,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 				}
 			}
 		}
+		
 		return dep;
     }
                                 
@@ -392,7 +394,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         //intro.setMinimumSize(new Dimension(700, 50));
         //intro.setPreferredSize(new Dimension(700, 50));
         mainDialogPanel.add(intro, BorderLayout.NORTH);
-           
+        
+        
         selectorPanel = new ClassSelectorPanel();
         selectorPanel.setVisible(true);
         mainPanel.add(selectorPanel);
@@ -665,10 +668,13 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
                     return null;
                 } finally {
+
                     try {
+
                         if (br != null) {
                             br.close();
                         }
+
                         if (bw != null) {
                             bw.close();
                         }
@@ -750,15 +756,19 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         }
 
         try {
+
             if (zIn != null) {
                 zIn.close();
             }
+
             if (fw != null) {
                 fw.close();
             }
+
             if (bw != null) {
                 bw.close();
             }
+
             if (br != null) {
                 br.close();
             }
@@ -1073,160 +1083,102 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
     	
     	}
-    
+    }
+
+/**
+ * A node in the file tree.
+ * 
+ * @author senseneyj
+ */
+class JFileTreeNode implements TreeNode {
+
+	File file;
+
+	File[] children;
+
+	TreeNode parent;
+
+	/** Whether root of file system */
+	boolean isRoot;
 
 	/**
-	 * A node in the file tree.
+	 * Creates a new file tree node.
 	 * 
-	 * @author senseneyj
+	 * @param file Node file
+	 * @param isFileSystemRoot whether the file is a file system root
+	 * @param parent parent node
 	 */
-	class JFileTreeNode implements TreeNode {
-	
-		File file;
-	
-		File[] children;
-	
-		TreeNode parent;
-	
-		/** Whether root of file system */
-		boolean isRoot;
-	
-		/**
-		 * Creates a new file tree node.
-		 * 
-		 * @param file Node file
-		 * @param isFileSystemRoot whether the file is a file system root
-		 * @param parent parent node
-		 */
-		public JFileTreeNode(File file, boolean isFileSystemRoot, TreeNode parent) {
-			this.file = file;
-			this.isRoot = isFileSystemRoot;
-			this.parent = parent;
-			this.children = file.listFiles();
-			if (this.children == null) {
-				this.children = new File[0];
-			}
+	public JFileTreeNode(File file, boolean isFileSystemRoot, TreeNode parent) {
+		this.file = file;
+		this.isRoot = isFileSystemRoot;
+		this.parent = parent;
+		this.children = file.listFiles();
+		if (this.children == null) {
+			this.children = new File[0];
 		}
-	
-		/**
-		 * Creates a new file tree node.
-		 */
-		public JFileTreeNode(File child) {
-			this.file = null;
-			this.parent = null;
-			this.children = new File[1];
-			this.children[0] = child;
-		}
-		
-		public Enumeration<?> children() {
-			final int elementCount = children.length;
-			return new Enumeration<File>() {
-				int count = 0;
-	
-				public boolean hasMoreElements() {
-					return count < elementCount;
-				}
-	
-				public File nextElement() {
-					if (this.count < elementCount) {
-						return JFileTreeNode.this.children[count++];
-					}
-					throw new NoSuchElementException("Vector Enumeration");
-				}
-			};
-		}
-		
-		public File getFile() {
-			return file;
-		}
-	
-		public boolean getAllowsChildren() {
-			return true;
-		}
-	
-		public TreeNode getChildAt(int childIndex) {
-			return new JFileTreeNode(children[childIndex], parent == null, this);
-		}
-	
-		public int getChildCount() {
-			return children.length;
-		}
-	
-		public int getIndex(TreeNode node) {
-			JFileTreeNode subNode = (JFileTreeNode) node;
-			for (int i = 0; i < children.length; i++) {
-				if (subNode.file.equals(children[i])) {
-					return i;
-				}
-			}
-			return -1;
-		}
-	
-		public TreeNode getParent() {
-			return this.parent;
-		}
-	
-		public boolean isLeaf() {
-			return (getChildCount() == 0);
-		}
-		
-		
 	}
 
-	public class PluginClassLoader extends ClassLoader {
-	    
-		 /**Table for already loaded classes**/
-	    private Hashtable<String, Class<?>> classes = new Hashtable<String, Class<?>>();
-		
-		public PluginClassLoader(){
-	        super(PluginClassLoader.class.getClassLoader());
-	    }
-	  
-	    public Class<?> loadClass(String className) throws ClassNotFoundException {
-	         return findClass(className);
-	    }
-	 
-	    /**
-	     * Finds class given correct long name, turns package structure into file system structure.
-	     */
-	    public Class<?> findClass(String className){
-	        byte classByte[];
-	        Class<?> result=null;
-	        result = (Class<?>)classes.get(className);
-	        if(result != null){
-	            return result;
-	        }
-	        
-	        try{
-	            return findSystemClass(className);
-	        }catch(Exception e){
-	        }
-	        try{
-	           String classPath =  pluginDir+className.replace('.',File.separatorChar)+".class";
-	           classByte = loadClassData(classPath);
-	            result = defineClass(className,classByte,0,classByte.length,null);
-	            classes.put(className,result);
-	            return result;
-	        }catch(Exception e){
-	            return null;
-	        } 
-	    }
-	 
-	    private byte[] loadClassData(String className) throws IOException{
-	 
-	        File f ;
-	        f = new File(className);
-	        int size = (int)f.length();
-	        byte buff[] = new byte[size];
-	        FileInputStream fis = new FileInputStream(f);
-	        DataInputStream dis = new DataInputStream(fis);
-	        dis.readFully(buff);
-	        dis.close();
-	        return buff;
-	    }
+	/**
+	 * Creates a new file tree node.
+	 */
+	public JFileTreeNode(File child) {
+		this.file = null;
+		this.parent = null;
+		this.children = new File[1];
+		this.children[0] = child;
 	}
 	
+	public Enumeration<?> children() {
+		final int elementCount = children.length;
+		return new Enumeration<File>() {
+			int count = 0;
+
+			public boolean hasMoreElements() {
+				return count < elementCount;
+			}
+
+			public File nextElement() {
+				if (this.count < elementCount) {
+					return JFileTreeNode.this.children[count++];
+				}
+				throw new NoSuchElementException("Vector Enumeration");
+			}
+		};
+	}
+	
+	public File getFile() {
+		return file;
+	}
+
+	public boolean getAllowsChildren() {
+		return true;
+	}
+
+	public TreeNode getChildAt(int childIndex) {
+		return new JFileTreeNode(children[childIndex], parent == null, this);
+	}
+
+	public int getChildCount() {
+		return children.length;
+	}
+
+	public int getIndex(TreeNode node) {
+		JFileTreeNode subNode = (JFileTreeNode) node;
+		for (int i = 0; i < children.length; i++) {
+			if (subNode.file.equals(children[i])) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public TreeNode getParent() {
+		return this.parent;
+	}
+
+	public boolean isLeaf() {
+		return (getChildCount() == 0);
+	}
 }
-
 
 
