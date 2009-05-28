@@ -1,20 +1,16 @@
 package gov.nih.mipav.plugins;
 
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.dialogs.JDialogInstallPlugin.PluginClassLoader;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 
 /**
  * Stores the default manifest file as a static reference, or optionally can be used for creating custom manifest files.
@@ -48,17 +44,10 @@ public class ManifestFile {
 	
 	private long timeLoaded;
 	
-	/** The default storage location of plugins */
-    private String pluginDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" +
-                               File.separator;
-	
 	private static ManifestFile staticRef = new ManifestFile();
 	
 	/** The manifest file as a set of class files. */
 	private HashMap<Class, ArrayList<Class>> manifestInfo;
-	
-	/**Custom class loader for loading plugins that are in the process of being installed. */
-	private PluginClassLoader pluginLoader;
 	
 	//~ Constructors -------------------------------------------------------------------------
 	
@@ -67,7 +56,7 @@ public class ManifestFile {
 	 */
 	public ManifestFile() {
 		manifest = new File(MANIFEST_LOC+"plugins.mf");
-		pluginLoader = new PluginClassLoader();
+	
 		init();
 	}
 	
@@ -130,10 +119,10 @@ public class ManifestFile {
 				while((nextLine = in.readLine()) != null) {
 					if(!inPlugin && (beginIndex = nextLine.indexOf(PLUGIN_ENTRY+DELIMITER)) != -1) { //line-delim has been stripped
 						try {
-							pluginClass = pluginLoader.loadClass(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
+							pluginClass = Class.forName(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
 							inPlugin = true;
 						} catch (ClassNotFoundException e) {
-							MipavUtil.displayInfo(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length())+" could not be read as a class. Please check your class path");
+							MipavUtil.displayInfo(nextLine+" could not be read as a class. Please check your class path");
 							e.printStackTrace();
 						}
 					} else if(inPlugin) {
@@ -145,7 +134,7 @@ public class ManifestFile {
 							
 							if((beginIndex = nextLine.indexOf(PLUGIN_ENTRY+DELIMITER)) != -1) { //line-delim has been stripped
 								try {
-									pluginClass = pluginLoader.loadClass(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
+									pluginClass = Class.forName(nextLine.substring(beginIndex+PLUGIN_ENTRY.length() + DELIMITER.length()));
 									inPlugin = true;
 								} catch (ClassNotFoundException e) {
 									MipavUtil.displayInfo(nextLine+" could not be read as a class. Please check your class path");
@@ -155,7 +144,7 @@ public class ManifestFile {
 						} else if (nextLine.contains(DEPENDENT_ENTRY)){
 							beginIndex = nextLine.indexOf(DEPENDENT_ENTRY);
 							try {
-								dependentClass = pluginLoader.loadClass(nextLine.substring(beginIndex + DEPENDENT_ENTRY.length() + DELIMITER.length()));
+								dependentClass = Class.forName(nextLine.substring(beginIndex + DEPENDENT_ENTRY.length() + DELIMITER.length()));
 								currentPlugin.add(dependentClass);
 							} catch (ClassNotFoundException e) {
 								MipavUtil.displayInfo(nextLine+" could not be read as a class. Please check your class path");
@@ -415,58 +404,5 @@ public class ManifestFile {
 		} catch (IOException e) {
 			MipavUtil.displayInfo("Manifest file unable to be created, ensure you have access to your home directory");
 		}
-	}
-	
-	public class PluginClassLoader extends ClassLoader {
-	    
-		 /**Table for already loaded classes**/
-	    private Hashtable<String, Class<?>> classes = new Hashtable<String, Class<?>>();
-		
-		public PluginClassLoader(){
-	        super(PluginClassLoader.class.getClassLoader());
-	    }
-	  
-	    public Class<?> loadClass(String className) throws ClassNotFoundException {
-	         return findClass(className);
-	    }
-	 
-	    /**
-	     * Finds class given correct long name, turns package structure into file system structure.
-	     */
-	    public Class<?> findClass(String className){
-	        byte classByte[];
-	        Class<?> result=null;
-	        result = (Class<?>)classes.get(className);
-	        if(result != null){
-	            return result;
-	        }
-	        
-	        try{
-	            return findSystemClass(className);
-	        }catch(Exception e){
-	        }
-	        try{
-	           String classPath =  pluginDir+className.replace('.',File.separatorChar)+".class";
-	           classByte = loadClassData(classPath);
-	            result = defineClass(className,classByte,0,classByte.length,null);
-	            classes.put(className,result);
-	            return result;
-	        }catch(Exception e){
-	            return null;
-	        } 
-	    }
-	 
-	    private byte[] loadClassData(String className) throws IOException{
-	 
-	        File f ;
-	        f = new File(className);
-	        int size = (int)f.length();
-	        byte buff[] = new byte[size];
-	        FileInputStream fis = new FileInputStream(f);
-	        DataInputStream dis = new DataInputStream(fis);
-	        dis.readFully(buff);
-	        dis.close();
-	        return buff;
-	    }
 	}
 }
