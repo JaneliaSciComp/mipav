@@ -552,7 +552,11 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					}
 					
 					if(!initDir.getText().equals(INIT_TEXT)) {
-						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(initDir.getText().length()+1);
+						int inc = 1;
+						if(initDir.getText().charAt(initDir.getText().length()-1) == File.separatorChar) {
+							inc = 0;
+						}
+						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(initDir.getText().length()+inc);
 					} else {
 						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(File.listRoots()[1].toString().length());
 					} 
