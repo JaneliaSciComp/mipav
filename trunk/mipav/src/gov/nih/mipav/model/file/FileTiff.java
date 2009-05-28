@@ -979,6 +979,8 @@ public class FileTiff extends FileBase {
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         int[] imgExtents;
         int totalSize;
+        int i;
+        int k;
 
         try {
             file = new File(fileDir + fileName);
@@ -1004,7 +1006,6 @@ public class FileTiff extends FileBase {
                 throw new IOException("Tiff Read Header: Error - Invalid Magic number = " + magicTIFFNumber);
             }
 
-            long saveLoc = raFile.getFilePointer();
             fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF); // dummy fileInfo
             fileInfo.setEndianess(endianess);
             imageSlice = 0;
@@ -1012,6 +1013,7 @@ public class FileTiff extends FileBase {
 
             boolean moreIFDs = true;
             imgResols = new float[5];
+            imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
             Preferences.debug("\n ************** FileTiff.openIFD: Opening = " + fileName + "\n",
                               Preferences.DEBUG_FILEIO);
             tileOffsetNumber = 0;
@@ -1061,14 +1063,14 @@ public class FileTiff extends FileBase {
                 
                 if ((tileOffsets == null) || (tileByteCounts == null)) {
                     totalSize = 0;
-                    for (int i = 0; i < imageSlice; i++) {
+                    for (i = 0; i < imageSlice; i++) {
                         totalSize += dataOffsets[i].size();
                     }
                     tileOffsets = new int[totalSize];
                     tileByteCounts = new int[totalSize];
                     tileMaxByteCount = 0;
     
-                    for (int i = 0, k = 0; i < imageSlice; i++) {
+                    for (i = 0, k = 0; i < imageSlice; i++) {
                         for (int j = 0; j < dataOffsets[i].size(); j++) {
                             tileOffsets[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).index;
                             tileByteCounts[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).byteCount;
@@ -1082,7 +1084,7 @@ public class FileTiff extends FileBase {
                 }
                 else {
                     tileMaxByteCount = 0;
-                    for (int k = 0; k < tileByteCounts.length; k++) {
+                    for (k = 0; k < tileByteCounts.length; k++) {
                         if (tileByteCounts[k] > tileMaxByteCount) {
                             tileMaxByteCount = tileByteCounts[k];
                         }
@@ -1106,7 +1108,7 @@ public class FileTiff extends FileBase {
 
             // System.err.println("Tile width: " + tileWidth + " samples per pixel: " + samplesPerPixel);
             //System.err.println("Image slice: " + imageSlice);
-            imgResols[0] = imgResols[1] = imgResols[2] = imgResols[3] = imgResols[4] = (float) 1.0;
+           
             Preferences.debug("imageSlice = " + imageSlice, Preferences.DEBUG_FILEIO);
 
             if (haveMultiSpectraImage && (imageSlice > 1)) {
@@ -1145,34 +1147,19 @@ public class FileTiff extends FileBase {
                 }
             }
 
-            imageSlice = 0;
-            raFile.seek(saveLoc);
-            moreIFDs = true;
-
-            int i = 0;
+            
             tileOffsetNumber = 0;
             tileByteNumber = 0;
 
             if (!foundTag43314) {
-                while (moreIFDs){
-                    fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
-                    fileInfo.setExtents(imgExtents);
-                    raFile.seek(IFDoffsets[imageSlice]);
-                    moreIFDs = openIFD(fileInfo);
-
-                    // Set the resolutions
-                    fileInfo.setResolutions(imgResols);
-
-                    if ((multiFile == false) && (one == false)) {
+                fileInfo.setResolutions(imgResols);
+                if ((multiFile == false) && (one == false)) {
+                    for (i = 0; i < imageSlice; i++) {
                         image.setFileInfo(fileInfo, i);
                     }
-
-                    i++;
-                } // while (moreIFDs)
+                }
             } // if (!foundTag43314)
             else { // foundTag43314
-                fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
-                fileInfo.setExtents(imgExtents);
                 fileInfo.setDataType(image.getType());
 
                 if ((imgExtents.length > 2) && !one) {
