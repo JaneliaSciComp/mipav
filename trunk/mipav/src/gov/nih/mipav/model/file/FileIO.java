@@ -373,6 +373,8 @@ public class FileIO {
      * @return The image that was read in, or null if failure.
      */
     public ModelImage readDicom(String selectedFileName, String[] fileList, boolean performSort) {
+    	
+    	
         ModelImage image = null;
         FileDicom imageFile;
         FileInfoDicom refFileInfo;
@@ -1051,7 +1053,14 @@ public class FileIO {
                 // Read the image
                 if (image.getType() == ModelStorageBase.FLOAT) {
                     imageFile.readImage(bufferFloat, curFileInfo.getDataType(), start);
-                } else {
+                } 
+                else if (imageFile.isDir()){
+                    if (progressBar != null) {
+                        progressBar.dispose();
+                    }
+                	return null;
+                }
+                else {
                     imageFile.readImage(bufferShort, curFileInfo.getDataType(), start);
                 }
 
@@ -1725,6 +1734,10 @@ public class FileIO {
 
                 case FileUtility.ANALYZE:
                     image = readAnalyze(fileName, fileDir, one);
+                    break;
+                    
+                case FileUtility.MYSTERY:
+                    image = readMystery(fileName, fileDir, false);
                     break;
 
                 case FileUtility.MGH:
@@ -3780,6 +3793,75 @@ public class FileIO {
             // most likely an Analyze file
             try {
                 imageFile = new FileAnalyze(fileName, fileDir);
+                createProgressBar(imageFile, fileName, FILE_READ);
+                image = imageFile.readImage(one);
+            } catch (IOException error) {
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                return null;
+            } catch (OutOfMemoryError error) {
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                return null;
+            }
+        }
+
+        if (imageFile != null) {
+            imageFile.finalize();
+            imageFile = null;
+        }
+
+        return image;
+    }
+
+    /**
+     * Reads an analyze file by calling the read method of the file. Also checks if it's a Cheshire and if so, calls
+     * that method instead. This method contains special code to not display the progress bar should the image be
+     * <q>splash.img</q>.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readMystery(String fileName, String fileDir, boolean one) {
+        ModelImage image = null;
+        FileMystery imageFile = null;
+
+        if (FileCheshire.isCheshire(fileName, fileDir)) {
+            image = readCheshire(fileName, fileDir);
+        } else {
+
+            // most likely an Mystery file
+            try {
+                imageFile = new FileMystery(fileName, fileDir);
                 createProgressBar(imageFile, fileName, FILE_READ);
                 image = imageFile.readImage(one);
             } catch (IOException error) {
