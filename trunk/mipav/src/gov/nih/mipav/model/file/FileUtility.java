@@ -239,6 +239,9 @@ public class FileUtility {
     /** Extension: .hdr for header, .bfloat for data */
     public static final int BFLOAT = 66;
     
+    /** Extension: .hdr for header, .img for data */
+    public static final int SIEMENSTEXT = 67;
+    
     public static final int JP2 = 100;
     
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi", "biorad", "bmp", "bruker", "cheshire",
@@ -248,6 +251,8 @@ public class FileUtility {
     	"nrrd", "osm", "pcx", "pic", "pict", "png", "project", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml", "tga",
     	"tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "surfaceref xml", "minc hdf", 
     	"liff", "bfloat", "jp2"};
+
+
     
     /**
      * Returns the file type associated with a string.
@@ -900,8 +905,8 @@ public class FileUtility {
                                     fileType = FileUtility.isAnalyzeOrSPM(fileName, fileDir, quiet);
                                 }
                                 catch (IOException ex) {}
-                                if (fileType == FileUtility.UNDEFINED) {
-                                    fileType = FileUtility.SPM;
+                                if (fileType == FileUtility.UNDEFINED  && FileSiemensText.isSiemensText(fileDir + fileName)) {
+                                    fileType = FileUtility.SIEMENSTEXT;
                                 }
     
                                 try {
