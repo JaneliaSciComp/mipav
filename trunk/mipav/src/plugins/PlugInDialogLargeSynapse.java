@@ -117,11 +117,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
     
     private JTextField blueBrightIntensityText;
     
-    private JCheckBox histoInfoCheckBox;
-    
-    /** If true, provide histograms of red, green, and blue values along detection lines */
-    private boolean histoInfo = false;  
-    
     /** Text field for the input TIFF file */
     private JTextField inText;
     
@@ -307,10 +302,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         return blueBrightIntensity;
     }
     
-    public boolean getHistoInfo() {
-        return histoInfo;
-    }
-    
     public int getXYProcessLength() {
         return xyProcessLength;
     }
@@ -339,7 +330,7 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
                     xyOverlapLength, zProcessLength, zOverlapLength, redMin, redMax,
                     greenMin, greenMax, blueMinXY, blueMaxXY, blueMinZ, blueMaxZ,
                     redIntensity, greenIntensity, blueIntensity, redBrightIntensity,
-                    greenBrightIntensity, blueBrightIntensity, histoInfo);
+                    greenBrightIntensity, blueBrightIntensity);
             
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -417,8 +408,7 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         str += greenIntensity + delim;
         str += greenBrightIntensity + delim;
         str += blueIntensity + delim;
-        str += blueBrightIntensity + delim;
-        str += histoInfo;
+        str += blueBrightIntensity;
         
         return str;
     }
@@ -581,10 +571,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         this.blueBrightIntensity = blueBrightIntensity;
     }
     
-    public void setHistoInfo(boolean histoInfo) {
-        this.histoInfo = histoInfo;    
-    }
-    
     /**
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
@@ -612,7 +598,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         setGreenBrightIntensity(scriptParameters.getParams().getInt("green_bright_intensity"));
         setBlueIntensity(scriptParameters.getParams().getInt("blue_intensity"));
         setBlueBrightIntensity(scriptParameters.getParams().getInt("blue_bright_intensity"));
-        setHistoInfo(scriptParameters.getParams().getBoolean("histo_info"));
     }
 
     /**
@@ -637,7 +622,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_bright_intensity", greenBrightIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_intensity", blueIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_bright_intensity", blueBrightIntensity));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("histo_info", histoInfo));
     }
 
     /**
@@ -645,7 +629,7 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Large Synapse Detection  05/18/09");
+        setTitle("Large Synapse Detection  05/29/09");
         
         JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setForeground(Color.black);
@@ -951,14 +935,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(blueBrightIntensityText, gbc);
-        
-        histoInfoCheckBox = new JCheckBox("Obtain histograms of detected line colors");
-        histoInfoCheckBox.setFont(serif12);
-        histoInfoCheckBox.setForeground(Color.black);
-        histoInfoCheckBox.setSelected(false);
-        gbc.gridx = 0;
-        gbc.gridy = yPos++;
-        mainPanel.add(histoInfoCheckBox, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -1274,8 +1250,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
 
             return false;
         }
-        
-        histoInfo = histoInfoCheckBox.isSelected();
         
         return true;
     } // end setVariables()
