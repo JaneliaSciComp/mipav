@@ -781,6 +781,12 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             adjMarkButton.setSelected(false);
             refMarkButton.setSelected(false);
             translateButton.setSelected(false);
+            upButton.setEnabled(false);
+            downButton.setEnabled(false);
+            rightButton.setEnabled(false);
+            leftButton.setEnabled(false);
+            cwButton.setEnabled(false);
+            ccwButton.setEnabled(false);
             componentImage.setCenter(false);
             componentImage.setCursorMode(ViewJComponentRegistration.DEFAULT);
             componentImageA.setCursorMode(ViewJComponentBase.DEFAULT);
