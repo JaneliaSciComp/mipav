@@ -416,6 +416,21 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private float zoom = 1; // zoom factor
+    
+    private JTextArea costFunctionTextArea;
+    
+    /** Scroll Pane for the Text Area **/
+    private JScrollPane costFunctionScrollPane;
+    
+    /** Holds extents, other info about firstImage and SecondImage */
+    private ModelSimpleImage simpleImg1, simpleImg2;
+    
+    /** Identity matrix for testing cost */
+    private TransMatrix tMatrix;
+    
+    private AlgorithmCostFunctions2D algoCost;
+    
+    private JButton calculateCostButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -922,6 +937,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             close();
         } else if (command.equals("help")) {
             MipavUtil.showHelp("10046");
+        }else if(command.equals("costFunction")) {
+        	calculateCostFunctionValues();
         }
     }
 
@@ -1683,7 +1700,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         labelAlphaBlend.setForeground(Color.black);
         labelAlphaBlend.setFont(serif12);
         labelAlphaBlend.setEnabled(true);
-        addControlPanel(labelAlphaBlend, cpGBC, 0, 2, 2, 1);
+        addControlPanel(labelAlphaBlend, cpGBC, 0, 0, 2, 1);
 
         // Make labels to be used in display in the alpha blending slider
         Hashtable<Integer, JLabel> dictionary = new Hashtable<Integer, JLabel>();
@@ -1720,7 +1737,13 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         alphaSlider.setLabelTable(dictionary); // loads the labels made above
         alphaSlider.setValue(50);
 
-        addControlPanel(alphaSlider, cpGBC, 2, 2, 8, 1);
+        addControlPanel(alphaSlider, cpGBC, 2, 0, 8, 1);
+        
+        costFunctionTextArea = new JTextArea(15,38);
+        costFunctionScrollPane = new JScrollPane(costFunctionTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        addControlPanel(costFunctionScrollPane, cpGBC, 10, 0, 5, 3);
+        
+        
         alphaSlider.addChangeListener(this);
 
     }
@@ -2412,6 +2435,18 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         buttonArray[10] = ccwButton;
 
         toolBar2.add(makeSeparator());
+        
+        calculateCostButton = new JButton("Cost Function");
+        calculateCostButton.addActionListener(al);
+        calculateCostButton.setToolTipText("Calulate Cost Function");
+        calculateCostButton.setFont(MipavUtil.font12B);
+
+        // degreeIncrementButton.setMinimumSize(new Dimension(20, 20));
+        calculateCostButton.setMargin(new Insets(7, 7, 7, 7));
+        calculateCostButton.setActionCommand("costFunction");
+        calculateCostButton.setBorderPainted(false);
+        calculateCostButton.setRolloverEnabled(true);
+        toolBar2.add(calculateCostButton);
 
         toolBar2.setFloatable(false);
 
@@ -2559,8 +2594,10 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
         // structureY is the total of all nonimage components in the Y direction
         structureY = getInsets().top + componentY + getInsets().bottom;
-        setSize((int) Math.round((scrollPaneSize * 2) + 3 + getInsets().left + getInsets().right),
-                (int) Math.round(scrollPaneSize + 3 + structureY));
+        //setSize((int) Math.round((scrollPaneSize * 2) + 3 + getInsets().left + getInsets().right),
+                //(int) Math.round(scrollPaneSize + 3 + structureY));
+        
+        setSize(1000,1000);
 
         zoom = Math.min(zoom, (float) (scrollPane.getViewportBorderBounds().width - 1) / (imageA.getExtents()[0] - 1));
         zoom = Math.min(zoom, (float) (scrollPane.getViewportBorderBounds().height - 1) / (imageA.getExtents()[1] - 1));
@@ -2594,7 +2631,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         tabbedPane.addChangeListener(this);
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
         setTitle();
-        pack();
+        //pack();
         setVisible(true);
     }
 
@@ -3246,6 +3283,61 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         doneLeastSquares = false;
         updateImages(true);
     } // end of private void transformC()
+    
+    
+    
+    private void calculateCostFunctionValues() {
+    	
+   	 int bin1 = 256;
+        double possibleIntValues1 = imageA.getMax() - imageA.getMin() + 1;
+
+        if (((imageA.getType() == ModelStorageBase.BYTE) || (imageA.getType() == ModelStorageBase.UBYTE) ||
+                 (imageA.getType() == ModelStorageBase.SHORT) ||
+                 (imageA.getType() == ModelStorageBase.USHORT) ||
+                 (imageA.getType() == ModelStorageBase.INTEGER) ||
+                 (imageA.getType() == ModelStorageBase.UINTEGER) ||
+                 (imageA.getType() == ModelStorageBase.LONG)) && (possibleIntValues1 < 256)) {
+            bin1 = (int) Math.round(possibleIntValues1);
+        }
+        
+        
+        simpleImg1 = new ModelSimpleImage(imageA.getExtents(), imageA.getFileInfo(0).getResolutions(),
+       		 imageA);
+
+        simpleImg2 = new ModelSimpleImage(imageB.getExtents(), imageB.getFileInfo(0).getResolutions(),
+                imageB);
+        
+        
+        float smoothSize = 1;
+        double cost;
+        
+        algoCost = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED, bin1, smoothSize);
+        tMatrix = new TransMatrix(3);
+        cost = algoCost.cost(tMatrix);
+        costFunctionTextArea.append("Correlation Ratio Smoothed" + ":\t\t" + cost + "\n");
+        
+        algoCost = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, AlgorithmCostFunctions2D.MUTUAL_INFORMATION_SMOOTHED, bin1, smoothSize);
+        tMatrix = new TransMatrix(3);
+        cost = algoCost.cost(tMatrix);
+        costFunctionTextArea.append("Mutual Information Smoothed" + ":\t\t" + cost + "\n");
+        
+        algoCost = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, bin1, smoothSize);
+        tMatrix = new TransMatrix(3);
+        cost = algoCost.cost(tMatrix);
+        costFunctionTextArea.append("Normalized Mutual Information Smoothed" + ":\t" + cost + "\n");
+        
+        algoCost = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, AlgorithmCostFunctions2D.NORMALIZED_XCORRELATION_SMOOTHED, bin1, smoothSize);
+        tMatrix = new TransMatrix(3);
+        cost = algoCost.cost(tMatrix);
+        costFunctionTextArea.append("Normalized Cross Correlation Smoothed" + ":\t" + cost + "\n");
+        costFunctionTextArea.append("-------------------------------------------------------------------------------------------------\n");
+        
+        
+        if(algoCost != null) {
+       	 algoCost.disposeLocal();
+        	 algoCost = null;
+        }
+   }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 

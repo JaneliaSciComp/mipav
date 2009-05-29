@@ -1811,7 +1811,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         cpGBC.anchor = GridBagConstraints.WEST;
         cpGBC.weightx = 100;
         cpGBC.weighty = 100;
-        cpGBC.insets = new Insets(10, 10, 10, 10);
+        cpGBC.insets = new Insets(10, 10, 0, 10);
         controlPanel = new JPanel();
         controlPanel.setBounds(10, 100, 500, 120);
         controlPanel.setBorder(new EtchedBorder());
@@ -1851,17 +1851,17 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             textReferenceSlice.addFocusListener(this);
             cpGBC.fill = GridBagConstraints.NONE;
             cpGBC.anchor = GridBagConstraints.CENTER;
-            cpGBC.insets = new Insets(0, 10, 30, 10);
-            addControlPanel(textReferenceSlice, cpGBC, 2, 1, 1, 1);
+            //cpGBC.insets = new Insets(0, 10, 30, 10);
+            addControlPanel(textReferenceSlice, cpGBC, 10, 0, 1, 1);
 
-            cpGBC.insets = new Insets(10, 10, 10, 10);
+            //cpGBC.insets = new Insets(10, 10, 0, 10);
             cpGBC.fill = GridBagConstraints.BOTH;
             cpGBC.anchor = GridBagConstraints.WEST;
             labelAdjustedSlice = new JLabel("Adjusted slice index (0 - " + String.valueOf(nImage-1) + ")");
             labelAdjustedSlice.setForeground(Color.black);
             labelAdjustedSlice.setFont(serif12);
             labelAdjustedSlice.setEnabled(true);
-            addControlPanel(labelAdjustedSlice, cpGBC, 0, 2, 2, 1);
+            addControlPanel(labelAdjustedSlice, cpGBC, 0, 1, 2, 1);
 
             slider2 = new JSlider(0, nImage-1, zSlice2);
             slider2.setFont(serif12);
@@ -1882,7 +1882,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             labelTable2.put(new Integer(nImage-1), createLabel(String.valueOf(nImage-1)));
             slider2.setLabelTable(labelTable2);
             slider2.setPaintLabels(true);
-            addControlPanel(slider2, cpGBC, 2, 2, 8, 1);
+            addControlPanel(slider2, cpGBC, 2, 1, 8, 1);
 
             textAdjustedSlice = new JTextField(String.valueOf(zSlice2), 4);
             
@@ -1891,14 +1891,14 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             textAdjustedSlice.addFocusListener(this);
             cpGBC.fill = GridBagConstraints.NONE;
             cpGBC.anchor = GridBagConstraints.CENTER;
-            cpGBC.insets = new Insets(0, 10, 30, 10);
-            addControlPanel(textAdjustedSlice, cpGBC, 2, 3, 1, 1);
+            //cpGBC.insets = new Insets(0, 10, 30, 10);
+            addControlPanel(textAdjustedSlice, cpGBC, 10, 1, 1, 1);
             cpGBC.insets = new Insets(10, 10, 10, 10);
         }
         
         costFunctionTextArea = new JTextArea(15,38);
         costFunctionScrollPane = new JScrollPane(costFunctionTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        addControlPanel(costFunctionScrollPane, cpGBC, 10, 0, 5, 5);
+        addControlPanel(costFunctionScrollPane, cpGBC, 11, 0, 5, 3);
         
 
         cpGBC.fill = GridBagConstraints.BOTH;
@@ -1908,7 +1908,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         labelAlphaBlend.setForeground(Color.black);
         labelAlphaBlend.setFont(serif12);
         labelAlphaBlend.setEnabled(true);
-        addControlPanel(labelAlphaBlend, cpGBC, 0, 4, 2, 1);
+        addControlPanel(labelAlphaBlend, cpGBC, 0, 2, 2, 1);
 
         // Make labels to be used in display in the alpha blending slider
         Hashtable<Integer, JLabel> dictionary = new Hashtable<Integer, JLabel>();
@@ -1945,7 +1945,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         alphaSlider.setLabelTable(dictionary); // loads the labels made above
         alphaSlider.setValue(50);
 
-        addControlPanel(alphaSlider, cpGBC, 2, 4, 8, 1);
+        addControlPanel(alphaSlider, cpGBC, 2, 2, 8, 1);
         alphaSlider.addChangeListener(this);
 
     }
@@ -2627,8 +2627,8 @@ public class ViewJFrameRegistration extends ViewJFrameBase
 
         //setSize((int) Math.round((tempX) + 3 + getInsets().left + getInsets().right),
                //(int) Math.round(scrollPaneSize + 3 + structureY));
-        
-        setSize(1000,(int) Math.round(scrollPaneSize + 3 + structureY));
+                
+        setSize(1000,1000);
 
         zoom = Math.min(zoom, (float) (scrollPane.getViewportBorderBounds().width - 1) / (imageA.getExtents()[0] - 1));
         zoom = Math.min(zoom, (float) (scrollPane.getViewportBorderBounds().height - 1) / (imageA.getExtents()[1] - 1));
