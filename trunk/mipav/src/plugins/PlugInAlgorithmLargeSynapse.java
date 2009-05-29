@@ -10,6 +10,8 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Vector;
 
 import java.awt.*;
@@ -111,8 +113,6 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
     
     private int blueBrightIntensity;
     
-    private boolean histoInfo;
-    
     private RandomAccessFile raFile;
     
     private boolean endianess;
@@ -121,7 +121,7 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
     
     private int xDim;
     private int yDim;
-    
+    private int zDim;
     private long fileLength;
     
     private int[] IFDoffsets = new int[4096];
@@ -137,7 +137,86 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
     private int samplesPerPixel = 1;
     
     private byte[] imageDescription = null;
-    
+    private int threePreviousColor;
+    private int twoPreviousColor;
+    private int onePreviousColor;
+    private int presentColor;
+    private int presentBrightColor;
+    private int threePreviousWidth;
+    private int twoPreviousWidth;
+    private int onePreviousWidth;
+    private int presentWidth;
+    private boolean presentBrightness;
+    private boolean onePreviousBrightness;
+    private boolean twoPreviousBrightness;
+    private boolean threePreviousBrightness;
+    private int blueX;
+    private int blueY;
+    private int blueZ;
+    private int centerBlueX;
+    private int centerBlueY;
+    private int centerBlueZ;
+    private int numSynapses = 0;
+    private int previousNumSynapses = 0;
+    private int xArr[] = new int[1];
+    private int yArr[] = new int[1];
+    private int zArr[] = new int[1];
+    private int threeBandMinXY;
+    private int threeBandMinZ;
+    private int blueCount;
+    private String fileName;
+    private String fileDirectory;
+    private File file;
+    //private RandomAccessFile raFile;
+    private String dataString = null;
+    private int minimumBlueCount = Integer.MAX_VALUE;
+    private int maximumBlueCount = Integer.MIN_VALUE;
+    private long totalBlueCount = 0;
+    private long totalBlueCountSquared = 0;
+    private double averageBlueCount;
+    private double blueStandardDeviation;
+    private BitSet colorMask = null;
+    private float xInit[] = null;
+    private float redExtents[] = null;
+    private float greenExtents[] = null;
+    private float blueExtents[] = null;
+    private int threePreviousPos[] = null;
+    private int twoPreviousPos[] = null;
+    private int onePreviousPos[] = null;
+    private int presentPos[] = null;
+    private int presentPosIndex = 0;
+    private int colorObjects[];
+    private int redObjectIndex = 0;
+    private int greenObjectIndex = 0;
+    private int blueObjectIndex = 0;
+    private ArrayList <Integer>blueCountList;
+    private ArrayList <Short>blueCenterXList;
+    private ArrayList <Short>blueCenterYList;
+    private ArrayList <Short>blueCenterZList;
+    private ArrayList <Short>blueXWidthList;
+    private ArrayList <Short>blueYWidthList;
+    private ArrayList <Short>blueZWidthList;
+    // If bigBlueFraction will allow storage of 5 synapses for each red object
+    // If not bigBlueFraction allow only 1 synapse per blue object
+    private int synapseBlueFound[];
+    private int synapseGreenFound[];
+    private int threePreviousObjectIndex;
+    private int twoPreviousObjectIndex;
+    private int onePreviousObjectIndex;
+    private int presentObjectIndex;
+    //  In each processed volume all bytes are classified as NONE, RED, GREEN, BLUE, BRIGHT_RED,
+    // BRIGHT_GREEN, or BRIGHT_BLUE
+    private byte buffer[];
+    // The x length used in the current processed volume
+    private int xLength;
+    // The y length used in the current processed volume
+    private int yLength;
+    // The z length used in the current processed volume
+    private int zLength;
+    // Set to xLength * yLength for each current processed volume
+    private int xySlice;
+    // Set to xySlice * zLength for each current processed volume
+    private int length;
     private final byte NONE = 0;
     private final byte RED = 1;
     private final byte GREEN = 2;
@@ -242,13 +321,12 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
      * @param redBrightIntensity
      * @param greenBrightIntensity
      * @param blueBrightIntensity
-     * @param histoInfo
      */
     public PlugInAlgorithmLargeSynapse(String directory, String inputFileName, int xyProcessLength,
             int xyOverlapLength, int zProcessLength, int zOverlapLength, int redMin, int redMax,
             int greenMin, int greenMax, int blueMinXY, int blueMaxXY, int blueMinZ, int blueMaxZ,
             int redIntensity, int greenIntensity, int blueIntensity, int redBrightIntensity,
-            int greenBrightIntensity, int blueBrightIntensity, boolean histoInfo) {
+            int greenBrightIntensity, int blueBrightIntensity) {
         this.directory = directory;
         this.inputFileName = inputFileName;
         this.xyProcessLength = xyProcessLength;
@@ -269,7 +347,6 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
         this.redBrightIntensity = redBrightIntensity;
         this.greenBrightIntensity = greenBrightIntensity;
         this.blueBrightIntensity = blueBrightIntensity;
-        this.histoInfo = histoInfo;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -284,28 +361,19 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
         int xstart;
         int ystart;
         int zstart;
-        int zDim;
         int zIncrement;
         int xyIncrement;
         // Number of bytes processed in each slice each iteration
         int processSquare;
         // Number of bytes in a processed volume
         int processVolume;
-        // In each processed volume all bytes are classified as NONE, RED, GREEN, BLUE, BRIGHT_RED,
-        // BRIGHT_GREEN, or BRIGHT_BLUE
-        byte buffer[];
-        // The x length used in the current processed volume
-        int xLength;
-        // The y length used in the current processed volume
-        int yLength;
-        // The z length used in the current processed volume
-        int zLength;
         int i;
         int j;
         int x;
         int y;
         int z;
         int zs;
+        int xPos;
         int yPos;
         int zPos;
         int red;
@@ -313,7 +381,9 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
         int blue;
         int pos;
         File file;
-        
+        int xsec;
+        int ysec;
+        int zsec;
         
         byte[] sliceBufferByte;
         int idx;
@@ -326,6 +396,12 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
         int currentIndex;
         int a;
         int nBytes;
+        int blueStartX = 0;
+        int blueStartY = 0;
+        int blueStartZ = 0;
+        int xStart;
+        int yStart;
+        int zStart;
         
         try {
             file = new File(directory + inputFileName);
@@ -351,7 +427,6 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
                 throw new IOException("Tiff Read Header: Error - Invalid Magic number = " + magicTIFFNumber);
             }
 
-            long saveLoc = raFile.getFilePointer();
             imageSlice = 0;
             IFDoffsets[imageSlice] = getInt(endianess);
 
@@ -378,17 +453,19 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
             processVolume = processSquare * zProcessLength;
             buffer = new byte[processVolume];
             
-            for (zstart = 0; zstart < zDim; zstart += zIncrement) {
-                fireProgressStateChanged(100 * zstart/ zDim);
-                Preferences.debug("main loop zstart = " + zstart + "\n");
-                zLength = Math.min(zProcessLength, zDim - zstart);
-                for (ystart = 0; ystart < yDim; ystart += xyIncrement) {
-                    Preferences.debug("main loop ystart = " + ystart + "\n");
-                    yLength = Math.min(xyProcessLength, yDim - ystart);
-                    for (xstart = 0; xstart < xDim; xstart += xyIncrement) {
-                        Preferences.debug("main loop xstart = " + xstart + "\n");
-                        xLength = Math.min(xyProcessLength, xDim - xstart);
-                        for (zs = zstart; zs < zstart + zLength; zs++) {
+            for (zsec = 0; zsec < zDim - zOverlapLength; zsec += zIncrement) {
+                fireProgressStateChanged(100 * zsec/ zDim);
+                Preferences.debug("main loop zsec = " + zsec + "\n");
+                zLength = Math.min(zProcessLength, zDim - zsec);
+                for (ysec = 0; ysec < yDim - xyOverlapLength; ysec += xyIncrement) {
+                    Preferences.debug("main loop ysec = " + ysec + "\n");
+                    yLength = Math.min(xyProcessLength, yDim - ysec);
+                    for (xsec = 0; xsec < xDim - xyOverlapLength; xsec += xyIncrement) {
+                        Preferences.debug("main loop xsec = " + xsec + "\n");
+                        xLength = Math.min(xyProcessLength, xDim - xsec);
+                        xySlice = xLength * yLength;
+                        length = xySlice * zLength;
+                        for (zs = zsec; zs < zsec + zLength; zs++) {
                                 idx = 0;
                                 nIndex = dataOffsets[zs].size();
                                 firstIndex = ((Index) (dataOffsets[zs].elementAt(0))).index;
@@ -438,11 +515,11 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
                                     
                                 
                                 
-                                zPos = (zs - zstart)* xLength * yLength;
-                                for (y = ystart; y < ystart + yLength; y++) {
-                                    yPos = zPos + (y - ystart) * xLength;
-                                    for (x = xstart; x < xstart + xLength; x++) {
-                                        pos = yPos + x - xstart;
+                                zPos = (zs - zsec)* xLength * yLength;
+                                for (y = ysec; y < ysec + yLength; y++) {
+                                    yPos = zPos + (y - ysec) * xLength;
+                                    for (x = xsec; x < xsec + xLength; x++) {
+                                        pos = yPos + x - xsec;
                                         red = sliceBufferByte[3*(x + y * xDim)] & 0xff;
                                         green = sliceBufferByte[3*(x + y * xDim) + 1] & 0xff;
                                         blue = sliceBufferByte[3*(x + y * xDim) + 2] & 0xff;
@@ -474,10 +551,2621 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
                                     }
                                 }    
                             
-                        } // for (zs = zstart; zs < zstart + zLength; zs++)    
-                    } // for (xstart = 0; xstart < xDim; xstart += xyIncrement)
-                } // for (ystart = 0; ystart < yDim; ystart += xyIncrement)
-            } // for (zstart = 0; zstart < zDim; zstart += zIncrement)
+                        } // for (zs = zsec; zs < zsec + zLength; zs++)
+                        identifyObjects();
+                        Preferences.debug("Number of red objects = " + redObjectIndex + "\n");
+                        Preferences.debug("Number of green objects = " + greenObjectIndex + "\n");
+                        Preferences.debug("Number of blue objects = " + blueObjectIndex + "\n");
+                        
+                        // Allow only 1 blue object in each synapse
+                        synapseBlueFound = new int[blueObjectIndex + 1];
+                        
+                        threeBandMinXY = redMin + greenMin + blueMinXY;
+                        threeBandMinZ = redMin + greenMin + blueMinZ;
+                        
+                        dataString = "Index     x         y         z         count     x width   y width   z width\n\n";
+                        
+                        // Search along all lines parallel to x axis
+                        dataString += ("Searching parallel to x axis\n");
+                        for (z = 0; z < zDim; z++) {
+                            zPos = z * xySlice;
+                            for (y = 0; y < yDim; y++) {
+                                yPos = zPos + y * xDim;
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = 0; x < xDim; x++) {
+                                   pos = yPos + x;  
+                                   if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                       presentWidth++;
+                                       if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                           blueX = (blueStartX + x) >> 1;
+                                           blueY = (blueStartY + y) >> 1;
+                                           blueZ = (blueStartZ + z) >> 1; 
+                                       }
+                                       if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                           presentBrightness = true;
+                                       }
+                                   }
+                                   else {
+                                       threePreviousColor = twoPreviousColor;
+                                       threePreviousWidth = twoPreviousWidth;
+                                       twoPreviousColor = onePreviousColor;
+                                       twoPreviousWidth = onePreviousWidth;
+                                       onePreviousColor = presentColor;
+                                       onePreviousWidth = presentWidth;
+                                       threePreviousBrightness = twoPreviousBrightness;
+                                       twoPreviousBrightness = onePreviousBrightness;
+                                       onePreviousBrightness = presentBrightness;
+                                       threePreviousObjectIndex = twoPreviousObjectIndex;
+                                       twoPreviousObjectIndex = onePreviousObjectIndex;
+                                       onePreviousObjectIndex = presentObjectIndex;
+                                       if (buffer[pos] < BRIGHT_RED) {
+                                           presentColor = buffer[pos];
+                                           if (buffer[pos] == NONE) {
+                                               presentBrightColor = NONE;
+                                           }
+                                           else {
+                                               presentBrightColor = presentColor + 3;
+                                           }
+                                           presentBrightness = false;
+                                       }
+                                       else {
+                                           presentBrightColor = buffer[pos];
+                                           presentColor = presentBrightColor - 3;
+                                           presentBrightness = true;
+                                           
+                                       }
+                                       presentWidth = 1;
+                                       checkForSynapseXY(); 
+                                       if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                           blueStartX = x;
+                                           blueStartY = y;
+                                           blueStartZ = z;
+                                           blueX = x;
+                                           blueY = y;
+                                           blueZ = z; 
+                                           presentObjectIndex = colorObjects[pos];
+                                       }
+                                       else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                           presentObjectIndex = 0;
+                                       }
+                                       else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                           presentObjectIndex = 0;
+                                       }
+                                   }
+                                } // for (x = 0; x < xDim; x++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseXY();
+                            } // for (y = 0; y < yDim; y++)
+                        } // for (z = 0; z < zDim; z++)
+                        System.out.println("Number of synapses found searching parallel to x axis = " + numSynapses);
+                        Preferences.debug("Number of synapses found searching parallel to x axis = " + numSynapses + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to x axis = " + numSynapses + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search along all lines parallel to y axis
+                        dataString += ("\nSearching parallel to y axis\n");
+                        for (z = 0; z < zDim; z++) {
+                            zPos = z * xySlice;
+                            for (x = 0; x < xDim; x++) {
+                                xPos = zPos + x;
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (y = 0; y < yDim; y++) {
+                                    pos = xPos + y * xDim;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseXY();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) { 
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (y = 0; y < yDim; y++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseXY();
+                            } // for (x = 0; x < xDim; x++)
+                        } // for (z = 0; z < zDim; z++)
+                        System.out.println("Number of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to y axis = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search all lines parallel to z axis
+                        dataString += ("\nSearching parallel to z axis\n");
+                        for (y = 0; y < yDim; y++) {
+                            yPos = y * xDim;
+                            for (x = 0; x < xDim; x++) {
+                                xPos = yPos + x;
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (z = 0; z < zDim; z++) {
+                                    pos = xPos + z * xySlice;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (z = 0; z < zDim; z++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (x = 0; x < xDim; x++)
+                        } // for (y = 0; y < yDim; y++)
+                        System.out.println("Number of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to z axis = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        //Search all lines parallel to x = -y.
+                        dataString += ("\nSearching parallel to x = -y\n");
+                        for (z = 0; z < zDim; z++) {
+                            zPos = z * xySlice;
+                            for (xStart = 0; xStart <= xDim - threeBandMinXY; xStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, y = yDim-1; (x <= xDim - 1) && (y >= 0); x++, y--) {
+                                    pos = zPos + y * xDim + x; 
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseXY();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, y = yDim-1; (x <= xDim - 1) && (y >= 0); x++, y--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseXY();
+                            } // for (xStart = 0; xStart <= xDim - threeBandMinXY; xStart++)
+                            for (yStart = yDim - 2; yStart >= threeBandMinXY-1; yStart--) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = 0, y = yStart; (x <= xDim - 1) && (y >= 0); x++, y--) {
+                                    pos = zPos + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseXY(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = 0, y = yStart; (x <= xDim - 1) && (y >= 0); x++, y--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseXY();
+                            } // for (yStart = yDim - 2; yStart >= threeBandMinXY-1; yStart--)
+                        } // for (z = 0; z < zDim; z++)
+                        System.out.println("Number of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to (x = -y) = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search all lines parallel to x = y.
+                        dataString += ("\nSearching parallel to x = y\n");
+                        for (z = 0; z < zDim; z++) {
+                            zPos = z * xySlice;
+                            for (xStart = xDim - 1; xStart >= threeBandMinXY - 1; xStart--) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, y = yDim - 1; (x >= 0) && (y >= 0); x--, y--) {
+                                    pos = zPos + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseXY();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, y = yDim - 1; (x >= 0) && (y >= 0); x--, y--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseXY();
+                            } // for (xStart = xDim - 1; xStart >= threeBandMinXY - 1; xStart--)
+                            for (yStart = yDim - 2; yStart >= threeBandMinXY - 1; yStart--) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xDim - 1, y = yStart; (x >= 0) && (y >= 0); x--, y--) {
+                                    pos = zPos + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseXY(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xDim - 1, y = yStart; (x >= 0) && (y >= 0); x--, y--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseXY();
+                            } // for (yStart = yDim - 2; yStart >= threeBandMinXY - 1; yStart--)
+                        } // for (z = 0; z < zDim; z++)
+                        System.out.println("Number of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to (x = y) = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search all lines parallel to x = -z.
+                        dataString += ("\nSearching parallel to x = -z\n");
+                        for (y = 0; y < yDim; y++) {
+                            yPos = y * xDim;
+                            for (xStart = 0; xStart <= xDim - threeBandMinZ; xStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, z = zDim-1; (x <= xDim - 1) && (z >= 0); x++, z--) {
+                                    pos = yPos + z * xySlice + x; 
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, z = zDim-1; (x <= xDim - 1) && (z >= 0); x++, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (xStart = 0; xStart <= xDim - threeBandMinZ; xStart++)
+                            for (zStart = zDim - 2; zStart >= threeBandMinZ-1; zStart--) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = 0, z = zStart; (x <= xDim - 1) && (z >= 0); x++, z--) {
+                                    pos = yPos + z * xySlice + x; 
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = 0, z = zStart; (x <= xDim - 1) && (z >= 0); x++, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (zStart = zDim - 2; zStart >= threeBandMinZ-1; zStart--)
+                        } // for (y = 0; y < yDim; y++)
+                        System.out.println("Number of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to (x = -z) = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search all lines parallel to x = z.
+                        dataString += ("\nSearching parallel to x = z\n");
+                        for (y = 0; y < yDim; y++) {
+                            yPos = y * xDim;
+                            for (xStart = xDim - 1; xStart >= threeBandMinZ - 1; xStart--) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, z = zDim - 1; (x >= 0) && (z >= 0); x--, z--) {
+                                    pos = yPos + z * xySlice + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, z = zDim - 1; (x >= 0) && (z >= 0); x--, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (xStart = xDim - 1; xStart >= threeBandMinZ - 1; xStart--)
+                            for (zStart = zDim - 2; zStart >= threeBandMinZ - 1; zStart--) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xDim - 1, z = zStart; (x >= 0) && (z >= 0); x--, z--) {
+                                    pos = yPos + z * xySlice + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xDim - 1, z = zStart; (x >= 0) && (z >= 0); x--, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (zStart = zDim - 2; zStart >= threeBandMinZ - 1; zStart--)
+                        } // for (y = 0; y < yDim; y++)
+                        System.out.println("Number of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to (x = z) = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search all lines parallel to y = -z.
+                        dataString += ("\nSearching parallel to y = -z\n");
+                        for (x = 0; x < xDim; x++) {
+                            for (yStart = 0; yStart <= yDim - threeBandMinZ; yStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (y = yStart, z = zDim-1; (y <= yDim - 1) && (z >= 0); y++, z--) {
+                                    pos = x + z * xySlice + y * xDim;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (y = yStart, z = zDim-1; (y <= yDim - 1) && (z >= 0); y++, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (yStart = 0; yStart <= yDim - threeBandMinZ; yStart++)
+                            for (zStart = zDim - 2; zStart >= threeBandMinZ-1; zStart--) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (y = 0, z = zStart; (y <= yDim - 1) && (z >= 0); y++, z--) {
+                                    pos = x + z * xySlice + y * xDim;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) { 
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (y = 0, z = zStart; (y <= yDim - 1) && (z >= 0); y++, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (zStart = zDim - 2; zStart >= threeBandMinZ-1; zStart--)
+                        } // for (x = 0; x < xDim; x++)
+                        System.out.println("Number of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to (y = -z) = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search all lines parallel to y = z.
+                        dataString += ("\nSearching parallel to y = z\n");
+                        for (x = 0; x < xDim; x++) {
+                            for (yStart = yDim - 1; yStart >= threeBandMinZ - 1; yStart--) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (y = yStart, z = zDim - 1; (y >= 0) && (z >= 0); y--, z--) {
+                                    pos = x + z * xySlice + y * xDim;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (y = yStart, z = zDim - 1; (y >= 0) && (z >= 0); y--, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (yStart = yDim - 1; yStart >= threeBandMinZ - 1; yStart--)
+                            for (zStart = zDim - 2; zStart >= threeBandMinZ - 1; zStart--) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (y = yDim - 1, z = zStart; (y >= 0) && (z >= 0); y--, z--) {
+                                    pos = x + z * xySlice + y * xDim;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (y = yDim - 1, z = zStart; (y >= 0) && (z >= 0); y--, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (zStart = zDim - 2; zStart >= threeBandMinZ - 1; zStart--)
+                        } // for (x = 0; x < xDim; x++)
+                        System.out.println("Number of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to (y = z) = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search all lines with delX = delY = delZ
+                        dataString += ("\nSearching parallel to delX = delY = delZ\n");
+                        for (zStart = 0; zStart < zDim; zStart++) {
+                            for (yStart = 0; yStart < yDim; yStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (yStart = 0; yStart < yDim; yStart++)
+                        } // for (zStart = 0; zStart < zDim; zStart++)
+                        for (zStart = 0; zStart < zDim; zStart++) {
+                            for (xStart = 0; xStart < xDim; xStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, y = 0, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, y = 0, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (xStart = 0; xStart < xDim; xStart++)
+                        } // for (zStart = 0; zStart < zDim; zStart++)
+                        for (yStart = 0; yStart < yDim; yStart++) {
+                            for (xStart = 0; xStart < xDim; xStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, y = yStart, z = 0; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, y = yStart, z = 0; (x <= xDim-1) && (y <= yDim - 1) && (z <= zDim - 1); x++, y++, z++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (xStart = 0; xStart < xDim; xStart++)
+                        } // for (yStart = 0; yStart < yDim; yStart++)
+                        System.out.println("Number of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to (delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search all lines with delX = delY = -delZ
+                        dataString += ("\nSearching parallel to delX = delY = -delZ\n");
+                        for (zStart = 0; zStart < zDim; zStart++) {
+                            for (yStart = 0; yStart < yDim; yStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (yStart = 0; yStart < yDim; yStart++)
+                        } // for (zStart = 0; zStart < zDim; zStart++)
+                        for (zStart = 0; zStart < zDim; zStart++) {
+                            for (xStart = 0; xStart < xDim; xStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, y = 0, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, y = 0, z = zStart; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (xStart = 0; xStart < xDim; xStart++)
+                        } // for (zStart = 0; zStart < zDim; zStart++)
+                        for (yStart = 0; yStart < yDim; yStart++) {
+                            for (xStart = 0; xStart < xDim; xStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, y = yStart, z = zDim-1; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, y = yStart, z = zDim-1; (x <= xDim-1) && (y <= yDim - 1) && (z >= 0); x++, y++, z--)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (xStart = 0; xStart < xDim; xStart++)
+                        } // for (yStart = 0; yStart < yDim; yStart++)
+                        System.out.println("Number of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to (delX = delY = -delZ) = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search all lines with delX = -delY = delZ
+                        dataString += ("\nSearching parallel to delX = -delY = delZ\n");
+                        for (zStart = 0; zStart < zDim; zStart++) {
+                            for (yStart = 0; yStart < yDim; yStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = 0, y = yStart, z = zStart; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (yStart = 0; yStart < yDim; yStart++)
+                        } // for (zStart = 0; zStart < zDim; zStart++)
+                        for (zStart = 0; zStart < zDim; zStart++) {
+                            for (xStart = 0; xStart < xDim; xStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, y = yDim-1, z = zStart; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, y = yDim-1, z = zStart; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (xStart = 0; xStart < xDim; xStart++)
+                        } // for (zStart = 0; zStart < zDim; zStart++)
+                        for (yStart = 0; yStart < yDim; yStart++) {
+                            for (xStart = 0; xStart < xDim; xStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, y = yStart, z = 0; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, y = yStart, z = 0; (x <= xDim-1) && (y >= 0) && (z <= zDim - 1); x++, y--, z++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (xStart = 0; xStart < xDim; xStart++)
+                        } // for (yStart = 0; yStart < yDim; yStart++)
+                        System.out.println("Number of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to (delX = -delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+                        
+                        // Search all lines with -delX = delY = delZ
+                        dataString += ("\nSearching parallel to -delX = delY = delZ\n");
+                        for (zStart = 0; zStart < zDim; zStart++) {
+                            for (yStart = 0; yStart < yDim; yStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xDim-1, y = yStart, z = zStart; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ();
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xDim-1, y = yStart, z = zStart; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (yStart = 0; yStart < yDim; yStart++)
+                        } // for (zStart = 0; zStart < zDim; zStart++)
+                        for (zStart = 0; zStart < zDim; zStart++) {
+                            for (xStart = 0; xStart < xDim; xStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, y = 0, z = zStart; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, y = 0, z = zStart; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (xStart = 0; xStart < xDim; xStart++)
+                        } // for (zStart = 0; zStart < zDim; zStart++)
+                        for (yStart = 0; yStart < yDim; yStart++) {
+                            for (xStart = 0; xStart < xDim; xStart++) {
+                                threePreviousColor = NONE;
+                                twoPreviousColor = NONE;
+                                onePreviousColor = NONE;
+                                presentColor = NONE;
+                                presentBrightColor = NONE;
+                                threePreviousWidth = 0;
+                                twoPreviousWidth = 0;
+                                onePreviousWidth = 0;
+                                presentWidth = 0;
+                                threePreviousBrightness = false;
+                                twoPreviousBrightness = false;
+                                onePreviousBrightness = false;
+                                presentBrightness = false;
+                                for (x = xStart, y = yStart, z = 0; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++) {
+                                    pos = z * xySlice + y * xDim + x;
+                                    if ((buffer[pos] == presentColor) || (buffer[pos] == presentBrightColor)) {
+                                        presentWidth++;
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueX = (blueStartX + x) >> 1;
+                                            blueY = (blueStartY + y) >> 1;
+                                            blueZ = (blueStartZ + z) >> 1;    
+                                        }
+                                        if ((!presentBrightness) && (buffer[pos] >= BRIGHT_RED)) {
+                                            presentBrightness = true;
+                                        }
+                                    }
+                                    else {
+                                        threePreviousColor = twoPreviousColor;
+                                        threePreviousWidth = twoPreviousWidth;
+                                        twoPreviousColor = onePreviousColor;
+                                        twoPreviousWidth = onePreviousWidth;
+                                        onePreviousColor = presentColor;
+                                        onePreviousWidth = presentWidth;
+                                        threePreviousBrightness = twoPreviousBrightness;
+                                        twoPreviousBrightness = onePreviousBrightness;
+                                        onePreviousBrightness = presentBrightness;
+                                        threePreviousObjectIndex = twoPreviousObjectIndex;
+                                        twoPreviousObjectIndex = onePreviousObjectIndex;
+                                        onePreviousObjectIndex = presentObjectIndex;
+                                        if (buffer[pos] < BRIGHT_RED) {
+                                            presentColor = buffer[pos];
+                                            if (buffer[pos] == NONE) {
+                                                presentBrightColor = NONE;
+                                            }
+                                            else {
+                                                presentBrightColor = presentColor + 3;
+                                            }
+                                            presentBrightness = false;
+                                        }
+                                        else {
+                                            presentBrightColor = buffer[pos];
+                                            presentColor = presentBrightColor - 3;
+                                            presentBrightness = true;
+                                            
+                                        }
+                                        presentWidth = 1;
+                                        checkForSynapseZ(); 
+                                        if ((presentColor == BRIGHT_BLUE) || (presentColor == BLUE)) {
+                                            blueStartX = x;
+                                            blueStartY = y;
+                                            blueStartZ = z;
+                                            blueX = x;
+                                            blueY = y;
+                                            blueZ = z; 
+                                            presentObjectIndex = colorObjects[pos];
+                                        }
+                                        else if ((presentColor == BRIGHT_RED) || (presentColor == RED)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                        else if ((presentColor == BRIGHT_GREEN) || (presentColor == GREEN)) {
+                                            presentObjectIndex = 0;
+                                        }
+                                    }
+                                } // for (x = xStart, y = yStart, z = 0; (x >= 0) && (y <= yDim - 1) && (z <= zDim - 1); x--, y++, z++)
+                                threePreviousColor = twoPreviousColor;
+                                threePreviousWidth = twoPreviousWidth;
+                                twoPreviousColor = onePreviousColor;
+                                twoPreviousWidth = onePreviousWidth;
+                                onePreviousColor = presentColor;
+                                onePreviousWidth = presentWidth;
+                                threePreviousBrightness = twoPreviousBrightness;
+                                twoPreviousBrightness = onePreviousBrightness;
+                                onePreviousBrightness = presentBrightness;
+                                threePreviousObjectIndex = twoPreviousObjectIndex;
+                                twoPreviousObjectIndex = onePreviousObjectIndex;
+                                onePreviousObjectIndex = presentObjectIndex;
+                                checkForSynapseZ();
+                            } // for (xStart = 0; xStart < xDim; xStart++)
+                        } // for (yStart = 0; yStart < yDim; yStart++)
+                        System.out.println("Number of synapses found searching parallel to (-delX = delY = delZ) = " + (numSynapses - previousNumSynapses));
+                        Preferences.debug("Number of synapses found searching parallel to (-delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n");
+                        dataString += "\nNumber of synapses found searching parallel to (-delX = delY = delZ) = " + (numSynapses - previousNumSynapses) + "\n";
+                        previousNumSynapses = numSynapses;
+
+
+                        if (threadStopped) {
+                            finalize();
+
+                            return;
+                        }
+                        
+                        System.out.println("Total synapses found = " + numSynapses);
+                        Preferences.debug("Total synapses found = " + numSynapses + "\n");
+                        dataString += "\nTotal synapses found = " + numSynapses + "\n";
+                        dataString += "Minimum blue count = " + minimumBlueCount + "\n";
+                        dataString += "Maximum blue count = " + maximumBlueCount + "\n";
+                        averageBlueCount = (double)totalBlueCount/numSynapses;
+                        dataString += "Average blue count = " + String.format("%.2f\n",averageBlueCount);
+                        blueStandardDeviation = (totalBlueCountSquared - (double)totalBlueCount * (double)totalBlueCount/numSynapses)/(numSynapses - 1);
+                        blueStandardDeviation = Math.sqrt(blueStandardDeviation);
+                        dataString += "Blue count standard deviation = " + String.format("%.2f\n",blueStandardDeviation);
+                        fileDirectory = srcImage.getImageDirectory();
+                        fileName = srcImage.getImageName() + ".txt";
+                        file = new File(fileDirectory + fileName);
+
+                        try {
+                            raFile = new RandomAccessFile(file, "rw");
+
+                            // Necessary so that if this is an overwritten file there isn't any
+                            // junk at the end
+                            raFile.setLength(0);
+                            raFile.write(dataString.getBytes());
+                            raFile.close();
+                        } catch (FileNotFoundException e) {
+                            MipavUtil.displayError("FileNotFoundException " + e);
+                        } catch (IOException e) {
+                            MipavUtil.displayError("IOException " + e);
+                        }
+                        
+                        
+                        for (i = 0; i < colorObjects.length; i++) {
+                            if (synapseBlueFound[colorObjects[i]] == 0) {
+                                colorObjects[i] = 0;    
+                            }
+                        }
+                        
+                        for (i = 0; i < length; i++) {
+                            if (colorObjects[i] > 0) {
+                                buffer[i] = (byte)255;
+                            }
+                            else {
+                                buffer[i] = 0;
+                            }
+                        }
+                       
+                        
+                    } // for (xsec = 0; xsec < xDim - xyOverlapLength; xsec += xyIncrement)
+                } // for (ysec = 0; ysec < yDim - xyOverlapLength; ysec += xyIncrement)
+            } // for (zsec = 0; zsec < zDim - zOverlapLength; zsec += zIncrement)
         raFile.close();
         }
         catch (IOException e) {
@@ -489,6 +3177,901 @@ public class PlugInAlgorithmLargeSynapse extends AlgorithmBase {
             return;
         }
         return;
+    }
+    
+//  Finding red, blue, green or green, blue, red with all 3 colors in the appropriate width range
+    // means that a synapse has been found within a plane
+    private void checkForSynapseXY() {
+       int i;
+       short blueXWidth;
+       short blueYWidth;
+       short blueZWidth;
+       if ((threePreviousBrightness && twoPreviousBrightness && onePreviousBrightness &&
+           (twoPreviousColor == BLUE) && (twoPreviousWidth >= blueMinXY) && (twoPreviousWidth <= blueMaxXY)) && 
+           (((threePreviousColor == RED) && (threePreviousWidth >= redMin) && (threePreviousWidth <= redMax) &&
+           (onePreviousColor == GREEN) && (onePreviousWidth >= greenMin) && (onePreviousWidth <= greenMax)) ||
+           ((threePreviousColor == GREEN) && (threePreviousWidth >= greenMin) && (threePreviousWidth <= greenMax) &&
+           (onePreviousColor == RED) && (onePreviousWidth >= redMin) && (onePreviousWidth <= redMax)))) {
+           
+           if (synapseBlueFound[twoPreviousObjectIndex] > 0) {
+               return;
+           }
+           synapseBlueFound[twoPreviousObjectIndex] = 1;
+           blueCount = blueCountList.get(twoPreviousObjectIndex-1).intValue();
+           centerBlueX = blueCenterXList.get(twoPreviousObjectIndex-1).shortValue();
+           centerBlueY = blueCenterYList.get(twoPreviousObjectIndex-1).shortValue();
+           centerBlueZ = blueCenterZList.get(twoPreviousObjectIndex-1).shortValue();
+           blueXWidth = blueXWidthList.get(twoPreviousObjectIndex-1).shortValue();
+           blueYWidth = blueYWidthList.get(twoPreviousObjectIndex-1).shortValue();
+           blueZWidth = blueZWidthList.get(twoPreviousObjectIndex-1).shortValue();
+           dataString += String.format("%-10d%-10d%-10d%-10d%-10d%-10d%-10d%-10d\n",
+                   numSynapses+1, centerBlueX, centerBlueY, centerBlueZ, blueCount,
+                   blueXWidth, blueYWidth, blueZWidth);
+           if (blueCount < minimumBlueCount) {
+               minimumBlueCount = blueCount;
+           }
+           if (blueCount > maximumBlueCount) {
+               maximumBlueCount = blueCount;
+           }
+           totalBlueCount += blueCount;
+           totalBlueCountSquared += blueCount * blueCount;
+           numSynapses++;
+       }
+    }
+    
+    //Finding red, blue, green or green, blue, red with all 3 colors in the appropriate width range
+    // means that a synapse has been found between planes
+    private void checkForSynapseZ() {
+       int i;
+       short blueXWidth;
+       short blueYWidth;
+       short blueZWidth;
+       if ((threePreviousBrightness && twoPreviousBrightness && onePreviousBrightness &&
+           (twoPreviousColor == BLUE) && (twoPreviousWidth >= blueMinZ) && (twoPreviousWidth <= blueMaxZ)) && 
+           (((threePreviousColor == RED) && (threePreviousWidth >= redMin) && (threePreviousWidth <= redMax) &&
+           (onePreviousColor == GREEN) && (onePreviousWidth >= greenMin) && (onePreviousWidth <= greenMax)) ||
+           ((threePreviousColor == GREEN) && (threePreviousWidth >= greenMin) && (threePreviousWidth <= greenMax) &&
+           (onePreviousColor == RED) && (onePreviousWidth >= redMin) && (onePreviousWidth <= redMax)))) {
+           if (synapseBlueFound[twoPreviousObjectIndex] > 0) {
+               return;
+           }
+           synapseBlueFound[twoPreviousObjectIndex] = 1;
+           blueCount = blueCountList.get(twoPreviousObjectIndex-1).intValue();
+           centerBlueX = blueCenterXList.get(twoPreviousObjectIndex-1).shortValue();
+           centerBlueY = blueCenterYList.get(twoPreviousObjectIndex-1).shortValue();
+           centerBlueZ = blueCenterZList.get(twoPreviousObjectIndex-1).shortValue();
+           blueXWidth = blueXWidthList.get(twoPreviousObjectIndex-1).shortValue();
+           blueYWidth = blueYWidthList.get(twoPreviousObjectIndex-1).shortValue();
+           blueZWidth = blueZWidthList.get(twoPreviousObjectIndex-1).shortValue();
+           dataString += String.format("%-10d%-10d%-10d%-10d%-10d%-10d%-10d%-10d\n",
+                   numSynapses+1, centerBlueX, centerBlueY, centerBlueZ, blueCount,
+                   blueXWidth, blueYWidth, blueZWidth);
+           if (blueCount < minimumBlueCount) {
+               minimumBlueCount = blueCount;
+           }
+           if (blueCount > maximumBlueCount) {
+               maximumBlueCount = blueCount;
+           }
+           totalBlueCount += blueCount;
+           totalBlueCountSquared += blueCount * blueCount;
+           numSynapses++;
+       }
+    }
+    
+    private void identifyObjects() {
+        int i;
+        int x;
+        int y;
+        int z;
+        int zPos;
+        int yPos;
+        boolean change;
+        change = true;
+        int del;
+        int maxZDel;
+        int maxYDel;
+        int maxYZDel;
+        int maxXDel;
+        int maxDel;
+        int xLow;
+        int xHigh;
+        int yLow;
+        int yHigh;
+        int zLow;
+        int zHigh;
+        int x2;
+        int y2;
+        int z2;
+        int z2Pos;
+        int y2Pos;
+        int i2;
+        int lowBlueX = 0;
+        int highBlueX = 0;
+        int lowBlueY = 0;
+        int highBlueY = 0;
+        int lowBlueZ = 0;
+        int highBlueZ = 0;
+        colorObjects = new int[length];
+        if (blueCountList == null) {
+            blueCountList = new ArrayList<Integer>();
+        }
+        else {
+            blueCountList.clear();
+        }
+        if (blueCenterXList == null) {
+             blueCenterXList = new ArrayList<Short>();
+        }
+        else {
+            blueCenterXList.clear();
+        }
+        if (blueCenterYList == null) {
+            blueCenterYList = new ArrayList<Short>();
+        }
+        else {
+            blueCenterYList.clear();
+        }
+        if (blueCenterZList == null) {
+            blueCenterZList = new ArrayList<Short>();
+        }
+        else {
+            blueCenterZList.clear();
+        }
+        if (blueXWidthList == null) {
+            blueXWidthList = new ArrayList<Short>();
+        }
+        else {
+            blueXWidthList.clear();
+        }
+        if (blueYWidthList == null) {
+            blueYWidthList = new ArrayList<Short>();
+        }
+        else {
+            blueYWidthList.clear();
+        }
+        if (blueZWidthList == null) {
+            blueZWidthList = new ArrayList<Short>();
+        }
+        else {
+             blueZWidthList.clear();
+        }
+        for (z = 0; z < zLength; z++) {
+            zPos = z * xySlice;
+            maxZDel = Math.max(z, zLength - 1 - z);
+            for (y = 0; y < yLength; y++) {
+                yPos = zPos + y * xLength;
+                maxYDel = Math.max(y, yLength - 1 - y);
+                maxYZDel = Math.max(maxYDel, maxZDel);
+                for (x = 0; x < xLength; x++) {
+                    i = yPos + x; 
+                    maxXDel = Math.max(x, xDim - 1 - x);
+                    maxDel = Math.max(maxXDel, maxYZDel); 
+                    if ((colorObjects[i] == 0) && ((buffer[i] == BLUE) || (buffer[i] == BRIGHT_BLUE))) {
+                        change = true;
+                        colorObjects[i] = ++blueObjectIndex;
+                        blueCount = 1;
+                        centerBlueX = x;
+                        centerBlueY = y;
+                        centerBlueZ = z;
+                        lowBlueX = x;
+                        highBlueX = x;
+                        lowBlueY = y;
+                        highBlueY = y;
+                        lowBlueZ = z;
+                        highBlueZ = z;
+                        del = -1;
+                        while (change) {
+                            change = false;
+                            if (del < maxDel) {
+                                del++;   
+                            }
+                            xLow = Math.max(0, x - del);
+                            xHigh = Math.min(xDim - 1, x + del);
+                            yLow = Math.max(0, y - del);
+                            yHigh = Math.min(yDim - 1, y + del);
+                            zLow = Math.max(0, z - del);
+                            zHigh = Math.min(zDim - 1, z + del);
+                            for (z2 = zLow; z2 <= zHigh; z2++) {
+                                z2Pos = z2 * xySlice;
+                                for (y2 = yLow; y2 <= yHigh; y2++) {
+                                    y2Pos = z2Pos + y2 * xDim;
+                                    for (x2 = xLow; x2 <= xHigh; x2++) {
+                                        i2 = y2Pos + x2;
+                                        if ((colorObjects[i2] > 0) && ((buffer[i2] == BRIGHT_BLUE) || (buffer[i2] == BLUE))) {
+                                            if ((x2 > 0) && (colorObjects[i2-1] == 0) && ((buffer[i2-1] == BRIGHT_BLUE) || (buffer[i2-1] == BLUE))) {
+                                                colorObjects[i2-1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 - 1);
+                                                centerBlueY += y2;
+                                                centerBlueZ += z2;
+                                                if ((x2 - 1) < lowBlueX) {
+                                                    lowBlueX = x2 - 1;   
+                                                }
+                                                if ((x2 - 1) > highBlueX) {
+                                                    highBlueX = x2 - 1;
+                                                }
+                                                if (y2 < lowBlueY) {
+                                                    lowBlueY = y2;
+                                                }
+                                                if (y2 > highBlueY) {
+                                                    highBlueY = y2;
+                                                }
+                                                if (z2 < lowBlueZ) {
+                                                    lowBlueZ = z2;
+                                                }
+                                                if (z2 > highBlueZ) {
+                                                    highBlueZ = z2;
+                                                }
+                                            }
+                                            if ((x2 < xDim - 1) && (colorObjects[i2+1] == 0) && ((buffer[i2+1] == BRIGHT_BLUE) || (buffer[i2+1] == BLUE))) {
+                                                colorObjects[i2+1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 + 1);
+                                                centerBlueY += y2;
+                                                centerBlueZ += z2;
+                                                if ((x2 + 1) < lowBlueX) {
+                                                    lowBlueX = x2 + 1;   
+                                                }
+                                                if ((x2 + 1) > highBlueX) {
+                                                    highBlueX = x2 + 1;
+                                                }
+                                                if (y2 < lowBlueY) {
+                                                    lowBlueY = y2;
+                                                }
+                                                if (y2 > highBlueY) {
+                                                    highBlueY = y2;
+                                                }
+                                                if (z2 < lowBlueZ) {
+                                                    lowBlueZ = z2;
+                                                }
+                                                if (z2 > highBlueZ) {
+                                                    highBlueZ = z2;
+                                                }
+                                            }
+                                            if ((y2 > 0)&& (colorObjects[i2-xDim] == 0) && ((buffer[i2-xDim] == BRIGHT_BLUE) || (buffer[i2-xDim] == BLUE))) {
+                                                colorObjects[i2-xDim] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += x2;
+                                                centerBlueY += (y2 - 1);
+                                                centerBlueZ += z2;
+                                                if (x2 < lowBlueX) {
+                                                    lowBlueX = x2;
+                                                }
+                                                if (x2 > highBlueX) {
+                                                    highBlueX = x2;
+                                                }
+                                                if ((y2 - 1) < lowBlueY) {
+                                                    lowBlueY = y2 - 1;   
+                                                }
+                                                if ((y2 - 1) > highBlueY) {
+                                                    highBlueY = y2 - 1;
+                                                }
+                                                if (z2 < lowBlueZ) {
+                                                    lowBlueZ = z2;
+                                                }
+                                                if (z2 > highBlueZ) {
+                                                    highBlueZ = z2;
+                                                }
+                                            }
+                                            if ((y2 < yDim - 1) && (colorObjects[i2+xDim] == 0) && ((buffer[i2+xDim] == BRIGHT_BLUE) || (buffer[i2+xDim] == BLUE))) {
+                                                colorObjects[i2+xDim] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += x2;
+                                                centerBlueY += (y2 + 1);
+                                                centerBlueZ += z2;
+                                                if (x2 < lowBlueX) {
+                                                    lowBlueX = x2;
+                                                }
+                                                if (x2 > highBlueX) {
+                                                    highBlueX = x2;
+                                                }
+                                                if ((y2 + 1) < lowBlueY) {
+                                                    lowBlueY = y2 + 1;   
+                                                }
+                                                if ((y2 + 1) > highBlueY) {
+                                                    highBlueY = y2 + 1;
+                                                }
+                                                if (z2 < lowBlueZ) {
+                                                    lowBlueZ = z2;
+                                                }
+                                                if (z2 > highBlueZ) {
+                                                    highBlueZ = z2;
+                                                }
+                                            }
+                                            if ((z2 > 0) && (colorObjects[i2-xySlice] == 0) && ((buffer[i2-xySlice] == BRIGHT_BLUE) || (buffer[i2-xySlice] == BLUE))) {
+                                                colorObjects[i2-xySlice] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += x2;
+                                                centerBlueY += y2;
+                                                centerBlueZ += (z2 - 1);
+                                                if (x2 < lowBlueX) {
+                                                    lowBlueX = x2;
+                                                }
+                                                if (x2 > highBlueX) {
+                                                    highBlueX = x2;
+                                                }
+                                                if (y2 < lowBlueY) {
+                                                    lowBlueY = y2;
+                                                }
+                                                if (y2 > highBlueY) {
+                                                    highBlueY = y2;
+                                                }
+                                                if ((z2 - 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 - 1;   
+                                                }
+                                                if ((z2 - 1) > highBlueZ) {
+                                                    highBlueZ = z2 - 1;
+                                                }
+                                            }
+                                            if ((z2 < zDim - 1) && (colorObjects[i2+xySlice] == 0) && ((buffer[i2+xySlice] == BRIGHT_BLUE) || (buffer[i2+xySlice] == BLUE))) {
+                                                colorObjects[i2+xySlice] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += x2;
+                                                centerBlueY += y2;
+                                                centerBlueZ += (z2 + 1);
+                                                if (x2 < lowBlueX) {
+                                                    lowBlueX = x2;
+                                                }
+                                                if (x2 > highBlueX) {
+                                                    highBlueX = x2;
+                                                }
+                                                if (y2 < lowBlueY) {
+                                                    lowBlueY = y2;
+                                                }
+                                                if (y2 > highBlueY) {
+                                                    highBlueY = y2;
+                                                }
+                                                if ((z2 + 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 + 1;   
+                                                }
+                                                if ((z2 + 1) > highBlueZ) {
+                                                    highBlueZ = z2 + 1;
+                                                }
+                                            }
+                                            if ((x2 > 0) && (y2 > 0) && (colorObjects[i2-xDim-1] == 0) && ((buffer[i2-xDim-1] == BRIGHT_BLUE) || (buffer[i2-xDim-1] == BLUE))) {
+                                                colorObjects[i2-xDim-1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 - 1);
+                                                centerBlueY += (y2 - 1);
+                                                centerBlueZ += z2;
+                                                if ((x2 - 1) < lowBlueX) {
+                                                    lowBlueX = x2 - 1;   
+                                                }
+                                                if ((x2 - 1) > highBlueX) {
+                                                    highBlueX = x2 - 1;
+                                                }
+                                                if ((y2 - 1) < lowBlueY) {
+                                                    lowBlueY = y2 - 1;   
+                                                }
+                                                if ((y2 - 1) > highBlueY) {
+                                                    highBlueY = y2 - 1;
+                                                }
+                                                if (z2 < lowBlueZ) {
+                                                    lowBlueZ = z2;
+                                                }
+                                                if (z2 > highBlueZ) {
+                                                    highBlueZ = z2;
+                                                }
+                                            }
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (colorObjects[i2+xDim-1] == 0) && ((buffer[i2+xDim-1] == BRIGHT_BLUE) || (buffer[i2+xDim-1] == BLUE))) {
+                                                colorObjects[i2+xDim-1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 - 1);
+                                                centerBlueY += (y2 + 1);
+                                                centerBlueZ += z2;
+                                                if ((x2 - 1) < lowBlueX) {
+                                                    lowBlueX = x2 - 1;   
+                                                }
+                                                if ((x2 - 1) > highBlueX) {
+                                                    highBlueX = x2 - 1;
+                                                }
+                                                if ((y2 + 1) < lowBlueY) {
+                                                    lowBlueY = y2 + 1;   
+                                                }
+                                                if ((y2 + 1) > highBlueY) {
+                                                    highBlueY = y2 + 1;
+                                                }
+                                                if (z2 < lowBlueZ) {
+                                                    lowBlueZ = z2;
+                                                }
+                                                if (z2 > highBlueZ) {
+                                                    highBlueZ = z2;
+                                                }
+                                            }
+                                            if ((x2 < xDim-1) && (y2 > 0) && (colorObjects[i2-xDim+1] == 0) && ((buffer[i2-xDim+1] == BRIGHT_BLUE) || (buffer[i2-xDim+1] == BLUE))) {
+                                                colorObjects[i2-xDim+1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 + 1);
+                                                centerBlueY += (y2 - 1);
+                                                centerBlueZ += z2;
+                                                if ((x2 + 1) < lowBlueX) {
+                                                    lowBlueX = x2 + 1;   
+                                                }
+                                                if ((x2 + 1) > highBlueX) {
+                                                    highBlueX = x2 + 1;
+                                                }
+                                                if ((y2 - 1) < lowBlueY) {
+                                                    lowBlueY = y2 - 1;   
+                                                }
+                                                if ((y2 - 1) > highBlueY) {
+                                                    highBlueY = y2 - 1;
+                                                }
+                                                if (z2 < lowBlueZ) {
+                                                    lowBlueZ = z2;
+                                                }
+                                                if (z2 > highBlueZ) {
+                                                    highBlueZ = z2;
+                                                }
+                                            }
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (colorObjects[i2+xDim+1] == 0) && ((buffer[i2+xDim+1] == BRIGHT_BLUE) || (buffer[i2+xDim+1] == BLUE))) {
+                                                colorObjects[i2+xDim+1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 + 1);
+                                                centerBlueY += (y2 + 1);
+                                                centerBlueZ += z2;
+                                                if ((x2 + 1) < lowBlueX) {
+                                                    lowBlueX = x2 + 1;   
+                                                }
+                                                if ((x2 + 1) > highBlueX) {
+                                                    highBlueX = x2 + 1;
+                                                }
+                                                if ((y2 + 1) < lowBlueY) {
+                                                    lowBlueY = y2 + 1;   
+                                                }
+                                                if ((y2 + 1) > highBlueY) {
+                                                    highBlueY = y2 + 1;
+                                                }
+                                                if (z2 < lowBlueZ) {
+                                                    lowBlueZ = z2;
+                                                }
+                                                if (z2 > highBlueZ) {
+                                                    highBlueZ = z2;
+                                                }
+                                            }
+                                            if ((x2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-1] == 0) && ((buffer[i2-xySlice-1] == BRIGHT_BLUE) || (buffer[i2-xySlice-1] == BLUE))) {
+                                                colorObjects[i2-xySlice-1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 - 1);
+                                                centerBlueY += y2;
+                                                centerBlueZ += (z2 - 1);
+                                                if ((x2 - 1) < lowBlueX) {
+                                                    lowBlueX = x2 - 1;   
+                                                }
+                                                if ((x2 - 1) > highBlueX) {
+                                                    highBlueX = x2 - 1;
+                                                }
+                                                if (y2 < lowBlueY) {
+                                                    lowBlueY = y2;
+                                                }
+                                                if (y2 > highBlueY) {
+                                                    highBlueY = y2;
+                                                }
+                                                if ((z2 - 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 - 1;   
+                                                }
+                                                if ((z2 - 1) > highBlueZ) {
+                                                    highBlueZ = z2 - 1;
+                                                }
+                                            }
+                                            if ((x2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-1] == 0) && ((buffer[i2+xySlice-1] == BRIGHT_BLUE) || (buffer[i2+xySlice-1] == BLUE))) {
+                                                colorObjects[i2+xySlice-1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 - 1);
+                                                centerBlueY += y2;
+                                                centerBlueZ += (z2 + 1);
+                                                if ((x2 - 1) < lowBlueX) {
+                                                    lowBlueX = x2 - 1;   
+                                                }
+                                                if ((x2 - 1) > highBlueX) {
+                                                    highBlueX = x2 - 1;
+                                                }
+                                                if (y2 < lowBlueY) {
+                                                    lowBlueY = y2;
+                                                }
+                                                if (y2 > highBlueY) {
+                                                    highBlueY = y2;
+                                                }
+                                                if ((z2 + 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 + 1;   
+                                                }
+                                                if ((z2 + 1) > highBlueZ) {
+                                                    highBlueZ = z2 + 1;
+                                                }
+                                            }
+                                            if ((x2 < xDim-1) && (z2 > 0) && (colorObjects[i2-xySlice+1] == 0) && ((buffer[i2-xySlice+1] == BRIGHT_BLUE) || (buffer[i2-xySlice+1] == BLUE))) {
+                                                colorObjects[i2-xySlice+1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 + 1);
+                                                centerBlueY += y2;
+                                                centerBlueZ += (z2 - 1);
+                                                if ((x2 + 1) < lowBlueX) {
+                                                    lowBlueX = x2 + 1;   
+                                                }
+                                                if ((x2 + 1) > highBlueX) {
+                                                    highBlueX = x2 + 1;
+                                                }
+                                                if (y2 < lowBlueY) {
+                                                    lowBlueY = y2;
+                                                }
+                                                if (y2 > highBlueY) {
+                                                    highBlueY = y2;
+                                                }
+                                                if ((z2 - 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 - 1;   
+                                                }
+                                                if ((z2 - 1) > highBlueZ) {
+                                                    highBlueZ = z2 - 1;
+                                                }
+                                            }
+                                            if ((x2 < xDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+1] == 0) && ((buffer[i2+xySlice+1] == BRIGHT_BLUE) || (buffer[i2+xySlice+1] == BLUE))) {
+                                                colorObjects[i2+xySlice+1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 + 1);
+                                                centerBlueY += y2;
+                                                centerBlueZ += (z2 + 1);
+                                                if ((x2 + 1) < lowBlueX) {
+                                                    lowBlueX = x2 + 1;   
+                                                }
+                                                if ((x2 + 1) > highBlueX) {
+                                                    highBlueX = x2 + 1;
+                                                }
+                                                if (y2 < lowBlueY) {
+                                                    lowBlueY = y2;
+                                                }
+                                                if (y2 > highBlueY) {
+                                                    highBlueY = y2;
+                                                }
+                                                if ((z2 + 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 + 1;   
+                                                }
+                                                if ((z2 + 1) > highBlueZ) {
+                                                    highBlueZ = z2 + 1;
+                                                }
+                                            }
+                                            if ((y2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-xDim] == 0) && ((buffer[i2-xySlice-xDim] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim] == BLUE))) {
+                                                colorObjects[i2-xySlice-xDim] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += x2;
+                                                centerBlueY += (y2 - 1);
+                                                centerBlueZ += (z2 - 1);
+                                                if (x2 < lowBlueX) {
+                                                    lowBlueX = x2;
+                                                }
+                                                if (x2 > highBlueX) {
+                                                    highBlueX = x2;
+                                                }
+                                                if ((y2 - 1) < lowBlueY) {
+                                                    lowBlueY = y2 - 1;   
+                                                }
+                                                if ((y2 - 1) > highBlueY) {
+                                                    highBlueY = y2 - 1;
+                                                }
+                                                if ((z2 - 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 - 1;   
+                                                }
+                                                if ((z2 - 1) > highBlueZ) {
+                                                    highBlueZ = z2 - 1;
+                                                }
+                                            }
+                                            if ((y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim] == 0) && ((buffer[i2+xySlice-xDim] == BRIGHT_BLUE) || (buffer[i2+xySlice-xDim] == BLUE))) {
+                                                colorObjects[i2+xySlice-xDim] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += x2;
+                                                centerBlueY += (y2 - 1);
+                                                centerBlueZ += (z2 + 1);
+                                                if (x2 < lowBlueX) {
+                                                    lowBlueX = x2;
+                                                }
+                                                if (x2 > highBlueX) {
+                                                    highBlueX = x2;
+                                                }
+                                                if ((y2 - 1) < lowBlueY) {
+                                                    lowBlueY = y2 - 1;   
+                                                }
+                                                if ((y2 - 1) > highBlueY) {
+                                                    highBlueY = y2 - 1;
+                                                }
+                                                if ((z2 + 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 + 1;   
+                                                }
+                                                if ((z2 + 1) > highBlueZ) {
+                                                    highBlueZ = z2 + 1;
+                                                }
+                                            }
+                                            if ((y2 < yDim-1) && (z2 > 0) && (colorObjects[i2-xySlice+xDim] == 0) && ((buffer[i2-xySlice+xDim] == BRIGHT_BLUE) || (buffer[i2-xySlice+xDim] == BLUE))) {
+                                                colorObjects[i2-xySlice+xDim] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += x2;
+                                                centerBlueY += (y2 + 1);
+                                                centerBlueZ += (z2 - 1);
+                                                if (x2 < lowBlueX) {
+                                                    lowBlueX = x2;
+                                                }
+                                                if (x2 > highBlueX) {
+                                                    highBlueX = x2;
+                                                }
+                                                if ((y2 + 1) < lowBlueY) {
+                                                    lowBlueY = y2 + 1;   
+                                                }
+                                                if ((y2 + 1) > highBlueY) {
+                                                    highBlueY = y2 + 1;
+                                                }
+                                                if ((z2 - 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 - 1;   
+                                                }
+                                                if ((z2 - 1) > highBlueZ) {
+                                                    highBlueZ = z2 - 1;
+                                                }
+                                            }
+                                            if ((y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim] == 0) && ((buffer[i2+xySlice+xDim] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim] == BLUE))) {
+                                                colorObjects[i2+xySlice+xDim] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += x2;
+                                                centerBlueY += (y2 + 1);
+                                                centerBlueZ += (z2 + 1);
+                                                if (x2 < lowBlueX) {
+                                                    lowBlueX = x2;
+                                                }
+                                                if (x2 > highBlueX) {
+                                                    highBlueX = x2;
+                                                }
+                                                if ((y2 + 1) < lowBlueY) {
+                                                    lowBlueY = y2 + 1;   
+                                                }
+                                                if ((y2 + 1) > highBlueY) {
+                                                    highBlueY = y2 + 1;
+                                                }
+                                                if ((z2 + 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 + 1;   
+                                                }
+                                                if ((z2 + 1) > highBlueZ) {
+                                                    highBlueZ = z2 + 1;
+                                                }
+                                            }
+                                            if ((x2 > 0) && (y2 > 0) && (z2 > 0)&& (colorObjects[i2-xySlice-xDim-1] == 0) && ((buffer[i2-xySlice-xDim-1] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim-1] == BLUE))) {
+                                                colorObjects[i2-xySlice-xDim-1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 - 1);
+                                                centerBlueY += (y2 - 1);
+                                                centerBlueZ += (z2 - 1);
+                                                if ((x2 - 1) < lowBlueX) {
+                                                    lowBlueX = x2 - 1;   
+                                                }
+                                                if ((x2 - 1) > highBlueX) {
+                                                    highBlueX = x2 - 1;
+                                                }
+                                                if ((y2 - 1) < lowBlueY) {
+                                                    lowBlueY = y2 - 1;   
+                                                }
+                                                if ((y2 - 1) > highBlueY) {
+                                                    highBlueY = y2 - 1;
+                                                }
+                                                if ((z2 - 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 - 1;   
+                                                }
+                                                if ((z2 - 1) > highBlueZ) {
+                                                    highBlueZ = z2 - 1;
+                                                }
+                                            }
+                                            if ((x2 > 0) && (y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim-1] == 0) && ((buffer[i2+xySlice-xDim-1] == BRIGHT_BLUE) ||(buffer[i2+xySlice-xDim-1] == BLUE))) {
+                                                colorObjects[i2+xySlice-xDim-1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 - 1);
+                                                centerBlueY += (y2 - 1);
+                                                centerBlueZ += (z2 + 1);
+                                                if ((x2 - 1) < lowBlueX) {
+                                                    lowBlueX = x2 - 1;   
+                                                }
+                                                if ((x2 - 1) > highBlueX) {
+                                                    highBlueX = x2 - 1;
+                                                }
+                                                if ((y2 - 1) < lowBlueY) {
+                                                    lowBlueY = y2 - 1;   
+                                                }
+                                                if ((y2 - 1) > highBlueY) {
+                                                    highBlueY = y2 - 1;
+                                                }
+                                                if ((z2 + 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 + 1;   
+                                                }
+                                                if ((z2 + 1) > highBlueZ) {
+                                                    highBlueZ = z2 + 1;
+                                                }
+                                            }
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 > 0)&& (colorObjects[i2-xySlice+xDim-1] == 0) && ((buffer[i2-xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i2-xySlice+xDim-1] == BLUE))) {
+                                                colorObjects[i2-xySlice+xDim-1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 - 1);
+                                                centerBlueY += (y2 + 1);
+                                                centerBlueZ += (z2 - 1);
+                                                if ((x2 - 1) < lowBlueX) {
+                                                    lowBlueX = x2 - 1;   
+                                                }
+                                                if ((x2 - 1) > highBlueX) {
+                                                    highBlueX = x2 - 1;
+                                                }
+                                                if ((y2 + 1) < lowBlueY) {
+                                                    lowBlueY = y2 + 1;   
+                                                }
+                                                if ((y2 + 1) > highBlueY) {
+                                                    highBlueY = y2 + 1;
+                                                }
+                                                if ((z2 - 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 - 1;   
+                                                }
+                                                if ((z2 - 1) > highBlueZ) {
+                                                    highBlueZ = z2 - 1;
+                                                }
+                                            }
+                                            if ((x2 > 0) && (y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim-1] == 0) && ((buffer[i2+xySlice+xDim-1] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim-1] == BLUE))) {
+                                                colorObjects[i2+xySlice+xDim-1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 - 1);
+                                                centerBlueY += (y2 + 1);
+                                                centerBlueZ += (z2 + 1);
+                                                if ((x2 - 1) < lowBlueX) {
+                                                    lowBlueX = x2 - 1;   
+                                                }
+                                                if ((x2 - 1) > highBlueX) {
+                                                    highBlueX = x2 - 1;
+                                                }
+                                                if ((y2 + 1) < lowBlueY) {
+                                                    lowBlueY = y2 + 1;   
+                                                }
+                                                if ((y2 + 1) > highBlueY) {
+                                                    highBlueY = y2 + 1;
+                                                }
+                                                if ((z2 + 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 + 1;   
+                                                }
+                                                if ((z2 + 1) > highBlueZ) {
+                                                    highBlueZ = z2 + 1;
+                                                }
+                                            }
+                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 > 0) && (colorObjects[i2-xySlice-xDim+1] == 0) && ((buffer[i2-xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i2-xySlice-xDim+1] == BLUE))) {
+                                                colorObjects[i2-xySlice-xDim+1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 + 1);
+                                                centerBlueY += (y2 - 1);
+                                                centerBlueZ += (z2 - 1);
+                                                if ((x2 + 1) < lowBlueX) {
+                                                    lowBlueX = x2 + 1;   
+                                                }
+                                                if ((x2 + 1) > highBlueX) {
+                                                    highBlueX = x2 + 1;
+                                                }
+                                                if ((y2 - 1) < lowBlueY) {
+                                                    lowBlueY = y2 - 1;   
+                                                }
+                                                if ((y2 - 1) > highBlueY) {
+                                                    highBlueY = y2 - 1;
+                                                }
+                                                if ((z2 - 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 - 1;   
+                                                }
+                                                if ((z2 - 1) > highBlueZ) {
+                                                    highBlueZ = z2 - 1;
+                                                }
+                                            }
+                                            if ((x2 < xDim-1) && (y2 > 0) && (z2 < zDim - 1) && (colorObjects[i2+xySlice-xDim+1] == 0) && ((buffer[i2+xySlice-xDim+1] == BRIGHT_BLUE) || (buffer[i2+xySlice-xDim+1] == BLUE))) {
+                                                colorObjects[i2+xySlice-xDim+1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 + 1);
+                                                centerBlueY += (y2 - 1);
+                                                centerBlueZ += (z2 + 1);
+                                                if ((x2 + 1) < lowBlueX) {
+                                                    lowBlueX = x2 + 1;   
+                                                }
+                                                if ((x2 + 1) > highBlueX) {
+                                                    highBlueX = x2 + 1;
+                                                }
+                                                if ((y2 - 1) < lowBlueY) {
+                                                    lowBlueY = y2 - 1;   
+                                                }
+                                                if ((y2 - 1) > highBlueY) {
+                                                    highBlueY = y2 - 1;
+                                                }
+                                                if ((z2 + 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 + 1;   
+                                                }
+                                                if ((z2 + 1) > highBlueZ) {
+                                                    highBlueZ = z2 + 1;
+                                                }
+                                            }
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 > 0) && (colorObjects[i2-xySlice+xDim+1] == 0) && ((buffer[i2-xySlice+xDim+1] == BRIGHT_BLUE) ||(buffer[i2-xySlice+xDim+1] == BLUE))) {
+                                                colorObjects[i2-xySlice+xDim+1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 + 1);
+                                                centerBlueY += (y2 + 1);
+                                                centerBlueZ += (z2 - 1);
+                                                if ((x2 + 1) < lowBlueX) {
+                                                    lowBlueX = x2 + 1;   
+                                                }
+                                                if ((x2 + 1) > highBlueX) {
+                                                    highBlueX = x2 + 1;
+                                                }
+                                                if ((y2 + 1) < lowBlueY) {
+                                                    lowBlueY = y2 + 1;   
+                                                }
+                                                if ((y2 + 1) > highBlueY) {
+                                                    highBlueY = y2 + 1;
+                                                }
+                                                if ((z2 - 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 - 1;   
+                                                }
+                                                if ((z2 - 1) > highBlueZ) {
+                                                    highBlueZ = z2 - 1;
+                                                }
+                                            }
+                                            if ((x2 < xDim - 1) && (y2 < yDim - 1) && (z2 < zDim - 1) && (colorObjects[i2+xySlice+xDim+1] == 0) && ((buffer[i2+xySlice+xDim+1] == BRIGHT_BLUE) || (buffer[i2+xySlice+xDim+1] == BLUE))) {
+                                                colorObjects[i2+xySlice+xDim+1] = blueObjectIndex;
+                                                change = true;
+                                                blueCount++;
+                                                centerBlueX += (x2 + 1);
+                                                centerBlueY += (y2 + 1);
+                                                centerBlueZ += (z2 + 1);
+                                                if ((x2 + 1) < lowBlueX) {
+                                                    lowBlueX = x2 + 1;   
+                                                }
+                                                if ((x2 + 1) > highBlueX) {
+                                                    highBlueX = x2 + 1;
+                                                }
+                                                if ((y2 + 1) < lowBlueY) {
+                                                    lowBlueY = y2 + 1;   
+                                                }
+                                                if ((y2 + 1) > highBlueY) {
+                                                    highBlueY = y2 + 1;
+                                                }
+                                                if ((z2 + 1) < lowBlueZ) {
+                                                    lowBlueZ = z2 + 1;   
+                                                }
+                                                if ((z2 + 1) > highBlueZ) {
+                                                    highBlueZ = z2 + 1;
+                                                }
+                                            }
+                                        } // if ((colorObjects[i2] > 0) && ((buffer[i2] == BRIGHT_BLUE) || (buffer[i2] == BLUE)))
+                                    } // for (x2 = xLow; x2 <= xHigh; x2++)
+                                } // for (y2 = yLow; y2 <= yHigh; y2++)
+                            } // for (z2 = zLow; z2 <= zHigh; z2++)
+                        } // while (change)
+                        centerBlueX = Math.round((float)centerBlueX/blueCount);
+                        centerBlueY = Math.round((float)centerBlueY/blueCount);
+                        centerBlueZ = Math.round((float)centerBlueZ/blueCount);
+                        blueCountList.add(blueCount);
+                        blueCenterXList.add((short)centerBlueX);
+                        blueCenterYList.add((short)centerBlueY);
+                        blueCenterZList.add((short)centerBlueZ);
+                        blueXWidthList.add((short)(highBlueX - lowBlueX + 1));
+                        blueYWidthList.add((short)(highBlueY - lowBlueY + 1));
+                        blueZWidthList.add((short)(highBlueZ - lowBlueZ + 1));
+                    } // else if ((colorObjects[i] == 0) && ((buffer[i] == BLUE) || (buffer[i] == BRIGHT_BLUE)))
+                } // for (x = 0; x < xDim; x++)
+            } // for (y = 0; y < yDim; y++) 
+        } // for (z = 0; z < zDim; z++)
     }
     
     /**
