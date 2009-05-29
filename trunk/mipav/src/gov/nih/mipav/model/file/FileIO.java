@@ -1736,8 +1736,8 @@ public class FileIO {
                     image = readAnalyze(fileName, fileDir, one);
                     break;
                     
-                case FileUtility.MYSTERY:
-                    image = readMystery(fileName, fileDir, false);
+                case FileUtility.SIEMENSTEXT:
+                    image = readSiemensText(fileName, fileDir, false);
                     break;
 
                 case FileUtility.MGH:
@@ -3839,7 +3839,7 @@ public class FileIO {
     }
 
     /**
-     * Reads an analyze file by calling the read method of the file. Also checks if it's a Cheshire and if so, calls
+     * Reads an siemenstext file by calling the read method of the file. Also checks if it's a Cheshire and if so, calls
      * that method instead. This method contains special code to not display the progress bar should the image be
      * <q>splash.img</q>.
      * 
@@ -3851,17 +3851,17 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readMystery(String fileName, String fileDir, boolean one) {
+    private ModelImage readSiemensText(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
-        FileMystery imageFile = null;
+        FileSiemensText imageFile = null;
 
         if (FileCheshire.isCheshire(fileName, fileDir)) {
             image = readCheshire(fileName, fileDir);
         } else {
 
-            // most likely an Mystery file
+            // most likely an SiemensText file
             try {
-                imageFile = new FileMystery(fileName, fileDir);
+                imageFile = new FileSiemensText(fileName, fileDir);
                 createProgressBar(imageFile, fileName, FILE_READ);
                 image = imageFile.readImage(one);
             } catch (IOException error) {
