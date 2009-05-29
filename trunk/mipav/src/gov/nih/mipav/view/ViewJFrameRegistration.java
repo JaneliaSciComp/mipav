@@ -338,6 +338,8 @@ public class ViewJFrameRegistration extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private JToggleButton translateButton;
+    
+    private JButton calculateCostButton;
 
     /** DOCUMENT ME! */
     private JButton upButton;
@@ -398,6 +400,19 @@ public class ViewJFrameRegistration extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private int zSlice, zSlice2, zLastSlice, zLastSlice2;
+    
+    private JTextArea costFunctionTextArea;
+    
+    /** Scroll Pane for the Text Area **/
+    private JScrollPane costFunctionScrollPane;
+    
+    /** Holds extents, other info about firstImage and SecondImage */
+    private ModelSimpleImage simpleImg1, simpleImg2;
+    
+    /** Identity matrix for testing cost */
+    private TransMatrix tMatrix;
+    
+    private AlgorithmCostFunctions2D algoCost;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -658,6 +673,8 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                 } else {
                     transformC();
                 }
+                
+               
             } else if (mode == ViewJComponentBase.DEFAULT) {
                 componentImage.moveVOIPosition(0, Math.round(pixelIncrement * yRes));
             }
@@ -721,9 +738,16 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         } else if (command.equals("adjMarkMinus")) {
             componentImage.deletePoint(false);
         } else if (command.equals("defaultMode")) {
+        	System.out.println("aaa");
             adjMarkButton.setSelected(false);
             refMarkButton.setSelected(false);
             translateButton.setSelected(false);
+            upButton.setEnabled(false);
+            downButton.setEnabled(false);
+            rightButton.setEnabled(false);
+            leftButton.setEnabled(false);
+            cwButton.setEnabled(false);
+            ccwButton.setEnabled(false);
             componentImage.setCenter(false);
             componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
             setDefaultMode();
@@ -842,6 +866,8 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             close();
         } else if (command.equals("help")) {
             MipavUtil.showHelp("10046");
+        }else if(command.equals("costFunction")) {
+        	calculateCostFunctionValues();
         }
 
     }
@@ -1556,7 +1582,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         // slider for the blending percentages of the reference and adjustable slices
         else if (source == alphaSlider) {
 
-            if ((alphaSlider.getValueIsAdjusting() == true) && ((imageSize > (1024 * 1024)) || !doDrag)) {
+            if ((alphaSlider.getValueIsAdjusting() == true) && ((imageSize > (1296 * 1296)) || !doDrag)) {
                 return;
             }
 
@@ -1825,15 +1851,17 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             textReferenceSlice.addFocusListener(this);
             cpGBC.fill = GridBagConstraints.NONE;
             cpGBC.anchor = GridBagConstraints.CENTER;
-            addControlPanel(textReferenceSlice, cpGBC, 10, 0, 1, 1);
+            cpGBC.insets = new Insets(0, 10, 30, 10);
+            addControlPanel(textReferenceSlice, cpGBC, 2, 1, 1, 1);
 
+            cpGBC.insets = new Insets(10, 10, 10, 10);
             cpGBC.fill = GridBagConstraints.BOTH;
             cpGBC.anchor = GridBagConstraints.WEST;
             labelAdjustedSlice = new JLabel("Adjusted slice index (0 - " + String.valueOf(nImage-1) + ")");
             labelAdjustedSlice.setForeground(Color.black);
             labelAdjustedSlice.setFont(serif12);
             labelAdjustedSlice.setEnabled(true);
-            addControlPanel(labelAdjustedSlice, cpGBC, 0, 1, 2, 1);
+            addControlPanel(labelAdjustedSlice, cpGBC, 0, 2, 2, 1);
 
             slider2 = new JSlider(0, nImage-1, zSlice2);
             slider2.setFont(serif12);
@@ -1854,16 +1882,24 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             labelTable2.put(new Integer(nImage-1), createLabel(String.valueOf(nImage-1)));
             slider2.setLabelTable(labelTable2);
             slider2.setPaintLabels(true);
-            addControlPanel(slider2, cpGBC, 2, 1, 8, 1);
+            addControlPanel(slider2, cpGBC, 2, 2, 8, 1);
 
             textAdjustedSlice = new JTextField(String.valueOf(zSlice2), 4);
+            
             textAdjustedSlice.setFont(serif12);
             textAdjustedSlice.setEnabled(false);
             textAdjustedSlice.addFocusListener(this);
             cpGBC.fill = GridBagConstraints.NONE;
             cpGBC.anchor = GridBagConstraints.CENTER;
-            addControlPanel(textAdjustedSlice, cpGBC, 10, 1, 1, 1);
+            cpGBC.insets = new Insets(0, 10, 30, 10);
+            addControlPanel(textAdjustedSlice, cpGBC, 2, 3, 1, 1);
+            cpGBC.insets = new Insets(10, 10, 10, 10);
         }
+        
+        costFunctionTextArea = new JTextArea(15,38);
+        costFunctionScrollPane = new JScrollPane(costFunctionTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        addControlPanel(costFunctionScrollPane, cpGBC, 10, 0, 5, 5);
+        
 
         cpGBC.fill = GridBagConstraints.BOTH;
         cpGBC.anchor = GridBagConstraints.WEST;
@@ -1872,7 +1908,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         labelAlphaBlend.setForeground(Color.black);
         labelAlphaBlend.setFont(serif12);
         labelAlphaBlend.setEnabled(true);
-        addControlPanel(labelAlphaBlend, cpGBC, 0, 2, 2, 1);
+        addControlPanel(labelAlphaBlend, cpGBC, 0, 4, 2, 1);
 
         // Make labels to be used in display in the alpha blending slider
         Hashtable<Integer, JLabel> dictionary = new Hashtable<Integer, JLabel>();
@@ -1909,7 +1945,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         alphaSlider.setLabelTable(dictionary); // loads the labels made above
         alphaSlider.setValue(50);
 
-        addControlPanel(alphaSlider, cpGBC, 2, 2, 8, 1);
+        addControlPanel(alphaSlider, cpGBC, 2, 4, 8, 1);
         alphaSlider.addChangeListener(this);
 
     }
@@ -2107,6 +2143,8 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             } else {
                 scrollPaneSize = 512;
             }
+            
+
 
             image.setImageOrder(ModelImage.IMAGE_A);
             extents = new int[2];
@@ -2164,6 +2202,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         scrollPane.setBounds(0, 0, scrollPaneSize + 3, scrollPaneSize + 3);
+        
         getContentPane().add(scrollPane);
         scrollPane.setBackground(Color.black);
         scrollPane.setVisible(true);
@@ -2187,6 +2226,21 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         toolBar2.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         movementGroup = new ButtonGroup();
         toolBar2.setBorder(etchedBorder);
+        
+        defaultModeButton = new JToggleButton(MipavUtil.getIcon("pointer.gif"));
+
+        // defaultModeButton.setMargin(new Insets(7, 7, 7, 7));
+        defaultModeButton.addActionListener(al);
+        defaultModeButton.setToolTipText("Return to default mode");
+        defaultModeButton.setActionCommand("defaultMode");
+        defaultModeButton.setSelected(true);
+        defaultModeButton.setRolloverEnabled(true);
+        defaultModeButton.setBorderPainted(false);
+        defaultModeButton.setRolloverIcon(MipavUtil.getIcon("pointerroll.gif"));
+        defaultModeButton.setFocusPainted(false);
+        movementGroup.add(defaultModeButton);
+        toolBar2.add(defaultModeButton);
+        toolBar2.add(makeSeparator());
 
 
         pixelIncrementButton = new JButton(String.valueOf(pixelIncrement));
@@ -2407,24 +2461,29 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         adjMarkMinusButton.setFocusPainted(false);
         toolBar2.add(adjMarkMinusButton);
         toolBar2.add(makeSeparator());
+        
+        calculateCostButton = new JButton("Cost Function");
+        calculateCostButton.addActionListener(al);
+        calculateCostButton.setToolTipText("Calulate Cost Function");
+        calculateCostButton.setFont(MipavUtil.font12B);
 
-        defaultModeButton = new JToggleButton(MipavUtil.getIcon("pointer.gif"));
-
-        // defaultModeButton.setMargin(new Insets(7, 7, 7, 7));
-        defaultModeButton.addActionListener(al);
-        defaultModeButton.setToolTipText("Return to default mode");
-        defaultModeButton.setActionCommand("defaultMode");
-        defaultModeButton.setSelected(true);
-        defaultModeButton.setRolloverEnabled(true);
-        defaultModeButton.setBorderPainted(false);
-        defaultModeButton.setRolloverIcon(MipavUtil.getIcon("pointerroll.gif"));
-        defaultModeButton.setFocusPainted(false);
-        movementGroup.add(defaultModeButton);
-        toolBar2.add(defaultModeButton);
+        // degreeIncrementButton.setMinimumSize(new Dimension(20, 20));
+        calculateCostButton.setMargin(new Insets(7, 7, 7, 7));
+        calculateCostButton.setActionCommand("costFunction");
+        calculateCostButton.setBorderPainted(false);
+        calculateCostButton.setRolloverEnabled(true);
+        toolBar2.add(calculateCostButton);
+        
+        
+        
+        
+        
 
 
         
         toolBar2.setFloatable(false);
+        
+        
 
         return toolBar2;
     }
@@ -2566,9 +2625,10 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             tempX = scrollPaneSize;
         }
 
-        setSize((int) Math.round((tempX) + 3 + getInsets().left + getInsets().right),
-                (int) Math.round(scrollPaneSize + 3 + structureY));
-
+        //setSize((int) Math.round((tempX) + 3 + getInsets().left + getInsets().right),
+               //(int) Math.round(scrollPaneSize + 3 + structureY));
+        
+        setSize(1000,(int) Math.round(scrollPaneSize + 3 + structureY));
 
         zoom = Math.min(zoom, (float) (scrollPane.getViewportBorderBounds().width - 1) / (imageA.getExtents()[0] - 1));
         zoom = Math.min(zoom, (float) (scrollPane.getViewportBorderBounds().height - 1) / (imageA.getExtents()[1] - 1));
@@ -3230,6 +3290,62 @@ public class ViewJFrameRegistration extends ViewJFrameBase
         doneLeastSquares = false;
         updateImages(true);
     } // end of private void transformC()
+    
+    
+    private void calculateCostFunctionValues() {
+    	
+    	 int bin1 = 256;
+         double possibleIntValues1 = imageA.getMax() - imageA.getMin() + 1;
+
+         if (((imageA.getType() == ModelStorageBase.BYTE) || (imageA.getType() == ModelStorageBase.UBYTE) ||
+                  (imageA.getType() == ModelStorageBase.SHORT) ||
+                  (imageA.getType() == ModelStorageBase.USHORT) ||
+                  (imageA.getType() == ModelStorageBase.INTEGER) ||
+                  (imageA.getType() == ModelStorageBase.UINTEGER) ||
+                  (imageA.getType() == ModelStorageBase.LONG)) && (possibleIntValues1 < 256)) {
+             bin1 = (int) Math.round(possibleIntValues1);
+         }
+         
+         
+         simpleImg1 = new ModelSimpleImage(imageA.getExtents(), imageA.getFileInfo(0).getResolutions(),
+        		 imageA);
+
+         simpleImg2 = new ModelSimpleImage(imageB.getExtents(), imageB.getFileInfo(0).getResolutions(),
+                 imageB);
+         
+         
+         float smoothSize = 1;
+         double cost;
+         
+         algoCost = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED, bin1, smoothSize);
+         tMatrix = new TransMatrix(3);
+         cost = algoCost.cost(tMatrix);
+         costFunctionTextArea.append("Correlation Ratio Smoothed" + ":\t\t" + cost + "\n");
+         
+         algoCost = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, AlgorithmCostFunctions2D.MUTUAL_INFORMATION_SMOOTHED, bin1, smoothSize);
+         tMatrix = new TransMatrix(3);
+         cost = algoCost.cost(tMatrix);
+         costFunctionTextArea.append("Mutual Information Smoothed" + ":\t\t" + cost + "\n");
+         
+         algoCost = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED, bin1, smoothSize);
+         tMatrix = new TransMatrix(3);
+         cost = algoCost.cost(tMatrix);
+         costFunctionTextArea.append("Normalized Mutual Information Smoothed" + ":\t" + cost + "\n");
+         
+         algoCost = new AlgorithmCostFunctions2D(simpleImg1, simpleImg2, AlgorithmCostFunctions2D.NORMALIZED_XCORRELATION_SMOOTHED, bin1, smoothSize);
+         tMatrix = new TransMatrix(3);
+         cost = algoCost.cost(tMatrix);
+         costFunctionTextArea.append("Normalized Cross Correlation Smoothed" + ":\t" + cost + "\n");
+         costFunctionTextArea.append("-------------------------------------------------------------------------------------------------\n");
+         
+         
+         if(algoCost != null) {
+        	 algoCost.disposeLocal();
+         	 algoCost = null;
+         }
+    }
+    
+    
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
