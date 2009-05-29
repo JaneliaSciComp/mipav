@@ -115,6 +115,8 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     /** DOCUMENT ME! */
     private JSlider brightSlider, contSlider;
     
+    
+    
 
     /** DOCUMENT ME! */
     private JSplitPane imageSliderPane;
@@ -149,6 +151,8 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     
     private FileInfoDicom dicomInfo;
     
+    FileDicom opener = null;
+    
     private File file;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -173,6 +177,13 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
         	if  (file.getName().toLowerCase().startsWith("dicomdir"))
         	{
                 this.file = file;
+                
+        		try {
+        			opener = new FileDicom(file.getName(), file.getParent()+File.separatorChar);
+        			opener.readHeader(true);
+        		} catch (IOException e) {
+        			MipavUtil.displayError(e.toString());
+        		}
                 init("DICOMDIR Browser");
                 scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
                 ifSuccess = true;
@@ -183,6 +194,20 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
         
 
     }
+    public JDialogDicomDir(Frame parent, File file, FileDicom caller) {
+        super(parent, false);
+        this.opener = caller;
+        if (file != null) {
+                this.file = file;
+                init("DICOMDIR Browser");
+                scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
+                ifSuccess = true;
+        }
+
+    }
+        
+
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -294,14 +319,9 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
      */
     private void init(String title) {
 
-        FileDicom opener = null;
         
-		try {
-			opener = new FileDicom(file.getName(), file.getParent()+File.separatorChar);
-			opener.readHeader(true);
-		} catch (IOException e) {
-			MipavUtil.displayError(e.toString());
-		}
+        
+
         dirInfo = opener.getDirFileInfo();
         dicomInfo = (FileInfoDicom) opener.getFileInfo();
         

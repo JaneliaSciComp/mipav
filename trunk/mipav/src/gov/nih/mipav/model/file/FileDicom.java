@@ -14,6 +14,7 @@ import gov.nih.mipav.model.file.rawjp2.ImgWriterRAW;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogDicomDir;
 
 import java.awt.image.*;
 import java.io.*;
@@ -86,6 +87,7 @@ public class FileDicom extends FileDicomBase {
     
     private boolean encapsulatedJP2 = false;
     
+    /** If file is a DICOMDIR this is false **/
     private boolean notDir = true;
 
     /** Directory of the image file. */
@@ -123,6 +125,7 @@ public class FileDicom extends FileDicomBase {
     
     private FileDicomTagTable tagTable;
     
+    /** Holds sequence of files described in DICOMDIR **/
     private FileDicomSQ dirInfo;
 
 
@@ -509,7 +512,10 @@ public class FileDicom extends FileDicomBase {
     public final boolean isQuiet() {
         return quiet;
     }
-    
+    /**
+     * 
+     * @return true if file is a DICOMDIR 
+     */
     public final boolean isDir() {
         return !notDir;
     }
@@ -1019,7 +1025,7 @@ public class FileDicom extends FileDicomBase {
                 }
             }
         }
-        // Done reading tags
+        // Done reading tags, if DICOMDIR then don't do anything else
 
         if (notDir)
 	        {
@@ -1198,8 +1204,7 @@ public class FileDicom extends FileDicomBase {
         }
         else
         {
-        	for(int i = 0; i < dirInfo.getSequenceLength(); i++)
-        	Preferences.debug("Yo....." + dirInfo.getItem(i).getItemDisplay().toString() + "\n");
+        	JDialogDicomDir dirBrowser = new JDialogDicomDir(null, fileHeader,this);
         	return true;
         }
     }
@@ -1233,6 +1238,7 @@ public class FileDicom extends FileDicomBase {
             if ( !readHeader(true)) {
                 throw (new IOException("DICOM header file error"));
             }
+            
         }
 
         if (fileInfo.getUnitsOfMeasure(0) != FileInfoBase.CENTIMETERS) {
