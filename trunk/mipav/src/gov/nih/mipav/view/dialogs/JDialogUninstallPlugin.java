@@ -272,11 +272,13 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
 			Class plugin = Class.forName(pluginName);
 			ManifestFile mf = ManifestFile.getReference();
 			ArrayList<Class> allDep = mf.removeEntry(plugin);
-			for(int i=0; i<allDep.size(); i++) {
-				if(isInPluginFolder(allDep.get(i))) {
-					File f = new File(pluginDir+allDep.get(i).getName()+".class");
-					boolean delete = f.delete();
-					System.out.println(allDep.get(i)+" deleted "+delete);
+			if(allDep != null) {
+				for(int i=0; i<allDep.size(); i++) {
+					if(isInPluginFolder(allDep.get(i))) {
+						File f = new File(pluginDir+allDep.get(i).getName()+".class");
+						boolean delete = f.delete();
+						System.out.println(allDep.get(i)+" deleted "+delete);
+					}
 				}
 			}
 		} catch (ClassNotFoundException e) {
