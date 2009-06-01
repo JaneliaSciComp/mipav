@@ -225,5 +225,51 @@ public class MipavMath {
     public static final float phase(float real, float imaginary) {
            return (float)Math.atan2(imaginary, real);
     }
+    
+    
+
+    /**
+     * Calculate the dimension value to power of 2.
+     * 
+     * @param dim dimension value.
+     * 
+     * @return value dimension value in power of 2
+     */
+    public static int dimPowerOfTwo(int dim) {
+
+        // 128^3 x 4 is 8MB
+        // 256^3 x 4 is 64MB
+        if (dim <= 16) {
+            return 16;
+        } else if (dim <= 32) {
+            return 32;
+        } else if (dim <= 64) {
+
+            if (dim > 40) {
+                return 64;
+            } 
+            return 32;
+        } else if (dim <= 128) {
+
+            if (dim > 80) {
+                return 128;
+            } 
+            return 64;
+        } else if (dim <= 256) {
+
+            if (dim > 160) {
+                return 256;
+            } 
+            return 128;
+        } else if (dim <= 512) {
+
+            if (dim > 448) {
+                return 512;
+            } 
+            return 256;
+        } else {
+            return 512;
+        }
+    }
 
 }

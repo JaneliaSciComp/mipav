@@ -535,13 +535,17 @@ public class ModelImage extends ModelStorageBase {
      */
     public void copyFileTypeInfo(ModelImage fromImage) {
         int numInfos;
+        int numFromInfos;
 
         if (getNDims() == 2) {
             numInfos = 1;
+            numFromInfos = 1;
         } else if (getNDims() == 3) {
             numInfos = getExtents()[2];
+            numFromInfos = fromImage.getExtents()[2];
         } else {
             numInfos = getExtents()[2] * getExtents()[3];
+            numFromInfos = fromImage.getExtents()[2] * fromImage.getExtents()[3];
         }
 
         FileInfoBase[] fileInfo = new FileInfoBase[numInfos];
@@ -573,9 +577,15 @@ public class ModelImage extends ModelStorageBase {
                 }
 
                 if (numInfos > i) {
-
+                    if ( i < numFromInfos )
+                    {
                     // more correct information for a Z-axis rotation, so copy the file info on a slice basis
-                    ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) fromImage.getFileInfo(i));
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) fromImage.getFileInfo(i));
+                    }
+                    else
+                    {
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) fromImage.getFileInfo(numFromInfos-1));
+                    }
                 } else {
 
                     // not possible for other rotations because the z-dimension is different
@@ -2056,7 +2066,11 @@ public class ModelImage extends ModelStorageBase {
     }
     
     public boolean is3DImage(){
-    	return (getExtents().length == 3);
+        return (getExtents().length == 3);
+    }
+    
+    public boolean is4DImage(){
+        return (getExtents().length == 4);
     }
     
     /**

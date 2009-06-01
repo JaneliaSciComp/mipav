@@ -2,24 +2,19 @@ package gov.nih.mipav.view.renderer.WildMagic;
 
 
 import gov.nih.mipav.MipavCoordinateSystems;
-import gov.nih.mipav.model.algorithms.AlgorithmTransform;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcat;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
 import gov.nih.mipav.view.ViewJComponentBase;
 import gov.nih.mipav.view.ViewJFrameBase;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewToolBarBuilder;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.JPanelHistoLUT;
 import gov.nih.mipav.view.renderer.JPanelHistoRGB;
 import gov.nih.mipav.view.renderer.JPanelRendererBase;
@@ -40,6 +35,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSlices_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelVolume4D;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
@@ -349,7 +345,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     private JToolBar m_kVOIToolbar;
     private IntVector[] m_kVOIImage = null;
     
-    private JToolBar m_k4DToolbar;
+    private JPanel m_kVolume4DPanel;
+    private JPanelVolume4D m_kVolume4DGUI;
     private boolean m_b4D = false;
     
     
@@ -360,36 +357,36 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     {
     	super(null, null);
     }
+   
 
-    /**
-     * Make a volume rendering frame, which contains the toolbars on the top,
-     * control panel on the left, the volume rendering panel on the right, and
-     * the three orthogonal view ( axial, sagittal, coronal, views) on the
-     * bottom right.
-     *
-     * @param  _imageA First image to display
-     * @param LUTa  LUT of the imageA (if null grayscale LUT is constructed)
-     * @param  _RGBTA  RGB table of imageA
-     * @param  _imageB Second loaded image
-     * @param  LUTb LUT of the imageB
-     * @param  _RGBTB RGB table of imageB
-     */
-    public VolumeTriPlanarInterface(ModelImage _imageA, ModelLUT LUTa, ModelRGB _RGBTA,
-                                    ModelImage _imageB, ModelLUT LUTb, ModelRGB _RGBTB)
+    public VolumeTriPlanarInterface(ModelImage _imageA, ModelImage _imageB, int iFilterType, boolean bCompute, String kDir, int[] aiExtents)
     {
         super(_imageA, _imageB);
-        RGBTA = _RGBTA;
-        RGBTB = _RGBTB;
-        this.LUTa = LUTa;
-        this.LUTb = LUTb;
-
         try {
             setIconImage(MipavUtil.getIconImage("4plane_16x16.gif"));
         } catch (Exception e) {
             e.printStackTrace();
         }
+        imageOrientation = _imageA.getImageOrientation();
+        
+        
 
-        imageOrientation = imageA.getImageOrientation();
+        String kExternalDirs = getExternalDirs();        
+        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
+        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
+        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
+        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        m_kVolumeImageA = new VolumeImage(  _imageA, "A", bCompute, kDir, iFilterType, aiExtents );
+        imageA = m_kVolumeImageA.GetImage();
+        RGBTA = m_kVolumeImageA.GetRGB();
+        this.LUTa = m_kVolumeImageA.GetLUT();
+        if ( imageB != null )
+        {
+            m_kVolumeImageB = new VolumeImage( _imageB, "B", bCompute, kDir, iFilterType, aiExtents  );
+            imageB = m_kVolumeImageB.GetImage();
+            //RGBTB =  m_kVolumeImageB.GetRGB();
+            //this.LUTb = m_kVolumeImageB.GetLUT();
+        }
     }
 
 
@@ -430,46 +427,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         return rendererProgressBar;
     }
 
-
-    /**
-     * Creates and initializes the LUT for an image.
-     * @param   img  the image to create a LUT for
-     * @return  a LUT for the image <code>img</code> (null if a color image)
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
-     */
-    public static ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
-        ModelLUT newLUT = null;
-
-        // only make a lut for non color images
-        if (img.isColorImage() == false) {
-            int[] dimExtentsLUT = new int[2];
-
-            dimExtentsLUT[0] = 4;
-            dimExtentsLUT[1] = 256;
-
-            newLUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-
-            float min, max;
-
-            if (img.getType() == ModelStorageBase.UBYTE) {
-                min = 0;
-                max = 255;
-            } else if (img.getType() == ModelStorageBase.BYTE) {
-                min = -128;
-                max = 127;
-            } else {
-                min = (float) img.getMin();
-                max = (float) img.getMax();
-            }
-
-            float imgMin = (float) img.getMin();
-            float imgMax = (float) img.getMax();
-
-            newLUT.resetTransferLine(min, imgMin, max, imgMax);
-        }
-
-        return newLUT;
-    }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#actionPerformed(java.awt.event.ActionEvent)
@@ -682,7 +639,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             m_kVOIToolbar.setVisible(showVOI);
         } else if (command.equals("4DToolbar") && m_b4D) {
             boolean show4D = menuObj.isMenuItemSelected("4D toolbar");
-            m_k4DToolbar.setVisible(show4D);
+            insertTab("4D", m_kVolume4DPanel );
+            resizePanel();
         } else if (command.equals("RectVOI") ) {
             doVOI(command);
         } else if (command.equals("EllipseVOI") ) {
@@ -717,10 +675,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             create3DVOI(true);
         } else if (command.equals("3DVOIUnion") ) {
             create3DVOI(false);
-        } else if (command.equals("Play4D")) {
-            raycastRenderWM.play4D(true);
-        } else if (command.equals("Stop4D")) {
-            raycastRenderWM.play4D(false);
         }
 
     }
@@ -1033,7 +987,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      */
     public void buildSculpt() {
         m_kSculptPanel = new JPanel();
-        sculptGUI = new JPanelSculptor_WM(this);
+        sculptGUI = new JPanelSculptor_WM(this, m_kVolumeImageA.GetImage().is4DImage());
         m_kSculptPanel.add(sculptGUI.getMainPanel());
         maxPanelWidth = Math.max(m_kSculptPanel.getPreferredSize().width, maxPanelWidth);
     }
@@ -1114,19 +1068,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             } else {
                 m_kVolOpacityPanel = new JPanelVolOpacity(this, imageA, imageB);
             }
-            
-            String kExternalDirs = getExternalDirs();        
-            ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-            VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-            PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-            CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
-            m_kVolumeImageA = new VolumeImage(  imageA, LUTa, RGBTA, "A" );
-            //VolumeImageViewer.main(this, m_kVolumeImageA, true);
-
-            if ( imageB != null )
-            {
-                m_kVolumeImageB = new VolumeImage( imageB, LUTb, RGBTB, "B" );
-            }
 
             m_kAnimator = new Animator();
             m_akPlaneRender = new PlaneRender_WM[3];
@@ -1166,7 +1107,12 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             // After the whole WM rendering framework built, force updating the color LUT table in order to 
             // update both the volume viewer and tri-planar viewer.  Otherwise, the render volume turns to be black.
             if ( panelHistoLUT != null ) 
-            	panelHistoLUT.updateComponentLUT();
+                panelHistoLUT.updateComponentLUT(); 
+            if ( panelHistoRGB != null ) 
+            {
+                panelHistoRGB.updateHistoRGB(imageA, imageB, false);
+                panelHistoRGB.updateFrames(false);
+            }
             
         } finally {
             progressBar.dispose();
@@ -1324,170 +1270,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             rendererProgressBar = null;
         }
         super.dispose();
-    }
-
-    /**
-     * Insert the blank images to the end of image. Padding the image to power of 2.
-     *
-     * @param  extents     int[] original extents
-     * @param  volExtents  int[] padding to power of 2 extents.
-     */
-    public void doPadding(int[] extents, int[] volExtents) {
-        ModelImage blankImage;
-        AlgorithmConcat mathAlgo;
-
-        int[] destExtents = null;
-
-        destExtents = new int[3];
-        destExtents[0] = imageA.getExtents()[0];
-        destExtents[1] = imageA.getExtents()[1];
-        destExtents[2] = volExtents[2] - extents[2];
-
-        blankImage = new ModelImage(imageA.getType(), destExtents, imageA.getImageName());
-
-        for (int i = 0; i < blankImage.getSize(); i++) {
-            blankImage.set(i, imageA.getMin());
-        }
-
-        destExtents[2] = imageA.getExtents()[2] + blankImage.getExtents()[2];
-
-        paddingImageA = new ModelImage(imageA.getType(), destExtents, imageA.getImageName());
-
-        try {
-            mathAlgo = new AlgorithmConcat(imageA, blankImage, paddingImageA);
-            setVisible(false);
-            mathAlgo.run();
-
-            if (mathAlgo.isCompleted()) {
-                mathAlgo.finalize();
-                mathAlgo = null;
-            }
-
-        } catch (OutOfMemoryError x) {
-            System.gc();
-            MipavUtil.displayError("Dialog Concatenation: unable to allocate enough memory");
-
-            return;
-        }
-
-        JDialogBase.updateFileInfoStatic(imageA, paddingImageA);
-        paddingImageA.calcMinMax();
-
-        imageA.disposeLocal();
-
-        imageA = paddingImageA;
-
-        if (imageB != null) {
-            paddingImageB = new ModelImage(imageB.getType(), destExtents, imageB.getImageName());
-
-            try {
-                mathAlgo = new AlgorithmConcat(imageB, blankImage, paddingImageB);
-                setVisible(false);
-                mathAlgo.run();
-
-                if (mathAlgo.isCompleted()) {
-                    mathAlgo.finalize();
-                    mathAlgo = null;
-                }
-
-            } catch (OutOfMemoryError x) {
-                System.gc();
-                MipavUtil.displayError("Dialog Concatenation: unable to allocate enough memory");
-
-                return;
-            }
-
-            JDialogBase.updateFileInfoStatic(imageB, paddingImageB);
-            paddingImageB.calcMinMax();
-            imageB.disposeLocal();
-
-            imageB = paddingImageB;
-        }
-
-        blankImage.disposeLocal();
-    }
-
-    /**
-     * Resample the images to power of 2.
-     *
-     * @param  volExtents     resampled volume extents
-     * @param  newRes         new resampled resolution
-     * @param  forceResample  resampled or not
-     * @param  nDim           number of dimensions
-     * @param iFilterType type of sample filter, may be one of 7 different
-     * filters: TriLinear Interpolation, NearestNeighbor, CubicBSpline,
-     * QuadraticBSpline, CubicLagragian, QuinticLagragian, HepticLagragian, or
-     * WindowedSinc (see AlgorithmTransform.java).
-     */
-    public void doResample(int[] volExtents, float[] newRes
-                           , boolean forceResample, int nDim, int iFilterType)
-    {
-        AlgorithmTransform transformFunct = null;
-        if (forceResample) {
-
-            // resample imageA
-            if (nDim >= 3) {
-                transformFunct = new AlgorithmTransform(imageA, new TransMatrix(4), iFilterType, newRes[0], newRes[1],
-                                                        newRes[2], volExtents[0], volExtents[1], volExtents[2], false,
-                                                        true, false);
-            } else { // Should never even get here!
-
-                // Maybe some error message and close dialog
-            }
-
-            transformFunct.setRunningInSeparateThread(false);
-            transformFunct.run();
-
-            if (transformFunct.isCompleted() == false) {
-
-                // What to do
-                transformFunct.finalize();
-                transformFunct = null;
-            }
-
-            imageA = transformFunct.getTransformedImage();
-            imageA.calcMinMax();
-                      
-            if (!imageA.isColorImage()) {
-                resetLUTMinMax(imageA, LUTa);
-            }
-
-            transformFunct.disposeLocal();
-            transformFunct = null;
-            
-            //new ViewJFrameImage((ModelImage)(imageA), null, new Dimension(610, 200), false);
-            
-        }
-
-        // resample imageB
-        if ((imageB != null) && forceResample) {
-
-            // Resample image into volume that is a power of two !
-            Preferences.debug("ViewJFrameSurfaceRenderer.buildTexture: Volume resampled.");
-
-            if (nDim >= 3) {
-                transformFunct = new AlgorithmTransform(imageB, new TransMatrix(4), iFilterType, newRes[0], newRes[1],
-                                                        newRes[2], volExtents[0], volExtents[1], volExtents[2], false,
-                                                        true, false);
-            } else { }
-
-            transformFunct.setRunningInSeparateThread(false);
-            transformFunct.run();
-
-            if (transformFunct.isCompleted() == false) {
-
-                // What to do
-                transformFunct.finalize();
-                transformFunct = null;
-            }
-
-            imageB = transformFunct.getTransformedImage();
-            imageB.calcMinMax();
-
-            if (!imageB.isColorImage()) {
-                resetLUTMinMax(imageB, LUTb);
-            }
-        }
     }
 
     /**
@@ -1793,6 +1575,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
     
+    public void play4D( boolean bOn )
+    {
+        raycastRenderWM.play4D(bOn);
+    }
+    
     /**
      * Enables picking correspondence points between the surface renderer and
      * the BrainSurfaceFlattener renderer.
@@ -1930,6 +1717,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      * @see gov.nih.mipav.view.ViewJFrameBase#setAlphaBlend(int)
      */
     public void setAlphaBlend(int value) { }
+    
+    public void setAnimationSpeed( float fValue )
+    {
+        raycastRenderWM.setAnimationSpeed( fValue );
+    }
     
     /**
      * Enables backface culling for the given surface.
@@ -2378,7 +2170,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#setTimeSlice(int)
      */
-    public void setTimeSlice(int slice) { }
+    public void setTimeSlice(int slice) { 
+        m_kVolumeImageA.SetTimeSlice( slice );
+        setModified();
+    }
   
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#setTitle()
@@ -2468,6 +2263,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         raycastRenderWM.smoothTwo(kSurfaceName, iteration,
                                   fStiffness, volumeLimit, volumePercent);
     }    
+    
     
     /**
      * Switches between different ways of displaying the geodesic path
@@ -2724,6 +2520,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         menuObj.setMenuItemEnabled("RFA toolbar", false);
         menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", false);
         menuObj.setMenuItemEnabled("Open Fly Through view", false);
+        menuObj.setMenuItemEnabled("4D toolbar", m_kVolumeImageA.GetImage().is4DImage() );
         
         return menuBar;
     }
@@ -2827,37 +2624,15 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         
         
 
-        if ( imageA.getExtents().length > 3 )
+        if ( imageA.is4DImage() )
         {
             if ( imageA.getExtents()[3]  != 0 )
             {
                 m_b4D = true;
-                gbc.gridy++;
-                System.err.println( "Build4D");
-                m_k4DToolbar = new JToolBar();
-                m_k4DToolbar.setBorder(etchedBorder);
-                m_k4DToolbar.setBorderPainted(true);
-                m_k4DToolbar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-                m_k4DToolbar.setFloatable(false);
-
-
-                JButton playButton = new JButton("Play");
-                playButton.addActionListener(this);
-                playButton.setActionCommand("Play4D");
-                playButton.setFont(MipavUtil.font12B);
-                playButton.setPreferredSize(MipavUtil.defaultButtonSize);
-
-                JButton stopButton = new JButton("Stop");
-                stopButton.addActionListener(this);
-                stopButton.setActionCommand("Stop4D");
-                stopButton.setFont(MipavUtil.font12B);
-                stopButton.setPreferredSize(MipavUtil.defaultButtonSize);
-
-                m_k4DToolbar.add( playButton );
-                m_k4DToolbar.add( stopButton );
-                m_k4DToolbar.setVisible(false);
-                panelToolbar.add(m_k4DToolbar, gbc);
-
+                m_kVolume4DPanel = new JPanel();
+                m_kVolume4DGUI = new JPanelVolume4D(this);
+                m_kVolume4DPanel.add(m_kVolume4DGUI.getMainPanel());
+                maxPanelWidth = Math.max(m_kVolume4DPanel.getPreferredSize().width, maxPanelWidth);
             }
         }
     }
@@ -2917,7 +2692,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         buildSurfacePanel();
         buildRenderModePanel();
         buildGeodesic();
-        buildSculpt();
         buildCustumBlendPanel();
         
 
@@ -2940,6 +2714,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             triImagePanel.add(panelAxial);
             triImagePanel.add(panelSagittal);
             triImagePanel.add(panelCoronal);
+            buildSculpt();
             buildMultiHistogramPanel();
             buildSurfaceTexturePanel();
         }
@@ -3116,32 +2891,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         }
 
     }
-
-
-    /**
-     * Calculate the LUT from the resampled image.
-     *
-     * @param  image  ModelImage reference
-     * @param  lut    ModelLUT reference
-     */
-    protected void resetLUTMinMax(ModelImage image, ModelLUT lut) {
-        int nPts = lut.getTransferFunction().size();
-        float[] x = new float[nPts];
-        float[] y = new float[nPts];
-        lut.getTransferFunction().exportArrays(x, y);
-
-        for (int i = 0; i < nPts; i++) {
-
-            if (x[i] < image.getMin()) {
-                x[i] = (float) image.getMin();
-            } else if (x[i] > image.getMax()) {
-                x[i] = (float) image.getMax();
-            }
-        }
-
-        lut.getTransferFunction().importArrays(x, y, nPts);
-
-    }
     
     /**
      * Method that resizes the frame and adjusts the rows, columns as needed.
@@ -3179,6 +2928,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         {
             flythruControl.resizePanel(maxPanelWidth, height);
             dualPane.setDividerLocation( 0.5f );
+        }
+        if ( m_kVolume4DGUI != null )
+        {
+            m_kVolume4DGUI.resizePanel(maxPanelWidth, height);
         }
         
         rightPane.setDividerLocation( 0.618f ); 

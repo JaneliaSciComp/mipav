@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
-
+import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
@@ -114,7 +114,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         this.dim = extents.length;
 
         for (int i = 0; i < Math.min(3,extents.length); i++) {
-            volExtents[i] = dimPowerOfTwo(extents[i]);
+            volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
             volSize *= volExtents[i];
 
             if (volExtents[i] != extents[i]) {
@@ -153,13 +153,13 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
                 }
             }
 
-            volExtents[0] = dimPowerOfTwo(Integer.parseInt(extXOutput.getText()));
+            volExtents[0] = MipavMath.dimPowerOfTwo(Integer.parseInt(extXOutput.getText()));
             newRes[0] = (float) ((extents[0]) * res[0]) / (float) (volExtents[0]);
-            volExtents[1] = dimPowerOfTwo(Integer.parseInt(extYOutput.getText()));
+            volExtents[1] = MipavMath.dimPowerOfTwo(Integer.parseInt(extYOutput.getText()));
             newRes[1] = (float) ((extents[1]) * res[1]) / (float) (volExtents[1]);
 
             if (dim >= 3) {
-                volExtents[2] = dimPowerOfTwo(Integer.parseInt(extZOutput.getText()));
+                volExtents[2] = MipavMath.dimPowerOfTwo(Integer.parseInt(extZOutput.getText()));
                 newRes[2] = (float) ((extents[2]) * res[2]) / (float) (volExtents[2]);
             }
 
@@ -185,15 +185,15 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             dispose();
         } else if (command.equals("xChanged")) {
             int x = Integer.parseInt(extXOutput.getText());
-            x = dimPowerOfTwo(x);
+            x = MipavMath.dimPowerOfTwo(x);
             extXOutput.setText(Integer.toString(x));
         } else if (command.equals("yChanged")) {
             int y = Integer.parseInt(extYOutput.getText());
-            y = dimPowerOfTwo(y);
+            y = MipavMath.dimPowerOfTwo(y);
             extYOutput.setText(Integer.toString(y));
         } else if (command.equals("zChanged")) {
             int z = Integer.parseInt(extZOutput.getText());
-            z = dimPowerOfTwo(z);
+            z = MipavMath.dimPowerOfTwo(z);
             extZOutput.setText(Integer.toString(z));
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("19040");
@@ -599,7 +599,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         dim = extents.length;
 
         for (int i = 0; i < extents.length; i++) {
-            volExtents[i] = dimPowerOfTwo(extents[i]);
+            volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
             volSize *= volExtents[i];
 
             newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
@@ -626,53 +626,6 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
     }
 
 
-    /**
-     * Calculate the dimension value to power of 2.
-     *
-     * @param   dim  dimension value
-     *
-     * @return  value dimension value in power of 2.
-     */
-    public static int dimPowerOfTwo(int dim) {
-
-        // 128^3 x 4 is 8MB
-        // 256^3 x 4 is 64MB
-        if (dim <= 16) {
-            return 16;
-        } else if (dim <= 32) {
-            return 32;
-        } else if (dim <= 64) {
-
-            if (dim > 40) {
-                return 64;
-            } else {
-                return 32;
-            }
-        } else if (dim <= 128) {
-
-            if (dim > 80) {
-                return 128;
-            } else {
-                return 64;
-            }
-        } else if (dim <= 256) {
-
-            if (dim > 160) {
-                return 256;
-            } else {
-                return 128;
-            }
-        } else if (dim <= 512) {
-
-            if (dim > 320) {
-                return 512;
-            } else {
-                return 256;
-            }
-        } else {
-            return 512;
-        }
-    }
 
     /**
      * Document ME.

@@ -151,6 +151,7 @@ public abstract class JInterfaceBase extends JDialog implements ActionListener
     protected JButton buildCancelButton() {
         cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(this);
+        cancelButton.setActionCommand("Cancel");
 
         // cancelButton.setToolTipText("Cancel action.");
         cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
@@ -168,6 +169,7 @@ public abstract class JInterfaceBase extends JDialog implements ActionListener
     protected JButton buildOKButton() {
         OKButton = new JButton("OK");
         OKButton.addActionListener(this);
+        OKButton.setActionCommand("OK");
 
         // OKButton.setToolTipText("Accept values and perform action.");
         OKButton.setMinimumSize(MipavUtil.defaultButtonSize);

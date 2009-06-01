@@ -9,6 +9,8 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
+import gov.nih.mipav.view.renderer.flythroughview.JpegImagesToMovie;
+import gov.nih.mipav.view.renderer.flythroughview.MovieMaker;
 
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
@@ -21,6 +23,7 @@ import java.io.IOException;
 import java.util.Vector;
 
 import javax.imageio.ImageIO;
+import javax.media.MediaLocator;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCanvas;
 import javax.media.opengl.GLEventListener;
@@ -93,6 +96,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /** Screen capture counter. */
     private int m_iScreenCaptureCounter = 0;
 
+    /** Set to true when recording. */
+    protected boolean m_bSnapshot = false;
     /**
      * Default GPURenderBase constructor.
      */
@@ -377,6 +382,63 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
+
+    /**
+     * Save quick time movie.
+     */
+    public void saveAVIMovie() {
+        File outputFile = null;
+        File[] inputFile = new File[getCounter()];
+        String directory = m_kVolumeImageA.GetImage().getFileInfo(0).getFileDirectory() + File.separatorChar;
+        for (int i = 0; i < getCounter(); i++) {
+            inputFile[i] = new File(directory + "captureImage" + i + "." + "jpg");
+        }
+
+        // Save to AVI file.
+        String file = directory + m_kVolumeImageA.GetImage().getImageName() + ".avi";
+        outputFile = new File(file);
+
+        try {
+            MovieMaker movieMake = new MovieMaker(GetWidth(), GetHeight(), 3, outputFile, inputFile);
+            movieMake.makeMovie();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+
+        inputFile = null;
+        outputFile = null;
+
+    }
+
+    /**
+     * Save AVI movie.
+     */
+    public void saveQuickTimeMovie() {
+        MediaLocator oml;
+        Vector inputFiles = new Vector();
+        String file;
+
+        String directory = m_kVolumeImageA.GetImage().getFileInfo(0).getFileDirectory() + File.separatorChar;
+        file = "file:" + directory + m_kVolumeImageA.GetImage().getImageName() + ".mov";
+
+        if ((oml = new MediaLocator(file)) == null) {
+            System.err.println("Cannot build media locator from: " + directory);
+
+            return;
+        }
+
+        for (int i = 0; i < getCounter(); i++) {
+            inputFiles.addElement(directory + "captureImage" + i + "." + "jpg");
+        }
+
+        JpegImagesToMovie imageToMovie = new JpegImagesToMovie();
+        imageToMovie.doIt(GetWidth(), GetHeight(), 30, inputFiles, oml);
+
+        inputFiles = null;
+        oml = null;
+
+    }
+    
     /** 
      * Changes the projection to Orthographic Projection.
      */
@@ -547,6 +609,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#record(boolean)
+     */
+    public void record(boolean bOn)
+    {
+        m_bSnapshot = bOn;
+    }
+  
+    
     /**
      * Writes a the frame buffer as a .jpg image to disk. The file name is captureImage + the image number.
      * @return true on successful write.
@@ -555,7 +626,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         BufferedImage kScreenShot = m_pkRenderer.Screenshot();
         try {
-            ImageIO.write(kScreenShot, "jpg", new File("captureImage" + m_iScreenCaptureCounter++ + "." + "jpg"));
+            String directory = m_kVolumeImageA.GetImage().getFileInfo(0).getFileDirectory() + File.separatorChar;
+            ImageIO.write(kScreenShot, "jpg", new File( directory + "captureImage" + m_iScreenCaptureCounter++ + "." + "jpg"));
         } catch (IOException e) {
             e.printStackTrace();
         }

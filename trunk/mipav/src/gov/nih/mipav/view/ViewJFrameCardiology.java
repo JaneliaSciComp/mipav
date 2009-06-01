@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import gov.nih.mipav.MipavMath;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
@@ -1476,53 +1477,6 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
 
     } // end createBuffers()
 
-    /**
-     * Get a power of 2 which is close to a given number.
-     *
-     * @param   dim  the number to get a power of 2 for
-     *
-     * @return  a power of 2
-     */
-    protected int dimPowerOfTwo(int dim) {
-
-        // 128^3 x 4 is 8MB
-        // 256^3 x 4 is 64MB
-        if (dim <= 16) {
-            return 16;
-        } else if (dim <= 32) {
-            return 32;
-        } else if (dim <= 64) {
-
-            if (dim > 40) {
-                return 64;
-            } else {
-                return 32;
-            }
-        } else if (dim <= 128) {
-
-            if (dim > 80) {
-                return 128;
-            } else {
-                return 64;
-            }
-        } else if (dim <= 256) {
-
-            if (dim > 160) {
-                return 256;
-            } else {
-                return 128;
-            }
-        } else if (dim <= 512) {
-
-            if (dim > 448) {
-                return 512;
-            } else {
-                return 256;
-            }
-        } else {
-            return 512;
-        }
-    }
 
     /**
      * Get the height of the scroll pane holding the component image.
@@ -2211,7 +2165,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
         res = _imageA.getFileInfo(0).getResolutions();
 
         for (int i = 0; i < extents.length; i++) {
-            volExtents[i] = dimPowerOfTwo(extents[i]);
+            volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
             resols[i] = (res[i] * extents[i]) / volExtents[i];
         }
 
@@ -2255,7 +2209,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             res = _imageB.getFileInfo(0).getResolutions();
 
             for (int i = 0; i < extents.length; i++) {
-                volExtents[i] = dimPowerOfTwo(extents[i]);
+                volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
                 resols[i] = (res[i] * extents[i]) / volExtents[i];
             }
 

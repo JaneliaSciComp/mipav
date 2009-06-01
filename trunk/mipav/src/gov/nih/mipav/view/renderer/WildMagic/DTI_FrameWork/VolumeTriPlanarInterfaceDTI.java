@@ -18,6 +18,7 @@ import com.sun.opengl.util.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -74,21 +75,15 @@ implements ChangeListener {
      * @param  _rightPanelRenderMode  volume rendering panel render mode ( Raycast, shearwarp, etc).
      * @param  _resampleDialog        resample dialog reference.
      */
-    public VolumeTriPlanarInterfaceDTI(ModelImage _imageA, ModelLUT LUTa, ModelRGB _RGBTA, ModelImage _imageB, ModelLUT LUTb,
-                                ModelRGB _RGBTB) {
-        super(_imageA, LUTa, _RGBTA, _imageB, LUTb, _RGBTB);
-        
-        RGBTA = _RGBTA;
-        RGBTB = _RGBTB;
-        this.LUTa = LUTa;
-        this.LUTb = LUTb;
+    public VolumeTriPlanarInterfaceDTI(ModelImage _imageA) {
+        super();
 
         try {
             setIconImage(MipavUtil.getIconImage("4plane_16x16.gif"));
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        imageA = _imageA;
         imageOrientation = imageA.getImageOrientation();
     }
 
@@ -129,31 +124,21 @@ implements ChangeListener {
     	}
     	imageA = _m_kDTIColorImage;
     	
-    	  if (imageA.isColorImage()) {
-                               int[] RGBExtents = new int[2];
-                  RGBExtents[0] = 4;
-                  RGBExtents[1] = 256;
-                  RGBTA = new ModelRGB(RGBExtents);
-             
-          } else {
-             
-                  LUTa = initLUT(imageA);
-             
-          }
 
-          if (imageB != null) {
-              imageB = (ModelImage) (imageB.clone());
-
-              if (imageB.isColorImage()) {
-                                      int[] RGBExtents = new int[2];
-                      RGBExtents[0] = 4;
-                      RGBExtents[1] = 256;
-                      RGBTB = new ModelRGB(RGBExtents);
-                
-              } else {
-                     LUTb = new ModelLUT(ModelLUT.GRAY, 256, imageB.getExtents());
-                               }
-          }
+        boolean bDirExists = true;
+        m_kParentDir = imageA.getFileInfo()[0].getFileDirectory().concat( File.separator + "RenderFiles" + File.separator);
+        File kDir = new File( m_kParentDir );
+        if ( !kDir.exists() )
+        {
+            bDirExists = false;
+            try {
+                kDir.mkdir();
+            } catch (SecurityException e) {}
+        }
+        m_kVolumeImageA = new VolumeImage( imageA, "A", true, m_kParentDir, 0, null );
+        imageA = m_kVolumeImageA.GetImage();
+        RGBTA = m_kVolumeImageA.GetRGB();
+        this.LUTa = m_kVolumeImageA.GetLUT();
     	
     	restoreContext();
     }
@@ -345,12 +330,6 @@ implements ChangeListener {
 
         try {
             progressBar.updateValueImmed(5);
-           
-            m_kVolumeImageA = new VolumeImage(  imageA, LUTa, RGBTA, "A" );
-            if ( imageB != null )
-            {
-                m_kVolumeImageB = new VolumeImage( imageB, LUTb, RGBTB, "B" );
-            }
           
             ((PlaneRenderDTI)m_akPlaneRender[0]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
 			((PlaneRenderDTI)m_akPlaneRender[1]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL);

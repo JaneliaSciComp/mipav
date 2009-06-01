@@ -2325,10 +2325,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                             imageInfoDialog.toFront();
                         }
                     } else {
-                        new VolumeTriPlanarDialog(imageA, imageB, command);
+                        new VolumeTriPlanarDialog(imageA, imageB);
                     }
                 } else {
-                    new VolumeTriPlanarDialog(imageA, imageB, command);
+                    new VolumeTriPlanarDialog(imageA, imageB);
                 }
             } catch (OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: unable to open Volume Triplanar frame.");
@@ -4892,53 +4892,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     } // end createBuffers()
 
-    /**
-     * Get a power of 2 which is close to a given number.
-     * 
-     * @param dim the number to get a power of 2 for
-     * 
-     * @return a power of 2
-     */
-    protected int dimPowerOfTwo(int dim) {
-
-        // 128^3 x 4 is 8MB
-        // 256^3 x 4 is 64MB
-        if (dim <= 16) {
-            return 16;
-        } else if (dim <= 32) {
-            return 32;
-        } else if (dim <= 64) {
-
-            if (dim > 40) {
-                return 64;
-            } else {
-                return 32;
-            }
-        } else if (dim <= 128) {
-
-            if (dim > 80) {
-                return 128;
-            } else {
-                return 64;
-            }
-        } else if (dim <= 256) {
-
-            if (dim > 160) {
-                return 256;
-            } else {
-                return 128;
-            }
-        } else if (dim <= 512) {
-
-            if (dim > 448) {
-                return 512;
-            } else {
-                return 256;
-            }
-        } else {
-            return 512;
-        }
-    }
 
     /**
      * Returns a reference to the image info dialog for the active image. Image A and image B have references to their
