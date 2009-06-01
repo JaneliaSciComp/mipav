@@ -12,6 +12,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.JTreeDICOM;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.PreviewImageContainer;
 import gov.nih.mipav.view.ScrollCorrector;
 import gov.nih.mipav.view.ViewFileChooserSubsample;
@@ -19,6 +20,7 @@ import gov.nih.mipav.view.ViewJComponentPreviewImage;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewTableModel;
 import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.WidgetFactory;
 
 import java.awt.BorderLayout;
@@ -164,9 +166,20 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
         super(parent, false);
         
         // get the selected directory
-    	JFileChooser chooser = new JFileChooser();
+        JFileChooser chooser ;
+        
+        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+        	chooser = new JFileChooser(ViewUserInterface.getReference().getDefaultDirectory());
+        } else {
+        	chooser = new JFileChooser(System.getProperties().getProperty("user.dir"));
+        }
+        
+        
     	chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setDialogTitle("Open the DICOMDIR file.");
+        
+
+        
         int returnValue = chooser.showOpenDialog(parent);
 	    File file = null;
 	    
