@@ -253,36 +253,35 @@ public class ManifestFile {
 		ArrayList<Class> dep = manifestInfo.remove(c);
 		if(dep != null) {
 			removeFromFile(c);
-		}
-		
-		boolean depExists;
-		Class currentClass;
-		int i = 0;
-depQ:	while(dep.size() > i) {
-			depExists = false;
-			currentClass = dep.get(i);
-			Iterator<Class> itr = manifestInfo.keySet().iterator();
-			while(itr.hasNext()) {
-				Class plugin = itr.next();
-				if(plugin.equals(currentClass)) {
-					depExists = true;
-					break depQ;
-				}
-				ArrayList<Class> depList = manifestInfo.get(plugin);
-				for(int j=0; j<depList.size(); j++) {
-					if(depList.get(j).equals(currentClass)) {
+			
+			boolean depExists;
+			Class currentClass;
+			int i = 0;
+	depQ:	while(dep.size() > i) {
+				depExists = false;
+				currentClass = dep.get(i);
+				Iterator<Class> itr = manifestInfo.keySet().iterator();
+				while(itr.hasNext()) {
+					Class plugin = itr.next();
+					if(plugin.equals(currentClass)) {
 						depExists = true;
 						break depQ;
 					}
+					ArrayList<Class> depList = manifestInfo.get(plugin);
+					for(int j=0; j<depList.size(); j++) {
+						if(depList.get(j).equals(currentClass)) {
+							depExists = true;
+							break depQ;
+						}
+					}
+				}
+				if(depExists) {
+					dep.remove(currentClass);
+				} else {
+					i++;
 				}
 			}
-			if(depExists) {
-				dep.remove(currentClass);
-			} else {
-				i++;
-			}
 		}
-		
 		return dep;
 	}
 	
