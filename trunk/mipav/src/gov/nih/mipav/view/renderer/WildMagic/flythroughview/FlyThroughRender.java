@@ -123,8 +123,6 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /** Original surface color for undoing the pseudo-color curvature map. */
     private ColorRGB[] m_akColorBackup;
 
-    /** Set to true when taking a snapshot of the fly path. */
-    private boolean m_bSnapshot = false;
 
 
     /**
@@ -530,13 +528,6 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
     } 
 
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#record(boolean)
-     */
-    public void record(boolean bOn)
-    {
-        m_bSnapshot = bOn;
-    }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#setCurrentState(java.lang.Object)

@@ -750,7 +750,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void invokeDTIframe() {
         ModelImage imageA = createEmptyImage(null);
-        VolumeTriPlanarInterfaceDTI kWM = new VolumeTriPlanarInterfaceDTI(imageA, null, null, null, null, null);
+        VolumeTriPlanarInterfaceDTI kWM = new VolumeTriPlanarInterfaceDTI(imageA);
         kWM.constructRenderers();
     }
 

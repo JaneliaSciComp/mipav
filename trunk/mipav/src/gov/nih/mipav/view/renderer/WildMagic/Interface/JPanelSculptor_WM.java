@@ -48,6 +48,8 @@ public class JPanelSculptor_WM extends JInterfaceBase
 
     /** Button to apply sculpt region to the volume. */
     private JButton m_kApplySculptButton;
+    /** Button to apply sculpt region to the volume. */
+    private JButton m_kApplyAllButton;
 
     /** Button for clearing the sculpt region. */
     private JButton m_kClearDrawOutlineButton;
@@ -65,6 +67,7 @@ public class JPanelSculptor_WM extends JInterfaceBase
 
     /** Button to undo the sculpt and restor the original volume. */
     private JButton m_kUndoSculptButton;
+    private JButton m_kUndoAllButton;
 
     /** Rectangle shape button. */
     private JToggleButton rectButton;
@@ -88,9 +91,9 @@ public class JPanelSculptor_WM extends JInterfaceBase
      *
      * @param  parent  surface render
      */
-    public JPanelSculptor_WM(VolumeTriPlanarInterface kVolumeViewer) {
+    public JPanelSculptor_WM(VolumeTriPlanarInterface kVolumeViewer, boolean bIs4D) {
         super(kVolumeViewer);
-        init();
+        init(bIs4D);
     }
 
 
@@ -121,9 +124,13 @@ public class JPanelSculptor_WM extends JInterfaceBase
         } else if (command.equals("InvertSculptRegion")) {
             invertSculptRegion();
         } else if (command.equals("ApplySculptRegion")) {
-            applySculptRegion();
+            applySculptRegion(false);
+        } else if (command.equals("ApplyAll")) {
+            applySculptRegion(true);
         } else if (command.equals("UndoApplySculptRegion")) {
-            undoSculptRegion();
+            undoSculptRegion(false);
+        } else if (command.equals("UndoAll")) {
+            undoSculptRegion(true);
         } else if (command.equals("SaveSculptImage")) {
             if ( rayBasedRenderWM != null )
             {
@@ -135,7 +142,7 @@ public class JPanelSculptor_WM extends JInterfaceBase
     /**
      * Cull the sculpt region through the 3D volume.
      */
-    public void applySculptRegion() {
+    public void applySculptRegion(boolean bAll) {
 
         /* the m_kDrawOutlineButton is a toggle button, once apply is pressed,
          * un-toggle the draw button. */
@@ -144,12 +151,14 @@ public class JPanelSculptor_WM extends JInterfaceBase
         m_kClearDrawOutlineButton.setEnabled(false);
         m_kInvertOutlineButton.setEnabled(false);
         m_kApplySculptButton.setEnabled(false);
+        m_kApplyAllButton.setEnabled(false);
         m_kUndoSculptButton.setEnabled(true);
+        m_kUndoAllButton.setEnabled(true);
         m_kSaveSculptButton.setEnabled(true);
 
         if ( rayBasedRenderWM != null )
         {
-            rayBasedRenderWM.applySculpt();
+            rayBasedRenderWM.applySculpt(bAll);
         }
 
     }
@@ -168,6 +177,7 @@ public class JPanelSculptor_WM extends JInterfaceBase
         m_kClearDrawOutlineButton.setEnabled(false);
         m_kInvertOutlineButton.setEnabled(false);
         m_kApplySculptButton.setEnabled(false);
+        m_kApplyAllButton.setEnabled(false);
 
         if ( rayBasedRenderWM != null )
         {
@@ -199,12 +209,13 @@ public class JPanelSculptor_WM extends JInterfaceBase
         m_kClearDrawOutlineButton.setEnabled(true);
         m_kInvertOutlineButton.setEnabled(true);
         m_kApplySculptButton.setEnabled(true);
+        m_kApplyAllButton.setEnabled(true);
     }
 
     /**
      * Initialize the buttons layout.
      */
-    public void init() {
+    public void init(boolean bIs4D) {
         JToolBar viewToolBar = new JToolBar();
         viewToolBar.setBorderPainted(true);
         viewToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
@@ -251,10 +262,26 @@ public class JPanelSculptor_WM extends JInterfaceBase
         m_kApplySculptButton.setEnabled(false);
         viewToolBar.add(m_kApplySculptButton);
 
+        if ( bIs4D )
+        {
+            m_kApplyAllButton = new JButton("ApplyAll");
+            m_kApplyAllButton.setEnabled(false);
+            m_kApplyAllButton.addActionListener(this);
+            m_kApplyAllButton.setActionCommand("ApplyAll");
+            viewToolBar.add(m_kApplyAllButton);
+        }
         m_kUndoSculptButton = toolbarBuilder.buildButton("UndoApplySculptRegion", "Undo apply sculpt region to volume",
                                                          "sculptorundo");
         m_kUndoSculptButton.setEnabled(false);
         viewToolBar.add(m_kUndoSculptButton);
+        if ( bIs4D )
+        {
+            m_kUndoAllButton = new JButton("UndoAll");
+            m_kUndoAllButton.setEnabled(false);
+            m_kUndoAllButton.addActionListener(this);
+            m_kUndoAllButton.setActionCommand("UndoAll");
+            viewToolBar.add(m_kUndoAllButton);
+        }
 
         m_kSaveSculptButton = toolbarBuilder.buildButton("SaveSculptImage", "Save the sculpt region to image", "save");
         m_kSaveSculptButton.setEnabled(false);
@@ -370,7 +397,7 @@ public class JPanelSculptor_WM extends JInterfaceBase
     /**
      * undoSculptRegion: called when the "Undo Sculpt" Button is pressed.
      */
-    public void undoSculptRegion() {
+    public void undoSculptRegion(boolean bAll) {
 
         /* the m_kDrawOutlineButton is a toggle button, once undo is pressed,
          * un-toggle the draw button. */
@@ -380,12 +407,14 @@ public class JPanelSculptor_WM extends JInterfaceBase
         m_kClearDrawOutlineButton.setEnabled(false);
         m_kInvertOutlineButton.setEnabled(false);
         m_kApplySculptButton.setEnabled(false);
+        m_kApplyAllButton.setEnabled(false);
         m_kUndoSculptButton.setEnabled(false);
+        m_kUndoAllButton.setEnabled(false);
         m_kSaveSculptButton.setEnabled(false);
 
         if ( rayBasedRenderWM != null )
         {
-            rayBasedRenderWM.undoSculpt();
+            rayBasedRenderWM.undoSculpt(bAll);
        }
 
     }

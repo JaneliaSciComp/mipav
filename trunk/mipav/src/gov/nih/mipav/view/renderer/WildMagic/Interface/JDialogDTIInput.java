@@ -1,5 +1,5 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
-
+import gov.nih.mipav.MipavMath;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.*;
@@ -767,7 +767,7 @@ public class JDialogDTIInput extends JInterfaceBase
         boolean originalVolPowerOfTwo = true;
         int volSize = 1;
         for (int i = 0; i < extents.length; i++) {
-            volExtents[i] = JDialogDirectResample.dimPowerOfTwo(extents[i]);
+            volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
             volSize *= volExtents[i];
 
             if ((i < 3) && volExtents[i] != extents[i]) {

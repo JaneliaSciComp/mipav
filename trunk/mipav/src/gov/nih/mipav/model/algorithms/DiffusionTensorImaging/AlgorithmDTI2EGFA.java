@@ -301,6 +301,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             FileInfoBase[] fileInfoBases = m_kFAImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
+                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -329,6 +330,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             FileInfoBase[] fileInfoBases = m_kTraceImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
+                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -357,6 +359,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             FileInfoBase[] fileInfoBases = m_kRAImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
+                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -386,6 +389,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             FileInfoBase[] fileInfoBases = m_kVRImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
+                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -413,6 +417,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             FileInfoBase[] fileInfoBases = m_kADCImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
+                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -440,6 +445,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             FileInfoBase[] fileInfoBases = m_kEigenImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsEV);
+                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
             }
         }
         else
@@ -467,6 +473,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             FileInfoBase[] fileInfoBases = m_kEigenValueImage.getFileInfo();
             for (int i=0;i<fileInfoBases.length;i++) {
                 fileInfoBases[i].setExtents(extentsA);
+                fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
             }
             
            new ViewJFrameImage(m_kEigenValueImage, null, new Dimension(610, 200), false);

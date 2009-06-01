@@ -4,6 +4,7 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.view.ViewJFrameAnimateClip;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClip;
@@ -120,6 +121,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     private float fSample_mouseDragged;
     
     private boolean m_bPlay4D = false;
+    private float m_fAnimateRate = 0;
+    private int m_iAnimateCount = 0;
     
     /**
      * Default Constructor.
@@ -239,7 +242,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Apply the sculpt region to the volume.
      */
-    public void applySculpt()
+    public void applySculpt(boolean bAll)
     {
         if ( m_kSculptor == null )
         {
@@ -248,28 +251,41 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         float[] afData = new float[16];
         m_pkRenderer.SetConstantWVPMatrix (0, afData);
-        m_kSculptor.setWVPMatrix(new Matrix4f(afData, true));
-        if ( m_kVolumeImageA.GetVolumeTarget().GetImage().GetData() != null )
+        m_kSculptor.setWVPMatrix(new Matrix4f(afData, true));   
+        boolean bSculptTrue = false;
+        int iTSize = (m_kVolumeImageA.GetImage().is4DImage()&&bAll) ? m_kVolumeImageA.GetImage().getExtents()[3] : 1;
+        for ( int i = 0; i < iTSize; i++ )
         {
-            m_kSculptor.setTextureImageDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetData() );
-        }
-        else
-        {
-            m_kSculptor.setTextureImageFloatDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetFloatData() );
-        }
-
-        if ( m_kVolumeImageB != null )
-        {
-            if ( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() != null )
+            if ( m_kVolumeImageA.GetVolumeTarget().GetImage().GetData() != null )
             {
-                m_kSculptor.setTextureImageDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() );
+                m_kSculptor.setTextureImageDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetData() );
             }
             else
             {
-                m_kSculptor.setTextureImageFloatDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetFloatData() );
+                m_kSculptor.setTextureImageFloatDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetFloatData() );
+            }
+
+            if ( m_kVolumeImageB != null )
+            {
+                if ( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() != null )
+                {
+                    m_kSculptor.setTextureImageDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() );
+                }
+                else
+                {
+                    m_kSculptor.setTextureImageFloatDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetFloatData() );
+                }
+            }
+            if ( m_kSculptor.applySculpt(m_kVolumeImageA.GetTimeSlice()) )
+            {
+                bSculptTrue = true;
+            }
+            if ( iTSize > 1 )
+            {
+                m_kVolumeImageA.update4D(true);
             }
         }
-        if ( m_kSculptor.applySculpt() )
+        if ( bSculptTrue )
         {
             m_kVolumeImageA.ReleaseVolume();
             if ( m_kVolumeImageB != null )
@@ -381,6 +397,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             RenderSculpt();
             m_pkRenderer.EndScene();
         }
+        if ( m_bSnapshot )
+        {
+            writeImage();
+        }
         m_pkRenderer.DisplayBackBuffer();
 
         UpdateFrameCount();
@@ -427,7 +447,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( m_bPlay4D )
         {
-            update4D( true );
+            if ( m_iAnimateCount++ > m_fAnimateRate )
+            {
+                m_iAnimateCount = 0;
+                update4D( true );
+            }
         }
     }
 
@@ -988,7 +1012,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_bPlay4D = !m_bPlay4D;
             return;
         case 'e':
-            m_bExtract = true;
+            m_bSnapshot = !m_bSnapshot;  
+            if ( !m_bSnapshot )
+            {
+                saveAVIMovie();
+            }
             return;
         case 'p':
             displayBoundingBox( !m_kVolumeBox.GetDisplay() );
@@ -1375,6 +1403,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kSlices.setABBlend(fValue);
         }
+    }
+    
+
+    public void setAnimationSpeed( float fValue )
+    {
+        m_fAnimateRate = 32 * ( 1 - fValue );
     }
 
     /**
@@ -2173,37 +2207,44 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Undo applying the sculpt region to the volume.
      */
-    public void undoSculpt()
+    public void undoSculpt(boolean bAll)
     {
         if ( m_kSculptor == null )
         {
             return;
         }
-
-        if ( m_kVolumeImageA.GetVolumeTarget().GetImage().GetData() != null )
+        int iTSize = (m_kVolumeImageA.GetImage().is4DImage()&&bAll) ? m_kVolumeImageA.GetImage().getExtents()[3] : 1;
+        for ( int i = 0; i < iTSize; i++ )
         {
-            m_kSculptor.setTextureImageDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetData() );
-        }
-        else
-        {
-            m_kSculptor.setTextureImageFloatDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetFloatData() );
-        }
-        if ( m_kVolumeImageB != null )
-        {
-            if ( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() != null )
+            if ( m_kVolumeImageA.GetVolumeTarget().GetImage().GetData() != null )
             {
-                m_kSculptor.setTextureImageDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() );
+                m_kSculptor.setTextureImageDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetData() );
             }
             else
             {
-                m_kSculptor.setTextureImageFloatDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetFloatData() );
+                m_kSculptor.setTextureImageFloatDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetFloatData() );
             }
-        }
-        m_kSculptor.undoSculpt();
-        m_kVolumeImageA.ReleaseVolume();
-        if ( m_kVolumeImageB != null )
-        {
-            m_kVolumeImageB.ReleaseVolume();
+            if ( m_kVolumeImageB != null )
+            {
+                if ( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() != null )
+                {
+                    m_kSculptor.setTextureImageDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() );
+                }
+                else
+                {
+                    m_kSculptor.setTextureImageFloatDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetFloatData() );
+                }
+            }
+            m_kSculptor.undoSculpt(m_kVolumeImageA.GetTimeSlice());
+            m_kVolumeImageA.ReleaseVolume();
+            if ( m_kVolumeImageB != null )
+            {
+                m_kVolumeImageB.ReleaseVolume();
+            }
+            if ( iTSize > 1 )
+            {
+                m_kVolumeImageA.update4D(true);
+            }
         }
         m_kParent.setModified();
     }

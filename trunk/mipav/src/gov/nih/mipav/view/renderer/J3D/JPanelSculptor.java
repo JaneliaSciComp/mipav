@@ -86,8 +86,6 @@ public class JPanelSculptor extends JPanelRendererJ3D {
     /** Toolbar builder reference. */
     private ViewToolBarBuilder toolbarBuilder;
     
-    private VolumeTriPlanarRender m_kVolumeRendererGPU = null;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -140,10 +138,6 @@ public class JPanelSculptor extends JPanelRendererJ3D {
             undoSculptRegion();
         } else if (command.equals("SaveSculptImage")) {
             boolean alreadySaved = false;
-            if ( m_kVolumeRendererGPU != null )
-            {
-                alreadySaved = m_kVolumeRendererGPU.save(new FileWriteOptions(true), -1);
-            }
             if (m_kTextureSculptor != null && !alreadySaved) {
                 alreadySaved = m_kTextureSculptor.save(new FileWriteOptions(true), -1);
             }
@@ -189,12 +183,6 @@ public class JPanelSculptor extends JPanelRendererJ3D {
             surRender.updateData();
             surRender.updateImages();
         }
-        if ( m_kVolumeRendererGPU != null )
-        {
-            m_kVolumeRendererGPU.applySculpt();
-         //   surRender.updateData();
-         //   surRender.updateImages();
-        }
 
     }
 
@@ -212,11 +200,6 @@ public class JPanelSculptor extends JPanelRendererJ3D {
         m_kClearDrawOutlineButton.setEnabled(false);
         m_kInvertOutlineButton.setEnabled(false);
         m_kApplySculptButton.setEnabled(false);
-
-        if ( m_kVolumeRendererGPU != null )
-        {
-            m_kVolumeRendererGPU.clearSculpt();
-        }
 
         /* tell the m_kSculptor object to clear to draw outline */
         if (m_kVolumeSculptor != null) {
@@ -252,11 +235,6 @@ public class JPanelSculptor extends JPanelRendererJ3D {
      * drawSculptRegion: called when the "Draw Sculpt Outline" Button is pressed.
      */
     public void drawSculptRegion() {
-
-        if ( m_kVolumeRendererGPU != null )
-        {
-           m_kVolumeRendererGPU.enableSculpt(!m_kVolumeRendererGPU.getSculptEnabled());
-       }
 
         /* tell the m_kSculptor object that drawing is enabled */
         if (m_kVolumeSculptor != null) {
@@ -415,12 +393,6 @@ public class JPanelSculptor extends JPanelRendererJ3D {
      * clearwSculptRegion: called when the "Clear Outline" Button is pressed.
      */
     public void invertSculptRegion() {
-
-        if ( m_kVolumeRendererGPU != null )
-        {
-            m_kVolumeRendererGPU.invertSculpt();
-        }
-
         /* tell the m_kSculptor object to clear to draw outline */
         if (m_kVolumeSculptor != null) {
             m_kVolumeSculptor.invertSculpt();
@@ -476,10 +448,6 @@ public class JPanelSculptor extends JPanelRendererJ3D {
         if (m_kVolumeSculptor != null) {
             m_kVolumeSculptor.setDrawingShape(shape);
         }
-        if ( m_kVolumeRendererGPU != null )
-        {
-            m_kVolumeRendererGPU.setDrawingShape(shape);
-        }
     }
 
     /**
@@ -489,15 +457,6 @@ public class JPanelSculptor extends JPanelRendererJ3D {
      */
     public void setVolumeSculptor(VolumeRenderer _rayBasedRender) {
         m_kVolumeSculptor = new VolumeSculptor(_rayBasedRender, m_iSculptWidth, m_iSculptHeight);
-    }
-
-    /**
-     * Initialize the raycast based volume render with the sculptor.
-     *
-     * @param  _rayBasedRender  VolumeRenderer
-     */
-    public void setVolumeSculptor(VolumeTriPlanarRender _rayBasedRender) {
-        m_kVolumeRendererGPU = _rayBasedRender;
     }
 
     /**
@@ -535,14 +494,6 @@ public class JPanelSculptor extends JPanelRendererJ3D {
             surRender.updateData();
             surRender.updateImages();
         }
-        
-        if ( m_kVolumeRendererGPU != null )
-        {
-            m_kVolumeRendererGPU.undoSculpt();
-         //   surRender.updateData();
-         //   surRender.updateImages();
-       }
-
     }
 
     /**

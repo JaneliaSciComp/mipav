@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
+import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
@@ -1162,7 +1163,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
         boolean originalVolPowerOfTwo = true;
         int volSize = 1;
         for (int i = 0; i < extents.length; i++) {
-            volExtents[i] = JDialogDirectResample.dimPowerOfTwo(extents[i]);
+            volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
             volSize *= volExtents[i];
 
             if ((i < 3) && volExtents[i] != extents[i]) {

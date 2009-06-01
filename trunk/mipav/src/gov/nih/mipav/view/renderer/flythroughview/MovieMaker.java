@@ -147,7 +147,10 @@ public class MovieMaker implements ControllerListener, DataSinkListener {
         // Query for the processor for supported formats.
         // Then set it on the processor.
         TrackControl[] tcs = processor.getTrackControls();
-        Format[] f = tcs[0].getSupportedFormats();
+        Format[] f = tcs[0].getSupportedFormats();              
+        
+        for (int j = 0; j < tcs[0].getSupportedFormats().length; j++) 
+            System.out.println((tcs[0].getSupportedFormats())[j]);
 
         if ((f == null) || (f.length == 0)) {
             throw new Exception("The mux does not support the input format: " + tcs[0].getFormat());
