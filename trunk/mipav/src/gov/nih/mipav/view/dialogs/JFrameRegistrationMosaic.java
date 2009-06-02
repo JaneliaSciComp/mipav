@@ -231,10 +231,11 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
     public JFrameRegistrationMosaic() {
         super("Mosaic Registration");
         try {
-            this.setIconImage(MipavUtil.getIconImage("puzzle3.gif"));
+        	this.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
                     + ">.  Check that this file is available.\n");
+            error.printStackTrace();
         }
 
         initGUI();
