@@ -58,6 +58,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	/** File system view. */
 	private static FileSystemView fileSystem = FileSystemView.getFileSystemView();
 
+	private static String initTreeLoc = System.getProperty("user.home");
+	
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The GUI browse button */
@@ -446,7 +448,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	
     	private static final String DELETE = "Delete";
     	
-    	private static final String INIT_TEXT = "Select a directory to search for plugins";
+    	
 
 		private static final String CHECK = "Check";
     	
@@ -464,6 +466,11 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 		private File selectedFile = new File(System.getProperty("user.home"));
     	
 		public ClassSelectorPanel() {
+			if(Preferences.getPluginInstallDirectory() != null) {
+				initTreeLoc = Preferences.getPluginInstallDirectory();
+				selectedFile = new File(initTreeLoc);
+			}
+			
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 			
 			JPanel dirSelectPanel = new JPanel();
@@ -479,7 +486,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			dirLabel.setBorder(new EmptyBorder(0, 20, 0, 5));
 			dirSelectPanel.add(dirLabel);
 			
-			initDir = new JTextField(INIT_TEXT);
+			initDir = new JTextField(initTreeLoc);
 			initDir.setFont(MipavUtil.font12);
 			dirSelectPanel.add(initDir);
 			add(dirSelectPanel);
@@ -558,10 +565,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
 				if(Preferences.getPluginInstallDirectory() != null) {
                 	chooser.setCurrentDirectory(new File(Preferences.getPluginInstallDirectory()));
-                } else if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-                    chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
                 } else {
-                    chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
                 }
 	            chooser.setMultiSelectionEnabled(false);
 	            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -584,7 +589,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 						continue; //shouldn't be able to select root
 					}
 					
-					if(!initDir.getText().equals(INIT_TEXT)) {
+					if(!initDir.getText().equals(initTreeLoc)) {
 						int inc = 1;
 						if(initDir.getText().charAt(initDir.getText().length()-1) == File.separatorChar) {
 							inc = 0;
@@ -1054,11 +1059,14 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	public JFileTreePanel() {
     		this.setLayout(new BorderLayout());
 
-    		File root = new File(System.getProperty("user.home"));
+    		File root = new File(initTreeLoc);
     		JFileTreeNode rootTreeNode = new JFileTreeNode(root);
     		tree = new JTree(rootTreeNode);
     		tree.setCellRenderer(new JFileTreeCellRenderer());
     		tree.setRootVisible(false);
+    		for(int i=0; i<tree.getRowCount(); i++) {
+            	tree.expandRow(i);
+            }
     		JScrollPane scrollPane = new JScrollPane(tree);
     		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -1076,6 +1084,9 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     		
     		tree.setModel(tempTree.getModel());
     		tree.setRootVisible(false);
+    		for(int i=0; i<tree.getRowCount(); i++) {
+            	tree.expandRow(i);
+            }
     		
     		return tree;
     	}
