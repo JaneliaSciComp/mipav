@@ -7451,10 +7451,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     protected void computeDataSize() {
         int i;
+        long longSize;
 
         // base data size
-        for (this.dataSize = 1, i = 0; i < this.nDims; i++) {
+        for (this.dataSize = 1, i = 0, longSize = 1; i < this.nDims; i++) {
             this.dataSize *= dimExtents[i];
+            longSize *= dimExtents[i];
+        }
+        
+        if (longSize > Integer.MAX_VALUE) {
+            MipavUtil.displayError("Product of dimExtents exceeds maximum allowable array size = " + Integer.MAX_VALUE);
+            return;
         }
 
         switch (bufferType) {
@@ -7496,6 +7503,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case DCOMPLEX:
 
                 this.dataSize *= 2;
+                longSize *= 2;
+                if (longSize > Integer.MAX_VALUE) {
+                    MipavUtil.displayError("2 times product of dimExtents exceeds maximum allowable array size = " + Integer.MAX_VALUE);
+                    return;
+                }
                 break;
 
             case ARGB:
@@ -7503,6 +7515,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case ARGB_FLOAT:
 
                 this.dataSize *= 4;
+                longSize *= 4;
+                if (longSize > Integer.MAX_VALUE) {
+                    MipavUtil.displayError("4 times product of dimExtents exceeds maximum allowable array size = " + Integer.MAX_VALUE);
+                    return;
+                }
                 break;
 
             default: 
