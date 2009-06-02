@@ -64,6 +64,17 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     private JTextField dPerPText;
     private JTextField VOIText;
     private JTextField mpMapText;
+    private JComboBox costBox;
+    private JComboBox interpBox;
+    private JComboBox degreeBox;
+    private JTextField startBox;
+    private JTextField endBox;
+    private JTextField coarseBox;
+    private JTextField fineBox;
+    private JTextField bracketBox;
+    private JTextField iterationsBox;
+    private JTextField minimaBox;
+    private JCheckBox subsampleBox;
     
     /** output text area **/
     protected JTextArea outputTextArea;
@@ -370,6 +381,144 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         
         tabs.addTab("Analyze mpMap", null, secondPanel);
         
+        JPanel thirdPanel = new JPanel(new GridBagLayout());
+        
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        
+        
+        // Create Second tab for data creation
+        JLabel costLabel = new JLabel(" Cost Function : ");
+        thirdPanel.add(costLabel, gbc);
+        
+        gbc.gridx = 1;
+        String[] costStrings = { "Correlation Ratio", "Least Squared", "Mutual Information",
+        		"Normalized Mutual Information", "Normalized X Correlation" };
+        costBox = new JComboBox(costStrings);
+        costBox.setFont(MipavUtil.font12);
+        costBox.setBackground(Color.white);
+        costBox.setSelectedIndex(0);
+        thirdPanel.add(costBox, gbc);
+        
+        gbc.gridy = 1;
+        gbc.gridx = 0;
+        
+        JLabel freedomLabel = new JLabel(" Degrees of Freedom : ");
+        thirdPanel.add(freedomLabel, gbc);
+        
+        gbc.gridx = 1;
+        degreeBox = new JComboBox();
+        degreeBox.setFont(MipavUtil.font12);
+        degreeBox.setBackground(Color.white);
+        degreeBox.addItem("Translations - 2");
+        degreeBox.addItem("Rigid - 3");
+        degreeBox.addItem("Global rescale - 4");
+        degreeBox.addItem("Specific rescale - 5");
+        degreeBox.addItem("Affine - 6");
+        degreeBox.setSelectedIndex(1);
+        thirdPanel.add(degreeBox,gbc);
+        
+        
+        gbc.gridy = 2;
+        gbc.gridx = 0;
+        
+        JLabel interpLabel = new JLabel(" Interpolation Method : ");
+        thirdPanel.add(interpLabel, gbc);
+        
+        gbc.gridx = 1;
+        String[] interpStrings = { "Trilinear", "Bilinear", "Nearest Neighbor",
+        		"BSpline3", "BSpline4" };
+        interpBox = new JComboBox(interpStrings);
+        interpBox.setSelectedIndex(1);
+        interpBox.setFont(MipavUtil.font12);
+        interpBox.setBackground(Color.white);
+        thirdPanel.add(interpBox,gbc);
+        
+        gbc.gridy = 3;
+        gbc.gridx = 0;
+        
+        JLabel startLabel = new JLabel(" Begining Rotation (degrees) : ");
+        thirdPanel.add(startLabel, gbc);
+        
+        gbc.gridx = 1;
+        startBox = new JTextField("-10");
+        thirdPanel.add(startBox,gbc);
+        
+        
+        gbc.gridy = 4;
+        gbc.gridx = 0;
+        
+        JLabel endLabel = new JLabel(" Ending Rotation (degrees) : ");
+        thirdPanel.add(endLabel, gbc);
+        
+        gbc.gridx = 1;
+        endBox = new JTextField("10");
+        thirdPanel.add(endBox,gbc);
+        
+        gbc.gridy = 5;
+        gbc.gridx = 0;
+        
+        JLabel coarseLabel = new JLabel(" Coarse Sampling Rate : ");
+        thirdPanel.add(coarseLabel, gbc);
+        
+        gbc.gridx = 1;
+        coarseBox = new JTextField("3");
+        thirdPanel.add(coarseBox,gbc);
+        
+        gbc.gridy = 6;
+        gbc.gridx = 0;
+        
+        JLabel fineLabel = new JLabel(" Fine Sampling Rate : ");
+        thirdPanel.add(fineLabel, gbc);
+        
+        gbc.gridx = 1;
+        fineBox = new JTextField("2");
+        thirdPanel.add(fineBox,gbc);
+        
+        gbc.gridy = 10;
+        gbc.gridx = 1;
+        
+
+        subsampleBox = new JCheckBox("Subsample?", true);
+        thirdPanel.add(subsampleBox,gbc);
+        
+        gbc.gridy = 8;
+        gbc.gridx = 0;
+        
+        JLabel bracketLabel = new JLabel(" Minima Bracket Size : ");
+        thirdPanel.add(bracketLabel, gbc);
+        
+        gbc.gridx = 1;
+        bracketBox = new JTextField("10");
+        thirdPanel.add(bracketBox,gbc);
+        
+        gbc.gridy = 9;
+        gbc.gridx = 0;
+        
+        JLabel iterLabel = new JLabel(" Number of Iterations : ");
+        thirdPanel.add(iterLabel, gbc);
+        
+        gbc.gridx = 1;
+        iterationsBox = new JTextField("2");
+        thirdPanel.add(iterationsBox,gbc);
+        
+        gbc.gridy = 7;
+        gbc.gridx = 0;
+        
+        JLabel minimaLabel = new JLabel(" Number of Minima : ");
+        thirdPanel.add(minimaLabel, gbc);
+        
+        gbc.gridx = 1;
+        minimaBox = new JTextField("3");
+        thirdPanel.add(minimaBox,gbc);
+        
+        
+        
+        tabs.addTab("Advance Settings", thirdPanel);
+        
         getContentPane().add(tabs, BorderLayout.CENTER);
         getContentPane().add(OKCancelHelpPanel, BorderLayout.SOUTH);
         
@@ -387,7 +536,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     @Override
     protected void callAlgorithm() {
         
-        if (tabs.getSelectedIndex() == 0) //if on registration tab
+        if (tabs.getSelectedIndex() == 0 || tabs.getSelectedIndex()==2) //if on registration tab
         { 
             if (typeMinMax.getSelectedIndex()==0)
                 autoMinMax = true;
@@ -400,10 +549,22 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
             ymax = Float.parseFloat(ymaxText.getText().trim());
             bmin = Float.parseFloat(bminText.getText().trim());
             bmax = Float.parseFloat(bmaxText.getText().trim());
+            int cost = costBox.getSelectedIndex()*3;
+            int dof = degreeBox.getSelectedIndex()+2;
+            int interp = interpBox.getSelectedIndex();
+            float start = Float.parseFloat(startBox.getText().trim());
+            float end = Float.parseFloat(endBox.getText().trim()); 
+            float fine = Float.parseFloat(fineBox.getText().trim());
+            float coarse = Float.parseFloat(coarseBox.getText().trim()); 
+            boolean subsample = subsampleBox.isSelected();
+            int bracket = Integer.parseInt(bracketBox.getText().trim());
+            int iterations = Integer.parseInt(iterationsBox.getText().trim());
+            int minima = Integer.parseInt(minimaBox.getText().trim());
             
             
             alg = new PlugInAlgorithmNEIRetinalRegistration(imagePath1, imagePath2, outputTextArea, refPath, toConcat.isSelected(), Float.parseFloat(epsYText.getText().trim()), 
-                    Float.parseFloat(epsBText.getText().trim()),ymin,ymax, bmin, bmax, preReg.isSelected(), autoMinMax);
+                    Float.parseFloat(epsBText.getText().trim()),ymin,ymax, bmin, bmax, preReg.isSelected(), autoMinMax,
+                    cost,dof,interp,start,end,fine,coarse,subsample,bracket,iterations,minima);
             alg.addListener(this);
             
             if (isRunInSeparateThread()) {
@@ -448,16 +609,16 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     }
     
 
-    @Override
+    
     protected void setGUIFromParams() {
-    // TODO Auto-generated method stub
+
 
     }
 
-    @Override
+    
     protected void storeParamsFromGUI() throws ParserException {
-    // TODO Auto-generated method stub
 
+    	
     }
 
     public void algorithmPerformed(AlgorithmBase algorithm) {
@@ -472,6 +633,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                     image2PathBrowseButton.setEnabled(true);
                     refPathBrowseButton.setEnabled(true);
                     tabs.setEnabledAt(1, true);
+                    tabs.setEnabledAt(2, true);
                 
                 }
                 
@@ -496,9 +658,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                 
             }
         }
-            
-    // TODO Auto-generated method stub
-
+        
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -593,8 +753,10 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
              }
         }
         else if(command.equalsIgnoreCase("ok")) {
-            if (tabs.getSelectedIndex() == 0) //if on registration tab
+            if (tabs.getSelectedIndex() == 0 || tabs.getSelectedIndex() == 2) //if on registration tab
             {
+
+            	
                 if(ImageDirTextField1.getText().trim().equals("") || ImageDirTextField2.getText().trim().equals("") || (RefTextField.getText().trim().equals("") && !preReg.isSelected())) {
                     MipavUtil.displayError("Both Image Directories & a Reference are Required!");
                     return;
@@ -607,10 +769,54 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                     MipavUtil.displayError("Percentile must be above 0");
                     return;
                 }
+                if(Float.parseFloat(startBox.getText().trim()) > Float.parseFloat(endBox.getText().trim())){
+                	MipavUtil.displayError("Begining rotation must be smaller then end rotation.");
+                	tabs.setSelectedIndex(2);
+                	return;
+                }
                 if(RefTextField.getText().trim().equals("") && !preReg.isSelected()){
                     MipavUtil.displayError("Reference Image is Required!");
                     return;
                 }
+                if(startBox.getText().trim().equals("")){
+                    MipavUtil.displayError("Starting Rotation is Required!");
+                    return;
+                }
+                
+                if(endBox.getText().trim().equals("")){
+                    MipavUtil.displayError("Ending Rotation is Required!");
+                    return;
+                }
+                if(RefTextField.getText().trim().equals("")){
+                    MipavUtil.displayError("Reference Image is Required!");
+                    return;
+                }
+                
+                if(coarseBox.getText().trim().equals("") || Float.parseFloat(coarseBox.getText().trim()) <=0){
+                    MipavUtil.displayError("Coarse rate must be a positive number!");
+                    return;
+                }
+                
+                if(fineBox.getText().trim().equals("") || Float.parseFloat(fineBox.getText().trim()) <=0){
+                    MipavUtil.displayError("Fine rate must be a positive number!");
+                    return;
+                }
+                
+                if(bracketBox.getText().trim().equals("") || Integer.parseInt(bracketBox.getText().trim()) <=0){
+                    MipavUtil.displayError("Bracket size must be a positive number!");
+                    return;
+                }
+                
+                if(iterationsBox.getText().trim().equals("") || Integer.parseInt(iterationsBox.getText().trim()) <=0){
+                    MipavUtil.displayError("Iteration number must be a positive number!");
+                    return;
+                }
+                
+                if(minimaBox.getText().trim().equals("") || Integer.parseInt(minimaBox.getText().trim()) <=0){
+                    MipavUtil.displayError("Minima number must be a positive number!");
+                    return;
+                }
+                
                 if(epsYText.getText().trim().equals("")){
                     MipavUtil.displayError("epsYellow is Required!");
                     return;
@@ -636,12 +842,13 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                     RefTextField.setText("");
                     return;
                 }
-                
+                tabs.setSelectedIndex(0);
                 OKButton.setEnabled(false);
                 image1PathBrowseButton.setEnabled(false);
                 image2PathBrowseButton.setEnabled(false);
                 refPathBrowseButton.setEnabled(false);
                 tabs.setEnabledAt(1, false);
+                tabs.setEnabledAt(2, false);
                 setimagePaths(ImageDirTextField1.getText().trim(), ImageDirTextField2.getText().trim(), RefTextField.getText().trim());
             }
             
