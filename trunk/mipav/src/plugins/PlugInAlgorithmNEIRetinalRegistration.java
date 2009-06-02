@@ -109,6 +109,28 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     /** Is min/max percentile? **/
     private boolean percentile;
     
+    private int costChoice = 0;
+    
+    private int DoF = 3;
+    
+    private int interp = 1;
+    
+    private float startRot = -10;
+    
+    private float endRot = 10;
+    
+    private float coarse = 3;
+    
+    private float fine = 2;
+    
+    private boolean subsamp = true;
+    
+    private int bracketSize = 10;
+    
+    private int iterations = 2;
+    
+    private int minima = 3;
+    
     /** matrix of the image resolution to ensure regionGrow works **/
     private float resol[] = new float[2];
     /**
@@ -123,7 +145,9 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     *  percentile is true if min/max are percents, if not then exact values
     */
     public PlugInAlgorithmNEIRetinalRegistration(String imageDir1, String imageDir2, JTextArea outputbox, String refPath, boolean toConcat, float epsY,
-            float epsB, float ymin, float ymax,float bmin, float bmax, boolean registered, boolean percentile) {
+            float epsB, float ymin, float ymax,float bmin, float bmax, boolean registered, boolean percentile,
+            int cost,int dof,int interp, float begin,float end,float coarse,float fine,
+            boolean subsample,int bracket,int iterations,int minima) {
         
         //Set all variables
         sigma[0] = 4;
@@ -143,11 +167,23 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         this.bmax = bmax;
         this.preReg = registered;
         this.percentile = percentile;
-        
+        this.costChoice = cost;
+        this.DoF = dof;
+        this.interp = interp;
+        this.startRot = begin;
+        this.endRot = end;
+        this.coarse = coarse;
+        this.fine = fine;
+        this.subsamp = subsample;
+        this.bracketSize = bracket;
+        this.iterations = iterations;
+        this.minima = minima;
         
         
  
     }
+    
+    
     
 
     @Override
@@ -694,16 +730,17 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         imageSize = match.getSliceSize();
         
         for (int i = 0; i < imageSize; i++) {
-        
-        if (!mask.get(i))
-            inputWeightImage.set(i, 0);
-        else
-            inputWeightImage.set(i, 1);
+	        
+	        if (!mask.get(i))
+	            inputWeightImage.set(i, 0);
+	        else
+	            inputWeightImage.set(i, 1);
         }
         
         outputbox.append("        ** Registering to Reference Image **\n");
         outputbox.setCaretPosition( outputbox.getText().length() );
-        AlgorithmRegOAR2D reg2 = new AlgorithmRegOAR2D(ref, temp, refWeightImage, inputWeightImage, 0, 3, 1,(float) -10, (float) 10,(float)  3, (float) 2, true, 10,2, 3);
+        AlgorithmRegOAR2D reg2 = new AlgorithmRegOAR2D(ref, temp, refWeightImage, inputWeightImage, costChoice, DoF, interp,startRot, endRot,coarse, 
+        		fine, subsamp, bracketSize,iterations, minima);
         reg2.run();
         
         refWeightImage.disposeLocal();
@@ -899,6 +936,72 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         } catch (IOException e) {
         }
         
+        
+    }
+    
+    public int getCost(){
+
+    	return costChoice;
+        
+    }
+    
+    public int getDoF(){
+
+    	return DoF;
+        
+    }
+    
+    public int getInterp(){
+
+    	return interp;
+        
+    }
+    
+    public float getStartRot(){
+
+    	return startRot;
+        
+    }
+    
+    public float getEndRot(){
+
+    	return endRot;
+        
+    }
+    
+    public float getCoarse(){
+
+    	return coarse;
+        
+    }
+    
+    public float getFine(){
+
+    	return fine;
+        
+    }
+    
+    public boolean getSubSample(){
+
+    	return subsamp;
+        
+    }
+    
+    public int getBracket(){
+
+    	return bracketSize;
+        
+    }
+    
+    public int getIterations(){
+
+    	return iterations;
+        
+    }
+    
+    public int getMinima(){
+
+    	return minima;
         
     }
 }
