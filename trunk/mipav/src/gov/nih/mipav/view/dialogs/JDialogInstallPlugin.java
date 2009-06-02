@@ -103,6 +103,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
      */
     public JDialogInstallPlugin(JFrame theParentFrame) {
         super(theParentFrame, false);
+        File f = new File(pluginDir);
+        if(!f.exists()) {
+        	f.mkdirs();
+        }
         ui = ViewUserInterface.getReference();
         init();
     }
@@ -457,7 +461,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 		private JScrollPane scrollPane;
 
 		/** Currently used file*/
-		private File selectedFile = File.listRoots()[1];
+		private File selectedFile = new File(System.getProperty("user.home"));
     	
 		public ClassSelectorPanel() {
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -587,7 +591,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 						}
 						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(initDir.getText().length()+inc);
 					} else {
-						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(File.listRoots()[1].toString().length());
+						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(System.getProperty("user.home").length());
 					} 
 					
 					if(!((DefaultListModel)selected.getModel()).contains(name)) {
@@ -1050,8 +1054,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	public JFileTreePanel() {
     		this.setLayout(new BorderLayout());
 
-    		File[] roots = File.listRoots();
-    		JFileTreeNode rootTreeNode = new JFileTreeNode(roots[1]);
+    		File root = new File(System.getProperty("user.home"));
+    		JFileTreeNode rootTreeNode = new JFileTreeNode(root);
     		tree = new JTree(rootTreeNode);
     		tree.setCellRenderer(new JFileTreeCellRenderer());
     		tree.setRootVisible(false);
