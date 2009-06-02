@@ -1060,9 +1060,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     		tree = new JTree(rootTreeNode);
     		tree.setCellRenderer(new JFileTreeCellRenderer());
     		tree.setRootVisible(false);
-    		for(int i=0; i<tree.getRowCount(); i++) {
-            	tree.expandRow(i);
-            }
+    		tree.expandRow(0);
+    		
     		JScrollPane scrollPane = new JScrollPane(tree);
     		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -1080,9 +1079,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     		
     		tree.setModel(tempTree.getModel());
     		tree.setRootVisible(false);
-    		for(int i=0; i<tree.getRowCount(); i++) {
-            	tree.expandRow(i);
-            }
+    		tree.expandRow(0);
     		
     		return tree;
     	}
