@@ -135,7 +135,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     
     public void init() {
         setForeground(Color.black);
-        setTitle("NEI Retinal Registration" + " v1.2");
+        setTitle("NEI Retinal Registration" + " v1.5");
         
         tabs = new JTabbedPane();
         
