@@ -589,15 +589,11 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 						continue; //shouldn't be able to select root
 					}
 					
-					if(!initDir.getText().equals(initTreeLoc)) {
-						int inc = 1;
-						if(initDir.getText().charAt(initDir.getText().length()-1) == File.separatorChar) {
-							inc = 0;
-						}
-						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(initDir.getText().length()+inc);
-					} else {
-						name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(System.getProperty("user.home").length());
-					} 
+					int inc = 1;
+					if(initDir.getText().charAt(initDir.getText().length()-1) == File.separatorChar) {
+						inc = 0;
+					}
+					name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(initDir.getText().length()+inc);
 					
 					if(!((DefaultListModel)selected.getModel()).contains(name)) {
 						if(!isInPluginFolder(name)) {
