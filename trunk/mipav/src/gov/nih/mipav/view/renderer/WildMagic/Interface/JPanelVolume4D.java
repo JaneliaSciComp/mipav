@@ -88,6 +88,13 @@ public class JPanelVolume4D extends JInterfaceBase
         }
     }
     
+    public void setTimeSlice( int iTSlice )
+    {
+        m_k4DSlider.removeChangeListener(this);
+        m_k4DSlider.setValue(iTSlice);
+        m_k4DSlider.addChangeListener(this);
+    }
+    
     /**
      * Initializes the GUI components.
      */
