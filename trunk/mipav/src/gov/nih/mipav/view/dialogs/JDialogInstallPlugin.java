@@ -301,7 +301,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 							dep.add(initDep);
 						}
 							
-						ArrayList<Class> subDep = gatherSubClassDependents(initDep);
+						ArrayList<Class> subDep = gatherSubClassDependents(initDep, 0);
 						for(int k=0; k<subDep.size(); k++) {
 							if(!dep.contains(subDep.get(k))) {
 								dep.add(subDep.get(k));
@@ -321,7 +321,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					dep.add(possibleDep[j]);
 				}
 				
-				ArrayList<Class> subDep = gatherSubClassDependents(possibleDep[j]);
+				ArrayList<Class> subDep = gatherSubClassDependents(possibleDep[j], 0);
 				for(int k=0; k<subDep.size(); k++) {
 					if(!dep.contains(subDep.get(k))) {
 						dep.add(subDep.get(k));
@@ -337,7 +337,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					dep.add(f[i].getType());
 				}
 				
-				ArrayList<Class> subDep = gatherSubClassDependents(f[i].getType());
+				ArrayList<Class> subDep = gatherSubClassDependents(f[i].getType(), 0);
 				for(int k=0; k<subDep.size(); k++) {
 					if(!dep.contains(subDep.get(k))) {
 						dep.add(subDep.get(k));
@@ -353,8 +353,19 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	return depAr;
     }
     
-    private ArrayList<Class> gatherSubClassDependents(Class c) {
+    /**
+     * Attempts to go no further than third level.
+     * 
+     * @param c
+     * @param level
+     * @return
+     */
+    private ArrayList<Class> gatherSubClassDependents(Class c, int level) {
     	ArrayList<Class> dep = new ArrayList<Class>();
+    	
+    	if(level > 3) {
+    		return dep;
+    	}
     	
     	Class[] possibleDep = c.getDeclaredClasses();
 		for(int j=0; j<possibleDep.length; j++) {
@@ -363,7 +374,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					dep.add(possibleDep[j]);
 				}
 					
-				ArrayList<Class> subDep = gatherSubClassDependents(possibleDep[j]);
+				ArrayList<Class> subDep = gatherSubClassDependents(possibleDep[j], ++level);
 				for(int k=0; k<subDep.size(); k++) {
 					if(!dep.contains(subDep.get(k))) {
 						dep.add(subDep.get(k));
@@ -379,7 +390,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					dep.add(f[i].getType());
 				}
 					
-				ArrayList<Class> subDep = gatherSubClassDependents(f[i].getType());
+				ArrayList<Class> subDep = gatherSubClassDependents(f[i].getType(), ++level);
 				for(int k=0; k<subDep.size(); k++) {
 					if(!dep.contains(subDep.get(k))) {
 						dep.add(subDep.get(k));
@@ -406,9 +417,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
         JLabel intro = new JLabel("<html><center>This interface allows for batch installation of plugins into MIPAV.  <br>"+
         		"You may select Java class files or container files.  "+
-        		"These include *.class, *.tar.gz, *.zip, *.jar files.<br>"+
-        		"Detected plugins that will likely install correctly are displayed in <font color=\"blue\">blue</font>.<br>"+
-        		"Plugins and any problem components listed are displayed in <font color=\"red\">red</font>.</center></html>  ");
+        		"These include *.class, *.tar.gz, *.zip, *.jar files.<br></html>");
+        		//TODO: Figure out dependencies
+        		/*"Detected plugins that will likely install correctly are displayed in <font color=\"blue\">blue</font>.<br>"+
+        		"Plugins and any problem components listed are displayed in <font color=\"red\">red</font>.</center></html>  ");*/
         intro.setBorder(new EmptyBorder(10, 75, 0, 75));
         //intro.setMinimumSize(new Dimension(700, 50));
         //intro.setPreferredSize(new Dimension(700, 50));
