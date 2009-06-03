@@ -110,7 +110,8 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         }
         boolean bDirExists = true;
         String kImageName = ModelImage.makeImageName( _imageA.getFileInfo(0).getFileName(), "");
-        m_kParentDir = _imageA.getFileInfo()[0].getFileDirectory().concat( File.separator + kImageName + "_RenderFiles" + File.separator);
+        m_kParentDir = _imageA.getFileInfo()[0].getFileDirectory().concat( kImageName + "_RenderFiles" + File.separator);
+        //System.err.println( m_kParentDir );
         File kDir = new File( m_kParentDir );
         if ( !kDir.exists() )
         {

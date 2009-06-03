@@ -95,9 +95,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected boolean m_bModified = true;
     /** Screen capture counter. */
     private int m_iScreenCaptureCounter = 0;
+    private int m_iMovieCounter = 0;
 
     /** Set to true when recording. */
     protected boolean m_bSnapshot = false;
+    protected int m_iCaptureFPS;
     /**
      * Default GPURenderBase constructor.
      */
@@ -389,25 +391,32 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void saveAVIMovie() {
         File outputFile = null;
         File[] inputFile = new File[getCounter()];
-        String directory = m_kVolumeImageA.GetImage().getFileInfo(0).getFileDirectory() + File.separatorChar;
+        String directory = m_kVolumeImageA.GetImage().getFileInfo(0).getFileDirectory();
+        //System.err.println( directory );
         for (int i = 0; i < getCounter(); i++) {
             inputFile[i] = new File(directory + "captureImage" + i + "." + "jpg");
+            //System.err.println( directory + "captureImage" + i + "." + "jpg"  );
         }
 
         // Save to AVI file.
-        String file = directory + m_kVolumeImageA.GetImage().getImageName() + ".avi";
+        String file = m_kVolumeImageA.GetImage().getImageName() + (m_iMovieCounter++) + ".avi";
+        //System.err.println( file );
         outputFile = new File(file);
 
+        //System.err.println( m_iCaptureFPS );
         try {
-            MovieMaker movieMake = new MovieMaker(GetWidth(), GetHeight(), 3, outputFile, inputFile);
+            MovieMaker movieMake = new MovieMaker(GetWidth(), GetHeight(), m_iCaptureFPS, outputFile, inputFile);
             movieMake.makeMovie();
         } catch (Throwable t) {
             t.printStackTrace();
         }
 
+        for (int i = 0; i < getCounter(); i++) {
+            inputFile[i].delete();
+        }
+        m_iScreenCaptureCounter = 0;
         inputFile = null;
         outputFile = null;
-
     }
 
     /**
@@ -415,17 +424,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void saveQuickTimeMovie() {
         MediaLocator oml;
-        Vector inputFiles = new Vector();
+        Vector<String> inputFiles = new Vector<String>();
         String file;
 
         String directory = m_kVolumeImageA.GetImage().getFileInfo(0).getFileDirectory() + File.separatorChar;
         file = "file:" + directory + m_kVolumeImageA.GetImage().getImageName() + ".mov";
 
-        if ((oml = new MediaLocator(file)) == null) {
-            System.err.println("Cannot build media locator from: " + directory);
-
-            return;
-        }
+        oml = new MediaLocator(file);
 
         for (int i = 0; i < getCounter(); i++) {
             inputFiles.addElement(directory + "captureImage" + i + "." + "jpg");
@@ -615,6 +620,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void record(boolean bOn)
     {
         m_bSnapshot = bOn;
+        if ( m_bSnapshot )
+        {
+            m_iCaptureFPS = (int)m_dFrameRate;
+        }
+        if ( !m_bSnapshot )
+        {
+            saveAVIMovie();
+        }
     }
   
     
@@ -626,7 +639,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         BufferedImage kScreenShot = m_pkRenderer.Screenshot();
         try {
-            String directory = m_kVolumeImageA.GetImage().getFileInfo(0).getFileDirectory() + File.separatorChar;
+            String directory = m_kVolumeImageA.GetImage().getFileInfo(0).getFileDirectory();
+            //System.err.println( directory );
             ImageIO.write(kScreenShot, "jpg", new File( directory + "captureImage" + m_iScreenCaptureCounter++ + "." + "jpg"));
         } catch (IOException e) {
             e.printStackTrace();

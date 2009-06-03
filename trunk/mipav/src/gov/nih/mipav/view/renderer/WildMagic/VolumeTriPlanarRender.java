@@ -1002,22 +1002,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 m_kVolumeRayCast.SetDisplaySecond( m_bDisplaySecond );
             }
             return;
-        case '3':
-            update4D( false );
-            return;
-        case '4':
-            update4D( true );
-            return;
-        case '5':
-            m_bPlay4D = !m_bPlay4D;
-            return;
-        case 'e':
-            m_bSnapshot = !m_bSnapshot;  
-            if ( !m_bSnapshot )
-            {
-                saveAVIMovie();
-            }
-            return;
         case 'p':
             displayBoundingBox( !m_kVolumeBox.GetDisplay() );
             return;

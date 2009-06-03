@@ -1081,7 +1081,7 @@ public class JPanelFlythruMove extends JPanelRendererBase implements ActionListe
     public void saveAVIMovie() {
         File outputFile = null;
         File[] inputFile = new File[parentScene.getCounter()];
-        String directory = parentScene.getImage().getFileInfo(0).getFileDirectory() + "flythru" + File.separatorChar;
+        String directory = parentScene.getImage().getFileInfo(0).getFileDirectory();
         for (int i = 0; i < parentScene.getCounter(); i++) {
             inputFile[i] = new File(directory + "captureImage" + i + "." + "jpg");
         }

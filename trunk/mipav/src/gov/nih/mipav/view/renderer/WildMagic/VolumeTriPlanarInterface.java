@@ -349,6 +349,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     private JPanelVolume4D m_kVolume4DGUI;
     private boolean m_b4D = false;
     
+    private JToggleButton m_kRecordToggle;
+    
     
     /**
      * Specific constructor call from the VolumeViewerDTI.   
@@ -675,6 +677,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             create3DVOI(true);
         } else if (command.equals("3DVOIUnion") ) {
             create3DVOI(false);
+        } else if (command.equals("Record")) {
+            raycastRenderWM.record(m_kRecordToggle.isSelected());
         }
 
     }
@@ -2595,6 +2599,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         viewToolBar.add(toolbarBuilder.buildButton("Extract", "Extract rotated image", "extract"));
         rfaButton.setVisible(false);
         rfaSeparator.setVisible(false);
+        
+        m_kRecordToggle = toolbarBuilder.buildToggleButton("Record", "Record to Avi", "movie");
+        viewToolBar.add(m_kRecordToggle);
         
         GridBagConstraints gbc = new GridBagConstraints();
 
