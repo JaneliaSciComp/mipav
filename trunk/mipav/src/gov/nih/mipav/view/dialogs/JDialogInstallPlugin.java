@@ -437,7 +437,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
-        cancelButton.setText("Exit");
+        cancelButton.setText("Close");
 
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));

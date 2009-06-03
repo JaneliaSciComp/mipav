@@ -188,7 +188,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
         buttonPanel.add(uninstall);
         buildCancelButton();
         buttonPanel.add(cancelButton);
-        cancelButton.setText("Exit");
+        cancelButton.setText("Close");
 
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
