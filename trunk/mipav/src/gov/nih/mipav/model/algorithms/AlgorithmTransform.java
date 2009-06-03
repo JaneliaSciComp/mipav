@@ -4889,9 +4889,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fileInfo[i].setAxisOrientation(AlgorithmTransform.axisOrient);
                 fileInfo[i].setUnitsOfMeasure(units);
 
+                fileInfo[i].setOrigin(AlgorithmTransform.imgOrigin);
                 AlgorithmTransform.imgOrigin[2] = AlgorithmTransform.startPos
                         + (AlgorithmTransform.direct[2] * i * resolutions[2]);
-                fileInfo[i].setOrigin(AlgorithmTransform.imgOrigin);
+                
 
                 if (fileInfo[i].getFileFormat() == FileUtility.DICOM) {
                     orientation = (String) ((FileInfoDicom) fileInfo[i]).getTagTable().getValue("0020,0032");
