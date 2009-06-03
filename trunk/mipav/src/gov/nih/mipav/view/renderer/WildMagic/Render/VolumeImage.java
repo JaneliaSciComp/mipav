@@ -1460,8 +1460,8 @@ public class VolumeImage
             fileInfoBases[i].setResolutions(newRes);
         }
         m_kImage.calcMinMax();
-        m_kImage.setImageName( kImageName );
-        m_kImage.saveImage( kDir, m_kImage.getImageName(), FileUtility.XML, false );
+        m_kImage.setImageName(  kImageName );
+        m_kImage.saveImage( kDir, kImageName, FileUtility.XML, false );
     }
 
     private void ReadFromDisk( String kImageName, String kDir, String kPostfix )
