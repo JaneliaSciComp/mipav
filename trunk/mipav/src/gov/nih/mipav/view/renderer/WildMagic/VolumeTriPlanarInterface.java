@@ -2175,6 +2175,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      * @see gov.nih.mipav.view.ViewImageUpdateInterface#setTimeSlice(int)
      */
     public void setTimeSlice(int slice) { 
+        m_kVolume4DGUI.setTimeSlice( slice );
         m_kVolumeImageA.SetTimeSlice( slice );
         setModified();
     }

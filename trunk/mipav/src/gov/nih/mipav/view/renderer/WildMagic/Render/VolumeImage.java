@@ -326,6 +326,8 @@ public class VolumeImage
         
         m_kHistoTarget.SetImage( m_kHisto[m_iTimeSlice] );
         m_kHistoTarget.Release();
+        
+        m_kImage.setTimeSlice(m_iTimeSlice);
     }
     
 
@@ -773,8 +775,11 @@ public class VolumeImage
     
     public void SetTimeSlice(int iSlice)
     {
-        m_iTimeSlice = iSlice;
-        update4D();
+        if ( m_iTimeSlice != iSlice )
+        {
+            m_iTimeSlice = iSlice;
+            update4D();
+        }
     }
     
     /**
