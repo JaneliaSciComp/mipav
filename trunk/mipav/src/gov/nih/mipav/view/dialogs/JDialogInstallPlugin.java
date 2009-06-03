@@ -213,7 +213,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         	String name = files.get(i).getName();
         	name = name.substring(0, name.indexOf(".class"));
         	try {
-				Class c = ClassLoader.getSystemClassLoader().loadClass(name);
+				Class c = Class.forName(name);
 				boolean isPlugin = false;
 				Class[] inter = c.getInterfaces();
 				for(int j=0; j<inter.length; j++) {
@@ -614,9 +614,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 		    		MipavUtil.displayInfo("<html>The following files are already in the plugin directory: <br>"+conflictList+"</html>");
 		    	}
 				
-				ArrayList<File> allFiles = moveFiles();
-				filesColor = buildColorTable(files);
-				removeFiles(allFiles);
+				//TODO: color tables were built here to find missing dependencies
+				//ArrayList<File> allFiles = moveFiles();
+				//filesColor = buildColorTable(files);
+				//removeFiles(allFiles);
 			} else if(e.getActionCommand().equals(DELETE)) {
 				Object[] numSelected = selected.getSelectedValues();
 				int[] selectedIndex = selected.getSelectedIndices();
@@ -637,7 +638,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					m.add(i, files.get(i));
 				}
 				
-				filesColor = buildColorTable(files);
+				//TODO: color tables were built here to find missing dependencies
+				//filesColor = buildColorTable(files);
 			} else if(e.getActionCommand().equals(CHECK)) {
 				//rebuilds index, renderer is already aware of the check button's status
 				fileTree = subFilePanel.setRootDir(selectedFile);
@@ -940,6 +942,14 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 		return true;
     }
     
+    /**
+     * Attempted to find dependencies of used files after they were temporarily added to the class path (included unpacking jars)
+     * 
+     * @param allFiles
+     * @see moveFiles()
+     * @see removeFiles(ArrayList<File>)
+     * @return
+     */
     private Vector<Color> buildColorTable(Vector<File> allFiles) {
     	Vector<Color> vectorColors = new Vector<Color>();
     	for(int i=0; i<allFiles.size(); i++) {
