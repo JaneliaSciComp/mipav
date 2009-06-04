@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.view.ViewJFrameAnimateClip;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClip;
@@ -411,11 +412,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeRayCast.SetDisplay(false);   
             m_kSlices.SetDisplay(true);   
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            VolumeImageNormalGM.main(m_kParent, m_kVolumeImageA);
-            if ( m_kVolumeImageB != null )
-            {
-                VolumeImageNormalGM.main(m_kParent, m_kVolumeImageB);
-            }
+            m_kVolumeImageA.GenerateNormalFiles( );
+            //VolumeImageNormalGM.main(m_kParent, m_kVolumeImageA);
+            //if ( m_kVolumeImageB != null )
+            //{
+            //    VolumeImageNormalGM.main(m_kParent, m_kVolumeImageB);
+            //}
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             m_kVolumeRayCast.setVolumeSamples( (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f );
             CMPMode();
@@ -1355,7 +1357,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void saveImageFromTexture()
     {
-        ModelImage kImage = m_kVolumeImageA.CreateImageFromTexture(m_kVolumeImageA.GetVolumeTarget().GetImage());
+        ModelImage kImage = VolumeImage.CreateImageFromTexture(m_kVolumeImageA.GetVolumeTarget().GetImage(), true);
+        kImage.setImageName(JDialogBase.makeImageName(m_kVolumeImageA.GetImage().getImageName(), "_Crop"));
+        kImage.copyFileTypeInfo(m_kVolumeImageA.GetImage());
+        kImage.calcMinMax();
         kImage.saveImage(m_kVolumeImageA.GetImage().getImageDirectory(), kImage.getImageName(), kImage.getType(), true);
     }
 

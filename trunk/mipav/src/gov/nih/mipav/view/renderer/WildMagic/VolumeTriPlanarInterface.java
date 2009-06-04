@@ -2525,7 +2525,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         menuObj.setMenuItemEnabled("RFA toolbar", false);
         menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", false);
         menuObj.setMenuItemEnabled("Open Fly Through view", false);
-        menuObj.setMenuItemEnabled("4D toolbar", m_kVolumeImageA.GetImage().is4DImage() );
+        if ( m_kVolumeImageA != null && m_kVolumeImageA.GetImage() != null )
+        {
+            menuObj.setMenuItemEnabled("4D toolbar", m_kVolumeImageA.GetImage().is4DImage() );
+        }
         
         return menuBar;
     }

@@ -1,11 +1,9 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.model.structures.ModelImage;
 
 import java.awt.Frame;
 import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
@@ -22,17 +20,21 @@ public class VolumeImageNormalGM extends VolumeImageViewer
     private Texture m_pkVolumeCalcTarget;
     private boolean m_bDisplayFirst = true;
     private boolean m_bDisplaySecond = true;
+    private ModelImage m_kImage;
+    private Texture m_kTexture;
     
-    public VolumeImageNormalGM( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
+    public VolumeImageNormalGM( VolumeImage kVolumeImage, ModelImage kImage, Texture kTexture )
     {
-        super(kParentFrame, kVolumeImage );
+        super(null, kVolumeImage);
+        m_kImage = kImage;
+        m_kTexture = kTexture;
     }
     /**
      * @param args
      */
-    public static void main( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
+    public static void main( VolumeImage kVolumeImage, ModelImage kImage, Texture kTexture )
     {
-        VolumeImageNormalGM kWorld = new VolumeImageNormalGM(kParentFrame, kVolumeImage);
+        VolumeImageNormalGM kWorld = new VolumeImageNormalGM(kVolumeImage, kImage, kTexture);
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
         Animator animator = new Animator( kWorld.GetCanvas() );
@@ -56,7 +58,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
         }
         while ( m_bDisplayFirst )
         {
-            float fZ = ((float)m_iSlice)/(m_kVolumeImage.GetImage().getExtents()[2] -1);
+            float fZ = ((float)m_iSlice)/(m_kImage.getExtents()[2] -1);
             UpdateSlice(fZ);;
             m_pkPlane.DetachAllEffects();
             m_pkPlane.AttachEffect(m_spkEffect);
@@ -71,7 +73,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
             m_pkRenderer.FrameBufferToTexSubImage3D( m_pkVolumeCalcTarget, m_iSlice, false );
             //m_pkRenderer.DisplayBackBuffer();
             m_iSlice++; 
-            if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
+            if ( m_iSlice >= m_kImage.getExtents()[2])
             {
                 m_iSlice = 0;
                 m_bDisplayFirst = false;
@@ -80,7 +82,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
         }
         while ( m_bDisplaySecond )
         {
-            float fZ = ((float)m_iSlice)/(m_kVolumeImage.GetImage().getExtents()[2] -1);
+            float fZ = ((float)m_iSlice)/(m_kImage.getExtents()[2] -1);
             UpdateSlice(fZ);
             m_pkPlane.DetachAllEffects();
             m_pkPlane.AttachEffect(m_spkEffect2);
@@ -92,10 +94,10 @@ public class VolumeImageNormalGM extends VolumeImageViewer
                 m_pkRenderer.EndScene();
                 //writeImage();
             }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetNormalMapTarget(), m_iSlice, false );
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kTexture, m_iSlice, true );
             //m_pkRenderer.DisplayBackBuffer();
             m_iSlice++; 
-            if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
+            if ( m_iSlice >= m_kImage.getExtents()[2])
             {
                 m_bDisplaySecond = false;
             }
@@ -124,7 +126,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
         m_pkPlane.DetachAllEffects();
         
         GraphicsImage kImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,m_iWidth,m_iHeight,
-                                                 m_kVolumeImage.GetImage().getExtents()[2],(byte[])null,
+                m_kImage.getExtents()[2],(byte[])null,
                                                  "VolumeCalc" );
         m_pkVolumeCalcTarget = new Texture();
         m_pkVolumeCalcTarget.SetImage(kImage);
