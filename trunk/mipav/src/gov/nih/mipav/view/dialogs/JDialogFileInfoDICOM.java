@@ -924,12 +924,13 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     	if(prefTagsString != null && (!prefTagsString.trim().equals(""))) {
     		tags = prefTagsString.split(";");
     	}
-        NavigableSet<String> set = tagsList.descendingKeySet();
+        Set<String> set = tagsList.keySet();
         // go through the hashlist, and for each element you find, copy it
         // into the table, showing full info if it was coded
         int ii;
         
-        for (ii = 0, e = set.descendingIterator(); e.hasNext(); ii++) {
+        
+        for (ii = 0, e = set.iterator(); e.hasNext(); ii++) {
             key =  e.next();
             name = key;
 

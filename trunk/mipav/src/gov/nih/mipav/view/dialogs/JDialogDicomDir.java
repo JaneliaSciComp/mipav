@@ -139,9 +139,6 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     protected FileImageXML.Thumbnail thumbnail = null;
     
     /** DOCUMENT ME! */
-    private boolean showXMLThumbnail = true;
-    
-    /** DOCUMENT ME! */
     private float contrast = 1;
     
     /** DOCUMENT ME! */
@@ -209,12 +206,16 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     }
     public JDialogDicomDir(Frame parent, File file, FileDicom caller) {
         super(parent, false);
-        this.opener = caller;
-        if (file != null) {
-                this.file = file;
-                init("DICOMDIR Browser");
-                scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
-                ifSuccess = true;
+        if (this.runInSeparateThread==false){
+        	
+	        
+	        this.opener = caller;
+	        if (file != null) {
+	                this.file = file;
+	                init("DICOMDIR Browser");
+	                scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
+	                ifSuccess = true;
+	        }
         }
 
     }

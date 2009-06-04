@@ -362,6 +362,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.buildTreeDialog();
         } else if (command.equals("BrowseDICOM")) {
             userInterface.buildDICOMFrame();
+        } else if (command.equals("BrowseDICOMDIR")) {
+            userInterface.buildDICOMDIRFrame();
         } else if (command.equals("OpenSRBFile")) {
             userInterface.openSRBFile();
         } else if (command.equals("SaveSRBFile")) {
