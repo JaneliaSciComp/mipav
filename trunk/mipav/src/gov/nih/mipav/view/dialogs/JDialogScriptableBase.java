@@ -8,6 +8,7 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
+import java.util.Vector;
 
 
 /**
@@ -89,12 +90,29 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
         int index = name.lastIndexOf(classPrefix);
 
         if (index == -1) {
-
-            // TODO: may be an fatal error..
-            Preferences.debug("dialog base: No script " + classPrefix + " prefix found.  Returning " + name + "\n",
-                              Preferences.DEBUG_SCRIPTING);
-
-            return name;
+        	//since the plugin has a non-standard dialog name, the dialogClass name will have
+        	//to be shortened by looking at the ScriptableActionLoader's possible locations
+        	Vector scriptLoc = ScriptableActionLoader.getScriptActionLocations();
+        	int i=0;
+        	while(classPrefix.equals("JDialog") && i < scriptLoc.size()) {
+        		if(name.contains(scriptLoc.get(i).toString())) {
+        			classPrefix = scriptLoc.get(i).toString();
+        			index = name.lastIndexOf(classPrefix);
+        		}
+        		i++;
+        	}
+        	if(!classPrefix.equals("JDialog")) {
+        		Preferences.debug("dialog base: Extracting script action command.  Returning " +
+                        name.substring(index + classPrefix.length()) + "\n", Preferences.DEBUG_SCRIPTING);
+        	
+        		 return name.substring(index + classPrefix.length());
+        	} else {
+	            //Display's the long package name, not a problem unless this script uses MIPAV tools.
+	            Preferences.debug("dialog base: No script " + classPrefix + " prefix found.  Returning " + name + "\n",
+	                              Preferences.DEBUG_SCRIPTING);
+        	
+	            return name;
+        	}
         } else {
             Preferences.debug("dialog base: Extracting script action command.  Returning " +
                               name.substring(index + classPrefix.length()) + "\n", Preferences.DEBUG_SCRIPTING);

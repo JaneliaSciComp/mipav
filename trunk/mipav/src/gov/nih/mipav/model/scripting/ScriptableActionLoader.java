@@ -111,4 +111,12 @@ public class ScriptableActionLoader {
             SCRIPT_ACTION_LOCATIONS.add(packageString);
         }
     }
+    
+    /**
+     * Gets the script action location vector, needed for figuring out the possible
+	 * short name of a non-MIPAV scriptable tool.
+     */
+    public static Vector getScriptActionLocations() {
+    	return SCRIPT_ACTION_LOCATIONS;
+    }
 }

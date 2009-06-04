@@ -945,9 +945,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             });
 
             String name, pluginName;
-            Field catField;
+            Field catField = null, scriptField = null;
             Class plugin;
-            String fieldName = "CATEGORY";
+            String catName = "CATEGORY";
+            String scriptName = "SCRIPT_PREFIX";
             
             for (int i = 0; i < allFiles.length; i++) {
             	JMenu currentMenu = menu;
@@ -961,8 +962,24 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
                 try {
                 	plugin = Class.forName(name);
-                	plugin.newInstance();   //instantiated to allow loading into SCRIPT_ACTION_LOCATIONS
-                	catField = plugin.getField(fieldName);
+                	
+                	//plugin.newInstance();   
+                	//rather than instantiating to allow loading into SCRIPT_ACTION_LOCATIONS,  see below
+                	try {               	
+	                	scriptField = plugin.getField(scriptName);
+                	} catch(NoSuchFieldException e1) {
+                		//The scriptname field is optional.
+                	}
+                	
+                	if(scriptField != null) {
+                		String scriptLoc = (String)scriptField.get(plugin);
+                		if(scriptLoc != null) {
+                			//the value of SCRIPT_NAME is now the short name for this plugin
+                			ScriptableActionLoader.addScriptActionLocation(scriptLoc);  
+                		}
+                	}
+                	
+                	catField = plugin.getField(catName);
                 	String[] hier = (String[])catField.get(plugin);
                 	Class[] interList = plugin.getInterfaces();
                 	String interName = new String();
@@ -998,6 +1015,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 
                 } catch(Exception e) {
                 	//usually this means other files/folders exist in the installed plugins directory besides plugin files
+                	e.printStackTrace();
                 }
             }
         }
