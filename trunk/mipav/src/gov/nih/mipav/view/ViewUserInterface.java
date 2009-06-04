@@ -3410,7 +3410,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                 JOptionPane.QUESTION_MESSAGE);
 
                 if (answer == JOptionPane.YES_OPTION) {
-                    BufferedReader breader = new BufferedReader(new FileReader(plistFile));
+                	FileReader reader = new FileReader(plistFile);
+                    BufferedReader breader = new BufferedReader(reader);
                     String line = breader.readLine();
                     Vector<String> fileListing = new Vector<String>();
 
@@ -3441,6 +3442,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
 
                     breader.close();
+                    reader.close();
 
                     if (needsJavaVersionSpecifier) {
 

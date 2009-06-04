@@ -304,8 +304,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
         if (!lax.canRead()) {
             throw new IOException(lax.getAbsolutePath() + " cannot be read.");
         }
-
-        readFile = new BufferedReader(new FileReader(lax));
+        FileReader reader = new FileReader(lax); 
+        readFile = new BufferedReader(reader);
 
         if (lax.getName().toLowerCase().endsWith("lax")) {
             type = laxType;
@@ -344,6 +344,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
         }
 
         readFile.close();
+        reader.close();
 
         return heapMemories;
     }
