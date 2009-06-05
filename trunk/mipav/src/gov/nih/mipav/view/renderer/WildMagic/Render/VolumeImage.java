@@ -363,16 +363,17 @@ public class VolumeImage
     private void update4D()
     {
         m_kVolumeTarget.SetImage(m_kVolume[m_iTimeSlice]);
-        m_kVolumeTarget.Release();
         m_kVolumeGMTarget.SetImage(m_kVolumeGM[m_iTimeSlice]);
-        m_kVolumeGMTarget.Release();
         m_kVolumeGMGMTarget.SetImage(m_kVolumeGMGM[m_iTimeSlice]);
-        m_kVolumeGMGMTarget.Release();
         m_kNormalMapTarget.SetImage(m_kNormal[m_iTimeSlice]);
-        m_kNormalMapTarget.Release();
         m_kHistoTarget.SetImage( m_kHisto[m_iTimeSlice] );
+
+        m_kVolumeTarget.Release();
+        m_kVolumeGMTarget.Release();
+        m_kVolumeGMGMTarget.Release();
+        m_kNormalMapTarget.Release();
         m_kHistoTarget.Release();
-        
+
         m_kImage.setTimeSlice(m_iTimeSlice);
     }
     
