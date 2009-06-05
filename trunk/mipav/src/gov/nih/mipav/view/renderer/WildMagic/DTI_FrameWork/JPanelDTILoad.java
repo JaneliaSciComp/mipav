@@ -634,7 +634,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
             FileIO fileIO = new FileIO();
             m_kDTIImage = fileIO.readImage(chooser.getSelectedFile().getName(),
                     chooser.getCurrentDirectory() + File.separator);
-            m_kParentDir = chooser.getCurrentDirectory().getParent();
+            m_kParentDir = chooser.getCurrentDirectory().getPath();
 
             if (m_kDTIImage.getNDims() != 4) {
                 MipavUtil

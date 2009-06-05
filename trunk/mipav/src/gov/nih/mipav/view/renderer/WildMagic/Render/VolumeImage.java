@@ -124,7 +124,7 @@ public class VolumeImage
                 kImageName = ModelImage.makeImageName( m_kImage.getFileInfo(0).getFileName(), "_Normal_" + i);
                 System.err.println( kImageName );
                 ModelImage kNormal = ReadFromDisk( kImageName, kDir );
-                m_kNormal[i] = UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal.getImageName() );
+                m_kNormal[i] = UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal.getImageName(), true );
             }
         }
     }
@@ -137,15 +137,16 @@ public class VolumeImage
         }
         for ( int i = 0; i < m_iTimeSteps; i++ )
         {
-            VolumeImageNormalGM.main( this, m_akImages[i], m_kNormalMapTarget);
-            ModelImage kNormal = VolumeImage.CreateImageFromTexture(m_kNormal[i], false);
-            String kImageName = ModelImage.makeImageName( m_kImage.getFileInfo(0).getFileName(), "_Normal_" + i);
-            kNormal.setImageName(  kImageName );        
-            kNormal.copyFileTypeInfo( m_kImage);
-            kNormal.calcMinMax();
-            System.err.println( kImageName );
-            kNormal.saveImage( m_kDir, kImageName, FileUtility.XML, false );
+            VolumeImageNormalGM.main( this, m_akImages[i], m_kNormalMapTarget, i, 
+                    ModelImage.makeImageName( m_kImage.getFileInfo(0).getFileName(), "_Normal_" + i));
         }
+    }
+    
+    public void CopyNormalFiles(int i, ModelImage kImage)
+    {
+        kImage.calcMinMax();
+        kImage.saveImage( m_kDir, kImage.getImageName(), FileUtility.XML, false );
+        m_kNormal[i] = UpdateData(kImage, 0, null, m_kNormal[i], m_kNormalMapTarget, kImage.getImageName(), true );
     }
     
 
@@ -173,7 +174,7 @@ public class VolumeImage
             m_kVolume = new GraphicsImage[1];
             m_kVolumeGM = new GraphicsImage[1];
             m_kVolumeGMGM = new GraphicsImage[1];
-            m_kVolume[0] = UpdateData(m_kImage, m_iTimeSlice, null, null, m_kVolumeTarget, m_kImage.getImageName() );
+            m_kVolume[0] = UpdateData(m_kImage, m_iTimeSlice, null, null, m_kVolumeTarget, m_kImage.getImageName(), true );
             m_kNormal = new GraphicsImage[1];
             m_kNormal[0] = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
                                            iXBound,iYBound,iZBound,new byte[iXBound*iYBound*iZBound*4],
@@ -194,7 +195,7 @@ public class VolumeImage
             for ( int i = 0; i < m_kVolume.length; i++ )
             {
                 m_akImages[i] = new ModelImage( m_kImage.getType(), aiSubset, JDialogBase.makeImageName(m_kImage.getImageName(), "_" + i) );
-                m_kVolume[i] = UpdateData(m_kImage, i, m_akImages[i], null, m_kVolumeTarget, m_akImages[i].getImageName() );      
+                m_kVolume[i] = UpdateData(m_kImage, i, m_akImages[i], null, m_kVolumeTarget, m_akImages[i].getImageName(), true );      
                 
                 m_akImages[i].copyFileTypeInfo(m_kImage);
                 m_akImages[i].calcMinMax();
@@ -384,7 +385,7 @@ public class VolumeImage
      * @param kPostFix the postfix string for the image name.
      */
     public static GraphicsImage UpdateData( ModelImage kImage, int iTimeSlice, ModelImage kNewImage, GraphicsImage kVolumeImage,
-            Texture kVolumeTexture, String kImageName )
+            Texture kVolumeTexture, String kImageName, boolean bSwap )
     {
         int iXBound = kImage.getExtents()[0];
         int iYBound = kImage.getExtents()[1];
@@ -398,13 +399,16 @@ public class VolumeImage
             aucData = new byte[iSize];
             try {
                 kImage.exportData( iTimeSlice * iSize, iSize, aucData );
-                for ( int i = 0; i < iSize; i += 4)
+                if ( bSwap )
                 {
-                    byte tmp = aucData[i];
-                    aucData[i] = aucData[i+1];
-                    aucData[i+1] = aucData[i+2];
-                    aucData[i+2] = aucData[i+3];
-                    aucData[i+3] = tmp;
+                    for ( int i = 0; i < iSize; i += 4)
+                    {
+                        byte tmp = aucData[i];
+                        aucData[i] = aucData[i+1];
+                        aucData[i+1] = aucData[i+2];
+                        aucData[i+2] = aucData[i+3];
+                        aucData[i+3] = tmp;
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -448,7 +452,7 @@ public class VolumeImage
         }
         if ( kVolumeTexture != null )
         {
-            kVolumeTexture.Release();
+            kVolumeTexture.Reload(true);
         }
         return kVolumeImage;
     }
@@ -910,7 +914,7 @@ public class VolumeImage
     public void UpdateData( ModelImage kImage, String kPostfix )
     {
         m_kImage = kImage;
-        VolumeImage.UpdateData( m_kImage, m_iTimeSlice, m_akImages[m_iTimeSlice], m_kVolume[m_iTimeSlice], m_kVolumeTarget, m_kImage.getImageName() );
+        VolumeImage.UpdateData( m_kImage, m_iTimeSlice, m_akImages[m_iTimeSlice], m_kVolume[m_iTimeSlice], m_kVolumeTarget, m_kImage.getImageName(), true );
     }    
     /**
      * Update the LUT for the ModelImage.
@@ -1137,10 +1141,10 @@ public class VolumeImage
             if ( kImageGM == null )
             {
                 System.err.println( "Gradient magnitude calculation returned null" );
-                m_kVolumeGM[i] = VolumeImage.UpdateData( kImage, i, null, null, m_kVolumeGMTarget, kImageName );
+                m_kVolumeGM[i] = VolumeImage.UpdateData( kImage, i, null, null, m_kVolumeGMTarget, kImageName, true );
             }
             else {
-                m_kVolumeGM[i] = VolumeImage.UpdateData( kImageGM, 0, null, null, m_kVolumeGMTarget, kImageName );
+                m_kVolumeGM[i] = VolumeImage.UpdateData( kImageGM, 0, null, null, m_kVolumeGMTarget, kImageName, true );
             }
             ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
             if ( kImageFrame != null )
@@ -1212,7 +1216,7 @@ public class VolumeImage
             }
             if ( kImageGMGM != null )
             {            
-                m_kVolumeGMGM[i] = VolumeImage.UpdateData( kImageGMGM, 0, null, null, m_kVolumeGMGMTarget, kImageName );
+                m_kVolumeGMGM[i] = VolumeImage.UpdateData( kImageGMGM, 0, null, null, m_kVolumeGMGMTarget, kImageName, true );
             }
             else
             {
