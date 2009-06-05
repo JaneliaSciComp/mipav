@@ -1,9 +1,13 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 
 import java.awt.Frame;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
@@ -22,19 +26,24 @@ public class VolumeImageNormalGM extends VolumeImageViewer
     private boolean m_bDisplaySecond = true;
     private ModelImage m_kImage;
     private Texture m_kTexture;
+    private int m_iVolume = 0;
+    private String m_kImageName;
+    private ModelImage m_kOutputImage = null;
     
-    public VolumeImageNormalGM( VolumeImage kVolumeImage, ModelImage kImage, Texture kTexture )
+    public VolumeImageNormalGM( VolumeImage kVolumeImage, ModelImage kImage, Texture kTexture, int iVolume, String kImageName )
     {
         super(null, kVolumeImage);
         m_kImage = kImage;
         m_kTexture = kTexture;
+        m_iVolume = iVolume;
+        m_kImageName = kImageName;
     }
     /**
      * @param args
      */
-    public static void main( VolumeImage kVolumeImage, ModelImage kImage, Texture kTexture )
+    public static void main( VolumeImage kVolumeImage, ModelImage kImage, Texture kTexture, int iVolume, String kImageName )
     {
-        VolumeImageNormalGM kWorld = new VolumeImageNormalGM(kVolumeImage, kImage, kTexture);
+        VolumeImageNormalGM kWorld = new VolumeImageNormalGM(kVolumeImage, kImage, kTexture, iVolume, kImageName);
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
         Animator animator = new Animator( kWorld.GetCanvas() );
@@ -93,13 +102,15 @@ public class VolumeImageNormalGM extends VolumeImageViewer
                 m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 m_pkRenderer.EndScene();
                 //writeImage();
+                SaveImage(m_iSlice);
             }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kTexture, m_iSlice, true );
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kTexture, m_iSlice, false );
             //m_pkRenderer.DisplayBackBuffer();
             m_iSlice++; 
             if ( m_iSlice >= m_kImage.getExtents()[2])
             {
                 m_bDisplaySecond = false;
+                m_kVolumeImage.CopyNormalFiles(m_iVolume, m_kOutputImage);
             }
         }
         dispose(arg0);
@@ -135,5 +146,30 @@ public class VolumeImageNormalGM extends VolumeImageViewer
         m_pkRenderer.LoadResources(m_pkPlane);
         (m_spkEffect2).SetStepSize(m_kVolumeImage);
         m_pkPlane.DetachAllEffects();
+    }
+    
+    private void SaveImage(int iZ)
+    {
+        if ( m_kOutputImage == null )
+        {
+            m_kOutputImage = new ModelImage( ModelStorageBase.ARGB, m_kImage.getExtents(), m_kImageName );
+        }
+        int iWidth = m_kImage.getExtents()[0];
+        int iHeight = m_kImage.getExtents()[1];
+        ByteBuffer kBuffer = m_pkRenderer.GetScreenImage( iWidth, iHeight );
+        int iSize = iWidth * iHeight * 4;
+        try {
+            byte[] aucData = new byte[iSize];
+            for ( int i = 0; i < iSize; i += 4)
+            {
+                aucData[i] = (byte)255;
+                aucData[i+1] = kBuffer.array()[i];
+                aucData[i+2] = kBuffer.array()[i+1];
+                aucData[i+3] = kBuffer.array()[i+2];
+            }
+            m_kOutputImage.importData( iZ * iSize, aucData, false );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

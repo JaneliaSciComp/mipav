@@ -257,7 +257,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         kReuse.addActionListener(this);
         kReuse.setActionCommand( "ReuseFiles" );
         kReuseBox.add(kReuse);
-        m_kCompute = new JRadioButton( "Computed Render Files" );
+        m_kCompute = new JRadioButton( "Compute Render Files" );
         m_kCompute.setEnabled( true );
         m_kCompute.setSelected( !bUsePreComputedFiles );
         m_kCompute.addActionListener(this);

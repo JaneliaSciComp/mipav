@@ -126,8 +126,9 @@ implements ChangeListener {
     	
 
         boolean bDirExists = true;
-        m_kParentDir = imageA.getFileInfo()[0].getFileDirectory().concat( File.separator + "RenderFiles" + File.separator);
-        File kDir = new File( m_kParentDir );
+        m_kParentDir = imageA.getFileInfo()[0].getFileDirectory();
+        String kRenderFilesDir = m_kParentDir + File.separator + "RenderFiles" + File.separator;
+        File kDir = new File( kRenderFilesDir );
         if ( !kDir.exists() )
         {
             bDirExists = false;
@@ -135,7 +136,7 @@ implements ChangeListener {
                 kDir.mkdir();
             } catch (SecurityException e) {}
         }
-        m_kVolumeImageA = new VolumeImage( imageA, "A", true, m_kParentDir, 0, null );
+        m_kVolumeImageA = new VolumeImage( imageA, "A", !bDirExists, kRenderFilesDir, 0, null );
         imageA = m_kVolumeImageA.GetImage();
         RGBTA = m_kVolumeImageA.GetRGB();
         this.LUTa = m_kVolumeImageA.GetLUT();
