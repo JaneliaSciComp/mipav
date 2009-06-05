@@ -1057,6 +1057,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         }
                     }
 
+                    catField = plugin.getField(catName);
+                    final String[] hier = (String[]) catField.get(plugin);
                     final Class[] interList = plugin.getInterfaces();
                     String interName = new String();
                     for (final Class element : interList) {
@@ -1064,44 +1066,23 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             interName = element.getName().substring(element.getName().indexOf("PlugIn"));
                         }
                     }
-                    
-                    try {
-                    	catField = plugin.getField(catName);
-                    } catch(NoSuchFieldException e) {
-                    	if(interName != null) {
-                    		final Component[] subComp = currentMenu.getMenuComponents();
-                    		for (final Component element2 : subComp) {
-	                            if (element2 instanceof JMenu && ((JMenu) element2).getText().equals(interName)) {
-	                                currentMenu = (JMenu) element2;
-	                                break;
-	                            }
-	                        }
-                    	} else {
-                    		System.out.println("Had category undefined: "+plugin);
-                    	}
-                    }
-                    	
-                	if(catField != null) {
-	                    final String[] hier = (String[]) catField.get(plugin);
 
-	                    for (final String element : hier) {
-	                        final Component[] subComp = currentMenu.getMenuComponents();
-	                        boolean subExists = false;
-	                        for (final Component element2 : subComp) {
-	                            if (element2 instanceof JMenu && ((JMenu) element2).getText().equals(element)) {
-	                                currentMenu = (JMenu) element2;
-	                                subExists = true;
-	                                break;
-	                            }
-	                        }
-	                        if ( !subExists) {
-	                            final JMenu newMenu = ViewMenuBuilder.buildMenu(element, 0, false);
-	                            currentMenu.add(newMenu);
-	                            currentMenu = newMenu;
-	                        }
-	                    }
+                    for (final String element : hier) {
+                        final Component[] subComp = currentMenu.getMenuComponents();
+                        boolean subExists = false;
+                        for (final Component element2 : subComp) {
+                            if (element2 instanceof JMenu && ((JMenu) element2).getText().equals(element)) {
+                                currentMenu = (JMenu) element2;
+                                subExists = true;
+                                break;
+                            }
+                        }
+                        if ( !subExists) {
+                            final JMenu newMenu = ViewMenuBuilder.buildMenu(element, 0, false);
+                            currentMenu.add(newMenu);
+                            currentMenu = newMenu;
+                        }
                     }
-                    
                     if ( ! (al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
                         final JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, interName
                                 + pluginName, 0, al, null, false);
@@ -1110,6 +1091,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         currentMenu.add(pluginMenuItem);
                     }
 
+                } catch(NoSuchFieldException e) {
+                	//no category, so class is not a valid plugin, class should not be added to GUI
                 } catch (final Exception e) {
                     // usually this means other files/folders exist in the installed plugins directory besides plugin
                     // files
