@@ -10,6 +10,9 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -146,17 +149,28 @@ public class JPanelVolume4D extends JInterfaceBase
         kGBC.gridx = 0;
         kGBC.gridy = 0;
         
+        JPanel kAnimatePanel = new JPanel(kGrid);
+        kAnimatePanel.setBorder(buildTitledBorder("Volume Animation"));
+        kAnimatePanel.add( playButton, kGBC ); kGBC.gridx++;
+        kAnimatePanel.add( stopButton, kGBC );
+        kGBC.gridx = 0; kGBC.gridy++;  kGBC.gridy++;
+        kAnimatePanel.add( kMin, kGBC ); kGBC.gridx++;
+        kAnimatePanel.add( m_kFrameRateSlider, kGBC ); kGBC.gridx++;
+        kAnimatePanel.add( kMax, kGBC );
+        
         JPanel kPanel = new JPanel(kGrid);
+        kPanel.setBorder(buildTitledBorder("Select Sub-Volume"));
+        kGBC.gridx = 0;
+        kGBC.gridy = 0;
         kPanel.add( kTimeSlice, kGBC ); kGBC.gridx++;
         kPanel.add( m_k4DSlider, kGBC );
-        kGBC.gridx = 0; kGBC.gridy++;  kGBC.gridy++;
-        kPanel.add( kMin, kGBC ); kGBC.gridx++;
-        kPanel.add( m_kFrameRateSlider, kGBC ); kGBC.gridx++;
-        kPanel.add( kMax, kGBC );
-        kGBC.gridx = 0; kGBC.gridy++;  kGBC.gridy++;
-        kPanel.add( playButton, kGBC ); kGBC.gridx++;
-        kPanel.add( stopButton, kGBC );
-        mainScrollPanel.add(kPanel);
+        
+        Box contentBox = new Box(BoxLayout.Y_AXIS);
+        contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        contentBox.add(kPanel);
+        contentBox.add(kAnimatePanel);
+
+        mainScrollPanel.add(contentBox);
  
         mainPanel.add(scroller, BorderLayout.CENTER);
     }
