@@ -52,6 +52,8 @@ public class VOIContour extends VOIBase {
 
     /** DOCUMENT ME! */
     private boolean flagRetrace = false;
+    
+    private int lastX = -1, lastY = -1;
 
     /** These four variables are used in the retrace mode of the Contour. */
     private int indexRetrace = -99;
@@ -61,6 +63,8 @@ public class VOIContour extends VOIBase {
 
     /** Number of pixels in the array used in graphing intensity along the boundary. */
     private int numPixels;
+    
+    private int saveiOld=-1, saveiNew=-1, counter = 0;
 
     /** DOCUMENT ME! */
     private VOIContour oldContour; // old contour
@@ -3231,6 +3235,16 @@ public class VOIContour extends VOIBase {
     public void resetIndex() {
         indexRetrace = NOT_A_POINT;
         flagRetrace = false;
+        saveiNew = -1;
+    }
+    
+    /**
+     * Resets the counter.
+     */
+    public void resetCounter() {
+    	saveiNew = -1;
+    	saveiOld = -1;
+    	counter = 0;
     }
 
     /**
@@ -3253,6 +3267,7 @@ public class VOIContour extends VOIBase {
         int i, j, idx;
         int newIndex, end;
         int[] units = new int[3];
+        
 
         try {
 
@@ -3263,7 +3278,7 @@ public class VOIContour extends VOIBase {
             }
 
             if (indexRetrace == -99) {
-                makeCounterClockwise();
+            	
 
                 if (closed == true) {
                     oldContour = new VOIContour(name, true);
@@ -3276,6 +3291,20 @@ public class VOIContour extends VOIBase {
                     oldContour.addElement(this.elementAt(i));
                 }
             }
+
+                if(counter ==0)
+                	makeCounterClockwise();
+                
+                if (counter == 2){
+    	            if((saveiNew==0 && saveiOld==size()-1) || (saveiOld < saveiNew && saveiOld !=0))  	
+    	            	makeCounterClockwise();
+    	            else if ((saveiNew < saveiOld) || (saveiOld==0 && saveiNew==size()-1))
+    	            	makeClockwise();
+    	            
+    	            resetIndex();
+                }
+
+            
 
             // Return if trying to add the same point.
             z = ((Vector3f) (elementAt(0))).Z;
@@ -3290,13 +3319,17 @@ public class VOIContour extends VOIBase {
             units[0] = 0;
             units[1] = 0;
             units[2] = 0;
-            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
+
 
             // Find nearest point in old contour
             minDistance = 9999999;
             end = oldContour.size();
 
+            saveiOld = saveiNew;
+
+
             for (i = 0; i < end; i++) {
+            	
                 x2 = ((Vector3f) (oldContour.elementAt(i))).X;
                 y2 = ((Vector3f) (oldContour.elementAt(i))).Y;
                 dist = MipavMath.distance(x1, x2, y1, y2);
@@ -3304,14 +3337,17 @@ public class VOIContour extends VOIBase {
                 if (dist < minDistance) {
                     ptRetrace = (Vector3f) oldContour.elementAt(i);
                     minDistance = dist;
+                    saveiNew = i;
+                  
+                    
                 }
             }
+            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
 
             // remove point(s) in contour
             newIndex = indexOf(ptRetrace);
 
             if ((newIndex >= 0) && (newIndex < size())) {
-
                 if (indexRetrace >= newIndex) { // should not happen when indexRetrace == -99
 
                     for (j = 0; j < (indexRetrace - newIndex); j++) {
@@ -3360,9 +3396,13 @@ public class VOIContour extends VOIBase {
             units[2] = 0;
             drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
             active = true;
+            
+
+            if (saveiNew != saveiOld)		
+            counter++;
+            
         } catch (OutOfMemoryError error) {
             System.gc();
-
             return;
         }
     }

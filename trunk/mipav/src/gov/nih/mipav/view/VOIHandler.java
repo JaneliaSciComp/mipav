@@ -1851,7 +1851,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         if (compImage instanceof ViewJComponentRegistration) {
             return;
         }
-
         int mouseMods = mouseEvent.getModifiers();
         int i, j, m;
         int nVOI;
@@ -3996,6 +3995,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     ((VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).trimPoints(Preferences.getTrim(),
                                                                                                      true);
                     ((VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).resetIndex();
+                    ((VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).resetCounter();
 
                     break;
                 }
