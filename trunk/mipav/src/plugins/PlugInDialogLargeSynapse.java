@@ -130,33 +130,10 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
     
     private String directory = null;
     
-    private JLabel xyProcessLabel;
+    private JCheckBox bigBlueCheckBox;
     
-    private JTextField xyProcessText;
-    
-    /** Length of a processed square within a slice */
-    private int xyProcessLength = 500;
-    
-    private JLabel xyOverlapLabel;
-    
-    private JTextField xyOverlapText;
-    
-    /** Overlap length in a processed square in a slice */
-    private int xyOverlapLength = 100;
-    
-    private JLabel zProcessLabel;
-    
-    private JTextField zProcessText;
-    
-    /** Height of a processed volume across slices */
-    private int zProcessLength = 60;
-    
-    private JLabel zOverlapLabel;
-    
-    private JTextField zOverlapText;
-    
-    /** Overlap of processed volume heights across slices */
-    private int zOverlapLength = 12;
+    //  true if blueFraction >= 0.05
+    private boolean bigBlueFraction = false;
     
     private PlugInAlgorithmLargeSynapse algoLargeSynapse;
 
@@ -234,90 +211,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         } 
     }
     
-    public String getInputFileName() {
-        return inputFileName;
-    }
-    
-    public String getDirectory() {
-        return directory;
-    }
-    
-    public boolean isSuccessfulExit() {
-        return successfulExit;
-    }
-    
-    public int getRedMin() {
-        return redMin;
-    }
-    
-    public int getRedMax() {
-        return redMax;
-    }
-    
-    public int getGreenMin() {
-        return greenMin;
-    }
-    
-    public int getGreenMax() {
-        return greenMax;
-    }
-    
-    public int getBlueMinXY() {
-        return blueMinXY;
-    }
-    
-    public int getBlueMaxXY() {
-        return blueMaxXY;
-    }
-    
-    public int getBlueMinZ() {
-        return blueMinZ;
-    }
-    
-    public int getBlueMaxZ() {
-        return blueMaxZ;
-    }
-    
-    public int getRedIntensity() {
-        return redIntensity;
-    }
-    
-    public int getRedBrightIntensity() {
-        return redBrightIntensity;
-    }
-    
-    public int getGreenIntensity() {
-        return greenIntensity;
-    }
-    
-    public int getGreenBrightIntensity() {
-        return greenBrightIntensity;
-    }
-    
-    public int getBlueIntensity() {
-        return blueIntensity;
-    }
-    
-    public int getBlueBrightIntensity() {
-        return blueBrightIntensity;
-    }
-    
-    public int getXYProcessLength() {
-        return xyProcessLength;
-    }
-    
-    public int getXYOverlapLength() {
-        return xyOverlapLength;
-    }
-    
-    public int getZProcessLength() {
-        return zProcessLength;
-    }
-    
-    public int getZOverlapLength() {
-        return zOverlapLength;
-    }
-    
     /**
      * Once all the necessary variables are set, call the large synapse detection plugin
      */
@@ -326,9 +219,8 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         try {
             
             //          Make algorithm.
-            algoLargeSynapse = new PlugInAlgorithmLargeSynapse(directory, inputFileName, xyProcessLength,
-                    xyOverlapLength, zProcessLength, zOverlapLength, redMin, redMax,
-                    greenMin, greenMax, blueMinXY, blueMaxXY, blueMinZ, blueMaxZ,
+            algoLargeSynapse = new PlugInAlgorithmLargeSynapse(directory, inputFileName, redMin, redMax,
+                    greenMin, greenMax, blueMinXY, blueMaxXY, blueMinZ, blueMaxZ, bigBlueFraction, 
                     redIntensity, greenIntensity, blueIntensity, redBrightIntensity,
                     greenBrightIntensity, blueBrightIntensity);
             
@@ -391,10 +283,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         }
 
         String str = new String();
-        str += xyProcessLength + delim;
-        str += xyOverlapLength + delim;
-        str += zProcessLength + delim;
-        str += zOverlapLength + delim;
         str += redMin + delim;
         str += redMax + delim;
         str += greenMin + delim;
@@ -403,6 +291,7 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         str += blueMaxXY + delim;
         str += blueMinZ + delim;
         str += blueMaxZ + delim;
+        str += bigBlueFraction + delim;
         str += redIntensity + delim;
         str += redBrightIntensity + delim;
         str += greenIntensity + delim;
@@ -411,38 +300,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         str += blueBrightIntensity;
         
         return str;
-    }
-    
-    /**
-     * Accessor that sets xyProcessLength, base side of a block processing volume
-     * @param xyProcessLength
-     */
-    public void setXYProcessLength(int xyProcessLength) {
-        this.xyProcessLength = xyProcessLength;
-    }
-    
-    /**
-     * Accessor that sets xyOverlapLength, overlap base length of neighboring block
-     * @param xyOverlapLength
-     */
-    public void setXYOverlapLength(int xyOverlapLength) {
-        this.xyOverlapLength = xyOverlapLength;
-    }
-    
-    /**
-     * Accessor that sets zProcessLength, height of a block processing volume
-     * @param zProcessLength
-     */
-    public void setZProcessLength(int zProcessLength) {
-        this.zProcessLength = zProcessLength;
-    }
-    
-    /**
-     * Accessor that sets zOverlapLength, overlap height of neighboring block
-     * @param zOverlapLength
-     */
-    public void setZOverlapLength(int zOverlapLength) {
-        this.zOverlapLength = zOverlapLength;
     }
     
     /**
@@ -572,6 +429,14 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
     }
     
     /**
+     * 
+     * @param bigBlueFraction
+     */
+    public void setBigBlueFraction(boolean bigBlueFraction) {
+        this.bigBlueFraction = bigBlueFraction;
+    }
+    
+    /**
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() { }
@@ -580,10 +445,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
      * {@inheritDoc}
      */
     protected void setGUIFromParams() {
-        setXYProcessLength(scriptParameters.getParams().getInt("xy_process_length"));
-        setXYOverlapLength(scriptParameters.getParams().getInt("xy_overlap_length"));
-        setZProcessLength(scriptParameters.getParams().getInt("z_process_length"));
-        setZOverlapLength(scriptParameters.getParams().getInt("z_overlap_length"));
         setRedMin(scriptParameters.getParams().getInt("red_min"));
         setRedMax(scriptParameters.getParams().getInt("red_max"));
         setGreenMin(scriptParameters.getParams().getInt("green_min"));
@@ -592,6 +453,7 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         setBlueMaxXY(scriptParameters.getParams().getInt("blue_maxxy"));
         setBlueMinZ(scriptParameters.getParams().getInt("blue_minz"));
         setBlueMaxZ(scriptParameters.getParams().getInt("blue_maxz"));
+        setBigBlueFraction(scriptParameters.getParams().getBoolean("big_blue_fraction"));
         setRedIntensity(scriptParameters.getParams().getInt("red_intensity"));
         setRedBrightIntensity(scriptParameters.getParams().getInt("red_bright_intensity"));
         setGreenIntensity(scriptParameters.getParams().getInt("green_intensity"));
@@ -604,10 +466,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
      * {@inheritDoc}
      */
     protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.getParams().put(ParameterFactory.newParameter("xy_process_length", xyProcessLength));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("xy_overlap_length", xyOverlapLength));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("z_process_length", zProcessLength));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("z_overlap_length", zOverlapLength));
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_min", redMin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_max", redMax));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_min", greenMin));
@@ -616,6 +474,7 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_maxxy", blueMaxXY));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_minz", blueMinZ));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blue_maxz", blueMaxZ));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("big_blue_fraction", bigBlueFraction));
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_intensity", redIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("red_bright_intensity", redBrightIntensity));
         scriptParameters.getParams().put(ParameterFactory.newParameter("green_intensity", greenIntensity));
@@ -629,7 +488,7 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Large Synapse Detection  05/29/09");
+        setTitle("Large Synapse Detection  06/05/09");
         
         JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setForeground(Color.black);
@@ -682,69 +541,19 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
         mainPanel.setBorder(buildTitledBorder("Input parameters"));
         mainPanel.add(inputPanel, gbc);
         
-        xyProcessLabel = new JLabel("Processed square length within slice");
-        xyProcessLabel.setForeground(Color.black);
-        xyProcessLabel.setFont(serif12);
-        gbc.gridwidth = 1;
+        bigBlueCheckBox = new JCheckBox("Large blue fraction with up to 5 synapses per blue region", false);
+        bigBlueCheckBox.setForeground(Color.black);
+        bigBlueCheckBox.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = yPos;
-        mainPanel.add(xyProcessLabel, gbc);
-        
-        xyProcessText = new JTextField(10);
-        xyProcessText.setText("500");
-        xyProcessText.setFont(serif12);
-        gbc.gridx = 1;
         gbc.gridy = yPos++;
-        mainPanel.add(xyProcessText, gbc);
-        
-        xyOverlapLabel = new JLabel("Overlap length within slice");
-        xyOverlapLabel.setForeground(Color.black);
-        xyOverlapLabel.setFont(serif12);
-        gbc.gridx = 0;
-        gbc.gridy = yPos;
-        mainPanel.add(xyOverlapLabel, gbc);
-        
-        xyOverlapText = new JTextField(10);
-        xyOverlapText.setText("80");
-        xyOverlapText.setFont(serif12);
-        gbc.gridx = 1;
-        gbc.gridy = yPos++;
-        mainPanel.add(xyOverlapText, gbc);
-        
-        zProcessLabel = new JLabel("Processed height across slices");
-        zProcessLabel.setForeground(Color.black);
-        zProcessLabel.setFont(serif12);
-        gbc.gridwidth = 1;
-        gbc.gridx = 0;
-        gbc.gridy = yPos;
-        mainPanel.add(zProcessLabel, gbc);
-        
-        zProcessText = new JTextField(10);
-        zProcessText.setText("60");
-        zProcessText.setFont(serif12);
-        gbc.gridx = 1;
-        gbc.gridy = yPos++;
-        mainPanel.add(zProcessText, gbc);
-        
-        zOverlapLabel = new JLabel("Overlap length between slices");
-        zOverlapLabel.setForeground(Color.black);
-        zOverlapLabel.setFont(serif12);
-        gbc.gridx = 0;
-        gbc.gridy = yPos;
-        mainPanel.add(zOverlapLabel, gbc);
-        
-        zOverlapText = new JTextField(10);
-        zOverlapText.setText("15");
-        zOverlapText.setFont(serif12);
-        gbc.gridx = 1;
-        gbc.gridy = yPos++;
-        mainPanel.add(zOverlapText, gbc);
+        mainPanel.add(bigBlueCheckBox, gbc);
         
         redMinLabel = new JLabel("Minimum red pixel width");
         redMinLabel.setForeground(Color.black);
         redMinLabel.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = yPos;
+        gbc.gridwidth = 1;
         mainPanel.add(redMinLabel, gbc);
 
         redMinText = new JTextField(10);
@@ -962,6 +771,8 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
             return false;
         }
         
+        bigBlueFraction = bigBlueCheckBox.isSelected();
+        
         tmpStr = redMinText.getText();
         redMin = Integer.parseInt(tmpStr);
 
@@ -1097,56 +908,6 @@ public class PlugInDialogLargeSynapse extends JDialogScriptableBase implements A
             blueMaxZText.selectAll();
 
             return false;
-        }
-        
-        tmpStr = xyProcessText.getText();
-        xyProcessLength = Integer.parseInt(tmpStr);
-        
-        if (xyProcessLength < 2 * (redMin + greenMin + blueMinXY)) {
-            MipavUtil.displayError("Processed square length must be at least 2 * (redMin + greenMin + blueMinXY)");
-            xyProcessText.requestFocus();
-            xyProcessText.selectAll();
-            
-            return false;
-        }
-        
-        tmpStr = xyOverlapText.getText();
-        xyOverlapLength = Integer.parseInt(tmpStr);
-        
-        if (xyOverlapLength < 0) {
-            MipavUtil.displayError("Overlap square length cannot be negative");
-            xyOverlapText.requestFocus();
-            xyOverlapText.selectAll();
-        }
-        else if (xyOverlapLength >= xyProcessLength) {
-            MipavUtil.displayError("xyOverlapLength must be less than xyProcessLength");
-            xyOverlapText.requestFocus();
-            xyOverlapText.selectAll();
-        }
-        
-        tmpStr = zProcessText.getText();
-        zProcessLength = Integer.parseInt(tmpStr);
-        
-        if (zProcessLength < 2 * (redMin + greenMin + blueMinZ)) {
-            MipavUtil.displayError("Processed height must be at least 2 * (redMin + greenMin + blueMinZ)");
-            zProcessText.requestFocus();
-            zProcessText.selectAll();
-            
-            return false;
-        }
-        
-        tmpStr = zOverlapText.getText();
-        zOverlapLength = Integer.parseInt(tmpStr);
-        
-        if (zOverlapLength < 0) {
-            MipavUtil.displayError("Overlap height cannot be negative");
-            zOverlapText.requestFocus();
-            zOverlapText.selectAll();
-        }
-        else if (zOverlapLength >= zProcessLength) {
-            MipavUtil.displayError("zOverlapLength must be less than zProcessLength");
-            zOverlapText.requestFocus();
-            zOverlapText.selectAll();
         }
         
         tmpStr = redIntensityText.getText();
