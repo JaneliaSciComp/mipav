@@ -356,7 +356,7 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
 
         pack();
         setVisible(true);
-        setResizable(false);
+        //setResizable(false);
 
     } // end init()
 

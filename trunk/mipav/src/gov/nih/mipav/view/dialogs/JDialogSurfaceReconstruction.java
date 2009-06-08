@@ -288,7 +288,7 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
      */
     private void init() {
         setTitle("Surface Reconstruction");
-        setResizable(false);
+        //setResizable(false);
         cancelFlag = false;
 
         JPanel mainPanel = new JPanel();

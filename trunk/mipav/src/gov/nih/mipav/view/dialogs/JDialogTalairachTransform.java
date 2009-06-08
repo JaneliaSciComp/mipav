@@ -283,7 +283,7 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
         
         pack();
         setVisible(true); 
-		setResizable(false);
+		//setResizable(false);
     	System.gc();
 	
 	} // end init()

@@ -423,7 +423,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
 
         pack();
         setVisible(true);
-        setResizable(false);
+        //setResizable(false);
 
     } // end init()
 

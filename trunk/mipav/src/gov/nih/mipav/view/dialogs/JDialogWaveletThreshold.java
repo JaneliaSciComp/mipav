@@ -713,7 +713,7 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         pack();
-        setResizable(false);
+        //setResizable(false);
         setVisible(true);
     }
 

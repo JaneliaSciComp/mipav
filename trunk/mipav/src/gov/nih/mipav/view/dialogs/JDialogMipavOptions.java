@@ -376,7 +376,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         this.getContentPane().add(makeApplyClosePanel(), BorderLayout.SOUTH);
 
         pack();
-        this.setResizable(false);
+        //this.setResizable(false);
         setVisible(true);
     }
 

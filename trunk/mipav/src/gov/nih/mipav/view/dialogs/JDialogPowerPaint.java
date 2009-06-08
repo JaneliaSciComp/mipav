@@ -3498,7 +3498,7 @@ public class JDialogPowerPaint extends JDialogBase
 
         pack();
         setVisible(true);
-        setResizable(false);
+        //setResizable(false);
         System.gc();
 		
 		image.getParentFrame().getComponentImage().addMouseListener(this);

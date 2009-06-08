@@ -392,7 +392,7 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
 
         pack();
         setVisible(true); 
-		setResizable(false);
+		//setResizable(false);
     	System.gc();
 		
 	} // end init()

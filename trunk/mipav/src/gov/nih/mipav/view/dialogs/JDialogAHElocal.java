@@ -918,7 +918,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
         pack();
         setVisible(true);
-        setResizable(false);
+        //setResizable(false);
         System.gc();
     }
 
