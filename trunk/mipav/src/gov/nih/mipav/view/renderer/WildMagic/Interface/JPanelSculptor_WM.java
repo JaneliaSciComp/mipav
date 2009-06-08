@@ -151,9 +151,12 @@ public class JPanelSculptor_WM extends JInterfaceBase
         m_kClearDrawOutlineButton.setEnabled(false);
         m_kInvertOutlineButton.setEnabled(false);
         m_kApplySculptButton.setEnabled(false);
-        m_kApplyAllButton.setEnabled(false);
+        if ( m_kApplyAllButton != null )
+        {
+            m_kApplyAllButton.setEnabled(false);
+            m_kUndoAllButton.setEnabled(true);            
+        }
         m_kUndoSculptButton.setEnabled(true);
-        m_kUndoAllButton.setEnabled(true);
         m_kSaveSculptButton.setEnabled(true);
 
         if ( rayBasedRenderWM != null )
@@ -176,8 +179,11 @@ public class JPanelSculptor_WM extends JInterfaceBase
         /* disable clear and apply sculpt buttons */
         m_kClearDrawOutlineButton.setEnabled(false);
         m_kInvertOutlineButton.setEnabled(false);
-        m_kApplySculptButton.setEnabled(false);
-        m_kApplyAllButton.setEnabled(false);
+        m_kApplySculptButton.setEnabled(false);        
+        if ( m_kApplyAllButton != null )
+        {
+            m_kApplyAllButton.setEnabled(false);
+        }
 
         if ( rayBasedRenderWM != null )
         {
@@ -209,7 +215,10 @@ public class JPanelSculptor_WM extends JInterfaceBase
         m_kClearDrawOutlineButton.setEnabled(true);
         m_kInvertOutlineButton.setEnabled(true);
         m_kApplySculptButton.setEnabled(true);
-        m_kApplyAllButton.setEnabled(true);
+        if ( m_kApplyAllButton != null )
+        {
+            m_kApplyAllButton.setEnabled(true);
+        }
     }
 
     /**
@@ -406,10 +415,13 @@ public class JPanelSculptor_WM extends JInterfaceBase
         m_kDrawOutlineButton.setFocusable(false);
         m_kClearDrawOutlineButton.setEnabled(false);
         m_kInvertOutlineButton.setEnabled(false);
-        m_kApplySculptButton.setEnabled(false);
-        m_kApplyAllButton.setEnabled(false);
+        m_kApplySculptButton.setEnabled(false);    
+        if ( m_kApplyAllButton != null )
+        {
+            m_kApplyAllButton.setEnabled(false);
+            m_kUndoAllButton.setEnabled(false);
+        }
         m_kUndoSculptButton.setEnabled(false);
-        m_kUndoAllButton.setEnabled(false);
         m_kSaveSculptButton.setEnabled(false);
 
         if ( rayBasedRenderWM != null )
