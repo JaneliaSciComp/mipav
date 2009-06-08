@@ -679,7 +679,9 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
 		if(tree.getSelectionCount()>1)
 			return;
 		
-		
+		if(!e.isAddedPath())
+			return;
+			
 		DefaultMutableTreeNode currentNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
 		int howMany = tagViewer.getRowCount();
 		

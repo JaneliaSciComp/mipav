@@ -46,8 +46,8 @@ public class FileDicomBase {
     /** Read-write access. */
     public static final int READ_WRITE = 1;
 
-    /** The size of the buffer that contains the tags of the DICOM image. Default = 400K. */
-    public static final int BUFFER_SIZE = 400000;
+    /** The size of the buffer that contains the tags of the DICOM image. Default = 4Mil. */
+    public static final int BUFFER_SIZE = 4000000;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
