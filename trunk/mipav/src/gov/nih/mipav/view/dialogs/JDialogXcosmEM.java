@@ -614,7 +614,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
 
         pack();
         setVisible(true);
-        setResizable(false);
+        //setResizable(false);
 
     } // end init()
 

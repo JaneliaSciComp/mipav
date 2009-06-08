@@ -445,7 +445,7 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
         
         getContentPane().add(inputPanel);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
-        setResizable(false);
+        //setResizable(false);
         pack();
         setVisible(true);
         

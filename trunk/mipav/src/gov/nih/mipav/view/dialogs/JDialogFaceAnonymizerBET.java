@@ -478,7 +478,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
-        setResizable(false);
+        //setResizable(false);
         setVisible(true);
     }
 

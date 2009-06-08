@@ -357,7 +357,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         getContentPane().add(flipAxisPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
-        setResizable(false);
+        //setResizable(false);
         setVisible(true);
     }
     

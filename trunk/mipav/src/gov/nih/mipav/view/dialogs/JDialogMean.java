@@ -920,7 +920,7 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
 
         pack();
         setVisible(true);
-        setResizable(false);
+        //setResizable(false);
         System.gc();
     }
 

@@ -120,7 +120,7 @@ public class JDialogCenterOfMassRGB extends JDialogScriptableBase implements Alg
         userInterface = ViewUserInterface.getReference();
         init();
 
-        this.setResizable(false);
+        //this.setResizable(false);
         setVisible(true);
     }
 

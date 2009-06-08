@@ -602,7 +602,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 
 		pack();
 		setVisible(true);
-		setResizable(false);
+		//setResizable(false);
 	}
 
 	/**

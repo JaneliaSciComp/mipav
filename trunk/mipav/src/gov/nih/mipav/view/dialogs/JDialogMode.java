@@ -673,7 +673,7 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
         setVisible(true);
-        setResizable(false);
+        //setResizable(false);
         System.gc();
 
     }

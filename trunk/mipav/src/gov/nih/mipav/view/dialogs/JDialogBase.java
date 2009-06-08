@@ -100,7 +100,7 @@ public abstract class JDialogBase extends JDialog
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
         addWindowListener(this);
-        // setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+        // setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));  commented out becasue it is 1.6 and we need to be 1.5 compliant
 
         // bind ENTER to okay button, ESC to cancel button
         Action okAction = new OKAction();

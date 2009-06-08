@@ -749,8 +749,9 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
+    	//setForeground(Color.black);
         setTitle("Threshold");
-        setResizable(false);
+        //setResizable(false);
 
         JPanel scalePanel = new JPanel(new GridBagLayout());
         scalePanel.setBorder(buildTitledBorder("Thresholds"));

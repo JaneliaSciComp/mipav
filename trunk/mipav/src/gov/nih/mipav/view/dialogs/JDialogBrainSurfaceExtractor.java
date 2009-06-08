@@ -641,7 +641,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
         getContentPane().add(mainDialogPanel);
 
         pack();
-        setResizable(false);
+        //setResizable(false);
         setVisible(true);
     }
 

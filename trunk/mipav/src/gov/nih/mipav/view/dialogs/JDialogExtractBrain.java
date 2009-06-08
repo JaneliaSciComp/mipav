@@ -1130,7 +1130,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         // getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
-        setResizable(false);
+        //setResizable(false);
         setVisible(true);
     }
 

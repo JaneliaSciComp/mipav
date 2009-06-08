@@ -1090,7 +1090,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
         setVisible(true);
-        setResizable(false);
+        //setResizable(false);
         System.gc();
 
     }

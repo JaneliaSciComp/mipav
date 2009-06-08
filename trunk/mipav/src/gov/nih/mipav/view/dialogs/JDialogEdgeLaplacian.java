@@ -546,7 +546,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
         getContentPane().add(mainPanelManager.getPanel(), BorderLayout.CENTER);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
-        setResizable(false);
+        //setResizable(false);
         setVisible(true);
 
         System.gc();

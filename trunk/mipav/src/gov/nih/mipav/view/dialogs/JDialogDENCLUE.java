@@ -395,7 +395,7 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
 
         pack();
         setVisible(true);
-        setResizable(false);
+        //setResizable(false);
         System.gc();
 
     }

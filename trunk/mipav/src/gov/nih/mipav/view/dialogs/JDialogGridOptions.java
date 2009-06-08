@@ -228,7 +228,7 @@ public class JDialogGridOptions extends JDialogBase {
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         pack();
-        setResizable(false);
+        //setResizable(false);
         setVisible(true);
     }
 

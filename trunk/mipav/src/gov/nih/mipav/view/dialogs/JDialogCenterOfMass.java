@@ -295,7 +295,7 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
      */
     private void init() {
         setTitle("Center of Mass");
-        setResizable(false);
+        //setResizable(false);
 
         JPanel scalePanel = new JPanel(new GridBagLayout());
         scalePanel.setBorder(buildTitledBorder("Thresholds"));
