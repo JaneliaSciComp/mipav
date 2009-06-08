@@ -882,9 +882,10 @@ public class JDialogReorient extends JDialogScriptableBase implements AlgorithmI
         or[0] = image.getFileInfo()[0].getAxisOrientation()[0];
         or[1] = image.getFileInfo()[0].getAxisOrientation()[1];
         or[2] = image.getFileInfo()[0].getAxisOrientation()[2];
-        newOr[0] = scriptParameters.getParams().getInt("neworientationx");
-        newOr[1] = scriptParameters.getParams().getInt("neworientationy");
-        newOr[2] = scriptParameters.getParams().getInt("neworientationz");
+        //scripting reorient does not store original orientation in params (should be in image)
+        newOr[0] = scriptParameters.getParams().getInt("orientationx");
+        newOr[1] = scriptParameters.getParams().getInt("orientationy");
+        newOr[2] = scriptParameters.getParams().getInt("orientationz");
 		resolutionIndex = scriptParameters.getParams().getInt("resolution");
 		interpType = scriptParameters.getParams().getString("interpolation");
 		
