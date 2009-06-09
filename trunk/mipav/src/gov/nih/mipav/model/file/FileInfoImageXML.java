@@ -460,9 +460,16 @@ public class FileInfoImageXML extends FileInfoXML {
 
             while (pe.hasMoreElements()) {
                 XMLParameter tp = temp.getParameter((String) pe.nextElement());
-
-                dialog.appendParameter(desc, tp.getName(), tp.getDescription(), tp.getValueType(), tp.getValue(), tp
-                        .getDate(), tp.getTime());
+                editorChoice[0] = JDialogEditor.STRING;
+                int loc = tp.getDescription().indexOf('[')+1;
+                int value = Integer.parseInt(tp.getDescription().substring(loc, loc+1));
+                if(value > 0)
+                	dialog.appendTagData(tp.getDescription().substring(0, tp.getDescription().indexOf('[')), desc+" [" + (value+1)+"]" , tp.getValue(), editorChoice);
+                else
+                	dialog.appendTagData(tp.getDescription().substring(0, tp.getDescription().indexOf('[')), desc , tp.getValue(), editorChoice);
+             //   dialog.appendParameter(desc, tp.getName(), tp.getDescription(), tp.getValueType(), tp.getValue(), tp
+              //          .getDate(), tp.getTime());
+                
             }
         }
     }

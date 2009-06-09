@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.table.TableColumn;
 
 
 /**
@@ -55,6 +56,12 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /** edit button. */
     private JButton edit;
+    
+    /** expand dicom tags button. */
+    private JButton expandTags;
+    
+    /** are the dicom tags expanded **/
+    private boolean isExpanded = false;
 
     /** hashtable to store editor dialogs associated with the table. */
     private Hashtable editorDialogTable;
@@ -67,9 +74,14 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
     /** model associated with investigator information. */
     private ViewTableModel investigatorModel;
+    
+    /** model associated with tag information. */
+    private ViewTableModel tagModel;
 
     /** investigator information table. */
     private JTable investigatorTable;
+    
+    private JTable tagTable;
 
     /** master scroll pane in which to display all information. */
     private JScrollPane masterScrollPane;
@@ -91,7 +103,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     private final Hashtable primaryTypeHolder, primaryEditorHolder;
 
     private Hashtable subjectTypeHolder, subjectEditorHolder, scanTypeHolder, scanEditorHolder, investigatorTypeHolder,
-            investigatorEditorHolder;
+            investigatorEditorHolder, tagTypeHolder, tagEditorHolder;
 
     /** button for removing parameters. */
     private JButton removeParam;
@@ -108,6 +120,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     /** Box to hold table information. */
     private Box scrollingBox;
 
+    private JLabel tagLabel;
+    
     /** string holding set description when adding a parameter. */
     private String setDescforAddParam;
 
@@ -529,6 +543,76 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                     fileinfo.updateFileInfos((FileInfoXML) image.getFileInfo(q));
                 }
             }
+            
+        } else if (e.getActionCommand().equals("ExpandTags"))
+        {
+        	if (!isExpanded)
+        	{
+	        	scrollingBox.remove(tagLabel);
+	            scrollingBox.remove(tagTable.getTableHeader());
+	            scrollingBox.remove(tagTable);
+	            
+	
+	            // create set displays for each set
+	            Enumeration a = fileinfo.getPSetKeys();
+	    
+	            while (a.hasMoreElements()) {
+	                final String desc = fileinfo.getPSet((String) a.nextElement()).getDescription();
+	
+	                setHashtable.put(desc, new PSetDisplay(desc));
+	                scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getLabel());
+	                scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getTable().getTableHeader());
+	                scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getTable());
+	            }
+	        	
+	    
+	            
+	            
+	            Enumeration ee = fileinfo.getPSetKeys();
+	
+	            while (ee.hasMoreElements()) {
+	                XMLPSet temp = fileinfo.getPSet((String) ee.nextElement());
+	                String desc = temp.getDescription();
+	                Enumeration pe = temp.getParameterKeys();
+	                int editorChoice[] = new int[1];
+	                while (pe.hasMoreElements()) {
+	                    XMLParameter tp = temp.getParameter((String) pe.nextElement());
+	                    editorChoice[0] = JDialogEditor.STRING;
+	                    appendParameter(desc, tp.getName(), tp.getDescription(), tp.getValueType(), tp.getValue(), tp
+	                            .getDate(), tp.getTime());
+	                    
+	                }
+	            }
+	            isExpanded = true;
+	            
+	            expandTags.setText("Collapse Tags");
+        	}
+        	else
+        	{
+	            Enumeration a = fileinfo.getPSetKeys();
+	    	    
+	            while (a.hasMoreElements()) {
+	                final String desc = fileinfo.getPSet((String) a.nextElement()).getDescription();
+	
+//	                setHashtable.put(desc, new PSetDisplay(desc));
+	                scrollingBox.remove( ((PSetDisplay) setHashtable.get(desc)).getLabel());
+	                scrollingBox.remove( ((PSetDisplay) setHashtable.get(desc)).getTable().getTableHeader());
+	                scrollingBox.remove( ((PSetDisplay) setHashtable.get(desc)).getTable());
+	            }
+	            
+	        	scrollingBox.add(tagLabel);
+	            scrollingBox.add(tagTable.getTableHeader());
+	            scrollingBox.add(tagTable);
+	            
+	            
+	            scrollingBox.repaint();
+	            masterScrollPane.revalidate();
+	            isExpanded = false;
+	            
+	            expandTags.setText("Expand Tags");
+        	}
+
+
         } else if (e.getActionCommand().equals("EditTag")) { // edit the high-lighted tag
 
             Integer named;
@@ -1124,7 +1208,33 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         investigatorTypeHolder.put(new Integer(investigatorModel.getRowCount() - 1), editorInts);
     }
+    
+    /**
+     * appends an editable row to the end of the tag table.
+     * 
+     * @param name DOCUMENT ME!
+     * @param value DOCUMENT ME!
+     * @param date 
+     * @param editor - list of editor types for editing this row
+     */
+    public void appendTagData(final String tag, final String name, final String value, final int[] editor) {
+        
+    	
+    	final String[] rose = {tag,name,value};
 
+        tagModel.addRow(rose);
+        final Vector editorInts = new Vector();
+
+        for (final int element : editor) { // set the list of editors to use
+            editorInts.addElement(new Integer(element));
+        }
+
+        tagTypeHolder.put(new Integer(tagModel.getRowCount() - 1), editorInts);
+        tagTable.setAutoCreateRowSorter(true);
+        tagTable.getRowSorter().toggleSortOrder(0);
+
+    
+    }
     /**
      * appends an editable row with the given parameter data to the proper set display table.
      * 
@@ -1288,6 +1398,14 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             investigatorTable = new JTable(investigatorModel);
             investigatorTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             investigatorTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            
+            tagTypeHolder = new Hashtable();
+            tagEditorHolder = new Hashtable();
+            tagModel = new ViewTableModel();
+            tagTable = new JTable(tagModel);
+            tagTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            tagTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            
 
             // for the diff tables inside the scrollpanel:
             scrollingBox = new Box(BoxLayout.Y_AXIS);
@@ -1371,20 +1489,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         scrollingBox.add(investigatorLabel);
         scrollingBox.add(investigatorTable.getTableHeader());
         scrollingBox.add(investigatorTable);
-
-        // create set displays for each set
-        Enumeration e = fileInfo.getPSetKeys();
-
-        while (e.hasMoreElements()) {
-            final String desc = fileInfo.getPSet((String) e.nextElement()).getDescription();
-
-            setHashtable.put(desc, new PSetDisplay(desc));
-            scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getLabel());
-            scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getTable().getTableHeader());
-            scrollingBox.add( ((PSetDisplay) setHashtable.get(desc)).getTable());
-        }
-
-        e = fileInfo.getSurfaceKeys();
+        
+        Enumeration e = fileInfo.getSurfaceKeys();
 
         while (e.hasMoreElements()) {
             final String path = (String) e.nextElement();
@@ -1395,6 +1501,28 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         scrollingBox.add(surfaces.getLabel());
         scrollingBox.add(surfaces.getTable().getTableHeader());
         scrollingBox.add(surfaces.getTable());
+        
+        tagModel.addColumn("Tag");
+        tagModel.addColumn("Name");
+        tagModel.addColumn("Value");
+        tagTable.getColumn("Tag").setMinWidth(30);
+        tagTable.getColumn("Tag").setMaxWidth(100);
+        tagTable.getColumn("Name").setMinWidth(120);
+        tagTable.getColumn("Name").setMaxWidth(450);
+        tagTable.getColumn("Value").setMinWidth(50);
+        tagTable.getColumn("Value").setMaxWidth(1000);
+        tagTable.getTableHeader().setReorderingAllowed(false);
+
+        tagLabel = new JLabel("DICOM Tags");
+
+        tagLabel.setForeground(Color.black);
+
+        scrollingBox.add(tagLabel);
+        scrollingBox.add(tagTable.getTableHeader());
+        scrollingBox.add(tagTable);
+
+
+
 
         masterScrollPane = new JScrollPane(scrollingBox, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -1436,9 +1564,17 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         addSurface = new JButton("Add Surface");
         addSurface.setActionCommand("AddSurface");
         addSurface.addActionListener(this);
+        
+        // removeParam.setPreferredSize( MipavUtil.defaultButtonSize );
+        addSurface.setFont(serif12B);
+
+
+        expandTags = new JButton("Expand Tags");
+        expandTags.setActionCommand("ExpandTags");
+        expandTags.addActionListener(this);
 
         // addSurface.setPreferredSize( MipavUtil.defaultButtonSize );
-        addSurface.setFont(serif12B);
+        expandTags.setFont(serif12B);
 
         removeSurface = new JButton("Remove Surface");
         removeSurface.setActionCommand("RemoveSurface");
@@ -1451,12 +1587,13 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
 
         buttonPanel.add(addSet);
         buttonPanel.add(edit);
+        buttonPanel.add(expandTags);
         buttonPanel.add(removeParam);
         buttonPanel.add(addSurface);
         buttonPanel.add(removeSurface);
         buttonPanel.add(close);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-        this.setSize(new Dimension(650, 800));
+        this.setSize(new Dimension(800, 800));
 
     }
 
