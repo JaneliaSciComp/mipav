@@ -911,6 +911,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("pasteVOI")) {
             componentImage.getVOIHandler().pasteVOI();
         } else if (command.equals("selectAllVOIs")) {
+        	if(componentImage.getActiveImage().getVOIs().size() == 0) {
+        		MipavUtil.displayWarning("There are no VOIs in this image");
+        		return;
+        	}
             componentImage.getVOIHandler().selectAllVOIs(true);
         } else if (event.getActionCommand().equals("voiSelectNone")) {
             componentImage.getVOIHandler().selectAllVOIs(false);
@@ -995,7 +999,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("avgIntensityThreshold")) {
             new JDialogIntensityThreshold(this, componentImage, true);
         } else if (command.equals("GroupVOIs")) {
-
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select VOIs!");
+        		return;
+        	}
             if (displayMode == IMAGE_A) {
                 imageA.groupVOIs();
             } else {
