@@ -376,7 +376,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             }
 
             if (!foundActive) {
-                MipavUtil.displayError("Please select a VOI!");
+                MipavUtil.displayWarning("Please select a VOI!");
             }
         } catch (OutOfMemoryError error) {
             System.gc();
