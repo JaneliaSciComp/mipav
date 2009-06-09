@@ -1968,7 +1968,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     || ( (getActiveImage().getNDims() == 3) && (getActiveImage().getExtents()[2] == 2))) {
                 new JDialogFRET(this, getActiveImage());
             } else {
-                return;
+            	MipavUtil.displayError("Image does not have proper dimensions and extents");
             }
         } else if (command.equals("doFRETBleed")) {
             new JDialogFRETBleedThrough(this, getActiveImage());
