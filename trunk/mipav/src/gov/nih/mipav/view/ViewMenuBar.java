@@ -761,11 +761,14 @@ public class ViewMenuBar {
                                                 "backward.gif", true)}),
                                 separator,
                                 menuBuilder.makeMenu("VOI conversion", true, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("VOI -> Binary mask", "BinaryMask", 0, null, false),
-                                        menuBuilder.buildMenuItem("VOI -> Short mask", "ShortMask", 0, null, false),
-                                        menuBuilder.buildMenuItem("VOI -> Paint", "PaintMask", 0, null, false),
-                                        menuBuilder.buildMenuItem("VOI -> Unsigned byte mask", "UnsignedByteMask", 0,
-                                                null, false)}),
+                                		menuBuilder.buildMenuItem("VOI -> Paint", "PaintMask", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> All to Binary mask", "BinaryMask", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> All to Short mask", "ShortMask", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> All to Unsigned byte mask", "UnsignedByteMask", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> Selected to Binary mask", "BinaryMaskSelected", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> Selected to Short mask", "ShortMaskSelected", 0, null, false),
+                                        menuBuilder.buildMenuItem("VOI -> Selected to Unsigned byte mask", "UnsignedByteMaskSelected", 0, null, false)
+                                        }),
                                 menuBuilder.makeMenu("Mask conversion", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Mask -> VOI", "MaskToVOI", 0, null, false),
                                         menuBuilder.buildMenuItem("Mask -> Paint", "MaskToPaint", 0, null, false),}),

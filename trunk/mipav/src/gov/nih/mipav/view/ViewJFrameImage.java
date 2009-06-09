@@ -776,6 +776,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("XOR")) {
             userInterface.setUseVOIXOR(menuBuilder.isMenuItemSelected("Allow VOI holes (XOR)"));
         } else if (command.equals("PaintMask")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             getActiveImage().setMask(getActiveImage().generateVOIMask(useXOR, true));
             componentImage.setPaintMask(getActiveImage().getMask());
             updateImages(true);
@@ -921,30 +925,46 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("SendContourToBack")) {
             componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.BACK);
         } else if (command.equals("PropVOIUp")) {
-
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             // It appears JButtons don't pass key modifiers
             // if((event.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {}
             if (componentImage.getVOIHandler().propVOI(1, false) == true) {
                 incSlice();
             }
         } else if (command.equals("PropVOIDown")) {
-
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             if (componentImage.getVOIHandler().propVOI( -1, false) == true) {
                 decSlice();
             }
         } else if (command.equals("PropVOIActiveUp")) {
-
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             // It appears JButtons don't pass key modifiers
             // if((event.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {}
             if (componentImage.getVOIHandler().propVOI(1, true) == true) {
                 incSlice();
             }
         } else if (command.equals("PropVOIActiveDown")) {
-
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             if (componentImage.getVOIHandler().propVOI( -1, true) == true) {
                 decSlice();
             }
         } else if (command.equals("PropVOIAll")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             componentImage.getVOIHandler().propVOIAll();
         } else if (command.equals("BringForward")) {
             componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.FORWARD);
@@ -995,6 +1015,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Cardio")) {
             new JDialogCardiology(this, imageA);
         } else if (command.equals("BinaryMask")) {
+        	if(componentImage.getActiveImage().getVOIs().size() == 0) {
+        		MipavUtil.displayWarning("There are no VOIs in this image");
+        		return;
+        	}
             ModelImage maskImage = null;
 
             try {
@@ -1028,6 +1052,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ProvenanceRecorder.getReference().addLine(
                     new ActionVOIToMask(getActiveImage(), maskImage, ActionVOIToMask.MASK_BINARY));
         } else if (command.equals("ShortMask")) {
+        	if(componentImage.getActiveImage().getVOIs().size() == 0) {
+        		MipavUtil.displayWarning("There are no VOIs in this image");
+        		return;
+        	}
             ModelImage shortImage = null;
 
             try {
@@ -1061,6 +1089,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ProvenanceRecorder.getReference().addLine(
                     new ActionVOIToMask(getActiveImage(), shortImage, ActionVOIToMask.MASK_SHORT));
         } else if (command.equals("UnsignedByteMask")) {
+        	if(componentImage.getActiveImage().getVOIs().size() == 0) {
+        		MipavUtil.displayWarning("There are no VOIs in this image");
+        		return;
+        	}
             ModelImage uByteImage = null;
 
             try {
@@ -1093,7 +1125,119 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     new ActionVOIToMask(getActiveImage(), uByteImage, ActionVOIToMask.MASK_UBYTE));
             ProvenanceRecorder.getReference().addLine(
                     new ActionVOIToMask(getActiveImage(), uByteImage, ActionVOIToMask.MASK_UBYTE));
-        } else if (command.equals("MaskToVOI")) {
+        } else if (command.equals("BinaryMaskSelected")) {
+        	
+        	
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select at least 1 VOI!");
+        		return;
+        	}
+        	
+            ModelImage maskImage = null;
+
+            try {
+
+                
+
+                maskImage = getActiveImage().generateBinaryImage(useXOR, true);
+
+                if (maskImage != null) {
+                    maskImage.setImageName(getActiveImage().getImageName() + "_bmask");
+                    maskImage.getMatrixHolder().replaceMatrices(getActiveImage().getMatrixHolder().getMatrices());
+                    maskImage.getFileInfo(0).setOrigin(getActiveImage().getFileInfo(0).getOrigin());
+                    new ViewJFrameImage(maskImage, null, new Dimension(610, 200), false);
+                }
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Out of memory: unable to open new frame");
+
+                if (maskImage != null) {
+                    maskImage.disposeLocal();
+                }
+
+                maskImage = null;
+
+                return;
+            }
+
+            ScriptRecorder.getReference().addLine(
+                    new ActionVOIToMask(getActiveImage(), maskImage, ActionVOIToMask.MASK_BINARY));
+            ProvenanceRecorder.getReference().addLine(
+                    new ActionVOIToMask(getActiveImage(), maskImage, ActionVOIToMask.MASK_BINARY));
+        } else if (command.equals("ShortMaskSelected")) {
+        	
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select at least 1 VOI!");
+        		return;
+        	}
+        	
+        	
+            ModelImage shortImage = null;
+
+            try {
+
+                
+
+                shortImage = getActiveImage().generateShortImage(1, useXOR, true);
+
+                if (shortImage != null) {
+                    shortImage.setImageName(getActiveImage().getImageName() + "_smask");
+                    shortImage.getMatrixHolder().replaceMatrices(getActiveImage().getMatrixHolder().getMatrices());
+                    shortImage.getFileInfo(0).setOrigin(getActiveImage().getFileInfo(0).getOrigin());
+                    new ViewJFrameImage(shortImage, null, new Dimension(610, 200), false);
+                }
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Out of memory: unable to open new frame");
+
+                if (shortImage != null) {
+                    shortImage.disposeLocal();
+                }
+
+                shortImage = null;
+
+                return;
+            }
+
+            ScriptRecorder.getReference().addLine(
+                    new ActionVOIToMask(getActiveImage(), shortImage, ActionVOIToMask.MASK_SHORT));
+            ProvenanceRecorder.getReference().addLine(
+                    new ActionVOIToMask(getActiveImage(), shortImage, ActionVOIToMask.MASK_SHORT));
+        } else if (command.equals("UnsignedByteMaskSelected")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select at least 1 VOI!");
+        		return;
+        	}
+        	
+            ModelImage uByteImage = null;
+
+            try {
+
+                
+
+                uByteImage = getActiveImage().generateUnsignedByteImage(1, useXOR, true);
+
+                if (uByteImage != null) {
+                    uByteImage.setImageName(getActiveImage().getImageName() + "_ubmask");
+                    uByteImage.getMatrixHolder().replaceMatrices(getActiveImage().getMatrixHolder().getMatrices());
+                    uByteImage.getFileInfo(0).setOrigin(getActiveImage().getFileInfo(0).getOrigin());
+                    new ViewJFrameImage(uByteImage, null, new Dimension(610, 200), false);
+                }
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Out of memory: unable to open new frame");
+
+                if (uByteImage != null) {
+                    uByteImage.disposeLocal();
+                }
+
+                uByteImage = null;
+
+                return;
+            }
+
+            ScriptRecorder.getReference().addLine(
+                    new ActionVOIToMask(getActiveImage(), uByteImage, ActionVOIToMask.MASK_UBYTE));
+            ProvenanceRecorder.getReference().addLine(
+                    new ActionVOIToMask(getActiveImage(), uByteImage, ActionVOIToMask.MASK_UBYTE));
+        }else if (command.equals("MaskToVOI")) {
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
 
             progressBar = new ViewJProgressBar(getActiveImage().getImageName(), "Extracting VOI ...", 0, 100, true);
@@ -1265,14 +1409,35 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("SaveVOIIntensities")) {
             saveVOIIntensities();
         } else if (command.equals("Snake")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             new JDialogSnake(this, getActiveImage());
         } else if (command.equals("AGVF")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             new JDialogAGVF(this, getActiveImage());
         } else if (command.equals("GVF")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             new JDialogGVF(this, getActiveImage());
+            
         } else if (command.equals("BSnake")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             new JDialogBSnake(this, getActiveImage());
         } else if (command.equals("SmoothVOI")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             new JDialogBSmooth(this, getActiveImage(), componentImage.getSlice());
         } // Paint
         else if (command.equals("colorPaint")) { // new colour dialog only when null
@@ -1402,14 +1567,27 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ImageFlipZ")) {
             new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
         } else if (command.equals("VOIFlipY")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
+        	
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
         } else if (command.equals("VOIFlipX")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS, AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
         } else if (command.equals("VOIFlipZ")) {
+        	if(!checkForActiveVOIs()) {
+        		MipavUtil.displayWarning("Please select a VOI!");
+        		return;
+        	}
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
@@ -5503,6 +5681,29 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             decSlice();
         }
+    }
+    
+    
+    
+    private boolean checkForActiveVOIs() {
+    	boolean foundActive = false;
+    	ViewVOIVector VOIs;
+    	int nVOI;
+    	 
+    	VOIs = componentImage.getActiveImage().getVOIs();
+        nVOI = VOIs.size();
+        
+        for (int i = 0; i < nVOI; i++) {
+
+            if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
+            	
+            	 foundActive = true;
+            	 break;
+            }
+        }
+    	
+    	
+    	return foundActive;
     }
     
     private class DicomQueryListener implements ActionListener {

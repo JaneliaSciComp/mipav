@@ -67,7 +67,7 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
          VOI VOIHandle = null;
          
          if(nVOI == 0) {
-         	 MipavUtil.displayError("Please select 2 closed VOI contours in non-contiguous slices");
+         	 MipavUtil.displayWarning("Please select 2 closed VOI contours in non-contiguous slices");
              return;
          }
          
@@ -108,17 +108,17 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
 
          
          if(nActiveContour != 2) {
-         	MipavUtil.displayError("Please select 2 closed VOI contours in non-contiguous slices");
+         	MipavUtil.displayWarning("Please select 2 closed VOI contours in non-contiguous slices");
              return;
          }
          
          if(sliceIndex1 == sliceIndex2) {
-         	MipavUtil.displayError("Please select 2 closed VOI contours in non-contiguous slices");
+         	MipavUtil.displayWarning("Please select 2 closed VOI contours in non-contiguous slices");
              return;
          }
          
         if((sliceIndex1 == sliceIndex2 + 1) || (sliceIndex1 == sliceIndex2 - 1)) {
-         	MipavUtil.displayError("Please select 2 closed VOI contours in non-contiguous slices");
+         	MipavUtil.displayWarning("Please select 2 closed VOI contours in non-contiguous slices");
              return;
         }
         
