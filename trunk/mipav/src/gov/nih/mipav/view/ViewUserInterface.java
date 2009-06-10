@@ -292,6 +292,26 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         // toolbars of individual images
         ScriptRecorder.getReference().addScriptRecordingListener(this);
     }
+    
+    /**
+     * Constructs main UI frame. Accesses the .preferences file to set up variables. Sets up DICOM hashtable for reading
+     * in DICOM files and starts the catcher, if appropriate. This method cannot be called directly. To use this
+     * constructor, you must call createReference. This class is a singleton, which means that only one type of this
+     * class is allowed to be instantiated in a single VM.
+     * 
+     * @param forceQuite Mipav will not display any error, warning, or info messages. If a error displays MIPAV will exit.
+     */
+    protected ViewUserInterface(boolean forceQuite) {
+    	MipavUtil.setForceQuite(forceQuite);
+        mainFrame = new JFrame();
+        imageFrameVector = new Vector<Frame>();
+        imageHashtable = new CustomHashtable<ModelImage>();
+        initialize();
+
+        // listen to the script recorder so that we can pass along changes in the script recorder status to the script
+        // toolbars of individual images
+        ScriptRecorder.getReference().addScriptRecordingListener(this);
+    }
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
