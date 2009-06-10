@@ -1066,6 +1066,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             interName = element.getName().substring(element.getName().indexOf("PlugIn"));
                         }
                     }
+                    
+                    if(interName.length() == 0 && plugin.getSuperclass() != null) {
+                    	interName = getSuperInterfaces(plugin.getSuperclass());
+                    }
 
                     for (final String element : hier) {
                         final Component[] subComp = currentMenu.getMenuComponents();
@@ -1114,7 +1118,24 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return menu;
     }
 
-    /**
+    private String getSuperInterfaces(Class plugin) {
+		String interName = new String();
+		final Class[] interList = plugin.getInterfaces();
+        for (final Class element : interList) {
+            if (element.getName().contains("PlugIn")) {
+                interName = element.getName().substring(element.getName().indexOf("PlugIn"));
+            }
+        }
+        
+        if(interName.length() == 0 && plugin.getSuperclass() != null) {
+        	return getSuperInterfaces(plugin.getSuperclass());
+        } else {
+        	return interName;
+        }
+		
+	}
+
+	/**
      * Recursive deletion algorithm to delete JMenus which contain no JMenuItems exclusive of JMenus in any children.
      * 
      * @param menu The menu to run through deletion
