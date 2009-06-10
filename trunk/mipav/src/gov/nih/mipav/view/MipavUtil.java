@@ -161,6 +161,8 @@ public class MipavUtil extends JComponent {
 
     /** DOCUMENT ME! */
     public static int MENU_Y_PADDING = 27;
+    
+    private static boolean forceQuite = false;
 
     /** DOCUMENT ME! */
     public static final int[] functionKeys = new int[] {0, KeyEvent.VK_F1, KeyEvent.VK_F2, KeyEvent.VK_F3,
@@ -387,49 +389,55 @@ public class MipavUtil extends JComponent {
      * @see JOptionPane#showMessageDialog(java.awt.Component, java.lang.Object, java.lang.String, int, javax.swing.Icon)
      */
     public static void displayError(String error) {
-
-        if ( (ViewUserInterface.getReference() != null)
-                && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
-                        .isPlugInFrameVisible())) {
-
-            try {
-                JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-                JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
-            } catch (FileNotFoundException ex) {
-                Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                        + ">.  Check that this file is available.\n");
-                System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                        + ">.  Check that this file is available.\n");
-            }
-        } else {
-
-            if (ViewUserInterface.getReference() != null) {
-
-                // the user has enabled the -hide option
-                System.err.println("Error: " + error);
-
-                // exit with an abnormal return value to indicate a problem
-                // (useful when running mipav from the command line and testing
-                // whether the algorithm completed successfully)
-                if (ViewUserInterface.getReference().doExitCmdLineOnError()) {
-                    System.exit(1);
-                }
-            } else {
-
-                try {
-
-                    // an error occurred before the ui could be set up, so assume that the user is not using -hide..
-                    JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-                    JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
-                } catch (FileNotFoundException ex) {
-                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
-                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
-                }
-            }
-
-        }
+    	if(!forceQuite){
+	        if ( (ViewUserInterface.getReference() != null)
+	                && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
+	                        .isPlugInFrameVisible())) {
+	
+	            try {
+	                JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
+	                JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
+	            } catch (FileNotFoundException ex) {
+	                Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+	                        + ">.  Check that this file is available.\n");
+	                System.err.println("Exception ocurred while getting <" + ex.getMessage()
+	                        + ">.  Check that this file is available.\n");
+	            }
+	        } else {
+	
+	            if (ViewUserInterface.getReference() != null) {
+	
+	                // the user has enabled the -hide option
+	                System.err.println("Error: " + error);
+	
+	                // exit with an abnormal return value to indicate a problem
+	                // (useful when running mipav from the command line and testing
+	                // whether the algorithm completed successfully)
+	                if (ViewUserInterface.getReference().doExitCmdLineOnError()) {
+	                    System.exit(1);
+	                }
+	            } else {
+	
+	                try {
+	
+	                    // an error occurred before the ui could be set up, so assume that the user is not using -hide..
+	                    JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
+	                    JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
+	                } catch (FileNotFoundException ex) {
+	                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+	                            + ">.  Check that this file is available.\n");
+	                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
+	                            + ">.  Check that this file is available.\n");
+	                }
+	            }
+	        }
+    	}
+    	else
+    	{
+    		System.err.println("Error: " + error);
+    		System.exit(1);
+    	}
+    		
     }
 
     /**
@@ -443,41 +451,45 @@ public class MipavUtil extends JComponent {
      * @param info the information string
      */
     public static void displayInfo(String info) {
-
-        if ( (ViewUserInterface.getReference() != null)
-                && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
-                        .isPlugInFrameVisible())) {
-
-            try {
-                JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-                JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
-            } catch (FileNotFoundException ex) {
-                Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                        + ">.  Check that this file is available.\n");
-                System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                        + ">.  Check that this file is available.\n");
-            }
-        } else {
-
-            if (ViewUserInterface.getReference() != null) {
-
-                // the user has enabled the -hide option
-                System.err.println("Info: " + info);
-            } else {
-
-                try {
-
-                    // an error occurred before the ui could be set up, so assume that the user is not using -hide..
-                    JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-                    JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
-                } catch (FileNotFoundException ex) {
-                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
-                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
-                }
-            }
-        }
+    	if(!forceQuite){
+	        if ( (ViewUserInterface.getReference() != null)
+	                && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
+	                        .isPlugInFrameVisible())) {
+	
+	            try {
+	                JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
+	                JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
+	            } catch (FileNotFoundException ex) {
+	                Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+	                        + ">.  Check that this file is available.\n");
+	                System.err.println("Exception ocurred while getting <" + ex.getMessage()
+	                        + ">.  Check that this file is available.\n");
+	            }
+	        } else {
+	
+	            if (ViewUserInterface.getReference() != null) {
+	
+	                // the user has enabled the -hide option
+	                System.err.println("Info: " + info);
+	            } else {
+	
+	                try {
+	
+	                    // an error occurred before the ui could be set up, so assume that the user is not using -hide..
+	                    JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
+	                    JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
+	                } catch (FileNotFoundException ex) {
+	                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+	                            + ">.  Check that this file is available.\n");
+	                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
+	                            + ">.  Check that this file is available.\n");
+	                }
+	            }
+	        }
+    	}
+    	else{
+    		System.err.println("Info: " + info);
+    	}
     }
 
     /**
@@ -491,42 +503,45 @@ public class MipavUtil extends JComponent {
      * @param warning the message text of the warning.
      */
     public static void displayWarning(String warning) {
-
-        if ( (ViewUserInterface.getReference() != null)
-                && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
-                        .isPlugInFrameVisible())) {
-
-            try {
-                JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-                JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
-            } catch (FileNotFoundException ex) {
-                Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                        + ">.  Check that this file is available.\n");
-                System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                        + ">.  Check that this file is available.\n");
-            }
-        } else {
-
-            if (ViewUserInterface.getReference() != null) {
-
-                // the user has enabled the -hide option
-                System.err.println("Warning: " + warning);
-            } else {
-
-                try {
-
-                    // an error occurred before the ui could be set up, so assume that the user is not using -hide..
-                    JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-                    JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
-                } catch (FileNotFoundException ex) {
-                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
-                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
-                            + ">.  Check that this file is available.\n");
-                }
-            }
-        }
-
+    	if(!forceQuite){
+	        if ( (ViewUserInterface.getReference() != null)
+	                && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
+	                        .isPlugInFrameVisible())) {
+	
+	            try {
+	                JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
+	                JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
+	            } catch (FileNotFoundException ex) {
+	                Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+	                        + ">.  Check that this file is available.\n");
+	                System.err.println("Exception ocurred while getting <" + ex.getMessage()
+	                        + ">.  Check that this file is available.\n");
+	            }
+	        } else {
+	
+	            if (ViewUserInterface.getReference() != null) {
+	
+	                // the user has enabled the -hide option
+	                System.err.println("Warning: " + warning);
+	            } else {
+	
+	                try {
+	
+	                    // an error occurred before the ui could be set up, so assume that the user is not using -hide..
+	                    JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
+	                    JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
+	                } catch (FileNotFoundException ex) {
+	                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+	                            + ">.  Check that this file is available.\n");
+	                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
+	                            + ">.  Check that this file is available.\n");
+	                }
+	            }
+	        }
+    	}
+    	else{
+    		System.err.println("Warning: " + warning);
+    	}
     }
 
     /**
@@ -658,6 +673,16 @@ public class MipavUtil extends JComponent {
 
         return icon;
     }
+    
+    /**
+     * Finds if forceQuite is true or false
+     * 
+     * @return true/false
+     */
+    public static boolean getForceQuite() {
+    	return forceQuite;
+    }
+
 
     /**
      * Finds the image of the specified name. Uses the PlaceHolder class, which is in the same directory as the icons
@@ -1108,6 +1133,15 @@ public class MipavUtil extends JComponent {
                 comp[x].setFont(MipavUtil.defaultMenuFont);
             } catch (Exception e) {} // do nothing
         }
+    }
+    
+    /**
+     * Finds if forceQuite is true or false
+     * @param force Should mipav quite all errors
+     * @return true/false
+     */
+    public static final void setForceQuite(boolean force) {
+    	 forceQuite = force;
     }
 
     /**
