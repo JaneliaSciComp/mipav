@@ -2318,11 +2318,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     public void updateData() {
         if ( m_kVolumeImageA != null )
         {
-            m_kVolumeImageA.UpdateData(imageA, "A");
+            m_kVolumeImageA.UpdateData(imageA);
         }
         if ( m_kVolumeImageB != null )
         {
-            m_kVolumeImageB.UpdateData(imageB, "B");
+            m_kVolumeImageB.UpdateData(imageB);
         }
         raycastRenderWM.updateData();
         setModified();
