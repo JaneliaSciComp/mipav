@@ -3878,18 +3878,32 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             if ( !Preferences.getProperty(Preferences.PREF_STARTING_HEAP_SIZE).equals(mems[0])
                     || !Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE).equals(mems[1])) {
-
-                MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n"
-                        + "those in the Preferences file.\n" + "Memory Allocation will display so you can "
-                        + "ensure this is correct.");
-                new JDialogMemoryAllocation(this, true);
+            	if(!MipavUtil.getForceQuite()){
+	                MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n"
+	                        + "those in the Preferences file.\n" + "Memory Allocation will display so you can "
+	                        + "ensure this is correct.");
+	                new JDialogMemoryAllocation(this, true);
+            	}
+            	else{
+	                MipavUtil.displayError("Heap size settings in the " + "environment startup file do not match \n"
+	                        + "those in the Preferences file.\n" + "Memory Allocation will display so you can "
+	                        + "ensure this is correct.");
+            	}
+            	
             }
             // else sizes match; there are no problems
         } catch (final NullPointerException npe) { // prefs not found/invalid strings
-            MipavUtil.displayWarning("Heap size settings in the " + "environment startup file either do not match \n"
-                    + "those in the Preferences file, or are non-existant.\n"
-                    + "Memory Allocation will display so you can " + "ensure this is correct.");
-            new JDialogMemoryAllocation(this, true);
+        	if(!MipavUtil.getForceQuite()){
+	            MipavUtil.displayWarning("Heap size settings in the " + "environment startup file either do not match \n"
+	                    + "those in the Preferences file, or are non-existant.\n"
+	                    + "Memory Allocation will display so you can " + "ensure this is correct.");
+	            new JDialogMemoryAllocation(this, true);
+        	}
+        	else{
+	            MipavUtil.displayError("Heap size settings in the " + "environment startup file either do not match \n"
+	                    + "those in the Preferences file, or are non-existant.\n"
+	                    + "Memory Allocation will display so you can " + "ensure this is correct.");
+        	}
         } catch (final FileNotFoundException fnf) { // LAX not found
             Preferences.debug(fnf.getLocalizedMessage() + "\n");
             MipavUtil.displayWarning(fnf.getLocalizedMessage());
