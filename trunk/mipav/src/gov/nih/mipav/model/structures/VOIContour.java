@@ -17,6 +17,8 @@ import java.text.*;
 
 import java.util.*;
 
+import com.sun.corba.se.spi.legacy.connection.GetEndPointInfoAgainException;
+
 
 /**
  * This class is fundamental to the VOI class in which points are stored that describe a curve of an VOI. The points are
@@ -53,7 +55,9 @@ public class VOIContour extends VOIBase {
     /** DOCUMENT ME! */
     private boolean flagRetrace = false;
     
-    private int lastX = -1, lastY = -1;
+    private int count, origSize;
+    
+    private int lastX = -1, lastY = -1, lastZ = -1;
 
     /** These four variables are used in the retrace mode of the Contour. */
     private int indexRetrace = -99;
@@ -64,7 +68,9 @@ public class VOIContour extends VOIBase {
     /** Number of pixels in the array used in graphing intensity along the boundary. */
     private int numPixels;
     
-    private int saveiOld=-1, saveiNew=-1, counter = 0;
+    private boolean isFirst = true;
+
+    private boolean knowDirection = false;
 
     /** DOCUMENT ME! */
     private VOIContour oldContour; // old contour
@@ -3235,17 +3241,13 @@ public class VOIContour extends VOIBase {
     public void resetIndex() {
         indexRetrace = NOT_A_POINT;
         flagRetrace = false;
-        saveiNew = -1;
+        oldContour = null;
+        lastX = -1;
+        knowDirection = false;
+        isFirst = true;
     }
     
-    /**
-     * Resets the counter.
-     */
-    public void resetCounter() {
-    	saveiNew = -1;
-    	saveiOld = -1;
-    	counter = 0;
-    }
+
 
     /**
      * Redraws contour. Must move cursor in clockwise motion to work best
@@ -3264,22 +3266,24 @@ public class VOIContour extends VOIBase {
         Vector3f ptRetrace = null;
         double minDistance, dist;
         float x2, y2, z;
-        int i, j, idx;
-        int newIndex, end;
         int[] units = new int[3];
         
-
         try {
+        	makeCounterClockwise();
 
             if (g == null) {
                 MipavUtil.displayError("VOIContour.retraceContour: grapics = null");
-
-                return;
             }
-
+            
+            if (count>=origSize){
+            	resetIndex();
+            }
+            
+            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
+            
             if (indexRetrace == -99) {
             	
-
+            	count = 0;
                 if (closed == true) {
                     oldContour = new VOIContour(name, true);
                 } else {
@@ -3287,24 +3291,12 @@ public class VOIContour extends VOIBase {
                 }
 
                 // oldContour = new VOIContour();
-                for (i = 0; i < size(); i++) { // Make copy and save into oldContour
+                for (int i = 0; i < size(); i++) { // Make copy and save into oldContour
                     oldContour.addElement(this.elementAt(i));
                 }
-            }
-
-                if(counter ==0)
-                	makeCounterClockwise();
                 
-                if (counter == 2){
-    	            if((saveiNew==0 && saveiOld==size()-1) || (saveiOld < saveiNew && saveiOld !=0))  	
-    	            	makeCounterClockwise();
-    	            else if ((saveiNew < saveiOld) || (saveiOld==0 && saveiNew==size()-1))
-    	            	makeClockwise();
-    	            
-    	            resetIndex();
-                }
-
-            
+                origSize=oldContour.size()-2;
+            }
 
             // Return if trying to add the same point.
             z = ((Vector3f) (elementAt(0))).Z;
@@ -3313,8 +3305,7 @@ public class VOIContour extends VOIBase {
                 return;
             }
 
-            g.setColor(black);
-            g.setXORMode(red);
+            g.setColor(red);
             active = false;
             units[0] = 0;
             units[1] = 0;
@@ -3323,87 +3314,204 @@ public class VOIContour extends VOIBase {
 
             // Find nearest point in old contour
             minDistance = 9999999;
-            end = oldContour.size();
-
-            saveiOld = saveiNew;
+            int end = oldContour.size();
 
 
-            for (i = 0; i < end; i++) {
+            for (int i = 0; i < end; i++) {
             	
                 x2 = ((Vector3f) (oldContour.elementAt(i))).X;
                 y2 = ((Vector3f) (oldContour.elementAt(i))).Y;
                 dist = MipavMath.distance(x1, x2, y1, y2);
-
+                
                 if (dist < minDistance) {
                     ptRetrace = (Vector3f) oldContour.elementAt(i);
-                    minDistance = dist;
-                    saveiNew = i;
-                  
-                    
-                }
-            }
-            drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
-
-            // remove point(s) in contour
-            newIndex = indexOf(ptRetrace);
-
-            if ((newIndex >= 0) && (newIndex < size())) {
-                if (indexRetrace >= newIndex) { // should not happen when indexRetrace == -99
-
-                    for (j = 0; j < (indexRetrace - newIndex); j++) {
-                        removeElementAt(newIndex);
-                        flagRetrace = true;
-                    }
-                } else if ((flagRetrace == true) && (((newIndex - indexRetrace) / (float) size()) > 0.75f)) {
-
-                    for (j = 0; j < indexRetrace; j++) {
-                        removeElementAt(0);
-                    }
-
-                    int size = size();
-
-                    for (j = 0; j < (size - newIndex); j++) {
-                        ;
-                        removeElementAt(size() - 1);
-                    }
+                    minDistance = dist;   
                 }
             }
 
-            // Find index where new point is to be added
-            minDistance = 999999999;
-            idx = 0;
-
-            for (i = 0; i < size(); i++) {
-                x2 = ((Vector3f) (elementAt(i))).X;
-                y2 = ((Vector3f) (elementAt(i))).Y;
-                dist = MipavMath.distance(x1, x2, y1, y2);
-
-                if (dist < minDistance) {
-                    idx = i;
-                    minDistance = dist;
-                }
+            int index, indexold;
+            Vector3f newer = new Vector3f(x1,y1,z);
+            
+            if(lastX == -1){ //if first time
+            	lastX = (int) ptRetrace.X;
+            	lastY = (int) ptRetrace.Y;
+            	lastZ = (int) ptRetrace.Z;
+            	indexRetrace = oldContour.indexOf(ptRetrace);
+            	count++;
+            	insertElementAt(newer, indexOf(oldContour.get(indexRetrace)));
             }
+            else if(!(lastX == (int) ptRetrace.X && lastY == (int) ptRetrace.Y)){
 
-            if (indexRetrace != NOT_A_POINT) {
-                insertElementAt(new Vector3f(x1, y1, z), idx);
-                indexRetrace = idx;
-            } else {
-                indexRetrace = idx;
+            	index = oldContour.indexOf(ptRetrace);
+            	Vector3f old = new Vector3f(lastX,lastY,lastZ);
+            	indexold = indexRetrace;
+
+            	
+            	if ((index-indexold) ==1)
+            	{
+            		knowDirection = true;
+            		lastX = (int) ptRetrace.X;
+            		lastY = (int) ptRetrace.Y;
+            		lastZ = (int) ptRetrace.Z;
+            		insertElementAt(newer, indexOf(old));
+            		removeElement(old);
+            		indexRetrace = index;
+            		count++;	
+            	}
+            	else if (indexold-index > 1 && index ==0){
+            		knowDirection = true;
+            		lastX = (int) ptRetrace.X;
+            		lastY = (int) ptRetrace.Y;
+            		lastZ = (int) ptRetrace.Z;
+            		insertElementAt(newer, indexOf(old));
+            		removeElement(old);
+            		indexRetrace = index;
+            		count++;
+            	}
+            	else if ((indexold-index) ==1)
+            	{
+            		knowDirection = true;
+            		lastX = (int) ptRetrace.X;
+            		lastY = (int) ptRetrace.Y;
+            		lastZ = (int) ptRetrace.Z;
+            		
+            		if(isFirst){
+            			insertElementAt(newer, indexOf(old)-1);
+            			isFirst = false;
+            		}
+            		else{
+            			insertElementAt(newer, indexOf(old));
+            		}
+            		
+            		removeElement(old);
+            		indexRetrace = index;
+            		count++;	
+            	}
+            	else if (indexold-index < 1 && indexold ==0)
+            	{
+            		knowDirection = true;
+            		lastX = (int) ptRetrace.X;
+            		lastY = (int) ptRetrace.Y;
+            		lastZ = (int) ptRetrace.Z;
+            		
+            		if(isFirst){
+            			insertElementAt(newer, indexOf(old)-1);
+            			isFirst = false;
+            		}
+            		else{
+            			insertElementAt(newer, indexOf(old));
+            		}
+            		
+            		removeElement(old);
+            		indexRetrace = index;
+            		count++;
+	
+            	}
+            	else if ((indexold-index)>1){
+                	if(!isFirst){
+	            		for(;index!=indexold-1; index++){
+	            			indexRetrace = indexOf(old) - 1;
+	            			oldContour.removeElementAt(indexRetrace);
+	            			removeElementAt(indexRetrace);
+	            			old = get(indexRetrace);
+	            			count++;
+	            		}
+	            		
+	            		lastX = (int) old.X;
+	            		lastY = (int) old.Y;
+	            		lastZ = (int) old.Z;
+	            		insertElementAt(newer, indexOf(old));
+                	}
+                	else{
+            			Vector3f left = new Vector3f(oldContour.get(index+1));
+            			int size = oldContour.size();
+                     		for(; index>=0; index--){
+                     			
+                     			if (oldContour.indexOf(left)!=-1){
+                     				oldContour.removeElementAt(oldContour.indexOf(left)-1);
+                     			}
+                     			removeElementAt(indexOf(left)-1);
+                     			count++;  			
+                     		}	
+            			
+                     		for(; indexold<size; indexold++){
+                     			oldContour.removeElementAt(oldContour.size()-1);
+                     			removeElementAt(size()-1);
+                     			count++;
+                     		}	
+                     		resetIndex();
+                		}
+            	
+            	}
+        		else{
+                	if(isFirst){
+	        			Vector3f right = new Vector3f(oldContour.get(index+1));
+	            		for(; index!=indexold-1; indexold++){
+	            			
+	            			if (oldContour.indexOf(right)!=-1){
+	            				oldContour.removeElementAt(oldContour.indexOf(right)-1);
+	            			}
+	            			count++;
+	            			removeElementAt(indexOf(right)-1);
+	            			
+	            		}
+	            		
+	            		lastX = (int) right.X;
+	            		lastY = (int) right.Y;
+	            		lastZ = (int) right.Z;
+	            		insertElementAt(newer, indexOf(right));
+                	}
+
+            	else{
+        			Vector3f left = new Vector3f(oldContour.get(indexold));
+        			int size = oldContour.size();
+                 		for(; indexold>0; indexold--){
+                 			
+                 			if (oldContour.indexOf(left)!=-1){
+                 				oldContour.removeElementAt(oldContour.indexOf(left)-1);
+                 			}
+                 			removeElementAt(indexOf(left)-1);
+                 			count++;
+                 		}	
+        			
+                 		for(; index<size; index++){
+                 			oldContour.removeElementAt(oldContour.size()-1);
+                 			removeElementAt(size()-1);
+                 			count++;
+                 			
+                 		}	
+                 		removeElement(firstElement());
+                 		resetIndex();
+            		}
+            	}
             }
+            	
 
+            	
+            else if( minDistance > 10  && knowDirection){
+            	if(isFirst)
+            		insertElementAt(newer, indexOf(ptRetrace));
+            	else{
+            		insertElementAt(newer, indexOf(ptRetrace)+1);
+            	}
+
+            		
+            }
             units[0] = 0;
             units[1] = 0;
             units[2] = 0;
             drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
             active = true;
             
-
-            if (saveiNew != saveiOld)		
-            counter++;
             
         } catch (OutOfMemoryError error) {
             System.gc();
-            return;
+        }
+        catch (ArrayIndexOutOfBoundsException error){
+        	resetIndex();
+        }
+        catch (NullPointerException error){
+        	resetIndex();
         }
     }
 
