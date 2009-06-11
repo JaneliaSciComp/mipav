@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TableSorter;
 
 import gov.nih.mipav.view.*;
 
@@ -121,6 +122,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     private Box scrollingBox;
 
     private JLabel tagLabel;
+    
+    private TableSorter sorter;
     
     /** string holding set description when adding a parameter. */
     private String setDescforAddParam;
@@ -1230,8 +1233,10 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
         }
 
         tagTypeHolder.put(new Integer(tagModel.getRowCount() - 1), editorInts);
-        tagTable.setAutoCreateRowSorter(true);
-        tagTable.getRowSorter().toggleSortOrder(0);
+     //   tagTable.setAutoCreateRowSorter(true);
+     //   tagTable.getRowSorter().toggleSortOrder(0);
+        sorter.setSortingStatus(0, TableSorter.ASCENDING);
+
 
     
     }
@@ -1402,7 +1407,12 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             tagTypeHolder = new Hashtable();
             tagEditorHolder = new Hashtable();
             tagModel = new ViewTableModel();
-            tagTable = new JTable(tagModel);
+            sorter = new TableSorter(tagModel);
+            tagTable = new JTable(sorter);
+            sorter.setTableHeader(tagTable.getTableHeader());
+
+            
+            
             tagTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             tagTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             
