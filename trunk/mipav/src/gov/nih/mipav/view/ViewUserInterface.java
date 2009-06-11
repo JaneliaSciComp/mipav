@@ -302,6 +302,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param forceQuite Mipav will not display any error, warning, or info messages. If a error displays MIPAV will exit.
      */
     protected ViewUserInterface(boolean forceQuite) {
+    	System.out.println("MIPAV STARTED with forceQuite set as " + forceQuite);
     	MipavUtil.setForceQuite(forceQuite);
         mainFrame = new JFrame();
         imageFrameVector = new Vector<Frame>();
