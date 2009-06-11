@@ -411,7 +411,7 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
                 for (i = 0; i < nDims; i++) {
                     resolutions[i] = Float.valueOf(stoken.nextToken()).floatValue();
 
-                    if (image.getExtents()[i] < srcMinExtent) {
+                    if ((image.getExtents()[i] < srcMinExtent) && ((!have25D) || (i < 2))) {
                         srcMinExtent = image.getExtents()[i];
                     }
                 }
