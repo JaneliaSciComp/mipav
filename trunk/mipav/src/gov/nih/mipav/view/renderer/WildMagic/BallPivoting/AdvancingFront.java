@@ -37,15 +37,17 @@ public abstract class AdvancingFront {
 	public void BuildMesh() {
 		/// if ( interval == 0 )
 		int 	interval = 512;
-	    while(true) {
-	        System.err.println( "BuildMesh while...");
+		for ( int k = 0; k <16; k++ ) {
+	   // while(true) {
+	       //  System.err.println( "BuildMesh while...");
 	      // if(call) call(0, "Advancing front");
 	      for(int i = 0; i < interval; i++) {
 	            //System.err.println( "BuildMesh " + i);
 	        if(front.isEmpty() && !SeedFace()) return;
 	        	AddFace();
 	      }
-	    }
+		}
+	   // }
 	 }
 	
 	//Implement these functions in your subclass 
