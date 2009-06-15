@@ -41,10 +41,12 @@ public class AlgorithmNoise extends AlgorithmBase {
     /** Storage or min and max values. */
     private double min, max;
     
-    /** For Poisson out = Poisson((in + background)*gain) / gain */
-    private double background;
+    /** For Poisson out = gain * Poisson(mean) + offset */
+    private double mean;
     
     private double gain;
+    
+    private double offset;
 
     /** Noise type. Defaults to uniform. */
     private int noiseType = UNIFORM;
@@ -60,16 +62,18 @@ public class AlgorithmNoise extends AlgorithmBase {
      * @param  srcImg      source image model
      * @param  _noiseType  gaussian noise or uniform noise
      * @param  _level      level of noise
-     * @param  background  For poisson: out = Poisson((in + background)*gain)/ gain
+     * @param  mean  For poisson: out = gain * Poisson(mean) + offset
      * @param  gain
+     * @param offset
      */
-    public AlgorithmNoise(ModelImage srcImg, int _noiseType, double _level, double background, double gain) {
+    public AlgorithmNoise(ModelImage srcImg, int _noiseType, double _level, double mean, double gain, double offset) {
 
         super(null, srcImg);
         noiseType = _noiseType;
         level = _level;
-        this.background = background;
+        this.mean = mean;
         this.gain = gain;
+        this.offset = offset;
         randomGen = new RandomNumberGen();
         setRange();
     }
@@ -81,16 +85,19 @@ public class AlgorithmNoise extends AlgorithmBase {
      * @param  srcImg      source image model
      * @param  _noiseType  gaussian noise or uniform noise
      * @param  _level      level of noise
-     * @param  background  For poisson: out = Poisson((in + background)*gain)/ gain
+     * @param  mean  For poisson: out = gain * Poisson(mean) + offset
      * @param  gain
+     * @param  offset
      */
-    public AlgorithmNoise(ModelImage destImg, ModelImage srcImg, int _noiseType, double _level, double background, double gain) {
+    public AlgorithmNoise(ModelImage destImg, ModelImage srcImg, int _noiseType, double _level, double mean, double gain,
+                          double offset) {
 
         super(destImg, srcImg);
         noiseType = _noiseType;
         level = _level;
-        this.background = background;
+        this.mean = mean;
         this.gain = gain;
+        this.offset = offset;
         randomGen = new RandomNumberGen();
         setRange();
     }
@@ -151,6 +158,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double[] buffer;
         double noise;
         double pixel;
+        double poissEvents[] = null;
 
         try {
             length = srcImage.getSliceSize();
@@ -169,7 +177,9 @@ public class AlgorithmNoise extends AlgorithmBase {
             return;
         }
 
-        
+        if (noiseType == POISSON) {
+            poissEvents = randomGen.poissDecay(length, mean, gain, offset);    
+        }
 
         int mod = length / 100;
 
@@ -187,7 +197,7 @@ public class AlgorithmNoise extends AlgorithmBase {
                 pixel = buffer[i] + noise;
             }
             else {
-                pixel = randomGen.genPoissonRandomNum(buffer[i], background, gain);
+                pixel = buffer[i] + poissEvents[i];
             }
 
 
@@ -228,6 +238,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double[] buffer;
         double noise;
         double pixel;
+        double poissEvents[] = null;
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
@@ -249,7 +260,9 @@ public class AlgorithmNoise extends AlgorithmBase {
             return;
         }
 
-        
+        if (noiseType == POISSON) {
+            poissEvents = randomGen.poissDecay(length, mean, gain, offset);    
+        }
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -267,7 +280,7 @@ public class AlgorithmNoise extends AlgorithmBase {
                 pixel = buffer[i] + noise;
             }
             else {
-                pixel = randomGen.genPoissonRandomNum(buffer[i], background, gain);
+                pixel = buffer[i] + poissEvents[i];
             }
 
             // clamp noise to image type
@@ -308,6 +321,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double[] buffer;
         double noise;
         double pixel;
+        double poissEvents[] = null;
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -335,7 +349,9 @@ public class AlgorithmNoise extends AlgorithmBase {
             return;
         }
 
-        
+        if (noiseType == POISSON) {
+            poissEvents = randomGen.poissDecay(length, mean, gain, offset);    
+        }
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -353,7 +369,7 @@ public class AlgorithmNoise extends AlgorithmBase {
                 pixel = buffer[i] + noise;
             }
             else {
-                pixel = randomGen.genPoissonRandomNum(buffer[i], background, gain);
+                pixel = buffer[i] + poissEvents[i];
             }
             
             // clamp noise to image type
@@ -388,6 +404,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double[] buffer;
         double noise;
         double pixel;
+        double poissEvents[] = null;
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -417,7 +434,9 @@ public class AlgorithmNoise extends AlgorithmBase {
             return;
         }
 
-        
+        if (noiseType == POISSON) {
+            poissEvents = randomGen.poissDecay(length, mean, gain, offset);    
+        }
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -435,7 +454,7 @@ public class AlgorithmNoise extends AlgorithmBase {
                 pixel = buffer[i] + noise;
             }
             else {
-                pixel = randomGen.genPoissonRandomNum(buffer[i], background, gain);
+                pixel = buffer[i] + poissEvents[i];
             }
             
             // clamp noise to image type
