@@ -102,13 +102,17 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     /** DOCUMENT ME! */
     private JLabel start;
     
-    private JTextField backgroundText;
+    private JTextField meanText;
     
-    private double background = 0.0;
+    private double mean = 5.0;
     
     private JTextField gainText;
     
     private double gain = 1.0;
+    
+    private JTextField offsetText;
+    
+    private double offset = 0.0;
 
     /** DOCUMENT ME! */
     private JTextField textStart;
@@ -275,10 +279,10 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     
     /**
      * 
-     * @param background
+     * @param mean
      */
-    public void setBackground(double background) {
-        this.background = background;
+    public void setMean(double mean) {
+        this.mean = mean;
     }
     
     /**
@@ -287,6 +291,14 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
      */
     public void setGain(double gain) {
         this.gain = gain;
+    }
+    
+    /**
+     * 
+     * @param offset
+     */
+    public void setOffset(double offset) {
+        this.offset = offset;
     }
 
     /**
@@ -320,7 +332,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                 }
 
                 // Make algorithm
-                randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise, background, gain);
+                randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise, mean, gain, offset);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -357,7 +369,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             try {
 
                 // Make algorithm
-                randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise, background, gain);
+                randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise, mean, gain, offset);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -426,8 +438,9 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
         setNoiseType(scriptParameters.getParams().getInt("noise_type"));
         setNoiseLevel(scriptParameters.getParams().getDouble("starting_range"));
-        setBackground(scriptParameters.getParams().getDouble("poisson_background"));
+        setMean(scriptParameters.getParams().getDouble("poisson_mean"));
         setGain(scriptParameters.getParams().getDouble("poisson_gain"));
+        setOffset(scriptParameters.getParams().getDouble("poisson_offset"));
     }
 
     /**
@@ -439,8 +452,9 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("noise_type", noiseType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("starting_range", min));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_background", background));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_mean", mean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_gain", gain));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_offset", offset));
     }
 
 
@@ -522,7 +536,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc.gridy = yPos++;
         getContentPane().add(panelPO, gbc);
         
-        JLabel poissonLabel = new JLabel("Out = Poisson((in + background)*gain) / gain");
+        JLabel poissonLabel = new JLabel("Out = Gain * Poisson(mean) + Offset");
         poissonLabel.setFont(serif12);
         poissonLabel.setForeground(Color.black);
         gbc2.gridx = 0;
@@ -530,21 +544,22 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc2.gridy = yPos2++;
         panelPO.add(poissonLabel, gbc2);
         
-        JLabel backgroundLabel = new JLabel("Background");
-        backgroundLabel.setFont(serif12);
-        backgroundLabel.setForeground(Color.black);
+        JLabel meanLabel = new JLabel("Mean ( > 0) ");
+        meanLabel.setFont(serif12);
+        meanLabel.setForeground(Color.black);
+        gbc2.gridx = 0;
         gbc2.gridy = yPos2;
-        panelPO.add(backgroundLabel, gbc2);
+        panelPO.add(meanLabel, gbc2);
         
-        backgroundText = new JTextField(10);
-        backgroundText.setText("0.0");
-        backgroundText.setFont(serif12);
-        backgroundText.setForeground(Color.black);
+        meanText = new JTextField(10);
+        meanText.setText("5.0");
+        meanText.setFont(serif12);
+        meanText.setForeground(Color.black);
         gbc2.gridx = 1;
         gbc2.gridy = yPos2++;
-        panelPO.add(backgroundText, gbc2);
+        panelPO.add(meanText, gbc2);
         
-        JLabel gainLabel = new JLabel("Gain (> 0.0)");
+        JLabel gainLabel = new JLabel("Gain ");
         gainLabel.setFont(serif12);
         gainLabel.setForeground(Color.black);
         gbc2.gridx = 0;
@@ -558,6 +573,21 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc2.gridx = 1;
         gbc2.gridy = yPos2++;
         panelPO.add(gainText, gbc2);
+        
+        JLabel offsetLabel = new JLabel("Offset ");
+        offsetLabel.setFont(serif12);
+        offsetLabel.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = yPos2;
+        panelPO.add(offsetLabel, gbc2);
+        
+        offsetText = new JTextField(10);
+        offsetText.setText("0.0");
+        offsetText.setFont(serif12);
+        offsetText.setForeground(Color.black);
+        gbc2.gridx = 1;
+        gbc2.gridy = yPos2++;
+        panelPO.add(offsetText, gbc2);
 
         JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
         panelImageType = new JPanel(new BorderLayout());
@@ -686,16 +716,18 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         } // if ((noiseType == GAUSSIAN) || (noiseType == UNIFORM))
         
         if (noiseType == POISSON) {
-            tmpStr = backgroundText.getText();
-            background = Double.valueOf(tmpStr).doubleValue();
-            tmpStr = gainText.getText();
-            gain = Double.valueOf(tmpStr).doubleValue();
-            if (gain <= 0.0) {
-                MipavUtil.displayError("Gain must be > 0");
-                gainText.requestFocus();
-                gainText.selectAll();
+            tmpStr = meanText.getText();
+            mean = Double.valueOf(tmpStr).doubleValue();
+            if (mean <= 0.0) {
+                MipavUtil.displayError("Mean must me greater than zero");
+                meanText.requestFocus();
+                meanText.selectAll();
                 return false;
             }
+            tmpStr = gainText.getText();
+            gain = Double.valueOf(tmpStr).doubleValue();
+            tmpStr = offsetText.getText();
+            offset = Double.valueOf(tmpStr).doubleValue();
         } // if (noiseType == POISSON)
 
         return true;
