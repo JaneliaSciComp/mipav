@@ -280,7 +280,7 @@ public class RandomNumberGen extends Random {
         // mean + 8 * sigma
         n = (int)(mu + 8 * Math.sqrt(mu));
         if (n > maxBins) {
-            MipavUtil.displayError("Overflow error in poissDecay");
+            MipavUtil.displayError("Overflow error in poissDecay mean mu too large");
             return null;
         }
         ptable = new double[n+1];
