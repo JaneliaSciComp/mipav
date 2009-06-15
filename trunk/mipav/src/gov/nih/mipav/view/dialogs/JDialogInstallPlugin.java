@@ -204,9 +204,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     }
     
     private void installPlugins() {
-    	
     	ArrayList<File> files = moveFiles();
-
     	ArrayList<String> installSimpleName = new ArrayList<String>();
         for(int i=0; i<files.size(); i++) {
         	String name = files.get(i).getName();
@@ -242,10 +240,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					}
 				}
 			} catch (ClassNotFoundException e) {
-				System.out.println("Class not found");
-				e.printStackTrace();
+				//name could not likely be resolved given the current classpath
 			}
-        	
         }
         
         // updates menubar for each image
@@ -307,7 +303,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 							}
 						}
 	    			} catch (ClassNotFoundException e) {
-						e.printStackTrace();
+						//name could not be resolved given current classpath
 					}
 	    		}
     		}
@@ -607,12 +603,12 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 					name = ((JFileTreeNode)paths[i].getLastPathComponent()).getFile().toString().substring(initDir.getText().length()+inc);
 					
 					if(!((DefaultListModel)selected.getModel()).contains(name)) {
-						if(!isInPluginFolder(name)) {
-							((DefaultListModel)selected.getModel()).addElement(name);
-							files.add(((JFileTreeNode)paths[i].getLastPathComponent()).getFile());
-						} else {
+						if(isInPluginFolder(name)) {
 							conflict.add(name);
 						}
+						//even though conflicting, still added to potential list
+						((DefaultListModel)selected.getModel()).addElement(name);
+						files.add(((JFileTreeNode)paths[i].getLastPathComponent()).getFile());
 					}
 				}
 				
