@@ -719,7 +719,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             tmpStr = meanText.getText();
             mean = Double.valueOf(tmpStr).doubleValue();
             if (mean <= 0.0) {
-                MipavUtil.displayError("Mean must me greater than zero");
+                MipavUtil.displayError("Mean must be greater than zero");
                 meanText.requestFocus();
                 meanText.selectAll();
                 return false;
