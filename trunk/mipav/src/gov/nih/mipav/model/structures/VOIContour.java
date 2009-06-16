@@ -3324,6 +3324,7 @@ public class VOIContour extends VOIBase {
             
             g.setColor(red);
             active = false;
+            setActive(active);
             units[0] = 0;
             units[1] = 0;
             units[2] = 0;
@@ -3441,6 +3442,7 @@ public class VOIContour extends VOIBase {
             units[2] = 0;
             drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, resols, units, 0, g, false, thickness);
             active = true;
+            setActive(active);
             
             
         } catch (OutOfMemoryError error) {
