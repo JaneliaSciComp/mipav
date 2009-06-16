@@ -1952,6 +1952,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogKernelRegression(this, getActiveImage());
         } else if (command.equals("nlMeansFilter")) {
             new JDialogNonlocalMeansFilter(this, getActiveImage());
+        } else if (command.equals("RandomCircleGen")) {
+            new JDialogRandomCircleGeneration(this);
         } else if (command.equals("RandOrder")) {
             new JDialogRandomizeSliceOrder(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("ReplaceValue")) {
