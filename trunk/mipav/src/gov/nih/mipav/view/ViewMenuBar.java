@@ -322,7 +322,8 @@ public class ViewMenuBar {
                 menuBuilder.makeMenu("SNR", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Single MRI image", "SMRISNR", 0, null, false),
                         menuBuilder.buildMenuItem("Two MRI images", "DMRISNR", 0, null, false),}),
-
+                menuBuilder.makeMenu("Spatial statistics", false, new JMenuItem[] {
+                        menuBuilder.buildMenuItem("Random circle generation", "RandomCircleGen", 0, null, false),}),
                 menuBuilder.makeMenu("Transformation tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Barrel distortion correction", "Barrel", 0, null, false),
                         menuBuilder.buildMenuItem("Circle to rectangle", "CircleToRec", 0, null, false),
