@@ -25,31 +25,30 @@ public class JDialogRandomCircleGeneration extends JDialogBase implements Algori
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private AlgorithmHoughCircle hAlgo = null;
+    private AlgorithmRandomCircleGeneration rAlgo = null;
 
-    /** DOCUMENT ME! */
-    private ModelImage image;
+    private int extents[];
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
-    private int x0;
+    private int xDim = 512;
 
     /** DOCUMENT ME! */
-    private JTextField x0Text;
+    private JTextField xDimText;
 
     /** DOCUMENT ME! */
-    private int y0;
+    private int yDim = 512;
     
-    private JTextField y0Text;
+    private JTextField yDimText;
     
-    private int rad;
+    private int radius = 5;
 
     /** DOCUMENT ME! */
-    private JTextField radText;
+    private JTextField radiusText;
     
-    private int numCircles;
+    private int numCircles = 200;
     
     private JTextField numCirclesText;
 
@@ -84,7 +83,7 @@ public class JDialogRandomCircleGeneration extends JDialogBase implements Algori
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("HoughCircle002");
+            //MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
         }
@@ -104,11 +103,10 @@ public class JDialogRandomCircleGeneration extends JDialogBase implements Algori
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
 
-        if (algorithm instanceof AlgorithmHoughCircle) {
-            Preferences.debug("Hough Circle: " + algorithm.getElapsedTime());
-            image.clearMask();
+        if (algorithm instanceof AlgorithmRandomCircleGeneration) {
+            Preferences.debug("Random Circle Generation: " + algorithm.getElapsedTime());
 
-            if ((hAlgo.isCompleted() == true) && (resultImage != null)) {
+            if ((rAlgo.isCompleted() == true) && (resultImage != null)) {
 
 
                 resultImage.clearMask();
@@ -129,11 +127,11 @@ public class JDialogRandomCircleGeneration extends JDialogBase implements Algori
             }
 
             // insertScriptLine(algorithm);
-        } // if (algorithm instanceof AlgorithmHoughCircle)
+        } // if (algorithm instanceof AlgorithmRandomCircleGeneration)
 
-        if (hAlgo != null) {
-            hAlgo.finalize();
-            hAlgo = null;
+        if (rAlgo != null) {
+            rAlgo.finalize();
+            rAlgo = null;
         }
 
         dispose();
@@ -168,19 +166,22 @@ public class JDialogRandomCircleGeneration extends JDialogBase implements Algori
     private void callAlgorithm() {
 
         try {
-            String name = makeImageName(image.getImageName(), "_hough_circle");
-            resultImage = new ModelImage(image.getType(), image.getExtents(), name);
+            String name = "Randomly_generated_circles";
+            extents = new int[2];
+            extents[0] = xDim;
+            extents[1] = yDim;
+            resultImage = new ModelImage(ModelStorageBase.BYTE, extents, name);
             resultImage.setImageName(name);
 
             // Make algorithm
-            hAlgo = new AlgorithmHoughCircle(resultImage, image, x0, y0, rad, numCircles);
+            rAlgo = new AlgorithmRandomCircleGeneration(resultImage, radius, numCircles);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
-            hAlgo.addListener(this);
+            rAlgo.addListener(this);
             
-            createProgressBar(image.getImageName(), hAlgo);
+            createProgressBar(name, rAlgo);
 
             // Hide dialog
             setVisible(false);
@@ -188,17 +189,17 @@ public class JDialogRandomCircleGeneration extends JDialogBase implements Algori
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (hAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                if (rAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
 
-                hAlgo.run();
+                rAlgo.run();
             }
         } catch (OutOfMemoryError x) {
 
             System.gc();
-            MipavUtil.displayError("Dialog Hough Circle: unable to allocate enough memory");
+            MipavUtil.displayError("Dialog Random Circle Generation: unable to allocate enough memory");
 
             return;
         }
@@ -210,19 +211,17 @@ public class JDialogRandomCircleGeneration extends JDialogBase implements Algori
      */
     private void init() {
         JLabel mainLabel;
-        JLabel x0Label;
-        JLabel y0Label;
-        JLabel radLabel;
+        JLabel xDimLabel;
+        JLabel yDimLabel;
+        JLabel radiusLabel;
         JLabel numCirclesLabel;
-        int xDim = Math.min(512, image.getExtents()[0]);
-        int yDim = Math.min(512, image.getExtents()[1]);
-        int rDim = Math.min(512, Math.max(image.getExtents()[0], image.getExtents()[1]));
+        
         setForeground(Color.black);
-        setTitle("Hough transform for circle detection");
+        setTitle("Random spaced circle generation");
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
-        paramPanel.setBorder(buildTitledBorder("Hough transform parameters"));
+        paramPanel.setBorder(buildTitledBorder("Random circle parameters"));
 
         GridBagConstraints gbc6 = new GridBagConstraints();
 
@@ -234,67 +233,61 @@ public class JDialogRandomCircleGeneration extends JDialogBase implements Algori
         gbc6.fill = GridBagConstraints.HORIZONTAL;
         gbc6.gridx = 0;
         gbc6.gridy = 0;
-        
-        mainLabel = new JLabel("(x - x0)**2 + (y - y0)**2 = rad**2");
-        mainLabel.setForeground(Color.black);
-        mainLabel.setFont(serif12);
-        mainLabel.setEnabled(true);
-        paramPanel.add(mainLabel, gbc6);
 
-        x0Label = new JLabel("x0 dimension of Hough transform image ");
-        x0Label.setForeground(Color.black);
-        x0Label.setFont(serif12);
-        x0Label.setEnabled(true);
-        gbc6.gridy = 1;
-        paramPanel.add(x0Label, gbc6);
+        xDimLabel = new JLabel("Image x dimension ");
+        xDimLabel.setForeground(Color.black);
+        xDimLabel.setFont(serif12);
+        xDimLabel.setEnabled(true);
+        gbc6.gridy = 0;
+        paramPanel.add(xDimLabel, gbc6);
 
-        x0Text = new JTextField(10);
-        x0Text.setText(String.valueOf(xDim));
-        x0Text.setFont(serif12);
-        x0Text.setEnabled(true);
+        xDimText = new JTextField(10);
+        xDimText.setText(String.valueOf(xDim));
+        xDimText.setFont(serif12);
+        xDimText.setEnabled(true);
         gbc6.gridx = 1;
-        paramPanel.add(x0Text, gbc6);
+        paramPanel.add(xDimText, gbc6);
 
-        y0Label = new JLabel("y0 dimension of Hough transform image ");
-        y0Label.setForeground(Color.black);
-        y0Label.setFont(serif12);
-        y0Label.setEnabled(true);
+        yDimLabel = new JLabel("Image y dimension ");
+        yDimLabel.setForeground(Color.black);
+        yDimLabel.setFont(serif12);
+        yDimLabel.setEnabled(true);
+        gbc6.gridx = 0;
+        gbc6.gridy = 1;
+        paramPanel.add(yDimLabel, gbc6);
+
+        yDimText = new JTextField(10);
+        yDimText.setText(String.valueOf(yDim));
+        yDimText.setFont(serif12);
+        yDimText.setEnabled(true);
+        gbc6.gridx = 1;
+        paramPanel.add(yDimText, gbc6);
+        
+        radiusLabel = new JLabel("Circle radius ");
+        radiusLabel.setForeground(Color.black);
+        radiusLabel.setFont(serif12);
+        radiusLabel.setEnabled(true);
         gbc6.gridx = 0;
         gbc6.gridy = 2;
-        paramPanel.add(y0Label, gbc6);
+        paramPanel.add(radiusLabel, gbc6);
 
-        y0Text = new JTextField(10);
-        y0Text.setText(String.valueOf(yDim));
-        y0Text.setFont(serif12);
-        y0Text.setEnabled(true);
+        radiusText = new JTextField(10);
+        radiusText.setText(String.valueOf(radius));
+        radiusText.setFont(serif12);
+        radiusText.setEnabled(true);
         gbc6.gridx = 1;
-        paramPanel.add(y0Text, gbc6);
-        
-        radLabel = new JLabel("rad dimension of Hough transform image ");
-        radLabel.setForeground(Color.black);
-        radLabel.setFont(serif12);
-        radLabel.setEnabled(true);
-        gbc6.gridx = 0;
-        gbc6.gridy = 3;
-        paramPanel.add(radLabel, gbc6);
-
-        radText = new JTextField(10);
-        radText.setText(String.valueOf(rDim));
-        radText.setFont(serif12);
-        radText.setEnabled(true);
-        gbc6.gridx = 1;
-        paramPanel.add(radText, gbc6);
+        paramPanel.add(radiusText, gbc6);
         
         numCirclesLabel = new JLabel("Number of circles ");
         numCirclesLabel.setForeground(Color.black);
         numCirclesLabel.setFont(serif12);
         numCirclesLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 4;
+        gbc6.gridy = 3;
         paramPanel.add(numCirclesLabel, gbc6);
         
         numCirclesText = new JTextField(3);
-        numCirclesText.setText("1");
+        numCirclesText.setText(String.valueOf(numCircles));
         numCirclesText.setFont(serif12);
         numCirclesText.setEnabled(true);
         gbc6.gridx = 1;
@@ -314,34 +307,34 @@ public class JDialogRandomCircleGeneration extends JDialogBase implements Algori
      */
     private boolean setVariables() {
 
-        if (!testParameter(x0Text.getText(), 5, 1000000)) {
-            x0Text.requestFocus();
-            x0Text.selectAll();
+        if (!testParameter(xDimText.getText(), 5, 1000000)) {
+            xDimText.requestFocus();
+            xDimText.selectAll();
 
             return false;
         } else {
-            x0 = Integer.valueOf(x0Text.getText()).intValue();
+            xDim = Integer.valueOf(xDimText.getText()).intValue();
         }
 
-        if (!testParameter(y0Text.getText(), 5, 1000000)) {
-            y0Text.requestFocus();
-            y0Text.selectAll();
+        if (!testParameter(yDimText.getText(), 5, 1000000)) {
+            yDimText.requestFocus();
+            yDimText.selectAll();
 
             return false;
         } else {
-            y0 = Integer.valueOf(y0Text.getText()).intValue();
-        }
-        
-        if (!testParameter(radText.getText(), 5, 1000000)) {
-            radText.requestFocus();
-            radText.selectAll();
-
-            return false;
-        } else {
-            rad = Integer.valueOf(radText.getText()).intValue();
+            yDim = Integer.valueOf(yDimText.getText()).intValue();
         }
         
-        if (!testParameter(numCirclesText.getText(), 1, 100)) {
+        if (!testParameter(radiusText.getText(), 1, 1000000)) {
+            radiusText.requestFocus();
+            radiusText.selectAll();
+
+            return false;
+        } else {
+            radius = Integer.valueOf(radiusText.getText()).intValue();
+        }
+        
+        if (!testParameter(numCirclesText.getText(), 1, 100000)) {
             numCirclesText.requestFocus();
             numCirclesText.selectAll();
 
