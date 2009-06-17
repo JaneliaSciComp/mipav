@@ -366,6 +366,10 @@ public class FileDicom extends FileDicomBase {
         if (raFile.length() <= ID_OFFSET) {
             return false;
         }
+        
+        if(isDir()){
+        	return false;
+        }
 
         long fPtr = raFile.getFilePointer();
         raFile.seek(ID_OFFSET); // Find "DICM" tag
@@ -381,6 +385,8 @@ public class FileDicom extends FileDicomBase {
             fileInfo.containsDICM = true;
             raFile.seek(fPtr); // set file pointer back to original position
         }
+        
+
 
         return (fileInfo.containsDICM);
     }
