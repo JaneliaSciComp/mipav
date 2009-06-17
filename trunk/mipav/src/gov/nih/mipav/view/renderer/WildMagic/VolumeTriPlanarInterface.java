@@ -38,6 +38,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelVolume4D;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewerPoint;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
@@ -679,6 +680,8 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             create3DVOI(false);
         } else if (command.equals("Record")) {
             raycastRenderWM.record(m_kRecordToggle.isSelected());
+        } else if (command.equals("Histogram2D")) {
+            VolumeImageViewerPoint.main(null, m_kVolumeImageA, true);
         }
 
     }
@@ -2508,6 +2511,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                                          menuObj.buildMenuItem("Open DTI Tract file", "DTI", 0, null, false),
                                          menuObj.buildMenuItem("Open BrainSurface Flattener view", "BrainSurface", 0, null, false),
                                          menuObj.buildMenuItem("Open Fly Through view", "FlyThru", 0, null, false),
+                                         menuObj.buildMenuItem("Histogram 2D", "Histogram2D", 0, null, false),
                                          menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)
                                      }));
         menuBar.add(menuObj.makeMenu("Options", false,

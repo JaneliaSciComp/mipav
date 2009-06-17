@@ -222,6 +222,21 @@ implements StreamInterface
         {
             pkProgram.GetUC("ShowSurface").GetData()[0] = bOn? 1 : 0;
         } 
+    }    
+    
+
+
+    public void ZSlice( float fZ )
+    {
+        Program pkProgram = GetPProgram(0);
+        if ( pkProgram != null && pkProgram.GetUC("ZSlice") != null ) 
+        {
+            pkProgram.GetUC("ZSlice").GetData()[0] = fZ;
+        } 
+        if ( pkProgram != null && pkProgram.GetUC("UseZSlice") != null ) 
+        {
+            pkProgram.GetUC("UseZSlice").GetData()[0] = 1;
+        } 
     }
     /** Initializes the ShaderEffect vertex and pixel shader programs. */
     private void Init ( boolean bUnique )

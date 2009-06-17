@@ -13,11 +13,19 @@ uniform float IsColorB;
 uniform float Blend;
 uniform float ABBlend;
 uniform float ShowSurface;
+uniform float ZSlice;
+uniform float UseZSlice;
 
 void p_Color_Opacity_TextureP()
 {
+    vec3 texCoord = gl_TexCoord[0].xyz;
+    if ( UseZSlice != 0.0 )
+    {
+        texCoord.z = ZSlice;
+    }
     gl_FragColor = vec4(0.0);
-    vec4 color = texture3D(bVolumeImageA_TEXUNIT1,gl_TexCoord[0].xyz);
+    //vec4 color = texture3D(bVolumeImageA_TEXUNIT1, gl_TexCoord[0].xyz);
+    vec4 color = texture3D(bVolumeImageA_TEXUNIT1, texCoord );
     if ( IsColorA != 0.0 )
     {
         if ( ColorLUTOnA.x != 0.0 )
@@ -39,7 +47,8 @@ void p_Color_Opacity_TextureP()
     }
     if ( ABBlend != 1.0 )
     {
-        color = texture3D(jVolumeImageB_TEXUNIT9,gl_TexCoord[0].xyz);
+        //color = texture3D(jVolumeImageB_TEXUNIT9,gl_TexCoord[0].xyz);
+        color = texture3D(jVolumeImageB_TEXUNIT9, texCoord );
         if ( IsColorB != 0.0 )
         {
             if ( ColorLUTOnB.x != 0.0 )
@@ -75,7 +84,8 @@ void p_Color_Opacity_TextureP()
 
     if ( ShowSurface != 0.0 )
     {
-        vec4 surfaceColor = texture3D(iSurfaceImage_TEXUNIT8,gl_TexCoord[0].xyz);
+        //vec4 surfaceColor = texture3D(iSurfaceImage_TEXUNIT8,gl_TexCoord[0].xyz);
+        vec4 surfaceColor = texture3D(iSurfaceImage_TEXUNIT8, texCoord);
         if ( (surfaceColor.r != 0) || (surfaceColor.g != 0) || (surfaceColor.b != 0))
         {
             gl_FragColor.rgb = surfaceColor.rgb;

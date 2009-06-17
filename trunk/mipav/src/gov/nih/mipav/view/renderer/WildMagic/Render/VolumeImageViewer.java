@@ -168,7 +168,6 @@ public class VolumeImageViewer extends JavaApplication3D
         {
             return;
         }
-        m_bInit = true;
         
         arg0.setAutoSwapBufferMode( false );
 
@@ -204,6 +203,7 @@ public class VolumeImageViewer extends JavaApplication3D
         InitializeObjectMotion(m_spkScene);
 
         //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+        m_bInit = true;
     }
 
     /** 
@@ -255,6 +255,7 @@ public class VolumeImageViewer extends JavaApplication3D
             m_pkRenderer.OnFrustumChange();
             m_pkRenderer.Resize(iWidth,iHeight);
             arg0.setSize(iWidth,iHeight);
+            m_bDisplay = true;
         }
     }
     
@@ -326,5 +327,8 @@ public class VolumeImageViewer extends JavaApplication3D
         m_pkPlane.VBuffer.SetTCoord3(0, 3, 1,1, fZ);    
         m_pkPlane.VBuffer.Release();
         m_bDisplay = true;
+        
+        //((VolumePlaneEffect)m_spkEffect).ZSlice( fZ );
+        m_bDisplay = true;        
     }
 }
