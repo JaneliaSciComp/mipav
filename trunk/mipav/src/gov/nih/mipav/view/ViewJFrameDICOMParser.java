@@ -1511,6 +1511,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                             continue;
                         }
+                        
                     } catch (IOException error) {
                         MipavUtil.displayError("Unable to read file to parse.");
                         error.printStackTrace();
@@ -1522,8 +1523,10 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                         referenceFileInfo = (FileInfoDicom) imageFile.getFileInfo();
                     }
 
-                    fileInfoVector.addElement(imageFile.getFileInfo());
-
+                    if (!imageFile.isDir()){ //finally check to make sure it isn't a DICOMDIR
+                    	fileInfoVector.addElement(imageFile.getFileInfo());
+                    }
+                    
                     if (success) {
                         addStudyData((FileInfoDicom) imageFile.getFileInfo());
                     }
@@ -1688,7 +1691,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 int modelRow = imageTableSorter.modelIndex(imageTable.getSelectedRow());
 
                 FileInfoDicom fileInfoDICOM = (FileInfoDicom) imageTableVector.elementAt(modelRow);
-
+                System.out.println(fileInfoDICOM.getFileName());
                 buildImage(fileInfoDICOM.getFileName(), fileInfoDICOM.getFileDirectory() + File.separatorChar);
                 componentImageDicom = img;
                 componentImageDicom.setSliceBrightness(brightness, contrast);
