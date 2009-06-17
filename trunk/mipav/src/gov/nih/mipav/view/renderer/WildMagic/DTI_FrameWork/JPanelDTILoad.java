@@ -266,7 +266,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
                     AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
                             parentFrame.getDTIimage(), parentFrame.getFAimage(), parentFrame.getEVimage(), 
                             parentFrame.getEValueimage(),
-                            parentFrame.getParentDir() + "DTIImage.xml_tract",
+                            m_kParentDir + "DTIImage.xml_tract",
                             m_kNegX.isSelected(), m_kNegY.isSelected(), m_kNegZ.isSelected(),
                             fFAMin, fFAMax, fMaxAngle );
                     kTractAlgorithm.run();
@@ -331,7 +331,7 @@ public class JPanelDTILoad extends JInterfaceBase implements AlgorithmInterface 
                 AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(
                         parentFrame.getDTIimage(), parentFrame.getEVimage(), 
                         parentFrame.getEValueimage(),
-                        parentFrame.getParentDir() + "DTIImage.xml_tract",
+                        m_kParentDir + "DTIImage.xml_tract",
                         m_kNegX.isSelected(), m_kNegY.isSelected(), m_kNegZ.isSelected() );
                 kTractAlgorithm.run();
                 kTractAlgorithm.disposeLocal();

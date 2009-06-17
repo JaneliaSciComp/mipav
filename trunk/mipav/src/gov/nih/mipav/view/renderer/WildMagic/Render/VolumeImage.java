@@ -105,6 +105,9 @@ public class VolumeImage
     /** When true the supporting images are re-computed */
     private boolean m_bCompute = true;
     
+    private float[] m_fGMMin;
+    private float[] m_fGMMax;
+    
     /**
      * Create a Volume image with the input ModelImage.
      * @param kImage input ModelImage
@@ -144,6 +147,7 @@ public class VolumeImage
                 m_kNormal[i] = UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal.getImageName(), true );
             }
         }
+        
     }
     
     /**
@@ -555,7 +559,16 @@ public class VolumeImage
     {
         return m_akHistoTCoord;
     }
+
+    public float GetGMMin()
+    {
+        return m_fGMMin[m_iTimeSlice];
+    }
     
+    public float GetGMMax()
+    {
+        return m_fGMMax[m_iTimeSlice];
+    }
     
     /**
      * Return the ModelImage volume data.
@@ -709,6 +722,8 @@ public class VolumeImage
         if ( iNDims == 3 )
         {
             m_iTimeSteps = 1;
+            m_fGMMin = new float[1];
+            m_fGMMax = new float[1];
             m_akImages = new ModelImage[ m_iTimeSteps ];    
             m_akImages[0] = m_kImage;
             
@@ -726,7 +741,9 @@ public class VolumeImage
             m_iTimeSteps = aiExtents[3];
             int[] aiSubset = new int[]{aiExtents[0], aiExtents[1], aiExtents[2]};
             
-            m_akImages = new ModelImage[ m_iTimeSteps ];            
+            m_akImages = new ModelImage[ m_iTimeSteps ];      
+            m_fGMMin = new float[m_iTimeSteps];
+            m_fGMMax = new float[m_iTimeSteps];      
             
             m_kVolume = new GraphicsImage[m_iTimeSteps];
             m_kVolumeGM = new GraphicsImage[m_iTimeSteps];
@@ -1200,7 +1217,7 @@ public class VolumeImage
 
             m_kHisto[t] = 
                 new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
-                        256,256, null, new String("VolumeImageHisto" + kPostFix) );
+                        256,256, (byte[])null, new String("VolumeImageHisto" + kPostFix) );
             m_kHisto[t].SetData( abHisto, 256, 256 );
         }
         
@@ -1272,6 +1289,9 @@ public class VolumeImage
                 m_kVolumeGM[i] = VolumeImage.UpdateData( kImage, i, null, null, m_kVolumeGMTarget, kImageName, true );
             }
             else {
+                kImageGM.calcMinMax();
+                m_fGMMin[i] = (float)kImageGM.getMin();
+                m_fGMMax[i] = (float)kImageGM.getMax();
                 m_kVolumeGM[i] = VolumeImage.UpdateData( kImageGM, 0, null, null, m_kVolumeGMTarget, kImageName, true );
             }
             ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
