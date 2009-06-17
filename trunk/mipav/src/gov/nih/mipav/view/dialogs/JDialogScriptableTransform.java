@@ -822,6 +822,15 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 else if (matrixFile == null){
                     noTransform.setSelected(true);
                 }
+                else {
+                    rotOrigin.setSelected(true);
+                    rotCenter.setEnabled(false);
+                    rotOrigin.setEnabled(false);
+                }
+            }
+            else {
+                rotCenter.setEnabled(true);
+                rotOrigin.setEnabled(true);        
             }
         } else if (source == storedMatrix) {
             matrixFName.setText(" ");
