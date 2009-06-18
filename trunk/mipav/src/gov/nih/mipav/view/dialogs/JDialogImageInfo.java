@@ -3149,10 +3149,37 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * Updates the image with the new Matrix information (for matrix replacement).
      */
     private void updateMatrixInfo() {
-
-        TransMatrix tMat = new TransMatrix(matrix.length, transformIDBox.getSelectedIndex());
+    	
+    	String type = (String)transformIDBox.getSelectedItem();
+    	int id = -1;
+    	
+    	if(type == "Scanner Anatomical"){
+    		id = TransMatrix.TRANSFORM_SCANNER_ANATOMICAL;
+    	}
+    	else if (type == "Another Dataset"){
+    		id = TransMatrix.TRANSFORM_ANOTHER_DATASET;
+    	}
+    	else if (type == "Talairach Tournoux"){
+    		id = TransMatrix.TRANSFORM_TALAIRACH_TOURNOUX;
+    	}
+    	else if (type == "MNI 152"){
+    		id = TransMatrix.TRANSFORM_MNI_152;
+    	}
+    	else if (type == "Composite"){
+    		id = TransMatrix.TRANSFORM_COMPOSITE;
+    	}
+    	else if (type == "NIFTI Scanner Anatomical"){
+    		id = TransMatrix.TRANSFORM_NIFTI_SCANNER_ANATOMICAL;
+    	}
+    	else{
+    		id = TransMatrix.TRANSFORM_UNKNOWN;
+    	}
+    	
+    	
+        TransMatrix tMat = new TransMatrix(matrix.length, id);
         updateTransformInfo(tMat);
-        image.getMatrixHolder().replaceMatrix((String)matrixBox.getSelectedItem(), tMat);
+       
+        image.getMatrixHolder().replaceMatrix(type, tMat);
 
         // script line if recording
         ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image, tMat));
