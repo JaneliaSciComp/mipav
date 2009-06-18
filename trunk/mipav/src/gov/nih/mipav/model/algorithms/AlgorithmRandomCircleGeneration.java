@@ -115,6 +115,8 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
         double smallerDistance;
         double largerDistance;
         double oneSeventhRange;
+        int boundaryDistance;
+        int circlesLeft;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -207,15 +209,52 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
         } // for (i = 0; i < circlesDrawn; i++)
         
        Arrays.sort(nearestNeighborDistance);
-       total = 0.0;
+       // Remember that nearest neighbor statistics will not hold near a boundary, so to be safe only consider those
+       // circles at least the maximum nearestNeighborDistance aways from the boundary.  Otherswise, the maximum
+       // nearest neighbor distance is artificially inflated by boundary effects.
+       Preferences.debug("Before removing boundary influenced circles maximum nearest neighbor distance = " + 
+                         nearestNeighborDistance[circlesDrawn - 1] + "\n");
+       System.out.println("Before removing boundary influenced circles maximum nearest neighbor distance = " + 
+               nearestNeighborDistance[circlesDrawn - 1]);
+       boundaryDistance = (int)Math.ceil(nearestNeighborDistance[circlesDrawn - 1]);
+       circlesLeft = 0;
        for (i = 0; i < circlesDrawn; i++) {
+           if ((circleXCenter[i] >= boundaryDistance) && (circleXCenter[i] <= xDim - 1 - boundaryDistance) &&
+               (circleYCenter[i] >= boundaryDistance) && (circleYCenter[i] <= yDim - 1 - boundaryDistance)) {
+               circleXCenter[circlesLeft] = circleXCenter[i];
+               circleYCenter[circlesLeft++] = circleYCenter[i];
+           }
+       }
+       Preferences.debug("To avoid boundary effects only " + circlesLeft + " of the " + circlesDrawn + 
+            " circles drawn will be analyzed\n");
+       System.out.println("To avoid boundary effects only " + circlesLeft + " of the " + circlesDrawn + 
+       " circles drawn will be analyzed\n");
+       nearestNeighborDistance = new double[circlesLeft];
+       for (i = 0; i < circlesLeft; i++) {
+           lowestDistSquared = Integer.MAX_VALUE;
+           for (j = 0; j < circlesLeft; j++) {
+               if (i != j) {
+                   xDistSquared = circleXCenter[i] - circleXCenter[j];
+                   xDistSquared = xDistSquared * xDistSquared;
+                   yDistSquared = circleYCenter[i] - circleYCenter[j];
+                   yDistSquared = yDistSquared * yDistSquared;
+                   distSquared = xDistSquared + yDistSquared;
+                   if (distSquared < lowestDistSquared) {
+                       lowestDistSquared = distSquared;
+                       nearestNeighborDistance[i] = Math.sqrt(distSquared);
+                   }
+               }
+           }
+       } // for (i = 0; i < circlesLeft; i++)
+       total = 0.0;
+       for (i = 0; i < circlesLeft; i++) {
            total += nearestNeighborDistance[i];
        }
-       mean = total/circlesDrawn;
+       mean = total/circlesLeft;
        totalDeviateSquared = 0.0;
        totalDeviateCubed = 0.0;
        totalDeviateFourth = 0.0;
-       for (i = 0; i < circlesDrawn; i++) {
+       for (i = 0; i < circlesLeft; i++) {
            deviate = nearestNeighborDistance[i] - mean;
            deviateSquared = deviate * deviate;
            totalDeviateSquared += deviateSquared;
@@ -224,7 +263,7 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
            deviateFourth = deviateCubed * deviate;
            totalDeviateFourth += deviateFourth;
        }
-       variance = totalDeviateSquared/(circlesDrawn - 1);
+       variance = totalDeviateSquared/(circlesLeft - 1);
        stdDev = Math.sqrt(variance);
        // Skewness is a third standardized moment that measures the degree of symmetry of a probablility
        // distribution.  A distribution that is symmetrical has a skewness of zero.  If the skewness is 
@@ -233,7 +272,7 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
        // skewness = E[(x - mean)**3]/(stdDev**3)
        // skewness = totalDeviateCubed/((stdDev**3)*(sample number - 1))
        // skewness = (sqrt(sample number - 1) * totalDeviateCubed)/(totalDeviateSquared**1.5)
-       skewness = totalDeviateCubed/(Math.pow(stdDev, 3)* (circlesDrawn - 1));
+       skewness = totalDeviateCubed/(Math.pow(stdDev, 3)* (circlesLeft - 1));
        // Kurtosis, based on the fourth central moment, measures the thinness of tails or peakedness
        // of a probability distribution.  If kurtosis of a random variable is less than 3, the distribution
        // has thicker tails and a lower peak compared to a normal distribution.  Kurtosis larger than 3
@@ -241,14 +280,14 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
        // kurtosis = [(x - mean)**4]/(stdDev**4)
        // kurtosis = totalDeviateFourth/((stdDev**4) * (sample number - 1))
        // kurtosis = ((sample number - 1) * totalDeviateFourth)/(totalDeviateSquared**2)
-       kurtosis = totalDeviateFourth/(Math.pow(stdDev, 4) * (circlesDrawn - 1));
-       if ((circlesDrawn % 2) == 0) {
+       kurtosis = totalDeviateFourth/(Math.pow(stdDev, 4) * (circlesLeft - 1));
+       if ((circlesLeft % 2) == 0) {
            // even number
-           median = (nearestNeighborDistance[circlesDrawn/2 - 1] + nearestNeighborDistance[circlesDrawn/2])/2.0;
+           median = (nearestNeighborDistance[circlesLeft/2 - 1] + nearestNeighborDistance[circlesLeft/2])/2.0;
        }
        else {
            // odd number
-           median = nearestNeighborDistance[(circlesDrawn - 1)/2];
+           median = nearestNeighborDistance[(circlesLeft - 1)/2];
        }
        Preferences.debug("Nearest neighbor statistics:\n ");
        System.out.println("Nearest neighbor statistics: ");
@@ -258,8 +297,8 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
        System.out.println("Mean distance = " + mean);
        Preferences.debug("Median distance = " + median + "\n");
        System.out.println("Median distance = " + median);
-       Preferences.debug("Largest distance = " + nearestNeighborDistance[circlesDrawn-1] + "\n");
-       System.out.println("Largest distance = " + nearestNeighborDistance[circlesDrawn-1]);
+       Preferences.debug("Largest distance = " + nearestNeighborDistance[circlesLeft-1] + "\n");
+       System.out.println("Largest distance = " + nearestNeighborDistance[circlesLeft-1]);
        Preferences.debug("Standard deviation = " + stdDev + "\n");
        System.out.println("Standard deviation = " + stdDev);
        Preferences.debug("Skewness = " + skewness + "\n");
@@ -272,7 +311,7 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
        // minus 3.  Let's make 7 categories, so degrees of freedom = 4.
        // The 7 categories have lowest values of (nearestNeighborDistance - mean)/stdDev =
        // -infinity, -1.40, -0.80, -0.20, 0.40, 1.00, and 1.60.
-       for (i = 0; i < circlesDrawn; i++) {
+       for (i = 0; i < circlesLeft; i++) {
            z = (nearestNeighborDistance[i] - mean)/stdDev;
            if (z >= 1.60) {
                observedFrequency[6]++;
@@ -297,13 +336,13 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
            }
        }
        
-       theoreticalFrequency[0] = 0.0808 * circlesDrawn;
-       theoreticalFrequency[1] = 0.1311 * circlesDrawn;
-       theoreticalFrequency[2] = 0.2088 * circlesDrawn;
-       theoreticalFrequency[3] = 0.2347 * circlesDrawn;
-       theoreticalFrequency[4] = 0.1859 * circlesDrawn;
-       theoreticalFrequency[5] = 0.1039 * circlesDrawn;
-       theoreticalFrequency[6] = 0.0548 * circlesDrawn;
+       theoreticalFrequency[0] = 0.0808 * circlesLeft;
+       theoreticalFrequency[1] = 0.1311 * circlesLeft;
+       theoreticalFrequency[2] = 0.2088 * circlesLeft;
+       theoreticalFrequency[3] = 0.2347 * circlesLeft;
+       theoreticalFrequency[4] = 0.1859 * circlesLeft;
+       theoreticalFrequency[5] = 0.1039 * circlesLeft;
+       theoreticalFrequency[6] = 0.0548 * circlesLeft;
        chiSquaredOfFour = 0.0;
        for (i = 0; i < 7; i++) {
            deviate = observedFrequency[i] - theoreticalFrequency[i];
@@ -339,7 +378,7 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
        // chi-squared distribution with 2 degress of freedom.
        // (sample number)*[skewness**2/6 + (kurtosis - 3)**2/24] follows a chi squared of 2 degrees of freedom
        // distribution.
-       chiSquaredOfTwo = circlesDrawn * (skewness * skewness/6.0 + (kurtosis - 3.0) * (kurtosis - 3.0)/24.0);
+       chiSquaredOfTwo = circlesLeft * (skewness * skewness/6.0 + (kurtosis - 3.0) * (kurtosis - 3.0)/24.0);
        Preferences.debug("Jarque-Bera test using skewness and kurtosis yields a chi squared of 2 df = " 
                           + chiSquaredOfTwo + "\n");
        System.out.println("Jarque-Bera test using skewness and kurtosis yields a chi squared of 2 df = " 
@@ -372,31 +411,35 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
        // Here the density is the density of all the generated circles whether they were drawn or not.
        // normFactor is the normalizing factor needed to make the integeral of p(r)dr from r = 0 to 
        // r = infinity be 1.  Here normFactor = exp(4*(radius**2)*density*PI)
-       // theoretical Frequency = numCircles * normFactor * (exp(-density*PI*(smaller distance ** 2)) -
+       // theoretical Frequency = circlesLeft * normFactor * (exp(-density*PI*(smaller distance ** 2)) -
        //                                       exp(-density*PI*(larger distance ** 2)))
        density = circlesGenerated * Math.PI * radius * radius / length;
        normFactor = Math.exp(4.0*radius*radius*density*Math.PI);
        for (i = 0; i < 7; i++) {
            observedFrequency[i] = 0;
        }
-       for (i = 0; i < circlesDrawn; i++) {
+       for (i = 0; i < circlesLeft; i++) {
           // Generate an observed index from 0 to 6
            index = (int)((7*(nearestNeighborDistance[i] - nearestNeighborDistance[0]))/
-                   (nearestNeighborDistance[circlesDrawn-1] - nearestNeighborDistance[0]));
+                   (nearestNeighborDistance[circlesLeft-1] - nearestNeighborDistance[0]));
            if (index > 6) {
                index = 6;
            }
            observedFrequency[index]++;
-       } // for (i = 0; i < circlesDrawn; i++)
-       oneSeventhRange = (nearestNeighborDistance[circlesDrawn-1] - nearestNeighborDistance[0])/7.0;
+       } // for (i = 0; i < circlesLeft; i++)
+       oneSeventhRange = (nearestNeighborDistance[circlesLeft-1] - nearestNeighborDistance[0])/7.0;
        chiSquaredOfFour = 0.0;
        for (i = 0; i < 7; i++) {
            smallerDistance = nearestNeighborDistance[0] + i * oneSeventhRange;
            largerDistance = nearestNeighborDistance[0] + (i+1) * oneSeventhRange;
-           theoreticalFrequency[i] = numCircles * normFactor * (Math.exp(-density*Math.PI*smallerDistance*smallerDistance) -
-                                     (Math.exp(-density*Math.PI*largerDistance*largerDistance)));
+           theoreticalFrequency[i] = circlesLeft * normFactor * (Math.exp(-density*Math.PI*smallerDistance*smallerDistance) -
+                                     Math.exp(-density*Math.PI*largerDistance*largerDistance));
            deviate = observedFrequency[i] - theoreticalFrequency[i];
            chiSquaredOfFour += deviate * deviate / theoreticalFrequency[i];    
+       }
+       for (i = 0; i < 7; i++) {
+           Preferences.debug("Observed frequency [" + i + "] = " + observedFrequency[i] + "\n");
+           Preferences.debug("Theoretical frequency [" + i + "] = " + theoreticalFrequency[i] + "\n");
        }
        Preferences.debug("Chi squared fit for a uniform random distribution for 4 df = " + chiSquaredOfFour + "\n");
        System.out.println("Chi squared fit for a uniform random distribution for 4 df = " + chiSquaredOfFour);
