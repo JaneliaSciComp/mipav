@@ -615,7 +615,7 @@ public class FileUtility {
 
                     if (fileListBuffer[i].trim().toLowerCase().endsWith(suffix.toLowerCase())) { // note: not case
                         // sensitive!
-
+                    	String text = FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim());
                         if (FileUtility.trimNumbersAndSpecial(fileListBuffer[i].trim()).equals(subName)) {
                             fileList[j] = fileListBuffer[i];
                             j++;
@@ -1585,7 +1585,6 @@ public class FileUtility {
             }
         }
 
-        char fillChar = 'a';
 
         // If yes, then remove remaining numbers
         if (aCharIsPresent) {
@@ -1594,7 +1593,8 @@ public class FileUtility {
                 ch = tmpStr.charAt(i);
 
                 if (Character.isDigit(ch)) {
-                    tmpStr = tmpStr.replace(ch, fillChar);
+                    tmpStr = tmpStr.substring(0,i)+tmpStr.substring(i+1);
+                    i = -1;
                 }
             }
         }
