@@ -187,19 +187,6 @@ public class StaticGrid extends BasicGrid {
       return links.elementAt(index);
     }
 	
-
-	public int getIndex(Link l ) {
-		int index = -1;
-		for ( int i = 0; i < grid.size(); i++ ) {
-			Link temp = grid.get(i);
-			if ( temp.equals(l) ) {
-				index = i;
-				return index;
-			}
-		}
-		return index;
-	}
-	
 	
 	public int GetInSphere(PointDistanceFunctor _getPointDistance, VertTmark _marker, Point3 _p, float _r,
 			Vector<Vertex> _objectPtrs, Vector<Float> _distances, Vector<Point3> _points) {

@@ -12,17 +12,17 @@ public class Point3 {
 		
 	}
 	
-	public void print() {
+	public final void print() {
 		System.err.println(" x = " + x + " y = " + y + " z = " + z);
 	}
 	
-	public Point3(float nx, float ny, float nz) {
+	public  Point3(float nx, float ny, float nz) {
 		x = nx;
 		y = ny;
 		z = nz;
 	}
 	
-	public Point3( Point3 p ) {
+	public  Point3( Point3 p ) {
 		x = p.x;
 		y = p.y;
 		z = p.z;
@@ -35,14 +35,14 @@ public class Point3 {
 	}
 	
 	// & operator =
-	public Point3 assign(Point3 b) {
+	public  final Point3 assign(Point3 b) {
 		x = b.x;
 	    y = b.y;
 		z = b.z;
 		return this;
 	}
 	
-	public void Zero()
+	public  final void Zero()
 	{
 		x = 0;
 		y = 0;
@@ -51,7 +51,7 @@ public class Point3 {
 	
 	
 	// & operator []
-	public float get(int index) {
+	public  final float get(int index) {
 		if ( index == 0)
 			return x;
 		else if ( index == 1 )
@@ -61,51 +61,51 @@ public class Point3 {
 		}
 	}
 	
-	public float X() {
+	public  final float X() {
 		return x;
 	}
 	
-	public float Y() {
+	public  final float Y() {
 		return y;
 	}
 	
-	public float Z() {
+	public  final float Z() {
 		return z;
 	}
 	
-	public Point3 V() {
+	public  final Point3 V() {
 		return this;
 	}
 	
 	// operator + 
-	public Point3 add(Point3 b) {
+	public  final Point3 add(Point3 b) {
 		return new Point3(x + b.x, y + b.y, z + b.z);
 	}
 	
 	// operator - 
-	public Point3 sub(Point3 b) {
+	public  final Point3 sub(Point3 b) {
 		return new Point3(x - b.x, y - b.y, z - b.z);
 	}
 	
 	// operator *
-	public Point3 mul(float s) {
+	public  final Point3 mul(float s) {
 		return new Point3(x * s, y * s, z * s);
 	}
 	
 	
 	// operator /
-	public Point3 div(float v) {
+	public  final Point3 div(float v) {
 		return new Point3(x / v, y / v, z / v);
 	}
 	
 	/// Dot product, operator *
-	public float dot( Point3 p )
+	public  final float dot( Point3 p )
 	{
 		return ( x*p.x + y*p.y + z*p.z );
 	}
 	
 	/// Cross product, operator ^ 
-	public Point3 Cross( Point3 p )
+	public  final Point3 Cross( Point3 p )
 	{
 		return new Point3
 		(
@@ -117,7 +117,7 @@ public class Point3 {
 	
 	
 	// & operator +=
-	public Point3 add_into(Point3 b) {
+	public  final Point3 add_into(Point3 b) {
 		x += b.x;
 		y += b.y; 
 		z += b.z;
@@ -125,7 +125,7 @@ public class Point3 {
 	}
 	
 	// & operator -=
-	public Point3 sub_into(Point3 b) {
+	public  final Point3 sub_into(Point3 b) {
 		x -= b.x;
 		y -= b.y; 
 		z -= b.z;
@@ -141,7 +141,7 @@ public class Point3 {
 	}
 	
 	// & operator /=
-	public Point3 div_into(float v) {
+	public  final Point3 div_into(float v) {
 		x /= v;
 		y /= v; 
 		z /= v;
@@ -149,18 +149,18 @@ public class Point3 {
 	}
 	
 	// Norme
-	public float Norm()
+	public  final float Norm()
 	{
 		return (float)Math.sqrt( x*x + y*y + z*z );
 	}
 	
-	public float SquaredNorm() 
+	public  final float SquaredNorm() 
 	{
 		return (  x*x + y*y + z*z  );
 	}
 	
 	// Scalatura differenziata
-	public Point3 Scale( float sx, float sy, float sz )
+	public  final Point3 Scale( float sx, float sy, float sz )
 	{
 		x *= sx;
 		y *= sy;
@@ -168,7 +168,7 @@ public class Point3 {
 		return this;
 	}
 	
-	public Point3 Scale( Point3  p )
+	public  final Point3 Scale( Point3  p )
 	{
 		x *= p.x;
 		y *= p.y;
@@ -178,7 +178,7 @@ public class Point3 {
 	
 
 	// Normalizzazione
-	public Point3 Normalize()
+	public  final Point3 Normalize()
 	{
         float n = (float)Math.sqrt(x*x + y*y + z*z);
 		if(n>0.0) {	x /= n;	y /= n;	z /= n;  }
@@ -187,17 +187,17 @@ public class Point3 {
 	
 	
 	// operator == 
-	public boolean equals(Point3 b) {
+	public  final boolean equals(Point3 b) {
 		return (x == b.x && y == b.y && z == b.z);
 	}
 	
 	// operator !=
-	public boolean notequals(Point3 b) {
+	public  final boolean notequals(Point3 b) {
 		return (x != b.x || y != b.y || z != b.z);		
 	}
 	
 	// operator <
-	public boolean lessThan( Point3 p )
+	public  final boolean lessThan( Point3 p )
 	{
 		return	(z!=p.z)?(z<p.z):
 				(y!=p.y)?(y<p.y):
@@ -205,7 +205,7 @@ public class Point3 {
 	}
 	
 	// operator >
-	public boolean greaterThan( Point3 p )
+	public  final boolean greaterThan( Point3 p )
 	{
 		return	(z!=p.z)?(z>p.z):
 				(y!=p.y)?(y>p.y):
@@ -213,7 +213,7 @@ public class Point3 {
 	}
 	
 	// operator <= 
-	public boolean lessEqualThan( Point3 p )
+	public  final boolean lessEqualThan( Point3 p )
 	{
 		return	(z!=p.z)?(z< p.z):
 				(y!=p.y)?(y< p.y):
@@ -221,14 +221,14 @@ public class Point3 {
 	}
 	
 	// operator >=
-	public boolean greaterEqualThan( Point3 p )
+	public  final boolean greaterEqualThan( Point3 p )
 	{
 		return	(z!=p.z)?(z> p.z):
 				(y!=p.y)?(y> p.y):
 							   (x>=p.x);
 	}
 	
-	public Point3 negate()
+	public  final Point3 negate()
 	{
 		return new Point3( -x, -y, -z );
 	}
