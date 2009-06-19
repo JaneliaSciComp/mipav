@@ -4648,7 +4648,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         // TransMatrix newTMatrix;
 
         if (AlgorithmTransform.updateOrigin) {
-            AlgorithmTransform.updateOrigin(this.transMatrix);
+            //AlgorithmTransform.updateOrigin(this.transMatrix);
+            updateOrigin();
         }
 
         // System.err.println("MATRIX: " + transMatrix);
@@ -4956,57 +4957,44 @@ public class AlgorithmTransform extends AlgorithmBase {
 
     /**
      * Update origin.
-     * 
+     * Translate the image origin from image space to patient space (scanner space).
+     * The basic ideas,  tranlate the (0,0,0) point from scaner space to image space,
+     * then subtract the original image origin. 
+     * The (0, 0, 0) point is the upper left corner of the scanner space's image.   
      * @param xfrm DOCUMENT ME!
      */
+    
     private static void updateOrigin(final TransMatrix xfrm) {
 
-        if (xfrm.getDim() == 3) {
-            final float[] tempOrigin = new float[2];
+		if (xfrm.getDim() == 3) {
+			final float[] tempOrigin = new float[2];
+			xfrm.transform(0f, 0f, tempOrigin);
+			AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0] + tempOrigin[0];
+			AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1] + tempOrigin[1];
+		} else {
+			final float[] tempOrigin = new float[3];
+			xfrm.transform(0f, 0f, 0f, tempOrigin);
+			AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0] + tempOrigin[0];
+			AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1] + tempOrigin[1];
+			AlgorithmTransform.imgOrigin[2] = AlgorithmTransform.imgOrigin[2] + tempOrigin[2];
+		}
 
-            xfrm.transform(AlgorithmTransform.imgOrigin[0], AlgorithmTransform.imgOrigin[1], tempOrigin);
-            AlgorithmTransform.imgOrigin[0] = tempOrigin[0];
-            AlgorithmTransform.imgOrigin[1] = tempOrigin[1];
-        } else {
-            final float[] tempOrigin = new float[3];
-
-            xfrm.transform(AlgorithmTransform.imgOrigin[0], AlgorithmTransform.imgOrigin[1],
-                    AlgorithmTransform.imgOrigin[2], tempOrigin);
-            AlgorithmTransform.imgOrigin[0] = tempOrigin[0];
-            AlgorithmTransform.imgOrigin[1] = tempOrigin[1];
-            AlgorithmTransform.imgOrigin[2] = tempOrigin[2];
-        }
-    }
-
+	}
+    
+    
     /**
-     * Creates buffer for new image, prepares transformation matrix, and calls transform function for interpolation
-     * specified.
-     */
-    private void transform() {
+	 * Translate the image origin from image space to patient space (scanner
+	 * space). The basic ideas, tranlate the (0,0,0) point from scaner space to
+	 * image space, then subtract the original image origin. The (0, 0, 0) point
+	 * is the upper left corner of the scanner space's image.
+	 */
+    private void updateOrigin() {
 
-    	
         // uses inverse transform to transform backwards
-    	
-    	// The transform is the DICOM transform (which is a pure 3D rotation)
-    	// that puts points in the original image (in mm coordinates) into
-    	// patient (scanner) corrdinates.
-    	// Pt in patient space = TRANSFORM * Pt in image space
-    	
-    	// The algorithm is, for each voxel in the final image (patient spaace)
-    	// find its corresponding location in the source image (image space) and
-    	// interpolate the value to be stored at the voxel in the final image (patient space).
-    	
-    	// This algorithm uses
-    	// Pt in image space = INVTRANSFORM * Pt in patient space
-    	// where the intensity value of the Pt in image space is interpolated and 
-    	// assigned to the voxel in patient space
-    	
         TransMatrix xfrm = null;
         TransMatrix trans;
         TransMatrix xfrmC;
-        byte byteBuf[] = null;
-        byte byteBuf2[] = null;
-
+       
         if ( (DIM >= 3) && ( !do25D)) {
             imgLength = iXdim * iYdim * iZdim;
         } else {
@@ -5021,15 +5009,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                 trans = new TransMatrix(4);
             }
 
-            // transMatrix is the DICOM rotation matrix
             trans.Copy(transMatrix);
-            
-            // trans is the DICOM rotation matrix
 
-            // The DICOM matrix is a pure 3D rotation about the patient (scanner) origin
-            // if we want to rotate about a point other then the patient (scanner)
-            // origin, we need to translate the new rotation point that we want to
-            // rotate about to the patient origin.
             if ( (doCenter) && ( !haveCentered)) {
 
                 if ( (do25D) || (DIM == 2)) {
@@ -5057,7 +5038,93 @@ public class AlgorithmTransform extends AlgorithmBase {
             } // if ((doCenter) && (!haveCentered))
 
             xfrm = AlgorithmTransform.matrixtoInverseArray(trans);
- 
+           
+            if (xfrm.getDim() == 3) {
+                final float[] tempOrigin = new float[2];
+                xfrm.transform(0f, 0f, tempOrigin);
+                AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0]+tempOrigin[0];
+                AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1]+tempOrigin[1];
+            } else {
+                final float[] tempOrigin = new float[3];
+                System.err.println("Before: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
+                		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
+                		"AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
+                xfrm.transform(0f, 0f, 0f, tempOrigin);
+                AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0]+tempOrigin[0];
+                AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1]+tempOrigin[1];
+                AlgorithmTransform.imgOrigin[2] = AlgorithmTransform.imgOrigin[2]+tempOrigin[2];
+                
+                System.err.println("After: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
+                		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
+                		"AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
+            }
+        } catch (final OutOfMemoryError e) {
+            disposeLocal();
+            System.gc();
+            displayError("Algorithm Transform: ZZZ. Out of memory on srcImage.exportData");
+            setCompleted(false);
+
+            return;
+        }
+    }
+
+    /**
+     * Creates buffer for new image, prepares transformation matrix, and calls transform function for interpolation
+     * specified.
+     */
+    private void transform() {
+
+        // uses inverse transform to transform backwards
+        TransMatrix xfrm = null;
+        TransMatrix trans;
+        TransMatrix xfrmC;
+        byte byteBuf[] = null;
+        byte byteBuf2[] = null;
+
+        if ( (DIM >= 3) && ( !do25D)) {
+            imgLength = iXdim * iYdim * iZdim;
+        } else {
+            imgLength = iXdim * iYdim;
+        }
+
+        try {
+
+            if ( (do25D) || (DIM == 2)) {
+                trans = new TransMatrix(3);
+            } else { // (DIM >= 3) && (!do25D)
+                trans = new TransMatrix(4);
+            }
+
+            trans.Copy(transMatrix);
+
+            if ( (doCenter) && ( !haveCentered)) {
+
+                if ( (do25D) || (DIM == 2)) {
+                    xfrmC = new TransMatrix(3);
+                } else { // (DIM >= 3) && (!do25D)
+                    xfrmC = new TransMatrix(4);
+                }
+
+                // by default: xfrmC.identity();
+
+                if ( (DIM >= 3) && ( !do25D)) {
+                    xfrmC.setTranslate(center.X, center.Y, center.Z);
+                } else { // (DIM == 2) || do25D
+                    xfrmC.setTranslate(center.X, center.Y);
+                }
+
+                trans.Copy(xfrmC);
+                trans.Mult(transMatrix);
+
+                if ( (DIM >= 3) && ( !do25D)) {
+                    trans.setTranslate( -center.X, -center.Y, -center.Z);
+                } else { // (DIM == 2) || do25D
+                    trans.setTranslate( -center.X, -center.Y);
+                }
+            } // if ((doCenter) && (!haveCentered))
+
+            xfrm = AlgorithmTransform.matrixtoInverseArray(trans);
+
             bufferFactor = 1;
 
             if (srcImage.isColorImage()) {
