@@ -476,6 +476,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			if(Preferences.getPluginInstallDirectory() != null) {
 				initTreeLoc = Preferences.getPluginInstallDirectory();
 				selectedFile = new File(initTreeLoc);
+				if(!selectedFile.exists()) {
+					initTreeLoc = System.getProperty("user.home");
+					selectedFile = new File(initTreeLoc);
+				}
 			}
 			
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
