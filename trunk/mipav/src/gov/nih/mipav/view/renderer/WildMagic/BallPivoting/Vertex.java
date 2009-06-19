@@ -38,6 +38,15 @@ public class Vertex {
 
 	protected Point3 _n = new Point3();
 	
+	public Vertex copy() {
+		Vertex v = new Vertex();
+		v._p.assign(this._p);
+		v._n.assign(this._n);
+		v.b = this.b;
+		v.imark = this.imark;
+		v._flags = this._flags;
+		return v;
+	}
 	
 	/// Return the spatial coordinate of the vertex
 	public Point3 P()

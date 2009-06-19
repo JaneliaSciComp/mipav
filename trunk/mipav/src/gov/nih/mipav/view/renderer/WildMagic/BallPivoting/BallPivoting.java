@@ -27,6 +27,15 @@ public class BallPivoting extends AdvancingFront {
 	
 	public float radi() { return radius; }        
 	
+	
+	Vector<Vertex> left = new Vector<Vertex>();
+	Vector<Vertex> leftUp = new Vector<Vertex>();
+	Vector<Vertex> leftDown = new Vector<Vertex>();
+	Vector<Vertex> right = new Vector<Vertex>();
+	Vector<Vertex> rightUp = new Vector<Vertex>();
+	Vector<Vertex> rightDown = new Vector<Vertex>();
+	
+	
 	// MESH _mesh, float _radius = 0, float minr = 0.2, float angle = M_PI/2
 	public BallPivoting(TriMesh _mesh, float _radius,  float minr, float angle) { 
 	
@@ -54,9 +63,85 @@ public class BallPivoting extends AdvancingFront {
           		  baricenter.add_into(vi.P());
           	  }
 		}
+		
 		System.err.println("Test");
 		baricenter.div_into(this.mesh.vn);
-
+		
+		
+		/*
+		vt = mesh.vert.iterator();
+	
+		System.err.println("mesh.vert.size = " + mesh.vert.size());
+		
+		while ( vt.hasNext() ) {
+			  vi = vt.next();
+			  if ( vi.P().x < baricenter.x ) {
+				  left.add(vi.copy());
+			  } else {
+				  right.add(vi.copy());
+			  }
+		}
+		
+		vt = left.iterator();
+		while ( vt.hasNext() ) {
+			vi = vt.next();
+			if ( vi.P().y < baricenter.y ) {
+				  leftDown.add(vi.copy());
+			} else {
+				  leftUp.add(vi.copy());
+			}   	  
+		}
+		
+		vt = right.iterator();
+		while ( vt.hasNext() ) {
+			vi = vt.next();
+			if ( vi.P().y < baricenter.y ) {
+				  rightDown.add(vi.copy());
+			} else {
+				  rightUp.add(vi.copy());
+			}   	  
+		}
+		
+		
+		System.err.println("leftUp.size = " + leftUp.size());
+		System.err.println("leftDown.size = " + leftDown.size());
+		System.err.println("rightUp.size = " + rightUp.size());
+		System.err.println("rightDown.size = " + rightDown.size());
+		System.err.println("total = " + (leftUp.size()+leftDown.size()+rightUp.size()+rightDown.size()));		
+		
+		
+		this.mesh.vert.removeAllElements();		
+	
+		
+		vt = leftUp.iterator();
+		while ( vt.hasNext() ) {
+			vi = vt.next();
+			this.mesh.vert.add(vi);
+		}
+		
+		
+		vt = leftDown.iterator();
+		while ( vt.hasNext() ) {
+			vi = vt.next();
+			this.mesh.vert.add(vi);
+		}
+		
+		
+		vt = rightUp.iterator();
+		while ( vt.hasNext() ) {
+			vi = vt.next();
+			this.mesh.vert.add(vi);
+		}
+		
+		
+	    
+		vt = rightDown.iterator();
+		while ( vt.hasNext() ) {
+			vi = vt.next();
+			this.mesh.vert.add(vi);
+		}
+        */
+		
 		assert(this.mesh.vn > 3);
 		if(radius == 0)
 		{
@@ -283,7 +368,7 @@ public class BallPivoting extends AdvancingFront {
 	
 	//select a new vertex, mark as Visited and mark as usedBit all neighbours (less than min_edge)
 	// FrontEdge &edge, std::list<FrontEdge>::iterator &touch
-	public int Place(FrontEdge edge, FrontEdge[] touch) {
+	public final int Place(FrontEdge edge, FrontEdge[] touch) {
 		Point3 v0 = ((this.mesh.vert.get(edge.v0))).P();
 		Point3 v1 = ((this.mesh.vert.get(edge.v1))).P();  
 		Point3 v2 = ((this.mesh.vert.get(edge.v2))).P();  
@@ -431,7 +516,7 @@ public class BallPivoting extends AdvancingFront {
 	the normal of the face points toward the center of the sphere */
 
 	// Point3x &p0, Point3x &p1, Point3x &p2, Point3x &center
-	private boolean FindSphere(Point3 p0, Point3 p1, Point3 p2, Point3 center) {
+	private final boolean FindSphere(Point3 p0, Point3 p1, Point3 p2, Point3 center) {
 		//we want p0 to be always the smallest one.
 		Point3[] p = new Point3[3];
 		p[0] = new Point3();

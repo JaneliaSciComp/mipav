@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.BallPivoting;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 public abstract class AdvancingFront {
 	public LinkedList<FrontEdge> front = new LinkedList<FrontEdge>();
@@ -35,19 +36,51 @@ public abstract class AdvancingFront {
 	public abstract float radi();
 	
 	public void BuildMesh() {
-		/// if ( interval == 0 )
-		int 	interval = 512;
-		for ( int k = 0; k <16; k++ ) {
-	   // while(true) {
-	       //  System.err.println( "BuildMesh while...");
-	      // if(call) call(0, "Advancing front");
-	      for(int i = 0; i < interval; i++) {
-	            //System.err.println( "BuildMesh " + i);
-	        if(front.isEmpty() && !SeedFace()) return;
+		
+		final int 	interval = 512*16;
+	
+		int nthreads = 4;
+		
+		/*
+		final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+		for ( int k = 0; k < 16; k = k+4) {
+		    // divide the quad
+		     
+			for(int i = 0; i < nthreads; i++){
+				Runnable task = new Runnable(){
+					public void run(){
+					  for(int i = 0; i < interval; i++) {
+				            //System.err.println( "BuildMesh " + i);
+				        if(front.isEmpty() && !SeedFace()) return;
+				        	AddFace();
+				      }
+
+						doneSignal.countDown();
+					}
+				};
+				gov.nih.mipav.util.MipavUtil.mipavThreadPool.execute(task);
+			}
+	        try {
+	            doneSignal.await();
+	            // merge quad
+	             
+	        } catch (InterruptedException e) {
+	            e.printStackTrace();
+	        }
+		}	
+	    */
+		
+		int count = 0;
+		SeedFace();
+		for(int i = 0; i < interval; i++) {
+	         //  System.err.println( "BuildMesh " + i);
+	        if(front.isEmpty() ) return;
 	        	AddFace();
-	      }
-		}
-	   // }
+	    }
+		
+		
+		
+	    
 	 }
 	
 	//Implement these functions in your subclass 
@@ -135,8 +168,10 @@ public abstract class AdvancingFront {
 		    int[] v00 = new int[1];
 		    int[] v11 = new int[1];
 		    int[] v22 = new int[1];
+		    
+		    System.err.println( "SeedFace");
 		    boolean success = Seed(v00, v11, v22);
-            //System.err.println("SeedFace: " + v00[0] + " " +  v11[0] + " " +  v22[0]);
+           
 		    v[0] = v00[0];
 		    v[1] = v11[0];
 		    v[2] = v22[0];
@@ -189,9 +224,10 @@ public abstract class AdvancingFront {
 		    return true;
 	}
 	  
-	public boolean AddFace() {
+	public final boolean AddFace() {
 		    if(front.size() == 0) return false; 
 		      
+		    // System.err.println("ruida");
 		    FrontEdge ei = front.getFirst();
 		    FrontEdge current = ei;
 		    FrontEdge previous = current.previous;           
@@ -355,7 +391,7 @@ public abstract class AdvancingFront {
 		      return false;
 		  }       
 	
-	 protected void AddFace(int v0, int v1, int v2) {
+	 protected final void AddFace(int v0, int v1, int v2) {
 		    assert(v0 < (int)mesh.vert.size() && v1 < (int)mesh.vert.size() && v2 < (int)mesh.vert.size());  
 		    Face face = new Face();
 		    // face.V(0) = mesh.vert.get(v0);
@@ -371,17 +407,18 @@ public abstract class AdvancingFront {
 		    face.setV(2, mesh.vert.get(v2));
 		    
 		    ComputeNormalizedNormal(face);
+		    // face.setN(((face.P(1)).sub(face.P(0))).Cross((face.P(2)).sub(face.P(0))).Normalize());
 		    // mesh.face.push_back(face);
 		    mesh.face.add(face);
 		    mesh.fn++;
      }
 		    
-	 protected void ComputeNormalizedNormal(Face f) {	
+	 protected final void ComputeNormalizedNormal(Face f) {	
 		 // f.N() = NormalizedNormal(f);
 		 f.setN(NormalizedNoraml(f));
 	 }
 
-	 protected Point3 NormalizedNoraml(Face f) {
+	 protected final Point3 NormalizedNoraml(Face f) {
 		 Point3 p0 = f.P(0);
 		 Point3 p1 = f.P(1);
 		 Point3 p2 = f.P(2);
@@ -391,7 +428,7 @@ public abstract class AdvancingFront {
 	 
 	 
 	 // VertexType &vertex
-     protected void AddVertex(Vertex vertex) {
+     protected final void AddVertex(Vertex vertex) {
 		    Vertex oldstart = null;
 		    int old_index;
 		    int current_index;
@@ -419,7 +456,7 @@ public abstract class AdvancingFront {
 		    nb.add(0);
 	 }
 	
-     protected boolean CheckEdge(int v0, int v1) {
+     protected final boolean CheckEdge(int v0, int v1) {
     	    int tot = 0;
     	    //HACK to speed up things until i can use a seach structure
     	/*    int i = mesh.face.size() - 4*(front.size());
@@ -443,45 +480,45 @@ public abstract class AdvancingFront {
     	  }    
 
      //Add a new FrontEdge to the back of the queue
-     protected FrontEdge NewEdge(FrontEdge e) {                  
+     protected final FrontEdge NewEdge(FrontEdge e) {                  
        // return front.insert(front.end(), e);
     	 front.addLast(e);
     	 return front.getLast();
      }     
      
      //move an Edge among the dead ones
-     protected void KillEdge(FrontEdge e) {
+     protected final void KillEdge(FrontEdge e) {
        e.active = false;
        // deads.splice(deads.getLast(), front, e);
        front.remove(e);
        deads.addLast(e);
      }
      
-     protected void Erase(FrontEdge e) {
+     protected final void Erase(FrontEdge e) {
        if(e.active) front.remove(e);
        else deads.remove(e);
      }
      
      //move an FrontEdge to the back of the queue
-     protected void MoveBack(FrontEdge e) {
+     protected final void MoveBack(FrontEdge e) {
        // front.splice(front.getLast(), front, e);  
     	 front.remove(e);
     	 front.addLast(e);
      }
      
-     protected void MoveFront(FrontEdge e) {
+     protected final void MoveFront(FrontEdge e) {
        // front.splice(front.begin(), front, e);
     	 front.remove(e);
     	 front.addFirst(e);
      }
      
      //check if e can be sewed with one of its neighbors
-     protected boolean Glue(FrontEdge e) {
+     protected final boolean Glue(FrontEdge e) {
        return Glue(e.previous, e) || Glue(e, e.next);
      }
      
    //Glue toghether a and b (where a.next = b
-     protected boolean Glue(FrontEdge a, FrontEdge b) {
+     protected final boolean Glue(FrontEdge a, FrontEdge b) {
        if( a.v0 != b.v1) return false; 
        
        FrontEdge previous = a.previous;
@@ -495,7 +532,7 @@ public abstract class AdvancingFront {
        return true;
      }
      
-     protected void Detach(int v) {
+     protected final void Detach(int v) {
        assert(nb.get(v) > 0);
        int value = nb.get(v);
        --value;
