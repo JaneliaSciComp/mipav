@@ -3,7 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.BallPivoting;
 public class PointerUpdater<E> {
 	
 	
-		public void Clear(){
+		public final void clear(){
 			newBase= null;
 			oldBase= null;
 		    newEnd= null;
@@ -11,7 +11,7 @@ public class PointerUpdater<E> {
 			preventUpdateFlag=false;
 		}
 		
-		public void Update(Face vp)
+		public final void update(Face vp)
 		{
 			// Ruida, face comparison and addressing ?????????????
 			/*
@@ -22,7 +22,7 @@ public class PointerUpdater<E> {
 		     */
 		}
 		
-		public boolean NeedUpdate() {
+		public final boolean needUpdate() {
 			if(oldBase != null && !newBase.equals(oldBase) && !preventUpdateFlag) 
 				return true; 
 			else return false;
