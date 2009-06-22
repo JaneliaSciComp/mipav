@@ -4,16 +4,16 @@ import java.util.*;
 
 public class UpdateFlags {
 	
-	public static void VertexClearV(TriMesh m) { 
-		VertexClear(m,Vertex.VISITED);
+	public static final void vertexClearV(TriMesh m) { 
+		vertexClear(m,Vertex.VISITED);
 	}
 	
-	public static void VertexClearB(TriMesh m) { 
-		VertexClear(m,Vertex.BORDER);
+	public static final void vertexClearB(TriMesh m) { 
+		vertexClear(m,Vertex.BORDER);
 	}
 	
 	// int FlagMask = 0xffffffff
-	public static void VertexClear(TriMesh m, int FlagMask)
+	public static final void vertexClear(TriMesh m, int FlagMask)
 	{
 		if ( FlagMask == -1 ) {
 			FlagMask = 0xffffffff;
@@ -26,8 +26,8 @@ public class UpdateFlags {
 		i = 0;
 		while ( i < m.vert.size()) {
 			vi = m.vert.get(i);
-			if(!(vi).IsD()) {
-				flags = vi.Flags();
+			if(!(vi).isD()) {
+				flags = vi.flags();
 				flags &= andMask ;
 				// (vi).Flags() &= andMask ;
 				vi.setFlags(flags);
@@ -40,9 +40,9 @@ public class UpdateFlags {
 	}
 	
 	/// Compute the PerVertex Border flag deriving it from the faces
-	public void VertexBorderFromFace(TriMesh m)
+	public static final void vertexBorderFromFace(TriMesh m)
 	{
-	  assert(HasPerFaceFlags(m));
+	  assert(hasPerFaceFlags(m));
 		Vertex v;
 		Face f;
         int i;
@@ -50,7 +50,7 @@ public class UpdateFlags {
 		i = 0;
 		while ( i < m.vert.size()) {
 			v = m.vert.get(i);
-			v.ClearB();
+			v.clearB();
 			i++;
 		}
 		
@@ -64,8 +64,8 @@ public class UpdateFlags {
 		    		 for(int z=0;z< f.VN();++z)
 				     if( (f).IsB(z) )
 				     {
-					     f.V(z).SetB();
-					     f.V(f.Next(z)).SetB();          // Ruida,  Next() ?????????????????
+					     f.V(z).setB();
+					     f.V(f.Next(z)).setB();          // Ruida,  Next() ?????????????????
 				     }
 		    		 
 				 }
@@ -77,26 +77,26 @@ public class UpdateFlags {
 	
 	}
 	
-	public static boolean HasPerFaceFlags(TriMesh m ) {
-		return HasMark();
+	public static final boolean hasPerFaceFlags(TriMesh m ) {
+		return hasMark();
 	}
 	
-	public static boolean HasMark() {
+	public static final boolean hasMark() {
 		return true;
 	}
 	
 	/// Computes per-face border flags without requiring any kind of topology 
 	/// It has a O(fn log fn) complexity. 
-	public void FaceBorderFromNone(TriMesh m)
+	public static final void faceBorderFromNone(TriMesh m)
 	{
-	  assert(HasPerFaceFlags(m));
+	  assert(hasPerFaceFlags(m));
 	  Vector<EdgeSorter> e = new Vector<EdgeSorter>();
 	  Iterator<Face> pf;
 	  Iterator<EdgeSorter> p;
 	  
       Iterator<Vertex> v = m.vert.iterator();
 	  while ( v.hasNext() ) {
-		  ((Vertex)v.next()).ClearB();
+		  ((Vertex)v.next()).clearB();
 	  }
 	  
 	  if( m.fn == 0 ) 
@@ -159,18 +159,7 @@ public class UpdateFlags {
 		} while(true);
 	}
 	
-	/*
-	private int getIndex(Vector<EdgeSorter> e, EdgeSorter est) {
-		int index = -1;
-		for (int i = 0; i < e.size(); i++ ) {
-			if ( e.get(i).equals(est)) {
-				index = i;
-				return index;
-			}
-		}
-		return index;
-	}
-	*/
+	
 	class EdgeSorter implements Comparable
 	{
 

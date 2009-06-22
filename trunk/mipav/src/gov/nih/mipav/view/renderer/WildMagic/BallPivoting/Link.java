@@ -14,7 +14,7 @@ public class Link implements Comparable {
 		};
 
 		
-	    public int compareTo(Object o) {
+	    public final int compareTo(Object o) {
             Link other = (Link) o;
 	        if (lessThan(other))
 	            return -1;
@@ -24,37 +24,34 @@ public class Link implements Comparable {
 	            return 0;
 	    }
 		
-		public boolean lessThan ( Link  l ) { return i <   l.i; } 
-		public boolean lessThan ( Object r, Object  l ) { return ((Link)r).i <   ((Link)l).i; } 
-		public boolean lessEqualThan ( Link  l ) { return i <=  l.i; }
-		public boolean greaterThan  ( Link  l ) { return i >   l.i; }
-		public boolean greaterEqualThan ( Link  l ) { return i >=  l.i; }
-		public boolean equals ( Link  l ) { return i ==  l.i; }
-		public boolean notequals ( Link  l ) { return i !=  l.i; }
+		public final boolean lessThan ( Link  l ) { return i <   l.i; } 
+		public final boolean lessThan ( Object r, Object  l ) { return ((Link)r).i <   ((Link)l).i; } 
+		public final boolean lessEqualThan ( Link  l ) { return i <=  l.i; }
+		public final boolean greaterThan  ( Link  l ) { return i >   l.i; }
+		public final boolean greaterEqualThan ( Link  l ) { return i >=  l.i; }
+		public final boolean equals ( Link  l ) { return i ==  l.i; }
+		public final boolean notequals ( Link  l ) { return i !=  l.i; }
 
-		public Vertex  Elem() {
+		public final Vertex  elem() {
 			return t;
 		}
 
-		// ObjType operator *(){return *(t);}
-
-		public Vertex get() {
+	
+		public final Vertex get() {
 			return t;
 		}
 		
-		public  int  Index() {
+		public final int  index() {
 			return i;
 		}
 
-		public void assign(Link in) {
+		public final void assign(Link in) {
 			t = in.t;
 			i = in.i;
 		}
 		
 
-		/// Puntatore all'elemento T
 		private Vertex t = null;   
-		/// Indirizzo del voxel dentro la griglia
 		public int i;
 
 }

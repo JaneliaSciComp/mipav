@@ -367,12 +367,12 @@ public class Face {
 		
 		 if(this.IsD()) 
 			{
-				bb.SetNull();
+				bb.setNull();
 				return;
 			}
-		  bb.Set(this.P(0));
-		  bb.Add(this.P(1));
-		  bb.Add(this.P(2));
+		  bb.set(this.P(0));
+		  bb.add(this.P(1));
+		  bb.add(this.P(2));
 	  }
 
 	

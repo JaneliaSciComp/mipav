@@ -18,7 +18,7 @@ public class PlyReader {
 	
 	
 
-	public  void readPlyAsciiMesh(TriMesh mesh, String directory, String filename) {
+	public final void readPlyAsciiMesh(TriMesh mesh, String directory, String filename) {
 		
 		// TriMesh mesh;
 		 File file;
@@ -85,7 +85,7 @@ public class PlyReader {
      * @return line of the ascii file as a String
      * @throws IOException I/O exception
      */
-    private static String readLine(InputStream in) throws IOException
+    private static final String readLine(InputStream in) throws IOException
     {
         StringBuffer buf = new StringBuffer();
         int c;
@@ -96,7 +96,7 @@ public class PlyReader {
         return buf.toString();
     }
     
-    private static File openFiles(String directory, String filename) {
+    private static final File openFiles(String directory, String filename) {
 
     	String fname = new String(directory + File.separator + filename);
     	System.err.println(fname);

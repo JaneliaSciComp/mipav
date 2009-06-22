@@ -10,7 +10,7 @@ public class PointDistanceFunctor {
 		// Point3 fp = new Point3(p);
 
 		float md;		// distance between v and fp
-		md = (v.P().sub(p)).Norm();
+		md = (v.P().sub(p)).norm();
 
 		if (md <= minDist[0]) 
 		{

@@ -39,16 +39,16 @@ public class TriMesh {
 		}
 	}
 	
-	public int SimplexNumber(){ 
+	public int simplexNumber(){ 
 		return fn;
 	}
 	
-	public int VertexNumber(){ 
+	public int vertexNumber(){ 
 		return vn;
 	}
 	
 	/// Initialize the imark-system of the faces
-	public void InitFaceIMark()
+	public final void initFaceIMark()
 	{
 		Face f = null;
 		int f_index = 0;
@@ -61,39 +61,39 @@ public class TriMesh {
 	}
 
 	/// Initialize the imark-system of the vertices
-	public void InitVertexIMark()
+	public final void initVertexIMark()
 	{
 		Vertex vi = null;
         int v_index = 0;
 		for(v_index = 0 ;v_index < vert.size();++v_index)
 			vi = vert.get(v_index);
-			if( !vi.IsD() && vi.IsRW() )
-				vi.InitIMark();
+			if( !vi.isD() && vi.isRW() )
+				vi.initIMark();
 	}
 	
 	
 	/** Access function to the incremental mark. 
 	*/
-	public int IMark(){return imark;}
+	public final int iMark(){return imark;}
 	/** Check if the vertex incremental mark matches the one of the mesh. 
 		@param v Vertex pointer
 	*/
-	public boolean IsMarked( Vertex  v ) { return v.imark == imark; }
+	public final boolean isMarked( Vertex  v ) { return v.imark == imark; }
 	/** Check if the face incremental mark matches the one of the mesh. 
 		@param v Face pointer
 	*/
-	public boolean IsMarked( Face f ) { return f.imark == imark; }
+	public final boolean isMarked( Face f ) { return f.imark == imark; }
 	/** Set the vertex incremental mark of the vertex to the one of the mesh.
 		@param v Vertex pointer
 	*/
-	public void Mark( Vertex v ) { v.imark = imark; }
+	public final void mark( Vertex v ) { v.imark = imark; }
 	/** Set the face incremental mark of the vertex to the one of the mesh.
 		@param v Vertex pointer
 	*/
-	public void Mark( Face f ) { f.imark = imark; }
+	public final void mark( Face f ) { f.imark = imark; }
 	/// Unmark the mesh
-	public void UnMarkAll() { ++imark; }
+	public final void unMarkAll() { ++imark; }
 	
-	public boolean HasPerVertexNormal()  { return Vertex.HasNormal() ; }
+	public final boolean hasPerVertexNormal()  { return Vertex.hasNormal() ; }
 	
 }

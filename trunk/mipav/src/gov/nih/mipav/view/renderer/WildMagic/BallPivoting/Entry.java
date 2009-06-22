@@ -9,13 +9,13 @@ public class Entry implements Comparable {
 		dist=_dist;
 		intersection = _intersection;
 	}
-	public boolean lessThan( Entry l ) {
+	public final boolean lessThan( Entry l ) {
 		return (dist > l.dist);                  // // Ruida >  ?????????????????
 	}    
 	
-	public boolean equals(Entry l) { return elem.equals(l.elem); }
+	public final boolean equals(Entry l) { return elem.equals(l.elem); }
 	
-	public int compareTo(Object o) {
+	public final int compareTo(Object o) {
 		Entry other = (Entry) o;
 		if (lessThan(other))
 			return -1;
