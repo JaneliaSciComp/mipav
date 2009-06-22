@@ -145,9 +145,9 @@ public class AlgorithmTransform extends AlgorithmBase {
     private int iZdim, iTdim;
 
     /** DOCUMENT ME! */
-    private final float iXres, iYres;
+    private static float iXres, iYres;
 
-    private float iZres;
+    private static float iZres;
 
     /** DOCUMENT ME! */
     private final int[] oUnits;
@@ -4969,14 +4969,14 @@ public class AlgorithmTransform extends AlgorithmBase {
 		if (xfrm.getDim() == 3) {
 			final float[] tempOrigin = new float[2];
 			xfrm.transform(0f, 0f, tempOrigin);
-			AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0] + tempOrigin[0];
-			AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1] + tempOrigin[1];
+			AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0] + tempOrigin[0] * iXres;
+			AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1] + tempOrigin[1] * iYres;
 		} else {
 			final float[] tempOrigin = new float[3];
 			xfrm.transform(0f, 0f, 0f, tempOrigin);
-			AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0] + tempOrigin[0];
-			AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1] + tempOrigin[1];
-			AlgorithmTransform.imgOrigin[2] = AlgorithmTransform.imgOrigin[2] + tempOrigin[2];
+			AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0] + tempOrigin[0] * iXres;
+			AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1] + tempOrigin[1] * iYres;
+			AlgorithmTransform.imgOrigin[2] = AlgorithmTransform.imgOrigin[2] + tempOrigin[2] * iZres;
 		}
 
 	}
