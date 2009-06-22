@@ -29,11 +29,6 @@ public class Box3 {
 		max.assign(b.max);
 	}
 	
-	public void assign(Box3 b) {
-		min.assign(b.min);
-		max.assign(b.max);
-	}
-	
 	/// Min Max constructor
 	public Box3(Point3 mi, Point3 ma) {
 		min.assign(mi);
@@ -46,43 +41,49 @@ public class Box3 {
 		max = center.add(new Point3(radius, radius, radius));
 	}
 	
-	public boolean equals(Box3 p) {
+	public final void assign(Box3 b) {
+		min.assign(b.min);
+		max.assign(b.max);
+	}
+	
+	
+	public final boolean equals(Box3 p) {
 		return min.equals(p.min) && max.equals(p.max);
 	}
 	
-	public boolean noteqauls(Box3 p) {
+	public final boolean noteqauls(Box3 p) {
 		return min.notequals(p.min) || max.notequals(p.max);
 	}
 	
-	public void Offset( float s )
+	public final void offset( float s )
 	{
-		Offset( new Point3(s,s,s));
+		offset( new Point3(s,s,s));
 	}
 	
-	public void Offset(Point3 delta )
+	public final void offset(Point3 delta )
 	{
 		min.sub_into(delta);
 		max.add_into(delta);
 	}
 	
 	/// Initializing the bounding box
-	public void Set( Point3 p )
+	public final void set( Point3 p )
 	{
 		min.assign(p); 
 		max.assign(p);
 	}
 	
-	public void SetNull()
+	public final void setNull()
 	{
 		min.x= 1f; max.x= -1f;
 		min.y= 1f; max.y= -1f;
 		min.z= 1f; max.z= -1f;
 	}
 	
-	public void Add( final Box3 b )
+	public final void add( final Box3 b )
 	{
-		if(b.IsNull()) return; // Adding a null bbox should do nothing
-		if(IsNull()) this.assign(b);
+		if(b.isNull()) return; // Adding a null bbox should do nothing
+		if(isNull()) this.assign(b);
 		else
 		{
 			if(min.x > b.min.x) min.x = b.min.x;
@@ -95,9 +96,9 @@ public class Box3 {
 		}
 	}
 	
-	public void Add( final Point3 p )
+	public final void add( final Point3 p )
 	{
-		if(IsNull()) Set(p);
+		if(isNull()) set(p);
 		else 
 		{
 			if(min.x > p.x) min.x = p.x;
@@ -128,7 +129,7 @@ public class Box3 {
 			Add(m.mul(new Point3(mx.x,mx.y,mx.z)));
 	}
 	*/
-	public void Intersect( final Box3 b )
+	public final void intersect( final Box3 b )
 	{
 		if(min.x < b.min.x) min.x = b.min.x;
 		if(min.y < b.min.y) min.y = b.min.y;
@@ -138,16 +139,16 @@ public class Box3 {
 		if(max.y > b.max.y) max.y = b.max.y;
 		if(max.z > b.max.z) max.z = b.max.z;
 
-		if(min.x>max.x || min.y>max.y || min.z>max.z) SetNull();
+		if(min.x>max.x || min.y>max.y || min.z>max.z) setNull();
 	}
 	
-	public void Translate( final Point3 p )
+	public final void translate( final Point3 p )
 	{
 		min.add_into(p);
 		max.add_into(p);
 	}
 	
-	public final boolean IsIn( final Point3 p )
+	public final boolean isIn( final Point3 p )
 	{
 		return (
 			min.x <= p.x && p.x <= max.x &&
@@ -156,7 +157,7 @@ public class Box3 {
 		);
 	}
 	
-	public final boolean IsInEx( final Point3 p )
+	public final boolean isInEx( final Point3 p )
 	{
 		return (
 			min.x <= p.x && p.x < max.x &&
@@ -165,64 +166,64 @@ public class Box3 {
 		);
 	}
 	
-	public final boolean Collide(final Box3 b)
+	public final boolean collide(final Box3 b)
 	{
 		return b.min.x<max.x && b.max.x>min.x &&
 			   b.min.y<max.y && b.max.y>min.y &&
 			   b.min.z<max.z && b.max.z>min.z ;
 	}
 	
-	public boolean IsNull() { 
+	public final boolean isNull() { 
 		return min.x>max.x || min.y>max.y || min.z>max.z; 
 	}
 	
-	public final boolean IsEmpty() { 
+	public final boolean isEmpty() { 
 		return min.equals(max); 
 	}
 	
-	public final float Diag()
+	public final float diag()
 	{
-		return Distance(min,max);
+		return distance(min,max);
 	}
 	
-	public float SquaredDiag()
+	public final float squaredDiag()
 	{
-		return SquaredDistance(min,max);
+		return squaredDistance(min,max);
 	}
 	
-	public final Point3 Center()
+	public final Point3 center()
 	{
 		return (min.add(max)).div(2f);
 	}
 	
 	
 
-	public float Distance( Point3 p1, Point3 p2 )
+	public final float distance( Point3 p1, Point3 p2 )
 	{
-	    return (p1.sub(p2)).Norm();
+	    return (p1.sub(p2)).norm();
 	}
 
-	public float SquaredDistance( Point3 p1, Point3 p2 )
+	public final float squaredDistance( Point3 p1, Point3 p2 )
 	{
-	    return (p1.sub(p2)).SquaredNorm();
+	    return (p1.sub(p2)).squaredNorm();
 	}
 	
 	
 	
 	
-	public final Point3 Dim()
+	public final Point3 dim()
 	{
 		return max.sub(min);
 	}
 	
-	public final Point3 LocalToGlobal(final Point3 p) {
+	public final Point3 localToGlobal(final Point3 p) {
 		return new Point3( 
 			min.x + p.x*(max.x-min.x), 
 			min.y + p.y*(max.y-min.y),
 			min.z + p.z*(max.z-min.z));
 	}
 	
-	public final Point3 GlobalToLocal(final Point3 p) {
+	public final Point3 globalToLocal(final Point3 p) {
 		return new Point3( 
 		  (p.x-min.x)/(max.x-min.x), 
 		  (p.y-min.y)/(max.y-min.y), 
@@ -230,18 +231,18 @@ public class Box3 {
 			);
 	}
 	
-	public float Volume()
+	public final float volume()
 	{
 		return (max.x-min.x)*(max.y-min.y)*(max.z-min.z);
 	}
 	
-	public final float DimX() { return max.x-min.x;}
+	public final float dimX() { return max.x-min.x;}
 
-    public final float DimY() { return max.y-min.y;}
+    public final float dimY() { return max.y-min.y;}
 	
-    public final float DimZ() { return max.z-min.z;}
+    public final float dimZ() { return max.z-min.z;}
 	
-    public final int MaxDim() { 
+    public final int maxDim() { 
 		int i;
 		Point3 diag = max.sub(min);
 		if(diag.x>diag.y) i=0; else i=1;
@@ -253,7 +254,7 @@ public class Box3 {
 		}
 	}
     
-    public final int MinDim() { 
+    public final int minDim() { 
 		int i;
 		Point3 diag =  max.sub(min);
 		if(diag.x<diag.y) i=0; else i=1;
@@ -278,9 +279,9 @@ public class Box3 {
     */
     public final Point3 P(final int i) {
 		return new Point3(
-			min.x+ (i%2) * DimX(),
-			min.y+ ((i / 2)%2) * DimY(),
-			min.z+ ((i>3)? 1 : 0) * DimZ());
+			min.x+ (i%2) * dimX(),
+			min.y+ ((i / 2)%2) * dimY(),
+			min.z+ ((i>3)? 1 : 0) * dimZ());
     }
     
     

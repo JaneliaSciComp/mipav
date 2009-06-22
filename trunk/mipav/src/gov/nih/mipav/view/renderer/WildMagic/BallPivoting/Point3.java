@@ -42,7 +42,7 @@ public class Point3 {
 		return this;
 	}
 	
-	public  final void Zero()
+	public  final void zero()
 	{
 		x = 0;
 		y = 0;
@@ -105,7 +105,7 @@ public class Point3 {
 	}
 	
 	/// Cross product, operator ^ 
-	public  final Point3 Cross( Point3 p )
+	public  final Point3 cross( Point3 p )
 	{
 		return new Point3
 		(
@@ -149,18 +149,18 @@ public class Point3 {
 	}
 	
 	// Norme
-	public  final float Norm()
+	public  final float norm()
 	{
 		return (float)Math.sqrt( x*x + y*y + z*z );
 	}
 	
-	public  final float SquaredNorm() 
+	public  final float squaredNorm() 
 	{
 		return (  x*x + y*y + z*z  );
 	}
 	
 	// Scalatura differenziata
-	public  final Point3 Scale( float sx, float sy, float sz )
+	public  final Point3 scale( float sx, float sy, float sz )
 	{
 		x *= sx;
 		y *= sy;
@@ -168,7 +168,7 @@ public class Point3 {
 		return this;
 	}
 	
-	public  final Point3 Scale( Point3  p )
+	public  final Point3 scale( Point3  p )
 	{
 		x *= p.x;
 		y *= p.y;
@@ -178,7 +178,7 @@ public class Point3 {
 	
 
 	// Normalizzazione
-	public  final Point3 Normalize()
+	public  final Point3 normalize()
 	{
         float n = (float)Math.sqrt(x*x + y*y + z*z);
 		if(n>0.0) {	x /= n;	y /= n;	z /= n;  }

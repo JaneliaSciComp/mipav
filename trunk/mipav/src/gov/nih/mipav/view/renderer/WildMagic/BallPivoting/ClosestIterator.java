@@ -13,17 +13,17 @@ public class ClosestIterator {
 	protected Box3 to_explore = new Box3();		//current bounding box explored
 	protected float radius;			  //curret radius for sphere expansion
 	protected float step_size;		  //radius step
-	protected Vector<Entry> Elems = new Vector<Entry>(); //element loaded from the current sphere
+	protected Vector<Entry> elems = new Vector<Entry>(); //element loaded from the current sphere
 	
 	protected PointDistanceFunctor dist_funct;
 	protected VertTmark tm;
 	
-	protected Entry CurrentElem;  // //iterator to current element
+	protected Entry currentElem;  // //iterator to current element
 	
 	
 
 	///control the end of scanning
-	public boolean  _EndGrid()
+	public final boolean  _endGrid()
 	{
 		if (explored.min.equals(new Point3(0, 0, 0)) && explored.max.equals(Si.siz)) {
 			end =true;
@@ -32,7 +32,7 @@ public class ClosestIterator {
 	}
 
 
-	public void _UpdateRadius()
+	public final void _UpdateRadius()
 	{
 		if (radius>=max_dist) {
 			end=true;
@@ -44,7 +44,7 @@ public class ClosestIterator {
 	}
 
 	///add cell to the curren set of explored cells
-	public boolean _NextShell()
+	public final boolean _nextShell()
 	{
 
 		//then expand the box
@@ -54,8 +54,8 @@ public class ClosestIterator {
 		Box3 b3d = new Box3(p,radius);
 		Si.BoxToIBox(b3d,to_explore);
 		Box3 ibox = new Box3(new Point3(0,0,0),Si.siz.sub(new Point3(1,1,1)));
-		to_explore.Intersect(ibox);
-		if (!to_explore.IsNull())
+		to_explore.intersect(ibox);
+		if (!to_explore.isNull())
 		{
 			assert(!( to_explore.min.x<0 || to_explore.max.x>=Si.siz.x ||
 				to_explore.min.y<0 || to_explore.max.y>=Si.siz.y ||  to_explore.min.z<0
@@ -73,38 +73,37 @@ public class ClosestIterator {
 	
 
 	///set the current spatial indexing structure used
-	public void SetIndexStructure(StaticGrid _Si) {
+	public final void setIndexStructure(StaticGrid _Si) {
 		Si=_Si;
 	}
 
-	public void SetMarker(VertTmark _tm)
+	public final void setMarker(VertTmark _tm)
 	{
 		tm=_tm;
 	}
 	
 	///initialize the Iterator
-	public void Init(Point3 _p, float _max_dist)
+	public final void init(Point3 _p, float _max_dist)
 	{
-		explored.SetNull();
-		to_explore.SetNull();
+		explored.setNull();
+		to_explore.setNull();
 		p = _p;
 		max_dist=_max_dist;
-		Elems.clear();
+		elems.clear();
 		end=false;
-		tm.UnMarkAll();
-		//step_size=Si.voxel.X();
-		step_size=Si.voxel.Norm();
+		tm.unMarkAll();
+		step_size=Si.voxel.norm();
 		radius=0;
 
 		///inflate the bbox until find a valid bbox
-		while ((!_NextShell())&&(!End())) {}
+		while ((!_nextShell())&&(!end())) {}
 
-		while ((!End())&& Refresh()&&(!_EndGrid()))
-				_NextShell();
+		while ((!end())&& refresh()&&(!_endGrid()))
+				_nextShell();
 	}
 
 	//return true if the scan is complete
-	public boolean End() {
+	public final boolean end() {
 		return end;
 	}
 
@@ -112,7 +111,7 @@ public class ClosestIterator {
 	///refresh Object found	also considering current share radius,
 	//and object comes from	previous that are already in	the	stack
 	//return false if no elements find
-	public boolean Refresh()
+	public final boolean refresh()
 	{
 	    int[] tempIndex = new int[1];
 		int	ix,iy,iz;
@@ -122,7 +121,7 @@ public class ClosestIterator {
 				for(ix = (int)to_explore.min.x; ix	<= (int)to_explore.max.x;++ix)
 				{
 					// this test is to avoid to re-process already analyzed cells.
-					if((explored.IsNull())||
+					if((explored.isNull())||
 						(ix<(int)explored.min.x || ix>(int)explored.max.x ||
 						iy< (int)explored.min.y || iy> (int)explored.max.y ||
 						iz< (int)explored.min.z || iz> (int)explored.max.z ))
@@ -133,7 +132,7 @@ public class ClosestIterator {
                         // System.err.println("check");
 						//Si.Grid(ix,iy,iz,first,last);
 						
-						first = Si.Grid(ix, iy, iz, tempIndex);
+						first = Si.grid(ix, iy, iz, tempIndex);
 				        //last.i = first.i + 1;
 				        int firstIndex = tempIndex[0];
 				        int lastIndex = firstIndex+1;//Si.getIndex(last);
@@ -157,7 +156,7 @@ public class ClosestIterator {
 								// deep  ???  no.
 								// System.err.print(" i = " + i + " elem.p() = ");  elem.P().print();
 								
-								if (!tm.IsMarked(elem))
+								if (!tm.isMarked(elem))
 								{
 	                                // System.err.println("amaze");
 									Point3 nearest = new Point3();
@@ -165,9 +164,9 @@ public class ClosestIterator {
 									dist[0] = max_dist;
 									if (dist_funct.call( l.get(),p,dist,nearest)) {
 										// System.err.println("count = " + count++);
-										Elems.add(new Entry(elem,(float)Math.abs(dist[0]),nearest));
+										elems.add(new Entry(elem,(float)Math.abs(dist[0]),nearest));
 									}
-									tm.Mark(elem);
+									tm.mark(elem);
 								}
 						}
 					}
@@ -177,71 +176,67 @@ public class ClosestIterator {
 		    // System.err.println("Elems.size() = " + Elems.size());
 			////sort the elements in Elems and take a iterator to the last one
 			// std.sort(Elems.begin(),Elems.end());
-		    Collections.sort(Elems);
+		    Collections.sort(elems);
 		    
 			// CurrentElem=Elems.rbegin();
-		    if ( Elems.size() == 0 ) { 
+		    if ( elems.size() == 0 ) { 
 		    	// CurrentElem = null;
 		    } else {
-		    	CurrentElem=Elems.lastElement();
+		    	currentElem=elems.lastElement();
 		    }
-		return((Elems.size()==0)||(Dist()>radius));
+		return((elems.size()==0)||(dist()>radius));
 	}
 	
 
-	public boolean ToUpdate() {
-		return ((Elems.size()==0)||(Dist()>radius));
+	public final boolean toUpdate() {
+		return ((elems.size()==0)||(dist()>radius));
 	}
 
 	 // operator ++
-	public void plusplus()
+	public final void plusplus()
 	{
-		if (!Elems.isEmpty()) Elems.remove(Elems.lastElement());
-		// else return;
-        // System.err.println("1. Elems.size() " + Elems.size());
-		// if( Elems.size() == 0 ) return;
-		// CurrentElem = Elems.rbegin();
-		if ( Elems.size() == 0 ) {
+		if (!elems.isEmpty()) elems.remove(elems.lastElement());
+		if ( elems.size() == 0 ) {
 			// CurrentElem = null;
 		} else {
-			CurrentElem = Elems.lastElement();
+			currentElem = elems.lastElement();
 		}
-		if ((!End())&& ToUpdate())
+		if ((!end())&& toUpdate())
 		{
 		    //System.err.println( "ClosestIterator ++" );
-            while ((!End())&& Refresh()&&(!_EndGrid()))
+            while ((!end())&& refresh()&&(!_endGrid()))
             {
 
                 //System.err.println( "ClosestIterator ++ calling NS" );
-                _NextShell();
+                _nextShell();
             }
 		}
 	}
 
 
 	// &operator *()
-	public Vertex get() {
+	public final Vertex get() {
 	    //System.err.println( "ClosestIterator *operator " + CurrentElem.elem._p.x + " " + CurrentElem.elem._p.y + " " + CurrentElem.elem._p.z );
-		return CurrentElem.elem;
+		return currentElem.elem;
 	}
 	
 	//&operator *()
-	public Object dereference(){
-		return CurrentElem.elem;
+	public final Object dereference(){
+		return currentElem.elem;
 	}
 	
 	//return distance of the element form the point if no element
 	//are in the vector then return max dinstance
-	public float Dist()
+	public final float dist()
 	{
-		if (Elems.size()>0)
-			return (CurrentElem.dist);
+		if (elems.size()>0)
+			return (currentElem.dist);
 		else
 			return Float.MAX_VALUE;
 	}
 
-	public Point3 NearestPoint(){
-		return CurrentElem.intersection;
+	public final Point3 nearestPoint(){
+		return currentElem.intersection;
 	}
 	
 	

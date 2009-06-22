@@ -28,7 +28,7 @@ public class BasicGrid {
 	 Derives the right values of Dim and voxel starting
 	 from the current values of siz and bbox
 	*/
-	public void ComputeDimAndVoxel()
+	public final void computeDimAndVoxel()
 	{
 			this.dim  = this.bbox.max.sub(this.bbox.min);
 			this.voxel.x = this.dim.x/this.siz.x;
@@ -40,7 +40,7 @@ public class BasicGrid {
 	 * @param p is a 3D point
 	 * @return integer coordinates of the cell
 	 */
-	public Point3 GridP( Point3 p )
+	public final Point3 gridP( Point3 p )
 	{
 		Point3 pi = new Point3(); 
 		PToIP(p, pi);
@@ -51,7 +51,7 @@ public class BasicGrid {
 	 * @param p is a 3D point in the space
 	 * @return integer coordinates pi of the cell
 	 */
-	public void PToIP(final Point3 p, Point3 pi )
+	public final void PToIP(final Point3 p, Point3 pi )
 	{
 		Point3 t = p.sub(bbox.min);
 		pi.x = (int)( t.x / voxel.x );
@@ -75,7 +75,7 @@ public class BasicGrid {
 	 * @param b is the cell in <ScalarType> coordinates
 	 * @return ib is the correspondent box in integer coordinates
 	 */
-	public void BoxToIBox(final Box3  b, Box3 ib )
+	public final void BoxToIBox(final Box3  b, Box3 ib )
 	{
 		PToIP(b.min, ib.min);
 		PToIP(b.max, ib.max);
@@ -87,7 +87,7 @@ public class BasicGrid {
 	 * @return b is the correspondent box in <ScalarType> coordinates
 	 */
 	/// Given a voxel box in the back ends of the box real
-	public void IBoxToBox( final Box3 ib, Box3 b )
+	public final void IBoxToBox( final Box3 ib, Box3 b )
 	{
 		IPToP(ib.min,b.min);
 		IPToP(ib.max,b.max);
@@ -97,11 +97,11 @@ public class BasicGrid {
 	 * Calculate the size of the grid function
 	 * the ratio of the bounding box and the number of elements
 	 */
-	public void BestDim( int elems, Point3 size, Point3 dim )
+	public final void bestDim( int elems, Point3 size, Point3 dim )
 	{
 		int mincells   = 1;		// Minimum number of cells
 		double GFactor = 1;	// GridEntry = NumElem*GFactor
-		double diag = size.Norm();	// Diagonal of the box
+		double diag = size.norm();	// Diagonal of the box
 		double eps  = diag*1e-4;		// 	Tolerance factor
 
 		assert(elems>0);

@@ -19,8 +19,8 @@ public abstract class AdvancingFront {
 		    
 		   UpdateFlags u = new UpdateFlags();
 		   
-		   u.FaceBorderFromNone(mesh);   
-		   u.VertexBorderFromFace(mesh);     
+		   u.faceBorderFromNone(mesh);   
+		   u.vertexBorderFromFace(mesh);     
 
 		    nb.clear();
 		    // nb.resize(mesh.vert.size(), 0);
@@ -30,12 +30,12 @@ public abstract class AdvancingFront {
 		    }
 		    
 		  
-		    CreateLoops();
+		    createLoops();
     }
 	
 	public abstract float radi();
 	
-	public void BuildMesh() {
+	public final void buildMesh() {
 		
 		final int 	interval = 512*16;
 	
@@ -71,11 +71,11 @@ public abstract class AdvancingFront {
 	    */
 		
 		int count = 0;
-		SeedFace();
+		seedFace();
 		for(int i = 0; i < interval; i++) {
 	         //  System.err.println( "BuildMesh " + i);
 	        if(front.isEmpty() ) return;
-	        	AddFace();
+	        	addFace();
 	    }
 		
 		
@@ -85,10 +85,10 @@ public abstract class AdvancingFront {
 	
 	//Implement these functions in your subclass 
 	// int &v0, int &v1, int &v2
-	protected abstract boolean Seed(int[] v0, int[] v1, int[] v2);
-	protected abstract int Place(FrontEdge e, FrontEdge[] touch);  
+	protected abstract boolean seed(int[] v0, int[] v1, int[] v2);
+	protected abstract int place(FrontEdge e, FrontEdge[] touch);  
 	
-	protected boolean CheckFrontEdge(int v0, int v1) {
+	protected final boolean checkFrontEdge(int v0, int v1) {
 	    int tot = 0;
 	    //HACK to speed up things until i can use a sreach structure
 //	    int i = mesh.face.size() - 4*(front.size());
@@ -112,7 +112,7 @@ public abstract class AdvancingFront {
 	  }        
 	
 	 //create the FrontEdge loops from seed faces
-	 protected void CreateLoops() {   
+	 protected final void createLoops() {   
 	    Vertex start = mesh.vert.firstElement();
 	    for(int i = 0; i < mesh.face.size(); i++) {
 	      Face f = mesh.face.elementAt(i);     
@@ -120,7 +120,7 @@ public abstract class AdvancingFront {
 	       
 	      for(int k = 0; k < 3; k++) {
 	        if(f.IsB(k)) {
-	          NewEdge(new FrontEdge(f.getIndex(f.V0(k)) - f.getIndex(start), 
+	          newEdge(new FrontEdge(f.getIndex(f.V0(k)) - f.getIndex(start), 
 	        		                f.getIndex(f.V1(k)) - f.getIndex(start), 
 	        		                f.getIndex(f.V2(k)) - f.getIndex(start), 
 	        		                i));     
@@ -163,14 +163,14 @@ public abstract class AdvancingFront {
 	    
 	  }   
 	  
-	  protected boolean SeedFace() {
+	  protected final boolean seedFace() {
 		    int[]  v = new int[3];
 		    int[] v00 = new int[1];
 		    int[] v11 = new int[1];
 		    int[] v22 = new int[1];
 		    
 		    System.err.println( "SeedFace");
-		    boolean success = Seed(v00, v11, v22);
+		    boolean success = seed(v00, v11, v22);
            
 		    v[0] = v00[0];
 		    v[1] = v11[0];
@@ -195,7 +195,7 @@ public abstract class AdvancingFront {
 		  
 		      // System.err.println("v0 = " + v0 + " v1 = " + v1 + " v2 = " + v2);
 		      
-		      mesh.vert.get(v0).SetB();
+		      mesh.vert.get(v0).setB();
 		      
 		      // nb[v[i]]++;
 		      int value = nb.get(v[i]);
@@ -220,11 +220,11 @@ public abstract class AdvancingFront {
 		    first.previous = last;
 
             //System.err.println("SAddFace: " + v[0] + " " +  v[1] + " " +  v[2]);
-		    AddFace(v[0], v[1], v[2]);
+		    addFace(v[0], v[1], v[2]);
 		    return true;
 	}
 	  
-	public final boolean AddFace() {
+	public final boolean addFace() {
 		    if(front.size() == 0) return false; 
 		      
 		    // System.err.println("ruida");
@@ -239,10 +239,10 @@ public abstract class AdvancingFront {
 		    FrontEdge[] touch = new FrontEdge[1];
 		    touch[0] = new FrontEdge();                 // here is the problem   !!!!!!!!!!!!!!
 		    
-		    int v2 = Place(current, touch);
+		    int v2 = place(current, touch);
 
 		    if(v2 == -1) {
-		      KillEdge(ei);
+		      killEdge(ei);
 		      return false;
 		    }
 		    
@@ -253,8 +253,8 @@ public abstract class AdvancingFront {
 		      
 		      //touch == current.previous?  
 		      if(v2 == previous.v0) {   
-		        if(!CheckEdge(v2, v1)) {
-		          KillEdge(ei);
+		        if(!checkEdge(v2, v1)) {
+		          killEdge(ei);
 		          return false;
 		        }       
 		          /*touching previous FrontEdge  (we reuse previous)        
@@ -266,22 +266,22 @@ public abstract class AdvancingFront {
 		                         \ /
 		                          v0           */
 		          
-		        Detach(v0);
+		        detach(v0);
 		  
-		        FrontEdge up = NewEdge(new FrontEdge(v2, v1, v0, mesh.face.size()));
-		        MoveFront(up);
+		        FrontEdge up = newEdge(new FrontEdge(v2, v1, v0, mesh.face.size()));
+		        moveFront(up);
 		        up.previous = previous.previous;
 		        up.next = current.next;
 		        previous.previous.next = up;
 		        next.previous = up;
-		        Erase(current.previous);
-		        Erase(ei);
-		        Glue(up);
+		        erase(current.previous);
+		        erase(ei);
+		        glue(up);
 
 		      //touch == (*current.next).next         
 		      } else if(v2 == next.v1) {    
-		        if(!CheckEdge(v0, v2)) {
-		          KillEdge(ei);
+		        if(!checkEdge(v0, v2)) {
+		          killEdge(ei);
 		          return false;
 		        }     
 		        /*touching next FrontEdge  (we reuse next)        
@@ -293,19 +293,19 @@ public abstract class AdvancingFront {
 		                         \ /
 		                          v1           */      
 		    
-		        Detach(v1);
-		        FrontEdge up = NewEdge(new FrontEdge(v0, v2, v1, mesh.face.size()));
-		        MoveFront(up);
+		        detach(v1);
+		        FrontEdge up = newEdge(new FrontEdge(v0, v2, v1, mesh.face.size()));
+		        moveFront(up);
 		        up.previous = current.previous;
 		        up.next = current.next.next;
 		        previous.next = up;
 		        next.next.previous = up;
-		        Erase(current.next);
-		        Erase(ei);
-		        Glue(up);
+		        erase(current.next);
+		        erase(ei);
+		        glue(up);
 		      } else {
-		        if(!CheckEdge(v0, v2) || !CheckEdge(v2, v1)) {
-		          KillEdge(ei);
+		        if(!checkEdge(v0, v2) || !checkEdge(v2, v1)) {
+		          killEdge(ei);
 		          return false;
 		        } 
 		      //touching some loop: split (or merge it is local does not matter.
@@ -325,7 +325,7 @@ public abstract class AdvancingFront {
 		        
 		        //this would be a really bad join
 		        if(v1 == right.v0 || v0 == left.v1) {
-		          KillEdge(ei);
+		          killEdge(ei);
 		          return false;
 		        }
 		        
@@ -335,8 +335,8 @@ public abstract class AdvancingFront {
 		        nb.set(v2, v);
 		            
 		  
-		        FrontEdge down = NewEdge(new FrontEdge(v2, v1, v0, mesh.face.size()));      
-		        FrontEdge up = NewEdge(new FrontEdge(v0, v2, v1, mesh.face.size()));                            
+		        FrontEdge down = newEdge(new FrontEdge(v2, v1, v0, mesh.face.size()));      
+		        FrontEdge up = newEdge(new FrontEdge(v0, v2, v1, mesh.face.size()));                            
 		      
 		        right.next = down;
 		        down.previous = right;
@@ -349,7 +349,7 @@ public abstract class AdvancingFront {
 		  
 		        up.previous = current.previous;
 		        previous.next = up;
-		        Erase(ei);
+		        erase(ei);
 		      }                         
 		              
 		      
@@ -366,16 +366,16 @@ public abstract class AdvancingFront {
 		                      /         V
 		                 ----v0 - - - > v1--------- */
 		        // assert(!mesh.vert[v2].IsB()); //fatal error! a new point is already a border?
-		    	assert(!(mesh.vert.get(v2)).IsB());
+		    	assert(!(mesh.vert.get(v2)).isB());
 		        // nb[v2]++;
 		    	int v = nb.get(v2);
 		    	v++;
 		    	nb.set(v2, v);
 		    	
-		        (mesh.vert.get(v2)).SetB();
+		        (mesh.vert.get(v2)).setB();
 
-		        FrontEdge down = NewEdge(new FrontEdge(v2, v1, v0, mesh.face.size()));
-		        FrontEdge up = NewEdge(new FrontEdge(v0, v2, v1, mesh.face.size()));                        
+		        FrontEdge down = newEdge(new FrontEdge(v2, v1, v0, mesh.face.size()));
+		        FrontEdge up = newEdge(new FrontEdge(v0, v2, v1, mesh.face.size()));                        
 		  
 		        down.previous = up;
 		        up.next = down;
@@ -383,15 +383,15 @@ public abstract class AdvancingFront {
 		        next.previous = down;
 		        up.previous = current.previous;
 		        previous.next = up;
-		        Erase(ei);
+		        erase(ei);
 		      }
 
             //System.err.println("AddFace: " + v0 + " " +  v1 + " " +  v2);
-		      AddFace(v0, v2, v1);
+		      addFace(v0, v2, v1);
 		      return false;
 		  }       
 	
-	 protected final void AddFace(int v0, int v1, int v2) {
+	 protected final void addFace(int v0, int v1, int v2) {
 		    assert(v0 < (int)mesh.vert.size() && v1 < (int)mesh.vert.size() && v2 < (int)mesh.vert.size());  
 		    Face face = new Face();
 		    // face.V(0) = mesh.vert.get(v0);
@@ -406,29 +406,29 @@ public abstract class AdvancingFront {
 		    face.setV(1, mesh.vert.get(v1));
 		    face.setV(2, mesh.vert.get(v2));
 		    
-		    ComputeNormalizedNormal(face);
+		    computeNormalizedNormal(face);
 		    // face.setN(((face.P(1)).sub(face.P(0))).Cross((face.P(2)).sub(face.P(0))).Normalize());
 		    // mesh.face.push_back(face);
 		    mesh.face.add(face);
 		    mesh.fn++;
      }
 		    
-	 protected final void ComputeNormalizedNormal(Face f) {	
+	 protected final void computeNormalizedNormal(Face f) {	
 		 // f.N() = NormalizedNormal(f);
-		 f.setN(NormalizedNoraml(f));
+		 f.setN(normalizedNoraml(f));
 	 }
 
-	 protected final Point3 NormalizedNoraml(Face f) {
+	 protected final Point3 normalizedNoraml(Face f) {
 		 Point3 p0 = f.P(0);
 		 Point3 p1 = f.P(1);
 		 Point3 p2 = f.P(2);
 		 
-		 return (( p1.sub(p0)).Cross(p2.sub(p0))).Normalize();
+		 return (( p1.sub(p0)).cross(p2.sub(p0))).normalize();
 	 }
 	 
 	 
 	 // VertexType &vertex
-     protected final void AddVertex(Vertex vertex) {
+     protected final void addVertex(Vertex vertex) {
 		    Vertex oldstart = null;
 		    int old_index;
 		    int current_index;
@@ -456,7 +456,7 @@ public abstract class AdvancingFront {
 		    nb.add(0);
 	 }
 	
-     protected final boolean CheckEdge(int v0, int v1) {
+     protected final boolean checkEdge(int v0, int v1) {
     	    int tot = 0;
     	    //HACK to speed up things until i can use a seach structure
     	/*    int i = mesh.face.size() - 4*(front.size());
@@ -480,65 +480,65 @@ public abstract class AdvancingFront {
     	  }    
 
      //Add a new FrontEdge to the back of the queue
-     protected final FrontEdge NewEdge(FrontEdge e) {                  
+     protected final FrontEdge newEdge(FrontEdge e) {                  
        // return front.insert(front.end(), e);
     	 front.addLast(e);
     	 return front.getLast();
      }     
      
      //move an Edge among the dead ones
-     protected final void KillEdge(FrontEdge e) {
+     protected final void killEdge(FrontEdge e) {
        e.active = false;
        // deads.splice(deads.getLast(), front, e);
        front.remove(e);
        deads.addLast(e);
      }
      
-     protected final void Erase(FrontEdge e) {
+     protected final void erase(FrontEdge e) {
        if(e.active) front.remove(e);
        else deads.remove(e);
      }
      
      //move an FrontEdge to the back of the queue
-     protected final void MoveBack(FrontEdge e) {
+     protected final void moveBack(FrontEdge e) {
        // front.splice(front.getLast(), front, e);  
     	 front.remove(e);
     	 front.addLast(e);
      }
      
-     protected final void MoveFront(FrontEdge e) {
+     protected final void moveFront(FrontEdge e) {
        // front.splice(front.begin(), front, e);
     	 front.remove(e);
     	 front.addFirst(e);
      }
      
      //check if e can be sewed with one of its neighbors
-     protected final boolean Glue(FrontEdge e) {
-       return Glue(e.previous, e) || Glue(e, e.next);
+     protected final boolean glue(FrontEdge e) {
+       return glue(e.previous, e) || glue(e, e.next);
      }
      
    //Glue toghether a and b (where a.next = b
-     protected final boolean Glue(FrontEdge a, FrontEdge b) {
+     protected final boolean glue(FrontEdge a, FrontEdge b) {
        if( a.v0 != b.v1) return false; 
        
        FrontEdge previous = a.previous;
        FrontEdge next = b.next;
        previous.next = next;
        next.previous = previous;
-       Detach(a.v1);
-       Detach(a.v0); 
-       Erase(a);
-       Erase(b);  
+       detach(a.v1);
+       detach(a.v0); 
+       erase(a);
+       erase(b);  
        return true;
      }
      
-     protected final void Detach(int v) {
+     protected final void detach(int v) {
        assert(nb.get(v) > 0);
        int value = nb.get(v);
        --value;
        nb.set(v, value);
        if( nb.get(v) == 0) {
-         mesh.vert.get(v).ClearB();      
+         mesh.vert.get(v).clearB();      
        }
      }      
      
@@ -554,7 +554,7 @@ public abstract class AdvancingFront {
         	 }
     	 
     	 // int &v0, int &v1, int &v2
-    	 public boolean Seed(int[] v0, int[] v1, int[] v2) {
+    	 public boolean seed(int[] v0, int[] v1, int[] v2) {
     		
     	    Vertex[] v = new Vertex[3];
     	    v[0] = new Vertex();
@@ -564,21 +564,21 @@ public abstract class AdvancingFront {
     	    v[0].setP(new Point3(0, 0, 0));
     	    v[1].setP(new Point3(1, 0, 0));
     	    v[2].setP(new Point3(0, 1, 0));
-    	    v[0].ClearFlags();
-    	    v[1].ClearFlags();
-    	    v[2].ClearFlags();
+    	    v[0].clearFlags();
+    	    v[1].clearFlags();
+    	    v[2].clearFlags();
 
     	    v0[0] = this.mesh.vert.size();
-    	    AddVertex(v[0]);
+    	    addVertex(v[0]);
     	    v1[0] = this.mesh.vert.size();
-    	    AddVertex(v[1]);
+    	    addVertex(v[1]);
     	    v2[0] = this.mesh.vert.size();
-    	    AddVertex(v[2]);
+    	    addVertex(v[2]);
     	    return true;
     	  }
     	  
     	 // &touch
-    	  public int Place(FrontEdge e, FrontEdge[] touch) {
+    	  public int place(FrontEdge e, FrontEdge[] touch) {
     	     Point3[] p = new Point3[3];
     	     p[0] = new Point3();
     	     p[1] = new Point3();
@@ -594,11 +594,11 @@ public abstract class AdvancingFront {
 
     	     int vn = this.mesh.vert.size();
     	     for(int i = 0; i < this.mesh.vert.size(); i++) {
-    	       if((  this.mesh.vert.get(i).P().sub(point)).Norm() < 0.1f) {
+    	       if((  this.mesh.vert.get(i).P().sub(point)).norm() < 0.1f) {
     	         vn = i;
     	         //find the border
     	         k_index = 0;
-    	         assert(((Vertex)(this.mesh.vert.get(i))).IsB());
+    	         assert(((Vertex)(this.mesh.vert.get(i))).isB());
     		     for(FrontEdge k = this.front.getFirst(); k_index < this.front.size(); k = this.front.get(++k_index))
     				if( k.v0 == i) touch[0] = k;
     		     
@@ -611,8 +611,8 @@ public abstract class AdvancingFront {
     	     if(vn == this.mesh.vert.size()) {       
     	       Vertex v = new Vertex();
     	       v.setP(point);
-    	       v.ClearFlags();
-    	       AddVertex(v);
+    	       v.clearFlags();
+    	       addVertex(v);
     	     }
     	     return vn;
     	  }

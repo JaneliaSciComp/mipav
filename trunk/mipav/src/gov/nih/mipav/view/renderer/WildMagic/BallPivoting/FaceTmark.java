@@ -7,19 +7,20 @@ public class FaceTmark {
 	public FaceTmark() {
 		
 	}
-	void UnMarkAll() {
-		m.UnMarkAll();
+	
+	public final void unMarkAll() {
+		m.unMarkAll();
 	}
 	
-	public boolean IsMarked(Face obj){
-		return (m.IsMarked(obj));
+	public final boolean isMarked(Face obj){
+		return (m.isMarked(obj));
 	}
 	
-	public void Mark(Face obj) {
-		m.Mark(obj);
+	public final void mark(Face obj) {
+		m.mark(obj);
 	}
 	
-	public void SetMesh(TriMesh _m) {
+	public final void setMesh(TriMesh _m) {
 		m=_m;
 	}
 	

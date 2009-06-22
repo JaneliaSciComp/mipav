@@ -21,7 +21,7 @@ public class PlyWriter {
             super();
         }
     }
-	public void writePlyAsciiMesh(TriMesh mesh, String directory, String filename) {
+	public final void writePlyAsciiMesh(TriMesh mesh, String directory, String filename) {
 	    
 
         
@@ -65,7 +65,7 @@ public class PlyWriter {
                     kAvg.add_into( akNormals[i].get(j) );
                 }
                 kAvg.div_into((float)akNormals[i].size());
-                kAvg.Normalize();
+                kAvg.normalize();
             }
             else
             {
@@ -139,7 +139,7 @@ public class PlyWriter {
 	}
 	
 
-    private File openFiles(String directory, String filename) {
+    private final File openFiles(String directory, String filename) {
     	String fname = new String(directory + File.separator + filename);
     	File file = new File(fname);
     	return file;

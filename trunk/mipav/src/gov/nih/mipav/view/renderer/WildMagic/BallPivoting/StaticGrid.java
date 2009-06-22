@@ -49,19 +49,19 @@ public class StaticGrid extends BasicGrid {
 	// the same of the nubmer of elements to be inserted in the grid.
 	//
 	// Note that the bbox must be already 'inflated' so to be sure that no object will fall on the border of the grid.	
-	public void Set(Box3 _bbox, Vector<Vertex> vertex)
+	public final void set(Box3 _bbox, Vector<Vertex> vertex)
 	{
 
 		// int _size=(int)std::distance<OBJITER>(_oBegin,_oEnd);
 		int _size = vertex.size();
 		Point3 _dim = _bbox.max.sub(_bbox.min);
 		Point3 _siz = new Point3();
-		BestDim( _size, _dim, _siz );
+		bestDim( _size, _dim, _siz );
 		
-		Set(vertex, _bbox,_siz);
+		set(vertex, _bbox,_siz);
 	}			
 	
-	public void Set(Vector<Vertex> vertex, Box3 _bbox, Point3 _siz)
+	public final void set(Vector<Vertex> vertex, Box3 _bbox, Point3 _siz)
 	{
 			Vertex i;
 			Iterator<Vertex> ii;
@@ -96,9 +96,9 @@ public class StaticGrid extends BasicGrid {
 				{
 					i = ii.next();
 					Box3 bb = new Box3();			// Boundig box del tetraedro corrente
-					i.GetBBox(bb);
-					bb.Intersect(this.bbox);
-					if(! bb.IsNull() )
+					i.getBBox(bb);
+					bb.intersect(this.bbox);
+					if(! bb.isNull() )
 					{
 
 						Box3 ib = new Box3();		// Boundig box in voxels
@@ -144,7 +144,7 @@ public class StaticGrid extends BasicGrid {
 					assert ( pl_elem != null );
 					grid.set(pg, pl_elem );   // Addressing issues here
 					//System.err.println ("Grid  " + pg + " " + pl_elem + " " + pl_elem.Index() );
-					while( (int)pg == pl_elem.Index() )	// Found beginning
+					while( (int)pg == pl_elem.index() )	// Found beginning
 					{
 					    //System.err.println("    while..."  + pl_elem + " " + pl_elem.Index() );
 						if ( pl.hasNext() )
@@ -164,7 +164,7 @@ public class StaticGrid extends BasicGrid {
 	}		
 
 	/// BY INTEGER COORDS
-	public Link Grid( int x, int y, int z, int[] index )
+	public final Link grid( int x, int y, int z, int[] index )
 	{
 		assert(!( x<0 || x>=BT.siz.x || y<0 || y>=BT.siz.y || z<0 || z>=BT.siz.z ));
 		assert(grid.size()>0);
@@ -179,21 +179,21 @@ public class StaticGrid extends BasicGrid {
 	}
 
     
-    public Link get(int index) {
+    public final Link get(int index) {
       return grid.elementAt(index);
     }
     
-    public Link getLink(int index) {
+    public final Link getLink(int index) {
       return links.elementAt(index);
     }
 	
 	
-	public int GetInSphere(PointDistanceFunctor _getPointDistance, VertTmark _marker, Point3 _p, float _r,
+	public final int getInSphere(PointDistanceFunctor _getPointDistance, VertTmark _marker, Point3 _p, float _r,
 			Vector<Vertex> _objectPtrs, Vector<Float> _distances, Vector<Point3> _points) {
-		return GridGetInSphere(this,_getPointDistance,_marker,_p,_r,_objectPtrs,_distances,_points);
+		return gridGetInSphere(this,_getPointDistance,_marker,_p,_r,_objectPtrs,_distances,_points);
 	}
 	
-	public int GridGetInSphere(StaticGrid _Si,
+	public final int gridGetInSphere(StaticGrid _Si,
 							   PointDistanceFunctor _getPointDistance, 
 							   VertTmark _marker,
 							   Point3 _p, 
@@ -203,17 +203,17 @@ public class StaticGrid extends BasicGrid {
 							   Vector<Point3> _points
 							   ) {
 		ClosestIterator Cli=new ClosestIterator(_Si,_getPointDistance);
-		Cli.SetMarker(_marker);
-		Cli.Init(_p,_r);
+		Cli.setMarker(_marker);
+		Cli.init(_p,_r);
 		_objectPtrs.clear();
 		_distances.clear();
 		_points.clear();
-		while (!Cli.End())
+		while (!Cli.end())
 		{
 			
 			_objectPtrs.add(Cli.get());          //  Ruida  address conversion????????
-			_distances.add(Cli.Dist());
-			_points.add(Cli.NearestPoint());
+			_distances.add(Cli.dist());
+			_points.add(Cli.nearestPoint());
 			
 			// ++Cli;
 			Cli.plusplus();

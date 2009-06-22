@@ -25,6 +25,9 @@ public class Vertex {
 	// First user bit
 	public static int USER0      = 0x0200;			// Fisrt user bit
 	
+	protected Face _vfb;
+	protected int _vfi;
+	
 	
 	/** @name Vertex Flags
 	For each vertex we store a set of boolean values packed in a int. 
@@ -38,7 +41,7 @@ public class Vertex {
 
 	protected Point3 _n = new Point3();
 	
-	public Vertex copy() {
+	public final Vertex copy() {
 		Vertex v = new Vertex();
 		v._p.assign(this._p);
 		v._n.assign(this._n);
@@ -49,7 +52,7 @@ public class Vertex {
 	}
 	
 	/// Return the spatial coordinate of the vertex
-	public Point3 P()
+	public final  Point3 P()
 	{
 	  assert( (_flags & DELETED) == 0 );
 		assert( (_flags & NOTREAD) == 0 );
@@ -57,7 +60,7 @@ public class Vertex {
 		return _p;
 	}
 	
-	public void setP(Point3 p) {
+	public final void setP(Point3 p) {
 		assert( (_flags & DELETED) == 0 );
 		assert( (_flags & NOTREAD) == 0 );
 		assert( (_flags & NOTWRITE) == 0 );
@@ -65,7 +68,7 @@ public class Vertex {
 	}
 	
 	/// Return the constant spatial coordinate of the vertex
-	public Point3 cP()
+	public final Point3 cP()
 	{
 		assert( (_flags & DELETED) == 0 );
 		assert( (_flags & NOTREAD) == 0 );
@@ -74,14 +77,14 @@ public class Vertex {
 	
 	
 	
-	public int Flags ()
+	public final int flags ()
 	{
 			assert( (_flags & DELETED) == 0 );
 			assert( (_flags & NOTREAD) == 0 );
 			return _flags;
 	}
 	
-	public void setFlags(int flags ) {
+	public final void setFlags(int flags ) {
 		assert( (_flags & DELETED) == 0 );
 		assert( (_flags & NOTREAD) == 0 );
 	    _flags = flags;
@@ -89,71 +92,62 @@ public class Vertex {
 	
 	
 	///  checks if the vertex is deleted
-	public boolean IsD() {return (_flags & DELETED) != 0;}
+	public final boolean isD() {return (_flags & DELETED) != 0;}
 	///  checks if the vertex is readable
-	public boolean IsR() {return (_flags & NOTREAD) == 0;}
+	public final boolean isR() {return (_flags & NOTREAD) == 0;}
 	///  checks if the vertex is modifiable
-	public boolean IsW() {return (_flags & NOTWRITE)== 0;}
+	public final boolean isW() {return (_flags & NOTWRITE)== 0;}
 	/// This funcion checks whether the vertex is both readable and modifiable
-	public boolean IsRW() {return (_flags & (NOTREAD | NOTWRITE)) == 0;}
+	public final boolean isRW() {return (_flags & (NOTREAD | NOTWRITE)) == 0;}
 	///  checks if the vertex is Modified
-	public boolean IsS() {return (_flags & SELECTED) != 0;}
+	public final boolean isS() {return (_flags & SELECTED) != 0;}
 	///  checks if the vertex is readable
-	public boolean IsB() {return (_flags & BORDER) != 0;}
+	public final boolean isB() {return (_flags & BORDER) != 0;}
 	///  checks if the vertex is visited
-	public boolean IsV() {return (_flags & VISITED) != 0;}
+	public final boolean isV() {return (_flags & VISITED) != 0;}
 
 
-	/** Set the flag value
-		@param flagp Valore da inserire nel flag
-	*/
-	public void SetFlags(int flagp) {_flags=flagp;}
-
-
-	/** Set the flag value
-	@param flagp Valore da inserire nel flag
-	*/
-	public void ClearFlags() {_flags=0;}
+	public final void clearFlags() {_flags=0;}
 	
 	///  deletes the vertex from the mesh
-	public void SetD() {_flags |=DELETED;}
+	public final void setD() {_flags |=DELETED;}
 	///  un-delete a vertex
-	public void ClearD() {_flags &=(~DELETED);}
+	public final void clearD() {_flags &=(~DELETED);}
 	///  marks the vertex as readable
-	public void SetR() {_flags &=(~NOTREAD);}
+	public final void setR() {_flags &=(~NOTREAD);}
 	///  marks the vertex as not readable
-	public void ClearR() {_flags |=NOTREAD;}
+	public final void clearR() {_flags |=NOTREAD;}
 	///  marks the vertex as writable
-	public void ClearW() {_flags |=NOTWRITE;}
+	public final void clearW() {_flags |=NOTWRITE;}
 	///  marks the vertex as not writable
-	public void SetW() {_flags &=(~NOTWRITE);}
+	public final void setW() {_flags &=(~NOTWRITE);}
 	///  select the vertex
-	public void SetS()		{_flags |=SELECTED;}
+	public final void setS()		{_flags |=SELECTED;}
 	/// Un-select a vertex
-	public void ClearS()	{_flags &= ~SELECTED;}
+	public final void clearS()	{_flags &= ~SELECTED;}
 	/// Set vertex as ob border
-	public void SetB()		{_flags |=BORDER;}
-	public void ClearB()	{_flags &=~BORDER;}
+	public final void setB()		{_flags |=BORDER;}
+	public final void clearB()	{_flags &=~BORDER;}
 	///  checks if the vertex is visited
-	public void ClearV()	{_flags &= ~VISITED;}
+	public final void clearV()	{_flags &= ~VISITED;}
 	///  checks if the vertex is visited
-	public void SetV()		{_flags |=VISITED;}
+	public final void setV()		{_flags |=VISITED;}
 	
 	///  Return the first bit that is not still used
-	public static int LastBitFlag()
+	public static final int lastBitFlag()
 	{
 				b =USER0;
 				return b;
 	}
 
 	/// allocate a bit among the flags that can be used by user.
-	public static int NewBitFlag()
+	public static final int newBitFlag()
 	{
 		b=b<<1;
 		return b;
 	}
 	// de-allocate a bit among the flags that can be used by user.
-	public static boolean DeleteBitFlag(int bitval) {
+	public static final boolean deleteBitFlag(int bitval) {
 		if (b == bitval) {
 			b = b >> 1;
 			return true;
@@ -163,19 +157,19 @@ public class Vertex {
 	}
 	
 	/// This function checks if the given user bit is true
-	public boolean IsUserBit(int userBit){return (_flags & userBit) != 0;}
+	public final boolean isUserBit(int userBit){return (_flags & userBit) != 0;}
 	/// This function set  the given user bit 
-	public void SetUserBit(int userBit){_flags |=userBit;}
+	public final void setUserBit(int userBit){_flags |=userBit;}
 	/// This function clear the given user bit 
-	public void ClearUserBit(int userBit){_flags &= (~userBit);}
+	public final void clearUserBit(int userBit){_flags &= (~userBit);}
 	
 	
 	/*#*******************	
 	*  Bounding box *
 	**********************/
-	public void GetBBox( Box3 bb ) 
+	public final void getBBox( Box3 bb ) 
 	{
-		bb.Set( cP() );
+		bb.set( cP() );
 	}
 	
 	
@@ -185,7 +179,7 @@ public class Vertex {
 	   blah
 	 **/
 	/// This function return the vertex incremental mark
-	public int  IMark()
+	public final int  iMark()
 	{
 		assert( (_flags & DELETED) == 0 );
 		assert( (_flags & NOTREAD) == 0 );
@@ -194,32 +188,32 @@ public class Vertex {
 	}
 
 	/// Initialize the _imark system of the vertex
-	public void InitIMark()
+	public final void initIMark()
 	{
 		imark = 0;
 	}
 	
 	// & operator [] 
-	public float get(int i) {
+	public final float get(int i) {
 		return P().V().get(i);
 	}
 	
-	public boolean equals(Vertex ve) {
+	public final boolean equals(Vertex ve) {
 		return _p.equals(ve._p);
 	}
 	
 	/// Operator to compare two vertices using lexicographic order
 	// operator < 
-	public boolean lessThan (Vertex ve) {
+	public final boolean lessThan (Vertex ve) {
 		return _p.lessThan(ve._p);
 	}
 	
 	/// Operator to compare two vertices using lexicographic order
-	public boolean lessEqualThan (Vertex ve) {
+	public final boolean lessEqualThan (Vertex ve) {
 		return _p.lessEqualThan(ve._p);
 	}
 	
-	public boolean greaterThan (Vertex ve) {
+	public final boolean greaterThan (Vertex ve) {
 		return _p.greaterThan(ve._p);
 	}
 	
@@ -227,18 +221,18 @@ public class Vertex {
 	 /***********************************************/
 	 /** @name Vertex Normal 
 	 **/
-	public static boolean HasNormal() {
+	public static final boolean hasNormal() {
 		return true;
 	}
 	
-	public Point3 N() {
+	public final Point3 N() {
 		assert( (_flags & DELETED) == 0 );
 		assert( (_flags & NOTREAD) == 0 );
 		assert( (_flags & NOTWRITE) == 0 );
 		return _n;
 	}
 	
-	public void setN(Point3 nv) {
+	public final void setN(Point3 nv) {
 		assert( (_flags & DELETED) == 0 );
 		assert( (_flags & NOTREAD) == 0 );
 		assert( (_flags & NOTWRITE) == 0 );
@@ -246,30 +240,19 @@ public class Vertex {
 	}
 	
 	
-	public Face cVFp() 
+	public final Face cVFp() 
 	{
 		  return _vfb;
 	}
 	
-	public Face VFp()
+	public final Face VFp()
 	{
 		  return _vfb;
 	}
 	
-	public int VFi() {
+	public final int VFi() {
 		return _vfi;
 	}
 	
-	protected Face _vfb;
-	protected int _vfi;
 	
-	/*#*******************	
-	*  Bounding box *
-	**********************/
-    /*
-	public void GetBBox( Box3 bb ) 
-	{
-		bb.Set( cP() );
-	}
-	*/
 }

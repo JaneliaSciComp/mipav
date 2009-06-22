@@ -8,19 +8,20 @@ public class VertTmark {
 	public VertTmark() {
 		
 	}
-	void UnMarkAll() {
-		m.UnMarkAll();
+	
+	public final void unMarkAll() {
+		m.unMarkAll();
 	}
 	
-	public boolean IsMarked(Vertex obj){
-		return (m.IsMarked(obj));
+	public final boolean isMarked(Vertex obj){
+		return (m.isMarked(obj));
 	}
 	
-	public void Mark(Vertex obj) {
-		m.Mark(obj);
+	public final void mark(Vertex obj) {
+		m.mark(obj);
 	}
 	
-	public void SetMesh(TriMesh _m) {
+	public final void setMesh(TriMesh _m) {
 		m=_m;
 	}
 	

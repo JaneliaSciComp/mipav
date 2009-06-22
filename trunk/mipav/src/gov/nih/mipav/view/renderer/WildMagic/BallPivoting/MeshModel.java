@@ -44,7 +44,7 @@ public class MeshModel {
 	public int currentDataMask;;
 	
 	
-	public void clearDataMask(int unneededDataMask)
+	public final void clearDataMask(int unneededDataMask)
 	  {
 		    /*
 			if( ( (unneededDataMask & MM_VERTFACETOPO)!=0)	&& hasDataMask(MM_VERTFACETOPO)) {cm.face.DisableVFAdjacency();
@@ -63,7 +63,7 @@ public class MeshModel {
 	    currentDataMask = currentDataMask & (~unneededDataMask);
 	  }
 	
-	 public boolean hasDataMask(int maskToBeTested)
+	 public final boolean hasDataMask(int maskToBeTested)
 	{
 		return ((currentDataMask & maskToBeTested)!= 0);
 	}
