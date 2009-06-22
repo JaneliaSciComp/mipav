@@ -4985,7 +4985,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     /**
 	 * Translate the image origin from image space to patient space (scanner
 	 * space). The basic ideas, tranlate the (0,0,0) point from scaner space to
-	 * image space, then subtract the original image origin. The (0, 0, 0) point
+	 * image space, then multiply the resolution, and subtract the image origin. The (0, 0, 0) point
 	 * is the upper left corner of the scanner space's image.
 	 */
     private void updateOrigin() {
@@ -5042,17 +5042,17 @@ public class AlgorithmTransform extends AlgorithmBase {
             if (xfrm.getDim() == 3) {
                 final float[] tempOrigin = new float[2];
                 xfrm.transform(0f, 0f, tempOrigin);
-                AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0]+tempOrigin[0];
-                AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1]+tempOrigin[1];
+                AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0]+tempOrigin[0] * iXres;
+                AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1]+tempOrigin[1] * iYres;
             } else {
                 final float[] tempOrigin = new float[3];
                 System.err.println("Before: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
                 		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
                 		"AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
                 xfrm.transform(0f, 0f, 0f, tempOrigin);
-                AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0]+tempOrigin[0];
-                AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1]+tempOrigin[1];
-                AlgorithmTransform.imgOrigin[2] = AlgorithmTransform.imgOrigin[2]+tempOrigin[2];
+                AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0]+tempOrigin[0] * iXres;
+                AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1]+tempOrigin[1] * iYres;
+                AlgorithmTransform.imgOrigin[2] = AlgorithmTransform.imgOrigin[2]+tempOrigin[2] * iZres;
                 
                 System.err.println("After: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
                 		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
