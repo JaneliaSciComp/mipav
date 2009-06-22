@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.view.MipavUtil;
+
 
 /**  This code calculates the gamma function of an input argument x
  *   A typcial usage would be:
@@ -20,6 +22,9 @@ public class Gamma {
     
     /** Compute gamma function or log of gamma function for complex arguments */
     public static final int CGAMMA = 3;
+    
+    /** Compute incompete gamma functions and regularized gamma P function */
+    public static final int INCOG = 4;
     /** input argument 
      *  Note that the gamma function is not defined for x equal to zero or a
      *  negative integer */
@@ -46,8 +51,16 @@ public class Gamma {
     /** Imaginary part of outputted result */
     private double imagResult[];
     
-    /** GAMMA, LGAMMA, or CGAMMA */
+    /** GAMMA, LGAMMA, CGAMMA, or INCOG */
     private int version;
+    
+    private double a;
+    
+    private double lowerIncompleteGamma[];
+    
+    private double upperIncompleteGamma[];
+    
+    private double regularizedGammaP[];
     
     /**
      * 
@@ -91,6 +104,25 @@ public class Gamma {
         this.version = CGAMMA;
     }
     
+    /**
+     * 
+     * @param a Must have a <= 170
+     * @param x
+     * @param lowerIncompleteGamma
+     * @param upperIncompleteGamma
+     * @param regularizedGammaP
+     */
+    public Gamma(double a, double x, double lowerIncompleteGamma[], double upperIncompleteGamma[],
+                 double regularizedGammaP[]) {
+        this.a = a;
+        this.x = x;
+        this.lowerIncompleteGamma = lowerIncompleteGamma;
+        this.upperIncompleteGamma = upperIncompleteGamma;
+        this.regularizedGammaP = regularizedGammaP;
+        this.version = INCOG;
+        
+    }
+    
 //  ~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -112,6 +144,9 @@ public class Gamma {
         }
         else if (version == CGAMMA) {
             //cgamma();
+        }
+        else if (version == INCOG) {
+            incog();
         }
     }
 
@@ -343,5 +378,65 @@ public class Gamma {
         } // if (functionCode == 1)
         return;
     } // cgamma */
+    
+    /**
+     * This code is a port of the FORTRAN routine INCOG from the book Computation of
+     * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc.,
+     * 1996, pp. 63-64.  It caclulates the incomplete gamma functions and the regularized
+     * gamma function P.
+     */
+    private void incog() {
+        double xam;
+        Gamma gamm;
+        double ga[] = new double[1];
+        double s;
+        double r;
+        int k;
+        double t0;
+        if (a > 170.0) {
+            MipavUtil.displayError("a = " + a + " exceeds the maximum allowable value of 170 for incog");
+            return;
+        }
+        xam = -x + a*Math.log(x);
+        if (xam > 700.0) {
+            MipavUtil.displayError("a and/or x too large in incog");
+            return;
+        }
+        if (x == 0.0) {
+            lowerIncompleteGamma[0] = 0;
+            gamm = new Gamma(a, ga);
+            gamm.run();
+            upperIncompleteGamma[0] = ga[0];
+            regularizedGammaP[0] = 0.0;
+        } // if (x == 0.0)
+        else if (x <= 1.0+a) {
+            s = 1.0/a;
+            r = s;
+            for (k = 1; k <= 60; k++) {
+                r = r * x/(a + k);
+                s = s + r;
+                if (Math.abs(r/s) < 1.0E-15) {
+                    break;
+                }
+            } // for (k = 1; k <= 60; k++)
+            lowerIncompleteGamma[0] = Math.exp(xam)*s;
+            gamm = new Gamma(a, ga);
+            gamm.run();
+            regularizedGammaP[0] = lowerIncompleteGamma[0]/ga[0];
+            upperIncompleteGamma[0] = ga[0] - lowerIncompleteGamma[0];
+        } // else if (x <= 1.0+a)
+        else { // else x > 1.0 + a
+            t0 = 0.0;
+            for (k = 60; k >= 1; k--) {
+                t0 = (k - a)/(1.0 + k/(x + t0));    
+            } // for (k = 60; k >= 1; k--)
+            upperIncompleteGamma[0] = Math.exp(xam)/(x + t0);
+            gamm = new Gamma(a, ga);
+            gamm.run();
+            lowerIncompleteGamma[0] = ga[0] - upperIncompleteGamma[0];
+            regularizedGammaP[0] = 1.0 - upperIncompleteGamma[0]/ga[0];
+        } // else x > 1.0 + a
+        return;
+    }
    
 }
