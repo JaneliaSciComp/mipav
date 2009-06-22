@@ -1048,7 +1048,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             Class plugin;
             final String catName = "CATEGORY";
             final String scriptName = "SCRIPT_PREFIX";
-
             for (final File allFile : allFiles) {
                 JMenu currentMenu = menu;
                 name = allFile.getName();
@@ -1118,6 +1117,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                 } catch(NoSuchFieldException e) {
                 	//no category, so class is not a valid plugin, class should not be added to GUI
+                } catch(NoClassDefFoundError e) {
+                	//a component of the plugin does not exist on the file system, the plugin may have to be reinstalled.
                 } catch (final Exception e) {
                     // usually this means other files/folders exist in the installed plugins directory besides plugin
                     // files
