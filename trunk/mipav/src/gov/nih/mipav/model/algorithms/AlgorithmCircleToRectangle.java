@@ -299,8 +299,8 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         
         Gamma gamm;
         double g1[] = new double[1];
-        double g2[] = new double[2];
-        double g3[] = new double[3];
+        double g2[] = new double[1];
+        double g3[] = new double[1];
         double d;
 
         double xc, yc;
