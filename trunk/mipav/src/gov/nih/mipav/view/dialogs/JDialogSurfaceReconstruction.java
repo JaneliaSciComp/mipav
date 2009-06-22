@@ -139,14 +139,18 @@ public class JDialogSurfaceReconstruction extends JDialogBase {
 			m.cm.face.setSize(0);
 	    }
     	
-	    m.cm.InitFaceIMark();
-		m.cm.InitVertexIMark();
+	    m.cm.initFaceIMark();
+		m.cm.initVertexIMark();
 		// int startingFn=m.cm.fn;			
 		Clustering /= 100.0f;
 		BallPivoting pivot = new BallPivoting(m.cm, Radius, Clustering, CreaseThr); 
 	    // the main processing
+		double tt=System.currentTimeMillis();
 		System.err.println("BuildMesh");
-	    pivot.BuildMesh();
+		
+	    pivot.buildMesh();
+	    System.err.println("#              Total Time: " + ((double)(System.currentTimeMillis()-tt) / 1000.0));
+		
 	    System.err.println("finish");
 	    m.clearDataMask(MeshModel.MM_FACEFACETOPO | MeshModel.MM_FACEFLAGBORDER);
 	    System.err.println("m.cm.fn = " + m.cm.fn);
