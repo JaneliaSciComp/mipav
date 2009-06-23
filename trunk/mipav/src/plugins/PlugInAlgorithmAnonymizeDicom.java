@@ -80,6 +80,16 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		this.submitImageLocation = submitImageLocation;
 		this.selectedFiles = inputFiles;
 		this.tagListFromDialog = tagList;
+		
+		File f = new File(submitPatientLocation);
+		if(!f.exists()) {
+			f.mkdirs();
+		}
+		
+		f = new File(submitImageLocation);
+		if(!f.exists()) {
+			f.mkdirs();
+		}
 
 		if(selectedFiles.length > 0)
 			anonLoc = submitPatientLocation + File.separator + "AnonymizationResults.txt";
@@ -627,11 +637,24 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                	
 	                	long raPtrOld = raFile.getFilePointer();
 	                	if(type.equals("typeString")) {
+	                		
+	                		
 	                		//System.out.println(strValue);
 		                	anonymizeTags.put(key, strValue);
 		                	String anonStr = "";
-		                	for(int i=0; i<strValue.length(); i++) {
-		                		anonStr = anonStr+"X";
+		                	if(key.equals("0008,0014") || key.equals("0008,0018") || 
+		                			key.equals("0020,000E") || key.equals("0020, 000D") || key.equals("0020,0010") || key.equals("0020,0052")) {
+		                		for(int i=0; i<strValue.length(); i++) {
+			                		if(strValue.charAt(i) == '.') {
+			                			anonStr = anonStr+".";
+			                		} else {
+			                			anonStr = anonStr+"1";
+			                		}
+			                	}
+		                	} else {		                	
+			                	for(int i=0; i<strValue.length(); i++) {
+			                		anonStr = anonStr+"X";
+			                	}
 		                	}
 		                	
 		                	raFile.seek(bPtrOld);
@@ -1844,8 +1867,18 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 	                	if(type.equals("typeString")) {
 	                		System.out.println(strValue);
 		                	String anonStr = "";
-		                	for(int i=0; i<strValue.length(); i++) {
-		                		anonStr = anonStr+"X";
+		                	if(nameSQ.equals("0008,1155")) {
+		                		for(int i=0; i<strValue.length(); i++) {
+			                		if(strValue.charAt(i) == '.') {
+			                			anonStr = anonStr+".";
+			                		} else {
+			                			anonStr = anonStr+"1";
+			                		}
+			                	}
+		                	} else {
+			                	for(int i=0; i<strValue.length(); i++) {
+			                		anonStr = anonStr+"X";
+			                	}
 		                	}
 		                	
 		                	raFile.seek(bPtrOld);
