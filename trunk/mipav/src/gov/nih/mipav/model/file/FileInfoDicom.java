@@ -245,7 +245,8 @@ public class FileInfoDicom extends FileInfoBase {
             try {
 
                 if (list[i]) {
-                    getTagTable().setValue(anonymizeTagIDs[i], "", 0);
+                	String anonValue = generateAnonTag(anonymizeTagIDs[i]);
+                	getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
                 }
             } catch (NullPointerException npe) { // an IllegalArgumentException is probably not right here....
                 throw new IllegalArgumentException("(" + anonymizeTagIDs[i] + ") is a required type 2 tag.");
@@ -260,25 +261,43 @@ public class FileInfoDicom extends FileInfoBase {
             // change each of the following tags to (empty)
             // if we are asked to anonymize this info and if the tag exists in the hashtable.
             if ((list[i]) && (tagTable.getValue(anonymizeTagIDs[i]) != null)) {
-                if(anonymizeTagIDs[i].equals("0008,0018")) { 
-                	//though not technically required, nany programs want this field to be populated
-                	Random r = new Random();
-            		String anonStr = "";
-            		String strValue = getTagTable().get("0008,0018").getValue(true).toString();
-            		for(int j=0; j<strValue.length(); j++) {
-                		if(strValue.charAt(j) == '.') {
-                			anonStr = anonStr+".";
-                		} else {
-                			anonStr = anonStr+r.nextInt(10);
-                		} 
-                	}
-            		getTagTable().setValue(anonymizeTagIDs[i], anonStr);
-                } else {
-                	getTagTable().setValue(anonymizeTagIDs[i], "", 0);
-                }
+        		String anonValue = generateAnonTag(anonymizeTagIDs[i]);
+            	getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
             }
         }
         // this fileInfo is now an expurgated/sanitised version
+    }
+    
+    /**
+     * Generates an anonymous version of a particular tag that is DICOM compatible 
+     * @param key
+     * @return
+     */
+    private String generateAnonTag(String key) {
+    	String anonStr = "";
+    	String strValue = getTagTable().get(key).getValue(true).toString();
+    	if(strValue != null) {
+	    	if(key.equals("0008,0014") || key.equals("0008,0018") || 
+	    			key.equals("0020,000E") || key.equals("0020,000D") || key.equals("0020,0010") || key.equals("0020,0052")) {
+	    		Random r = new Random();
+	    		
+	    		for(int i=0; i<strValue.length(); i++) {
+	        		if(strValue.charAt(i) == '.') {
+	        			anonStr = anonStr+".";
+	        		} else if(key.equals("0008,0018")) {
+	        			anonStr = anonStr+r.nextInt(10);
+	        		} else {
+	        			anonStr = anonStr+"1";
+	        		}
+	        	}
+	    	} else {		                	
+	        	for(int i=0; i<strValue.length(); i++) {
+	        		anonStr = anonStr+"X";
+	        	}
+	    	}
+    	}
+    	
+    	return anonStr;
     }
 
     /**
