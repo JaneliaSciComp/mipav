@@ -8,10 +8,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.*;
 import java.text.*;
+import java.util.Scanner;
 import java.util.Vector;
 import java.util.Enumeration;
 
 import java.io.*;
+import java.net.URL;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -70,6 +72,8 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
 
     /** DOCUMENT ME! */
     private JToolBar tBar;
+    
+    private static String VERSION = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -82,7 +86,9 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
         super(title);
 
         setResizable(true);
+        setVersion();
         init(title);
+        append(getVersion()+"\n",1);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -267,6 +273,11 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            
+            if(getTabbedPane().getSelectedIndex()==1){
+            	append(getVersion()+"\n",1);
+            }
+            
         } else if (event.getActionCommand().equals("Copy")) {
 
             try {
@@ -633,13 +644,35 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
 
         buildMenu();
         buildToolBar();
-
         getContentPane().add(tBar, BorderLayout.NORTH);
+        
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
-    /**
+    public static void setVersion() {
+    	URL fileURL = ViewUserInterface.class.getClassLoader().getResource("about.txt");
+    	File aboutFile = new File(fileURL.getFile());
+    	try {
+    		if (aboutFile.exists()){
+			Scanner find = new Scanner(aboutFile).useDelimiter("Version:\\s*\\S*\\s*\\S*\\s");
+			find.next();
+			ViewJFrameMessage.VERSION = "MIPAV "+ find.nextLine();
+    		}
+    		else{
+    			ViewJFrameMessage.VERSION="Can't locate version number.";
+    		}
+		} catch (FileNotFoundException e) {
+			ViewJFrameMessage.VERSION="Can't locate version number.";
+		}
+	
+	}
+
+	public static String getVersion() {
+		return VERSION;
+	}
+
+	/**
      * DOCUMENT ME!
      */
     public static class ScrollTextArea extends JScrollPane {
