@@ -260,7 +260,22 @@ public class FileInfoDicom extends FileInfoBase {
             // change each of the following tags to (empty)
             // if we are asked to anonymize this info and if the tag exists in the hashtable.
             if ((list[i]) && (tagTable.getValue(anonymizeTagIDs[i]) != null)) {
-                getTagTable().setValue(anonymizeTagIDs[i], "", 0);
+                if(anonymizeTagIDs[i].equals("0008,0018")) { 
+                	//though not technically required, nany programs want this field to be populated
+                	Random r = new Random();
+            		String anonStr = "";
+            		String strValue = getTagTable().get("0008,0018").getValue(true).toString();
+            		for(int j=0; j<strValue.length(); j++) {
+                		if(strValue.charAt(j) == '.') {
+                			anonStr = anonStr+".";
+                		} else {
+                			anonStr = anonStr+r.nextInt(10);
+                		} 
+                	}
+            		getTagTable().setValue(anonymizeTagIDs[i], anonStr);
+                } else {
+                	getTagTable().setValue(anonymizeTagIDs[i], "", 0);
+                }
             }
         }
         // this fileInfo is now an expurgated/sanitised version
