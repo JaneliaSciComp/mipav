@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.Vector;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -644,9 +645,13 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	String anonStr = "";
 		                	if(key.equals("0008,0014") || key.equals("0008,0018") || 
 		                			key.equals("0020,000E") || key.equals("0020,000D") || key.equals("0020,0010") || key.equals("0020,0052")) {
+		                		Random r = new Random();
+		                		
 		                		for(int i=0; i<strValue.length(); i++) {
 			                		if(strValue.charAt(i) == '.') {
 			                			anonStr = anonStr+".";
+			                		} else if(key.equals("0008,0018")) {
+			                			anonStr = anonStr+r.nextInt(10);
 			                		} else {
 			                			anonStr = anonStr+"1";
 			                		}
