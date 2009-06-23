@@ -3076,9 +3076,14 @@ public class FileIO {
                 for (i = 1; i < numDig; i++) {
                     start = "0" + start;
                 }
-
-                fName = fName.substring(0, fName.indexOf(".")) + start
-                        + fName.substring(fName.indexOf("."), fName.length());
+                
+                if(fName.indexOf(".")!= -1){
+                	fName = fName.substring(0, fName.indexOf(".")) + start
+                		+ fName.substring(fName.indexOf("."), fName.length());
+                }
+                else{
+                	fName = fName + start;
+                }
 
                 // check to see if we are actually switching dims (split into multi-file)
                 if (options.getBeginSlice() == options.getEndSlice()) {
