@@ -643,7 +643,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
 		                	anonymizeTags.put(key, strValue);
 		                	String anonStr = "";
 		                	if(key.equals("0008,0014") || key.equals("0008,0018") || 
-		                			key.equals("0020,000E") || key.equals("0020, 000D") || key.equals("0020,0010") || key.equals("0020,0052")) {
+		                			key.equals("0020,000E") || key.equals("0020,000D") || key.equals("0020,0010") || key.equals("0020,0052")) {
 		                		for(int i=0; i<strValue.length(); i++) {
 			                		if(strValue.charAt(i) == '.') {
 			                			anonStr = anonStr+".";
