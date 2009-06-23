@@ -106,7 +106,7 @@ public class Gamma {
     
     /**
      * 
-     * @param a Must have a <= 170
+     * @param a
      * @param x
      * @param lowerIncompleteGamma
      * @param upperIncompleteGamma
@@ -383,7 +383,9 @@ public class Gamma {
      * This code is a port of the FORTRAN routine INCOG from the book Computation of
      * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc.,
      * 1996, pp. 63-64.  It caclulates the incomplete gamma functions and the regularized
-     * gamma function P.
+     * gamma function P.  For a > 100 use code deried from Numercial Recipes The Art of
+     * Scientific Computing Third Edition Chapter 6 Special Functions from routine 
+     * gammpapprox P. 262.
      */
     private void incog() {
         double xam;
@@ -393,10 +395,56 @@ public class Gamma {
         double r;
         int k;
         double t0;
-        if (a > 170.0) {
-            MipavUtil.displayError("a = " + a + " exceeds the maximum allowable value of 170 for incog");
+        double a1;
+        double lna1;
+        double sqrta1;
+        double gln[] = new double[1];
+        double xu;
+        double sum;
+        int j;
+        double t;
+        double ans;
+        double y[] = new double []{0.0021695375159141994, 0.011413521097787704, 0.027972308950302116,
+                0.051727015600492421, 0.082502225484340941, 0.12007019910960293, 0.16415283300752470,
+                0.21442376986779355, 0.27051082840644336, 0.33199876341447887, 0.39843234186401943,
+                0.46931971407375483, 0.54413605556657973, 0.62232745288031077, 0.70331500465597174,
+                0.78649910768313447, 0.87126389619061517, 0.95698180152629142};
+        double w[] = new double[]{0.0055657196642445571, 0.012915947284065419, 0.020181515297735382,
+                0.027298621498568734, 0.034213810770299537, 0.040875750923643261, 0.047235083490265582,
+                0.053244713977759692, 0.058860144245324798, 0.064039797355015485, 0.068745323835736408,
+                0.072941885005653087, 0.076598410645870640, 0.079687828912071670, 0.082187266704339706,
+                0.084078218979661945, 0.085346685739338721, 0.085983275670394821};
+        if (a > 100.0) {
+            a1 = a - 1.0;
+            lna1 = Math.log(a1);
+            sqrta1 = Math.sqrt(a1);
+            gamm = new Gamma(x, 0, gln);
+            gamm.run();
+            if (x > a1) {
+                xu = Math.max(a1 + 11.5*sqrta1, x + 6.0*sqrta1);
+            }
+            else {
+                xu = Math.max(0.0, Math.min(a1 - 7.5*sqrta1, x - 5.0*sqrta1));
+            }
+            sum = 0.0;
+            for (j = 0; j < 18; j++) {
+                t = x + (xu - x)*y[j];
+                sum += w[j]*Math.exp(-(t-a1)+a1*(Math.log(t)-lna1));
+            }
+            ans = sum*(xu-x)*Math.exp(a1*(lna1-1.0)-gln[0]);
+            if (x > a1) {
+                regularizedGammaP[0] = 1.0 - ans;
+            }
+            else {
+                regularizedGammaP[0] = -ans;
+            }
+            // ga[0], lowerIncompleteGamma[0], and upperIncompleteGamma[0] may be too large to compute
+            gamm = new Gamma(a, ga);
+            gamm.run();
+            lowerIncompleteGamma[0] = regularizedGammaP[0] * ga[0];
+            upperIncompleteGamma[0] = ga[0] - lowerIncompleteGamma[0];
             return;
-        }
+        } // if (a > 100.0)
         xam = -x + a*Math.log(x);
         if (xam > 700.0) {
             MipavUtil.displayError("a and/or x too large in incog");
@@ -408,6 +456,7 @@ public class Gamma {
             gamm.run();
             upperIncompleteGamma[0] = ga[0];
             regularizedGammaP[0] = 0.0;
+            return;
         } // if (x == 0.0)
         else if (x <= 1.0+a) {
             s = 1.0/a;
@@ -424,6 +473,7 @@ public class Gamma {
             gamm.run();
             regularizedGammaP[0] = lowerIncompleteGamma[0]/ga[0];
             upperIncompleteGamma[0] = ga[0] - lowerIncompleteGamma[0];
+            return;
         } // else if (x <= 1.0+a)
         else { // else x > 1.0 + a
             t0 = 0.0;
@@ -435,8 +485,8 @@ public class Gamma {
             gamm.run();
             lowerIncompleteGamma[0] = ga[0] - upperIncompleteGamma[0];
             regularizedGammaP[0] = 1.0 - upperIncompleteGamma[0]/ga[0];
+            return;
         } // else x > 1.0 + a
-        return;
     }
    
 }
