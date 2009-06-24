@@ -10060,9 +10060,10 @@ public class FileIO {
         try {
             String name = "";
             if ( ! ((FileInfoDicom) (myFileInfo)).isMultiFrame()) {
-
+            		String sopUID =  ((String)((FileInfoDicom)image.getFileInfo(0)).getTagTable().get("0008,0018").getValue(true)).toString();
                 for (i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
                     progressBar.updateValue(Math.round((float) i / (options.getEndSlice()) * 100), false);
+                    
                     myFileInfo = (FileInfoDicom) image.getFileInfo(i);
                     myFileInfo.setFileDirectory(fileDir); // need to update in case it changed
 
@@ -10072,6 +10073,9 @@ public class FileIO {
                         myFileInfo.getTagTable().setValue("0020,0013", s, s.length());
                     }
 
+                    myFileInfo.getTagTable().setValue("0008,0018", sopUID+"."+i);   
+                    myFileInfo.getTagTable().setValue("0002,0003", sopUID+"."+i);   
+                    
                     if (options.isSaveAs()) {
 
                         if ( (i < 9) && (options.getEndSlice() != options.getBeginSlice())) {

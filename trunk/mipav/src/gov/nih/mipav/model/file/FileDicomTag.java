@@ -698,7 +698,7 @@ public class FileDicomTag extends ModelSerialCloneable {
 
         // illegal on UIDs which are to be padded by null when not even length
         if ( ( (length % 2) != 0) && (value instanceof java.lang.String)) {
-            value = (String) value + " ";
+            value = (String) value + '\u0000';
             this.length = length + 1;
         } else {
             this.length = length;
