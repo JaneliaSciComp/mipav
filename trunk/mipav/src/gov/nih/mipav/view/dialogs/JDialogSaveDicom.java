@@ -461,7 +461,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary
                 // Capture SOP
                 // UID
-                dicomFileInfo.getTagTable().setValue("0002,0003", "1.2.840.999999999999999999", 26); // bogus SOP
+                dicomFileInfo.getTagTable().setValue("0002,0003", FileInfoDicom.generateNewTag("0002,0003", "1.2.840.999999999999999999"), 26); // bogus SOP
                 // Instance UID
                 dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian
                 // transfer
@@ -472,7 +472,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
                 dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary
                 // Capture UID
-                dicomFileInfo.getTagTable().setValue("0008,0018", "1.2.840.999999999999999999", 26); // bogus SOP
+                dicomFileInfo.getTagTable().setValue("0008,0018", FileInfoDicom.generateNewTag("0008,0018", "1.2.840.999999999999999999"), 26); // bogus SOP
                 // Instance UID
 
                 // all secondary capture info is installed by FileDicom.writeImage(), under the assumption that all

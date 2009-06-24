@@ -299,6 +299,40 @@ public class FileInfoDicom extends FileInfoBase {
     	
     	return anonStr;
     }
+    
+    /**
+     * Generates an new version of a particular tag that is DICOM compatible 
+     * @param key
+     * @return
+     */
+    public static String generateNewTag(String key, String strValue) {
+    	String anonStr = "";
+    	if(strValue != null) {
+	    	if(key.equals("0008,0014") || key.equals("0008,0018") || key.equals("0002,0003")||
+	    			key.equals("0020,000E") || key.equals("0020,000D") || key.equals("0020,0010") || key.equals("0020,0052")) {
+	    		Random r = new Random();
+	    		
+	    		for(int i=0; i<strValue.length(); i++) {
+	        		if(strValue.charAt(i) == '.') {
+	        			anonStr = anonStr+".";
+	        		}
+	        		else if(strValue.charAt(i) == ' ') {
+	        			anonStr = anonStr+"A";
+	        		}else if(key.equals("0008,0018")) {
+	        			anonStr = anonStr+r.nextInt(10);
+	        		} else {
+	        			anonStr = anonStr+"1";
+	        		}
+	        	}
+	    	} else {		                	
+	        	for(int i=0; i<strValue.length(); i++) {
+	        		anonStr = anonStr+"X";
+	        	}
+	    	}
+    	}
+    	
+    	return anonStr;
+    }
 
     /**
      * Super requires displayAboutInfo to be defined display of this class is held by JDialogFileInfoDICOM. Should never
