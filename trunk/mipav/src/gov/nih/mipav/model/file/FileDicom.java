@@ -783,9 +783,13 @@ public class FileDicom extends FileDicomBase {
                     	dirInfo = (FileDicomSQ) getSequence(endianess, len);
                     	 sq = new FileDicomSQ();
                     }
-                    else         	
+                    else {        	
+                    	if(name.equals("0028,3010")) {
+                    		System.out.println("Here");
+                    	}
                     	sq = getSequence(endianess, len);
-                    
+                    		
+                    }
                     // System.err.print( "SEQUENCE DONE: Sequence Tags: (" + name + "); length = " +
                     // Integer.toString(len, 0x10) + "\n");
                     
@@ -3043,7 +3047,7 @@ public class FileDicom extends FileDicomBase {
         // distance from beginning of sequence
         int seqStart = (int) getFilePointer();
         inSQ = true;
-
+        
         getNextElement(endianess); // gets the first ITEM tag
         Preferences.debug("Item: " + Integer.toString(groupWord, 0x10) + "," + Integer.toString(elementWord, 0x10)
                 + " for " + Integer.toString(elementLength, 0x10) + " # readfrom: "
@@ -3064,7 +3068,7 @@ public class FileDicom extends FileDicomBase {
 
                         // elementLength here is the length of the
                         // item as it written into the File
-                        if (elementLength == 0) {
+                        if (elementLength == 0 || elementLength == -1) {
                             FileDicomItem item = new FileDicomItem();
                             sq.addItem(item);
                         } else {
@@ -3296,7 +3300,12 @@ public class FileDicom extends FileDicomBase {
         }
 
         for (int i = 0; i < dicomTags.length; i++) {
-            String type = "";
+            System.out.println(dicomTags[i].getKey().toString());
+        	if(dicomTags[i].getKey().toString().equals("0028,3010")) {
+            	System.out.println("Here");
+            }
+        	
+        	String type = "";
             String vr = dicomTags[i].getValueRepresentation();
 
             // System.out.println("w = " + dicomTags[i].toString());
@@ -3359,7 +3368,7 @@ public class FileDicom extends FileDicomBase {
 
                     // explicit VR 32 bit length
                     outputFile.writeShort(0); // skip two reserved bytes
-
+                    System.out.println(((FileDicomSQ) dicomTags[i].getValue(false)).getLength());
                     if ( ((FileDicomSQ) dicomTags[i].getValue(false)).getLength() == 0) {
                         writeInt(0, endianess); // write length of 0.
                     } else {
