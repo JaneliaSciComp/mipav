@@ -649,6 +649,10 @@ public class FileDicom extends FileDicomBase {
             getNextElement(endianess); // gets group, element, length
             name = convertGroupElement(groupWord, elementWord);
 
+            if(name.equals("6000,3000")) {
+            	System.out.println("Here");
+            }
+            
             FileDicomKey key = new FileDicomKey(name);
             int tagVM;
             int dirLength;
@@ -784,9 +788,6 @@ public class FileDicom extends FileDicomBase {
                     	 sq = new FileDicomSQ();
                     }
                     else {        	
-                    	if(name.equals("0028,3010")) {
-                    		System.out.println("Here");
-                    	}
                     	sq = getSequence(endianess, len);
                     		
                     }
@@ -3300,10 +3301,6 @@ public class FileDicom extends FileDicomBase {
         }
 
         for (int i = 0; i < dicomTags.length; i++) {
-            System.out.println(dicomTags[i].getKey().toString());
-        	if(dicomTags[i].getKey().toString().equals("0028,3010")) {
-            	System.out.println("Here");
-            }
         	
         	String type = "";
             String vr = dicomTags[i].getValueRepresentation();
