@@ -209,6 +209,46 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     	}
 	}
     
+    /**
+     * Perform one-dimension convolution.
+     * @param imageBuffer
+     * @param kernelBuffer
+     * @param resultBuffer
+     */
+    private void convolveNoColor(double[] imageBuffer, float[] kernelBuffer, double[] resultBuffer){
+        
+        int kernelDim = kernelBuffer.length;
+        int halfKernelDim = kernelDim/2;
+        for (int i = 0; i < imageBuffer.length; i++) {
+            if (entireImage || mask.get(i)) {
+                int count = 0;
+                double sum = 0;
+                double norm = 0;
+                int start = i - halfKernelDim;
+                int end = start + kernelDim;
+                if (start < 0) {
+                    count = count - start;
+                    start = 0;
+                }
+                if (end > imageBuffer.length) {
+                    end = imageBuffer.length;
+                }
+                for (int j = start; j < end; j ++) {
+                    sum += kernelBuffer[count] * imageBuffer[j];
+                    if (kernelBuffer[count] > 0) {
+                        norm += kernelBuffer[count];
+                    } else {
+                        norm -= kernelBuffer[count];
+                    }
+                    count++;
+                }
+                resultBuffer[i] = sum / norm;
+            }else{
+                resultBuffer[i] = imageBuffer[i];
+            }
+        }
+    }
+    
     public void performMT(){
         int size = inputBuffer.length;
         if(imgExtents.length < 3 || kernelBuffer.length < 3){
@@ -292,56 +332,92 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     	int xDim = imgExtents[0];
     	int yDim = imgExtents[1];
     	int zDim = (imgExtents.length == 2)?1:imgExtents[2];
+        int sliceSize = xDim * yDim * cFactor;
 
         int xoffset = xDim * cFactor;
-        int yoffset = yDim * cFactor;
-        int zoffset = zDim * cFactor;
+        
+        int numColors = 1;
+        if (colorImage) {
+            numColors = 0;
+            if (red) {
+                numColors++;    
+            }
+            if (green) {
+                numColors++;
+            }
+            if (blue) {
+                numColors++;
+            }
+        }
+        
+        int colorIn;
         
         if(zDim == 1 || kernelBuffer.length == 2){
-        	progressStep = (xDim*yDim) / (maxProgressValue-minProgressValue);
+        	progressStep = numColors*(yDim*zDim + xDim*zDim) / (maxProgressValue-minProgressValue);
         }else{
-        	progressStep = (yDim*zDim + xDim*zDim + xDim*yDim) / (maxProgressValue-minProgressValue);
+        	progressStep = numColors*(yDim*zDim + xDim*zDim + xDim*yDim) / (maxProgressValue-minProgressValue);
         }
 
         progress = minProgressValue;
-        double[] xrowBuffer = new double[xoffset];
-        double[] xresultBuffer = new double[xoffset];
+        double[] xrowBuffer = new double[xDim];
+        double[] xresultBuffer = new double[xDim];
+        
         // Convolve the image with the X dimension kernel
-        for (int row = 0; (row < yDim*zDim) && !threadStopped; row++) {
-
-            if (row % progressStep == 0) {
-                fireProgressStateChanged((int)progress++);
+        colorIn = -1;
+        for (int c = 0; c < cFactor; c++) {
+            if ((!colorImage) || (red && c == 1) || (green && c == 2) || (blue && c == 3)) {
+                colorIn++;
+                for (int row = 0; (row < yDim*zDim) && !threadStopped; row++) {
+        
+                    if ((colorIn*yDim*zDim + row) % progressStep == 0) {
+                        fireProgressStateChanged((int)progress++);
+                    }
+                    MipavUtil.rowCopy(inputBuffer, row*xoffset+ c, xrowBuffer, 0, xDim, cFactor, 1);
+                    convolveNoColor(xrowBuffer, kernelBuffer[0], xresultBuffer);
+                    MipavUtil.rowCopy(xresultBuffer, 0, inputBuffer, row*xoffset+ c, xDim, 1, cFactor);
+                }
             }
-            System.arraycopy(inputBuffer, row*xoffset, xrowBuffer, 0, xoffset);
-            convolve(xrowBuffer, kernelBuffer[0], xresultBuffer);
-            System.arraycopy(xresultBuffer, 0, inputBuffer, row*xoffset, xoffset);
         }
 
         // Convolve the result image from above with the Y dimension kernel
-        double[] yrowBuffer = new double[yoffset*cFactor];
-        double[] yresultBuffer = new double[yoffset*cFactor];
-	     for ( int row = 0; (row < zDim * xDim ) && !threadStopped; row++ ) {
-			if (row % progressStep == 0) {
-				fireProgressStateChanged((int)progress++);
-			}
-			MipavUtil.rowCopy(inputBuffer, row, yrowBuffer, 0, yoffset, xoffset, cFactor);
-			convolve(yrowBuffer, kernelBuffer[1], yresultBuffer);
-			MipavUtil.rowCopy(yresultBuffer, 0, inputBuffer, row, yoffset, cFactor, xoffset);
-	    }
+        double[] yrowBuffer = new double[yDim];
+        double[] yresultBuffer = new double[yDim];
+        colorIn = -1;
+        for (int c = 0; c < cFactor; c++) {
+            if ((!colorImage) || (red && c == 1) || (green && c == 2) || (blue && c == 3)) {
+                colorIn++;
+                for (int z = 0; z < zDim; z++) {
+        	         for ( int row = 0; (row < xDim ) && !threadStopped; row++ ) {
+                         if ((colorIn*xDim*zDim + row) % progressStep == 0) {
+                            fireProgressStateChanged((int)progress++);
+                         }
+            			 MipavUtil.rowCopy(inputBuffer, z*sliceSize + row*cFactor + c, yrowBuffer, 0, yDim, xoffset, 1);
+            			 convolveNoColor(yrowBuffer, kernelBuffer[1], yresultBuffer);
+            			 MipavUtil.rowCopy(yresultBuffer, 0, inputBuffer, z*sliceSize + row*cFactor + c, yDim, 1, xoffset);
+                     }
+        	    }
+            }
+         }
 		
         // Convolve the result image from above with the Z dimension kernel
         if (zDim > 1 && kernelBuffer.length > 2) {
-            double[] zrowBuffer = new double[zoffset*cFactor];
-            double[] zresultBuffer = new double[zoffset*cFactor];
-			for (int row = 0; (row < xDim * yDim) && !threadStopped; row++) {
-				if (row % progressStep == 0) {
-					fireProgressStateChanged((int)progress++);
-				}
-				MipavUtil.rowCopy(inputBuffer, row, zrowBuffer, 0, zoffset, yoffset, cFactor);
-				convolve(zrowBuffer, kernelBuffer[2], zresultBuffer);
-				MipavUtil.rowCopy(zresultBuffer, 0, inputBuffer, row, zoffset, cFactor, yoffset);
-			}
-		}
+            double[] zrowBuffer = new double[zDim];
+            double[] zresultBuffer = new double[zDim];
+            colorIn = -1;
+            for (int c = 0; c < cFactor; c++) {
+                if ((!colorImage) || (red && c == 1) || (green && c == 2) || (blue && c == 3)) {
+                    colorIn++;
+        			for (int row = 0; (row < xDim * yDim) && !threadStopped; row++) {
+        				if ((colorIn*xDim*yDim + row) % progressStep == 0) {
+        					fireProgressStateChanged((int)progress++);
+        				}
+        				MipavUtil.rowCopy(inputBuffer, row*cFactor + c, zrowBuffer, 0, zDim, sliceSize, 1);
+        				convolveNoColor(zrowBuffer, kernelBuffer[2], zresultBuffer);
+        				MipavUtil.rowCopy(zresultBuffer, 0, inputBuffer, row*cFactor + c, zDim, 1, sliceSize);
+        			}
+        		}
+            }
+        }
     }
 
     private void convolveX(final int from, final int to){
