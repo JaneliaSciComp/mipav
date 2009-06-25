@@ -40,6 +40,7 @@ import gov.nih.mipav.model.util.NDARPipeline;
 import gov.nih.mipav.view.dialogs.JDialogAnonymizeDirectory;
 import gov.nih.mipav.view.dialogs.JDialogDCCIEConversion;
 import gov.nih.mipav.view.dialogs.JDialogDTICreateListFile;
+import gov.nih.mipav.view.dialogs.JDialogDTIEstimateTensor;
 import gov.nih.mipav.view.dialogs.JDialogDataProvenance;
 import gov.nih.mipav.view.dialogs.JDialogDicomDir;
 import gov.nih.mipav.view.dialogs.JDialogFilterChoice;
@@ -301,9 +302,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @param forceQuite Mipav will not display any error, warning, or info messages. If a error displays MIPAV will exit.
      */
-    protected ViewUserInterface(boolean forceQuiet) {
-    	System.out.println("MIPAV STARTED with forceQuiet set as " + forceQuiet);
-    	MipavUtil.setForceQuite(forceQuiet);
+    protected ViewUserInterface(boolean forceQuite) {
+    	System.out.println("MIPAV STARTED with forceQuite set as " + forceQuite);
+    	MipavUtil.setForceQuite(forceQuite);
         mainFrame = new JFrame();
         imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable<ModelImage>();
@@ -840,6 +841,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             invokeDTIframe();
         } else if (command.equals("createListFile")) {
             new JDialogDTICreateListFile();
+        } else if (command.equals("estimateTensor")) {
+        	new JDialogDTIEstimateTensor();
+        	
         }
 
     }
@@ -989,6 +993,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             this.pluginsMenu = buildPlugInsMenu(this);
         }
 
+        openingMenuBar.add(menuBar.makeSystemsAnalysisMenu());
         openingMenuBar.add(pluginsMenu);
         openingMenuBar.add(menuBar.makeScriptingMenu());
         openingMenuBar.add(menuBar.makeHelpMenu());
@@ -1048,6 +1053,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             Class plugin;
             final String catName = "CATEGORY";
             final String scriptName = "SCRIPT_PREFIX";
+
             for (final File allFile : allFiles) {
                 JMenu currentMenu = menu;
                 name = allFile.getName();
@@ -1117,8 +1123,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                 } catch(NoSuchFieldException e) {
                 	//no category, so class is not a valid plugin, class should not be added to GUI
-                } catch(NoClassDefFoundError e) {
-                	//a component of the plugin does not exist on the file system, the plugin may have to be reinstalled.
                 } catch (final Exception e) {
                     // usually this means other files/folders exist in the installed plugins directory besides plugin
                     // files
