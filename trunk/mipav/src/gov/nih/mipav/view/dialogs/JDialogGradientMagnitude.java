@@ -450,13 +450,13 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     }
     
     /**
-     * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
+     * Once all the necessary variables are set, call the Gradient Magnitude algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_gmag");
         displayInNewFrame = outputOptionsPanel.isOutputNewImageSet();
-        if (separable) { // source image is 2D and kernel is separable
+        if (separable) { // kernel is separable
             float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
             if (!displayInNewFrame) {
