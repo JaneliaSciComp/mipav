@@ -3377,13 +3377,42 @@ public class VOIContour extends VOIBase {
 	            		removeElement(old);
 	            		indexRetrace = index;
 	            	}
+	            	else if(isFirst && indexold >= size()-3 && indexold-index!=1){
+                		if(((indexold-index)<(oldContour.size()/2))){
+		            		for(;index!=indexold; indexold--){
+		            			indexRetrace = indexOf(old)-1;
+		            			oldContour.removeElementAt(indexRetrace);
+		            			removeElementAt(indexRetrace);
+		            			old = get(indexRetrace);
+		            		}
+		            		lastX = (int) old.X;
+		            		lastY = (int) old.Y;
+		            		lastZ = (int) old.Z;
+		            		insertElementAt(newer, indexOf(old)+1);
+                		}
+                		else{
+	            			indexRetrace = indexOf(old)-1;
+	            			oldContour.removeElementAt(indexRetrace);
+	            			removeElementAt(indexRetrace);
+		            		for(int size = size()-1, i = 0;i!=size -indexold; i++){
+		            			oldContour.remove(0);
+		            			remove(0);
+		            		}
+		            		lastX = (int) old.X;
+		            		lastY = (int) old.Y;
+		            		lastZ = (int) old.Z;
+		            		insertElementAt(newer, 0);
+		            		indexRetrace = 0;
+                		}
+
+                	}
 	            	else if ((indexold-index)>=1){ //if clockwise in general
 	            		knowDirection = true;
 	                	if(!isFirst){
 	                		if(!(index-indexold>oldContour.size()/2 || index == 0)){
 			            		for(;index!=indexold; index++){
 			            			indexRetrace = indexOf(old);
-			            			oldContour.removeElementAt(indexRetrace);
+			            			oldContour.removeElementAt(oldContour.indexOf(old));
 			            			removeElementAt(indexRetrace);
 			            			old = get(indexRetrace-1);
 			            		}
@@ -3428,7 +3457,7 @@ public class VOIContour extends VOIBase {
 	            		indexRetrace = oldContour.indexOf(right)-1;
 	            	}
 	            }
-	            else if(minDistance > 10  && knowDirection ){
+	            else if(minDistance > 5  && knowDirection ){
 	            	if(isFirst)
 	            		insertElementAt(newer, indexOf(ptRetrace));
 	            	else{
@@ -3592,7 +3621,6 @@ public class VOIContour extends VOIBase {
      */
     public void secondOrderAttributeslsq(float xRes, float yRes, int xUnits, int yUnits, float[] pAxis,
                                          float[] eccentricity, float[] majorAxis, float[] minorAxis) {
-        System.err.println("here2");
         reloadPoints();
 
         int nPts = size();
