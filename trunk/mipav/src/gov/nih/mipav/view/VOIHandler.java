@@ -56,6 +56,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
     /** The component image that owns this class. */
     protected ViewJComponentEditImage compImage;
+    
+    private boolean restart = false;
 
     /** Buffer for holding VOI graphing information. */
     protected float[] graphImgBuff;
@@ -2554,6 +2556,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                 if (VOIs.VOIAt(i).isActive()) {
 						try {
+							if (restart){
+								((VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).resetStart();
+								restart = false;
+							}
 							((VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).retraceContour(compImage.getZoomX(),
 							                                                                                     compImage.getZoomY(),
 							                                                                                     compImage.getResolutionX(),
@@ -3997,11 +4003,12 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                 if (VOIs.VOIAt(i).isActive()) {
                     try {
-						((VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).trimPoints(.5,
-						                                                                                 true);
+                    System.out.println(i);
+                    	((VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).trimPoints(.5, true);
 						((VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).resetStart();
 					} catch (Exception e) {
 						VOIs.VOIAt(i).setActive(true);
+						restart = true;
 					}
                     break;
                 }
