@@ -3019,6 +3019,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.invokeDTIframe();
         } else if (command.equals("createListFile")) {
             new JDialogDTICreateListFile();
+        }else if (command.equals("estimateTensor")) {
+        	new JDialogDTIEstimateTensor();
+        	
         }
 
     }

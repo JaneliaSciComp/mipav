@@ -83,6 +83,7 @@ public class ViewMenuBar {
             menuBar.add(makeLUTMenu());
             menuBar.add(makeAlgorithmsMenu());
             menuBar.add(makeUtilitiesMenu());
+            menuBar.add(makeSystemsAnalysisMenu());
             menuBar.add(plugInMenu);
             menuBar.add(makeScriptingMenu());
             menuBar.add(makeImageMenu(isDicomImage));
@@ -476,6 +477,18 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("MIPAV data provenance", "DataProvenance", 0, null, true), separator,
                 menuBuilder.buildMenuItem("MIPAV options", "Options", 0, null, true),
                 menuBuilder.buildMenuItem("Shortcut editor", Preferences.PREF_SHORTCUTS, 0, null, true),});
+    }
+    
+    
+    
+    public JMenu makeSystemsAnalysisMenu() {
+    	 return menuBuilder.makeMenu("Systems Analysis", 'S', false, new JComponent[] {
+    			 menuBuilder.makeMenu("DTI", true, new JMenuItem[] {
+                         menuBuilder.buildMenuItem("Estimate Tensor", "estimateTensor", 0, null, true),
+                         menuBuilder.buildMenuItem("Fiber Tracking", "fiberTracking", 0, null, true),
+                         menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, true)  
+    			 })
+    	 });
     }
 
     /**
