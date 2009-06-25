@@ -461,6 +461,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         int startIndex;
 
         float stepProgressValue = ((float)100)/(numImages * numIterations);
+        float progressValue = 0;
         
         for (int imgNumber = 0; imgNumber < numImages; imgNumber++) {
             startIndex = imgNumber * length;
@@ -475,7 +476,8 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             } // catch()
 
             for (int iterNum = 0; iterNum < numIterations; iterNum++) {
-                fireProgressStateChanged(Math.round(stepProgressValue * iterNum));
+            	progressValue +=stepProgressValue;
+                fireProgressStateChanged((int)progressValue);
                 // make the magnitude of the gradient image of the gaussian smoothed source image
                 // A separate constructor AlgorithmSeparableConvolver call is needed for each iteration
                 // because the constructor has the line
