@@ -12,7 +12,8 @@ import gov.nih.mipav.view.*;
 
 public class FileLIFF extends FileBase {
     /* In 3 color images, if CY3, FITC, and DAPI are used, they are set to red, green,
-     * and blue respectively.
+     * and blue respectively.  In 2 color images, if FITC and DAPI are used, they are
+     * set to green and blue respectively.
      * 
      * Note that for version 5, if the data type is not DEEP GREY, the padded width of the
      * data row is found by dividing the uncompressed data size by the image height.
