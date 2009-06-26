@@ -4003,7 +4003,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                 if (VOIs.VOIAt(i).isActive()) {
                     try {
-                    System.out.println(i);
                     	((VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).trimPoints(.5, true);
 						((VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).resetStart();
 					} catch (Exception e) {
