@@ -2284,6 +2284,38 @@ public class FileLIFF extends FileBase {
                     sliceColorBuffer = new byte[sliceColorBytes];
                 }
             }
+            else if (((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) && ((majorTypeCount % 2) == 0) 
+                    && (majorLayerNumber == 2)) {
+                   doDeepGreyColor = true;
+                   Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
+                   Preferences.debug("These are RGB stored in " + bitNumber + " depth\n");
+                   imageSlices = majorTypeCount/2;
+                   if (imageSlices > 1) {
+                       Preferences.debug("The MIPAV image will have " + imageSlices + " slices of type ARGB_USHORT\n");
+                   }
+                   else {
+                       Preferences.debug("The MIPAV image will have 1 slice of type ARGB_USHORT\n");    
+                   }
+                   if (imageSlices > 1) {
+                       imageExtents = new int[3];
+                       imageExtents[0] = xDim;
+                       imageExtents[1] = yDim;
+                       imageExtents[2] = imageSlices;
+                   }
+                   else {
+                       imageExtents = new int[2];
+                       imageExtents[0] = xDim;
+                       imageExtents[1] = yDim;
+                   }
+                   sliceSize = xDim * yDim;
+                   fileInfo.setExtents(imageExtents);
+                   image = new ModelImage(ModelStorageBase.ARGB_USHORT, imageExtents, fileName);
+                   shortBuffer = new short[4 * xDim * yDim];
+                   sliceColorBytes = 2 * xDim * yDim;
+                   if (versionNumber <= 2) {
+                       sliceColorBuffer = new byte[sliceColorBytes];
+                   }
+               }
             else if ((majorType >= DEEP_GREY_9) && (majorType <= DEEP_GREY_16)) {
                 if (majorTypeCount > 1) {
                     Preferences.debug("Found " + majorTypeCount + " slices of type " + typeStr[majorType] + "\n");
@@ -2485,9 +2517,9 @@ public class FileLIFF extends FileBase {
                     colorSequence[0] = 1;
                     colorSequence[1] = 2;
                     colorSequence[2] = 3;
-                    if (haveCY3 && haveFITC && haveDAPI) {
+                    if (haveFITC && haveDAPI) {
                         // CY3 is red, FITC is green, and DAPI is blue
-                        for (i = 0; i < 3; i++) {
+                        for (i = 0; i < majorLayerNumber; i++) {
                             if (majorLayerString[i].equals("CY3")) {
                                 colorSequence[i] = 1;
                             }
@@ -2498,14 +2530,19 @@ public class FileLIFF extends FileBase {
                                 colorSequence[i] = 3;
                             }
                         }
-                    } // if (haveCY3 && haveFITC && haveFITC)
+                    } // if (haveFITC && haveDAPI)
                     index = 0;
                     color = colorSequence[0];
                     sliceNumber = 0;
                     i0Last = 0;
                     i1Last = 0;
                     i2Last = 0;
-                    totalSubPictCount = subPictCount[0] + subPictCount[1] + subPictCount[2];
+                    if (majorLayerNumber == 3) {
+                        totalSubPictCount = subPictCount[0] + subPictCount[1] + subPictCount[2];
+                    }
+                    else {
+                        totalSubPictCount = subPictCount[0] + subPictCount[1];
+                    }
                     currentSubPictCount = 0;
                     for (i = 0, k = 0; currentSubPictCount < totalSubPictCount; currentSubPictCount++) {
                         if (imageTypeLocation[i][k] == majorType) {
@@ -2564,9 +2601,18 @@ public class FileLIFF extends FileBase {
                                     i = i1Last;
                                 }
                                 else if (color == colorSequence[1]) {
-                                    color = colorSequence[2];
-                                    k = 2;
-                                    i = i2Last;
+                                    if (majorLayerNumber == 2) {
+                                        color = colorSequence[0];
+                                        k = 0;
+                                        i = i0Last;
+                                        image.importData(4 * sliceNumber * xDim * yDim, shortBuffer, false);
+                                        sliceNumber++;
+                                    }
+                                    else {
+                                        color = colorSequence[2];
+                                        k = 2;
+                                        i = i2Last;
+                                    }
                                 }
                                 else if (color == colorSequence[2]) {
                                     color = colorSequence[0];
