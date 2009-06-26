@@ -16,7 +16,40 @@ import java.util.*;
  
  The nearest neighbor distribution of circles generated from a uniform distribution is taken from 
  "The mosaic of nerve cells in the mammalian retina" by H. Wassle and H. J. Riemann, Proc. R. Soc. Lond.,
- B. 200, 441-461, 1978. 
+ B. 200, 441-461, 1978.  Some of the math does not seem correct, but the general conclusion is that generation
+ of circles from a uniform random distribution will result in a Rayleigh or Weibull distribution for the
+ nearest neighbor distances.
+ 
+  From Computational Methods in Biophysics, Biomaterials, BioTechnology, and Medical Systems
+  Algorithm Development, Mathematical Analysis, and Diagnostics Volume 2 Computational Methods edited by Cornelius
+  T. Leondes, Chapter 2 Computer techniques for spatial analysis of objects in biomedical images by
+  G. Cevenini, M. R. Massia, and P. Barbini, Kluwer Academic Publishers, 2003, pp. 39-90, information about
+  randomly distributed circles.
+  "Analysis of the distribution W**2 of squared NN distances between n randomly distributed circles shows that
+  2*lambda*PI*(W**2 - n*r**2)
+  has a chi-squared distribution with 2*n degrees of freedom.  r is the average radius of the circular objects,
+  lambda is the mean intensity per unit area.
+  X is a point to NN object distance.
+  W is an inter-object NN distance.  Consider W as going from the center of one object to the periphery of
+  the nearest object.
+  The point-object squared NN distance distribution, X**2, is not affected by the reperesentation of objects
+  as circles, thus 2*lambda*X**2 also has a chi-squared distribution with 2m degrees of freedom, where m is the
+  number of selected points.  It means that, under the assumption of circular objecs of equal size, all tests 
+  based on squared NN distances, like those of Hopkins, Brown, or others, can still be used.  If m = n, and these
+  results are combined, an estimate of the mean radius of the objects as circles can be obtained as 
+  rest = sqrt((W**2 - X**2)/n)
+  Again, a Monte Carlo approach is sugested.  If rest is significantly different from the value measured directly
+  on the image by automatic procedures of digital image processing or a value nevertheless compatible with the
+  average physical size of the objects, we can sustain that the statistical pattern is not random.  If rest is high,
+  it indicates regularity; if low, aggregation.  Moreover, since the formula for rest is formally a function of NN
+  distances, we can again inspect classes of distances to obtain scale-related indications about the statistical
+  pattern.
+  
+  Let x2 = chi squared and v = degrees of freedom
+  The probability density function p(x2,v) = (1/((2**(v/2))* gamma(v/2)))*(x2**((v-2)/2))*exp(-x2/2)
+  The probability of observing a value of chi square that is larger than a particular value for a random
+  sample of N observations with v degrees of freedom is the integral of this probability from chi square = x2
+  to chi square = infinity.
  */
 public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
 
@@ -80,7 +113,7 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
         int j;
         int attempts;
         boolean found;
-        byte buffer[];
+        int buffer[];
         int length;
         int xCenter = radius;
         int yCenter = radius;
@@ -111,12 +144,23 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
         double chiSquaredOfFour;
         double z;
         int index;
-        double normFactor;
         double smallerDistance;
         double largerDistance;
         double oneSeventhRange;
         int boundaryDistance;
         int circlesLeft;
+        int maskBytesSet;
+        int circleBytesSet;
+        double circlesAwayFromBoundary;
+        double thirdSmallToMean;
+        double a;
+        double b;
+        double theoreticalDistance[] = new double[8];
+        double nearestNeighborDistanceSumOfSquares;
+        double chiSquared;
+        Statistics stat;
+        double degreesOfFreedom;
+        double chiSquaredPercentile[] = new double[1];
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -131,12 +175,13 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         length = xDim * yDim;
-        buffer = new byte[length];
+        buffer = new int[length];
         // Create a mask for setting circles
         radiusSquared = radius * radius;
         xMaskDim = 2 * radius + 1;
         yMaskDim = xMaskDim;
         mask = new byte[xMaskDim * yMaskDim];
+        maskBytesSet = 0;
         for (y = 0; y <= 2*radius; y++) {
             yDistSquared = (y - radius);
             yDistSquared = yDistSquared * yDistSquared;
@@ -146,6 +191,7 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
                 distSquared = xDistSquared + yDistSquared;
                 if (distSquared <= radiusSquared) {
                     mask[x + y * xMaskDim] = 1;
+                    maskBytesSet++;
                 }
             }
         } // for (y = 0; y <= 2*radius; y++)
@@ -164,7 +210,7 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
                 for (y = 0; y <= 2*radius; y++) {
                     for (x = 0; x <= 2*radius; x++) {
                         if (mask[x + y * xMaskDim] == 1) {
-                            if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] == 1) {
+                            if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
                                 found = false;
                                 attempts++;
                                 break yloop;
@@ -181,7 +227,7 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
             for (y = 0; y <= 2*radius; y++) {
                 for (x = 0; x <= 2*radius; x++) {
                     if (mask[x + y * xMaskDim] == 1) {
-                        buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] = 1;
+                        buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  i;
                     }
                 }
             }
@@ -195,20 +241,25 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
             lowestDistSquared = Integer.MAX_VALUE;
             for (j = 0; j < circlesDrawn; j++) {
                 if (i != j) {
-                    xDistSquared = circleXCenter[i] - circleXCenter[j];
-                    xDistSquared = xDistSquared * xDistSquared;
-                    yDistSquared = circleYCenter[i] - circleYCenter[j];
-                    yDistSquared = yDistSquared * yDistSquared;
-                    distSquared = xDistSquared + yDistSquared;
-                    if (distSquared < lowestDistSquared) {
-                        lowestDistSquared = distSquared;
-                        nearestNeighborDistance[i] = Math.sqrt(distSquared);
+                    for (y = 0; y <= 2*radius; y++) {
+                        for (x = 0; x <= 2*radius; x++) {
+                            if (mask[x + y * xMaskDim] == 1) {
+                                xDistSquared = circleXCenter[i] - (circleXCenter[j] + x - radius);
+                                xDistSquared = xDistSquared * xDistSquared;
+                                yDistSquared = circleYCenter[i] - (circleYCenter[j] + y - radius);
+                                yDistSquared = yDistSquared * yDistSquared;
+                                distSquared = xDistSquared + yDistSquared;
+                                if (distSquared < lowestDistSquared) {
+                                    lowestDistSquared = distSquared;
+                                    nearestNeighborDistance[i] = Math.sqrt(distSquared);
+                                }
+                            }
+                        }
                     }
                 }
             }
         } // for (i = 0; i < circlesDrawn; i++)
         
-       Arrays.sort(nearestNeighborDistance);
        // Remember that nearest neighbor statistics will not hold near a boundary, so to be safe only consider those
        // circles at least the maximum nearestNeighborDistance aways from the boundary.  Otherswise, the maximum
        // nearest neighbor distance is artificially inflated by boundary effects.
@@ -234,18 +285,25 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
            lowestDistSquared = Integer.MAX_VALUE;
            for (j = 0; j < circlesLeft; j++) {
                if (i != j) {
-                   xDistSquared = circleXCenter[i] - circleXCenter[j];
-                   xDistSquared = xDistSquared * xDistSquared;
-                   yDistSquared = circleYCenter[i] - circleYCenter[j];
-                   yDistSquared = yDistSquared * yDistSquared;
-                   distSquared = xDistSquared + yDistSquared;
-                   if (distSquared < lowestDistSquared) {
-                       lowestDistSquared = distSquared;
-                       nearestNeighborDistance[i] = Math.sqrt(distSquared);
+                   for (y = 0; y <= 2*radius; y++) {
+                       for (x = 0; x <= 2*radius; x++) {
+                           if (mask[x + y * xMaskDim] == 1) {
+                               xDistSquared = circleXCenter[i] - (circleXCenter[j] + x - radius);
+                               xDistSquared = xDistSquared * xDistSquared;
+                               yDistSquared = circleYCenter[i] - (circleYCenter[j] + y - radius);
+                               yDistSquared = yDistSquared * yDistSquared;
+                               distSquared = xDistSquared + yDistSquared;
+                               if (distSquared < lowestDistSquared) {
+                                   lowestDistSquared = distSquared;
+                                   nearestNeighborDistance[i] = Math.sqrt(distSquared);
+                               }
+                           }
+                       }
                    }
                }
            }
        } // for (i = 0; i < circlesLeft; i++)
+       Arrays.sort(nearestNeighborDistance);
        total = 0.0;
        for (i = 0; i < circlesLeft; i++) {
            total += nearestNeighborDistance[i];
@@ -405,75 +463,61 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
        }
        
        // The probability density function for the nearest neighbor distance when circles of a 
-       // fixed radius are generated from a uniform random distribution is
-       // p(r) = 0 for r < 2 * radius
-       // p(r) = normFactor*2*PI*density*r*exp(-density*PI*r**2) for r >= 2*radius
-       // Here the density is the density of all the generated circles whether they were drawn or not.
-       // normFactor is the normalizing factor needed to make the integeral of p(r)dr from r = 0 to 
-       // r = infinity be 1.  Here normFactor = exp(4*(radius**2)*density*PI)
-       // theoretical Frequency = circlesLeft * normFactor * (exp(-density*PI*(smaller distance ** 2)) -
-       //                                       exp(-density*PI*(larger distance ** 2)))
-       density = circlesGenerated * Math.PI * radius * radius / length;
-       normFactor = Math.exp(4.0*radius*radius*density*Math.PI);
-       for (i = 0; i < 7; i++) {
-           observedFrequency[i] = 0;
-       }
+       // fixed radius are generated from a uniform random distribution is a Rayleigh or
+       // Weibull distribution.
+       // The probability density function is:
+       // p(r) = (2/b)*(r - a)*exp(-(r - a)*(r - a)/b) for r >= a
+       // p(r) = 0 for r < a
+       // The cumulative function is:
+       // P(r) = 1 - exp(-(r - a)*(r - a)/b) for r >= a
+       // P(r) = 0 for r < a
+       // mean = a + sqrt(PI* b/4)
+       // variance = b*(4 - PI)/4
+       // Expect a = 2 * radius or a = nearestNeighborDistance[0], b = 1/(PI * density)
+       // Take a = nearestNeighborDistance[0].
+       nearestNeighborDistanceSumOfSquares = 0.0;
        for (i = 0; i < circlesLeft; i++) {
-          // Generate an observed index from 0 to 6
-           index = (int)((7*(nearestNeighborDistance[i] - nearestNeighborDistance[0]))/
-                   (nearestNeighborDistance[circlesLeft-1] - nearestNeighborDistance[0]));
-           if (index > 6) {
-               index = 6;
-           }
-           observedFrequency[index]++;
-       } // for (i = 0; i < circlesLeft; i++)
-       oneSeventhRange = (nearestNeighborDistance[circlesLeft-1] - nearestNeighborDistance[0])/7.0;
-       chiSquaredOfFour = 0.0;
-       for (i = 0; i < 7; i++) {
-           smallerDistance = nearestNeighborDistance[0] + i * oneSeventhRange;
-           largerDistance = nearestNeighborDistance[0] + (i+1) * oneSeventhRange;
-           theoreticalFrequency[i] = circlesLeft * normFactor * (Math.exp(-density*Math.PI*smallerDistance*smallerDistance) -
-                                     Math.exp(-density*Math.PI*largerDistance*largerDistance));
-           deviate = observedFrequency[i] - theoreticalFrequency[i];
-           chiSquaredOfFour += deviate * deviate / theoreticalFrequency[i];    
+           nearestNeighborDistanceSumOfSquares += nearestNeighborDistance[i]*nearestNeighborDistance[i];
        }
-       for (i = 0; i < 7; i++) {
-           Preferences.debug("Observed frequency [" + i + "] = " + observedFrequency[i] + "\n");
-           Preferences.debug("Theoretical frequency [" + i + "] = " + theoreticalFrequency[i] + "\n");
-       }
-       Preferences.debug("Chi squared fit for a uniform random distribution for 4 df = " + chiSquaredOfFour + "\n");
-       System.out.println("Chi squared fit for a uniform random distribution for 4 df = " + chiSquaredOfFour);
-       if (chiSquaredOfFour >= 14.86) {
-           Preferences.debug("Uniform random distribution rejected at the 0.5 percent level of signficance\n");
-           System.out.println("Uniform random distribution rejected at the 0.5 percent level of significance");
-       }
-       else if (chiSquaredOfFour >= 13.28) {
-           Preferences.debug("Uniform random distribution rejected at the 1.0 percent level of signficance\n");
-           System.out.println("Uniform random distribution rejected at the 1.0 percent level of significance");    
-       }
-       else if (chiSquaredOfFour >= 11.14) {
-           Preferences.debug("Uniform random distribution rejected at the 2.5 percent level of signficance\n");
-           System.out.println("Uniform random distribution rejected at the 2.5 percent level of significance");    
-       }
-       else if (chiSquaredOfFour >= 9.49) {
-           Preferences.debug("Uniform random distribution rejected at the 5.0 percent level of signficance\n");
-           System.out.println("Uniform random distribution rejected at the 5.0 percent level of significance");
+       density = (double)circlesLeft/(double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance));
+       chiSquared = 2.0 * density * Math.PI * (nearestNeighborDistanceSumOfSquares - circlesLeft * radius * radius);
+       Preferences.debug("chiSquared for sum of squared NN distances of " + circlesLeft + " circles = " +
+                         chiSquared + "\n");
+       System.out.println("chiSquared for sum of squared NN distances of " + circlesLeft + " circles = " +
+                         chiSquared);
+       degreesOfFreedom = 2 * circlesLeft;
+       
+       stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+               chiSquared, degreesOfFreedom, chiSquaredPercentile);
+       stat.run();
+       Preferences.debug("chiSquared percentile for sum of squared NN distances = " + chiSquaredPercentile[0]*100.0 + "\n");
+       System.out.println("chiSquared percentile for sum of squared NN distances = " + chiSquaredPercentile[0]*100.0);
+       if (chiSquaredPercentile[0] >= 0.95) {
+           Preferences.debug("chiSquared tests rejects random circle distribution at a " +
+                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n");
+           System.out.println("chiSquared tests rejects random circle distribution at a " +
+                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance"); 
        }
        else {
-           Preferences.debug("Uniform random distribution not rejected\n");
-           System.out.println("Uniform random distribution not rejected");
+           Preferences.debug("chiSquared tests do not reject random circle distribution\n");
+           System.out.println("chiSquared tests do not reject random circle distribution");
        }
        
-        try {
-            srcImage.importData(0, buffer, true);
-        }
-        catch(IOException e) {
-            MipavUtil.displayError("IOException on srcImage.importData(0, buffer, true");
-            setCompleted(false);
-            return;  
-        }
-        
-        setCompleted(true);
-        return;
+       for (i = 0; i < buffer.length; i++) {
+           if (buffer[i] > 0) {
+               buffer[i] = 1;
+           }
+       }
+       try {
+           srcImage.importData(0, buffer, true);
+       }
+       catch(IOException e) {
+           MipavUtil.displayError("IO exception on srcImage.importData(0, buffer, true)");
+           setCompleted(false);
+           return;
+       }
+       
+       setCompleted(true);
+       return;
     }
 }
