@@ -418,7 +418,7 @@ public class Gamma {
             a1 = a - 1.0;
             lna1 = Math.log(a1);
             sqrta1 = Math.sqrt(a1);
-            gamm = new Gamma(x, 0, gln);
+            gamm = new Gamma(a, 0, gln);
             gamm.run();
             if (x > a1) {
                 xu = Math.max(a1 + 11.5*sqrta1, x + 6.0*sqrta1);
