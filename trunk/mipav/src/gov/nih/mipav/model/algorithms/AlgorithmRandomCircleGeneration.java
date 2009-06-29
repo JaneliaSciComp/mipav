@@ -26,11 +26,11 @@ import java.util.*;
   G. Cevenini, M. R. Massia, and P. Barbini, Kluwer Academic Publishers, 2003, pp. 39-90, information about
   randomly distributed circles.
   "Analysis of the distribution W**2 of squared NN distances between n randomly distributed circles shows that
-  2*lambda*PI*(W**2 - n*r**2)
-  has a chi-squared distribution with 2*n degrees of freedom.  r is the average radius of the circular objects,
-  lambda is the mean intensity per unit area.
+  2*lambda*PI*(W**2 - n*diameter**2)
+  has a chi-squared distribution with 2*n degrees of freedom.  diameter is the average diameter of the circular objects,
+  lambda is the mean number per unit area.
   X is a point to NN object distance.
-  W is an inter-object NN distance.  Consider W as going from the center of one object to the periphery of
+  W is an inter-object NN distance.  Consider W as going from the center of one object to the center of
   the nearest object.
   The point-object squared NN distance distribution, X**2, is not affected by the reperesentation of objects
   as circles, thus 2*lambda*X**2 also has a chi-squared distribution with 2m degrees of freedom, where m is the
@@ -44,6 +44,21 @@ import java.util.*;
   it indicates regularity; if low, aggregation.  Moreover, since the formula for rest is formally a function of NN
   distances, we can again inspect classes of distances to obtain scale-related indications about the statistical
   pattern.
+  
+  Best reference for nearest neighbor distribution for equally sized circles is: "Nearest Neighbor Assessments of
+  Spatial Configurations of Circles rather Than Points" by Daniel Simberloff, Ecology, Vol. 60, No. 4, Aug. 1979,
+  pp. 679-685.
+  d = diameter
+  lambda = mean number per unit area
+  mean nearest neighbor value = d + (exp(lambda * PI * d**2)/sqrt(lambda)*integral from t = d*sqrt(2*lambda*PI) to
+  t = infinity of (1/sqrt(2*PI))*exp(-t**2/2)dt.  The integral is simply the 1 - Gaussian probability integral.
+  E(nearest neighbor distance squared) = d**2 + 1/(lambda * PI)
+  variance = E(r**2) - [E(r)]**2 = d**2 + 1/(lambda * PI) - [E(r)]**2
+  standard error = sqrt(variance)/sqrt(N)
+  Get percentile from Gaussian probability integral.
+  If the measured mean is significantly greater than the analytical mean, the distribution is uniform or regular.
+  If the measured mean is signficantly less than than the analytical mean, the distribution is clumped or 
+  aggregated.
   
   Let x2 = chi squared and v = degrees of freedom
   The probability density function p(x2,v) = (1/((2**(v/2))* gamma(v/2)))*(x2**((v-2)/2))*exp(-x2/2)
@@ -161,6 +176,13 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
         Statistics stat;
         double degreesOfFreedom;
         double chiSquaredPercentile[] = new double[1];
+        double diameter;
+        double integral[] = new double[1];
+        double analyticalMean;
+        double analyticalMeanSquared;
+        double analyticalVariance;
+        double analyticalStandardError;
+        double percentile[] = new double[1];
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -240,22 +262,16 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
         for (i = 0; i < circlesDrawn; i++) {
             lowestDistSquared = Integer.MAX_VALUE;
             for (j = 0; j < circlesDrawn; j++) {
-                if (i != j) {
-                    for (y = 0; y <= 2*radius; y++) {
-                        for (x = 0; x <= 2*radius; x++) {
-                            if (mask[x + y * xMaskDim] == 1) {
-                                xDistSquared = circleXCenter[i] - (circleXCenter[j] + x - radius);
-                                xDistSquared = xDistSquared * xDistSquared;
-                                yDistSquared = circleYCenter[i] - (circleYCenter[j] + y - radius);
-                                yDistSquared = yDistSquared * yDistSquared;
-                                distSquared = xDistSquared + yDistSquared;
-                                if (distSquared < lowestDistSquared) {
-                                    lowestDistSquared = distSquared;
-                                    nearestNeighborDistance[i] = Math.sqrt(distSquared);
-                                }
-                            }
-                        }
-                    }
+                if (i != j) {          
+                    xDistSquared = circleXCenter[i] - circleXCenter[j];
+                    xDistSquared = xDistSquared * xDistSquared;
+                    yDistSquared = circleYCenter[i] - circleYCenter[j];
+                    yDistSquared = yDistSquared * yDistSquared;
+                    distSquared = xDistSquared + yDistSquared;
+                    if (distSquared < lowestDistSquared) {
+                        lowestDistSquared = distSquared;
+                        nearestNeighborDistance[i] = Math.sqrt(distSquared);
+                    }  
                 }
             }
         } // for (i = 0; i < circlesDrawn; i++)
@@ -285,21 +301,15 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
            lowestDistSquared = Integer.MAX_VALUE;
            for (j = 0; j < circlesLeft; j++) {
                if (i != j) {
-                   for (y = 0; y <= 2*radius; y++) {
-                       for (x = 0; x <= 2*radius; x++) {
-                           if (mask[x + y * xMaskDim] == 1) {
-                               xDistSquared = circleXCenter[i] - (circleXCenter[j] + x - radius);
-                               xDistSquared = xDistSquared * xDistSquared;
-                               yDistSquared = circleYCenter[i] - (circleYCenter[j] + y - radius);
-                               yDistSquared = yDistSquared * yDistSquared;
-                               distSquared = xDistSquared + yDistSquared;
-                               if (distSquared < lowestDistSquared) {
-                                   lowestDistSquared = distSquared;
-                                   nearestNeighborDistance[i] = Math.sqrt(distSquared);
-                               }
-                           }
-                       }
-                   }
+                   xDistSquared = circleXCenter[i] - circleXCenter[j];
+                   xDistSquared = xDistSquared * xDistSquared;
+                   yDistSquared = circleYCenter[i] - circleYCenter[j];
+                   yDistSquared = yDistSquared * yDistSquared;
+                   distSquared = xDistSquared + yDistSquared;
+                   if (distSquared < lowestDistSquared) {
+                       lowestDistSquared = distSquared;
+                       nearestNeighborDistance[i] = Math.sqrt(distSquared);
+                   }       
                }
            }
        } // for (i = 0; i < circlesLeft; i++)
@@ -406,27 +416,28 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
            deviate = observedFrequency[i] - theoreticalFrequency[i];
            chiSquaredOfFour += deviate * deviate / theoreticalFrequency[i];    
        }
-       Preferences.debug("Chi squared fit for a gaussian for 4 df = " + chiSquaredOfFour + "\n");
-       System.out.println("Chi squared fit for a gaussian for 4 df = " + chiSquaredOfFour);
-       if (chiSquaredOfFour >= 14.86) {
-           Preferences.debug("Gaussian rejected at the 0.5 percent level of signficance\n");
-           System.out.println("Gaussian rejected at the 0.5 percent level of significance");
-       }
-       else if (chiSquaredOfFour >= 13.28) {
-           Preferences.debug("Gaussian rejected at the 1.0 percent level of signficance\n");
-           System.out.println("Gaussian rejected at the 1.0 percent level of significance");    
-       }
-       else if (chiSquaredOfFour >= 11.14) {
-           Preferences.debug("Gaussian rejected at the 2.5 percent level of signficance\n");
-           System.out.println("Gaussian rejected at the 2.5 percent level of significance");    
-       }
-       else if (chiSquaredOfFour >= 9.49) {
-           Preferences.debug("Gaussian rejected at the 5.0 percent level of signficance\n");
-           System.out.println("Gaussian rejected at the 5.0 percent level of significance");
+       Preferences.debug("Chi squared for a gaussian fit on mean and standard deviation for 4 df = "
+                          + chiSquaredOfFour + "\n");
+       System.out.println("Chi squared for a gaussian fit on mean and standard deviation for 4 df = "
+                          + chiSquaredOfFour);
+       degreesOfFreedom = 4;
+       stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+               chiSquaredOfFour, degreesOfFreedom, chiSquaredPercentile);
+       stat.run();
+       
+       Preferences.debug("ChiSquared percentile for Gaussian fit on mean and standard deviation = " +
+                         chiSquaredPercentile[0]*100.0 + "\n");
+       System.out.println("chiSquared percentile for Gaussian fit on mean and standard deviation = " +
+                          chiSquaredPercentile[0]*100.0);
+       if (chiSquaredPercentile[0] >= 0.95) {
+           Preferences.debug("chiSquared test rejects Gaussian fit on mean and standard deviation at a " +
+                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n");
+           System.out.println("chiSquared test rejects Gaussian fit on mean and standard deviation at a " +
+                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance"); 
        }
        else {
-           Preferences.debug("Gaussian not rejected\n");
-           System.out.println("Gaussian not rejected");
+           Preferences.debug("chiSquared test does not reject Gaussian fit on mean and standard deviation\n");
+           System.out.println("chiSquared test does not reject Gaussian fit on mean and standard deviation");
        }
        
        // Given a large number of observations, the Jarque-bera test can be used as a normality test.
@@ -437,29 +448,27 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
        // (sample number)*[skewness**2/6 + (kurtosis - 3)**2/24] follows a chi squared of 2 degrees of freedom
        // distribution.
        chiSquaredOfTwo = circlesLeft * (skewness * skewness/6.0 + (kurtosis - 3.0) * (kurtosis - 3.0)/24.0);
-       Preferences.debug("Jarque-Bera test using skewness and kurtosis yields a chi squared of 2 df = " 
+       Preferences.debug("Jarque-Bera test using skewness and kurtosis yields a chi squared for 2 df = " 
                           + chiSquaredOfTwo + "\n");
-       System.out.println("Jarque-Bera test using skewness and kurtosis yields a chi squared of 2 df = " 
+       System.out.println("Jarque-Bera test using skewness and kurtosis yields a chi squared for 2 df = " 
                           + chiSquaredOfTwo);
-       if (chiSquaredOfTwo >= 10.60) {
-           Preferences.debug("Normality rejected at the 0.5 percent level of signficance\n");
-           System.out.println("Normality rejected at the 0.5 percent level of significance");
-       }
-       else if (chiSquaredOfTwo >= 9.21) {
-           Preferences.debug("Normality rejected at the 1.0 percent level of signficance\n");
-           System.out.println("Normality rejected at the 1.0 percent level of significance");    
-       }
-       else if (chiSquaredOfTwo >= 7.38) {
-           Preferences.debug("Normality rejected at the 2.5 percent level of signficance\n");
-           System.out.println("Normality rejected at the 2.5 percent level of significance");    
-       }
-       else if (chiSquaredOfTwo >= 5.99) {
-           Preferences.debug("Normality rejected at the 5.0 percent level of signficance\n");
-           System.out.println("Normality rejected at the 5.0 percent level of significance");
+       degreesOfFreedom = 2;
+       stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+               chiSquaredOfTwo, degreesOfFreedom, chiSquaredPercentile);
+       stat.run();
+       Preferences.debug("chiSquared percentile for Jarque-Bera test using skewness and kurtosis = " +
+                         chiSquaredPercentile[0]*100.0 + "\n");
+       System.out.println("chiSquared percentile for Jarque-Bera test using skewness and kurtosis = " +
+                          chiSquaredPercentile[0]*100.0);
+       if (chiSquaredPercentile[0] >= 0.95) {
+           Preferences.debug("chiSquared test rejects Gaussian fit based on skewness and kurtosis at a " +
+                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n");
+           System.out.println("chiSquared test rejects Gaussian fit based on skewness and kurtosis at a  " +
+                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance"); 
        }
        else {
-           Preferences.debug("Normality not rejected\n");
-           System.out.println("Normality not rejected");
+           Preferences.debug("chiSquared test does not reject Gaussian fit based on skewness and kurtosis\n");
+           System.out.println("chiSquared test does not reject Gaussian fit based on skewness and kurtosis");
        }
        
        // The probability density function for the nearest neighbor distance when circles of a 
@@ -480,7 +489,41 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
            nearestNeighborDistanceSumOfSquares += nearestNeighborDistance[i]*nearestNeighborDistance[i];
        }
        density = (double)circlesLeft/(double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance));
-       chiSquared = 2.0 * density * Math.PI * (nearestNeighborDistanceSumOfSquares - circlesLeft * radius * radius);
+       diameter = 2.0 * radius;
+       
+       // Calculate analytical mean
+       z = -diameter*Math.sqrt(2.0 * density * Math.PI);
+       stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, circlesLeft-1, integral);
+       stat.run();
+       analyticalMean = diameter + Math.exp(density*Math.PI*diameter*diameter)*integral[0]/Math.sqrt(density);
+       Preferences.debug("Analytical mean = " + analyticalMean + "\n");
+       System.out.println("Analytical mean = " + analyticalMean);
+       analyticalMeanSquared = diameter*diameter + 1.0/(density*Math.PI);
+       analyticalVariance = analyticalMeanSquared - analyticalMean*analyticalMean;
+       analyticalStandardError = Math.sqrt(analyticalVariance/circlesLeft);
+       z = (mean - analyticalMean)/analyticalStandardError;
+       stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, circlesLeft-1, percentile);
+       stat.run();
+       Preferences.debug("Percentile in Gaussian probability integral for measured mean around analytical mean = "
+                         + percentile[0]*100.0 + "\n");
+       System.out.println("Percentile in Gaussian probability integral for measured mean around analytical mean = " +
+                           percentile[0]*100.0);
+       if (percentile[0] < 0.025) {
+           // Measured mean signficantly less than analytical mean of random distribution
+           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+           System.out.println("Clumping or arrgrgation found in nearest neighbor distances");
+       }
+       else if (percentile[0] > 0.975) {
+           // Measured mean significantly greater than analytical mean of random distribution
+           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+           System.out.println("Uniform or regular distribution found in nearest neighbor distances");
+       }
+       else {
+         // Measured mean not significantly different from analytical mean of random distribution
+           Preferences.debug("Measured mean consistent with random distribution\n");
+           System.out.println("Measured mean consistent with random distribution");
+       }
+       chiSquared = 2.0 * density * Math.PI * (nearestNeighborDistanceSumOfSquares - circlesLeft * diameter * diameter);
        Preferences.debug("chiSquared for sum of squared NN distances of " + circlesLeft + " circles = " +
                          chiSquared + "\n");
        System.out.println("chiSquared for sum of squared NN distances of " + circlesLeft + " circles = " +
@@ -499,8 +542,8 @@ public class AlgorithmRandomCircleGeneration extends AlgorithmBase {
                    (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance"); 
        }
        else {
-           Preferences.debug("chiSquared tests do not reject random circle distribution\n");
-           System.out.println("chiSquared tests do not reject random circle distribution");
+           Preferences.debug("chiSquared test does not reject random circle distribution\n");
+           System.out.println("chiSquared test does not reject random circle distribution");
        }
        
        for (i = 0; i < buffer.length; i++) {
