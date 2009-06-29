@@ -218,8 +218,10 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         
         
         JPanel maskImagePanel = new JPanel();
-        JLabel maskImageLabel = new JLabel("Mask Image (optional)");
+        JLabel maskImageLabel = new JLabel("Mask Image");
         maskImageTextField = new JTextField(20);
+        maskImageTextField.setEditable(false);
+        maskImageTextField.setBackground(Color.white);
         JButton loadMaskButton = new JButton("Browse");
         loadMaskButton.addActionListener(this);
         loadMaskButton.setActionCommand("maskBrowse");
@@ -300,6 +302,8 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         JPanel outputDirPanel = new JPanel();
         JLabel outputDirLabel = new JLabel("Output Dir");
         outputDirTextField = new JTextField(20);
+        outputDirTextField.setEditable(false);
+        outputDirTextField.setBackground(Color.white);
         JButton outputDirButton = new JButton("Browse");
         outputDirButton.addActionListener(this);
         outputDirButton.setActionCommand("outputDirBrowse");
@@ -580,6 +584,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		        	fileIO.setQuiet(true);
 
 		            maskImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
+		            maskImageTextField.setText(currDir);
 		        }
 		 }else if(command.equals("outputDirBrowse")) {
 			 	JFileChooser chooser = new JFileChooser();
@@ -595,6 +600,10 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		        	outputDirTextField.setText(currDir);
 		        }
 		 }else if(command.equals("ok")) {
+			 boolean success = validateData();
+			 if(!success) {
+				 return;
+			 }
 			 createListFile();
 			 createBMatrixFile();
 			 createPathFile();
@@ -1233,6 +1242,10 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     private boolean validateData() {
     	boolean isValid = true;
     	int numRows = srcTableModel.getRowCount();
+    	if(numRows == 0) {
+    		MipavUtil.displayError("DWI data is required");
+			return false;
+    	}
     	for(int i=0;i<numRows;i++) {
     		String bValString = ((String)srcTableModel.getValueAt(i, 1)).trim();
     		String xgradString = ((String)srcTableModel.getValueAt(i, 2)).trim();
@@ -1268,6 +1281,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     		}
     	}
     	
+    	String maskImageString = maskImageTextField.getText().trim();
     	String xdimString = xdimTextField.getText().trim();
     	String ydimString = ydimTextField.getText().trim();
     	String numSlicesString = numSlicesTextField.getText().trim();
@@ -1281,7 +1295,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     	String imagePlaneString = imagePlaneTextField.getText().trim();
     	String phaseEncodingString = phaseEncodingTextField.getText().trim();
     	
-    	if(xdimString.equals("") || ydimString.equals("") || numSlicesString.equals("") || numVolsString.equals("") || hFOVString.equals("") || vFOVString.equals("") || outputDirString.equals("") || formatString.equals("") || gapString.equals("") || sliceThicknessString.equals("") || imagePlaneString.equals("") || phaseEncodingString.equals("") ) {
+    	if(maskImageString.equals("") || xdimString.equals("") || ydimString.equals("") || numSlicesString.equals("") || numVolsString.equals("") || hFOVString.equals("") || vFOVString.equals("") || outputDirString.equals("") || formatString.equals("") || gapString.equals("") || sliceThicknessString.equals("") || imagePlaneString.equals("") || phaseEncodingString.equals("") ) {
     		MipavUtil.displayError("One or more required study parameters is missing");
 			return false;
     	}
