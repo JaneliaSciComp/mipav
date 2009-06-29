@@ -67,7 +67,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     
     private Vector<ArrayList> slicesVector = new Vector<ArrayList>();;
     
-    private JTextField bValueTextField,xdimTextField, ydimTextField, numSlicesTextField, numVolumesTextField, hFOVTextField, vFOVTextField, outputDirTextField, formatTextField, gapTextField, sliceThicknessTextField, imagePlaneTextField, phaseEncodingTextField;
+    private JTextField bValueTextField,xdimTextField, ydimTextField, numSlicesTextField, numVolumesTextField, hFOVTextField, vFOVTextField, outputDirTextField, formatTextField, gapTextField, sliceThicknessTextField, imagePlaneTextField, phaseEncodingTextField,maskImageTextField;
     
     private ModelImage maskImage;
     
@@ -219,7 +219,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         
         JPanel maskImagePanel = new JPanel();
         JLabel maskImageLabel = new JLabel("Mask Image (optional)");
-        JTextField maskImageTextField = new JTextField(20);
+        maskImageTextField = new JTextField(20);
         JButton loadMaskButton = new JButton("Browse");
         loadMaskButton.addActionListener(this);
         loadMaskButton.setActionCommand("maskBrowse");
@@ -1226,6 +1226,99 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 
     	}
+    }
+    
+    
+    
+    private boolean validateData() {
+    	boolean isValid = true;
+    	int numRows = srcTableModel.getRowCount();
+    	for(int i=0;i<numRows;i++) {
+    		String bValString = ((String)srcTableModel.getValueAt(i, 1)).trim();
+    		String xgradString = ((String)srcTableModel.getValueAt(i, 2)).trim();
+    		String ygradString = ((String)srcTableModel.getValueAt(i, 3)).trim();
+    		String zgradString = ((String)srcTableModel.getValueAt(i, 4)).trim();
+    		if(bValString.equals("") || xgradString.equals("") || ygradString.equals("") || zgradString.equals("")) {
+    			MipavUtil.displayError("B-Values and Gradient Direction Inputs are required");
+    			return false;
+    		}
+    		try {
+    			Float.valueOf(bValString);
+    		}catch(NumberFormatException e) {
+    			MipavUtil.displayError("B-Value and Gradient Direction Inputs must be valid numbers");
+    			return false;
+    		}
+    		try {
+    			Float.valueOf(xgradString);
+    		}catch(NumberFormatException e) {
+    			MipavUtil.displayError("B-Value and Gradient Direction Inputs must be valid numbers");
+    			return false;
+    		}
+    		try {
+    			Float.valueOf(ygradString);
+    		}catch(NumberFormatException e) {
+    			MipavUtil.displayError("B-Value and Gradient Direction Inputs must be valid numbers");
+    			return false;
+    		}
+    		try {
+    			Float.valueOf(zgradString);
+    		}catch(NumberFormatException e) {
+    			MipavUtil.displayError("B-Value and Gradient Direction Inputs must be valid numbers");
+    			return false;
+    		}
+    	}
+    	
+    	String xdimString = xdimTextField.getText().trim();
+    	String ydimString = ydimTextField.getText().trim();
+    	String numSlicesString = numSlicesTextField.getText().trim();
+    	String numVolsString = numVolumesTextField.getText().trim();
+    	String hFOVString = hFOVTextField.getText().trim();
+    	String vFOVString = vFOVTextField.getText().trim();
+    	String outputDirString = outputDirTextField.getText().trim();
+    	String formatString = formatTextField.getText().trim();
+    	String gapString = gapTextField.getText().trim();
+    	String sliceThicknessString = sliceThicknessTextField.getText().trim();
+    	String imagePlaneString = imagePlaneTextField.getText().trim();
+    	String phaseEncodingString = phaseEncodingTextField.getText().trim();
+    	
+    	if(xdimString.equals("") || ydimString.equals("") || numSlicesString.equals("") || numVolsString.equals("") || hFOVString.equals("") || vFOVString.equals("") || outputDirString.equals("") || formatString.equals("") || gapString.equals("") || sliceThicknessString.equals("") || imagePlaneString.equals("") || phaseEncodingString.equals("") ) {
+    		MipavUtil.displayError("One or more required study parameters is missing");
+			return false;
+    	}
+    	
+    	try {
+			Integer.valueOf(xdimString);
+		}catch(NumberFormatException e) {
+			MipavUtil.displayError("Image X Dimension must be a valid number");
+			return false;
+		}
+    	
+		
+		try {
+			Integer.valueOf(ydimString);
+		}catch(NumberFormatException e) {
+			MipavUtil.displayError("Image Y Dimension must be a valid number");
+			return false;
+		}
+		
+		
+		try {
+			Integer.valueOf(numSlicesString);
+		}catch(NumberFormatException e) {
+			MipavUtil.displayError("Num Slices per 3D Volume must be a valid number");
+			return false;
+		}
+		
+		try {
+			Integer.valueOf(numVolsString);
+		}catch(NumberFormatException e) {
+			MipavUtil.displayError("Num 3D Volumes must be a valid number");
+			return false;
+		}
+    
+    	
+    	
+    	return isValid;
     }
 	
 	
