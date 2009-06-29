@@ -694,7 +694,8 @@ public class JDialogDTIInput extends JInterfaceBase
                 for ( int j = 0; j < m_iWeights; j++ )
                 {
                     str = in.readLine();
-                    m_aakDWIList[i][j] = new String(kPathName + File.separator + str);
+                    //m_aakDWIList[i][j] = new String(kPathName + File.separator + str);
+                    m_aakDWIList[i][j] = new String(str);
                 }
             }
             in.close();
