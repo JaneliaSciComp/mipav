@@ -51,6 +51,34 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
     private int numCircles = 200;
     
     private JTextField numCirclesText;
+    
+    private ButtonGroup patternGroup;
+    
+    private JRadioButton randomButton;
+    
+    private JRadioButton aggregatedButton;
+    
+    private JRadioButton regularButton;
+    
+    private int pattern = AlgorithmCircleGeneration.RANDOM;
+    
+    private JLabel initialCirclesLabel;
+    
+    private JTextField initialCirclesText;
+    
+    private int initialRandomCircles = 20;
+    
+    private JLabel minimumDistanceLabel;
+    
+    private JTextField minimumDistanceText;
+    
+    private double minimumNearestNeighborDistance = 12.0;
+    
+    private JLabel maximumDistanceLabel;
+    
+    private JTextField maximumDistanceText;
+    
+    private double maximumNearestNeighborDistance = 15.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -74,6 +102,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -86,6 +115,31 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
             //MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else if ((source == randomButton) || (source == aggregatedButton) || (source == regularButton)) {
+            if (randomButton.isSelected()) {
+                initialCirclesLabel.setEnabled(false);
+                initialCirclesText.setEnabled(false);
+                minimumDistanceLabel.setEnabled(false);
+                minimumDistanceText.setEnabled(false);
+                maximumDistanceLabel.setEnabled(false);
+                maximumDistanceText.setEnabled(false);
+            }
+            else if (aggregatedButton.isSelected()) {
+                initialCirclesLabel.setEnabled(true);
+                initialCirclesText.setEnabled(true);
+                minimumDistanceLabel.setEnabled(false);
+                minimumDistanceText.setEnabled(false);
+                maximumDistanceLabel.setEnabled(true);
+                maximumDistanceText.setEnabled(true);    
+            }
+            else {
+                initialCirclesLabel.setEnabled(false);
+                initialCirclesText.setEnabled(false);
+                minimumDistanceLabel.setEnabled(true);
+                minimumDistanceText.setEnabled(true);
+                maximumDistanceLabel.setEnabled(true);
+                maximumDistanceText.setEnabled(true);
+            }
         }
     }
 
@@ -174,7 +228,8 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
             resultImage.setImageName(name);
 
             // Make algorithm
-            cAlgo = new AlgorithmCircleGeneration(resultImage, radius, numCircles);
+            cAlgo = new AlgorithmCircleGeneration(resultImage, radius, numCircles, pattern, initialRandomCircles,
+                        minimumNearestNeighborDistance, maximumNearestNeighborDistance);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -217,11 +272,11 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         JLabel numCirclesLabel;
         
         setForeground(Color.black);
-        setTitle("Random spaced circle generation");
+        setTitle("Circle generation");
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
-        paramPanel.setBorder(buildTitledBorder("Random circle parameters"));
+        paramPanel.setBorder(buildTitledBorder("Circle parameters"));
 
         GridBagConstraints gbc6 = new GridBagConstraints();
 
@@ -292,6 +347,79 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         numCirclesText.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(numCirclesText, gbc6);
+        
+        patternGroup = new ButtonGroup();
+        randomButton = new JRadioButton("Random pattern", true);
+        randomButton.setFont(serif12);
+        randomButton.setForeground(Color.black);
+        randomButton.addActionListener(this);
+        patternGroup.add(randomButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 4;
+        paramPanel.add(randomButton, gbc6);
+        
+        aggregatedButton = new JRadioButton("Aggregated pattern", false);
+        aggregatedButton.setFont(serif12);
+        aggregatedButton.setForeground(Color.black);
+        aggregatedButton.addActionListener(this);
+        patternGroup.add(aggregatedButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 5;
+        paramPanel.add(aggregatedButton, gbc6);
+        
+        regularButton = new JRadioButton("Regular pattern", false);
+        regularButton.setFont(serif12);
+        regularButton.setForeground(Color.black);
+        regularButton.addActionListener(this);
+        patternGroup.add(regularButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 6;
+        paramPanel.add(regularButton, gbc6);
+        
+        initialCirclesLabel = new JLabel("Initial circles randomly generated ");
+        initialCirclesLabel.setForeground(Color.black);
+        initialCirclesLabel.setFont(serif12);
+        initialCirclesLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 7;
+        paramPanel.add(initialCirclesLabel, gbc6);
+        
+        initialCirclesText = new JTextField(10);
+        initialCirclesText.setText(String.valueOf(initialRandomCircles));
+        initialCirclesText.setFont(serif12);
+        initialCirclesText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(initialCirclesText, gbc6);
+        
+        minimumDistanceLabel = new JLabel("Minimum nearest neighbor distance ");
+        minimumDistanceLabel.setForeground(Color.black);
+        minimumDistanceLabel.setFont(serif12);
+        minimumDistanceLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 8;
+        paramPanel.add(minimumDistanceLabel, gbc6);
+        
+        minimumDistanceText = new JTextField(10);
+        minimumDistanceText.setText(String.valueOf(minimumNearestNeighborDistance));
+        minimumDistanceText.setFont(serif12);
+        minimumDistanceText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(minimumDistanceText, gbc6);
+        
+        maximumDistanceLabel = new JLabel("Maximum nearest neighbor distance ");
+        maximumDistanceLabel.setForeground(Color.black);
+        maximumDistanceLabel.setFont(serif12);
+        maximumDistanceLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 9;
+        paramPanel.add(maximumDistanceLabel, gbc6);
+        
+        maximumDistanceText = new JTextField(10);
+        maximumDistanceText.setText(String.valueOf(maximumNearestNeighborDistance));
+        maximumDistanceText.setFont(serif12);
+        maximumDistanceText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(maximumDistanceText, gbc6);
 
         getContentPane().add(paramPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -341,6 +469,53 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
             return false;
         } else {
             numCircles = Integer.valueOf(numCirclesText.getText()).intValue();
+        }
+        
+        if (randomButton.isSelected()) {
+            pattern = AlgorithmCircleGeneration.RANDOM;
+        }
+        else if (aggregatedButton.isSelected()) {
+            pattern = AlgorithmCircleGeneration.AGGREGATED;
+            initialRandomCircles = Integer.valueOf(initialCirclesText.getText()).intValue();
+            if (initialRandomCircles < 1) {
+                MipavUtil.displayError("The number of initial random circles must be at least 1");
+                initialCirclesText.requestFocus();
+                initialCirclesText.selectAll();
+                return false;
+            }
+            if (initialRandomCircles >= numCircles) {
+                MipavUtil.displayError("The number of initial random circles must be less than the number of circles");
+                initialCirclesText.requestFocus();
+                initialCirclesText.selectAll();
+                return false;
+            }
+            
+            maximumNearestNeighborDistance = Double.valueOf(maximumDistanceText.getText()).doubleValue();
+            if (maximumNearestNeighborDistance < 2.0 * radius) {
+                MipavUtil.displayError("The maximum nearest neighbor distance must be at least 2.0 * radius");
+                maximumDistanceText.requestFocus();
+                maximumDistanceText.selectAll();
+                return false;
+            }
+        }
+        else {
+            pattern = AlgorithmCircleGeneration.REGULAR;
+            minimumNearestNeighborDistance = Double.valueOf(minimumDistanceText.getText()).doubleValue();
+            if (minimumNearestNeighborDistance < 2.0 * radius) {
+                MipavUtil.displayError("The minimum nearest neighbor distance must be at least 2.0 * radius");
+                minimumDistanceText.requestFocus();
+                minimumDistanceText.selectAll();
+                return false;
+            }
+            
+            maximumNearestNeighborDistance = Double.valueOf(maximumDistanceText.getText()).doubleValue();
+            if (maximumNearestNeighborDistance <= minimumNearestNeighborDistance) {
+                MipavUtil.displayError(
+                "The maximum nearest neighbor distance must be greater than the minimum nearest neighbor distance");
+                maximumDistanceText.requestFocus();
+                maximumDistanceText.selectAll();
+                return false;
+            }
         }
 
         return true;
