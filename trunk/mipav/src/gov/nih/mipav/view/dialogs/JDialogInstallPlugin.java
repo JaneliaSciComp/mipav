@@ -486,7 +486,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 			
 			JPanel dirSelectPanel = new JPanel();
 			dirSelectPanel.setLayout(new BoxLayout(dirSelectPanel, BoxLayout.X_AXIS));
-			dirSelectPanel.setBorder(MipavUtil.buildTitledBorder("Select a directory"));
+			dirSelectPanel.setBorder(MipavUtil.buildTitledBorder("Select a plugin directory"));
 			
 			JButton browseButton = new JButton(BROWSE);
 			browseButton.addActionListener(this);
@@ -573,12 +573,13 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     	public void actionPerformed(ActionEvent e) {
 			if(e.getActionCommand().equals(BROWSE)) {
 				JFileChooser chooser = new JFileChooser();
-
+				
 				if(Preferences.getPluginInstallDirectory() != null) {
                 	chooser.setCurrentDirectory(new File(Preferences.getPluginInstallDirectory()));
                 } else {
                     chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
                 }
+				chooser.setDialogTitle("Select a plugin directory");
 	            chooser.setMultiSelectionEnabled(false);
 	            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
