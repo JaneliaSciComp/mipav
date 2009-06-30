@@ -1266,9 +1266,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * as the VOI statistic information
 	 *
 	 */
-	protected void PDFcreate() {		
-		String fileDir, fileName;
-		fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+VOI_DIR;
+	protected void PDFcreate(String fileDir) {		
+		String fileName;
+		if(!(new File(fileDir).exists())) {
+			fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+VOI_DIR;
+		}
 		fileName = fileDir + File.separator + "NIA_Report.pdf";
 		pdfFile = new File(fileName);
 		if(pdfFile.exists()) {
@@ -3591,9 +3593,34 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		
 			boolean pdfCreated = false;
 			
+			String fileDir = System.getProperty("user.dir");
+			if(doSave) {
+				//Select file directory and create if necessary
+				JFileChooser chooser = new JFileChooser();
+				System.out.println(imageDir);
+				if(new File(imageDir).exists()) {
+                	chooser.setCurrentDirectory(new File(imageDir));
+                } else {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                }
+				chooser.setDialogTitle("Select a directory for saving PDF and text files");
+	            chooser.setMultiSelectionEnabled(false);
+	            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+	            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+	                fileDir = chooser.getSelectedFile().toString();
+	                if(!chooser.getSelectedFile().exists()) {
+	                	chooser.getSelectedFile().mkdirs();
+	                }
+	            } else {
+	            	//user chose to not save calculations to PDF/text
+	            	return;
+	            }
+			}
+			
 			//if PDF hasnt been created and we're saving, create it now
 			if (doSave && !pdfCreated) {
-				PDFcreate();
+				PDFcreate(fileDir);
 				pdfCreated = true;
 			}
 			Iterator<String> itr;
@@ -3661,7 +3688,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 		
 			if (doSave) {
-					    		
+				ucsdOutput.setFileDir(fileDir);
 				Thread output = new Thread(ucsdOutput);
 		    	output.start();
 				
@@ -3744,6 +3771,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			/** Whether the Runnable successfully wrote the file*/
 			private boolean success = false;
 			
+			/** File directory to save to **/
+			private String fileDir = imageDir;
+			
 			/**
 			 * Whether the output has finished.
 			 */
@@ -3756,6 +3786,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			 */
 			public boolean isSuccess() {
 				return success;
+			}
+			
+			public void setFileDir(String fileDir) {
+				this.fileDir = fileDir;
 			}
 
 			/**
@@ -3771,7 +3805,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 						calcList.add(temp);
 				}
 				
-				String fileDir = imageDir;
+				if(!(new File(fileDir).exists())) {
+					fileDir = imageDir;
+				}
 				String fileName = "Text_Report.txt";
 				textFile = new File(fileDir + File.separator + fileName);
 				if(textFile.exists()) {
