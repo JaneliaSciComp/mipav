@@ -182,8 +182,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         }
         
         public String toString() {
-        	if(side2.length() == 0)
+        	if(side2.length() == 0) {
         		return side1;
+        	}
         	return side1+"/"+side2;
         }
     }
@@ -208,8 +209,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         commonConstructor(image, titles, voiList,  imageType, symmetry, false, multipleSlices);
 
         File f;
-        if(!(f = new File(imageDir+File.separator)).exists())
+        if(!(f = new File(imageDir+File.separator)).exists()) {
         	f.mkdir();
+        }
 
         createVOIBuffer();
         
@@ -258,8 +260,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         progressBar.updateValue(5);
         
         File f;
-        if(!(f = new File(imageDir+File.separator)).exists())
+        if(!(f = new File(imageDir+File.separator)).exists()) {
         	f.mkdir();
+        }
 
         System.out.println("Exists? "+f.exists());
         createVOIBuffer();
@@ -282,7 +285,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    this.multipleSlices = multipleSlices; 
 	    this.currentSlice = getViewableSlice();
 	    this.colorChoice = 0;
-	  //left as zero to ensure VOIs across image stay same color (helps for image batches)
+	    //left as zero to ensure VOIs across image stay same color (helps for image batches)
 	
 	    for(int i=0; i<voiList.length; i++) {
 	    	ArrayList<Comparable> mirrorArrList = new ArrayList<Comparable>(), noMirrorArrList = new ArrayList<Comparable>(), 
@@ -302,11 +305,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    		}
 	    	}
 	    	mirrorArr[i] = new String[mirrorArrList.size()];
-	    	for(int j=0; j<mirrorArr[i].length; j++) 
+	    	for(int j=0; j<mirrorArr[i].length; j++) {
 	    		mirrorArr[i][j] = (String)mirrorArrList.get(j);
+	    	}
 	    	noMirrorArr[i] = new String[noMirrorArrList.size()];
-	    	for(int j=0; j<noMirrorArr[i].length; j++) 
+	    	for(int j=0; j<noMirrorArr[i].length; j++) { 
 	    		noMirrorArr[i][j] = (String)noMirrorArrList.get(j);
+	    	}
 	    }
 	    
 	    Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(true));
@@ -397,16 +402,21 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         												(leftBone = !voiBuffer.get("Left Bone").getCreated()))) || 
 				(imageType.equals(ImageType.Abdomen) && ((abdomen = !voiBuffer.get("Abdomen").getCreated())))) {
         		String createStr = new String();
-        		if(abdomen)
+        		if(abdomen) {
         			createStr += "\tAbdomen\n";
-        		if(leftMarrow)
+        		}
+        		if(leftMarrow) {
         			createStr += "\tLeft Marrow\n";
-        		if(rightMarrow)
+        		}
+        		if(rightMarrow) {
         			createStr += "\tRight Marrow\n";
-        		if(leftBone)
+        		}
+        		if(leftBone) {
         			createStr += "\tLeft Bone\n";
-        		if(rightBone)
+        		}
+        		if(rightBone) {
         			createStr += "\tRightBone\n";
+        		}
         		MipavUtil.displayWarning("This tab calculates VOIs that depend on the following being created.\n"+
         				"Note that only muscle calculations will be correct.\n"+createStr);
         	}
@@ -430,10 +440,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     	} else if(command.equals(DialogPrompt.EXIT)) {
         	close();
     	} else if(command.equals(DialogPrompt.HELP)) {
-    		if(imageType.equals(ImageType.Thigh))
+    		if(imageType.equals(ImageType.Thigh)) {
     			MipavUtil.showHelp("MS00001");
-    		else //image is of type abdomen
+    		} else { //image is of type abdomen
     			MipavUtil.showHelp("MS00050");
+    		}
     	} else {
     		super.actionPerformed(e);
     	}
@@ -541,8 +552,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        algorithm.finalize();
 	        algorithm = null;
 	    }
-	    if(standAlone)
+	    if(standAlone) {
 	    	initControls();
+	    }
 	}
 
 	/**
@@ -719,8 +731,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         	
         	scrollPane.setSize(imageWidth, imageHeight);
         	
-            setSize(width,
-                    height);
+            setSize(width, height);
             validate();
             setTitle();
            
@@ -734,8 +745,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * Easy curveExists for checks if curveExists for viewableSlice(). (so no bounds check)
 	 */
 	public boolean curveExists(String name) {
-		if(voiBuffer.get(name).getCurves()[getViewableSlice()].size() > 0) 
+		if(voiBuffer.get(name).getCurves()[getViewableSlice()].size() > 0) {
 			return true;
+		}
 		return false;
 	}
 
@@ -806,8 +818,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 */
 	public int getLocationStatus(String name) {
 		int loc = PlugInSelectableVOI.INVALID_LOC_NUMBER;
-		if(voiBuffer.get(name) != null)
+		if(voiBuffer.get(name) != null) {
 			loc = voiBuffer.get(name).getLocation();
+		}
 		return loc;
 	}
 
@@ -820,8 +833,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		ArrayList<String> newName = new ArrayList<String>();
 		String v;
 		for(int i=0; i<voiName.length; i++) {
-			if(voiBuffer.get(v = voiName[i].substring(0, voiName[i].lastIndexOf('.'))).getCreated())
+			if(voiBuffer.get(v = voiName[i].substring(0, voiName[i].lastIndexOf('.'))).getCreated()) {
 				newName.add(v);
+			}
 		}
 		
 		VOI tempVOI;
@@ -842,8 +856,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 */
 	public boolean getZeroStatus(String name) {
 		boolean fill = false;
-		if(voiBuffer.get(name) != null)
+		if(voiBuffer.get(name) != null) {
 			fill = voiBuffer.get(name).getFillEligible();
+		}
 		return fill;
 	}
 
@@ -857,8 +872,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
 		String ext = name.contains(".xml") ? "" : ".xml";
 		PlugInSelectableVOI temp = voiBuffer.get(name);
-		for(int i=0; i<temp.getZDim(); i++) 
+		for(int i=0; i<temp.getZDim(); i++) {
 			temp.removeCurves(i);
+		}
 	    if(new File(fileDir+name+ext).exists()) {
 	        FileVOI v;
 	        VOI[] voiVec = null;
@@ -898,7 +914,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    if(allVOIs.isDirectory()) {
 	        for(int i=0; i<voiName.length; i++) {
 	            //System.out.println(voiName[i]);
-	
 	            if(new File(fileDir+voiName[i]).exists()) {
 	                String fileName = voiName[i];
 	                FileVOI v;
@@ -914,13 +929,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                } else {
 	                	if(voiBuffer.get(voiVec[0].getName()).getColor().equals(PlugInSelectableVOI.INVALID_COLOR)) {
 	                    	Color c = hasColor(voiVec[0]);
-	                        if(!(c = hasColor(voiVec[0])).equals(PlugInSelectableVOI.INVALID_COLOR))
+	                        if(!(c = hasColor(voiVec[0])).equals(PlugInSelectableVOI.INVALID_COLOR)) {
 	                            voiVec[0].setColor(c);
-	                        else 
+	                        } else {
 	                            voiVec[0].setColor(c = colorPick[colorChoice++ % colorPick.length]);
+	                        }
 	                        voiBuffer.get(voiVec[0].getName()).setColor(c);
-	                	} else
+	                	} else {
 	                		voiVec[0].setColor(voiBuffer.get(voiVec[0].getName()).getColor());
+	                	}
 	                    voiVec[0].setThickness(2);
 	                    if(fillVOIs != 0 && getZeroStatus(voiVec[0].getName())) {
 	                    	voiVec[0].setDisplayMode(VOI.SOLID);
@@ -941,8 +958,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 */
 	public void lockToPanel(int tabLoc, String title) {
 		tabs[tabLoc].setVisible(true);
-		for(int i=0; i<voiTabLoc; i++)
+		for(int i=0; i<voiTabLoc; i++) {
 			dialogTabs.setEnabledAt(i, false);
+		}
 		dialogTabs.addTab(title, tabs[tabLoc]);
 		dialogTabs.setSelectedIndex(voiTabLoc);
 		updateImages(true);
@@ -966,10 +984,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * @return
 	 */
 	public boolean voiExists(String name, int slice) {
-		if(!multipleSlices)
+		if(!multipleSlices) {
 			return voiExists(name);
-		if(voiBuffer.get(name).getCurves()[slice].size() > 0)
+		}
+		if(voiBuffer.get(name).getCurves()[slice].size() > 0) {
 			return true;
+		}
 		return false;
 	}
 
@@ -986,9 +1006,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    ViewVOIVector VOIs;
 	    FileVOI fileVOI;
 	    ModelImage currentImage;
-	
 	    try {
-	
 	        if (displayMode == IMAGE_A) {
 	            currentImage = imageA;
 	            VOIs = imageA.getVOIs();
@@ -997,10 +1015,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	            VOIs = imageB.getVOIs();
 	        } else {
 	            MipavUtil.displayError(" Cannot save VOIs when viewing both images");
-	
 	            return;
 	        }
-	
 	        // Might want to bring up warning message before deleting VOIs !!!!
 	        // or not do it at all.
 	        // if voiDir exists, then empty it
@@ -1008,21 +1024,18 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        File voiFileDir = new File(voiDir);
 	
 	        if (voiFileDir.exists() && voiFileDir.isDirectory()) {
-	
 	            // only clean out the vois if this is a default voi directory
 	            if (voiFileDir.getName().startsWith("defaultVOIs_")) {
 	                File[] files = voiFileDir.listFiles();
-	
 	                if (files != null) {
-	
 	                    for (int k = 0; k < files.length; k++) {
-	
 	                        if (files[k].getName().endsWith(".voi") || files[k].getName().endsWith(".xml")) { // files[k].delete();
 	                        }
 	                    }
 	                } // if (files != null)
 	            }
-	        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+	        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { 
+	        	// voiFileDir.delete();
 	        } else { // voiFileDir does not exist
 	            voiFileDir.mkdir();
 	        }
@@ -1032,9 +1045,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        System.err.println("Number of VOIs: " + nVOI);
 	
 	        for (i = 0; i < nVOI; i++) {
-	
 	            fileVOI = new PlugInFileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
-	
 	            fileVOI.writeVOI(VOIs.VOIAt(i), true);
 	        }
 	
@@ -1210,10 +1221,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			Paragraph aPar = new Paragraph();
 			aPar.setAlignment(Element.ALIGN_CENTER);
 			aPar.add(new Paragraph());
-			if(multipleSlices)
+			if(multipleSlices) {
 				aPar.add(new Chunk("Volume calculations", new Font(Font.TIMES_ROMAN, 14, Font.BOLD)));
-			else
+			} else {
 				aPar.add(new Chunk("Area calculations", new Font(Font.TIMES_ROMAN, 14, Font.BOLD)));
+			}
 			aPar.add(wholeTable);
 			pdfDocument.add(new Paragraph());
 			pdfDocument.add(aPar);
@@ -1277,8 +1289,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				int i=0;
 				while(pdfFile.exists() && i<1000) {
 					fileName = "PDF_Report-"+(++i)+ ".pdf";
-					if(i == 1000) 
+					if(i == 1000) {
 						MipavUtil.displayError("Too many PDFs have been created, overwriting "+fileName);
+					}
 					pdfFile = new File(fileDir + File.separator + fileName);
 				}
 			}
@@ -1583,12 +1596,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			Color c = PlugInSelectableVOI.INVALID_COLOR;
 			v.isEmpty();
 			if((c = v.getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
-	        	if((c = hasColor(v)).equals(PlugInSelectableVOI.INVALID_COLOR))
+	        	if((c = hasColor(v)).equals(PlugInSelectableVOI.INVALID_COLOR)) {
 	                v.setColor(c = colorPick[colorChoice++ % colorPick.length]);
-	        	else
+	        	} else {
 	        		v.setColor(c);
-			} else
+	        	}
+			} else {
 				v.setColor(c);
+			}
 			voiBuffer.put(name, v);
 			System.out.println(voiBuffer.get(v.getName()) +"\twith area: "+ voiBuffer.get(v.getName()).isEmpty());
 		}
@@ -1871,9 +1886,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    pack();
 	    
 	    // User interface will have list of frames
-	   userInterface.registerFrame(this);
+	    userInterface.registerFrame(this);
 	
-	   getContentPane().add(controls, BorderLayout.NORTH);
+	    getContentPane().add(controls, BorderLayout.NORTH);
 	    
 	    //call the normal init function here, 
 	    initNext();
@@ -1887,10 +1902,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		//VOIs of pane already loaded, just need to make relevant ones solid
 	    VOIVector voiVec = getActiveImage().getVOIs();
 	    VOI voi;
-		for(int i=0; i<voiVec.size(); i++) 
-			if(voiBuffer.get((voi = voiVec.get(i)).getName()).getFillEligible()) 
-				if(!(((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(voi.getName()))) 
+		for(int i=0; i<voiVec.size(); i++) { 
+			if(voiBuffer.get((voi = voiVec.get(i)).getName()).getFillEligible()) {
+				if(!(((VoiDialogPrompt)tabs[voiTabLoc]).getObjectName().equals(voi.getName()))) { 
 					voi.setDisplayMode(VOI.SOLID);
+				}
+			}
+		}
 	    
 	    componentImage.setCursorMode(ViewJComponentBase.NEW_VOI);
 	    updateImages(true);
@@ -2241,8 +2259,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             if(command.equals(HIDE_ALL)) {
                 //clear all VOIs drawn
             	VOIVector voiPromptBufferAppend = (VOIVector)getActiveImage().getVOIs().clone();
-            	for(int i=0; i<voiPromptBufferAppend.size(); i++)
+            	for(int i=0; i<voiPromptBufferAppend.size(); i++) {
             		voiPromptBuffer.add(voiPromptBufferAppend.get(i));
+            	}
                 getActiveImage().unregisterAllVOIs();
                 ((JButton)e.getSource()).setText(SHOW_ALL);
                 ((JButton)e.getSource()).setActionCommand(SHOW_ALL);
@@ -2250,11 +2269,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             } else if(command.equals(SHOW_ALL)) {
             	//show all VOIs previously drawn, do not get rid of any VOIs on screen
             	VOIVector voiPromptBufferAppend = (VOIVector)getActiveImage().getVOIs().clone();
-            	for(int i=0; i<voiPromptBufferAppend.size(); i++)
+            	for(int i=0; i<voiPromptBufferAppend.size(); i++) {
             		voiPromptBuffer.add(voiPromptBufferAppend.get(i));
+            	}
         		getActiveImage().unregisterAllVOIs();
-            	for(int i=0; i<voiPromptBuffer.size(); i++)
+            	for(int i=0; i<voiPromptBuffer.size(); i++) {
             		getActiveImage().registerVOI(voiPromptBuffer.get(i));
+            	}
             	((JButton)e.getSource()).setText(HIDE_ALL);
                 ((JButton)e.getSource()).setActionCommand(HIDE_ALL);
                 voiPromptBuffer.removeAllElements();
@@ -2346,8 +2367,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                		}
 	                	} //note: does unregister/register to for faster method execution
 	                	getActiveImage().unregisterAllVOIs();
-	                    if(goodVoi != null)
-	                    	getActiveImage().registerVOI(goodVoi);	                    
+	                    if(goodVoi != null) {
+	                    	getActiveImage().registerVOI(goodVoi);
+	                    }
 	                	updateImages(true);
                 	}
                 	
@@ -2387,7 +2409,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    return objectName;
 		}
 
-		@Override
 		public void setSlice(int slice) {
 			//Do nothing since this dialog does not depend on a changing slice (though could in the future)
 		}
@@ -2418,15 +2439,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    
 		    updateSelectionLabel();
 		    
-		    if(voiExists && voiBuffer.get(name).isComputerGenerated()) 
+		    if(voiExists && voiBuffer.get(name).isComputerGenerated()) {
 		    	createWarningLabel();
+		    }
 		}
 
 		/**
 		 * Prepares to leave voi dialog, clears the voiPromptBuffer.
 		 */
 		public void takeDownDialog() {
-			
 			removeAll();
 			voiPromptBuffer.removeAllElements();
 		}
@@ -2762,8 +2783,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 * Gets the symmetric buttons in this panel.
 		 */
 		public JButton[] getMirrorButton() {
-			if(mirrorButtonArr != null)
+			if(mirrorButtonArr != null) {
 				return mirrorButtonArr;
+			}
 			return new JButton[0];
 		}
 
@@ -2771,8 +2793,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 * Gets the non-symmetric buttons in this panel.
 		 */
 		public JButton[] getNoMirrorButton() {
-			if(noMirrorButtonArr != null)
+			if(noMirrorButtonArr != null) {
 				return noMirrorButtonArr;
+			}
 			return new JButton[0];
 		}
 
@@ -2788,20 +2811,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				if(name.equals(mirrorButtonArr[i].getText())) {
 					mirrorCheckArr[i].setColor(c);
 					v.addVOIListener(mirrorCheckArr[i].getColorButton());
-					if(v.isComputerGenerated())
+					if(v.isComputerGenerated()) {
 						mirrorButtonArr[i].setForeground(Color.RED);
-					else
+					} else {
 						mirrorButtonArr[i].setForeground(Color.BLACK);
+					}
 				}
 			}
 			for(int i=0; i<noMirrorButtonArr.length; i++) {
 				if(name.equals(noMirrorButtonArr[i].getText())) {
 					noMirrorCheckArr[i].setColor(c);
 					v.addVOIListener(noMirrorCheckArr[i].getColorButton());
-					if(v.isComputerGenerated())
+					if(v.isComputerGenerated()) {
 						noMirrorButtonArr[i].setForeground(Color.RED);
-					else
+					} else {
 						noMirrorButtonArr[i].setForeground(Color.BLACK);
+					}
 				}
 			}
 		}
@@ -3139,8 +3164,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        	
 	        	processCalculations(true, true);
 	        	//note analysis turns off LUT automatically
-	        	if(lutOn = lutBuffer) 
+	        	if(lutOn = lutBuffer) {
 	        		loadLUT();
+	        	}
 	        	setVisible(true);
 	        } else if (command.equals(TOGGLE_LUT)) {
 	        	if(!lutOn) {
@@ -3187,8 +3213,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                }
 	        		((JButton)e.getSource()).setSelected(true);
 	        		getActiveImage().registerVOI(rec);
-	        	}
-	        		
+	        	}	
 	        	updateImages(true);
 	        }
 		}
@@ -3356,9 +3381,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    mainPanel.add(buildButtons());
 		    
 		    for(int i=0; i<buttonGroup.length; i++) {
-		    	if(buttonGroup[i].getText().equals(TOGGLE_LUT)) 
+		    	if(buttonGroup[i].getText().equals(TOGGLE_LUT)) {
 		    		buttonGroup[i].setText("Show LUT");
-		    	else if(buttonGroup[i].getText().equals(OUTPUT)) {
+		    	} else if(buttonGroup[i].getText().equals(OUTPUT)) {
 		    		buttonGroup[i].setEnabled(false);
 		    	} else if(buttonGroup[i].getText().equals(SELECT_ALL)) {
 		    		buttonGroup[i].setEnabled(false);
@@ -3379,12 +3404,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			String tempStr = "";
 			for(int i=0; i<objectArr.length; i++) {
 				ArrayList<String> tempObj = new ArrayList<String>();
-				for(int j=0; j<objectArr[i].length; j++) 
-					if(calcTree.get(tempStr = objectArr[i][j]).equals(true))
+				for(int j=0; j<objectArr[i].length; j++) {
+					if(calcTree.get(tempStr = objectArr[i][j]).equals(true)) {
 						tempObj.add(tempStr);
+					}
+				}
 				resultArr[i] = new String[tempObj.size()];
-				for(int j=0; j<resultArr[i].length; j++)
+				for(int j=0; j<resultArr[i].length; j++) {
 					resultArr[i][j] = tempObj.get(j);
+				}
 			}
 			return resultArr;
 		}
@@ -3616,20 +3644,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				pdfCreated = true;
 			}
 			Iterator<String> itr;
-			if(all)
+			if(all) {
 				itr = voiBuffer.keySet().iterator();
-			else {
+			} else {
 				ArrayList<String> totalList = new ArrayList<String>(), subList = new ArrayList<String>();
 				for (int listNum = 0; listNum < mirrorButtonCalcItemsArr.length; listNum++, subList = new ArrayList<String>())  {   	
-					for(int i=0; i<mirrorButtonCalcItemsArr[listNum].length; i++) 
-						if(mirrorCheckCalcItemsArr[listNum][i].isSelected())
+					for(int i=0; i<mirrorButtonCalcItemsArr[listNum].length; i++)  {
+						if(mirrorCheckCalcItemsArr[listNum][i].isSelected()) {
 							subList.add(mirrorButtonCalcItemsArr[listNum][i].getText());
+						}
+					}
 					totalList.addAll(subList);
 		    	}
 				for (int listNum = 0; listNum < noMirrorButtonCalcItemsArr.length; listNum++, subList = new ArrayList<String>())  {   	
-					for(int i=0; i<noMirrorButtonCalcItemsArr[listNum].length; i++) 
-						if(noMirrorCheckCalcItemsArr[listNum][i].isSelected())
+					for(int i=0; i<noMirrorButtonCalcItemsArr[listNum].length; i++) {
+						if(noMirrorCheckCalcItemsArr[listNum][i].isSelected()) {
 							subList.add(noMirrorButtonCalcItemsArr[listNum][i].getText());
+						}
+					}
 					totalList.addAll(subList);
 		    	}
 				itr = totalList.iterator();
@@ -3688,20 +3720,25 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				//now load all VOIs at once:
 				ArrayList<String> totalList = new ArrayList<String>(), subList = new ArrayList<String>();
 				for (int listNum = 0; listNum < mirrorButtonCalcItemsArr.length; listNum++, subList = new ArrayList<String>())  {   	
-					for(int i=0; i<mirrorButtonCalcItemsArr[listNum].length; i++) 
-						if(mirrorButtonCalcItemsArr[listNum][i].isEnabled())
+					for(int i=0; i<mirrorButtonCalcItemsArr[listNum].length; i++) {
+						if(mirrorButtonCalcItemsArr[listNum][i].isEnabled()) {
 							subList.add(mirrorButtonCalcItemsArr[listNum][i].getText());
+						}
+					}
 					totalList.addAll(subList);
 		    	}
 				for (int listNum = 0; listNum < noMirrorButtonCalcItemsArr.length; listNum++, subList = new ArrayList<String>())  {   	
-					for(int i=0; i<noMirrorButtonCalcItemsArr[listNum].length; i++) 
-						if(noMirrorButtonCalcItemsArr[listNum][i].isEnabled())
+					for(int i=0; i<noMirrorButtonCalcItemsArr[listNum].length; i++) {
+						if(noMirrorButtonCalcItemsArr[listNum][i].isEnabled()) {
 							subList.add(noMirrorButtonCalcItemsArr[listNum][i].getText());
+						}
+					}
 					totalList.addAll(subList);
 		    	}
 				String[] allStrings = new String[totalList.size()];
-				for(int i=0; i<totalList.size(); i++) 
+				for(int i=0; i<totalList.size(); i++) {
 					allStrings[i] = totalList.get(i) + ".xml";
+				}
 				 
 				loadVOIs(allStrings, .4);
 			
@@ -3982,8 +4019,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			getLUTa().makeLUT(256);
 			
 			VOIVector vec = getActiveImage().getVOIs();
-			for(int i=0; i<vec.size(); i++) 
+			for(int i=0; i<vec.size(); i++) {
 				vec.get(i).setDisplayMode(VOI.CONTOUR);
+			}
 			
 			updateImages(true);
 			
@@ -4041,8 +4079,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				Iterator<String> tempItr = voiBuffer.keySet().iterator();
 				PlugInSelectableVOI temp = null;
 				while(tempItr.hasNext()) {
-					if((temp = voiBuffer.get(tempItr.next())).getCalcEligible())
+					if((temp = voiBuffer.get(tempItr.next())).getCalcEligible()) {
 						calcList.add(temp);
+					}
 				}
 				
 				//set file directory
@@ -4099,11 +4138,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			 */
 			private String[] assembleOutput() {
 				String[] sliceStr;
-				if(getActiveImage().getExtents().length > 2)
+				if(getActiveImage().getExtents().length > 2) {
 					sliceStr = new String[getActiveImage().getExtents()[2]];
-				else
+				} else {
 					sliceStr = new String[1];
-				
+				}
+					
 				for(int i=0; i<sliceStr.length; i++) {
 					sliceStr[i] = new String();
 					
@@ -4141,8 +4181,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					ArrayList<PlugInSelectableVOI> calcItems = new ArrayList<PlugInSelectableVOI>(voiBuffer.keySet().size());
 					Iterator<PlugInSelectableVOI> firstItr = voiBuffer.values().iterator();
 					while(firstItr.hasNext()) {
-						if((temp = firstItr.next()).getCalcEligible())
+						if((temp = firstItr.next()).getCalcEligible()) {
 							calcItems.add(temp);
+						}
 					}
 					ArrayList<PlugInSelectableVOI> orderedCalcItems = (ArrayList<PlugInSelectableVOI>)calcItems.clone();
 					for(int j=0; j<calcItems.size(); j++) 
@@ -4267,14 +4308,16 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			            tempThread.start();
 					}
 		            
-				} else
+				} else {
 					System.out.println("Just avoided calculating "+children[i].getName());
+				}
 			}
 			long time2 = System.currentTimeMillis();
 			System.out.println("Waiting for threads to complete");
 			try {
-				for(int i=0; i<calc.size(); i++)
+				for(int i=0; i<calc.size(); i++) {
 					calc.get(i).join();
+				}
 			} catch(InterruptedException e) {
 				System.err.println("Algorithm failed, calculations may be inaccurate.");
 				e.printStackTrace();
@@ -4320,9 +4363,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			BufferedWriter writer = null;
 			try {
 				boolean doCreate = false;
-				if(!textFile.exists()) 
+				if(!textFile.exists()) {
 					doCreate = true;
-				
+				}
 				writer = new BufferedWriter(new FileWriter(textFile, !doCreate));
 				if(doCreate) {
 					String create = "File Location\tFat Area\tLean Area\tTotal Area\t"+
@@ -4408,12 +4451,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    	meanTotalH = -meanTotalH;
 		    } else if(new Double(meanFatH).equals(Double.NaN)) 
 		    	meanFatH = 0;
-		    if(meanLeanH < 0)
+		    if(meanLeanH < 0) {
 		    	meanLeanH = -meanLeanH;
-		    else if(new Double(meanLeanH).equals(Double.NaN))
+		    } else if(new Double(meanLeanH).equals(Double.NaN)) {
 		    	meanLeanH = 0;
-		    if(new Double(meanTotalH).equals(Double.NaN))
+		    }
+		    if(new Double(meanTotalH).equals(Double.NaN)) {
 		    	meanTotalH = 0;
+		    }
 		    
 		    temp.setMeanFatH(meanFatH, sliceNumber);
 			temp.setMeanLeanH(meanLeanH, sliceNumber);
@@ -4437,8 +4482,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				}
 			}
 			meanH /= area;
-			if(new Double(meanH).equals(Double.NaN))
+			if(new Double(meanH).equals(Double.NaN)) {
 				meanH = 0;
+			}
 			return meanH;
 		}
 		
@@ -4453,8 +4499,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			double mark = 0;
 			for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
 		        mark = getImageA().getDouble(i);
-				if(mark  >= lowerBound && mark <= upperBound) 
+				if(mark  >= lowerBound && mark <= upperBound) { 
 					area++;	
+				}
 			}
 			return area;
 		}
@@ -4466,8 +4513,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			int totalArea = 0;
 			BitSet fullMask = new BitSet();
 			v.createBinaryMask(fullMask, getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
-			for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) 
+			for(int i=fullMask.nextSetBit(0); i>=0; i=fullMask.nextSetBit(i+1)) {
 		        totalArea++;
+			}
 			return totalArea;
 		}
 	}
@@ -5578,7 +5626,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        followVOISelectionBox.setEnabled(image.getNDims() > 2);
 	        treeOptionPanel.add(followVOISelectionBox, BorderLayout.CENTER);
 
-
 	        gb.gridy = 1;
 	        gb.weightx = 1;
 	        gb.weighty = 0;
@@ -5635,7 +5682,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        mainDialogPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 	        getContentPane().add(mainDialogPanel);
 	        pack();
-
 	    }
 	}
 	
@@ -5650,7 +5696,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        }*/
 		}
 
-		@Override
 		public void deleteContour(VOI voi, int slice) {
 			// TODO Auto-generated method stub
 			System.out.println("Working2");
@@ -5658,7 +5703,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			System.out.println("Working2");
 		}
 
-		@Override
 		public void deleteSelectedVOI(boolean contoursOnly) {
 			// TODO Auto-generated method stub
 			System.out.println("Working");
@@ -5666,14 +5710,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			System.out.println("Working");
 		}
 
-		@Override
 		public void deleteVOIActivePt() {
 			// TODO Auto-generated method stub
 			super.deleteVOIActivePt();
 			System.out.println("Working3");
 		}
 
-		@Override
 		public void deleteVOIs() {
 			// TODO Auto-generated method stub
 			super.deleteVOIs();
@@ -5714,8 +5756,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	     */
 	    public void writeXML(VOI voi, boolean saveAllContours) throws IOException {
 	    	
-	    	if(file.exists() == true) 
+	    	if(file.exists() == true) {
                 file.delete();
+	    	}
 	    	
 	    	//now that file has been deleted, prompting will not occur
 	    	super.writeXML(voi, saveAllContours);
