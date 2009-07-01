@@ -60,6 +60,8 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
     
     private JRadioButton regularButton;
     
+    private JRadioButton constrainedButton;
+    
     private int pattern = AlgorithmCircleGeneration.RANDOM;
     
     private JLabel initialCirclesLabel;
@@ -79,6 +81,24 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
     private JTextField maximumDistanceText;
     
     private double maximumNearestNeighborDistance = 15.0;
+    
+    private JLabel lowestForbiddenLabel;
+    
+    private JTextField lowestForbiddenText;
+    
+    private double lowestForbiddenNNDistance = 15.0;
+    
+    private JLabel highestForbiddenLabel;
+    
+    private JTextField highestForbiddenText;
+    
+    private double highestForbiddenNNDistance = 20.0;
+    
+    private JLabel highestRegenerationLabel;
+    
+    private JTextField highestRegenerationText;
+    
+    private double highestRegenerationNNDistance = 25.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -115,7 +135,8 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
             //MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
-        } else if ((source == randomButton) || (source == aggregatedButton) || (source == regularButton)) {
+        } else if ((source == randomButton) || (source == aggregatedButton) || (source == regularButton) ||
+                   (source == constrainedButton)) {
             if (randomButton.isSelected()) {
                 initialCirclesLabel.setEnabled(false);
                 initialCirclesText.setEnabled(false);
@@ -123,6 +144,12 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 minimumDistanceText.setEnabled(false);
                 maximumDistanceLabel.setEnabled(false);
                 maximumDistanceText.setEnabled(false);
+                lowestForbiddenLabel.setEnabled(false);
+                lowestForbiddenText.setEnabled(false);
+                highestForbiddenLabel.setEnabled(false);
+                highestForbiddenText.setEnabled(false);
+                highestRegenerationLabel.setEnabled(false);
+                highestRegenerationText.setEnabled(false);
             }
             else if (aggregatedButton.isSelected()) {
                 initialCirclesLabel.setEnabled(true);
@@ -130,15 +157,41 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 minimumDistanceLabel.setEnabled(false);
                 minimumDistanceText.setEnabled(false);
                 maximumDistanceLabel.setEnabled(true);
-                maximumDistanceText.setEnabled(true);    
+                maximumDistanceText.setEnabled(true);
+                lowestForbiddenLabel.setEnabled(false);
+                lowestForbiddenText.setEnabled(false);
+                highestForbiddenLabel.setEnabled(false);
+                highestForbiddenText.setEnabled(false);
+                highestRegenerationLabel.setEnabled(false);
+                highestRegenerationText.setEnabled(false);
             }
-            else {
+            else if (regularButton.isSelected()){
                 initialCirclesLabel.setEnabled(false);
                 initialCirclesText.setEnabled(false);
                 minimumDistanceLabel.setEnabled(true);
                 minimumDistanceText.setEnabled(true);
                 maximumDistanceLabel.setEnabled(true);
                 maximumDistanceText.setEnabled(true);
+                lowestForbiddenLabel.setEnabled(false);
+                lowestForbiddenText.setEnabled(false);
+                highestForbiddenLabel.setEnabled(false);
+                highestForbiddenText.setEnabled(false);
+                highestRegenerationLabel.setEnabled(false);
+                highestRegenerationText.setEnabled(false);
+            }
+            else {
+                initialCirclesLabel.setEnabled(false);
+                initialCirclesText.setEnabled(false);
+                minimumDistanceLabel.setEnabled(false);
+                minimumDistanceText.setEnabled(false);
+                maximumDistanceLabel.setEnabled(false);
+                maximumDistanceText.setEnabled(false);
+                lowestForbiddenLabel.setEnabled(true);
+                lowestForbiddenText.setEnabled(true);
+                highestForbiddenLabel.setEnabled(true);
+                highestForbiddenText.setEnabled(true);
+                highestRegenerationLabel.setEnabled(true);
+                highestRegenerationText.setEnabled(true);   
             }
         }
     }
@@ -229,7 +282,8 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
 
             // Make algorithm
             cAlgo = new AlgorithmCircleGeneration(resultImage, radius, numCircles, pattern, initialRandomCircles,
-                        minimumNearestNeighborDistance, maximumNearestNeighborDistance);
+                        minimumNearestNeighborDistance, maximumNearestNeighborDistance, lowestForbiddenNNDistance,
+                        highestForbiddenNNDistance, highestRegenerationNNDistance);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -376,12 +430,21 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         gbc6.gridy = 6;
         paramPanel.add(regularButton, gbc6);
         
+        constrainedButton = new JRadioButton("Constrained pattern", false);
+        constrainedButton.setFont(serif12);
+        constrainedButton.setForeground(Color.black);
+        constrainedButton.addActionListener(this);
+        patternGroup.add(constrainedButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 7;
+        paramPanel.add(constrainedButton, gbc6);
+        
         initialCirclesLabel = new JLabel("Initial circles randomly generated ");
         initialCirclesLabel.setForeground(Color.black);
         initialCirclesLabel.setFont(serif12);
         initialCirclesLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 7;
+        gbc6.gridy = 8;
         paramPanel.add(initialCirclesLabel, gbc6);
         
         initialCirclesText = new JTextField(10);
@@ -396,7 +459,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         minimumDistanceLabel.setFont(serif12);
         minimumDistanceLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 8;
+        gbc6.gridy = 9;
         paramPanel.add(minimumDistanceLabel, gbc6);
         
         minimumDistanceText = new JTextField(10);
@@ -411,7 +474,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         maximumDistanceLabel.setFont(serif12);
         maximumDistanceLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 9;
+        gbc6.gridy = 10;
         paramPanel.add(maximumDistanceLabel, gbc6);
         
         maximumDistanceText = new JTextField(10);
@@ -420,6 +483,51 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         maximumDistanceText.setEnabled(false);
         gbc6.gridx = 1;
         paramPanel.add(maximumDistanceText, gbc6);
+        
+        lowestForbiddenLabel = new JLabel("Lowest forbidden intermediate nearest neighbor distance ");
+        lowestForbiddenLabel.setForeground(Color.black);
+        lowestForbiddenLabel.setFont(serif12);
+        lowestForbiddenLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 11;
+        paramPanel.add(lowestForbiddenLabel, gbc6);
+        
+        lowestForbiddenText = new JTextField(10);
+        lowestForbiddenText.setText(String.valueOf(lowestForbiddenNNDistance));
+        lowestForbiddenText.setFont(serif12);
+        lowestForbiddenText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(lowestForbiddenText, gbc6);
+        
+        highestForbiddenLabel = new JLabel("Highest forbidden intermediate nearest neighbor distance ");
+        highestForbiddenLabel.setForeground(Color.black);
+        highestForbiddenLabel.setFont(serif12);
+        highestForbiddenLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 12;
+        paramPanel.add(highestForbiddenLabel, gbc6);
+        
+        highestForbiddenText = new JTextField(10);
+        highestForbiddenText.setText(String.valueOf(highestForbiddenNNDistance));
+        highestForbiddenText.setFont(serif12);
+        highestForbiddenText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(highestForbiddenText, gbc6);
+        
+        highestRegenerationLabel = new JLabel("Highest regeneration nearest neighbor distance ");
+        highestRegenerationLabel.setForeground(Color.black);
+        highestRegenerationLabel.setFont(serif12);
+        highestRegenerationLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 13;
+        paramPanel.add(highestRegenerationLabel, gbc6);
+        
+        highestRegenerationText = new JTextField(10);
+        highestRegenerationText.setText(String.valueOf(highestRegenerationNNDistance));
+        highestRegenerationText.setFont(serif12);
+        highestRegenerationText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(highestRegenerationText, gbc6);
 
         getContentPane().add(paramPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -498,7 +606,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 return false;
             }
         }
-        else {
+        else if (regularButton.isSelected()){
             pattern = AlgorithmCircleGeneration.REGULAR;
             minimumNearestNeighborDistance = Double.valueOf(minimumDistanceText.getText()).doubleValue();
             if (minimumNearestNeighborDistance < 2.0 * radius) {
@@ -514,6 +622,35 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 "The maximum nearest neighbor distance must be greater than the minimum nearest neighbor distance");
                 maximumDistanceText.requestFocus();
                 maximumDistanceText.selectAll();
+                return false;
+            }
+        }
+        else {
+            pattern = AlgorithmCircleGeneration.CONSTRAINED;
+            lowestForbiddenNNDistance = Double.valueOf(lowestForbiddenText.getText()).doubleValue();
+            if (lowestForbiddenNNDistance <= 2.0 * radius) {
+                MipavUtil.displayError(
+                "The lowest forbidden intermediate nearest neighbor distance must be greater than 2.0 * radius");
+                lowestForbiddenText.requestFocus();
+                lowestForbiddenText.selectAll();
+                return false;
+            }
+            
+            highestForbiddenNNDistance = Double.valueOf(highestForbiddenText.getText()).doubleValue();
+            if (highestForbiddenNNDistance <= lowestForbiddenNNDistance) {
+                MipavUtil.displayError(
+                "The highest forbidden intermediate nearest neighbor distance must be greater than the lowest forbidden distance");
+                highestForbiddenText.requestFocus();
+                highestForbiddenText.selectAll();
+                return false;
+            }
+            
+            highestRegenerationNNDistance = Double.valueOf(highestRegenerationText.getText()).doubleValue();
+            if (highestRegenerationNNDistance <= highestForbiddenNNDistance) {
+                MipavUtil.displayError(
+                "The highest regeneration nearest neighbor distance must be greater than the highest forbidden distance");
+                highestRegenerationText.requestFocus();
+                highestRegenerationText.selectAll();
                 return false;
             }
         }
