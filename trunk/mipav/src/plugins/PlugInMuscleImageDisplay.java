@@ -1266,21 +1266,24 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * as the VOI statistic information
 	 *
 	 */
-	protected void PDFcreate(String fileDir) {		
-		String fileName;
+	protected void PDFcreate(String fileDir, String fileName) {		
 		if(!(new File(fileDir).exists())) {
 			fileDir = getActiveImage().getFileInfo(getViewableSlice()).getFileDirectory()+VOI_DIR;
 		}
-		fileName = fileDir + File.separator + "NIA_Report.pdf";
-		pdfFile = new File(fileName);
-		if(pdfFile.exists()) {
-			int i=0;
-			while(pdfFile.exists() && i<1000) {
-				fileName = "NIA_Report-"+(++i)+ ".pdf";
-				if(i == 1000) 
-					MipavUtil.displayError("Too many PDFs have been created, overwriting "+fileName);
-				pdfFile = new File(fileDir + File.separator + fileName);
+		if(fileName == null) {
+			fileName = fileDir + File.separator + "PDF_Report.pdf";
+			pdfFile = new File(fileDir + File.separator + fileName);
+			if(pdfFile.exists()) {
+				int i=0;
+				while(pdfFile.exists() && i<1000) {
+					fileName = "PDF_Report-"+(++i)+ ".pdf";
+					if(i == 1000) 
+						MipavUtil.displayError("Too many PDFs have been created, overwriting "+fileName);
+					pdfFile = new File(fileDir + File.separator + fileName);
+				}
 			}
+		} else {
+			pdfFile = new File(fileDir + File.separator + fileName);
 		}
 		try {
 			pdfDocument = new Document();
@@ -3593,34 +3596,23 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		
 			boolean pdfCreated = false;
 			
-			String fileDir = System.getProperty("user.dir");
+			String textFileDir = null, textFileName = null, pdfFileDir = null, pdfFileName = null;
 			if(doSave) {
-				//Select file directory and create if necessary
-				JFileChooser chooser = new JFileChooser();
-				System.out.println(imageDir);
-				if(new File(imageDir).exists()) {
-                	chooser.setCurrentDirectory(new File(imageDir));
-                } else {
-                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-                }
-				chooser.setDialogTitle("Select a directory for saving PDF and text files");
-	            chooser.setMultiSelectionEnabled(false);
-	            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-	            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-	                fileDir = chooser.getSelectedFile().toString();
-	                if(!chooser.getSelectedFile().exists()) {
-	                	chooser.getSelectedFile().mkdirs();
-	                }
-	            } else {
-	            	//user chose to not save calculations to PDF/text
-	            	return;
-	            }
+				FileLocation fl = new FileLocation(muscleFrame);
+				
+				if(!fl.doCalc()) {  //user chose to not save files.
+					return;
+				}
+				
+				textFileDir = fl.getTextFileDir();
+				textFileName = fl.getTextFileName();
+				pdfFileDir = fl.getPdfFileDir();
+				pdfFileName = fl.getPdfFileName();
 			}
 			
 			//if PDF hasnt been created and we're saving, create it now
 			if (doSave && !pdfCreated) {
-				PDFcreate(fileDir);
+				PDFcreate(pdfFileDir, pdfFileName);
 				pdfCreated = true;
 			}
 			Iterator<String> itr;
@@ -3688,7 +3680,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			}
 		
 			if (doSave) {
-				ucsdOutput.setFileDir(fileDir);
+				ucsdOutput.setFileDir(textFileDir);
+				ucsdOutput.setFileName(textFileName);
 				Thread output = new Thread(ucsdOutput);
 		    	output.start();
 				
@@ -3739,6 +3732,246 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		}
 
 		/**
+		 * Class to set file locations/names of PDF and text files
+		 * 
+		 * @author senseneyj
+		 *
+		 */
+		private class FileLocation extends JDialogBase implements ActionListener {
+			
+			private JButton browsePDF, browseText;
+
+			private JTextField textDirField, textNameField;
+			
+			private JTextField pdfDirField, pdfNameField;
+			
+			private String textFileDir, textFileName;
+			
+			private String pdfFileDir, pdfFileName;
+			
+			private boolean doCalc = false;
+			
+			public FileLocation(Frame theParentFrame) {
+				super(theParentFrame, true);
+				
+				if(imageDir != null) {
+					textFileDir = imageDir;
+					pdfFileDir = imageDir;
+				} else {
+					textFileDir = System.getProperty("user.home");
+					pdfFileDir = System.getProperty("user.home");
+				}
+				
+				textFileName = "Text_Report.txt";
+				pdfFileName = "PDF_Report.pdf";
+				
+				init();
+			}
+
+			private void init() {
+				setForeground(Color.black);
+		        setTitle("Select name and location of text and PDF data files");
+
+		        GridBagConstraints gbc = new GridBagConstraints();
+		        gbc.gridwidth = 1;
+		        gbc.gridheight = 1;
+		        gbc.anchor = GridBagConstraints.WEST;
+		        gbc.weightx = 0;
+		        gbc.insets = new Insets(3, 3, 3, 3);
+		        gbc.fill = GridBagConstraints.HORIZONTAL;
+		        gbc.gridx = 0;
+		        gbc.gridy = 0;
+
+		        JPanel mainPanel = new JPanel(new GridBagLayout());
+		        mainPanel.setForeground(Color.black);
+		        mainPanel.setBorder(buildTitledBorder("Text and PDF File Locations"));
+
+		        mainPanel.add(new JLabel("PDF File Directory:"), gbc);
+		        
+		        pdfDirField = new JTextField(pdfFileDir);
+		        gbc.gridx = 1;
+		        gbc.gridy = 0;
+		        gbc.weightx = 1;
+		        mainPanel.add(pdfDirField, gbc);
+		        
+		        browsePDF = new JButton("Browse");
+		        browsePDF.addActionListener(this);
+		        gbc.gridx = 2;
+		        gbc.gridy = 0;
+		        gbc.weightx  = 0;
+		        mainPanel.add(browsePDF, gbc);
+		        
+		        gbc.gridx = 3;
+		        gbc.gridy = 0;
+		        mainPanel.add(new JLabel("PDF File Name:"), gbc);
+
+		        pdfNameField = new JTextField(pdfFileName);
+		        gbc.gridx = 4;
+		        gbc.gridy = 0;
+		        gbc.weightx = 1;
+		        mainPanel.add(pdfNameField, gbc);
+		        
+		        gbc.gridx = 0;
+		        gbc.gridy = 1;
+		        gbc.weightx  = 0;
+		        mainPanel.add(new JLabel("Text File Directory:"), gbc);
+		        
+		        textDirField = new JTextField(textFileDir);
+		        gbc.gridx = 1;
+		        gbc.gridy = 1;
+		        gbc.weightx = 1;
+		        mainPanel.add(textDirField, gbc);
+
+		        browseText = new JButton("Browse");
+		        browseText.addActionListener(this);
+		        gbc.gridx = 2;
+		        gbc.gridy = 1;
+		        gbc.weightx  = 0;
+		        mainPanel.add(browseText, gbc);
+		        
+		        gbc.gridx = 3;
+		        gbc.gridy = 1;
+		        mainPanel.add(new JLabel("Text File Name:"), gbc);
+
+		        textNameField = new JTextField(textFileName);
+		        gbc.gridx = 4;
+		        gbc.gridy = 1;
+		        gbc.weightx = 1;
+		        mainPanel.add(textNameField, gbc);
+		        
+		        getContentPane().add(mainPanel, BorderLayout.CENTER);
+
+		        // Build the Panel that holds the OK and CANCEL Buttons
+		        JPanel OKCancelPanel = new JPanel();
+
+		        // size and place the OK button
+		        buildOKButton();
+		        OKCancelPanel.add(OKButton, BorderLayout.WEST);
+
+		        // size and place the CANCEL button
+		        buildCancelButton();
+		        OKCancelPanel.add(cancelButton, BorderLayout.EAST);
+		        getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+
+		        pack();
+		        setVisible(true);
+		        setResizable(false);
+		        System.gc();
+			}
+
+			public String getTextFileDir() {
+				return textFileDir;
+			}
+
+			public String getTextFileName() {
+				return textFileName;
+			}
+
+			public String getPdfFileDir() {
+				return pdfFileDir;
+			}
+
+			public String getPdfFileName() {
+				return pdfFileName;
+			}
+			
+			public boolean doCalc() {
+				return doCalc;
+			}
+
+			public void actionPerformed(ActionEvent e) {
+				if(e.getSource().equals(OKButton)) {
+					textFileDir = textDirField.getText();
+					textFileName = textNameField.getText();
+					
+					pdfFileDir = pdfDirField.getText();
+					pdfFileName = pdfNameField.getText();
+					
+					setVisible(false);
+					//create folders if necessary (may have been manually entered)
+					if(!new File(textFileDir).exists()) {
+						new File(textFileDir).mkdirs();
+					}
+					if(!new File(pdfFileDir).exists()) {
+						new File(pdfFileDir).mkdirs();
+					}
+					//check that user wants to overwrite any existing files
+					boolean doGo = checkExists(textFileDir + File.separator + textFileName);
+					if(doGo) {
+						doGo = checkExists(pdfFileDir + File.separator + pdfFileName);
+					}
+					
+					if(doGo) {
+						doCalc = true;
+						dispose();
+					} else { //don't calc if user didn't want one of the files to be overwritten.
+						doCalc = false;
+						setVisible(true);
+					}
+				} else if(e.getSource().equals(cancelButton)) {
+					dispose();
+					doCalc = false;
+				} else if(e.getSource().equals(browsePDF)) {
+					pdfFileDir = setDirLoc(pdfFileDir);
+					pdfDirField.setText(pdfFileDir);
+				} else if(e.getSource().equals(browseText)) {
+					textFileDir = setDirLoc(textFileDir);
+					textDirField.setText(textFileDir);
+				}
+			}
+			
+			private boolean checkExists(String fileName) {
+				String message = "<html>The file "+fileName+" already exists.<br>Are you sure you want to overwrite this file?</html>";
+				if(new File(fileName).exists()) {
+					int val = JOptionPane.showConfirmDialog(this, message, "File already exists", JOptionPane.YES_NO_OPTION);
+
+					if(val == JOptionPane.YES_OPTION) {
+						return true;
+					} else {
+						return false;
+					}
+				} else {
+					return true;
+				}
+			}
+			
+			private String setDirLoc(String fileDir) {
+				//Select file directory and names, create if necessary
+				JFileChooser chooser = new JFileChooser();
+				if(new File(fileDir).exists()) {
+					chooser.setCurrentDirectory(new File(fileDir));
+				} else if(new File(imageDir).exists()) {
+	            	chooser.setCurrentDirectory(new File(imageDir));
+	            } else {
+	                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+	            }
+				String type = "";
+				if(fileDir.equals(pdfFileDir)) {
+					type = "PDF";
+				} else if(fileDir.equals(textFileDir)) {
+					type = "text";
+				}
+				
+				chooser.setDialogTitle("Select a directory where the "+type+" data file will be saved");
+	            chooser.setMultiSelectionEnabled(false);
+	            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+	            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+	                fileDir = chooser.getSelectedFile().toString();
+	                if(!chooser.getSelectedFile().exists()) {
+	                	chooser.getSelectedFile().mkdirs();
+	                }                
+	            } else {
+	            	//user chose to not save calculations to PDF/text
+	            }
+	            
+	            return fileDir;
+			}
+		}
+		
+		
+
+		/**
 		 * Removes the CT Thigh specific lut
 		 */
 		private void removeLUT() {
@@ -3774,6 +4007,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			/** File directory to save to **/
 			private String fileDir = imageDir;
 			
+			/**Name of text file to save**/
+			private String fileName;
+			
 			/**
 			 * Whether the output has finished.
 			 */
@@ -3791,6 +4027,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			public void setFileDir(String fileDir) {
 				this.fileDir = fileDir;
 			}
+			
+			public void setFileName(String fileName) {
+				this.fileName = fileName;
+			}
 
 			/**
 			 * Produces output into text file in NIA_Seg
@@ -3805,20 +4045,29 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 						calcList.add(temp);
 				}
 				
+				//set file directory
 				if(!(new File(fileDir).exists())) {
 					fileDir = imageDir;
 				}
-				String fileName = "Text_Report.txt";
-				textFile = new File(fileDir + File.separator + fileName);
-				if(textFile.exists()) {
-					int i=0;
-					while(textFile.exists() && i<1000) {
-						fileName = "Text_Report-"+(++i)+ ".txt";
-						if(i == 1000) 
-							MipavUtil.displayError("Too many text documents have been created, overwriting "+fileName);
-						textFile = new File(fileDir + File.separator + fileName);
+				
+				//set file name
+				if(fileName == null) {
+					fileName = "Text_Report.txt";
+					textFile = new File(fileDir + File.separator + fileName);
+					if(textFile.exists()) {
+						int i=0;
+						while(textFile.exists() && i<1000) {
+							fileName = "Text_Report-"+(++i)+ ".txt";
+							if(i == 1000) {
+								MipavUtil.displayError("Too many text documents have been created, overwriting "+fileName);
+							}
+							textFile = new File(fileDir + File.separator + fileName);
+						}
 					}
+				} else {
+					textFile = new File(fileDir + File.separator + fileName);
 				}
+				
 				System.out.println("Text path: "+textFile.getAbsolutePath());
 				
 				String[] output = assembleOutput();
