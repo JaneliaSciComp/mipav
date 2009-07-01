@@ -12,13 +12,8 @@ import java.util.*;
 /**
  * This module draws uniformly randomly positioned circles with a specified radius.
  See http://www.indiana.edu/~statmath for skewness, kurtosis, and Jarque-Bera Test that uses skewness
- and kurtosis to test for normality.
- 
- The nearest neighbor distribution of circles generated from a uniform distribution is taken from 
- "The mosaic of nerve cells in the mammalian retina" by H. Wassle and H. J. Riemann, Proc. R. Soc. Lond.,
- B. 200, 441-461, 1978.  Some of the math does not seem correct, but the general conclusion is that generation
- of circles from a uniform random distribution will result in a Rayleigh or Weibull distribution for the
- nearest neighbor distances.
+ and kurtosis to test for normality.  Tests for a Gaussian fit reveal nothing since RANDOM, AGGREGATED,
+ UNIFORM, and CONSTRAINED patterns all fail Gaussian fit tests.
  
   From Computational Methods in Biophysics, Biomaterials, BioTechnology, and Medical Systems
   Algorithm Development, Mathematical Analysis, and Diagnostics Volume 2 Computational Methods edited by Cornelius
@@ -58,7 +53,8 @@ import java.util.*;
   Get percentile from Gaussian probability integral.
   If the measured mean is significantly greater than the analytical mean, the distribution is uniform or regular.
   If the measured mean is signficantly less than than the analytical mean, the distribution is clumped or 
-  aggregated.
+  aggregated.  The test on the mean will often show a difference from a random distribution, while the chi square
+  test fails to show a difference from a random distribution.
   
   Let x2 = chi squared and v = degrees of freedom
   The probability density function p(x2,v) = (1/((2**(v/2))* gamma(v/2)))*(x2**((v-2)/2))*exp(-x2/2)
@@ -70,9 +66,27 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     
     public static final int RANDOM = 1;
     
+    // The first initialRandomCircles are generated at random.  The remaining circles are only accepted if the 
+    // nearest neighbor distance is <= maximumNearestNeighborDistance.
     public static final int AGGREGATED = 2;
     
+    // Regular patterns can arise from inhibition or repulsion mechanisms which constrain objects to remain a
+    // certain distance from each other.  The first circle is generated at random.  All other circles are only
+    // accepted if the nearest neighbor distance is >= minimumNearestNeighborDistance and 
+    // <= maximumNearestNeighborDistance.
     public static final int REGULAR = 3;
+    
+    // Very small and large distances between neighboring objects are allowed, but not intermediate distances.
+    // Such constrained patterns are found in nature due to growth patterns.
+    // The first circle is generated at random.  The remaining circles are only accepted if the nearest neighbor
+    // distance is less than the lowestForbiddenNNDistance or greater than the highestForbiddenNNDistance.  For
+    // each objected rejected from being in the forbidden intermediate range, the new replacement generated circle
+    // must have a value greater than the highestForbiddenNNDistance and less than or equal to the 
+    // highestRegenerationNNDistance.  The pattern obtained is not distinguishable from randomness for NN distances
+    // less than the lowestForbiddenNNDistance and greater than the highestRegenerationNNDistance, but is regular
+    // in the range from the lowestForbiddenNNDistance to the highestRegenerationNNDistnace with a peak of 
+    // significance at an NN Distance just above the hgihestForbiddenNNDistance.
+    public static final int CONSTRAINED = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -94,6 +108,12 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     
     // Used in AGGREGATED and REGULAR
     private double maximumNearestNeighborDistance;
+    
+    private double lowestForbiddenNNDistance;
+    
+    private double highestForbiddenNNDistance;
+    
+    private double highestRegenerationNNDistance;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -113,9 +133,13 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
      *         are drawn with nearestNeighborDistance less than or equal ot maximumNearestNeighborDistance.
      * @param  minimumNearestNeighborDistance Used in REGULAR
      * @param  maximumNearestNeighborDistance Used in AGGREGATED and REGULAR
+     * @param  lowestForbiddenNNDistance Used in CONSTRAINED
+     * @param  highestForbiddenNNDistance Used in CONSTRAINED
+     * @param  highestRegeneerationNNDistance Used in CONSTRAINED
      */
     public AlgorithmCircleGeneration(ModelImage srcImage, int radius, int numCircles, int pattern,
-            int initialRandomCircles, double minimumNearestNeighborDistance, double maximumNearestNeighborDistance) {
+            int initialRandomCircles, double minimumNearestNeighborDistance, double maximumNearestNeighborDistance,
+            double lowestForbiddenNNDistance, double highestForbiddenNNDistance, double highestRegenerationNNDistance) {
         super(null, srcImage);
         this.radius = radius;
         this.numCircles = numCircles;
@@ -123,6 +147,9 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         this.initialRandomCircles = initialRandomCircles;
         this.minimumNearestNeighborDistance = minimumNearestNeighborDistance;
         this.maximumNearestNeighborDistance = maximumNearestNeighborDistance;
+        this.lowestForbiddenNNDistance = lowestForbiddenNNDistance;
+        this.highestForbiddenNNDistance = highestForbiddenNNDistance;
+        this.highestRegenerationNNDistance = highestRegenerationNNDistance;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -212,6 +239,10 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         int numRandomCircles;
         double minimumNNDistanceSquared;
         double maximumNNDistanceSquared;
+        double lowestForbiddenSquared;
+        double highestForbiddenSquared;
+        double highestRegenerationSquared;
+        boolean intermediateRejected;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -249,6 +280,9 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         
         minimumNNDistanceSquared = minimumNearestNeighborDistance * minimumNearestNeighborDistance;
         maximumNNDistanceSquared = maximumNearestNeighborDistance * maximumNearestNeighborDistance;
+        lowestForbiddenSquared = lowestForbiddenNNDistance * lowestForbiddenNNDistance;
+        highestForbiddenSquared = highestForbiddenNNDistance * highestForbiddenNNDistance;
+        highestRegenerationSquared = highestRegenerationNNDistance * highestRegenerationNNDistance;
         
         randomGen = new RandomNumberGen();
         switch(pattern) {
@@ -259,6 +293,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                 numRandomCircles = initialRandomCircles;
                 break;
             case REGULAR:
+            case CONSTRAINED:
                 numRandomCircles = 1;
                 break;
             default:
@@ -364,18 +399,18 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
             for (i = 2; i <= numCircles; i++) {
                 found = false;
                 attempts = 0;
+                wloop:
                     while ((!found) && (attempts <= 1000)) {
                         found = true;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
-                        yyloop:
                         for (y = 0; y <= 2*radius; y++) {
                             for (x = 0; x <= 2*radius; x++) {
                                 if (mask[x + y * xMaskDim] == 1) {
                                     if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
                                         found = false;
                                         attempts++;
-                                        break yyloop;
+                                        continue wloop;
                                     }
                                 }
                             }
@@ -414,6 +449,68 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                 Preferences.debug(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.\n");
                 System.out.println(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.");    
         } // if (pattern == REGULAR)
+        
+        if (pattern == CONSTRAINED) {
+            for (i = 2; i <= numCircles; i++) {
+                found = false;
+                attempts = 0;
+                intermediateRejected = false;
+                wl:
+                    while ((!found) && (attempts <= 1000)) {
+                        found = true;
+                        xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
+                        yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim] == 1) {
+                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
+                                        found = false;
+                                        attempts++;
+                                        continue wl;
+                                    }
+                                }
+                            }
+                        } // for (y = 0; y <= 2*radius; y++)
+                        lowestDistSquared = Integer.MAX_VALUE;
+                        for (j = 0; j < i-1; j++) {         
+                            xDistSquared = circleXCenter[j] - xCenter;
+                            xDistSquared = xDistSquared * xDistSquared;
+                            yDistSquared = circleYCenter[j] - yCenter;
+                            yDistSquared = yDistSquared * yDistSquared;
+                            distSquared = xDistSquared + yDistSquared;
+                            if (distSquared < lowestDistSquared) {
+                                lowestDistSquared = distSquared;
+                            }  
+                        }
+                        if ((!intermediateRejected) && (lowestDistSquared >= lowestForbiddenSquared) && 
+                            (lowestDistSquared <= highestForbiddenSquared)) {
+                            found = false;
+                            intermediateRejected = true;
+                            attempts++;
+                        } 
+                        else if (intermediateRejected && ((lowestDistSquared <= highestForbiddenSquared) ||
+                                (lowestDistSquared > highestRegenerationSquared))) {
+                            found = false;
+                            attempts++;
+                        }
+                    } // while ((!found) && (attempts <= 1000)
+                    if (!found) {
+                        break;
+                    }
+                    circleXCenter[i-1] = xCenter;
+                    circleYCenter[i-1] = yCenter;
+                    for (y = 0; y <= 2*radius; y++) {
+                        for (x = 0; x <= 2*radius; x++) {
+                            if (mask[x + y * xMaskDim] == 1) {
+                                buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  i;
+                            }
+                        }
+                    }
+                } // for (i = 2; i <= numCircles; i++)
+                circlesDrawn = i-1; 
+                Preferences.debug(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.\n");
+                System.out.println(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.");     
+        } // if (pattern == CONSTRAINED)
         
         nearestNeighborDistance = new double[circlesDrawn];
         for (i = 0; i < circlesDrawn; i++) {
