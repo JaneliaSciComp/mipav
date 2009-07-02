@@ -23,6 +23,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,7 +50,7 @@ import javax.swing.table.DefaultTableModel;
 import WildMagic.LibFoundation.Mathematics.GMatrixf;
 
 
-public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmInterface  {
+public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmInterface, WindowListener  {
 	
 	private GridBagConstraints gbc,gbc2,gbc3;
 	
@@ -418,30 +420,94 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 
 		            srcImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
 		            if(srcImage.isDicomImage()) {
-		            	formatTextField.setText("dicom");
+		            	if(formatTextField.getText().trim().equals("")) {
+		            		formatTextField.setText("dicom");
+		            		formatTextField.setEditable(false);
+		            	}else {
+		            		if(!formatTextField.getText().trim().equals("dicom")) {
+		            			MipavUtil.displayError("Image format for this volume does not match previous image format");
+		                        return;
+		            		}
+		            	}
 		            }else {
 		            	int type = srcImage.getType();
 		            	if (type == ModelStorageBase.INTEGER) {
-		            		formatTextField.setText("integer");
+		            		if(formatTextField.getText().trim().equals("")) {
+			            		formatTextField.setText("integer");
+			            		formatTextField.setEditable(false);
+		            		}else {
+		            			if(!formatTextField.getText().trim().equals("integer")) {
+			            			MipavUtil.displayError("Image format for this volume does not match previous image format");
+			                        return;
+			            		}
+		            		}
 		            	}else if(type == ModelStorageBase.FLOAT) {
-		            		formatTextField.setText("float");
+		            		if(formatTextField.getText().trim().equals("")) {
+			            		formatTextField.setText("float");
+			            		formatTextField.setEditable(false);
+		            		}else {
+		            			if(!formatTextField.getText().trim().equals("float")) {
+			            			MipavUtil.displayError("Image format for this volume does not match previous image format");
+			                        return;
+			            		}
+		            		}
 		            	}
 		            }
 		            int numDims = srcImage.getNDims();
 		            
 		            int xDim = srcImage.getExtents()[0];
-		            xdimTextField.setText(String.valueOf(xDim));
+		            if(xdimTextField.getText().trim().equals("")) {
+			            xdimTextField.setText(String.valueOf(xDim));
+			            xdimTextField.setEditable(false);
+		            }else {
+		            	if(!formatTextField.getText().trim().equals(String.valueOf(xDim))) {
+	            			MipavUtil.displayError("Image X Dimension for this volume does not match previous image X dimension");
+	                        return;
+	            		}
+		            }
 		            int yDim = srcImage.getExtents()[1];
-		            ydimTextField.setText(String.valueOf(yDim));
+		            if(ydimTextField.getText().trim().equals("")) {
+		            	ydimTextField.setText(String.valueOf(yDim));
+		            	ydimTextField.setEditable(false);
+		            }else {
+		            	if(!formatTextField.getText().trim().equals(String.valueOf(yDim))) {
+	            			MipavUtil.displayError("Image Y Dimension for this volume does not match previous image Y dimension");
+	                        return;
+	            		}
+		            }
 		            
 		            
 		            int orientation = srcImage.getImageOrientation();
 		            if(orientation == FileInfoBase.AXIAL) {
-		            	imagePlaneTextField.setText("axial");
+		            	if(imagePlaneTextField.getText().trim().equals("")) {
+			            	imagePlaneTextField.setText("axial");
+			            	imagePlaneTextField.setEditable(false);
+		            	}else {
+		            		if(!imagePlaneTextField.getText().trim().equals("axial")) {
+		            			MipavUtil.displayError("Image plane for this volume does not match previous image plane");
+		                        return;
+		            		}
+		            	}
 		            }else if(orientation == FileInfoBase.SAGITTAL) {
-		            	imagePlaneTextField.setText("sagittal");
+		            	if(imagePlaneTextField.getText().trim().equals("")) {
+			            	imagePlaneTextField.setText("sagittal");
+			            	imagePlaneTextField.setEditable(false);
+		            	}else {
+		            		if(!imagePlaneTextField.getText().trim().equals("sagittal")) {
+		            			MipavUtil.displayError("Image plane for this volume does not match previous image plane");
+		                        return;
+		            		}
+		            	}
 		            }else if(orientation == FileInfoBase.CORONAL) {
-		            	imagePlaneTextField.setText("coronal");
+		            	if(imagePlaneTextField.getText().trim().equals("")) {
+			            	imagePlaneTextField.setText("coronal");
+			            	imagePlaneTextField.setEditable(false);
+		            	}else {
+		            		if(!imagePlaneTextField.getText().trim().equals("coronal")) {
+		            			MipavUtil.displayError("Image plane for this volume does not match previous image plane");
+		                        return;
+		            		}
+		            	}
 		            }
 		            
 		            
@@ -458,8 +524,24 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		                sliceGp = sliceTh - sliceGp;
 		                sliceGap = String.valueOf(sliceGp);
 		                
-		                sliceThicknessTextField.setText(sliceThickness);
-		                gapTextField.setText(String.valueOf(sliceGap));
+		                if(sliceThicknessTextField.getText().trim().equals("")) {
+			                sliceThicknessTextField.setText(sliceThickness);
+			                sliceThicknessTextField.setEditable(false);
+		                }else {
+		                	if(!sliceThicknessTextField.getText().trim().equals(sliceThickness)) {
+		            			MipavUtil.displayError("Slice thickness for this volume does not match previous slice thickness");
+		                        return;
+		            		}
+		                }
+		                if(gapTextField.getText().trim().equals("")) {
+			                gapTextField.setText(String.valueOf(sliceGap));
+			                gapTextField.setEditable(false);
+		                }else {
+		                	if(!gapTextField.getText().trim().equals(String.valueOf(sliceGap))) {
+		            			MipavUtil.displayError("Gap thickness for this volume does not match previous gap thickness");
+		                        return;
+		            		}
+		                }
 		                
 		                
 		                String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
@@ -479,12 +561,47 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		                    
 		                    String xFieldOfView = String.valueOf(xFieldOfViewFloat);
 		                    String yFieldOfView = String.valueOf(yFieldOfViewFloat);
-		                    hFOVTextField.setText(xFieldOfView);
-			                vFOVTextField.setText(yFieldOfView);
+		                    if(hFOVTextField.getText().trim().equals("")) {
+		                    	hFOVTextField.setText(xFieldOfView);
+		                    	hFOVTextField.setEditable(false);
+		                    }else {
+		                    	if(!hFOVTextField.getText().trim().equals(xFieldOfView)) {
+			            			MipavUtil.displayError("Horizontal FOV for this volume does not match previous horizontal FOV");
+			                        return;
+			            		}
+		                    }
+		                    
+		                    if(vFOVTextField.getText().trim().equals("")) {
+				                vFOVTextField.setText(yFieldOfView);
+				                vFOVTextField.setEditable(false);
+		                    }else {
+		                    	if(!vFOVTextField.getText().trim().equals(yFieldOfView)) {
+			            			MipavUtil.displayError("Vertical FOV for this volume does not match previous vertical FOV");
+			                        return;
+			            		}
+		                    }
 		                    
 		                }else {
-		                	hFOVTextField.setText(fieldOfView);
-			                vFOVTextField.setText(fieldOfView);
+		                	if(hFOVTextField.getText().trim().equals("")) {
+		                    	hFOVTextField.setText(fieldOfView);
+		                    	hFOVTextField.setEditable(false);
+		                    }else {
+		                    	if(!hFOVTextField.getText().trim().equals(fieldOfView)) {
+			            			MipavUtil.displayError("Horizontal FOV for this volume does not match previous horizontal FOV");
+			                        return;
+			            		}
+		                    }
+		                    
+		                    if(vFOVTextField.getText().trim().equals("")) {
+				                vFOVTextField.setText(fieldOfView);
+				                vFOVTextField.setEditable(false);
+		                    }else {
+		                    	if(!vFOVTextField.getText().trim().equals(fieldOfView)) {
+			            			MipavUtil.displayError("Vertical FOV for this volume does not match previous vertical FOV");
+			                        return;
+			            		}
+		                    }
+
 		                }
 		                
 		                
@@ -497,10 +614,29 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		                    phaseEncodeDirection = "horizontal";
 		                }
 		                
-		                phaseEncodingTextField.setText(phaseEncodeDirection);
-		                
+		                if(phaseEncodingTextField.getText().trim().equals("")) {
+			                phaseEncodingTextField.setText(phaseEncodeDirection);
+			                phaseEncodingTextField.setEditable(false);
+		                }else {
+		                	if(!phaseEncodingTextField.getText().trim().equals(phaseEncodeDirection)) {
+		            			MipavUtil.displayError("Phase encoding orientaion for this volume does not match previous phase encoding orientation");
+		                        return;
+		            		}
+		                }
 		            	
 		            	
+		            }else {
+		            	float sliceTh = srcImage.getFileInfo()[0].getSliceThickness();
+		            	
+		            	if(sliceThicknessTextField.getText().trim().equals("")) {
+			                sliceThicknessTextField.setText(String.valueOf(sliceTh));
+			                sliceThicknessTextField.setEditable(false);
+		                }else {
+		                	if(!sliceThicknessTextField.getText().trim().equals(String.valueOf(sliceTh))) {
+		            			MipavUtil.displayError("Slice thickness for this volume does not match previous slice thickness");
+		                        return;
+		            		}
+		                }
 		            }
 		            
 		            
@@ -508,7 +644,15 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		            
 		            if(numDims == 3) {
 		            	int numSlices = srcImage.getExtents()[2];
-		            	numSlicesTextField.setText(String.valueOf(numSlices));
+		            	if(numSlicesTextField.getText().trim().equals("")) {
+			            	numSlicesTextField.setText(String.valueOf(numSlices));
+			            	numSlicesTextField.setEditable(false);
+		            	}else {
+		            		if(!numSlicesTextField.getText().trim().equals(String.valueOf(numSlices))) {
+		            			MipavUtil.displayError("Num slices for this volume does not match previous num slices");
+		                        return;
+		            		}
+		            	}
 		            	String firstImageSliceAbsPath = srcImage.getFileInfo(0).getFileDirectory() + srcImage.getFileInfo(0).getFileName();
 		            	ArrayList<String> slicesArrayList = new ArrayList<String>();
 		            	for(int i=0;i<numSlices;i++) {
@@ -531,7 +675,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                         srcTableModel.addRow(rowData);
 		            
 		            	numVolumesTextField.setText(String.valueOf(srcTableModel.getRowCount()));
-		            	
+		            	numVolumesTextField.setEditable(false);
 		            }else if(numDims == 4) {
 		            	//to do
 		            	
@@ -615,6 +759,12 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
              }
              processDWI();
 			 
+		 }else if(command.equals("cancel")) {
+			 if(maskImage != null) {
+					maskImage.disposeLocal();
+					maskImage = null;
+				}
+			 dispose();
 		 }
 
 	}
@@ -1233,6 +1383,10 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
            System.out.println("saving to " + listFile.getParent());
            DTIImage.saveImage(listFile.getParent() + File.separator, "DTI.xml", FileUtility.XML, false);
            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+           if(maskImage != null) {
+        	   maskImage.disposeLocal();
+        	   maskImage = null;
+           }
 
     	}
     }
@@ -1334,6 +1488,16 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     	
     	return isValid;
     }
+
+
+	@Override
+	public void windowClosing(WindowEvent event) {
+		super.windowClosing(event);
+		if(maskImage != null) {
+			maskImage.disposeLocal();
+			maskImage = null;
+		}
+	}
 	
 	
 	
