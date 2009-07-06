@@ -496,9 +496,15 @@ public class FilePARREC extends FileBase {
                     }
                     break;
                 case '.' : // scan file variable
+                	System.out.println("@@@" + nextLine + "@@@");
                     String []tags = nextLine.split(":");
                     String tag = tags[0].trim();
-                    String key = tags[1].trim();
+                    String key;
+                    if(tags.length < 2) {
+                    	key = "";
+                    }else {
+                    	key = tags[1].trim();
+                    }
                     String stgTag = (String)VolMap.get(tag);
                     if(null!=stgTag) {
                         VolParameters.put(stgTag,key);
