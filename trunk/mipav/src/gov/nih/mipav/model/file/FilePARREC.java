@@ -496,7 +496,6 @@ public class FilePARREC extends FileBase {
                     }
                     break;
                 case '.' : // scan file variable
-                	System.out.println("@@@" + nextLine + "@@@");
                     String []tags = nextLine.split(":");
                     String tag = tags[0].trim();
                     String key;
