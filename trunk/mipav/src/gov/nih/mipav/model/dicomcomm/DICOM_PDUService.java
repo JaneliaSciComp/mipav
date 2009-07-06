@@ -52,8 +52,8 @@ public class DICOM_PDUService extends DICOM_Comms {
     /** Buffer used to hold image data. */
     protected ByteBuffer compData = null;
 
-    /** A list of accepted Presentation contexts. */
-    Vector acceptedPresentationContexts = new Vector();
+    /** A list of  Presentation contexts. */
+    Vector PresentationContexts = new Vector();
 
     /** A hash table of proposed abstract syntaxes where: value = AbstractSyntaxes; key = UID. */
     Hashtable proposedAbstractSyntaxs = new Hashtable();
@@ -342,11 +342,17 @@ public class DICOM_PDUService extends DICOM_Comms {
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() + " PDU_Service.connectClientToServer: (" +
                                           this.hashCode() + ") Association to " + remoteAppTitle +
-                                          " accepted, but rejected locally.\n");
+                                          " , but rejected locally.\n");
                     }
 
                     throw new DICOM_Exception("Association to " + remoteAppTitle +
-                                              " accepted, but rejected locally.\n");
+                                              " , but rejected locally.\n");
+                }
+                //added to test
+                else{
+                	Preferences.debug(DICOM_Util.timeStamper() + " Testing code \n");
+                	associateAC.writeHeader(this);
+                	associateAC.writeBody(this);
                 }
 
                 break;
@@ -439,7 +445,7 @@ public class DICOM_PDUService extends DICOM_Comms {
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
             Preferences.debug(DICOM_Util.timeStamper() + " PDU_Service.handleConnectionFromServer:(" + this.hashCode() +
-                              ") Accepted association from " + new String(associateRQ.getCallingAppTitle()) + "\n");
+                              ")  association from " + new String(associateRQ.getCallingAppTitle()) + "\n");
         }
     }
 
@@ -846,12 +852,12 @@ public class DICOM_PDUService extends DICOM_Comms {
         releaseRSP = null;
         socket = null;
         
-        if (acceptedPresentationContexts != null) {
-            acceptedPresentationContexts.removeAllElements();
-            acceptedPresentationContexts = null;
+        if (PresentationContexts != null) {
+            PresentationContexts.removeAllElements();
+            PresentationContexts = null;
         }
 
-        if (acceptedPresentationContexts != null) {
+        if (PresentationContexts != null) {
             proposedAbstractSyntaxs.clear();
             proposedAbstractSyntaxs = null;
         }
@@ -971,20 +977,20 @@ public class DICOM_PDUService extends DICOM_Comms {
 
         pDataTF.setOutgoingBlockSize(associateAC.getUserInformation().maxSubLength.getMaxLength());
 
-        acceptedPresentationContexts.removeAllElements();
+        PresentationContexts.removeAllElements();
         atLeastOneGood = false;
 
         for (int i = 0; i < associateAC.getPresentationContextes().size(); i++) {
             pca = (DICOM_PresentationContextAccept) (associateAC.getPresentationContextes().elementAt(i));
 
             if (pca.result == 0) {
-                acceptedPresentationContexts.addElement(pca);
+                PresentationContexts.addElement(pca);
                 atLeastOneGood = true;
 
                 // Need more debug here !!!
                 if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                     Preferences.debug(DICOM_Util.timeStamper() +
-                                      " PDU_Service.interrogateAAssociateAC - ACCEPTED : ID =  " +
+                                      " PDU_Service.interrogateAAssociateAC -  : ID =  " +
                                       pca.presentationContextID + ", abstract syntax = " +
                                       associateRQ.getPresentationContextFromID(pca.presentationContextID) + " - " +
                                       DICOM_Constants.convertUIDToString(associateRQ.getPresentationContextFromID(pca.presentationContextID)) +
@@ -997,12 +1003,11 @@ public class DICOM_PDUService extends DICOM_Comms {
 
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                 Preferences.debug(DICOM_Util.timeStamper() + " PDU_Service.interrogateAAssociateAC: : " +
-                                  " Did not receive an accepted presentation context. \n");
+                                  " Did not receive an  presentation context. \n");
             }
 
             return (false); // return failed
         }
-
         return (true); // return success
     }
 
@@ -1084,7 +1089,7 @@ public class DICOM_PDUService extends DICOM_Comms {
 
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() +
-                                          " PDU_Service.interrogateAAssociateRQ: presentation context NOT accepted = " +
+                                          " PDU_Service.interrogateAAssociateRQ: presentation context NOT  = " +
                                           presContext.absSyntax.getUID() + " " +
                                           DICOM_Constants.convertUIDToString(presContext.absSyntax.getUID()) +
                                           " presentation context ID = " + pca.presentationContextID + "\n");
@@ -1095,7 +1100,7 @@ public class DICOM_PDUService extends DICOM_Comms {
 
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() +
-                                          " PDU_Service.interogateAAssociateRQ: presentation accepted = " +
+                                          " PDU_Service.interogateAAssociateRQ: presentation  = " +
                                           presContext.absSyntax.getUID() + " " +
                                           DICOM_Constants.convertUIDToString(presContext.absSyntax.getUID()) +
                                           " presentation context ID = " + pca.presentationContextID + "\n");
@@ -1106,12 +1111,12 @@ public class DICOM_PDUService extends DICOM_Comms {
                 pca.trnSyntax.setUID(trnSyntax.getUID());
 //System.err.println("Transfer Syntax: " + trnSyntax.toString());
                 if (canWeHandleTransferSyntax(trnSyntax)) {
-                    pca.result = 0; // 0 = accepted
+                    pca.result = 0; // 0 = 
                     atLeastOne = true;
 
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() +
-                                          " PDU_Service.interrogateAAssociateRQ: transfer syntax accepted = " +
+                                          " PDU_Service.interrogateAAssociateRQ: transfer syntax  = " +
                                           trnSyntax.getUID() + " " +
                                           DICOM_TransferSyntaxUtil.convertToReadableString(trnSyntax.getUID()) + "\n");
                     }
@@ -1119,7 +1124,7 @@ public class DICOM_PDUService extends DICOM_Comms {
 
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() +
-                                          " PDU_Service.interrogateAAssociateRQ: transfer syntax NOT accepted = " +
+                                          " PDU_Service.interrogateAAssociateRQ: transfer syntax NOT  = " +
                                           trnSyntax.getUID() + " " +
                                           DICOM_TransferSyntaxUtil.convertToReadableString(trnSyntax.getUID()) + "\n");
                     }
@@ -1128,7 +1133,7 @@ public class DICOM_PDUService extends DICOM_Comms {
                 }
 
 
-                // add presentation context accepted to list accept list
+                // add presentation context  to list accept list
                 
                 /**
                  * matt & ben :  when you have and accept and reject under same presentation ID
@@ -1163,14 +1168,14 @@ public class DICOM_PDUService extends DICOM_Comms {
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
             Preferences.debug(DICOM_Util.timeStamper() + " PDU_Service.interrogateAAssociateRQ:(" + this.hashCode() +
-                              ")  Sending list of accepted presentation contexts." + "\n");
+                              ")  Sending list of  presentation contexts." + "\n");
         }
 
         associateAC.write(this); // Send a reply !!!!!!!!!
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
             Preferences.debug(DICOM_Util.timeStamper() + " PDU_Service.interrogateAAssociateRQ:(" + this.hashCode() +
-                              ")  Completed sending list of accepted presentation contexts." + "\n");
+                              ")  Completed sending list of  presentation contexts." + "\n");
         }
 
         return (true);
@@ -1215,7 +1220,7 @@ public class DICOM_PDUService extends DICOM_Comms {
     /**
      * As it turn out we accept all application contexts.
      *
-     * @param   applicationContext The application context to be check to be accepted. Not used at this time. 
+     * @param   applicationContext The application context to be check to be . Not used at this time. 
      *
      * @return  Always returns true.
      */
