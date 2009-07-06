@@ -1483,6 +1483,25 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 			MipavUtil.displayError("Num 3D Volumes must be a valid number");
 			return false;
 		}
+		
+		if(!(phaseEncodingString.equalsIgnoreCase("vertical") || phaseEncodingString.equalsIgnoreCase("horizontal"))) {
+			MipavUtil.displayError("Origin of Phase Encoding is not valid");
+			return false;
+		}
+		
+		if(!(imagePlaneString.equalsIgnoreCase("axial") || imagePlaneString.equalsIgnoreCase("coronal") || imagePlaneString.equalsIgnoreCase("saggittal")))  {
+			MipavUtil.displayError("Image plane is not valid");
+			return false;
+		}
+		
+		if(!(formatString.equalsIgnoreCase("integer") || formatString.equalsIgnoreCase("float") || formatString.equalsIgnoreCase("dicom"))) {
+			MipavUtil.displayError("Format of raw images is not valid");
+			return false;
+		}
+		
+		
+		
+		
     
     	
     	
