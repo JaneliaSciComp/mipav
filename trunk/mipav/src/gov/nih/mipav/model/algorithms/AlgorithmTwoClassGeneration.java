@@ -10,17 +10,30 @@ import java.io.*;
 import java.util.*;
 
 /**
- 
+ Reference is "Overall and pairwise segregation tests based on nearest neighbor contigency tables" by Elvan
+ Ceyhan, Computational Statistics and Data Analysis, 53, 2009, pp. 2786-2808.
  */
 public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
-    public static final int FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENT = 1;
+    public static final int FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS = 1;
     
     public static final int FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS = 2;
     
-    public static final int RANDOM_OFFSPRING_ALLOCATION_POISSON_SAME_PARENT = 3;
+    public static final int RANDOM_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS = 3;
     
     public static final int RANDOM_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS = 4;
+    
+    public static final int MATERN_SAME_PARENTS = 5;
+    
+    public static final int MATERN_DIFFERENT_PARENTS = 6;
+    
+    public static final int INHOMOGENEOUS_POISSON = 7;
+    
+    public static final int SQRT_X_PLUS_Y = 1;
+    
+    public static final int SQRT_X_TIMES_Y = 2;
+    
+    public static final int ABS_X_MINUS_Y = 3;
     
     
 
@@ -29,27 +42,24 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     // Circle radius
     private int radius;
     
-    // number of circles to be drawn
-    private int numCircles;
+    private int process;
     
-    // RANDOM, AGGREGATED, or REGULAR.
-    private int pattern;
+    // number of parents
+    private int numParents;
     
-    // Used in AGGREGATED.  initialRandomCircles are drawn randomly.  The rest are drawn with nearestNeighborDistance
-    // less than or equal to maximumNearestNeighborDistance
-    private int initialRandomCircles;
+    private int numOffspring1;
     
-    // Used in REGULAR
-    private double minimumNearestNeighborDistance;
+    private int numOffspring2;
     
-    // Used in AGGREGATED and REGULAR
-    private double maximumNearestNeighborDistance;
+    private double normalizedStdDev;
     
-    private double lowestForbiddenNNDistance;
+    private double parentPoissonNormalizedMean;
     
-    private double highestForbiddenNNDistance;
+    private double normalizedDiscRadius;
     
-    private double highestRegenerationNNDistance;
+    private double offspringPoissonNormalizedMean;
+    
+    private int inhomogeneous;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -63,29 +73,31 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
      *
      * @param  srcImg   Blank source image in which circles will be drawn
      * @param  radius   Circle radius
-     * @param  numCircles Number of circles to be drawn
-     * @param  pattern RANDOM, AGGREGATED, or REGULAR
-     * @param  initialRandomCircles Used in AGGREGATED.  initialRandomCircles are drawn randomly.  The rest
-     *         are drawn with nearestNeighborDistance less than or equal ot maximumNearestNeighborDistance.
-     * @param  minimumNearestNeighborDistance Used in REGULAR
-     * @param  maximumNearestNeighborDistance Used in AGGREGATED and REGULAR
-     * @param  lowestForbiddenNNDistance Used in CONSTRAINED
-     * @param  highestForbiddenNNDistance Used in CONSTRAINED
-     * @param  highestRegeneerationNNDistance Used in CONSTRAINED
+     * @param  process 
+     * @param  numParents Number of parents
+     * @param  numOffspring1
+     * @param  numOffspring2
+     * @param  normalizedStdDev
+     * @param  parentPoissonNormalizedMean
+     * @param  normalizedDiscRadius
+     * @param  offspringPoissonNormalizedMean
+     * @param  inhomogeneous
      */
-    public AlgorithmTwoClassGeneration(ModelImage srcImage, int radius, int numCircles, int pattern,
-            int initialRandomCircles, double minimumNearestNeighborDistance, double maximumNearestNeighborDistance,
-            double lowestForbiddenNNDistance, double highestForbiddenNNDistance, double highestRegenerationNNDistance) {
+    public AlgorithmTwoClassGeneration(ModelImage srcImage, int radius, int process, int numParents, 
+            int numOffspring1, int numOffspring2, double normalizedStdDev,
+            double parentPoissonNormalizedMean, double normalizedDiscRadius, double offspringPoissonNormalizedMean,
+            int inhomogeneous) {
         super(null, srcImage);
         this.radius = radius;
-        this.numCircles = numCircles;
-        this.pattern = pattern;
-        this.initialRandomCircles = initialRandomCircles;
-        this.minimumNearestNeighborDistance = minimumNearestNeighborDistance;
-        this.maximumNearestNeighborDistance = maximumNearestNeighborDistance;
-        this.lowestForbiddenNNDistance = lowestForbiddenNNDistance;
-        this.highestForbiddenNNDistance = highestForbiddenNNDistance;
-        this.highestRegenerationNNDistance = highestRegenerationNNDistance;
+        this.process = process;
+        this.numParents = numParents;
+        this.numOffspring1 = numOffspring1;
+        this.numOffspring2 = numOffspring2;
+        this.normalizedStdDev = normalizedStdDev;
+        this.parentPoissonNormalizedMean = parentPoissonNormalizedMean;
+        this.normalizedDiscRadius = normalizedDiscRadius;
+        this.offspringPoissonNormalizedMean = offspringPoissonNormalizedMean;
+        this.inhomogeneous = inhomogeneous;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -124,8 +136,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         /** Reference to the random number generator. */
         RandomNumberGen randomGen;
         int circlesDrawn;
-        int circleXCenter[] = new int[numCircles];
-        int circleYCenter[] = new int[numCircles];
+        //int circleXCenter[] = new int[numCircles];
+        //int circleYCenter[] = new int[numCircles];
         double nearestNeighborDistance[];
         double total;
         double mean;
