@@ -319,7 +319,6 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
      * Initializes GUI components and displays dialog.
      */
     private void init() {
-        JLabel mainLabel;
         JLabel xDimLabel;
         JLabel yDimLabel;
         JLabel radiusLabel;
@@ -561,7 +560,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
             yDim = Integer.valueOf(yDimText.getText()).intValue();
         }
         
-        if (!testParameter(radiusText.getText(), 1, 1000000)) {
+        if (!testParameter(radiusText.getText(), 0, 1000000)) {
             radiusText.requestFocus();
             radiusText.selectAll();
 
