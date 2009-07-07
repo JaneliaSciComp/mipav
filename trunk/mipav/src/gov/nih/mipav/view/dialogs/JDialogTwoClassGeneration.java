@@ -14,7 +14,7 @@ import javax.swing.*;
 
 /**
  * Dialog to create an image with two classes of circles which can be 1.) repelled or segregated, 2.) independent or 
- * random, or 3.) attracted or segregated.
+ * fixedPoissonSame, or 3.) attracted or segregated.
  */
 public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmInterface, ItemListener, WindowListener {
 
@@ -44,62 +44,82 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
     
     private JTextField yDimText;
     
-    private int radius = 5;
+    private int radius = 0;
 
     /** DOCUMENT ME! */
     private JTextField radiusText;
     
-    private int numCircles = 200;
+    private int numParents = 5;
     
-    private JTextField numCirclesText;
+    private JLabel numParentsLabel;
     
-    private ButtonGroup patternGroup;
+    private JTextField numParentsText;
     
-    private JRadioButton randomButton;
+    private ButtonGroup processGroup;
     
-    private JRadioButton aggregatedButton;
+    private JRadioButton fixedPoissonSameButton;
     
-    private JRadioButton regularButton;
+    private JRadioButton fixedPoissonDifferentButton;
     
-    private JRadioButton constrainedButton;
+    private JRadioButton randomPoissonSameButton;
     
-    private int pattern = AlgorithmCircleGeneration.RANDOM;
+    private JRadioButton randomPoissonDifferentButton;
     
-    private JLabel initialCirclesLabel;
+    private JRadioButton MaternSameButton;
     
-    private JTextField initialCirclesText;
+    private JRadioButton MaternDifferentButton;
     
-    private int initialRandomCircles = 20;
+    private JRadioButton inhomogeneousPoissonButton;
     
-    private JLabel minimumDistanceLabel;
+    private int process = AlgorithmTwoClassGeneration.FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS;
     
-    private JTextField minimumDistanceText;
+    private JLabel numOffspring1Label;
     
-    private double minimumNearestNeighborDistance = 12.0;
+    private JTextField numOffspring1Text;
     
-    private JLabel maximumDistanceLabel;
+    private int numOffspring1 = 50;
     
-    private JTextField maximumDistanceText;
+    private JLabel numOffspring2Label;
     
-    private double maximumNearestNeighborDistance = 15.0;
+    private JTextField numOffspring2Text;
     
-    private JLabel lowestForbiddenLabel;
+    private int numOffspring2 = 50;
     
-    private JTextField lowestForbiddenText;
+    private JLabel normalizedStdDevLabel;
     
-    private double lowestForbiddenNNDistance = 15.0;
+    private JTextField normalizedStdDevText;
     
-    private JLabel highestForbiddenLabel;
+    private double normalizedStdDev = 0.10;
     
-    private JTextField highestForbiddenText;
+    private JLabel parentPoissonNormalizedMeanLabel;
     
-    private double highestForbiddenNNDistance = 20.0;
+    private JTextField parentPoissonNormalizedMeanText;
     
-    private JLabel highestRegenerationLabel;
+    private double parentPoissonNormalizedMean = 5.0;
     
-    private JTextField highestRegenerationText;
+    private ButtonGroup inhomogeneousGroup;
     
-    private double highestRegenerationNNDistance = 25.0;
+    private JRadioButton sqrtXPlusYButton;
+    
+    private JRadioButton sqrtXTimesYButton;
+    
+    private JRadioButton absXMinusYButton;
+    
+    private JLabel normalizedDiscRadiusLabel;
+    
+    private JTextField normalizedDiscRadiusText;
+    
+    private double normalizedDiscRadius = 0.10;
+    
+    private JLabel offspringPoissonNormalizedMeanLabel;
+    
+    private JTextField offspringPoissonNormalizedMeanText;
+    
+    private double offspringPoissonNormalizedMean = 20.0;
+    
+    private int inhomogeneous = AlgorithmTwoClassGeneration.SQRT_X_PLUS_Y;
+    
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -136,63 +156,67 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
             //MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
-        } else if ((source == randomButton) || (source == aggregatedButton) || (source == regularButton) ||
-                   (source == constrainedButton)) {
-            if (randomButton.isSelected()) {
-                initialCirclesLabel.setEnabled(false);
-                initialCirclesText.setEnabled(false);
-                minimumDistanceLabel.setEnabled(false);
-                minimumDistanceText.setEnabled(false);
-                maximumDistanceLabel.setEnabled(false);
-                maximumDistanceText.setEnabled(false);
-                lowestForbiddenLabel.setEnabled(false);
-                lowestForbiddenText.setEnabled(false);
-                highestForbiddenLabel.setEnabled(false);
-                highestForbiddenText.setEnabled(false);
-                highestRegenerationLabel.setEnabled(false);
-                highestRegenerationText.setEnabled(false);
+        } else if ((source == fixedPoissonSameButton) || (source == fixedPoissonDifferentButton) ||
+                   (source == randomPoissonSameButton) || (source == randomPoissonDifferentButton) ||
+                   (source == MaternSameButton) || (source == MaternDifferentButton) ||
+                   (source == inhomogeneousPoissonButton)) {
+            if (fixedPoissonSameButton.isSelected() || fixedPoissonDifferentButton.isSelected() || 
+                randomPoissonSameButton.isSelected() || randomPoissonDifferentButton.isSelected()) {
+                numParentsLabel.setEnabled(true);
+                numParentsText.setEnabled(true);
+                numOffspring1Label.setEnabled(true);
+                numOffspring1Text.setEnabled(true);
+                numOffspring2Label.setEnabled(true);
+                numOffspring2Text.setEnabled(true);
+                normalizedStdDevLabel.setEnabled(true);
+                normalizedStdDevText.setEnabled(true);
+                parentPoissonNormalizedMeanLabel.setEnabled(false);
+                parentPoissonNormalizedMeanText.setEnabled(false);
+                normalizedDiscRadiusLabel.setEnabled(false);
+                normalizedDiscRadiusText.setEnabled(false);
+                offspringPoissonNormalizedMeanLabel.setEnabled(false);
+                offspringPoissonNormalizedMeanText.setEnabled(false);
+                sqrtXPlusYButton.setEnabled(false);
+                sqrtXTimesYButton.setEnabled(false);
+                absXMinusYButton.setEnabled(false);
             }
-            else if (aggregatedButton.isSelected()) {
-                initialCirclesLabel.setEnabled(true);
-                initialCirclesText.setEnabled(true);
-                minimumDistanceLabel.setEnabled(false);
-                minimumDistanceText.setEnabled(false);
-                maximumDistanceLabel.setEnabled(true);
-                maximumDistanceText.setEnabled(true);
-                lowestForbiddenLabel.setEnabled(false);
-                lowestForbiddenText.setEnabled(false);
-                highestForbiddenLabel.setEnabled(false);
-                highestForbiddenText.setEnabled(false);
-                highestRegenerationLabel.setEnabled(false);
-                highestRegenerationText.setEnabled(false);
-            }
-            else if (regularButton.isSelected()){
-                initialCirclesLabel.setEnabled(false);
-                initialCirclesText.setEnabled(false);
-                minimumDistanceLabel.setEnabled(true);
-                minimumDistanceText.setEnabled(true);
-                maximumDistanceLabel.setEnabled(true);
-                maximumDistanceText.setEnabled(true);
-                lowestForbiddenLabel.setEnabled(false);
-                lowestForbiddenText.setEnabled(false);
-                highestForbiddenLabel.setEnabled(false);
-                highestForbiddenText.setEnabled(false);
-                highestRegenerationLabel.setEnabled(false);
-                highestRegenerationText.setEnabled(false);
+            else if (MaternSameButton.isSelected() || MaternDifferentButton.isSelected()) {
+                numParentsLabel.setEnabled(false);
+                numParentsText.setEnabled(false);
+                numOffspring1Label.setEnabled(true);
+                numOffspring1Text.setEnabled(true);
+                numOffspring2Label.setEnabled(true);
+                numOffspring2Text.setEnabled(true);
+                normalizedStdDevLabel.setEnabled(false);
+                normalizedStdDevText.setEnabled(false);
+                parentPoissonNormalizedMeanLabel.setEnabled(true);
+                parentPoissonNormalizedMeanText.setEnabled(true);
+                normalizedDiscRadiusLabel.setEnabled(true);
+                normalizedDiscRadiusText.setEnabled(true);
+                offspringPoissonNormalizedMeanLabel.setEnabled(true);
+                offspringPoissonNormalizedMeanText.setEnabled(true);
+                sqrtXPlusYButton.setEnabled(false);
+                sqrtXTimesYButton.setEnabled(false);
+                absXMinusYButton.setEnabled(false);
             }
             else {
-                initialCirclesLabel.setEnabled(false);
-                initialCirclesText.setEnabled(false);
-                minimumDistanceLabel.setEnabled(false);
-                minimumDistanceText.setEnabled(false);
-                maximumDistanceLabel.setEnabled(false);
-                maximumDistanceText.setEnabled(false);
-                lowestForbiddenLabel.setEnabled(true);
-                lowestForbiddenText.setEnabled(true);
-                highestForbiddenLabel.setEnabled(true);
-                highestForbiddenText.setEnabled(true);
-                highestRegenerationLabel.setEnabled(true);
-                highestRegenerationText.setEnabled(true);   
+                numParentsLabel.setEnabled(false);
+                numParentsText.setEnabled(false); 
+                numOffspring1Label.setEnabled(false);
+                numOffspring1Text.setEnabled(false);
+                numOffspring2Label.setEnabled(false);
+                numOffspring2Text.setEnabled(false);
+                normalizedStdDevLabel.setEnabled(false);
+                normalizedStdDevText.setEnabled(false);
+                parentPoissonNormalizedMeanLabel.setEnabled(false);
+                parentPoissonNormalizedMeanText.setEnabled(false);
+                normalizedDiscRadiusLabel.setEnabled(false);
+                normalizedDiscRadiusText.setEnabled(false);
+                offspringPoissonNormalizedMeanLabel.setEnabled(false);
+                offspringPoissonNormalizedMeanText.setEnabled(false);
+                sqrtXPlusYButton.setEnabled(true);
+                sqrtXTimesYButton.setEnabled(true);
+                absXMinusYButton.setEnabled(true);
             }
         }
     }
@@ -211,8 +235,8 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
 
-        if (algorithm instanceof AlgorithmCircleGeneration) {
-            Preferences.debug("Circle Generation: " + algorithm.getElapsedTime());
+        if (algorithm instanceof AlgorithmTwoClassGeneration) {
+            Preferences.debug("Two Class Generation: " + algorithm.getElapsedTime());
 
             if ((tcAlgo.isCompleted() == true) && (resultImage != null)) {
 
@@ -235,7 +259,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
             }
 
             // insertScriptLine(algorithm);
-        } // if (algorithm instanceof AlgorithmCircleGeneration)
+        } // if (algorithm instanceof AlgorithmTwoClassGeneration)
 
         if (tcAlgo != null) {
             tcAlgo.finalize();
@@ -282,9 +306,9 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
             resultImage.setImageName(name);
 
             // Make algorithm
-            tcAlgo = new AlgorithmTwoClassGeneration(resultImage, radius, numCircles, pattern, initialRandomCircles,
-                        minimumNearestNeighborDistance, maximumNearestNeighborDistance, lowestForbiddenNNDistance,
-                        highestForbiddenNNDistance, highestRegenerationNNDistance);
+            tcAlgo = new AlgorithmTwoClassGeneration(resultImage, radius, process, numParents, numOffspring1,
+                        numOffspring2, normalizedStdDev, parentPoissonNormalizedMean,
+                        normalizedDiscRadius, offspringPoissonNormalizedMean, inhomogeneous);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -323,14 +347,13 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         JLabel xDimLabel;
         JLabel yDimLabel;
         JLabel radiusLabel;
-        JLabel numCirclesLabel;
         
         setForeground(Color.black);
         setTitle("Two class segregation/association generation");
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
-        paramPanel.setBorder(buildTitledBorder("Circle parameters"));
+        paramPanel.setBorder(buildTitledBorder("Parameters"));
 
         GridBagConstraints gbc6 = new GridBagConstraints();
 
@@ -387,147 +410,202 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         gbc6.gridx = 1;
         paramPanel.add(radiusText, gbc6);
         
-        numCirclesLabel = new JLabel("Number of circles ");
-        numCirclesLabel.setForeground(Color.black);
-        numCirclesLabel.setFont(serif12);
-        numCirclesLabel.setEnabled(true);
+        processGroup = new ButtonGroup();
+        fixedPoissonSameButton = new JRadioButton("Fixed offspring allocation Poisson same parents process", true);
+        fixedPoissonSameButton.setFont(serif12);
+        fixedPoissonSameButton.setForeground(Color.black);
+        fixedPoissonSameButton.addActionListener(this);
+        processGroup.add(fixedPoissonSameButton);
         gbc6.gridx = 0;
         gbc6.gridy = 3;
-        paramPanel.add(numCirclesLabel, gbc6);
+        paramPanel.add(fixedPoissonSameButton, gbc6);
         
-        numCirclesText = new JTextField(3);
-        numCirclesText.setText(String.valueOf(numCircles));
-        numCirclesText.setFont(serif12);
-        numCirclesText.setEnabled(true);
-        gbc6.gridx = 1;
-        paramPanel.add(numCirclesText, gbc6);
-        
-        patternGroup = new ButtonGroup();
-        randomButton = new JRadioButton("Random pattern", true);
-        randomButton.setFont(serif12);
-        randomButton.setForeground(Color.black);
-        randomButton.addActionListener(this);
-        patternGroup.add(randomButton);
+        fixedPoissonDifferentButton = new JRadioButton("Fixed offspring allocation Poisson different parents process", false);
+        fixedPoissonDifferentButton.setFont(serif12);
+        fixedPoissonDifferentButton.setForeground(Color.black);
+        fixedPoissonDifferentButton.addActionListener(this);
+        processGroup.add(fixedPoissonDifferentButton);
         gbc6.gridx = 0;
         gbc6.gridy = 4;
-        paramPanel.add(randomButton, gbc6);
+        paramPanel.add(fixedPoissonDifferentButton, gbc6);
         
-        aggregatedButton = new JRadioButton("Aggregated pattern", false);
-        aggregatedButton.setFont(serif12);
-        aggregatedButton.setForeground(Color.black);
-        aggregatedButton.addActionListener(this);
-        patternGroup.add(aggregatedButton);
+        randomPoissonSameButton = new JRadioButton("Random offspring allocation Poisson same parents process", false);
+        randomPoissonSameButton.setFont(serif12);
+        randomPoissonSameButton.setForeground(Color.black);
+        randomPoissonSameButton.addActionListener(this);
+        processGroup.add(randomPoissonSameButton);
         gbc6.gridx = 0;
         gbc6.gridy = 5;
-        paramPanel.add(aggregatedButton, gbc6);
+        paramPanel.add(randomPoissonSameButton, gbc6);
         
-        regularButton = new JRadioButton("Regular pattern", false);
-        regularButton.setFont(serif12);
-        regularButton.setForeground(Color.black);
-        regularButton.addActionListener(this);
-        patternGroup.add(regularButton);
+        randomPoissonDifferentButton = new JRadioButton("Random offspring allocation Poisson different parents process", false);
+        randomPoissonDifferentButton.setFont(serif12);
+        randomPoissonDifferentButton.setForeground(Color.black);
+        randomPoissonDifferentButton.addActionListener(this);
+        processGroup.add(randomPoissonDifferentButton);
         gbc6.gridx = 0;
         gbc6.gridy = 6;
-        paramPanel.add(regularButton, gbc6);
+        paramPanel.add(randomPoissonDifferentButton, gbc6);
         
-        constrainedButton = new JRadioButton("Constrained pattern", false);
-        constrainedButton.setFont(serif12);
-        constrainedButton.setForeground(Color.black);
-        constrainedButton.addActionListener(this);
-        patternGroup.add(constrainedButton);
+        MaternSameButton = new JRadioButton("Matern same parents process", false);
+        MaternSameButton.setFont(serif12);
+        MaternSameButton.setForeground(Color.black);
+        MaternSameButton.addActionListener(this);
+        processGroup.add(MaternSameButton);
         gbc6.gridx = 0;
         gbc6.gridy = 7;
-        paramPanel.add(constrainedButton, gbc6);
+        paramPanel.add(MaternSameButton, gbc6);
         
-        initialCirclesLabel = new JLabel("Initial circles randomly generated ");
-        initialCirclesLabel.setForeground(Color.black);
-        initialCirclesLabel.setFont(serif12);
-        initialCirclesLabel.setEnabled(false);
+        MaternDifferentButton = new JRadioButton("Matern different parents process", false);
+        MaternDifferentButton.setFont(serif12);
+        MaternDifferentButton.setForeground(Color.black);
+        MaternDifferentButton.addActionListener(this);
+        processGroup.add(MaternDifferentButton);
         gbc6.gridx = 0;
         gbc6.gridy = 8;
-        paramPanel.add(initialCirclesLabel, gbc6);
+        paramPanel.add(MaternDifferentButton, gbc6);
         
-        initialCirclesText = new JTextField(10);
-        initialCirclesText.setText(String.valueOf(initialRandomCircles));
-        initialCirclesText.setFont(serif12);
-        initialCirclesText.setEnabled(false);
-        gbc6.gridx = 1;
-        paramPanel.add(initialCirclesText, gbc6);
-        
-        minimumDistanceLabel = new JLabel("Minimum nearest neighbor distance ");
-        minimumDistanceLabel.setForeground(Color.black);
-        minimumDistanceLabel.setFont(serif12);
-        minimumDistanceLabel.setEnabled(false);
+        inhomogeneousPoissonButton = new JRadioButton("Inhomogeneous Poisson process", false);
+        inhomogeneousPoissonButton.setFont(serif12);
+        inhomogeneousPoissonButton.setForeground(Color.black);
+        inhomogeneousPoissonButton.addActionListener(this);
+        processGroup.add(inhomogeneousPoissonButton);
         gbc6.gridx = 0;
         gbc6.gridy = 9;
-        paramPanel.add(minimumDistanceLabel, gbc6);
+        paramPanel.add(inhomogeneousPoissonButton, gbc6);
         
-        minimumDistanceText = new JTextField(10);
-        minimumDistanceText.setText(String.valueOf(minimumNearestNeighborDistance));
-        minimumDistanceText.setFont(serif12);
-        minimumDistanceText.setEnabled(false);
-        gbc6.gridx = 1;
-        paramPanel.add(minimumDistanceText, gbc6);
-        
-        maximumDistanceLabel = new JLabel("Maximum nearest neighbor distance ");
-        maximumDistanceLabel.setForeground(Color.black);
-        maximumDistanceLabel.setFont(serif12);
-        maximumDistanceLabel.setEnabled(false);
+        numParentsLabel = new JLabel("Number of parents ");
+        numParentsLabel.setForeground(Color.black);
+        numParentsLabel.setFont(serif12);
+        numParentsLabel.setEnabled(true);
         gbc6.gridx = 0;
         gbc6.gridy = 10;
-        paramPanel.add(maximumDistanceLabel, gbc6);
+        paramPanel.add(numParentsLabel, gbc6);
         
-        maximumDistanceText = new JTextField(10);
-        maximumDistanceText.setText(String.valueOf(maximumNearestNeighborDistance));
-        maximumDistanceText.setFont(serif12);
-        maximumDistanceText.setEnabled(false);
+        numParentsText = new JTextField(3);
+        numParentsText.setText(String.valueOf(numParents));
+        numParentsText.setFont(serif12);
+        numParentsText.setEnabled(true);
         gbc6.gridx = 1;
-        paramPanel.add(maximumDistanceText, gbc6);
+        paramPanel.add(numParentsText, gbc6);
         
-        lowestForbiddenLabel = new JLabel("Lowest forbidden intermediate nearest neighbor distance ");
-        lowestForbiddenLabel.setForeground(Color.black);
-        lowestForbiddenLabel.setFont(serif12);
-        lowestForbiddenLabel.setEnabled(false);
+        numOffspring1Label = new JLabel("Number of Type 1 offspring ");
+        numOffspring1Label.setForeground(Color.black);
+        numOffspring1Label.setFont(serif12);
+        numOffspring1Label.setEnabled(true);
         gbc6.gridx = 0;
         gbc6.gridy = 11;
-        paramPanel.add(lowestForbiddenLabel, gbc6);
+        paramPanel.add(numOffspring1Label, gbc6);
         
-        lowestForbiddenText = new JTextField(10);
-        lowestForbiddenText.setText(String.valueOf(lowestForbiddenNNDistance));
-        lowestForbiddenText.setFont(serif12);
-        lowestForbiddenText.setEnabled(false);
+        numOffspring1Text = new JTextField(10);
+        numOffspring1Text.setText(String.valueOf(numOffspring1));
+        numOffspring1Text.setFont(serif12);
+        numOffspring1Text.setEnabled(true);
         gbc6.gridx = 1;
-        paramPanel.add(lowestForbiddenText, gbc6);
+        paramPanel.add(numOffspring1Text, gbc6);
         
-        highestForbiddenLabel = new JLabel("Highest forbidden intermediate nearest neighbor distance ");
-        highestForbiddenLabel.setForeground(Color.black);
-        highestForbiddenLabel.setFont(serif12);
-        highestForbiddenLabel.setEnabled(false);
+        numOffspring2Label = new JLabel("Number of Type 2 offspring ");
+        numOffspring2Label.setForeground(Color.black);
+        numOffspring2Label.setFont(serif12);
+        numOffspring2Label.setEnabled(true);
         gbc6.gridx = 0;
         gbc6.gridy = 12;
-        paramPanel.add(highestForbiddenLabel, gbc6);
+        paramPanel.add(numOffspring2Label, gbc6);
         
-        highestForbiddenText = new JTextField(10);
-        highestForbiddenText.setText(String.valueOf(highestForbiddenNNDistance));
-        highestForbiddenText.setFont(serif12);
-        highestForbiddenText.setEnabled(false);
+        numOffspring2Text = new JTextField(10);
+        numOffspring2Text.setText(String.valueOf(numOffspring2));
+        numOffspring2Text.setFont(serif12);
+        numOffspring2Text.setEnabled(true);
         gbc6.gridx = 1;
-        paramPanel.add(highestForbiddenText, gbc6);
+        paramPanel.add(numOffspring2Text, gbc6);
         
-        highestRegenerationLabel = new JLabel("Highest regeneration nearest neighbor distance ");
-        highestRegenerationLabel.setForeground(Color.black);
-        highestRegenerationLabel.setFont(serif12);
-        highestRegenerationLabel.setEnabled(false);
+        normalizedStdDevLabel = new JLabel("Normalized standard deviation ");
+        normalizedStdDevLabel.setForeground(Color.black);
+        normalizedStdDevLabel.setFont(serif12);
+        normalizedStdDevLabel.setEnabled(true);
         gbc6.gridx = 0;
         gbc6.gridy = 13;
-        paramPanel.add(highestRegenerationLabel, gbc6);
+        paramPanel.add(normalizedStdDevLabel, gbc6);
         
-        highestRegenerationText = new JTextField(10);
-        highestRegenerationText.setText(String.valueOf(highestRegenerationNNDistance));
-        highestRegenerationText.setFont(serif12);
-        highestRegenerationText.setEnabled(false);
+        normalizedStdDevText = new JTextField(10);
+        normalizedStdDevText.setText(String.valueOf(normalizedStdDev));
+        normalizedStdDevText.setFont(serif12);
+        normalizedStdDevText.setEnabled(true);
         gbc6.gridx = 1;
-        paramPanel.add(highestRegenerationText, gbc6);
+        paramPanel.add(normalizedStdDevText, gbc6);
+        
+        parentPoissonNormalizedMeanLabel = new JLabel("Parent Poisson normalized mean ");
+        parentPoissonNormalizedMeanLabel.setForeground(Color.black);
+        parentPoissonNormalizedMeanLabel.setFont(serif12);
+        parentPoissonNormalizedMeanLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 14;
+        paramPanel.add(parentPoissonNormalizedMeanLabel, gbc6);
+        
+        parentPoissonNormalizedMeanText = new JTextField(10);
+        parentPoissonNormalizedMeanText.setText(String.valueOf(parentPoissonNormalizedMean));
+        parentPoissonNormalizedMeanText.setFont(serif12);
+        parentPoissonNormalizedMeanText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(parentPoissonNormalizedMeanText, gbc6);
+        
+        normalizedDiscRadiusLabel = new JLabel("Normalized disc radius ");
+        normalizedDiscRadiusLabel.setForeground(Color.black);
+        normalizedDiscRadiusLabel.setFont(serif12);
+        normalizedDiscRadiusLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 15;
+        paramPanel.add(normalizedDiscRadiusLabel, gbc6);
+        
+        normalizedDiscRadiusText = new JTextField(10);
+        normalizedDiscRadiusText.setText(String.valueOf(normalizedDiscRadius));
+        normalizedDiscRadiusText.setFont(serif12);
+        normalizedDiscRadiusText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(normalizedDiscRadiusText, gbc6);
+        
+        offspringPoissonNormalizedMeanLabel = new JLabel("Offspring Poisson normalized mean ");
+        offspringPoissonNormalizedMeanLabel.setForeground(Color.black);
+        offspringPoissonNormalizedMeanLabel.setFont(serif12);
+        offspringPoissonNormalizedMeanLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 16;
+        paramPanel.add(offspringPoissonNormalizedMeanLabel, gbc6);
+        
+        offspringPoissonNormalizedMeanText = new JTextField(10);
+        offspringPoissonNormalizedMeanText.setText(String.valueOf(offspringPoissonNormalizedMean));
+        offspringPoissonNormalizedMeanText.setFont(serif12);
+        offspringPoissonNormalizedMeanText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(offspringPoissonNormalizedMeanText, gbc6);
+        
+        inhomogeneousGroup = new ButtonGroup();
+        sqrtXPlusYButton = new JRadioButton("lambda2(x,y) = n2*sqrt(x + y)", true);
+        sqrtXPlusYButton.setFont(serif12);
+        sqrtXPlusYButton.setForeground(Color.black);
+        sqrtXPlusYButton.setEnabled(false);
+        inhomogeneousGroup.add(sqrtXPlusYButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 17;
+        paramPanel.add(sqrtXPlusYButton, gbc6);
+        
+        sqrtXTimesYButton = new JRadioButton("lambda2(x,y) = n2*sqrt(x * y)", false);
+        sqrtXTimesYButton.setFont(serif12);
+        sqrtXTimesYButton.setForeground(Color.black);
+        sqrtXTimesYButton.setEnabled(false);
+        inhomogeneousGroup.add(sqrtXTimesYButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 18;
+        paramPanel.add(sqrtXTimesYButton, gbc6);
+        
+        absXMinusYButton = new JRadioButton("lambda2(x,y) = n2*|x - y|", true);
+        absXMinusYButton.setFont(serif12);
+        absXMinusYButton.setForeground(Color.black);
+        absXMinusYButton.setEnabled(false);
+        inhomogeneousGroup.add(absXMinusYButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 19;
+        paramPanel.add(absXMinusYButton, gbc6);
 
         getContentPane().add(paramPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -570,88 +648,153 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
             radius = Integer.valueOf(radiusText.getText()).intValue();
         }
         
-        if (!testParameter(numCirclesText.getText(), 1, 100000)) {
-            numCirclesText.requestFocus();
-            numCirclesText.selectAll();
-
-            return false;
-        } else {
-            numCircles = Integer.valueOf(numCirclesText.getText()).intValue();
-        }
         
-        if (randomButton.isSelected()) {
-            pattern = AlgorithmCircleGeneration.RANDOM;
-        }
-        else if (aggregatedButton.isSelected()) {
-            pattern = AlgorithmCircleGeneration.AGGREGATED;
-            initialRandomCircles = Integer.valueOf(initialCirclesText.getText()).intValue();
-            if (initialRandomCircles < 1) {
-                MipavUtil.displayError("The number of initial random circles must be at least 1");
-                initialCirclesText.requestFocus();
-                initialCirclesText.selectAll();
+        
+        if (fixedPoissonSameButton.isSelected() || fixedPoissonDifferentButton.isSelected() ||
+            randomPoissonSameButton.isSelected() || randomPoissonDifferentButton.isSelected()) {
+            if (!testParameter(numParentsText.getText(), 1, 100000)) {
+                numParentsText.requestFocus();
+                numParentsText.selectAll();
+
                 return false;
-            }
-            if (initialRandomCircles >= numCircles) {
-                MipavUtil.displayError("The number of initial random circles must be less than the number of circles");
-                initialCirclesText.requestFocus();
-                initialCirclesText.selectAll();
-                return false;
+            } else {
+                numParents = Integer.valueOf(numParentsText.getText()).intValue();
             }
             
-            maximumNearestNeighborDistance = Double.valueOf(maximumDistanceText.getText()).doubleValue();
-            if (maximumNearestNeighborDistance < 2.0 * radius) {
-                MipavUtil.displayError("The maximum nearest neighbor distance must be at least 2.0 * radius");
-                maximumDistanceText.requestFocus();
-                maximumDistanceText.selectAll();
+            if (!testParameter(numOffspring1Text.getText(), 1, 100000)) {
+                numOffspring1Text.requestFocus();
+                numOffspring1Text.selectAll();
                 return false;
             }
-        }
-        else if (regularButton.isSelected()){
-            pattern = AlgorithmCircleGeneration.REGULAR;
-            minimumNearestNeighborDistance = Double.valueOf(minimumDistanceText.getText()).doubleValue();
-            if (minimumNearestNeighborDistance < 2.0 * radius) {
-                MipavUtil.displayError("The minimum nearest neighbor distance must be at least 2.0 * radius");
-                minimumDistanceText.requestFocus();
-                minimumDistanceText.selectAll();
+            else {
+                numOffspring1 = Integer.valueOf(numOffspring1Text.getText()).intValue();
+            }
+            if (!testParameter(numOffspring2Text.getText(), 1, 100000)) {
+                numOffspring2Text.requestFocus();
+                numOffspring2Text.selectAll();
                 return false;
+            }
+            else {
+                numOffspring2 = Integer.valueOf(numOffspring2Text.getText()).intValue();
             }
             
-            maximumNearestNeighborDistance = Double.valueOf(maximumDistanceText.getText()).doubleValue();
-            if (maximumNearestNeighborDistance <= minimumNearestNeighborDistance) {
-                MipavUtil.displayError(
-                "The maximum nearest neighbor distance must be greater than the minimum nearest neighbor distance");
-                maximumDistanceText.requestFocus();
-                maximumDistanceText.selectAll();
+            if (!testParameter(normalizedStdDevText.getText(), 0.01, 1.0)) {
+                MipavUtil.displayError("Normalized standard deviation must be between 0.01 and 1.0");
+                normalizedStdDevText.requestFocus();
+                normalizedStdDevText.selectAll();
                 return false;
+            }
+            else {
+                normalizedStdDev = Double.valueOf(normalizedStdDevText.getText()).doubleValue();
+            }
+            
+            if (fixedPoissonSameButton.isSelected()){
+                if ((numOffspring1 < numParents) || ((numOffspring1 % numParents) != 0)) {
+                    MipavUtil.displayError("Offspring 1 must be a positive integer multiple of the number of parents");
+                    numOffspring1Text.requestFocus();
+                    numOffspring1Text.selectAll();
+                    return false;
+                }
+                
+                if ((numOffspring2 < numParents) || ((numOffspring2 % numParents) != 0)) {
+                    MipavUtil.displayError("Offspring 2 must be a positive integer multiple of the number of parents");
+                    numOffspring2Text.requestFocus();
+                    numOffspring2Text.selectAll();
+                    return false;
+                }
+                process = AlgorithmTwoClassGeneration.FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS;  
+            }
+            else if (fixedPoissonDifferentButton.isSelected()) {
+                if ((numOffspring1 < numParents) || ((numOffspring1 % numParents) != 0)) {
+                    MipavUtil.displayError("Offspring 1 must be a positive integer multiple of the number of parents");
+                    numOffspring1Text.requestFocus();
+                    numOffspring1Text.selectAll();
+                    return false;
+                }
+                
+                if ((numOffspring2 < numParents) || ((numOffspring2 % numParents) != 0)) {
+                    MipavUtil.displayError("Offspring 2 must be a positive integer multiple of the number of parents");
+                    numOffspring2Text.requestFocus();
+                    numOffspring2Text.selectAll();
+                    return false;
+                }
+                process = AlgorithmTwoClassGeneration.FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS;
+            }
+            else if (randomPoissonSameButton.isSelected()){
+                process = AlgorithmTwoClassGeneration.RANDOM_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS;
+            }
+            else {
+                process = AlgorithmTwoClassGeneration.RANDOM_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS;
+                
+            }
+        }
+        else if (MaternSameButton.isSelected() || MaternDifferentButton.isSelected()) {
+            
+            if (!testParameter(parentPoissonNormalizedMeanText.getText(), 1.0, 50.0)) {
+                MipavUtil.displayError("Parent Poisson normalized mean must be between 1.0 and 50.0");
+                parentPoissonNormalizedMeanText.requestFocus();
+                parentPoissonNormalizedMeanText.selectAll();
+                return false;
+            }
+            else {
+                parentPoissonNormalizedMean = Double.valueOf(parentPoissonNormalizedMeanText.getText()).doubleValue();
+            }
+            
+            if (!testParameter(numOffspring1Text.getText(), 1, 100000)) {
+                numOffspring1Text.requestFocus();
+                numOffspring1Text.selectAll();
+                return false;
+            }
+            else {
+                numOffspring1 = Integer.valueOf(numOffspring1Text.getText()).intValue();
+            }
+            
+            if (!testParameter(numOffspring2Text.getText(), 1, 100000)) {
+                numOffspring2Text.requestFocus();
+                numOffspring2Text.selectAll();
+                return false;
+            }
+            else {
+                numOffspring2 = Integer.valueOf(numOffspring2Text.getText()).intValue();
+            }
+            
+            if (!testParameter(normalizedDiscRadiusText.getText(), 0.01, 1.0)) {
+                MipavUtil.displayError("Normalized disc radius must be between 0.01 and 1.0");
+                normalizedDiscRadiusText.requestFocus();
+                normalizedDiscRadiusText.selectAll();
+                return false;
+            }
+            else {
+                normalizedDiscRadius = Double.valueOf(normalizedDiscRadiusText.getText()).doubleValue();
+            }
+            
+            if (!testParameter(offspringPoissonNormalizedMeanText.getText(), 1.0, 50.0)) {
+                MipavUtil.displayError("Offspring Poisson normalized mean must be between 1.0 and 50.0");
+                offspringPoissonNormalizedMeanText.requestFocus();
+                offspringPoissonNormalizedMeanText.selectAll();
+                return false;
+            }
+            else {
+                offspringPoissonNormalizedMean = Double.valueOf(offspringPoissonNormalizedMeanText.getText()).doubleValue();
+            }
+            if (MaternSameButton.isSelected()) {
+                process = AlgorithmTwoClassGeneration.MATERN_SAME_PARENTS;
+            }
+            else {
+                process = AlgorithmTwoClassGeneration.MATERN_DIFFERENT_PARENTS;
             }
         }
         else {
-            pattern = AlgorithmCircleGeneration.CONSTRAINED;
-            lowestForbiddenNNDistance = Double.valueOf(lowestForbiddenText.getText()).doubleValue();
-            if (lowestForbiddenNNDistance <= 2.0 * radius) {
-                MipavUtil.displayError(
-                "The lowest forbidden intermediate nearest neighbor distance must be greater than 2.0 * radius");
-                lowestForbiddenText.requestFocus();
-                lowestForbiddenText.selectAll();
-                return false;
-            }
+            process = AlgorithmTwoClassGeneration.INHOMOGENEOUS_POISSON;
             
-            highestForbiddenNNDistance = Double.valueOf(highestForbiddenText.getText()).doubleValue();
-            if (highestForbiddenNNDistance <= lowestForbiddenNNDistance) {
-                MipavUtil.displayError(
-                "The highest forbidden intermediate nearest neighbor distance must be greater than the lowest forbidden distance");
-                highestForbiddenText.requestFocus();
-                highestForbiddenText.selectAll();
-                return false;
+            if (sqrtXPlusYButton.isSelected()) {
+                inhomogeneous = AlgorithmTwoClassGeneration.SQRT_X_PLUS_Y;
             }
-            
-            highestRegenerationNNDistance = Double.valueOf(highestRegenerationText.getText()).doubleValue();
-            if (highestRegenerationNNDistance <= highestForbiddenNNDistance) {
-                MipavUtil.displayError(
-                "The highest regeneration nearest neighbor distance must be greater than the highest forbidden distance");
-                highestRegenerationText.requestFocus();
-                highestRegenerationText.selectAll();
-                return false;
+            else if (sqrtXTimesYButton.isSelected()) {
+                inhomogeneous = AlgorithmTwoClassGeneration.SQRT_X_TIMES_Y;
+            }
+            else {
+                inhomogeneous = AlgorithmTwoClassGeneration.ABS_X_MINUS_Y;
             }
         }
 
