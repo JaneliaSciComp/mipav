@@ -3069,7 +3069,7 @@ public class FileDicom extends FileDicomBase {
 
                         // elementLength here is the length of the
                         // item as it written into the File
-                        if (elementLength == 0 || elementLength == -1) {
+                        if (elementLength == 0) {
                             FileDicomItem item = new FileDicomItem();
                             sq.addItem(item);
                         } else {
