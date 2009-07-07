@@ -13,7 +13,7 @@ import javax.swing.*;
 
 
 /**
- * Dialog to create an image with randomly space circles of the same size
+ * Dialog to create an image with randomly spaced, aggregated, regular or uniform, or constrained circles of the same size
  */
 public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInterface, ItemListener, WindowListener {
 
