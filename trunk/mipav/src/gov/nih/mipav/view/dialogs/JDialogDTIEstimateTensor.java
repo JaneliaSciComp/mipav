@@ -33,6 +33,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -146,11 +147,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         srcTableModel = new DefaultTableModel() {
 			public boolean isCellEditable(int row, int column)
 			 {
-					if(column == 0) {
-						return false;
-					}else {
-						return true;
-					}
+					return false;
 			 }
 		};
         srcTableModel.addColumn("Image");
@@ -460,7 +457,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 			            xdimTextField.setText(String.valueOf(xDim));
 			            xdimTextField.setEditable(false);
 		            }else {
-		            	if(!formatTextField.getText().trim().equals(String.valueOf(xDim))) {
+		            	if(!xdimTextField.getText().trim().equals(String.valueOf(xDim))) {
 	            			MipavUtil.displayError("Image X Dimension for this volume does not match previous image X dimension");
 	                        return;
 	            		}
@@ -470,7 +467,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		            	ydimTextField.setText(String.valueOf(yDim));
 		            	ydimTextField.setEditable(false);
 		            }else {
-		            	if(!formatTextField.getText().trim().equals(String.valueOf(yDim))) {
+		            	if(!ydimTextField.getText().trim().equals(String.valueOf(yDim))) {
 	            			MipavUtil.displayError("Image Y Dimension for this volume does not match previous image Y dimension");
 	                        return;
 	            		}
@@ -565,7 +562,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		                    	hFOVTextField.setText(xFieldOfView);
 		                    	hFOVTextField.setEditable(false);
 		                    }else {
-		                    	if(!hFOVTextField.getText().trim().equals(xFieldOfView)) {
+		                    	if(!hFOVTextField.getText().trim().equals(xFieldOfView.trim())) {
 			            			MipavUtil.displayError("Horizontal FOV for this volume does not match previous horizontal FOV");
 			                        return;
 			            		}
@@ -575,7 +572,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 				                vFOVTextField.setText(yFieldOfView);
 				                vFOVTextField.setEditable(false);
 		                    }else {
-		                    	if(!vFOVTextField.getText().trim().equals(yFieldOfView)) {
+		                    	if(!vFOVTextField.getText().trim().equals(yFieldOfView.trim())) {
 			            			MipavUtil.displayError("Vertical FOV for this volume does not match previous vertical FOV");
 			                        return;
 			            		}
@@ -586,7 +583,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		                    	hFOVTextField.setText(fieldOfView);
 		                    	hFOVTextField.setEditable(false);
 		                    }else {
-		                    	if(!hFOVTextField.getText().trim().equals(fieldOfView)) {
+		                    	if(!hFOVTextField.getText().trim().equals(fieldOfView.trim())) {
 			            			MipavUtil.displayError("Horizontal FOV for this volume does not match previous horizontal FOV");
 			                        return;
 			            		}
@@ -596,7 +593,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 				                vFOVTextField.setText(fieldOfView);
 				                vFOVTextField.setEditable(false);
 		                    }else {
-		                    	if(!vFOVTextField.getText().trim().equals(fieldOfView)) {
+		                    	if(!vFOVTextField.getText().trim().equals(fieldOfView.trim())) {
 			            			MipavUtil.displayError("Vertical FOV for this volume does not match previous vertical FOV");
 			                        return;
 			            		}
@@ -689,7 +686,6 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		        
 		        		
 		 }else if(command.equalsIgnoreCase("bvalGradBrowse")) {
-			 System.out.println("hello");
 			 JFileChooser chooser = new JFileChooser();
 
 	            if (currDir != null) {
@@ -777,95 +773,96 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 	public boolean readBValGradientFile(String gradientFilePath) {
 
         try {
-        	System.out.println("yo");
             String str;
-            FileInputStream fis = new FileInputStream(gradientFilePath);
-            BufferedReader d = new BufferedReader(new InputStreamReader(fis));
-            String firstLine = d.readLine();
-            
-            System.out.println("Xxx");
-            System.out.println(firstLine);
+            File file = new File(gradientFilePath);
+            RandomAccessFile raFile = new RandomAccessFile(file, "r");
+
+            String firstLine = raFile.readLine();
             if(firstLine.contains(":")) {
-            	System.out.println("aaa");
+            	raFile.seek(0);
             	//this is DTI Studio
             	int numRows = srcTableModel.getRowCount();
-            	if(numRows > 0) {
-            		firstLine = firstLine.trim();
-	                String[] arr = firstLine.split(":");
-            		String grads = arr[1].trim();
-                	String[] arr2 = grads.split("\\s+");
-                	srcTableModel.setValueAt(arr2[0], 0, 2);
-                	srcTableModel.setValueAt(arr2[1], 0, 3);
-                	srcTableModel.setValueAt(arr2[2], 0, 4);
+            	
+            	
+            	for(int i=0;i<numRows;i++) {
+            		if(((String)srcTableModel.getValueAt(i, 2)).trim().equals("")) {
+            			str = raFile.readLine();
+            			if(str != null) {
+            				String[] arr = str.split(":");
+            				if(arr.length == 2) {
+            					String grads = arr[1].trim();
+        	                	String[] arr2 = grads.split("\\s+");
+        	                	srcTableModel.setValueAt(arr2[0], i, 2);
+        	                	srcTableModel.setValueAt(arr2[1], i, 3);
+        	                	srcTableModel.setValueAt(arr2[2], i, 4);
+            				}
+            			}
+            			
+            			
+            			
+            		}
+            		
             	}
-            	
-            	
-            	int counter = 1;
-                
-                while ((str = d.readLine()) != null) {
-                	System.out.println(str);
-                	if(counter < numRows) {
-    	            	
-    	                str = str.trim();
-    	                String[] arr = str.split(":");
-    	                if(arr.length == 1) {
-    	                	//fsl
-    	                }else if(arr.length == 2) {
-    	                	//dti studio
-    	                	String grads = arr[1].trim();
-    	                	String[] arr2 = grads.split("\\s+");
-    	                	srcTableModel.setValueAt(arr2[0], counter, 2);
-    	                	srcTableModel.setValueAt(arr2[1], counter, 3);
-    	                	srcTableModel.setValueAt(arr2[2], counter, 4);
-    	                }
-    	                counter++;
-                	}else {
-                		break;
-                	} 
-                }
+            
             	
             }else {
+            	int numRows = srcTableModel.getRowCount();
+            	int start = 0;
+            	for(int i=0;i<numRows;i++) {
+            		if(((String)srcTableModel.getValueAt(i, 2)).trim().equals("")) {
+            			start = i;
+            			break;
+            		}
+            	}
             	//this is FSL
             	firstLine = firstLine.trim();
             	String[] arr = firstLine.split("\\s+");
-            	int numRows = srcTableModel.getRowCount();
+            	int k = start;
+
             	for(int i=0;i<arr.length;i++) {
-            		if(i < numRows) {
-            			//set x gradients
-            			srcTableModel.setValueAt(arr[i], i, 2);
+            		if(k < numRows) {
+            			srcTableModel.setValueAt(arr[i], k, 2);
+            			k = k+1;
             		}else {
             			break;
             		}
             	}
-            	String secondLine = d.readLine();
+       
+
+            	k = start;
+            	String secondLine = raFile.readLine();
             	secondLine = secondLine.trim();
             	arr = secondLine.split("\\s+");
             	for(int i=0;i<arr.length;i++) {
-            		if(i < numRows) {
-            			//set x gradients
-            			srcTableModel.setValueAt(arr[i], i, 3);
+            		if(k < numRows) {
+            			srcTableModel.setValueAt(arr[i], k, 3);
+            			k = k+1;
             		}else {
             			break;
             		}
             	}
-            	String thirdLine = d.readLine();
+            	
+            	k = start;
+            	String thirdLine = raFile.readLine();
             	thirdLine = thirdLine.trim();
             	arr = thirdLine.split("\\s+");
             	for(int i=0;i<arr.length;i++) {
-            		if(i < numRows) {
-            			//set x gradients
-            			srcTableModel.setValueAt(arr[i], i, 4);
+            		if(k < numRows) {
+            			srcTableModel.setValueAt(arr[i], k, 4);
+            			k = k+1;
             		}else {
             			break;
             		}
             	}
-            	String fourthLine = d.readLine();
+            	
+            	k = start;
+            	String fourthLine = raFile.readLine();
             	fourthLine = fourthLine.trim();
             	arr = fourthLine.split("\\s+");
             	for(int i=0;i<arr.length;i++) {
-            		if(i < numRows) {
-            			//set x gradients
-            			srcTableModel.setValueAt(arr[i], i, 1);
+            		if(k < numRows) {
+            			srcTableModel.setValueAt(arr[i], k, 1);
+            			k = k+1;
             		}else {
             			break;
             		}
@@ -875,14 +872,10 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             	
             }
             
-            
-            
-            
-
-            fis.close();
+            raFile.close();
         } catch (Exception e) {
             
-
+        	MipavUtil.displayError("Error reading B-Value/Grad File");
             return false;
         }
 
@@ -966,7 +959,6 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		//formula for bmtxt values is :
         // bxx 2bxy 2bxz byy 2byz bzz
 		for(int i=0;i<numRows;i++) {
-			System.out.println("hey");
 			String bVal = ((String)srcTableModel.getValueAt(i, 1)).trim();
 			String xGrad = ((String)srcTableModel.getValueAt(i, 2)).trim();
 			String yGrad = ((String)srcTableModel.getValueAt(i, 3)).trim();
@@ -1099,7 +1091,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 			
 			
 		}
-		System.out.println("closing stream");
+
 		outputStream.close();
 		
 		}catch(Exception e) {
@@ -1149,7 +1141,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 	
 	private void readListFile() {
 		m_kParentDir =listFile.getParent();
-		System.out.println(m_kParentDir);
+
 
         String pathFilename = null;
         String pathFileAbsPath = null;
@@ -1345,7 +1337,9 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 
             m_iBOrig = nb;
 
-        } catch (IOException e) {
+        } catch (Exception e) {
+        	MipavUtil.displayError("Error reading B-Matrix File");
+            return;
         }
     }
 	
@@ -1377,10 +1371,10 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     }
     
     public void algorithmPerformed(AlgorithmBase algorithm) {
-    	System.out.println("algorithm performed");
+
     	if(kAlgorithm.isCompleted()) {
            DTIImage = ((AlgorithmDWI2DTI)kAlgorithm).getDTIImage();
-           System.out.println("saving to " + listFile.getParent());
+
            DTIImage.saveImage(listFile.getParent() + File.separator, "DTI.xml", FileUtility.XML, false);
            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
            if(maskImage != null) {
