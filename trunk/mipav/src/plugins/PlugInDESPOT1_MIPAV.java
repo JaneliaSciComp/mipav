@@ -1300,25 +1300,32 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric {
 			ViewJFrameImage t1ResultWindow = new ViewJFrameImage(t1ResultStack);
 			t1ResultWindow.setTitle("DESPOT1-HIFI_T1_Map");
 			t1ResultWindow.setVisible(true);
+		} else if(t1ResultStack != null) {
+			t1ResultStack.disposeLocal();
 		}
 		
 		if (calculateMo) {
 			ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
 			moResultWindow.setTitle("DESPOT1-HIFI_Mo_Map");
 			moResultWindow.setVisible(true);
+		} else if(moResultStack != null) {
+			moResultStack.disposeLocal();
 		}
 		
 		if (invertT1toR1) {
 			ViewJFrameImage r1ResultWindow = new ViewJFrameImage(r1ResultStack);
 			r1ResultWindow.setTitle("DESPOT1-HIFI_R1_Map");
 			r1ResultWindow.setVisible(true);
+		} else if(r1ResultStack != null) {
+			r1ResultStack.disposeLocal();
 		}
-		
 		
 		if (showB1Map) {
 			ViewJFrameImage b1ResultWindow = new ViewJFrameImage(b1ResultStack);
 			b1ResultWindow.setTitle("DESPOT1-HIFI_B1_Map");
 			b1ResultWindow.setVisible(true);
+		} else if(b1ResultStack != null) {
+			b1ResultStack.disposeLocal();
 		}
 		
 		return true;
@@ -1576,18 +1583,24 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric {
 			ViewJFrameImage t1ResultWindow = new ViewJFrameImage(t1ResultStack);
 			t1ResultWindow.setTitle("DESPOT1_T1_Map");
 			t1ResultWindow.setVisible(true);
+		} else if(t1ResultStack != null) {
+			t1ResultStack.disposeLocal();
 		}
-		
+		 
 		if (calculateMo) {
 			ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
 			moResultWindow.setTitle("DESPOT1_Mo_Map");
 			moResultWindow.setVisible(true);
+		} else if(moResultStack != null) {
+			moResultStack.disposeLocal();
 		}
 		
 		if (invertT1toR1) {
 			ViewJFrameImage r1ResultWindow = new ViewJFrameImage(r1ResultStack);
 			r1ResultWindow.setTitle("DESPOT1_R1_Map");
 			r1ResultWindow.setVisible(true);
+		} else if(r1ResultStack != null) {
+			r1ResultStack.disposeLocal();
 		}
 		
 		return true;
