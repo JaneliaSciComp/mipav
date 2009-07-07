@@ -634,18 +634,24 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 			ViewJFrameImage t2ResultWindow = new ViewJFrameImage(t2ResultStack);
 			t2ResultWindow.setTitle("DESPOT2-T2_Map");
 			t2ResultWindow.setVisible(true);
+		} else if(t2ResultStack != null) {
+			t2ResultStack.disposeLocal();
 		}
 		
 		if (calculateMo) {
 			ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
 			moResultWindow.setTitle("DESPOT2_MoMap");
 			moResultWindow.setVisible(true);
+		} else if(moResultStack != null) {
+			moResultStack.disposeLocal();
 		}
 		
 		if (invertT2toR2) {
 			ViewJFrameImage r2ResultWindow = new ViewJFrameImage(r2ResultStack);
 			r2ResultWindow.setTitle("DESPOT2-R2Map");
 			r2ResultWindow.setVisible(true);
+		} else if(r2ResultStack != null) {
+			r2ResultStack.disposeLocal();
 		}
 		
 	}
@@ -852,19 +858,25 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 			ViewJFrameImage t2ResultWindow = new ViewJFrameImage(t2ResultStack);
 			t2ResultWindow.setTitle("DESPOT2_T2_Map");
 			t2ResultWindow.setVisible(true);
+		} else if(t2ResultStack != null) {
+			t2ResultStack.disposeLocal();
 		}
 		
 		if (calculateMo) {
 			ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
 			moResultWindow.setTitle("DESPOT2_MoMap");
 			moResultWindow.setVisible(true);
+		} else if(moResultStack != null) {
+			moResultStack.disposeLocal();
 		}
 		
 		if (invertT2toR2) {
 			ViewJFrameImage r2ResultWindow = new ViewJFrameImage(r2ResultStack);
 			r2ResultWindow.setTitle("DESPOT2_R2Map");
 			r2ResultWindow.setVisible(true);
-		}	
+		} else if(r2ResultStack != null) {
+			r2ResultStack.disposeLocal();
+		}
 	}
 	
 	
@@ -1168,19 +1180,25 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 			ViewJFrameImage t2ResultWindow = new ViewJFrameImage(t2ResultStack);
 			t2ResultWindow.setTitle("CalculatedT2Map_AM");
 			t2ResultWindow.setVisible(true);
+		} else if(t2ResultStack != null) {
+			t2ResultStack.disposeLocal();
 		}
 		
 		if (calculateMo) {
 			ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
 			moResultWindow.setTitle("CalculatedMoMap_AM");
 			moResultWindow.setVisible(true);
+		} else if(moResultStack != null) {
+			moResultStack.disposeLocal();
 		}
 		
 		if (invertT2toR2) {
 			ViewJFrameImage r2ResultWindow = new ViewJFrameImage(r2ResultStack);
 			r2ResultWindow.setTitle("CalculatedR2Map_AM");
 			r2ResultWindow.setVisible(true);
-		}	
+		} else if(r2ResultStack != null) {
+			r2ResultStack.disposeLocal();
+		}
 	}
 	
 	public void calculateT2withFullModelling() {
@@ -1645,18 +1663,24 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 			ViewJFrameImage t2ResultWindow = new ViewJFrameImage(t2ResultStack);
 			t2ResultWindow.setTitle("CalculatedT2Map_FM");
 			t2ResultWindow.setVisible(true);
+		} else if(t2ResultStack != null) {
+			t2ResultStack.disposeLocal();
 		}
 		
 		if (calculateMo) {
 			ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
 			moResultWindow.setTitle("CalculatedMoMap_FM");
 			moResultWindow.setVisible(true);
+		} else if(moResultStack != null) {
+			moResultStack.disposeLocal();
 		}
 		
 		if (invertT2toR2) {
 			ViewJFrameImage r2ResultWindow = new ViewJFrameImage(r2ResultStack);
 			r2ResultWindow.setTitle("CalculatedR2Map_FM");
 			r2ResultWindow.setVisible(true);
+		} else if(r2ResultStack != null) {
+			r2ResultStack.disposeLocal();
 		}
 		
 		
@@ -1664,6 +1688,8 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric {
 			ViewJFrameImage boResultWindow = new ViewJFrameImage(boResultStack);
 			boResultWindow.setTitle("CalculatedOffResonanceMap_FM");
 			boResultWindow.setVisible(true);
+		} else if(boResultStack != null) {
+			boResultStack.disposeLocal();
 		}
 	}
 	
