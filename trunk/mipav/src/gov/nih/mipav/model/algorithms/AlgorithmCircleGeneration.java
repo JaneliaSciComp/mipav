@@ -211,19 +211,9 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         double theoreticalFrequency[] = new double[7];
         double chiSquaredOfFour;
         double z;
-        int index;
-        double smallerDistance;
-        double largerDistance;
-        double oneSeventhRange;
         int boundaryDistance;
         int circlesLeft;
         int maskBytesSet;
-        int circleBytesSet;
-        double circlesAwayFromBoundary;
-        double thirdSmallToMean;
-        double a;
-        double b;
-        double theoreticalDistance[] = new double[8];
         double nearestNeighborDistanceSumOfSquares;
         double chiSquared;
         Statistics stat;
@@ -633,7 +623,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        // minus 3.  Let's make 7 categories, so degrees of freedom = 4.
        // The 7 categories have lowest values of (nearestNeighborDistance - mean)/stdDev =
        // -infinity, -1.40, -0.80, -0.20, 0.40, 1.00, and 1.60.
-       for (i = 0; i < circlesLeft; i++) {
+       /*for (i = 0; i < circlesLeft; i++) {
            z = (nearestNeighborDistance[i] - mean)/stdDev;
            if (z >= 1.60) {
                observedFrequency[6]++;
@@ -723,7 +713,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        else {
            Preferences.debug("chiSquared test does not reject Gaussian fit based on skewness and kurtosis\n");
            System.out.println("chiSquared test does not reject Gaussian fit based on skewness and kurtosis");
-       }
+       }*/
        
        // The probability density function for the nearest neighbor distance when circles of a 
        // fixed radius are generated from a uniform random distribution is a Rayleigh or
