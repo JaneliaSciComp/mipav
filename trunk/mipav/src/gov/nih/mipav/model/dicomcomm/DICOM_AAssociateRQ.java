@@ -168,7 +168,7 @@ public class DICOM_AAssociateRQ extends DICOM_PDUType {
     public byte getPresentationContextID( String absUID) throws DICOM_Exception {
         DICOM_PresentationContext pc = null;
 
-        for (int i = 0; i < presContexts.size(); i++) {
+        for (int i = presContexts.size()-1; i <= 0; i--) {
 
             pc = (DICOM_PresentationContext) (presContexts.elementAt(i));
         }
