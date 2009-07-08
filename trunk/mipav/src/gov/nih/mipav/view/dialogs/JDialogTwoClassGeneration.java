@@ -106,12 +106,6 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
     
     private double normalizedDiscRadius = 0.10;
     
-    private JLabel offspringPoissonNormalizedMeanLabel;
-    
-    private JTextField offspringPoissonNormalizedMeanText;
-    
-    private double offspringPoissonNormalizedMean = 20.0;
-    
     private int inhomogeneous = AlgorithmTwoClassGeneration.SQRT_X_PLUS_Y;
     
     
@@ -169,8 +163,6 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 parentPoissonNormalizedMeanText.setEnabled(false);
                 normalizedDiscRadiusLabel.setEnabled(false);
                 normalizedDiscRadiusText.setEnabled(false);
-                offspringPoissonNormalizedMeanLabel.setEnabled(false);
-                offspringPoissonNormalizedMeanText.setEnabled(false);
                 sqrtXPlusYButton.setEnabled(false);
                 sqrtXTimesYButton.setEnabled(false);
                 absXMinusYButton.setEnabled(false);
@@ -188,8 +180,6 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 parentPoissonNormalizedMeanText.setEnabled(true);
                 normalizedDiscRadiusLabel.setEnabled(true);
                 normalizedDiscRadiusText.setEnabled(true);
-                offspringPoissonNormalizedMeanLabel.setEnabled(true);
-                offspringPoissonNormalizedMeanText.setEnabled(true);
                 sqrtXPlusYButton.setEnabled(false);
                 sqrtXTimesYButton.setEnabled(false);
                 absXMinusYButton.setEnabled(false);
@@ -207,8 +197,6 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 parentPoissonNormalizedMeanText.setEnabled(false);
                 normalizedDiscRadiusLabel.setEnabled(false);
                 normalizedDiscRadiusText.setEnabled(false);
-                offspringPoissonNormalizedMeanLabel.setEnabled(false);
-                offspringPoissonNormalizedMeanText.setEnabled(false);
                 sqrtXPlusYButton.setEnabled(true);
                 sqrtXTimesYButton.setEnabled(true);
                 absXMinusYButton.setEnabled(true);
@@ -303,7 +291,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
             // Make algorithm
             tcAlgo = new AlgorithmTwoClassGeneration(resultImage, radius, process, numParents, numOffspring1,
                         numOffspring2, normalizedStdDev, parentPoissonNormalizedMean,
-                        normalizedDiscRadius, offspringPoissonNormalizedMean, inhomogeneous);
+                        normalizedDiscRadius, inhomogeneous);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -543,21 +531,6 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         gbc6.gridx = 1;
         paramPanel.add(normalizedDiscRadiusText, gbc6);
         
-        offspringPoissonNormalizedMeanLabel = new JLabel("Offspring Poisson normalized mean ");
-        offspringPoissonNormalizedMeanLabel.setForeground(Color.black);
-        offspringPoissonNormalizedMeanLabel.setFont(serif12);
-        offspringPoissonNormalizedMeanLabel.setEnabled(false);
-        gbc6.gridx = 0;
-        gbc6.gridy = 15;
-        paramPanel.add(offspringPoissonNormalizedMeanLabel, gbc6);
-        
-        offspringPoissonNormalizedMeanText = new JTextField(10);
-        offspringPoissonNormalizedMeanText.setText(String.valueOf(offspringPoissonNormalizedMean));
-        offspringPoissonNormalizedMeanText.setFont(serif12);
-        offspringPoissonNormalizedMeanText.setEnabled(false);
-        gbc6.gridx = 1;
-        paramPanel.add(offspringPoissonNormalizedMeanText, gbc6);
-        
         inhomogeneousGroup = new ButtonGroup();
         sqrtXPlusYButton = new JRadioButton("lambda2(x,y) = n2*sqrt(x + y)", true);
         sqrtXPlusYButton.setFont(serif12);
@@ -565,7 +538,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         sqrtXPlusYButton.setEnabled(false);
         inhomogeneousGroup.add(sqrtXPlusYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 16;
+        gbc6.gridy = 15;
         paramPanel.add(sqrtXPlusYButton, gbc6);
         
         sqrtXTimesYButton = new JRadioButton("lambda2(x,y) = n2*sqrt(x * y)", false);
@@ -574,7 +547,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         sqrtXTimesYButton.setEnabled(false);
         inhomogeneousGroup.add(sqrtXTimesYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 17;
+        gbc6.gridy = 16;
         paramPanel.add(sqrtXTimesYButton, gbc6);
         
         absXMinusYButton = new JRadioButton("lambda2(x,y) = n2*|x - y|", true);
@@ -583,7 +556,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         absXMinusYButton.setEnabled(false);
         inhomogeneousGroup.add(absXMinusYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 18;
+        gbc6.gridy = 17;
         paramPanel.add(absXMinusYButton, gbc6);
 
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -738,15 +711,6 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 normalizedDiscRadius = Double.valueOf(normalizedDiscRadiusText.getText()).doubleValue();
             }
             
-            if (!testParameter(offspringPoissonNormalizedMeanText.getText(), 1.0, 50.0)) {
-                MipavUtil.displayError("Offspring Poisson normalized mean must be between 1.0 and 50.0");
-                offspringPoissonNormalizedMeanText.requestFocus();
-                offspringPoissonNormalizedMeanText.selectAll();
-                return false;
-            }
-            else {
-                offspringPoissonNormalizedMean = Double.valueOf(offspringPoissonNormalizedMeanText.getText()).doubleValue();
-            }
             if (MaternSameButton.isSelected()) {
                 process = AlgorithmTwoClassGeneration.MATERN_SAME_PARENTS;
             }
