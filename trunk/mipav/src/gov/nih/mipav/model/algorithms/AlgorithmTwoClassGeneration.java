@@ -57,8 +57,6 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
     private double normalizedDiscRadius;
     
-    private double offspringPoissonNormalizedMean;
-    
     private int inhomogeneous;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -80,12 +78,11 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
      * @param  normalizedStdDev
      * @param  parentPoissonNormalizedMean
      * @param  normalizedDiscRadius
-     * @param  offspringPoissonNormalizedMean
      * @param  inhomogeneous
      */
     public AlgorithmTwoClassGeneration(ModelImage srcImage, int radius, int process, int numParents, 
             int numOffspring1, int numOffspring2, double normalizedStdDev,
-            double parentPoissonNormalizedMean, double normalizedDiscRadius, double offspringPoissonNormalizedMean,
+            double parentPoissonNormalizedMean, double normalizedDiscRadius,
             int inhomogeneous) {
         super(null, srcImage);
         this.radius = radius;
@@ -96,7 +93,6 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         this.normalizedStdDev = normalizedStdDev;
         this.parentPoissonNormalizedMean = parentPoissonNormalizedMean;
         this.normalizedDiscRadius = normalizedDiscRadius;
-        this.offspringPoissonNormalizedMean = offspringPoissonNormalizedMean;
         this.inhomogeneous = inhomogeneous;
     }
 
@@ -202,6 +198,17 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         int offspring2Drawn;
         int offspring1PerParent;
         int offspring2PerParent;
+        int discRadius;
+        int expandedXDim;
+        int expandedYDim;
+        int discRadiusSquared;
+        int xDiscMaskDim;
+        int yDiscMaskDim;
+        byte discMask[];
+        int xDiscMask[];
+        int yDiscMask[];
+        int discMaskBytesSet;
+        int expandedBuffer[];
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -487,7 +494,50 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         } // if ((process == FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS) || 
         
         
-    
+        if ((process == MATERN_SAME_PARENTS) || (process == MATERN_DIFFERENT_PARENTS)) {
+            // Put 100 * parentPoissonNormalizedMean points into an area 100 times as large
+            // as the resulting area.
+            discRadius = (int)Math.round(normalizedDiscRadius * (xDim - 1));
+            expandedXDim = 10 * xDim;
+            expandedYDim = 10 * yDim;
+            // Create a mask for the disc around the Poisson parent points
+            discRadiusSquared = discRadius * discRadius;
+            xDiscMaskDim = 2 * discRadius + 1;
+            yDiscMaskDim = xDiscMaskDim;
+            discMask = new byte[xDiscMaskDim * yDiscMaskDim];
+            discMaskBytesSet = 0;
+            for (y = 0; y <= 2*discRadius; y++) {
+                yDistSquared = y - discRadius;
+                yDistSquared = yDistSquared * yDistSquared;
+                for (x = 0; x <= 2 * discRadius; x++) {
+                    xDistSquared = x - discRadius;
+                    xDistSquared = xDistSquared * xDistSquared;
+                    distSquared = xDistSquared + yDistSquared;
+                    if (distSquared <= discRadiusSquared) {
+                        discMask[x + y * xDiscMaskDim] = 1;
+                        discMaskBytesSet++;
+                    }
+                }
+            } // for (y = 0; y <= 2*radius; y++)
+            xDiscMask = new int[discMaskBytesSet];
+            yDiscMask = new int[discMaskBytesSet];
+            i = 0;
+            for (y = 0; y <= 2*discRadius; y++) {
+                for (x = 0; x <= 2*discRadius; x++) {
+                    if (discMask[x + y * xDiscMaskDim] == 1) {
+                        xDiscMask[i] = x;
+                        yDiscMask[i++] = y;
+                    }
+                }
+            }
+            expandedBuffer = new int[(xDim + 2 * discRadius)*(yDim + 2 * discRadius)];
+            numParents = (int)Math.round(100 * parentPoissonNormalizedMean);
+            xParentXLocation = new int[numParents];
+            xParentYLocation = new int[numParents];
+            for (i = 0; i < numParents; i++) {
+                
+            } // for (i = 0; i < numParents; i++)
+        } // if ((process == MATERN_SAME_PARENTS) || (process == MATERN_DIFFERENT_PARENTS))
         
         try {
             srcImage.importData(0, buffer, true);
