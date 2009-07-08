@@ -181,6 +181,27 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         double highestForbiddenSquared;
         double highestRegenerationSquared;
         boolean intermediateRejected;
+        byte parentX[] = null;
+        int xParentXLocation[];
+        int xParentYLocation[];
+        int xParentsPlaced;
+        byte parentY[] = null;
+        int yParentXLocation[] = null;
+        int yParentYLocation[] = null;
+        int yParentsPlaced;
+        int parentXLocation;
+        int parentYLocation;
+        int parentNumber;
+        double angle;
+        double distance;
+        int xCircleXCenter[];
+        int xCircleYCenter[];
+        int yCircleXCenter[];
+        int yCircleYCenter[];
+        int offspring1Drawn;
+        int offspring2Drawn;
+        int offspring1PerParent;
+        int offspring2PerParent;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -216,17 +237,268 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             }
         } // for (y = 0; y <= 2*radius; y++)
         
+        randomGen = new RandomNumberGen();
+        if ((process == FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS) || 
+            (process == FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS) ||
+            (process == RANDOM_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS) || 
+            (process == RANDOM_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS)) {
+            stdDev = (xDim - 1)*normalizedStdDev;
+            parentX = new byte[length];
+            xParentXLocation = new int[numParents];
+            xParentYLocation = new int[numParents];
+            xCircleXCenter = new int[numOffspring1];
+            xCircleYCenter = new int[numOffspring1];
+            yCircleXCenter = new int[numOffspring2];
+            yCircleYCenter = new int[numOffspring2];
+            offspring1PerParent = numOffspring1/numParents;
+            offspring2PerParent = numOffspring2/numParents;
+            for (i = 1; i <= numParents; i++) {
+                found = false;
+                attempts = 0;
+                while ((!found) && (attempts <= 100)) {
+                    found = true;
+                    xCenter = randomGen.genUniformRandomNum(0, xDim - 1);
+                    yCenter = randomGen.genUniformRandomNum(0, yDim - 1);
+                    if (parentX[xCenter + xDim * yCenter] != 0) {
+                        found = false;
+                        attempts++;
+                    }
+                    else {
+                        xParentXLocation[i-1] = xCenter;
+                        xParentYLocation[i-1] = yCenter;
+                        parentX[xCenter + xDim * yCenter] = 1;
+                    }
+                } // while ((!found) && (attempts <= 100))
+                if (!found) {
+                    break;
+                }
+            } // for (i = 1; i <= numParents; i++)
+            xParentsPlaced = i-1;
+            if (xParentsPlaced == 1) {
+                if (numParents != 1) {
+                    Preferences.debug("1 X parent point placed.  " + numParents + " parent points requested.\n");
+                    System.out.println("1 X parent point placed. " + numParents + " parent points requested.");
+                    setCompleted(false);
+                    return;
+                    
+                }
+                else {
+                    Preferences.debug("1 X parent point placed.  1 parent point requested\n");
+                    System.out.println("1 X parent point placed.  1 parent point requested");    
+                }
+            }
+            else if (xParentsPlaced != numParents) {
+                Preferences.debug(xParentsPlaced + " X parent points placed.  " +
+                                  numParents + " parent points requested.\n");
+                System.out.println(xParentsPlaced + " X parent points placed.  " +
+                        numParents + " parent points requested.");
+                setCompleted(false);
+                return;
+            }   
+            else { // xParentsPlaced == numParents
+                Preferences.debug(xParentsPlaced + " X parent points placed.  " +
+                        numParents + " parent points requested.\n");
+                System.out.println(xParentsPlaced + " X parent points placed.  " +
+                        numParents + " parent points requested.");
+            }
+            
+            if ((process == FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS) ||
+                    (process == RANDOM_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS)) {
+                    parentY = new byte[length];
+                    yParentXLocation = new int[numParents];
+                    yParentYLocation = new int[numParents];
+                    for (i = 1; i <= numParents; i++) {
+                        found = false;
+                        attempts = 0;
+                        while ((!found) && (attempts <= 100)) {
+                            found = true;
+                            xCenter = randomGen.genUniformRandomNum(0, xDim - 1);
+                            yCenter = randomGen.genUniformRandomNum(0, yDim - 1);
+                            if (parentY[xCenter + xDim * yCenter] != 0) {
+                                found = false;
+                                attempts++;
+                            }
+                            else {
+                                yParentXLocation[i-1] = xCenter;
+                                yParentYLocation[i-1] = yCenter;
+                                parentY[xCenter + xDim * yCenter] = 1;
+                            }
+                        } // while ((!found) && (attempts <= 100))
+                        if (!found) {
+                            break;
+                        }
+                    } // for (i = 1; i <= numParents; i++)
+                    yParentsPlaced = i-1;
+                    if (yParentsPlaced == 1) {
+                        if (numParents != 1) {
+                            Preferences.debug("1 Y parent point placed.  " + numParents + " parent points requested.\n");
+                            System.out.println("1 Y parent point placed. " + numParents + " parent points requested.");
+                            setCompleted(false);
+                            return;
+                            
+                        }
+                        else {
+                            Preferences.debug("1 Y parent point placed.  1 parent point requested\n");
+                            System.out.println("1 Y parent point placed.  1 parent point requested");    
+                        }
+                    }
+                    else if (yParentsPlaced != numParents) {
+                        Preferences.debug(yParentsPlaced + " Y parent points placed.  " +
+                                          numParents + " parent points requested.\n");
+                        System.out.println(yParentsPlaced + " Y parent points placed.  " +
+                                numParents + " parent points requested.");
+                        setCompleted(false);
+                        return;
+                    }   
+                    else { // yParentsPlaced == numParents
+                        Preferences.debug(yParentsPlaced + " Y parent points placed.  " +
+                                numParents + " parent points requested.\n");
+                        System.out.println(yParentsPlaced + " Y parent points placed.  " +
+                                numParents + " parent points requested.");
+                    }
+                } // if ((process == FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS) ||
+            for (i = 0; i < numOffspring1; i++) {
+                if ((process == FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS) ||
+                   (process == FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS)) {
+                    parentXLocation = xParentXLocation[i/offspring1PerParent];
+                    parentYLocation = xParentYLocation[i/offspring1PerParent];
+                }
+                else {
+                    parentNumber =  randomGen.genUniformRandomNum(0, numParents - 1);
+                    parentXLocation = xParentXLocation[parentNumber];
+                    parentYLocation = xParentYLocation[parentNumber];
+                }
+                found = false;
+                attempts = 0;
+                while ((!found) && (attempts <= 100)) {
+                    found = true;
+                    // radially symmetric
+                    angle = randomGen.genUniformRandomNum(0.0, Math.PI);
+                    distance = stdDev * randomGen.genStandardGaussian();
+                    xCenter = (int)Math.round(parentXLocation + distance * Math.cos(angle));
+                    if ((xCenter - radius < 0) || (xCenter + radius > xDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    yCenter = (int)Math.round(parentYLocation + distance * Math.sin(angle));
+                    if ((yCenter - radius < 0) || (yCenter + radius > yDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    rloop:
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim] == 1) {
+                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
+                                        found = false;
+                                        attempts++;
+                                        break rloop;
+                                    }
+                                }
+                            }
+                        } // for (y = 0; y <= 2*radius; y++)
+                } // while ((!found) && (attempts <= 100))
+                if (!found) {
+                    break;
+                }
+                xCircleXCenter[i] = xCenter;
+                xCircleYCenter[i] = yCenter;
+                for (y = 0; y <= 2*radius; y++) {
+                    for (x = 0; x <= 2*radius; x++) {
+                        if (mask[x + y * xMaskDim] == 1) {
+                            buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  1;
+                        }
+                    }
+                }
+            } // for (i = 0; i < numOffspring1; i++)
+            offspring1Drawn = i;
+            Preferences.debug(offspring1Drawn + " offspring 1 drawn.  " + numOffspring1 + " offspring 1 requested.\n");
+            System.out.println(offspring1Drawn + " offspring 1 drawn.  " + numOffspring1 + " offspring 1 requested.");
+            
+            for (i = 0; i < numOffspring2; i++) {
+                if (process == FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS) {
+                    parentXLocation = xParentXLocation[i/offspring2PerParent];
+                    parentYLocation = xParentYLocation[i/offspring2PerParent];
+                }
+                else if (process == FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS) {
+                    parentXLocation = yParentXLocation[i/offspring2PerParent];
+                    parentYLocation = yParentYLocation[i/offspring2PerParent];    
+                }
+                else if (process == RANDOM_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS) {
+                    parentNumber =  randomGen.genUniformRandomNum(0, numParents - 1);
+                    parentXLocation = xParentXLocation[parentNumber];
+                    parentYLocation = xParentYLocation[parentNumber];
+                }
+                else {
+                    parentNumber =  randomGen.genUniformRandomNum(0, numParents - 1);
+                    parentXLocation = yParentXLocation[parentNumber];
+                    parentYLocation = yParentYLocation[parentNumber];    
+                }
+                found = false;
+                attempts = 0;
+                while ((!found) && (attempts <= 100)) {
+                    found = true;
+                    // radially symmetric
+                    angle = randomGen.genUniformRandomNum(0.0, Math.PI);
+                    distance = stdDev * randomGen.genStandardGaussian();
+                    xCenter = (int)Math.round(parentXLocation + distance * Math.cos(angle));
+                    if ((xCenter - radius < 0) || (xCenter + radius > xDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    yCenter = (int)Math.round(parentYLocation + distance * Math.sin(angle));
+                    if ((yCenter - radius < 0) || (yCenter + radius > yDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    r2loop:
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim] == 1) {
+                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
+                                        found = false;
+                                        attempts++;
+                                        break r2loop;
+                                    }
+                                }
+                            }
+                        } // for (y = 0; y <= 2*radius; y++)
+                } // while ((!found) && (attempts <= 100))
+                if (!found) {
+                    break;
+                }
+                yCircleXCenter[i] = xCenter;
+                yCircleYCenter[i] = yCenter;
+                for (y = 0; y <= 2*radius; y++) {
+                    for (x = 0; x <= 2*radius; x++) {
+                        if (mask[x + y * xMaskDim] == 1) {
+                            buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  2;
+                        }
+                    }
+                }
+            } // for (i = 0; i < numOffspring2; i++)
+            offspring2Drawn = i;
+            Preferences.debug(offspring2Drawn + " offspring 2 drawn.  " + numOffspring2 + " offspring 2 requested.\n");
+            System.out.println(offspring2Drawn + " offspring 2 drawn.  " + numOffspring2 + " offspring 2 requested.");
+        } // if ((process == FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS) || 
         
-       try {
-           srcImage.importData(0, buffer, true);
-       }
-       catch(IOException e) {
-           MipavUtil.displayError("IO exception on srcImage.importData(0, buffer, true)");
-           setCompleted(false);
-           return;
-       }
+        
+    
+        
+        try {
+            srcImage.importData(0, buffer, true);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IO exception on srcImage.importData(0, buffer, true)");
+            setCompleted(false);
+            return;
+        }
        
-       setCompleted(true);
-       return;
+        setCompleted(true);
+        return;
     }
 }
