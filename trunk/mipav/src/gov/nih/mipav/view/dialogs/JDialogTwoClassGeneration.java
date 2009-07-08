@@ -34,15 +34,10 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
     private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
-    private int xDim = 512;
+    private int dim = 512;
 
     /** DOCUMENT ME! */
-    private JTextField xDimText;
-
-    /** DOCUMENT ME! */
-    private int yDim = 512;
-    
-    private JTextField yDimText;
+    private JTextField dimText;
     
     private int radius = 0;
 
@@ -300,8 +295,8 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         try {
             String name = "Two_classes";
             extents = new int[2];
-            extents[0] = xDim;
-            extents[1] = yDim;
+            extents[0] = dim;
+            extents[1] = dim;
             resultImage = new ModelImage(ModelStorageBase.BYTE, extents, name);
             resultImage.setImageName(name);
 
@@ -344,8 +339,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
      * Initializes GUI components and displays dialog.
      */
     private void init() {
-        JLabel xDimLabel;
-        JLabel yDimLabel;
+        JLabel dimLabel;
         JLabel radiusLabel;
         
         setForeground(Color.black);
@@ -366,41 +360,26 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         gbc6.gridx = 0;
         gbc6.gridy = 0;
 
-        xDimLabel = new JLabel("Image x dimension ");
-        xDimLabel.setForeground(Color.black);
-        xDimLabel.setFont(serif12);
-        xDimLabel.setEnabled(true);
+        dimLabel = new JLabel("Image x dimension = image y dimension ");
+        dimLabel.setForeground(Color.black);
+        dimLabel.setFont(serif12);
+        dimLabel.setEnabled(true);
         gbc6.gridy = 0;
-        paramPanel.add(xDimLabel, gbc6);
+        paramPanel.add(dimLabel, gbc6);
 
-        xDimText = new JTextField(10);
-        xDimText.setText(String.valueOf(xDim));
-        xDimText.setFont(serif12);
-        xDimText.setEnabled(true);
+        dimText = new JTextField(10);
+        dimText.setText(String.valueOf(dim));
+        dimText.setFont(serif12);
+        dimText.setEnabled(true);
         gbc6.gridx = 1;
-        paramPanel.add(xDimText, gbc6);
-
-        yDimLabel = new JLabel("Image y dimension ");
-        yDimLabel.setForeground(Color.black);
-        yDimLabel.setFont(serif12);
-        yDimLabel.setEnabled(true);
-        gbc6.gridx = 0;
-        gbc6.gridy = 1;
-        paramPanel.add(yDimLabel, gbc6);
-
-        yDimText = new JTextField(10);
-        yDimText.setText(String.valueOf(yDim));
-        yDimText.setFont(serif12);
-        yDimText.setEnabled(true);
-        gbc6.gridx = 1;
-        paramPanel.add(yDimText, gbc6);
+        paramPanel.add(dimText, gbc6);
         
         radiusLabel = new JLabel("Circle radius ");
         radiusLabel.setForeground(Color.black);
         radiusLabel.setFont(serif12);
         radiusLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 2;
+        gbc6.gridy = 1;
         paramPanel.add(radiusLabel, gbc6);
 
         radiusText = new JTextField(10);
@@ -417,7 +396,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         fixedPoissonSameButton.addActionListener(this);
         processGroup.add(fixedPoissonSameButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 3;
+        gbc6.gridy = 2;
         paramPanel.add(fixedPoissonSameButton, gbc6);
         
         fixedPoissonDifferentButton = new JRadioButton("Fixed offspring allocation Poisson different parents process", false);
@@ -426,7 +405,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         fixedPoissonDifferentButton.addActionListener(this);
         processGroup.add(fixedPoissonDifferentButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 4;
+        gbc6.gridy = 3;
         paramPanel.add(fixedPoissonDifferentButton, gbc6);
         
         randomPoissonSameButton = new JRadioButton("Random offspring allocation Poisson same parents process", false);
@@ -435,7 +414,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         randomPoissonSameButton.addActionListener(this);
         processGroup.add(randomPoissonSameButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 5;
+        gbc6.gridy = 4;
         paramPanel.add(randomPoissonSameButton, gbc6);
         
         randomPoissonDifferentButton = new JRadioButton("Random offspring allocation Poisson different parents process", false);
@@ -444,7 +423,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         randomPoissonDifferentButton.addActionListener(this);
         processGroup.add(randomPoissonDifferentButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 6;
+        gbc6.gridy = 5;
         paramPanel.add(randomPoissonDifferentButton, gbc6);
         
         MaternSameButton = new JRadioButton("Matern same parents process", false);
@@ -453,7 +432,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         MaternSameButton.addActionListener(this);
         processGroup.add(MaternSameButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 7;
+        gbc6.gridy = 6;
         paramPanel.add(MaternSameButton, gbc6);
         
         MaternDifferentButton = new JRadioButton("Matern different parents process", false);
@@ -462,7 +441,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         MaternDifferentButton.addActionListener(this);
         processGroup.add(MaternDifferentButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 8;
+        gbc6.gridy = 7;
         paramPanel.add(MaternDifferentButton, gbc6);
         
         inhomogeneousPoissonButton = new JRadioButton("Inhomogeneous Poisson process", false);
@@ -471,7 +450,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         inhomogeneousPoissonButton.addActionListener(this);
         processGroup.add(inhomogeneousPoissonButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 9;
+        gbc6.gridy = 8;
         paramPanel.add(inhomogeneousPoissonButton, gbc6);
         
         numParentsLabel = new JLabel("Number of parents ");
@@ -479,7 +458,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         numParentsLabel.setFont(serif12);
         numParentsLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 10;
+        gbc6.gridy = 9;
         paramPanel.add(numParentsLabel, gbc6);
         
         numParentsText = new JTextField(3);
@@ -494,7 +473,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         numOffspring1Label.setFont(serif12);
         numOffspring1Label.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 11;
+        gbc6.gridy = 10;
         paramPanel.add(numOffspring1Label, gbc6);
         
         numOffspring1Text = new JTextField(10);
@@ -509,7 +488,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         numOffspring2Label.setFont(serif12);
         numOffspring2Label.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 12;
+        gbc6.gridy = 11;
         paramPanel.add(numOffspring2Label, gbc6);
         
         numOffspring2Text = new JTextField(10);
@@ -524,7 +503,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         normalizedStdDevLabel.setFont(serif12);
         normalizedStdDevLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 13;
+        gbc6.gridy = 12;
         paramPanel.add(normalizedStdDevLabel, gbc6);
         
         normalizedStdDevText = new JTextField(10);
@@ -539,7 +518,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         parentPoissonNormalizedMeanLabel.setFont(serif12);
         parentPoissonNormalizedMeanLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 14;
+        gbc6.gridy = 13;
         paramPanel.add(parentPoissonNormalizedMeanLabel, gbc6);
         
         parentPoissonNormalizedMeanText = new JTextField(10);
@@ -554,7 +533,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         normalizedDiscRadiusLabel.setFont(serif12);
         normalizedDiscRadiusLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 15;
+        gbc6.gridy = 14;
         paramPanel.add(normalizedDiscRadiusLabel, gbc6);
         
         normalizedDiscRadiusText = new JTextField(10);
@@ -569,7 +548,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         offspringPoissonNormalizedMeanLabel.setFont(serif12);
         offspringPoissonNormalizedMeanLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 16;
+        gbc6.gridy = 15;
         paramPanel.add(offspringPoissonNormalizedMeanLabel, gbc6);
         
         offspringPoissonNormalizedMeanText = new JTextField(10);
@@ -586,7 +565,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         sqrtXPlusYButton.setEnabled(false);
         inhomogeneousGroup.add(sqrtXPlusYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 17;
+        gbc6.gridy = 16;
         paramPanel.add(sqrtXPlusYButton, gbc6);
         
         sqrtXTimesYButton = new JRadioButton("lambda2(x,y) = n2*sqrt(x * y)", false);
@@ -595,7 +574,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         sqrtXTimesYButton.setEnabled(false);
         inhomogeneousGroup.add(sqrtXTimesYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 18;
+        gbc6.gridy = 17;
         paramPanel.add(sqrtXTimesYButton, gbc6);
         
         absXMinusYButton = new JRadioButton("lambda2(x,y) = n2*|x - y|", true);
@@ -604,7 +583,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         absXMinusYButton.setEnabled(false);
         inhomogeneousGroup.add(absXMinusYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 19;
+        gbc6.gridy = 18;
         paramPanel.add(absXMinusYButton, gbc6);
 
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -621,22 +600,13 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
      */
     private boolean setVariables() {
 
-        if (!testParameter(xDimText.getText(), 5, 1000000)) {
-            xDimText.requestFocus();
-            xDimText.selectAll();
+        if (!testParameter(dimText.getText(), 5, 1000000)) {
+            dimText.requestFocus();
+            dimText.selectAll();
 
             return false;
         } else {
-            xDim = Integer.valueOf(xDimText.getText()).intValue();
-        }
-
-        if (!testParameter(yDimText.getText(), 5, 1000000)) {
-            yDimText.requestFocus();
-            yDimText.selectAll();
-
-            return false;
-        } else {
-            yDim = Integer.valueOf(yDimText.getText()).intValue();
+            dim = Integer.valueOf(dimText.getText()).intValue();
         }
         
         if (!testParameter(radiusText.getText(), 0, 1000000)) {
