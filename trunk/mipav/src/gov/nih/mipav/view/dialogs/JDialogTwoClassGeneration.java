@@ -108,6 +108,18 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
     
     private int inhomogeneous = AlgorithmTwoClassGeneration.SQRT_X_PLUS_Y;
     
+    private JLabel numPoints1Label;
+    
+    private JTextField numPoints1Text;
+    
+    private int numPoints1 = 100;
+    
+    private JLabel numPoints2Label;
+    
+    private JTextField numPoints2Text;
+    
+    private int numPoints2 = 100;
+    
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -163,6 +175,10 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 parentPoissonNormalizedMeanText.setEnabled(false);
                 normalizedDiscRadiusLabel.setEnabled(false);
                 normalizedDiscRadiusText.setEnabled(false);
+                numPoints1Label.setEnabled(false);
+                numPoints1Text.setEnabled(false);
+                numPoints2Label.setEnabled(false);
+                numPoints2Text.setEnabled(false);
                 sqrtXPlusYButton.setEnabled(false);
                 sqrtXTimesYButton.setEnabled(false);
                 absXMinusYButton.setEnabled(false);
@@ -180,6 +196,10 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 parentPoissonNormalizedMeanText.setEnabled(true);
                 normalizedDiscRadiusLabel.setEnabled(true);
                 normalizedDiscRadiusText.setEnabled(true);
+                numPoints1Label.setEnabled(false);
+                numPoints1Text.setEnabled(false);
+                numPoints2Label.setEnabled(false);
+                numPoints2Text.setEnabled(false);
                 sqrtXPlusYButton.setEnabled(false);
                 sqrtXTimesYButton.setEnabled(false);
                 absXMinusYButton.setEnabled(false);
@@ -197,6 +217,10 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 parentPoissonNormalizedMeanText.setEnabled(false);
                 normalizedDiscRadiusLabel.setEnabled(false);
                 normalizedDiscRadiusText.setEnabled(false);
+                numPoints1Label.setEnabled(true);
+                numPoints1Text.setEnabled(true);
+                numPoints2Label.setEnabled(true);
+                numPoints2Text.setEnabled(true);
                 sqrtXPlusYButton.setEnabled(true);
                 sqrtXTimesYButton.setEnabled(true);
                 absXMinusYButton.setEnabled(true);
@@ -291,7 +315,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
             // Make algorithm
             tcAlgo = new AlgorithmTwoClassGeneration(resultImage, radius, process, numParents, numOffspring1,
                         numOffspring2, normalizedStdDev, parentPoissonNormalizedMean,
-                        normalizedDiscRadius, inhomogeneous);
+                        normalizedDiscRadius, numPoints1, numPoints2, inhomogeneous);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -531,6 +555,36 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         gbc6.gridx = 1;
         paramPanel.add(normalizedDiscRadiusText, gbc6);
         
+        numPoints1Label = new JLabel("Number of type 1 objects before deletion ");
+        numPoints1Label.setForeground(Color.black);
+        numPoints1Label.setFont(serif12);
+        numPoints1Label.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 15;
+        paramPanel.add(numPoints1Label, gbc6);
+        
+        numPoints1Text = new JTextField(10);
+        numPoints1Text.setText(String.valueOf(numPoints1));
+        numPoints1Text.setFont(serif12);
+        numPoints1Text.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(numPoints1Text, gbc6);
+        
+        numPoints2Label = new JLabel("Number of type 2 objects before deletion ");
+        numPoints2Label.setForeground(Color.black);
+        numPoints2Label.setFont(serif12);
+        numPoints2Label.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 16;
+        paramPanel.add(numPoints2Label, gbc6);
+        
+        numPoints2Text = new JTextField(10);
+        numPoints2Text.setText(String.valueOf(numPoints2));
+        numPoints2Text.setFont(serif12);
+        numPoints2Text.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(numPoints2Text, gbc6);
+        
         inhomogeneousGroup = new ButtonGroup();
         sqrtXPlusYButton = new JRadioButton("lambda2(x,y) = n2*sqrt(x + y)", true);
         sqrtXPlusYButton.setFont(serif12);
@@ -538,7 +592,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         sqrtXPlusYButton.setEnabled(false);
         inhomogeneousGroup.add(sqrtXPlusYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 15;
+        gbc6.gridy = 17;
         paramPanel.add(sqrtXPlusYButton, gbc6);
         
         sqrtXTimesYButton = new JRadioButton("lambda2(x,y) = n2*sqrt(x * y)", false);
@@ -547,7 +601,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         sqrtXTimesYButton.setEnabled(false);
         inhomogeneousGroup.add(sqrtXTimesYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 16;
+        gbc6.gridy = 18;
         paramPanel.add(sqrtXTimesYButton, gbc6);
         
         absXMinusYButton = new JRadioButton("lambda2(x,y) = n2*|x - y|", true);
@@ -556,7 +610,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         absXMinusYButton.setEnabled(false);
         inhomogeneousGroup.add(absXMinusYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 17;
+        gbc6.gridy = 19;
         paramPanel.add(absXMinusYButton, gbc6);
 
         getContentPane().add(paramPanel, BorderLayout.CENTER);
@@ -720,6 +774,26 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         }
         else {
             process = AlgorithmTwoClassGeneration.INHOMOGENEOUS_POISSON;
+            
+            if (!testParameter(numPoints1Text.getText(), 10, 10000)) {
+                 MipavUtil.displayError("Number of type 1 objects before deletion must be between 10 and 10000");
+                 numPoints1Text.requestFocus();
+                 numPoints1Text.selectAll();
+                 return false;
+            }
+            else {
+                numPoints1 = Integer.valueOf(numPoints1Text.getText()).intValue();
+            }
+            
+            if (!testParameter(numPoints2Text.getText(), 10, 10000)) {
+                MipavUtil.displayError("Number of type 2 objects before deletion must be between 10 and 10000");
+                numPoints2Text.requestFocus();
+                numPoints2Text.selectAll();
+                return false;
+           }
+           else {
+               numPoints2 = Integer.valueOf(numPoints2Text.getText()).intValue();
+           }
             
             if (sqrtXPlusYButton.isSelected()) {
                 inhomogeneous = AlgorithmTwoClassGeneration.SQRT_X_PLUS_Y;
