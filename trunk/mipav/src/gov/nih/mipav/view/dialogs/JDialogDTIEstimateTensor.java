@@ -393,7 +393,8 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
         pack();
-        setResizable(false);
+        setMinimumSize(getSize());
+        //setResizable(false);
         setVisible(true);
         
 	}
