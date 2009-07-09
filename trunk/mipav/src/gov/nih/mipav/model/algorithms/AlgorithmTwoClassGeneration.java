@@ -35,7 +35,6 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
     public static final int ABS_X_MINUS_Y = 3;
     
-    
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -56,6 +55,10 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     private double parentPoissonNormalizedMean;
     
     private double normalizedDiscRadius;
+    
+    private int numPoints1;
+    
+    private int numPoints2;
     
     private int inhomogeneous;
 
@@ -78,11 +81,14 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
      * @param  normalizedStdDev
      * @param  parentPoissonNormalizedMean
      * @param  normalizedDiscRadius
+     * @param  numPoints1
+     * @param  numPoints2
      * @param  inhomogeneous
      */
     public AlgorithmTwoClassGeneration(ModelImage srcImage, int radius, int process, int numParents, 
             int numOffspring1, int numOffspring2, double normalizedStdDev,
             double parentPoissonNormalizedMean, double normalizedDiscRadius,
+            int numPoints1, int numPoints2,
             int inhomogeneous) {
         super(null, srcImage);
         this.radius = radius;
@@ -93,6 +99,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         this.normalizedStdDev = normalizedStdDev;
         this.parentPoissonNormalizedMean = parentPoissonNormalizedMean;
         this.normalizedDiscRadius = normalizedDiscRadius;
+        this.numPoints1 = numPoints1;
+        this.numPoints2 = numPoints2;
         this.inhomogeneous = inhomogeneous;
     }
 
@@ -109,6 +117,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
+        final int SAME = 1;
+        final int DIFFERENT = 2;
         int xDim;
         int yDim;
         byte mask[];
@@ -190,12 +200,12 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         int parentNumber;
         double angle;
         double distance;
-        int xCircleXCenter[];
-        int xCircleYCenter[];
-        int yCircleXCenter[];
-        int yCircleYCenter[];
-        int offspring1Drawn;
-        int offspring2Drawn;
+        int xCircleXCenter[] = null;
+        int xCircleYCenter[] = null;
+        int yCircleXCenter[] = null;
+        int yCircleYCenter[] = null;
+        int offspring1Drawn = 0;
+        int offspring2Drawn = 0;
         int offspring1PerParent;
         int offspring2PerParent;
         int discRadius;
@@ -220,6 +230,21 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         int discIndex;
         int parentsPlaced;
         double offspringPoissonMean;
+        int originalCirclesCreated1;
+        int originalCirclesCreated2;
+        double intensity;
+        double maxIntensity;
+        int xCircleOrigXCenter[];
+        int xCircleOrigYCenter[];
+        int yCircleOrigXCenter[];
+        int yCircleOrigYCenter[];
+        double retentionProbability;
+        double cumulativeProb;
+        boolean retainCircle[];
+        double NN1Distance[];
+        byte NN1Type[];
+        double NN2Distance[];
+        byte NN2Type[];
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -777,6 +802,260 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
                 }
             }
         } // if ((process == MATERN_SAME_PARENTS) || (process == MATERN_DIFFERENT_PARENTS))
+        
+        if (process == INHOMOGENEOUS_POISSON) {
+            xCircleOrigXCenter = new int[numPoints1];
+            xCircleOrigYCenter = new int[numPoints1];
+            yCircleOrigXCenter = new int[numPoints2];
+            yCircleOrigYCenter = new int[numPoints2];
+            for (i = 0; i < numPoints1; i++) {
+                found = false;
+                attempts = 0;
+                while ((!found) && (attempts <= 100)) {
+                    found = true;
+                    xCenter = randomGen.genUniformRandomNum(radius, xDim - 1 - radius);
+                    yCenter = randomGen.genUniformRandomNum(radius, yDim - 1 - radius);
+                    rloop:
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim] == 1) {
+                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
+                                        found = false;
+                                        attempts++;
+                                        break rloop;
+                                    }
+                                }
+                            }
+                        } // for (y = 0; y <= 2*radius; y++)
+                } // while ((!found) && (attempts <= 100))
+                if (!found) {
+                    break;
+                }
+                xCircleOrigXCenter[i] = xCenter;
+                xCircleOrigYCenter[i] = yCenter;
+                for (y = 0; y <= 2*radius; y++) {
+                    for (x = 0; x <= 2*radius; x++) {
+                        if (mask[x + y * xMaskDim] == 1) {
+                            buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  1;
+                        }
+                    }
+                }
+            } // for (i = 0; i < numPoints1; i++)
+            originalCirclesCreated1 = i;
+            Preferences.debug(originalCirclesCreated1 + " type 1 circles orignally created.  " + 
+                    numPoints1 + " type 1 circles requested.\n");
+            System.out.println(originalCirclesCreated1 + " type 1 circles orignally created.  " + 
+                    numPoints1 + " type 1 circles requested.\n"); 
+            
+            for (i = 0; i < numPoints2; i++) {
+                found = false;
+                attempts = 0;
+                while ((!found) && (attempts <= 100)) {
+                    found = true;
+                    xCenter = randomGen.genUniformRandomNum(radius, xDim - 1 - radius);
+                    yCenter = randomGen.genUniformRandomNum(radius, yDim - 1 - radius);
+                    rloop:
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim] == 1) {
+                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
+                                        found = false;
+                                        attempts++;
+                                        break rloop;
+                                    }
+                                }
+                            }
+                        } // for (y = 0; y <= 2*radius; y++)
+                } // while ((!found) && (attempts <= 100))
+                if (!found) {
+                    break;
+                }
+                yCircleOrigXCenter[i] = xCenter;
+                yCircleOrigYCenter[i] = yCenter;
+                for (y = 0; y <= 2*radius; y++) {
+                    for (x = 0; x <= 2*radius; x++) {
+                        if (mask[x + y * xMaskDim] == 1) {
+                            buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  2;
+                        }
+                    }
+                }
+            } // for (i = 0; i < numPoints2; i++)
+            originalCirclesCreated2 = i;
+            Preferences.debug(originalCirclesCreated2 + " type 2 circles orignally created.  " + 
+                    numPoints2 + " type 2 circles requested.\n");
+            System.out.println(originalCirclesCreated2 + " type 2 circles orignally created.  " + 
+                    numPoints2 + " type 2 circles requested.\n");
+            
+            maxIntensity = -Double.MAX_VALUE;
+            for (i = 0; i < originalCirclesCreated1; i++) {
+                intensity = Math.sqrt((double)xCircleOrigXCenter[i]/(xDim - 1) + (double)xCircleOrigYCenter[i]/(yDim - 1));
+                if (intensity > maxIntensity) {
+                    maxIntensity = intensity;
+                }
+            }
+            
+            retainCircle = new boolean[originalCirclesCreated1];
+            offspring1Drawn = 0;
+            for (i = 0; i < originalCirclesCreated1; i++) {
+                intensity = Math.sqrt((double)xCircleOrigXCenter[i]/(xDim - 1) + (double)xCircleOrigYCenter[i]/(yDim - 1));
+                retentionProbability = intensity/maxIntensity;
+                cumulativeProb = randomGen.genUniformRandomNum(0.0, 1.0);
+                if (cumulativeProb <= retentionProbability) {
+                    retainCircle[i] = true;
+                    offspring1Drawn++;
+                }
+            }
+            
+            Preferences.debug(offspring1Drawn + " type 1 offspring retained.\n");
+            System.out.println(offspring1Drawn + " type 1 offspring retained.");
+            
+            xCircleXCenter = new int[offspring1Drawn];
+            xCircleYCenter = new int[offspring1Drawn];
+            for (i = 0, j = 0; i < originalCirclesCreated1; i++) {
+                if (retainCircle[i]) {
+                    xCircleXCenter[j] = xCircleOrigXCenter[i];
+                    xCircleYCenter[j++] = xCircleOrigYCenter[i]; 
+                }
+            }
+            
+            maxIntensity = -Double.MAX_VALUE;
+            for (i = 0; i < originalCirclesCreated2; i++) {
+                if (inhomogeneous == SQRT_X_PLUS_Y) {
+                    intensity = Math.sqrt((double)yCircleOrigXCenter[i]/(xDim - 1) + (double)yCircleOrigYCenter[i]/(yDim - 1));
+                }
+                else if (inhomogeneous == SQRT_X_TIMES_Y) {
+                    intensity = Math.sqrt((double)yCircleOrigXCenter[i] * yCircleOrigYCenter[i]/((xDim-1)*(yDim-1)));
+                }
+                else {
+                    intensity = Math.abs((double)yCircleOrigXCenter[i]/(xDim-1) - (double)yCircleOrigYCenter[i]/(yDim-1));
+                }
+                if (intensity > maxIntensity) {
+                    maxIntensity = intensity;
+                }
+            }
+            
+            retainCircle = new boolean[originalCirclesCreated2];
+            offspring2Drawn = 0;
+            for (i = 0; i < originalCirclesCreated2; i++) {
+                if (inhomogeneous == SQRT_X_PLUS_Y) {
+                    intensity = Math.sqrt((double)yCircleOrigXCenter[i]/(xDim - 1) + (double)yCircleOrigYCenter[i]/(yDim - 1));
+                }
+                else if (inhomogeneous == SQRT_X_TIMES_Y) {
+                    intensity = Math.sqrt((double)yCircleOrigXCenter[i] * yCircleOrigYCenter[i]/((xDim-1)*(yDim-1)));
+                }
+                else {
+                    intensity = Math.abs((double)yCircleOrigXCenter[i]/(xDim-1) - (double)yCircleOrigYCenter[i]/(yDim-1));
+                }
+                retentionProbability = intensity/maxIntensity;
+                cumulativeProb = randomGen.genUniformRandomNum(0.0, 1.0);
+                if (cumulativeProb <= retentionProbability) {
+                    retainCircle[i] = true;
+                    offspring2Drawn++;
+                }
+            }
+            
+            Preferences.debug(offspring2Drawn + " type 2 offspring retained.\n");
+            System.out.println(offspring2Drawn + " type 2 offspring retained.");
+            
+            yCircleXCenter = new int[offspring2Drawn];
+            yCircleYCenter = new int[offspring2Drawn];
+            for (i = 0, j = 0; i < originalCirclesCreated2; i++) {
+                if (retainCircle[i]) {
+                    yCircleXCenter[j] = yCircleOrigXCenter[i];
+                    yCircleYCenter[j++] = yCircleOrigYCenter[i]; 
+                }
+            }
+            
+            for (i = 0; i < buffer.length; i++) {
+                buffer[i] = 0;
+            }
+            
+            for (i = 0; i < offspring1Drawn; i++) {
+                for (y = 0; y <= 2*radius; y++) {
+                    for (x = 0; x <= 2*radius; x++) {
+                        if (mask[x + y * xMaskDim] == 1) {
+                            buffer[(xCircleXCenter[i] + x - radius) + xDim*(xCircleYCenter[i] + y - radius)] =  1;
+                        }
+                    }
+                }    
+            }
+            
+            for (i = 0; i < offspring2Drawn; i++) {
+                for (y = 0; y <= 2*radius; y++) {
+                    for (x = 0; x <= 2*radius; x++) {
+                        if (mask[x + y * xMaskDim] == 1) {
+                            buffer[(yCircleXCenter[i] + x - radius) + xDim*(yCircleYCenter[i] + y - radius)] =  2;
+                        }
+                    }
+                }    
+            }
+        } // if (process == INHOMOGENEOUS_POISSON)
+        
+        NN1Distance = new double[offspring1Drawn];
+        NN1Type = new byte[offspring1Drawn];
+        for (i = 0; i < offspring1Drawn; i++) {
+            lowestDistSquared = Integer.MAX_VALUE;
+            for (j = 0; j < offspring1Drawn; j++) {
+                if (i != j) {          
+                    xDistSquared = xCircleXCenter[i] - xCircleXCenter[j];
+                    xDistSquared = xDistSquared * xDistSquared;
+                    yDistSquared = xCircleYCenter[i] - xCircleYCenter[j];
+                    yDistSquared = yDistSquared * yDistSquared;
+                    distSquared = xDistSquared + yDistSquared;
+                    if (distSquared < lowestDistSquared) {
+                        lowestDistSquared = distSquared;
+                        NN1Distance[i] = Math.sqrt(distSquared);
+                        NN1Type[i] = SAME;
+                    }  
+                }
+            }
+            
+            for (j = 0; j < offspring2Drawn; j++) {          
+                xDistSquared = xCircleXCenter[i] - yCircleXCenter[j];
+                xDistSquared = xDistSquared * xDistSquared;
+                yDistSquared = xCircleYCenter[i] - yCircleYCenter[j];
+                yDistSquared = yDistSquared * yDistSquared;
+                distSquared = xDistSquared + yDistSquared;
+                if (distSquared < lowestDistSquared) {
+                    lowestDistSquared = distSquared;
+                    NN1Distance[i] = Math.sqrt(distSquared);
+                    NN1Type[i] = DIFFERENT;
+                }  
+            }
+        } // for (i = 0; i < offspring1Drawn; i++)
+        
+        NN2Distance = new double[offspring2Drawn];
+        NN2Type = new byte[offspring2Drawn];
+        for (i = 0; i < offspring2Drawn; i++) {
+            lowestDistSquared = Integer.MAX_VALUE;
+            for (j = 0; j < offspring1Drawn; j++) {
+                if (i != j) {          
+                    xDistSquared = yCircleXCenter[i] - xCircleXCenter[j];
+                    xDistSquared = xDistSquared * xDistSquared;
+                    yDistSquared = yCircleYCenter[i] - xCircleYCenter[j];
+                    yDistSquared = yDistSquared * yDistSquared;
+                    distSquared = xDistSquared + yDistSquared;
+                    if (distSquared < lowestDistSquared) {
+                        lowestDistSquared = distSquared;
+                        NN1Distance[i] = Math.sqrt(distSquared);
+                        NN1Type[i] = DIFFERENT;
+                    }  
+                }
+            }
+            
+            for (j = 0; j < offspring2Drawn; j++) {          
+                xDistSquared = yCircleXCenter[i] - yCircleXCenter[j];
+                xDistSquared = xDistSquared * xDistSquared;
+                yDistSquared = yCircleYCenter[i] - yCircleYCenter[j];
+                yDistSquared = yDistSquared * yDistSquared;
+                distSquared = xDistSquared + yDistSquared;
+                if (distSquared < lowestDistSquared) {
+                    lowestDistSquared = distSquared;
+                    NN1Distance[i] = Math.sqrt(distSquared);
+                    NN1Type[i] = SAME;
+                }  
+            }
+        } // for (i = 0; i < offspring2Drawn; i++)
         
         try {
             srcImage.importData(0, buffer, true);
