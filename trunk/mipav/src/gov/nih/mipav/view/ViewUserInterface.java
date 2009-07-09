@@ -1064,8 +1064,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 } catch (final Exception e) {
                     pluginName = name;
                 }
-                try {
-                    plugin = Class.forName(name);
+                try {               	
+                	plugin = Class.forName(name);
 
                     // plugin.newInstance();
                     // rather than instantiating to allow loading into SCRIPT_ACTION_LOCATIONS, see below
@@ -1123,10 +1123,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                 } catch(NoSuchFieldException e) {
                 	//no category, so class is not a valid plugin, class should not be added to GUI
-                } catch (final Exception e) {
+                } catch(ClassNotFoundException e) {
+                	
+                	//e.printStackTrace();
+            	} catch (final Exception e) {
                     // usually this means other files/folders exist in the installed plugins directory besides plugin
                     // files
-                    e.printStackTrace();
+                    //e.printStackTrace();
+                } catch(NoClassDefFoundError e) {
+                	//components of some classes may no longer exist in the classpath.
                 }
             }
         }
