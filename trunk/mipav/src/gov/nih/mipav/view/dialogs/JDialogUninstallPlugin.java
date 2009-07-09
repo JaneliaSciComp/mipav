@@ -106,6 +106,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     		   MipavUtil.displayInfo("No plugins are selected.");
     		   return;
     	   }
+    	   
     	   uninstallPlugins();
     	   
     	   updateMenuBar();
@@ -121,7 +122,30 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
        } 
     }
 
-    private void updateMenuBar() {
+    private String deleteOrphans(File[] orphans) {
+    	int numYes = 0, numNo = 0;
+    	String noDeleteOrphans = new String();
+    	for(int i=0; i<orphans.length; i++) {
+			if(orphans[i].delete()) {
+				numYes++;
+			} else {
+				numNo++;
+				noDeleteOrphans += orphans[i].getName() + "<br>";
+			}
+		}
+    	
+    	String message = new String();
+    	//would expect to usually be the case
+    	if(numNo == 0) {
+    		message = "All "+numYes+" unusable class files were deleted.";
+    	} else {
+    		message = "Only "+numYes+" unusable class files could be deleted.<br>The following were not deleted:<br>"+noDeleteOrphans;
+    	}
+    	
+    	return message;
+	}
+
+	private void updateMenuBar() {
     	// updates menubar for each image
         Vector imageFrames = ui.getImageFrameVector();
 
@@ -259,14 +283,89 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     			numNo++;
     		}
     	}
-    	String message = "Plugin uninstall results:\t  ("+numYes+" deleted, "+numNo+" failed)\n";
-    	for(int i=0; i<deleteStatus.length; i++) {
-    		message += deleteStatus[i]+"\n";
+    	
+    	File[] orphans = detectOrphans();
+    	
+    	String orphanMessage = new String();
+    	if(orphans != null && orphans.length > 0) {
+    		String orphanList = new String();
+    		for(int i=0; i<orphans.length; i++) { 
+    			if(i<5) {
+    				orphanList += orphans[i].getName()+"<br>";
+    			}
+    		}
+    		if(orphans.length > 5) {
+    			orphanList += "..."+(orphanList.length() - 5)+" more.";
+    		}
+    		
+    		String message = "<html>The following unusable class files have been detected in your plugins folder."+
+    							"<br>Would you like to delete them?<br><br>"+orphanList+"</html>";
+    		int result = JOptionPane.showConfirmDialog(this, orphanList, "Unusable class files detected", JOptionPane.YES_NO_OPTION);
+    		if(result == JOptionPane.YES_OPTION) {
+    			orphanMessage = deleteOrphans(orphans);
+    		}
     	}
-    	MipavUtil.displayInfo(message);
+
+    	String message = "<html>Plugin uninstall results:\t  ("+numYes+" deleted, "+numNo+" failed)<br>";
+    	for(int i=0; i<deleteStatus.length; i++) {
+    		message += deleteStatus[i]+"<br>";
+    	}
+    	MipavUtil.displayInfo(message+orphanMessage+"</html>");
     }
     
-    private boolean deletePluginDependents(String name) {
+    private File[] detectOrphans() {
+    	ArrayList<File> orphanFile = new ArrayList<File>(); 
+    	
+    	String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator
+         + "plugins" + File.separator;
+    	 
+    	 final File pluginsDir = new File(userPlugins);
+    	 if (pluginsDir.isDirectory()) {
+
+    		 final File[] allFiles = pluginsDir.listFiles(new FileFilter() {
+    			 public boolean accept(final File f) {
+
+    				 if (f.getPath().endsWith(".class")) {
+    					 return true;
+    				 }
+    				 return false;
+    			 }
+    		 });
+
+    		 String name, pluginName;
+    		 Field catField = null, scriptField = null;
+    		 Class plugin;
+    		 final String catName = "CATEGORY";
+    		 final String scriptName = "SCRIPT_PREFIX";
+
+		     for (final File allFile : allFiles) {
+		         name = allFile.getName();
+		
+		         try {
+		             name = name.substring(0, name.indexOf(".class"));
+		             pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
+		         } catch (final Exception e) {
+		             orphanFile.add(allFile);
+		         }
+		         try {               	
+		         	plugin = Class.forName(name);
+		         } catch(Exception e) {
+		        	 orphanFile.add(allFile);
+		         } catch(Error e) {
+		        	 orphanFile.add(allFile);
+		         }
+			}
+    	 }
+    	 
+    	 File[] f = new File[orphanFile.size()];
+    	 for(int i=0; i<orphanFile.size(); i++) {
+    		 f[i] = orphanFile.get(i);
+    	 }
+    	 
+    	 return f;
+    }
+
+	private boolean deletePluginDependents(String name) {
     	String pluginName = "PlugIn"+name;
     	try {
 			Class plugin = Class.forName(pluginName);
