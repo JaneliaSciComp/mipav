@@ -245,6 +245,57 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         byte NN1Type[];
         double NN2Distance[];
         byte NN2Type[];
+        int NN1Neighbor[];
+        int NN2Neighbor[];
+        int N11;
+        int N12;
+        int N21;
+        int N22;
+        int C1;
+        int C2;
+        int n1;
+        int n2;
+        int n;
+        double EN11;
+        double EN12;
+        double EN21;
+        double EN22;
+        // A (base, NN) pair (X,Y) is reflexive if (Y,X) is also a (base, NN) pair.
+        // R is twice the number of reflexive pairs
+        int R;
+        // Q is the number of points with shared NNs, which occurs when two or more points share a NN.
+        // Then Q = 2*(Q2 + 3*Q3 + 6*Q4 + 10*Q5 * 15*Q6), where Qk is the number of points that serve
+        // as a NN to other points k times.
+        int Q;
+        int Q2;
+        int Q3;
+        int Q4;
+        int Q5;
+        int Q6;
+        int Q1Array[];
+        int Q2Array[];
+        double p11;
+        double p111;
+        double p1111;
+        double p12;
+        double p112;
+        double p1122;
+        double p21;
+        double p221;
+        double p2211;
+        double p22;
+        double p222;
+        double p2222;
+        double varN11;
+        double varN12;
+        double varN21;
+        double varN22;
+        // Under complete spatial randomness independence, zijD asymptotically has a N(0,1) distribution 
+        // conditional on Q and R;
+        double z11D;
+        double z12D;
+        double z21D;
+        double z22D;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -991,8 +1042,13 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             }
         } // if (process == INHOMOGENEOUS_POISSON)
         
+        N11 = 0;
+        N12 = 0;
+        N21 = 0;
+        N22 = 0;
         NN1Distance = new double[offspring1Drawn];
         NN1Type = new byte[offspring1Drawn];
+        NN1Neighbor = new int[offspring1Drawn];
         for (i = 0; i < offspring1Drawn; i++) {
             lowestDistSquared = Integer.MAX_VALUE;
             for (j = 0; j < offspring1Drawn; j++) {
@@ -1006,6 +1062,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
                         lowestDistSquared = distSquared;
                         NN1Distance[i] = Math.sqrt(distSquared);
                         NN1Type[i] = SAME;
+                        NN1Neighbor[i] = j;
                     }  
                 }
             }
@@ -1020,42 +1077,261 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
                     lowestDistSquared = distSquared;
                     NN1Distance[i] = Math.sqrt(distSquared);
                     NN1Type[i] = DIFFERENT;
+                    NN1Neighbor[i] = j;
                 }  
             }
         } // for (i = 0; i < offspring1Drawn; i++)
         
+        for (i = 0; i < offspring1Drawn; i++) {
+            if (NN1Type[i] == SAME) {
+                N11++;
+            }
+            else {
+                N12++;
+            }
+        }
+        
         NN2Distance = new double[offspring2Drawn];
         NN2Type = new byte[offspring2Drawn];
+        NN2Neighbor = new int[offspring2Drawn];
         for (i = 0; i < offspring2Drawn; i++) {
             lowestDistSquared = Integer.MAX_VALUE;
-            for (j = 0; j < offspring1Drawn; j++) {
-                if (i != j) {          
-                    xDistSquared = yCircleXCenter[i] - xCircleXCenter[j];
-                    xDistSquared = xDistSquared * xDistSquared;
-                    yDistSquared = yCircleYCenter[i] - xCircleYCenter[j];
-                    yDistSquared = yDistSquared * yDistSquared;
-                    distSquared = xDistSquared + yDistSquared;
-                    if (distSquared < lowestDistSquared) {
-                        lowestDistSquared = distSquared;
-                        NN1Distance[i] = Math.sqrt(distSquared);
-                        NN1Type[i] = DIFFERENT;
-                    }  
-                }
-            }
-            
-            for (j = 0; j < offspring2Drawn; j++) {          
-                xDistSquared = yCircleXCenter[i] - yCircleXCenter[j];
+            for (j = 0; j < offspring1Drawn; j++) {         
+                xDistSquared = yCircleXCenter[i] - xCircleXCenter[j];
                 xDistSquared = xDistSquared * xDistSquared;
-                yDistSquared = yCircleYCenter[i] - yCircleYCenter[j];
+                yDistSquared = yCircleYCenter[i] - xCircleYCenter[j];
                 yDistSquared = yDistSquared * yDistSquared;
                 distSquared = xDistSquared + yDistSquared;
                 if (distSquared < lowestDistSquared) {
                     lowestDistSquared = distSquared;
-                    NN1Distance[i] = Math.sqrt(distSquared);
-                    NN1Type[i] = SAME;
+                    NN2Distance[i] = Math.sqrt(distSquared);
+                    NN2Type[i] = DIFFERENT;
+                    NN2Neighbor[i] = j;
                 }  
             }
+            
+            for (j = 0; j < offspring2Drawn; j++) { 
+                if (i != j) {
+                    xDistSquared = yCircleXCenter[i] - yCircleXCenter[j];
+                    xDistSquared = xDistSquared * xDistSquared;
+                    yDistSquared = yCircleYCenter[i] - yCircleYCenter[j];
+                    yDistSquared = yDistSquared * yDistSquared;
+                    distSquared = xDistSquared + yDistSquared;
+                    if (distSquared < lowestDistSquared) {
+                        lowestDistSquared = distSquared;
+                        NN2Distance[i] = Math.sqrt(distSquared);
+                        NN2Type[i] = SAME;
+                        NN2Neighbor[i] = j;
+                    } 
+                }
+            }
         } // for (i = 0; i < offspring2Drawn; i++)
+        
+        for (i = 0; i < offspring2Drawn; i++) {
+            if (NN2Type[i] == DIFFERENT) {
+                N21++;
+            }
+            else {
+                N22++;
+            }
+        }
+        
+        C1 = N11 + N21;
+        C2 = N12 + N22;
+        n1 = N11 + N12;
+        n2 = N21 + N22;
+        n = n1 + n2;
+        
+        // Dixon's cell-specific test of segregation
+        EN11 = (double)n1*(n1 - 1)/(n - 1);
+        EN12 = (double)n1 * n2/(n - 1);
+        EN21 = EN12;
+        EN22 = (double)n2*(n2 - 1)/(n - 1);
+        
+        // Find R, twice the number of reflexive pairs.
+        R = 0;
+        for (i = 0; i < offspring1Drawn; i++) {
+            if (NN1Type[i] == SAME && NN1Neighbor[NN1Neighbor[i]] == i) {
+                R++;
+            }
+            else if (NN1Type[i] == DIFFERENT && NN2Neighbor[NN1Neighbor[i]] == i) {
+                R++;
+            }
+        }
+        
+        for (i = 0; i < offspring2Drawn; i++) {
+            if (NN2Type[i] == DIFFERENT && NN1Neighbor[NN2Neighbor[i]] == i) {
+                R++;
+            }
+            else if (NN2Type[i] == SAME && NN2Neighbor[NN2Neighbor[i]] == i) {
+                R++;
+            }
+        }
+        
+        Q1Array = new int[offspring1Drawn];
+        Q2Array = new int[offspring2Drawn];
+        for (i = 0; i < offspring1Drawn; i++) {
+            if (NN1Type[i] == SAME) {
+                Q1Array[NN1Neighbor[i]]++;
+            }
+            else {
+                Q2Array[NN1Neighbor[i]]++;
+            }
+        }
+        
+        for (i = 0; i < offspring2Drawn; i++) {
+            if (NN2Type[i] == DIFFERENT) {
+                Q1Array[NN2Neighbor[i]]++;    
+            }
+            else {
+                Q2Array[NN2Neighbor[i]]++;
+            }
+        }
+        
+        Q2 = 0;
+        Q3 = 0;
+        Q4 = 0;
+        Q5 = 0;
+        Q6 = 0;
+        for (i = 0; i < offspring1Drawn; i++) {
+            if (Q1Array[i] == 2) {
+                Q2++;
+            }
+            else if (Q1Array[i] == 3) {
+                Q3++;
+            }
+            else if (Q1Array[i] == 4) {
+                Q4++;
+            }
+            else if (Q1Array[i] == 5) {
+                Q5++;
+            }
+            else if (Q1Array[i] == 6) {
+                Q6++;
+            }
+        }
+        
+        for (i = 0; i < offspring2Drawn; i++) {
+            if (Q2Array[i] == 2) {
+                Q2++;
+            }
+            else if (Q2Array[i] == 3) {
+                Q3++;
+            }
+            else if (Q2Array[i] == 4) {
+                Q4++;
+            }
+            else if (Q2Array[i] == 5) {
+                Q5++;
+            }
+            else if (Q2Array[i] == 6) {
+                Q6++;
+            }
+        }
+        
+        Q = 2 * (Q2 + 3*Q3 + 6*Q4 + 10*Q5 + 15*Q6);
+        
+        p11 = (double)n1*(n1 - 1)/(n*(n - 1));
+        p111 = (double)n1*(n1 - 1)*(n1 - 2)/(n*(n - 1)*(n - 2));
+        p1111 = (double)n1*(n1 - 1)*(n1 - 2)*(n1 - 3)/(n*(n - 1)*(n - 2)*(n - 3));
+        p12 = (double)n1*n2/(n*(n - 1));
+        p112 = (double)n1*(n1 - 1)*n2/(n*(n - 1)*(n - 2));
+        p1122 = (double)n1*(n1 - 1)*n2*(n2 - 1)/(n*(n - 1)*(n - 2)*(n - 3));
+        p21 = p12;
+        p221 = (double)n2*(n2 - 1)*n1/(n*(n - 1)*(n - 2));
+        p2211 = p1122;
+        p22 = (double)n2*(n2 - 1)/(n*(n-1));
+        p222 = (double)n2*(n2 - 1)*(n2 - 2)/(n*(n - 1)*(n - 2));
+        p2222 = (double)n2*(n2 - 1)*(n2 - 2)*(n2 - 3)/(n*(n - 1)*(n - 2)*(n - 3));
+        
+        varN11 = (n + R)*p11 + (2*n - 2*R + Q)*p111 + (n*n - 3*n - Q + R)*p1111 -n*n*p11*p11;
+        varN12 = n*p12 + Q*p112 + (n*n - 3*n - Q + R)*p1122 - n*n*p12*p12;
+        varN21 = n*p21 + Q*p221 + (n*n - 3*n - Q + R)*p2211 - n*n*p21*p21;
+        varN22 = (n + R)*p22 + (2*n - 2*R + Q)*p222 + (n*n - 3*n - Q + R)*p2222 - n*n*p22*p22;
+        
+        z11D = (N11 - EN11)/Math.sqrt(varN11);
+        z12D = (N12 - EN12)/Math.sqrt(varN12);
+        z21D = (N21 - EN21)/Math.sqrt(varN21);
+        z22D = (N22 - EN22)/Math.sqrt(varN22);
+        
+        Preferences.debug("Dixon's cell-specific test of segregation\n");
+        System.out.println("Dixon's cell-specific test of segregation");
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z11D, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean N11 around expected mean N11 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean N11 around expected mean N11 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of N11 indicates association\n");
+            System.out.println("Low value of N11 indicates association");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of N11 indicates segregation\n");
+            System.out.println("High value of N11 indicates segregation");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on N11 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on N11 value");
+        }
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z12D, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean N12 around expected mean N12 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean N12 around expected mean N12 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of N12 indicates segregation\n");
+            System.out.println("Low value of N12 indicates segregation");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of N12 indicates association\n");
+            System.out.println("High value of N12 indicates association");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on N12 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on N12 value");
+        }
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z21D, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean N21 around expected mean N21 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean N21 around expected mean N21 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of N21 indicates segregation\n");
+            System.out.println("Low value of N21 indicates segregation");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of N21 indicates association\n");
+            System.out.println("High value of N21 indicates association");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on N21 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on N21 value");
+        }
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z22D, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean N22 around expected mean N22 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean N22 around expected mean N22 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of N22 indicates association\n");
+            System.out.println("Low value of N22 indicates association");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of N22 indicates segregation\n");
+            System.out.println("High value of N22 indicates segregation");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on N22 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on N22 value");
+        }
         
         try {
             srcImage.importData(0, buffer, true);
