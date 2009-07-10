@@ -593,6 +593,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 	            }
 			} else if(e.getActionCommand().equals(MOVE_RIGHT)) {
 				TreePath[] paths = fileTree.getSelectionModel().getSelectionPaths();
+				if(paths == null) {
+					return;
+				}
+				
 				ArrayList<String> conflict = new ArrayList<String>();
 				for(int i=0; i<paths.length; i++) {
 					String name = "";
