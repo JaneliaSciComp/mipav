@@ -137,7 +137,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     	String message = new String();
     	//would expect to usually be the case
     	if(numNo == 0) {
-    		message = "All "+numYes+" unusable class files were deleted.";
+    		message = "All unusable class files were deleted.";
     	} else {
     		message = "Only "+numYes+" unusable class files could be deleted.<br>The following were not deleted:<br>"+noDeleteOrphans;
     	}
@@ -300,7 +300,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     		
     		String message = "<html>The following unusable class files have been detected in your plugins folder."+
     							"<br>Would you like to delete them?<br><br>"+orphanList+"</html>";
-    		int result = JOptionPane.showConfirmDialog(this, orphanList, "Unusable class files detected", JOptionPane.YES_NO_OPTION);
+    		int result = JOptionPane.showConfirmDialog(this, message, "Unusable class files detected", JOptionPane.YES_NO_OPTION);
     		if(result == JOptionPane.YES_OPTION) {
     			orphanMessage = deleteOrphans(orphans);
     		}
@@ -310,7 +310,7 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     	for(int i=0; i<deleteStatus.length; i++) {
     		message += deleteStatus[i]+"<br>";
     	}
-    	MipavUtil.displayInfo(message+orphanMessage+"</html>");
+    	MipavUtil.displayInfo(message+"<br>"+orphanMessage+"</html>");
     }
     
     private File[] detectOrphans() {
