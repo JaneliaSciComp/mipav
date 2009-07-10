@@ -348,12 +348,7 @@ public class DICOM_PDUService extends DICOM_Comms {
                     throw new DICOM_Exception("Association to " + remoteAppTitle +
                                               " , but rejected locally.\n");
                 }
-                //added to test
-                else{
-                	Preferences.debug(DICOM_Util.timeStamper() + " Testing code \n");
-                	associateAC.writeHeader(this);
-                	associateAC.writeBody(this);
-                }
+
 
                 break;
 
