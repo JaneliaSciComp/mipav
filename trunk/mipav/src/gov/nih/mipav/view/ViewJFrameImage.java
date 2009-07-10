@@ -3023,7 +3023,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogDTICreateListFile();
         }else if (command.equals("estimateTensor")) {
         	new JDialogDTIEstimateTensor();
-        	
+        }else if(command.equals("fiberTracking")) {
+        	new JDialogDTIFiberTracking();
         }
 
     }

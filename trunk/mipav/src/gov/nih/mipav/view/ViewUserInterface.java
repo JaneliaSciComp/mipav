@@ -41,6 +41,7 @@ import gov.nih.mipav.view.dialogs.JDialogAnonymizeDirectory;
 import gov.nih.mipav.view.dialogs.JDialogDCCIEConversion;
 import gov.nih.mipav.view.dialogs.JDialogDTICreateListFile;
 import gov.nih.mipav.view.dialogs.JDialogDTIEstimateTensor;
+import gov.nih.mipav.view.dialogs.JDialogDTIFiberTracking;
 import gov.nih.mipav.view.dialogs.JDialogDataProvenance;
 import gov.nih.mipav.view.dialogs.JDialogDicomDir;
 import gov.nih.mipav.view.dialogs.JDialogFilterChoice;
@@ -843,7 +844,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new JDialogDTICreateListFile();
         } else if (command.equals("estimateTensor")) {
         	new JDialogDTIEstimateTensor();
-        	
+        }else if(command.equals("fiberTracking")) {
+        	new JDialogDTIFiberTracking();
         }
 
     }
