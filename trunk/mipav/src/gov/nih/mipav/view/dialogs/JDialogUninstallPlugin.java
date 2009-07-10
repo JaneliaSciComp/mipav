@@ -236,10 +236,10 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
     	for(int i=0; i<plugin.getItemCount(); i++) {
     		if(plugin.getItem(i) instanceof JMenu) {
     			root.add(createBranch((JMenu) plugin.getItem(i)));
-    		} else if(plugin.getItem(i) != null && !(plugin.getItem(i).equals(ui.getMenuBuilder().getMenuItem("Install plugin")) 
-    							|| plugin.getItem(i).equals(ui.getMenuBuilder().getMenuItem("Uninstall plugin")))) {
+    		} else if(plugin.getItem(i) != null && !(plugin.getItem(i).getActionCommand().equals("InstallPlugin")
+    							|| plugin.getItem(i).getActionCommand().equals("UninstallPlugin"))) {
     			root.add(new DefaultMutableTreeNode(plugin.getItem(i).getName()));
-    		}
+    		} 
     	}
     	return root;
     }
