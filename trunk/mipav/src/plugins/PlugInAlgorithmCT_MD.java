@@ -205,6 +205,8 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
         int totLength, imgLength;
         float[] buffer;
+        
+        float area = srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1];
 
         float vol = srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1] * srcImage.getResolutions(0)[2];
 
@@ -268,17 +270,17 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
                                                                       ViewJFrameMessage.DATA);
             ViewUserInterface.getReference().getMessageFrame().append("Number of fat pixels = " + fat,
                                                                       ViewJFrameMessage.DATA);
-            ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (fat * vol) + " mm^3\n",
+            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (fat * area) + " mm^2\n",
                                                                       ViewJFrameMessage.DATA);
 
             ViewUserInterface.getReference().getMessageFrame().append("Number of LDM pixels = " + ldMuscle,
                                                                       ViewJFrameMessage.DATA);
-            ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (ldMuscle * vol) + " mm^3\n",
+            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (ldMuscle * area) + " mm^2\n",
                                                                       ViewJFrameMessage.DATA);
 
             ViewUserInterface.getReference().getMessageFrame().append("Number of HDM pixels = " + hdMuscle,
                                                                       ViewJFrameMessage.DATA);
-            ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (hdMuscle * vol) + " mm^3\n",
+            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (hdMuscle * area) + " mm^2\n",
                                                                       ViewJFrameMessage.DATA);
         }
 
