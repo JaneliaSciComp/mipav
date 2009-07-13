@@ -1,4 +1,5 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -107,21 +108,24 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
         int length; // total number of data-elements (pixels) in image
         float[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
-
+        String unitStr;
 
         try {
 
             // image length is length in 2 dims
             length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
+            unitStr = getUnitsString();
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
         } catch (IOException error) {
             buffer = null;
+            unitStr = "unknown";
             errorCleanUp("Algorithm CT_MD reports: source image locked", true);
-
+            
             return;
         } catch (OutOfMemoryError e) {
             buffer = null;
+            unitStr = "unknown";
             errorCleanUp("Algorithm CT_MD reports: out of memory", true);
 
             return;
@@ -169,7 +173,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
         }
 
         // destImage.releaseLock();
-
+        
         if (threadStopped) {
             finalize();
 
@@ -180,17 +184,17 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
         ViewUserInterface.getReference().getMessageFrame().append("Number of Fat pixels = " + fat,
                                                                   ViewJFrameMessage.DATA);
-        ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (fat * area) + " mm^2\n",
+        ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (fat * area) + " "+unitStr+"^2\n",
                                                                   ViewJFrameMessage.DATA);
 
         ViewUserInterface.getReference().getMessageFrame().append("Number of LDM pixels = " + ldMuscle,
                                                                   ViewJFrameMessage.DATA);
-        ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (ldMuscle * area) + " mm^2\n",
+        ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (ldMuscle * area) + " "+unitStr+"^2\n",
                                                                   ViewJFrameMessage.DATA);
 
         ViewUserInterface.getReference().getMessageFrame().append("Number of HDM pixels = " + hdMuscle,
                                                                   ViewJFrameMessage.DATA);
-        ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (hdMuscle * area) + " mm^2\n",
+        ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (hdMuscle * area) + " "+unitStr+"^2\n",
                                                                   ViewJFrameMessage.DATA);
 
         destImage.calcMinMax();
@@ -210,6 +214,8 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
         float vol = srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1] * srcImage.getResolutions(0)[2];
 
+        String unitStr = getUnitsString();
+        
         try {
 
             // image totLength is totLength in 3 dims
@@ -270,17 +276,17 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
                                                                       ViewJFrameMessage.DATA);
             ViewUserInterface.getReference().getMessageFrame().append("Number of fat pixels = " + fat,
                                                                       ViewJFrameMessage.DATA);
-            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (fat * area) + " mm^2\n",
+            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (fat * area) + " "+unitStr+"^2\n",
                                                                       ViewJFrameMessage.DATA);
 
             ViewUserInterface.getReference().getMessageFrame().append("Number of LDM pixels = " + ldMuscle,
                                                                       ViewJFrameMessage.DATA);
-            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (ldMuscle * area) + " mm^2\n",
+            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (ldMuscle * area) + " "+unitStr+"^2\n",
                                                                       ViewJFrameMessage.DATA);
 
             ViewUserInterface.getReference().getMessageFrame().append("Number of HDM pixels = " + hdMuscle,
                                                                       ViewJFrameMessage.DATA);
-            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (hdMuscle * area) + " mm^2\n",
+            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (hdMuscle * area) + " "+unitStr+"^2\n",
                                                                       ViewJFrameMessage.DATA);
         }
 
@@ -296,22 +302,43 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
                                                                   ViewJFrameMessage.DATA);
         ViewUserInterface.getReference().getMessageFrame().append("Number of totFat pixels = " + totFat,
                                                                   ViewJFrameMessage.DATA);
-        ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (totFat * vol) + " mm^3\n",
+        ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (totFat * vol) + " "+unitStr+"^3\n",
                                                                   ViewJFrameMessage.DATA);
 
         ViewUserInterface.getReference().getMessageFrame().append("Number of LDM pixels = " + totLdMuscle,
                                                                   ViewJFrameMessage.DATA);
-        ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (totLdMuscle * vol) + " mm^3\n",
+        ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (totLdMuscle * vol) + " "+unitStr+"^3\n",
                                                                   ViewJFrameMessage.DATA);
 
         ViewUserInterface.getReference().getMessageFrame().append("Number of HDM pixels = " + totHdMuscle,
                                                                   ViewJFrameMessage.DATA);
-        ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (totHdMuscle * vol) + " mm^3\n",
+        ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (totHdMuscle * vol) + " "+unitStr+"^3\n",
                                                                   ViewJFrameMessage.DATA);
 
         destImage.calcMinMax();
 
         setCompleted(true);
+    }
+    
+    private String getUnitsString() {
+    	String unit = "";
+    	if(srcImage.getNDims() == 2) {
+    		if(srcImage.getUnitsOfMeasure()[0] == srcImage.getUnitsOfMeasure()[1]) {
+    			return FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getUnitsOfMeasure()[0]);
+    		} else {
+    			MipavUtil.displayInfo("Image units of measure do not agree in all dimensions.  Please check units carefully.");
+    			unit = "unknown";
+    		}
+    	} else if(srcImage.getNDims() == 3) {
+    		if(srcImage.getUnitsOfMeasure()[0] == srcImage.getUnitsOfMeasure()[1] && srcImage.getUnitsOfMeasure()[1] == srcImage.getUnitsOfMeasure()[2]) {
+    			return FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getUnitsOfMeasure()[0]);
+    		} else {
+    			MipavUtil.displayInfo("Image units of measure do not agree in all dimensions.  Please check units carefully.");
+    			unit = "unknown";
+    		}
+    	}
+    	
+    	return unit;
     }
 
 }
