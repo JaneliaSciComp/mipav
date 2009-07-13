@@ -66,6 +66,10 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
     
     private JRadioButton inhomogeneousPoissonButton;
     
+    private JRadioButton segregationButton;
+    
+    private JRadioButton associationButton;
+    
     private int process = AlgorithmTwoClassGeneration.FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS;
     
     private JLabel numOffspring1Label;
@@ -120,6 +124,12 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
     
     private int numPoints2 = 100;
     
+    private JLabel segregationLabel;
+    
+    private JTextField segregationText;
+    
+    private double segregation = 0.25;
+    
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -160,7 +170,8 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         } else if ((source == fixedPoissonSameButton) || (source == fixedPoissonDifferentButton) ||
                    (source == randomPoissonSameButton) || (source == randomPoissonDifferentButton) ||
                    (source == MaternSameButton) || (source == MaternDifferentButton) ||
-                   (source == inhomogeneousPoissonButton)) {
+                   (source == inhomogeneousPoissonButton) || (source == segregationButton) ||
+                   (source == associationButton)) {
             if (fixedPoissonSameButton.isSelected() || fixedPoissonDifferentButton.isSelected() || 
                 randomPoissonSameButton.isSelected() || randomPoissonDifferentButton.isSelected()) {
                 numParentsLabel.setEnabled(true);
@@ -182,6 +193,8 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 sqrtXPlusYButton.setEnabled(false);
                 sqrtXTimesYButton.setEnabled(false);
                 absXMinusYButton.setEnabled(false);
+                segregationLabel.setEnabled(false);
+                segregationText.setEnabled(false);
             }
             else if (MaternSameButton.isSelected() || MaternDifferentButton.isSelected()) {
                 numParentsLabel.setEnabled(false);
@@ -203,8 +216,10 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 sqrtXPlusYButton.setEnabled(false);
                 sqrtXTimesYButton.setEnabled(false);
                 absXMinusYButton.setEnabled(false);
+                segregationLabel.setEnabled(false);
+                segregationText.setEnabled(false);
             }
-            else {
+            else if (inhomogeneousPoissonButton.isSelected()){
                 numParentsLabel.setEnabled(false);
                 numParentsText.setEnabled(false); 
                 numOffspring1Label.setEnabled(false);
@@ -224,6 +239,54 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 sqrtXPlusYButton.setEnabled(true);
                 sqrtXTimesYButton.setEnabled(true);
                 absXMinusYButton.setEnabled(true);
+                segregationLabel.setEnabled(false);
+                segregationText.setEnabled(false);
+            }
+            else if (segregationButton.isSelected()) {
+                numParentsLabel.setEnabled(false);
+                numParentsText.setEnabled(false); 
+                numOffspring1Label.setEnabled(true);
+                numOffspring1Text.setEnabled(true);
+                numOffspring2Label.setEnabled(true);
+                numOffspring2Text.setEnabled(true);
+                normalizedStdDevLabel.setEnabled(false);
+                normalizedStdDevText.setEnabled(false);
+                parentPoissonNormalizedMeanLabel.setEnabled(false);
+                parentPoissonNormalizedMeanText.setEnabled(false);
+                normalizedDiscRadiusLabel.setEnabled(false);
+                normalizedDiscRadiusText.setEnabled(false);
+                numPoints1Label.setEnabled(false);
+                numPoints1Text.setEnabled(false);
+                numPoints2Label.setEnabled(false);
+                numPoints2Text.setEnabled(false);
+                sqrtXPlusYButton.setEnabled(false);
+                sqrtXTimesYButton.setEnabled(false);
+                absXMinusYButton.setEnabled(false);
+                segregationLabel.setEnabled(true);
+                segregationText.setEnabled(true);    
+            }
+            else if (associationButton.isSelected()) {
+                numParentsLabel.setEnabled(false);
+                numParentsText.setEnabled(false); 
+                numOffspring1Label.setEnabled(true);
+                numOffspring1Text.setEnabled(true);
+                numOffspring2Label.setEnabled(true);
+                numOffspring2Text.setEnabled(true);
+                normalizedStdDevLabel.setEnabled(false);
+                normalizedStdDevText.setEnabled(false);
+                parentPoissonNormalizedMeanLabel.setEnabled(false);
+                parentPoissonNormalizedMeanText.setEnabled(false);
+                normalizedDiscRadiusLabel.setEnabled(true);
+                normalizedDiscRadiusText.setEnabled(true);
+                numPoints1Label.setEnabled(false);
+                numPoints1Text.setEnabled(false);
+                numPoints2Label.setEnabled(false);
+                numPoints2Text.setEnabled(false);
+                sqrtXPlusYButton.setEnabled(false);
+                sqrtXTimesYButton.setEnabled(false);
+                absXMinusYButton.setEnabled(false);
+                segregationLabel.setEnabled(false);
+                segregationText.setEnabled(false);        
             }
         }
     }
@@ -315,7 +378,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
             // Make algorithm
             tcAlgo = new AlgorithmTwoClassGeneration(resultImage, radius, process, numParents, numOffspring1,
                         numOffspring2, normalizedStdDev, parentPoissonNormalizedMean,
-                        normalizedDiscRadius, numPoints1, numPoints2, inhomogeneous);
+                        normalizedDiscRadius, numPoints1, numPoints2, inhomogeneous, segregation);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -465,12 +528,30 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         gbc6.gridy = 8;
         paramPanel.add(inhomogeneousPoissonButton, gbc6);
         
+        segregationButton = new JRadioButton("Segregation alternative", false);
+        segregationButton.setFont(serif12);
+        segregationButton.setForeground(Color.black);
+        segregationButton.addActionListener(this);
+        processGroup.add(segregationButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 9;
+        paramPanel.add(segregationButton, gbc6);
+        
+        associationButton = new JRadioButton("Association alternative", false);
+        associationButton.setFont(serif12);
+        associationButton.setForeground(Color.black);
+        associationButton.addActionListener(this);
+        processGroup.add(associationButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 10;
+        paramPanel.add(associationButton, gbc6);
+        
         numParentsLabel = new JLabel("Number of parents ");
         numParentsLabel.setForeground(Color.black);
         numParentsLabel.setFont(serif12);
         numParentsLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 9;
+        gbc6.gridy =11;
         paramPanel.add(numParentsLabel, gbc6);
         
         numParentsText = new JTextField(3);
@@ -485,7 +566,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         numOffspring1Label.setFont(serif12);
         numOffspring1Label.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 10;
+        gbc6.gridy = 12;
         paramPanel.add(numOffspring1Label, gbc6);
         
         numOffspring1Text = new JTextField(10);
@@ -500,7 +581,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         numOffspring2Label.setFont(serif12);
         numOffspring2Label.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 11;
+        gbc6.gridy = 13;
         paramPanel.add(numOffspring2Label, gbc6);
         
         numOffspring2Text = new JTextField(10);
@@ -515,7 +596,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         normalizedStdDevLabel.setFont(serif12);
         normalizedStdDevLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 12;
+        gbc6.gridy = 14;
         paramPanel.add(normalizedStdDevLabel, gbc6);
         
         normalizedStdDevText = new JTextField(10);
@@ -530,7 +611,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         parentPoissonNormalizedMeanLabel.setFont(serif12);
         parentPoissonNormalizedMeanLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 13;
+        gbc6.gridy = 15;
         paramPanel.add(parentPoissonNormalizedMeanLabel, gbc6);
         
         parentPoissonNormalizedMeanText = new JTextField(10);
@@ -545,7 +626,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         normalizedDiscRadiusLabel.setFont(serif12);
         normalizedDiscRadiusLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 14;
+        gbc6.gridy = 16;
         paramPanel.add(normalizedDiscRadiusLabel, gbc6);
         
         normalizedDiscRadiusText = new JTextField(10);
@@ -560,7 +641,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         numPoints1Label.setFont(serif12);
         numPoints1Label.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 15;
+        gbc6.gridy = 17;
         paramPanel.add(numPoints1Label, gbc6);
         
         numPoints1Text = new JTextField(10);
@@ -575,7 +656,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         numPoints2Label.setFont(serif12);
         numPoints2Label.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 16;
+        gbc6.gridy = 18;
         paramPanel.add(numPoints2Label, gbc6);
         
         numPoints2Text = new JTextField(10);
@@ -592,7 +673,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         sqrtXPlusYButton.setEnabled(false);
         inhomogeneousGroup.add(sqrtXPlusYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 17;
+        gbc6.gridy = 19;
         paramPanel.add(sqrtXPlusYButton, gbc6);
         
         sqrtXTimesYButton = new JRadioButton("lambda2(x,y) = n2*sqrt(x * y)", false);
@@ -601,7 +682,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         sqrtXTimesYButton.setEnabled(false);
         inhomogeneousGroup.add(sqrtXTimesYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 18;
+        gbc6.gridy = 20;
         paramPanel.add(sqrtXTimesYButton, gbc6);
         
         absXMinusYButton = new JRadioButton("lambda2(x,y) = n2*|x - y|", true);
@@ -610,8 +691,23 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
         absXMinusYButton.setEnabled(false);
         inhomogeneousGroup.add(absXMinusYButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 19;
+        gbc6.gridy = 21;
         paramPanel.add(absXMinusYButton, gbc6);
+        
+        segregationLabel = new JLabel("Segregation parameter (0.0 - 1.0)");
+        segregationLabel.setForeground(Color.black);
+        segregationLabel.setFont(serif12);
+        segregationLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 22;
+        paramPanel.add(segregationLabel, gbc6);
+        
+        segregationText = new JTextField(10);
+        segregationText.setText(String.valueOf(segregation));
+        segregationText.setFont(serif12);
+        segregationText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(segregationText, gbc6);
 
         getContentPane().add(paramPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -772,7 +868,7 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
                 process = AlgorithmTwoClassGeneration.MATERN_DIFFERENT_PARENTS;
             }
         }
-        else {
+        else if (inhomogeneousPoissonButton.isSelected()){
             process = AlgorithmTwoClassGeneration.INHOMOGENEOUS_POISSON;
             
             if (!testParameter(numPoints1Text.getText(), 10, 10000)) {
@@ -803,6 +899,65 @@ public class JDialogTwoClassGeneration extends JDialogBase implements AlgorithmI
             }
             else {
                 inhomogeneous = AlgorithmTwoClassGeneration.ABS_X_MINUS_Y;
+            }
+        }
+        else if (segregationButton.isSelected()) {
+            process = AlgorithmTwoClassGeneration.SEGREGATION_ALTERNATIVE;
+            
+            if (!testParameter(numOffspring1Text.getText(), 1, 100000)) {
+                numOffspring1Text.requestFocus();
+                numOffspring1Text.selectAll();
+                return false;
+            }
+            else {
+                numOffspring1 = Integer.valueOf(numOffspring1Text.getText()).intValue();
+            }
+            if (!testParameter(numOffspring2Text.getText(), 1, 100000)) {
+                numOffspring2Text.requestFocus();
+                numOffspring2Text.selectAll();
+                return false;
+            }
+            else {
+                numOffspring2 = Integer.valueOf(numOffspring2Text.getText()).intValue();
+            }
+            
+            if (!testParameter(segregationText.getText(), 0.0, 1.0)) {
+                segregationText.requestFocus();
+                segregationText.selectAll();
+                return false;
+            }
+            else {
+                segregation = Double.valueOf(segregationText.getText()).doubleValue();
+            }
+        }
+        else if (associationButton.isSelected()) {
+            process = AlgorithmTwoClassGeneration.ASSOCIATION_ALTERNATIVE;
+            
+            if (!testParameter(numOffspring1Text.getText(), 1, 100000)) {
+                numOffspring1Text.requestFocus();
+                numOffspring1Text.selectAll();
+                return false;
+            }
+            else {
+                numOffspring1 = Integer.valueOf(numOffspring1Text.getText()).intValue();
+            }
+            if (!testParameter(numOffspring2Text.getText(), 1, 100000)) {
+                numOffspring2Text.requestFocus();
+                numOffspring2Text.selectAll();
+                return false;
+            }
+            else {
+                numOffspring2 = Integer.valueOf(numOffspring2Text.getText()).intValue();
+            }
+            
+            if (!testParameter(normalizedDiscRadiusText.getText(), 0.01, 1.0)) {
+                MipavUtil.displayError("Normalized disc radius must be between 0.01 and 1.0");
+                normalizedDiscRadiusText.requestFocus();
+                normalizedDiscRadiusText.selectAll();
+                return false;
+            }
+            else {
+                normalizedDiscRadius = Double.valueOf(normalizedDiscRadiusText.getText()).doubleValue();
             }
         }
 
