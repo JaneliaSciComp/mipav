@@ -13,6 +13,8 @@ import java.io.*;
  Ceyhan, Computational Statistics and Data Analysis, 53, 2009, pp. 2786-2808.
  2.) Technical Report #KU-EC-08-6: New Tests of Spatial Segregation Based on Nearest Neighbor
  Contingency Tables by Elvan Ceyhan, September 18, 2008
+ 3.) "Nearest-neighbor contingency table analysis of spatial segregation for several species" 
+ by Philip M. Dixon, Ecoscience, Vol. 9, No. 2, 2002, pp. 142-151.
  */
 public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
@@ -269,6 +271,31 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         double z12D;
         double z21D;
         double z22D;
+        double T11;
+        double T12;
+        double T21;
+        double T22;
+        double p122;
+        double p1112;
+        double p2221;
+        double covN11N12;
+        double covN11N21;
+        double covN12N21;
+        double covN12N22;
+        double varC1;
+        double varC2;
+        double covN11C1;
+        double covN12C2;
+        double covN21C1;
+        double covN22C2;
+        double varT11;
+        double varT12;
+        double varT21;
+        double varT22;
+        double z11N;
+        double z12N;
+        double z21N;
+        double z22N;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -1439,7 +1466,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         CD = (z11D*z11D + z22D*z22D - 2*r*z11D*z22D)/(1 - r*r);
         
         // Under random labelling the chi squared statistic has degrees of freedom = 2;
-        // Under complete spatial randomness the chi squared statisitc has degrees of freedom = 1;
+        // Under complete spatial randomness the chi squared statistic has degrees of freedom = 1;
         degreesOfFreedom = 1;
         stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
                 CD, degreesOfFreedom, chiSquaredPercentile);
@@ -1533,6 +1560,118 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         else {
             Preferences.debug("Complete spatial randomness cannot be rejected based on N22 value\n");
             System.out.println("Complete spatial randomness cannot be rejected based on N22 value");
+        }
+        
+        T11 = N11 - ((double)(n1 - 1)/(n - 1))*C1;
+        T12 = N12 - ((double)n1/(n - 1))*C2;
+        T21 = N21 - ((double)n2/(n - 1))*C1;
+        T22 = N22 - ((double)(n2 - 1)/(n - 1))*C2;
+        
+        p122 = ((double)n1*n2*(n2 - 1))/(n*(n - 1)*(n - 2));
+        p1112 = ((double)n1*(n1 - 1)*(n1 - 2)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
+        p2221 = ((double)n2*(n2 - 1)*(n2 - 2)*n1)/(n*(n - 1)*(n - 2)*(n - 3));
+        covN11N12 = (n - R)*p112 + (n*n - 3*n - Q + R)*p1112 - n*n*p11*p12;
+        covN11N21 = (n - R + Q)*p112 + (n*n - 3*n - Q + R)*p1112 - n*n*p11*p12;
+        covN12N21 = R*p12 + (n - R)*(p112 + p122) + (n*n - 3*n - Q + R)*p1122 - n*n*p12*p21;
+        covN12N22 = (n - R + Q)*p221 + (n*n - 3*n - Q + R)*p2221 - n*n*p22*p21;
+        
+        varC1 = varN11 + varN21 + 2 * covN11N21;
+        varC2 = varN12 + varN22 + 2 * covN12N22;
+        covN11C1 = covN11N21;;
+        covN12C2 = covN12N22;
+        covN21C1 = covN11N21;
+        covN22C2 = covN12N22;
+        varT11 = varN11 + (double)(n1 - 1)*(n1 - 1)*varC1/((n - 1)*(n - 1))
+                  - 2 * (double)(n1 - 1)*covN11C1/(n - 1);
+        varT12 = varN12 + (double)n1*n1*varC2/((n - 1) * (n - 1))
+                 - 2 * (double)n1*covN12C2/(n - 1);
+        varT21 = varN21 + (double)n2*n2*varC1/((n - 1)*(n - 1))
+                 - 2 * (double)n2*covN21C1/(n - 1);
+        varT22 = varN22 + (double)(n2 - 1)*(n2 - 1)*varC2/((n - 1)*(n - 1))
+                 - 2 * (double)(n2 - 1)*covN22C2/(n - 1);
+        
+        z11N = T11/Math.sqrt(varT11);
+        z12N = T12/Math.sqrt(varT12);
+        z21N = T21/Math.sqrt(varT21);
+        z22N = T22/Math.sqrt(varT22);
+        
+        Preferences.debug("Ceyhan's cell-specific tests of segregation\n");
+        System.out.println("Ceyhan's cell-specific tests of segregation");
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z11N, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean T11 around expected mean T11 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean T11 around expected mean T11 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of T11 indicates association\n");
+            System.out.println("Low value of T11 indicates association");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of T11 indicates segregation\n");
+            System.out.println("High value of T11 indicates segregation");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on T11 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on T11 value");
+        }
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z12N, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean T12 around expected mean T12 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean T12 around expected mean T12 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of T12 indicates segregation\n");
+            System.out.println("Low value of T12 indicates segregation");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of T12 indicates association\n");
+            System.out.println("High value of T12 indicates association");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on T12 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on T12 value");
+        }
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z21N, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean T21 around expected mean T21 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean T21 around expected mean T21 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of T21 indicates segregation\n");
+            System.out.println("Low value of T21 indicates segregation");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of T21 indicates association\n");
+            System.out.println("High value of T21 indicates association");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on T21 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on T21 value");
+        }
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z22N, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean T22 around expected mean T22 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean T22 around expected mean T22 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of T22 indicates association\n");
+            System.out.println("Low value of T22 indicates association");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of T22 indicates segregation\n");
+            System.out.println("High value of T22 indicates segregation");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on T22 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on T22 value");
         }
         
         try {
