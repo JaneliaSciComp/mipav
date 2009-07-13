@@ -4,14 +4,15 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
-import java.util.*;
 
 /**
- Reference is "Overall and pairwise segregation tests based on nearest neighbor contigency tables" by Elvan
+ Referencs :
+ 1.) "Overall and pairwise segregation tests based on nearest neighbor contigency tables" by Elvan
  Ceyhan, Computational Statistics and Data Analysis, 53, 2009, pp. 2786-2808.
+ 2.) Technical Report #KU-EC-08-6: New Tests of Spatial Segregation Based on Nearest Neighbor
+ Contingency Tables by Elvan Ceyhan, September 18, 2008
  */
 public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
@@ -149,52 +150,12 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         int yCenter = radius;
         /** Reference to the random number generator. */
         RandomNumberGen randomGen;
-        int circlesDrawn;
-        //int circleXCenter[] = new int[numCircles];
-        //int circleYCenter[] = new int[numCircles];
-        double nearestNeighborDistance[];
-        double total;
-        double mean;
-        double variance;
         double stdDev;
-        double median;
-        double deviate;
-        double deviateSquared;
-        double deviateCubed;
-        double deviateFourth;
-        double totalDeviateSquared;
-        double totalDeviateCubed;
-        double totalDeviateFourth;
-        double skewness;
-        double kurtosis;
-        double chiSquaredOfTwo;
-        double density;
-        double observedFrequency[] = new double[7];
-        double theoreticalFrequency[] = new double[7];
-        double chiSquaredOfFour;
-        double z;
-        int boundaryDistance;
-        int circlesLeft;
         int maskBytesSet;
-        double nearestNeighborDistanceSumOfSquares;
-        double chiSquared;
         Statistics stat;
         double degreesOfFreedom;
         double chiSquaredPercentile[] = new double[1];
-        double diameter;
-        double integral[] = new double[1];
-        double analyticalMean;
-        double analyticalMeanSquared;
-        double analyticalVariance;
-        double analyticalStandardError;
         double percentile[] = new double[1];
-        int numRandomCircles;
-        double minimumNNDistanceSquared;
-        double maximumNNDistanceSquared;
-        double lowestForbiddenSquared;
-        double highestForbiddenSquared;
-        double highestRegenerationSquared;
-        boolean intermediateRejected;
         byte parentX[] = null;
         int xParentXLocation[];
         int xParentYLocation[];
@@ -237,7 +198,6 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         double offset;
         int discIndex;
         int parentsPlaced;
-        double offspringPoissonMean;
         int originalCirclesCreated1;
         int originalCirclesCreated2;
         double intensity;
@@ -300,6 +260,9 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         double varN12;
         double varN21;
         double varN22;
+        double covN11N22;
+        double r;
+        double CD;
         // Under complete spatial randomness independence, zijD asymptotically has a N(0,1) distribution 
         // conditional on Q and R;
         double z11D;
@@ -1471,8 +1434,30 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         z21D = (N21 - EN21)/Math.sqrt(varN21);
         z22D = (N22 - EN22)/Math.sqrt(varN22);
         
-        Preferences.debug("Dixon's cell-specific test of segregation\n");
-        System.out.println("Dixon's cell-specific test of segregation");
+        covN11N22 = (n*n - 3*n - Q + R)*p1122 - n*n*p11*p22;
+        r = covN11N22/Math.sqrt(varN11*varN22);
+        CD = (z11D*z11D + z22D*z22D - 2*r*z11D*z22D)/(1 - r*r);
+        
+        // Under random labelling the chi squared statistic has degrees of freedom = 2;
+        // Under complete spatial randomness the chi squared statisitc has degrees of freedom = 1;
+        degreesOfFreedom = 1;
+        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                CD, degreesOfFreedom, chiSquaredPercentile);
+        stat.run();
+        Preferences.debug("chiSquared percentile for Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+        System.out.println("chiSquared percentile for Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
+        
+        if (chiSquaredPercentile[0] > 0.950) {
+            Preferences.debug("chiSquared test rejects random object distribution\n");
+            System.out.println("chiSquared test rejects random object distribution"); 
+        }
+        else {
+            Preferences.debug("chiSquared test does not reject random object distribution\n");
+            System.out.println("chiSquared test does not reject random object distribution");
+        }
+        
+        Preferences.debug("Dixon's cell-specific tests of segregation\n");
+        System.out.println("Dixon's cell-specific tests of segregation");
         
         stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z11D, 0, percentile);
         stat.run();
