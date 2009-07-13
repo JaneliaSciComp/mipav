@@ -29,6 +29,10 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
     public static final int INHOMOGENEOUS_POISSON = 7;
     
+    public static final int SEGREGATION_ALTERNATIVE = 8;
+    
+    public static final int ASSOCIATION_ALTERNATIVE = 9;
+    
     public static final int SQRT_X_PLUS_Y = 1;
     
     public static final int SQRT_X_TIMES_Y = 2;
@@ -61,6 +65,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     private int numPoints2;
     
     private int inhomogeneous;
+    
+    private double segregation;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -84,12 +90,13 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
      * @param  numPoints1
      * @param  numPoints2
      * @param  inhomogeneous
+     * @param  segregation
      */
     public AlgorithmTwoClassGeneration(ModelImage srcImage, int radius, int process, int numParents, 
             int numOffspring1, int numOffspring2, double normalizedStdDev,
             double parentPoissonNormalizedMean, double normalizedDiscRadius,
             int numPoints1, int numPoints2,
-            int inhomogeneous) {
+            int inhomogeneous, double segregation) {
         super(null, srcImage);
         this.radius = radius;
         this.process = process;
@@ -102,6 +109,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         this.numPoints1 = numPoints1;
         this.numPoints2 = numPoints2;
         this.inhomogeneous = inhomogeneous;
+        this.segregation = segregation;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -238,6 +246,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         int xCircleOrigYCenter[];
         int yCircleOrigXCenter[];
         int yCircleOrigYCenter[];
+        int xNumber;
+        double ry;
         double retentionProbability;
         double cumulativeProb;
         boolean retainCircle[];
@@ -810,7 +820,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
                              attempts++;
                              continue;
                          }
-                         r3loop:
+                         r4loop:
                              for (y = 0; y <= 2*radius; y++) {
                                  for (x = 0; x <= 2*radius; x++) {
                                      if (mask[x + y * xMaskDim] == 1) {
@@ -818,7 +828,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
                                                           (xDim + 4 * discRadius)*(yCenter + y - radius)] != 0) {
                                              found = false;
                                              attempts++;
-                                             break r3loop;
+                                             break r4loop;
                                          }
                                      }
                                  }
@@ -866,14 +876,14 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
                     found = true;
                     xCenter = randomGen.genUniformRandomNum(radius, xDim - 1 - radius);
                     yCenter = randomGen.genUniformRandomNum(radius, yDim - 1 - radius);
-                    rloop:
+                    r5loop:
                         for (y = 0; y <= 2*radius; y++) {
                             for (x = 0; x <= 2*radius; x++) {
                                 if (mask[x + y * xMaskDim] == 1) {
                                     if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
                                         found = false;
                                         attempts++;
-                                        break rloop;
+                                        break r5loop;
                                     }
                                 }
                             }
@@ -905,14 +915,14 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
                     found = true;
                     xCenter = randomGen.genUniformRandomNum(radius, xDim - 1 - radius);
                     yCenter = randomGen.genUniformRandomNum(radius, yDim - 1 - radius);
-                    rloop:
+                    r6loop:
                         for (y = 0; y <= 2*radius; y++) {
                             for (x = 0; x <= 2*radius; x++) {
                                 if (mask[x + y * xMaskDim] == 1) {
                                     if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
                                         found = false;
                                         attempts++;
-                                        break rloop;
+                                        break r6loop;
                                     }
                                 }
                             }
@@ -1041,6 +1051,213 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
                 }    
             }
         } // if (process == INHOMOGENEOUS_POISSON)
+        
+        if (process == SEGREGATION_ALTERNATIVE) {
+            xCircleXCenter = new int[numOffspring1];
+            xCircleYCenter = new int[numOffspring1];
+            yCircleXCenter = new int[numOffspring2];
+            yCircleYCenter = new int[numOffspring2];
+            for (i = 0; i < numOffspring1; i++) {
+                found = false;
+                attempts = 0;
+                while ((!found) && (attempts <= 100)) {
+                    found = true;
+                    xCenter = randomGen.genUniformRandomNum(0, (int)Math.round((xDim - 1)*(1 - segregation)));
+                    if ((xCenter - radius < 0) || (xCenter + radius > xDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    yCenter = randomGen.genUniformRandomNum(0, (int)Math.round((yDim - 1)*(1 - segregation)));
+                    if ((yCenter - radius < 0) || (yCenter + radius > yDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    r7loop:
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim] == 1) {
+                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
+                                        found = false;
+                                        attempts++;
+                                        break r7loop;
+                                    }
+                                }
+                            }
+                        } // for (y = 0; y <= 2*radius; y++)
+                } // while ((!found) && (attempts <= 100))
+                if (!found) {
+                    break;
+                }
+                xCircleXCenter[i] = xCenter;
+                xCircleYCenter[i] = yCenter;
+                for (y = 0; y <= 2*radius; y++) {
+                    for (x = 0; x <= 2*radius; x++) {
+                        if (mask[x + y * xMaskDim] == 1) {
+                            buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  1;
+                        }
+                    }
+                }
+            } // for (i = 0; i < numOffspring1; i++)
+            offspring1Drawn = i;
+            Preferences.debug(offspring1Drawn + " offspring 1 drawn.  " + numOffspring1 + " offspring 1 requested.\n");
+            System.out.println(offspring1Drawn + " offspring 1 drawn.  " + numOffspring1 + " offspring 1 requested.");
+            
+            for (i = 0; i < numOffspring2; i++) {
+                found = false;
+                attempts = 0;
+                while ((!found) && (attempts <= 100)) {
+                    found = true;
+                    xCenter = randomGen.genUniformRandomNum((int)Math.round(segregation*(xDim-1)), xDim-1);
+                    if ((xCenter - radius < 0) || (xCenter + radius > xDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    yCenter = randomGen.genUniformRandomNum((int)Math.round(segregation*(yDim-1)), yDim-1);
+                    if ((yCenter - radius < 0) || (yCenter + radius > yDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    r8loop:
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim] == 1) {
+                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
+                                        found = false;
+                                        attempts++;
+                                        break r8loop;
+                                    }
+                                }
+                            }
+                        } // for (y = 0; y <= 2*radius; y++)
+                } // while ((!found) && (attempts <= 100))
+                if (!found) {
+                    break;
+                }
+                yCircleXCenter[i] = xCenter;
+                yCircleYCenter[i] = yCenter;
+                for (y = 0; y <= 2*radius; y++) {
+                    for (x = 0; x <= 2*radius; x++) {
+                        if (mask[x + y * xMaskDim] == 1) {
+                            buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  2;
+                        }
+                    }
+                }
+            } // for (i = 0; i < numOffspring2; i++)
+            offspring2Drawn = i;
+            Preferences.debug(offspring2Drawn + " offspring 2 drawn.  " + numOffspring2 + " offspring 2 requested.\n");
+            System.out.println(offspring2Drawn + " offspring 2 drawn.  " + numOffspring2 + " offspring 2 requested.");
+            
+        } // if (process == SEGREGATION_ALTERNATIVE)
+        
+        if (process == ASSOCIATION_ALTERNATIVE) {
+            discRadius = (int)Math.round(normalizedDiscRadius * (xDim - 1)); 
+            xCircleXCenter = new int[numOffspring1];
+            xCircleYCenter = new int[numOffspring1];
+            yCircleXCenter = new int[numOffspring2];
+            yCircleYCenter = new int[numOffspring2];
+            for (i = 0; i < numOffspring1; i++) {
+                found = false;
+                attempts = 0;
+                while ((!found) && (attempts <= 100)) {
+                    found = true;
+                    xCenter = randomGen.genUniformRandomNum(0, xDim);
+                    if ((xCenter - radius < 0) || (xCenter + radius > xDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    yCenter = randomGen.genUniformRandomNum(0, yDim);
+                    if ((yCenter - radius < 0) || (yCenter + radius > yDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    r9loop:
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim] == 1) {
+                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
+                                        found = false;
+                                        attempts++;
+                                        break r9loop;
+                                    }
+                                }
+                            }
+                        } // for (y = 0; y <= 2*radius; y++)
+                } // while ((!found) && (attempts <= 100))
+                if (!found) {
+                    break;
+                }
+                xCircleXCenter[i] = xCenter;
+                xCircleYCenter[i] = yCenter;
+                for (y = 0; y <= 2*radius; y++) {
+                    for (x = 0; x <= 2*radius; x++) {
+                        if (mask[x + y * xMaskDim] == 1) {
+                            buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  1;
+                        }
+                    }
+                }
+            } // for (i = 0; i < numOffspring1; i++)
+            offspring1Drawn = i;
+            Preferences.debug(offspring1Drawn + " offspring 1 drawn.  " + numOffspring1 + " offspring 1 requested.\n");
+            System.out.println(offspring1Drawn + " offspring 1 drawn.  " + numOffspring1 + " offspring 1 requested.");
+            
+            for (i = 0; i < numOffspring2; i++) {
+                found = false;
+                attempts = 0;
+                while ((!found) && (attempts <= 100)) {
+                    found = true;
+                    xNumber =  randomGen.genUniformRandomNum(0, offspring1Drawn - 1);
+                    parentXLocation = xCircleXCenter[xNumber];
+                    parentYLocation = xCircleYCenter[xNumber];
+                    ry = randomGen.genUniformRandomNum(0.0, discRadius);
+                    angle = randomGen.genUniformRandomNum(0.0, 2.0*Math.PI);
+                    xCenter = (int)Math.round(parentXLocation + ry * Math.cos(angle));
+                    if ((xCenter - radius < 0) || (xCenter + radius > xDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    yCenter = (int)Math.round(parentYLocation + ry * Math.sin(angle));
+                    if ((yCenter - radius < 0) || (yCenter + radius > yDim - 1)) {
+                        found = false;
+                        attempts++;
+                        continue;
+                    }
+                    r10loop:
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim] == 1) {
+                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
+                                        found = false;
+                                        attempts++;
+                                        break r10loop;
+                                    }
+                                }
+                            }
+                        } // for (y = 0; y <= 2*radius; y++)
+                } // while ((!found) && (attempts <= 100))
+                if (!found) {
+                    break;
+                }
+                yCircleXCenter[i] = xCenter;
+                yCircleYCenter[i] = yCenter;
+                for (y = 0; y <= 2*radius; y++) {
+                    for (x = 0; x <= 2*radius; x++) {
+                        if (mask[x + y * xMaskDim] == 1) {
+                            buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  2;
+                        }
+                    }
+                }
+            } // for (i = 0; i < numOffspring2; i++)
+            offspring2Drawn = i;
+            Preferences.debug(offspring2Drawn + " offspring 2 drawn.  " + numOffspring2 + " offspring 2 requested.\n");
+            System.out.println(offspring2Drawn + " offspring 2 drawn.  " + numOffspring2 + " offspring 2 requested.");
+        } // if (process == ASSOCIATION_ALTERNATIVE)
         
         N11 = 0;
         N12 = 0;
