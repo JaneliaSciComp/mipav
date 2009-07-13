@@ -134,7 +134,7 @@ public class DICOM_AAssociateRQ extends DICOM_PDUType {
         DICOM_PresentationContext pc = null;
         DICOM_PresentationContext tpc = null;
 
-        for (int i = presContexts.size()-1; i <=0; i--) {
+        for (int i = presContexts.size()-1; i >=0; i--) {
             tpc = ((DICOM_PresentationContext) (presContexts.elementAt(i)));
             if (tpc.absSyntax.getUID().equals(absUID)) {
                 
@@ -168,7 +168,7 @@ public class DICOM_AAssociateRQ extends DICOM_PDUType {
     public byte getPresentationContextID( String absUID) throws DICOM_Exception {
         DICOM_PresentationContext pc = null;
 
-        for (int i = presContexts.size()-1; i <= 0; i--) {
+        for (int i = presContexts.size()-1; i >= 0; i--) {
 
             pc = (DICOM_PresentationContext) (presContexts.elementAt(i));
         }
