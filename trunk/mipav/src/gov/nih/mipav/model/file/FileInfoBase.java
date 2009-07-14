@@ -166,6 +166,23 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             MINUTES_STRING, HOURS_STRING, HZ_STRING, PPM_STRING, RADS_STRING, DEGREES_STRING};
 
     /**
+     * Array of all conversion factors for various units, base units are in the SI system (meter-kilogram-second).
+     * Each conversion factor is the multiplier needed to convert the given unit into the base unit.
+     * L - length (meter)
+     * T - time (second)
+     * M - mass (kilogram)
+     * C - concentration (parts per million)
+     * A - angle (radians)
+     * F - frequency (hertz)
+     * E - energy (joule)
+     * X - dimensionless (1)
+     */
+    private static final String[] allUnitsConv = {"0X", "0X", ".0254L", ".01L",
+        ".0000000001L", ".000000001L", ".000001L", ".001L", "1L",
+        "1000L", "1609.344L", ".000000001T", ".000001T", ".001T", "1T",
+        "60T", "360T", "1F", "1C", "1A", "0.0174532925A"};
+    
+    /**
      * Array of all abbreviated units --- the first value is unknown since all of the* static definitions start at 1
      * instead of 0. Each string* can be no more than 4 characters.
      */
@@ -527,6 +544,49 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public abstract void displayAboutInfo(JDialogBase dialog, TransMatrix matrix);
 
+    
+    /**
+     * This method is the only interaction developers should see with the allUnitsConv array.  A value with the given
+     * unit types available.
+     */
+    public static double convertValue(double val, String initUnit, String endUnit) {
+    	int initLoc = getUnitLoc(initUnit);
+    	int endLoc = getUnitLoc(endUnit);
+    	
+    	if(initLoc == -1 || endLoc == -1) {
+    		return Double.MIN_VALUE; //requested units not found
+    	}
+    	
+    	String initConvStr = allUnitsConv[initLoc];
+    	String endConvStr = allUnitsConv[endLoc];
+    	
+    	char initUnitType = initConvStr.charAt(initConvStr.length()-1);
+    	char endUnitType = endConvStr.charAt(endConvStr.length()-1);
+    	
+    	if(initUnitType != endUnitType) {
+    		return Double.MIN_VALUE; //requested conversion not possible because the dimensions do not match
+    	}
+    	
+    	double initToBase = Double.valueOf(initConvStr.substring(0, initConvStr.length()-1));
+    	double baseToEnd = 1.0/Double.valueOf(endConvStr.substring(0, endConvStr.length()-1));
+    	
+    	double endVal = val * initToBase * baseToEnd;
+    	
+    	return endVal;
+    	
+    }
+    
+    private static int getUnitLoc(String unitStr) {
+    	for(int i=0; i<allUnits.length; i++) {
+    		if(allUnits[i].equals(unitStr)) {
+    			return i;
+    		}
+    	}
+    	
+    	//unitStr not found
+    	return -1;
+    }
+    
     /**
      * Helper method to copy important file info type to another file info type.
      * 
