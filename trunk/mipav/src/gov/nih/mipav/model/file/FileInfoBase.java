@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.file;
 
 
+import java.util.Vector;
+
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSerialCloneable;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -548,6 +550,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /**
      * This method is the only interaction developers should see with the allUnitsConv array.  A value with the given
      * unit types available.
+     * 
+     * @return Double.MIN_VALUE if the conversion is not possible
      */
     public static double convertValue(double val, String initUnit, String endUnit) {
     	int initLoc = getUnitLoc(initUnit);
@@ -672,6 +676,36 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                 j++; // increment the index into the newInfo
             }
         }
+    }
+    
+    public static int[] getAllSameDimUnits(String dim) {
+    	int dimLoc = getUnitLoc(dim);
+    	if(dimLoc == -1) {
+    		return new int[0];
+    	}
+    	
+    	return getAllSameDimUnits(dimLoc);
+    }
+   
+    public static int[] getAllSameDimUnits(int dim) {
+    	if(dim < 0 || dim > allUnits.length) {
+    		return new int[0];
+    	}
+    	
+    	char unitType = allUnitsConv[dim].charAt(allUnitsConv[dim].length()-1);
+    	Vector<Integer> unitList = new Vector<Integer>();
+    	for(int i=0; i<allUnitsConv.length; i++) {
+    		if(allUnitsConv[i].charAt(allUnitsConv[i].length()-1) == unitType) {
+    			unitList.add(Integer.valueOf(i));
+    		}
+    	}
+    	
+    	int[] unitArr = new int[unitList.size()];
+    	for(int i=0; i<unitArr.length; i++) {
+    		unitArr[i] = unitList.get(i).intValue();
+    	}
+    	
+    	return unitArr;
     }
 
     /**
