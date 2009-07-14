@@ -1,4 +1,5 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -10,6 +11,7 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 
 /**
@@ -63,6 +65,15 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
 
     /** DOCUMENT ME! */
     private JTextField hdmLValTF;
+    
+    /** Combo box for selecting output units */
+    private JComboBox outputUnits;
+    
+    /**If a 3D image, whether the plugin should print volume.**/
+    private JCheckBox doVolumeMeasure;
+    
+    /**If a 3D image, whether the plugin should print volume.**/
+    private JCheckBox doAreaMeasure;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -387,7 +398,54 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
         hdmHValTF.setFont(serif12);
         inputPanel.add(hdmHValTF);
 
-        getContentPane().add(inputPanel, BorderLayout.CENTER);
+        getContentPane().add(inputPanel, BorderLayout.NORTH);
+        
+        JPanel outputPanel = new JPanel(new GridBagLayout());
+        outputPanel.setForeground(Color.black);
+        outputPanel.setBorder(buildTitledBorder("Output parameters"));
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        
+        JPanel unitsPanel = new JPanel();
+        JLabel unitLabel = new JLabel("Select output units: ");
+        unitLabel.setForeground(Color.black);
+        unitLabel.setBorder(new EmptyBorder(0, 0, 0, 20));
+        unitLabel.setFont(serif12);
+        unitsPanel.add(unitLabel, gbc);
+
+        int measure = image.getUnitsOfMeasure()[0];
+        String measureText = FileInfoBase.getUnitsOfMeasureStr(measure);
+        int[] allSameMeasure = FileInfoBase.getAllSameDimUnits(measure);
+        String[] unitArr = new String[allSameMeasure.length];
+        for(int i=0; i<allSameMeasure.length; i++) {
+        	unitArr[i] = FileInfoBase.getUnitsOfMeasureStr(allSameMeasure[i]);
+        }
+        outputUnits = new JComboBox(unitArr);
+        outputUnits.setFont(serif12);
+        outputUnits.setSelectedItem(measureText);
+        unitsPanel.add(outputUnits);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        outputPanel.add(unitsPanel, gbc);
+        
+        if(image.getNDims() > 2) {
+        	gbc.weightx = 0;
+        	gbc.gridy = 1;
+        	gbc.gridx = 0;
+        	gbc.anchor = GridBagConstraints.CENTER;
+        	doVolumeMeasure = new JCheckBox("Show slice volume calculations");
+        	doVolumeMeasure.setSelected(true);
+        	doVolumeMeasure.setFont(serif12);
+        	outputPanel.add(doVolumeMeasure, gbc);
+        	
+        	gbc.gridy = 2;
+        	doAreaMeasure = new JCheckBox("Show slice area calculations");
+        	doAreaMeasure.setFont(serif12);
+        	outputPanel.add(doAreaMeasure, gbc);
+        }
+        
+        getContentPane().add(outputPanel, BorderLayout.CENTER);
 
         // Build the Panel that holds the OK and CANCEL Buttons
         JPanel OKCancelPanel = new JPanel();
