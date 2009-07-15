@@ -3565,7 +3565,6 @@ public class ModelImage extends ModelStorageBase {
      */
     public void make2UnitsOfMeasureIdentical(int newUnitDim, int oldUnitDim) {
         int i;
-        System.out.println("In here");
         int newUnit = fileInfo[0].getUnitsOfMeasure()[newUnitDim];
         int oldUnit = fileInfo[0].getUnitsOfMeasure()[oldUnitDim];
         float res = fileInfo[0].getResolutions()[oldUnitDim];
