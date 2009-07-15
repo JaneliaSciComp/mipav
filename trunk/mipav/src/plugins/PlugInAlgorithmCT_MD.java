@@ -44,6 +44,15 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public int ldmL = 0;
+    
+    /**The ending units */
+    public String resultUnit;
+    
+    /**Whether to calculate slice volumes for a 3D image*/
+    public boolean doVolume;
+    
+    /**Whether to calculate slice area for a 3D image*/
+    public boolean doArea;
 
 
     /** DOCUMENT ME! */
@@ -59,6 +68,9 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
      */
     public PlugInAlgorithmCT_MD(ModelImage destImg, ModelImage srcImg) {
         super(destImg, srcImg);
+        resultUnit = FileInfoBase.getUnitsOfMeasureStr(srcImage.getUnitsOfMeasure()[0]);
+        doVolume = true;
+        doArea = false;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -276,18 +288,40 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
                                                                       ViewJFrameMessage.DATA);
             ViewUserInterface.getReference().getMessageFrame().append("Number of fat pixels = " + fat,
                                                                       ViewJFrameMessage.DATA);
-            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (fat * area) + " "+unitStr+"^2\n",
-                                                                      ViewJFrameMessage.DATA);
-
+            if(doArea) {
+	            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (fat * area) + " "+unitStr+"^2",
+	                                                                      ViewJFrameMessage.DATA);
+            }
+            if(doVolume) {
+            	ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (fat * vol) + " "+unitStr+"^3",
+                        ViewJFrameMessage.DATA);
+            }
+            ViewUserInterface.getReference().getMessageFrame().append("\n", ViewJFrameMessage.DATA);
+            
+            
             ViewUserInterface.getReference().getMessageFrame().append("Number of LDM pixels = " + ldMuscle,
                                                                       ViewJFrameMessage.DATA);
-            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (ldMuscle * area) + " "+unitStr+"^2\n",
-                                                                      ViewJFrameMessage.DATA);
+            if(doArea) {
+	            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (ldMuscle * area) + " "+unitStr+"^2",
+	                                                                      ViewJFrameMessage.DATA);
+            }
+            if(doVolume) {
+            	ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (ldMuscle * vol) + " "+unitStr+"^3",
+                        ViewJFrameMessage.DATA);
+            }
+            ViewUserInterface.getReference().getMessageFrame().append("\n", ViewJFrameMessage.DATA);
 
             ViewUserInterface.getReference().getMessageFrame().append("Number of HDM pixels = " + hdMuscle,
                                                                       ViewJFrameMessage.DATA);
-            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (hdMuscle * area) + " "+unitStr+"^2\n",
-                                                                      ViewJFrameMessage.DATA);
+            if(doArea) {
+	            ViewUserInterface.getReference().getMessageFrame().append("  Area = " + (hdMuscle * area) + " "+unitStr+"^2",
+	                                                                      ViewJFrameMessage.DATA);
+            }
+            if(doVolume) {
+            	ViewUserInterface.getReference().getMessageFrame().append("  Volume = " + (hdMuscle * vol) + " "+unitStr+"^3",
+                        ViewJFrameMessage.DATA);
+            }
+            ViewUserInterface.getReference().getMessageFrame().append("\n", ViewJFrameMessage.DATA);
         }
 
         destImage.releaseLock();

@@ -268,6 +268,7 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
                 ctSegAlgo.hdmL = hdmLVal;
                 ctSegAlgo.hdmH = hdmHVal;
 
+                ctSegAlgo.resultUnit = outputUnits.getSelectedItem().toString();
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -312,6 +313,10 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
                 ctSegAlgo.ldmH = ldmHVal;
                 ctSegAlgo.hdmL = hdmLVal;
                 ctSegAlgo.hdmH = hdmHVal;
+                
+                ctSegAlgo.resultUnit = outputUnits.getSelectedItem().toString();
+                ctSegAlgo.doVolume = doVolumeMeasure.isSelected();
+                ctSegAlgo.doArea = doAreaMeasure.isSelected();
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -441,6 +446,7 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
         	
         	gbc.gridy = 2;
         	doAreaMeasure = new JCheckBox("Show slice area calculations");
+        	doAreaMeasure.setSelected(false);
         	doAreaMeasure.setFont(serif12);
         	outputPanel.add(doAreaMeasure, gbc);
         }
