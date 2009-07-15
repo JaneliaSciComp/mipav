@@ -119,6 +119,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
     private void calcStoreInDest2D() {
 
         int length; // total number of data-elements (pixels) in image
+        int resultUnitLoc;
         float[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
         String unitStr;
 
@@ -126,7 +127,8 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
             // image length is length in 2 dims
             length = srcImage.getExtents()[0] * srcImage.getExtents()[1];
-            unitStr = getUnitsString();
+            resultUnitLoc = FileInfoBase.getUnitsOfMeasureFromStr(resultUnit);
+            unitStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(resultUnitLoc);
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
         } catch (IOException error) {
@@ -192,7 +194,14 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
             return;
         }
 
-        float area = srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1];
+        //perform any necessary conversion
+        int res0Unit = srcImage.getUnitsOfMeasure(0);
+        int res1Unit = srcImage.getUnitsOfMeasure(1);
+        
+        float xRes = (float) (srcImage.getResolutions(0)[0] * ModelImage.getConversionFactor(resultUnitLoc, res0Unit));
+        float yRes = (float) (srcImage.getResolutions(0)[1] * ModelImage.getConversionFactor(resultUnitLoc, res1Unit));
+        
+        float area = xRes * yRes;
 
         ViewUserInterface.getReference().getMessageFrame().append("Number of Fat pixels = " + fat,
                                                                   ViewJFrameMessage.DATA);
@@ -222,11 +231,21 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
         int totLength, imgLength;
         float[] buffer;
         
-        float area = srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1];
+       //perform any necessary conversion
+        int resultUnitLoc = FileInfoBase.getUnitsOfMeasureFromStr(resultUnit);
+        int res0Unit = srcImage.getUnitsOfMeasure(0);
+        int res1Unit = srcImage.getUnitsOfMeasure(1);
+        int res2Unit = srcImage.getUnitsOfMeasure(2);
+        
+        float xRes = (float) (srcImage.getResolutions(0)[0] * ModelImage.getConversionFactor(resultUnitLoc, res0Unit));
+        float yRes = (float) (srcImage.getResolutions(0)[1] * ModelImage.getConversionFactor(resultUnitLoc, res1Unit));
+        float zRes = (float) (srcImage.getResolutions(0)[2] * ModelImage.getConversionFactor(resultUnitLoc, res2Unit));
+        
+        float area = xRes * yRes;
 
-        float vol = srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1] * srcImage.getResolutions(0)[2];
+        float vol = xRes * yRes * zRes;
 
-        String unitStr = getUnitsString();
+        String unitStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(resultUnitLoc);
         
         try {
 
@@ -353,26 +372,4 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
         setCompleted(true);
     }
-    
-    private String getUnitsString() {
-    	String unit = "";
-    	if(srcImage.getNDims() == 2) {
-    		if(srcImage.getUnitsOfMeasure()[0] == srcImage.getUnitsOfMeasure()[1]) {
-    			return FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getUnitsOfMeasure()[0]);
-    		} else {
-    			MipavUtil.displayInfo("Image units of measure do not agree in all dimensions.  Please check units carefully.");
-    			unit = "unknown";
-    		}
-    	} else if(srcImage.getNDims() == 3) {
-    		if(srcImage.getUnitsOfMeasure()[0] == srcImage.getUnitsOfMeasure()[1] && srcImage.getUnitsOfMeasure()[1] == srcImage.getUnitsOfMeasure()[2]) {
-    			return FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getUnitsOfMeasure()[0]);
-    		} else {
-    			MipavUtil.displayInfo("Image units of measure do not agree in all dimensions.  Please check units carefully.");
-    			unit = "unknown";
-    		}
-    	}
-    	
-    	return unit;
-    }
-
 }
