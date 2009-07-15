@@ -3583,7 +3583,7 @@ public class ModelImage extends ModelStorageBase {
      * 
      * @return Double.MIN_VALUE when a valid conversion is not found
      */
-    public double getConversionFactor(int newUnit, int oldUnit) {
+    public static double getConversionFactor(int newUnit, int oldUnit) {
     	if(newUnit == oldUnit) {
     		return 1;
     	}
@@ -3593,6 +3593,7 @@ public class ModelImage extends ModelStorageBase {
             switch(oldUnit) {
                 case FileInfoBase.CENTIMETERS:
                     return 0.393700787;
+                    
                 case FileInfoBase.ANGSTROMS:
                     return 3.93700787E-9;
                      
