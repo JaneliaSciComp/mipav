@@ -1134,6 +1134,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     //e.printStackTrace();
                 } catch(NoClassDefFoundError e) {
                 	//components of some classes may no longer exist in the classpath.
+                	System.out.println("Here: "+name);
                 }
             }
         }
