@@ -74,7 +74,15 @@ public class FileHistoLUT extends FileBase {
      */
     public FileHistoLUT(String fileName, String fileDir) throws IOException {
         int index = fileName.lastIndexOf("."); // remove extension
-        String fileNameBase = fileName.substring(0, index);
+        String fileNameBase = null;
+        
+        if(index != -1){
+        	fileNameBase = fileName.substring(0, index);
+        }
+        else{
+        	fileNameBase = fileName;
+        }
+
 
         // initialize class variables
         this.lutFileName = fileNameBase + ".lut";
