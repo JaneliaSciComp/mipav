@@ -179,6 +179,17 @@ public class DICOM_VR {
     public static final void writeData(DICOM_VR vr, DICOM_Comms vrBuffer) {
         vrBuffer.write(vr.data, 0, vr.data.length);
     }
+    
+    /**
+     * Writes a VR to a DICOM_Comms (network socket).
+     *
+     * @param  vr        the VR to write
+     * @param  vrBuffer  the DICOM_Comms to write to
+     * @param ioBuffer 
+     */
+    public static final void writeDataIn(DICOM_VR vr, DICOM_Comms vrBuffer, DICOM_FileIO ioBuffer) {
+        vrBuffer.writeIn(vr.data, 0, vr.data.length, ioBuffer);
+    }
 
     /**
      * Returns a deep copy the VR.

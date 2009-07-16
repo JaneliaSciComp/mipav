@@ -308,7 +308,9 @@ public class DICOM_CRequest {
 
         if (ddo != null) {
             Preferences.debug(DICOM_Util.timeStamper() + " CRequest.write DDO: " + ddo.toString("Data") + "  \n");
-            pdu.write(transferSyntax, classUID, (byte) 0);
+            transferSyntax = pdu.getTransferSyntaxID();
+            pdu.write(transferSyntax, ddo, classUID, (byte) 0);
+//            pdu.write(ddo, classUID, (byte) 1);
         }
     }
 

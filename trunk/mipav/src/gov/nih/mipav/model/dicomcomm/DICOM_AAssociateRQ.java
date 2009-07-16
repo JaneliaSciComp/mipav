@@ -169,8 +169,9 @@ public class DICOM_AAssociateRQ extends DICOM_PDUType {
         DICOM_PresentationContext pc = null;
 
         for (int i = presContexts.size()-1; i >= 0; i--) {
-
-            pc = (DICOM_PresentationContext) (presContexts.elementAt(i));
+        		if (absUID == ((DICOM_PresentationContext)presContexts.elementAt(i)).absSyntax.UID){
+                    pc = (DICOM_PresentationContext) (presContexts.elementAt(i));
+        		}
         }
 
         if (pc == null) {

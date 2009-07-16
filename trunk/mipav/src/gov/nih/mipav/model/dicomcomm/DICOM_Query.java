@@ -378,7 +378,7 @@ public class DICOM_Query extends DICOM_SOP implements Runnable {
 
         DICOM_Object ddoRsp = new DICOM_Object();
         DICOM_Object dco = new DICOM_Object();
-
+        pdu.parseDICOMintoBuffer(ddo.copy(), pdu.pDataTF.getVRLinkedBuffer(), pdu.ioBuffer);
         cFindRq.write(pdu, null, UID, null, ddo, null); // send query
         pdu.addFindResultToList(null, ddo); // indicates start
 
