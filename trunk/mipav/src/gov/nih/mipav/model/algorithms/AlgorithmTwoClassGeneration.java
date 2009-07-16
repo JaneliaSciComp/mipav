@@ -2,6 +2,9 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
+import Jama.*;
 
 import gov.nih.mipav.view.*;
 
@@ -280,6 +283,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         double p2221;
         double covN11N12;
         double covN11N21;
+        double covN21N11;
         double covN12N21;
         double covN12N22;
         double varC1;
@@ -296,6 +300,34 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         double z12N;
         double z21N;
         double z22N;
+        double covN21N12;
+        double covN12N11;
+        double covN21N22;
+        double covN22N11;
+        double covN22N21;
+        double covN22N12;
+        double covN11C2;
+        double covN12C1;
+        double covN22C1;
+        double covN21C2;
+        double covC1C1;
+        double covC1C2;
+        double covC2C1;
+        double covC2C2;
+        double covT11T12;
+        double covT11T21;
+        double covT11T22;
+        double covT12T11;
+        double covT12T21;
+        double covT12T22;
+        double covT21T11;
+        double covT21T12;
+        double covT21T22;
+        double covT22T11;
+        double covT22T12;
+        double covT22T21;
+        double sigma[][];
+        Matrix sigmaN;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -1577,10 +1609,10 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         
         varC1 = varN11 + varN21 + 2 * covN11N21;
         varC2 = varN12 + varN22 + 2 * covN12N22;
-        covN11C1 = covN11N21;;
-        covN12C2 = covN12N22;
-        covN21C1 = covN11N21;
-        covN22C2 = covN12N22;
+        covN11C1 = varN11 + covN11N21;
+        covN12C2 =  varN12 + covN12N22;
+        covN21C1 = varN21 + covN11N21;
+        covN22C2 =  varN22 + covN12N22;
         varT11 = varN11 + (double)(n1 - 1)*(n1 - 1)*varC1/((n - 1)*(n - 1))
                   - 2 * (double)(n1 - 1)*covN11C1/(n - 1);
         varT12 = varN12 + (double)n1*n1*varC2/((n - 1) * (n - 1))
@@ -1594,6 +1626,71 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         z12N = T12/Math.sqrt(varT12);
         z21N = T21/Math.sqrt(varT21);
         z22N = T22/Math.sqrt(varT22);
+        
+        // CN = T'SigmaNInverseT
+        // CN has a chiSquared distribution with 1 degree of freedom
+        // T' = [T11 T12 T21 T22]
+        // T = [T11]
+        //     [T12]
+        //     [T21]
+        //     [T22]
+        // SigmaN = [varT11    covT11T12  covT11T21  covT11T22]
+        //          [covT12T11 varT12     covT12T21  covT12T22]
+        //          [covT21T11 covT21T12  varT21     covT21T22]
+        //          [covT22T11 covT22T12  covT22T21  varT22]
+        
+        covN12N11 = covN11N12;
+        covN11C2 = covN11N12 + covN11N22;
+        covN12C1 = covN12N11 + covN12N21;
+        covN21N12 = covN12N21;
+        covN21N22 = (n - R)*p221 + (n*n - 3*n - Q + R)*p2221 - n*n*p22*p21;
+        covC1C2 = covN11N12 + covN11N22 + covN21N12 + covN21N22;
+        covT11T12 = covN11N12 - (double)n1*covN11C2/(n - 1) - (double)(n1 - 1)*covN12C1/(n - 1)
+                    + (double)(n1 - 1)*n1*covC1C2/((n - 1)*(n - 1));
+        covN21N11 = covN11N21;
+        covC1C1 = varN11 + covN11N21 + covN21N11 + varN21;
+        covT11T21 = covN11N21 - (double)n2*covN11C1/(n - 1) - (double)(n1 - 1)*covN21C1/(n - 1)
+                    + (double)(n1 - 1)*n2*covC1C1/((n - 1)*(n - 1));
+        covN22N11 = covN11N22;
+        covN22N21 = covN21N22;
+        covN22C1 = covN22N11 + covN22N21;
+        covT11T22 = covN11N22 - (double)(n2 - 1)*covN11C2/(n - 1) - (double)(n1 - 1)*covN22C1/(n - 1)
+                    + (double)(n1 - 1)*(n2 - 1)*covC1C2/((n - 1)*(n - 1));
+        covT12T11 = covT11T12;
+        covC2C1 = covC1C2;
+        covN21C2 = covN21N12 + covN21N22;
+        covT12T21 = covN12N21 - (double)n2*covN12C1/(n - 1) - (double)n1*covN21C2/(n - 1)
+                    + (double)n1*n2*covC2C1/((n - 1)*(n - 1));
+        covN22N12 = covN12N22;
+        covC2C2 = varN12 + covN12N22 + covN22N12 + varN22;
+        covT12T22 = covN22N12 - (double)n1*covN22C2/(n - 1) - (double)(n2 - 1)*covN12C2/(n - 1)
+                    + (double)(n2 - 1)*n1*covC2C2/((n - 1)*(n - 1));
+        covT21T11 = covT11T21;
+        covT21T12 = covT12T21;
+        covT21T22 = covN22N21 + (double)n2*covN22C1/(n - 1) - (double)(n2 - 1)*covN21C2/(n - 1)
+                    + (double)(n2 - 1)*n2*covC2C1/((n - 1)*(n - 1));
+        covT22T11 = covT11T22;
+        covT22T12 = covT12T22;
+        covT22T21 = covT21T22;
+        sigma = new double[4][4];
+        sigma[0][0] =  varT11;
+        sigma[0][1] = covT11T12;
+        sigma[0][2] = covT11T21;
+        sigma[0][3] = covT11T22;
+        sigma[1][0] = covT12T11;
+        sigma[1][1] =  varT12;
+        sigma[1][2] = covT12T21;
+        sigma[1][3] = covT12T22;
+        sigma[2][0] = covT21T11;
+        sigma[2][1] = covT21T12;
+        sigma[2][2] = varT21;
+        sigma[2][3] = covT21T22;
+        sigma[3][0] = covT22T11;
+        sigma[3][1] = covT22T12;
+        sigma[3][2] = covT22T21;
+        sigma[3][3] = varT22;
+        sigmaN = new Matrix(sigma);
+        sigmaN = sigmaN.inverse();
         
         Preferences.debug("Ceyhan's cell-specific tests of segregation\n");
         System.out.println("Ceyhan's cell-specific tests of segregation");
