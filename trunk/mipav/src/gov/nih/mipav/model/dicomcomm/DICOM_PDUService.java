@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.dicomcomm;
 
 
+import gov.nih.mipav.model.dicomcomm.DICOM_Comms.ByteBuffer;
 import gov.nih.mipav.view.*;
 
 
@@ -59,7 +60,7 @@ public class DICOM_PDUService extends DICOM_Comms {
     Hashtable proposedAbstractSyntaxs = new Hashtable();
 
     /** Buffer used in sending DICOM image. */
-    private DICOM_FileIO ioBuffer = null;
+    DICOM_FileIO ioBuffer = new DICOM_FileIO();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -783,15 +784,15 @@ public class DICOM_PDUService extends DICOM_Comms {
     /**
      * Writes the image (loaded into ioBuffer from file) out the port.
      * @param   transferSyntax    Transfer syntax
+     * @param ddo 
      * @param   sopClassUID    SOP class UID
      * @param   messageHeader  1 = indicates command, 0 = data.
      *
      * @throws  DICOM_Exception  Throws error if an error is encountered writing the image out the port.
      */
-    public void write(String transferSyntax, String sopClassUID, byte messageHeader) throws DICOM_Exception {
+    public void write(String transferSyntax, DICOM_Object ddo, String sopClassUID, byte messageHeader) throws DICOM_Exception {
 
         pDataTF.getVRLinkedBuffer().setOutgoingEndianess(LITTLE_ENDIAN);
-
         // The incomming buffer should contain the DICOM file read from disk.
         pDataTF.getVRLinkedBuffer().outgoingBuffers = ioBuffer.incomingBuffers;
         pDataTF.getVRLinkedBuffer().outBuffersLength = ioBuffer.inBuffersLength;
@@ -1222,6 +1223,62 @@ public class DICOM_PDUService extends DICOM_Comms {
     private boolean shouldWeAcceptApplicationContext(DICOM_PDUItemType applicationContext) {
         return (true); // accept all presentation contextes !!!!!!!!
     }
+
+	public void parseDICOMintoBuffer(DICOM_Object ddo, DICOM_Comms vrBuffer, DICOM_FileIO ioBuffer) {
+        DICOM_VR VR;
+        int length;
+        boolean padByte = false;
+
+        while ((VR = ddo.pop()) != null) {
+            vrBuffer.writeShort16In(VR.group, ioBuffer);
+            vrBuffer.writeShort16In(VR.element, ioBuffer);
+            length = VR.data.length;
+            padByte = false;
+
+            if ((length % 2) != 0) { // not even
+                length++;
+                padByte = true;
+            }
+
+            vrBuffer.writeInt32In(length, ioBuffer);
+            // Preferences.debug("DICOM_PDU_SERV parseDICOMIntoRawVR: "+Integer.toString(VR.group, 0x10) + "," +
+            //          Integer.toString(VR.element,0x10)+"; VR length = "  + length+ " (" +
+            // Integer.toString(length, 0x10) + ")\n");
+
+            DICOM_VR.writeDataIn(VR, vrBuffer, ioBuffer);
+
+            if (padByte) {
+                int typeCode = DICOM_RTC.getTypeCode(DICOM_RTC.unknownDDType(VR.group, VR.element));
+                byte padCharacter = ' '; // clever: always padding space, if we need to pad
+
+                switch (typeCode) {
+
+                    case DICOM_RTC.TYPE_CS:
+                    case DICOM_RTC.TYPE_IS:
+                    case DICOM_RTC.TYPE_LO:
+                    case DICOM_RTC.TYPE_PN:
+                    case DICOM_RTC.TYPE_SH:
+                        padCharacter = (byte) ' ';
+                        break;
+
+                    case DICOM_RTC.TYPE_UNKNOWN:
+                        padCharacter = (byte) ' '; // space
+                        break;
+
+                    case DICOM_RTC.TYPE_OB:
+                    case DICOM_RTC.TYPE_UI:
+                    case DICOM_RTC.TYPE_DT:
+                        padCharacter = 0; // for completeness: null char padded
+                        break;
+
+                    default:
+                }
+
+                vrBuffer.writeByteIn(padCharacter, ioBuffer);
+            }
+        }
+		
+	}
 
 
 }

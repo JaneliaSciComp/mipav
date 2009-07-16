@@ -784,6 +784,54 @@ public class DICOM_Comms {
             }
         }
     }
+    
+    /**
+     * Writes a specified number of bytes from the byte buffer into incomming ByteBuffer list of byte buffers.
+     *
+     * @param  data        byte buffer
+     * @param  dataOffset  DOCUMENT ME!
+     * @param  nBytes      number of bytes to write
+     * @param ioBuffer 
+     */
+    public void writeIn(byte[] data, int dataOffset, int nBytes, DICOM_FileIO ioBuffer) {
+
+        int length;
+        ByteBuffer byteBuffer;
+
+        
+        if (ioBuffer.incomingBuffers.size() == 0) {
+            ByteBuffer byteBuffer2 = new ByteBuffer(breakSize);
+            ioBuffer.incomingBuffers.addElement(byteBuffer2);
+        }
+
+        while (nBytes > 0) {
+
+            byteBuffer = (ByteBuffer) ioBuffer.incomingBuffers.lastElement();
+            length = byteBuffer.bufferSize - byteBuffer.endIndex;
+
+            if (length > 0) {
+
+                if (length <= nBytes) {
+                    System.arraycopy(data, dataOffset, byteBuffer.data, byteBuffer.endIndex + 1, length);
+                    ioBuffer.inBuffersLength += length;
+                    nBytes -= length;
+                    dataOffset += length;
+                    byteBuffer.endIndex += length;
+
+                    ByteBuffer byteBuffer2 = new ByteBuffer(breakSize);
+                    ioBuffer.incomingBuffers.addElement(byteBuffer2);
+                } else {
+                    System.arraycopy(data, dataOffset, byteBuffer.data, byteBuffer.endIndex + 1, nBytes);
+                    ioBuffer.inBuffersLength += nBytes;
+                    byteBuffer.endIndex += nBytes;
+                    nBytes = 0;
+                }
+            } else {
+                ByteBuffer byteBuffer2 = new ByteBuffer(ByteBuffer.DEFAULT_SIZE);
+                ioBuffer.incomingBuffers.addElement(byteBuffer2);
+            }
+        }
+    }
 
     /**
      * Writes a byte to the outgoing buffers.
@@ -793,6 +841,17 @@ public class DICOM_Comms {
     public final void writeByte(byte value) {
         byteArray1[0] = value;
         write(byteArray1, 0, 1);
+    }
+    
+    /**
+     * Writes a byte to the incoming buffers.
+     *
+     * @param  value  byte value
+     * @param ioBuffer 
+     */
+    public final void writeByteIn(byte value, DICOM_FileIO ioBuffer) {
+        byteArray1[0] = value;
+        writeIn(byteArray1, 0, 1, ioBuffer);
     }
 
     /**
@@ -805,6 +864,19 @@ public class DICOM_Comms {
         int32ToBuffer(byteArray4, 0, value, outEndianess);
         write(byteArray4, 0, 4);
     }
+    
+    /**
+     * Writes a 32 (4 byte) integer to the incoming buffers.
+     *
+     * @param  value  the value to be sent. The value is put into a 4 byte "byte" buffer in the order indicated by the
+     *                specified endianess of this class.
+     * @param ioBuffer 
+     */
+    public final void writeInt32In(int value, DICOM_FileIO ioBuffer) {
+        int32ToBuffer(byteArray4, 0, value, outEndianess);
+        writeIn(byteArray4, 0, 4, ioBuffer);
+    }
+
 
     /**
      * Writes a 16 (2 byte) integer to the outgoing buffers.
@@ -815,6 +887,18 @@ public class DICOM_Comms {
     public final void writeShort16(int value) {
         int16ToBuffer(byteArray2, 0, value, outEndianess);
         write(byteArray2, 0, 2);
+    }
+    
+    /**
+     * Writes a 16 (2 byte) integer to the incomming buffers.
+     *
+     * @param  value  the value to be sent. The value is put into a 2 byte "byte" buffer in the order indicated by the
+     *                specified endianess of this class.
+     * @param ioBuffer 
+     */
+    public final void writeShort16In(int value, DICOM_FileIO ioBuffer) {
+        int16ToBuffer(byteArray2, 0, value, outEndianess);
+        writeIn(byteArray2, 0, 2, ioBuffer);
     }
 
 
