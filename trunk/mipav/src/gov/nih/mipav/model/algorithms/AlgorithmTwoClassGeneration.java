@@ -328,6 +328,11 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         double covT22T21;
         double sigma[][];
         Matrix sigmaN;
+        double Tp[][];
+        Matrix TpM;
+        double T[][];
+        Matrix TM;
+        double CN[][];
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -362,6 +367,59 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
                 }
             }
         } // for (y = 0; y <= 2*radius; y++)
+        
+        switch(process) {
+            case FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS:
+                Preferences.debug("FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS\n");
+                System.out.println("FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS");
+                break;
+            case FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS:
+                Preferences.debug("FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS\n");
+                System.out.println("FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS");
+                break;
+            case RANDOM_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS:
+                Preferences.debug("RANDOM_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS\n");
+                System.out.println("RANDOM_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS");
+                break;
+            case RANDOM_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS:
+                Preferences.debug("RANDOM_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS\n");
+                System.out.println("RANDOM_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS");
+                break;
+            case MATERN_SAME_PARENTS:
+                Preferences.debug("MATERN_SAME_PARENTS\n");
+                System.out.println("MATERN_SAME_PARENTS");
+                break;
+            case MATERN_DIFFERENT_PARENTS:
+                Preferences.debug("MATERN_DIFFERENT_PARENTS\n");
+                System.out.println("MATERN_DIFFERENT_PARENTS");
+                break;
+            case INHOMOGENEOUS_POISSON:
+                Preferences.debug("INHOMOGENEOUS_POISSON\n");
+                System.out.println("INHOMOGENEOUS_POISSON");
+                switch(inhomogeneous) {
+                    case SQRT_X_PLUS_Y:
+                        Preferences.debug("SQRT_X_PLUS_Y\n");
+                        System.out.println("SQRT_X_PLUS_Y");
+                        break;
+                    case SQRT_X_TIMES_Y:
+                        Preferences.debug("SQRT_X_TIMES_Y\n");
+                        System.out.println("SQRT_X_TIMES_Y");
+                        break;
+                    case ABS_X_MINUS_Y:
+                        Preferences.debug("ABS_X_MINUS_Y\n");
+                        System.out.println("ABS_X_MINUS_Y");
+                        break;
+                }
+                break;
+            case SEGREGATION_ALTERNATIVE:
+                Preferences.debug("SEGREGATION_ALTERNATIVE\n");
+                System.out.println("SEGREGATION_ALTERNATIVE");
+                break;
+            case ASSOCIATION_ALTERNATIVE:
+                Preferences.debug("ASSOCIATION_ALTERNATIVE\n");
+                System.out.println("ASSOCIATION_ALTERNATIVE");
+                break;
+        }
         
         randomGen = new RandomNumberGen();
         if ((process == FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS) || 
@@ -1690,7 +1748,34 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         sigma[3][2] = covT22T21;
         sigma[3][3] = varT22;
         sigmaN = new Matrix(sigma);
-        sigmaN = sigmaN.inverse();
+        Tp = new double[1][4];
+        Tp[0][0] = T11;
+        Tp[0][1] = T12;
+        Tp[0][2] = T21;
+        Tp[0][3] = T22;
+        TpM = new Matrix(Tp);
+        T = new double[4][1];
+        T[0][0] = T11;
+        T[1][0] = T12;
+        T[2][0] = T21;
+        T[3][0] = T22;
+        TM = new Matrix(T);
+        CN = ((TpM.times(sigmaN.inverse())).times(TM)).getArray();
+        degreesOfFreedom = 1;
+        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                CN[0][0], degreesOfFreedom, chiSquaredPercentile);
+        stat.run();
+        Preferences.debug("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+        System.out.println("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
+        
+        if (chiSquaredPercentile[0] > 0.950) {
+            Preferences.debug("chiSquared test rejects random object distribution\n");
+            System.out.println("chiSquared test rejects random object distribution"); 
+        }
+        else {
+            Preferences.debug("chiSquared test does not reject random object distribution\n");
+            System.out.println("chiSquared test does not reject random object distribution");
+        }
         
         Preferences.debug("Ceyhan's cell-specific tests of segregation\n");
         System.out.println("Ceyhan's cell-specific tests of segregation");
