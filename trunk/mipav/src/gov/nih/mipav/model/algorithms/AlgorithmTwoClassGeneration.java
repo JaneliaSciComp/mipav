@@ -11,7 +11,40 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 /**
- Referencs :
+ *      This program generates type 1 and type 2 objects in different spatial patterns and tests to see if
+ *      randomness if rejected for segregation or association.  The objects may be points or circles of
+ *      a specified radius. 
+ *
+ *      Segregation occurs when members of a given class have nearest neighbors that are more frequently of the
+ *      same class and less frequently of the other class than would be expected if there were randomness in the
+ *      nearest neighbor structure.  Association occurs when members of a given class have nearest neighbors that
+ *      are less frequently of the same class and more frequently of the other class than would be expected if 
+ *      there were randomness in the nearest neighbor structure.
+ *      
+ *      Nearest neighbor contingency tables are constructed using the nearest neighbor frequencies of classes.
+ *      Below is the nearest neighbor contingency table used for the 2 class case in this program:
+ *                                                NN class                                       Sum
+ *                                                Class 1                Class 2
+ *      Base class            Class 1             N11                    N12                     n1
+ *                            Class 2             N21                    N22                     n2
+ *                            
+ *                            Sum                 C1                     C2                      n
+ *                            
+ *      This program performs the following tests: Dixon's overall test of segregation, Dixon's cell-specific
+ *      tests of segregation, Ceyhan's overall test of segregation, and Ceyhan's cell-specific tests of 
+ *      segregation.  Dixon's overall test of segregation generates CD which follows a chi squared distribution
+ *      with 1 degree of freedom.  Spatial randomness is rejected if CD has a value greater than the chi squared
+ *      cumulative frequency value of 0.95.  In Dixon's cell-specific tests ZijD for i = 1,2 j = 1,2 are calculated
+ *      from (Nij - expected value(Nij))/sqrt(variance Nij).  ZijD has a normal distribution with 0 mean and a 
+ *      standard deviation of 1.  2 sided tests are used with one tail end of the curve indicating segregation and
+ *      the other tail end of the curve indicating association.  Cutoff is at 0.025 at one end of the tail and at
+ *      0.975 at the other end of the tail.  Ceyhan's overall test of segregation generates CN
+ *      which follows a chi squared distribution with 1 degree of freedom.  Spatial randomness if rejected if CN
+ *      has a value greater than the chi squared cumulative frequency value of 0.95. In Ceyhan's cell-specific
+ *      tests ZijN with i = 1,2 j = 1,2 are calculated from Tij/sqrt(variance Tij).  ZijN has a normal distribution
+ *      with 0 mean and a standard deviation of 1.
+ * 
+ References :
  1.) "Overall and pairwise segregation tests based on nearest neighbor contigency tables" by Elvan
  Ceyhan, Computational Statistics and Data Analysis, 53, 2009, pp. 2786-2808.
  2.) Technical Report #KU-EC-08-6: New Tests of Spatial Segregation Based on Nearest Neighbor
@@ -21,16 +54,66 @@ import java.io.*;
  */
 public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
+    // numParents are generated with a uniform random distribution over the square.
+    // Type 1 offspring are generated with (numOffspring1/numParents) offspring from
+    // each parent in the set with a radially symmetric Gaussian distribution whose
+    // standard deviation = normalized standard deviation * (xDim - 1).  Type 2
+    // offspring are generated with (numOffspring2/numParents) offspring from each
+    // parent in the same set used for the type 1 offspring with the same radially 
+    // symmetric Gaussian distribution.
     public static final int FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS = 1;
     
+    // A first set of numParents are generated with a uniform random distribution over the square.
+    // Type 1 offspring are generated with (numOffspring1/numParents) offspring from
+    // each parent in the first set with a radially symmetric Gaussian distribution whose
+    // standard deviation = normalized standard deviation * (xDim - 1).  A second
+    // set of numParents are generated with a uniform distribution over the square.
+    // Type 2 offspring are generated with (numOffspring2/numParents) offspring from each
+    // parent in the second set with the same radially symmetric Gaussian distribution.
     public static final int FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS = 2;
     
+    // numParents are generated with a uniform random distribution over the square.
+    // Type 1 offspring are generated from a randomly chosen parent
+    // in the set with a radially symmetric Gaussian distribution whose
+    // standard deviation = normalized standard deviation * (xDim - 1).  Type 2
+    // offspring are generated from a randomly chosen
+    // parent in the same set used for the type 1 offspring with the same radially 
+    // symmetric Gaussian distribution.
     public static final int RANDOM_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS = 3;
     
+    // A first set of numParents are generated with a uniform random distribution over the square.
+    // Type 1 offspring are generated from a randomly chosen
+    // parent in the first set with a radially symmetric Gaussian distribution whose
+    // standard deviation = normalized standard deviation * (xDim - 1).  A second
+    // set of numParents are generated with a uniform distribution over the square.
+    // Type 2 offspring are generated from a randomly chosen
+    // parent in the second set with the same radially symmetric Gaussian distribution.
     public static final int RANDOM_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS = 4;
     
+    // Put 100 * parentPoissonNormalizedMean points into an area 100 times as large
+    // as the actual image area.  Then each parent point is replaced with a random
+    // cluster of offspring.  The number of objects inside each cluster are random with
+    // a Poisson distribution whose mean = numOffspring1/parentPoissonNormalizedMean for
+    // type 1 objects and whose mean = numOffspring2/parentPoissonNormalizedMean for type 2 objects.
+    // The points are placed independently and uniformly inside a disc with a 
+    // disc radius = normalized disc radius * (xDim - 1).  Only consider those objects
+    // falling inside the actual image area.  One set of parent points is used for
+    // both offspring.
     public static final int MATERN_SAME_PARENTS = 5;
     
+    // Put 100 * parentPoissonNormalizedMean points into an area 100 times as large
+    // as the actual image area.  Then each parent point is replaced with a random
+    // cluster of type 1 offspring.  The number of type 1 objects inside each cluster are random with
+    // a Poisson distribution whose mean = numOffspring1/parentPoissonNormalizedMean.
+    // The type 1 offspring are placed independently and uniformly inside a disc with a 
+    // disc radius = normalized disc radius * (xDim - 1).  Only consider those points
+    // falling inside the actual image area.  A second set of 100 * parentPoissonNormalizedMean
+    // parent points is generated for type 2 objects.  Each second set parent point is replaced with
+    // a cluster of type 2 offspring.  The number of type 2 objects inside each cluster are random with
+    // a Poisson distribution whose mean = numOffspring2/parentPoissonNormalizedMean.  The type 2 
+    // offsprihg are placed independently and uniformly inside a disc with a disc radius =
+    // normalized disc radius * (xDim - 1).  Only consider those points falling inside the
+    // actual image area.
     public static final int MATERN_DIFFERENT_PARENTS = 6;
     
     public static final int INHOMOGENEOUS_POISSON = 7;
