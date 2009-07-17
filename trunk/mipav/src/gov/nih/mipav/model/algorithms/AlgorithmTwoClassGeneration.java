@@ -1448,19 +1448,19 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         // Find R, twice the number of reflexive pairs.
         R = 0;
         for (i = 0; i < offspring1Drawn; i++) {
-            if (NN1Type[i] == SAME && NN1Neighbor[NN1Neighbor[i]] == i) {
+            if (NN1Type[i] == SAME && NN1Type[NN1Neighbor[i]] == SAME && NN1Neighbor[NN1Neighbor[i]] == i) {
                 R++;
             }
-            else if (NN1Type[i] == DIFFERENT && NN2Neighbor[NN1Neighbor[i]] == i) {
+            else if (NN1Type[i] == DIFFERENT && NN2Type[NN1Neighbor[i]] == DIFFERENT && NN2Neighbor[NN1Neighbor[i]] == i) {
                 R++;
             }
         }
         
         for (i = 0; i < offspring2Drawn; i++) {
-            if (NN2Type[i] == DIFFERENT && NN1Neighbor[NN2Neighbor[i]] == i) {
+            if (NN2Type[i] == DIFFERENT && NN1Type[NN2Neighbor[i]] == DIFFERENT && NN1Neighbor[NN2Neighbor[i]] == i) {
                 R++;
             }
-            else if (NN2Type[i] == SAME && NN2Neighbor[NN2Neighbor[i]] == i) {
+            else if (NN2Type[i] == SAME && NN2Type[NN2Neighbor[i]] == SAME && NN2Neighbor[NN2Neighbor[i]] == i) {
                 R++;
             }
         }
