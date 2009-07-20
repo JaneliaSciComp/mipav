@@ -482,10 +482,13 @@ public class ViewMenuBar {
     }
 
     public JMenu makeSystemsAnalysisMenu() {
-        return menuBuilder.makeMenu("Systems analysis", 'S', false, new JComponent[] {menuBuilder.makeMenu("DTI", true,
-                new JMenuItem[] {menuBuilder.buildMenuItem("Estimate tensor", "estimateTensor", 0, null, true),
-                        menuBuilder.buildMenuItem("Fiber tracking", "fiberTracking", 0, null, true),
-                        menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, true)})});
+    	 return menuBuilder.makeMenu("Systems Analysis", 'S', false, new JComponent[] {
+    			 menuBuilder.makeMenu("DTI", true, new JMenuItem[] {
+                         menuBuilder.buildMenuItem("Estimate Tensor", "estimateTensor", 0, null, true),
+                         menuBuilder.buildMenuItem("Fiber Tracking / Statistics", "fiberTracking", 0, null, true),
+                         menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, true)  
+    			 })
+    	 });
     }
 
     /**
