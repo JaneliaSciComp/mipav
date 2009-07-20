@@ -723,14 +723,31 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         /* Perform adaptive fuzzy clustering           */
 
         /************************************************/
+        Preferences.debug("Before first ComputeMemberships2D centroids are:\n");
+        for (i = 0; i < centroids.length; i++) {
+            Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n");
+        }
         ComputeMemberships2D(buffer, centroids, mems, exponent);
+        Preferences.debug("Afer first ComputeMemberships2D centroids are:\n");
+        for (i = 0; i < centroids.length; i++) {
+            Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n");
+        }
 
         while ((iterations <= maxIter) && (maxChange > tolerance)) {
             fireProgressStateChanged("Iteration = " + iterations + " maxChange = " + maxChange);
 
+            Preferences.debug("iterations = " + iterations + "\n");
             ComputeCentroids2D(buffer, centroids, mems, qVal);
+            Preferences.debug("After ComputeCentroids2D\n");
+            for (i = 0; i < centroids.length; i++) {
+                Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n");
+            }
 
             ComputeMemberships2D(buffer, centroids, mems, exponent);
+            Preferences.debug("Afer ComputeMemberships2D:\n");
+            for (i = 0; i < centroids.length; i++) {
+                Preferences.debug("centroids[" + i + "] = " + centroids[i] + "\n");
+            }
 
             iterations += 1;
         } // while ((iterations <= maxIter) && (maxChange > tolerance))
@@ -1301,6 +1318,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         int m;
         float minC;
         int indexM;
+        int indexB;
         float tempFloat = 0;
         int index = 0;
         int yStepOut;
@@ -1318,6 +1336,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     for (x = 0; (x < xDim) && !threadStopped; x++) {
                         index = x + yStepOut;
                         indexM = (c * sliceSize) + index;
+                        indexB = (m * sliceSize) + index;
 
                         if (objMask.get(index)) {
 
@@ -1331,7 +1350,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                                 tempFloat = (float) Math.pow(mems[indexM], qVal);
                             }
 
-                            numer += tempFloat * buffer[index];
+                            numer += tempFloat * buffer[indexB];
                             denom += tempFloat;
                         } // if (objMask.get(index))
                     } // for (x = 0; x < xDim; x++)
@@ -1405,6 +1424,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         int i, j;
         float minC;
         int indexM;
+        int indexB;
         int m;
         float tempFloat = 0;
         int index = 0;
@@ -1426,6 +1446,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                         for (x = 0; x < xDim; x++) {
                             index = x + yStepOut;
                             indexM = (c * volSize) + index;
+                            indexB = (m * volSize) + index;
 
                             if (objMask.get(index)) {
 
@@ -1439,7 +1460,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                                     tempFloat = (float) Math.pow(mems[indexM], qVal);
                                 }
 
-                                numer += tempFloat * buffer[index];
+                                numer += tempFloat * buffer[indexB];
                                 denom += tempFloat;
                             } // if (objMask.get(index)
                         } // for (x = 0; x < xDim; x++)
