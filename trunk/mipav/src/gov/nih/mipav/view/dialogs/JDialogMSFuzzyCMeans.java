@@ -1368,11 +1368,12 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
 
         gbc.gridx = 0;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.gridy = 0;
+        int ypos = 0;
+        gbc.gridy = ypos++;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         paramPanel.add(upperPanel, gbc);
-        gbc.gridy = 1;
+        gbc.gridy = ypos++;
         gbc.gridwidth = 1;
         paramPanel.add(imageVOIPanel, gbc);
         gbc.gridx = 1;
@@ -1381,6 +1382,9 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
         colorPanel = new JPanelColorChannels(srcImage[0]);
 
         if (srcImage[0].isColorImage()) {
+            gbc.gridx = 0;
+            gbc.gridy = ypos++;
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
             paramPanel.add(colorPanel, gbc);
         } // if (doColor)
 
@@ -1420,7 +1424,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
 
         gbc.gridx = 0;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.gridy = 2;
+        gbc.gridy = ypos++;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         paramPanel.add(imagePanel, gbc);
