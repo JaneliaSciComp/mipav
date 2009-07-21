@@ -1434,7 +1434,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             return;
         }
 
-        if (source.equals(queryResultTable.getSelectionModel())) {
+        if (source.equals(queryResultTable.getSelectionModel())&&queryTableModel.getRowCount()!=0) {
             setEnabled(down, true);
             setEnabled(move, true);
 

@@ -873,7 +873,7 @@ public class DICOM_Comms {
      * @param ioBuffer 
      */
     public final void writeInt32In(int value, DICOM_FileIO ioBuffer) {
-        int32ToBuffer(byteArray4, 0, value, outEndianess);
+        int32ToBuffer(byteArray4, 0, value, DICOM_PDUService.LITTLE_ENDIAN);
         writeIn(byteArray4, 0, 4, ioBuffer);
     }
 
@@ -897,7 +897,7 @@ public class DICOM_Comms {
      * @param ioBuffer 
      */
     public final void writeShort16In(int value, DICOM_FileIO ioBuffer) {
-        int16ToBuffer(byteArray2, 0, value, outEndianess);
+        int16ToBuffer(byteArray2, 0, value, DICOM_PDUService.LITTLE_ENDIAN);
         writeIn(byteArray2, 0, 2, ioBuffer);
     }
 

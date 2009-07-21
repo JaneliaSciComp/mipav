@@ -53,7 +53,7 @@ public class DICOM_StdStorage extends DICOM_SOP {
             throws DICOM_Exception {
 
         DICOM_Object dco = new DICOM_Object();
-
+        pdu.parseDICOMintoBuffer(ddo.copy(), pdu.pDataTF.getVRLinkedBuffer(), pdu.ioBuffer);
         cStoreRq.write(pdu, transferSyntax, classUID, instanceUID, ddo, null);
         pdu.readInObject(dco);
         cStoreRsp.read(dco, pdu, null);

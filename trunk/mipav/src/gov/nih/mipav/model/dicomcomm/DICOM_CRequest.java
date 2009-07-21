@@ -310,7 +310,6 @@ public class DICOM_CRequest {
             Preferences.debug(DICOM_Util.timeStamper() + " CRequest.write DDO: " + ddo.toString("Data") + "  \n");
             transferSyntax = pdu.getTransferSyntaxID();
             pdu.write(transferSyntax, ddo, classUID, (byte) 0);
-//            pdu.write(ddo, classUID, (byte) 1);
         }
     }
 
