@@ -100,6 +100,7 @@ public class DICOM_StdRetrieve extends DICOM_SOP {
             Preferences.debug(DICOM_Util.timeStamper() + " DICOM_StdRetrieve.write: MOVE request.\n");
         }
 
+        pdu.parseDICOMintoBuffer(ddo.copy(), pdu.pDataTF.getVRLinkedBuffer(), pdu.ioBuffer);
         cMoveRq.write(pdu, null, UID, null, ddo, outAETitle);
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {

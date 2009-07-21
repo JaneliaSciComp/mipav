@@ -12,7 +12,7 @@ public class DICOM_PDataTF extends DICOM_PDUType {
     public byte PDVPresContID;
 
     /** Size of the output data */
-    private int outBlockSize;
+    int outBlockSize;
 
     /** Presentation Data Value length. */
     private int PDVLength; 
@@ -38,7 +38,7 @@ public class DICOM_PDataTF extends DICOM_PDUType {
     private boolean readMessageStatus = false;
 
     /** Reference to the link buffer communication link. */
-    private DICOM_CommsLink vrLinkedBuffer = new DICOM_CommsLink();
+    DICOM_CommsLink vrLinkedBuffer = new DICOM_CommsLink();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 

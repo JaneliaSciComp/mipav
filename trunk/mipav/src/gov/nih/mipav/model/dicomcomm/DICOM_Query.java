@@ -34,7 +34,7 @@ public class DICOM_Query extends DICOM_SOP implements Runnable {
     private boolean keepGoing = true;
 
     /** The PDU service object. */
-    private DICOM_PDUService pdu;
+    public DICOM_PDUService pdu;
 
     /** The GUI frame to starting queries.  */
     private ViewJFrameDICOMQuery queryFrame;
@@ -172,11 +172,11 @@ public class DICOM_Query extends DICOM_SOP implements Runnable {
             Preferences.debug("DICOMQuery.sendQuery: " + pdu.findResults.toString("Display query results") + " \n");
         }
 
-        pdu.close();
 
         if (cancelFlag == false) {
             queryFrame.displayQueryResults(queryType);
         }
+        pdu.close();
     }
 
     /**

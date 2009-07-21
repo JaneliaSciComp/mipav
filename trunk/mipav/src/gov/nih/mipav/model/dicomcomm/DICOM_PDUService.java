@@ -105,7 +105,7 @@ public class DICOM_PDUService extends DICOM_Comms {
                 group = vrBuffer.readShort16();
                 element = vrBuffer.readShort16();
                 length = vrBuffer.readInt32();
-
+/*
                 if ((length == 0) && (start == 0)) {
                     start = 1;
 
@@ -114,7 +114,8 @@ public class DICOM_PDUService extends DICOM_Comms {
                         vrBuffer.readInt32();
                         // System.out.println (" i " + vrBuffer.readInt32());
                     }
-                }
+                   
+                } */
 
                 // Preferences.debug(DICOM_Util.timeStamper() + " PDU_Service.parseRawVRIntoDICOM: " +
                 // " group = " + Integer.toHexString(group) +
@@ -792,7 +793,7 @@ public class DICOM_PDUService extends DICOM_Comms {
      */
     public void write(String transferSyntax, DICOM_Object ddo, String sopClassUID, byte messageHeader) throws DICOM_Exception {
 
-        pDataTF.getVRLinkedBuffer().setOutgoingEndianess(LITTLE_ENDIAN);
+        pDataTF.getVRLinkedBuffer().setOutgoingEndianess(BIG_ENDIAN);
         // The incomming buffer should contain the DICOM file read from disk.
         pDataTF.getVRLinkedBuffer().outgoingBuffers = ioBuffer.incomingBuffers;
         pDataTF.getVRLinkedBuffer().outBuffersLength = ioBuffer.inBuffersLength;
@@ -1241,9 +1242,9 @@ public class DICOM_PDUService extends DICOM_Comms {
             }
 
             vrBuffer.writeInt32In(length, ioBuffer);
-            // Preferences.debug("DICOM_PDU_SERV parseDICOMIntoRawVR: "+Integer.toString(VR.group, 0x10) + "," +
-            //          Integer.toString(VR.element,0x10)+"; VR length = "  + length+ " (" +
-            // Integer.toString(length, 0x10) + ")\n");
+           //  Preferences.debug("DICOM_PDU_SERV parseDICOMIntoRawVR: "+Integer.toString(VR.group, 0x10) + "," +
+          //            Integer.toString(VR.element,0x10)+"; VR length = "  + length+ " (" +
+         //    Integer.toString(length, 0x10) + ")\n");
 
             DICOM_VR.writeDataIn(VR, vrBuffer, ioBuffer);
 
@@ -1277,6 +1278,8 @@ public class DICOM_PDUService extends DICOM_Comms {
                 vrBuffer.writeByteIn(padCharacter, ioBuffer);
             }
         }
+        
+
 		
 	}
 
