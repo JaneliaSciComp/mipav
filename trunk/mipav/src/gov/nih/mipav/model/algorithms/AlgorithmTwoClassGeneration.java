@@ -1631,8 +1631,14 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         
         z11D = (N11 - EN11)/Math.sqrt(varN11);
         z12D = (N12 - EN12)/Math.sqrt(varN12);
+        Preferences.debug("z11D = " + z11D + "\n");
+        Preferences.debug("z12D = " + z12D + "\n");
+        Preferences.debug("Should have z11D = -z12D for 2 class case\n");
         z21D = (N21 - EN21)/Math.sqrt(varN21);
         z22D = (N22 - EN22)/Math.sqrt(varN22);
+        Preferences.debug("z21D = " + z21D + "\n");
+        Preferences.debug("z22D = " + z22D + "\n");
+        Preferences.debug("Should have z21D = -z22D for 2 class case\n");
         
         covN11N22 = (n*n - 3*n - Q + R)*p1122 - n*n*p11*p22;
         r = covN11N22/Math.sqrt(varN11*varN22);
@@ -1735,10 +1741,10 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             System.out.println("Complete spatial randomness cannot be rejected based on N22 value");
         }
         
-        T11 = N11 - ((double)(n1 - 1)/(n - 1))*C1;
-        T12 = N12 - ((double)n1/(n - 1))*C2;
-        T21 = N21 - ((double)n2/(n - 1))*C1;
-        T22 = N22 - ((double)(n2 - 1)/(n - 1))*C2;
+        T11 = N11 - ((double)(n1 - 1)*C1)/(n - 1);
+        T12 = N12 - ((double)n1*C2)/(n - 1);
+        T21 = N21 - ((double)n2*C1)/(n - 1);
+        T22 = N22 - ((double)(n2 - 1)*C2)/(n - 1);
         
         p122 = ((double)n1*n2*(n2 - 1))/(n*(n - 1)*(n - 2));
         p1112 = ((double)n1*(n1 - 1)*(n1 - 2)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
@@ -1754,19 +1760,25 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         covN12C2 =  varN12 + covN12N22;
         covN21C1 = varN21 + covN11N21;
         covN22C2 =  varN22 + covN12N22;
-        varT11 = varN11 + (double)(n1 - 1)*(n1 - 1)*varC1/((n - 1)*(n - 1))
-                  - 2 * (double)(n1 - 1)*covN11C1/(n - 1);
-        varT12 = varN12 + (double)n1*n1*varC2/((n - 1) * (n - 1))
-                 - 2 * (double)n1*covN12C2/(n - 1);
-        varT21 = varN21 + (double)n2*n2*varC1/((n - 1)*(n - 1))
-                 - 2 * (double)n2*covN21C1/(n - 1);
-        varT22 = varN22 + (double)(n2 - 1)*(n2 - 1)*varC2/((n - 1)*(n - 1))
-                 - 2 * (double)(n2 - 1)*covN22C2/(n - 1);
+        varT11 = varN11 + (n1 - 1)*(n1 - 1)*varC1/((n - 1)*(n - 1))
+                  - 2 * (n1 - 1)*covN11C1/(n - 1);
+        varT12 = varN12 + n1*n1*varC2/((n - 1) * (n - 1))
+                 - 2 * n1*covN12C2/(n - 1);
+        varT21 = varN21 + n2*n2*varC1/((n - 1)*(n - 1))
+                 - 2 * n2*covN21C1/(n - 1);
+        varT22 = varN22 + (n2 - 1)*(n2 - 1)*varC2/((n - 1)*(n - 1))
+                 - 2 * (n2 - 1)*covN22C2/(n - 1);
         
         z11N = T11/Math.sqrt(varT11);
         z12N = T12/Math.sqrt(varT12);
         z21N = T21/Math.sqrt(varT21);
         z22N = T22/Math.sqrt(varT22);
+        Preferences.debug("z11N = " + z11N + "\n");
+        Preferences.debug("z21N = " + z21N + "\n");
+        Preferences.debug("Should have z11N = -z21N for 2 class case\n");
+        Preferences.debug("z12N = " + z12N + "\n");
+        Preferences.debug("z22N = " + z22N + "\n");
+        Preferences.debug("Should have z12N = -z22N for 2 class case\n");
         
         // CN = T'SigmaNInverseT
         // CN has a chiSquared distribution with 1 degree of freedom
