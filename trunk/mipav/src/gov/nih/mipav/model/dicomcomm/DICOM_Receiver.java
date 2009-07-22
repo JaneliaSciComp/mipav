@@ -218,7 +218,9 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                             Preferences.debug("DICOMReceiver.mipavReciever: " + e);
                         }
                     }
-
+                    // No need since PDUService should have closed socket after read
+                    
+                    /*
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug("DICOMReceiver.mipavReciever: (" + this.hashCode() +
                                           ") Closing connection from " + inetAddress + "\n");
@@ -234,6 +236,8 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                     }
 
                     acceptedSocket = null;
+                
+                */
                 }
             } catch (Exception e) {
 
@@ -549,7 +553,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
 
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() +
-                                          " DICOMReceiver.recieverClient: StoreRSP: Success" + filePath + fileName +
+                                          " DICOMReceiver.recieverClient: StoreRSP: Success " + filePath + fileName +
                                           "\n");
                     }
 
