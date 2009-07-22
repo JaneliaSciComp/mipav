@@ -34,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 public class PlugInMuscleImageDisplay extends ViewJFrameImage implements AlgorithmInterface {
     
@@ -3076,7 +3077,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     	//~ Instance fields -------------------------------------------------------------------------------------
     	
     	/** Labels for instructions. */
-		private JLabel[] instructionLabel;
+		private JLabel instructionLabel;
 
 		/** Text for muscles where a mirror muscle may exist. */
 		private String[][] mirrorCalcItemsArr;
@@ -3095,6 +3096,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		
 		/** Buttons for all non-symmetric objects. */
 		private JButton[][] noMirrorButtonCalcItemsArr;
+		
+		/** Check box for whether volumes should be shown */
+		private JCheckBox doVolumeBox;
+		
+		/** Combo box for selecting output units */
+	    private JComboBox outputUnits;
 		
 		/**Seed for random color chooser for VOIs that have not had a color assigned to them. */
 		private int colorChoice = 0;
@@ -3373,7 +3380,6 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		        String subTitle = title.toLowerCase().substring(0, end);
 		        
 		        mirrorPanel[i].setBorder(MipavUtil.buildTitledBorder("View a"+vowel+subTitle+" component"));
-		    		
 		
 		    	mainPanel.add(mirrorPanel[i]);
 		    }
@@ -3391,6 +3397,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    		buttonGroup[i].setEnabled(false);
 		    	}
 		    }
+		    
+		    
 		    
 		    add(mainPanel, BorderLayout.CENTER);
 		    
@@ -3426,22 +3434,54 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        gbc.fill = GridBagConstraints.HORIZONTAL;
 	        gbc.gridx = 0;
 	        gbc.gridy = 0;
-	        gbc.weightx = 1;
+	        gbc.weightx = 0;
 	        gbc.weighty = 0;
 	        
-	        JPanel instructionPanel = new JPanel(new GridLayout(4, 1));
+	        JPanel instructionPanel = new JPanel(new GridBagLayout());
 	        instructionPanel.setForeground(Color.black);
 	        instructionPanel.setBorder(MipavUtil.buildTitledBorder("Instructions"));
-	        instructionLabel = new JLabel[2];
-	        instructionLabel[0] = new JLabel("1) Click on the muscle you would like to view.\n\r");
-	        instructionLabel[1] = new JLabel("2) Check boxes indicate whether a particular VOI exists.");
-	        //extra no longer needed for resizing
-	        
-	        for(int i=0; i<instructionLabel.length; i++) {
-	            instructionLabel[i].setFont(MipavUtil.font12);
-	            instructionPanel.add(instructionLabel[i], gbc);
-	            gbc.gridy++;
+	        String message = "<html>1) Click on the muscle you would like to view.<br>"+
+	        					"2) Check boxes indicate whether a particular VOI exists.";
+	        instructionLabel = new JLabel(message);
+	        instructionLabel.setFont(MipavUtil.font12);
+	        instructionPanel.add(instructionLabel, gbc);
+	 
+	        JPanel optionPanel = new JPanel();
+		    
+		    if(multipleSlices) {  //volumes never shown when 2D, even if slice thickness specified
+			    gbc.gridy = 1;
+			    gbc.weightx = 1;
+		    	gbc.fill = GridBagConstraints.CENTER;
+			    doVolumeBox = new JCheckBox("Show per-slice volume calculations");
+			    doVolumeBox.setFont(MipavUtil.font12);
+			    doVolumeBox.setBorder(new EmptyBorder(10, 0, 0, 0));
+		    	JPanel blankPanel = new JPanel();
+		    	blankPanel.add(doVolumeBox);
+			    instructionPanel.add(blankPanel, gbc);
+		    }
+		    
+		    JLabel unitLabel = new JLabel("Select output units: ");
+	        unitLabel.setForeground(Color.black);
+	        unitLabel.setBorder(new EmptyBorder(0, 0, 0, 10));
+	        unitLabel.setFont(MipavUtil.font12);
+	        optionPanel.add(unitLabel);
+		    
+		    int measure = imageA.getUnitsOfMeasure()[0];
+		    String measureText = FileInfoBase.getUnitsOfMeasureStr(measure);
+	        int[] allSameMeasure = FileInfoBase.getAllSameDimUnits(measure);
+	        String[] unitArr = new String[allSameMeasure.length];
+	        for(int i=0; i<allSameMeasure.length; i++) {
+	        	unitArr[i] = FileInfoBase.getUnitsOfMeasureStr(allSameMeasure[i]);
 	        }
+	        
+	        outputUnits = new JComboBox(unitArr);
+	        outputUnits.setFont(MipavUtil.font12);
+	        outputUnits.setSelectedItem(measureText);
+	        optionPanel.add(outputUnits);
+		    
+	        gbc.gridy = gbc.gridy+1;
+	        gbc.weightx = 1;
+		    instructionPanel.add(optionPanel, gbc);
 	        
 	        return instructionPanel;
 	    }
