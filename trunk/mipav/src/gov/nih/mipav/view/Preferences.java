@@ -831,6 +831,21 @@ public class Preferences {
             }
         }
     }
+    
+
+    /**
+     * Prints to data tab
+     * 
+     * @param string String string to be output
+     */
+    public static final void data(String string) {
+
+        if (messageFrame == null) {
+            System.err.println("Message frame is null");
+        } else {
+        	messageFrame.append(string, ViewJFrameMessage.DATA);   
+        }
+    }
 
     /**
      * If the debug is turned on for the given level, output to the messageFrame.
