@@ -38,16 +38,16 @@ public class PlugInSelectableVOI extends VOI {
 	
 	private boolean created = false;
 	
-	/** Total area of this VOI using counting method (subject to partial voluming). */
+	/** Total area of this VOI using counting method (subject to partial voluming), in pixels. */
 	private double[] totalArea;
 	
-	/** Total area of this VOI that is neither muscle or fat. */
+	/** Total area of this VOI that is neither muscle or fat, in pixels. */
 	private double[] partialArea;
 	
-	/** Total fat area of this VOI. */
+	/** Total fat area of this VOI, in pixels. */
 	private double[] fatArea;
 	
-	/** Total muscle area of this VOI. */
+	/** Total muscle area of this VOI, in number of pixels. */
 	private double[] leanArea;
 	
 	/** Mean Hounsfield unit for the fat area of this VOI. */
