@@ -417,6 +417,18 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		        	fileIO.setQuiet(true);
 
 		            srcImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
+		           
+		            boolean isMultifile = srcImage.getFileInfo()[0].getMultiFile();
+		            int numDims = srcImage.getNDims();
+		            
+		            if(isMultifile && numDims == 4) {
+		            	MipavUtil.displayError("Multifile 4D images are not currently supported");
+		            	srcImage.disposeLocal();
+			            srcImage = null;
+			            return;
+		            	
+		            }
+
 		            if(srcImage.isDicomImage()) {
 		            	if(formatTextField.getText().trim().equals("")) {
 		            		formatTextField.setText("dicom");
@@ -451,7 +463,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		            		}
 		            	}
 		            }
-		            int numDims = srcImage.getNDims();
+		            
 		            
 		            int xDim = srcImage.getExtents()[0];
 		            if(xdimTextField.getText().trim().equals("")) {
@@ -641,6 +653,10 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		            
 		            
 		            if(numDims == 3) {
+
+		            	
+		            	
+		            	
 		            	int numSlices = srcImage.getExtents()[2];
 		            	if(numSlicesTextField.getText().trim().equals("")) {
 			            	numSlicesTextField.setText(String.valueOf(numSlices));
@@ -651,31 +667,97 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		                        return;
 		            		}
 		            	}
-		            	String firstImageSliceAbsPath = srcImage.getFileInfo(0).getFileDirectory() + srcImage.getFileInfo(0).getFileName();
-		            	ArrayList<String> slicesArrayList = new ArrayList<String>();
-		            	for(int i=0;i<numSlices;i++) {
-		            		String absPath = srcImage.getFileInfo(i).getFileDirectory() + srcImage.getFileInfo(i).getFileName();
-		            		//System.out.println(absPath);
-		            		slicesArrayList.add(absPath);
+		            	
+		            	if(isMultifile) {
+			            	String firstImageSliceAbsPath = srcImage.getFileInfo(0).getFileDirectory() + srcImage.getFileInfo(0).getFileName();
+			            	String firstImageSliceName = srcImage.getFileInfo(0).getFileName();
+			            	ArrayList<String> slicesArrayList = new ArrayList<String>();
+			            	for(int i=0;i<numSlices;i++) {
+			            		String absPath = srcImage.getFileInfo(i).getFileDirectory() + srcImage.getFileInfo(i).getFileName();
+			            		//System.out.println(absPath);
+			            		slicesArrayList.add(absPath);
+			            	}
+			            	slicesVector.add(slicesArrayList);
+			            	
+			            	
+			            	
+			            	// we will display the full path
+	                        Vector rowData = new Vector();
+	                        rowData.add(firstImageSliceName + " - multifile");
+	                        rowData.add("");
+	                        rowData.add("");
+	                        rowData.add("");
+	                        rowData.add("");
+	                        
+	                        srcTableModel.addRow(rowData);
+		            	}else {
+		            		//to do
+		            		String imageAbsPath = srcImage.getFileInfo(0).getFileDirectory() + srcImage.getFileInfo(0).getFileName();
+		            		String imageName = srcImage.getFileInfo(0).getFileName();
+		            		
+		            		ArrayList<String> slicesArrayList = new ArrayList<String>();
+		            		
+		            		for(int i=0;i<numSlices;i++) {
+			            		String slicePath = imageAbsPath + "_3D_numSlices_" + numSlices + "_slice_" + i;
+			            		//System.out.println(absPath);
+			            		slicesArrayList.add(slicePath);
+			            	}
+			            	slicesVector.add(slicesArrayList);
+		            		
+			            	Vector rowData = new Vector();
+	                        rowData.add(imageName);
+	                        rowData.add("");
+	                        rowData.add("");
+	                        rowData.add("");
+	                        rowData.add("");
+	                        
+	                        srcTableModel.addRow(rowData);
+		            		
 		            	}
-		            	slicesVector.add(slicesArrayList);
-		            	
-		            	
-		            	
-		            	// we will display the full path
-                        Vector rowData = new Vector();
-                        rowData.add(firstImageSliceAbsPath);
-                        rowData.add("");
-                        rowData.add("");
-                        rowData.add("");
-                        rowData.add("");
-                        
-                        srcTableModel.addRow(rowData);
 		            
 		            	numVolumesTextField.setText(String.valueOf(srcTableModel.getRowCount()));
 		            	numVolumesTextField.setEditable(false);
 		            }else if(numDims == 4) {
-		            	//to do
+		            	int numVolumes = srcImage.getExtents()[3];
+		            	int numSlices = srcImage.getExtents()[2];
+		            	
+		            	if(numSlicesTextField.getText().trim().equals("")) {
+			            	numSlicesTextField.setText(String.valueOf(numSlices));
+			            	numSlicesTextField.setEditable(false);
+		            	}else {
+		            		if(!numSlicesTextField.getText().trim().equals(String.valueOf(numSlices))) {
+		            			MipavUtil.displayError("Num slices for this volume does not match previous num slices");
+		                        return;
+		            		}
+		            	}
+		            	
+		            	String imageAbsPath = srcImage.getFileInfo(0).getFileDirectory() + srcImage.getFileInfo(0).getFileName();
+	            		String imageName = srcImage.getFileInfo(0).getFileName();
+	            		
+	            		int i = 0;
+		            	for(i=0;i<numVolumes;i++) {
+		            		ArrayList<String> slicesArrayList = new ArrayList<String>();
+		            		for(int k=0;k<numSlices;k++) {
+		            			String slicePath = imageAbsPath + "_4D_numVols_" + numVolumes + "_numSlices_" + numSlices + "_vol_" + i + "_slice_" + k;
+			            		System.out.println(slicePath);
+			            		slicesArrayList.add(slicePath);
+		            		}
+		            		
+		            		slicesVector.add(slicesArrayList);
+		            		
+		            		Vector rowData = new Vector();
+	                        rowData.add(imageName + "_vol_" + i);
+	                        rowData.add("");
+	                        rowData.add("");
+	                        rowData.add("");
+	                        rowData.add("");
+	                        
+	                        srcTableModel.addRow(rowData);
+		            		
+		            	}
+		            	
+		            	numVolumesTextField.setText(String.valueOf(srcTableModel.getRowCount()));
+		            	numVolumesTextField.setEditable(false);
 		            	
 		            }
 		            
@@ -725,6 +807,33 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		        	fileIO.setQuiet(true);
 
 		            maskImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
+		            
+		            if(maskImage.getNDims() != 3) {
+		            	MipavUtil.displayError("Mask Image must be a 3D image");
+                        maskImage.disposeLocal();
+                        maskImage = null;
+		            	return;
+		            }
+		            
+		           int xdim = maskImage.getExtents()[0];
+		           int ydim = maskImage.getExtents()[1];
+		           
+		           if(!xdimTextField.getText().trim().equals(String.valueOf(xdim))) {
+		        	   MipavUtil.displayError("Mask image xdim does not match with dwi xdim");
+		        	   maskImage.disposeLocal();
+                       maskImage = null;
+		        	   return;
+		        	   
+		           }
+		           
+		           if(!ydimTextField.getText().trim().equals(String.valueOf(ydim))) {
+		        	   MipavUtil.displayError("Mask image ydim does not match with dwi ydim");
+		        	   maskImage.disposeLocal();
+                       maskImage = null;
+		        	   return;
+		        	   
+		           }
+		            
 		            maskImageTextField.setText(currDir);
 		        }
 		 }else if(command.equals("outputDirBrowse")) {
@@ -741,6 +850,9 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		        	outputDirTextField.setText(currDir);
 		        }
 		 }else if(command.equals("ok")) {
+			 
+			
+			
 			 boolean success = validateData();
 			 if(!success) {
 				 return;
@@ -1105,7 +1217,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 	
 	private void createPathFile() {
 		
-		
+		System.out.println("aaa");
 		
 		int numSlicesPer3DVolume = Integer.valueOf(numSlicesTextField.getText().trim()).intValue();
 		 try {
@@ -1119,6 +1231,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 	            	while (iter.hasNext()) {
 	            		ArrayList slicesList = (ArrayList)iter.next();
 	            		String path = (String)slicesList.get(i);
+	            		System.out.println(path);
 	            		printStream.println(path);
 	            	}
 	            	
@@ -1132,7 +1245,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 	            outputStream.close();
 	            
 		 }catch(Exception e) {
-			 
+			 e.printStackTrace();
 		 }
 		
 	}
@@ -1358,7 +1471,10 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             MipavUtil.displayError("Path file must be set to create tensor data.");
             return;
         }
-
+        System.out.println("aaaa " + m_kBMatrix.GetColumns());
+        System.out.println("xxxx " + m_kBMatrix.GetRows());
+        
+        
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
         kAlgorithm = new AlgorithmDWI2DTI( maskImage, false,
@@ -1376,8 +1492,8 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     	if(kAlgorithm.isCompleted()) {
            DTIImage = ((AlgorithmDWI2DTI)kAlgorithm).getDTIImage();
 
-           DTIImage.saveImage(listFile.getParent() + File.separator, "DTI.xml", FileUtility.XML, false);
-           MipavUtil.displayInfo("Tensor image saved as " + listFile.getParent() + File.separator + "DTI.xml");
+           DTIImage.saveImage(outputDirTextField.getText() + File.separator, "DTI.xml", FileUtility.XML, false);
+           MipavUtil.displayInfo("Tensor image saved as " + outputDirTextField.getText() + File.separator + "DTI.xml");
            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
            if(maskImage != null) {
         	   maskImage.disposeLocal();
