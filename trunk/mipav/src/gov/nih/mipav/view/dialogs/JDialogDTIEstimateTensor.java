@@ -119,6 +119,8 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     /** Diffusion Tensor image. */
     private ModelImage DTIImage = null;
     
+    private JButton loadMaskButton;
+    
     /**
      * List of file names for the Diffusion Weighted Images, from the .path
      * file.
@@ -221,9 +223,10 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         maskImageTextField = new JTextField(20);
         maskImageTextField.setEditable(false);
         maskImageTextField.setBackground(Color.white);
-        JButton loadMaskButton = new JButton("Browse");
+        loadMaskButton = new JButton("Browse");
         loadMaskButton.addActionListener(this);
         loadMaskButton.setActionCommand("maskBrowse");
+        loadMaskButton.setEnabled(false);
         maskImagePanel.add(maskImageTextField);
         maskImagePanel.add(loadMaskButton);
         gbc3.gridx = 0;
@@ -766,7 +769,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		            srcImage = null;
 		        }
 		        
-		        
+		        loadMaskButton.setEnabled(true);
 		        		
 		 }else if(command.equalsIgnoreCase("bvalGradBrowse")) {
 			 JFileChooser chooser = new JFileChooser();
