@@ -43,6 +43,27 @@ import java.io.*;
  *      has a value greater than the chi squared cumulative frequency value of 0.95. In Ceyhan's cell-specific
  *      tests ZijN with i = 1,2 j = 1,2 are calculated from Tij/sqrt(variance Tij).  ZijN has a normal distribution
  *      with 0 mean and a standard deviation of 1.
+ *      
+ *      Note that there is a contradiction between the equations given for case 2 for Cov[Tii, Tkl] and case 4 for
+ *      Cov[Tij, Tkl] between the 2 Ceyhan papers.  Reference 1 has:
+ *      Case 2:
+ *      Cov[Tii, Tkl] = Cov[Nii, Nkl] - nk*Cov[Nii, Cl]/(n - 1) - (ni - 1)*Cov[Nkl, Ci]/(n - 1)
+ *                      + (ni - 1)*nk*Cov[Ci, Cl]/(n-1)**2
+ *      case 4:
+ *      Cov[Tij, Tkl] = Cov[Nij, Nkl] - nk*Cov[Nij, Cl]/(n - 1) - ni*Cov[Nkl, Cj]/(n - 1)
+ *                      + ni*nk*Cov[Cj, Cl]/(n-1)**2
+ *                      
+ *      Reference 2 has:
+ *      Case 2:
+ *      Cov[Tii, Tkl] = Cov[Nii, Nkl] - nl*Cov[Nii, Cl]/(n - 1) - (ni - 1)*Cov[Nkl, Ci]/(n - 1)
+ *                      + (ni - 1)*nl*Cov[Ci, Cl]/(n-1)**2
+ *      case 4:
+ *      Cov[Tij, Tkl] = Cov[Nij, Nkl] - nl*Cov[Nij, Cl]/(n - 1) - ni*Cov[Nkl, Cj]/(n - 1)
+ *                      + ni*nl*Cov[Cj, Cl]/(n-1)**2
+ *                      
+ *      nk in the second and fourth terms in both cases in reference 1 becomes nl in reference 2.
+ *      I am using the reference 2 version of nl since this yields a CN value = 13.26, close to the
+ *      CN = 13.11 calculated by Ceyhan for the Pielou data in reference 1. 
  * 
  References :
  1.) "Overall and pairwise segregation tests based on nearest neighbor contigency tables" by Elvan
@@ -60,7 +81,11 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     // standard deviation = normalized standard deviation * (xDim - 1).  Type 2
     // offspring are generated with (numOffspring2/numParents) offspring from each
     // parent in the same set used for the type 1 offspring with the same radially 
-    // symmetric Gaussian distribution.
+    // symmetric Gaussian distribution.  For complete spatial randomness a rejection
+    // rate in the test for complete spatial randomness of 0.05 would be expected.
+    // In this case the rejection rates are slightly (but significantly) higher than
+    // 0.05, so the 2 classes are slightly segregated.
+    // Segregation increases as normalizedStdDev decreases.
     public static final int FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS = 1;
     
     // A first set of numParents are generated with a uniform random distribution over the square.
@@ -70,6 +95,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     // set of numParents are generated with a uniform distribution over the square.
     // Type 2 offspring are generated with (numOffspring2/numParents) offspring from each
     // parent in the second set with the same radially symmetric Gaussian distribution.
+    // The 2 classes are strongly segregated.
+    // Segregation increases as normalizedStdDev decreases.
     public static final int FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS = 2;
     
     // numParents are generated with a uniform random distribution over the square.
@@ -79,6 +106,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     // offspring are generated from a randomly chosen
     // parent in the same set used for the type 1 offspring with the same radially 
     // symmetric Gaussian distribution.
+    // The 2 classes satisfy randomness in the nearest neighbor structure.
     public static final int RANDOM_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS = 3;
     
     // A first set of numParents are generated with a uniform random distribution over the square.
@@ -88,6 +116,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     // set of numParents are generated with a uniform distribution over the square.
     // Type 2 offspring are generated from a randomly chosen
     // parent in the second set with the same radially symmetric Gaussian distribution.
+    // The 2 classes are strongly segregated.
+    // Segregation increases as normalizedStdDev decreases.
     public static final int RANDOM_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS = 4;
     
     // Put 100 * parentPoissonNormalizedMean points into an area 100 times as large
@@ -99,6 +129,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     // disc radius = normalized disc radius * (xDim - 1).  Only consider those objects
     // falling inside the actual image area.  One set of parent points is used for
     // both offspring.
+    // The 2 classes satisfy randomness in the nearest neighbor structure.
     public static final int MATERN_SAME_PARENTS = 5;
     
     // Put 100 * parentPoissonNormalizedMean points into an area 100 times as large
@@ -114,12 +145,36 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     // offsprihg are placed independently and uniformly inside a disc with a disc radius =
     // normalized disc radius * (xDim - 1).  Only consider those points falling inside the
     // actual image area.
+    // The classes are strongly segregated.
+    // As the normalizedDiscRadius increases, the level of segregation decreases.
     public static final int MATERN_DIFFERENT_PARENTS = 6;
     
+    // numPoints1 type 1 objects are generated with a uniform random distribution over the square.
+    // numPoints2 type 2 objects are generated with a uniform random distribution over the square.
+    // For type 1 objects the maximum value maxIntensity = sqrt(xCenter/(xDim - 1) + yCenter/(yDim - 1)) is found.
+    // For each type 1 object the retention probability = sqrt(xCenter/(xDim - 1) + yCenter/(yDim - 1)) is calculated.
+    // A random number between 0 and 1 is generated.  If the random number is <= retention probability, the type 1
+    // object is retained.  Otherwise, the type 1 object is deleted.  If inhomogeneous = SQRT_X_PLUS_Y, then the
+    // same process is used for deciding which type 2 objects to delete.  If inhomogeneous = SQRT_X_TIMES_Y, then
+    // intensity = sqrt((xCenter * yCenter)/((xDim - 1) * (yDim - 1))) is used for deciding object 2 retention.
+    // If inhomogeneous = ABS_X_MINUS_Y, then abs((xCenter/(xDim - 1) - yCenter/(yDim - 1)), is used for deciding
+    // object 2 retention.
+    // For the same or similar density functions, SQRT_X_PLUS_Y and SQRT_X_TIMES_Y, the 2 classes show randomness
+    // in the nearest neighbor structure.  For very different density functions with ABS_X_MINUS_Y, moderate
+    // segregation is observed between the 2 classes.
     public static final int INHOMOGENEOUS_POISSON = 7;
     
+    // Type 1 objects are generated uniformly over the square (0, (1 - segregation)*(xDim - 1)) by
+    // (0, (1 - segregation)*(yDim - 1)).  Type 2 objects are generated uniformly over the square
+    // (segregation*(xDim - 1), xDim - 1) by (segregation*(yDim-1), yDim - 1).
     public static final int SEGREGATION_ALTERNATIVE = 8;
     
+    // Type 1 objects are generated with a uniform random distribution over the square.
+    // For each type 2 object a type 1 object is randomly selected, a distance ry is generated from a 
+    // uniform random distribution of numbers from 0 to discRadius, and an angle is generated from a
+    // uniform random distribution of angles from 0 to 2*PI.  The x center of the type 2 object is placed
+    // at the x location of the parent type 1 object + ry * cosine(angle).  The y center of the type 2
+    // object is placed at the y location of the parent type 1 object + ry * sine(angle).
     public static final int ASSOCIATION_ALTERNATIVE = 9;
     
     public static final int SQRT_X_PLUS_Y = 1;
@@ -156,6 +211,10 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     private int inhomogeneous;
     
     private double segregation;
+    
+    // Test with NNCT for Pielou's data, shown in Table 3 of "Overall and pairwise segregation tests based on nearest
+    // neighbor contingency tables"
+    private boolean selfTest1 = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -311,9 +370,9 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         int N22;
         int C1;
         int C2;
-        int n1;
-        int n2;
-        int n;
+        long n1;
+        long n2;
+        long n;
         double EN11;
         double EN12;
         double EN21;
@@ -1516,6 +1575,13 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             }
         }
         
+        if (selfTest1) {
+            N11 = 137;
+            N12 = 23;
+            N21 = 38;
+            N22 = 30;
+        }
+        
         C1 = N11 + N21;
         C2 = N12 + N22;
         n1 = N11 + N12;
@@ -1523,106 +1589,112 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         n = n1 + n2;
         
         // Dixon's cell-specific test of segregation
-        EN11 = (double)n1*(n1 - 1)/(n - 1);
-        EN12 = (double)n1 * n2/(n - 1);
+        EN11 = ((double)n1*(n1 - 1))/(n - 1);
+        EN12 = ((double)n1 * n2)/(n - 1);
         EN21 = EN12;
-        EN22 = (double)n2*(n2 - 1)/(n - 1);
+        EN22 = ((double)n2*(n2 - 1))/(n - 1);
         
         // Find R, twice the number of reflexive pairs.
-        R = 0;
-        for (i = 0; i < offspring1Drawn; i++) {
-            if (NN1Type[i] == SAME && NN1Type[NN1Neighbor[i]] == SAME && NN1Neighbor[NN1Neighbor[i]] == i) {
-                R++;
-            }
-            else if (NN1Type[i] == DIFFERENT && NN2Type[NN1Neighbor[i]] == DIFFERENT && NN2Neighbor[NN1Neighbor[i]] == i) {
-                R++;
-            }
+        if (selfTest1) {
+            Q = 162;
+            R = 134;
         }
+        else { // not selfTest1
+            R = 0;
+            for (i = 0; i < offspring1Drawn; i++) {
+                if (NN1Type[i] == SAME && NN1Type[NN1Neighbor[i]] == SAME && NN1Neighbor[NN1Neighbor[i]] == i) {
+                    R++;
+                }
+                else if (NN1Type[i] == DIFFERENT && NN2Type[NN1Neighbor[i]] == DIFFERENT && NN2Neighbor[NN1Neighbor[i]] == i) {
+                    R++;
+                }
+            }
+            
+            for (i = 0; i < offspring2Drawn; i++) {
+                if (NN2Type[i] == DIFFERENT && NN1Type[NN2Neighbor[i]] == DIFFERENT && NN1Neighbor[NN2Neighbor[i]] == i) {
+                    R++;
+                }
+                else if (NN2Type[i] == SAME && NN2Type[NN2Neighbor[i]] == SAME && NN2Neighbor[NN2Neighbor[i]] == i) {
+                    R++;
+                }
+            }
+            
+            Q1Array = new int[offspring1Drawn];
+            Q2Array = new int[offspring2Drawn];
+            for (i = 0; i < offspring1Drawn; i++) {
+                if (NN1Type[i] == SAME) {
+                    Q1Array[NN1Neighbor[i]]++;
+                }
+                else {
+                    Q2Array[NN1Neighbor[i]]++;
+                }
+            }
+            
+            for (i = 0; i < offspring2Drawn; i++) {
+                if (NN2Type[i] == DIFFERENT) {
+                    Q1Array[NN2Neighbor[i]]++;    
+                }
+                else {
+                    Q2Array[NN2Neighbor[i]]++;
+                }
+            }
+            
+            Q2 = 0;
+            Q3 = 0;
+            Q4 = 0;
+            Q5 = 0;
+            Q6 = 0;
+            for (i = 0; i < offspring1Drawn; i++) {
+                if (Q1Array[i] == 2) {
+                    Q2++;
+                }
+                else if (Q1Array[i] == 3) {
+                    Q3++;
+                }
+                else if (Q1Array[i] == 4) {
+                    Q4++;
+                }
+                else if (Q1Array[i] == 5) {
+                    Q5++;
+                }
+                else if (Q1Array[i] == 6) {
+                    Q6++;
+                }
+            }
+            
+            for (i = 0; i < offspring2Drawn; i++) {
+                if (Q2Array[i] == 2) {
+                    Q2++;
+                }
+                else if (Q2Array[i] == 3) {
+                    Q3++;
+                }
+                else if (Q2Array[i] == 4) {
+                    Q4++;
+                }
+                else if (Q2Array[i] == 5) {
+                    Q5++;
+                }
+                else if (Q2Array[i] == 6) {
+                    Q6++;
+                }
+            }
+            
+            Q = 2 * (Q2 + 3*Q3 + 6*Q4 + 10*Q5 + 15*Q6);
+        } // else not selfTest1
         
-        for (i = 0; i < offspring2Drawn; i++) {
-            if (NN2Type[i] == DIFFERENT && NN1Type[NN2Neighbor[i]] == DIFFERENT && NN1Neighbor[NN2Neighbor[i]] == i) {
-                R++;
-            }
-            else if (NN2Type[i] == SAME && NN2Type[NN2Neighbor[i]] == SAME && NN2Neighbor[NN2Neighbor[i]] == i) {
-                R++;
-            }
-        }
-        
-        Q1Array = new int[offspring1Drawn];
-        Q2Array = new int[offspring2Drawn];
-        for (i = 0; i < offspring1Drawn; i++) {
-            if (NN1Type[i] == SAME) {
-                Q1Array[NN1Neighbor[i]]++;
-            }
-            else {
-                Q2Array[NN1Neighbor[i]]++;
-            }
-        }
-        
-        for (i = 0; i < offspring2Drawn; i++) {
-            if (NN2Type[i] == DIFFERENT) {
-                Q1Array[NN2Neighbor[i]]++;    
-            }
-            else {
-                Q2Array[NN2Neighbor[i]]++;
-            }
-        }
-        
-        Q2 = 0;
-        Q3 = 0;
-        Q4 = 0;
-        Q5 = 0;
-        Q6 = 0;
-        for (i = 0; i < offspring1Drawn; i++) {
-            if (Q1Array[i] == 2) {
-                Q2++;
-            }
-            else if (Q1Array[i] == 3) {
-                Q3++;
-            }
-            else if (Q1Array[i] == 4) {
-                Q4++;
-            }
-            else if (Q1Array[i] == 5) {
-                Q5++;
-            }
-            else if (Q1Array[i] == 6) {
-                Q6++;
-            }
-        }
-        
-        for (i = 0; i < offspring2Drawn; i++) {
-            if (Q2Array[i] == 2) {
-                Q2++;
-            }
-            else if (Q2Array[i] == 3) {
-                Q3++;
-            }
-            else if (Q2Array[i] == 4) {
-                Q4++;
-            }
-            else if (Q2Array[i] == 5) {
-                Q5++;
-            }
-            else if (Q2Array[i] == 6) {
-                Q6++;
-            }
-        }
-        
-        Q = 2 * (Q2 + 3*Q3 + 6*Q4 + 10*Q5 + 15*Q6);
-        
-        p11 = (double)n1*(n1 - 1)/(n*(n - 1));
-        p111 = (double)n1*(n1 - 1)*(n1 - 2)/(n*(n - 1)*(n - 2));
-        p1111 = (double)n1*(n1 - 1)*(n1 - 2)*(n1 - 3)/(n*(n - 1)*(n - 2)*(n - 3));
-        p12 = (double)n1*n2/(n*(n - 1));
-        p112 = (double)n1*(n1 - 1)*n2/(n*(n - 1)*(n - 2));
-        p1122 = (double)n1*(n1 - 1)*n2*(n2 - 1)/(n*(n - 1)*(n - 2)*(n - 3));
+        p11 = ((double)n1*(n1 - 1))/(n*(n - 1));
+        p111 = ((double)n1*(n1 - 1)*(n1 - 2))/(n*(n - 1)*(n - 2));
+        p1111 = ((double)n1*(n1 - 1)*(n1 - 2)*(n1 - 3))/(n*(n - 1)*(n - 2)*(n - 3));
+        p12 = ((double)n1*n2)/(n*(n - 1));
+        p112 = ((double)n1*(n1 - 1)*n2)/(n*(n - 1)*(n - 2));
+        p1122 = ((double)n1*(n1 - 1)*n2*(n2 - 1))/(n*(n - 1)*(n - 2)*(n - 3));
         p21 = p12;
-        p221 = (double)n2*(n2 - 1)*n1/(n*(n - 1)*(n - 2));
+        p221 = ((double)n2*(n2 - 1)*n1)/(n*(n - 1)*(n - 2));
         p2211 = p1122;
-        p22 = (double)n2*(n2 - 1)/(n*(n-1));
-        p222 = (double)n2*(n2 - 1)*(n2 - 2)/(n*(n - 1)*(n - 2));
-        p2222 = (double)n2*(n2 - 1)*(n2 - 2)*(n2 - 3)/(n*(n - 1)*(n - 2)*(n - 3));
+        p22 = ((double)n2*(n2 - 1))/(n*(n-1));
+        p222 = ((double)n2*(n2 - 1)*(n2 - 2))/(n*(n - 1)*(n - 2));
+        p2222 = ((double)n2*(n2 - 1)*(n2 - 2)*(n2 - 3))/(n*(n - 1)*(n - 2)*(n - 3));
         
         varN11 = (n + R)*p11 + (2*n - 2*R + Q)*p111 + (n*n - 3*n - Q + R)*p1111 -n*n*p11*p11;
         varN12 = n*p12 + Q*p112 + (n*n - 3*n - Q + R)*p1122 - n*n*p12*p12;
@@ -1632,17 +1704,33 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         z11D = (N11 - EN11)/Math.sqrt(varN11);
         z12D = (N12 - EN12)/Math.sqrt(varN12);
         Preferences.debug("z11D = " + z11D + "\n");
+        if (selfTest1) {
+            Preferences.debug("Expect z11D = 4.36\n");
+        }
         Preferences.debug("z12D = " + z12D + "\n");
+        if (selfTest1) {
+            Preferences.debug("Expect z12D = -4.36\n");
+        }
         Preferences.debug("Should have z11D = -z12D for 2 class case\n");
         z21D = (N21 - EN21)/Math.sqrt(varN21);
         z22D = (N22 - EN22)/Math.sqrt(varN22);
         Preferences.debug("z21D = " + z21D + "\n");
+        if (selfTest1) {
+            Preferences.debug("Expect z21 = -2.29\n");
+        }
         Preferences.debug("z22D = " + z22D + "\n");
+        if (selfTest1) {
+            Preferences.debug("Expect z22 = 2.29\n");
+        }
         Preferences.debug("Should have z21D = -z22D for 2 class case\n");
         
         covN11N22 = (n*n - 3*n - Q + R)*p1122 - n*n*p11*p22;
         r = covN11N22/Math.sqrt(varN11*varN22);
         CD = (z11D*z11D + z22D*z22D - 2*r*z11D*z22D)/(1 - r*r);
+        Preferences.debug("CD = " + CD + "\n");
+        if (selfTest1) {
+            Preferences.debug("Should have CD = 19.67\n");
+        }
         
         // Under random labelling the chi squared statistic has degrees of freedom = 2;
         // Under complete spatial randomness the chi squared statistic has degrees of freedom = 1;
@@ -1774,10 +1862,22 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         z21N = T21/Math.sqrt(varT21);
         z22N = T22/Math.sqrt(varT22);
         Preferences.debug("z11N = " + z11N + "\n");
+        if (selfTest1) {
+            Preferences.debug("Should have z11N = 3.63\n");
+        }
         Preferences.debug("z21N = " + z21N + "\n");
+        if (selfTest1) {
+            Preferences.debug("Should have z21 = -3.63\n");
+        }
         Preferences.debug("Should have z11N = -z21N for 2 class case\n");
         Preferences.debug("z12N = " + z12N + "\n");
+        if (selfTest1) {
+            Preferences.debug("Should have z12N = -3.61\n");
+        }
         Preferences.debug("z22N = " + z22N + "\n");
+        if (selfTest1) {
+            Preferences.debug("Should have z22N = 3.61\n");
+        }
         Preferences.debug("Should have z12N = -z22N for 2 class case\n");
         
         // CN = T'SigmaNInverseT
@@ -1798,30 +1898,36 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         covN21N12 = covN12N21;
         covN21N22 = (n - R)*p221 + (n*n - 3*n - Q + R)*p2221 - n*n*p22*p21;
         covC1C2 = covN11N12 + covN11N22 + covN21N12 + covN21N22;
-        covT11T12 = covN11N12 - (double)n1*covN11C2/(n - 1) - (double)(n1 - 1)*covN12C1/(n - 1)
-                    + (double)(n1 - 1)*n1*covC1C2/((n - 1)*(n - 1));
+        //covT11T12 = covN11N12 - n1*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
+                    //+ (n1 - 1)*n1*covC1C2/((n - 1)*(n - 1));
+        covT11T12 = covN11N12 - n2*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
+        + (n1 - 1)*n2*covC1C2/((n - 1)*(n - 1));
         covN21N11 = covN11N21;
         covC1C1 = varN11 + covN11N21 + covN21N11 + varN21;
-        covT11T21 = covN11N21 - (double)n2*covN11C1/(n - 1) - (double)(n1 - 1)*covN21C1/(n - 1)
-                    + (double)(n1 - 1)*n2*covC1C1/((n - 1)*(n - 1));
+        //covT11T21 = covN11N21 - n2*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
+                    //+ (n1 - 1)*n2*covC1C1/((n - 1)*(n - 1));
+        covT11T21 = covN11N21 - n1*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
+        + (n1 - 1)*n1*covC1C1/((n - 1)*(n - 1));
         covN22N11 = covN11N22;
         covN22N21 = covN21N22;
         covN22C1 = covN22N11 + covN22N21;
-        covT11T22 = covN11N22 - (double)(n2 - 1)*covN11C2/(n - 1) - (double)(n1 - 1)*covN22C1/(n - 1)
-                    + (double)(n1 - 1)*(n2 - 1)*covC1C2/((n - 1)*(n - 1));
+        covT11T22 = covN11N22 - (n2 - 1)*covN11C2/(n - 1) - (n1 - 1)*covN22C1/(n - 1)
+                    + (n1 - 1)*(n2 - 1)*covC1C2/((n - 1)*(n - 1));
         covT12T11 = covT11T12;
         covC2C1 = covC1C2;
         covN21C2 = covN21N12 + covN21N22;
-        covT12T21 = covN12N21 - (double)n2*covN12C1/(n - 1) - (double)n1*covN21C2/(n - 1)
-                    + (double)n1*n2*covC2C1/((n - 1)*(n - 1));
+        //covT12T21 = covN12N21 - n2*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
+                    //+ n1*n2*covC2C1/((n - 1)*(n - 1));
+        covT12T21 = covN12N21 - n1*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
+        + n1*n1*covC2C1/((n - 1)*(n - 1));
         covN22N12 = covN12N22;
         covC2C2 = varN12 + covN12N22 + covN22N12 + varN22;
-        covT12T22 = covN22N12 - (double)n1*covN22C2/(n - 1) - (double)(n2 - 1)*covN12C2/(n - 1)
-                    + (double)(n2 - 1)*n1*covC2C2/((n - 1)*(n - 1));
+        covT12T22 = covN22N12 - n1*covN22C2/(n - 1) - (n2 - 1)*covN12C2/(n - 1)
+                    + (n2 - 1)*n1*covC2C2/((n - 1)*(n - 1));
         covT21T11 = covT11T21;
         covT21T12 = covT12T21;
-        covT21T22 = covN22N21 + (double)n2*covN22C1/(n - 1) - (double)(n2 - 1)*covN21C2/(n - 1)
-                    + (double)(n2 - 1)*n2*covC2C1/((n - 1)*(n - 1));
+        covT21T22 = covN22N21 - n2*covN22C1/(n - 1) - (n2 - 1)*covN21C2/(n - 1)
+                    + (n2 - 1)*n2*covC2C1/((n - 1)*(n - 1));
         covT22T11 = covT11T22;
         covT22T12 = covT12T22;
         covT22T21 = covT21T22;
@@ -1856,6 +1962,10 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         T[3][0] = T22;
         TM = new Matrix(T);
         CN = ((TpM.times(sigmaN.inverse())).times(TM)).getArray();
+        Preferences.debug("CN = " + CN[0][0] + "\n");
+        if (selfTest1) {
+            Preferences.debug("Should have CN = 13.11\n");
+        }
         degreesOfFreedom = 1;
         stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
                 CN[0][0], degreesOfFreedom, chiSquaredPercentile);
