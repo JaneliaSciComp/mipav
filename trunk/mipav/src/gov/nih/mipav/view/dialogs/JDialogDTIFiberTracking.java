@@ -226,6 +226,14 @@ public class JDialogDTIFiberTracking extends JDialogBase implements WindowListen
 		        	FileIO fileIO = new FileIO();
 		        	fileIO.setQuiet(true);
 		            tensorImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null); 
+		            if(tensorImage.getNDims() != 4) {
+		            	MipavUtil.displayError("Tensor Image must be a 4D image");
+		            	tensorImage.disposeLocal();
+		            	tensorImage = null;
+		            	return;
+		            	
+		            }
+		            
 		            tensorImageTextField.setText(currDir);
 		        }
 		 }else if(command.equals("outputDirBrowse")) {
