@@ -476,7 +476,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 fileInfoBases[i].setFileDirectory( m_kDTIImage.getFileInfo(0).getFileDirectory());
             }
             
-           new ViewJFrameImage(m_kEigenValueImage, null, new Dimension(610, 200), false);
+           //new ViewJFrameImage(m_kEigenValueImage, null, new Dimension(610, 200), false);
         }
         else
         {
