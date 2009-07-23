@@ -1516,7 +1516,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
 
         tmpStr = textNClasses.getText();
 
-        if (testParameter(tmpStr, 1.0, 6.0)) {
+        if (testParameter(tmpStr, 1.0, 12.0)) {
             nClasses = Integer.valueOf(tmpStr).intValue();
         } else {
             textNClasses.requestFocus();
