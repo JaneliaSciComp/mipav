@@ -1073,7 +1073,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
         m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
-            m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+            m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true );
         }
     }
 

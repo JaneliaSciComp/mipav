@@ -44,10 +44,11 @@ public class VolumeCalcEffect extends VolumeClipEffect
     {
         SetPassQuantity(1);
         SetVShader(0,new VertexShader("TextureV"));
-        SetPShader(0,new PixelShader(kShaderName, false));
-        GetPShader(0).SetTextureQuantity(1);
-        GetPShader(0).SetImageName(0,kTextureName);
-        GetPShader(0).SetTexture(0, kTexture );
+        PixelShader kPShader = new PixelShader(kShaderName, false);
+        SetPShader(0,kPShader);
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetImageName(0,kTextureName);
+        kPShader.SetTexture(0, kTexture );
     }
 
     /** Create a new VolumeCalcEffect shader with the VolumeImage data. This
@@ -59,10 +60,11 @@ public class VolumeCalcEffect extends VolumeClipEffect
         /* Set single-pass rendering: */
         SetPassQuantity(1);
         SetVShader(0,new VertexShader("TextureV"));
-        SetPShader(0,new PixelShader(kShaderName + kVolumeImage.GetPostfix(), false));
-        GetPShader(0).SetTextureQuantity(1);
-        GetPShader(0).SetImageName(0,kTexture.GetImage().GetName());
-        GetPShader(0).SetTexture(0, kTexture );
+        PixelShader kPShader = new PixelShader(kShaderName + kVolumeImage.GetPostfix(), false);
+        SetPShader(0,kPShader);
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetImageName(0,kTexture.GetImage().GetName());
+        kPShader.SetTexture(0, kTexture );
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
         m_afMinMax[0] = (float)kVolumeImage.GetImage().getMin();
         m_afMinMax[1] = (float)kVolumeImage.GetImage().getMax();
@@ -79,10 +81,11 @@ public class VolumeCalcEffect extends VolumeClipEffect
         /* Set single-pass rendering: */
         SetPassQuantity(1);
         SetVShader(0,new VertexShader("TextureV"));
-        SetPShader(0,new PixelShader("CropClipped" + kVolumeImage.GetPostfix(), false));
-        GetPShader(0).SetTextureQuantity(1);
-        GetPShader(0).SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
-        GetPShader(0).SetTexture(0, kVolumeImage.GetVolumeTarget() );
+        PixelShader kPShader = new PixelShader("CropClipped" + kVolumeImage.GetPostfix(), false);
+        SetPShader(0,kPShader);
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
+        kPShader.SetTexture(0, kVolumeImage.GetVolumeTarget() );
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
         this.m_afClipAll = kClip.m_afClipAll;
         this.m_afDoClip = kClip.m_afDoClip;
@@ -105,16 +108,17 @@ public class VolumeCalcEffect extends VolumeClipEffect
         /* Set single-pass rendering: */
         SetPassQuantity(1);
         SetVShader(0,new VertexShader("TextureV"));
-        SetPShader(0,new PixelShader("SurfaceExtract", false));
-        GetPShader(0).SetTextureQuantity(4);
-        GetPShader(0).SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
-        GetPShader(0).SetTexture(0, kVolumeImage.GetVolumeTarget() );
-        GetPShader(0).SetImageName(1,kVolumeImage.GetOpacityMapTarget().GetImage().GetName());
-        GetPShader(0).SetTexture(1, kVolumeImage.GetOpacityMapTarget() );
-        GetPShader(0).SetImageName(2,kVolumeImage.GetNormalMapTarget().GetImage().GetName());
-        GetPShader(0).SetTexture(2, kVolumeImage.GetNormalMapTarget() );
-        GetPShader(0).SetImageName(3,kVolumeImage.GetOpacityMapGMTarget().GetImage().GetName());
-        GetPShader(0).SetTexture(3, kVolumeImage.GetOpacityMapGMTarget() );
+        PixelShader kPShader = new PixelShader("SurfaceExtract", false);
+        SetPShader(0,kPShader);
+        kPShader.SetTextureQuantity(4);
+        kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
+        kPShader.SetTexture(0, kVolumeImage.GetVolumeTarget() );
+        kPShader.SetImageName(1,kVolumeImage.GetOpacityMapTarget().GetImage().GetName());
+        kPShader.SetTexture(1, kVolumeImage.GetOpacityMapTarget() );
+        kPShader.SetImageName(2,kVolumeImage.GetNormalMapTarget().GetImage().GetName());
+        kPShader.SetTexture(2, kVolumeImage.GetNormalMapTarget() );
+        kPShader.SetImageName(3,kVolumeImage.GetOpacityMapGMTarget().GetImage().GetName());
+        kPShader.SetTexture(3, kVolumeImage.GetOpacityMapGMTarget() );
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
         this.m_afClipAll = kClip.m_afClipAll;
         this.m_afDoClip = kClip.m_afDoClip;
@@ -140,27 +144,26 @@ public class VolumeCalcEffect extends VolumeClipEffect
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClipEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
-                                Program pkPProgram)
+                                Program pkPProgram, Program pkCProgram)
     {
         // Sets the IsColor shader parameter based on whether the data is a
         // color volume or not.
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("IsColor") != null ) 
+        if ( pkCProgram.GetUC("IsColor") != null ) 
         {
             if ( m_bIsColor )
             {
-                pkProgram.GetUC("IsColor").GetData()[0] = 1.0f;
+                pkCProgram.GetUC("IsColor").GetData()[0] = 1.0f;
             }
             else
             {
-                pkProgram.GetUC("IsColor").GetData()[0] = 0.0f;
+                pkCProgram.GetUC("IsColor").GetData()[0] = 0.0f;
             }
         }  
-        if ( pkProgram.GetUC("MinMax") != null ) 
+        if ( pkCProgram.GetUC("MinMax") != null ) 
         {
-            pkProgram.GetUC("MinMax").SetDataSource(m_afMinMax);
+            pkCProgram.GetUC("MinMax").SetDataSource(m_afMinMax);
         }  
-        super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram );
+        super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram, pkCProgram );
     }
     
     
@@ -169,12 +172,12 @@ public class VolumeCalcEffect extends VolumeClipEffect
      */
     public void SetStepSize(VolumeImage kVolumeImage)
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("StepSize") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("StepSize") != null ) 
         {
-            pkProgram.GetUC("StepSize").GetData()[0] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[0])-1);
-            pkProgram.GetUC("StepSize").GetData()[1] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[1])-1);
-            pkProgram.GetUC("StepSize").GetData()[2] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[2])-1);
+            pkCProgram.GetUC("StepSize").GetData()[0] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[0])-1);
+            pkCProgram.GetUC("StepSize").GetData()[1] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[1])-1);
+            pkCProgram.GetUC("StepSize").GetData()[2] = 1.0f/((float)(kVolumeImage.GetImage().getExtents()[2])-1);
             //System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
         }
     }
@@ -184,39 +187,39 @@ public class VolumeCalcEffect extends VolumeClipEffect
      */
     public void SetStepSize(float fX, float fY, float fZ)
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("StepSize") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("StepSize") != null ) 
         {
-            pkProgram.GetUC("StepSize").GetData()[0] = fX;
-            pkProgram.GetUC("StepSize").GetData()[1] = fY;
-            pkProgram.GetUC("StepSize").GetData()[2] = fZ;
+            pkCProgram.GetUC("StepSize").GetData()[0] = fX;
+            pkCProgram.GetUC("StepSize").GetData()[1] = fY;
+            pkCProgram.GetUC("StepSize").GetData()[2] = fZ;
             //System.err.println( m_afExtents[0] + " " + m_afExtents[1] + " " + m_afExtents[2] );
         }
     }
     
     public void SetIsoVal(float fVal)
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("IsoVal") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("IsoVal") != null ) 
         {
-            pkProgram.GetUC("IsoVal").GetData()[0] = fVal;
+            pkCProgram.GetUC("IsoVal").GetData()[0] = fVal;
         }
     }
     
     
     public void SetVolumeIndex(int iIndex)
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("VolumeIndex") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("VolumeIndex") != null ) 
         {
-            pkProgram.GetUC("VolumeIndex").GetData()[0] = iIndex;
+            pkCProgram.GetUC("VolumeIndex").GetData()[0] = iIndex;
         }
 
         if ( iIndex != 0 )
         {        
-            if ( pkProgram.GetUC("IsColor") != null ) 
+            if ( pkCProgram.GetUC("IsColor") != null ) 
             {
-                pkProgram.GetUC("IsColor").GetData()[0] = 0.0f;
+                pkCProgram.GetUC("IsColor").GetData()[0] = 0.0f;
             }  
         }
     }

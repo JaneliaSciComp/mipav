@@ -565,7 +565,7 @@ public class PlaneRender_WM extends GPURenderBase
                         //System.err.print( m_iPlaneOrientation + "       " + kPos.Z + " " + m_kCenter.Z );
                         if ( Math.abs( kPos.Z - m_kCenter.Z) < Mathf.ZERO_TOLERANCE )
                         {
-                            kNode.Render( m_pkRenderer, m_kCuller );
+                            kNode.Render( m_pkRenderer, m_kCuller, false );
                             //System.err.print("                Draw VOI" );
                         }
                         //System.err.println( "" );
@@ -573,7 +573,7 @@ public class PlaneRender_WM extends GPURenderBase
                 }
                 else
                 {
-                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true );
                 }
 
                 m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(kSave);

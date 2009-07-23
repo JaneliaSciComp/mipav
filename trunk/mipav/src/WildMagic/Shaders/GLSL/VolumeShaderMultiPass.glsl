@@ -605,6 +605,7 @@ void p_VolumeShaderMultiPass()
     vec3 position = vec3(0.0);
     position = start + fPos * dir;
 
+    vec4 LocalMaterialDiffuse = MaterialDiffuse;
     vec3 LocalMaterialAmbient = MaterialAmbient;
     vec3 LocalMaterialEmissive = MaterialEmissive;
 
@@ -696,6 +697,10 @@ void p_VolumeShaderMultiPass()
                 color = color0;
                 opacity = opacity0;
                 //fCount += 1.0;
+
+                LocalMaterialDiffuse.r = color.r;
+                LocalMaterialDiffuse.g = color.g;
+                LocalMaterialDiffuse.b = color.b;
             }
             if ( UseWidget1 != 0.0 )
             {
@@ -707,7 +712,18 @@ void p_VolumeShaderMultiPass()
 //                 color += color1;
 //                 opacity += opacity1;
                 color = color1 + (1 - opacity1)*color;
-                opacity = opacity1 * opacity1 + (1 - opacity1) * opacity;
+                if ( opacity != 0.0 )
+                {
+                    opacity = opacity1 * opacity1 + (1 - opacity1) * opacity;
+                }
+                else
+                {
+                    opacity = opacity1;
+                }
+
+                LocalMaterialDiffuse.r = color.r;
+                LocalMaterialDiffuse.g = color.g;
+                LocalMaterialDiffuse.b = color.b;
                 //fCount += 1.0;
             }
             if ( UseWidget2 != 0.0 )
@@ -827,7 +843,7 @@ void p_VolumeShaderMultiPass()
             if ( Light0Type != -1.0 )
             {
                 color0 = computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
-                                       MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                                       MaterialEmissive.xyz,  MaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                        Light0Ambient.xyzw, Light0Diffuse.xyzw, Light0Specular.xyzw,
                                        Light0ModelPosition.xyzw, Light0ModelDirection.xyzw,
                                        Light0SpotCutoff.xyzw, Light0Attenuation.xyzw,
@@ -851,7 +867,7 @@ void p_VolumeShaderMultiPass()
             if ( Light2Type != -1.0 )
             {
                 color2 = computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
-                                       MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                                       MaterialEmissive.xyz,  MaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                        Light2Ambient.xyzw, Light2Diffuse.xyzw, Light2Specular.xyzw,
                                        Light2WorldPosition.xyzw, Light2WorldDirection.xyzw,
                                        Light2SpotCutoff.xyzw, Light2Attenuation.xyzw,
@@ -862,7 +878,7 @@ void p_VolumeShaderMultiPass()
             if ( Light3Type != -1.0 )
             {
                 color3 = computeColor( position.xyz, normal.xyz, CameraModelPosition.xyz,
-                                       MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse.xyzw, MaterialSpecular.xyzw,
+                                       MaterialEmissive.xyz,  MaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                        Light3Ambient.xyzw, Light3Diffuse.xyzw, Light3Specular.xyzw,
                                        Light3WorldPosition.xyzw, Light3WorldDirection.xyzw,
                                        Light3SpotCutoff.xyzw, Light3Attenuation.xyzw,

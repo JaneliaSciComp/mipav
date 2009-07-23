@@ -242,7 +242,7 @@ public class CameraAndLightNodes extends JavaApplication3D
         pkMesh.AttachLight(pkLight);
 
         TextureEffect pkEffect = new TextureEffect("Gravel");
-        Texture pkTexture = pkEffect.GetPTexture(0,0);
+        Texture pkTexture = pkEffect.GetTexture(0,0);
         pkTexture.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
         pkTexture.SetWrapType(0,Texture.WrapType.REPEAT);
         pkTexture.SetWrapType(1,Texture.WrapType.REPEAT);

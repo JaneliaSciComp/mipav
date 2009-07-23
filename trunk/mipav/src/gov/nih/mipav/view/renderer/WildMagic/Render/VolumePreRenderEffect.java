@@ -31,7 +31,7 @@ public class VolumePreRenderEffect extends ShaderEffect
      * @param bUseTextureCoords when true use texture coordinates as the colors in the pre-render.
      * @param bUnique when true create unique shader programs, when false share shader programs.
      */
-    public VolumePreRenderEffect (boolean bUseTextureCoords, boolean bUnique)
+    public VolumePreRenderEffect (boolean bUseTextureCoords, boolean bUnique, boolean bTransparent)
     {
         super(1);
         if ( bUseTextureCoords )
@@ -42,7 +42,14 @@ public class VolumePreRenderEffect extends ShaderEffect
         {
             m_kVShader.set(0, new VertexShader("VolumePreRenderColor", bUnique));            
         }
-        m_kPShader.set(0, new PixelShader("PassThrough4", bUnique));
+        if ( bTransparent )
+        {
+            m_kPShader.set(0, new PixelShader("PassThrough_Transparency4", bUnique));
+        }
+        else
+        {
+            m_kPShader.set(0, new PixelShader("PassThrough4", bUnique));
+        }
     }
     
     /**
@@ -51,14 +58,14 @@ public class VolumePreRenderEffect extends ShaderEffect
      */
     public void Blend( float fValue )
     {    
-        Program pkProgram = GetVProgram(0);
-        if ( pkProgram == null )
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram == null )
         {
             return;
         }
-        if ( pkProgram.GetUC("Blend") != null)
+        if ( pkCProgram.GetUC("Blend") != null)
         {
-            pkProgram.GetUC("Blend").GetData()[0] = fValue;
+            pkCProgram.GetUC("Blend").GetData()[0] = fValue;
         }
     }
 
@@ -66,7 +73,7 @@ public class VolumePreRenderEffect extends ShaderEffect
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
-                                Program pkPProgram)
+                                Program pkPProgram, Program pkCProgram)
     {
         Blend(1);
     }

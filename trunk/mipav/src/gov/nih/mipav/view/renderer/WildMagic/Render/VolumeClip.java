@@ -257,7 +257,7 @@ public class VolumeClip extends VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void PreRender( Renderer kRenderer, Culler kCuller )
+    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay  && ! m_bDisplayClipArb )
         {
@@ -272,7 +272,7 @@ public class VolumeClip extends VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void Render( Renderer kRenderer, Culler kCuller )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay  && ! m_bDisplayClipArb )
         {

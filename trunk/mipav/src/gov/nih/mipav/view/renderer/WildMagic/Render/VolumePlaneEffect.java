@@ -29,28 +29,16 @@ implements StreamInterface
 
     /** 
      * Creates a new VolumeShaderEffect object.
-     * @param kVolumeImageA the VolumeImage containing shared data and textures for rendering.
-     * @param kVolumeImageB second VolumeImage.
-     */
-    public VolumePlaneEffect ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB )
-    {
-        m_kVolumeImageA = kVolumeImageA;
-        m_kVolumeImageB = kVolumeImageB;
-        Init( false );
-    }
-
-    /** 
-     * Creates a new VolumeShaderEffect object.
      * @param kVolumeImageA the VolumeImage containing shared data and
      * textures for rendering.
      * @param kVolumeImageB second VolumeImage.
      * @param bUnique when true the shader program must be unique.
      */
-    public VolumePlaneEffect ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB, boolean bUnique )
+    public VolumePlaneEffect ( VolumeImage kVolumeImageA, VolumeImage kVolumeImageB, boolean bUnique, boolean bTransparency )
     {
         m_kVolumeImageA = kVolumeImageA;
         m_kVolumeImageB = kVolumeImageB;
-        Init( bUnique );
+        Init( bUnique, bTransparency );
     }
 
     /**
@@ -59,10 +47,10 @@ implements StreamInterface
      */
     public void Blend(float fBlend)
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram != null && pkProgram.GetUC("Blend") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("Blend") != null ) 
         {
-            pkProgram.GetUC("Blend").GetData()[0] = fBlend;
+            pkCProgram.GetUC("Blend").GetData()[0] = fBlend;
         }
     }
 
@@ -72,10 +60,10 @@ implements StreamInterface
      */
     public void setABBlend(float fBlend)
     {
-        Program pkProgram = GetPProgram(0);
-        if ( (pkProgram != null) && pkProgram.GetUC("ABBlend") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( (pkCProgram != null) && pkCProgram.GetUC("ABBlend") != null ) 
         {
-            pkProgram.GetUC("ABBlend").GetData()[0] = fBlend;
+            pkCProgram.GetUC("ABBlend").GetData()[0] = fBlend;
         }
     }
     
@@ -95,10 +83,10 @@ implements StreamInterface
      */
     public float GetBlend()
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram != null && pkProgram.GetUC("Blend") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("Blend") != null ) 
         {
-            return pkProgram.GetUC("Blend").GetData()[0];
+            return pkCProgram.GetUC("Blend").GetData()[0];
         }
         return 1.0f;
     }
@@ -107,35 +95,34 @@ implements StreamInterface
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
-            Program pkPProgram)
+            Program pkPProgram, Program pkCProgram)
     {
         Blend(1);
         setABBlend(1);
         SetBackgroundColor(ColorRGBA.BLACK);
         setRGBTA(null);
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("IsColorA") != null ) 
+        if ( pkCProgram.GetUC("IsColorA") != null ) 
         {
             if ( m_kVolumeImageA.GetImage().isColorImage() )
             {
-                pkProgram.GetUC("IsColorA").GetData()[0] = 1.0f;
+                pkCProgram.GetUC("IsColorA").GetData()[0] = 1.0f;
             }
             else
             {
-                pkProgram.GetUC("IsColorA").GetData()[0] = 0.0f;
+                pkCProgram.GetUC("IsColorA").GetData()[0] = 0.0f;
             }
         }    
         if ( m_kVolumeImageB != null )
         {
-            if ( pkProgram.GetUC("IsColorB") != null ) 
+            if ( pkCProgram.GetUC("IsColorB") != null ) 
             {
                 if ( m_kVolumeImageB.GetImage().isColorImage() )
                 {
-                    pkProgram.GetUC("IsColorB").GetData()[0] = 1.0f;
+                    pkCProgram.GetUC("IsColorB").GetData()[0] = 1.0f;
                 }
                 else
                 {
-                    pkProgram.GetUC("IsColorB").GetData()[0] = 0.0f;
+                    pkCProgram.GetUC("IsColorB").GetData()[0] = 0.0f;
                 }
             }  
             setABBlend(.5f);
@@ -174,39 +161,39 @@ implements StreamInterface
 
 
     public void setRGBTA(ModelRGB RGBT) {
-        Program pkProgram = GetPProgram(0);
-        if ( (pkProgram != null) && (pkProgram.GetUC("ColorLUTOnA") != null) ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( (pkCProgram != null) && (pkCProgram.GetUC("ColorLUTOnA") != null) ) 
         {
             if ( RGBT != null )
             {
-                pkProgram.GetUC("ColorLUTOnA").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
-                pkProgram.GetUC("ColorLUTOnA").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
-                pkProgram.GetUC("ColorLUTOnA").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
+                pkCProgram.GetUC("ColorLUTOnA").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
+                pkCProgram.GetUC("ColorLUTOnA").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
+                pkCProgram.GetUC("ColorLUTOnA").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
             }
             else
             {
-                pkProgram.GetUC("ColorLUTOnA").GetData()[0] = 1.0f;
-                pkProgram.GetUC("ColorLUTOnA").GetData()[1] = 1.0f;
-                pkProgram.GetUC("ColorLUTOnA").GetData()[2] = 1.0f;
+                pkCProgram.GetUC("ColorLUTOnA").GetData()[0] = 1.0f;
+                pkCProgram.GetUC("ColorLUTOnA").GetData()[1] = 1.0f;
+                pkCProgram.GetUC("ColorLUTOnA").GetData()[2] = 1.0f;
             }
         }
     }    
 
     public void setRGBTB(ModelRGB RGBT) {
-        Program pkProgram = GetPProgram(0);
-        if ( (pkProgram != null) && (pkProgram.GetUC("ColorLUTOnB") != null) ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( (pkCProgram != null) && (pkCProgram.GetUC("ColorLUTOnB") != null) ) 
         {
             if ( RGBT != null )
             {
-                pkProgram.GetUC("ColorLUTOnB").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
-                pkProgram.GetUC("ColorLUTOnB").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
-                pkProgram.GetUC("ColorLUTOnB").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
+                pkCProgram.GetUC("ColorLUTOnB").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
+                pkCProgram.GetUC("ColorLUTOnB").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
+                pkCProgram.GetUC("ColorLUTOnB").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
             }
             else
             {
-                pkProgram.GetUC("ColorLUTOnB").GetData()[0] = 1.0f;
-                pkProgram.GetUC("ColorLUTOnB").GetData()[1] = 1.0f;
-                pkProgram.GetUC("ColorLUTOnB").GetData()[2] = 1.0f;                
+                pkCProgram.GetUC("ColorLUTOnB").GetData()[0] = 1.0f;
+                pkCProgram.GetUC("ColorLUTOnB").GetData()[1] = 1.0f;
+                pkCProgram.GetUC("ColorLUTOnB").GetData()[2] = 1.0f;                
             }
         }
     }
@@ -217,10 +204,10 @@ implements StreamInterface
      */
     public void ShowSurface( boolean bOn )
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram != null && pkProgram.GetUC("ShowSurface") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("ShowSurface") != null ) 
         {
-            pkProgram.GetUC("ShowSurface").GetData()[0] = bOn? 1 : 0;
+            pkCProgram.GetUC("ShowSurface").GetData()[0] = bOn? 1 : 0;
         } 
     }    
     
@@ -228,41 +215,49 @@ implements StreamInterface
 
     public void ZSlice( float fZ )
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram != null && pkProgram.GetUC("ZSlice") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("ZSlice") != null ) 
         {
-            pkProgram.GetUC("ZSlice").GetData()[0] = fZ;
+            pkCProgram.GetUC("ZSlice").GetData()[0] = fZ;
         } 
-        if ( pkProgram != null && pkProgram.GetUC("UseZSlice") != null ) 
+        if ( pkCProgram != null && pkCProgram.GetUC("UseZSlice") != null ) 
         {
-            pkProgram.GetUC("UseZSlice").GetData()[0] = 1;
+            pkCProgram.GetUC("UseZSlice").GetData()[0] = 1;
         } 
     }
     /** Initializes the ShaderEffect vertex and pixel shader programs. */
-    private void Init ( boolean bUnique )
+    private void Init ( boolean bUnique, boolean bTransparency )
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-
         SetVShader(0,new VertexShader("Color_Opacity_TextureV"));
-        SetPShader(0,new PixelShader("Color_Opacity_TextureP", bUnique));
+        PixelShader kPShader = null;
+        if ( !bTransparency )
+        {
+            kPShader = new PixelShader("Color_Opacity_TextureP", bUnique);
+        }
+        else
+        {
+            kPShader = new PixelShader("Color_Opacity_Texture_TransparencyP", bUnique);
+            }
+        SetPShader(0,kPShader);
 
-        GetPShader(0).SetTextureQuantity(5);
+        kPShader.SetTextureQuantity(5);
         int iTex = 0;
-        GetPShader(0).SetImageName(iTex,m_kVolumeImageA.GetVolumeTarget().GetName());
-        GetPShader(0).SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
-        GetPShader(0).SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
-        GetPShader(0).SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
+        kPShader.SetImageName(iTex,m_kVolumeImageA.GetVolumeTarget().GetName());
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
         
-        GetPShader(0).SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName() );
-        GetPShader(0).SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget() );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName() );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget() );
 
         if ( m_kVolumeImageB != null )
         {
-            GetPShader(0).SetImageName(iTex,"VolumeImageB");
-            GetPShader(0).SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
-            GetPShader(0).SetImageName(iTex, "ColorMapB");
-            GetPShader(0).SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget() );
+            kPShader.SetImageName(iTex,"VolumeImageB");
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
+            kPShader.SetImageName(iTex, "ColorMapB");
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget() );
         }
     }
 }

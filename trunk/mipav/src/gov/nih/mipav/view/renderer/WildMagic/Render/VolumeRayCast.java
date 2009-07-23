@@ -8,6 +8,7 @@ import javax.media.opengl.GLAutoDrawable;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
@@ -91,7 +92,7 @@ public class VolumeRayCast extends VolumeObject
     private GraphicsImage m_spkSceneImage;
 
     /** Texture for the first-pass rendering of the proxy-geometry: */
-    private Texture m_pkSceneTarget;
+    private Texture[] m_apkSceneTarget = new Texture[1];
 
     /** Off-screen buffer the first-pass rendering is drawn into: */
     private OpenGLFrameBuffer m_pkPBuffer;
@@ -198,10 +199,10 @@ public class VolumeRayCast extends VolumeObject
         // loaded so that the scene target texture has everything needed for
         // FrameBuffer::Create to succeed.
         TextureEffect pkEffect = new TextureEffect("SceneImage");
-        m_pkSceneTarget = pkEffect.GetPTexture(0,0);
-        m_pkSceneTarget.SetFilterType(Texture.FilterType.NEAREST);
-        m_pkSceneTarget.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
-        m_pkSceneTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
+        m_apkSceneTarget[0] = pkEffect.GetTexture(0,0);
+        m_apkSceneTarget[0].SetFilterType(Texture.FilterType.NEAREST);
+        m_apkSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
+        m_apkSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
 
         //m_pkSceneTarget.SetOffscreenTexture(true);
         //m_pkSceneTarget.SetDepthCompare (DepthCompare.DC_LESS);
@@ -216,7 +217,7 @@ public class VolumeRayCast extends VolumeObject
 
         // Create the RGBA frame-buffer object to be bound to the scene polygon.
         m_pkPBuffer = new OpenGLFrameBuffer(eFormat,eDepth,eStencil,
-                eBuffering,eMultisampling,kRenderer,m_pkSceneTarget,arg0,0);
+                eBuffering,eMultisampling,kRenderer,m_apkSceneTarget,arg0,0);
         assert(m_pkPBuffer != null);
 
         m_kScene.UpdateGS();
@@ -226,7 +227,7 @@ public class VolumeRayCast extends VolumeObject
 
         
         m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
-                m_pkSceneTarget);
+                m_apkSceneTarget[0]);
         kRenderer.LoadResources(m_kVolumeShaderEffect);
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
@@ -246,10 +247,10 @@ public class VolumeRayCast extends VolumeObject
             m_spkSceneImage.dispose();
             m_spkSceneImage = null;
         }
-        if ( m_pkSceneTarget != null )
+        if ( m_apkSceneTarget[0] != null )
         {
-            m_pkSceneTarget.dispose();
-            m_pkSceneTarget = null;
+            m_apkSceneTarget[0].dispose();
+            m_apkSceneTarget[0] = null;
         }
         if ( m_pkPBuffer != null )
         {
@@ -359,7 +360,7 @@ public class VolumeRayCast extends VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void PreRender( Renderer kRenderer, Culler kCuller )
+    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
@@ -423,7 +424,7 @@ public class VolumeRayCast extends VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void Render( Renderer kRenderer, Culler kCuller )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
@@ -752,7 +753,7 @@ public class VolumeRayCast extends VolumeObject
         m_kMaterial.Ambient = new ColorRGB(0.1f,0.1f,0.1f);
         m_kMaterial.Diffuse = new ColorRGB(1f,1f,1f);
         m_kMaterial.Specular = new ColorRGB(1f,1f,1f);
-        m_kMaterial.Shininess = 64f;
+        m_kMaterial.Shininess = 128f;
         m_kMesh.AttachGlobalState(m_kMaterial);
         m_kMesh.UpdateMS(true);
         return m_kMesh;
@@ -770,5 +771,11 @@ public class VolumeRayCast extends VolumeObject
         int iZBound = m_kVolumeImageA.GetImage().getExtents()[2];
         Box(iXBound,iYBound,iZBound);
         m_spkVertexColor3Shader = new VertexColor3Effect();
+    }
+    
+    public Matrix4f GetWorld()
+    {
+        m_kScene.UpdateGS();
+        return m_kMesh.HWorld;
     }
 }

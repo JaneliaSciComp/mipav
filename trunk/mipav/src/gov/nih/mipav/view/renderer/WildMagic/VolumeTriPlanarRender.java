@@ -33,6 +33,7 @@ import java.awt.event.MouseMotionListener;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
+import WildMagic.ApplicationDemos.OrderIndpTransparencyEffect;
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -41,14 +42,24 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.Collision.PickRecord;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.Rendering.Camera;
 import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.FrameBuffer;
+import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Geometry;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.Shaders.SamplerInformation;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.sun.opengl.util.Animator;
@@ -124,6 +135,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     private boolean m_bPlay4D = false;
     private float m_fAnimateRate = 0;
     private int m_iAnimateCount = 0;
+    
+    
+
+    private FrameBuffer m_kFBO;    
+    private ShaderEffect m_spkPlaneEffect;
+    private TriMesh m_pkPlane;
+    private Camera m_pkScreenCamera;
     
     /**
      * Default Constructor.
@@ -251,8 +269,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
 
         float[] afData = new float[16];
-        m_pkRenderer.SetConstantWVPMatrix (0, afData);
-        m_kSculptor.setWVPMatrix(new Matrix4f(afData, true));   
+        Matrix4f kWorld = new Matrix4f();
+        
+        m_pkRenderer.SetConstantVPMatrix (0, afData);
+        Matrix4f kVP = new Matrix4f( afData, true );
+        kWorld.Mult(m_kSceneToWorld, kVP);
+        m_kSculptor.setWVPMatrix(kWorld);   
         boolean bSculptTrue = false;
         int iTSize = (m_kVolumeImageA.GetImage().is4DImage()&&bAll) ? m_kVolumeImageA.GetImage().getExtents()[3] : 1;
         for ( int i = 0; i < iTSize; i++ )
@@ -549,7 +571,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kShaderParamsWindow.setParent(this);
         }
         m_kShaderParamsWindow.close();
-        m_kShaderParamsWindow.AddUserVariables(m_kVolumeRayCast.GetShaderEffect().GetPProgram(0));
+        m_kShaderParamsWindow.AddUserVariables(m_kVolumeRayCast.GetShaderEffect().GetCProgram(0));
         m_kShaderParamsWindow.Display();
         m_kShaderParamsWindow.setParent(this);
     }
@@ -969,6 +991,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         InitializeCameraMotion(.05f,0.001f);
         InitializeObjectMotion(m_spkScene);
 
+        CreateRenderTarget( arg0, m_iWidth, m_iHeight );
         //((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         m_kAnimator.add( GetCanvas() );
@@ -2434,14 +2457,37 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         if ( !m_bStereo )
         {
+            // First: render opaque objects to an off-screen color/depth buffer
+            //m_kSolidFBO.Enable();        
+            m_kFBO.Enable();
+            m_kFBO.DrawBuffers(new int[]{0});
+            m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
+            m_pkRenderer.ClearBuffers();
+            
             for ( int i = 1; i < m_kDisplayList.size(); i++ )
             {
-                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true );
             }
+
+            // Second: render semi-transparent objects:
+            m_kFBO.DrawBuffers(new int[]{1,2});
+            m_pkRenderer.SetBackgroundColor( new ColorRGBA(0.0f, 0.0f,0.0f,0.0f));
+            m_pkRenderer.ClearBackBuffer();
+            
             for ( int i = 1; i < m_kDisplayList.size(); i++ )
             {
-                m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
+                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, false );
             }
+
+            m_kFBO.Disable();
+            
+            
+            m_pkRenderer.SetCamera(m_pkScreenCamera);
+            m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
+            m_pkRenderer.ClearBuffers();
+            
+            m_pkRenderer.Draw( m_pkPlane );  
+            m_pkRenderer.SetCamera(m_spkCamera);
         }
         else
         {          
@@ -2452,11 +2498,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 m_pkRenderer.SetColorMask( false, false, true, true );
                 for ( int i = 1; i < m_kDisplayList.size(); i++ )
                 {
-                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
-                }
-                for ( int i = 1; i < m_kDisplayList.size(); i++ )
-                {
-                    m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
+                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, false );
                 }
             }
             m_pkRenderer.ClearZBuffer();
@@ -2468,11 +2510,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 m_pkRenderer.SetColorMask( true, false, false, true );
                 for ( int i = 1; i < m_kDisplayList.size(); i++ )
                 {
-                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
-                }
-                for ( int i = 1; i < m_kDisplayList.size(); i++ )
-                {
-                    m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
+                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, false );
                 }
             }
             MoveRight();
@@ -2505,14 +2543,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             for ( int i = 0; i < m_kDisplayList.size(); i++ )
             {
-                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
+                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller, true );
             }
         }
         else
         {
             for ( int i = 0; i < m_kDisplayList.size(); i++ )
             {
-                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller );
+                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller, true );
             }
             m_kVolumeRayCast.PostPreRender(m_pkRenderer);
 
@@ -2521,9 +2559,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
             for ( int i = 1; i < m_kDisplayList.size(); i++ )
             {
-                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller );
+                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true );
             }
-            m_kDisplayList.get(0).Render( m_pkRenderer, m_kCuller );
+            m_kDisplayList.get(0).Render( m_pkRenderer, m_kCuller, false );
 
             for ( int i = 1; i < m_kDisplayList.size(); i++ )
             {
@@ -2605,5 +2643,73 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             m_kDTIDisplay.setVolumeColor(flag);
         }
+    }
+    
+    
+
+    
+
+    private void CreateRenderTarget( GLAutoDrawable arg0, int iWidth, int iHeight )
+    {        
+        Texture[] akSceneTarget = new Texture[3];
+        GraphicsImage pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,(byte[])null,
+                "ColorTex0");
+        akSceneTarget[0] = new Texture();
+        akSceneTarget[0].SetImage(pkSceneImage);
+        akSceneTarget[0].SetShared(true);
+        akSceneTarget[0].SetFilterType(Texture.FilterType.NEAREST);
+        akSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP);
+        akSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP);
+        akSceneTarget[0].SetSamplerInformation( new SamplerInformation( "ColorTex0", SamplerInformation.Type.SAMPLER_2D, 0, 0 ) );
+        m_pkRenderer.LoadTexture( akSceneTarget[0] );
+        
+        
+        pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,(float[])null,
+        "ColorTex1");
+        akSceneTarget[1] = new Texture();
+        akSceneTarget[1].SetImage(pkSceneImage);
+        akSceneTarget[1].SetShared(true);
+        akSceneTarget[1].SetFilterType(Texture.FilterType.NEAREST);
+        akSceneTarget[1].SetWrapType(0,Texture.WrapType.CLAMP);
+        akSceneTarget[1].SetWrapType(1,Texture.WrapType.CLAMP);
+        akSceneTarget[1].SetSamplerInformation( new SamplerInformation( "ColorTex1", SamplerInformation.Type.SAMPLER_2D, 0, 0 ) );
+        m_pkRenderer.LoadTexture( akSceneTarget[1] );
+        
+        pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,(float[])null,
+                "ColorTex2");
+        akSceneTarget[2] = new Texture();
+        akSceneTarget[2].SetImage(pkSceneImage);
+        akSceneTarget[2].SetShared(true);
+        akSceneTarget[2].SetFilterType(Texture.FilterType.NEAREST);
+        akSceneTarget[2].SetWrapType(0,Texture.WrapType.CLAMP);
+        akSceneTarget[2].SetWrapType(1,Texture.WrapType.CLAMP);
+        akSceneTarget[2].SetSamplerInformation( new SamplerInformation( "ColorTex2", SamplerInformation.Type.SAMPLER_2D, 0, 0 ) );
+        m_pkRenderer.LoadTexture( akSceneTarget[2] );
+      
+        Attributes kAttributes = new Attributes();
+        kAttributes.SetPChannels(3);
+        kAttributes.SetTChannels(0,3);
+        StandardMesh kSM = new StandardMesh(kAttributes);
+        m_pkPlane = kSM.Rectangle(2,2,1.0f,1.0f);      
+            
+        m_spkPlaneEffect = new OrderIndpTransparencyEffect(akSceneTarget, m_kBackgroundColor );
+        m_pkPlane.AttachEffect( m_spkPlaneEffect);
+        m_pkPlane.UpdateGS();
+        m_pkPlane.UpdateRS();
+        
+        m_kFBO = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
+                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget, arg0,0);
+        
+
+        m_pkScreenCamera = new Camera();
+        m_pkScreenCamera.Perspective = false;
+        m_pkScreenCamera.SetFrustum(-1,1,-1,1,1f,10.0f);
+    }
+    
+
+    protected void UpdateSceneRotation()
+    {
+        super.UpdateSceneRotation();
+        m_kSceneToWorld.Copy(m_kVolumeRayCast.GetWorld());
     }
 }

@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic;
 
 
 import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.MipavInitGPU;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
@@ -38,7 +39,6 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelVolume4D;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewerPoint;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
@@ -97,10 +97,6 @@ import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
-import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
-import WildMagic.LibGraphics.Shaders.ImageCatalog;
-import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
-import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 
 import com.sun.opengl.util.Animator;
 
@@ -359,12 +355,14 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     public VolumeTriPlanarInterface()
     {
     	super(null, null);
+        MipavInitGPU.InitGPU();
     }
    
 
     public VolumeTriPlanarInterface(ModelImage _imageA, ModelImage _imageB, int iFilterType, boolean bCompute, String kDir, int[] aiExtents)
     {
         super(_imageA, _imageB);
+        MipavInitGPU.InitGPU();
         try {
             setIconImage(MipavUtil.getIconImage("4plane_16x16.gif"));
         } catch (Exception e) {
@@ -372,13 +370,7 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         }
         imageOrientation = _imageA.getImageOrientation();
         
-        
 
-        String kExternalDirs = getExternalDirs();        
-        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
         m_kVolumeImageA = new VolumeImage(  _imageA, "A", bCompute, kDir, iFilterType, aiExtents );
         imageA = m_kVolumeImageA.GetImage();
         RGBTA = m_kVolumeImageA.GetRGB();
@@ -392,28 +384,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         }
     }
 
-
-    /**
-     * Get the default Shader directory.
-     * @return string containing the default Shader directory.
-     */
-    static public String getExternalDirs()
-    {
-        String jar_filename = "";
-        String class_path_key = "java.class.path";
-        String class_path = System.getProperty(class_path_key);
-        for (String fn : class_path.split(":")) {
-            if (fn.contains("WildMagic.jar")) {
-                jar_filename = fn;
-                String externalDirs = jar_filename.substring(0, jar_filename.indexOf("lib"));
-                externalDirs = externalDirs.concat("WildMagic");
-                //System.err.println("Shader dir found: " + externalDirs);
-                return externalDirs;
-            }
-        }
-        System.err.println("Shader dir not found");
-        return System.getProperties().getProperty("user.dir");
-    }
 
     /**
      * Retrieve the progress bar used in the volume renderer (the one in the
@@ -680,8 +650,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             create3DVOI(false);
         } else if (command.equals("Record")) {
             raycastRenderWM.record(m_kRecordToggle.isSelected());
-        } else if (command.equals("Histogram2D")) {
-            VolumeImageViewerPoint.main(null, m_kVolumeImageA, true);
         }
 
     }
@@ -1582,11 +1550,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
     
-    public void play4D( boolean bOn )
-    {
-        raycastRenderWM.play4D(bOn);
-    }
-    
     /**
      * Enables picking correspondence points between the surface renderer and
      * the BrainSurfaceFlattener renderer.
@@ -1610,6 +1573,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         {
             brainsurfaceFlattenerRender.drawPicked(iV0, iV1, iV2);
         }        
+    }
+    
+    public void play4D( boolean bOn )
+    {
+        raycastRenderWM.play4D(bOn);
     }
 
     public void refreshLighting() {
@@ -2511,7 +2479,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                                          menuObj.buildMenuItem("Open DTI Tract file", "DTI", 0, null, false),
                                          menuObj.buildMenuItem("Open BrainSurface Flattener view", "BrainSurface", 0, null, false),
                                          menuObj.buildMenuItem("Open Fly Through view", "FlyThru", 0, null, false),
-                                         menuObj.buildMenuItem("Histogram 2D", "Histogram2D", 0, null, false),
                                          menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)
                                      }));
         menuBar.add(menuObj.makeMenu("Options", false,

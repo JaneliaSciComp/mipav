@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
+import gov.nih.mipav.MipavInitGPU;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -260,11 +261,7 @@ implements ChangeListener {
             serif12B = MipavUtil.font12B;
             progressBar.updateValueImmed(5);
 
-            String kExternalDirs = getExternalDirs();        
-            ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-            VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-            PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-            CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+            MipavInitGPU.InitGPU();
             
             m_kAnimator = new Animator();
             m_akPlaneRender = new PlaneRender_WM[3];

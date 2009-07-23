@@ -27,13 +27,13 @@ public class SurfaceClipEffect extends VolumeClipEffect
      */
     public void Scale( float fSX, float fSY, float fSZ, boolean bOn )
     {
-        Program pkProgram = GetVProgram(0);
-        if ( (pkProgram != null) && (pkProgram.GetUC("SurfaceScale") != null) ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( (pkCProgram != null) && (pkCProgram.GetUC("SurfaceScale") != null) ) 
         {
-            pkProgram.GetUC("SurfaceScale").GetData()[0] = fSX;
-            pkProgram.GetUC("SurfaceScale").GetData()[1] = fSY;
-            pkProgram.GetUC("SurfaceScale").GetData()[2] = fSZ;
-            pkProgram.GetUC("SurfaceScale").GetData()[3] = bOn ? 1 : 0;
+            pkCProgram.GetUC("SurfaceScale").GetData()[0] = fSX;
+            pkCProgram.GetUC("SurfaceScale").GetData()[1] = fSY;
+            pkCProgram.GetUC("SurfaceScale").GetData()[2] = fSZ;
+            pkCProgram.GetUC("SurfaceScale").GetData()[3] = bOn ? 1 : 0;
         }
     }
 }

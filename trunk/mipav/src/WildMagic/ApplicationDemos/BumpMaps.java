@@ -252,12 +252,12 @@ public class BumpMaps extends JavaApplication3D
                                                                    "BricksNormal",Vector3f.UNIT_Z);
             pkEffect.ComputeLightVectors(pkMesh);
 
-            Texture pkBricks = pkEffect.GetPTexture(0,0);
+            Texture pkBricks = pkEffect.GetTexture(0,0);
             pkBricks.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
             pkBricks.SetWrapType(0,Texture.WrapType.REPEAT);
             pkBricks.SetWrapType(1,Texture.WrapType.REPEAT);
 
-            Texture pkNormals = pkEffect.GetPTexture(0,1);
+            Texture pkNormals = pkEffect.GetTexture(0,1);
             pkNormals.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
             pkNormals.SetWrapType(0,Texture.WrapType.REPEAT);
             pkNormals.SetWrapType(1,Texture.WrapType.REPEAT);
@@ -268,7 +268,7 @@ public class BumpMaps extends JavaApplication3D
         {
             TextureEffect pkEffect = new TextureEffect("Bricks");
 
-            Texture pkBricks = pkEffect.GetPTexture(0,0);
+            Texture pkBricks = pkEffect.GetTexture(0,0);
             pkBricks.SetFilterType(Texture.FilterType.LINEAR_LINEAR);
             pkBricks.SetWrapType(0,Texture.WrapType.REPEAT);
             pkBricks.SetWrapType(1,Texture.WrapType.REPEAT);

@@ -14,17 +14,31 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     /** Creates a LightingEffect
      * @param kImageA VolumeImage containing data and textures for the effect.
      */
-    public SurfaceLightingEffect (VolumeImage kImageA)
+    public SurfaceLightingEffect (VolumeImage kImageA, boolean bTransparent)
     {
         SetPassQuantity(1);
         m_kVVertexLighting = new VertexShader("MipavLighting", true);
-        m_kPVertexLighting = new PixelShader("PassThrough4");
+        if ( !bTransparent )
+        {
+            m_kPVertexLighting = new PixelShader("PassThrough4");
+        }
+        else
+        {
+            m_kPVertexLighting = new PixelShader("PassThrough_Transparency4");
+        }
         
         m_kVolumeTextureNew = new Texture();
         m_kVolumeLUTNew = new Texture();
         
         m_kVPixelLighting = new VertexShader("MipavLightingFragmentV", true);
-        m_kPPixelLighting = new PixelShader("MipavLightingFragmentP", true);
+        if ( !bTransparent )
+        {
+            m_kPPixelLighting = new PixelShader("MipavLightingFragmentP", true);
+        }
+        else
+        {
+            m_kPPixelLighting = new PixelShader("MipavLightingFragment_TransparencyP", true);
+        }
         if ( kImageA != null )
         {
             m_kPPixelLighting.SetTextureQuantity(4);
@@ -47,22 +61,22 @@ public class SurfaceLightingEffect extends VolumeClipEffect
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClipEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
-                                Program pkPProgram)
+                                Program pkPProgram, Program pkCProgram)
     {
-        SetColorImage(pkPProgram);
+        SetColorImage(pkCProgram);
         Blend(m_fBlend);
-        super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram );
+        super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram, pkCProgram );
     }
     
 
     /**
      * Sets the IsColor shader parameter values.
      */
-    private void SetColorImage(Program pkPProgram)
+    private void SetColorImage(Program pkCProgram)
     { 
-        if ( (pkPProgram.GetUC("IsColor") != null) && ((m_kVolumeImage != null)) ) 
+        if ( (pkCProgram.GetUC("IsColor") != null) && ((m_kVolumeImage != null)) ) 
         {
-            pkPProgram.GetUC("IsColor").GetData()[0] = m_kVolumeImage.IsColorImage() ? 1 : 0;
+            pkCProgram.GetUC("IsColor").GetData()[0] = m_kVolumeImage.IsColorImage() ? 1 : 0;
         } 
     }
     
@@ -73,22 +87,14 @@ public class SurfaceLightingEffect extends VolumeClipEffect
      */
     public void SetLight( String kLightType, float[] afType )
     {
-        Program pkProgram = null;
-        if ( m_bPerPixelLighting )
-        {
-            pkProgram = GetPProgram(0);
-        }
-        else
-        {
-            pkProgram = GetVProgram(0);
-        }
-        if ( pkProgram == null )
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram == null )
         {
             return;
         }
-        if ( pkProgram.GetUC(kLightType) != null)
+        if ( pkCProgram.GetUC(kLightType) != null)
         {
-            pkProgram.GetUC(kLightType).SetDataSource(afType);
+            pkCProgram.GetUC(kLightType).SetDataSource(afType);
         }
         
     }
@@ -99,22 +105,14 @@ public class SurfaceLightingEffect extends VolumeClipEffect
      */
     public void Blend( float fValue )
     {    
-        Program pkProgram = null;
-        if ( m_bPerPixelLighting )
-        {
-            pkProgram = GetPProgram(0);
-        }
-        else
-        {
-            pkProgram = GetVProgram(0);
-        }
-        if ( pkProgram == null )
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram == null )
         {
             return;
         }
-        if ( pkProgram.GetUC("Blend") != null)
+        if ( pkCProgram.GetUC("Blend") != null)
         {
-            pkProgram.GetUC("Blend").GetData()[0] = fValue;
+            pkCProgram.GetUC("Blend").GetData()[0] = fValue;
         }
         m_fBlend = fValue;
     }
@@ -126,14 +124,10 @@ public class SurfaceLightingEffect extends VolumeClipEffect
      */
     public void SetReverseFace( int iReverse )
     {    
-        Program pkProgram = GetVProgram(0);
-        if ( pkProgram == null )
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("ReverseFace") != null)
         {
-            return;
-        }
-        if ( pkProgram.GetUC("ReverseFace") != null)
-        {
-            pkProgram.GetUC("ReverseFace").GetData()[0] = iReverse;
+            pkCProgram.GetUC("ReverseFace").GetData()[0] = iReverse;
         }
         m_iReverseFace = iReverse;
     }
@@ -174,28 +168,20 @@ public class SurfaceLightingEffect extends VolumeClipEffect
      */
     public void SetClipping( boolean bClip )
     {
-        Program pkProgram = null;
-        if ( m_bPerPixelLighting )
-        {
-            pkProgram = GetPProgram(0);
-        }
-        else
-        {
-            pkProgram = GetVProgram(0);
-        }
-        if ( pkProgram == null )
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram == null )
         {
             return;
         }
-        if ( pkProgram.GetUC("ClipEnabled") != null)
+        if ( pkCProgram.GetUC("ClipEnabled") != null)
         {
             if ( bClip )
             {
-                pkProgram.GetUC("ClipEnabled").GetData()[0] = 1;
+                pkCProgram.GetUC("ClipEnabled").GetData()[0] = 1;
             }
             else
             {
-                pkProgram.GetUC("ClipEnabled").GetData()[0] = 0;
+                pkCProgram.GetUC("ClipEnabled").GetData()[0] = 0;
             }
         }
     }
@@ -210,42 +196,42 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     {
         m_bUseNewLUT = bUseNewLUT;
         m_bUseNewImage = bUseNewImage;
-        Program pkProgram = GetPProgram(0);  
-        if ( pkProgram == null )
+        Program pkCProgram = GetCProgram(0);  
+        if ( pkCProgram == null )
         {
             return;
         }
-        if ( pkProgram.GetUC("UseTexture") != null)
+        if ( pkCProgram.GetUC("UseTexture") != null)
         {
             if ( bTextureOn )
             {
-                pkProgram.GetUC("UseTexture").GetData()[0] = 1;
+                pkCProgram.GetUC("UseTexture").GetData()[0] = 1;
             }
             else
             {
-                pkProgram.GetUC("UseTexture").GetData()[0] = 0;
+                pkCProgram.GetUC("UseTexture").GetData()[0] = 0;
             }
         }
-        if ( pkProgram.GetUC("UseImageNew") != null)
+        if ( pkCProgram.GetUC("UseImageNew") != null)
         {
             if ( bUseNewImage )
             {
-                pkProgram.GetUC("UseImageNew").SetDataSource(new float[]{1,0,0,0});
+                pkCProgram.GetUC("UseImageNew").GetData()[0] = 1;
             }
             else
             {
-                pkProgram.GetUC("UseImageNew").SetDataSource(new float[]{0,0,0,0});
+                pkCProgram.GetUC("UseImageNew").GetData()[0] = 0;
             }
         }    
-        if ( pkProgram.GetUC("UseLUTNew") != null)
+        if ( pkCProgram.GetUC("UseLUTNew") != null)
         {
             if ( bUseNewLUT )
             {
-                pkProgram.GetUC("UseLUTNew").SetDataSource(new float[]{1,0,0,0});
+                pkCProgram.GetUC("UseLUTNew").GetData()[0] = 1;
             }
             else
             {
-                pkProgram.GetUC("UseLUTNew").SetDataSource(new float[]{0,0,0,0});
+                pkCProgram.GetUC("UseLUTNew").GetData()[0] = 0;
             }
         }
     }
@@ -287,9 +273,10 @@ public class SurfaceLightingEffect extends VolumeClipEffect
             m_kVolumeTextureNew.Release();
             m_kVolumeTextureNew.SetImage(m_kVolumeImageNew);
 
-            if ( m_kPPixelLighting.GetProgram().GetUC("IsColorNew") != null ) 
+            Program kCProgram = GetCProgram(0);
+            if ( kCProgram.GetUC("IsColorNew") != null ) 
             {
-                m_kPPixelLighting.GetProgram().GetUC("IsColorNew").GetData()[0] = kImage.isColorImage() ? 1 : 0;
+                kCProgram.GetUC("IsColorNew").GetData()[0] = kImage.isColorImage() ? 1 : 0;
             } 
         }
         else

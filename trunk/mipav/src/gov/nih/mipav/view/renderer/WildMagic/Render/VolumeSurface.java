@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -27,6 +28,7 @@ import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Geometry;
 import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Spatial;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
@@ -34,6 +36,7 @@ public class VolumeSurface extends VolumeObject
 {
     /** ShaderEffect for the plane bounding-boxes. */
     private VolumePreRenderEffect m_kVolumePreShader;
+    private VolumePreRenderEffect m_kVolumePreShaderTransparent;
     //private HierarchicalTriMesh m_kMesh = null;
     /** TriMesh */
     private TriMesh m_kMesh = null;
@@ -41,6 +44,7 @@ public class VolumeSurface extends VolumeObject
     private MaterialState m_kMaterial = null;
     /** Surface shader effect. */
     private SurfaceLightingEffect m_kLightShader;
+    private SurfaceLightingEffect m_kLightShaderTransparent;
     /** Surface volume. */
     private float m_fVolume = 0;
     /** Surface area. */
@@ -58,6 +62,8 @@ public class VolumeSurface extends VolumeObject
     private Node[] m_akGeodesicNodes = new Node[3]; 
     /** Current displayed geodesic component. */
     private int m_iCurrentGeodesic = 0;
+    private float m_fBlend = 1.0f;
+    private Vector<Spatial> m_kDisplayObjs = new Vector<Spatial>();
 
     /** Create a new VolumeSurface with the VolumeImage parameter.
      * @param kImageA the VolumeImage containing shared data and textures for
@@ -105,7 +111,8 @@ public class VolumeSurface extends VolumeObject
         }
         m_kMesh.UpdateMS();
 
-        m_kLightShader = new SurfaceLightingEffect( kImageA );
+        m_kLightShader = new SurfaceLightingEffect( kImageA, false );
+        m_kLightShaderTransparent = new SurfaceLightingEffect( kImageA, true );
 
         if ( !bHasMaterial )
         {
@@ -158,8 +165,11 @@ public class VolumeSurface extends VolumeObject
      */
     public void Blend( float fValue )
     {
+        m_fBlend = fValue;
         m_kLightShader.Blend(fValue);
+        m_kLightShaderTransparent.Blend(fValue);
         m_kVolumePreShader.Blend(fValue);
+        m_kVolumePreShaderTransparent.Blend(fValue);
     }
 
     /**
@@ -372,6 +382,11 @@ public class VolumeSurface extends VolumeObject
             m_kVolumePreShader.dispose();
             m_kVolumePreShader = null;
         }
+        if ( m_kVolumePreShaderTransparent != null )
+        {
+            m_kVolumePreShaderTransparent.dispose();
+            m_kVolumePreShaderTransparent = null;
+        }
         if ( m_kMesh != null )
         {
             m_kMesh.dispose();
@@ -386,6 +401,11 @@ public class VolumeSurface extends VolumeObject
         {
             m_kLightShader.dispose();
             m_kLightShader = null;
+        }
+        if ( m_kLightShaderTransparent != null )
+        {
+            m_kLightShaderTransparent.dispose();
+            m_kLightShaderTransparent = null;
         }
         
         m_kCenter = null;
@@ -409,6 +429,7 @@ public class VolumeSurface extends VolumeObject
             Vector3f kTexCoord = new Vector3f();
             m_kMesh.VBuffer.GetTCoord3( 0, kRecord.iV0, kTexCoord );
             m_kLightShader.Dropper( kTexCoord, rkDropperColor);
+            m_kLightShaderTransparent.Dropper( kTexCoord, rkDropperColor);
         }
     }
     
@@ -658,7 +679,7 @@ public class VolumeSurface extends VolumeObject
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
-    public void PreRender( Renderer kRenderer, Culler kCuller )
+    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
@@ -720,7 +741,7 @@ public class VolumeSurface extends VolumeObject
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
-    public void Render( Renderer kRenderer, Culler kCuller )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
@@ -728,10 +749,32 @@ public class VolumeSurface extends VolumeObject
         }
         for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
         {
+            //Spatial kObj = m_kScene.DetachChildAt(i);
+            //m_kDisplayObjs.add(  );
             m_kScene.GetChild(i).DetachAllEffects();
-            m_kScene.GetChild(i).AttachEffect( m_kLightShader );
+            if ( bSolid && (m_fBlend >= 1.0f) )
+            {
+                m_kScene.GetChild(i).AttachEffect( m_kLightShader );
+            }
+            else if ( !bSolid && (m_fBlend > 0) && (m_fBlend < 1.0) )
+            {
+                m_kScene.GetChild(i).AttachEffect( m_kLightShaderTransparent );
+            }
+        }
+        m_kScene.DetachGlobalState(GlobalState.StateType.ALPHA);
+        m_kScene.DetachGlobalState(GlobalState.StateType.ZBUFFER);
+        if ( !bSolid )
+        {
+            m_kScene.AttachGlobalState(m_kAlphaTransparency);
+            m_kScene.AttachGlobalState(m_kZBufferTransparency);
+            m_kZBufferTransparency.Writable = false;
+        }
+        else
+        {
+            m_kScene.AttachGlobalState(m_kAlpha);
         }
         m_kScene.UpdateGS();
+        m_kScene.UpdateRS();
         kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
@@ -790,6 +833,7 @@ public class VolumeSurface extends VolumeObject
     public void SetClip( int iWhich, float data, boolean bEnable)
     {
         m_kLightShader.SetClip(iWhich, data, bEnable);
+        m_kLightShaderTransparent.SetClip(iWhich, data, bEnable);
     }
 
     
@@ -799,6 +843,7 @@ public class VolumeSurface extends VolumeObject
     public void SetClipArb( float[] afEquation, boolean bEnable )
     {
         m_kLightShader.SetClipArb(afEquation, bEnable);
+        m_kLightShaderTransparent.SetClipArb(afEquation, bEnable);
     }
     /** Sets eye clipping for the VolumeShaderEffect.
      * @param afEquation the eye clipping equation.
@@ -806,6 +851,7 @@ public class VolumeSurface extends VolumeObject
     public void SetClipEye( float[] afEquation, boolean bEnable )
     {
         m_kLightShader.SetClipEye(afEquation, bEnable);
+        m_kLightShaderTransparent.SetClipEye(afEquation, bEnable);
     }
 
 
@@ -815,6 +861,7 @@ public class VolumeSurface extends VolumeObject
     public void SetClipEyeInv( float[] afEquation, boolean bEnable )
     {
         m_kLightShader.SetClipEyeInv(afEquation, bEnable);
+        m_kLightShaderTransparent.SetClipEyeInv(afEquation, bEnable);
     }
 
 
@@ -825,6 +872,7 @@ public class VolumeSurface extends VolumeObject
     public void SetClipping( boolean bClip )
     {
         m_kLightShader.SetClipping(bClip);
+        m_kLightShaderTransparent.SetClipping(bClip);
     }
 
 
@@ -853,6 +901,7 @@ public class VolumeSurface extends VolumeObject
     public void SetImageNew( ModelImage kImage )
     {
         m_kLightShader.SetImageNew(kImage);
+        m_kLightShaderTransparent.SetImageNew(kImage);
     }
 
     /* (non-Javadoc)
@@ -863,6 +912,7 @@ public class VolumeSurface extends VolumeObject
         if ( m_kLightShader != null )
         {
             m_kLightShader.SetLight(kLightType, afType);
+            m_kLightShaderTransparent.SetLight(kLightType, afType);
         }
     }
 
@@ -874,6 +924,7 @@ public class VolumeSurface extends VolumeObject
     public void SetLUTNew( ModelLUT kLUT, ModelRGB kRGBT )
     {
         m_kLightShader.SetLUTNew(kLUT, kRGBT);
+        m_kLightShaderTransparent.SetLUTNew(kLUT, kRGBT);
     }
 
     /**
@@ -905,6 +956,7 @@ public class VolumeSurface extends VolumeObject
         if ( m_kLightShader != null )
         {
             m_kLightShader.SetPerPixelLighting(kRenderer, bOn);
+            m_kLightShaderTransparent.SetPerPixelLighting(kRenderer, bOn);
         }
     }
     
@@ -917,6 +969,7 @@ public class VolumeSurface extends VolumeObject
     public void SetSurfaceTexture( boolean bOn, boolean bUseNewImage, boolean bUseNewLUT )
     {
         m_kLightShader.SetSurfaceTexture(bOn, bUseNewImage, bUseNewLUT);
+        m_kLightShaderTransparent.SetSurfaceTexture(bOn, bUseNewImage, bUseNewLUT);
         m_bTextureOn = bOn;
     }
 
@@ -1353,7 +1406,8 @@ public class VolumeSurface extends VolumeObject
     /** Creates the scene graph. */
     private void CreateScene ( )
     {
-        m_kVolumePreShader = new VolumePreRenderEffect(true, true);
+        m_kVolumePreShader = new VolumePreRenderEffect(true, true, false);
+        m_kVolumePreShaderTransparent = new VolumePreRenderEffect(true, true, true);
         m_kScene = new Node();
 
         m_kCull = new CullState();

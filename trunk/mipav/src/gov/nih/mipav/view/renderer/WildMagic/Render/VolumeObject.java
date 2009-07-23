@@ -8,6 +8,7 @@ import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
@@ -51,6 +52,12 @@ public abstract class VolumeObject
 
     /** Alpha blending for this object. */
     protected AlphaState m_kAlpha;
+
+    /** Alpha blending for this object. */
+    protected AlphaState m_kAlphaTransparency;
+    /** Zbuffer for this object. */
+    protected ZBufferState m_kZBufferTransparency;
+    protected boolean m_bTransparent = false;
 
     /** Wire-frame for this object. */
     protected WireframeState m_kWireframe = null;
@@ -102,7 +109,16 @@ public abstract class VolumeObject
         
         m_fX = fX;
         m_fY = fY;
-        m_fZ = fZ;
+        m_fZ = fZ;  
+
+        m_kAlphaTransparency = new AlphaState();
+        m_kAlphaTransparency.BlendEnabled = true;
+        m_kAlphaTransparency.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
+        m_kAlphaTransparency.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+        
+        m_kZBufferTransparency = new ZBufferState();
+        m_kZBufferTransparency.Enabled = true;
+        m_kZBufferTransparency.Writable = false;
     }
     
     /**
@@ -249,13 +265,13 @@ public abstract class VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public abstract void PreRender( Renderer kRenderer, Culler kCuller );
+    public abstract void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid );
     /**
      * Render the object.
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public abstract void Render( Renderer kRenderer, Culler kCuller );
+    public abstract void Render( Renderer kRenderer, Culler kCuller, boolean bSolid );
     
     /**
      * Set back-face culling on/off.

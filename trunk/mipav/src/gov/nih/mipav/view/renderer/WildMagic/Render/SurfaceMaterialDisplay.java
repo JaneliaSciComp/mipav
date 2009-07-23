@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.MipavInitGPU;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
 import java.awt.event.KeyListener;
@@ -65,11 +66,7 @@ implements GLEventListener, KeyListener
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
 
-        String kExternalDirs = VolumeTriPlanarInterface.getExternalDirs();        
-        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        MipavInitGPU.InitGPU();
 
         m_pkMaterial = kMaterial;
         m_akLights = akLights;

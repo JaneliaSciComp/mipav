@@ -129,8 +129,7 @@ public class Gooch extends JavaApplication3D
         {
             m_kShaderParamsWindow = new ApplicationGUI();
             m_kShaderParamsWindow.setParent(this);
-            m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetVProgram(0));
-            m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetPProgram(0));
+            m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetCProgram(0));
             m_kShaderParamsWindow.Display();
             m_kShaderParamsWindow.setParent(this);
         }
@@ -251,8 +250,7 @@ public class Gooch extends JavaApplication3D
         case 'L':
             ApplicationGUI kShaderParamsWindow = new ApplicationGUI();
             kShaderParamsWindow.setParent(this);
-            kShaderParamsWindow.AddUserVariables(m_spkEffect.GetVProgram(0));
-            kShaderParamsWindow.AddUserVariables(m_spkEffect.GetPProgram(0));
+            kShaderParamsWindow.AddUserVariables(m_spkEffect.GetCProgram(0));
             kShaderParamsWindow.Display();
             return;
         case 's':

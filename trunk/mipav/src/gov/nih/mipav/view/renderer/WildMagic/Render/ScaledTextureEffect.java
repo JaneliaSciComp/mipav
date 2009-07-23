@@ -24,13 +24,11 @@ public class ScaledTextureEffect extends ShaderEffect
     }
 
     public void OnLoadPrograms (int iPass, Program pkVProgram,
-            Program pkPProgram)
+            Program pkPProgram, Program pkCProgram)
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("Scale") != null ) 
+        if ( pkCProgram.GetUC("Scale") != null ) 
         {
-            pkProgram.GetUC("Scale").GetData()[0] = m_fScale;
+            pkCProgram.GetUC("Scale").GetData()[0] = m_fScale;
         }
     }
-
 }

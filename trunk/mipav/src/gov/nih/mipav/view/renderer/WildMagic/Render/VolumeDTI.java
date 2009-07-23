@@ -490,7 +490,7 @@ public class VolumeDTI extends VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void PreRender(Renderer kRenderer, Culler kCuller )
+    public void PreRender(Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
@@ -594,7 +594,7 @@ public class VolumeDTI extends VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void Render( Renderer kRenderer, Culler kCuller )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
@@ -846,7 +846,7 @@ public class VolumeDTI extends VolumeObject
         }
 
         
-        m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );    
+        m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA, false );    
         int iPassQuantity = m_kLightShader.GetPassQuantity();
         for (int iPass = 0; iPass < iPassQuantity; iPass++) {
             m_kLightShader.LoadPrograms(kRenderer, iPass, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),
@@ -984,16 +984,16 @@ public class VolumeDTI extends VolumeObject
         {
             return;
         }
-        Program pkProgram = kShader.GetVProgram(0);
-        if ( pkProgram == null )
+        Program pkCProgram = kShader.GetCProgram(0);
+        if ( pkCProgram == null )
         {
             return;
         }
         if ( kColor == null )
         {
-            if ( pkProgram.GetUC("UseConstantColor") != null )
+            if ( pkCProgram.GetUC("UseConstantColor") != null )
             {
-                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {0,0,0,0});
+                pkCProgram.GetUC("UseConstantColor").GetData()[0] = 0;
             }
 
             m_kEllipseConstantColor.remove( kKey );
@@ -1001,13 +1001,16 @@ public class VolumeDTI extends VolumeObject
         }
         else
         {
-            if ( pkProgram.GetUC("ConstantColor") != null )
+            if ( pkCProgram.GetUC("ConstantColor") != null )
             {
-                pkProgram.GetUC("ConstantColor").SetDataSource(new float[] { kColor.R, kColor.G, kColor.B, 1f } );
+                pkCProgram.GetUC("ConstantColor").GetData()[0] = kColor.R;
+                pkCProgram.GetUC("ConstantColor").GetData()[1] = kColor.G;
+                pkCProgram.GetUC("ConstantColor").GetData()[2] = kColor.B;
+                pkCProgram.GetUC("ConstantColor").GetData()[3] = 1;
             }
-            if ( pkProgram.GetUC("UseConstantColor") != null )
+            if ( pkCProgram.GetUC("UseConstantColor") != null )
             {
-                pkProgram.GetUC("UseConstantColor").SetDataSource(new float[] {1,0,0,0});
+                pkCProgram.GetUC("UseConstantColor").GetData()[0] = 1;
             }
 
             m_kEllipseConstantColor.remove( kKey );
