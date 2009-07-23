@@ -236,7 +236,7 @@ public class VolumeSlices extends VolumeObject
     
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
-     */
+     
     public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
@@ -251,18 +251,19 @@ public class VolumeSlices extends VolumeObject
         m_kScene.UpdateGS();
         kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
-    }
+    }*/
     
     
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
-    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
             return;
         }
+        boolean bRender = false;
         for ( int i = 0; i < 3; i++ )
         {
             m_akPlanes[i].DetachAllEffects();
@@ -271,6 +272,7 @@ public class VolumeSlices extends VolumeObject
             m_kScene.DetachChild(m_akBoundingBox[i]);
             if ( bSolid == m_abSolid[i] )
             {                
+                bRender = true;
                 if ( m_akPlaneEffect[i].GetBlend() != 0 )
                 {
                     m_kScene.AttachChild( m_akPlanes[i] );
@@ -280,13 +282,17 @@ public class VolumeSlices extends VolumeObject
             if ( bSolid )
             {
                 m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
-                m_akPlanes[i].AttachEffect( m_akPlaneEffect[i] );
+                m_akPlanes[i].AttachEffect( m_kVolumePreShader[i] );
             }
             else
             {
                 m_akBoundingBox[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
-                m_akPlanes[i].AttachEffect( m_akPlaneEffectTransparent[i] );
+                m_akPlanes[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
             }
+        }
+        if ( !bRender )
+        {
+            return;
         }
         m_kScene.DetachGlobalState(GlobalState.StateType.ALPHA);
         m_kScene.DetachGlobalState(GlobalState.StateType.ZBUFFER);
@@ -302,12 +308,70 @@ public class VolumeSlices extends VolumeObject
         }
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
-        kCuller.ComputeVisibleSet(m_kScene);
-        
-
-        
+        kCuller.ComputeVisibleSet(m_kScene);              
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
+    
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
+     */
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    {
+        if ( !m_bDisplay )
+        {
+            return;
+        }
+        boolean bRender = false;
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlanes[i].DetachAllEffects();
+            m_akBoundingBox[i].DetachAllEffects();
+            m_kScene.DetachChild( m_akPlanes[i] );
+            m_kScene.DetachChild(m_akBoundingBox[i]);
+            if ( bSolid == m_abSolid[i] )
+            {                
+                if ( m_akPlaneEffect[i].GetBlend() != 0 )
+                {
+                    bRender = true;
+                    m_kScene.AttachChild( m_akPlanes[i] );
+                    m_kScene.AttachChild(m_akBoundingBox[i]);
+                }
+            }
+            if ( bSolid )
+            {
+                m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
+                m_akPlanes[i].AttachEffect( m_akPlaneEffect[i] );
+            }
+            else
+            {
+                m_akBoundingBox[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
+                m_akPlanes[i].AttachEffect( m_akPlaneEffectTransparent[i] );
+            }
+        }
+        if ( !bRender )
+        {
+            return;
+        }
+        m_kScene.DetachGlobalState(GlobalState.StateType.ALPHA);
+        m_kScene.DetachGlobalState(GlobalState.StateType.ZBUFFER);
+        if ( !bSolid )
+        {
+            m_kScene.AttachGlobalState(m_kAlphaTransparency);
+            m_kScene.AttachGlobalState(m_kZBufferTransparency);
+            m_kZBufferTransparency.Writable = false;
+        }
+        else
+        {
+            m_kScene.AttachGlobalState(m_kAlpha);
+        }
+        m_kScene.UpdateGS();
+        m_kScene.UpdateRS();
+        kCuller.ComputeVisibleSet(m_kScene);              
+        kRenderer.DrawScene(kCuller.GetVisibleSet());
+    }
+    
+    
 
     /** Sets the bounding box color for the given plane.
      * @param i the plane index (0-3) in file coordinates.

@@ -678,7 +678,7 @@ public class VolumeSurface extends VolumeObject
     }
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
-     */
+   
     public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
@@ -692,6 +692,45 @@ public class VolumeSurface extends VolumeObject
         }
 
         m_kScene.UpdateGS();
+        kCuller.ComputeVisibleSet(m_kScene);
+        kRenderer.DrawScene(kCuller.GetVisibleSet());
+    }
+      */
+
+    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    {
+        if ( !m_bDisplay )
+        {
+            return;
+        }
+        for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
+        {
+            //Spatial kObj = m_kScene.DetachChildAt(i);
+            //m_kDisplayObjs.add(  );
+            m_kScene.GetChild(i).DetachAllEffects();
+            if ( bSolid && (m_fBlend >= 1.0f) )
+            {
+                m_kScene.GetChild(i).AttachEffect( m_kVolumePreShader );
+            }
+            else if ( !bSolid && (m_fBlend > 0) && (m_fBlend < 1.0) )
+            {
+                m_kScene.GetChild(i).AttachEffect( m_kVolumePreShaderTransparent );
+            }
+        }
+        m_kScene.DetachGlobalState(GlobalState.StateType.ALPHA);
+        m_kScene.DetachGlobalState(GlobalState.StateType.ZBUFFER);
+        if ( !bSolid )
+        {
+            m_kScene.AttachGlobalState(m_kAlphaTransparency);
+            m_kScene.AttachGlobalState(m_kZBufferTransparency);
+            m_kZBufferTransparency.Writable = false;
+        }
+        else
+        {
+            m_kScene.AttachGlobalState(m_kAlpha);
+        }
+        m_kScene.UpdateGS();
+        m_kScene.UpdateRS();
         kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }

@@ -51,6 +51,7 @@ import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Geometry;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -141,6 +142,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     private FrameBuffer m_kFBO;    
     private ShaderEffect m_spkPlaneEffect;
     private TriMesh m_pkPlane;
+    private TriMesh m_pkPlanePreRender;
     private Camera m_pkScreenCamera;
     
     /**
@@ -2457,37 +2459,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         if ( !m_bStereo )
         {
-            // First: render opaque objects to an off-screen color/depth buffer
-            //m_kSolidFBO.Enable();        
-            m_kFBO.Enable();
-            m_kFBO.DrawBuffers(new int[]{0});
-            m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
-            m_pkRenderer.ClearBuffers();
-            
-            for ( int i = 1; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true );
-            }
-
-            // Second: render semi-transparent objects:
-            m_kFBO.DrawBuffers(new int[]{1,2});
-            m_pkRenderer.SetBackgroundColor( new ColorRGBA(0.0f, 0.0f,0.0f,0.0f));
-            m_pkRenderer.ClearBackBuffer();
-            
-            for ( int i = 1; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, false );
-            }
-
-            m_kFBO.Disable();
-            
-            
-            m_pkRenderer.SetCamera(m_pkScreenCamera);
-            m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
-            m_pkRenderer.ClearBuffers();
-            
-            m_pkRenderer.Draw( m_pkPlane );  
-            m_pkRenderer.SetCamera(m_spkCamera);
+            RenderWithTransparency();
         }
         else
         {          
@@ -2518,6 +2490,41 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
+    private void RenderWithTransparency()
+    {
+        // First: render opaque objects to an off-screen color/depth buffer
+        //m_kSolidFBO.Enable();        
+        m_kFBO.Enable();
+        m_kFBO.DrawBuffers(new int[]{0});
+        m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
+        m_pkRenderer.ClearBuffers();
+        
+        for ( int i = 1; i < m_kDisplayList.size(); i++ )
+        {
+            m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true );
+        }
+
+        // Second: render semi-transparent objects:
+        m_kFBO.DrawBuffers(new int[]{1,2});
+        m_pkRenderer.SetBackgroundColor( new ColorRGBA(0.0f, 0.0f,0.0f,0.0f));
+        m_pkRenderer.ClearBackBuffer();
+        
+        for ( int i = 1; i < m_kDisplayList.size(); i++ )
+        {
+            m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, false );
+        }
+
+        m_kFBO.Disable();        
+        
+        m_pkRenderer.SetCamera(m_pkScreenCamera);
+        m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
+        m_pkRenderer.ClearBuffers();
+        
+        m_pkRenderer.Draw( m_pkPlane );  
+        m_pkRenderer.SetCamera(m_spkCamera);
+    }
+    
+    
     /**
      * Render the sculpt image.
      */
@@ -2548,6 +2555,46 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         else
         {
+
+            // First: render opaque objects to an off-screen color/depth buffer
+            //m_kSolidFBO.Enable();        
+            m_kFBO.Enable();
+            m_kFBO.DrawBuffers(new int[]{0});
+            m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
+            m_pkRenderer.ClearBuffers();
+            
+            m_kVolumeRayCast.PreRenderA( m_pkRenderer, m_kCuller, true );
+            for ( int i = 1; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller, true );
+            }
+
+            // Second: render semi-transparent objects:
+            m_kFBO.DrawBuffers(new int[]{1,2});
+            m_pkRenderer.SetBackgroundColor( new ColorRGBA(0.0f, 0.0f,0.0f,0.0f));
+            m_pkRenderer.ClearBackBuffer();
+
+            for ( int i = 1; i < m_kDisplayList.size(); i++ )
+            {
+                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller, false );
+            }
+            m_kFBO.Disable();
+            
+            
+            m_pkRenderer.SetCamera(m_pkScreenCamera);
+            
+            m_kVolumeRayCast.PreRenderB(m_pkRenderer);
+            m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
+            m_pkRenderer.ClearBuffers();
+            m_pkRenderer.Draw( m_pkPlane );  
+            m_kVolumeRayCast.PostPreRenderB(m_pkRenderer);
+            
+            m_pkRenderer.SetCamera(m_spkCamera);
+            RenderWithTransparency();
+            m_kVolumeRayCast.Render( m_pkRenderer, m_kCuller, true );
+            m_pkRenderer.SetCamera(m_spkCamera);
+            
+            /*
             for ( int i = 0; i < m_kDisplayList.size(); i++ )
             {
                 m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller, true );
@@ -2567,6 +2614,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             {
                 m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
             }
+            
+*/
         }
     }
     
@@ -2690,10 +2739,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         kAttributes.SetPChannels(3);
         kAttributes.SetTChannels(0,3);
         StandardMesh kSM = new StandardMesh(kAttributes);
-        m_pkPlane = kSM.Rectangle(2,2,1.0f,1.0f);      
+        m_pkPlane = kSM.Rectangle(2,2,1.0f,1.0f);    
             
         m_spkPlaneEffect = new OrderIndpTransparencyEffect(akSceneTarget, m_kBackgroundColor );
         m_pkPlane.AttachEffect( m_spkPlaneEffect);
+        
+        ZBufferState kZState = new ZBufferState();
+        kZState.Enabled = true;
+        kZState.Writable = false;
+        m_pkPlane.AttachGlobalState(kZState);
         m_pkPlane.UpdateGS();
         m_pkPlane.UpdateRS();
         
