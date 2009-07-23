@@ -64,8 +64,6 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
     
     private JRadioButton MaternDifferentButton;
     
-    private JRadioButton inhomogeneousPoissonButton;
-    
     private JRadioButton segregationButton;
     
     private JRadioButton associationButton;
@@ -84,6 +82,12 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
     
     private int numOffspring2 = 50;
     
+    private JLabel numOffspring3Label;
+    
+    private JTextField numOffspring3Text;
+    
+    private int numOffspring3 = 50;
+    
     private JLabel normalizedStdDevLabel;
     
     private JTextField normalizedStdDevText;
@@ -96,33 +100,17 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
     
     private double parentPoissonNormalizedMean = 5.0;
     
-    private ButtonGroup inhomogeneousGroup;
-    
-    private JRadioButton sqrtXPlusYButton;
-    
-    private JRadioButton sqrtXTimesYButton;
-    
-    private JRadioButton absXMinusYButton;
-    
     private JLabel normalizedDiscRadiusLabel;
     
     private JTextField normalizedDiscRadiusText;
     
     private double normalizedDiscRadius = 0.10;
     
-    private int inhomogeneous = AlgorithmThreeClassGeneration.SQRT_X_PLUS_Y;
+    private JLabel normalizedDiscRadius2Label;
     
-    private JLabel numPoints1Label;
+    private JTextField normalizedDiscRadius2Text;
     
-    private JTextField numPoints1Text;
-    
-    private int numPoints1 = 100;
-    
-    private JLabel numPoints2Label;
-    
-    private JTextField numPoints2Text;
-    
-    private int numPoints2 = 100;
+    private double normalizedDiscRadius2 = 0.10;
     
     private JLabel segregationLabel;
     
@@ -170,8 +158,7 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
         } else if ((source == fixedPoissonSameButton) || (source == fixedPoissonDifferentButton) ||
                    (source == randomPoissonSameButton) || (source == randomPoissonDifferentButton) ||
                    (source == MaternSameButton) || (source == MaternDifferentButton) ||
-                   (source == inhomogeneousPoissonButton) || (source == segregationButton) ||
-                   (source == associationButton)) {
+                   (source == segregationButton) ||(source == associationButton)) {
             if (fixedPoissonSameButton.isSelected() || fixedPoissonDifferentButton.isSelected() || 
                 randomPoissonSameButton.isSelected() || randomPoissonDifferentButton.isSelected()) {
                 numParentsLabel.setEnabled(true);
@@ -180,19 +167,16 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
                 numOffspring1Text.setEnabled(true);
                 numOffspring2Label.setEnabled(true);
                 numOffspring2Text.setEnabled(true);
+                numOffspring3Label.setEnabled(true);
+                numOffspring3Text.setEnabled(true);
                 normalizedStdDevLabel.setEnabled(true);
                 normalizedStdDevText.setEnabled(true);
                 parentPoissonNormalizedMeanLabel.setEnabled(false);
                 parentPoissonNormalizedMeanText.setEnabled(false);
                 normalizedDiscRadiusLabel.setEnabled(false);
                 normalizedDiscRadiusText.setEnabled(false);
-                numPoints1Label.setEnabled(false);
-                numPoints1Text.setEnabled(false);
-                numPoints2Label.setEnabled(false);
-                numPoints2Text.setEnabled(false);
-                sqrtXPlusYButton.setEnabled(false);
-                sqrtXTimesYButton.setEnabled(false);
-                absXMinusYButton.setEnabled(false);
+                normalizedDiscRadius2Label.setEnabled(false);
+                normalizedDiscRadius2Text.setEnabled(false);
                 segregationLabel.setEnabled(false);
                 segregationText.setEnabled(false);
             }
@@ -203,42 +187,16 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
                 numOffspring1Text.setEnabled(true);
                 numOffspring2Label.setEnabled(true);
                 numOffspring2Text.setEnabled(true);
+                numOffspring3Label.setEnabled(true);
+                numOffspring3Text.setEnabled(true);
                 normalizedStdDevLabel.setEnabled(false);
                 normalizedStdDevText.setEnabled(false);
                 parentPoissonNormalizedMeanLabel.setEnabled(true);
                 parentPoissonNormalizedMeanText.setEnabled(true);
                 normalizedDiscRadiusLabel.setEnabled(true);
                 normalizedDiscRadiusText.setEnabled(true);
-                numPoints1Label.setEnabled(false);
-                numPoints1Text.setEnabled(false);
-                numPoints2Label.setEnabled(false);
-                numPoints2Text.setEnabled(false);
-                sqrtXPlusYButton.setEnabled(false);
-                sqrtXTimesYButton.setEnabled(false);
-                absXMinusYButton.setEnabled(false);
-                segregationLabel.setEnabled(false);
-                segregationText.setEnabled(false);
-            }
-            else if (inhomogeneousPoissonButton.isSelected()){
-                numParentsLabel.setEnabled(false);
-                numParentsText.setEnabled(false); 
-                numOffspring1Label.setEnabled(false);
-                numOffspring1Text.setEnabled(false);
-                numOffspring2Label.setEnabled(false);
-                numOffspring2Text.setEnabled(false);
-                normalizedStdDevLabel.setEnabled(false);
-                normalizedStdDevText.setEnabled(false);
-                parentPoissonNormalizedMeanLabel.setEnabled(false);
-                parentPoissonNormalizedMeanText.setEnabled(false);
-                normalizedDiscRadiusLabel.setEnabled(false);
-                normalizedDiscRadiusText.setEnabled(false);
-                numPoints1Label.setEnabled(true);
-                numPoints1Text.setEnabled(true);
-                numPoints2Label.setEnabled(true);
-                numPoints2Text.setEnabled(true);
-                sqrtXPlusYButton.setEnabled(true);
-                sqrtXTimesYButton.setEnabled(true);
-                absXMinusYButton.setEnabled(true);
+                normalizedDiscRadius2Label.setEnabled(false);
+                normalizedDiscRadius2Text.setEnabled(false);
                 segregationLabel.setEnabled(false);
                 segregationText.setEnabled(false);
             }
@@ -249,19 +207,16 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
                 numOffspring1Text.setEnabled(true);
                 numOffspring2Label.setEnabled(true);
                 numOffspring2Text.setEnabled(true);
+                numOffspring3Label.setEnabled(true);
+                numOffspring3Text.setEnabled(true);
                 normalizedStdDevLabel.setEnabled(false);
                 normalizedStdDevText.setEnabled(false);
                 parentPoissonNormalizedMeanLabel.setEnabled(false);
                 parentPoissonNormalizedMeanText.setEnabled(false);
                 normalizedDiscRadiusLabel.setEnabled(false);
                 normalizedDiscRadiusText.setEnabled(false);
-                numPoints1Label.setEnabled(false);
-                numPoints1Text.setEnabled(false);
-                numPoints2Label.setEnabled(false);
-                numPoints2Text.setEnabled(false);
-                sqrtXPlusYButton.setEnabled(false);
-                sqrtXTimesYButton.setEnabled(false);
-                absXMinusYButton.setEnabled(false);
+                normalizedDiscRadius2Label.setEnabled(false);
+                normalizedDiscRadius2Text.setEnabled(false);
                 segregationLabel.setEnabled(true);
                 segregationText.setEnabled(true);    
             }
@@ -272,19 +227,16 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
                 numOffspring1Text.setEnabled(true);
                 numOffspring2Label.setEnabled(true);
                 numOffspring2Text.setEnabled(true);
+                numOffspring3Label.setEnabled(true);
+                numOffspring3Text.setEnabled(true);
                 normalizedStdDevLabel.setEnabled(false);
                 normalizedStdDevText.setEnabled(false);
                 parentPoissonNormalizedMeanLabel.setEnabled(false);
                 parentPoissonNormalizedMeanText.setEnabled(false);
                 normalizedDiscRadiusLabel.setEnabled(true);
                 normalizedDiscRadiusText.setEnabled(true);
-                numPoints1Label.setEnabled(false);
-                numPoints1Text.setEnabled(false);
-                numPoints2Label.setEnabled(false);
-                numPoints2Text.setEnabled(false);
-                sqrtXPlusYButton.setEnabled(false);
-                sqrtXTimesYButton.setEnabled(false);
-                absXMinusYButton.setEnabled(false);
+                normalizedDiscRadius2Label.setEnabled(true);
+                normalizedDiscRadius2Text.setEnabled(true);
                 segregationLabel.setEnabled(false);
                 segregationText.setEnabled(false);        
             }
@@ -377,8 +329,8 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
 
             // Make algorithm
             tcAlgo = new AlgorithmThreeClassGeneration(resultImage, radius, process, numParents, numOffspring1,
-                        numOffspring2, normalizedStdDev, parentPoissonNormalizedMean,
-                        normalizedDiscRadius, numPoints1, numPoints2, inhomogeneous, segregation);
+                        numOffspring2, numOffspring3, normalizedStdDev, parentPoissonNormalizedMean,
+                        normalizedDiscRadius, normalizedDiscRadius2, segregation);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -519,22 +471,13 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
         gbc6.gridy = 7;
         paramPanel.add(MaternDifferentButton, gbc6);
         
-        inhomogeneousPoissonButton = new JRadioButton("Inhomogeneous Poisson process", false);
-        inhomogeneousPoissonButton.setFont(serif12);
-        inhomogeneousPoissonButton.setForeground(Color.black);
-        inhomogeneousPoissonButton.addActionListener(this);
-        processGroup.add(inhomogeneousPoissonButton);
-        gbc6.gridx = 0;
-        gbc6.gridy = 8;
-        paramPanel.add(inhomogeneousPoissonButton, gbc6);
-        
         segregationButton = new JRadioButton("Segregation alternative", false);
         segregationButton.setFont(serif12);
         segregationButton.setForeground(Color.black);
         segregationButton.addActionListener(this);
         processGroup.add(segregationButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 9;
+        gbc6.gridy = 8;
         paramPanel.add(segregationButton, gbc6);
         
         associationButton = new JRadioButton("Association alternative", false);
@@ -543,7 +486,7 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
         associationButton.addActionListener(this);
         processGroup.add(associationButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 10;
+        gbc6.gridy = 9;
         paramPanel.add(associationButton, gbc6);
         
         numParentsLabel = new JLabel("Number of parents ");
@@ -551,7 +494,7 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
         numParentsLabel.setFont(serif12);
         numParentsLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy =11;
+        gbc6.gridy =10;
         paramPanel.add(numParentsLabel, gbc6);
         
         numParentsText = new JTextField(3);
@@ -566,7 +509,7 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
         numOffspring1Label.setFont(serif12);
         numOffspring1Label.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 12;
+        gbc6.gridy = 11;
         paramPanel.add(numOffspring1Label, gbc6);
         
         numOffspring1Text = new JTextField(10);
@@ -581,7 +524,7 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
         numOffspring2Label.setFont(serif12);
         numOffspring2Label.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 13;
+        gbc6.gridy = 12;
         paramPanel.add(numOffspring2Label, gbc6);
         
         numOffspring2Text = new JTextField(10);
@@ -590,6 +533,21 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
         numOffspring2Text.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(numOffspring2Text, gbc6);
+        
+        numOffspring3Label = new JLabel("Number of Type 3 offspring ");
+        numOffspring3Label.setForeground(Color.black);
+        numOffspring3Label.setFont(serif12);
+        numOffspring3Label.setEnabled(true);
+        gbc6.gridx = 0;
+        gbc6.gridy = 13;
+        paramPanel.add(numOffspring3Label, gbc6);
+        
+        numOffspring3Text = new JTextField(10);
+        numOffspring3Text.setText(String.valueOf(numOffspring3));
+        numOffspring3Text.setFont(serif12);
+        numOffspring3Text.setEnabled(true);
+        gbc6.gridx = 1;
+        paramPanel.add(numOffspring3Text, gbc6);
         
         normalizedStdDevLabel = new JLabel("Normalized standard deviation ");
         normalizedStdDevLabel.setForeground(Color.black);
@@ -636,70 +594,27 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
         gbc6.gridx = 1;
         paramPanel.add(normalizedDiscRadiusText, gbc6);
         
-        numPoints1Label = new JLabel("Number of type 1 objects before deletion ");
-        numPoints1Label.setForeground(Color.black);
-        numPoints1Label.setFont(serif12);
-        numPoints1Label.setEnabled(false);
+        normalizedDiscRadius2Label = new JLabel("Normalized disc radius2 ");
+        normalizedDiscRadius2Label.setForeground(Color.black);
+        normalizedDiscRadius2Label.setFont(serif12);
+        normalizedDiscRadius2Label.setEnabled(false);
         gbc6.gridx = 0;
         gbc6.gridy = 17;
-        paramPanel.add(numPoints1Label, gbc6);
+        paramPanel.add(normalizedDiscRadius2Label, gbc6);
         
-        numPoints1Text = new JTextField(10);
-        numPoints1Text.setText(String.valueOf(numPoints1));
-        numPoints1Text.setFont(serif12);
-        numPoints1Text.setEnabled(false);
+        normalizedDiscRadius2Text = new JTextField(10);
+        normalizedDiscRadius2Text.setText(String.valueOf(normalizedDiscRadius2));
+        normalizedDiscRadius2Text.setFont(serif12);
+        normalizedDiscRadius2Text.setEnabled(false);
         gbc6.gridx = 1;
-        paramPanel.add(numPoints1Text, gbc6);
+        paramPanel.add(normalizedDiscRadius2Text, gbc6);
         
-        numPoints2Label = new JLabel("Number of type 2 objects before deletion ");
-        numPoints2Label.setForeground(Color.black);
-        numPoints2Label.setFont(serif12);
-        numPoints2Label.setEnabled(false);
-        gbc6.gridx = 0;
-        gbc6.gridy = 18;
-        paramPanel.add(numPoints2Label, gbc6);
-        
-        numPoints2Text = new JTextField(10);
-        numPoints2Text.setText(String.valueOf(numPoints2));
-        numPoints2Text.setFont(serif12);
-        numPoints2Text.setEnabled(false);
-        gbc6.gridx = 1;
-        paramPanel.add(numPoints2Text, gbc6);
-        
-        inhomogeneousGroup = new ButtonGroup();
-        sqrtXPlusYButton = new JRadioButton("lambda2(x,y) = n2*sqrt(x + y)", true);
-        sqrtXPlusYButton.setFont(serif12);
-        sqrtXPlusYButton.setForeground(Color.black);
-        sqrtXPlusYButton.setEnabled(false);
-        inhomogeneousGroup.add(sqrtXPlusYButton);
-        gbc6.gridx = 0;
-        gbc6.gridy = 19;
-        paramPanel.add(sqrtXPlusYButton, gbc6);
-        
-        sqrtXTimesYButton = new JRadioButton("lambda2(x,y) = n2*sqrt(x * y)", false);
-        sqrtXTimesYButton.setFont(serif12);
-        sqrtXTimesYButton.setForeground(Color.black);
-        sqrtXTimesYButton.setEnabled(false);
-        inhomogeneousGroup.add(sqrtXTimesYButton);
-        gbc6.gridx = 0;
-        gbc6.gridy = 20;
-        paramPanel.add(sqrtXTimesYButton, gbc6);
-        
-        absXMinusYButton = new JRadioButton("lambda2(x,y) = n2*|x - y|", true);
-        absXMinusYButton.setFont(serif12);
-        absXMinusYButton.setForeground(Color.black);
-        absXMinusYButton.setEnabled(false);
-        inhomogeneousGroup.add(absXMinusYButton);
-        gbc6.gridx = 0;
-        gbc6.gridy = 21;
-        paramPanel.add(absXMinusYButton, gbc6);
-        
-        segregationLabel = new JLabel("Segregation parameter (0.0 - 1.0)");
+        segregationLabel = new JLabel("Segregation parameter (0.0 - 0.5)");
         segregationLabel.setForeground(Color.black);
         segregationLabel.setFont(serif12);
         segregationLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 22;
+        gbc6.gridy = 18;
         paramPanel.add(segregationLabel, gbc6);
         
         segregationText = new JTextField(10);
@@ -770,6 +685,14 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
             else {
                 numOffspring2 = Integer.valueOf(numOffspring2Text.getText()).intValue();
             }
+            if (!testParameter(numOffspring3Text.getText(), 1, 100000)) {
+                numOffspring3Text.requestFocus();
+                numOffspring3Text.selectAll();
+                return false;
+            }
+            else {
+                numOffspring3 = Integer.valueOf(numOffspring3Text.getText()).intValue();
+            }
             
             if (!testParameter(normalizedStdDevText.getText(), 0.01, 1.0)) {
                 MipavUtil.displayError("Normalized standard deviation must be between 0.01 and 1.0");
@@ -795,6 +718,13 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
                     numOffspring2Text.selectAll();
                     return false;
                 }
+                
+                if ((numOffspring3 < numParents) || ((numOffspring3 % numParents) != 0)) {
+                    MipavUtil.displayError("Offspring 3 must be a positive integer multiple of the number of parents");
+                    numOffspring3Text.requestFocus();
+                    numOffspring3Text.selectAll();
+                    return false;
+                }
                 process = AlgorithmThreeClassGeneration.FIXED_OFFSPRING_ALLOCATION_POISSON_SAME_PARENTS;  
             }
             else if (fixedPoissonDifferentButton.isSelected()) {
@@ -809,6 +739,13 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
                     MipavUtil.displayError("Offspring 2 must be a positive integer multiple of the number of parents");
                     numOffspring2Text.requestFocus();
                     numOffspring2Text.selectAll();
+                    return false;
+                }
+                
+                if ((numOffspring3 < numParents) || ((numOffspring3 % numParents) != 0)) {
+                    MipavUtil.displayError("Offspring 3 must be a positive integer multiple of the number of parents");
+                    numOffspring3Text.requestFocus();
+                    numOffspring3Text.selectAll();
                     return false;
                 }
                 process = AlgorithmThreeClassGeneration.FIXED_OFFSPRING_ALLOCATION_POISSON_DIFFERENT_PARENTS;
@@ -851,6 +788,15 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
                 numOffspring2 = Integer.valueOf(numOffspring2Text.getText()).intValue();
             }
             
+            if (!testParameter(numOffspring3Text.getText(), 1, 100000)) {
+                numOffspring3Text.requestFocus();
+                numOffspring3Text.selectAll();
+                return false;
+            }
+            else {
+                numOffspring3 = Integer.valueOf(numOffspring3Text.getText()).intValue();
+            }
+            
             if (!testParameter(normalizedDiscRadiusText.getText(), 0.01, 1.0)) {
                 MipavUtil.displayError("Normalized disc radius must be between 0.01 and 1.0");
                 normalizedDiscRadiusText.requestFocus();
@@ -866,39 +812,6 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
             }
             else {
                 process = AlgorithmThreeClassGeneration.MATERN_DIFFERENT_PARENTS;
-            }
-        }
-        else if (inhomogeneousPoissonButton.isSelected()){
-            process = AlgorithmThreeClassGeneration.INHOMOGENEOUS_POISSON;
-            
-            if (!testParameter(numPoints1Text.getText(), 10, 10000)) {
-                 MipavUtil.displayError("Number of type 1 objects before deletion must be between 10 and 10000");
-                 numPoints1Text.requestFocus();
-                 numPoints1Text.selectAll();
-                 return false;
-            }
-            else {
-                numPoints1 = Integer.valueOf(numPoints1Text.getText()).intValue();
-            }
-            
-            if (!testParameter(numPoints2Text.getText(), 10, 10000)) {
-                MipavUtil.displayError("Number of type 2 objects before deletion must be between 10 and 10000");
-                numPoints2Text.requestFocus();
-                numPoints2Text.selectAll();
-                return false;
-           }
-           else {
-               numPoints2 = Integer.valueOf(numPoints2Text.getText()).intValue();
-           }
-            
-            if (sqrtXPlusYButton.isSelected()) {
-                inhomogeneous = AlgorithmThreeClassGeneration.SQRT_X_PLUS_Y;
-            }
-            else if (sqrtXTimesYButton.isSelected()) {
-                inhomogeneous = AlgorithmThreeClassGeneration.SQRT_X_TIMES_Y;
-            }
-            else {
-                inhomogeneous = AlgorithmThreeClassGeneration.ABS_X_MINUS_Y;
             }
         }
         else if (segregationButton.isSelected()) {
@@ -920,8 +833,16 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
             else {
                 numOffspring2 = Integer.valueOf(numOffspring2Text.getText()).intValue();
             }
+            if (!testParameter(numOffspring3Text.getText(), 1, 100000)) {
+                numOffspring3Text.requestFocus();
+                numOffspring3Text.selectAll();
+                return false;
+            }
+            else {
+                numOffspring3 = Integer.valueOf(numOffspring3Text.getText()).intValue();
+            }
             
-            if (!testParameter(segregationText.getText(), 0.0, 1.0)) {
+            if (!testParameter(segregationText.getText(), 0.0, 0.5)) {
                 segregationText.requestFocus();
                 segregationText.selectAll();
                 return false;
@@ -949,6 +870,14 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
             else {
                 numOffspring2 = Integer.valueOf(numOffspring2Text.getText()).intValue();
             }
+            if (!testParameter(numOffspring3Text.getText(), 1, 100000)) {
+                numOffspring3Text.requestFocus();
+                numOffspring3Text.selectAll();
+                return false;
+            }
+            else {
+                numOffspring3 = Integer.valueOf(numOffspring3Text.getText()).intValue();
+            }
             
             if (!testParameter(normalizedDiscRadiusText.getText(), 0.01, 1.0)) {
                 MipavUtil.displayError("Normalized disc radius must be between 0.01 and 1.0");
@@ -958,6 +887,16 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
             }
             else {
                 normalizedDiscRadius = Double.valueOf(normalizedDiscRadiusText.getText()).doubleValue();
+            }
+            
+            if (!testParameter(normalizedDiscRadius2Text.getText(), 0.01, 1.0)) {
+                MipavUtil.displayError("Normalized disc radius2 must be between 0.01 and 1.0");
+                normalizedDiscRadius2Text.requestFocus();
+                normalizedDiscRadius2Text.selectAll();
+                return false;
+            }
+            else {
+                normalizedDiscRadius2 = Double.valueOf(normalizedDiscRadius2Text.getText()).doubleValue();
             }
         }
 
