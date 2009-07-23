@@ -60,12 +60,12 @@ public class VolumeNode extends VolumeObject
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
-    public void PreRender( Renderer kRenderer, Culler kCuller ){}
+    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid ){}
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
-    public void Render( Renderer kRenderer, Culler kCuller )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
         {

@@ -6,6 +6,7 @@ import gov.nih.mipav.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewerPoint;
 
 import java.awt.*;
 
@@ -73,6 +74,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
     /** DOCUMENT ME! */
     public static final int LEAST_SQUARES_COLOR = 18;
+    public static final int NORMALIZED_MUTUAL_INFORMATION_GPU = 19;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -157,6 +159,8 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     /** DOCUMENT ME! */
     private double yEnd2;
 
+    VolumeImageViewerPoint m_kGPUCost = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -193,6 +197,11 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
         if ((costFunctID >= MUTUAL_INFORMATION_SMOOTHED) && (costFunctID <= NORMALIZED_MUTUAL_INFORMATION)) {
             setPLogP(nBins); // precalculate
+        }
+
+        if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
+        {
+            m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false);
         }
     }
 
@@ -290,6 +299,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
                 value = normalizedMutualInformationSmoothedWgt(affMatrix);
+                break;                
+            case NORMALIZED_MUTUAL_INFORMATION_GPU:
+                if ( m_kGPUCost != null )
+                {
+                    value = m_kGPUCost.getError(affMatrix);
+                }
                 break;
         }
 
@@ -305,6 +320,11 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         inputImage = null;
         refWgtImage = null;
         inputWgtImage = null;
+
+        if ( m_kGPUCost != null )
+        {
+            m_kGPUCost.dispose();
+        }
 
 //        sumY = null;
 //        sumY2 = null;

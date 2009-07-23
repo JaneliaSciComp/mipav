@@ -31,6 +31,7 @@ import javax.media.opengl.GLEventListener;
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Quaternion;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.Picker;
@@ -67,6 +68,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected boolean m_bInit = false;
     /** Scene translation, centers the scene: */
     protected Vector3f m_kTranslate = new Vector3f(Vector3f.ZERO);
+    protected Matrix4f m_kSceneToWorld = new Matrix4f();
     /** Normalized volume extents: */
     protected float m_fX = 1f, m_fY = 1f, m_fZ = 1f, m_fMax = 1f;
     /** Flag for indicating the that Java Container is visible or not: */
@@ -653,20 +655,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Updates the camera and displayed objects for rendering.
      */
     protected void Move()
-    {
+    {        
         if (MoveCamera())
         {
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }        
         if (MoveObject())
         {
-            m_spkScene.UpdateGS();
-            m_kCuller.ComputeVisibleSet(m_spkScene);
-            
-            for ( int i = 0; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
-            }
+            UpdateSceneRotation();
         }
 
         if ( m_bTestFrameRate )

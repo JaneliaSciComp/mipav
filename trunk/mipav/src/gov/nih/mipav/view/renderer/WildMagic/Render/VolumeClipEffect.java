@@ -41,32 +41,32 @@ public abstract class VolumeClipEffect extends ShaderEffect
     /* (non-Javadoc)
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */
-    public void OnLoadPrograms (int iPass, Program pkVProgram, Program pkPProgram)
+    public void OnLoadPrograms (int iPass, Program pkVProgram, Program pkPProgram, Program pkCProgram)
     {
         for ( int i = 0; i < 6; i++ )
         {       
-            if ( pkPProgram.GetUC(m_akClip[i]) != null ) 
+            if ( pkCProgram.GetUC(m_akClip[i]) != null ) 
             {
-                pkPProgram.GetUC(m_akClip[i]).SetDataSource(m_aafClipData[i]);
+                pkCProgram.GetUC(m_akClip[i]).SetDataSource(m_aafClipData[i]);
             }
         }
-        if ( pkPProgram.GetUC("DoClip") != null ) 
+        if ( pkCProgram.GetUC("DoClip") != null ) 
         {
-            pkPProgram.GetUC("DoClip").SetDataSource(m_afDoClip);
+            pkCProgram.GetUC("DoClip").SetDataSource(m_afDoClip);
         }       
-        if ( pkPProgram.GetUC("clipArb") != null ) 
+        if ( pkCProgram.GetUC("clipArb") != null ) 
         {
-            pkPProgram.GetUC("clipArb").SetDataSource(m_afClipArbData);
+            pkCProgram.GetUC("clipArb").SetDataSource(m_afClipArbData);
         }
-        if ( pkPProgram.GetUC("clipEye") != null ) 
+        if ( pkCProgram.GetUC("clipEye") != null ) 
         {
-            pkPProgram.GetUC("clipEye").SetDataSource(m_afClipEyeData);
+            pkCProgram.GetUC("clipEye").SetDataSource(m_afClipEyeData);
         }
-        if ( pkPProgram.GetUC("clipEyeInv") != null ) 
+        if ( pkCProgram.GetUC("clipEyeInv") != null ) 
         {
-            pkPProgram.GetUC("clipEyeInv").SetDataSource(m_afClipEyeInvData);
+            pkCProgram.GetUC("clipEyeInv").SetDataSource(m_afClipEyeInvData);
         }
-        super.OnLoadPrograms( iPass, pkVProgram, pkPProgram );
+        super.OnLoadPrograms( iPass, pkVProgram, pkPProgram, pkCProgram );
     }
 
 

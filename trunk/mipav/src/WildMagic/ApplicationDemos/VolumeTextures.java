@@ -275,8 +275,8 @@ public class VolumeTextures extends JavaApplication3D
         m_spkVolumeTexture.SetPShader(0,pkPShader);
 
         m_pkRenderer.LoadResources(m_spkVolumeTexture);
-        Program pkProgram = m_spkVolumeTexture.GetPProgram(0);
-        pkProgram.GetUC("CommonAlpha").SetDataSource(m_afCommonAlpha);
+        Program pkCProgram = m_spkVolumeTexture.GetCProgram(0);
+        pkCProgram.GetUC("CommonAlpha").SetDataSource(m_afCommonAlpha);
     }
 
     void CreateGridMesh ()

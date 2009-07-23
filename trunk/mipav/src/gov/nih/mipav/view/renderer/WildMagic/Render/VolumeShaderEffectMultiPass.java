@@ -94,10 +94,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
      */
     public void Blend(float fBlend)
     {       
-        Program kPProgram = m_kPShaderCMP.GetProgram();
-        if ( kPProgram.GetUC("Blend") != null )
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("Blend") != null )
         {
-            kPProgram.GetUC("Blend").GetData()[0] = fBlend;
+            pkCProgram.GetUC("Blend").GetData()[0] = fBlend;
         }
     }
 
@@ -120,30 +120,30 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
             m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
         }
-        Program kPProgram = m_kPShaderCMP.GetProgram();  
-        if ( kPProgram.GetUC("MIP") != null )
+        Program pkCProgram = GetCProgram(0);  
+        if ( pkCProgram.GetUC("MIP") != null )
         {
-            kPProgram.GetUC("MIP").GetData()[0] = 0;
+            pkCProgram.GetUC("MIP").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("DRRA") != null )
+        if ( pkCProgram.GetUC("DRRA") != null )
         {
-            kPProgram.GetUC("DRRA").GetData()[0] = 0;
+            pkCProgram.GetUC("DRRA").GetData()[0] = 0;
         }
-        if ( (m_kVolumeImageB != null) && (kPProgram.GetUC("DRRB") != null) )
+        if ( (m_kVolumeImageB != null) && (pkCProgram.GetUC("DRRB") != null) )
         {
-            kPProgram.GetUC("DRRB").GetData()[0] = 0;
+            pkCProgram.GetUC("DRRB").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("Composite") != null )
+        if ( pkCProgram.GetUC("Composite") != null )
         {
-            kPProgram.GetUC("Composite").GetData()[0] = 0;
+            pkCProgram.GetUC("Composite").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("Surface") != null )
+        if ( pkCProgram.GetUC("Surface") != null )
         {
-            kPProgram.GetUC("Surface").GetData()[0] = 0;
+            pkCProgram.GetUC("Surface").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("MULTIHISTO") != null )
+        if ( pkCProgram.GetUC("MULTIHISTO") != null )
         {
-            kPProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
+            pkCProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
         }
     }
 
@@ -198,30 +198,30 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE;
             m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
         }
-        Program kPProgram = m_kPShaderCMP.GetProgram();  
-        if ( kPProgram.GetUC("MIP") != null )
+        Program kCProgram = GetCProgram(0);  
+        if ( kCProgram.GetUC("MIP") != null )
         {
-            kPProgram.GetUC("MIP").GetData()[0] = 0;
+            kCProgram.GetUC("MIP").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("DRRA") != null )
+        if ( kCProgram.GetUC("DRRA") != null )
         {
-            kPProgram.GetUC("DRRA").GetData()[0] = m_kVolumeImageA.getDRRNorm();
+            kCProgram.GetUC("DRRA").GetData()[0] = m_kVolumeImageA.getDRRNorm();
         }
-        if ( (m_kVolumeImageB != null) && (kPProgram.GetUC("DRRB") != null) )
+        if ( (m_kVolumeImageB != null) && (kCProgram.GetUC("DRRB") != null) )
         {
-            kPProgram.GetUC("DRRB").GetData()[0] = m_kVolumeImageB.getDRRNorm();
+            kCProgram.GetUC("DRRB").GetData()[0] = m_kVolumeImageB.getDRRNorm();
         }
-        if ( kPProgram.GetUC("Composite") != null )
+        if ( kCProgram.GetUC("Composite") != null )
         {
-            kPProgram.GetUC("Composite").GetData()[0] = 0;
+            kCProgram.GetUC("Composite").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("Surface") != null )
+        if ( kCProgram.GetUC("Surface") != null )
         {
-            kPProgram.GetUC("Surface").GetData()[0] = 0;
+            kCProgram.GetUC("Surface").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("MULTIHISTO") != null )
+        if ( kCProgram.GetUC("MULTIHISTO") != null )
         {
-            kPProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
+            kCProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
         }
     }
 
@@ -244,30 +244,30 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE;
             m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_MAX;
         }
-        Program kPProgram = m_kPShaderCMP.GetProgram();    
-        if ( kPProgram.GetUC("MIP") != null )
+        Program kCProgram = GetCProgram(0);    
+        if ( kCProgram.GetUC("MIP") != null )
         {
-            kPProgram.GetUC("MIP").GetData()[0] = 1;
+            kCProgram.GetUC("MIP").GetData()[0] = 1;
         }
-        if ( kPProgram.GetUC("DRRA") != null )
+        if ( kCProgram.GetUC("DRRA") != null )
         {
-            kPProgram.GetUC("DRRA").GetData()[0] = 0;
+            kCProgram.GetUC("DRRA").GetData()[0] = 0;
         }
-        if ( (m_kVolumeImageB != null) && (kPProgram.GetUC("DRRB") != null) )
+        if ( (m_kVolumeImageB != null) && (kCProgram.GetUC("DRRB") != null) )
         {
-            kPProgram.GetUC("DRRB").GetData()[0] = 0;
+            kCProgram.GetUC("DRRB").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("Composite") != null )
+        if ( kCProgram.GetUC("Composite") != null )
         {
-            kPProgram.GetUC("Composite").GetData()[0] = 0;
+            kCProgram.GetUC("Composite").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("Surface") != null )
+        if ( kCProgram.GetUC("Surface") != null )
         {
-            kPProgram.GetUC("Surface").GetData()[0] = 0;
+            kCProgram.GetUC("Surface").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("MULTIHISTO") != null )
+        if ( kCProgram.GetUC("MULTIHISTO") != null )
         {
-            kPProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
+            kCProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
         }
     }
     
@@ -279,10 +279,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         m_bMultiHisto = bOn;
         if ( m_kPShaderCMP != null )
         {
-            Program kPProgram = m_kPShaderCMP.GetProgram();  
-            if ( (kPProgram != null) && (kPProgram.GetUC("MULTIHISTO") != null) )
+            Program kCProgram = GetCProgram(0);  
+            if ( (kCProgram != null) && (kCProgram.GetUC("MULTIHISTO") != null) )
             {
-                kPProgram.GetUC("MULTIHISTO").GetData()[0] = bOn? 1 : 0;
+                kCProgram.GetUC("MULTIHISTO").GetData()[0] = bOn? 1 : 0;
             }
         }
     }
@@ -292,29 +292,33 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
      * @param iPass the ith rendering pass
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
-                                Program pkPProgram)
+                                Program pkPProgram, Program pkCProgram)
     {
-        SetColorImage(pkPProgram);
+        SetColorImage(pkCProgram);
         setABBlend(1.0f);
         setRGBTA(null);
         if ( m_kVolumeImageB != null )
         {
             setABBlend(0.5f);
-            if ( pkPProgram.GetUC("ShowB") != null ) 
+            if ( pkCProgram.GetUC("ShowB") != null ) 
             {    
-                pkPProgram.GetUC("ShowB").GetData()[0] = 1;
+                pkCProgram.GetUC("ShowB").GetData()[0] = 1;
             }   
             setRGBTB(null);
         }
         for ( int i = 0; i < ms_MaxLights; i++ )
         {
             String kLightType = new String("Light"+(i)+"Type");
-            if ( pkPProgram.GetUC(kLightType) != null)
+            if ( pkCProgram.GetUC(kLightType) != null)
             {
-                pkPProgram.GetUC(kLightType).SetDataSource(m_aafLight[i]);
+                pkCProgram.GetUC(kLightType).SetDataSource(m_aafLight[i]);
             }
         }
-        super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram );
+        for ( int i = 1; i < m_iPassQuantity; i++ )
+        {
+            SetCProgram(i,pkCProgram);
+        }
+        super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram, pkCProgram );
     }
 
     /**
@@ -325,24 +329,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
      */
     public void Reload( WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
-        for ( int i = 0; i < m_iPasses; i++ )
-        {
-            Program kVProgram = GetVProgram(i);
-            kVProgram.Release();
-            VertexProgramCatalog.GetActive().Remove(kVProgram);
-
-            Program kPProgram = GetPProgram(i);
-            kPProgram.Release();
-            PixelProgramCatalog.GetActive().Remove(kPProgram);
-
-            VertexShader pkVShader = GetVShader(i);
-            pkVShader.OnReleaseProgram();
-            PixelShader pkPShader = GetPShader(i);
-            pkPShader.OnReleaseProgram();
-        }
-
+        ReleaseResources(kRenderer, null);
         LoadResources(kRenderer, null);
-
         setCurrentShader();
     }
     
@@ -381,10 +369,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
      */
     public void setABBlend(float fBlend)
     {
-        Program kPProgram = m_kPShaderCMP.GetProgram();  
-        if ( (kPProgram != null) && kPProgram.GetUC("ABBlend") != null ) 
+        Program kCProgram = GetCProgram(0);  
+        if ( (kCProgram != null) && kCProgram.GetUC("ABBlend") != null ) 
         {
-            kPProgram.GetUC("ABBlend").GetData()[0] = fBlend;
+            kCProgram.GetUC("ABBlend").GetData()[0] = fBlend;
         }
     }
     /**
@@ -395,13 +383,13 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     {
         if ( m_kPShaderCMP != null )
         {
-            Program kPProgram = m_kPShaderCMP.GetProgram();  
-            if ( (kPProgram != null) && (kPProgram.GetUC("BackgroundColor") != null) ) 
+            Program kCProgram = GetCProgram(0);  
+            if ( (kCProgram != null) && (kCProgram.GetUC("BackgroundColor") != null) ) 
             {
-                kPProgram.GetUC("BackgroundColor").GetData()[0] = kColor.R;
-                kPProgram.GetUC("BackgroundColor").GetData()[1] = kColor.G;
-                kPProgram.GetUC("BackgroundColor").GetData()[2] = kColor.B;
-                kPProgram.GetUC("BackgroundColor").GetData()[3] = kColor.A;
+                kCProgram.GetUC("BackgroundColor").GetData()[0] = kColor.R;
+                kCProgram.GetUC("BackgroundColor").GetData()[1] = kColor.G;
+                kCProgram.GetUC("BackgroundColor").GetData()[2] = kColor.B;
+                kCProgram.GetUC("BackgroundColor").GetData()[3] = kColor.A;
             }
         }
     }
@@ -427,10 +415,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
      */
     public void SetGradientMagnitude(boolean bShow)
     {
-        Program kPProgram = m_kPShaderCMP.GetProgram();  
-        if ( kPProgram.GetUC("GradientMagnitude") != null ) 
+        Program kCProgram = GetCProgram(0);  
+        if ( kCProgram.GetUC("GradientMagnitude") != null ) 
         {
-            kPProgram.GetUC("GradientMagnitude").GetData()[0] = bShow? 1 : 0;
+            kCProgram.GetUC("GradientMagnitude").GetData()[0] = bShow? 1 : 0;
         }
     }    
     
@@ -449,21 +437,21 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     public void setRGBTA(ModelRGB RGBT) {
         if ( m_kPShaderCMP != null )
         {
-            Program kPProgram = m_kPShaderCMP.GetProgram();  
-            if ( (kPProgram != null) && (kPProgram.GetUC("ColorLUTOnA") != null) ) 
+            Program kCProgram = GetCProgram(0);  
+            if ( (kCProgram != null) && (kCProgram.GetUC("ColorLUTOnA") != null) ) 
             {
                 if ( RGBT != null )
                 {
-                    kPProgram.GetUC("ColorLUTOnA").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
-                    kPProgram.GetUC("ColorLUTOnA").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
-                    kPProgram.GetUC("ColorLUTOnA").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
+                    kCProgram.GetUC("ColorLUTOnA").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
+                    kCProgram.GetUC("ColorLUTOnA").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
+                    kCProgram.GetUC("ColorLUTOnA").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
 
                 }
                 else
                 {
-                    kPProgram.GetUC("ColorLUTOnA").GetData()[0] = 1.0f;
-                    kPProgram.GetUC("ColorLUTOnA").GetData()[1] = 1.0f;
-                    kPProgram.GetUC("ColorLUTOnA").GetData()[2] = 1.0f;
+                    kCProgram.GetUC("ColorLUTOnA").GetData()[0] = 1.0f;
+                    kCProgram.GetUC("ColorLUTOnA").GetData()[1] = 1.0f;
+                    kCProgram.GetUC("ColorLUTOnA").GetData()[2] = 1.0f;
                 }
             }
         }
@@ -471,20 +459,20 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     public void setRGBTB(ModelRGB RGBT) {
         if ( m_kPShaderCMP != null )
         {
-            Program kPProgram = m_kPShaderCMP.GetProgram();  
-            if ( (kPProgram != null) && (kPProgram.GetUC("ColorLUTOnB") != null) ) 
+            Program kCProgram = GetCProgram(0);  
+            if ( (kCProgram != null) && (kCProgram.GetUC("ColorLUTOnB") != null) ) 
             {
                 if ( RGBT != null )
                 {
-                    kPProgram.GetUC("ColorLUTOnB").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
-                    kPProgram.GetUC("ColorLUTOnB").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
-                    kPProgram.GetUC("ColorLUTOnB").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
+                    kCProgram.GetUC("ColorLUTOnB").GetData()[0] = RGBT.getROn() ? 1.0f : 0.0f;
+                    kCProgram.GetUC("ColorLUTOnB").GetData()[1] = RGBT.getGOn() ? 1.0f : 0.0f;
+                    kCProgram.GetUC("ColorLUTOnB").GetData()[2] = RGBT.getBOn() ? 1.0f : 0.0f;
                 }
                 else
                 {
-                    kPProgram.GetUC("ColorLUTOnB").GetData()[0] = 1.0f;
-                    kPProgram.GetUC("ColorLUTOnB").GetData()[1] = 1.0f;
-                    kPProgram.GetUC("ColorLUTOnB").GetData()[2] = 1.0f;                
+                    kCProgram.GetUC("ColorLUTOnB").GetData()[0] = 1.0f;
+                    kCProgram.GetUC("ColorLUTOnB").GetData()[1] = 1.0f;
+                    kCProgram.GetUC("ColorLUTOnB").GetData()[2] = 1.0f;                
                 }
             }
         }
@@ -494,11 +482,13 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     {
         m_iPasses = Math.max(1, (int)(fSample * ms_iMaxSamples));
         SetPassQuantity(m_iPasses);
+        Program pkCProgram = GetCProgram(0);
         for ( int i = 0; i < m_iPasses; i++ )
         {
             SetVShader(i,m_pkVShader);
             /* The pixel shader defaults to CMP: */
             SetPShader(i,m_kPShaderCMP);
+            SetCProgram(i,pkCProgram);
         }
         setCurrentShader();
     }
@@ -522,30 +512,30 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
             m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
         }
-        Program kPProgram = m_kPShaderCMP.GetProgram();    
-        if ( kPProgram.GetUC("MIP") != null )
+        Program kCProgram = GetCProgram(0);    
+        if ( kCProgram.GetUC("MIP") != null )
         {
-            kPProgram.GetUC("MIP").GetData()[0] = 0;
+            kCProgram.GetUC("MIP").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("DRRA") != null )
+        if ( kCProgram.GetUC("DRRA") != null )
         {
-            kPProgram.GetUC("DRRA").GetData()[0] = 0;
+            kCProgram.GetUC("DRRA").GetData()[0] = 0;
         }
-        if ( (m_kVolumeImageB != null) && (kPProgram.GetUC("DRRB") != null) )
+        if ( (m_kVolumeImageB != null) && (kCProgram.GetUC("DRRB") != null) )
         {
-            kPProgram.GetUC("DRRB").GetData()[0] = 0;
+            kCProgram.GetUC("DRRB").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("Composite") != null )
+        if ( kCProgram.GetUC("Composite") != null )
         {
-            kPProgram.GetUC("Composite").GetData()[0] = 0;
+            kCProgram.GetUC("Composite").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("Surface") != null )
+        if ( kCProgram.GetUC("Surface") != null )
         {
-            kPProgram.GetUC("Surface").GetData()[0] = 1;
+            kCProgram.GetUC("Surface").GetData()[0] = 1;
         }
-        if ( kPProgram.GetUC("MULTIHISTO") != null )
+        if ( kCProgram.GetUC("MULTIHISTO") != null )
         {
-            kPProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
+            kCProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
         }
     }
     /**
@@ -570,30 +560,30 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_ONE_MINUS_SRC_ALPHA;
             m_kAlphaState.get(i).BlendEquation = AlphaState.BlendEquationMode.BE_ADD;
         }
-        Program kPProgram = m_kPShaderCMP.GetProgram();    
-        if ( kPProgram.GetUC("MIP") != null )
+        Program kCProgram = GetCProgram(0);    
+        if ( kCProgram.GetUC("MIP") != null )
         {
-            kPProgram.GetUC("MIP").GetData()[0] = 0;
+            kCProgram.GetUC("MIP").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("DRRA") != null )
+        if ( kCProgram.GetUC("DRRA") != null )
         {
-            kPProgram.GetUC("DRRA").GetData()[0] = 0;
+            kCProgram.GetUC("DRRA").GetData()[0] = 0;
         }
-        if ( (m_kVolumeImageB != null) && (kPProgram.GetUC("DRRB") != null) )
+        if ( (m_kVolumeImageB != null) && (kCProgram.GetUC("DRRB") != null) )
         {
-            kPProgram.GetUC("DRRB").GetData()[0] = 0;
+            kCProgram.GetUC("DRRB").GetData()[0] = 0;
         }
-        if ( kPProgram.GetUC("Composite") != null )
+        if ( kCProgram.GetUC("Composite") != null )
         {
-            kPProgram.GetUC("Composite").GetData()[0] = 1;
+            kCProgram.GetUC("Composite").GetData()[0] = 1;
         }
-        if ( kPProgram.GetUC("Surface") != null )
+        if ( kCProgram.GetUC("Surface") != null )
         {
-            kPProgram.GetUC("Surface").GetData()[0] = 1;
+            kCProgram.GetUC("Surface").GetData()[0] = 1;
         }
-        if ( kPProgram.GetUC("MULTIHISTO") != null )
+        if ( kCProgram.GetUC("MULTIHISTO") != null )
         {
-            kPProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
+            kCProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
         }
     }
     public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
@@ -629,51 +619,51 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             
             for ( int i = 0; i < m_iPasses; i++ )
             {
-                Program pkProgram = GetPProgram(i);
-                if ( pkProgram.GetUC("UseWidget"+iState) != null ) 
+                Program pkCProgram = GetCProgram(i);
+                if ( pkCProgram.GetUC("UseWidget"+iState) != null ) 
                 {
-                    pkProgram.GetUC("UseWidget"+iState).SetDataSource(m_akLevWidget[iState].UseWidget);
+                    pkCProgram.GetUC("UseWidget"+iState).SetDataSource(m_akLevWidget[iState].UseWidget);
                     //System.err.println( "UseWidget"+iState + " " + m_akLevWidget[iState].UseWidget[0]);
                 }
-                if ( pkProgram.GetUC("LevColor"+iState) != null ) 
+                if ( pkCProgram.GetUC("LevColor"+iState) != null ) 
                 {
-                    pkProgram.GetUC("LevColor"+iState).SetDataSource(m_akLevWidget[iState].Color);
+                    pkCProgram.GetUC("LevColor"+iState).SetDataSource(m_akLevWidget[iState].Color);
                     //System.err.println( "LevColor" + fR + " " + fG + " " + fB + " " + fA );
                 }
-                if ( pkProgram.GetUC("LevMidLine"+iState) != null ) 
+                if ( pkCProgram.GetUC("LevMidLine"+iState) != null ) 
                 {
-                    pkProgram.GetUC("LevMidLine"+iState).SetDataSource(m_akLevWidget[iState].MidLine);
+                    pkCProgram.GetUC("LevMidLine"+iState).SetDataSource(m_akLevWidget[iState].MidLine);
                     //System.err.println( "LevMidLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
                 }
-                if ( pkProgram.GetUC("LevLeftLine"+iState) != null ) 
+                if ( pkCProgram.GetUC("LevLeftLine"+iState) != null ) 
                 {
-                    pkProgram.GetUC("LevLeftLine"+iState).SetDataSource(m_akLevWidget[iState].LeftLine);
+                    pkCProgram.GetUC("LevLeftLine"+iState).SetDataSource(m_akLevWidget[iState].LeftLine);
                     //System.err.println( "LevLeftLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
                 }
-                if ( pkProgram.GetUC("LevRightLine"+iState) != null ) 
+                if ( pkCProgram.GetUC("LevRightLine"+iState) != null ) 
                 {
-                    pkProgram.GetUC("LevRightLine"+iState).SetDataSource(m_akLevWidget[iState].RightLine);
+                    pkCProgram.GetUC("LevRightLine"+iState).SetDataSource(m_akLevWidget[iState].RightLine);
                     //System.err.println( "LevRightLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
                 }
-                if ( pkProgram.GetUC("BoundaryEmphasis"+iState) != null ) 
+                if ( pkCProgram.GetUC("BoundaryEmphasis"+iState) != null ) 
                 {
-                    pkProgram.GetUC("BoundaryEmphasis"+iState).SetDataSource(m_akLevWidget[iState].BoundaryEmphasis);
+                    pkCProgram.GetUC("BoundaryEmphasis"+iState).SetDataSource(m_akLevWidget[iState].BoundaryEmphasis);
                 }
-                if ( pkProgram.GetUC("Shift"+iState) != null ) 
+                if ( pkCProgram.GetUC("Shift"+iState) != null ) 
                 {
                     //System.err.println( "Shift" + iState );
-                    pkProgram.GetUC("Shift"+iState).GetData()[0] = fShiftL;
-                    pkProgram.GetUC("Shift"+iState).GetData()[1] = fShiftR;
+                    pkCProgram.GetUC("Shift"+iState).GetData()[0] = fShiftL;
+                    pkCProgram.GetUC("Shift"+iState).GetData()[1] = fShiftR;
                 }
-                if ( pkProgram.GetUC("InvY0MY1"+iState) != null ) 
+                if ( pkCProgram.GetUC("InvY0MY1"+iState) != null ) 
                 {            
                     //System.err.println( "InvY0MY1" + iState );
                     float fLeftInvY0MY1 = 1.0f / (m_akLevWidget[iState].LeftLine[1] - m_akLevWidget[iState].LeftLine[3]);
                     float fMidInvY0MY1 = 1.0f / (m_akLevWidget[iState].MidLine[1] - m_akLevWidget[iState].MidLine[3]);
                     float fRightInvY0MY1 = 1.0f / (m_akLevWidget[iState].RightLine[1] - m_akLevWidget[iState].RightLine[3]);
-                    pkProgram.GetUC("InvY0MY1"+iState).GetData()[0] = fLeftInvY0MY1;
-                    pkProgram.GetUC("InvY0MY1"+iState).GetData()[1] = fMidInvY0MY1;
-                    pkProgram.GetUC("InvY0MY1"+iState).GetData()[2] = fRightInvY0MY1;
+                    pkCProgram.GetUC("InvY0MY1"+iState).GetData()[0] = fLeftInvY0MY1;
+                    pkCProgram.GetUC("InvY0MY1"+iState).GetData()[1] = fMidInvY0MY1;
+                    pkCProgram.GetUC("InvY0MY1"+iState).GetData()[2] = fRightInvY0MY1;
   }
                 
             }

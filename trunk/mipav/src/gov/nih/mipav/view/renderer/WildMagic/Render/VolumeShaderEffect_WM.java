@@ -114,10 +114,10 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     public void Blend(float fBlend)
     {
         m_afBlend[0] = fBlend;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("blend") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("blend") != null ) 
         {
-            pkProgram.GetUC("blend").SetDataSource(m_afBlend);
+            pkCProgram.GetUC("blend").SetDataSource(m_afBlend);
         }
     }
 
@@ -189,15 +189,6 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     }
     
     /**
-     * Returns the current pixel program.
-     * @return the current pixel program.
-     */
-    public Program GetPProgram()
-    {
-        return GetPProgram(0);
-    }
-
-    /**
      * Change to the MIP mode pixel shader program.
      * @param kRenderer the Renderer displaying the scene-graph, to which the
      * new shader program is passed.
@@ -235,18 +226,7 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
      */
     public void Reload( WildMagic.LibGraphics.Rendering.Renderer kRenderer )
     {
-        Program kVProgram = GetVProgram(0);
-        kVProgram.Release();
-        VertexProgramCatalog.GetActive().Remove(kVProgram);
-
-        Program kPProgram = GetPProgram(0);
-        kPProgram.Release();
-        PixelProgramCatalog.GetActive().Remove(kPProgram);
-
-        VertexShader pkVShader = GetVShader(0);
-        pkVShader.OnReleaseProgram();
-        PixelShader pkPShader = GetPShader(0);
-        pkPShader.OnReleaseProgram();
+        ReleaseResources(kRenderer, null);
 
         LoadPrograms(kRenderer, 0,kRenderer.GetMaxColors(),
                      kRenderer.GetMaxTCoords(),
@@ -321,10 +301,10 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     public void setABBlend(float fBlend)
     {
         m_afABBlend[0] = fBlend;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("ABBlend") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("ABBlend") != null ) 
         {
-            pkProgram.GetUC("ABBlend").SetDataSource(m_afABBlend);
+            pkCProgram.GetUC("ABBlend").SetDataSource(m_afABBlend);
         }
     }
 
@@ -335,15 +315,15 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     public void SetBackgroundColor( ColorRGBA kColor )
     {
         m_kBackgroundColor = kColor;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("BackgroundColor") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("BackgroundColor") != null ) 
         {
             float[] afColor = new float[4];
             afColor[0] = kColor.R;
             afColor[1] = kColor.G;
             afColor[2] = kColor.B;
             afColor[3] = kColor.A;
-            pkProgram.GetUC("BackgroundColor").SetDataSource(afColor);
+            pkCProgram.GetUC("BackgroundColor").SetDataSource(afColor);
         }
     }
     /** 
@@ -366,10 +346,10 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
      */
     public void SetLight( String kLightType, float[] afType )
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC(kLightType) != null)
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC(kLightType) != null)
         {
-            pkProgram.GetUC(kLightType).SetDataSource(afType);
+            pkCProgram.GetUC(kLightType).SetDataSource(afType);
         }
     }
     /**
@@ -379,10 +359,10 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
     public void setSteps(float fsteps)
     {
         stepsSize[0] = fsteps;
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("steps") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("steps") != null ) 
         {
-            pkProgram.GetUC("steps").SetDataSource(stepsSize);
+            pkCProgram.GetUC("steps").SetDataSource(stepsSize);
         }
     }
 
@@ -399,18 +379,18 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         }
         m_iWhichShader = SUR;
         SetProgram(m_kPShaderSUR, kRenderer);
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("Composite") != null )
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("Composite") != null )
         {
-            pkProgram.GetUC("Composite").SetDataSource(new float[] {0,0,0,0});
+            pkCProgram.GetUC("Composite").SetDataSource(new float[] {0,0,0,0});
         }
-        if ( pkProgram.GetUC("CompositeA") != null )
+        if ( pkCProgram.GetUC("CompositeA") != null )
         {
-            pkProgram.GetUC("CompositeA").SetDataSource(new float[] {0,0,0,0});
+            pkCProgram.GetUC("CompositeA").SetDataSource(new float[] {0,0,0,0});
         }
-        if ( pkProgram.GetUC("CompositeB") != null )
+        if ( pkCProgram.GetUC("CompositeB") != null )
         {
-            pkProgram.GetUC("CompositeB").SetDataSource(new float[] {0,0,0,0});
+            pkCProgram.GetUC("CompositeB").SetDataSource(new float[] {0,0,0,0});
         }
     }
     /**
@@ -428,18 +408,18 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
 
         m_iWhichShader = CMP_SUR;
         SetProgram(m_kPShaderSUR, kRenderer);
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("Composite") != null )
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("Composite") != null )
         {
-            pkProgram.GetUC("Composite").SetDataSource(new float[] {1,0,0,0});
+            pkCProgram.GetUC("Composite").SetDataSource(new float[] {1,0,0,0});
         }
-        if ( pkProgram.GetUC("CompositeA") != null )
+        if ( pkCProgram.GetUC("CompositeA") != null )
         {
-            pkProgram.GetUC("CompositeA").SetDataSource(new float[] {1,0,0,0});
+            pkCProgram.GetUC("CompositeA").SetDataSource(new float[] {1,0,0,0});
         }
-        if ( pkProgram.GetUC("CompositeB") != null )
+        if ( pkCProgram.GetUC("CompositeB") != null )
         {
-            pkProgram.GetUC("CompositeB").SetDataSource(new float[] {1,0,0,0});
+            pkCProgram.GetUC("CompositeB").SetDataSource(new float[] {1,0,0,0});
         }
     }
     public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
@@ -450,30 +430,30 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         }
         
         m_akLevWidget[iState].Copy( kLWS );
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("LevColor"+iState) != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("LevColor"+iState) != null ) 
         {
-            pkProgram.GetUC("LevColor"+iState).SetDataSource(m_akLevWidget[iState].Color);
+            pkCProgram.GetUC("LevColor"+iState).SetDataSource(m_akLevWidget[iState].Color);
             //System.err.println( "LevColor" + fR + " " + fG + " " + fB + " " + fA );
         }
-        if ( pkProgram.GetUC("LevMidLine"+iState) != null ) 
+        if ( pkCProgram.GetUC("LevMidLine"+iState) != null ) 
         {
-            pkProgram.GetUC("LevMidLine"+iState).SetDataSource(m_akLevWidget[iState].MidLine);
+            pkCProgram.GetUC("LevMidLine"+iState).SetDataSource(m_akLevWidget[iState].MidLine);
             //System.err.println( "LevMidLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
         }
-        if ( pkProgram.GetUC("LevLeftLine"+iState) != null ) 
+        if ( pkCProgram.GetUC("LevLeftLine"+iState) != null ) 
         {
-            pkProgram.GetUC("LevLeftLine"+iState).SetDataSource(m_akLevWidget[iState].LeftLine);
+            pkCProgram.GetUC("LevLeftLine"+iState).SetDataSource(m_akLevWidget[iState].LeftLine);
             //System.err.println( "LevLeftLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
         }
-        if ( pkProgram.GetUC("LevRightLine"+iState) != null ) 
+        if ( pkCProgram.GetUC("LevRightLine"+iState) != null ) 
         {
-            pkProgram.GetUC("LevRightLine"+iState).SetDataSource(m_akLevWidget[iState].RightLine);
+            pkCProgram.GetUC("LevRightLine"+iState).SetDataSource(m_akLevWidget[iState].RightLine);
             //System.err.println( "LevRightLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
         }
-        if ( pkProgram.GetUC("BoundaryEmphasis"+iState) != null ) 
+        if ( pkCProgram.GetUC("BoundaryEmphasis"+iState) != null ) 
         {
-            pkProgram.GetUC("BoundaryEmphasis"+iState).SetDataSource(m_akLevWidget[iState].BoundaryEmphasis);
+            pkCProgram.GetUC("BoundaryEmphasis"+iState).SetDataSource(m_akLevWidget[iState].BoundaryEmphasis);
         }
     }
     /**
@@ -567,27 +547,27 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
      */
     private void SetColorImage()
     {
-        Program pkProgram = GetPProgram(0);
+        Program pkCProgram = GetCProgram(0);
         if ( m_kVolumeImageA.IsColorImage() )
         {
-            if ( pkProgram.GetUC("IsColor") != null ) 
+            if ( pkCProgram.GetUC("IsColor") != null ) 
             {
-                pkProgram.GetUC("IsColor").SetDataSource(new float[]{1,0,0,0});
+                pkCProgram.GetUC("IsColor").SetDataSource(new float[]{1,0,0,0});
             }
-            if ( pkProgram.GetUC("IsColorA") != null ) 
+            if ( pkCProgram.GetUC("IsColorA") != null ) 
             {
-                pkProgram.GetUC("IsColorA").SetDataSource(new float[]{1,0,0,0});
+                pkCProgram.GetUC("IsColorA").SetDataSource(new float[]{1,0,0,0});
             }
         }
         if ( (m_kVolumeImageB != null) && m_kVolumeImageB.IsColorImage() )
         {
-            if ( pkProgram.GetUC("IsColorB") != null ) 
+            if ( pkCProgram.GetUC("IsColorB") != null ) 
             {
-                pkProgram.GetUC("IsColorB").SetDataSource(new float[]{1,0,0,0});
+                pkCProgram.GetUC("IsColorB").SetDataSource(new float[]{1,0,0,0});
             }                
             else
             {
-                pkProgram.GetUC("IsColorB").SetDataSource(new float[]{0,0,0,0});
+                pkCProgram.GetUC("IsColorB").SetDataSource(new float[]{0,0,0,0});
             }
         }
     }
@@ -597,10 +577,10 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
      */
     private void SetGradientMagnitude()
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("GradientMagnitude") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("GradientMagnitude") != null ) 
         {
-            pkProgram.GetUC("GradientMagnitude").SetDataSource(m_afGradientMagnitude);
+            pkCProgram.GetUC("GradientMagnitude").SetDataSource(m_afGradientMagnitude);
         }
     }
 
@@ -629,10 +609,10 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
         setSteps(stepsSize[0]);
         if ( m_kVolumeImageB != null )
         {
-            Program pkProgram = GetPProgram(0);
-            if ( pkProgram.GetUC("ShowB") != null ) 
+            Program pkCProgram = GetCProgram(0);
+            if ( pkCProgram.GetUC("ShowB") != null ) 
             {    
-                pkProgram.GetUC("ShowB").SetDataSource(new float[]{1,0,0,0});
+                pkCProgram.GetUC("ShowB").SetDataSource(new float[]{1,0,0,0});
             }   
         }
     }
@@ -642,10 +622,10 @@ public class VolumeShaderEffect_WM extends VolumeClipEffect
      */
     private void SetSelfShadow()
     {
-        Program pkProgram = GetPProgram(0);
-        if ( pkProgram.GetUC("SelfShadow") != null ) 
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram.GetUC("SelfShadow") != null ) 
         {
-            pkProgram.GetUC("SelfShadow").SetDataSource(m_afSelfShadow);
+            pkCProgram.GetUC("SelfShadow").SetDataSource(m_afSelfShadow);
         }
     }
 

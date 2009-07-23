@@ -32,7 +32,7 @@ public class MipavLightingEffect extends ShaderEffect
      * @param iPass the ith rendering pass
      */
     public void OnLoadPrograms (int iPass, Program pkVProgram,
-                                Program pkPProgram)
+                                Program pkPProgram, Program pkCProgram)
     {
         Blend(1.0f);
     }
@@ -44,7 +44,7 @@ public class MipavLightingEffect extends ShaderEffect
      */
     public void SetLight( String kLightType, float[] afType )
     {
-        Program pkProgram = GetVProgram(0);
+        Program pkProgram = GetCProgram(0);
         if ( pkProgram == null )
         {
             return;
@@ -61,7 +61,7 @@ public class MipavLightingEffect extends ShaderEffect
      */
     public void Blend( float fValue )
     {
-        Program pkProgram = GetVProgram(0);
+        Program pkProgram = GetCProgram(0);
         if ( pkProgram == null )
         {
             return;

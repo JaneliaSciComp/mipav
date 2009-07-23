@@ -165,8 +165,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_kCenter.Copy(kCenter);
         m_kSurface = new TriMesh(kSurface);
         m_kSurface.AttachGlobalState(kSurface.GetGlobalState( GlobalState.StateType.MATERIAL ));
-        SurfaceLightingEffect kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
-        m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA );
+        SurfaceLightingEffect kLightShader = new SurfaceLightingEffect( m_kVolumeImageA, false );
+        m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA, false );
         m_kSurface.AttachEffect(kLightShader);
         m_kSurface.UpdateRS();
         m_kSurface.UpdateMS();

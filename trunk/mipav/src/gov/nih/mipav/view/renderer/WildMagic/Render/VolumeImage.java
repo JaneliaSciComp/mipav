@@ -7,6 +7,7 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -248,9 +249,11 @@ public class VolumeImage
      * @param kVolumeTexture the volume data texture.
      * @param kPostFix the postfix string for the image name.
      */
-    public static GraphicsImage UpdateData( ModelImage kImage, int iTimeSlice, ModelImage kNewImage, GraphicsImage kVolumeImage,
+    public static GraphicsImage UpdateData( ModelImage kImage, int iTimeSlice, ModelImage kNewImage, 
+            GraphicsImage kVolumeImage,
             Texture kVolumeTexture, String kImageName, boolean bSwap )
     {
+        GraphicsImage kReturn = kVolumeImage;
         int iXBound = kImage.getExtents()[0];
         int iYBound = kImage.getExtents()[1];
         int iZBound = kImage.getExtents()[2];
@@ -277,15 +280,15 @@ public class VolumeImage
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if ( kVolumeImage == null )
+            if ( kReturn == null )
             {
-                kVolumeImage =
+                kReturn =
                     new GraphicsImage( GraphicsImage.FormatMode.IT_RGBA8888,
                             iXBound,iYBound,iZBound,aucData, kImageName);
             }
             else
             {
-                kVolumeImage.SetData( aucData, iXBound, iYBound, iZBound );
+                kReturn.SetData( aucData, iXBound, iYBound, iZBound );
             }
         }
         else
@@ -293,15 +296,15 @@ public class VolumeImage
             aucData = new byte[iSize];
             try {
                 kImage.exportData( iTimeSlice * iSize, iSize, aucData );
-                if ( kVolumeImage == null )
+                if ( kReturn == null )
                 {
-                kVolumeImage =
+                    kReturn =
                     new GraphicsImage( GraphicsImage.FormatMode.IT_L8, 
                             iXBound,iYBound,iZBound, aucData, kImageName);
                 }
                 else
                 {
-                    kVolumeImage.SetData( aucData, iXBound, iYBound, iZBound );
+                    kReturn.SetData( aucData, iXBound, iYBound, iZBound );
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -318,7 +321,39 @@ public class VolumeImage
         {
             kVolumeTexture.Reload(true);
         }
-        return kVolumeImage;
+        return kReturn;
+    }
+    
+    
+
+    /**
+     */
+    public static GraphicsImage UpdateData( ModelSimpleImage kImage, int iTimeSlice, String kImageName )
+    {
+        GraphicsImage kReturn = null;
+        float[] afData = null;
+        int iSize = kImage.dataSize;
+        GraphicsImage.FormatMode eType = GraphicsImage.FormatMode.IT_L8;
+        if ( kImage.isColor )
+        {
+            iSize *= 4;
+            eType = GraphicsImage.FormatMode.IT_RGBA8888;
+        }
+        afData = new float[iSize];
+        kImage.exportData( afData, iTimeSlice * iSize, iSize );
+        
+        if ( kImage.nDims == 3 )
+        {
+            kReturn =
+                new GraphicsImage( eType,
+                        kImage.extents[0],kImage.extents[1],kImage.extents[2], afData, kImageName);
+        }
+        else
+        {
+            kReturn =
+                new GraphicsImage( eType, kImage.extents[0],kImage.extents[1],1, afData, kImageName);
+        }
+        return kReturn;
     }
 
     /**
@@ -1384,6 +1419,11 @@ public class VolumeImage
                 kImageGMGM = null;
             }
         }
+/*
+        m_kVolumeGMGM[0] = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
+                kImage.getExtents()[0],kImage.getExtents()[1],kImage.getExtents()[2],(byte[])null,
+                new String("VolumeImageGMGM"+kPostfix+kPostfix));
+                */
         m_kVolumeGMGMTarget = new Texture();
         m_kVolumeGMGMTarget.SetImage(m_kVolumeGMGM[0]);
         m_kVolumeGMGMTarget.SetShared(true);

@@ -19,22 +19,108 @@
 package WildMagic.ApplicationDemos;
 
 
+import gov.nih.mipav.view.renderer.WildMagic.Render.SurfaceLightingEffect;
+
 import java.awt.Frame;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLCanvas;
+import javax.media.opengl.GLEventListener;
 
-import WildMagic.LibApplications.OpenGLApplication.*;
-import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
+import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.IridescenceEffect;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibGraphics.Shaders.*;
+import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.Culler;
+import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.Transformation;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
+import WildMagic.LibGraphics.Shaders.ImageCatalog;
+import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
+import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.sun.opengl.util.Animator;
 
 
 public class Iridescence extends JavaApplication3D implements GLEventListener, KeyListener {
+    /** Static light index. */
+    public static final int LIGHT_INDEX_STATIC = 0;
+
+    /** Ambient light index. */
+    public static final int LIGHT_INDEX_AMBIENT = 1;
+
+    /** light for corner X0Y0Z0. */
+    public static final int LIGHT_INDEX_MODEL_X0Y0Z0 = 2;
+
+    /** light for corner X1Y0Z0. */
+    public static final int LIGHT_INDEX_MODEL_X1Y0Z0 = 3;
+
+    /** light for corner X0Y1Z0. */
+    public static final int LIGHT_INDEX_MODEL_X0Y1Z0 = 4;
+
+    /** light for corner X1Y1Z0. */
+    public static final int LIGHT_INDEX_MODEL_X1Y1Z0 = 5;
+
+    /** light for corner X0Y0Z1. */
+    public static final int LIGHT_INDEX_MODEL_X0Y0Z1 = 6;
+    /** light for corner X1Y0Z1. */
+    public static final int LIGHT_INDEX_MODEL_X1Y0Z1 = 7;
+    /** light for corner X0Y1Z1. */
+    public static final int LIGHT_INDEX_MODEL_X0Y1Z1 = 8;
+    
+
+
+    /** light for corner X1Y1Z1. */
+    public static final int LIGHT_INDEX_MODEL_X1Y1Z1 = 9;
+
+    /** Max number of light. */
+    public static final int LIGHT_INDEX_MAX = 10;
+    SurfaceLightingEffect m_kLightShader;
+
+    /** Light scale factor array. */
+    private int[] m_aiLightScale;
+
+    /** The structure for the light bulbs. */
+    private Light[] m_akLights;
+
+    private Node m_spkScene;
+
+    private WireframeState m_spkWireframe;
+
+    private TriMesh pkMesh2;
+
+    private IridescenceEffect m_spkEffect;
+
+    private Culler m_kCuller = new Culler(0, 0, null);
+
+    /** Window with the shader parameter interface: */
+    private ApplicationGUI m_kShaderParamsWindow = null;
+
+    private boolean[] m_abColorMask = new boolean[] {true, true, true, true};
+
+    private boolean m_bStereo = false;
+    private boolean m_bLeft = true;
+
+    private boolean m_bRight = true;
+
+    private Node m_kArrow;
+    
     /**
      * The constructor initializes the OpenGLRender, and sets up the GLEvent, KeyEvent, and Mouse listeners. The last
      * three statements initialize the ImageCatalog, VertexProgramCatalog, and PixelProgramCatalog. The three catalogs
@@ -87,7 +173,6 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
         animator.start();
         // and all the rest happens in the display function...
     }
-
     /**
      * Iridescence.display() displays the scene. The frame rate is measured. Any camera motion that has occurred since
      * the last frame was displayed is applied and the culling system updated. Any object motions that has occurred is
@@ -147,13 +232,16 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
         if (m_kShaderParamsWindow == null) {
             m_kShaderParamsWindow = new ApplicationGUI();
             m_kShaderParamsWindow.setParent(this);
-            m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetVProgram(0));
+            m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetCProgram(0));
             m_kShaderParamsWindow.Display();
             m_kShaderParamsWindow.setParent(this);
         }
     }
-
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) {}
+
+    public GLCanvas GetCanvas() {
+        return ((OpenGLRenderer) m_pkRenderer).GetCanvas();
+    }
 
     /**
      * Iridescence.init is called only once when the GLCanvas is initialized. It initializes the renderer object, sets
@@ -191,90 +279,6 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
         // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
 
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        // ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        if (iWidth > 0 && iHeight > 0) {
-            if (m_pkRenderer != null) {
-                m_pkRenderer.Resize(iWidth, iHeight);
-            }
-
-            m_iWidth = iWidth;
-            m_iHeight = iHeight;
-        }
-        // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
-    }
-
-    public GLCanvas GetCanvas() {
-        return ((OpenGLRenderer) m_pkRenderer).GetCanvas();
-    }
-
-    /**
-     * Iridescence.CreateScene() creates the scene graph. The root node is m_spkScene. It contains a single TriMesh
-     * object, the torus. The TriMesh object is created with a set of rendering Attributes with three channels for point
-     * data (x,y,z); three channels for normal data (x,y,z); and two channels for texture-coordinate data (s,t). An
-     * IridescenceEffect is created and attached to the torus.
-     */
-    private void CreateScene() {
-        m_spkScene = new Node();
-
-        // start arrow node --------
-        Transformation trans = new Transformation();
-        float rotationRedian = 0.5f * (float) Math.PI;
-
-        Matrix3f matrix = new Matrix3f((float)Math.cos(rotationRedian),0.0f,(float)Math.sin(rotationRedian),
-                                       0.0f,1.0f,0.0f,
-                                       (float)-Math.sin(rotationRedian),0.0f,(float)Math.cos(rotationRedian));
-
-        trans.SetRotate(matrix);
-        //trans.SetTranslate(0.0f,0.0f,-0.25f);
-        
-        Attributes kAttr = new Attributes();
-        kAttr.SetPChannels(3);
-        kAttr.SetNChannels(3);
-        kAttr.SetTChannels(0,2);
-        StandardMesh kSM = new StandardMesh(kAttr);
-        kSM.SetTransformation(trans);
-
-        Node pkTrnNode = new Node();
-        TriMesh pkMesh = kSM.Cone(6,6,0.5f,0.5f, false);
-        pkMesh.Local.SetTranslate(-0.25f,0.0f,0.0f);
-        pkTrnNode.AttachChild(pkMesh);
-        
-        //trans.SetTranslate(0.0f,0.0f,0.25f);
-        TriMesh pkMesh2 = kSM.Cylinder(6,6,0.25f,0.5f, false);
-        pkMesh2.Local.SetTranslate(0.25f,0.0f,0.0f);
-        pkTrnNode.AttachChild(pkMesh2);
-
-        // end arrow node --------
-        m_spkScene.AttachChild(pkTrnNode);
-
-        /*
-        Attributes kAttr = new Attributes();
-        kAttr.SetPChannels(3);
-        kAttr.SetNChannels(3);
-        kAttr.SetTChannels(0, 2);
-        StandardMesh kSM = new StandardMesh(kAttr);
-        // TriMesh pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
-        TriMesh pkMesh = kSM.Torus(200, 200, 2.0f, 1.0f);
-
-        pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), new Vector3f(
-                -0.707f, 0.707f, 0f), false));
-        m_spkScene.AttachChild(pkMesh);
-        */
-
-        m_spkEffect = new IridescenceEffect("Leaf", "Gradient");
-        m_spkEffect.SetInterpolateFactor(0.5f);
-        final int iPassQuantity = m_spkEffect.GetPassQuantity();
-        for (int iPass = 0; iPass < iPassQuantity; iPass++) {
-            m_spkEffect.LoadPrograms(m_pkRenderer, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
-                                     m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
-        }
-
-        pkMesh.AttachEffect(m_spkEffect);
-        pkMesh2.AttachEffect(m_spkEffect);
-//         m_pkRenderer.SetColorMask(m_abColorMask[0], m_abColorMask[1], m_abColorMask[2], m_abColorMask[3]);
-    }
-
     /**
      * Iridescence.keyPressed() processes key-input from the user. The iridescence factor shader parameter can be
      * increased and decreased by pressing the + and - keys. A shader-editor GUI can be launched by pressing 'l'. The
@@ -284,6 +288,15 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
         char ucKey = e.getKeyChar();
         super.keyPressed(e);
         float fInterpolateFactor;
+        if (ucKey == 'w' || ucKey == 'W')
+        {
+            m_spkWireframe.Enabled = !m_spkWireframe.Enabled;
+            if ( m_spkWireframe.Enabled )
+                m_spkWireframe.Fill = WireframeState.FillMode.FM_LINE;
+            else
+                m_spkWireframe.Fill = WireframeState.FillMode.FM_FILL;
+            return;
+        }
         switch (ucKey) {
             case '+':
             case '=':
@@ -332,23 +345,183 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
         return;
     }
 
-    private Node m_spkScene;
+    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+        // ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        if (iWidth > 0 && iHeight > 0) {
+            if (m_pkRenderer != null) {
+                m_pkRenderer.Resize(iWidth, iHeight);
+            }
 
-    private IridescenceEffect m_spkEffect;
+            m_iWidth = iWidth;
+            m_iHeight = iHeight;
+        }
+        // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
+    }
 
-    private Culler m_kCuller = new Culler(0, 0, null);
+    /**
+     * Called from JPanelLight. Updates the lighting parameters.
+     * @param akGLights the set of GeneralLight objects.
+     */
+    public void updateLighting(Light[] akGLights )
+    {
+        if ( akGLights == null )
+        {
+            return;
+        }
+        m_akLights = akGLights;
+        for ( int i = 0; i < akGLights.length; i++ )
+        {
+            String kLightType = new String("Light"+(i)+"Type");
+            float[] afType = new float[]{0,0,0,0};
+            //if ( i < m_pkRenderer.GetMaxLights() )
+            if ( i < 4 )
+            {
+                if ( akGLights[i].On )
+                {
+                    Light kLight = akGLights[i];
+                    m_pkRenderer.SetLight( i, kLight );
+                    if ( akGLights[i].Type == Light.LightType.LT_AMBIENT )
+                    {
+                        afType[0] = 0;
+                    }
+                    else if ( akGLights[i].Type == Light.LightType.LT_DIRECTIONAL )
+                    {
+                        afType[0] = 1;
+                    }
+                    else if ( akGLights[i].Type == Light.LightType.LT_POINT )
+                    {
+                        afType[0] = 2;
+                    }
+                    else if ( akGLights[i].Type == Light.LightType.LT_SPOT )
+                    {
+                        afType[0] = 3;
+                    }
+                    m_kLightShader.SetLight(kLightType, afType);
+                }
+                else
+                {
+                    m_pkRenderer.SetLight( i, new Light() );
+                    afType[0] = -1;
+                    m_kLightShader.SetLight(kLightType, afType);
+                }
+            }
+        }
+    }
 
-    /** Window with the shader parameter interface: */
-    private ApplicationGUI m_kShaderParamsWindow = null;
+    /**
+     * Iridescence.CreateScene() creates the scene graph. The root node is m_spkScene. It contains a single TriMesh
+     * object, the torus. The TriMesh object is created with a set of rendering Attributes with three channels for point
+     * data (x,y,z); three channels for normal data (x,y,z); and two channels for texture-coordinate data (s,t). An
+     * IridescenceEffect is created and attached to the torus.
+     */
+    private void CreateScene() {
+        m_spkScene = new Node();
+        m_spkWireframe = new WireframeState();
 
-    private boolean[] m_abColorMask = new boolean[] {true, true, true, true};
+        // start arrow node --------
+        MakeArrow();
+        m_spkScene.AttachChild(m_kArrow);
+        // end arrow node --------
 
-    private boolean m_bStereo = false;
+        /*
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetNChannels(3);
+        kAttr.SetTChannels(0, 2);
+        StandardMesh kSM = new StandardMesh(kAttr);
+        // TriMesh pkMesh = kSM.Ellipsoid(50,50,1.5f,1.0f, 2.0f);
+        TriMesh pkMesh = kSM.Torus(200, 200, 2.0f, 1.0f);
 
-    private boolean m_bLeft = true;
+        pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), new Vector3f(
+                -0.707f, 0.707f, 0f), false));
+        m_spkScene.AttachChild(pkMesh);
 
-    private boolean m_bRight = true;
+                */
+               
 
+        m_spkEffect = new IridescenceEffect("Leaf", "Gradient");
+        m_spkEffect.SetInterpolateFactor(0.5f);
+        int iPassQuantity = m_spkEffect.GetPassQuantity();
+        for (int iPass = 0; iPass < iPassQuantity; iPass++) {
+            m_spkEffect.LoadPrograms(m_pkRenderer, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
+                                     m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
+        }
+    }
+
+    private void MakeArrow()
+    {
+        m_kArrow = new Node();
+        Vector3f kPos = new Vector3f();
+        Matrix3f matrix = new Matrix3f(0f,0.0f,1f,
+                                       0.0f,1.0f,0.0f,
+                                       -1f,0.0f,0f);
+        
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetNChannels(3);
+        kAttr.SetTChannels(0,2);
+        StandardMesh kSM = new StandardMesh(kAttr);
+
+        TriMesh pkMesh = kSM.Cone(64,64,1.0f,1.0f, false);
+        m_kArrow.AttachChild(pkMesh);
+        
+        for ( int i = 0; i < pkMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+            kPos = pkMesh.VBuffer.GetPosition3(i);
+            matrix.Mult(kPos, kPos);
+            kPos.X -=.5;
+            pkMesh.VBuffer.SetPosition3(i, kPos);
+            kPos = pkMesh.VBuffer.GetNormal3(i);
+            matrix.Mult(kPos, kPos);
+            pkMesh.VBuffer.SetNormal3(i, kPos);            
+        }
+
+        pkMesh2 = kSM.Cylinder(64,64,0.5f,1.0f,false);
+        for ( int i = 0; i < pkMesh2.VBuffer.GetVertexQuantity(); i++ )
+        {
+            kPos = pkMesh2.VBuffer.GetPosition3(i);
+            matrix.Mult(kPos, kPos);
+            kPos.X +=.5;
+            pkMesh2.VBuffer.SetPosition3(i, kPos);
+            kPos = pkMesh2.VBuffer.GetNormal3(i);
+            matrix.Mult(kPos, kPos);
+            pkMesh2.VBuffer.SetNormal3(i, kPos);            
+        }
+        
+        m_kArrow.AttachChild(pkMesh2);
+        
+
+        m_kLightShader = new SurfaceLightingEffect( null, false ); 
+        int iPassQuantity = m_kLightShader.GetPassQuantity();
+        for (int iPass = 0; iPass < iPassQuantity; iPass++) {
+            m_kLightShader.LoadPrograms(m_pkRenderer, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
+                                     m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
+        }
+        setupLights();
+        updateLighting(m_akLights);
+        
+
+        pkMesh.AttachEffect(m_kLightShader);
+        pkMesh2.AttachEffect(m_kLightShader);
+        
+        MaterialState kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0.5f,0.5f,0.5f);
+        kMaterial.Specular = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Shininess = 500f;
+        kMaterial.Alpha = 1f;
+        
+
+        pkMesh.AttachGlobalState(kMaterial);
+        pkMesh.AttachGlobalState(m_spkWireframe);
+        
+        pkMesh2.AttachGlobalState(kMaterial);
+        pkMesh2.AttachGlobalState(m_spkWireframe);
+
+        
+    }
+    
     private String getExternalDirs() {
         String jar_filename = "";
         String class_path_key = "java.class.path";
@@ -362,5 +535,49 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
             }
         }
         return System.getProperties().getProperty("user.dir");
+    }
+
+    private void setupLights()
+    {
+        // Setup for the lights.
+        m_aiLightScale = new int[LIGHT_INDEX_MAX];
+        m_akLights = new Light[LIGHT_INDEX_MAX];
+
+
+        // Ambient light for model.
+        m_akLights[LIGHT_INDEX_AMBIENT] = new Light();
+        m_akLights[LIGHT_INDEX_AMBIENT].Intensity = 0.5f;
+        m_akLights[LIGHT_INDEX_AMBIENT].Ambient.Set(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_AMBIENT].Diffuse.Set(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_AMBIENT].Specular.Set(1f, 1f, 1f);
+        m_aiLightScale[LIGHT_INDEX_AMBIENT] = 1;
+
+        // Model lights at corners of the volume.
+        for (int i = 0; i < 8; i++) {
+            float fX = ((0 != (i & 1)) ? +1.0f : -1.0f);
+            float fY = ((0 != (i & 2)) ? +1.0f : -1.0f);
+            float fZ = ((0 != (i & 4)) ? +1.0f : -1.0f);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i] = new Light(Light.LightType.LT_DIRECTIONAL);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].On = false;
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Intensity = 0.5f;
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Ambient.Set(1f, 1f, 1f);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Diffuse.Set(1f, 1f, 1f);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Specular.Set(1f, 1f, 1f);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Position.Set(fX, fY, fZ);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].DVector.Set(-fX, -fY, fZ);
+            m_aiLightScale[LIGHT_INDEX_MODEL_X0Y0Z0 + i] = 1;
+        }
+
+        // Directional light for world.
+        m_akLights[LIGHT_INDEX_STATIC] = new Light(Light.LightType.LT_DIRECTIONAL);
+        m_akLights[LIGHT_INDEX_STATIC].On = true;
+        m_akLights[LIGHT_INDEX_STATIC].Intensity = 0.5f;
+        m_akLights[LIGHT_INDEX_STATIC].Ambient.Set(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_STATIC].Diffuse.Set(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_STATIC].Specular.Set(1f, 1f, 1f);
+        m_akLights[LIGHT_INDEX_STATIC].Position.Set(-3f,-3f,-3f);
+        m_akLights[LIGHT_INDEX_STATIC].DVector.Set( 1f, 1f, 1f );
+        m_akLights[LIGHT_INDEX_STATIC].DVector.Normalize();
+        m_aiLightScale[LIGHT_INDEX_STATIC] = 3;
     }
 }
