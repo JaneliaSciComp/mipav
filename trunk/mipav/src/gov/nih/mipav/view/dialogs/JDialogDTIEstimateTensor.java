@@ -53,8 +53,10 @@ import WildMagic.LibFoundation.Mathematics.GMatrixf;
 
 public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmInterface, WindowListener  {
 	
+	/** grid bag constraints **/
 	private GridBagConstraints gbc,gbc2,gbc3;
 	
+	/** main panel **/
 	private JPanel mainPanel;
 	
 	/** table to display the src image names. */
@@ -66,16 +68,22 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     /** current directory  **/
     private String currDir = null;
     
+    /** src image **/
     private ModelImage srcImage;
     
+    /** slices **/
     private Vector<ArrayList> slicesVector = new Vector<ArrayList>();;
     
+    /** textfields **/
     private JTextField bValueTextField,xdimTextField, ydimTextField, numSlicesTextField, numVolumesTextField, hFOVTextField, vFOVTextField, outputDirTextField, formatTextField, gapTextField, sliceThicknessTextField, imagePlaneTextField, phaseEncodingTextField,maskImageTextField;
     
+    /** mask Image **/
     private ModelImage maskImage;
     
+    /** list file **/
     private File listFile;
     
+    /** paren tdir **/
     private String m_kParentDir;
     
     /** X-dimensions for Diffusion Weighted Images. */
@@ -98,10 +106,13 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     
     /** Slice thickness read from .list file */
     private float m_fResX = 1f, m_fResY = 1f, m_fResZ = 1f;
+    
     /** Set to true if the slice resolution is read from the .list file: (xRes) */
     private boolean m_bUseXRes = false;
+    
     /** Set to true if the slice resolution is read from the .list file: (yRes) */
     private boolean m_bUseYRes = false;
+    
     /** Set to true if the slice resolution is read from the .list file: (zRes) */
     private boolean m_bUseZRes = false;
     
@@ -114,25 +125,29 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     /** Number of different BMatrix rows: */
     private int m_iBOrig = 0;
     
+    /** handle to algorithm **/
     private AlgorithmDWI2DTI kAlgorithm;
     
     /** Diffusion Tensor image. */
     private ModelImage DTIImage = null;
     
+    /** button **/
     private JButton loadMaskButton;
     
-    /**
-     * List of file names for the Diffusion Weighted Images, from the .path
-     * file.
-     */
+    /** List of file names for the Diffusion Weighted Images, from the .path **/
     private String[][] m_aakDWIList = null;
 	
+    /**
+     * constructor
+     */
 	public JDialogDTIEstimateTensor() {
 		super(ViewUserInterface.getReference().getMainFrame(), false);
 		init();
 	}
 	
-	
+	/**
+	 * init
+	 */
 	public void init() {
 		setForeground(Color.black);
         setTitle("Estimate Tensor");
@@ -141,10 +156,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         gbc2 = new GridBagConstraints();
         gbc3 = new GridBagConstraints();
         mainPanel = new JPanel(new GridBagLayout());
-        
-        
-        
-        
+
         JPanel srcPanel = new JPanel(new GridBagLayout());
         srcTableModel = new DefaultTableModel() {
 			public boolean isCellEditable(int row, int column)
@@ -186,8 +198,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         bValuePanel.add(bValueLabel);
         bValuePanel.add(bValueTextField);
         bValuePanel.add(bValueButton);
-        
-        
+
         JButton srcBrowseButton = new JButton("Load DWI Volume");
         srcBrowseButton.addActionListener(this);
         srcBrowseButton.setActionCommand("srcBrowse");
@@ -199,8 +210,6 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         DWIButtonPanel.add(loadBValGradFileButton);
         DWIButtonPanel.add(bValuePanel);
 
-        
-        
         gbc2.gridx = 0;
         gbc2.gridy = 0;
         gbc2.insets = new Insets(15,5,5,15);
@@ -212,12 +221,8 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         gbc2.gridy = 1;
         srcPanel.add(DWIButtonPanel, gbc2);
 
-        
-        
         JPanel studyParamsPanel = new JPanel(new GridBagLayout());
         studyParamsPanel.setBorder(buildTitledBorder("Study Parameters"));
-        
-        
         JPanel maskImagePanel = new JPanel();
         JLabel maskImageLabel = new JLabel("Mask Image");
         maskImageTextField = new JTextField(20);
@@ -236,10 +241,6 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         studyParamsPanel.add(maskImageLabel,gbc3);
         gbc3.gridx = 1;
         studyParamsPanel.add(maskImagePanel,gbc3);
-        
-        
-        
-        
 
         JLabel xdimLabel = new JLabel("Image X Dimension");
         xdimTextField = new JTextField(20);
@@ -248,8 +249,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         studyParamsPanel.add(xdimLabel,gbc3);
         gbc3.gridx = 1;
         studyParamsPanel.add(xdimTextField,gbc3);
-        
-        
+
         JLabel ydimLabel = new JLabel("Image Y Dimension");
         ydimTextField = new JTextField(20);
         gbc3.gridx = 0;
@@ -257,9 +257,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         studyParamsPanel.add(ydimLabel,gbc3);
         gbc3.gridx = 1;
         studyParamsPanel.add(ydimTextField,gbc3);
-        
-        
-        
+
         JLabel numSlicesLabel = new JLabel("Num Slices per 3D Volume");
         numSlicesTextField = new JTextField(20);
         gbc3.gridx = 0;
@@ -267,9 +265,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         studyParamsPanel.add(numSlicesLabel,gbc3);
         gbc3.gridx = 1;
         studyParamsPanel.add(numSlicesTextField,gbc3);
-        
-        
-        
+
         JLabel numVolumesLabel = new JLabel("Num 3D Volumes");
         numVolumesTextField = new JTextField(20);
         gbc3.gridx = 0;
@@ -277,11 +273,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         studyParamsPanel.add(numVolumesLabel,gbc3);
         gbc3.gridx = 1;
         studyParamsPanel.add(numVolumesTextField,gbc3);
-        
-        
-        
-       
-        
+
         JLabel hFOVLabel = new JLabel("Horizontal Field of View (in mm)");
         hFOVTextField = new JTextField(20);
         gbc3.gridx = 0;
@@ -297,10 +289,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         studyParamsPanel.add(vFOVLabel,gbc3);
         gbc3.gridx = 1;
         studyParamsPanel.add(vFOVTextField,gbc3);
-        
-        
-        
-        
+
         JPanel outputDirPanel = new JPanel();
         JLabel outputDirLabel = new JLabel("Output Dir");
         outputDirTextField = new JTextField(20);
@@ -318,9 +307,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         studyParamsPanel.add(outputDirLabel,gbc3);
         gbc3.gridx = 3;
         studyParamsPanel.add(outputDirPanel,gbc3);
-        
-        
-        
+
         JLabel formatLabel = new JLabel("Format of raw images (integer, float, dicom)");
         formatTextField = new JTextField(20);
         gbc3.gridx = 2;
@@ -328,8 +315,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         studyParamsPanel.add(formatLabel,gbc3);
         gbc3.gridx = 3;
         studyParamsPanel.add(formatTextField,gbc3);
-        
-        
+
         JLabel gapLabel = new JLabel("Gap between slices (in mm)");
         gapTextField = new JTextField(20);
         gbc3.gridx = 2;
@@ -345,8 +331,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         studyParamsPanel.add(sliceThicknessLabel,gbc3);
         gbc3.gridx = 3;
         studyParamsPanel.add(sliceThicknessTextField,gbc3);
-        
-        
+
         JLabel imagePlaneLabel = new JLabel("Image plane (axial, coronal, sagittal)");
         imagePlaneTextField = new JTextField(20);
         gbc3.gridx = 2;
@@ -362,18 +347,12 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         studyParamsPanel.add(phaseEncodingLabel,gbc3);
         gbc3.gridx = 3;
         studyParamsPanel.add(phaseEncodingTextField,gbc3);
-        
-        
-       
+
         gbc2.gridy = 2;
         gbc2.anchor = GridBagConstraints.WEST;
         gbc2.fill = GridBagConstraints.BOTH;
         srcPanel.add(studyParamsPanel, gbc2);
-        
-        
-   
-        
-        
+
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(15,5,5,0);
@@ -381,8 +360,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         gbc.anchor = GridBagConstraints.WEST;
 
         mainPanel.add(srcPanel, gbc);
-        
-        
+
         JPanel OKCancelPanel = new JPanel();
         buildOKButton();
         OKButton.setActionCommand("ok");
@@ -390,18 +368,17 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         buildCancelButton();
         cancelButton.setActionCommand("cancel");
         OKCancelPanel.add(cancelButton, BorderLayout.EAST);
-        
-        
-        
+
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
         pack();
         setMinimumSize(getSize());
-        //setResizable(false);
         setVisible(true);
-        
 	}
 
+	/**
+	 * action performed
+	 */
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		
@@ -651,15 +628,8 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		            		}
 		                }
 		            }
-		            
-		            
-		            
-		            
-		            if(numDims == 3) {
 
-		            	
-		            	
-		            	
+		            if(numDims == 3) {
 		            	int numSlices = srcImage.getExtents()[2];
 		            	if(numSlicesTextField.getText().trim().equals("")) {
 			            	numSlicesTextField.setText(String.valueOf(numSlices));
@@ -742,7 +712,6 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		            		ArrayList<String> slicesArrayList = new ArrayList<String>();
 		            		for(int k=0;k<numSlices;k++) {
 		            			String slicePath = imageAbsPath + "_4D_numVols_" + numVolumes + "_numSlices_" + numSlices + "_vol_" + i + "_slice_" + k;
-			            		System.out.println(slicePath);
 			            		slicesArrayList.add(slicePath);
 		            		}
 		            		
@@ -763,8 +732,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		            	numVolumesTextField.setEditable(false);
 		            	
 		            }
-		            
-		            
+
 		            srcImage.disposeLocal();
 		            srcImage = null;
 		        }
@@ -853,9 +821,6 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 		        	outputDirTextField.setText(currDir);
 		        }
 		 }else if(command.equals("ok")) {
-			 
-			
-			
 			 boolean success = validateData();
 			 if(!success) {
 				 return;
@@ -885,7 +850,11 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 	
 	
 	
-	
+	/**
+	 * reads the bval/gradient file...both dti studio format and fsl format are accepted
+	 * @param gradientFilePath
+	 * @return
+	 */
 	public boolean readBValGradientFile(String gradientFilePath) {
 
         try {
@@ -991,7 +960,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             raFile.close();
         } catch (Exception e) {
             
-        	MipavUtil.displayError("Error reading B-Value/Grad File");
+        	MipavUtil.displayError("Error reading B-Value/Grad File...DTI Studio and FSL formats are accepted");
             return false;
         }
 
@@ -1000,10 +969,11 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     }
 	
 	
-	
+	/**
+	 * create list file
+	 */
 	private void createListFile() {
-		
-		
+
 		 try {
 	            listFile = new File(outputDirTextField.getText()  + File.separator + "dti.list");
 	            FileOutputStream outputStream = new FileOutputStream(listFile);
@@ -1059,6 +1029,9 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 	}
 	
 	
+	/**
+	 * create b-matrix file
+	 */
 	private void createBMatrixFile() {
 		 try {
 	            StringBuffer sb;
@@ -1067,10 +1040,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 	            FileOutputStream outputStream = new FileOutputStream(bMatrixFile);
 	            PrintStream printStream = new PrintStream(outputStream);
 	            DecimalFormat decFormat = new DecimalFormat("%16f");
-		
-		
-		
-		
+
 		int numRows = srcTableModel.getRowCount();
 		//formula for bmtxt values is :
         // bxx 2bxy 2bxz byy 2byz bzz
@@ -1200,12 +1170,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             printStream.print(sb.toString());
 
             printStream.println();
-			
-			
-			
-			
-			
-			
+
 		}
 
 		outputStream.close();
@@ -1217,33 +1182,25 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 	}
 	
 	
-	
+	/**
+	 * create path file
+	 */
 	private void createPathFile() {
-		
-		System.out.println("aaa");
-		
+
 		int numSlicesPer3DVolume = Integer.valueOf(numSlicesTextField.getText().trim()).intValue();
 		 try {
 	            File pathFile = new File(outputDirTextField.getText()  + File.separator + "dti.path");
 	            FileOutputStream outputStream = new FileOutputStream(pathFile);
 	            PrintStream printStream = new PrintStream(outputStream);
-	            
-	           
+
 	            for(int i=0;i<numSlicesPer3DVolume;i++) {
 	            	Iterator iter = slicesVector.iterator();
 	            	while (iter.hasNext()) {
 	            		ArrayList slicesList = (ArrayList)iter.next();
 	            		String path = (String)slicesList.get(i);
-	            		System.out.println(path);
 	            		printStream.println(path);
 	            	}
-	            	
-	            	
-	            	
-	            	
-	            	
-	            	
-	            	
+
 	            }
 	            outputStream.close();
 	            
@@ -1255,7 +1212,9 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 	
 	
 	
-	
+	/**
+	 * read list file
+	 */
 	private void readListFile() {
 		m_kParentDir =listFile.getParent();
 
@@ -1474,8 +1433,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             MipavUtil.displayError("Path file must be set to create tensor data.");
             return;
         }
-        System.out.println("aaaa " + m_kBMatrix.GetColumns());
-        System.out.println("xxxx " + m_kBMatrix.GetRows());
+
         
         
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -1490,6 +1448,9 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 
     }
     
+    /**
+     * algorithm performed
+     */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
     	if(kAlgorithm.isCompleted()) {
@@ -1507,7 +1468,10 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     }
     
     
-    
+    /**
+     * validate data
+     * @return
+     */
     private boolean validateData() {
     	boolean isValid = true;
     	int numRows = srcTableModel.getRowCount();
@@ -1613,18 +1577,14 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 			MipavUtil.displayError("Format of raw images is not valid");
 			return false;
 		}
-		
-		
-		
-		
-    
-    	
-    	
+
     	return isValid;
     }
 
 
-	@Override
+	/**
+	 * window closing
+	 */
 	public void windowClosing(WindowEvent event) {
 		super.windowClosing(event);
 		if(maskImage != null) {
