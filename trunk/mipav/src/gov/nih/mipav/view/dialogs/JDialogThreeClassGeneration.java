@@ -324,7 +324,7 @@ public class JDialogThreeClassGeneration extends JDialogBase implements Algorith
             extents = new int[2];
             extents[0] = dim;
             extents[1] = dim;
-            resultImage = new ModelImage(ModelStorageBase.BYTE, extents, name);
+            resultImage = new ModelImage(ModelStorageBase.ARGB, extents, name);
             resultImage.setImageName(name);
 
             // Make algorithm
