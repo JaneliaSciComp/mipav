@@ -214,7 +214,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
     // Test with NNCT for Pielou's data, shown in Table 3 of "Overall and pairwise segregation tests based on nearest
     // neighbor contingency tables"
-    private boolean selfTest1 = false;
+    private boolean selfTest1 = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -475,6 +475,13 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         double T[][];
         Matrix TM;
         double CN[][];
+        Matrix sigmaD;
+        double ND[][];
+        Matrix NDM;
+        double NDp[][];
+        Matrix NDpM;
+        byte red[];
+        byte green[];
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -1728,6 +1735,53 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         r = covN11N22/Math.sqrt(varN11*varN22);
         CD = (z11D*z11D + z22D*z22D - 2*r*z11D*z22D)/(1 - r*r);
         Preferences.debug("CD = " + CD + "\n");
+        
+        p122 = ((double)n1*n2*(n2 - 1))/(n*(n - 1)*(n - 2));
+        p1112 = ((double)n1*(n1 - 1)*(n1 - 2)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
+        p2221 = ((double)n2*(n2 - 1)*(n2 - 2)*n1)/(n*(n - 1)*(n - 2)*(n - 3));
+        covN11N12 = (n - R)*p112 + (n*n - 3*n - Q + R)*p1112 - n*n*p11*p12;
+        covN11N21 = (n - R + Q)*p112 + (n*n - 3*n - Q + R)*p1112 - n*n*p11*p12;
+        covN12N21 = R*p12 + (n - R)*(p112 + p122) + (n*n - 3*n - Q + R)*p1122 - n*n*p12*p21;
+        covN12N22 = (n - R + Q)*p221 + (n*n - 3*n - Q + R)*p2221 - n*n*p22*p21;
+        covN12N11 = covN11N12;
+        covN21N12 = covN12N21;
+        covN21N22 = (n - R)*p221 + (n*n - 3*n - Q + R)*p2221 - n*n*p22*p21;
+        covN21N11 = covN11N21;
+        covN22N11 = covN11N22;
+        covN22N21 = covN21N22;
+        covN22N12 = covN12N22;
+        sigma = new double[4][4];
+        sigma[0][0] = varN11;
+        sigma[0][1] = covN11N12;
+        sigma[0][2] = covN11N21;
+        sigma[0][3] = covN11N22;
+        sigma[1][0] = covN12N11;
+        sigma[1][1] = varN12;
+        sigma[1][2] = covN12N21;
+        sigma[1][3] = covN12N22;
+        sigma[2][0] = covN21N11;
+        sigma[2][1] = covN21N12;
+        sigma[2][2] = varN21;
+        sigma[2][3] = covN21N22;
+        sigma[3][0] = covN22N11;
+        sigma[3][1] = covN22N12;
+        sigma[3][2] = covN22N21;
+        sigma[3][3] = varN22;
+        sigmaD = new Matrix(sigma);
+        NDp = new double[1][4];
+        NDp[0][0] = N11 - EN11;
+        NDp[0][1] = N12 - EN12;
+        NDp[0][2] = N21 - EN21;
+        NDp[0][3] = N22 - EN22;
+        NDpM = new Matrix(NDp);
+        ND = new double[4][1];
+        ND[0][0] = N11 - EN11;
+        ND[1][0] = N12 - EN12;
+        ND[2][0] = N21 - EN21;
+        ND[3][0] = N22 - EN22;
+        NDM = new Matrix(ND);
+        CD = ((NDpM.times(sigmaD.inverse())).times(NDM)).getArray()[0][0];
+        Preferences.debug("CD calculated via matrix quadratic form = " + CD + "\n");
         if (selfTest1) {
             Preferences.debug("Should have CD = 19.67\n");
         }
@@ -1834,14 +1888,6 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         T21 = N21 - ((double)n2*C1)/(n - 1);
         T22 = N22 - ((double)(n2 - 1)*C2)/(n - 1);
         
-        p122 = ((double)n1*n2*(n2 - 1))/(n*(n - 1)*(n - 2));
-        p1112 = ((double)n1*(n1 - 1)*(n1 - 2)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
-        p2221 = ((double)n2*(n2 - 1)*(n2 - 2)*n1)/(n*(n - 1)*(n - 2)*(n - 3));
-        covN11N12 = (n - R)*p112 + (n*n - 3*n - Q + R)*p1112 - n*n*p11*p12;
-        covN11N21 = (n - R + Q)*p112 + (n*n - 3*n - Q + R)*p1112 - n*n*p11*p12;
-        covN12N21 = R*p12 + (n - R)*(p112 + p122) + (n*n - 3*n - Q + R)*p1122 - n*n*p12*p21;
-        covN12N22 = (n - R + Q)*p221 + (n*n - 3*n - Q + R)*p2221 - n*n*p22*p21;
-        
         varC1 = varN11 + varN21 + 2 * covN11N21;
         varC2 = varN12 + varN22 + 2 * covN12N22;
         covN11C1 = varN11 + covN11N21;
@@ -1892,24 +1938,18 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         //          [covT21T11 covT21T12  varT21     covT21T22]
         //          [covT22T11 covT22T12  covT22T21  varT22]
         
-        covN12N11 = covN11N12;
         covN11C2 = covN11N12 + covN11N22;
         covN12C1 = covN12N11 + covN12N21;
-        covN21N12 = covN12N21;
-        covN21N22 = (n - R)*p221 + (n*n - 3*n - Q + R)*p2221 - n*n*p22*p21;
         covC1C2 = covN11N12 + covN11N22 + covN21N12 + covN21N22;
         //covT11T12 = covN11N12 - n1*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
                     //+ (n1 - 1)*n1*covC1C2/((n - 1)*(n - 1));
         covT11T12 = covN11N12 - n2*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
         + (n1 - 1)*n2*covC1C2/((n - 1)*(n - 1));
-        covN21N11 = covN11N21;
         covC1C1 = varN11 + covN11N21 + covN21N11 + varN21;
         //covT11T21 = covN11N21 - n2*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
                     //+ (n1 - 1)*n2*covC1C1/((n - 1)*(n - 1));
         covT11T21 = covN11N21 - n1*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
         + (n1 - 1)*n1*covC1C1/((n - 1)*(n - 1));
-        covN22N11 = covN11N22;
-        covN22N21 = covN21N22;
         covN22C1 = covN22N11 + covN22N21;
         covT11T22 = covN11N22 - (n2 - 1)*covN11C2/(n - 1) - (n1 - 1)*covN22C1/(n - 1)
                     + (n1 - 1)*(n2 - 1)*covC1C2/((n - 1)*(n - 1));
@@ -1920,7 +1960,6 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
                     //+ n1*n2*covC2C1/((n - 1)*(n - 1));
         covT12T21 = covN12N21 - n1*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
         + n1*n1*covC2C1/((n - 1)*(n - 1));
-        covN22N12 = covN12N22;
         covC2C2 = varN12 + covN12N22 + covN22N12 + varN22;
         covT12T22 = covN22N12 - n1*covN22C2/(n - 1) - (n2 - 1)*covN12C2/(n - 1)
                     + (n2 - 1)*n1*covC2C2/((n - 1)*(n - 1));
@@ -1931,7 +1970,6 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         covT22T11 = covT11T22;
         covT22T12 = covT12T22;
         covT22T21 = covT21T22;
-        sigma = new double[4][4];
         sigma[0][0] =  varT11;
         sigma[0][1] = covT11T12;
         sigma[0][2] = covT11T21;
@@ -2061,11 +2099,24 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             System.out.println("Complete spatial randomness cannot be rejected based on T22 value");
         }
         
+        red = new byte[buffer.length];
+        green = new byte[buffer.length];
+        
+        for (i = 0; i < buffer.length; i++) {
+            if (buffer[i] == 1) {
+                red[i] = (byte)255;
+            }
+            else if (buffer[i] == 2) {
+                green[i] = (byte)255;
+            }
+        }
+        
         try {
-            srcImage.importData(0, buffer, true);
+            srcImage.importRGBData(1, 0, red, false);
+            srcImage.importRGBData(2, 0, green, true);
         }
         catch(IOException e) {
-            MipavUtil.displayError("IO exception on srcImage.importData(0, buffer, true)");
+            MipavUtil.displayError("IO exception on srcImage.importRGBData");
             setCompleted(false);
             return;
         }
