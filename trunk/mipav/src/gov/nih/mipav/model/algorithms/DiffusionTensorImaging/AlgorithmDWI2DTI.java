@@ -24,9 +24,14 @@ import gov.nih.mipav.view.ViewUserInterface;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import WildMagic.LibFoundation.Mathematics.GMatrixf;
@@ -73,9 +78,13 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     /** handle to BSE Algorithm **/
     private AlgorithmBrainSurfaceExtractor alg;
     
-    private HashMap<String,float[]> m_3dbufferMap = new HashMap<String,float[]>();
+    private HashMap<String,float[]> m_3dbufferMap_float = new HashMap<String,float[]>();
     
-    private HashMap<String,float[]> m_4dbufferMap = new HashMap<String,float[]>();
+    private HashMap<String,float[]> m_4dbufferMap_float = new HashMap<String,float[]>();
+
+    private HashMap<String,int[]> m_3dbufferMap_int = new HashMap<String,int[]>();
+    
+    private HashMap<String,int[]> m_4dbufferMap_int = new HashMap<String,int[]>();
 
 
     /** Create a new AlgorithmDWI2DTI 
@@ -135,7 +144,11 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
             createMaskImage();
         }
         createDWIImage();
+
+        
     }
+    
+    
 
     /** Return the DTI Image. 
      * @return the DTI Image. 
@@ -179,6 +192,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     }
 
     /** Get the slice data for the image with the given slice and weight.
+     *  For 3d and 4d non-multifile images, the whole buffer is read in and stored...then slice data is extracted from that buffer
      * @param iSlice slice to read.
      * @param iWeight weight to read.
      * @return float[] containing the data.
@@ -195,8 +209,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     			int numSlices = Integer.valueOf(numSlicesString).intValue();
     			int slice = Integer.valueOf(sliceString).intValue();
     			kPath = kPath.substring(0, kPath.indexOf("_3D_"));
-    			if(m_3dbufferMap.containsKey(kPath)) {
-    				float[] volBuff = m_3dbufferMap.get(kPath);
+    			if(m_3dbufferMap_float.containsKey(kPath)) {
+    				float[] volBuff = m_3dbufferMap_float.get(kPath);
     				
     				int sliceLength = m_iDimX * m_iDimY;
 		            float[] sliceBuff = new float[sliceLength];
@@ -208,10 +222,16 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     					sliceBuff[k] = volBuff[i];
     				}
     				
+    				if(iSlice == numSlices-1) {
+    					volBuff = null;
+    					m_3dbufferMap_float.remove(kPath);
+    				}
+    				
     				return sliceBuff;
     			
     				
     			}else {
+    		
     				ModelImage image_3d;
     				FileIO fileIO = new FileIO();
 		        	fileIO.setQuiet(true);
@@ -239,7 +259,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     					sliceBuff[k] = volBuff[i];
     				}
     				
-    				m_3dbufferMap.put(kPath, sliceBuff);
+    				m_3dbufferMap_float.put(kPath, volBuff);
     				
     				return sliceBuff;
 
@@ -249,21 +269,17 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     			String numVolsString = kPath.substring(kPath.indexOf("_4D_numVols_")+12,kPath.indexOf("_numSlices_"));
     			String numSlicesString = kPath.substring(kPath.indexOf("_numSlices_")+11,kPath.indexOf("_vol_"));
     			String volString = kPath.substring(kPath.indexOf("_vol_")+5,kPath.indexOf("_slice_"));
-    			System.out.println(volString);
     			String sliceString = kPath.substring(kPath.indexOf("_slice_")+7,kPath.length());
     			int numVols = Integer.valueOf(numVolsString).intValue();
     			int numSlices = Integer.valueOf(numSlicesString).intValue();
     			int vol = Integer.valueOf(volString).intValue();
     			int slice = Integer.valueOf(sliceString).intValue();
     			kPath = kPath.substring(0, kPath.indexOf("_4D_"));
-    			if(m_4dbufferMap.containsKey(kPath)) {
-    				System.out.println("bbb");
-    				System.out.println(vol);
-    				System.out.println(slice);
-    				float[] volsBuff = m_4dbufferMap.get(kPath);
+    			if(m_4dbufferMap_float.containsKey(kPath)) {
+
+    				float[] volsBuff = m_4dbufferMap_float.get(kPath);
     				
     				int sliceLength = m_iDimX * m_iDimY;
-    				System.out.println();
 		            float[] sliceBuff = new float[sliceLength];
 		            
 		            int start = ((vol * numSlices)*sliceLength) + (slice * sliceLength);
@@ -275,14 +291,16 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     					sliceBuff[k] = volsBuff[i];
     				}
     				
+    				if(iSlice == numSlices-1 && iWeight == numVols-1) {
+    					volsBuff = null;
+    					m_4dbufferMap_float.remove(kPath);
+    				}
     				
     				
     				return sliceBuff;
     	
     			}else {
-    				System.out.println("aaa");
-    				System.out.println(vol);
-    				System.out.println(slice);
+
     				ModelImage image_4d;
     				FileIO fileIO = new FileIO();
 		        	fileIO.setQuiet(true);
@@ -313,29 +331,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     					sliceBuff[k] = volsBuff[i];
     				}
     				
-    				m_4dbufferMap.put(kPath, volsBuff);
-    				
-    				
-    				//TESTING
-    				/*int[] sliceExtents = new int[2];
-    		    	sliceExtents[0] = m_iDimX;
-    				sliceExtents[1] = m_iDimY;
-    				FileInfoImageXML fileInfoXML = new FileInfoImageXML("blah", null, FileUtility.XML);
-	        		fileInfoXML.setDataType(ModelStorageBase.FLOAT);
-	        		fileInfoXML.setExtents(sliceExtents);
-
-
-	                
-    				ModelImage sliceImage = new ModelImage(ModelStorageBase.FLOAT, sliceExtents, "blah");
-    				try {
-    				sliceImage.importData(0, sliceBuff, false);
-    				}catch(Exception e) {
-    					System.out.println("blah");
-    				}
-	                sliceImage.setFileInfo(fileInfoXML,0);
-	                new ViewJFrameImage(sliceImage);*/
-    				
-    				//END TESTING
+    				m_4dbufferMap_float.put(kPath, volsBuff);
+    			
     				
     				return sliceBuff;
     				
@@ -384,13 +381,165 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     
 
     /** Get the slice data for the image with the given slice and weight.
+     *  For 3d and 4d non-multifile images, the whole buffer is read in and stored...then slice data is extracted from that buffer
      * @param iSlice slice to read.
      * @param iWeight weight to read.
      * @return float[] containing the data.
      */
     private float[] readIntegerWeight( int iSlice, int iWeight )
     {
-        File kFile = new File( m_aakDWIList[ iSlice ][iWeight] );
+    	String kPath = m_aakDWIList[ iSlice ][iWeight];
+    	
+    	if(kPath.contains("_3D_") || kPath.contains("_4D_")) {
+    		if(kPath.contains("_3D_")) {
+    			
+    			String numSlicesString = kPath.substring(kPath.indexOf("_3D_numSlices_")+14,kPath.indexOf("_slice_"));
+    			String sliceString = kPath.substring(kPath.indexOf("_slice_")+7,kPath.length());
+    			int numSlices = Integer.valueOf(numSlicesString).intValue();
+    			int slice = Integer.valueOf(sliceString).intValue();
+    			kPath = kPath.substring(0, kPath.indexOf("_3D_"));
+    			if(m_3dbufferMap_int.containsKey(kPath)) {
+    				int[] volBuff = m_3dbufferMap_int.get(kPath);
+    				
+    				int sliceLength = m_iDimX * m_iDimY;
+		            float[] sliceBuff = new float[sliceLength];
+		            
+		            int start = slice * sliceLength;
+    				int end = start + sliceLength;
+    				
+    				for(int i=start,k=0;i<end;i++,k++) {
+    					sliceBuff[k] = (float)volBuff[i];
+    				}
+    				
+    				if(iSlice == numSlices-1) {
+    					volBuff = null;
+    					m_3dbufferMap_int.remove(kPath);
+    				}
+    				
+    				return sliceBuff;
+    			
+    				
+    			}else {
+    		
+    				ModelImage image_3d;
+    				FileIO fileIO = new FileIO();
+		        	fileIO.setQuiet(true);
+		        	image_3d = fileIO.readImage(kPath);
+		        	int m_iDimZ = numSlices;
+		        	int volLength = m_iDimX * m_iDimY * m_iDimZ;
+		            int[] volBuff = new int[volLength];
+		            
+		            
+		            try {
+		            	image_3d.exportData(0, volLength, volBuff);
+		            } catch (IOException error) {
+		                System.out.println("IO exception");
+		            }
+		            image_3d.disposeLocal();
+		            image_3d = null;
+		            
+		            int sliceLength = m_iDimX * m_iDimY;
+		            float[] sliceBuff = new float[sliceLength];
+		            
+		            int start = slice * sliceLength;
+    				int end = start + sliceLength;
+		            
+    				for(int i=start,k=0;i<end;i++,k++) {
+    					sliceBuff[k] = (float)volBuff[i];
+    				}
+    				
+    				m_3dbufferMap_int.put(kPath, volBuff);
+    				
+    				return sliceBuff;
+
+    			}
+    		}else {
+    			
+    			String numVolsString = kPath.substring(kPath.indexOf("_4D_numVols_")+12,kPath.indexOf("_numSlices_"));
+    			String numSlicesString = kPath.substring(kPath.indexOf("_numSlices_")+11,kPath.indexOf("_vol_"));
+    			String volString = kPath.substring(kPath.indexOf("_vol_")+5,kPath.indexOf("_slice_"));
+    			String sliceString = kPath.substring(kPath.indexOf("_slice_")+7,kPath.length());
+    			int numVols = Integer.valueOf(numVolsString).intValue();
+    			int numSlices = Integer.valueOf(numSlicesString).intValue();
+    			int vol = Integer.valueOf(volString).intValue();
+    			int slice = Integer.valueOf(sliceString).intValue();
+    			kPath = kPath.substring(0, kPath.indexOf("_4D_"));
+    			if(m_4dbufferMap_int.containsKey(kPath)) {
+
+    				int[] volsBuff = m_4dbufferMap_int.get(kPath);
+    				
+    				int sliceLength = m_iDimX * m_iDimY;
+		            float[] sliceBuff = new float[sliceLength];
+		            
+		            int start = ((vol * numSlices)*sliceLength) + (slice * sliceLength);
+    				int end = start + sliceLength;
+		            
+		            
+    				
+    				for(int i=start,k=0;i<end;i++,k++) {
+    					sliceBuff[k] = (float)volsBuff[i];
+    				}
+    				
+    				if(iSlice == numSlices-1 && iWeight == numVols-1) {
+    					volsBuff = null;
+    					m_4dbufferMap_int.remove(kPath);
+    				}
+    				
+    				
+    				return sliceBuff;
+    	
+    			}else {
+
+    				ModelImage image_4d;
+    				FileIO fileIO = new FileIO();
+		        	fileIO.setQuiet(true);
+		        	image_4d = fileIO.readImage(kPath);
+    				int m_iDimZ = numSlices;
+    				int m_iDimT = numVols;
+		        	int volsLength = m_iDimX * m_iDimY * m_iDimZ * m_iDimT;
+		            int[] volsBuff = new int[volsLength];
+		            
+		            try {
+		            	image_4d.exportData(0, volsLength, volsBuff);
+		            } catch (IOException error) {
+		                System.out.println("IO exception");
+		            }
+		            image_4d.disposeLocal();
+		            image_4d = null;
+    				
+		            int sliceLength = m_iDimX * m_iDimY;
+		            float[] sliceBuff = new float[sliceLength];
+		            
+		            
+		            int start = ((vol * numSlices)*sliceLength) + (slice * sliceLength);
+    				int end = start + sliceLength;
+		            
+		            
+    				
+    				for(int i=start,k=0;i<end;i++,k++) {
+    					sliceBuff[k] = (float)volsBuff[i];
+    				}
+    				
+    				m_4dbufferMap_int.put(kPath, volsBuff);
+    			
+    				
+    				return sliceBuff;
+    				
+    	            
+    				
+    			}
+    		}
+    		
+    	}else {
+    		
+    	}
+    	
+    	
+    	
+    	
+    	
+    	
+        File kFile = new File(kPath);
         if ( !kFile.exists() || !kFile.canRead() )
         {
             MipavUtil.displayError("Error reading file: " + m_aakDWIList[iSlice][iWeight] + ".");
@@ -530,6 +679,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
                     for (int slice = 0; slice < m_iSlices; slice++)
                     { 
                         float[] buffer = readSliceWeight(slice, j);
+
                         for ( int iY = 0; iY < m_iDimY; iY++ )
                         {
                             for ( int iX = 0; iX < m_iDimX; iX++ )
@@ -762,8 +912,6 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     public Matrix calculateMatrix(Matrix m){
         int nrows = m.getRowDimension();
         int ncols = m.getColumnDimension();
-        System.out.println("num rows is " + nrows);
-        System.out.println("num cols is " + ncols);
         Matrix m2 = new Matrix(nrows, ncols);
         for(int i = 0; i < nrows; i++){
             for(int j = 0; j < ncols-1; j++){
@@ -799,6 +947,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
         float fValue = Float.intBitsToFloat(tmpInt);
         return fValue;
     }
+    
 
 
     /** Translates the byte[] into integer values at the given indes iIndex.
@@ -849,5 +998,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase
     public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag, int interpMode) {
         return false;
     }
+    
+   
 
 }
