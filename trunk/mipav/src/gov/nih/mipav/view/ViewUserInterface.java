@@ -59,6 +59,7 @@ import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.VolumeTriPlanarInterf
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 import gov.nih.mipav.view.xcede.JXCEDEExplorer;
 
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -844,8 +845,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new JDialogDTICreateListFile();
         } else if (command.equals("estimateTensor")) {
         	new JDialogDTIEstimateTensor();
-        }else if(command.equals("fiberTracking")) {
+        } else if(command.equals("fiberTracking")) {
         	new JDialogDTIFiberTracking();
+        } else if(command.equals("dtiVisualization")) {
+        	invokeDTIframe();
         }
 
     }
@@ -854,9 +857,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * Calling the DTI framework with blank image during initialization.
      */
     public void invokeDTIframe() {
+    	
         final ModelImage imageA = createEmptyImage(null);
         final VolumeTriPlanarInterfaceDTI kWM = new VolumeTriPlanarInterfaceDTI(imageA);
         kWM.constructRenderers();
+        
+    	
     }
 
     /**

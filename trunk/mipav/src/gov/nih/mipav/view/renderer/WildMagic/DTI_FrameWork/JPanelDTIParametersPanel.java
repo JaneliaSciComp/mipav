@@ -784,6 +784,19 @@ implements ListSelectionListener, ChangeListener {
     }
 
 
+    public void setTractParams(File _m_kTractFile, JTextField _m_kTractsLimit, 
+    		JTextField _m_kTractsMin, JTextField _m_kTractsMax, 
+    		JTextField _m_kTractPath, ModelImage _m_kDTIImage) {
+    	
+    	m_kDTIImage = _m_kDTIImage;
+    	m_kTractFile = _m_kTractFile;
+    	m_kTractsLimit = _m_kTractsLimit;
+    	m_kTractsMin = _m_kTractsMin;
+    	m_kTractsMax = _m_kTractsMax;
+    	m_kTractPath = _m_kTractPath;
+    
+    	
+    }
 
 
     /**
@@ -791,7 +804,7 @@ implements ListSelectionListener, ChangeListener {
      * Loads fiber bundle tracts, filters them with the user-defined display
      * parameters, and passes them to the GPUVolumeRender for display.
      */
-    private void processTractFile() {
+    public void processTractFile() {
         if (m_kTractFile == null) {
             MipavUtil.displayError("Tract file must be set.");
             return;

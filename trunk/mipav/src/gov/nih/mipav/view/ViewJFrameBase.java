@@ -2255,6 +2255,12 @@ public abstract class ViewJFrameBase extends JFrame
     	reconstructSurfaceDialog.validate();
     }
     
+    /*
+    public void extractSurfaceFromVOIs() {
+    	JDialogBase extractSurfaceDialog = new JDialogExtractSurfaceVOIs(this);
+    	extractSurfaceDialog.validate();
+    }
+    */
     
     /**
      * This method saves all VOIs for the active image to a given directory.
