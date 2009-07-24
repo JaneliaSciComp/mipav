@@ -474,7 +474,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         Matrix TpM;
         double T[][];
         Matrix TM;
-        double CN[][];
+        double CN[][] = null;
         Matrix sigmaD;
         double ND[][];
         Matrix NDM;
@@ -482,6 +482,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         Matrix NDpM;
         byte red[];
         byte green[];
+        boolean success;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -1732,9 +1733,6 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         Preferences.debug("Should have z21D = -z22D for 2 class case\n");
         
         covN11N22 = (n*n - 3*n - Q + R)*p1122 - n*n*p11*p22;
-        r = covN11N22/Math.sqrt(varN11*varN22);
-        CD = (z11D*z11D + z22D*z22D - 2*r*z11D*z22D)/(1 - r*r);
-        Preferences.debug("CD = " + CD + "\n");
         
         p122 = ((double)n1*n2*(n2 - 1))/(n*(n - 1)*(n - 2));
         p1112 = ((double)n1*(n1 - 1)*(n1 - 2)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
@@ -1780,8 +1778,24 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         ND[2][0] = N21 - EN21;
         ND[3][0] = N22 - EN22;
         NDM = new Matrix(ND);
-        CD = ((NDpM.times(sigmaD.inverse())).times(NDM)).getArray()[0][0];
-        Preferences.debug("CD calculated via matrix quadratic form = " + CD + "\n");
+        success = true;
+        try {
+            sigmaD = sigmaD.inverse();
+        }
+        catch(RuntimeException e) {
+            Preferences.debug("Singular matrix on sigmaD.inverse()\n");
+            Preferences.debug("Cannot calculate CD via matrix quadratic form\n");
+            success = false;
+        }
+        if (success) {
+            CD = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
+            Preferences.debug("CD calculated via matrix quadratic form = " + CD + "\n");
+        }
+        
+        r = covN11N22/Math.sqrt(varN11*varN22);
+        CD = (z11D*z11D + z22D*z22D - 2*r*z11D*z22D)/(1 - r*r);
+        Preferences.debug("CD = " + CD + "\n");
+        
         if (selfTest1) {
             Preferences.debug("Should have CD = 19.67\n");
         }
@@ -1999,26 +2013,37 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         T[2][0] = T21;
         T[3][0] = T22;
         TM = new Matrix(T);
-        CN = ((TpM.times(sigmaN.inverse())).times(TM)).getArray();
-        Preferences.debug("CN = " + CN[0][0] + "\n");
-        if (selfTest1) {
-            Preferences.debug("Should have CN = 13.11\n");
+        success = true;
+        try {
+            sigmaN = sigmaN.inverse();
         }
-        degreesOfFreedom = 1;
-        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
-                CN[0][0], degreesOfFreedom, chiSquaredPercentile);
-        stat.run();
-        Preferences.debug("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
-        System.out.println("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
-        
-        if (chiSquaredPercentile[0] > 0.950) {
-            Preferences.debug("chiSquared test rejects random object distribution\n");
-            System.out.println("chiSquared test rejects random object distribution"); 
+        catch(RuntimeException e) {
+            Preferences.debug("Singular matrix on sigmaN.inverse()\n");
+            Preferences.debug("Cannot calculate CN\n");
+            success = false;
         }
-        else {
-            Preferences.debug("chiSquared test does not reject random object distribution\n");
-            System.out.println("chiSquared test does not reject random object distribution");
-        }
+        if (success) {
+            CN = ((TpM.times(sigmaN)).times(TM)).getArray();
+            Preferences.debug("CN = " + CN[0][0] + "\n");
+            if (selfTest1) {
+                Preferences.debug("Should have CN = 13.11\n");
+            }
+            degreesOfFreedom = 1;
+            stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                    CN[0][0], degreesOfFreedom, chiSquaredPercentile);
+            stat.run();
+            Preferences.debug("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+            System.out.println("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
+            
+            if (chiSquaredPercentile[0] > 0.950) {
+                Preferences.debug("chiSquared test rejects random object distribution\n");
+                System.out.println("chiSquared test rejects random object distribution"); 
+            }
+            else {
+                Preferences.debug("chiSquared test does not reject random object distribution\n");
+                System.out.println("chiSquared test does not reject random object distribution");
+            }
+        } // if (success)
         
         Preferences.debug("Ceyhan's cell-specific tests of segregation\n");
         System.out.println("Ceyhan's cell-specific tests of segregation");
