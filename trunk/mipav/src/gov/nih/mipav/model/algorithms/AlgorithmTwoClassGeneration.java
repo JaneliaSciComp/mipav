@@ -214,7 +214,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
     // Test with NNCT for Pielou's data, shown in Table 3 of "Overall and pairwise segregation tests based on nearest
     // neighbor contingency tables"
-    private boolean selfTest1 = true;
+    private boolean selfTest1 = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
