@@ -496,6 +496,10 @@ public class VolumeDTI extends VolumeObject
         {
             return;
         }
+        if ( !bSolid )
+        {
+            return;
+        }
         if ( m_bDisplayAllGlyphs )
         {
             DisplayAllGlyphs( m_kVolumeImageA.GetImage(), kRenderer);
@@ -597,6 +601,10 @@ public class VolumeDTI extends VolumeObject
     public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
     {
         if ( !m_bDisplay )
+        {
+            return;
+        }
+        if ( !bSolid )
         {
             return;
         }

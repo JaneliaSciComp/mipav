@@ -514,7 +514,8 @@ public class VolumeRayCast extends VolumeObject
         m_kMesh.DetachAllEffects();
         m_kMesh.AttachEffect( m_kVolumeShaderEffect );
         kCuller.ComputeVisibleSet(m_kScene);        
-        kRenderer.DrawScene(kCuller.GetVisibleSet());        
+        //kRenderer.DrawScene(kCuller.GetVisibleSet());  
+        kRenderer.Draw(m_kMesh);        
 
          // Draw scene polygon:
         //kRenderer.SetCamera(m_spkScreenCamera);
