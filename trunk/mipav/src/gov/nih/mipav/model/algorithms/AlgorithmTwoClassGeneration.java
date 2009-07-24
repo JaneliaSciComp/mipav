@@ -63,7 +63,13 @@ import java.io.*;
  *                      
  *      nk in the second and fourth terms in both cases in reference 1 becomes nl in reference 2.
  *      I am using the reference 2 version of nl since this yields a CN value = 13.26, close to the
- *      CN = 13.11 calculated by Ceyhan for the Pielou data in reference 1. 
+ *      CN = 13.11 calculated by Ceyhan for the Pielou data in reference 1.
+ *      
+ *      Note that there are 2 versions of Dixon's overall test of segregation, the first version in the 
+ *      1994 paper Testing Spatial Segregation Using a Nearest-Neighbor Contingency Table by Philip Dixon
+ *      and the second version in the 2002 paper Nearest-neighbor contingency table analysis of spatial segregation for
+ *      several species by Philip Dixon.  Include the first version since the second version may result
+ *      in a singular matrix error upon matrix inversion and be impossible to calculate.
  * 
  References :
  1.) "Overall and pairwise segregation tests based on nearest neighbor contigency tables" by Elvan
@@ -72,6 +78,8 @@ import java.io.*;
  Contingency Tables by Elvan Ceyhan, September 18, 2008
  3.) "Nearest-neighbor contingency table analysis of spatial segregation for several species" 
  by Philip M. Dixon, Ecoscience, Vol. 9, No. 2, 2002, pp. 142-151.
+ 4.) "Spatial Segregation Using a Nearest-Neighbor Contingency Table" by Philip Dixon, Ecology,
+ Vol. 75, No. 7, Oct., 1994, pp. 1940-1948.
  */
 public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
@@ -409,7 +417,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         double varN22;
         double covN11N22;
         double r;
-        double CD;
+        double CD1;
+        double CD2;
         // Under complete spatial randomness independence, zijD asymptotically has a N(0,1) distribution 
         // conditional on Q and R;
         double z11D;
@@ -1733,6 +1742,32 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         Preferences.debug("Should have z21D = -z22D for 2 class case\n");
         
         covN11N22 = (n*n - 3*n - Q + R)*p1122 - n*n*p11*p22;
+        r = covN11N22/Math.sqrt(varN11*varN22);
+        CD1 = (z11D*z11D + z22D*z22D - 2*r*z11D*z22D)/(1 - r*r);
+        Preferences.debug("1994 version of CD = " + CD1 + "\n");
+        
+        if (CD1 > 0.0) {
+            // Under random labelling the chi squared statistic has degrees of freedom = 2;
+            // Under complete spatial randomness the chi squared statistic has degrees of freedom = 1;
+            degreesOfFreedom = 1;
+            stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                    CD1, degreesOfFreedom, chiSquaredPercentile);
+            stat.run();
+            Preferences.debug("chiSquared percentile for 1994 version of Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+            System.out.println("chiSquared percentile for 1994 version of Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
+            
+            if (chiSquaredPercentile[0] > 0.950) {
+                Preferences.debug("chiSquared test rejects random object distribution\n");
+                System.out.println("chiSquared test rejects random object distribution"); 
+            }
+            else {
+                Preferences.debug("chiSquared test does not reject random object distribution\n");
+                System.out.println("chiSquared test does not reject random object distribution");
+            }
+        } // if (CD1 > 0.0)
+        else {
+            Preferences.debug("CD1 should be positive\n");
+        }
         
         p122 = ((double)n1*n2*(n2 - 1))/(n*(n - 1)*(n - 2));
         p1112 = ((double)n1*(n1 - 1)*(n1 - 2)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
@@ -1788,35 +1823,35 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             success = false;
         }
         if (success) {
-            CD = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
-            Preferences.debug("CD calculated via matrix quadratic form = " + CD + "\n");
+            CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
+            Preferences.debug("2002 version of CD calculated via matrix quadratic form = " + CD2 + "\n");
+            if (CD2 > 0.0) {
+                degreesOfFreedom = 2;
+                stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                        CD2, degreesOfFreedom, chiSquaredPercentile);
+                stat.run();
+                Preferences.debug("chiSquared percentile for 2002 version of Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+                System.out.println("chiSquared percentile for 2002 version of Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
+                
+                if (chiSquaredPercentile[0] > 0.950) {
+                    Preferences.debug("chiSquared test rejects random object distribution\n");
+                    System.out.println("chiSquared test rejects random object distribution"); 
+                }
+                else {
+                    Preferences.debug("chiSquared test does not reject random object distribution\n");
+                    System.out.println("chiSquared test does not reject random object distribution");
+                }
+            } // if (CD2 > 0.0)
+            else {
+                Preferences.debug("CD2 should be positive\n");
+            }
         }
-        
-        r = covN11N22/Math.sqrt(varN11*varN22);
-        CD = (z11D*z11D + z22D*z22D - 2*r*z11D*z22D)/(1 - r*r);
-        Preferences.debug("CD = " + CD + "\n");
         
         if (selfTest1) {
             Preferences.debug("Should have CD = 19.67\n");
         }
         
-        // Under random labelling the chi squared statistic has degrees of freedom = 2;
-        // Under complete spatial randomness the chi squared statistic has degrees of freedom = 1;
-        degreesOfFreedom = 1;
-        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
-                CD, degreesOfFreedom, chiSquaredPercentile);
-        stat.run();
-        Preferences.debug("chiSquared percentile for Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
-        System.out.println("chiSquared percentile for Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
         
-        if (chiSquaredPercentile[0] > 0.950) {
-            Preferences.debug("chiSquared test rejects random object distribution\n");
-            System.out.println("chiSquared test rejects random object distribution"); 
-        }
-        else {
-            Preferences.debug("chiSquared test does not reject random object distribution\n");
-            System.out.println("chiSquared test does not reject random object distribution");
-        }
         
         Preferences.debug("Dixon's cell-specific tests of segregation\n");
         System.out.println("Dixon's cell-specific tests of segregation");
@@ -2028,20 +2063,25 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             if (selfTest1) {
                 Preferences.debug("Should have CN = 13.11\n");
             }
-            degreesOfFreedom = 1;
-            stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
-                    CN[0][0], degreesOfFreedom, chiSquaredPercentile);
-            stat.run();
-            Preferences.debug("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
-            System.out.println("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
-            
-            if (chiSquaredPercentile[0] > 0.950) {
-                Preferences.debug("chiSquared test rejects random object distribution\n");
-                System.out.println("chiSquared test rejects random object distribution"); 
-            }
+            if (CN[0][0] > 0.0) {
+                degreesOfFreedom = 1;
+                stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                        CN[0][0], degreesOfFreedom, chiSquaredPercentile);
+                stat.run();
+                Preferences.debug("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+                System.out.println("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
+                
+                if (chiSquaredPercentile[0] > 0.950) {
+                    Preferences.debug("chiSquared test rejects random object distribution\n");
+                    System.out.println("chiSquared test rejects random object distribution"); 
+                }
+                else {
+                    Preferences.debug("chiSquared test does not reject random object distribution\n");
+                    System.out.println("chiSquared test does not reject random object distribution");
+                }
+            } // if (CN[0][0] > 0.0)
             else {
-                Preferences.debug("chiSquared test does not reject random object distribution\n");
-                System.out.println("chiSquared test does not reject random object distribution");
+                Preferences.debug("CN should be positive\n");
             }
         } // if (success)
         
