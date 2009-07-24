@@ -415,12 +415,23 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         double p12;
         double p112;
         double p1122;
+        double p123;
+        double p1223;
         double p13;
         double p113;
+        double p1113;
+        double p1123;
+        double p1132;
         double p1133;
+        double p132;
+        double p133;
+        double p1332;
         double p21;
+        double p213;
+        double p2113;
         double p221;
         double p2211;
+        double p2213;
         double p22;
         double p222;
         double p2222;
@@ -428,13 +439,17 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         double p223;
         double p2233;
         double p31;
+        double p312;
+        double p3112;
         double p32;
         double p331;
         double p3311;
+        double p3312;
         double p332;
         double p3322;
         double p33;
         double p333;
+        double p3331;
         double p3333;
         double varN11;
         double varN12;
@@ -468,6 +483,7 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         double p2221;
         double covN11N12;
         double covN11N21;
+        double covN11N23;
         double covN21N11;
         double covN12N21;
         double covN12N22;
@@ -491,6 +507,65 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         double covN22N11;
         double covN22N21;
         double covN22N12;
+        double covN11N13;
+        double covN11N31;
+        double covN11N32;
+        double covN11N33;
+        double covN12N13;
+        double covN12N23;
+        double covN12N31;
+        double covN12N32;
+        double covN12N33;
+        double covN13N11;
+        double covN13N12;
+        double covN13N21;
+        double covN13N22;
+        double covN13N23;
+        double covN13N31;
+        double covN13N32;
+        double covN13N33;
+        double covN21N13;
+        double covN21N23;
+        double covN21N31;
+        double covN21N32;
+        double covN21N33;
+        double covN22N13;
+        double covN22N23;
+        double covN22N31;
+        double covN22N32;
+        double covN22N33;
+        double covN23N11;
+        double covN23N12;
+        double covN23N13;
+        double covN23N21;
+        double covN23N22;
+        double covN23N31;
+        double covN23N32;
+        double covN23N33;
+        double covN31N11;
+        double covN31N12;
+        double covN31N13;
+        double covN31N21;
+        double covN31N22;
+        double covN31N23;
+        double covN31N32;
+        double covN31N33;
+        double covN32N11;
+        double covN32N12;
+        double covN32N13;
+        double covN32N21;
+        double covN32N22;
+        double covN32N23;
+        double covN32N31;
+        double covN32N33;
+        double covN33N11;
+        double covN33N12;
+        double covN33N13;
+        double covN33N21;
+        double covN33N22;
+        double covN33N23;
+        double covN33N31;
+        double covN33N32;
         double covN11C2;
         double covN12C1;
         double covN22C1;
@@ -517,7 +592,16 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         Matrix TpM;
         double T[][];
         Matrix TM;
-        double CN[][];
+        double CN[][] = null;
+        Matrix sigmaD;
+        double ND[][];
+        Matrix NDM;
+        double NDp[][];
+        Matrix NDpM;
+        byte red[];
+        byte green[];
+        byte blue[];
+        boolean success;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -2030,6 +2114,8 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         p113 = ((double)n1*(n1 - 1)*n3)/(n*(n - 1)*(n - 2));
         p1122 = ((double)n1*(n1 - 1)*n2*(n2 - 1))/(n*(n - 1)*(n - 2)*(n - 3));
         p1133 = ((double)n1*(n1 - 1)*n3*(n3 - 1))/(n*(n - 1)*(n - 2)*(n - 3));
+        p123 = ((double)n1*n2*n3)/(n*(n - 1)*(n - 2));
+        p1223 = ((double)n1*n2*(n2 - 1)*n3)/(n*(n - 1)*(n - 2)*(n - 3));
         p21 = p12;
         p221 = ((double)n2*(n2 - 1)*n1)/(n*(n - 1)*(n - 2));
         p2211 = p1122;
@@ -2040,8 +2126,11 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         p223 = ((double)n2*(n2 - 1)*n3)/(n*(n - 1)*(n - 2));
         p2233 = ((double)n2*(n2 - 1)*n3*(n3 - 1))/(n*(n - 1)*(n - 2)*(n - 3));
         p31 = p13;
+        p312 = ((double)n3*n1*n2)/(n*(n - 1)*(n - 2));
+        p3112 = ((double)n3*n1*(n1 - 1)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
         p331 = ((double)n3*(n3 - 1)*n1)/(n*(n - 1)*(n - 2));
         p3311 = p1133;
+        p3312 = ((double)n3*(n3 - 1)*n1*n2)/(n*(n - 1)*(n - 2)*(n - 3));
         p32 = p23;
         p332 = ((double)n3*(n3 - 1)*n2)/(n*(n - 1)*(n - 2));
         p3322 = p2233;
@@ -2084,7 +2173,17 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         covN11N22 = (n*n - 3*n - Q + R)*p1122 - n*n*p11*p22;
         p122 = ((double)n1*n2*(n2 - 1))/(n*(n - 1)*(n - 2));
         p1112 = ((double)n1*(n1 - 1)*(n1 - 2)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
+        p1113 = ((double)n1*(n1 - 1)*(n1 - 2)*n3)/(n*(n - 1)*(n - 2)*(n - 3));
+        p1123 = ((double)n1*(n1 - 1)*n2*n3)/(n*(n - 1)*(n - 2)*(n - 3));
+        p1132 = p1123;
         p2221 = ((double)n2*(n2 - 1)*(n2 - 2)*n1)/(n*(n - 1)*(n - 2)*(n - 3));
+        p213 = ((double)n2*n1*n3)/(n*(n - 1)*(n - 2));
+        p2113 = ((double)n2*n1*(n1 - 1)*n3)/(n*(n - 1)*(n - 2)*(n - 3));
+        p2213 = ((double)n2*(n2 - 1)*n1*n3)/(n*(n - 1)*(n - 2)*(n - 3));
+        p132 = p213;
+        p1332 = ((double)n1*n3*(n3 - 1)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
+        p133 = ((double)n1*n3*(n3 - 1))/(n*(n - 1)*(n - 2));
+        p3331 = ((double)n3*(n3 - 1)*(n3 - 2)*n1)/(n*(n - 1)*(n - 2)*(n - 3));
         covN11N12 = (n - R)*p112 + (n*n - 3*n - Q + R)*p1112 - n*n*p11*p12;
         covN11N21 = (n - R + Q)*p112 + (n*n - 3*n - Q + R)*p1112 - n*n*p11*p12;
         covN12N21 = R*p12 + (n - R)*(p112 + p122) + (n*n - 3*n - Q + R)*p1122 - n*n*p12*p21;
@@ -2096,24 +2195,115 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         covN22N11 = covN11N22;
         covN22N21 = covN21N22;
         covN22N12 = covN12N22;
-        //Preferences.debug("CD = " + CD + "\n");
-        
-        // Under random labelling the chi squared statistic has degrees of freedom = 6;
-        /*degreesOfFreedom = 6;
-        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
-                CD, degreesOfFreedom, chiSquaredPercentile);
-        stat.run();
-        Preferences.debug("chiSquared percentile for Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
-        System.out.println("chiSquared percentile for Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
-        
-        if (chiSquaredPercentile[0] > 0.950) {
-            Preferences.debug("chiSquared test rejects random object distribution\n");
-            System.out.println("chiSquared test rejects random object distribution"); 
+        covN11N13 = (n - R)*p113 + (n*n - 3*n - Q + R)*p1113 - n*n*p11*p13;
+        covN11N23 = (n*n - 3*n - Q + R)*p1123 - n*n*p11*p23;
+        covN11N31 = (n - R + Q)*p113 + (n*n - 3*n - Q + R)*p1113 - n*n*p11*p13;
+        covN11N32 = (n*n - 3*n - Q + R)*p1132 - n*n*p11*p32;
+        covN11N33 = (n*n - 3*n - Q + R)*p1133 - n*n*p11*p33;
+        covN12N13 = (n*n - 3*n - Q + R)*p1123 - n*n*p12*p13;
+        covN12N23 = (n - R)*p123 + (n*n - 3*n - Q + R)*p1223 - n*n*p12*p23;
+        covN12N31 = (n - R)*p312 + (n*n - 3*n - Q + R)*p3112 - n*n*p31*p12;
+        covN12N32 = Q*p123 + (n*n - 3*n - Q + R)*p1223 - n*n*p12*p23;
+        covN12N33 = (n*n - 3*n - Q + R)*p3312 - n*n*p33*p12;
+        covN13N11 = covN11N13;
+        covN13N12 = covN12N13;
+        covN13N21 = (n - R)*p213 + (n*n - 3*n - Q + R)*p2113 - n*n*p21*p13;
+        covN13N22 = (n*n - 3*n - Q + R)*p2213 - n*n*p22*p13;
+        covN13N23 = Q*p132 * (n*n - 3*n - Q + R)*p1332 - n*n*p13*p23;
+        covN13N31 = R*p13 + (n - R)*(p113 + p133) + (n*n - 3*n - Q + R)*p1133 - n*n*p13*p31;
+        covN13N32 = (n - R)*p132 + (n*n - 3*n - Q + R)*p1332 - n*n*p13*p32;
+        covN13N33 = (n - R + Q)*p331 + (n*n - 3*n - Q + R)*p3331 - n*n*p33*p31;
+        covN21N13 = covN13N21;
+        sigma = new double[9][9];
+        sigma[0][0] = varN11;
+        sigma[0][1] = covN11N12;
+        sigma[0][2] = covN11N13;
+        sigma[0][3] = covN11N21;
+        sigma[0][4] = covN11N22;
+        sigma[0][5] = covN11N23;
+        sigma[0][6] = covN11N31;
+        sigma[0][7] = covN11N32;
+        sigma[0][8] = covN11N33;
+        sigma[1][0] = covN12N11;
+        sigma[1][1] = varN12;
+        sigma[1][2] = covN12N13;
+        sigma[1][3] = covN12N21;
+        sigma[1][4] = covN12N22;
+        sigma[1][5] = covN12N23;
+        sigma[1][6] = covN12N31;
+        sigma[1][7] = covN12N32;
+        sigma[1][8] = covN12N33;
+        sigma[2][0] = covN13N11;
+        sigma[2][1] = covN13N12;
+        sigma[2][2] = varN13;
+        sigma[2][3] = covN13N21;
+        sigma[2][4] = covN13N22;
+        sigma[2][5] = covN13N23;
+        sigma[2][6] = covN13N31;
+        sigma[2][7] = covN13N32;
+        sigma[2][8] = covN13N33;
+        sigma[3][0] = covN21N11;
+        sigma[3][1] = covN21N12;
+        sigma[3][2] = covN21N13;
+        sigma[3][3] = varN21;
+        sigmaD = new Matrix(sigma);
+        NDp = new double[1][9];
+        NDp[0][0] = N11 - EN11;
+        NDp[0][1] = N12 - EN12;
+        NDp[0][2] = N13 - EN13;
+        NDp[0][3] = N21 - EN21;
+        NDp[0][4] = N22 - EN22;
+        NDp[0][5] = N23 - EN23;
+        NDp[0][6] = N31 - EN31;
+        NDp[0][7] = N32 - EN32;
+        NDp[0][8] = N33 - EN33;
+        NDpM = new Matrix(NDp);
+        ND = new double[9][1];
+        ND[0][0] = N11 - EN11;
+        ND[1][0] = N12 - EN12;
+        ND[2][0] = N13 - EN13;
+        ND[3][0] = N21 - EN21;
+        ND[4][0] = N22 - EN22;
+        ND[5][0] = N23 - EN23;
+        ND[6][0] = N31 - EN31;
+        ND[7][0] = N32 - EN32;
+        ND[8][0] = N33 - EN33;
+        NDM = new Matrix(ND);
+        success = true;
+        try {
+            sigmaD = sigmaD.inverse();
         }
-        else {
-            Preferences.debug("chiSquared test does not reject random object distribution\n");
-            System.out.println("chiSquared test does not reject random object distribution");
-        }*/
+        catch(RuntimeException e) {
+            Preferences.debug("Singular matrix on sigmaD.inverse()\n");
+            Preferences.debug("Cannot calculate CD via matrix quadratic form\n");
+            success = false;
+        }
+        if (success) {
+            CD = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
+            Preferences.debug("CD = " + CD + "\n");
+            
+            if (CD > 0.0) {
+                // Under random labelling the chi squared statistic has degrees of freedom = 6;
+                degreesOfFreedom = 6;
+                stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                        CD, degreesOfFreedom, chiSquaredPercentile);
+                stat.run();
+                Preferences.debug("chiSquared percentile for Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+                System.out.println("chiSquared percentile for Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
+                
+                if (chiSquaredPercentile[0] > 0.950) {
+                    Preferences.debug("chiSquared test rejects random object distribution\n");
+                    System.out.println("chiSquared test rejects random object distribution"); 
+                }
+                else {
+                    Preferences.debug("chiSquared test does not reject random object distribution\n");
+                    System.out.println("chiSquared test does not reject random object distribution");
+                }
+            } // if (CD > 0.0)
+            else {
+                Preferences.debug("CD should be positive\n");
+            }
+        } // if (success)
         
         Preferences.debug("Dixon's cell-specific tests of segregation\n");
         System.out.println("Dixon's cell-specific tests of segregation");
@@ -2362,7 +2552,7 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         covT22T11 = covT11T22;
         covT22T12 = covT12T22;
         covT22T21 = covT21T22;
-        sigma = new double[4][4];
+   
         sigma[0][0] =  varT11;
         sigma[0][1] = covT11T12;
         sigma[0][2] = covT11T21;
@@ -2380,35 +2570,51 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         sigma[3][2] = covT22T21;
         sigma[3][3] = varT22;
         sigmaN = new Matrix(sigma);
-        Tp = new double[1][4];
+        Tp = new double[1][9];
         Tp[0][0] = T11;
         Tp[0][1] = T12;
         Tp[0][2] = T21;
         Tp[0][3] = T22;
         TpM = new Matrix(Tp);
-        T = new double[4][1];
+        T = new double[9][1];
         T[0][0] = T11;
         T[1][0] = T12;
         T[2][0] = T21;
         T[3][0] = T22;
         TM = new Matrix(T);
-        CN = ((TpM.times(sigmaN.inverse())).times(TM)).getArray();
-        Preferences.debug("CN = " + CN[0][0] + "\n");
-        degreesOfFreedom = 4;
-        stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
-                CN[0][0], degreesOfFreedom, chiSquaredPercentile);
-        stat.run();
-        Preferences.debug("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
-        System.out.println("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
-        
-        if (chiSquaredPercentile[0] > 0.950) {
-            Preferences.debug("chiSquared test rejects random object distribution\n");
-            System.out.println("chiSquared test rejects random object distribution"); 
+        success = true;
+        try {
+            sigmaN = sigmaN.inverse();
         }
-        else {
-            Preferences.debug("chiSquared test does not reject random object distribution\n");
-            System.out.println("chiSquared test does not reject random object distribution");
+        catch(RuntimeException e) {
+            Preferences.debug("Singular matrix on sigmaN.inverse()\n");
+            Preferences.debug("Cannot calculate CN\n");
+            success = false;
         }
+        if (success) {
+            CN = ((TpM.times(sigmaN)).times(TM)).getArray();
+            Preferences.debug("CN = " + CN[0][0] + "\n");
+            if (CN[0][0] > 0.0) {
+                degreesOfFreedom = 4;
+                stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                        CN[0][0], degreesOfFreedom, chiSquaredPercentile);
+                stat.run();
+                Preferences.debug("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+                System.out.println("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
+                
+                if (chiSquaredPercentile[0] > 0.950) {
+                    Preferences.debug("chiSquared test rejects random object distribution\n");
+                    System.out.println("chiSquared test rejects random object distribution"); 
+                }
+                else {
+                    Preferences.debug("chiSquared test does not reject random object distribution\n");
+                    System.out.println("chiSquared test does not reject random object distribution");
+                }
+            } // if (CN[0][0] > 0.0)
+            else {
+                Preferences.debug("CN should be positive\n");
+            }
+        } // if (success)
         
         Preferences.debug("Ceyhan's cell-specific tests of segregation\n");
         System.out.println("Ceyhan's cell-specific tests of segregation");
@@ -2489,11 +2695,29 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
             System.out.println("Complete spatial randomness cannot be rejected based on T22 value");
         }
         
+        red = new byte[buffer.length];
+        green = new byte[buffer.length];
+        blue = new byte[buffer.length];
+        
+        for (i = 0; i < buffer.length; i++) {
+            if (buffer[i] == 1) {
+                red[i] = (byte)255;
+            }
+            else if (buffer[i] == 2) {
+                green[i] = (byte)255;
+            }
+            else if (buffer[i] == 3) {
+                blue[i] = (byte)255;
+            }
+        }
+        
         try {
-            srcImage.importData(0, buffer, true);
+            srcImage.importRGBData(1, 0, red, false);
+            srcImage.importRGBData(2, 0, green, false);
+            srcImage.importRGBData(3, 0, blue, true);
         }
         catch(IOException e) {
-            MipavUtil.displayError("IO exception on srcImage.importData(0, buffer, true)");
+            MipavUtil.displayError("IO exception on srcImage.importRGBData");
             setCompleted(false);
             return;
         }
