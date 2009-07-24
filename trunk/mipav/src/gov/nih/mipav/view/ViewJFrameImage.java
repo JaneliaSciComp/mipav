@@ -18,6 +18,7 @@ import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.JDialogVolViewResample;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotterView;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarDialog;
+import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.VolumeTriPlanarInterfaceDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 
 import java.awt.*;
@@ -1413,6 +1414,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             saveMergedVOIs();
         } else if (command.equals("ProstateReconstruct")) {
         	reconstructSurfaceFromVOIs();
+        } else if ( command.equals("ProstateExtract")) {
+        	// extractSurfaceFromVOIs();
         } else if (command.equals("SaveVOIIntensities")) {
             saveVOIIntensities();
         } else if (command.equals("Snake")) {
@@ -3027,10 +3030,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	new JDialogDTIEstimateTensor();
         }else if(command.equals("fiberTracking")) {
         	new JDialogDTIFiberTracking();
+        } else if(command.equals("dtiVisualization")) {
+        	userInterface.invokeDTIframe();
         }
 
     }
 
+    
     /**
      * Closes window and disposes of frame and component.
      */

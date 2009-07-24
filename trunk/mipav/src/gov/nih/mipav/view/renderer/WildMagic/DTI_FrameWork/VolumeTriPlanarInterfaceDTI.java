@@ -58,6 +58,21 @@ implements ChangeListener {
 	private JPanel DTIFiberPanel;
 	
 	private JPanel DTIParametersPanel;
+	
+	  /** Tract input file. */
+    private File m_kTractFile = null;
+
+    /** For TRACTS dialog: number of tracts to display. */
+    private JTextField m_kTractsLimit;
+
+    /** For TRACTS dialog: minimum tract length to display. */
+    private JTextField m_kTractsMin;
+
+    /** For TRACTS dialog: maximum tract length to display. */
+    private JTextField m_kTractsMax;
+
+    /** Fiber bundle tract file input path name text box. */
+    private JTextField m_kTractPath;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -115,17 +130,13 @@ implements ChangeListener {
     
     
     public void setDTIColorImage(ModelImage _m_kDTIColorImage) {
+    	
     	m_kDTIColorImage = _m_kDTIColorImage;
     	m_kDTIColorImage.setExtents(_m_kDTIColorImage.getExtents());
     	m_kDTIColorImage.calcMinMax();
-    	if ( imageA != null )
-    	{
-    	    imageA.disposeLocal();
-    	    imageA = null;
-    	}
+    	
     	imageA = _m_kDTIColorImage;
     	
-
         boolean bDirExists = true;
         m_kParentDir = imageA.getFileInfo()[0].getFileDirectory();
         String kRenderFilesDir = m_kParentDir + File.separator + "RenderFiles" + File.separator;
@@ -137,6 +148,7 @@ implements ChangeListener {
                 kDir.mkdir();
             } catch (SecurityException e) {}
         }
+        
         m_kVolumeImageA = new VolumeImage( imageA, "A", !bDirExists, kRenderFilesDir, 0, null );
         imageA = m_kVolumeImageA.GetImage();
         RGBTA = m_kVolumeImageA.GetRGB();
@@ -197,6 +209,9 @@ implements ChangeListener {
     public void setDTIParamsActive() {
     	insertTab("Fibers", DTIParametersPanel);
     	tabbedPane.setSelectedIndex(tabbedPane.indexOfTab("Fibers") );
+    	
+    	// getParamPanel().setTractParams(m_kTractFile, m_kTractsLimit, m_kTractsMin, m_kTractsMax, m_kTractPath, m_kDTIImage);
+    	// getParamPanel().processTractFile();
     }
     
     public JPanelDTIParametersPanel getParamPanel() {
@@ -214,6 +229,16 @@ implements ChangeListener {
     	
     	tabbedPane.addTab("Fibers", null, DTIParametersPanel);
     }
+    
+    
+    public void setTractParams(File _m_kTractFile, JTextField _m_kTractsLimit, JTextField _m_kTractsMin, JTextField _m_kTractsMax, JTextField _m_kTractPath) {
+    	m_kTractFile = _m_kTractFile;
+    	m_kTractsLimit = _m_kTractsLimit;
+    	m_kTractsMin = _m_kTractsMin;
+    	m_kTractsMax = _m_kTractsMax;
+    	m_kTractPath = _m_kTractPath;
+    }
+    
 
     /**
      * The histogram control panel of the lookup table.
@@ -265,30 +290,31 @@ implements ChangeListener {
             
             m_kAnimator = new Animator();
             m_akPlaneRender = new PlaneRender_WM[3];
-            /*
-            m_akPlaneRender[0] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
-                                                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.AXIAL,
-                                                    false);
-            m_akPlaneRender[1] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
-                                                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.SAGITTAL,
-                                                    false);
-            m_akPlaneRender[2] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, imageA, LUTa,
-                                                    m_kVolumeImageB, imageB, LUTb, FileInfoBase.CORONAL,
-                                                    false);
-            */
+            
+            
             m_akPlaneRender[0] = new PlaneRenderDTI();
             m_akPlaneRender[1] = new PlaneRenderDTI();
             m_akPlaneRender[2] = new PlaneRenderDTI();
             
+            
             progressBar.setMessage("Constructing gpu renderer...");
             raycastRenderWM = new VolumeTriPlanerRenderDTI();
-
+            
             progressBar.updateValueImmed(80);
             progressBar.setMessage("Constructing Lookup Table...");
 
             progressBar.updateValueImmed(100);
             
             this.configureFrame();
+            
+            /*
+            ((PlaneRenderDTI)m_akPlaneRender[0]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
+			((PlaneRenderDTI)m_akPlaneRender[1]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL);
+			((PlaneRenderDTI)m_akPlaneRender[2]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL);
+			((VolumeTriPlanerRenderDTI)raycastRenderWM).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
+            */
+            
+            
         } finally {
             progressBar.dispose();
         }
@@ -346,7 +372,7 @@ implements ChangeListener {
             buildHistoLUTPanel();
             buildOpacityPanel();            
             buildDisplayPanel();            
-            buildDTIimageLoadPanel();
+            // buildDTIimageLoadPanel();
             buildDTIParametersPanel();         
             buildLightPanel();
             buildClipPanel();
@@ -514,6 +540,7 @@ implements ChangeListener {
         int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
             panelToolbar.getHeight();
         DTIparamsPanel.resizePanel(maxPanelWidth, height);
+        // DTIimageLoadPanel.resizePanel(maxPanelWidth, height/3);
         super.resizePanel();        
         panelToolbar.getHeight();
     }
