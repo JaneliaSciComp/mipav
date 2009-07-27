@@ -45,26 +45,46 @@ import java.io.*;
  *      tests ZijN with i = 1,2,3 j = 1,2,3 are calculated from Tij/sqrt(variance Tij).  ZijN has a normal distribution
  *      with 0 mean and a standard deviation of 1.
  *      
- *      Note that there is a contradiction between the equations given for case 2 for Cov[Tii, Tkl] and case 4 for
- *      Cov[Tij, Tkl] between the 2 Ceyhan papers.  Reference 1 has:
- *      Case 2:
- *      Cov[Tii, Tkl] = Cov[Nii, Nkl] - nk*Cov[Nii, Cl]/(n - 1) - (ni - 1)*Cov[Nkl, Ci]/(n - 1)
- *                      + (ni - 1)*nk*Cov[Ci, Cl]/(n-1)**2
- *      case 4:
- *      Cov[Tij, Tkl] = Cov[Nij, Nkl] - nk*Cov[Nij, Cl]/(n - 1) - ni*Cov[Nkl, Cj]/(n - 1)
- *                      + ni*nk*Cov[Cj, Cl]/(n-1)**2
- *                      
- *      Reference 2 has:
- *      Case 2:
- *      Cov[Tii, Tkl] = Cov[Nii, Nkl] - nl*Cov[Nii, Cl]/(n - 1) - (ni - 1)*Cov[Nkl, Ci]/(n - 1)
- *                      + (ni - 1)*nl*Cov[Ci, Cl]/(n-1)**2
- *      case 4:
- *      Cov[Tij, Tkl] = Cov[Nij, Nkl] - nl*Cov[Nij, Cl]/(n - 1) - ni*Cov[Nkl, Cj]/(n - 1)
- *                      + ni*nl*Cov[Cj, Cl]/(n-1)**2
- *                      
+ *      Dear Dr Gandler,
+thanks for bringing this issue up to my attention...
+if you look at the definition of T_{ij}, the covariance expression in "Overall and pairwise segregation tests based on nearest neighbor  contingency tables:" should be the correct one, i will fix the technical report and then repost on arXiv...
+
+have a nice evening,
+E.
+ 
+
+"Gandler, William (NIH/CIT) [E]" <ilb@mail.nih.gov> wrote on 22.07.2009 21:43:
+> Dear Professor Elvan Ceyhan:
+> 
+>   In Overall and pairwise segregation tests based on nearest neighbor 
+> contingency tables:
+>  case 2 for overall test of segregation:
+> Cov[Tii, Tkl] = Cov[Nii, Nkl] - nk*Cov[Nii, Cl]/(n - 1) - (ni - 
+> 1)*Cov[Nkl, Ci]/(n-1) + (ni-1)*nk*Cov[Ci, Cl]/(n-1)**2 case 4:
+> Cov[Tij, Tkl] = Cov[Nij, Nkl] - nk*Cov[Nij, Cl]/(n - 1) - ni*Cov[Nkl, 
+> Cj]/(n - 1) + ni*nk*Cov[Cj, Cl]/(n - 1)**2 while in Technical Report 
+> #KU-EC_08-6: New Tests of Spatial Segregation Based on Nearest 
+> Nieghbor Contingency Tables:
+> Case 2:
+> Cov[Tij, Tkl] = Cov[Nii, Nkl] - nl*Cov[Nii, Cl]/(n - 1) - (ni - 
+> 1)*Cov[Nkl, Ci]/(n - 1)  + (ni -1)*nl*Cov[Ci, Cl]/(n - 1)**2 Case 4:
+> Cov[Tij, Tkl] = Cov[Nij, Nkl] - nl*Cov[Nij, Cl]/(n - 1) - ni*Cov[Nkl, 
+> Cj]/(n - 1) + ni*nl*Cov[Cj, Cl]/(n - 1)**2
+> 
+> so in the second and fourth terms nk in the first paper becomes nl in 
+> the second paper.
+> 
+>                                                                         
+>                                         Sincerely,
+> 
+>                                                                         
+>                                  William Gandler
+
+*      One more discrepancy:                
  *      nk in the second and fourth terms in both cases in reference 1 becomes nl in reference 2.
- *      I am using the reference 2 version of nl since this yields a CN value = 13.26, close to the
- *      CN = 13.11 calculated by Ceyhan for the Pielou data in reference 1. 
+ *      The reference 2 version of nl yields a CN value = 13.26, close to the
+ *      CN = 13.11 calculated by Ceyhan for the Pielou data in reference 1.  The reference 1
+ *      version of nk yields CN = 24.58. 
  * 
  References :
  1.) "Overall and pairwise segregation tests based on nearest neighbor contigency tables" by Elvan
@@ -435,21 +455,30 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         double p22;
         double p222;
         double p2222;
+        double p2223;
         double p23;
         double p223;
+        double p2231;
         double p2233;
+        double p231;
+        double p233;
+        double p2331;
         double p31;
         double p312;
         double p3112;
         double p32;
+        double p321;
+        double p3221;
         double p331;
         double p3311;
         double p3312;
         double p332;
+        double p3321;
         double p3322;
         double p33;
         double p333;
         double p3331;
+        double p3332;
         double p3333;
         double varN11;
         double varN12;
@@ -476,8 +505,13 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         double z33D;
         double T11;
         double T12;
+        double T13;
         double T21;
         double T22;
+        double T23;
+        double T31;
+        double T32;
+        double T33;
         double p122;
         double p1112;
         double p2221;
@@ -489,18 +523,34 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         double covN12N22;
         double varC1;
         double varC2;
+        double varC3;
         double covN11C1;
         double covN12C2;
+        double covN13C3;
         double covN21C1;
         double covN22C2;
+        double covN23C3;
+        double covN31C1;
+        double covN32C2;
+        double covN33C3;
         double varT11;
         double varT12;
+        double varT13;
         double varT21;
         double varT22;
+        double varT23;
+        double varT31;
+        double varT32;
+        double varT33;
         double z11N;
         double z12N;
+        double z13N;
         double z21N;
         double z22N;
+        double z23N;
+        double z31N;
+        double z32N;
+        double z33N;
         double covN21N12;
         double covN12N11;
         double covN21N22;
@@ -1899,9 +1949,9 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
                 distSquared = xDistSquared + yDistSquared;
                 if (distSquared < lowestDistSquared) {
                     lowestDistSquared = distSquared;
-                    NN2Distance[i] = Math.sqrt(distSquared);
-                    NN2Type[i] = ONE;
-                    NN2Neighbor[i] = j;
+                    NN3Distance[i] = Math.sqrt(distSquared);
+                    NN3Type[i] = ONE;
+                    NN3Neighbor[i] = j;
                 }  
             }
             
@@ -1913,9 +1963,9 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
                 distSquared = xDistSquared + yDistSquared;
                 if (distSquared < lowestDistSquared) {
                     lowestDistSquared = distSquared;
-                    NN2Distance[i] = Math.sqrt(distSquared);
-                    NN2Type[i] = TWO;
-                    NN2Neighbor[i] = j;
+                    NN3Distance[i] = Math.sqrt(distSquared);
+                    NN3Type[i] = TWO;
+                    NN3Neighbor[i] = j;
                 } 
             }
             
@@ -1928,9 +1978,9 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
                     distSquared = xDistSquared + yDistSquared;
                     if (distSquared < lowestDistSquared) {
                         lowestDistSquared = distSquared;
-                        NN2Distance[i] = Math.sqrt(distSquared);
-                        NN2Type[i] = THREE;
-                        NN2Neighbor[i] = j;
+                        NN3Distance[i] = Math.sqrt(distSquared);
+                        NN3Type[i] = THREE;
+                        NN3Neighbor[i] = j;
                     } 
                 }
             }
@@ -2184,6 +2234,15 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         p1332 = ((double)n1*n3*(n3 - 1)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
         p133 = ((double)n1*n3*(n3 - 1))/(n*(n - 1)*(n - 2));
         p3331 = ((double)n3*(n3 - 1)*(n3 - 2)*n1)/(n*(n - 1)*(n - 2)*(n - 3));
+        p321 = ((double)n3*n2*n1)/(n*(n - 1)*(n - 2));
+        p3221 = ((double)n3*n2*(n2 - 1)*n1)/(n*(n - 1)*(n - 2)*(n - 3));
+        p3321 = ((double)n3*(n3 - 1)*n2*n1)/(n*(n - 1)*(n - 2)*(n - 3));
+        p2223 = ((double)n2*(n2 - 1)*(n2 - 2)*n3)/(n*(n - 1)*(n - 2)*(n - 3));
+        p2231 = ((double)n2*(n2 - 1)*n3*n1)/(n*(n - 1)*(n - 2)*(n - 3));
+        p231 = p321;
+        p2331 = p1332;
+        p233 = ((double)n2*n3*(n3 - 1))/(n*(n - 1)*(n - 2));
+        p3332 = ((double)n3*(n3 - 1)*(n3 - 2)*n2)/(n*(n - 1)*(n - 2)*(n - 3));
         covN11N12 = (n - R)*p112 + (n*n - 3*n - Q + R)*p1112 - n*n*p11*p12;
         covN11N21 = (n - R + Q)*p112 + (n*n - 3*n - Q + R)*p1112 - n*n*p11*p12;
         covN12N21 = R*p12 + (n - R)*(p112 + p122) + (n*n - 3*n - Q + R)*p1122 - n*n*p12*p21;
@@ -2214,6 +2273,47 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         covN13N32 = (n - R)*p132 + (n*n - 3*n - Q + R)*p1332 - n*n*p13*p32;
         covN13N33 = (n - R + Q)*p331 + (n*n - 3*n - Q + R)*p3331 - n*n*p33*p31;
         covN21N13 = covN13N21;
+        covN21N23 = (n*n - 3*n - Q + R)*p2213 - n*n*p21*p23;
+        covN21N31 = Q*p213 + (n*n - 3*n - Q + R)*p2113 - n*n*p21*p31;
+        covN21N32 = (n - R)*p321 + (n*n - 3*n - Q + R)*p3221 - n*n*p32*p21;
+        covN21N33 = (n*n - 3*n - Q + R)*p3321 - n*n*p33*p21;
+        covN22N13 = covN13N22;
+        covN22N23 = (n - R)*p223 + (n*n - 3*n - Q + R)*p2223 - n*n*p22*p23;
+        covN22N31 = (n*n - 3*n - Q + R)*p2231 - n*n*p22*p31;
+        covN22N32 = (n - R + Q)*p223 + (n*n - 3*n - Q + R)*p2223 -n*n*p22*p32;
+        covN22N33 = (n*n - 3*n - Q + R)*p2233 - n*n*p22*p33;
+        covN23N11 = covN11N23;
+        covN23N12 = covN12N23;
+        covN23N13 = covN13N23;
+        covN23N21 = covN21N23;
+        covN23N22 = covN22N23;
+        covN23N31 = (n - R)*p231 + (n*n - 3*n - Q + R)*p2331 - n*n*p23*p31;
+        covN23N32 = R*p23 + (n - R)*(p223 +p233) + (n*n - 3*n - Q + R)*p2233 -n*n*p23*p32;
+        covN23N33 = (n - R + Q)*p332 + (n*n - 3*n - Q + R)*p3332 - n*n*p33*p23;
+        covN31N11 = covN11N31;
+        covN31N12 = covN12N31;
+        covN31N13 = covN13N31;
+        covN31N21 = covN21N31;
+        covN31N22 = covN22N31;
+        covN31N23 = covN23N31;
+        covN31N32 = (n*n - 3*n - Q + R)*p3312 - n*n*p31*p32;
+        covN31N33 = (n - R)*p331 + (n*n - 3*n - Q + R)*p3331 - n*n*p33*p31;
+        covN32N11 = covN11N32;
+        covN32N12 = covN12N32;
+        covN32N13 = covN13N32;
+        covN32N21 = covN21N32;
+        covN32N22 = covN22N32;
+        covN32N23 = covN23N32;
+        covN32N31 = covN31N32;
+        covN32N33 = (n - R)*p332 + (n*n - 3*n - Q + R)*p3332 - n*n*p33*p32;
+        covN33N11 = covN11N33;
+        covN33N12 = covN12N33;
+        covN33N13 = covN13N33;
+        covN33N21 = covN21N33;
+        covN33N22 = covN22N33;
+        covN33N23 = covN23N33;
+        covN33N31 = covN31N33;
+        covN33N32 = covN32N33;
         sigma = new double[9][9];
         sigma[0][0] = varN11;
         sigma[0][1] = covN11N12;
@@ -2246,6 +2346,56 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         sigma[3][1] = covN21N12;
         sigma[3][2] = covN21N13;
         sigma[3][3] = varN21;
+        sigma[3][4] = covN21N22;
+        sigma[3][5] = covN21N23;
+        sigma[3][6] = covN21N31;
+        sigma[3][7] = covN21N32;
+        sigma[3][8] = covN21N33;
+        sigma[4][0] = covN22N11;
+        sigma[4][1] = covN22N12;
+        sigma[4][2] = covN22N13;
+        sigma[4][3] = covN22N21;
+        sigma[4][4] = varN22;
+        sigma[4][5] = covN22N23;
+        sigma[4][6] = covN22N31;
+        sigma[4][7] = covN22N32;
+        sigma[4][8] = covN22N33;
+        sigma[5][0] = covN23N11;
+        sigma[5][1] = covN23N12;
+        sigma[5][2] = covN23N13;
+        sigma[5][3] = covN23N21;
+        sigma[5][4] = covN23N22;
+        sigma[5][5] = varN23;
+        sigma[5][6] = covN23N31;
+        sigma[5][7] = covN23N32;
+        sigma[5][8] = covN23N33;
+        sigma[6][0] = covN31N11;
+        sigma[6][1] = covN31N12;
+        sigma[6][2] = covN31N13;
+        sigma[6][3] = covN31N21;
+        sigma[6][4] = covN31N22;
+        sigma[6][5] = covN31N23;
+        sigma[6][6] = varN31;
+        sigma[6][7] = covN31N32;
+        sigma[6][8] = covN31N33;
+        sigma[7][0] = covN32N11;
+        sigma[7][1] = covN32N12;
+        sigma[7][2] = covN32N13;
+        sigma[7][3] = covN32N21;
+        sigma[7][4] = covN32N22;
+        sigma[7][5] = covN32N23;
+        sigma[7][6] = covN32N31;
+        sigma[7][7] = varN32;
+        sigma[7][8] = covN32N33;
+        sigma[8][0] = covN33N11;
+        sigma[8][1] = covN33N12;
+        sigma[8][2] = covN33N13;
+        sigma[8][3] = covN33N21;
+        sigma[8][4] = covN33N22;
+        sigma[8][5] = covN33N23;
+        sigma[8][6] = covN33N31;
+        sigma[8][7] = covN33N32;
+        sigma[8][8] = varN33;
         sigmaD = new Matrix(sigma);
         NDp = new double[1][9];
         NDp[0][0] = N11 - EN11;
@@ -2481,32 +2631,63 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         
         T11 = N11 - ((double)(n1 - 1)*C1)/(n - 1);
         T12 = N12 - ((double)n1*C2)/(n - 1);
+        T13 = N13 - ((double)n1*C3)/(n - 1);
         T21 = N21 - ((double)n2*C1)/(n - 1);
         T22 = N22 - ((double)(n2 - 1)*C2)/(n - 1);
+        T23 = N23 - ((double)n2*C3)/(n - 1);
+        T31 = N31 - ((double)n3*C1)/(n - 1);
+        T32 = N32 - ((double)n3*C2)/(n - 1);
+        T33 = N33 - ((double)(n3 - 1)*C3)/(n - 1);
         
-        varC1 = varN11 + varN21 + 2 * covN11N21;
-        varC2 = varN12 + varN22 + 2 * covN12N22;
-        covN11C1 = varN11 + covN11N21;
-        covN12C2 =  varN12 + covN12N22;
-        covN21C1 = varN21 + covN11N21;
-        covN22C2 =  varN22 + covN12N22;
+        varC1 = varN11 + varN21 + varN31 + 2 * covN11N21 + 2 * covN11N31 + 2 * covN21N31;
+        varC2 = varN12 + varN22 + varN32 + 2 * covN12N22 + 2 * covN12N32 + 2 * covN22N32;
+        varC3 = varN13 + varN23 + varN33 + 2 * covN13N23 + 2 * covN13N33 + 2 * covN23N33;
+        covN11C1 = varN11 + covN11N21 + covN11N31;
+        covN12C2 =  varN12 + covN12N22 + covN12N32;
+        covN13C3 = varN13 + covN13N23 + covN13N33;
+        covN21C1 = varN21 + covN11N21 + covN21N31;
+        covN22C2 =  varN22 + covN12N22 + covN22N32;
+        covN23C3 = varN23 + covN13N23 + covN23N33;
+        covN31C1 = varN31 + covN11N31 + covN21N31;
+        covN32C2 = varN32 + covN12N32 + covN22N32;
+        covN33C3 = varN33 + covN13N33 + covN23N33;
         varT11 = varN11 + (n1 - 1)*(n1 - 1)*varC1/((n - 1)*(n - 1))
                   - 2 * (n1 - 1)*covN11C1/(n - 1);
         varT12 = varN12 + n1*n1*varC2/((n - 1) * (n - 1))
                  - 2 * n1*covN12C2/(n - 1);
+        varT13 = varN13 + n1*n1*varC3/((n - 1) * (n - 1))
+        - 2 * n1*covN13C3/(n - 1);
         varT21 = varN21 + n2*n2*varC1/((n - 1)*(n - 1))
                  - 2 * n2*covN21C1/(n - 1);
         varT22 = varN22 + (n2 - 1)*(n2 - 1)*varC2/((n - 1)*(n - 1))
                  - 2 * (n2 - 1)*covN22C2/(n - 1);
+        varT23 = varN23 + n2*n2*varC3/((n - 1)*(n - 1))
+        - 2 * n2*covN23C3/(n - 1);
+        varT31 = varN31 + n3*n3*varC1/((n - 1)*(n - 1))
+        - 2 * n3*covN31C1/(n - 1);
+        varT32 = varN32 + n3*n3*varC2/((n - 1)*(n - 1))
+        - 2 * n3*covN32C2/(n - 1);
+        varT33 = varN33 + (n3 - 1)*(n3 - 1)*varC3/((n - 1)*(n - 1))
+        - 2 * (n3 - 1)*covN33C3/(n - 1);
         
         z11N = T11/Math.sqrt(varT11);
         z12N = T12/Math.sqrt(varT12);
+        z13N = T13/Math.sqrt(varT13);
         z21N = T21/Math.sqrt(varT21);
         z22N = T22/Math.sqrt(varT22);
+        z23N = T23/Math.sqrt(varT23);
+        z31N = T31/Math.sqrt(varT31);
+        z32N = T32/Math.sqrt(varT32);
+        z33N = T33/Math.sqrt(varT33);
         Preferences.debug("z11N = " + z11N + "\n");
-        Preferences.debug("z21N = " + z21N + "\n");
         Preferences.debug("z12N = " + z12N + "\n");
+        Preferences.debug("z13N = " + z13N + "\n");
+        Preferences.debug("z21N = " + z21N + "\n");
         Preferences.debug("z22N = " + z22N + "\n");
+        Preferences.debug("z23N = " + z23N + "\n");
+        Preferences.debug("z31N = " + z31N + "\n");
+        Preferences.debug("z32N = " + z32N + "\n");
+        Preferences.debug("z33N = " + z33N + "\n");
         
         // CN = T'SigmaNInverseT
         // CN has a chiSquared distribution with 1 degree of freedom
@@ -2523,25 +2704,25 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         covN11C2 = covN11N12 + covN11N22;
         covN12C1 = covN12N11 + covN12N21;
         covC1C2 = covN11N12 + covN11N22 + covN21N12 + covN21N22;
-        //covT11T12 = covN11N12 - n1*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
-                    //+ (n1 - 1)*n1*covC1C2/((n - 1)*(n - 1));
-        covT11T12 = covN11N12 - n2*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
-        + (n1 - 1)*n2*covC1C2/((n - 1)*(n - 1));
+        covT11T12 = covN11N12 - n1*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
+                    + (n1 - 1)*n1*covC1C2/((n - 1)*(n - 1));
+        //covT11T12 = covN11N12 - n2*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
+        //+ (n1 - 1)*n2*covC1C2/((n - 1)*(n - 1));
         covC1C1 = varN11 + covN11N21 + covN21N11 + varN21;
-        //covT11T21 = covN11N21 - n2*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
-                    //+ (n1 - 1)*n2*covC1C1/((n - 1)*(n - 1));
-        covT11T21 = covN11N21 - n1*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
-        + (n1 - 1)*n1*covC1C1/((n - 1)*(n - 1));
+        covT11T21 = covN11N21 - n2*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
+                    + (n1 - 1)*n2*covC1C1/((n - 1)*(n - 1));
+        //covT11T21 = covN11N21 - n1*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
+        //+ (n1 - 1)*n1*covC1C1/((n - 1)*(n - 1));
         covN22C1 = covN22N11 + covN22N21;
         covT11T22 = covN11N22 - (n2 - 1)*covN11C2/(n - 1) - (n1 - 1)*covN22C1/(n - 1)
                     + (n1 - 1)*(n2 - 1)*covC1C2/((n - 1)*(n - 1));
         covT12T11 = covT11T12;
         covC2C1 = covC1C2;
         covN21C2 = covN21N12 + covN21N22;
-        //covT12T21 = covN12N21 - n2*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
-                    //+ n1*n2*covC2C1/((n - 1)*(n - 1));
-        covT12T21 = covN12N21 - n1*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
-        + n1*n1*covC2C1/((n - 1)*(n - 1));
+        covT12T21 = covN12N21 - n2*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
+                    + n1*n2*covC2C1/((n - 1)*(n - 1));
+        //covT12T21 = covN12N21 - n1*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
+        //+ n1*n1*covC2C1/((n - 1)*(n - 1));
         covC2C2 = varN12 + covN12N22 + covN22N12 + varN22;
         covT12T22 = covN22N12 - n1*covN22C2/(n - 1) - (n2 - 1)*covN12C2/(n - 1)
                     + (n2 - 1)*n1*covC2C2/((n - 1)*(n - 1));
@@ -2657,6 +2838,25 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
             System.out.println("Complete spatial randomness cannot be rejected based on T12 value");
         }
         
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z13N, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean T13 around expected mean T13 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean T13 around expected mean T13 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of T13 indicates segregation\n");
+            System.out.println("Low value of T13 indicates segregation");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of T13 indicates association\n");
+            System.out.println("High value of T13 indicates association");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on T13 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on T13 value");
+        }
+        
         stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z21N, 0, percentile);
         stat.run();
         Preferences.debug("Percentile in Gaussian probability integral for measured mean T21 around expected mean T21 = "
@@ -2693,6 +2893,82 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         else {
             Preferences.debug("Complete spatial randomness cannot be rejected based on T22 value\n");
             System.out.println("Complete spatial randomness cannot be rejected based on T22 value");
+        }
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z23N, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean T23 around expected mean T23 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean T23 around expected mean T23 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of T23 indicates segregation\n");
+            System.out.println("Low value of T23 indicates segregation");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of T23 indicates association\n");
+            System.out.println("High value of T23 indicates association");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on T23 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on T23 value");
+        }
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z31N, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean T31 around expected mean T31 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean T31 around expected mean T31 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of T31 indicates segregation\n");
+            System.out.println("Low value of T31 indicates segregation");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of T31 indicates association\n");
+            System.out.println("High value of T31 indicates association");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on T31 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on T31 value");
+        }
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z32N, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean T32 around expected mean T32 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean T32 around expected mean T32 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of T32 indicates segregation\n");
+            System.out.println("Low value of T32 indicates segregation");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of T32 indicates association\n");
+            System.out.println("High value of T32 indicates association");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on T32 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on T32 value");
+        }
+        
+        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z33N, 0, percentile);
+        stat.run();
+        Preferences.debug("Percentile in Gaussian probability integral for measured mean T33 around expected mean T33 = "
+                + percentile[0]*100.0 + "\n");
+        System.out.println("Percentile in Gaussian probability integral for measured mean T33 around expected mean T33 = " +
+                  percentile[0]*100.0);
+        if (percentile[0] < 0.025) {
+            Preferences.debug("Low value of T33 indicates association\n");
+            System.out.println("Low value of T33 indicates association");
+        }
+        else if (percentile[0] > 0.975) {
+            Preferences.debug("High value of T33 indicates segregation\n");
+            System.out.println("High value of T33 indicates segregation");
+        }
+        else {
+            Preferences.debug("Complete spatial randomness cannot be rejected based on T33 value\n");
+            System.out.println("Complete spatial randomness cannot be rejected based on T33 value");
         }
         
         red = new byte[buffer.length];
