@@ -52,18 +52,13 @@ public class VolumeOrientationCube extends VolumeObject
         m_aakAxisFiles = null;
         m_kCubeTranslate = null;
     }
-
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
-     */
-    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid ) {}
-
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
-    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid )
     {
-        if ( !m_bDisplay )
+        if ( !m_bDisplay || bPreRender || !bSolid )
         {
             return;
         }

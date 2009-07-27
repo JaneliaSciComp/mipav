@@ -365,9 +365,6 @@ public class VolumeRayCast extends VolumeObject
     public void PostPreRenderB( Renderer kRenderer )
     {
         //kRenderer.Resize(m_iWidthSave,m_iHeightSave);
-        kRenderer.GetTexImage(m_apkSceneTarget[0]);
-        Texture kTex = m_pkPBuffer.GetTarget(0);
-        kRenderer.GetTexImage(kTex);
         m_pkPBuffer.Disable();
     }
 
@@ -377,7 +374,7 @@ public class VolumeRayCast extends VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    private void PreRender( Renderer kRenderer, Culler kCuller )
     {
         if ( !m_bDisplay )
         {
@@ -385,104 +382,26 @@ public class VolumeRayCast extends VolumeObject
         }
         m_iWidthSave = kRenderer.GetWidth();
         m_iHeightSave = kRenderer.GetHeight();
-        kRenderer.Resize( m_spkSceneImage.GetBound(0), m_spkSceneImage.GetBound(1));
         m_kScene.UpdateGS();
-        if ( !m_bDisplaySecond )
-        {
-            // First rendering pass:
-            // Draw the proxy geometry to a color buffer, to generate the
-            // back-facing texture-coordinates:
-            m_kMesh.DetachAllEffects();
-            m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-            kCuller.ComputeVisibleSet(m_kScene);
-            // Enable rendering to the PBuffer:
-            kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-            kRenderer.ClearBuffers();
-            // Cull front-facing polygons:
-            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
-            kRenderer.DrawScene(kCuller.GetVisibleSet());
-            // Undo culling:
-            m_kCull.CullFace = CullState.CullMode.CT_BACK;
-        }
-        else
-        {
-            // First rendering pass:
-            // Draw the proxy geometry to a color buffer, to generate the
-            // back-facing texture-coordinates:
-            m_kMesh.DetachAllEffects();
-            m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-            kCuller.ComputeVisibleSet(m_kScene);
-            // Enable rendering to the PBuffer:
-            m_pkPBuffer.Enable();
-            kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-            kRenderer.ClearBuffers();
-            
-            kCuller.ComputeVisibleSet(m_kScene);
-            
-            // Cull front-facing polygons:
-            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
-            kRenderer.DrawScene(kCuller.GetVisibleSet());
-            // Undo culling:
-            m_kCull.CullFace = CullState.CullMode.CT_BACK;
-        }
         
-    }
-    
-    
+        // First rendering pass:
+        // Draw the proxy geometry to a color buffer, to generate the
+        // back-facing texture-coordinates:
+        m_kMesh.DetachAllEffects();
+        m_kMesh.AttachEffect( m_spkVertexColor3Shader );
+        kCuller.ComputeVisibleSet(m_kScene);
+        // Enable rendering to the PBuffer:
+        //m_pkPBuffer.Enable();
+        kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+        kRenderer.ClearBuffers();
 
-    /** 
-     * PreRender renders the proxy geometry into the PBuffer texture.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
-     */
-    public void PreRenderA( Renderer kRenderer, Culler kCuller, boolean bSolid )
-    {
-        if ( !m_bDisplay )
-        {
-            return;
-        }
-        m_iWidthSave = kRenderer.GetWidth();
-        m_iHeightSave = kRenderer.GetHeight();
-        //kRenderer.Resize( m_spkSceneImage.GetBound(0), m_spkSceneImage.GetBound(1));
-        m_kScene.UpdateGS();
-        if ( !m_bDisplaySecond )
-        {
-            // First rendering pass:
-            // Draw the proxy geometry to a color buffer, to generate the
-            // back-facing texture-coordinates:
-            m_kMesh.DetachAllEffects();
-            m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-            kCuller.ComputeVisibleSet(m_kScene);
-            // Enable rendering to the PBuffer:
-            kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-            kRenderer.ClearBuffers();
-            // Cull front-facing polygons:
-            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
-            kRenderer.DrawScene(kCuller.GetVisibleSet());
-            // Undo culling:
-            m_kCull.CullFace = CullState.CullMode.CT_BACK;
-        }
-        else
-        {
-            // First rendering pass:
-            // Draw the proxy geometry to a color buffer, to generate the
-            // back-facing texture-coordinates:
-            m_kMesh.DetachAllEffects();
-            m_kMesh.AttachEffect( m_spkVertexColor3Shader );
-            kCuller.ComputeVisibleSet(m_kScene);
-            // Enable rendering to the PBuffer:
-            //m_pkPBuffer.Enable();
-            kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-            kRenderer.ClearBuffers();
-            
-            kCuller.ComputeVisibleSet(m_kScene);
-            
-            // Cull front-facing polygons:
-            m_kCull.CullFace = CullState.CullMode.CT_FRONT;
-            kRenderer.DrawScene(kCuller.GetVisibleSet());
-            // Undo culling:
-            m_kCull.CullFace = CullState.CullMode.CT_BACK;
-        }
+        kCuller.ComputeVisibleSet(m_kScene);
+
+        // Cull front-facing polygons:
+        m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+        kRenderer.DrawScene(kCuller.GetVisibleSet());
+        // Undo culling:
+        m_kCull.CullFace = CullState.CullMode.CT_BACK;
         
     }
     
@@ -501,25 +420,27 @@ public class VolumeRayCast extends VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
             return;
         }
-        kRenderer.GetTexImage(m_apkSceneTarget[0]);
-        m_apkSceneTarget[0].Reload(true);
-        // Second rendering pass:
-        // Draw the proxy geometry with the volume ray-tracing shader:
-        m_kMesh.DetachAllEffects();
-        m_kMesh.AttachEffect( m_kVolumeShaderEffect );
-        kCuller.ComputeVisibleSet(m_kScene);        
-        //kRenderer.DrawScene(kCuller.GetVisibleSet());  
-        kRenderer.Draw(m_kMesh);        
+        if ( bPreRender )
+        {
+            PreRender( kRenderer, kCuller );
+        }
+        else
+        {
+            m_kMesh.DetachAllEffects();
+            m_kMesh.AttachEffect( m_kVolumeShaderEffect );
+            kCuller.ComputeVisibleSet(m_kScene);        
+            kRenderer.Draw(m_kMesh);        
 
-         // Draw scene polygon:
-        //kRenderer.SetCamera(m_spkScreenCamera);
-        //kRenderer.Draw(m_spkScenePolygon);
+            // Draw scene polygon:
+            //kRenderer.SetCamera(m_spkScreenCamera);
+            //kRenderer.Draw(m_spkScenePolygon);
+        }
     }
 
     /**
