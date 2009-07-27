@@ -323,7 +323,7 @@ public class VolumeSlices extends VolumeObject
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
-    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
@@ -355,12 +355,26 @@ public class VolumeSlices extends VolumeObject
             if ( bSolid )
             {
                 m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
-                m_akPlanes[i].AttachEffect( m_akPlaneEffect[i] );
+                if ( bPreRender )
+                {
+                    m_akPlanes[i].AttachEffect( m_kVolumePreShader[i] );
+                }
+                else
+                {
+                    m_akPlanes[i].AttachEffect( m_akPlaneEffect[i] );
+                }
             }
             else
             {
                 m_akBoundingBox[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
-                m_akPlanes[i].AttachEffect( m_akPlaneEffectTransparent[i] );
+                if ( bPreRender )
+                {
+                    m_akPlanes[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
+                }
+                else
+                {
+                    m_akPlanes[i].AttachEffect( m_akPlaneEffectTransparent[i] );
+                }
             }
         }
         if ( !bRender )

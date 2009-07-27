@@ -780,7 +780,7 @@ public class VolumeSurface extends VolumeObject
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
      */
-    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
@@ -793,11 +793,25 @@ public class VolumeSurface extends VolumeObject
             m_kScene.GetChild(i).DetachAllEffects();
             if ( bSolid && (m_fBlend >= 1.0f) )
             {
-                m_kScene.GetChild(i).AttachEffect( m_kLightShader );
+                if ( bPreRender )
+                {
+                    m_kScene.GetChild(i).AttachEffect( m_kVolumePreShader );
+                }
+                else
+                {
+                    m_kScene.GetChild(i).AttachEffect( m_kLightShader );
+                }
             }
             else if ( !bSolid && (m_fBlend > 0) && (m_fBlend < 1.0) )
             {
-                m_kScene.GetChild(i).AttachEffect( m_kLightShaderTransparent );
+                if ( bPreRender )
+                {
+                    m_kScene.GetChild(i).AttachEffect( m_kVolumePreShaderTransparent );
+                }
+                else
+                {
+                    m_kScene.GetChild(i).AttachEffect( m_kLightShaderTransparent );
+                }
             }
         }
         m_kScene.DetachGlobalState(GlobalState.StateType.ALPHA);

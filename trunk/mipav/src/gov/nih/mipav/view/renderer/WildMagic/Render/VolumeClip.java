@@ -253,28 +253,13 @@ public class VolumeClip extends VolumeObject
     }
 
     /**
-     * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
-     */
-    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
-    {
-        if ( !m_bDisplay  && ! m_bDisplayClipArb )
-        {
-            return;
-        }
-        m_kScene.UpdateGS();
-        kCuller.ComputeVisibleSet(m_kScene);
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
-    }
-    /**
      * Render the object.
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid )
     {
-        if ( !m_bDisplay  && ! m_bDisplayClipArb )
+        if ( !m_bDisplay  && !m_bDisplayClipArb || !bSolid)
         {
             return;
         }

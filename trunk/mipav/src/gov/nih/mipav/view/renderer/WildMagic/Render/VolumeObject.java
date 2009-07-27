@@ -261,17 +261,11 @@ public abstract class VolumeObject
     public void PostRender( @SuppressWarnings("unused") Renderer kRenderer, 
             @SuppressWarnings("unused") Culler kCuller ) {}
     /**
-     * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
-     */
-    public abstract void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid );
-    /**
      * Render the object.
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public abstract void Render( Renderer kRenderer, Culler kCuller, boolean bSolid );
+    public abstract void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid );
     
     /**
      * Set back-face culling on/off.

@@ -2459,7 +2459,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         if ( !m_bStereo )
         {
-            RenderWithTransparency();
+            RenderWithTransparency(false);
         }
         else
         {          
@@ -2468,10 +2468,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             {
                 m_kCuller.ComputeVisibleSet(m_spkScene);
                 m_pkRenderer.SetColorMask( false, false, true, true );
-                for ( int i = 1; i < m_kDisplayList.size(); i++ )
-                {
-                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, false );
-                }
+                RenderWithTransparency(false);
             }
             m_pkRenderer.ClearZBuffer();
             MoveLeft();
@@ -2480,17 +2477,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             {
                 m_kCuller.ComputeVisibleSet(m_spkScene);
                 m_pkRenderer.SetColorMask( true, false, false, true );
-                for ( int i = 1; i < m_kDisplayList.size(); i++ )
-                {
-                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, false );
-                }
+                RenderWithTransparency(false);
             }
             MoveRight();
             m_pkRenderer.SetColorMask( true, true, true, true );
         }
     }
 
-    private void RenderWithTransparency()
+    private void RenderWithTransparency(boolean bPreRender)
     {
         // First: render opaque objects to an off-screen color/depth buffer
         //m_kSolidFBO.Enable();        
@@ -2498,10 +2492,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kFBO.DrawBuffers(new int[]{0});
         m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
         m_pkRenderer.ClearBuffers();
-        
+
+        if ( bPreRender )
+        {
+            m_kVolumeRayCast.Render( m_pkRenderer, m_kCuller, bPreRender, true );
+        }
         for ( int i = 1; i < m_kDisplayList.size(); i++ )
         {
-            m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true );
+            m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, bPreRender, true );
         }
 
         // Second: render semi-transparent objects:
@@ -2511,16 +2509,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         
         for ( int i = 1; i < m_kDisplayList.size(); i++ )
         {
-            m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, false );
+            m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, bPreRender, false );
         }
 
         m_kFBO.Disable();        
         
         m_pkRenderer.SetCamera(m_pkScreenCamera);
+        
+        if ( bPreRender )
+        {
+            m_kVolumeRayCast.PreRenderB(m_pkRenderer);
+        }
         m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
         m_pkRenderer.ClearBuffers();
+        m_pkRenderer.Draw( m_pkPlane ); 
+        if ( bPreRender )
+        { 
+            m_kVolumeRayCast.PostPreRenderB(m_pkRenderer);
+        }
         
-        m_pkRenderer.Draw( m_pkPlane );  
         m_pkRenderer.SetCamera(m_spkCamera);
     }
     
@@ -2538,10 +2545,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     
     /**
-     * Render the display list objecst embedded in the ray-cast volume.
+     * Render the display list objects embedded in the ray-cast volume.
      * This is a two-pass rendering. First the background is rendered with all objects displayed with
      * the color corresponding to the texture coordinates. The resulting color image is used to calculate
-     * the ray endpoints for rendering the ray-cast volume. In the second pass the display list
+     * the ray end-points for rendering the ray-cast volume. In the second pass the display list
      * objects are rendered normally and the ray-cast volume is rendered last.
      */
     private void RenderVolume()
@@ -2550,72 +2557,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             for ( int i = 0; i < m_kDisplayList.size(); i++ )
             {
-                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller, true );
+                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true, true );
             }
         }
         else
         {
-
-            // First: render opaque objects to an off-screen color/depth buffer
-            //m_kSolidFBO.Enable();        
-            m_kFBO.Enable();
-            m_kFBO.DrawBuffers(new int[]{0});
-            m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
-            m_pkRenderer.ClearBuffers();
-            
-            m_kVolumeRayCast.PreRenderA( m_pkRenderer, m_kCuller, true );
-            for ( int i = 1; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller, true );
-            }
-
-            // Second: render semi-transparent objects:
-            m_kFBO.DrawBuffers(new int[]{1,2});
-            m_pkRenderer.SetBackgroundColor( new ColorRGBA(0.0f, 0.0f,0.0f,0.0f));
-            m_pkRenderer.ClearBackBuffer();
-
-            for ( int i = 1; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller, false );
-            }
-            m_kFBO.Disable();
-            
-            
-            m_pkRenderer.SetCamera(m_pkScreenCamera);
-            
-            m_kVolumeRayCast.PreRenderB(m_pkRenderer);
-            m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
-            m_pkRenderer.ClearBuffers();
-            m_pkRenderer.Draw( m_pkPlane );  
-            m_kVolumeRayCast.PostPreRenderB(m_pkRenderer);
-            
+            RenderWithTransparency(true);
+            RenderWithTransparency(false);
+            m_kVolumeRayCast.Render( m_pkRenderer, m_kCuller, false, true );
             m_pkRenderer.SetCamera(m_spkCamera);
-            RenderWithTransparency();
-            m_kVolumeRayCast.Render( m_pkRenderer, m_kCuller, true );
-            m_pkRenderer.SetCamera(m_spkCamera);
-            
-            /*
-            for ( int i = 0; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).PreRender( m_pkRenderer, m_kCuller, true );
-            }
-            m_kVolumeRayCast.PostPreRender(m_pkRenderer);
-
-            m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
-            m_pkRenderer.ClearBuffers();
-
-            for ( int i = 1; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true );
-            }
-            m_kDisplayList.get(0).Render( m_pkRenderer, m_kCuller, false );
-
-            for ( int i = 1; i < m_kDisplayList.size(); i++ )
-            {
-                m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
-            }
-            
-*/
         }
     }
     

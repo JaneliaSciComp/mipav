@@ -485,30 +485,6 @@ public class VolumeDTI extends VolumeObject
         }
         return null;
     }
-    /**
-     * PreRender the object, for embedding in the ray-cast volume.
-     * @param kRenderer the OpenGLRenderer object.
-     * @param kCuller the Culler object.
-     */
-    public void PreRender(Renderer kRenderer, Culler kCuller, boolean bSolid )
-    {
-        if ( !m_bDisplay )
-        {
-            return;
-        }
-        if ( !bSolid )
-        {
-            return;
-        }
-        if ( m_bDisplayAllGlyphs )
-        {
-            DisplayAllGlyphs( m_kVolumeImageA.GetImage(), kRenderer);
-        }
-        else
-        {
-            DisplayTract(m_kVertexColor3Shader, kRenderer);
-        }
-    }
     
     /** 
      * Removes the specified polyline tract group.
@@ -598,7 +574,7 @@ public class VolumeDTI extends VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void Render( Renderer kRenderer, Culler kCuller, boolean bSolid )
+    public void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid )
     {
         if ( !m_bDisplay )
         {
