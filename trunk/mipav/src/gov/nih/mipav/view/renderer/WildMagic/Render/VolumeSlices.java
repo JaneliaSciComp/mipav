@@ -272,11 +272,18 @@ public class VolumeSlices extends VolumeObject
             m_kScene.DetachChild(m_akBoundingBox[i]);
             if ( bSolid == m_abSolid[i] )
             {                
-                bRender = true;
                 if ( m_akPlaneEffect[i].GetBlend() != 0 )
                 {
-                    m_kScene.AttachChild( m_akPlanes[i] );
-                    m_kScene.AttachChild(m_akBoundingBox[i]);
+                    if ( m_abShowPlanes[i] )
+                    {
+                        m_kScene.AttachChild( m_akPlanes[i] );
+                        bRender = true;
+                    }
+                    if ( m_abShowBoundingBox[i] )
+                    {
+                        m_kScene.AttachChild(m_akBoundingBox[i]);
+                        bRender = true;
+                    }
                 }
             }
             if ( bSolid )
@@ -333,9 +340,16 @@ public class VolumeSlices extends VolumeObject
             {                
                 if ( m_akPlaneEffect[i].GetBlend() != 0 )
                 {
-                    bRender = true;
-                    m_kScene.AttachChild( m_akPlanes[i] );
-                    m_kScene.AttachChild(m_akBoundingBox[i]);
+                    if ( m_abShowPlanes[i] )
+                    {
+                        m_kScene.AttachChild( m_akPlanes[i] );
+                        bRender = true;
+                    }
+                    if ( m_abShowBoundingBox[i] )
+                    {
+                        m_kScene.AttachChild(m_akBoundingBox[i]);
+                        bRender = true;
+                    }
                 }
             }
             if ( bSolid )
@@ -500,14 +514,6 @@ public class VolumeSlices extends VolumeObject
             return;
         }
         m_abShowBoundingBox[iIndex] = bShow;
-        if ( m_abShowBoundingBox[iIndex] )
-        {
-            m_kScene.AttachChild(m_akBoundingBox[iIndex]);
-        }
-        else
-        {
-            m_kScene.DetachChild(m_akBoundingBox[iIndex]);
-        }
     }
     /** Turns on/off displaying the given plane.
      * @param i the plane index (0-3) in file coordinates.
@@ -521,14 +527,6 @@ public class VolumeSlices extends VolumeObject
             return;
         }
         m_abShowPlanes[iIndex] = bShow;
-        if ( m_abShowPlanes[iIndex] )
-        {
-            m_kScene.AttachChild(m_akPlanes[iIndex]);
-        }
-        else
-        {
-            m_kScene.DetachChild(m_akPlanes[iIndex]);
-        }
     }
     /**
      * Turns rendering the planes with the surface mask on/off.

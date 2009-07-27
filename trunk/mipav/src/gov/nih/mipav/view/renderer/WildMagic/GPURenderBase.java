@@ -705,6 +705,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
             m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+            m_kDisplayList.get(i).GetScene().UpdateGS();
         }
     }
 }
