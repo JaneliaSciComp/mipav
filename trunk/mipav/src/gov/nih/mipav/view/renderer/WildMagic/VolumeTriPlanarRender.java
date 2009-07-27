@@ -21,6 +21,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeOrientationCube;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeRayCast;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
+import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 
 import java.awt.Cursor;
@@ -33,7 +34,6 @@ import java.awt.event.MouseMotionListener;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
-import WildMagic.ApplicationDemos.OrderIndpTransparencyEffect;
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -2484,6 +2484,24 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
 
+    /**
+     * 
+     * Rendering multiple translucent surfaces is accomplished with the following steps:
+     *   1. A FrameBuffer Object (FBO) is created with three render-to-texture targets, and a depth buffer.
+     *   2. The first render target is activated. Solid objects are rendered: writing color and depth
+     *      information to the FBO target1. The color information displays the solid objects, the depth
+     *      information enables the solid objects to properly occlude the translucent objects.
+     *   3. The second and third render targets are activated. Translucent objects are rendered: writing
+     *      accumulated color and alpha to the second target and the number of overlapping surfaces per
+     *      pixel to the third target. In this pass the depth buffer is read-only.
+     *   4. Rendering to the three texture targets is disabled.
+     *   5. A screen-space polygon is rendered, it reads the three textures generated in the previous pass.
+     *      The first texture contains the color from the solid objects, the next two textures contain the
+     *      color information and weighted-average for rendering the translucent textures.
+     *
+     * @param bPreRender when true rendering into the VolumeRayCast back-image texture for compositing with 
+     * the VolumeRayCast rendering.
+     */
     private void RenderWithTransparency(boolean bPreRender)
     {
         // First: render opaque objects to an off-screen color/depth buffer
@@ -2648,6 +2666,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     
 
+    /**
+     * Creates the three render-to-texture targets for rendering semi-transparent surfaces. 
+     * Creates the screen-space polygon and OrderIndTransparencyEffect that display the
+     * final result.
+     * The first render target is for the solid objects.
+     * Second render target is for translucent objects.
+     * Third render target is for accumulating the count of translucent objects per-pixel.
+     * @param arg0
+     * @param iWidth
+     * @param iHeight
+     */
     private void CreateRenderTarget( GLAutoDrawable arg0, int iWidth, int iHeight )
     {        
         Texture[] akSceneTarget = new Texture[3];
@@ -2691,7 +2720,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         StandardMesh kSM = new StandardMesh(kAttributes);
         m_pkPlane = kSM.Rectangle(2,2,1.0f,1.0f);    
             
-        m_spkPlaneEffect = new OrderIndpTransparencyEffect(akSceneTarget, m_kBackgroundColor );
+        m_spkPlaneEffect = new OrderIndpTransparencyEffect(akSceneTarget );
         m_pkPlane.AttachEffect( m_spkPlaneEffect);
         
         ZBufferState kZState = new ZBufferState();
