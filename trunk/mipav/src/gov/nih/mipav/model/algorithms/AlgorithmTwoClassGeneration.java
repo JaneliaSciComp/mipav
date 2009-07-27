@@ -44,26 +44,47 @@ import java.io.*;
  *      tests ZijN with i = 1,2 j = 1,2 are calculated from Tij/sqrt(variance Tij).  ZijN has a normal distribution
  *      with 0 mean and a standard deviation of 1.
  *      
- *      Note that there is a contradiction between the equations given for case 2 for Cov[Tii, Tkl] and case 4 for
- *      Cov[Tij, Tkl] between the 2 Ceyhan papers.  Reference 1 has:
- *      Case 2:
- *      Cov[Tii, Tkl] = Cov[Nii, Nkl] - nk*Cov[Nii, Cl]/(n - 1) - (ni - 1)*Cov[Nkl, Ci]/(n - 1)
- *                      + (ni - 1)*nk*Cov[Ci, Cl]/(n-1)**2
- *      case 4:
- *      Cov[Tij, Tkl] = Cov[Nij, Nkl] - nk*Cov[Nij, Cl]/(n - 1) - ni*Cov[Nkl, Cj]/(n - 1)
- *                      + ni*nk*Cov[Cj, Cl]/(n-1)**2
- *                      
- *      Reference 2 has:
- *      Case 2:
- *      Cov[Tii, Tkl] = Cov[Nii, Nkl] - nl*Cov[Nii, Cl]/(n - 1) - (ni - 1)*Cov[Nkl, Ci]/(n - 1)
- *                      + (ni - 1)*nl*Cov[Ci, Cl]/(n-1)**2
- *      case 4:
- *      Cov[Tij, Tkl] = Cov[Nij, Nkl] - nl*Cov[Nij, Cl]/(n - 1) - ni*Cov[Nkl, Cj]/(n - 1)
- *                      + ni*nl*Cov[Cj, Cl]/(n-1)**2
- *                      
+ *      Dear Dr Gandler,
+thanks for bringing this issue up to my attention...
+if you look at the definition of T_{ij}, the covariance expression in "Overall and pairwise segregation tests based on nearest neighbor  contingency tables:" should be the correct one, i will fix the technical report and then repost on arXiv...
+
+have a nice evening,
+E.
+ 
+
+"Gandler, William (NIH/CIT) [E]" <ilb@mail.nih.gov> wrote on 22.07.2009 21:43:
+> Dear Professor Elvan Ceyhan:
+> 
+>   In Overall and pairwise segregation tests based on nearest neighbor 
+> contingency tables:
+>  case 2 for overall test of segregation:
+> Cov[Tii, Tkl] = Cov[Nii, Nkl] - nk*Cov[Nii, Cl]/(n - 1) - (ni - 
+> 1)*Cov[Nkl, Ci]/(n-1) + (ni-1)*nk*Cov[Ci, Cl]/(n-1)**2 case 4:
+> Cov[Tij, Tkl] = Cov[Nij, Nkl] - nk*Cov[Nij, Cl]/(n - 1) - ni*Cov[Nkl, 
+> Cj]/(n - 1) + ni*nk*Cov[Cj, Cl]/(n - 1)**2 while in Technical Report 
+> #KU-EC_08-6: New Tests of Spatial Segregation Based on Nearest 
+> Nieghbor Contingency Tables:
+> Case 2:
+> Cov[Tij, Tkl] = Cov[Nii, Nkl] - nl*Cov[Nii, Cl]/(n - 1) - (ni - 
+> 1)*Cov[Nkl, Ci]/(n - 1)  + (ni -1)*nl*Cov[Ci, Cl]/(n - 1)**2 Case 4:
+> Cov[Tij, Tkl] = Cov[Nij, Nkl] - nl*Cov[Nij, Cl]/(n - 1) - ni*Cov[Nkl, 
+> Cj]/(n - 1) + ni*nl*Cov[Cj, Cl]/(n - 1)**2
+> 
+> so in the second and fourth terms nk in the first paper becomes nl in 
+> the second paper.
+> 
+>                                                                         
+>                                         Sincerely,
+> 
+>                                                                         
+>                                  William Gandler
+
+ 
+ *      One more discrepancy:                
  *      nk in the second and fourth terms in both cases in reference 1 becomes nl in reference 2.
- *      I am using the reference 2 version of nl since this yields a CN value = 13.26, close to the
- *      CN = 13.11 calculated by Ceyhan for the Pielou data in reference 1.
+ *      The reference 2 version of nl yields a CN value = 13.26, close to the
+ *      CN = 13.11 calculated by Ceyhan for the Pielou data in reference 1.  The reference 1
+ *      version of nk yields CN = 24.58.
  *      
  *      Note that there are 2 versions of Dixon's overall test of segregation, the first version in the 
  *      1994 paper Testing Spatial Segregation Using a Nearest-Neighbor Contingency Table by Philip Dixon
@@ -1990,25 +2011,25 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         covN11C2 = covN11N12 + covN11N22;
         covN12C1 = covN12N11 + covN12N21;
         covC1C2 = covN11N12 + covN11N22 + covN21N12 + covN21N22;
-        //covT11T12 = covN11N12 - n1*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
-                    //+ (n1 - 1)*n1*covC1C2/((n - 1)*(n - 1));
-        covT11T12 = covN11N12 - n2*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
-        + (n1 - 1)*n2*covC1C2/((n - 1)*(n - 1));
+        covT11T12 = covN11N12 - n1*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
+                    + (n1 - 1)*n1*covC1C2/((n - 1)*(n - 1));
+        //covT11T12 = covN11N12 - n2*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
+        //+ (n1 - 1)*n2*covC1C2/((n - 1)*(n - 1));
         covC1C1 = varN11 + covN11N21 + covN21N11 + varN21;
-        //covT11T21 = covN11N21 - n2*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
-                    //+ (n1 - 1)*n2*covC1C1/((n - 1)*(n - 1));
-        covT11T21 = covN11N21 - n1*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
-        + (n1 - 1)*n1*covC1C1/((n - 1)*(n - 1));
+        covT11T21 = covN11N21 - n2*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
+                    + (n1 - 1)*n2*covC1C1/((n - 1)*(n - 1));
+        //covT11T21 = covN11N21 - n1*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
+        //+ (n1 - 1)*n1*covC1C1/((n - 1)*(n - 1));
         covN22C1 = covN22N11 + covN22N21;
         covT11T22 = covN11N22 - (n2 - 1)*covN11C2/(n - 1) - (n1 - 1)*covN22C1/(n - 1)
                     + (n1 - 1)*(n2 - 1)*covC1C2/((n - 1)*(n - 1));
         covT12T11 = covT11T12;
         covC2C1 = covC1C2;
         covN21C2 = covN21N12 + covN21N22;
-        //covT12T21 = covN12N21 - n2*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
-                    //+ n1*n2*covC2C1/((n - 1)*(n - 1));
-        covT12T21 = covN12N21 - n1*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
-        + n1*n1*covC2C1/((n - 1)*(n - 1));
+        covT12T21 = covN12N21 - n2*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
+                    + n1*n2*covC2C1/((n - 1)*(n - 1));
+        //covT12T21 = covN12N21 - n1*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
+        //+ n1*n1*covC2C1/((n - 1)*(n - 1));
         covC2C2 = varN12 + covN12N22 + covN22N12 + varN22;
         covT12T22 = covN22N12 - n1*covN22C2/(n - 1) - (n2 - 1)*covN12C2/(n - 1)
                     + (n2 - 1)*n1*covC2C2/((n - 1)*(n - 1));
