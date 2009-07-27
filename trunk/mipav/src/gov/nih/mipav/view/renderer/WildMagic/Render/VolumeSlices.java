@@ -52,6 +52,7 @@ public class VolumeSlices extends VolumeObject
 
     private boolean[] m_abSolid = new boolean[]{true, true, true};
     
+    
     /** Create a new VolumeObject with the VolumeImage parameter.
      * @param kImageA the VolumeImage containing shared data and textures for
      * rendering.
@@ -252,73 +253,6 @@ public class VolumeSlices extends VolumeObject
         kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }*/
-    
-    
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
-     */
-    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
-    {
-        if ( !m_bDisplay )
-        {
-            return;
-        }
-        boolean bRender = false;
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_akPlanes[i].DetachAllEffects();
-            m_akBoundingBox[i].DetachAllEffects();
-            m_kScene.DetachChild( m_akPlanes[i] );
-            m_kScene.DetachChild(m_akBoundingBox[i]);
-            if ( bSolid == m_abSolid[i] )
-            {                
-                if ( m_akPlaneEffect[i].GetBlend() != 0 )
-                {
-                    if ( m_abShowPlanes[i] )
-                    {
-                        m_kScene.AttachChild( m_akPlanes[i] );
-                        bRender = true;
-                    }
-                    if ( m_abShowBoundingBox[i] )
-                    {
-                        m_kScene.AttachChild(m_akBoundingBox[i]);
-                        bRender = true;
-                    }
-                }
-            }
-            if ( bSolid )
-            {
-                m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
-                m_akPlanes[i].AttachEffect( m_kVolumePreShader[i] );
-            }
-            else
-            {
-                m_akBoundingBox[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
-                m_akPlanes[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
-            }
-        }
-        if ( !bRender )
-        {
-            return;
-        }
-        m_kScene.DetachGlobalState(GlobalState.StateType.ALPHA);
-        m_kScene.DetachGlobalState(GlobalState.StateType.ZBUFFER);
-        if ( !bSolid )
-        {
-            m_kScene.AttachGlobalState(m_kAlphaTransparency);
-            m_kScene.AttachGlobalState(m_kZBufferTransparency);
-            m_kZBufferTransparency.Writable = false;
-        }
-        else
-        {
-            m_kScene.AttachGlobalState(m_kAlpha);
-        }
-        m_kScene.UpdateGS();
-        m_kScene.UpdateRS();
-        kCuller.ComputeVisibleSet(m_kScene);              
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
-    }
-    
     
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#Render(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
@@ -632,5 +566,15 @@ public class VolumeSlices extends VolumeObject
             m_akPlanes[i].VBuffer.SetShared(true);
             m_akPlanes[i].IBuffer.SetShared(true);
         }
+    }
+
+    public Node GetScene()
+    {
+        m_kScene.DetachAllChildren();
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_kScene.AttachChild(m_akPlanes[i]);
+        }
+        return m_kScene;
     }
 }
