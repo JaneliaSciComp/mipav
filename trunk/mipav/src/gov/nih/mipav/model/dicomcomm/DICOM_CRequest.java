@@ -275,7 +275,7 @@ public class DICOM_CRequest {
 		    }
 		else{
 			
-			String s = instanceUID;
+			 dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, instanceUID);
 		}
 		
 
