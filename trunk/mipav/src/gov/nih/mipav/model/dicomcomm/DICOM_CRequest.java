@@ -263,21 +263,21 @@ public class DICOM_CRequest {
         dcor.setInt16(DICOM_RTC.DD_MessageID, MSG_ID);
 
         DICOM_Util.determineSOPClassUIDAndPush(classUID, null, ddo, dcor);
-
-        if (instanceUID == null) {
-
-            if ((COMMAND == DICOM_Constants.COMMAND_CStoreRQ) && (ddo != null)) {
-
-                // copy Affected SOP Instance UID
-                String s = ddo.getStr(DICOM_RTC.DD_SOPInstanceUID);
-
-                if (s != null) {
-                    dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, s);
-                }
-            }
-        } else {
-            dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, instanceUID);
-        }
+        
+		if ((COMMAND == DICOM_Constants.COMMAND_CStoreRQ) && (ddo != null)) {
+		
+		    // copy Affected SOP Instance UID
+		    	String s = ddo.getStr(DICOM_RTC.DD_SOPInstanceUID);
+		
+		        if (s != null) {
+		            dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, s);
+		        }
+		    }
+		else{
+			
+			String s = instanceUID;
+		}
+		
 
         dcor.setInt16(DICOM_RTC.DD_Priority, MEDIUM); // See class definition for other priority codes
 
