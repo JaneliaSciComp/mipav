@@ -324,8 +324,9 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                 Preferences.debug("\n" + DICOM_Util.timeStamper() + " DICOMReceiver.recieverClient: Begin (" +
                                   this.hashCode() + ")  \n");
             }
-
-            handleConnectionFromServer(socket); // handle association negotiation with server requester
+            if (socket.isClosed()){
+            	handleConnectionFromServer(socket);// handle association negotiation with server requester
+            }
 
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                 Preferences.debug(DICOM_Util.timeStamper() + " DICOMReceiver.receiverClient(" + this.hashCode() +

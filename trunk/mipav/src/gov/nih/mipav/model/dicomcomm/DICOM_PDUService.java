@@ -1139,7 +1139,7 @@ public class DICOM_PDUService extends DICOM_Comms {
                 if (pca.result != 4) {
                 associateAC.addPresentationContextAccept(pca);
                 } else {
-                	System.err.println("equal to four, not adding");
+                	Preferences.debug("equal to four, not adding");
                 }
 
                 if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
