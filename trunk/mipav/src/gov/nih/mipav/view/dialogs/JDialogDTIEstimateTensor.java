@@ -1456,7 +1456,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
     	if(kAlgorithm.isCompleted()) {
            DTIImage = ((AlgorithmDWI2DTI)kAlgorithm).getDTIImage();
 
-           DTIImage.saveImage(outputDirTextField.getText() + File.separator, "DTI.xml", FileUtility.XML, false);
+           DTIImage.saveImage(outputDirTextField.getText() + File.separator, "DTIImage.xml", FileUtility.XML, false);
            MipavUtil.displayInfo("Tensor image saved as " + outputDirTextField.getText() + File.separator + "DTI.xml");
            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
            if(maskImage != null) {
