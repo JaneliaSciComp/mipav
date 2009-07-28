@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.file;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogFileInfo;
@@ -26,6 +27,13 @@ public class FileInfoPARREC extends FileInfoBase {
     
     /** slice specific info **/
     private String sliceInfo;
+    
+    /** par/rec version **/
+    private String version;
+    
+    private ArrayList<String> generalInfoList = new ArrayList<String>();
+    
+    private ArrayList<String> imageInfoList = new ArrayList<String>();
     
     
 
@@ -130,6 +138,32 @@ public class FileInfoPARREC extends FileInfoBase {
 	public void setSliceInfo(String sliceInfo) {
 		this.sliceInfo = sliceInfo;
 	}
+
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public ArrayList<String> getGeneralInfoList() {
+		return generalInfoList;
+	}
+
+	public void setGeneralInfoList(String info) {
+		generalInfoList.add(info);
+	}
+
+	public ArrayList<String> getImageInfoList() {
+		return imageInfoList;
+	}
+
+	public void setImageInfoList(String info) {
+		imageInfoList.add(info);
+	}
+	
+	
 	
 	
 
