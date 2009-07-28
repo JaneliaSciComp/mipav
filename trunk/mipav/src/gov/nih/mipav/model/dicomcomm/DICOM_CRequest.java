@@ -273,8 +273,7 @@ public class DICOM_CRequest {
 		            dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, s);
 		        }
 		    }
-		else{
-			
+		else if((COMMAND == DICOM_Constants.COMMAND_CStoreRQ)){
 			 dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, instanceUID);
 		}
 		
