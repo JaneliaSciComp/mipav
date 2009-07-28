@@ -2268,7 +2268,7 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         covN13N12 = covN12N13;
         covN13N21 = (n - R)*p213 + (n*n - 3*n - Q + R)*p2113 - n*n*p21*p13;
         covN13N22 = (n*n - 3*n - Q + R)*p2213 - n*n*p22*p13;
-        covN13N23 = Q*p132 * (n*n - 3*n - Q + R)*p1332 - n*n*p13*p23;
+        covN13N23 = Q*p132 + (n*n - 3*n - Q + R)*p1332 - n*n*p13*p23;
         covN13N31 = R*p13 + (n - R)*(p113 + p133) + (n*n - 3*n - Q + R)*p1133 - n*n*p13*p31;
         covN13N32 = (n - R)*p132 + (n*n - 3*n - Q + R)*p1332 - n*n*p13*p32;
         covN13N33 = (n - R + Q)*p331 + (n*n - 3*n - Q + R)*p3331 - n*n*p33*p31;
