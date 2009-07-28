@@ -255,8 +255,8 @@ public class JPanelDTILoad extends JInterfaceBase {
                 setFAimage();
                 setDTIColorImage();
                 parentFrame.setDTIParamsActive();
-                
-                // parentFrame.getParamPanel().setTractParams(m_kTractFile, m_kTractsLimit, m_kTractsMin, m_kTractsMax, m_kTractPath, m_kDTIImage);
+                setDTIimage();
+                parentFrame.getParamPanel().setTractParams(m_kTractFile, m_kTractsLimit, m_kTractsMin, m_kTractsMax, m_kTractPath, m_kDTIImage);
 		        // parentFrame.getParamPanel().processTractFile();
         }
        
@@ -287,7 +287,7 @@ public class JPanelDTILoad extends JInterfaceBase {
                     - kTract.length());
             FileIO fileIO = new FileIO();
            
-            
+            /*
             m_kDTIImage = fileIO.readImage(kDTIName, chooser
                     .getCurrentDirectory()
                     + File.separator);
@@ -307,7 +307,7 @@ public class JPanelDTILoad extends JInterfaceBase {
                     m_kDTIImage = null;
                 }   
             }
-           
+            */
             m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
             if (!m_kTractFile.exists() || !m_kTractFile.canRead()) {
                 m_kTractFile = null;

@@ -176,11 +176,12 @@ implements ListSelectionListener, ChangeListener {
      */
     public void disposeLocal() {
        
+    	/*
        if ( m_kDTIImage != null ) {
     	   m_kDTIImage.disposeLocal();
     	   m_kDTIImage = null;
        }
-    	
+    	*/
        
        
        if ( m_kVOIParamsList != null )
@@ -710,7 +711,7 @@ implements ListSelectionListener, ChangeListener {
             kDTIName = kDTIName.substring(0, kDTIName.length()
                     - kTract.length());
             FileIO fileIO = new FileIO();
-           
+            /*
             m_kDTIImage = fileIO.readImage(kDTIName, chooser
                     .getCurrentDirectory()
                     + File.separator);
@@ -730,7 +731,7 @@ implements ListSelectionListener, ChangeListener {
                     m_kDTIImage = null;
                 }   
             }
-            
+            */
             m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
             if (!m_kTractFile.exists() || !m_kTractFile.canRead()) {
                 m_kTractFile = null;
@@ -904,11 +905,12 @@ implements ListSelectionListener, ChangeListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
+        /*
         if ( m_kDTIImage != null ) {
         	m_kDTIImage.disposeLocal();
         	m_kDTIImage = null;
         }
+        */
     }
     
     /** Updates the tract list user-interface. */
