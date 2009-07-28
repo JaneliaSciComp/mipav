@@ -124,7 +124,7 @@ implements ChangeListener {
     }
     
     public void setDTIimage(ModelImage _m_kDTIImage) {
-	    m_kDTIImage = _m_kDTIImage;
+	    m_kDTIImage = (ModelImage)_m_kDTIImage.clone();
     }
 	
     
@@ -489,13 +489,14 @@ implements ChangeListener {
         	DTIimageLoadPanel = null;
         }
         
+       
         if ( m_kDTIImage != null )
         {
         	m_kDTIImage.removeImageDisplayListener(this);
             m_kDTIImage.disposeLocal();
             m_kDTIImage = null;
         }
-        
+       
         
         
         if ( imageA != null ) {
