@@ -2316,7 +2316,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         lockPanel = new JPanel();
         lockAllButton = new JButton("lock all masks");
         lockAllButton.addActionListener(this);
-        lockAllButton.setActionCommand("lockAll");
+        lockAllButton.setActionCommand("AdvancedPaint:LockAll");
         gbc.gridy = 0;
         gbc.gridx = 0;
         gbc.anchor = GridBagConstraints.CENTER;
@@ -2325,7 +2325,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
         unlockAllButton = new JButton("unlock all masks");
         unlockAllButton.addActionListener(this);
-        unlockAllButton.setActionCommand("unlockAll");
+        unlockAllButton.setActionCommand("AdvancedPaint:UnlockAll");
         gbc.gridy = 0;
         gbc.gridx = 1;
         lockPanel.add(unlockAllButton, gbc);
@@ -2489,7 +2489,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         JPanel lockPanel = new JPanel();
         lockAllButton = new JButton("lock all masks");
         lockAllButton.addActionListener(this);
-        lockAllButton.setActionCommand("lockAll");
+        lockAllButton.setActionCommand("AdvancedPaint:LockAll");
         gbc.gridy = 0;
         gbc.gridx = 0;
         gbc.anchor = GridBagConstraints.CENTER;
@@ -2498,7 +2498,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
         unlockAllButton = new JButton("unlock all masks");
         unlockAllButton.addActionListener(this);
-        unlockAllButton.setActionCommand("unlockAll");
+        unlockAllButton.setActionCommand("AdvancedPaint:UnlockAll");
         gbc.gridy = 0;
         gbc.gridx = 1;
         lockPanel.add(unlockAllButton, gbc);
