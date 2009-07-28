@@ -526,12 +526,22 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         double varC3;
         double covN11C1;
         double covN12C2;
+        double covN12C3;
+        double covN13C2;
         double covN13C3;
         double covN21C1;
+        double covN21C3;
         double covN22C2;
+        double covN22C3;
+        double covN23C2;
         double covN23C3;
         double covN31C1;
+        double covN31C2;
+        double covN32C1;
         double covN32C2;
+        double covN32C3;
+        double covN33C1;
+        double covN33C2;
         double covN33C3;
         double varT11;
         double varT12;
@@ -617,25 +627,94 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         double covN33N31;
         double covN33N32;
         double covN11C2;
+        double covN11C3;
         double covN12C1;
+        double covN13C1;
         double covN22C1;
+        double covN23C1;
         double covN21C2;
+        double covN31C3;
         double covC1C1;
         double covC1C2;
+        double covC1C3;
         double covC2C1;
         double covC2C2;
+        double covC2C3;
+        double covC3C1;
+        double covC3C2;
+        double covC3C3;
         double covT11T12;
+        double covT11T13;
         double covT11T21;
         double covT11T22;
+        double covT11T23;
+        double covT11T31;
+        double covT11T32;
+        double covT11T33;
         double covT12T11;
+        double covT12T13;
         double covT12T21;
         double covT12T22;
+        double covT12T23;
+        double covT12T31;
+        double covT12T32;
+        double covT12T33;
+        double covT13T11;
+        double covT13T12;
+        double covT13T21;
+        double covT13T22;
+        double covT13T23;
+        double covT13T31;
+        double covT13T32;
+        double covT13T33;
         double covT21T11;
         double covT21T12;
+        double covT21T13;
         double covT21T22;
+        double covT21T23;
+        double covT21T31;
+        double covT21T32;
+        double covT21T33;
         double covT22T11;
         double covT22T12;
+        double covT22T13;
         double covT22T21;
+        double covT22T23;
+        double covT22T31;
+        double covT22T32;
+        double covT22T33;
+        double covT23T11;
+        double covT23T12;
+        double covT23T13;
+        double covT23T21;
+        double covT23T22;
+        double covT23T31;
+        double covT23T32;
+        double covT23T33;
+        double covT31T11;
+        double covT31T12;
+        double covT31T13;
+        double covT31T21;
+        double covT31T22;
+        double covT31T23;
+        double covT31T32;
+        double covT31T33;
+        double covT32T11;
+        double covT32T12;
+        double covT32T13;
+        double covT32T21;
+        double covT32T22;
+        double covT32T23;
+        double covT32T31;
+        double covT32T33;
+        double covT33T11;
+        double covT33T12;
+        double covT33T13;
+        double covT33T21;
+        double covT33T22;
+        double covT33T23;
+        double covT33T31;
+        double covT33T32;
         double sigma[][];
         Matrix sigmaN;
         double Tp[][];
@@ -2690,40 +2769,47 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         Preferences.debug("z33N = " + z33N + "\n");
         
         // CN = T'SigmaNInverseT
-        // CN has a chiSquared distribution with 1 degree of freedom
-        // T' = [T11 T12 T21 T22]
+        // CN has a chiSquared distribution with 4 degrees of freedom
+        // T' = [T11 T12 T13 T21 T22 T23 T31 T32 T33]
         // T = [T11]
         //     [T12]
+        //     [T13]
         //     [T21]
         //     [T22]
-        // SigmaN = [varT11    covT11T12  covT11T21  covT11T22]
-        //          [covT12T11 varT12     covT12T21  covT12T22]
-        //          [covT21T11 covT21T12  varT21     covT21T22]
-        //          [covT22T11 covT22T12  covT22T21  varT22]
+        //     [T23]
+        //     [T31]
+        //     [T32]
+        //     [T33]
+        // SigmaN = [varT11     covT11T12  covT11T13  covT11T21  covT11T22  covT11T23  covT11T31  covT11T32  covT11T33]
+        //          [covT12T11  varT12     covT12T13  covT12T21  covT12T22  covT12T23  covT12T31  covT12T32  covT12T33]
+        //          [covT13T11  covT13T12  varT13     covT13T21  covT13T22  covT13T23  covT13T31  covT13T32  covT13T33]
+        //          [covT21T11  covT21T12  covT21T13  varT21     covT21T22  covT21T23  covT21T31  covT21T32  covT21T33]
+        //          [covT22T11  covT22T12  covT22T13  covT22T21  varT22     covT22T23  covT22T31  covT22T32  covT22T33]
+        //          [covT23T11  covT23T12  covT23T13  covT23T21  covT23T22  varT23     covT23T31  covT23T32  covT23T33]
+        //          [covT31T11  covT31T12  covT31T13  covT31T21  covT31T22  covT31T23  varT31     covT31T32  covT31T33]
+        //          [covT32T11  covT32T12  covT32T13  covT32T21  covT32T22  covT32T23  covT32T31  varT32     covT32T33]
+        //          [covT33T11  covT33T12  covT33T13  covT33T21  covT33T22  covT33T23  covT33T31  covT33T32  varT33   ]
         
-        covN11C2 = covN11N12 + covN11N22;
-        covN12C1 = covN12N11 + covN12N21;
-        covC1C2 = covN11N12 + covN11N22 + covN21N12 + covN21N22;
+        covN11C2 = covN11N12 + covN11N22 + covN11N32;
+        covN12C1 = covN12N11 + covN12N21 + covN12N31;
+        covC1C2 = covN11N12 + covN11N22 + covN11N32 + covN21N12 + covN21N22 + covN21N32 
+                + covN31N12 + covN31N22 + covN31N32;
         covT11T12 = covN11N12 - n1*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
                     + (n1 - 1)*n1*covC1C2/((n - 1)*(n - 1));
-        //covT11T12 = covN11N12 - n2*covN11C2/(n - 1) - (n1 - 1)*covN12C1/(n - 1)
-        //+ (n1 - 1)*n2*covC1C2/((n - 1)*(n - 1));
-        covC1C1 = varN11 + covN11N21 + covN21N11 + varN21;
+        covC1C1 = varN11 + covN11N21 + covN11N31 + covN21N11 + varN21 + covN21N31 +
+                  covN31N11 + covN31N21 + varN31;
         covT11T21 = covN11N21 - n2*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
                     + (n1 - 1)*n2*covC1C1/((n - 1)*(n - 1));
-        //covT11T21 = covN11N21 - n1*covN11C1/(n - 1) - (n1 - 1)*covN21C1/(n - 1)
-        //+ (n1 - 1)*n1*covC1C1/((n - 1)*(n - 1));
-        covN22C1 = covN22N11 + covN22N21;
+        covN22C1 = covN22N11 + covN22N21 + covN22N31;
         covT11T22 = covN11N22 - (n2 - 1)*covN11C2/(n - 1) - (n1 - 1)*covN22C1/(n - 1)
                     + (n1 - 1)*(n2 - 1)*covC1C2/((n - 1)*(n - 1));
         covT12T11 = covT11T12;
         covC2C1 = covC1C2;
-        covN21C2 = covN21N12 + covN21N22;
+        covN21C2 = covN21N12 + covN21N22 + covN21N32;
         covT12T21 = covN12N21 - n2*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
                     + n1*n2*covC2C1/((n - 1)*(n - 1));
-        //covT12T21 = covN12N21 - n1*covN12C1/(n - 1) - n1*covN21C2/(n - 1)
-        //+ n1*n1*covC2C1/((n - 1)*(n - 1));
-        covC2C2 = varN12 + covN12N22 + covN22N12 + varN22;
+        covC2C2 = varN12 + covN12N22 + covN12N32 + covN22N12 + varN22 + covN22N32
+                + covN32N12 + covN32N22 + varN32;
         covT12T22 = covN22N12 - n1*covN22C2/(n - 1) - (n2 - 1)*covN12C2/(n - 1)
                     + (n2 - 1)*n1*covC2C2/((n - 1)*(n - 1));
         covT21T11 = covT11T21;
@@ -2733,35 +2819,222 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         covT22T11 = covT11T22;
         covT22T12 = covT12T22;
         covT22T21 = covT21T22;
+        covN11C3 = covN11N13 + covN11N23 + covN11N33;
+        covN13C1 = covN13N11 + covN13N21 + covN13N31;
+        covC1C3 = covN11N13 + covN11N23 + covN11N33 + covN21N13 + covN21N23 + covN21N33 
+        + covN31N13 + covN31N23 + covN31N33;
+        covT11T13 = covN11N13 - n1*covN11C3/(n - 1) - (n1 - 1)*covN13C1/(n - 1)
+        + (n1 - 1)*n1*covC1C3/((n - 1)*(n - 1));
+        covN23C1 = covN23N11 + covN23N21 + covN23N31;
+        covT11T23 = covN11N23 - n2*covN11C3/(n - 1) - (n1 - 1)*covN23C1/(n - 1)
+        + (n1 - 1)*n2*covC1C3/((n - 1)*(n - 1));
+        covT11T31 = covN11N31 - n3*covN11C1/(n - 1) - (n1 - 1)*covN31C1/(n - 1)
+        + (n1 - 1)*n3*covC1C1/((n - 1)*(n - 1));
+        covN32C1 = covN32N11 + covN32N21 + covN32N31;
+        covT11T32 = covN11N32 - n3*covN11C2/(n - 1) - (n1 - 1)*covN32C1/(n - 1)
+        + (n1 - 1)*n3*covC1C2/((n - 1)*(n - 1));
+        covN33C1 = covN33N11 + covN33N21 + covN33N31;
+        covT11T33 = covN11N33 - (n3 - 1)*covN11C3/(n - 1) - (n1 - 1)*covN33C1/(n - 1)
+        + (n1 - 1)*(n3 - 1)*covC1C3/((n - 1)*(n - 1));
+        covN12C3 = covN12N13 + covN12N23 + covN12N33;
+        covN13C2 = covN13N12 + covN13N22 + covN13N32;
+        covC2C3 = covN12N13 + covN12N23 + covN12N33 + covN22N13 + covN22N23 + covN22N33 
+        + covN32N13 + covN32N23 + covN32N33;
+        covT12T13 = covN12N13 - n1*covN12C3/(n - 1) - n1*covN13C2/(n - 1)
+                  + n1*n1*covC2C3/((n - 1)*(n - 1));
+        covN23C2 = covN23N12 + covN23N22 + covN23N32;
+        covT12T23 = covN12N23 - n2*covN12C3/(n - 1) - n1*covN23C2/(n - 1)
+        + n1*n2*covC2C3/((n - 1)*(n - 1));
+        covN31C2 = covN31N12 + covN31N22 + covN31N32;
+        covT12T31 = covN12N31 - n3*covN12C1/(n - 1) - n1*covN31C2/(n - 1)
+        + n1*n3*covC2C1/((n - 1)*(n - 1));
+        covT12T32 = covN12N32 - n3*covN12C2/(n - 1) - n1*covN32C2/(n - 1)
+        + n1*n3*covC2C2/((n - 1)*(n - 1));
+        covN33C2 = covN33N12 + covN33N22 + covN33N32;
+        covC3C2 = covC2C3;
+        covT12T33 = covN33N12 - n1*covN33C2/(n - 1) - (n3 - 1)*covN12C3/(n - 1)
+        + (n3 - 1)*n1*covC3C2/((n - 1)*(n - 1));
+        covT13T11 = covT11T13;
+        covT13T12 = covT12T13;
+        covN21C3 = covN21N13 + covN21N23 + covN21N33;
+        covC3C1 = covC1C3;
+        covT13T21 = covN13N21 - n2*covN13C1/(n - 1) - n1*covN21C3/(n - 1)
+        + n1*n2*covC3C1/((n - 1)*(n - 1));
+        covN22C3 = covN22N13 + covN22N23 + covN22N33;
+        covT13T22 = covN22N13 - n1*covN22C3/(n - 1) - (n2 - 1)*covN13C2/(n - 1)
+                  + (n2 - 1)*n1*covC2C3/((n - 1)*(n - 1));
+        covC3C3 = varN13 + covN13N23 + covN13N33 + covN23N13 + varN23 + covN23N33 +
+        covN33N13 + covN33N23 + varN33;
+        covT13T23 = covN13N23 - n2*covN13C3/(n - 1) - n1*covN23C3/(n - 1)
+        + n1*n2*covC3C3/((n - 1)*(n - 1));
+        covN31C3 = covN31N13 + covN31N23 + covN31N33;
+        covT13T31 = covN13N31 - n3*covN13C1/(n - 1) - n1*covN31C3/(n - 1)
+        + n1*n3*covC3C1/((n - 1)*(n - 1));
+        covN32C3 = covN32N13 + covN32N23 + covN32N33;
+        covT13T32 = covN13N32 - n3*covN13C2/(n - 1) - n1*covN32C3/(n - 1)
+        + n1*n3*covC3C2/((n - 1)*(n - 1));
+        covT13T33 = covN33N13 - n1*covN33C3/(n - 1) - (n3 - 1)*covN13C3/(n - 1)
+        + (n3 - 1)*n1*covC3C3/((n - 1)*(n - 1));
+        covT21T13 = covT13T21;
+        covT21T23 = covN21N23 - n2*covN21C3/(n - 1) - n2*covN23C1/(n - 1)
+        + n2*n2*covC1C3/((n - 1)*(n - 1));
+        covT21T31 = covN21N31 - n3*covN21C1/(n - 1) - n2*covN31C1/(n - 1)
+        + n2*n3*covC1C1/((n - 1)*(n - 1));
+        covT21T32 = covN21N32 - n3*covN21C2/(n - 1) - n2*covN32C1/(n - 1)
+        + n2*n3*covC1C2/((n - 1)*(n - 1));
+        covT21T33 = covN33N21 - n2*covN33C1/(n - 1) - (n3 - 1)*covN21C3/(n - 1)
+        + (n3 - 1)*n2*covC3C1/((n -1)*(n - 1));
+        covT22T13 = covT13T22;
+        covT22T23 = covN22N23 - n2*covN22C3/(n - 1) - (n2 - 1)*covN23C2/(n - 1)
+        + (n2 - 1)*n2*covC2C3/((n - 1)*(n - 1));
+        covT22T31 = covN22N31 - n3*covN22C1/(n - 1) - (n2 - 1)*covN31C2/(n - 1)
+        + (n2 - 1)*n3*covC2C1/((n - 1)*(n - 1));
+        covT22T32 = covN22N32 - n3*covN22C2/(n - 1) - (n2 - 1)*covN32C2/(n - 1)
+        + (n2 - 1)*n3*covC2C2/((n - 1)*(n - 1));
+        covT22T33 = covN22N33 - (n3 - 1)*covN22C3/(n - 1) - (n2 - 1)*covN33C2/(n - 1)
+        + (n2 - 1)*(n3 - 1)*covC2C3/((n - 1)*(n - 1));
+        covT23T11 = covT11T23;
+        covT23T12 = covT12T23;
+        covT23T13 = covT13T23;
+        covT23T21 = covT21T23;
+        covT23T22 = covT22T23;
+        covT23T31 = covN23N31 - n3*covN23C1/(n - 1) - n2*covN31C3/(n - 1)
+        + n2*n3*covC3C1/((n - 1)*(n - 1));
+        covT23T32 = covN23N32 - n3*covN23C2/(n - 1) - n2*covN32C3/(n - 1)
+        + n2*n3*covC3C2/((n - 1)*(n - 1));
+        covT23T33 = covN33N23 - n2*covN33C3/(n - 1) - (n3 - 1)*covN23C3/(n - 1)
+        + (n3 - 1)*n2*covC3C3/((n - 1)*(n - 1));
+        covT31T11 = covT11T31;
+        covT31T12 = covT12T31;
+        covT31T13 = covT13T31;
+        covT31T21 = covT21T31;
+        covT31T22 = covT22T31;
+        covT31T23 = covT23T31;
+        covT31T32 = covN31N32 - n3*covN31C2/(n - 1) - n3*covN32C1/(n - 1)
+        + n3*n3*covC1C2/((n - 1)*(n - 1));
+        covT31T33 = covN33N31 - n3*covN33C1/(n - 1) - (n3 - 1)*covN31C3/(n - 1)
+        + (n3 - 1)*n3*covC3C1/((n -1)*(n - 1));
+        covT32T11 = covT11T32;
+        covT32T12 = covT12T32;
+        covT32T13 = covT13T32;
+        covT32T21 = covT21T32;
+        covT32T22 = covT22T32;
+        covT32T23 = covT23T32;
+        covT32T31 = covT31T32;
+        covT32T33 = covN33N32 - n3*covN33C2/(n - 1) - (n3 - 1)*covN32C3/(n - 1)
+        + (n3 - 1)*n3*covC3C2/((n -1)*(n - 1));
+        covT33T11 = covT11T33;
+        covT33T12 = covT12T33;
+        covT33T13 = covT13T33;
+        covT33T21 = covT21T33;
+        covT33T22 = covT22T33;
+        covT33T23 = covT23T33;
+        covT33T31 = covT31T33;
+        covT33T32 = covT32T33;
    
         sigma[0][0] =  varT11;
         sigma[0][1] = covT11T12;
-        sigma[0][2] = covT11T21;
-        sigma[0][3] = covT11T22;
+        sigma[0][2] = covT11T13;
+        sigma[0][3] = covT11T21;
+        sigma[0][4] = covT11T22;
+        sigma[0][5] = covT11T23;
+        sigma[0][6] = covT11T31;
+        sigma[0][7] = covT11T32;
+        sigma[0][8] = covT11T33;
         sigma[1][0] = covT12T11;
         sigma[1][1] =  varT12;
-        sigma[1][2] = covT12T21;
-        sigma[1][3] = covT12T22;
-        sigma[2][0] = covT21T11;
-        sigma[2][1] = covT21T12;
-        sigma[2][2] = varT21;
-        sigma[2][3] = covT21T22;
-        sigma[3][0] = covT22T11;
-        sigma[3][1] = covT22T12;
-        sigma[3][2] = covT22T21;
-        sigma[3][3] = varT22;
+        sigma[1][2] = covT12T13;
+        sigma[1][3] = covT12T21;
+        sigma[1][4] = covT12T22;
+        sigma[1][5] = covT12T23;
+        sigma[1][6] = covT12T31;
+        sigma[1][7] = covT12T32;
+        sigma[1][8] = covT12T33;
+        sigma[2][0] = covT13T11;
+        sigma[2][1] = covT13T12;
+        sigma[2][2] = varT13;
+        sigma[2][3] = covT13T21;
+        sigma[2][4] = covT13T22;
+        sigma[2][5] = covT13T23;
+        sigma[2][6] = covT13T31;
+        sigma[2][7] = covT13T32;
+        sigma[2][8] = covT13T33;
+        sigma[3][0] = covT21T11;
+        sigma[3][1] = covT21T12;
+        sigma[3][2] = covT21T13;
+        sigma[3][3] = varT21;
+        sigma[3][4] = covT21T22;
+        sigma[3][5] = covT21T23;
+        sigma[3][6] = covT21T31;
+        sigma[3][7] = covT21T32;
+        sigma[3][8] = covT21T33;
+        sigma[4][0] = covT22T11;
+        sigma[4][1] = covT22T12;
+        sigma[4][2] = covT22T13;
+        sigma[4][3] = covT22T21;
+        sigma[4][4] = varT22;
+        sigma[4][5] = covT22T23;
+        sigma[4][6] = covT22T31;
+        sigma[4][7] = covT22T32;
+        sigma[4][8] = covT22T33;
+        sigma[5][0] = covT23T11;
+        sigma[5][1] = covT23T12;
+        sigma[5][2] = covT23T13;
+        sigma[5][3] = covT23T21;
+        sigma[5][4] = covT23T22;
+        sigma[5][5] = varT23;
+        sigma[5][6] = covT23T31;
+        sigma[5][7] = covT23T32;
+        sigma[5][8] = covT23T33;
+        sigma[6][0] = covT31T11;
+        sigma[6][1] = covT31T12;
+        sigma[6][2] = covT31T13;
+        sigma[6][3] = covT31T21;
+        sigma[6][4] = covT31T22;
+        sigma[6][5] = covT31T23;
+        sigma[6][6] = varT31;
+        sigma[6][7] = covT31T32;
+        sigma[6][8] = covT31T33;
+        sigma[7][0] = covT32T11;
+        sigma[7][1] = covT32T12;
+        sigma[7][2] = covT32T13;
+        sigma[7][3] = covT32T21;
+        sigma[7][4] = covT32T22;
+        sigma[7][5] = covT32T23;
+        sigma[7][6] = covT32T31;
+        sigma[7][7] = varT32;
+        sigma[7][8] = covT32T33;
+        sigma[8][0] = covT33T11;
+        sigma[8][1] = covT33T12;
+        sigma[8][2] = covT33T13;
+        sigma[8][3] = covT33T21;
+        sigma[8][4] = covT33T22;
+        sigma[8][5] = covT33T23;
+        sigma[8][6] = covT33T31;
+        sigma[8][7] = covT33T32;
+        sigma[8][8] = varT33;
         sigmaN = new Matrix(sigma);
         Tp = new double[1][9];
         Tp[0][0] = T11;
         Tp[0][1] = T12;
-        Tp[0][2] = T21;
-        Tp[0][3] = T22;
+        Tp[0][2] = T13;
+        Tp[0][3] = T21;
+        Tp[0][4] = T22;
+        Tp[0][5] = T23;
+        Tp[0][6] = T31;
+        Tp[0][7] = T32;
+        Tp[0][8] = T33;
         TpM = new Matrix(Tp);
         T = new double[9][1];
         T[0][0] = T11;
         T[1][0] = T12;
-        T[2][0] = T21;
-        T[3][0] = T22;
+        T[2][0] = T13;
+        T[3][0] = T21;
+        T[4][0] = T22;
+        T[5][0] = T23;
+        T[6][0] = T31;
+        T[7][0] = T32;
+        T[8][0] = T33;
         TM = new Matrix(T);
         success = true;
         try {
