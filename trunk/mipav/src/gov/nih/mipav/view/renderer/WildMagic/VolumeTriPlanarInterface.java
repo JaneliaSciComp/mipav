@@ -1434,6 +1434,16 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         return raycastRenderWM.getMaterial(kSurfaceName);
     }
 
+    /**
+     * Return the opacity properties of the given surface.
+     * @param kSurfaceName the surface to query.
+     * @return the opacity value of the surface.
+     */
+    public float getOpacity(String kSurfaceName)
+    {
+        return raycastRenderWM.getOpacity(kSurfaceName);
+    }
+    
 
     public VolumeNode getNode(String kSurfaceName)
     {       
@@ -2175,7 +2185,6 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     {
         raycastRenderWM.blend(kSurfaceName, fValue );
     }
-    
     
     /**
      * Turns showing the slice bounding box on/off.

@@ -42,6 +42,8 @@ public class VolumeSurface extends VolumeObject
     private TriMesh m_kMesh = null;
     /** Surface material properties. */
     private MaterialState m_kMaterial = null;
+    /** Surface opacity value. */
+    private float m_kOpacity = 1;
     /** Surface shader effect. */
     private SurfaceLightingEffect m_kLightShader;
     private SurfaceLightingEffect m_kLightShaderTransparent;
@@ -556,6 +558,22 @@ public class VolumeSurface extends VolumeObject
     public MaterialState GetMaterial()
     {
         return m_kMaterial;
+    }
+    
+    /**
+     * Set the surface opacity properties
+     * @param kMaterial surface opacity value.
+     */
+    public void SetOpacity( float opacity) {
+    	m_kOpacity = opacity;
+    }
+    
+    /**
+     * Return the surface opacity value.
+     * @return surface opacity value.
+     */
+    public float GetOpacity() {
+    	return m_kOpacity;
     }
 
     /* (non-Javadoc)

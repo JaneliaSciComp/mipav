@@ -335,6 +335,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
                 {
                     m_kDisplayList.get(i).Blend( fValue );
+                    // save the opacity property in surface attributes
+                    ((VolumeSurface)(m_kDisplayList.get(i))).SetOpacity(fValue);
                 }
             }
         }
@@ -840,6 +842,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         return null;
     }
+    
+    /**
+     * Return the opacity properties of the given surface.
+     * @param kSurfaceName the surface to query.
+     * @return the opacity value of the surface.
+     */
+    public float getOpacity( String kSurfaceName )
+    {
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i).GetName() != null )
+            {
+                if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+                {
+                    return ((VolumeSurface)(m_kDisplayList.get(i))).GetOpacity();
+                }
+            }
+        }
+        return 0;
+    }
+    
 
     /** Returns the polyline color for the specified fiber bundle tract group. 
      * @param iGroup the fiber bundle group to query.
