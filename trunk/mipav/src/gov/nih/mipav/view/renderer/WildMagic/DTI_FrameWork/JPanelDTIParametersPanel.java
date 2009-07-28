@@ -165,9 +165,9 @@ implements ListSelectionListener, ChangeListener {
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
        
-        mainPanel.add(createLoadTractDialog(), BorderLayout.NORTH);
-        mainPanel.add(createTractDialog(), BorderLayout.CENTER);
-        mainPanel.add(createTractPanel(), BorderLayout.SOUTH );
+        // mainPanel.add(createLoadTractDialog(), BorderLayout.NORTH);
+        mainPanel.add(createTractDialog(), BorderLayout.NORTH);
+        mainPanel.add(createTractPanel(), BorderLayout.CENTER );
     }
 
     /**
@@ -400,6 +400,14 @@ implements ListSelectionListener, ChangeListener {
       
     }
 
+    public void processDTI() {
+    	// loadingTrack = true;
+		// loadTractFile();
+		// loadingTrack = false;
+		((VolumeTriPlanerRenderDTI) m_kVolumeDisplay).enableSlicePickable(true);
+		processTractFile();
+    }
+    
     public void updateCounter() {
             updateTractCount();
     }
@@ -722,7 +730,7 @@ implements ListSelectionListener, ChangeListener {
                     m_kDTIImage = null;
                 }   
             }
-       
+            
             m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
             if (!m_kTractFile.exists() || !m_kTractFile.canRead()) {
                 m_kTractFile = null;
