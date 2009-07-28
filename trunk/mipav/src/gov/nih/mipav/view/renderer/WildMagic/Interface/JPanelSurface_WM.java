@@ -665,17 +665,23 @@ public class JPanelSurface_WM extends JInterfaceBase
      */
     public void valueChanged(ListSelectionEvent kEvent)
     {
+    	MaterialState kMaterial;
+    	float opacityValue;
         if ( m_kVolumeViewer != null )
         {
             int[] aiSelected = surfaceList.getSelectedIndices();
             if ( aiSelected.length == 1 )
             {
                 DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-
+                
                 triangleText.setText(String.valueOf( m_kMeshes.get(aiSelected[0]).GetTriangleQuantity() ) );
                 volumeText.setText(String.valueOf( m_kVolumeViewer.getVolume( (String)kList.elementAt(aiSelected[0]) ) ) );
                 areaText.setText(String.valueOf( m_kVolumeViewer.getSurfaceArea( (String)kList.elementAt(aiSelected[0]) ) ) );              
-
+                kMaterial = m_kVolumeViewer.getMaterial( (String)kList.elementAt(aiSelected[0]));
+                colorButton.setBackground( new Color(kMaterial.Diffuse.R, kMaterial.Diffuse.G, kMaterial.Diffuse.B) );
+                opacityValue = m_kVolumeViewer.getOpacity( (String)kList.elementAt(aiSelected[0]));
+                opacitySlider.setValue((int)(opacityValue * 100));
+                
                 if ( m_kMeshes.get(aiSelected[0]) instanceof ClodMesh )
                 {
                     decimateButton.setEnabled(false);
@@ -1444,8 +1450,7 @@ public class JPanelSurface_WM extends JInterfaceBase
             }
         }
     }
-
-
+    
     /**
      * Smoothes the selected surfaces. One dialog per group of selected surfaces is displayed (not a different dialog
      * per-surface).
