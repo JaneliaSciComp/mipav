@@ -23,6 +23,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
+import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.*;
 
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
@@ -448,6 +449,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeRayCast.setVolumeSamples( (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f );
             CMPMode();
             m_kAnimator.setRunAsFastAsPossible(true); 
+            if( m_kParent instanceof VolumeTriPlanarInterfaceDTI ) {
+            	((VolumeTriPlanarInterfaceDTI)m_kParent).getParamPanel().processDTI();
+            }
         }
         if ( m_bSurfaceUpdate )
         {

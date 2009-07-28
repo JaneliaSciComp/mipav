@@ -210,7 +210,7 @@ implements ChangeListener {
     	insertTab("Fibers", DTIParametersPanel);
     	tabbedPane.setSelectedIndex(tabbedPane.indexOfTab("Fibers") );
     	
-    	// getParamPanel().setTractParams(m_kTractFile, m_kTractsLimit, m_kTractsMin, m_kTractsMax, m_kTractPath, m_kDTIImage);
+        getParamPanel().setTractParams(m_kTractFile, m_kTractsLimit, m_kTractsMin, m_kTractsMax, m_kTractPath, m_kDTIImage);
     	// getParamPanel().processTractFile();
     }
     

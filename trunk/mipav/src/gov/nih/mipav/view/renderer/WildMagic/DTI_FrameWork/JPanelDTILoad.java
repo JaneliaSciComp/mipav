@@ -88,7 +88,7 @@ public class JPanelDTILoad extends JInterfaceBase {
         buildEVLoadPanel();
         buildFALoadPanel();
         buildEValueLoadPanel();
-        // buildLoadTractPanel();
+        buildLoadTractPanel();
  
         // build button panel
         GridBagLayout kGBL = new GridBagLayout();
