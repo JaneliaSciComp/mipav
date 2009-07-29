@@ -1238,7 +1238,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         if (!doColor) {
             comboBoxCostFunct.addItem("Normalized cross correlation");
             comboBoxCostFunct.addItem("Normalized mutual information");
-            //comboBoxCostFunct.addItem("Normalized mutual information - GPU");
+            comboBoxCostFunct.addItem("Normalized mutual information - GPU");
         }
 
         if (!doColor) {

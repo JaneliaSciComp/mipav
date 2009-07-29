@@ -1576,7 +1576,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         // comboBoxCostFunct.addItem("Normalized cross correlation smoothed");
         if (!doColor) {
             comboBoxCostFunct.addItem("Normalized mutual information");
-            //comboBoxCostFunct.addItem("Normalized mutual information - GPU");
+            comboBoxCostFunct.addItem("Normalized mutual information - GPU");
         }
 
         // comboBoxCostFunct.addItem("Normalized mutual information smoothed");
