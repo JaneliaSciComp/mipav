@@ -17,6 +17,7 @@ import gov.nih.mipav.view.Preferences;
 
 public class PlugInAlgorithmCodebookParse extends AlgorithmBase {
 	
+	/* file to parse */
 	private File file = null;
 
 	public PlugInAlgorithmCodebookParse(File selectedFiles) {
@@ -29,6 +30,8 @@ public class PlugInAlgorithmCodebookParse extends AlgorithmBase {
 		try {
 			FileReader read = new FileReader(file);
 			Scanner token = new Scanner(read).useDelimiter("[;|,|\n|\"]");
+			
+			//something to hold words and counts
 			TreeMap <String,Integer> holder = new TreeMap<String, Integer>();
 			String current = null;
 			
@@ -37,10 +40,11 @@ public class PlugInAlgorithmCodebookParse extends AlgorithmBase {
 
 
 			
-	      while (token.hasNext()) {
+	      while (token.hasNext()) { //while there are still words in the text
 	    	  	
 	        	  current = token.next().trim();
-
+	        	  
+	        	  //if the word exists in holder add to count, otherwise add to list
 	        	  if(current.length() != 0){
 		        	  if (holder.containsKey(current)){
 		        		  holder.put(current, holder.get(current)+1);
@@ -62,6 +66,8 @@ public class PlugInAlgorithmCodebookParse extends AlgorithmBase {
 	      
 	      Iterator runDown = set.iterator();
 	      Preferences.data("Word Counts, alphabetical \n");
+	      
+	      //print out words alphabetically
 	      while (runDown.hasNext()){
 	    	  words[i] = (String)runDown.next();
 	    	  count[i] = holder.get(words[i]);
@@ -69,6 +75,7 @@ public class PlugInAlgorithmCodebookParse extends AlgorithmBase {
 	    	  i++;
 	      }
 	      
+	      //print out words from top count to least
 	      Preferences.data("\n\nWord Counts, descending \n");
 	      int max = -1;
     	  for (i =0; i < words.length; i++){
