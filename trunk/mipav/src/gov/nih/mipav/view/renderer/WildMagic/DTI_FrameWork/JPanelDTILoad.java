@@ -249,7 +249,7 @@ public class JPanelDTILoad extends JInterfaceBase {
                 // processDTI();
                 setParentDir();
                 setTractParams();
-                setDTIimage();
+                // setDTIimage();
                 setEVimage();
                 setEValueimage();
                 setFAimage();
