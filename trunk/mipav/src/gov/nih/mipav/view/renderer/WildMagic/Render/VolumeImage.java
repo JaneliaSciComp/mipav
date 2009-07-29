@@ -146,6 +146,7 @@ public class VolumeImage
                 System.err.println( kImageName );
                 ModelImage kNormal = ReadFromDisk( kImageName, kDir );
                 m_kNormal[i] = UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal.getImageName(), true );
+                kNormal.disposeLocal();
             }
         }
         

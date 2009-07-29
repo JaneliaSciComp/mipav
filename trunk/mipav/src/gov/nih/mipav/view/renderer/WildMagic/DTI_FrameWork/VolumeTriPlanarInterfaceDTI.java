@@ -498,7 +498,6 @@ implements ChangeListener {
         }
        
         
-        
         if ( imageA != null ) {
         	imageA.removeImageDisplayListener(this);
         	imageA.disposeLocal();
@@ -520,6 +519,16 @@ implements ChangeListener {
         
       
         
+    }
+    
+    
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.ViewJFrameBase#windowClosing(java.awt.event.WindowEvent)
+     */
+    public void windowClosing(WindowEvent event) {
+        close();
+        disposeLocal(true);
+        dispose();
     }
 
     /**
