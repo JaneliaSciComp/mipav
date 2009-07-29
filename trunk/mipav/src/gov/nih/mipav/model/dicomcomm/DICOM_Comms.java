@@ -201,7 +201,7 @@ public class DICOM_Comms {
         ByteBuffer byteBuffer;
         int availableBytes;
 
-        if (nBytes > outBuffersLength) {
+        if (nBytes >= outBuffersLength) {
             flush();
         } else {
             outBuffersLength -= nBytes;
