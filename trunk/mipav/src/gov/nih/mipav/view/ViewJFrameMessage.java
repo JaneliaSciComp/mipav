@@ -651,9 +651,11 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     public static void setVersion() {
-    	URL fileURL = ViewUserInterface.class.getClassLoader().getResource("about.txt");
-    	File aboutFile = new File(fileURL.getFile());
+
     	try {
+        	URL fileURL = ViewUserInterface.class.getClassLoader().getResource("about.txt");
+        	File aboutFile = new File(fileURL.getFile());
+        	
     		if (aboutFile.exists()){
 			Scanner find = new Scanner(aboutFile).useDelimiter("Version:\\s*\\S*\\s*\\S*\\s");
 			find.next();
@@ -665,8 +667,12 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
 		} catch (FileNotFoundException e) {
 			ViewJFrameMessage.VERSION="Can't locate version number.";
 		}
+		catch (NullPointerException e) {
+			ViewJFrameMessage.VERSION="Can't locate version number.";
+		}
+    }
 	
-	}
+	
 
 	public static String getVersion() {
 		return VERSION;
