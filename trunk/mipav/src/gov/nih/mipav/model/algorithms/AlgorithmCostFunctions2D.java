@@ -229,6 +229,8 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
         costCalled++; // global debuggin variable to keep track of how many times cost function was called.
 
+        //System.err.println( costCalled );
+        
         double value = 0;
 
         switch (costFunctID) {
@@ -294,7 +296,26 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED:
+                /*
+                value = normalizedMutualInformation(affMatrix);
+                long startTime = System.currentTimeMillis();
+                long start = System.nanoTime();
+                */
                 value = normalizedMutualInformationSmoothed(affMatrix);
+                /*
+                long estimate = System.nanoTime() - start;
+                long time = System.currentTimeMillis() - startTime;
+                System.err.println( "CPU: " + value + " " + estimate + " " + time );
+                if ( m_kGPUCost != null )
+                {
+                    startTime = System.currentTimeMillis();
+                    start = System.nanoTime();
+                    double valueGPU = m_kGPUCost.getError(affMatrix);
+                    estimate = System.nanoTime() - start;
+                    time = System.currentTimeMillis() - startTime;
+                    System.err.println( "GPU: " + valueGPU + " " + estimate + " " + time );
+                }
+                */
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
@@ -635,7 +656,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             margEntropyR[0] = Math.log(nBins);
             margEntropyI[0] = Math.log(nBins);
         }
-
         return;
     }
 

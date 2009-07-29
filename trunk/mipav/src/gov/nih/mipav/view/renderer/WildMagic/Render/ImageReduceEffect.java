@@ -9,7 +9,13 @@ public class ImageReduceEffect extends ShaderEffect
 {
 
     public static final int SUM = 0;
-    public static final int ENTROPY = 1;
+    public static final int SUM_X = 1;
+    public static final int SUM_Y = 2;
+    public static final int ENTROPY = 3;
+    public static final int ENTROPY_X = 4;
+    public static final int ENTROPY_Y = 5;
+    public static final int SUM_XA = 6;
+    public static final int SUM_YA = 7;
     
     private int m_iWidth;
     private int m_iHeight;
@@ -22,15 +28,48 @@ public class ImageReduceEffect extends ShaderEffect
     {
         super(1);
         m_kVShader.set(0, new VertexShader("TextureV", true));
-        if ( iHeight > 1 )
+
+        if ( iType == SUM_X )
+        {
+            m_kPShader.set(0, new PixelShader("ImageReduce_Sum_2D_to_1D_x", true));
+            SetName( "ImageReduce_Sum_2D_to_1D_x" + " " + iWidth + " " + iHeight );
+        }
+        else if ( iType == SUM_Y )
+        {
+            m_kPShader.set(0, new PixelShader("ImageReduce_Sum_2D_to_1D_y", true));
+            SetName( "ImageReduce_Sum_2D_to_1D_y" + " " + iWidth + " " + iHeight );
+        }
+        else if ( iType == ENTROPY_X )
+        {
+            m_kPShader.set(0, new PixelShader("ImageReduce_Entropy_1D_x", true));
+            SetName( "ImageReduce_Entropy_1D_x" + " " + iWidth + " " + iHeight );
+        }
+        else if ( iType == ENTROPY_Y )
+        {
+            m_kPShader.set(0, new PixelShader("ImageReduce_Entropy_1D_y", true));
+            SetName( "ImageReduce_Entropy_1D_y" + " " + iWidth + " " + iHeight );
+        }
+        else if ( iType == SUM_XA )
+        {
+            m_kPShader.set(0, new PixelShader("ImageReduce_Sum_2D_to_1DA_x", true));
+            SetName( "ImageReduce_Sum_2D_to_1DA_x" + " " + iWidth + " " + iHeight );
+        }
+        else if ( iType == SUM_YA )
+        {
+            m_kPShader.set(0, new PixelShader("ImageReduce_Sum_2D_to_1DA_y", true));
+            SetName( "ImageReduce_Sum_2D_to_1DA_y" + " " + iWidth + " " + iHeight );
+        }
+        else if ( iHeight > 1 )
         {
             if ( iType == SUM )
             {
                 m_kPShader.set(0, new PixelShader("ImageReduce_Sum_2DP", true));
+                SetName( "ImageReduce_Sum_2DP" + " " + iWidth + " " + iHeight );
             }
             else
             {
                 m_kPShader.set(0, new PixelShader("ImageReduce_Entropy_2DP", true));
+                SetName( "ImageReduce_Entropy_2DP" + " " + iWidth + " " + iHeight );
             }
         }
         else
@@ -38,10 +77,12 @@ public class ImageReduceEffect extends ShaderEffect
             if ( iType == SUM )
             {
                 m_kPShader.set(0, new PixelShader("ImageReduce_Sum_1DP", true));
+                SetName( "ImageReduce_Sum_1DP" + " " + iWidth + " " + iHeight );
             }
             else
             {
                 m_kPShader.set(0, new PixelShader("ImageReduce_Entropy_1DP", true));
+                SetName( "ImageReduce_Entropy_1DP" + " " + iWidth + " " + iHeight );
             }
         }
 

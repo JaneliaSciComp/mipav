@@ -63,21 +63,21 @@ void p_ImageReduce_Entropy_2DP ()
     }
 
 
-    if ( data0.b > 0.0 )
-    {
-        gl_FragColor.b += (-data0.b * (log(data0.b) - dLogN));
-    }
-    if ( data1.b > 0.0 )
-    {
-        gl_FragColor.b += (-data1.b * (log(data1.b) - dLogN));
-    }
-    if ( data2.b > 0.0 )
-    {
-        gl_FragColor.b += (-data2.b * (log(data2.b) - dLogN));
-    }
-    if ( data3.b > 0.0 )
-    {
-        gl_FragColor.b += (-data3.b * (log(data3.b) - dLogN));
-    }
+//     if ( data0.b > 0.0 )
+//     {
+//         gl_FragColor.b += (-data0.b * (log(data0.b) - dLogN));
+//     }
+//     if ( data1.b > 0.0 )
+//     {
+//         gl_FragColor.b += (-data1.b * (log(data1.b) - dLogN));
+//     }
+//     if ( data2.b > 0.0 )
+//     {
+//         gl_FragColor.b += (-data2.b * (log(data2.b) - dLogN));
+//     }
+//     if ( data3.b > 0.0 )
+//     {
+//         gl_FragColor.b += (-data3.b * (log(data3.b) - dLogN));
+//     }
 }
 //----------------------------------------------------------------------------

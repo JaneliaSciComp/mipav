@@ -1584,8 +1584,35 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
             return;
         }
+/*
+        if ( costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU )
+        {
+            Preferences.debug(" Starting level 1 ************************************************\n");
 
-        if (DOF >= 3) {
+            Vector2f cog = calculateCenterOfMass2D(simpleRef, null, doColor);
+            Vector2f cogR = calculateCenterOfMass2D(simpleInput, null, doColor);
+
+            Preferences.debug(" COG input image = " + cog + "\n");
+            Preferences.debug(" COG ref   image = " + cogR + "\n");
+
+            double diffX = (cog.X - cogR.X);
+            double diffY = (cog.Y - cogR.Y);
+
+            double[] initial = new double[7];
+
+            initial[0] = 0; // initial rotation
+            initial[1] = diffX; // initial translations
+            initial[2] = diffY;
+            initial[3] = initial[4] = 1; // initial scaling
+            initial[5] = initial[6] = 0; // initial skewing
+            
+            MatrixListItem item = new MatrixListItem(Double.MAX_VALUE, new TransMatrix(4,4), initial );
+            System.err.println( baseNumIter );
+            
+            answer = levelOne(simpleRef, simpleInput, item);
+        }
+        else */
+            if (DOF >= 3) {
 			Preferences
 					.debug(" Starting level 8 ************************************************\n");
 

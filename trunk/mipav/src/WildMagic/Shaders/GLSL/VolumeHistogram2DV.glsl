@@ -25,7 +25,7 @@ void v_VolumeHistogram2DV()
     vec4 vert = gl_Vertex;
     vert.x = (vol1.r - 0.5) * 2.0;
 
-    gl_FrontColor = vec4(0.0,0.0,1.0,1.0);
+    gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
 
     vec4 vol2 = vec4(0.0);
 
@@ -46,7 +46,7 @@ void v_VolumeHistogram2DV()
          (texCoord.y < 0.0) || (texCoord.y > 1.0) ||
          (texCoord.z < 0.0) || (texCoord.z > 1.0)    )
     {
-        gl_FrontColor.b = 0.0;
+        gl_FrontColor.r = 0.0;
         gl_FrontColor.a = 0.0;
     }
     else
