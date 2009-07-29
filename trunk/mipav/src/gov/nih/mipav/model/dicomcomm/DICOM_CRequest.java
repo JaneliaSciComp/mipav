@@ -266,16 +266,18 @@ public class DICOM_CRequest {
         
 		if ((COMMAND == DICOM_Constants.COMMAND_CStoreRQ) && (ddo != null)) {
 		
+			
+			dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, instanceUID);
 		    // copy Affected SOP Instance UID
-		    	String s = ddo.getStr(DICOM_RTC.DD_SOPInstanceUID);
-		
-		        if (s != null) {
-		            dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, s);
-		        }
-		    }
-		else if((COMMAND == DICOM_Constants.COMMAND_CStoreRQ)){
-			 dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, instanceUID);
 		}
+		else if((COMMAND == DICOM_Constants.COMMAND_CStoreRQ)){
+	    	String s = ddo.getStr(DICOM_RTC.DD_SOPInstanceUID);
+			
+	        if (s != null) {
+	            dcor.setStr(DICOM_RTC.DD_AffectedSOPInstanceUID, s);
+	        }
+	    }
+		
 		
 
         dcor.setInt16(DICOM_RTC.DD_Priority, MEDIUM); // See class definition for other priority codes
