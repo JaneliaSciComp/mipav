@@ -1226,7 +1226,8 @@ public class DICOM_PDUService extends DICOM_Comms {
     }
 
 	public void parseDICOMintoBuffer(DICOM_Object ddo, DICOM_Comms vrBuffer, DICOM_FileIO ioBuffer) {
-        DICOM_VR VR;
+        
+		DICOM_VR VR;
         int length;
         boolean padByte = false;
 

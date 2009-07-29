@@ -85,12 +85,9 @@ public class DICOM_Store implements Runnable {
 
 
             // grab the first DICOM file (if directory) to see what the transfer syntax is:
-
-            String firstFilename = getFirstFile(fileName);
-            System.err.println("firstFileName: " + firstFilename);
-
-            if (firstFilename != null) {
-                getUIDs(firstFilename);
+            
+            if (fileName != null) {
+                getUIDs(fileName);
             }
 
             pdu.connectClientToServer(remoteAETitle, false, transferSyntax, classUID);
@@ -167,6 +164,7 @@ public class DICOM_Store implements Runnable {
         int i;
         File fileDir = null;
         String[] dirList;
+        String sample = "";
 
         try {
             fileDir = new File(dir);
@@ -181,13 +179,16 @@ public class DICOM_Store implements Runnable {
                 String test = null;
 
                 for (i = 0; i < dirList.length; i++) {
-                    test = getFirstFile(getFirstFile(dir + File.separatorChar + dirList[i]));
-
-                    if (test != null) {
-                        return test;
-                    }
+	                    test = dir + File.separatorChar + dirList[i];
+	                    if(test != null && test.lastIndexOf('.') != -1){
+	                    	sample = test.substring(test.lastIndexOf('.')).trim();
+		                    if (sample.contains("dcm")) {
+		                        return test;
+		                    }
+	                    }
+                	}
                 }
-            }
+            
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Error opening directory:" + error);
 
@@ -203,10 +204,13 @@ public class DICOM_Store implements Runnable {
      *
      * @param  fileName  DICOM file to be read.
      */
-    private void getUIDs(String fileName) {
+    private void getUIDs(String file) {
         FileDicom fileDICOM = null;
         FileInfoDicom fInfoDicom = null;
         String modality = null;
+        File fileDir = new File(file);
+        
+        String fileName = getFirstFile(file);
 
         try {
             fileDICOM = new FileDicom(fileName);
@@ -215,7 +219,13 @@ public class DICOM_Store implements Runnable {
                 fInfoDicom = (FileInfoDicom) (fileDICOM.getFileInfo());
                 transferSyntax = (String) (fInfoDicom.getTagTable().getValue("0002,0010"));
                 classUID = (String) (fInfoDicom.getTagTable().getValue("0008,0016"));
-                instanceUID = (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
+                
+                if (!fileDir.isDirectory()){
+                	instanceUID = (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
+                }
+                else{
+                	getDirUIDs(fileDir);
+                }
 
                 if (classUID != null) {
                     classUID = DICOM_Util.trimIgnorableChar(classUID.trim());
@@ -265,7 +275,50 @@ public class DICOM_Store implements Runnable {
         return;
     }
 
-    /**
+    private void getDirUIDs(File fileDir) {
+        int i;
+        String[] dirList;
+
+        try {
+        		String dir = fileDir.getAbsolutePath(), sample = "";
+                dirList = fileDir.list();
+                String test = null;
+                FileDicom fileDICOM = null;
+                FileInfoDicom fInfoDicom = null;
+                
+                instanceUID = "";
+
+                for (i = 0; i < dirList.length; i++) {
+                    test = dir + File.separatorChar + dirList[i];
+                    if(test != null && test.lastIndexOf('.') != -1){
+                    	sample = test.substring(test.lastIndexOf('.')).trim();
+	                    if (sample.contains("dcm")) {
+                            fileDICOM = new FileDicom(test);
+
+                            if (fileDICOM.readHeader(true)) {
+                            	fInfoDicom = (FileInfoDicom) (fileDICOM.getFileInfo());
+                            	if(instanceUID == ""){
+                                	instanceUID = (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
+                            	}
+                            	else{
+                                	instanceUID = instanceUID + "\\" + (String) (fInfoDicom.getTagTable().getValue("0008,0018"));
+
+                            	}
+                            }
+	                    }
+                    }
+                }
+                
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Error opening directory:" + error);
+
+        } catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
      * Recursily desends the directory tree to send the images. This is a patient level is specified as the directly,
      * all studies, series, and images for that patient are sent
      *
