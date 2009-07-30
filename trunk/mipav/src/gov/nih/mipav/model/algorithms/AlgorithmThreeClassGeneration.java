@@ -2759,6 +2759,7 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         z31N = T31/Math.sqrt(varT31);
         z32N = T32/Math.sqrt(varT32);
         z33N = T33/Math.sqrt(varT33);
+        
         Preferences.debug("z11N = " + z11N + "\n");
         Preferences.debug("z12N = " + z12N + "\n");
         Preferences.debug("z13N = " + z13N + "\n");
@@ -3258,8 +3259,13 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         double denom;
         double covN[][][][] = new double[nc][nc][nc][nc];
         double zijD[][] = new double[nc][nc];
+        double Tij[][] = new double[nc][nc];
+        double covC[][] = new double[nc][nc];
+        double covNC[][][] = new double[nc][nc][nc];
+        double covT[][][][] = new double[nc][nc][nc][nc];
         int k;
         int m;
+        double zN[][] = new double[nc][nc];
         N[0][0] = N11;
         N[0][1] = N12;
         N[0][2] = N13;
@@ -3502,7 +3508,182 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
                         CD, degreesOfFreedom, chiSquaredPercentile);
                 stat.run();
                 Preferences.debug("chiSquared percentile for Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
-                System.out.println("chiSquared percentile for Dixon's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
+                
+                if (chiSquaredPercentile[0] > 0.950) {
+                    Preferences.debug("chiSquared test rejects random object distribution\n");
+                }
+                else {
+                    Preferences.debug("chiSquared test does not reject random object distribution\n");
+                }
+            } // if (CD > 0.0)
+            else {
+                Preferences.debug("CD should be positive\n");
+            }
+        } // if (success)
+        
+        Preferences.debug("Dixon's cell-specific tests of segregation\n");
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, zijD[i][j], 0, percentile);
+                stat.run();
+                Preferences.debug("Percentile in Gaussian probability integral for measured mean N" + (i+1) + (j+1) + 
+                                   " around expected mean N" + (i+1) + (j+1) + " = "
+                        + percentile[0]*100.0 + "\n");
+                if (i == j) {
+                    if (percentile[0] < 0.025) {
+                        Preferences.debug("Low value of N" + (i+1) + (j + 1)+ " indicates association\n");
+                    }
+                    else if (percentile[0] > 0.975) {
+                        Preferences.debug("High value of N" + (i+1) + (j+1) + " indicates segregation\n");
+                    }
+                    else {
+                        Preferences.debug("Complete spatial randomness cannot be rejected based on N" +
+                                         (i+1) + (j+1)+ " value\n");
+                    }
+                } // if (i == j)
+                else { // i <> j
+                    if (percentile[0] < 0.025) {
+                        Preferences.debug("Low value of N" + (i+1) + (j + 1)+ " indicates segregation\n");
+                    }
+                    else if (percentile[0] > 0.975) {
+                        Preferences.debug("High value of N" + (i+1) + (j+1) + " indicates association\n");
+                    }
+                    else {
+                        Preferences.debug("Complete spatial randomness cannot be rejected based on N" +
+                                         (i+1) + (j+1)+ " value\n");
+                    }    
+                } // else i <> j
+            } // for (j = 0; j < nc; j++)
+        } // for (i = 0; i < nc; i++)
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                if (i == j) {
+                    Tij[i][j] = N[i][j] - ((double)(nn[i] - 1)*C[j])/(n - 1);
+                }
+                else {
+                    Tij[i][j] = N[i][j] - ((double)nn[i]*C[j])/(n - 1);
+                }
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m <nc; m++) {
+                        covC[i][j] += covN[k][i][m][j];
+                    }
+                }
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m < nc; m++) {
+                        covNC[i][j][k] += covN[i][j][m][k];
+                    }
+                }
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m < nc; m++) {
+                        if ((i == j) && (i == k) && (i == m)) {
+                            covT[i][j][k][m] = covN[i][j][k][m] 
+                            + ((nn[i] - 1)*(nn[i] - 1)*covC[j][j])/((n - 1)*(n - 1))
+                            - (2 * (nn[i] - 1) * covNC[i][j][j])/(n - 1);
+                        }
+                        else if ((i == k) && (j == m)) {
+                            covT[i][j][k][m] = covN[i][j][k][m]
+                            + (nn[i]*nn[i]*covC[j][j])/((n - 1)*(n - 1))
+                            - (2 * nn[i] * covNC[i][j][j])/(n - 1);
+                        }
+                        else if ((i == j) && (k == m)) {
+                            covT[i][j][k][m] = covN[i][i][k][k]
+                            - ((nn[k] - 1)*covNC[i][i][k])/(n - 1)
+                            - ((nn[i] - 1)*covNC[k][k][i])/(n - 1)
+                            + ((nn[i] - 1)*(nn[k] - 1)*covC[i][k])/((n - 1)*(n - 1));
+                        }
+                        else if (i == j) {
+                            covT[i][j][k][m] = covN[i][i][k][m]
+                            - (nn[k]*covNC[i][i][m])/(n - 1)
+                            - ((nn[i] - 1)*covNC[k][m][i])/(n - 1)
+                            + ((nn[i] - 1)*nn[k]*covC[i][m])/((n - 1)*(n - 1));
+                        }
+                        else if (k == m) {
+                            covT[i][j][k][m] = covN[k][k][i][j]
+                            - (nn[i]*covNC[k][k][j])/(n - 1)
+                            - ((nn[k] - 1)*covNC[i][j][k])/(n - 1)
+                            + ((nn[k] - 1)*nn[i]*covC[k][j])/((n - 1)*(n - 1));
+                        }
+                        else {
+                            covT[i][j][k][m] = covN[i][j][k][m]
+                            - (nn[k]*covNC[i][j][m])/(n - 1)
+                            - (nn[i] * covNC[k][m][j])/(n - 1)
+                            + (nn[i]*nn[k]*covC[j][m])/((n - 1)*(n - 1));
+                        }
+                    }
+                }
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                zN[i][j] = Tij[i][j]/Math.sqrt(covT[i][j][i][j]);
+                Preferences.debug("z" + (i+1) + (j+1) + "N = " + zN[i][j] + "\n");
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m < nc; m++) {
+                        sigma[i*nc + j][k * nc + m] = covT[i][j][k][m];
+                    }
+                }
+            }
+        }
+        
+        sigmaN = new Matrix(sigma);
+        Tp = new double[1][nc*nc];
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                Tp[0][i*nc + j] = Tij[i][j];
+            }
+        }
+        
+        TpM = new Matrix(Tp);
+        T = new double[nc*nc][1];
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                T[i*nc + j][0] = Tij[i][j];
+            }
+        }
+        
+        TM = new Matrix(T);
+        success = true;
+        try {
+            sigmaN = sigmaN.inverse();
+        }
+        catch(RuntimeException e) {
+            Preferences.debug("Singular matrix on sigmaN.inverse()\n");
+            Preferences.debug("Cannot calculate CN\n");
+            success = false;
+        }
+        if (success) {
+            CN = ((TpM.times(sigmaN)).times(TM)).getArray();
+            Preferences.debug("CN = " + CN[0][0] + "\n");
+            if (CN[0][0] > 0.0) {
+                degreesOfFreedom = (nc - 1)*(nc - 1);
+                stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                        CN[0][0], degreesOfFreedom, chiSquaredPercentile);
+                stat.run();
+                Preferences.debug("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+                System.out.println("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
                 
                 if (chiSquaredPercentile[0] > 0.950) {
                     Preferences.debug("chiSquared test rejects random object distribution\n");
@@ -3512,11 +3693,48 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
                     Preferences.debug("chiSquared test does not reject random object distribution\n");
                     System.out.println("chiSquared test does not reject random object distribution");
                 }
-            } // if (CD > 0.0)
+            } // if (CN[0][0] > 0.0)
             else {
-                Preferences.debug("CD should be positive\n");
+                Preferences.debug("CN should be positive\n");
             }
         } // if (success)
+        
+        Preferences.debug("Ceyhan's cell-specific tests of segregation\n");
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, zN[i][j], 0, percentile);
+                stat.run();
+                Preferences.debug("Percentile in Gaussian probability integral for measured mean T" + (i+1) + (j+1) + 
+                                   " around expected mean T" + (i+1) + (j+1) + " = "
+                        + percentile[0]*100.0 + "\n");
+                if (i == j) {
+                    if (percentile[0] < 0.025) {
+                        Preferences.debug("Low value of T" + (i+1) + (j + 1)+ " indicates association\n");
+                    }
+                    else if (percentile[0] > 0.975) {
+                        Preferences.debug("High value of T" + (i+1) + (j+1) + " indicates segregation\n");
+                    }
+                    else {
+                        Preferences.debug("Complete spatial randomness cannot be rejected based on T" +
+                                         (i+1) + (j+1)+ " value\n");
+                    }
+                } // if (i == j)
+                else { // i <> j
+                    if (percentile[0] < 0.025) {
+                        Preferences.debug("Low value of T" + (i+1) + (j + 1)+ " indicates segregation\n");
+                    }
+                    else if (percentile[0] > 0.975) {
+                        Preferences.debug("High value of T" + (i+1) + (j+1) + " indicates association\n");
+                    }
+                    else {
+                        Preferences.debug("Complete spatial randomness cannot be rejected based on T" +
+                                         (i+1) + (j+1)+ " value\n");
+                    }    
+                } // else i <> j
+            } // for (j = 0; j < nc; j++)
+        } // for (i = 0; i < nc; i++)
+        
         red = new byte[buffer.length];
         green = new byte[buffer.length];
         blue = new byte[buffer.length];
