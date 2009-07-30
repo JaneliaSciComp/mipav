@@ -242,8 +242,15 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     private double segregation;
     
     // Test with NNCT for Pielou's data, shown in Table 3 of "Overall and pairwise segregation tests based on nearest
-    // neighbor contingency tables"
+    // neighbor contingency tables"  In agreement with Ceyhan except for Ceyhan's overall test of segregation for which
+    // he calculates 13.11 and I calculate 24.58.
     private boolean selfTest1 = false;
+    
+    // Test with NNCT for 5 class Good and Whipple swamp tree data shown in Table 4 of "Overall and pairwise 
+    // segregation tests based on nearest neighbor contingency tables".  In agreement with Ceyhan on specific tests.
+    // For Dixon's overall test he calculates 275.64 and I calculate 279.92.  For Ceyhan's overall test he calculates 
+    // 263.10 and I calculate 641.28.
+    private boolean selfTest2 = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -2184,6 +2191,527 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             Preferences.debug("Complete spatial randomness cannot be rejected based on T22 value\n");
             System.out.println("Complete spatial randomness cannot be rejected based on T22 value");
         }
+        
+        // Double check with matrix forms
+        // Number of classes
+        int nc;
+        if (selfTest2) {
+            nc = 5;
+        }
+        else {
+            nc = 2;
+        }
+        long N[][] = new long[nc][nc];
+        int C[] = new int[nc];
+        long nn[] = new long[nc];
+        double ENij[][] = new double[nc][nc];
+        double p2[][] = new double[nc][nc];
+        double p3[][][] = new double[nc][nc][nc];
+        double p4[][][][] = new double[nc][nc][nc][nc];
+        double denom;
+        double covN[][][][] = new double[nc][nc][nc][nc];
+        double zijD[][] = new double[nc][nc];
+        double Tij[][] = new double[nc][nc];
+        double covC[][] = new double[nc][nc];
+        double covNC[][][] = new double[nc][nc][nc];
+        double covT[][][][] = new double[nc][nc][nc][nc];
+        int k;
+        int m;
+        double zN[][] = new double[nc][nc];
+        if (selfTest2) {
+            N[0][0] = 112;
+            N[0][1] = 40;
+            N[0][2] = 29;
+            N[0][3] = 20;
+            N[0][4] = 14;
+            N[1][0] = 38;
+            N[1][1] = 117;
+            N[1][2] = 26;
+            N[1][3] = 16;
+            N[1][4] = 8;
+            N[2][0] = 23;
+            N[2][1] = 23;
+            N[2][2] = 82;
+            N[2][3] = 22;
+            N[2][4] = 6;
+            N[3][0] = 19;
+            N[3][1] = 29;
+            N[3][2] = 29;
+            N[3][3] = 14;
+            N[3][4] = 7;
+            N[4][0] = 7;
+            N[4][1] = 8;
+            N[4][2] = 5;
+            N[4][3] = 7;
+            N[4][4] = 33;
+            Q = 472;
+            R = 454;
+        } // if (selfTest2)
+        else { // not selfTest2
+            N[0][0] = N11;
+            N[0][1] = N12;
+            N[1][0] = N21;
+            N[1][1] = N22;
+        } // else not selfTest2
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                C[i] += N[j][i];
+                nn[i] += N[i][j];
+            }
+        }
+        
+        n = 0;
+        for (i = 0; i < nc; i++) {
+            n += nn[i];
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                if (i == j) {
+                    ENij[i][j] = ((double)nn[i]*(nn[i] - 1))/(n - 1);
+                }
+                else {
+                    ENij[i][j] = ((double)nn[i]*nn[j])/(n - 1);
+                }
+            }
+        }
+        
+        denom = n * (n - 1);
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                if (i == j) {
+                    p2[i][j] = ((double)nn[i]*(nn[i] - 1))/denom;
+                }
+                else {
+                    p2[i][j] = ((double)nn[i]*nn[j])/denom;
+                }
+            }
+        }
+        
+        denom = n * (n - 1) * (n - 2);
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    if ((i == j) && (i == k)) {
+                        p3[i][j][k] = ((double)nn[i]*(nn[i] - 1)*(nn[i] - 2))/denom;
+                    }
+                    else if (i == j) {
+                        p3[i][j][k] = ((double)nn[i]*(nn[i] - 1)*nn[k])/denom;
+                    }
+                    else if (i == k) {
+                        p3[i][j][k] = ((double)nn[i]*(nn[i] - 1)*nn[j])/denom;
+                    }
+                    else if (j == k) {
+                        p3[i][j][k] = ((double)nn[i]*nn[j]*(nn[j] - 1))/denom;
+                    }
+                    else {
+                        p3[i][j][k] = ((double)nn[i]*nn[j]*nn[k])/denom;
+                    }
+                }
+            }
+        }
+        
+        denom = n * (n - 1) * (n - 2) * (n - 3);
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m < nc; m++) {
+                        if ((i == j) && (i == k) && (i == m)) {
+                            p4[i][j][k][m] = ((double)nn[i] * (nn[i] - 1) * (nn[i] - 2) * (nn[i] - 3))/denom;
+                        }
+                        else if ((i == j) && (i == k)) {
+                            p4[i][j][k][m] = ((double)nn[i] * (nn[i] - 1) * (nn[i] - 2) * nn[m])/denom;
+                        }
+                        else if ((i == j) && (i == m)) {
+                            p4[i][j][k][m] = ((double)nn[i] * (nn[i] - 1) * (nn[i] - 2) * nn[k])/denom;
+                        }
+                        else if ((i == k) && (i == m)) {
+                            p4[i][j][k][m] = ((double)nn[i] * (nn[i] - 1) * (nn[i] - 2) * nn[j])/denom;
+                        }
+                        else if ((j == k) && (j == m)) {
+                            p4[i][j][k][m] = ((double)nn[i] * nn[j] * (nn[j] - 1) * (nn[j] - 2))/denom;
+                        }
+                        else if ((i == j) && (k == m)) {
+                            p4[i][j][k][m] = ((double)nn[i] * (nn[i] - 1) * nn[k] * (nn[k] - 1))/denom;
+                        }
+                        else if ((i == k) && (j == m)) {
+                            p4[i][j][k][m] = ((double)nn[i] * (nn[i] - 1) * nn[j] * (nn[j] - 1))/denom;
+                        }
+                        else if ((i == m) && (j == k)) {
+                            p4[i][j][k][m] = ((double)nn[i] * (nn[i] - 1) * nn[j] * (nn[j] - 1))/denom;
+                        }
+                        else if (i == j) {
+                            p4[i][j][k][m] = ((double)nn[i] * (nn[i] - 1) * nn[k] * nn[m])/denom;
+                        }
+                        else if (i == k) {
+                            p4[i][j][k][m] = ((double)nn[i] * (nn[i] - 1) * nn[j] * nn[m])/denom;
+                        }
+                        else if (i == m) {
+                            p4[i][j][k][m] = ((double)nn[i] * (nn[i] - 1) * nn[j] * nn[k])/denom;
+                        }
+                        else if (j == k) {
+                            p4[i][j][k][m] = ((double)nn[i] * nn[j] * (nn[j] - 1) * nn[m])/denom;
+                        }
+                        else if (j == m) {
+                            p4[i][j][k][m] = ((double)nn[i] * nn[j] * (nn[j] - 1) * nn[k])/denom;
+                        }
+                        else if (k == m) {
+                            p4[i][j][k][m] = ((double)nn[i] * nn[j] * nn[k] * (nn[k] - 1))/denom;
+                        }
+                        else {
+                            p4[i][j][k][m] = ((double)nn[i] * nn[j] * nn[k] * nn[m])/denom;
+                        }
+                    }
+                }
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m < nc; m++) {
+                        if ((i == j) && (i == k) && (i == m)) {
+                            covN[i][j][k][m] = (n + R)*p2[i][i] + (2*n - 2*R + Q)*p3[i][i][i]
+                            + (n*n - 3*n - Q + R)*p4[i][i][i][i] - n*n*p2[i][i]*p2[i][i];
+                        }
+                        else if ((i == k) && (j == m)) {
+                            covN[i][j][k][m] = n*p2[i][j] + Q*p3[i][i][j]
+                            + (n*n - 3*n - Q + R)*p4[i][i][j][j] - n*n*p2[i][j]*p2[i][j];
+                        }
+                        else if ((i == j) && (k == m)) {
+                            covN[i][j][k][m] = (n*n - 3*n - Q + R)*p4[i][i][k][k] - n*n*p2[i][i]*p2[k][k];
+                        }
+                        else if ((i == j) && (i == k)) {
+                            covN[i][j][k][m] = (n - R)*p3[i][i][m] + (n*n - 3*n - Q + R)*p4[i][i][i][m]
+                            - n*n*p2[i][i]*p2[i][m];
+                        }
+                        else if ((i == k) && (i == m)) {
+                            covN[i][j][k][m] = (n - R)*p3[i][i][j] + (n*n - 3*n - Q + R)*p4[i][i][i][j]
+                            - n*n*p2[i][i]*p2[i][j];
+                        }
+                        else if ((i == j) && (i == m)) {
+                            covN[i][j][k][m] = (n - R + Q)*p3[i][i][k]
+                            + (n*n - 3*n - Q + R)*p4[i][i][i][k] - n*n*p2[i][i]*p2[i][k];
+                        }
+                        else if ((j == k) && (k == m)) {
+                            covN[i][j][k][m] = (n - R + Q)*p3[j][j][i]
+                            + (n*n - 3*n - Q + R)*p4[j][j][j][i] - n*n*p2[j][j]*p2[j][i];
+                        }
+                        else if (i == j) {
+                            covN[i][j][k][m] = (n*n - 3*n - Q + R)*p4[i][i][k][m] - n*n*p2[i][i]*p2[k][m];
+                        }
+                        else if (k == m) {
+                            covN[i][j][k][m] = (n*n - 3*n - Q + R)*p4[k][k][i][j] - n*n*p2[k][k]*p2[i][j];
+                        }
+                        else if (i == k) {
+                            covN[i][j][k][m] = (n*n - 3*n - Q + R)*p4[i][i][j][m] - n*n*p2[i][j]*p2[i][m];
+                        }
+                        else if ((i == m) && (j == k)) {
+                            covN[i][j][k][m] = R*p2[i][j] + (n - R)*(p3[i][i][j] + p3[i][j][j])
+                            + (n*n - 3*n - Q + R)*p4[i][i][j][j] - n*n*p2[i][j]*p2[j][i];
+                        }
+                        else if (j == k) {
+                            covN[i][j][k][m] = (n - R)*p3[i][j][m] + (n*n - 3*n - Q + R)*p4[i][j][j][m]
+                            - n*n*p2[i][j]*p2[j][m];
+                        }
+                        else if (i == m) {
+                            covN[i][j][k][m] = (n - R)*p3[i][j][k] + (n*n - 3*n - Q + R)*p4[i][i][j][k]
+                            - n*n*p2[i][j]*p2[i][k];
+                        }
+                        else if (j == m) {
+                            covN[i][j][k][m] = Q*p3[i][j][k] + (n*n - 3*n - Q + R)*p4[i][j][j][k]
+                            - n*n*p2[i][j]*p2[j][k];
+                        }
+                        else {
+                            covN[i][j][k][m] = (n*n - 3*n - Q + R)*p4[i][j][k][m] - n*n*p2[i][j]*p2[k][m];
+                        }
+                    }
+                }
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                zijD[i][j] = (N[i][j] - ENij[i][j])/Math.sqrt(covN[i][j][i][j]);
+                Preferences.debug("z" + (i+1) + (j+1) + "D = " + zijD[i][j] + "\n");
+            }
+        }
+        
+        sigma = new double[nc*nc][nc*nc];
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m < nc; m++) {
+                        sigma[i*nc + j][k * nc + m] = covN[i][j][k][m];
+                    }
+                }
+            }
+        }
+        
+        sigmaD = new Matrix(sigma);
+        NDp = new double[1][nc*nc];
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                NDp[0][i*nc + j] = N[i][j] - ENij[i][j];
+            }
+        }
+        
+        NDpM = new Matrix(NDp);
+        ND = new double[nc*nc][1];
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                ND[i*nc + j][0] = N[i][j] - ENij[i][j];
+            }
+        }
+        NDM = new Matrix(ND);
+        success = true;
+        try {
+            sigmaD = sigmaD.inverse();
+        }
+        catch(RuntimeException e) {
+            Preferences.debug("Singular matrix on sigmaD.inverse()\n");
+            Preferences.debug("Cannot calculate CD via matrix quadratic form\n");
+            success = false;
+        }
+        if (success) {
+            CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
+            Preferences.debug("CD = " + CD2 + "\n");
+            
+            if (CD2 > 0.0) {
+                // Under random labelling the chi squared statistic has degrees of freedom = 6;
+                degreesOfFreedom = nc*(nc - 1);
+                stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                        CD2, degreesOfFreedom, chiSquaredPercentile);
+                stat.run();
+                Preferences.debug("chiSquared percentile for Dixon's 2002 overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+                
+                if (chiSquaredPercentile[0] > 0.950) {
+                    Preferences.debug("chiSquared test rejects random object distribution\n");
+                }
+                else {
+                    Preferences.debug("chiSquared test does not reject random object distribution\n");
+                }
+            } // if (CD > 0.0)
+            else {
+                Preferences.debug("CD should be positive\n");
+            }
+        } // if (success)
+        
+        Preferences.debug("Dixon's cell-specific tests of segregation\n");
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, zijD[i][j], 0, percentile);
+                stat.run();
+                Preferences.debug("Percentile in Gaussian probability integral for measured mean N" + (i+1) + (j+1) + 
+                                   " around expected mean N" + (i+1) + (j+1) + " = "
+                        + percentile[0]*100.0 + "\n");
+                if (i == j) {
+                    if (percentile[0] < 0.025) {
+                        Preferences.debug("Low value of N" + (i+1) + (j + 1)+ " indicates association\n");
+                    }
+                    else if (percentile[0] > 0.975) {
+                        Preferences.debug("High value of N" + (i+1) + (j+1) + " indicates segregation\n");
+                    }
+                    else {
+                        Preferences.debug("Complete spatial randomness cannot be rejected based on N" +
+                                         (i+1) + (j+1)+ " value\n");
+                    }
+                } // if (i == j)
+                else { // i <> j
+                    if (percentile[0] < 0.025) {
+                        Preferences.debug("Low value of N" + (i+1) + (j + 1)+ " indicates segregation\n");
+                    }
+                    else if (percentile[0] > 0.975) {
+                        Preferences.debug("High value of N" + (i+1) + (j+1) + " indicates association\n");
+                    }
+                    else {
+                        Preferences.debug("Complete spatial randomness cannot be rejected based on N" +
+                                         (i+1) + (j+1)+ " value\n");
+                    }    
+                } // else i <> j
+            } // for (j = 0; j < nc; j++)
+        } // for (i = 0; i < nc; i++)
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                if (i == j) {
+                    Tij[i][j] = N[i][j] - ((double)(nn[i] - 1)*C[j])/(n - 1);
+                }
+                else {
+                    Tij[i][j] = N[i][j] - ((double)nn[i]*C[j])/(n - 1);
+                }
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m <nc; m++) {
+                        covC[i][j] += covN[k][i][m][j];
+                    }
+                }
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m < nc; m++) {
+                        covNC[i][j][k] += covN[i][j][m][k];
+                    }
+                }
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m < nc; m++) {
+                        if ((i == j) && (i == k) && (i == m)) {
+                            covT[i][j][k][m] = covN[i][j][k][m] 
+                            + ((nn[i] - 1)*(nn[i] - 1)*covC[j][j])/((n - 1)*(n - 1))
+                            - (2 * (nn[i] - 1) * covNC[i][j][j])/(n - 1);
+                        }
+                        else if ((i == k) && (j == m)) {
+                            covT[i][j][k][m] = covN[i][j][k][m]
+                            + (nn[i]*nn[i]*covC[j][j])/((n - 1)*(n - 1))
+                            - (2 * nn[i] * covNC[i][j][j])/(n - 1);
+                        }
+                        else if ((i == j) && (k == m)) {
+                            covT[i][j][k][m] = covN[i][i][k][k]
+                            - ((nn[k] - 1)*covNC[i][i][k])/(n - 1)
+                            - ((nn[i] - 1)*covNC[k][k][i])/(n - 1)
+                            + ((nn[i] - 1)*(nn[k] - 1)*covC[i][k])/((n - 1)*(n - 1));
+                        }
+                        else if (i == j) {
+                            covT[i][j][k][m] = covN[i][i][k][m]
+                            - (nn[k]*covNC[i][i][m])/(n - 1)
+                            - ((nn[i] - 1)*covNC[k][m][i])/(n - 1)
+                            + ((nn[i] - 1)*nn[k]*covC[i][m])/((n - 1)*(n - 1));
+                        }
+                        else if (k == m) {
+                            covT[i][j][k][m] = covN[k][k][i][j]
+                            - (nn[i]*covNC[k][k][j])/(n - 1)
+                            - ((nn[k] - 1)*covNC[i][j][k])/(n - 1)
+                            + ((nn[k] - 1)*nn[i]*covC[k][j])/((n - 1)*(n - 1));
+                        }
+                        else {
+                            covT[i][j][k][m] = covN[i][j][k][m]
+                            - (nn[k]*covNC[i][j][m])/(n - 1)
+                            - (nn[i] * covNC[k][m][j])/(n - 1)
+                            + (nn[i]*nn[k]*covC[j][m])/((n - 1)*(n - 1));
+                        }
+                    }
+                }
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                zN[i][j] = Tij[i][j]/Math.sqrt(covT[i][j][i][j]);
+                Preferences.debug("z" + (i+1) + (j+1) + "N = " + zN[i][j] + "\n");
+            }
+        }
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                for (k = 0; k < nc; k++) {
+                    for (m = 0; m < nc; m++) {
+                        sigma[i*nc + j][k * nc + m] = covT[i][j][k][m];
+                    }
+                }
+            }
+        }
+        
+        sigmaN = new Matrix(sigma);
+        Tp = new double[1][nc*nc];
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                Tp[0][i*nc + j] = Tij[i][j];
+            }
+        }
+        
+        TpM = new Matrix(Tp);
+        T = new double[nc*nc][1];
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                T[i*nc + j][0] = Tij[i][j];
+            }
+        }
+        
+        TM = new Matrix(T);
+        success = true;
+        try {
+            sigmaN = sigmaN.inverse();
+        }
+        catch(RuntimeException e) {
+            Preferences.debug("Singular matrix on sigmaN.inverse()\n");
+            Preferences.debug("Cannot calculate CN\n");
+            success = false;
+        }
+        if (success) {
+            CN = ((TpM.times(sigmaN)).times(TM)).getArray();
+            Preferences.debug("CN = " + CN[0][0] + "\n");
+            if (CN[0][0] > 0.0) {
+                degreesOfFreedom = (nc - 1)*(nc - 1);
+                stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                        CN[0][0], degreesOfFreedom, chiSquaredPercentile);
+                stat.run();
+                Preferences.debug("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0 + "\n");
+                System.out.println("chiSquared percentile for Ceyhan's overall test of segregation = " + chiSquaredPercentile[0]*100.0);
+                
+                if (chiSquaredPercentile[0] > 0.950) {
+                    Preferences.debug("chiSquared test rejects random object distribution\n");
+                    System.out.println("chiSquared test rejects random object distribution"); 
+                }
+                else {
+                    Preferences.debug("chiSquared test does not reject random object distribution\n");
+                    System.out.println("chiSquared test does not reject random object distribution");
+                }
+            } // if (CN[0][0] > 0.0)
+            else {
+                Preferences.debug("CN should be positive\n");
+            }
+        } // if (success)
+        
+        Preferences.debug("Ceyhan's cell-specific tests of segregation\n");
+        
+        for (i = 0; i < nc; i++) {
+            for (j = 0; j < nc; j++) {
+                stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, zN[i][j], 0, percentile);
+                stat.run();
+                Preferences.debug("Percentile in Gaussian probability integral for measured mean T" + (i+1) + (j+1) + 
+                                   " around expected mean T" + (i+1) + (j+1) + " = "
+                        + percentile[0]*100.0 + "\n");
+                if (i == j) {
+                    if (percentile[0] < 0.025) {
+                        Preferences.debug("Low value of T" + (i+1) + (j + 1)+ " indicates association\n");
+                    }
+                    else if (percentile[0] > 0.975) {
+                        Preferences.debug("High value of T" + (i+1) + (j+1) + " indicates segregation\n");
+                    }
+                    else {
+                        Preferences.debug("Complete spatial randomness cannot be rejected based on T" +
+                                         (i+1) + (j+1)+ " value\n");
+                    }
+                } // if (i == j)
+                else { // i <> j
+                    if (percentile[0] < 0.025) {
+                        Preferences.debug("Low value of T" + (i+1) + (j + 1)+ " indicates segregation\n");
+                    }
+                    else if (percentile[0] > 0.975) {
+                        Preferences.debug("High value of T" + (i+1) + (j+1) + " indicates association\n");
+                    }
+                    else {
+                        Preferences.debug("Complete spatial randomness cannot be rejected based on T" +
+                                         (i+1) + (j+1)+ " value\n");
+                    }    
+                } // else i <> j
+            } // for (j = 0; j < nc; j++)
+        } // for (i = 0; i < nc; i++)
         
         red = new byte[buffer.length];
         green = new byte[buffer.length];
