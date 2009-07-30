@@ -1,7 +1,12 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
 
+import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTI2EGFA;
+import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTITract;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -625,10 +630,12 @@ public class JPanelDTILoad extends JInterfaceBase {
         int returnValue = chooser.showOpenDialog(this);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             FileIO fileIO = new FileIO();
-            // ruida
+            
             m_kDTIImage = fileIO.readImage(chooser.getSelectedFile().getName(),
                     chooser.getCurrentDirectory() + File.separator);
            
+            m_kDTIImage = resampleImage(m_kDTIImage);
+            
             textDTIimage.setText(chooser.getSelectedFile().getAbsolutePath());
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser
                     .getCurrentDirectory().toString());
@@ -647,6 +654,9 @@ public class JPanelDTILoad extends JInterfaceBase {
             
             m_kDTIColorImage = fileIO.readImage(chooser.getSelectedFile().getName(),
                     chooser.getCurrentDirectory() + File.separator);
+            
+            m_kDTIColorImage = resampleImage(m_kDTIColorImage);
+            
             m_kParentDir = chooser.getCurrentDirectory().getPath();
             
             textDTIColorImage.setText(chooser.getSelectedFile().getAbsolutePath());
@@ -665,7 +675,8 @@ public class JPanelDTILoad extends JInterfaceBase {
             
             m_kEigenVectorImage = fileIO.readImage(chooser.getSelectedFile().getName(),
                     chooser.getCurrentDirectory() + File.separator);
-            m_kParentDir = chooser.getCurrentDirectory().getPath();
+            
+            m_kEigenVectorImage = resampleImage(m_kEigenVectorImage);
             
             textEVimage.setText(chooser.getSelectedFile().getAbsolutePath());
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
@@ -683,7 +694,7 @@ public class JPanelDTILoad extends JInterfaceBase {
             
             m_kAnisotropyImage = fileIO.readImage(chooser.getSelectedFile().getName(),
                     chooser.getCurrentDirectory() + File.separator);
-            m_kParentDir = chooser.getCurrentDirectory().getPath();
+            m_kAnisotropyImage = resampleImage(m_kAnisotropyImage);
             
             textFAimage.setText(chooser.getSelectedFile().getAbsolutePath());
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
@@ -701,7 +712,7 @@ public class JPanelDTILoad extends JInterfaceBase {
             
             m_kEigenValueImage = fileIO.readImage(chooser.getSelectedFile().getName(),
                     chooser.getCurrentDirectory() + File.separator);
-            m_kParentDir = chooser.getCurrentDirectory().getPath();
+            m_kEigenValueImage = resampleImage(m_kEigenValueImage);
             
             textEValueImage.setText(chooser.getSelectedFile().getAbsolutePath());
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
@@ -709,11 +720,61 @@ public class JPanelDTILoad extends JInterfaceBase {
     }
     
     
-    
+    /**
+     * Resample 4D image to power of 2
+     * @param srcImage source image need to be resampled
+     */
+    private ModelImage resampleImage(ModelImage srcImage)
+    {
+        int[] extents = srcImage.getExtents();
+        float[] res = srcImage.getFileInfo(0).getResolutions();
+        float[] saveRes;
+       
+       
+        if ( extents.length == 3 ) {
+        	saveRes =  new float[]{res[0], res[1], res[2]};
+        } else {
+        	saveRes =  new float[]{res[0], res[1], res[2], res[3]};
+        }
+         
+         
+        float[] newRes = new float[extents.length];
+        int[] volExtents = new int[extents.length];
+        boolean originalVolPowerOfTwo = true;
+        int volSize = 1;
+        for (int i = 0; i < extents.length; i++) {
+            volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
+            volSize *= volExtents[i];
 
+            if ((i < 3) && volExtents[i] != extents[i]) {
+                originalVolPowerOfTwo = false;
+            }
+            newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
+            saveRes[i] = (saveRes[i] * (extents[i])) / (volExtents[i]);
+        }
 
-    
-
+        if ( !originalVolPowerOfTwo )
+        {        
+            AlgorithmTransform transformFunct = new AlgorithmTransform(srcImage, new TransMatrix(4),
+                                                                       AlgorithmTransform.TRILINEAR,
+                                                                       newRes[0], newRes[1], newRes[2],
+                                                                       volExtents[0], volExtents[1], volExtents[2],
+                                                                       false, true, false);
+            transformFunct.setRunningInSeparateThread(false);
+            transformFunct.run();
+            
+            if (transformFunct.isCompleted() == false) {
+                transformFunct.finalize();
+                transformFunct = null;
+            }
+            
+            srcImage = transformFunct.getTransformedImage();
+            srcImage.calcMinMax();
+            
+        }
+        return srcImage;
+       
+    }
 
 
 }
