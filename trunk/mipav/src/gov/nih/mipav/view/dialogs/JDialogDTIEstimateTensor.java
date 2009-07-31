@@ -1532,18 +1532,23 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                ModelImage kDTIImageScaled = transformFunct.getTransformedImage();
                kDTIImageScaled.calcMinMax();
                
+               /*
                transformFunct.disposeLocal();
                transformFunct = null;
-
+               */
+               
                DTIImage.disposeLocal();
                DTIImage = null;
-               DTIImage = kDTIImageScaled;
+               DTIImage = transformFunct.getTransformedImage();
+               DTIImage.calcMinMax();
                
+               /*
                for ( int i = 0; i < DTIImage.getFileInfo().length; i++ )
                {
             	   DTIImage.getFileInfo(i).setResolutions(saveRes);
             	   DTIImage.getFileInfo(i).setSliceThickness(saveRes[2]);
                }
+               */
                
            }
            
