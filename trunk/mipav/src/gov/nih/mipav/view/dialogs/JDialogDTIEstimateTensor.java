@@ -1,7 +1,9 @@
 package gov.nih.mipav.view.dialogs;
 
+import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -9,6 +11,7 @@ import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewTableModel;
@@ -1455,6 +1458,97 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
 
     	if(kAlgorithm.isCompleted()) {
            DTIImage = ((AlgorithmDWI2DTI)kAlgorithm).getDTIImage();
+           
+           
+           float[] buffer;
+
+           // determine length of dec image
+           int length = DTIImage.getExtents()[0] * DTIImage.getExtents()[1] * DTIImage.getExtents()[2] * DTIImage.getExtents()[3];
+
+           buffer = new float[length];
+           
+           try {
+        	   DTIImage.exportData(0, length, buffer);
+           } catch (IOException error) {
+               System.out.println("IO exception");
+               return;
+           }
+           
+           //hack to trim low and high values
+           for(int i=0;i<buffer.length;i++) {
+        	   float val = buffer[i];
+        	   if(val < 0) {
+        		   buffer[i] = 0;
+        	   }else if(val > 5000) {
+        		   buffer[i] = 5000;
+        	   }
+           }
+           
+           try {
+        	   DTIImage.importData(0, buffer, true);
+           } catch (IOException error) {
+               System.out.println("IO exception");
+
+               return;
+           }
+           //end hack
+           
+           
+           //change to power of two
+           int[] extents = DTIImage.getExtents();
+           float[] res = DTIImage.getFileInfo(0).getResolutions();
+           float[] saveRes = new float[]{res[0], res[1], res[2], res[3]};
+            
+           float[] newRes = new float[extents.length];
+           int[] volExtents = new int[extents.length];
+           boolean originalVolPowerOfTwo = true;
+           int volSize = 1;
+           for (int i = 0; i < extents.length; i++) {
+               volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
+               volSize *= volExtents[i];
+
+               if ((i < 3) && volExtents[i] != extents[i]) {
+                   originalVolPowerOfTwo = false;
+               }
+               newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
+               saveRes[i] = (saveRes[i] * (extents[i])) / (volExtents[i]);
+           }
+
+           if ( !originalVolPowerOfTwo )
+           {        
+               AlgorithmTransform transformFunct = new AlgorithmTransform(DTIImage, new TransMatrix(4),
+                                                                          AlgorithmTransform.TRILINEAR,
+                                                                          newRes[0], newRes[1], newRes[2],
+                                                                          volExtents[0], volExtents[1], volExtents[2],
+                                                                          false, true, false);
+               transformFunct.setRunningInSeparateThread(false);
+               transformFunct.run();
+               
+               if (transformFunct.isCompleted() == false) {
+                   transformFunct.finalize();
+                   transformFunct = null;
+               }
+               
+               ModelImage kDTIImageScaled = transformFunct.getTransformedImage();
+               kDTIImageScaled.calcMinMax();
+               
+               transformFunct.disposeLocal();
+               transformFunct = null;
+
+               DTIImage.disposeLocal();
+               DTIImage = null;
+               DTIImage = kDTIImageScaled;
+               
+               for ( int i = 0; i < DTIImage.getFileInfo().length; i++ )
+               {
+            	   DTIImage.getFileInfo(i).setResolutions(saveRes);
+            	   DTIImage.getFileInfo(i).setSliceThickness(saveRes[2]);
+               }
+               
+           }
+           
+           
+           
 
            DTIImage.saveImage(outputDirTextField.getText() + File.separator, "DTIImage.xml", FileUtility.XML, false);
            MipavUtil.displayInfo("Tensor image saved as " + outputDirTextField.getText() + File.separator + "DTIImage.xml");
