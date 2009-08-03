@@ -431,7 +431,7 @@ public class ViewMenuBar {
 
         final JMenu dicomMenu = makeDicomMenu();
 
-        final JMenu dtiMenu = makeDiffusionTensorMenu();
+        //final JMenu dtiMenu = makeDiffusionTensorMenu();
 
         final JMenuItem closeImageBItem = menuBuilder.buildMenuItem("Close image(B)", "CloseImageB", 0, null, true);
         menuBuilder.setMenuItemEnabled("Close image(B)", false);
@@ -455,7 +455,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Image browser", "BrowseImages", 0, null, true),}),
                 ViewMenuBar.separator, loadMenu, extractImageBItem, closeImageBItem, ViewMenuBar.separator,
                 saveImageItem, saveImageAsItem, captureMenu, ViewMenuBar.separator, dicomMenu, ViewMenuBar.separator,
-                dtiMenu, ViewMenuBar.separator, menuBuilder.buildQuickList(), ViewMenuBar.separator,
+                menuBuilder.buildQuickList(), ViewMenuBar.separator,
                 menuBuilder.buildMenuItem("DCCIE image conversion", "dccieconvert", 0, null, true),
 
                 ViewMenuBar.// menuBuilder.buildMenuItem("Convert old XML", "convertXML", 0, null, true),
