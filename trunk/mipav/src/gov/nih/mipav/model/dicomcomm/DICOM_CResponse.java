@@ -125,7 +125,9 @@ public class DICOM_CResponse extends DICOM_CRequest {
             dcoRsp.setInt16(DICOM_RTC.DD_NumberOfFailedSuboperations, nFailed);
             dcoRsp.setInt16(DICOM_RTC.DD_NumberOfWarningSuboperations, nWarning);
         }
-
+        if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+            Preferences.debug(DICOM_Util.timeStamper() + " CResponse.write: Sending command RSP \n");
+        }
         pdu.write(dcoRsp, UID, (byte) 1);
 
         if (ddo != null) {

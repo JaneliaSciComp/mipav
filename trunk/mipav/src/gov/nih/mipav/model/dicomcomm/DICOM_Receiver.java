@@ -218,9 +218,8 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                             Preferences.debug("DICOMReceiver.mipavReciever: " + e);
                         }
                     }
-                    // No need since PDUService should have closed socket after read
                     
-                    /*
+                    
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug("DICOMReceiver.mipavReciever: (" + this.hashCode() +
                                           ") Closing connection from " + inetAddress + "\n");
@@ -237,7 +236,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
 
                     acceptedSocket = null;
                 
-                */
+                
                 }
             } catch (Exception e) {
 
@@ -324,9 +323,9 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                 Preferences.debug("\n" + DICOM_Util.timeStamper() + " DICOMReceiver.recieverClient: Begin (" +
                                   this.hashCode() + ")  \n");
             }
-            if (socket.isClosed()){
+            
             	handleConnectionFromServer(socket);// handle association negotiation with server requester
-            }
+
 
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                 Preferences.debug(DICOM_Util.timeStamper() + " DICOMReceiver.receiverClient(" + this.hashCode() +
@@ -558,6 +557,11 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                                           "\n");
                     }
 
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+                        Preferences.debug(DICOM_Util.timeStamper() +
+                                          " DICOMReceiver.recieverClient: Sending Status Store Success RSP \n");
+                    }
+                    
                     cStoreRSP.write(this, dco, uid, DICOM_Constants.STATUS_STORE_SUCCESS, null, null, 0, 0, 0, 0);
 
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
