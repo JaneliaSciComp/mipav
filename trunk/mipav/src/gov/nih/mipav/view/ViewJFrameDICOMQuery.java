@@ -792,39 +792,18 @@ public class ViewJFrameDICOMQuery extends JFrame
 
                 return;
             }
+            String fileList[] = getFiles(rows);
+            
+            for (int i = 0; i < fileList.length; i++) {
 
-            for (int i = 0; i < rows.length; i++) {
-                String fileDir = sourceTextF.getText() + File.separatorChar;
-                String fileName = (String) sendTable.getValueAt(rows[i], 0);
 
-                String suffix = FileUtility.getExtension(fileName);
-
-                if (!new File(fileDir + fileName).isDirectory() && !suffix.equalsIgnoreCase(".dcm") &&
-                        !suffix.equalsIgnoreCase(".ima")) {
-
-                    try {
-
-                        if (FileUtility.isDicom(fileName, fileDir, true) != FileUtility.DICOM) {
-                            sendStatusTArea.append("Skipping -- " + fileDir + fileName + " -- not a DICOM file.\n");
-
-                            continue;
-                        }
-                    } catch (IOException ioe) {
-                        sendStatusTArea.append("Skipping -- " + fileDir + fileName +
-                                               " -- I/O error encountered reading file.\n");
-                        ioe.printStackTrace();
-
-                        continue;
-                    }
-                }
-
-                DICOM_Store dcmStore = new DICOM_Store(fileDir + fileName, (String) sendDestCBox.getSelectedItem(),
+                DICOM_Store dcmStore = new DICOM_Store(fileList[i], (String) sendDestCBox.getSelectedItem(),
                                                        this);
 
                 Thread runner = new Thread(dcmStore);
                 runner.start();
 
-                sendStatusTArea.append("Sending -- " + fileDir + fileName + " to " +
+                sendStatusTArea.append("Sending -- " + fileList[i] + " to " +
                                        (String) sendDestCBox.getSelectedItem() + "\n");
             }
         } else if (command.equals("SendClear")) {
@@ -881,7 +860,77 @@ public class ViewJFrameDICOMQuery extends JFrame
         
     }
 
-    /**
+    private String[] getFiles(int[] rows) {
+    	Vector <String> list = new Vector<String>();
+    	
+    	for (int i = 0; i < rows.length; i++) {
+    		String fileDir = sourceTextF.getText() + File.separatorChar;
+    		String fileName = (String) sendTable.getValueAt(rows[i], 0);
+
+    		String suffix = FileUtility.getExtension(fileName);
+    		File current = new File(fileDir + fileName);
+    		
+    		if (!current.isDirectory()) {
+
+    			try {
+
+    				if (FileUtility.isDicom(fileName, fileDir, true) != FileUtility.DICOM) {
+    					sendStatusTArea.append("Skipping -- " + fileDir + fileName + " -- not a DICOM file.\n");
+
+    					continue;
+              	 }
+    				else{
+    					list.add(current.getAbsolutePath());
+    				}
+    			} catch (IOException ioe) {
+    				sendStatusTArea.append("Skipping -- " + fileDir + fileName +
+    					" -- I/O error encountered reading file.\n");
+    				ioe.printStackTrace();
+
+    				continue;
+    			}
+    			
+    			
+    		}
+    		
+    		else{
+    			addFiles(current, list);
+    		}
+    		
+    		
+    		
+    	}
+    	String output[] = new String[list.size()];
+    	for(int i = 0; i < list.size(); i++){
+    		output[i] = list.get(i);
+    	}
+		return output;
+	}
+
+	private void addFiles(File current, Vector<String> list) {
+		
+		File files[] = current.listFiles();
+		
+		for(int i = 0; i < files.length; i++){
+			if(files[i].isFile()){
+				try {
+					if(FileUtility.isDicom(files[i].getName(), files[i].getParent()+File.separator, true) == FileUtility.DICOM){
+						list.add(files[i].getAbsolutePath());
+					}
+					else{
+						sendStatusTArea.append("Skipping -- " + files[i].getParent()+File.separator+files[i].getName()+ " -- not a DICOM file.\n");
+					}
+				} catch (IOException e) {
+				}
+			}
+			else{
+				addFiles(files[i], list);
+			}
+		}
+		
+	}
+
+	/**
      * Appends the text area with the message.
      *
      * @param  appMessage  the message
