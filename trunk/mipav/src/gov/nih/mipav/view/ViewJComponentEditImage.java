@@ -5556,54 +5556,58 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param LUT DOCUMENT ME!
      */
     private void quickLUT(int xS, int wS, int yS, int hS, float[] imageBuffer, ModelImage image, ModelLUT LUT) {
-        int xDim = image.getExtents()[0];
-        int yDim = image.getExtents()[1];
-
-        float min = Float.MAX_VALUE;
-        float max = -100000000;
-        float[] x = new float[4];
-        float[] y = new float[4];
-        float[] z = new float[4];
-        Dimension dim = new Dimension(256, 256);
-        float minImage, maxImage;
-
-        for (int j = yS; j < (yS + hS); j++) {
-
-            for (int i = xS; i < (xS + wS); i++) {
-
-                if (imageBuffer[ (j * xDim) + i] > max) {
-                    max = imageBuffer[ (j * xDim) + i];
-                }
-
-                if (imageBuffer[ (j * xDim) + i] < min) {
-                    min = imageBuffer[ (j * xDim) + i];
-                }
-            }
-        }
-
-        if (image.getType() == ModelStorageBase.UBYTE) {
-            minImage = 0;
-            maxImage = 255;
-        } else if (image.getType() == ModelStorageBase.BYTE) {
-            minImage = -128;
-            maxImage = 127;
-        } else {
-            minImage = (float) image.getMin();
-            maxImage = (float) image.getMax();
-        }
-
-        // Set LUT min max values;
-        x[0] = minImage;
-        x[1] = min;
-        x[2] = max;
-        x[3] = maxImage;
-
-        y[0] = dim.height - 1;
-        y[1] = dim.height - 1;
-        y[2] = 0;
-        y[3] = 0;
-
-        LUT.getTransferFunction().importArrays(x, y, 4);
+    	
+    	if (wS > 5 && hS > 5)
+    	{
+	        int xDim = image.getExtents()[0];
+	        int yDim = image.getExtents()[1];
+	
+	        float min = Float.MAX_VALUE;
+	        float max = -100000000;
+	        float[] x = new float[4];
+	        float[] y = new float[4];
+	        float[] z = new float[4];
+	        Dimension dim = new Dimension(256, 256);
+	        float minImage, maxImage;
+	
+	        for (int j = yS; j < (yS + hS); j++) {
+	
+	            for (int i = xS; i < (xS + wS); i++) {
+	
+	                if (imageBuffer[ (j * xDim) + i] > max) {
+	                    max = imageBuffer[ (j * xDim) + i];
+	                }
+	
+	                if (imageBuffer[ (j * xDim) + i] < min) {
+	                    min = imageBuffer[ (j * xDim) + i];
+	                }
+	            }
+	        }
+	
+	        if (image.getType() == ModelStorageBase.UBYTE) {
+	            minImage = 0;
+	            maxImage = 255;
+	        } else if (image.getType() == ModelStorageBase.BYTE) {
+	            minImage = -128;
+	            maxImage = 127;
+	        } else {
+	            minImage = (float) image.getMin();
+	            maxImage = (float) image.getMax();
+	        }
+	
+	        // Set LUT min max values;
+	        x[0] = minImage;
+	        x[1] = min;
+	        x[2] = max;
+	        x[3] = maxImage;
+	
+	        y[0] = dim.height - 1;
+	        y[1] = dim.height - 1;
+	        y[2] = 0;
+	        y[3] = 0;
+	
+	        LUT.getTransferFunction().importArrays(x, y, 4);
+    	}
     }
 
     /**
