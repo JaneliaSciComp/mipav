@@ -2804,35 +2804,36 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             yS = MipavMath.round(voiHandler.getRubberband().getBounds().y / (getZoomY() * resolutionY));
             wS = MipavMath.round(voiHandler.getRubberband().getBounds().width / (getZoomX() * resolutionX));
             hS = MipavMath.round(voiHandler.getRubberband().getBounds().height / (getZoomY() * resolutionY));
-
-            if (imageA.isColorImage() == false) {
-
-                if (imageA == imageActive) {
-                    this.quickLUT(xS, wS, yS, hS, imageBufferA, imageA, LUTa);
-                    imageActive.notifyImageDisplayListeners(LUTa, true);
-                } else if ( (imageB != null) && (imageActive == imageB)) {
-                    this.quickLUT(xS, wS, yS, hS, imageBufferB, imageB, LUTb);
-                    imageActive.notifyImageDisplayListeners(LUTb, true);
-                }
-            } else { // RGB image
-
-                if (imageA == imageActive) {
-                    this.quickRGB(xS, wS, yS, hS, imageBufferA, imageA, RGBTA);
-                    imageActive.notifyImageDisplayListeners(true, 1, RGBTA);
-                } else if ( (imageBufferB != null) && (imageB != null) && (imageB == imageActive)) {
-                    this.quickRGB(xS, wS, yS, hS, imageBufferB, imageB, RGBTB);
-                    imageActive.notifyImageDisplayListeners(true, 1, RGBTB);
-                }
-            }
-
-            if ( (getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
-                getActiveImage().getHistoRGBFrame().update();
-            } else if (getActiveImage().getHistoLUTFrame() != null) {
-                getActiveImage().getHistoLUTFrame().update();
-            }
-
-            if ( ! ( (mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-                setCursorMode(DEFAULT);
+            if (wS > 5 && hS > 5){
+	            if (imageA.isColorImage() == false) {
+	
+	                if (imageA == imageActive) {
+	                    this.quickLUT(xS, wS, yS, hS, imageBufferA, imageA, LUTa);
+	                    imageActive.notifyImageDisplayListeners(LUTa, true);
+	                } else if ( (imageB != null) && (imageActive == imageB)) {
+	                    this.quickLUT(xS, wS, yS, hS, imageBufferB, imageB, LUTb);
+	                    imageActive.notifyImageDisplayListeners(LUTb, true);
+	                }
+	            } else { // RGB image
+	
+	                if (imageA == imageActive) {
+	                    this.quickRGB(xS, wS, yS, hS, imageBufferA, imageA, RGBTA);
+	                    imageActive.notifyImageDisplayListeners(true, 1, RGBTA);
+	                } else if ( (imageBufferB != null) && (imageB != null) && (imageB == imageActive)) {
+	                    this.quickRGB(xS, wS, yS, hS, imageBufferB, imageB, RGBTB);
+	                    imageActive.notifyImageDisplayListeners(true, 1, RGBTB);
+	                }
+	            }
+	
+	            if ( (getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
+	                getActiveImage().getHistoRGBFrame().update();
+	            } else if (getActiveImage().getHistoLUTFrame() != null) {
+	                getActiveImage().getHistoLUTFrame().update();
+	            }
+	
+	            if ( ! ( (mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
+	                setCursorMode(DEFAULT);
+	            }
             }
         } else if (cursorMode == DEFAULT) {
             intensityLabel = false;
@@ -5557,57 +5558,55 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      */
     private void quickLUT(int xS, int wS, int yS, int hS, float[] imageBuffer, ModelImage image, ModelLUT LUT) {
     	
-    	if (wS > 5 && hS > 5)
-    	{
-	        int xDim = image.getExtents()[0];
-	        int yDim = image.getExtents()[1];
+        int xDim = image.getExtents()[0];
+        int yDim = image.getExtents()[1];
+
+        float min = Float.MAX_VALUE;
+        float max = -100000000;
+        float[] x = new float[4];
+        float[] y = new float[4];
+        float[] z = new float[4];
+        Dimension dim = new Dimension(256, 256);
+        float minImage, maxImage;
+
+        for (int j = yS; j < (yS + hS); j++) {
+
+            for (int i = xS; i < (xS + wS); i++) {
+
+                if (imageBuffer[ (j * xDim) + i] > max) {
+                    max = imageBuffer[ (j * xDim) + i];
+                }
+
+                if (imageBuffer[ (j * xDim) + i] < min) {
+                    min = imageBuffer[ (j * xDim) + i];
+                }
+            }
+        }
+
+        if (image.getType() == ModelStorageBase.UBYTE) {
+            minImage = 0;
+            maxImage = 255;
+        } else if (image.getType() == ModelStorageBase.BYTE) {
+            minImage = -128;
+            maxImage = 127;
+        } else {
+            minImage = (float) image.getMin();
+            maxImage = (float) image.getMax();
+        }
+
+        // Set LUT min max values;
+        x[0] = minImage;
+        x[1] = min;
+        x[2] = max;
+        x[3] = maxImage;
+
+        y[0] = dim.height - 1;
+        y[1] = dim.height - 1;
+        y[2] = 0;
+        y[3] = 0;
+
+        LUT.getTransferFunction().importArrays(x, y, 4);
 	
-	        float min = Float.MAX_VALUE;
-	        float max = -100000000;
-	        float[] x = new float[4];
-	        float[] y = new float[4];
-	        float[] z = new float[4];
-	        Dimension dim = new Dimension(256, 256);
-	        float minImage, maxImage;
-	
-	        for (int j = yS; j < (yS + hS); j++) {
-	
-	            for (int i = xS; i < (xS + wS); i++) {
-	
-	                if (imageBuffer[ (j * xDim) + i] > max) {
-	                    max = imageBuffer[ (j * xDim) + i];
-	                }
-	
-	                if (imageBuffer[ (j * xDim) + i] < min) {
-	                    min = imageBuffer[ (j * xDim) + i];
-	                }
-	            }
-	        }
-	
-	        if (image.getType() == ModelStorageBase.UBYTE) {
-	            minImage = 0;
-	            maxImage = 255;
-	        } else if (image.getType() == ModelStorageBase.BYTE) {
-	            minImage = -128;
-	            maxImage = 127;
-	        } else {
-	            minImage = (float) image.getMin();
-	            maxImage = (float) image.getMax();
-	        }
-	
-	        // Set LUT min max values;
-	        x[0] = minImage;
-	        x[1] = min;
-	        x[2] = max;
-	        x[3] = maxImage;
-	
-	        y[0] = dim.height - 1;
-	        y[1] = dim.height - 1;
-	        y[2] = 0;
-	        y[3] = 0;
-	
-	        LUT.getTransferFunction().importArrays(x, y, 4);
-    	}
     }
 
     /**
