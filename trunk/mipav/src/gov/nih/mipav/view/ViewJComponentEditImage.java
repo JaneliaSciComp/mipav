@@ -2804,7 +2804,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
             yS = MipavMath.round(voiHandler.getRubberband().getBounds().y / (getZoomY() * resolutionY));
             wS = MipavMath.round(voiHandler.getRubberband().getBounds().width / (getZoomX() * resolutionX));
             hS = MipavMath.round(voiHandler.getRubberband().getBounds().height / (getZoomY() * resolutionY));
-            if (wS > 5 && hS > 5){
 	            if (imageA.isColorImage() == false) {
 	
 	                if (imageA == imageActive) {
@@ -2834,7 +2833,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 	            if ( ! ( (mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
 	                setCursorMode(DEFAULT);
 	            }
-            }
+            
         } else if (cursorMode == DEFAULT) {
             intensityLabel = false;
             paintComponent(getGraphics());
@@ -5557,56 +5556,57 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param LUT DOCUMENT ME!
      */
     private void quickLUT(int xS, int wS, int yS, int hS, float[] imageBuffer, ModelImage image, ModelLUT LUT) {
-    	
-        int xDim = image.getExtents()[0];
-        int yDim = image.getExtents()[1];
-
-        float min = Float.MAX_VALUE;
-        float max = -100000000;
-        float[] x = new float[4];
-        float[] y = new float[4];
-        float[] z = new float[4];
-        Dimension dim = new Dimension(256, 256);
-        float minImage, maxImage;
-
-        for (int j = yS; j < (yS + hS); j++) {
-
-            for (int i = xS; i < (xS + wS); i++) {
-
-                if (imageBuffer[ (j * xDim) + i] > max) {
-                    max = imageBuffer[ (j * xDim) + i];
-                }
-
-                if (imageBuffer[ (j * xDim) + i] < min) {
-                    min = imageBuffer[ (j * xDim) + i];
-                }
-            }
-        }
-
-        if (image.getType() == ModelStorageBase.UBYTE) {
-            minImage = 0;
-            maxImage = 255;
-        } else if (image.getType() == ModelStorageBase.BYTE) {
-            minImage = -128;
-            maxImage = 127;
-        } else {
-            minImage = (float) image.getMin();
-            maxImage = (float) image.getMax();
-        }
-
-        // Set LUT min max values;
-        x[0] = minImage;
-        x[1] = min;
-        x[2] = max;
-        x[3] = maxImage;
-
-        y[0] = dim.height - 1;
-        y[1] = dim.height - 1;
-        y[2] = 0;
-        y[3] = 0;
-
-        LUT.getTransferFunction().importArrays(x, y, 4);
+        if (wS > 5 && hS > 5){
+	        int xDim = image.getExtents()[0];
+	        int yDim = image.getExtents()[1];
 	
+	        float min = Float.MAX_VALUE;
+	        float max = -100000000;
+	        float[] x = new float[4];
+	        float[] y = new float[4];
+	        float[] z = new float[4];
+	        Dimension dim = new Dimension(256, 256);
+	        float minImage, maxImage;
+	
+	        for (int j = yS; j < (yS + hS); j++) {
+	
+	            for (int i = xS; i < (xS + wS); i++) {
+	
+	                if (imageBuffer[ (j * xDim) + i] > max) {
+	                    max = imageBuffer[ (j * xDim) + i];
+	                }
+	
+	                if (imageBuffer[ (j * xDim) + i] < min) {
+	                    min = imageBuffer[ (j * xDim) + i];
+	                }
+	            }
+	        }
+	
+	        if (image.getType() == ModelStorageBase.UBYTE) {
+	            minImage = 0;
+	            maxImage = 255;
+	        } else if (image.getType() == ModelStorageBase.BYTE) {
+	            minImage = -128;
+	            maxImage = 127;
+	        } else {
+	            minImage = (float) image.getMin();
+	            maxImage = (float) image.getMax();
+	        }
+	
+	        // Set LUT min max values;
+	        x[0] = minImage;
+	        x[1] = min;
+	        x[2] = max;
+	        x[3] = maxImage;
+	
+	        y[0] = dim.height - 1;
+	        y[1] = dim.height - 1;
+	        y[2] = 0;
+	        y[3] = 0;
+	
+	        LUT.getTransferFunction().importArrays(x, y, 4);
+	
+    }
     }
 
     /**
@@ -5621,64 +5621,67 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param RGB DOCUMENT ME!
      */
     private void quickRGB(int xS, int wS, int yS, int hS, float[] imageBuffer, ModelImage image, ModelRGB RGB) {
-        int xDim = image.getExtents()[0];
-        int yDim = image.getExtents()[1];
-
-        float[] minC = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
-        float[] maxC = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
-
-        float min = Float.MAX_VALUE;
-        float max = -100000000;
-        float[][] x = new float[3][4];
-        float[][] y = new float[3][4];
-        float[][] z = new float[3][4];
-        Dimension dim = new Dimension(256, 256);
-
-        for (int j = yS; j < (yS + hS); j++) {
-
-            for (int i = xS; i < (xS + wS); i++) {
-
-                for (int c = 0; c < 3; c++) {
-
-                    if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] > maxC[c]) {
-                        maxC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
-                    }
-
-                    if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] < minC[c]) {
-                        minC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
-                    }
-                }
-            }
+        if (wS > 5 && hS > 5){
+	    	
+	    	int xDim = image.getExtents()[0];
+	        int yDim = image.getExtents()[1];
+	
+	        float[] minC = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE};
+	        float[] maxC = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+	
+	        float min = Float.MAX_VALUE;
+	        float max = -100000000;
+	        float[][] x = new float[3][4];
+	        float[][] y = new float[3][4];
+	        float[][] z = new float[3][4];
+	        Dimension dim = new Dimension(256, 256);
+	
+	        for (int j = yS; j < (yS + hS); j++) {
+	
+	            for (int i = xS; i < (xS + wS); i++) {
+	
+	                for (int c = 0; c < 3; c++) {
+	
+	                    if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] > maxC[c]) {
+	                        maxC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
+	                    }
+	
+	                    if (imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1] < minC[c]) {
+	                        minC[c] = imageBuffer[ (j * xDim * 4) + (i * 4) + c + 1];
+	                    }
+	                }
+	            }
+	        }
+	
+	        max = Math.max(maxC[0], maxC[1]);
+	        max = Math.max(maxC[2], max);
+	
+	        for (int i = 0; i < 3; i++) {
+	
+	            // Set LUT min max values;
+	            // if (imageA.isColorImage() == true) {
+	            if (image.getType() == ModelStorageBase.ARGB) {
+	                x[i][1] = minC[i];
+	                x[i][2] = maxC[i];
+	            } else {
+	                x[i][1] = minC[i] * 255 / max;
+	                x[i][2] = maxC[i] * 255 / max;
+	            }
+	
+	            x[i][0] = 0;
+	            x[i][3] = 255;
+	
+	            y[i][0] = dim.height - 1;
+	            y[i][1] = dim.height - 1;
+	            y[i][2] = 0;
+	            y[i][3] = 0;
+	        }
+	
+	        RGB.getRedFunction().importArrays(x[0], y[0], 4);
+	        RGB.getGreenFunction().importArrays(x[1], y[1], 4);
+	        RGB.getBlueFunction().importArrays(x[2], y[2], 4);
+	        RGB.makeRGB( -1);
         }
-
-        max = Math.max(maxC[0], maxC[1]);
-        max = Math.max(maxC[2], max);
-
-        for (int i = 0; i < 3; i++) {
-
-            // Set LUT min max values;
-            // if (imageA.isColorImage() == true) {
-            if (image.getType() == ModelStorageBase.ARGB) {
-                x[i][1] = minC[i];
-                x[i][2] = maxC[i];
-            } else {
-                x[i][1] = minC[i] * 255 / max;
-                x[i][2] = maxC[i] * 255 / max;
-            }
-
-            x[i][0] = 0;
-            x[i][3] = 255;
-
-            y[i][0] = dim.height - 1;
-            y[i][1] = dim.height - 1;
-            y[i][2] = 0;
-            y[i][3] = 0;
-        }
-
-        RGB.getRedFunction().importArrays(x[0], y[0], 4);
-        RGB.getGreenFunction().importArrays(x[1], y[1], 4);
-        RGB.getBlueFunction().importArrays(x[2], y[2], 4);
-        RGB.makeRGB( -1);
     }
 
     /**
