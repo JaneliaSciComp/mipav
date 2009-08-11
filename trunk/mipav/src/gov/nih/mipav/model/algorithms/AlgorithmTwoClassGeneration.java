@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.jama.*;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import Jama.*;
@@ -243,13 +244,16 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     
     // Test with NNCT for Pielou's data, shown in Table 3 of "Overall and pairwise segregation tests based on nearest
     // neighbor contingency tables"  In agreement with Ceyhan except for Ceyhan's overall test of segregation for which
-    // he calculates 13.11 and I calculate 24.58.
+    // he calculates 13.11 and I calculate 24.58 for inverse and 19.67 for generalized inverse.  19.67 is also the
+    // value I calculate for Dixon's overall test.
     private boolean selfTest1 = false;
     
     // Test with NNCT for 5 class Good and Whipple swamp tree data shown in Table 4 of "Overall and pairwise 
     // segregation tests based on nearest neighbor contingency tables".  In agreement with Ceyhan on specific tests.
-    // For Dixon's overall test he calculates 275.64 and I calculate 279.92.  For Ceyhan's overall test he calculates 
-    // 263.10 and I calculate 641.28.
+    // For Dixon's overall test he calculates 275.64 and I calculate 279.92 for inverse and 275.64 for 
+    // generalized inverse.  For Ceyhan's overall test he calculates 263.10 and I calculate 641.28 for inverse
+    // and 275.64 for generalized inverse.  Note with generalized inverse I get the same overall test values for 
+    // Dixon's test and Ceyhan's test.
     private boolean selfTest2 = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -520,6 +524,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         byte red[];
         byte green[];
         boolean success;
+        GeneralizedInverse ge;
+        double sigmaInv[][];
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -1842,6 +1848,15 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         ND[3][0] = N22 - EN22;
         NDM = new Matrix(ND);
         success = true;
+        
+        ge = new GeneralizedInverse(sigma, sigma.length);
+        sigmaInv = null;
+        sigmaInv = ge.ginv();
+        ge = null;
+        sigmaD = new Matrix(sigmaInv);
+        CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
+        sigmaD = new Matrix(sigma);
+        Preferences.debug("2002 version of CD calculated via matrix quadratic form for generalized inverse = " + CD2 + "\n");
         try {
             sigmaD = sigmaD.inverse();
         }
@@ -1852,7 +1867,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         }
         if (success) {
             CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
-            Preferences.debug("2002 version of CD calculated via matrix quadratic form = " + CD2 + "\n");
+            Preferences.debug("2002 version of CD calculated via matrix quadratic form for inverse = " + CD2 + "\n");
             if (CD2 > 0.0) {
                 degreesOfFreedom = 2;
                 stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
@@ -2077,6 +2092,14 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         T[3][0] = T22;
         TM = new Matrix(T);
         success = true;
+        ge = new GeneralizedInverse(sigma, sigma.length);
+        sigmaInv = null;
+        sigmaInv = ge.ginv();
+        ge = null;
+        sigmaN = new Matrix(sigmaInv);
+        CN = ((TpM.times(sigmaN)).times(TM)).getArray();
+        Preferences.debug("CN for generalized inverse = " + CN[0][0] + "\n");
+        sigmaN = new Matrix(sigma);
         try {
             sigmaN = sigmaN.inverse();
         }
@@ -2087,7 +2110,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         }
         if (success) {
             CN = ((TpM.times(sigmaN)).times(TM)).getArray();
-            Preferences.debug("CN = " + CN[0][0] + "\n");
+            Preferences.debug("CN for inverse = " + CN[0][0] + "\n");
             if (selfTest1) {
                 Preferences.debug("Should have CN = 13.11\n");
             }
@@ -2467,6 +2490,14 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         }
         NDM = new Matrix(ND);
         success = true;
+        ge = new GeneralizedInverse(sigma, sigma.length);
+        sigmaInv = null;
+        sigmaInv = ge.ginv();
+        ge = null;
+        sigmaD = new Matrix(sigmaInv);
+        CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
+        Preferences.debug("CD for generalized inverse = " + CD2 + "\n");
+        sigmaD = new Matrix(sigma);
         try {
             sigmaD = sigmaD.inverse();
         }
@@ -2477,7 +2508,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         }
         if (success) {
             CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
-            Preferences.debug("CD = " + CD2 + "\n");
+            Preferences.debug("CD for inverse = " + CD2 + "\n");
             
             if (CD2 > 0.0) {
                 // Under random labelling the chi squared statistic has degrees of freedom = 6;
@@ -2644,6 +2675,14 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         
         TM = new Matrix(T);
         success = true;
+        ge = new GeneralizedInverse(sigma, sigma.length);
+        sigmaInv = null;
+        sigmaInv = ge.ginv();
+        ge = null;
+        sigmaN = new Matrix(sigmaInv);
+        CN = ((TpM.times(sigmaN)).times(TM)).getArray();
+        Preferences.debug("CN for generalized inverse = " + CN[0][0] + "\n");
+        sigmaN = new Matrix(sigma);
         try {
             sigmaN = sigmaN.inverse();
         }
@@ -2654,7 +2693,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         }
         if (success) {
             CN = ((TpM.times(sigmaN)).times(TM)).getArray();
-            Preferences.debug("CN = " + CN[0][0] + "\n");
+            Preferences.debug("CN for inverse = " + CN[0][0] + "\n");
             if (CN[0][0] > 0.0) {
                 degreesOfFreedom = (nc - 1)*(nc - 1);
                 stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
