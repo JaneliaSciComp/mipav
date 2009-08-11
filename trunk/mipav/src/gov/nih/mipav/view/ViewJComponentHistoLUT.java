@@ -71,7 +71,7 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
         lut = _lut;
         // set the default color LUT transfer function to linear. 
         // otherwise, the init transfer function setup messed up. 
-        linearMode();
+        //linearMode(); --- commented back out so that LUTs do not reset.
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
