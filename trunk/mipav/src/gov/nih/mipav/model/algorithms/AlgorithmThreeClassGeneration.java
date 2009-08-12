@@ -3,7 +3,6 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import Jama.*;
 
@@ -46,6 +45,17 @@ import java.io.*;
  *      tests ZijN with i = 1,2,3 j = 1,2,3 are calculated from Tij/sqrt(variance Tij).  ZijN has a normal distribution
  *      with 0 mean and a standard deviation of 1.
  *      
+ *      The generalized inverse is what should be used in calculating CD and CN.  Results are:
+ *                        Ceyhan             myself inverse        myself generalized inverse           
+ *      2 class CD        19.67              19.66                 19.67
+ *      2 class CN        13.11              24.59                 19.67
+ *      5 class CD       275.64             279.92                275.64
+ *      5 class CN       263.10             641.28                275.64
+ *      So if the generalized inverse is used, CN = CD or Ceyhan's overall test of segregation produces the same
+ *      result as Dixon's overall test of segregation.  I have used the simple generalized inverse algorithm of 
+ *      B. Rust, W. R. Burrus, and C. Schneeberger.  The generalized inverse algorithm of Shayle Searle in 
+ *      Matrix Algebra Useful for Statistics cited as a reference by Ceyhan is too vague to implement.
+ *      
  *      Dear Dr Gandler,
 thanks for bringing this issue up to my attention...
 if you look at the definition of T_{ij}, the covariance expression in "Overall and pairwise segregation tests based on nearest neighbor  contingency tables:" should be the correct one, i will fix the technical report and then repost on arXiv...
@@ -80,12 +90,6 @@ E.
 > 
 >                                                                         
 >                                  William Gandler
-
-*      One more discrepancy:                
- *      nk in the second and fourth terms in both cases in reference 1 becomes nl in reference 2.
- *      The reference 2 version of nl yields a CN value = 13.26, close to the
- *      CN = 13.11 calculated by Ceyhan for the Pielou data in reference 1.  The reference 1
- *      version of nk yields CN = 24.58. 
  * 
  References :
  1.) "Overall and pairwise segregation tests based on nearest neighbor contigency tables" by Elvan
