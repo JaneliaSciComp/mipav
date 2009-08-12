@@ -21,8 +21,8 @@ public class GeneralizedInverse {
         this.NR = NR;
         MR = A1.length;
         NC = A1[0].length;
-        A = new double[MR][NC];
-        for (i = 0; i < MR; i++) {
+        A = new double[NR][NC];
+        for (i = 0; i < NR; i++) {
             for (j = 0; j < NC; j++) {
                 A[i][j] = A1[i][j];
             }
