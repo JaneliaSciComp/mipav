@@ -147,8 +147,8 @@ public class GeneralizedInverse {
     public void ginvTest() {
         // The following tests are designed to ensure that the routine ptst is performing correctly.
         // First set up the matrix and a supposed inverse.
-        int m;
-        int n;
+        int m[] = new int[1];
+        int n[] = new int[1];
         int ma;
         int na;
         int nb;
@@ -173,8 +173,8 @@ public class GeneralizedInverse {
         int moptVar[] = new int[nTests];
         int iseedVar[] = new int[nTests];
         int alphaVar[] = new int[nTests];
-        m = 3;
-        n = 2;
+        m[0] = 3;
+        n[0] = 2;
         A[0][0] = 1.0;
         A[0][1] = 2.0;
         A[1][0] = 2.0;
@@ -241,8 +241,8 @@ public class GeneralizedInverse {
         X[0][0] = 3.0/25.0;
         X[0][1] = 4.0/25.0;
         
-        m = 2;
-        n = 1;
+        m[0] = 2;
+        n[0] = 1;
         Preferences.debug("Test ptst with row and column vectors\n");
         Preferences.debug("A = " + "\n");
         Preferences.debug(A[0][0] + "\n");
@@ -258,8 +258,8 @@ public class GeneralizedInverse {
         // Test trivial case (1 by 1)
         A[0][0] = 2.0;
         X[0][0] = 0.5;
-        m = 1;
-        n = 1;
+        m[0] = 1;
+        n[0] = 1;
         Preferences.debug("Test ptst with trivial 1 by 1 matrix A = 2.0 and matrix X = 0.5\n");
         ptst(n, m, X, na, A, ma, C, ma, ta, tm, fail);
         
@@ -289,8 +289,8 @@ public class GeneralizedInverse {
             Preferences.debug("Test number = " + (test + 1) + "\n");
             Preferences.debug(message[test] + "\n");
             // For each test set m, n, k, mopt, iseed, alpha
-            m = mVar[test];
-            n = nVar[test];
+            m[0] = mVar[test];
+            n[0] = nVar[test];
             k = kVar[test];
             mopt = moptVar[test];
             iseed = iseedVar[test];
@@ -309,25 +309,29 @@ public class GeneralizedInverse {
             // Other tests for valid inputs are made the routines
             
             // Check for dimensions exceeded
-            if (m >= ma) {
-                Preferences.debug("m >= ma dimension exceeded input ignored\n");
+            if (m[0] >= ma) {
+                Preferences.debug("m[0] >= ma dimension exceeded input ignored\n");
                 continue;
             }
-            if (n >= na) {
-                Preferences.debug("n >= na dimension exceeded input ignored\n");
+            if (n[0] >= na) {
+                Preferences.debug("n[0] >= na dimension exceeded input ignored\n");
                 continue;    
             }
             
             if (mopt != 0) {
-                // zielike routine call
+                // zielke routine call
                 // Note that m and n are replaced by appropriate values.
                 // mopt is the zielike matrix selected
                 // alpha is needed in zielike as a parameter in formulas for the matrix elements generated.
+                zielke(m, n, A, ma, na, mopt, alpha, fail);
+                if (fail[0]) {
+                    continue;
+                }
             } // if (mopt != 0)
         } // for (test = 0; test < nTests; test++)
     }
     
-    private void ptst(int m, int n, double A[][], int ma, double X[][], int nx, double C[][], 
+    private void ptst(int m[], int n[], double A[][], int ma, double X[][], int nx, double C[][], 
                       int nc, double ta[], double tm[], boolean fail[]) {
         // This subroutine is designed to test a proposed generalized inverse of a matrix labelled A,
         // which is m by n.  X is the n by m matrix containing the supposed inverse.
@@ -339,10 +343,10 @@ public class GeneralizedInverse {
         // XAX - X         ... Penrose condition 2
         // (AX)T - AX      ... Penrose condition 3
         // (XA)T - XA      ... Penrose condition 4
-        // m = number of rows in the 'original' matrix A
+        // m[0] = number of rows in the 'original' matrix A
         //   = number of columns in purported inverse
         // unchanged by this routine
-        // n = number of columns in the 'original' matrix A
+        // n[0] = number of columns in the 'original' matrix A
         //   = number of rows in purported inverse
         // unchanged by this routine
         // A = 'original' matrix of which a generalized inverse has supposedly been computed
@@ -395,9 +399,9 @@ public class GeneralizedInverse {
             fail[0] = true;
             return;
         }
-        if (n <= 0) {
-            Preferences.debug("ptst failed because n = " + n + " is less than 1\n");
-            System.out.println("ptst failed because n = " + n + " is less than 1");
+        if (n[0] <= 0) {
+            Preferences.debug("ptst failed because n[0] = " + n[0] + " is less than 1\n");
+            System.out.println("ptst failed because n[0] = " + n[0] + " is less than 1");
             fail[0] = true;
             return;    
         }
@@ -407,9 +411,9 @@ public class GeneralizedInverse {
             fail[0] = true;
             return;
         }
-        if (m <= 0) {
-            Preferences.debug("ptst failed because m = " + m + " is less than 1\n");
-            System.out.println("ptst failed because m = " + m + " is less than 1");
+        if (m [0]<= 0) {
+            Preferences.debug("ptst failed because m[0] = " + m[0] + " is less than 1\n");
+            System.out.println("ptst failed because m[0] = " + m[0] + " is less than 1");
             fail[0] = true;
             return;
         }
@@ -427,88 +431,88 @@ public class GeneralizedInverse {
         }
         
         // Compute AX
-        for (i = 0; i < m; i++) {
-            for (j = 0; j < m; j++) {
+        for (i = 0; i < m[0]; i++) {
+            for (j = 0; j < m[0]; j++) {
                 s = 0.0;
-                for (L = 0; L < n; L++) {
+                for (L = 0; L < n[0]; L++) {
                     s = s + A[i][L] * X[L][j];
-                } // for (L = 0; L < n; L++) 
+                } // for (L = 0; L < n[0]; L++) 
                 C[i][j] = s;
-            } // for (j = 0; j < m; j++)
-        } // for (i = 0; i < m; i++)
+            } // for (j = 0; j < m[0]; j++)
+        } // for (i = 0; i < m[0]; i++)
         
-        // Compute AXA, AXA - A = (m by n)
-        for (i = 0; i < m; i++) {
-            for (j = 0; j < n; j++) {
+        // Compute AXA, AXA - A = (m[0] by n[0])
+        for (i = 0; i < m[0]; i++) {
+            for (j = 0; j < n[0]; j++) {
                 s = 0.0;
-                for (L = 0; L < m; L++) {
+                for (L = 0; L < m[0]; L++) {
                     s = s + C[i][L] * A[L][j];
-                } // for (L = 0; L < m; L++)
+                } // for (L = 0; L < m[0]; L++)
                 t1 = Math.abs(A[i][j] - s);
                 if (t1 > tm[0]) {
                     tm[0] = t1;
                 }
                 ta[0] = ta[0] + t1;
-            } // for (j = 0; j < n; j++)
-        } // for (i = 0; i < m; i++)
-        ta[0] = ta[0]/(m * n);
+            } // for (j = 0; j < n[0]; j++)
+        } // for (i = 0; i < m[0]; i++)
+        ta[0] = ta[0]/(m[0] * n[0]);
         
-        // Compute XAX, XAX - X = (n by m)
-        for (i = 0; i < n; i++) {
-            for (j = 0; j < m; j++) {
+        // Compute XAX, XAX - X = (n[0] by m[0])
+        for (i = 0; i < n[0]; i++) {
+            for (j = 0; j < m[0]; j++) {
                 s = 0.0;
-                for (L = 0; L < m; L++) {
+                for (L = 0; L < m[0]; L++) {
                     s = s + X[i][L]*C[L][j];    
-                } // for (L = 0; L < m; L++)
+                } // for (L = 0; L < m[0]; L++)
                 t1 = Math.abs(X[i][j] - s);
                 if (t1 > tm[1]) {
                     tm[1] = t1;
                 }
                 ta[1] = ta[1] + t1;
-            } // for (j = 0; j < m; j++)
-        } // for (i = 0; i < n; i++)
-        ta[1] = ta[1]/(m * n);
+            } // for (j = 0; j < m[0]; j++)
+        } // for (i = 0; i < n[0]; i++)
+        ta[1] = ta[1]/(m[0] * n[0]);
         
-        // Asymmetry of AX (m by n)
+        // Asymmetry of AX (m[0] by n[0])
         // Test for trivial case
-        // Note that normalization unnecessary when m = 1 since AX will be 1 by 1
-        if (m > 1) {
-            m1 = m - 1;
+        // Note that normalization unnecessary when m[0] = 1 since AX will be 1 by 1
+        if (m[0] > 1) {
+            m1 = m[0] - 1;
             for (i = 1; i <= m1; i++) {
                 j1 = i + 1;
-                for (j = j1; j <= m; j++) {
+                for (j = j1; j <= m[0]; j++) {
                     t1 = Math.abs(C[i-1][j-1] - C[j-1][i-1]);
                     if (t1 > tm[2]) {
                         tm[2] = t1;
                     }
                     ta[2] = ta[2] + t1;
-                } // for (j = j1; j <= m; j++)
+                } // for (j = j1; j <= m[0]; j++)
             } // for (i = 1; i <= m1; i++)
-            ta[2] = ta[2]/(m*(m-1)/2);
-        } // if (m > 1)
+            ta[2] = ta[2]/(m[0]*(m[0]-1)/2);
+        } // if (m[0] > 1)
         
-        // Asymmetry of XA (n by n)
+        // Asymmetry of XA (n[0] by n[0])
         // Test for trivial case
-        // Noate that normalization unnecessary when n = 1 since XA will be 1 by 1
-        if (n > 1) {
-            n1 = n - 1;
+        // Noate that normalization unnecessary when n[0] = 1 since XA will be 1 by 1
+        if (n[0] > 1) {
+            n1 = n[0] - 1;
             for (i = 1; i <= n1; i++) {
                 j1 = i + 1;
-                for (j = j1; j <= n; j++) {
+                for (j = j1; j <= n[0]; j++) {
                     s = 0.0;
                     v = 0.0;
-                    for (L = 1; L <= m; L++) {
+                    for (L = 1; L <= m[0]; L++) {
                         s = s + X[i-1][L-1]*A[L-1][j-1];
                         v = v + X[j-1][L-1]*A[L-1][i-1];
-                    } // for (L = 1; L <= m; L++)
+                    } // for (L = 1; L <= m[0]; L++)
                     t1 = Math.abs(s-v);
                     if (t1 > tm[3]) {
                         tm[3] = t1;
                     }
                     ta[3] = ta[3] + t1;
-                } // for (j = j1; j <= n; j++)
+                } // for (j = j1; j <= n[0]; j++)
             } // for (i = 1; i <= n1; i++)
-            ta[3] = ta[3]/(n*(n-1)/2);
+            ta[3] = ta[3]/(n[0]*(n[0]-1)/2);
         } // if (n > 1)
         
         Preferences.debug("Test of penrose conditions\n");
@@ -548,13 +552,13 @@ public class GeneralizedInverse {
         return;
     } // ptst
     
-    private double anorm(int m, int n, double A[][], int ma) {
+    private double anorm(int m[], int n[], double A[][], int ma) {
         // Compute square (euclidean) norm of matrix A
-        // norm = SQRT(SUM(A[i][j]**2), fo ri = 1, m, j = 1, n)
+        // norm = SQRT(SUM(A[i][j]**2), for i = 1, m[0], j = 1, n[0])
         // This norm is used for simplicity - others acceptable
-        // m = number of rows in matrix A
-        // n = number of columns in matrix A
-        // A = subject matrix which is m by n
+        // m[0] = number of rows in matrix A
+        // n[0] = number of columns in matrix A
+        // A = subject matrix which is m[0] by n[0]
         // ma = first dimension of A
         // None of these arguments are altered by this routine
         int i;
@@ -562,12 +566,386 @@ public class GeneralizedInverse {
         double dnorm;
         
         dnorm = 0.0;
-        for (i = 0; i < m; i++) {
-            for (j = 0; j < n; j++) {
+        for (i = 0; i < m[0]; i++) {
+            for (j = 0; j < n[0]; j++) {
                 dnorm = dnorm + A[i][j]*A[i][j];
-            } // for (j = 0; j < n; j++)
-        } // for (i = 0; i < m; i++)
+            } // for (j = 0; j < n[0]; j++)
+        } // for (i = 0; i < m[0]; i++)
         dnorm = Math.sqrt(dnorm);
         return dnorm;
     } // anorm
+    
+    private void zielke(int m[], int n[], double A[][], int ma, int na, int mopt, double alpha, boolean fail[]) {
+        // Computes generalized inverse test matrices due to Zielke, Signum Newsletter, Vol. 13, #4, Dec. 78,
+        // pages 10 - 12 and Zielke, G., Signum Newsletter, Vol. 16, #3, Sept. 81, pages 7-8.
+        // Note corrections in Signum Newsletter, Vol. 16, #4, Dec. 81, page 6.
+        // These matrices are labelled A1, A2, A3, A4 or their generalized inverses A1+, A2+, A3+, A4+.
+        // m[0] = number of rows in matrix A produced
+        // This is set (changed) by this subroutine
+        // n[0] = number of columns in matrix A produces
+        // This is set (changed) by this subroutine
+        // A - The matrix which is generated
+        // ma - The first or row dimension of A in the calling program
+        // Unchanged by this routine
+        // na - The second or column dimension of A in the calling program.=
+        // Unchanged by this routine
+        // mopt - An integer used to select the matrix to be generated
+        // Unchanged by this routine
+        // The following table determines the possible matrices which may be generated.
+        // mopt = - 4 yields Zielke/RutiShauser A4+ matrix (The Moore-Penrose inverse of A4)
+        // mopt = -3 yields Zielke A3+ matrix
+        // mopt = -2 yields Zielke A2+ matrix
+        // mopt = -1 yields Zielke A1+ matrix
+        // mopt = 1 yields Zielke A1 matrix
+        // mopt = 2 yields Zielke A2 matrix
+        // mopt = 3 yields Zielke A3 matrix
+        // mopt = 4 yields Zielke/RutiShauser A4 matrix
+        // alpha = parameter used in generating the Zielke matrices
+        // Unchanged by this routine
+        // fail[0] = failure flag set true on failure.
+        // false otherwise
+        
+        // The declared dimensions must be large enough to hold the resuling matrices.
+        // The following table is useful:
+        //                     mopt                min. ma            min. na
+        //                       1                    5                  4
+        //                       2                    5                  4
+        //                       3                    5                  4
+        //                       4                    7                  3
+        //                      -1                    4                  5
+        //                      -2                    4                  5
+        //                      -3                    4                  5
+        //                      -4                    3                  7
+        int i;
+        int j;
+        int nopt;
+        
+        // Initially failure flag indicates successful operation
+        fail[0] = false;
+        
+        // Use the value of mopt to determine which input matrix is desired
+        nopt = mopt + 5;
+        
+        // Safety check
+        if ((nopt < 1) || (nopt > 9) || (nopt == 5)) {
+            System.out.println("Error mopt = " + mopt + " is not available for zielke");
+            Preferences.debug("Error mopt = " + mopt + " is not available for zielke\n");
+            fail[0] = true;
+            return;
+        } // if ((nopt < 1) || (nopt > 9) || (nopt == 5))
+        switch (nopt) {
+            case 1:
+                // Compute Zielke Rutishauser matrix A4+
+                if (ma < 3) {
+                    System.out.println("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke\n");
+                    fail[0] = true;
+                    return;    
+                }
+                if (na < 7) {
+                    System.out.println("Error mopt = " + mopt + " forbids na = " + na + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids na = " + na + " in zielke\n");
+                    fail[0] = true;
+                    return;      
+                }
+                A[0][0] = -(9.0*alpha+63.0)/168.0;
+                A[0][1] = -(6.0*alpha-46.0)/168.0;
+                A[0][2] = -(3.0*alpha-29.0)/168.0;
+                A[0][3] = -12.0/168.0;
+                A[0][4] = (3.0*alpha+5.0)/168.0;
+                A[0][5] = (6.0*alpha+22.0)/168.0;
+                A[0][6] = (9.0*alpha+39.0)/168.0;
+                A[1][0] = -6.0/168.0;
+                A[1][1] = -4.0/168.0;
+                A[1][2] = -2.0/168.0;
+                A[1][3] = 0.0;
+                A[1][4] = 2.0/168.0;
+                A[1][5] = 4.0/168.0;
+                A[1][6] = 6.0/168.0;
+                A[2][0] = (9.0*alpha+51.0)/168.0;
+                A[2][1] = (6.0*alpha+38.0)/168.0;
+                A[2][2] = (3.0*alpha+25.0)/168.0;
+                A[2][3] = 12.0/168.0;
+                A[2][4] = -(3.0*alpha+1.0)/168.0;
+                A[2][5] = -(6.0*alpha+14.0)/168.0;
+                A[2][6] = -(9.0*alpha+27.0)/168.0;
+                m[0] = 3;
+                n[0] = 7;
+                Preferences.debug("Zielke/Rutishauser matrix A4+\n");
+                break;
+            case 2:
+                // Compute Zielke matrix A3+
+                if (ma < 4) {
+                    System.out.println("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke\n");
+                    fail[0] = true;
+                    return;    
+                }
+                if (na < 5) {
+                    System.out.println("Error mopt = " + mopt + " forbids na = " + na + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids na = " + na + " in zielke\n");
+                    fail[0] = true;
+                    return;      
+                }
+                A[0][0] = 0.5;
+                A[0][1] = -0.125;
+                A[0][2] = -1.0;
+                A[0][3] = 0.875;
+                A[0][4] = -0.625;
+                A[0][5] = 0.375;
+                A[1][0] = -1.0;
+                A[1][1] = (2.0*alpha+13.0)/8.0;
+                A[1][2] = (-8.0*alpha-28.0)/8.0;
+                A[1][3] = (6.0*alpha+17.0)/8.0;
+                A[1][4] = (-2.0*alpha-3.0)/8.0;
+                A[1][5] = (2.0*alpha+1.0)/8.0;
+                A[2][0] = 1.25;
+                A[2][1] = -A[1][1] + 0.25;
+                A[2][2] = -A[1][2] - 1.25;
+                A[2][3] = -A[1][3] + 1.0;
+                A[2][4] = -A[1][4] - 0.5;
+                A[2][5] = -A[1][5] + 0.25;
+                A[3][0] = -0.25;
+                A[3][1] = 0.375;
+                A[3][2] = -0.25;
+                A[3][3] = 0.125;
+                A[3][4] = 0.125;
+                A[3][5] = -0.125;
+                A[4][0] = -0.5;
+                A[4][1] = -0.25;
+                A[4][2] = 1.5;
+                A[4][3] = -1.25;
+                A[4][4] = 0.75;
+                A[4][5] = -0.25;
+                m[0] = 5;
+                n[0] = 6;
+                Preferences.debug("Zielke matrix A3+\n");
+                break;
+            case 3:
+                // Compute Zielke matrix A2+
+                if (ma < 4) {
+                    System.out.println("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke\n");
+                    fail[0] = true;
+                    return;    
+                }
+                if (na < 5) {
+                    System.out.println("Error mopt = " + mopt + " forbids na = " + na + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids na = " + na + " in zielke\n");
+                    fail[0] = true;
+                    return;      
+                }
+                A[0][0] = (12.0*alpha+44.0)/60.0;
+                A[0][1] = 1.0/3.0;
+                A[0][2] = (-12.0*alpha-4.0)/60.0;
+                A[0][3] = (-6.0*alpha-27.0)/60.0;
+                A[0][4] = (6.0*alpha-3.0)/60.0;
+                A[1][0] = -A[0][0] - 0.2;
+                A[1][1] = -A[0][1];
+                A[1][2] = -A[0][2] + 0.2;
+                A[1][3] = -A[0][3] + 0.1;
+                A[1][4] = -A[0][4] - 0.1;
+                A[2][0] = A[1][0] + 11.0/15.0;
+                A[2][1] = 0.0;
+                A[2][2] = A[1][2] - 1.0/15.0;
+                A[2][3] = A[1][3] - 0.7;
+                A[2][4] = A[1][4] - 0.3;
+                A[3][0] = alpha/5.0;
+                A[3][1] = 0.0;
+                A[3][2] = -alpha/5.0;
+                A[3][3] = -A[2][3] + 0.1;
+                A[3][4] = -A[2][4] - 0.1;
+                m[0] = 4;
+                n[0] = 5;
+                Preferences.debug("Zielke matrix A2+\n");
+                break;
+            case 4:
+                // Compute Zielke matrix A1+
+                if (ma < 4) {
+                    System.out.println("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke\n");
+                    fail[0] = true;
+                    return;    
+                }
+                if (na < 5) {
+                    System.out.println("Error mopt = " + mopt + " forbids na = " + na + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids na = " + na + " in zielke\n");
+                    fail[0] = true;
+                    return;      
+                }
+                A[0][0] = alpha/2.0;
+                A[0][1] = 0.5;
+                A[0][2] = alpha/2.0;
+                A[0][3] = 0.5;
+                A[0][4] = -alpha;
+                A[1][0] = 0.0;
+                A[1][1] = -0.25;
+                A[1][2] = 0.0;
+                A[1][3] = -0.25;
+                A[1][4] = 0.5;
+                A[2][0] = -2.0*(alpha+1.0)/4.0;
+                A[2][1] = 0.0;
+                A[2][2] = A[2][0];
+                A[2][3] = 0.0;
+                A[2][4] = alpha;
+                A[3][0] = 0.0;
+                A[3][1] = -0.25;
+                A[3][2] = 0.0;
+                A[3][3] = -0.25;
+                A[3][4] = 0.5;
+                m[0] = 4;
+                n[0] = 5;
+                Preferences.debug("Zielke matrix A1+\n");
+                break;
+            case 6:
+                // Compute Zielke matrix A1
+                if (ma < 5) {
+                    System.out.println("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke\n");
+                    fail[0] = true;
+                    return;    
+                }
+                if (na < 4) {
+                    System.out.println("Error mopt = " + mopt + " forbids na = " + na + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids na = " + na + " in zielke\n");
+                    fail[0] = true;
+                    return;      
+                }
+                A[0][0] = alpha;
+                A[0][1] = alpha;
+                A[0][2] = alpha - 1.0;
+                A[0][3] = alpha;
+                A[1][0] = alpha + 1.0;
+                A[1][1] = alpha;
+                A[1][2] = alpha;
+                A[1][3] = alpha;
+                A[2][0] = alpha;
+                A[2][1] = alpha;
+                A[2][2] = alpha - 1.0;
+                A[2][3] = alpha;
+                A[3][0] = alpha + 1.0;
+                A[3][1] = alpha;
+                A[3][2] = alpha;
+                A[3][3] = alpha;
+                A[4][0] = alpha + 1.0;
+                A[4][1] = alpha + 1.0;
+                A[4][2] = alpha;
+                A[4][3] = alpha + 1.0;
+                m[0] = 5;
+                n[0] = 4;
+                Preferences.debug("Zielke matrix A1\n");
+                break;
+            case 7:
+                // Compute Zielke matrix A2
+                if (ma < 5) {
+                    System.out.println("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke\n");
+                    fail[0] = true;
+                    return;    
+                }
+                if (na < 4) {
+                    System.out.println("Error mopt = " + mopt + " forbids na = " + na + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids na = " + na + " in zielke\n");
+                    fail[0] = true;
+                    return;      
+                }
+                A[0][0] = alpha + 1.0;
+                A[0][1] = alpha;
+                A[0][2] = alpha;
+                A[0][3] = alpha + 1.0;
+                for (i = 0; i < 4; i++) {
+                    A[1][i] = A[0][i] + 1.0;
+                }
+                for (i = 0; i < 4; i++) {
+                    A[2][i] = A[1][i] + 1.0;
+                }
+                A[3][0] = alpha + 1.0;
+                A[3][1] = alpha + 1.0;
+                A[3][2] = alpha;
+                A[3][3] = alpha + 2.0;
+                for (i = 0; i < 4; i++) {
+                    A[4][i] = A[3][i] - 1.0;
+                }
+                m[0] = 5;
+                n[0] = 4;
+                Preferences.debug("Zielke matrix A2\n");
+                break;
+            case 8:
+                // Compute Zielke matrix A3
+                if (ma < 6) {
+                    System.out.println("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke\n");
+                    fail[0] = true;
+                    return;    
+                }
+                if (na < 5) {
+                    System.out.println("Error mopt = " + mopt + " forbids na = " + na + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids na = " + na + " in zielke\n");
+                    fail[0] = true;
+                    return;      
+                }
+                A[0][0] = alpha;
+                A[0][1] = alpha + 1.0;
+                A[0][2] = alpha + 2.0;
+                A[0][3] = alpha + 3.0;
+                A[0][4] = alpha;
+                A[1][0] = alpha;
+                A[1][1] = alpha + 2.0;
+                A[1][2] = alpha + 3.0;
+                A[1][3] = alpha + 5.0;
+                A[1][4] = alpha + 1.0;
+                for (i = 1; i <= 4; i++) {
+                    A[2][i-1] = alpha + i;
+                }
+                A[2][4] = alpha + 2.0;
+                for (i = 0; i < 5; i++) {
+                    A[3][i] = A[2][i] + 1.0;    
+                }
+                for (i = 0; i < 4; i++) {
+                    A[4][i] = A[3][i] + 1.0;
+                }
+                A[4][4] = alpha + 5.0;
+                A[5][0] = alpha + 5.0;
+                A[5][1] = alpha + 5.0;
+                A[5][2] = alpha + 6.0;
+                A[5][3] = alpha + 6.0;
+                A[5][4] = alpha + 7.0;
+                m[0] = 6;
+                n[0] = 5;
+                Preferences.debug("Zielke matrix A3\n");
+                break;
+            case 9:
+                // Compute Zielke/Rutishauser matrix A4
+                if (ma < 7) {
+                    System.out.println("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids ma = " + ma + " in zielke\n");
+                    fail[0] = true;
+                    return;    
+                }
+                if (na < 3) {
+                    System.out.println("Error mopt = " + mopt + " forbids na = " + na + " in zielke");
+                    Preferences.debug("Error mopt = " + mopt + " forbids na = " + na + " in zielke\n");
+                    fail[0] = true;
+                    return;      
+                }
+                for (i = 1; i <= 7; i++) {
+                    for (j = 1; j <= 3; j++) {
+                        A[i-1][j-1] = alpha + i + j - 1.0;
+                    }
+                }
+                m[0] = 7;
+                n[0] = 3;
+                Preferences.debug("Zielke/Rutishauser matrix A4\n");
+                break;
+        } // switch (nopt)
+        Preferences.debug("A =\n");
+        for (i = 0; i < m[0]; i++) {
+            Preferences.debug("Row = " + i + " ");
+            for (j = 0; j < n[0]; j ++) {
+                Preferences.debug(A[i][j] + " ");
+            }
+            Preferences.debug("\n");
+        }
+        return;
+    } // zielke
 }
