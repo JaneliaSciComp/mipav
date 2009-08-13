@@ -1851,19 +1851,19 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         ge = null;
         sigmaD = new Matrix(sigmaInv);
         CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
-        sigmaD = new Matrix(sigma);
+        //sigmaD = new Matrix(sigma);
         Preferences.debug("2002 version of CD calculated via matrix quadratic form for generalized inverse = " + CD2 + "\n");
-        try {
+        /*try {
             sigmaD = sigmaD.inverse();
         }
         catch(RuntimeException e) {
             Preferences.debug("Singular matrix on sigmaD.inverse()\n");
             Preferences.debug("Cannot calculate CD via matrix quadratic form\n");
             success = false;
-        }
+        }*/
         if (success) {
-            CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
-            Preferences.debug("2002 version of CD calculated via matrix quadratic form for inverse = " + CD2 + "\n");
+            //CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
+            //Preferences.debug("2002 version of CD calculated via matrix quadratic form for inverse = " + CD2 + "\n");
             if (CD2 > 0.0) {
                 degreesOfFreedom = 2;
                 stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
@@ -2095,7 +2095,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         sigmaN = new Matrix(sigmaInv);
         CN = ((TpM.times(sigmaN)).times(TM)).getArray();
         Preferences.debug("CN for generalized inverse = " + CN[0][0] + "\n");
-        sigmaN = new Matrix(sigma);
+        /*sigmaN = new Matrix(sigma);
         try {
             sigmaN = sigmaN.inverse();
         }
@@ -2103,10 +2103,10 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             Preferences.debug("Singular matrix on sigmaN.inverse()\n");
             Preferences.debug("Cannot calculate CN\n");
             success = false;
-        }
+        }*/
         if (success) {
-            CN = ((TpM.times(sigmaN)).times(TM)).getArray();
-            Preferences.debug("CN for inverse = " + CN[0][0] + "\n");
+            //CN = ((TpM.times(sigmaN)).times(TM)).getArray();
+            //Preferences.debug("CN for inverse = " + CN[0][0] + "\n");
             if (selfTest1) {
                 Preferences.debug("Ceyhan incorrectly has CN = 13.11\n");
                 Preferences.debug("Correct value = CD = 19.67\n");
@@ -2494,7 +2494,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         sigmaD = new Matrix(sigmaInv);
         CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
         Preferences.debug("CD for generalized inverse = " + CD2 + "\n");
-        sigmaD = new Matrix(sigma);
+        /*sigmaD = new Matrix(sigma);
         try {
             sigmaD = sigmaD.inverse();
         }
@@ -2502,10 +2502,10 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             Preferences.debug("Singular matrix on sigmaD.inverse()\n");
             Preferences.debug("Cannot calculate CD via matrix quadratic form\n");
             success = false;
-        }
+        }*/
         if (success) {
-            CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
-            Preferences.debug("CD for inverse = " + CD2 + "\n");
+            //CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
+            //Preferences.debug("CD for inverse = " + CD2 + "\n");
             
             if (CD2 > 0.0) {
                 // Under random labelling the chi squared statistic has degrees of freedom = 6;
@@ -2679,7 +2679,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         sigmaN = new Matrix(sigmaInv);
         CN = ((TpM.times(sigmaN)).times(TM)).getArray();
         Preferences.debug("CN for generalized inverse = " + CN[0][0] + "\n");
-        sigmaN = new Matrix(sigma);
+        /*sigmaN = new Matrix(sigma);
         try {
             sigmaN = sigmaN.inverse();
         }
@@ -2687,10 +2687,10 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             Preferences.debug("Singular matrix on sigmaN.inverse()\n");
             Preferences.debug("Cannot calculate CN\n");
             success = false;
-        }
+        }*/
         if (success) {
-            CN = ((TpM.times(sigmaN)).times(TM)).getArray();
-            Preferences.debug("CN for inverse = " + CN[0][0] + "\n");
+            //CN = ((TpM.times(sigmaN)).times(TM)).getArray();
+            //Preferences.debug("CN for inverse = " + CN[0][0] + "\n");
             if (CN[0][0] > 0.0) {
                 degreesOfFreedom = (nc - 1)*(nc - 1);
                 stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
