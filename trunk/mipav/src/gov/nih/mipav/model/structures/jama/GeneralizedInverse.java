@@ -152,13 +152,14 @@ public class GeneralizedInverse {
         int ma;
         int na;
         int nb;
-        int k;
+        int k[] = new int[1];
         int mopt;
-        int iseed;
-        int alpha;
+        int iseed[] = new int[1];
+        double alpha[] = new double[1];
         double A[][] = new double[30][30];
         double X[][] = new double[30][30];
         double C[][] = new double[30][30];
+        double B[][] = new double[30][30];
         double ta[] = new double[4];
         double tm[] = new double[4];
         boolean fail[] = new boolean[1];
@@ -172,7 +173,7 @@ public class GeneralizedInverse {
         int kVar[] = new int[nTests];
         int moptVar[] = new int[nTests];
         int iseedVar[] = new int[nTests];
-        int alphaVar[] = new int[nTests];
+        double alphaVar[] = new double[nTests];
         m[0] = 3;
         n[0] = 2;
         A[0][0] = 1.0;
@@ -291,20 +292,20 @@ public class GeneralizedInverse {
             // For each test set m, n, k, mopt, iseed, alpha
             m[0] = mVar[test];
             n[0] = nVar[test];
-            k = kVar[test];
+            k[0] = kVar[test];
             mopt = moptVar[test];
-            iseed = iseedVar[test];
-            alpha = alphaVar[test];
+            iseed[0] = iseedVar[test];
+            alpha[0] = alphaVar[test];
             
             // initialize error flag to imply correct execution
             fail[0] = false;
             
-            Preferences.debug("m = " + m + "\n");
-            Preferences.debug("n = " + n + "\n");
-            Preferences.debug("k = " + k + "\n");
+            Preferences.debug("m[0] = " + m[0] + "\n");
+            Preferences.debug("n[0] = " + n[0] + "\n");
+            Preferences.debug("k[0] = " + k[0] + "\n");
             Preferences.debug("mopt = " + mopt + "\n");
-            Preferences.debug("iseed = " + iseed + "\n");
-            Preferences.debug("alpha = " + alpha + "\n");
+            Preferences.debug("iseed[0] = " + iseed[0] + "\n");
+            Preferences.debug("alpha[0] = " + alpha[0] + "\n");
             
             // Other tests for valid inputs are made the routines
             
@@ -328,6 +329,16 @@ public class GeneralizedInverse {
                     continue;
                 }
             } // if (mopt != 0)
+            else { // mopt == 0
+                // Using generated matrix
+                // We suggest values of alpha to lie within 0.10 and 10.0, but other values of alpha
+                // will be tolerated.  Note that alpha cannot be equal to zero, and if so will be set
+                // to one in gmatx
+                gmatx(m, n, A, ma, na, B, nb, alpha, k, iseed, fail);
+                if (fail[0]) {
+                    continue;
+                }
+            } // else mopt == 0
         } // for (test = 0; test < nTests; test++)
     }
     
@@ -575,7 +586,7 @@ public class GeneralizedInverse {
         return dnorm;
     } // anorm
     
-    private void zielke(int m[], int n[], double A[][], int ma, int na, int mopt, double alpha, boolean fail[]) {
+    private void zielke(int m[], int n[], double A[][], int ma, int na, int mopt, double alpha[], boolean fail[]) {
         // Computes generalized inverse test matrices due to Zielke, Signum Newsletter, Vol. 13, #4, Dec. 78,
         // pages 10 - 12 and Zielke, G., Signum Newsletter, Vol. 16, #3, Sept. 81, pages 7-8.
         // Note corrections in Signum Newsletter, Vol. 16, #4, Dec. 81, page 6.
@@ -648,13 +659,13 @@ public class GeneralizedInverse {
                     fail[0] = true;
                     return;      
                 }
-                A[0][0] = -(9.0*alpha+63.0)/168.0;
-                A[0][1] = -(6.0*alpha-46.0)/168.0;
-                A[0][2] = -(3.0*alpha-29.0)/168.0;
+                A[0][0] = -(9.0*alpha[0]+63.0)/168.0;
+                A[0][1] = -(6.0*alpha[0]-46.0)/168.0;
+                A[0][2] = -(3.0*alpha[0]-29.0)/168.0;
                 A[0][3] = -12.0/168.0;
-                A[0][4] = (3.0*alpha+5.0)/168.0;
-                A[0][5] = (6.0*alpha+22.0)/168.0;
-                A[0][6] = (9.0*alpha+39.0)/168.0;
+                A[0][4] = (3.0*alpha[0]+5.0)/168.0;
+                A[0][5] = (6.0*alpha[0]+22.0)/168.0;
+                A[0][6] = (9.0*alpha[0]+39.0)/168.0;
                 A[1][0] = -6.0/168.0;
                 A[1][1] = -4.0/168.0;
                 A[1][2] = -2.0/168.0;
@@ -662,13 +673,13 @@ public class GeneralizedInverse {
                 A[1][4] = 2.0/168.0;
                 A[1][5] = 4.0/168.0;
                 A[1][6] = 6.0/168.0;
-                A[2][0] = (9.0*alpha+51.0)/168.0;
-                A[2][1] = (6.0*alpha+38.0)/168.0;
-                A[2][2] = (3.0*alpha+25.0)/168.0;
+                A[2][0] = (9.0*alpha[0]+51.0)/168.0;
+                A[2][1] = (6.0*alpha[0]+38.0)/168.0;
+                A[2][2] = (3.0*alpha[0]+25.0)/168.0;
                 A[2][3] = 12.0/168.0;
-                A[2][4] = -(3.0*alpha+1.0)/168.0;
-                A[2][5] = -(6.0*alpha+14.0)/168.0;
-                A[2][6] = -(9.0*alpha+27.0)/168.0;
+                A[2][4] = -(3.0*alpha[0]+1.0)/168.0;
+                A[2][5] = -(6.0*alpha[0]+14.0)/168.0;
+                A[2][6] = -(9.0*alpha[0]+27.0)/168.0;
                 m[0] = 3;
                 n[0] = 7;
                 Preferences.debug("Zielke/Rutishauser matrix A4+\n");
@@ -694,11 +705,11 @@ public class GeneralizedInverse {
                 A[0][4] = -0.625;
                 A[0][5] = 0.375;
                 A[1][0] = -1.0;
-                A[1][1] = (2.0*alpha+13.0)/8.0;
-                A[1][2] = (-8.0*alpha-28.0)/8.0;
-                A[1][3] = (6.0*alpha+17.0)/8.0;
-                A[1][4] = (-2.0*alpha-3.0)/8.0;
-                A[1][5] = (2.0*alpha+1.0)/8.0;
+                A[1][1] = (2.0*alpha[0]+13.0)/8.0;
+                A[1][2] = (-8.0*alpha[0]-28.0)/8.0;
+                A[1][3] = (6.0*alpha[0]+17.0)/8.0;
+                A[1][4] = (-2.0*alpha[0]-3.0)/8.0;
+                A[1][5] = (2.0*alpha[0]+1.0)/8.0;
                 A[2][0] = 1.25;
                 A[2][1] = -A[1][1] + 0.25;
                 A[2][2] = -A[1][2] - 1.25;
@@ -735,11 +746,11 @@ public class GeneralizedInverse {
                     fail[0] = true;
                     return;      
                 }
-                A[0][0] = (12.0*alpha+44.0)/60.0;
+                A[0][0] = (12.0*alpha[0]+44.0)/60.0;
                 A[0][1] = 1.0/3.0;
-                A[0][2] = (-12.0*alpha-4.0)/60.0;
-                A[0][3] = (-6.0*alpha-27.0)/60.0;
-                A[0][4] = (6.0*alpha-3.0)/60.0;
+                A[0][2] = (-12.0*alpha[0]-4.0)/60.0;
+                A[0][3] = (-6.0*alpha[0]-27.0)/60.0;
+                A[0][4] = (6.0*alpha[0]-3.0)/60.0;
                 A[1][0] = -A[0][0] - 0.2;
                 A[1][1] = -A[0][1];
                 A[1][2] = -A[0][2] + 0.2;
@@ -750,9 +761,9 @@ public class GeneralizedInverse {
                 A[2][2] = A[1][2] - 1.0/15.0;
                 A[2][3] = A[1][3] - 0.7;
                 A[2][4] = A[1][4] - 0.3;
-                A[3][0] = alpha/5.0;
+                A[3][0] = alpha[0]/5.0;
                 A[3][1] = 0.0;
-                A[3][2] = -alpha/5.0;
+                A[3][2] = -alpha[0]/5.0;
                 A[3][3] = -A[2][3] + 0.1;
                 A[3][4] = -A[2][4] - 0.1;
                 m[0] = 4;
@@ -773,21 +784,21 @@ public class GeneralizedInverse {
                     fail[0] = true;
                     return;      
                 }
-                A[0][0] = alpha/2.0;
+                A[0][0] = alpha[0]/2.0;
                 A[0][1] = 0.5;
-                A[0][2] = alpha/2.0;
+                A[0][2] = alpha[0]/2.0;
                 A[0][3] = 0.5;
-                A[0][4] = -alpha;
+                A[0][4] = -alpha[0];
                 A[1][0] = 0.0;
                 A[1][1] = -0.25;
                 A[1][2] = 0.0;
                 A[1][3] = -0.25;
                 A[1][4] = 0.5;
-                A[2][0] = -2.0*(alpha+1.0)/4.0;
+                A[2][0] = -2.0*(alpha[0]+1.0)/4.0;
                 A[2][1] = 0.0;
                 A[2][2] = A[2][0];
                 A[2][3] = 0.0;
-                A[2][4] = alpha;
+                A[2][4] = alpha[0];
                 A[3][0] = 0.0;
                 A[3][1] = -0.25;
                 A[3][2] = 0.0;
@@ -811,26 +822,26 @@ public class GeneralizedInverse {
                     fail[0] = true;
                     return;      
                 }
-                A[0][0] = alpha;
-                A[0][1] = alpha;
-                A[0][2] = alpha - 1.0;
-                A[0][3] = alpha;
-                A[1][0] = alpha + 1.0;
-                A[1][1] = alpha;
-                A[1][2] = alpha;
-                A[1][3] = alpha;
-                A[2][0] = alpha;
-                A[2][1] = alpha;
-                A[2][2] = alpha - 1.0;
-                A[2][3] = alpha;
-                A[3][0] = alpha + 1.0;
-                A[3][1] = alpha;
-                A[3][2] = alpha;
-                A[3][3] = alpha;
-                A[4][0] = alpha + 1.0;
-                A[4][1] = alpha + 1.0;
-                A[4][2] = alpha;
-                A[4][3] = alpha + 1.0;
+                A[0][0] = alpha[0];
+                A[0][1] = alpha[0];
+                A[0][2] = alpha[0] - 1.0;
+                A[0][3] = alpha[0];
+                A[1][0] = alpha[0] + 1.0;
+                A[1][1] = alpha[0];
+                A[1][2] = alpha[0];
+                A[1][3] = alpha[0];
+                A[2][0] = alpha[0];
+                A[2][1] = alpha[0];
+                A[2][2] = alpha[0] - 1.0;
+                A[2][3] = alpha[0];
+                A[3][0] = alpha[0] + 1.0;
+                A[3][1] = alpha[0];
+                A[3][2] = alpha[0];
+                A[3][3] = alpha[0];
+                A[4][0] = alpha[0] + 1.0;
+                A[4][1] = alpha[0] + 1.0;
+                A[4][2] = alpha[0];
+                A[4][3] = alpha[0] + 1.0;
                 m[0] = 5;
                 n[0] = 4;
                 Preferences.debug("Zielke matrix A1\n");
@@ -849,20 +860,20 @@ public class GeneralizedInverse {
                     fail[0] = true;
                     return;      
                 }
-                A[0][0] = alpha + 1.0;
-                A[0][1] = alpha;
-                A[0][2] = alpha;
-                A[0][3] = alpha + 1.0;
+                A[0][0] = alpha[0] + 1.0;
+                A[0][1] = alpha[0];
+                A[0][2] = alpha[0];
+                A[0][3] = alpha[0] + 1.0;
                 for (i = 0; i < 4; i++) {
                     A[1][i] = A[0][i] + 1.0;
                 }
                 for (i = 0; i < 4; i++) {
                     A[2][i] = A[1][i] + 1.0;
                 }
-                A[3][0] = alpha + 1.0;
-                A[3][1] = alpha + 1.0;
-                A[3][2] = alpha;
-                A[3][3] = alpha + 2.0;
+                A[3][0] = alpha[0] + 1.0;
+                A[3][1] = alpha[0] + 1.0;
+                A[3][2] = alpha[0];
+                A[3][3] = alpha[0] + 2.0;
                 for (i = 0; i < 4; i++) {
                     A[4][i] = A[3][i] - 1.0;
                 }
@@ -884,32 +895,32 @@ public class GeneralizedInverse {
                     fail[0] = true;
                     return;      
                 }
-                A[0][0] = alpha;
-                A[0][1] = alpha + 1.0;
-                A[0][2] = alpha + 2.0;
-                A[0][3] = alpha + 3.0;
-                A[0][4] = alpha;
-                A[1][0] = alpha;
-                A[1][1] = alpha + 2.0;
-                A[1][2] = alpha + 3.0;
-                A[1][3] = alpha + 5.0;
-                A[1][4] = alpha + 1.0;
+                A[0][0] = alpha[0];
+                A[0][1] = alpha[0] + 1.0;
+                A[0][2] = alpha[0] + 2.0;
+                A[0][3] = alpha[0] + 3.0;
+                A[0][4] = alpha[0];
+                A[1][0] = alpha[0];
+                A[1][1] = alpha[0] + 2.0;
+                A[1][2] = alpha[0] + 3.0;
+                A[1][3] = alpha[0] + 5.0;
+                A[1][4] = alpha[0] + 1.0;
                 for (i = 1; i <= 4; i++) {
-                    A[2][i-1] = alpha + i;
+                    A[2][i-1] = alpha[0] + i;
                 }
-                A[2][4] = alpha + 2.0;
+                A[2][4] = alpha[0] + 2.0;
                 for (i = 0; i < 5; i++) {
                     A[3][i] = A[2][i] + 1.0;    
                 }
                 for (i = 0; i < 4; i++) {
                     A[4][i] = A[3][i] + 1.0;
                 }
-                A[4][4] = alpha + 5.0;
-                A[5][0] = alpha + 5.0;
-                A[5][1] = alpha + 5.0;
-                A[5][2] = alpha + 6.0;
-                A[5][3] = alpha + 6.0;
-                A[5][4] = alpha + 7.0;
+                A[4][4] = alpha[0] + 5.0;
+                A[5][0] = alpha[0] + 5.0;
+                A[5][1] = alpha[0] + 5.0;
+                A[5][2] = alpha[0] + 6.0;
+                A[5][3] = alpha[0] + 6.0;
+                A[5][4] = alpha[0] + 7.0;
                 m[0] = 6;
                 n[0] = 5;
                 Preferences.debug("Zielke matrix A3\n");
@@ -930,7 +941,7 @@ public class GeneralizedInverse {
                 }
                 for (i = 1; i <= 7; i++) {
                     for (j = 1; j <= 3; j++) {
-                        A[i-1][j-1] = alpha + i + j - 1.0;
+                        A[i-1][j-1] = alpha[0] + i + j - 1.0;
                     }
                 }
                 m[0] = 7;
@@ -948,4 +959,153 @@ public class GeneralizedInverse {
         }
         return;
     } // zielke
+    
+    private void gmatx(int m[], int n[], double A[][], int ma, int na, double B[][], int nb,
+                       double alpha[], int k[], int iseed[], boolean fail[]) {
+        // February 9, 1984, May 27, 1984, July 18, 1985
+        // by J. C. Nash and R. L. C. Wang
+        // Computes an m[0] by n[0] matrix - A - for use in testing programs purporting to calculate
+        // the generalized inverse of a matrix
+        
+        // The matrix A, dimension ma by na but size m[0] by n[0], is to be calculated by a sequence
+        // of pseudo-random Jacobi rotations applied to a 'diagonal' matrix whose elements are
+        // determined by the parameters k and alpha as follows.  A[i-1][i-1] is set to 
+        // alpha**(1 - i) for for i = 1,2,...,k and to zero for i > k, where k is a positive integer
+        // no larger than the minimum value of m[0] and n[0]
+        
+        // m[0] = number of rows in matrix A
+        // Normally unchanged by this routine
+        // Altered during the execution of the routine if n[0] > m[0].
+        // Then reset before return to the calling program.
+        // m[0] is reset to ma if m[0] > ma on entry
+        // n[0] = number of columns in matrix A
+        // Normally unchanged by this routine
+        // Altered during the execution of the routine if n[0] > m[0]
+        // Then reset before return to the calling program.
+        // No check is made to verfiy n[0] <= na
+        // A = The matrix to be created in this routine
+        // A must be declared with first dimension = ma and 
+        // second dimension at least n[0] in the calling program.
+        // ma = first or row dimension of A
+        // ma should correspond to the first dimension of matrix A in the calling program.
+        // Unchanged by this routine.
+        // na = second or column dimension of matrix A
+        // Should not be altered
+        // B = working matrix in which test matrix is built
+        // nb = first dimension of matrix B
+        // Should be at least as large as largest dimension of matrix A
+        // Not altered by this routine
+        // alpha[0] = Factor used to generate singular values of matrix A.
+        // These are generated according to the formula alpha**(1-i) for for = 1,2,...,k[0]
+        // where k[0] is the rank (see below)
+        // alpha[0] should lie in the interval (0.1, 10.0) to generate 'reasonable' singular
+        // values, but other positive values are accepted without change.
+        // If alpha[0] <= 0.0, it will be set to 1.0.
+        // k[0] = the rank of the matrix to be generated
+        // Must be positive and no larger than the minimum of m[0] and n[0].
+        // If k[0] > min(m[0],n[0]), it will be set to min(m[0],n[0]) and a warning message
+        // displayed.
+        // Otherwise, k[0] is unaltered by this routine.
+        // iseed[0] = seed for the pseudo-random number generator
+        // Only positive values of iseed are allowed
+        // If iseed[0] <= 1, it will be set to 1
+        // iseed is converted to a double precision variable dseed for used in drand, the
+        // generator routine.
+        // dseed is altered in every call to drand, and dseed must be supplied in every
+        // call to drand.
+        // Reference: Schrage, L., A more protable fortran random number generator, 
+        // ACM Transactions on Mathematical Software, Vol. 5, No. 2, June, 1979, pages 132-138.
+        // fail[0] = error flag
+        // fail[0] = true if gmatx has failed to create matrix A
+        // fail[0] = false if gmatx has created matrix A
+        // Most failures are associated with the use of incorrect arguments for this routine.
+        
+        double dseed;
+        int i;
+        int im;
+        int imax;
+        int j;
+        int j1;
+        int L;
+        int mn;
+        int m1;
+        double c;
+        double s;
+        double t;
+        
+        // Set flag initially to false (program O.K.)
+        fail[0] = false;
+        if (iseed[0] <= 0) {
+            System.out.println(iseed[0] + " was an improper choice for iseed[0]");
+            Preferences.debug(iseed[0] + " was an improper choice for iseed[0]\n");
+            iseed[0] = 1;
+            System.out.println("iseed[0] was set to 1 in gmatx");
+            Preferences.debug("iseed[0] was set to 1 in gmatx\n");
+        } // if (iseed[0] <= 0)
+        
+        // Tests on m[0], n[0], and ma
+        
+        // Test for first dimension too small
+        if (ma < 1) {
+            System.out.println("ma = " + ma + " is incorrectly less than 1");
+            Preferences.debug("ma = " + ma + " is incorrectly less than 1\n");
+            fail[0] = true;
+            return;
+        }
+        // Test for invalid row or column size
+        if (m[0] < 1) {
+            System.out.println("m[0] = " + m[0] + " is incorrectly less than 1");
+            Preferences.debug("m[0] = " + m[0] + " is incorrectly less than 1\n");
+            fail[0] = true;
+            return;    
+        }
+        if (n[0] < 1) {
+            System.out.println("n[0] = " + n[0] + " is incorrectly less than 1");
+            Preferences.debug("n[0] = " + n[0] + " is incorrectly less than 1\n");
+            fail[0] = true;
+            return;       
+        }
+        // Test for valid row size
+        if (m[0] > ma) {
+            System.out.println("m[0] = " + m[0] + " exceeded allowable value of ma = " + ma);
+            Preferences.debug("m[0] = " + m[0] + " exceeded allowable value of ma = " + ma + "\n");
+            m[0] = ma;
+            System.out.println("m[0] was set to ma = " + ma + " in gmatx");
+            Preferences.debug("m[0] was set to ma = " + ma + " in gmatx\n");
+        }
+        
+        Preferences.debug("Genrating matrix by pseudo-random Jacobi rotations\n");
+        Preferences.debug("Order = " + m[0]+ " by " + n[0] + "\n");
+        Preferences.debug("Pseudo-random number seed = " + iseed[0] + "\n");
+        
+        // Determine if A or A-transpose is to be generated by the Jacobi rotations
+        // imax = 1 if A is generated
+        // imax = 0 if A-transpose is generated
+        imax = 1;
+        mn = n[0];
+        if (m[0] < n[0]) {
+            imax = 0;
+            im = m[0];
+            m[0] = n[0];
+            n[0] = im;
+            mn = m[0];
+        } // if (m[0] < n[0])
+        
+        for (i = 0; i < m[0]; i++) {
+            for (j = 0; j < n[0]; j++) {
+                B[i][j] = 0.0;
+            }
+        }
+        
+        // Replace (alpha[0] <= 0.0) by  1.0
+        if (alpha[0] <= 0.0) {
+            System.out.println("alpha[0] = " + alpha[0] + " is incorrectly <= 0.0");
+            Preferences.debug("alpha[0] = " + alpha[0] + " is incorrectly <= 0.0\n");
+            alpha[0] = 1.0;
+            System.out.println("alpha[0] was set to 1.0 in gmatx");
+            Preferences.debug("alpha[0] was set to 1.0 in gmatx\n");
+        }
+        
+        // Test k[0] and loop, k[0] being the rank
+    } // gmatx
 }
