@@ -81,16 +81,23 @@ public class PlugInAlgorithmCreateXML extends AlgorithmBase {
 		FileIO io = new FileIO();
 		ModelImage m = io.readImage(f[0].getName(), f[0].getParentFile().getAbsolutePath()+"\\", f.length > 1, null);
 		FileImageXML im = new FileImageXML(m, f.length > 1, f[0]);
-		if(m != null) {
-			m.disposeLocal();
-			m = null;
-		}
+		
 		try {
-			return im.writeXML();
+			boolean success =  im.writeXML();
+			if(m != null) {
+				m.disposeLocal();
+				m = null;
+			}
+			return success;
 		} catch (Exception e) {
 			e.printStackTrace();
+			if(m != null) {
+				m.disposeLocal();
+				m = null;
+			}
 			return false;
 		}
+		
 	}
 	
 	private class FileImageXML extends FileXML {
