@@ -32,7 +32,7 @@ public class GeneralizedInverse {
     
     public double[][] ginv() {
       int i;
-      double Ainv[][] = new double[NR][NC];
+      double Ainv[][] = new double[NC][NR];
       double U[][] = new double[NC][NC];
       double aflag[] = new double[NC];
       double atemp[] = new double[NC];
@@ -153,32 +153,51 @@ public class GeneralizedInverse {
         int mopt;
         int iseed[] = new int[1];
         double alpha[] = new double[1];
-        double A[][] = new double[30][30];
+        double Ag[][] = new double[30][30];
         double X[][] = new double[30][30];
         double C[][] = new double[30][30];
         double B[][] = new double[30][30];
+        double G[][] = new double[30][30];
         double ta[] = new double[4];
         double tm[] = new double[4];
         boolean fail[] = new boolean[1];
         int i;
         int j;
         int test;
-        int nTests = 1;
-        String message[] = new String[nTests];
-        int mVar[] = new int[nTests];
-        int nVar[] = new int[nTests];
-        int kVar[] = new int[nTests];
-        int moptVar[] = new int[nTests];
-        int iseedVar[] = new int[nTests];
-        double alphaVar[] = new double[nTests];
+        int nTests = 22;
+        String message[] = new String[]{"Testing invalid option A9+", "Testing iseed[0] < 0 in gmatx",
+                "Testing m[0] < 1 in gmatx", "Testing alpha[0] < 0.0 in gmatx",
+                "Testing k[0] < 0 in gmatx", "Testing k > min(m[0],n[0]) in gmatx",
+                "Testing n[0] > m[0] in gmatx, ginvse not called",
+                "Test no error data set which generates identity matrix",
+                "Test 1 by 5 row vector", "Test 5 by 1 column vector",
+                "Test 1 by 1 trivial case", "Test 5 by 10 matrix with power of 2 singular values",
+                "Test 10 by 5 generated matrix with rank 2",
+                "Test 5 by 10 generated matrix -- power of 0.1, rank 3",
+                "Test Zielke A1", "Test Zielke A2", "Test Zielke A3",
+                "Test Zielke / Rutishauser A4", "Test Zielke inverse A1",
+                "Test Zielke inverse A2", "Test Zielke inverse A3",
+                "Test Zielke / Rutishauser A4 inverse"};
+        
+        int mVar[] = new int[]{0,3,-1,4,5,5,3,4,1,5,1,10,10,5,5,5,5,5,5,5,5,5};
+        int nVar[] = new int[]{0,3,1,4,5,3,4,4,5,1,1,5,5,10,5,5,5,5,5,5,5,5};
+        int kVar[] = new int[]{0,2,1,4,-1,8,1,4,1,1,1,5,2,3,5,5,5,5,5,5,5,5};
+        int moptVar[] = new int[]{-9,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,-1,-2,-3,-4};
+        int iseedVar[] = new int[]{0,-1,34,56,98,1,0,453,12345,12345,12345,12345,54321,
+                                   34521,0,0,0,0,0,0,0,0};
+        double alphaVar[] = new double[]{2.0,0.2,0.1,-1.8,0.09,1.0,1.0,1.0,0.5,0.5,0.5,
+                                         0.5,0.5,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1};
+        boolean doginvse = false;
+        boolean doginv = true;
+        double tol;
         m[0] = 3;
         n[0] = 2;
-        A[0][0] = 1.0;
-        A[0][1] = 2.0;
-        A[1][0] = 2.0;
-        A[1][1] = -3.0;
-        A[2][0] = 0.5;
-        A[2][1] = 0.0;
+        Ag[0][0] = 1.0;
+        Ag[0][1] = 2.0;
+        Ag[1][0] = 2.0;
+        Ag[1][1] = -3.0;
+        Ag[2][0] = 0.5;
+        Ag[2][1] = 0.0;
         
         // Supposed inverse
         X[0][0] = 0.1;
@@ -190,10 +209,10 @@ public class GeneralizedInverse {
         ma = 30;
         na = 30;
         Preferences.debug("Test ptst with 3 by 2 matrices to verify matrix multiplications\n");
-        Preferences.debug("A = " + "\n");
+        Preferences.debug("Ag = " + "\n");
         for (i = 0; i < 3; i++) {
             for (j = 0; j < 2; j++) {
-                Preferences.debug(A[i][j] + " ");    
+                Preferences.debug(Ag[i][j] + " ");    
             }
             Preferences.debug("\n");
         }
@@ -204,36 +223,36 @@ public class GeneralizedInverse {
             }
             Preferences.debug("\n");
         }
-        ptst(m, n, A, ma, X, na, C, ma, ta, tm, fail);
+        ptst(m, n, Ag, ma, X, na, C, ma, ta, tm, fail);
         
         // Approximate results
         // Test PTST with 3 by 2 matrices to verify matrix multiplications
-        //                 A                       X
+        //                 Ag                       X
         //              1.0   2.0           0.1   0.2   -0.2
         //              2.0  -3.0           0.3  -0.3    0.9
         //              0.5   0.0
         //  Test Penrose Conditions
-        //  A is the input matrix, X is the inverse of A
+        //  Ag is the input matrix, X is the inverse of Ag
         //  Input matrix norm     = 4.27200100E00
         //  Inverse matrix norm =   1.03923000E00
         //                       Average Deviation       Maximum Deviation
-        // AXA=TEST=A ACTUAL        0.891666                 2.3
-        //            NORMALIZED    0.2087232                0.5383886
-        // XAX=TEST=X ACTUAL        0.1875                   0.42
-        //            NORMALIZED    0.1804217                0.4041449
-        // (AX)T=TEST=AX ACTUAL     0.1683332                0.32
-        //               NORMALIZED 0.3791636                0.7207864
-        // (XA)T=TEST=XA ACTUAL     0.55                     0.55
-        //               NORMALIZED 0.1238851                0.1238851
+        // AgXAg=TEST=Ag ACTUAL        0.891666                 2.3
+        //            NORMALIZED       0.2087232                0.5383886
+        // XAgX=TEST=X ACTUAL          0.1875                   0.42
+        //            NORMALIZED       0.1804217                0.4041449
+        // (AgX)T=TEST=AgX ACTUAL      0.1683332                0.32
+        //               NORMALIZED    0.3791636                0.7207864
+        // (XAg)T=TEST=XAg ACTUAL      0.55                     0.55
+        //               NORMALIZED    0.1238851                0.1238851
         
         // Reverse call to test row size < column size case
-        Preferences.debug("Same test on ptst with A and X interchanged\n");
-        ptst(n, m, X, na, A, ma, C, ma, ta, tm, fail);
+        Preferences.debug("Same test on ptst with Ag and X interchanged\n");
+        ptst(n, m, X, na, Ag, ma, C, ma, ta, tm, fail);
         
         // Test row and column vector problems
-        // Matrix (column vector) A
-        A[0][0] = 3.0;
-        A[1][0] = 4.0;
+        // Matrix (column vector) Ag
+        Ag[0][0] = 3.0;
+        Ag[1][0] = 4.0;
         
         // Matrix (row vector) X
         X[0][0] = 3.0/25.0;
@@ -242,24 +261,24 @@ public class GeneralizedInverse {
         m[0] = 2;
         n[0] = 1;
         Preferences.debug("Test ptst with row and column vectors\n");
-        Preferences.debug("A = " + "\n");
-        Preferences.debug(A[0][0] + "\n");
-        Preferences.debug(A[1][0] + "\n");
+        Preferences.debug("Ag = " + "\n");
+        Preferences.debug(Ag[0][0] + "\n");
+        Preferences.debug(Ag[1][0] + "\n");
         Preferences.debug("X = " + "\n");
         Preferences.debug(X[0][0] + " " + X[0][1] + "\n");
-        ptst(m, n, A, ma, X, na, C, ma, ta, tm, fail);
+        ptst(m, n, Ag, ma, X, na, C, ma, ta, tm, fail);
         
         // Reverse call to test row size < column size case
-        Preferences.debug("Same vector test on ptst with A and X interchanged\n");
-        ptst(n, m, X, na, A, ma, C, ma, ta, tm, fail);
+        Preferences.debug("Same vector test on ptst with Ag and X interchanged\n");
+        ptst(n, m, X, na, Ag, ma, C, ma, ta, tm, fail);
         
         // Test trivial case (1 by 1)
-        A[0][0] = 2.0;
+        Ag[0][0] = 2.0;
         X[0][0] = 0.5;
         m[0] = 1;
         n[0] = 1;
-        Preferences.debug("Test ptst with trivial 1 by 1 matrix A = 2.0 and matrix X = 0.5\n");
-        ptst(n, m, X, na, A, ma, C, ma, ta, tm, fail);
+        Preferences.debug("Test ptst with trivial 1 by 1 matrix Ag = 2.0 and matrix X = 0.5\n");
+        ptst(n, m, X, na, Ag, ma, C, ma, ta, tm, fail);
         
         // Test main driver code for generalized inverse testing
         
@@ -321,7 +340,7 @@ public class GeneralizedInverse {
                 // Note that m and n are replaced by appropriate values.
                 // mopt is the zielike matrix selected
                 // alpha is needed in zielike as a parameter in formulas for the matrix elements generated.
-                zielke(m, n, A, ma, na, mopt, alpha, fail);
+                zielke(m, n, Ag, ma, na, mopt, alpha, fail);
                 if (fail[0]) {
                     continue;
                 }
@@ -331,13 +350,67 @@ public class GeneralizedInverse {
                 // We suggest values of alpha to lie within 0.10 and 10.0, but other values of alpha
                 // will be tolerated.  Note that alpha cannot be equal to zero, and if so will be set
                 // to one in gmatx
-                gmatx(m, n, A, ma, na, B, nb, alpha, k, iseed, fail);
+                gmatx(m, n, Ag, ma, na, B, nb, alpha, k, iseed, fail);
                 if (fail[0]) {
                     continue;
                 }
             } // else mopt == 0
+            
+            // Add a different call for each generalized inverse routine tested
+            
+            if (doginv) {
+                NR = m[0];
+                NC = n[0];
+                A = new double[NR][NC];
+                for (i = 0; i < NR; i++) {
+                    for (j = 0; j < NC; j++) {
+                        A[i][j] = Ag[i][j];
+                    }
+                } 
+                
+                A = ginv();
+                for (i = 0; i < NC; i++) {
+                    for (j = 0; j < NR; j++) {
+                        X[i][j] = A[i][j];
+                    }
+                } 
+            } // if (doginv)
+            
+            if (doginvse) {
+                // ginvse is not designed to handle more columns than rows 
+                // that is, n[0] > m[0], so avoid call in such cases
+                
+                if (n[0] > m[0]) {
+                    Preferences.debug("ginvse not called because n[0] = " + n[0] + " > m[0] = " + m[0] + "\n");
+                    continue;
+                }
+                
+                // ginvse is also unable to handle column vectors, that is an m[0] by 1 matrix Ag
+                if (n[0] < 2) {
+                    continue;
+                }
+                
+                // Note additional statements to get conformity with test program
+                // Copy matrix to avoid overwriting it
+                for (i = 0; i < m[0]; i++) {
+                    for (j = 0; j < n[0]; j++) {
+                        G[i][j] = Ag[i][j];    
+                    }
+                } // for (i = 0; i < m[0]; i++)
+                
+                // IBM single precision
+                tol = Math.pow(16.0, -5.0);
+                ginvse(G, ma, na, X, ma, m, n, tol, C, ma, fail);
+                
+                if (fail[0]) {
+                    continue;
+                }
+            } // if (doginvse)
+            
+            // Test penrose conditions
+            ptst(m, n, Ag, ma, X, ma, C, ma, ta, tm, fail);
         } // for (test = 0; test < nTests; test++)
-    }
+    } // ginvTest
     
     private void ptst(int m[], int n[], double A[][], int ma, double X[][], int nx, double C[][], 
                       int nc, double ta[], double tm[], boolean fail[]) {
@@ -1259,4 +1332,227 @@ public class GeneralizedInverse {
         dpprn = dx * 4.656612875E-10;
         return dpprn;
     } // drand
+    
+    private void ginvse(double A[][], int ma, int na, double AIN[][], int nain, int m[], int n[],
+                        double tol, double V[][], int nv, boolean fail[]) {
+        // Inverse of A = V * inverse of S * transpose of U
+        // via singular value decomposition using algorithms 1 and 2 of
+        // Nash, J. C., Compact Numerical Methods for Computers, 1979,
+        // Adam Hilger, Bristol or Halsted Press, N.Y.
+        
+        // A = Matrix of size m[0] by n[0] to be 'inverted'
+        // A is destroyed by this routine and becomes the 
+        // U matrix of the singular value decomposition
+        // ma = row dimension of array A
+        // unchanged by this routine
+        // na = column dimension of array A
+        // unchanged by this routine
+        // AIN = computed 'inverse' (n[0] rows by m[0] cols.)
+        // nain = row dimension of array AIN
+        //        (Column dimension assumed to be at least m[0])
+        // unchanged by this routine
+        // m[0] = number of rows in matrix A and the number of columns in matrix AIN
+        // n[0] = number of columns in matrix A the number of rows in matrix AIN
+        // unchanged by this routine
+        // tol = machine precision for computing environment
+        // unchanged by thsi routine
+        // V = work matrix which becomes the V matrix (n[0] by n[0])
+        // of the singular value decomposition
+        // nv = dimensions of V (Both rows and columns)
+        // unchanged by this routine
+        // fail[0] = error flag - true implies failure of ginvse
+        
+        // Note.  This routine is not designed to produce a 'good' generalized inverse.
+        // It is meant only to furnish test data for routines gmatx, zielke, and ptst.
+        
+        int icount;
+        int nm1;
+        int i;
+        int j;
+        int jp1;
+        int k;
+        int sweep;
+        int limit;
+        double p;
+        double q;
+        double r;
+        double vv = 0.0;
+        double c;
+        double s;
+        double temp;
+        
+        // Initially set fail[0] = false to imple correct execution
+        fail[0] = false;
+        
+        // Tests on validity of dimensions
+        if (m[0] < 2) {
+            System.out.println("ginvse failed because m[0] = " + m[0] + " is less than 2");
+            Preferences.debug("ginvse failed because m[0] = " + m[0] + " is less than 2\n");
+            fail[0] = true;
+            return;
+        }
+        if (ma < 2) {
+            System.out.println("ginvse failed because ma = " + ma + " is less than 2");
+            Preferences.debug("ginvse failed because ma = " + ma + " is less than 2\n");
+            fail[0] = true;
+            return;        
+        }
+        if (n[0] < 2) {
+            System.out.println("ginvse failed because n[0] = " + n[0] + " is less than 2");
+            Preferences.debug("ginvse failed because n[0] = " + n[0] + " is less than 2\n");
+            fail[0] = true;
+            return;    
+        }
+        if (na < 2) {
+            System.out.println("ginvse failed because na = " + na + " is less than 2");
+            Preferences.debug("ginvse failed because na = " + na + " is less than 2\n");
+            fail[0] = true;
+            return;        
+        }
+        if (n[0] > na) {
+            System.out.println("ginvse failed because n[0] = " + n[0] + " exceeds na = " + na);
+            Preferences.debug("ginvse failed because n[0] = " + n[0] + " exceeds na = " + na + "\n");
+            fail[0] = true;
+            return;        
+        }
+        if (m[0] > ma) {
+            System.out.println("ginvse failed because m[0] = " + m[0] + " exceeds ma = " + ma);
+            Preferences.debug("ginvse failed because m[0] = " + m[0] + " exceeds ma = " + ma + "\n");
+            fail[0] = true;
+            return;        
+        }
+        
+        // n[0] must not exceed m[0], otherwise ginvse will fail
+        if (n[0] > m[0]) {
+            System.out.println("ginvse failed because n[0] = " + n[0] + " exceeds m[0] = " + m[0]);
+            Preferences.debug("ginvse failed because n[0] = " + n[0] + " exceeds m[0] = " + m[0] + "\n");
+            fail[0] = true;
+            return;            
+        }
+        
+        // sweep counter initialized to zero
+        sweep = 0;
+        // set sweep limit
+        // max(n[0], 6) was chosen from experience
+        limit = Math.max(n[0], 6);
+        
+        // V[i][j] initially n by n identity
+        for (i = 0; i < n[0]; i++) {
+            for (j = 0; j < n[0]; j++) {
+                V[i][j] = 0.0;
+            }
+            V[i][i] = 1.0;
+        }
+        
+        do {
+            // Initialize rotation counter (counts down to 0)
+            icount = n[0]*(n[0] - 1)/2;
+            
+            // count sweep
+            sweep = sweep + 1;
+            nm1 = n[0] - 1;
+            for (j = 1; j <= nm1; j++) {
+                jp1 = j + 1;
+                for (k = jp1; k <= n[0]; k++) {
+                    p = 0.0;
+                    q = 0.0;
+                    r = 0.0;
+                    for (i = 1; i <= m[0]; i++) {
+                        // Test for and avoid underflow
+                        // Not needed for machines which underflow to zero without error message
+                        if (Math.abs(A[i-1][j-1]) >= tol) {
+                            q = q + A[i-1][j-1]*A[i-1][j-1];
+                        }
+                        if (Math.abs(A[i-1][k-1]) >= tol) {
+                            r = r + A[i-1][k-1]*A[i-1][k-1];    
+                        }
+                        if (Math.abs(A[i-1][j-1]/tol)*Math.abs(A[i-1][k-1]/tol) >= 1.0) {
+                            p = p + A[i-1][j-1]*A[i-1][k-1];
+                        }
+                    } // for (i = 1; i <= m[0]; i++)
+                    if (q < r) {
+                        c = 0.0;
+                        s = 1.0;
+                    } // if (q < r)
+                    else { // q >= r
+                        if ((Math.abs(q) < tol) && (Math.abs(r) < tol)) {
+                            icount = icount - 1;
+                            continue;
+                        }
+                        if (r == 0.0) {
+                            icount = icount - 1;
+                            continue;
+                        }
+                        if ((p/q)*(p/r) < tol) {
+                            icount = icount - 1;
+                            continue;
+                        }
+                        
+                        // Calculate the sine and cosine of the angle of rotation
+                        q = q - r;
+                        vv = Math.sqrt(4.0*p*p + q*q);
+                        c = Math.sqrt((vv+q)/(2.0*vv));
+                        s = p/(vv*c);
+                    } // else q >= r
+                    
+                    // Apply the rotation to A
+                    for (i = 1; i <= m[0]; i++) {
+                        r = A[i-1][j-1];
+                        A[i-1][j-1] = r*c + A[i-1][k-1]*s;
+                        A[i-1][k-1] = -r*s + A[i-1][k-1]*c;
+                    } // for (i = 1; i <= m[0]; i++)
+                    
+                    // Apply the rotation to V
+                    for (i = 1; i <= n[0]; i++) {
+                        r = V[i-1][j-1];
+                        V[i-1][j-1] = r*c + V[i-1][k-1]*s;
+                        V[i-1][k-1] = -r*s + V[i-1][k-1]*c;
+                    } // for (i = 1; i <= n[0]; i++)
+                } // for (k = jp1; k <= n[0]; k++)
+            } // for (j = 1; j <= nm1; j++)
+            
+            // Output the number of sweeps and rotations
+            Preferences.debug("Sweep = " + sweep + "\n");
+            Preferences.debug("Jacobi rotations performed = " + icount + "\n");
+            
+            // Check number of sweeps and rotations (termination test)
+        } while ((icount > 0) && (sweep < limit));
+        
+        if (sweep >= limit) {
+            Preferences.debug("Sweep limit reached\n");
+        }
+        
+        for (j = 1; j <= n[0]; j++) {
+            q = 0.0;
+            for (i = 1; i <= m[0]; i++) {
+                q = q + A[i-1][j-1]*A[i-1][j-1];
+            }
+            
+            // Arbitrary rank decision
+            if (j == 1) {
+                vv = 1.0E-3*Math.sqrt(q);
+            }
+            if (Math.sqrt(q) > vv) {
+                for (i = 1; i <= m[0]; i++) {
+                    A[i-1][j-1] = A[i-1][j-1]/q;
+                }
+            } // if (Math.sqrt(q) > vv)
+            else { // Math.sqrt(q) <= vv
+                for (i = 1; i <= m[0]; i++) {
+                    A[i-1][j-1] = 0.0;
+                }
+            } // else Math.sqrt(q) <= vv
+        } // for (j = 1; j <= n[0]; j++)
+        
+        for (i = 0; i < n[0]; i++) {
+            for (j = 0; j < m[0]; j++) {
+                temp = 0.0;
+                for (k = 0; k < n[0]; k++) {
+                    temp = temp + V[i][k]*A[j][k];
+                } // for (k = 0; k < n[0]; k++)
+                AIN[i][j] = temp;
+            } // for (j = 0; j < m[0]; j++)
+        } // for (i = 0; i < n[0]; i++)
+        return;
+    } // ginvse
 }
