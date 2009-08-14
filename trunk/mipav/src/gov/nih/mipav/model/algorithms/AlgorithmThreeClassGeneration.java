@@ -2507,7 +2507,7 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         ND[8][0] = N33 - EN33;
         NDM = new Matrix(ND);
         success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length);
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
         sigmaInv = ge.ginv();
         ge = null;
@@ -3054,7 +3054,7 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         T[8][0] = T33;
         TM = new Matrix(T);
         success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length);
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
         sigmaInv = ge.ginv();
         ge = null;
@@ -3512,7 +3512,7 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         }
         NDM = new Matrix(ND);
         success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length);
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
         sigmaInv = ge.ginv();
         ge = null;
@@ -3697,7 +3697,7 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         
         TM = new Matrix(T);
         success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length);
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
         sigmaInv = ge.ginv();
         ge = null;
