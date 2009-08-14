@@ -1845,7 +1845,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         NDM = new Matrix(ND);
         success = true;
         
-        ge = new GeneralizedInverse(sigma, sigma.length);
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
         sigmaInv = ge.ginv();
         ge = null;
@@ -2088,7 +2088,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         T[3][0] = T22;
         TM = new Matrix(T);
         success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length);
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
         sigmaInv = ge.ginv();
         ge = null;
@@ -2487,7 +2487,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         }
         NDM = new Matrix(ND);
         success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length);
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
         sigmaInv = ge.ginv();
         ge = null;
@@ -2672,7 +2672,7 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         
         TM = new Matrix(T);
         success = true;
-        ge = new GeneralizedInverse(sigma, sigma.length);
+        ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
         sigmaInv = ge.ginv();
         ge = null;
