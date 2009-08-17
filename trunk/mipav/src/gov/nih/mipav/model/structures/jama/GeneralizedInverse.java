@@ -31,99 +31,102 @@ public class GeneralizedInverse {
     }
     
     public double[][] ginv() {
-      int i;
-      double Ainv[][] = new double[NC][NR];
-      double U[][] = new double[NC][NC];
-      double aflag[] = new double[NC];
-      double atemp[] = new double[NC];
-      double fac;
-      int n;
-      double tol;
-      int j;
-      double dot1;
-      int jm1;
-      int L;
-      int k;
-      double dot2;
-      
-      for (i = 0; i < NC; i++) {
-          U[i][i] = 1.0;
+        // Note there were 2 errors in file http://ftp.aset.psu.edu/pub/ger/fortran/hdk/ginv.for
+        // Line 55   DO 60 I = I, JM1 should be 55    DO 60 I = 1, JM1
+        // Line DO 65 K = I, JM1 should be DO 65 K = 1, JM1
+        int i;
+        double Ainv[][] = new double[NC][NR];
+        double U[][] = new double[NC][NC];
+        double aflag[] = new double[NC];
+        double atemp[] = new double[NC];
+        double fac;
+        int n;
+        double tol;
+        int j;
+        double dot1;
+        int jm1;
+        int L;
+        int k;
+        double dot2;
+        
+        for (i = 0; i < NC; i++) {
+            U[i][i] = 1.0;
+        }
+        fac = dot(A, NR, 1, 1);
+        fac = 1.0/Math.sqrt(fac);
+        for (i = 0; i < NR; i++) {
+            A[i][0] = A[i][0] * fac;
+        }
+        for (i = 0; i < NC; i++) {
+            U[i][0] = U[i][0] * fac;
+        }
+        aflag[0] = 1.0;
+        
+        // Dependent column tolerance for n bit floating point fraction
+        n = 27;
+        tol = 10.0 * Math.pow(0.5, n);
+        tol = tol * tol;
+        for (j = 2; j <= NC; j++) {
+            dot1 = dot(A, NR, j, j);
+            jm1 = j - 1;
+            for (L = 1; L <= 2; L++) {
+                for (k = 1; k <= jm1; k++) {
+                    atemp[k-1] = dot(A, NR, j, k);    
+                } // for (k = 1; k <= jm1; k++)
+                for (k = 1; k <= jm1; k++) {
+                    for (i = 1; i <= NR; i++) {
+                        A[i-1][j-1] = A[i-1][j-1] - atemp[k-1]*A[i-1][k-1]*aflag[k-1];    
+                    } // for (i = 1; i <= NR; i++)
+                    for (i = 1; i <= NC; i++) {
+                        U[i-1][j-1] = U[i-1][j-1] - atemp[k-1]*U[i-1][k-1];
+                    } // for (i = 1; i <= NC; i++)
+                } // for (k = 1; k <= jm1; k++)
+            } // for (L = 1; L <= 2; L++)
+            dot2 = dot(A, NR, j, j);
+            if (((dot2/dot1) - tol) <= 0.0) {
+                for (i = 1; i <= jm1; i++) {
+                    atemp[i-1] = 0.0;
+                    for (k = 1; k <= i; k++) {
+                        atemp[i - 1] = atemp[i - 1] + U[k-1][i-1]*U[k-1][j-1];
+                    } // for (k = 1; k <= i; k++)
+                } // for (i = 1; i <= jm1; i++)
+                for (i = 1; i <= NR; i++) {
+                    A[i-1][j-1] = 0.0;
+                    for (k = 1; k <= jm1; k++) {
+                        A[i-1][j-1] = A[i-1][j-1] - A[i-1][k-1]*atemp[k-1]*aflag[k-1];    
+                    } // for (k = i; k <= jm1; k++)
+                } // for (i = 1; i <= NR; i++)
+                aflag[j-1] = 0.0;
+                fac = dot(U, NC, j, j);
+                fac = 1.0/Math.sqrt(fac);
+            } // if (((dot2/dot1) - tol) <= 0.0)
+            else { // ((dot2/dot1) - tol) > 0.0
+                aflag[j-1] = 1.0;
+                fac = 1.0/Math.sqrt(dot2);
+            } // else ((dot2/dot1) - tol) > 0.0)
+            for (i = 1; i <= NR; i++) {
+                A[i-1][j-1] = A[i-1][j-1]*fac;
+            } // for (i = 1; i <= NR; i++)
+            for (i = 1; i <= NC; i++) {
+                U[i-1][j-1] = U[i-1][j-1]*fac;
+            } // for (i = 1; i <= NC; i++)
+        } // for (j = 2; j <= NC; j++)
+        for (j = 1; j <= NC; j++) {
+            for (i = 1; i <= NR; i++) {
+                fac = 0.0;
+                for (k = j; k <= NC; k++) {
+                    fac = fac + A[i-1][k-1]*U[j-1][k-1];
+                } // for (k = j; k <= NC; k++)
+                A[i-1][j-1] = fac;
+            } // for (i = 1; i <= NR; i++)
+        } // for (j = 1; j <= NC; j++)
+        for (i = 1; i <= NC; i++) {
+            for (j = 1; j <= NR; j++) {
+                Ainv[i-1][j-1] = A[j-1][i-1];
+            }
+        }
+        return Ainv;
       }
-      fac = dot(A, NR, 1, 1);
-      fac = 1.0/Math.sqrt(fac);
-      for (i = 0; i < NR; i++) {
-          A[i][0] = A[i][0] * fac;
-      }
-      for (i = 0; i < NC; i++) {
-          U[i][0] = U[i][0] * fac;
-      }
-      aflag[0] = 1.0;
-      
-      // Dependent column tolerance for n bit floating point precision
-      n = 27;
-      tol = 10.0 * Math.pow(0.5, n);
-      tol = tol * tol;
-      for (j = 2; j <= NC; j++) {
-          dot1 = dot(A, NR, j, j);
-          jm1 = j - 1;
-          for (L = 1; L <= 2; L++) {
-              for (k = 1; k <= jm1; k++) {
-                  atemp[k-1] = dot(A, NR, j, k);    
-              } // for (k = 1; k <= jm1; k++)
-              for (k = 1; k <= jm1; k++) {
-                  for (i = 1; i <= NR; i++) {
-                      A[i-1][j-1] = A[i-1][j-1] - atemp[k-1]*A[i-1][k-1]*aflag[k-1];    
-                  } // for (i = 1; i <= NR; i++)
-                  for (i = 1; i <= NC; i++) {
-                      U[i-1][j-1] = U[i-1][j-1] - atemp[k-1]*U[i-1][k-1];
-                  } // for (i = 1; i <= NC; i++)
-              } // for (k = 1; k <= jm1; k++)
-          } // for (L = 1; L <= 2; L++)
-          dot2 = dot(A, NR, j, j);
-          if (((dot2/dot1) - tol) <= 0.0) {
-              for (i = 1; i <= jm1; i++) {
-                  atemp[i-1] = 0.0;
-                  for (k = 1; k <= i; k++) {
-                      atemp[i - 1] = atemp[i - 1] + U[k-1][i-1]*U[k-1][j-1];
-                  } // for (k = 1; k <= i; k++)
-              } // for (i = 1; i <= jm1; i++)
-              for (i = 1; i <= NR; i++) {
-                  A[i-1][j-1] = 0.0;
-                  for (k = i; k <= jm1; k++) {
-                      A[i-1][j-1] = A[i-1][j-1] - A[i-1][k-1]*atemp[k-1]*aflag[k-1];    
-                  } // for (k = i; k <= jm1; k++)
-              } // for (i = 1; i <= NR; i++)
-              aflag[j-1] = 0.0;
-              fac = dot(U, NC, j, j);
-              fac = 1.0/Math.sqrt(fac);
-          } // if (((dot2/dot1) - tol) <= 0.0)
-          else { // ((dot2/dot1) - tol) > 0.0
-              aflag[j-1] = 1.0;
-              fac = 1.0/Math.sqrt(dot2);
-          } // else ((dot2/dot1) - tol) > 0.0)
-          for (i = 1; i <= NR; i++) {
-              A[i-1][j-1] = A[i-1][j-1]*fac;
-          } // for (i = 1; i <= NR; i++)
-          for (i = 1; i <= NC; i++) {
-              U[i-1][j-1] = U[i-1][j-1]*fac;
-          } // for (i = 1; i <= NC; i++)
-      } // for (j = 2; j <= NC; j++)
-      for (j = 1; j <= NC; j++) {
-          for (i = 1; i <= NR; i++) {
-              fac = 0.0;
-              for (k = j; k <= NC; k++) {
-                  fac = fac + A[i-1][k-1]*U[j-1][k-1];
-              } // for (k = j; k <= NC; k++)
-              A[i-1][j-1] = fac;
-          } // for (i = 1; i <= NR; i++)
-      } // for (j = 1; j <= NC; j++)
-      for (i = 1; i <= NC; i++) {
-          for (j = 1; j <= NR; j++) {
-              Ainv[i-1][j-1] = A[j-1][i-1];
-          }
-      }
-      return Ainv;
-    }
     
     // Computes the inner product of columns JC and KC
     private double dot(double A[][], int NR, int JC, int KC) {
@@ -135,15 +138,13 @@ public class GeneralizedInverse {
         return dot;
     }
     
-    // This is a port of part of algorithm 645, a program for testing generalized inverse subroutines.
+    // This is a port of algorithm 645, a program for testing generalized inverse subroutines.
     // ALGORITHM 645 COLLECTED ALGORITHMS FROM ACM.
     // ALGORITHM APPEARED IN ACM-TRANS. MATH. SOFTWARE, VOL. 12, NO. 3, SEPT., 1986, P. 274
     // ORIGINAL CODE BY J. C. NASH 1979, J. C. NASH AND C. E. GRATTON 1982
     // J. C. NASH 1983, 1984
     // J. C. NASH AND R. L. C. WANG 1985, 1986
     public void ginvTest() {
-        // The following tests are designed to ensure that the routine ptst is performing correctly.
-        // First set up the matrix and a supposed inverse.
         int m[] = new int[1];
         int n[] = new int[1];
         int ma;
@@ -187,9 +188,145 @@ public class GeneralizedInverse {
                                    34521,0,0,0,0,0,0,0,0};
         double alphaVar[] = new double[]{2.0,0.2,0.1,-1.8,0.09,1.0,1.0,1.0,0.5,0.5,0.5,
                                          0.5,0.5,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1};
+        // From Chapter 8 Gerneralized Inverses of Matrix Algebra Useful for Statistics by
+        // Shayle R. Searle:
+        //  Given any matrix A, there is a unique matrix M such that (1):
+        //  (i) AMA = A
+        //  (ii) MAM = M
+        //  (iii) AM is symmetric
+        //  (iv) MA is symmetric
+        // The matrix M defined by the four Penrose conditions in (1) is unique for a given A.
+        // But there are many matrices G which satisfy just the first Penrose condition:
+        // AGA = A (5)
+        // Nevertheless, they are of such importance in solving linear equations that we direct
+        // most attention to those matrices G rather than to the Moore-Penorose inverse M.
+        
+        //   Any matrix G satisfying (5) is called a generalized inverse of A; any, by (5), when A
+        // is p by q then G is q by p.  Although the name generalized inverse has not been adopted
+        // universally, it is widely used.  Notice that G is "a" generalized inverse of A and not
+        // "the" generalized inverse, because for any given A there are generally many matrices G
+        // satisfying (5).  The exception is when A is nonsingular, in which case there is only one
+        // G satisfying (5) and it is the regular inverse G = (A)-1 = M.  A useful alternative symbol
+        // for G satisfying AGA = A is A with a superscript -.
+        // Test ginvse routine that comes with the tester package.
+        // Note.  ginvse is not designed to produce a 'good' generalized inverse.
+        // It is meant only to furnish test data for routines gmatx, zielke, and ptst.
+        // All 4 Penrose tests are failed.
         boolean doginvse = false;
+        // All 4 Penrose tests passed
         boolean doginv = true;
-        double tol;
+        double tol = Math.pow(16.0, -5.0);
+        
+        // The following sequence of tests is used to test error traps in ginvse, ptst, and zielke
+        // This section can be omitted withot affecting computations
+        Preferences.debug("Test traps for calling sequence errors\n");
+        Preferences.debug("Provoke 11 errors reports for dimensions and invalid arguments\n");
+        
+        // Test trap for matrix row dimension less than 1
+        // Testing ma < 1
+        ma = 0;
+        na = 10;
+        m[0] = 10;
+        n[0] = 10;
+        ptst(m, n, Ag, ma, X, na, C, ma, ta, tm, fail);
+        // Ought to fail, stop if it has not failed
+        if (!fail[0]) {
+            return;
+        }
+        ginvse(G, ma, na, X, ma, m, n, tol, C, ma, fail);
+        if (!fail[0]) {
+            return;
+        }
+        
+        // Test trap for matrix column dimension less than 1
+        // Testing na < 1
+        ma = 11;
+        na = 0;
+        m[0] = 11;
+        n[0] = 11;
+        ptst(m, n, Ag, ma, X, na, C, ma, ta, tm, fail);
+        // Ought to fail, stop if it has not failed
+        if (!fail[0]) {
+            return;
+        }
+        ginvse(G, ma, na, X, ma, m, n, tol, C, ma, fail);
+        if (!fail[0]) {
+            return;
+        }
+        
+        // Test trap for matrix row order less than 1
+        // Testing m[0] < 1
+        ma = 12;
+        na = 12;
+        m[0] = 0;
+        n[0] = 12;
+        ptst(m, n, Ag, ma, X, na, C, ma, ta, tm, fail);
+       // Ought to fail, stop if it has not failed
+        if (!fail[0]) {
+            return;
+        }
+        ginvse(G, ma, na, X, ma, m, n, tol, C, ma, fail);
+        if (!fail[0]) {
+            return;
+        }
+        
+        // Test trap for matrix column order less than 1
+        // Testing n[0] < 1
+        ma = 13;
+        na = 13;
+        m[0] = 13;
+        n[0] = 0;
+        ptst(m, n, Ag, ma, X, na, C, ma, ta, tm, fail);
+       // Ought to fail, stop if it has not failed
+        if (!fail[0]) {
+            return;
+        }
+        ginvse(G, ma, na, X, ma, m, n, tol, C, ma, fail);
+        if (!fail[0]) {
+            return;
+        }
+        
+        // Test trap for number of rows greater than dimension
+        // Testing m[0] > ma
+        ma = 5;
+        na = 5;
+        m[0] = 6;
+        n[0] = 5;
+        ginvse(G, ma, na, X, ma, m, n, tol, C, ma, fail);
+        // Ought to fail, stop if it has not failed
+        if (!fail[0]) {
+            return;
+        }
+        
+        // Test trap fornumber of columns greater than dimension
+        // Testing n[0] > na
+        ma = 5;
+        na = 5;
+        m[0] = 5;
+        n[0] = 7;
+        ginvse(G, ma, na, X, ma, m, n, tol, C, ma, fail);
+        // Ought to fail, stop if it has not failed
+        if (!fail[0]) {
+            return;
+        }
+        
+        // Testing ma and na forbidden by zielke
+        ma = 3;
+        na = 3;
+        m[0] = 3;
+        n[0] = 3;
+        mopt = 2;
+        zielke(m, n, Ag, ma, na, mopt, alpha, fail);
+        // Ought to fail, stop if it has not failed
+        if (!fail[0]) {
+            return;
+        }
+        
+        // End of sequence of calls to test error traps
+        Preferences.debug("End of calling sequence for error tests\n");
+        
+        // The following tests are designed to ensure that the routine ptst is performing correctly.
+        // First set up the matrix and a supposed inverse.
         m[0] = 3;
         n[0] = 2;
         Ag[0][0] = 1.0;
@@ -294,15 +431,15 @@ public class GeneralizedInverse {
             na = 30;
             nb = 30;
             
-            // m and n give the size of the matrix to be generated by gmatx
-            // k gives its rank
+            // m[0] and n[0] give the size of the matrix to be generated by gmatx
+            // k[0] gives its rank
             // mopt = 0 if gmatx is to be called
-            // mopt = 1, 2, 3, 4 for zielike matrices
+            // mopt = 1, 2, 3, 4 for Zielke matrices
             //      = -1, -2, -3, -4 for their Moore-Penrose inverses
-            // iseed = an integer seed for use by the random number generator called by gmatx
-            // alpha = a parameter used to adjust the singular values of the matrix generated by gmatx
+            // iseed[0] = an integer seed for use by the random number generator called by gmatx
+            // alpha[0] = a parameter used to adjust the singular values of the matrix generated by gmatx
             
-            // For details of the controls, see the comments in the routines gmatx and zielike
+            // For details of the controls, see the comments in the routines gmatx and zielke
             Preferences.debug("Test number = " + (test + 1) + "\n");
             Preferences.debug(message[test] + "\n");
             // For each test set m, n, k, mopt, iseed, alpha
@@ -323,7 +460,7 @@ public class GeneralizedInverse {
             Preferences.debug("iseed[0] = " + iseed[0] + "\n");
             Preferences.debug("alpha[0] = " + alpha[0] + "\n");
             
-            // Other tests for valid inputs are made the routines
+            // Other tests for valid inputs are made in the routines
             
             // Check for dimensions exceeded
             if (m[0] >= ma) {
@@ -337,9 +474,9 @@ public class GeneralizedInverse {
             
             if (mopt != 0) {
                 // zielke routine call
-                // Note that m and n are replaced by appropriate values.
-                // mopt is the zielike matrix selected
-                // alpha is needed in zielike as a parameter in formulas for the matrix elements generated.
+                // Note that m[0] and n[0] are replaced by appropriate values.
+                // mopt is the Zielke matrix selected
+                // alpha is needed in zielke as a parameter in formulas for the matrix elements generated.
                 zielke(m, n, Ag, ma, na, mopt, alpha, fail);
                 if (fail[0]) {
                     continue;
@@ -1277,9 +1414,9 @@ public class GeneralizedInverse {
     } // gmatx
     
     private double drand(double dx) {
-        // Portable random number generator using recursion
+        // Portable random number generator using the recursion:
         // dx = dx * A mod P
-        // From Linus Schrage, ACM Transactions on Mathematical SOftware, Vol. 5, No. 2, p.134 FF,
+        // From Linus Shrage, ACM Transactions on Mathematical Software, Vol. 5, No. 2, p.134 FF,
         // June, 1979
         // dx = seed for next member of pseudo-random sequence
         // dx should not be altered between calls to drand
@@ -1323,7 +1460,7 @@ public class GeneralizedInverse {
         // The parentheses are essential
         dx = (((xalo-leftlo*b16)-p)+(fhi-k*b15)*b16) + k;
         
-        // Add p back if necessary
+        // Add p back in if necessary
         if (dx < 0.0) {
             dx = dx + p;
         }
@@ -1355,7 +1492,7 @@ public class GeneralizedInverse {
         // n[0] = number of columns in matrix A the number of rows in matrix AIN
         // unchanged by this routine
         // tol = machine precision for computing environment
-        // unchanged by thsi routine
+        // unchanged by this routine
         // V = work matrix which becomes the V matrix (n[0] by n[0])
         // of the singular value decomposition
         // nv = dimensions of V (Both rows and columns)
@@ -1381,7 +1518,7 @@ public class GeneralizedInverse {
         double s;
         double temp;
         
-        // Initially set fail[0] = false to imple correct execution
+        // Initially set fail[0] = false to imply correct execution
         fail[0] = false;
         
         // Tests on validity of dimensions
