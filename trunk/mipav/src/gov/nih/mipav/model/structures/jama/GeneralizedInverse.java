@@ -4,8 +4,6 @@ package gov.nih.mipav.model.structures.jama;
 import gov.nih.mipav.view.*;
 
 public class GeneralizedInverse {
-    // This is a port of the FORTRAN suborutine GINV2, A Simple Algorithm for Computing the Generalized Inverse
-    // of a Matrix by B. Rust, W. R. Burrus, and C. Schneeberger, CACM 9(5): 381-387 (May, 1966)
     private double A[][];
     
     // Number of rows in A
@@ -30,6 +28,8 @@ public class GeneralizedInverse {
         }
     }
     
+    // This is a port of the FORTRAN suborutine GINV2, A Simple Algorithm for Computing the Generalized Inverse
+    // of a Matrix by B. Rust, W. R. Burrus, and C. Schneeberger, CACM 9(5): 381-387 (May, 1966)
     public double[][] ginv() {
         // Note there were 2 errors in file http://ftp.aset.psu.edu/pub/ger/fortran/hdk/ginv.for
         // Line 55   DO 60 I = I, JM1 should be 55    DO 60 I = 1, JM1
@@ -188,7 +188,7 @@ public class GeneralizedInverse {
                                    34521,0,0,0,0,0,0,0,0};
         double alphaVar[] = new double[]{2.0,0.2,0.1,-1.8,0.09,1.0,1.0,1.0,0.5,0.5,0.5,
                                          0.5,0.5,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1};
-        // From Chapter 8 Gerneralized Inverses of Matrix Algebra Useful for Statistics by
+        // From Chapter 8 Generalized Inverses of Matrix Algebra Useful for Statistics by
         // Shayle R. Searle:
         //  Given any matrix A, there is a unique matrix M such that (1):
         //  (i) AMA = A
@@ -201,18 +201,20 @@ public class GeneralizedInverse {
         // Nevertheless, they are of such importance in solving linear equations that we direct
         // most attention to those matrices G rather than to the Moore-Penorose inverse M.
         
-        //   Any matrix G satisfying (5) is called a generalized inverse of A; any, by (5), when A
+        //   Any matrix G satisfying (5) is called a generalized inverse of A; and, by (5), when A
         // is p by q then G is q by p.  Although the name generalized inverse has not been adopted
         // universally, it is widely used.  Notice that G is "a" generalized inverse of A and not
         // "the" generalized inverse, because for any given A there are generally many matrices G
         // satisfying (5).  The exception is when A is nonsingular, in which case there is only one
         // G satisfying (5) and it is the regular inverse G = (A)-1 = M.  A useful alternative symbol
         // for G satisfying AGA = A is A with a superscript -.
+        
         // Test ginvse routine that comes with the tester package.
         // Note.  ginvse is not designed to produce a 'good' generalized inverse.
         // It is meant only to furnish test data for routines gmatx, zielke, and ptst.
         // All 4 Penrose tests are failed.
         boolean doginvse = false;
+        // Test ginv routine. 
         // All 4 Penrose tests passed
         boolean doginv = true;
         double tol = Math.pow(16.0, -5.0);
@@ -553,7 +555,7 @@ public class GeneralizedInverse {
                       int nc, double ta[], double tm[], boolean fail[]) {
         // This subroutine is designed to test a proposed generalized inverse of a matrix labelled A,
         // which is m by n.  X is the n by m matrix containing the supposed inverse.
-        // Program originally for square, symmetric matrices written by Richard L. C. Wnag, 1977
+        // Program originally for square, symmetric matrices written by Richard L. C. Wang, 1977
         // Modified and adapted by J. C. Nash 1979, 1982
         // Note that A and X may be interchanged -- tester does not object.
         // Average and maximum absolute deviations are caclulated for the matrices
@@ -591,7 +593,7 @@ public class GeneralizedInverse {
         // reference Wilkinson, J. H., The Algebraic Eigenvalue Problem, Oxford, 1965
         // ptst calls double anorm(m, n, A, ma)
         // anorm computes the square norm of a matrix A
-        // norm = SQRT(SUM(A[i][j]**2), for i = 1, m, j = 1, n)
+        // norm = SQRT(SUM(A[i-1][j-1]**2), for i = 1, m[0], j = 1, n[0])
         // This norm is used for simplicity.  Other norms are acceptable
         double s;
         double v;
@@ -629,7 +631,7 @@ public class GeneralizedInverse {
             fail[0] = true;
             return;
         }
-        if (m [0]<= 0) {
+        if (m[0]<= 0) {
             Preferences.debug("ptst failed because m[0] = " + m[0] + " is less than 1\n");
             System.out.println("ptst failed because m[0] = " + m[0] + " is less than 1");
             fail[0] = true;
@@ -772,7 +774,7 @@ public class GeneralizedInverse {
     
     private double anorm(int m[], int n[], double A[][], int ma) {
         // Compute square (euclidean) norm of matrix A
-        // norm = SQRT(SUM(A[i][j]**2), for i = 1, m[0], j = 1, n[0])
+        // norm = SQRT(SUM(A[i-1][j-1]**2), for i = 1, m[0], j = 1, n[0])
         // This norm is used for simplicity - others acceptable
         // m[0] = number of rows in matrix A
         // n[0] = number of columns in matrix A
@@ -800,7 +802,7 @@ public class GeneralizedInverse {
         // These matrices are labelled A1, A2, A3, A4 or their generalized inverses A1+, A2+, A3+, A4+.
         // m[0] = number of rows in matrix A produced
         // This is set (changed) by this subroutine
-        // n[0] = number of columns in matrix A produces
+        // n[0] = number of columns in matrix A produced
         // This is set (changed) by this subroutine
         // A - The matrix which is generated
         // ma - The first or row dimension of A in the calling program
@@ -1176,8 +1178,8 @@ public class GeneralizedInverse {
         
         // The matrix A, dimension ma by na but size m[0] by n[0], is to be calculated by a sequence
         // of pseudo-random Jacobi rotations applied to a 'diagonal' matrix whose elements are
-        // determined by the parameters k and alpha as follows.  A[i-1][i-1] is set to 
-        // alpha**(1 - i) for for i = 1,2,...,k and to zero for i > k, where k is a positive integer
+        // determined by the parameters k[0] and alpha[0] as follows.  A[i-1][i-1] is set to 
+        // alpha**(1 - i) for for i = 1,2,...,k[0] and to zero for i > k[0], where k[0] is a positive integer
         // no larger than the minimum value of m[0] and n[0]
         
         // m[0] = number of rows in matrix A
@@ -1215,12 +1217,12 @@ public class GeneralizedInverse {
         // Otherwise, k[0] is unaltered by this routine.
         // iseed[0] = seed for the pseudo-random number generator
         // Only positive values of iseed are allowed
-        // If iseed[0] <= 1, it will be set to 1
+        // If iseed[0] <= 0 it will be set to 1
         // iseed is converted to a double precision variable dseed for used in drand, the
         // generator routine.
-        // dseed is altered in every call to drand, and dseed must be supplied in every
+        // dseed is altered by drand, and dseed must be supplied in every
         // call to drand.
-        // Reference: Schrage, L., A more protable fortran random number generator, 
+        // Reference: Schrage, L., A more portable fortran random number generator, 
         // ACM Transactions on Mathematical Software, Vol. 5, No. 2, June, 1979, pages 132-138.
         // fail[0] = error flag
         // fail[0] = true if gmatx has failed to create matrix A
@@ -1283,7 +1285,7 @@ public class GeneralizedInverse {
             Preferences.debug("m[0] was set to ma = " + ma + " in gmatx\n");
         }
         
-        Preferences.debug("Genrating matrix by pseudo-random Jacobi rotations\n");
+        Preferences.debug("Generating matrix by pseudo-random Jacobi rotations\n");
         Preferences.debug("Order = " + m[0]+ " by " + n[0] + "\n");
         Preferences.debug("Pseudo-random number seed = " + iseed[0] + "\n");
         
@@ -1323,8 +1325,8 @@ public class GeneralizedInverse {
             return;
         }
         if (k[0] > mn) {
-            System.out.println("k[0] = " + k[0] + " exceeds the allowable value for k[0]");
-            Preferences.debug("k[0] = " + k[0] + " exceeds the allowable value for k[0]\n");
+            System.out.println("k[0] = " + k[0] + " exceeds the allowable value = mn for k[0]");
+            Preferences.debug("k[0] = " + k[0] + " exceeds the allowable value = mn for k[0]\n");
             k[0] = mn;
             System.out.println("k[0] has been set equal to mn = " + mn);
             Preferences.debug("k[0] has been set equal to mn = " + mn + "\n");
