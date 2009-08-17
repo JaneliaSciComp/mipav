@@ -94,7 +94,7 @@ public class GeneralizedInverse {
                     A[i-1][j-1] = 0.0;
                     for (k = 1; k <= jm1; k++) {
                         A[i-1][j-1] = A[i-1][j-1] - A[i-1][k-1]*atemp[k-1]*aflag[k-1];    
-                    } // for (k = i; k <= jm1; k++)
+                    } // for (k = 1; k <= jm1; k++)
                 } // for (i = 1; i <= NR; i++)
                 aflag[j-1] = 0.0;
                 fac = dot(U, NC, j, j);
