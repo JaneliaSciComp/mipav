@@ -2208,97 +2208,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      */
     public void keyTyped(KeyEvent e) {}
 
-    /**
-     * This method loads the LUT for the active image. If the image is not a color image then both the functions and the
-     * LUT data are loaded. If this is a color image, then only the functions are loaded.
-     * 
-     * @param loadAll boolean boolean indicating that both lut and transfer functions should be loaded. If false, then
-     *            only transfer functions are loaded.
-     * @param filename String filename to save LUT as
-     * @param dirName String directory to save LUT to
-     * @param quietMode boolean if true indicates that warnings should not be displayed.
-     */
-    public void loadOnlyLUTFrom(boolean loadAll, String filename, String dirName, boolean quietMode) {
-        ModelRGB rgb;
-        ModelLUT lut;
-        ModelImage img;
-        FileHistoLUT fileHistoLUT;
-        boolean useLUT = false;
-
-        if (imageActive == imageA) {
-            img = this.getImageA();
-
-            if (img.isColorImage()) {
-                useLUT = false;
-                rgb = this.getRGBTA();
-                lut = null;
-            } else {
-                useLUT = true;
-                rgb = null;
-                lut = this.getLUTa();
-            }
-        } else {
-            img = this.getImageB();
-
-            if (img.isColorImage()) {
-                useLUT = false;
-                rgb = this.getRGBTB();
-                lut = null;
-            } else {
-                useLUT = true;
-                rgb = null;
-                lut = this.getLUTb();
-            }
-        }
-
-        // if not using a lut (i.e. rgb only), then you
-        // can't loadAll.... there are only functions, so
-        // reset the loadAll variable
-        if ( !useLUT) {
-            loadAll = false;
-        }
-
-        try {
-
-            if (useLUT) {
-                fileHistoLUT = new FileHistoLUT(filename, dirName, lut);
-
-                if (loadAll) {
-                    fileHistoLUT.readOnlyLUT(quietMode);
-                } else {
-                    fileHistoLUT.readFunctions();
-                }
-
-                if (imageActive == imageA) {
-                    this.setLUTa(lut);
-                } else {
-                    this.setLUTb(lut);
-                }
-            } else {
-                fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
-
-                if (loadAll) {
-                    fileHistoLUT.readOnlyLUT(quietMode);
-                } else {
-                    fileHistoLUT.readFunctions();
-                }
-
-                if (imageActive == imageA) {
-                    this.setRGBTA(rgb);
-                } else {
-                    this.setRGBTB(rgb);
-                }
-            }
-
-            img.notifyImageDisplayListeners(lut, true);
-
-        } catch (IOException error) {
-
-            if ( !quietMode) {
-                MipavUtil.displayError("Error reading LUT: \n" + error.getMessage());
-            }
-        }
-    } // end loadLUTFrom()
 
     /**
      * Reads in an image icon from either the set of mipav icons or the user's $HOME/mipav/brushes/ directory.
@@ -2895,18 +2804,30 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     public void openUDLUT() {
         String fName = "userdefine.lut";
         String dName = Preferences.getPreferencesDir();
+        
+        readOnlyLUTFrom(fName, dName);
+        
+        try {
 
-        loadOnlyLUTFrom(true, fName, dName, false);
+            if (imageA.isColorImage() == false) {
 
-        // load the transfer function
-        String fName2 = "userdefineTF.fun";
+                imageA.notifyImageDisplayListeners(null, false);
 
-        loadUDTransferFunction(fName2, dName);
+                if (imageB != null) {
+                    imageB.notifyImageDisplayListeners(null, false);
+                }
 
-        if (imageActive == imageA) {
-            setLUTa(getLUTa());
-        } else {
-            setLUTb(getLUTb());
+            } else { // RGB image
+
+                imageA.notifyImageDisplayListeners(true, 1, RGBTA);
+                if (imageB != null) {
+                    imageB.notifyImageDisplayListeners(true, 1, RGBTB);
+                }
+            }
+
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ComponentEditImage.openUDLUT");
         }
 
     }
@@ -3913,6 +3834,63 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         }
 
     } // end saveLUTAs()
+    
+    
+    /**
+     * This method saves the LUT for the active image. If the image is not a color image then both the functions and the
+     * LUT data are saved. If this is a color image, then only the functions are saved.
+     * 
+     * @param filename filename to save LUT as
+     * @param dirName directory to save LUT to
+     */
+    public void readOnlyLUTFrom(String filename, String dirName) {
+        ModelRGB rgb;
+        ModelLUT lut;
+        ModelImage img;
+        FileHistoLUT fileHistoLUT;
+        boolean useLUT = false;
+
+        if (imageActive == imageA) {
+            img = this.getImageA();
+
+            if (img.isColorImage()) {
+                useLUT = false;
+                rgb = this.getRGBTA();
+                lut = null;
+            } else {
+                useLUT = true;
+                rgb = null;
+                lut = this.getLUTa();
+            }
+        } else {
+            img = this.getImageB();
+
+            if (img.isColorImage()) {
+                useLUT = false;
+                rgb = this.getRGBTB();
+                lut = null;
+            } else {
+                useLUT = true;
+                rgb = null;
+                lut = this.getLUTb();
+            }
+        }
+
+        try {
+
+            if (useLUT) {
+                fileHistoLUT = new FileHistoLUT(filename, dirName, lut);
+            } else {
+                fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
+            }
+
+            fileHistoLUT.readLUT(false);
+
+        } catch (IOException error) {
+            MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
+        }
+
+    } // end saveLUTAs()
 
     /**
      * Save user defined LUT table.
@@ -3925,16 +3903,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
 
         saveOnlyLUTAs(fName, dName);
 
-        // save the transfer function
-        String fName2 = "userdefineTF.fun";
-
-        saveUDTransferFunction(fName2, dName);
-
-        if (imageActive == imageA) {
-            setLUTa(getLUTa());
-        } else {
-            setLUTb(getLUTb());
-        }
     }
 
     /**
@@ -5399,30 +5367,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         }
     }
 
-    /**
-     * Loads the User Defined transfer function into the lut.
-     * 
-     * @param fName String file name
-     * @param dName String directory name
-     */
-    private void loadUDTransferFunction(String fName, String dName) {
-        FileHistoLUT fileHistoLUT;
-        ModelLUT lut = null;
-        String temp = "temp.temp";
 
-        if (imageActive == imageA) {
-            lut = this.getLUTa();
-        } else {
-            lut = this.getLUTb();
-        }
-
-        try {
-            fileHistoLUT = new FileHistoLUT(temp, dName, lut);
-            fileHistoLUT.readUDTransferFunction(fName, dName);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
 
     // When the apply or close button is pressed, JDialogCheckerBoard sets the following 2 parameters used.
     /**
@@ -5946,31 +5891,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         RGBT.makeRGB( -1);
     }
 
-    /**
-     * Saves the User Defined transfer function (remapped 0->1).
-     * 
-     * @param fName String file name
-     * @param dName String directory name
-     */
-    private void saveUDTransferFunction(String fName, String dName) {
-        FileHistoLUT fileHistoLUT;
-        ModelLUT lut = null;
-        String temp = "temp.temp";
-
-        if (imageActive == imageA) {
-            lut = this.getLUTa();
-        } else {
-            lut = this.getLUTb();
-        }
-
-        try {
-            fileHistoLUT = new FileHistoLUT(temp, dName, lut);
-            fileHistoLUT.writeUDTransferFunction(fName, dName);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
+   
     /**
      * 
      * @param zeroToOneLUTAdj
