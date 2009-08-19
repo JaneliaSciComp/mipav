@@ -170,8 +170,10 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 initialCirclesText.setEnabled(false);
                 minimumDistanceLabel.setEnabled(true);
                 minimumDistanceText.setEnabled(true);
+                minimumDistanceText.setText("25.0");
                 maximumDistanceLabel.setEnabled(true);
                 maximumDistanceText.setEnabled(true);
+                maximumDistanceText.setText("35.0");
                 lowestForbiddenLabel.setEnabled(false);
                 lowestForbiddenText.setEnabled(false);
                 highestForbiddenLabel.setEnabled(false);
