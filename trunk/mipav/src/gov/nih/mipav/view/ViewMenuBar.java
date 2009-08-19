@@ -178,7 +178,7 @@ public class ViewMenuBar {
 
                                 menuBuilder.buildMenuItem("Denoising BLS GSM", "blsGSM", 0, null, false),
                                 menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),}),
-                menuBuilder.makeMenu("Histogram tools", false, new JMenuItem[] {
+                        menuBuilder.makeMenu("Histogram tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("2D histogram", "histTwoDim", 0, null, false),
                         menuBuilder.buildMenuItem("Cumulative histogram", "cumHistogram", 0, null, false),
                         menuBuilder.makeMenu("Histogram equalization", false, new JMenuItem[] {
@@ -651,6 +651,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Horizontal", "ImageFlipY", 0, "fliphoriz.gif", true),
                         menuBuilder.buildMenuItem("Vertical", "ImageFlipX", 0, "flipvert.gif", true),
                         menuBuilder.buildMenuItem("Depth", "ImageFlipZ", 0, "flipvert.gif", true)}),
+                menuBuilder.buildMenuItem("Generate Grid", "writeGrid", 0, null, false),       
                 menuBuilder.buildMenuItem("Image calculator", "Calculator", 0, null, false),
                 menuBuilder.buildMenuItem("Image calculator - Bulk Images", "BulkCalculator", 0, null, false),
                 menuBuilder.buildMenuItem("Image math", null, 0, null, false),

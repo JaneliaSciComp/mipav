@@ -2586,7 +2586,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             componentImage.paintComponent(componentImage.getGraphics());
 
-        } else if (command.equals("GridOptions")) {
+        } else if (command.equals("writeGrid")) {
+        	new JDialogGenerateGrid(this,componentImage);
+        }
+        
+        else if (command.equals("GridOptions")) {
 
             if (gridOptions != null) {
                 gridOptions.setVisible(true);
