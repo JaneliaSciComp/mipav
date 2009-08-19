@@ -168,6 +168,9 @@ public class FileDicom extends FileDicomBase {
 
     /** Value Representation - see FileInfoDicom. */
     private byte[] vr = new byte[2];
+    
+    /** Whether MIPAV should be written to this dicom file as the secondary stamp **/
+    private boolean stampSecondary = true;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -272,6 +275,15 @@ public class FileDicom extends FileDicomBase {
 
         // System.out.println("FileDICOM.close");
         this.finalize();
+    }
+    
+    /**
+     * Sets whether MIPAV will edit the DICOM tags of this image with a secondary stamp.  This occurs when the image is
+     * being saved.
+     */
+    
+    public void doStampSecondary(boolean stampSecondary) {
+    	this.stampSecondary = stampSecondary;
     }
 
     /**
@@ -1713,8 +1725,10 @@ public class FileDicom extends FileDicomBase {
 
         fileInfo = (FileInfoDicom) image.getFileInfo(index);
 
-        // store that this DICOM has been saved/modified since original capture:
-        stampSecondaryCapture(fileInfo);
+        if(stampSecondary) {
+	        // store that this DICOM has been saved/modified since original capture:
+	        stampSecondaryCapture(fileInfo);
+        }
 
         this.image = image;
 
@@ -1919,8 +1933,10 @@ public class FileDicom extends FileDicomBase {
         String nFramesStr = String.valueOf(end - start + 1);
         fileInfo.getTagTable().setValue("0028,0008", nFramesStr, nFramesStr.length());
 
-        // store that this DICOM has been saved/modified since original capture:
-        stampSecondaryCapture(fileInfo);
+        if(stampSecondary) {
+	        // store that this DICOM has been saved/modified since original capture:
+	        stampSecondaryCapture(fileInfo);
+        }
         this.image = image;
 
         int imageSize = image.getSliceSize();

@@ -523,6 +523,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
         opts.setFileDirectory(outputDir + File.separator);
         opts.setFileName(file.getName());
         opts.setRecalculateInstanceNumber(false);
+        opts.doStamp(false); //NINDS would prefer to remove all references to NIH
         if(enableTextArea) {
         	outputTextArea.append("Saving " + file.getName() + " to " + outputDir + " \n\n");
         }
