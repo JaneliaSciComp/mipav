@@ -90,6 +90,9 @@ public class FileWriteOptions {
 
     /** DOCUMENT ME! */
     private boolean multiFile = false;
+    
+    /**Used for stamping DICOM images with MIPAV reference. */
+    private boolean doStamp = true;
 
     /** DOCUMENT ME! */
     private float opacity;
@@ -223,6 +226,24 @@ public class FileWriteOptions {
      */
     public void doPutInQuicklist(boolean doPut) {
         this.putInQuicklist = doPut;
+    }
+    
+    /**
+     * Whether or not to stamp DICOM images.
+     * 
+     * @return
+     */
+    public boolean doStamp() {
+    	return this.doStamp;
+    }
+    
+    /**
+     * Sets the flag for stamping DICOM images with a reference to MIPAV as a secondary processor.
+     * 
+     * @param doStamp
+     */
+    public void doStamp(boolean doStamp) {
+    	this.doStamp = doStamp;
     }
 
     /**

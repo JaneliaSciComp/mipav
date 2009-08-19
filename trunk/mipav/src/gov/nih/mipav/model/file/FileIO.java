@@ -9591,6 +9591,7 @@ public class FileIO {
                 }
 
                 dicomFile = new FileDicom(name, fileDir);
+                dicomFile.doStampSecondary(options.doStamp());
                 int sliceSize = image.getSliceSize();
                 dicomFile.writeImage(image, 0, sliceSize, 0, false);
                 // }
@@ -9602,6 +9603,7 @@ public class FileIO {
                 // String s=""+(i+1);
                 // myFileInfo = (FileInfoDicom)image.getFileInfo(i);
                 // if (saveAs) myFileInfo.updateValue("0020,0013", s, s.length());
+                dicomFile.doStampSecondary(options.doStamp());
                 dicomFile.writeMultiFrameImage(image, 0, 0);
             }
         } catch (IOException error) {
@@ -10094,6 +10096,7 @@ public class FileIO {
                     }
 
                     dicomFile = new FileDicom(name, fileDir);
+                    dicomFile.doStampSecondary(options.doStamp());
                     dicomFile.writeImage(image, i * sliceSize, (i * sliceSize) + sliceSize, i, saveAsEncapJP2);
 
                 }
@@ -10106,6 +10109,7 @@ public class FileIO {
                 // String s=""+(i+1);
                 // myFileInfo = (FileInfoDicom)image.getFileInfo(i);
                 // if (saveAs) myFileInfo.updateValue("0020,0013", s, s.length());
+                dicomFile.doStampSecondary(options.doStamp());
                 dicomFile.writeMultiFrameImage(image, options.getBeginSlice(), options.getEndSlice());
             }
         } catch (IOException error) {
