@@ -56,6 +56,27 @@ import java.util.*;
   aggregated.  The test on the mean will often show a difference from a random distribution, while the chi square
   test fails to show a difference from a random distribution.
   
+  For larger circles these equations become increasingly inaccurate because an assumption of the Poisson
+  distribution of rare events is violated: the mean number of circles per sampling unit is not small relative
+  to the maximum possible number of circles per sampling unit.  In fact for a given lambda there is a maximum 
+  E[r]= sqrt(2)/((3**0.25)*sqrt(lambda)), which obtains when all the points are perfectly arranged as vertices
+  of a hexagonal lattice.  Put another way, the maximum size circles that can be arranged with density lambda
+  have diameter d = sqrt(2)/((3**0.25)*sqrt(lambda)), and are located at the centers of hexagons completely
+  filling space.  At d = sqrt(2)/((3**0.25)*sqrt(lambda)), the standard error of average r will be zero, since
+  there is only one possible arrangement.  The Poisson derived expresion for standard error does not vanish until
+  d is somewhat greater than this maximum d.
+  
+  According to Simberloff for d = 0 and lambda = 0.005, E[r] = 7.0711.  When I ran a random distribution 
+  for 10,000 by 1,000 with 50,000 circles requested and circle diameter = 0, I had observed mean = 7.09
+  and analytical mean = 7.0717.
+  
+  The analytic equation for E[r(d,lambda)] is quite accurate for d as large as E[r(0, lambda)]; it exceeds the
+  simulated value by only 6.6%.  The analytic equation for the standard error begins to go badly awry at
+  approximately d = 0.75E[r(0,lambda)].  For example, for d = E[r(0,lambda)], whereas the equation for E[r]
+  exceeds its true value by only 6.6%, the calculated standard error exceeds the correct value by 29.1%.
+  For small circles either the analytic expressions or simulations for the expected mean nearest neighbor
+  and its standard error can be used, but for larger circles simulations should be used.
+  
   Let x2 = chi squared and v = degrees of freedom
   The probability density function p(x2,v) = (1/((2**(v/2))* gamma(v/2)))*(x2**((v-2)/2))*exp(-x2/2)
   The probability of observing a value of chi square that is larger than a particular value for a random
