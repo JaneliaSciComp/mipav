@@ -322,6 +322,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Two MRI images", "DMRISNR", 0, null, false),}),
                 menuBuilder.makeMenu("Spatial statistics", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Circle pattern generation", "CircleGen", 0, null, false),
+                        menuBuilder.buildMenuItem("Sphere pattern generation", "SphereGen", 0, null, false),
                         menuBuilder.buildMenuItem("Two class segregation/association generation", "TwoClass", 0, null, false),
                         menuBuilder.buildMenuItem("Three class segregation/association generation", "ThreeClass", 0, null, false)}),
                 menuBuilder.makeMenu("Transformation tools", false, new JMenuItem[] {
