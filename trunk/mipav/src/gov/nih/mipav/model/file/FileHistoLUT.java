@@ -888,7 +888,11 @@ public class FileHistoLUT extends FileBase {
      * @exception  IOException  if there is an error writing the file
      */
     public void writeLUT() throws IOException {
-        writeLUT(lut);
+    	if (useLUT) {
+            writeLUT(lut);
+        }
+
+        writeFunctions();
     }
 
     /**
@@ -1025,10 +1029,7 @@ public class FileHistoLUT extends FileBase {
      */
     public void writeUDTransferFunction(String fName, String dName) throws IOException {
 
-        if (useLUT && (lut == null)) {
-            throw new IOException("Error writing LUT transfer functions. LUT is null.");
-        }
-
+      
         // make sure that file is set to the funcFile
         if (raFile != null) {
             raFile.close();
@@ -1044,33 +1045,25 @@ public class FileHistoLUT extends FileBase {
             raFile = new RandomAccessFile(file, "rw");
         }
 
+        // write gray-scale image 
         raFile.writeBytes(funcTag + "\r\n");
 
-        TransferFunction funct = lut.getTransferFunction();
-
-        int nPts = funct.size();
-
-        float[] x = new float[nPts];
-        float[] y = new float[nPts];
-        float[] z = new float[nPts];
-
-        funct.exportArrays(x, y);
-
-        // remap 0->1
-        float remap = 0.0f - x[0];
-        float highest = x[nPts - 1] + remap;
-
-        for (int i = 0; i < nPts; i++) {
-            x[i] = (x[i] + remap) / highest;
+        // get the transfer function -- only exists for lut
+        if (useLUT) {
+            writeTransferFunction(raFile, lut.getTransferFunction(), "Transfer");
+            writeTransferFunction(raFile, lut.getAlphaFunction(), "Alpha");
         }
 
-        raFile.writeBytes("Transfer" + "\r\n");
-        raFile.writeBytes(Integer.toString(nPts) + "\t\t# Number of Points\r\n");
-
-        for (int i = 0; i < nPts; i++) {
-            raFile.writeBytes(Float.toString(x[i]) + "\t" + Float.toString(y[i]) + "\t" + Float.toString(z[i]) +
-                              "\r\n");
+        if (useLUT) {
+            writeTransferFunction(raFile, lut.getRedFunction(), "Red");
+            writeTransferFunction(raFile, lut.getGreenFunction(), "Green");
+            writeTransferFunction(raFile, lut.getBlueFunction(), "Blue");
+        } else {
+            writeTransferFunction(raFile, rgb.getRedFunction(), "Red");
+            writeTransferFunction(raFile, rgb.getGreenFunction(), "Green");
+            writeTransferFunction(raFile, rgb.getBlueFunction(), "Blue");
         }
+
 
         raFile.writeBytes(endTag + "\r\n");
         raFile.close();
