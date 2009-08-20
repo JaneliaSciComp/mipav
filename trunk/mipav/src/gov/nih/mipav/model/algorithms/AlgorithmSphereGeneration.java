@@ -4,41 +4,12 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
 import java.util.*;
 
 /**
  * This module draws uniformly randomly positioned spheres with a specified radius.
- See http://www.indiana.edu/~statmath for skewness, kurtosis, and Jarque-Bera Test that uses skewness
- and kurtosis to test for normality.  Tests for a Gaussian fit reveal nothing since RANDOM, AGGREGATED,
- UNIFORM, and CONSTRAINED patterns all fail Gaussian fit tests.
- 
-  From Computational Methods in Biophysics, Biomaterials, BioTechnology, and Medical Systems
-  Algorithm Development, Mathematical Analysis, and Diagnostics Volume 2 Computational Methods edited by Cornelius
-  T. Leondes, Chapter 2 Computer techniques for spatial analysis of objects in biomedical images by
-  G. Cevenini, M. R. Massia, and P. Barbini, Kluwer Academic Publishers, 2003, pp. 39-90, information about
-  randomly distributed circles.
-  "Analysis of the distribution W**2 of squared NN distances between n randomly distributed circles shows that
-  2*lambda*PI*(W**2 - n*diameter**2)
-  has a chi-squared distribution with 2*n degrees of freedom.  diameter is the average diameter of the circular objects,
-  lambda is the mean number per unit area.
-  X is a point to NN object distance.
-  W is an inter-object NN distance.  Consider W as going from the center of one object to the center of
-  the nearest object.
-  The point-object squared NN distance distribution, X**2, is not affected by the reperesentation of objects
-  as circles, thus 2*lambda*X**2 also has a chi-squared distribution with 2m degrees of freedom, where m is the
-  number of selected points.  It means that, under the assumption of circular objecs of equal size, all tests 
-  based on squared NN distances, like those of Hopkins, Brown, or others, can still be used.  If m = n, and these
-  results are combined, an estimate of the mean radius of the objects as circles can be obtained as 
-  rest = sqrt((W**2 - X**2)/n)
-  Again, a Monte Carlo approach is sugested.  If rest is significantly different from the value measured directly
-  on the image by automatic procedures of digital image processing or a value nevertheless compatible with the
-  average physical size of the objects, we can sustain that the statistical pattern is not random.  If rest is high,
-  it indicates regularity; if low, aggregation.  Moreover, since the formula for rest is formally a function of NN
-  distances, we can again inspect classes of distances to obtain scale-related indications about the statistical
-  pattern.
   
   Best reference for nearest neighbor distribution for equally sized circles is: "Nearest Neighbor Assessments of
   Spatial Configurations of Circles rather Than Points" by Daniel Simberloff, Ecology, Vol. 60, No. 4, Aug. 1979,
@@ -53,35 +24,53 @@ import java.util.*;
   Get percentile from Gaussian probability integral.
   If the measured mean is significantly greater than the analytical mean, the distribution is uniform or regular.
   If the measured mean is signficantly less than than the analytical mean, the distribution is clumped or 
-  aggregated.  The test on the mean will often show a difference from a random distribution, while the chi square
-  test fails to show a difference from a random distribution.
+  aggregated.  
   
-  For larger circles these equations become increasingly inaccurate because an assumption of the Poisson
-  distribution of rare events is violated: the mean number of circles per sampling unit is not small relative
-  to the maximum possible number of circles per sampling unit.  In fact for a given lambda there is a maximum 
-  E[r]= sqrt(2)/((3**0.25)*sqrt(lambda)), which obtains when all the points are perfectly arranged as vertices
-  of a hexagonal lattice.  Put another way, the maximum size circles that can be arranged with density lambda
-  have diameter d = sqrt(2)/((3**0.25)*sqrt(lambda)), and are located at the centers of hexagons completely
-  filling space.  At d = sqrt(2)/((3**0.25)*sqrt(lambda)), the standard error of average r will be zero, since
-  there is only one possible arrangement.  The Poisson derived expresion for standard error does not vanish until
-  d is somewhat greater than this maximum d.
-  
-  According to Simberloff for d = 0 and lambda = 0.005, E[r] = 7.0711.  When I ran a random distribution 
-  for 10,000 by 1,000 with 50,000 circles requested and circle diameter = 0, I had observed mean = 7.09
-  and analytical mean = 7.0717.
-  
-  The analytic equation for E[r(d,lambda)] is quite accurate for d as large as E[r(0, lambda)]; it exceeds the
-  simulated value by only 6.6%.  The analytic equation for the standard error begins to go badly awry at
-  approximately d = 0.75E[r(0,lambda)].  For example, for d = E[r(0,lambda)], whereas the equation for E[r]
-  exceeds its true value by only 6.6%, the calculated standard error exceeds the correct value by 29.1%.
-  For small circles either the analytic expressions or simulations for the expected mean nearest neighbor
-  and its standard error can be used, but for larger circles simulations should be used.
-  
-  Let x2 = chi squared and v = degrees of freedom
-  The probability density function p(x2,v) = (1/((2**(v/2))* gamma(v/2)))*(x2**((v-2)/2))*exp(-x2/2)
-  The probability of observing a value of chi square that is larger than a particular value for a random
-  sample of N observations with v degrees of freedom is the integral of this probability from chi square = x2
-  to chi square = infinity.
+  I have derived similar mathematics for Poisson distributed spheres.  
+  Consider a Poisson distribution of points in spheres of radius r.  The probability that a sphere of radius r
+  about a point contains no points, given a density of points = lambda is exp(-(4/3)*lambda*PI*(r**3))
+  Thus, 1 - exp(-(4/3)*lambda*PI*(r**3)) is the proportion of nearest neighbor distances <= r.
+  Differentiate this expression with respect to r to obtain as the probability density function of r,
+  4*lambda*PI*(r**2)*exp(-(4/3)*lambda*PI*(r**3)).  Now find the probability density function for spheres
+  of diameter dm.
+  For 0 < r <= dm, 0
+  For r > dm: 4*lambda*PI*(r**2)*exp(-(4/3)*lambda*PI*(r**3)) * 
+             (1 / ( 1 - 4*lambda*PI*integral from r = 0 to r = dm of (r**2)*exp(-(4/3)*lambda*PI*(r**3))dr)) =
+             
+             4*lambda*PI*(r**2)*exp(-(4/3)*lambda*PI*(r**3)) *
+             (1/ ( 1 + integral from r = 0 to r = dm of exp(-(4/3)*lambda*PI*(r**3))d(-(4/3)*lambda*PI*(r**3)))) =
+             
+             4*lambda*PI*(r**2)*exp(-(4/3)*lambda*PI*(r**3)) *
+             (1 /(1 + exp(-(4/3)*lambda*PI*(dm**3)) - 1)) =
+             
+              4*lambda*PI*exp((4/3)*lambda*PI*(dm**3))*(r**2)*exp(-(4/3)*lambda*PI*(r**3))
+              
+ E(r) = 4*lambda*PI*exp((4/3)*lambda*PI*(dm**3)) *
+        integral from r = dm to r = infinity of (r**3)*exp(-(4/3)*lambda*PI*(r**3))dr =
+        
+        -exp((4/3)*lambda*PI*(dm**3)) *
+        integral from r = dm to r = infinity of rd(exp(-(4/3)*lambda*PI*(r**3)))
+        
+        -exp((4/3)*lambda*PI*(dm**3)) *
+        (-dm*exp(-(4/3)*lambda*PI*(dm**3)) - intergal from r = dm to r = infinity of exp(-(4/3)*lambda*PI*(r**3))dr =
+        
+        dm + exp((4/3)*lambda*PI*(dm**3))*integral from r = dm to r = infinity of exp(-(4/3)*lambda*PI*(r**3))dr
+        
+ E(r**2) = 4*lambda*PI*exp((4/3)*lambda*PI*(dm**3)) * 
+           integral from r = dm to r = infinity of (r**4)*exp(-(4/3)*lambda*PI*(r**3))dr =
+           
+           -exp((4/3)*lambda*PI*(dm**3)) *
+           integral from r = dm to r = infinity of (r**2)*d(exp(-(4/3)*lambda*PI*(r**3))) =
+           
+           -exp((4/3)*lambda*PI*(dm**3) *
+           (-(dm**2)*exp(-(4/3)*lambda*PI*(dm**3)) 
+           - integral from r = dm to r = infinity of exp(-(4/3)*lambda*PI*(r**3))d(r**2) =
+           
+           dm**2 + exp((4/3)*lambda*PI*(dm**3)) * 
+           integral from r = dm to r = infinity of 2*r*exp(-(4/3)*lambda*PI*(r**3))dr
+           
+           
+             
  */
 public class AlgorithmSphereGeneration extends AlgorithmBase {
     
@@ -206,7 +195,6 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         int lowestDistSquared;
         int i;
         int j;
-        int k;
         int attempts;
         boolean found;
         int buffer[];
@@ -235,22 +223,14 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double totalDeviateFourth;
         double skewness;
         double kurtosis;
-        double chiSquaredOfTwo;
         double density;
-        double observedFrequency[] = new double[7];
-        double theoreticalFrequency[] = new double[7];
-        double chiSquaredOfFour;
         double z;
         int boundaryDistance;
         int spheresLeft;
         int maskBytesSet;
         double nearestNeighborDistanceSumOfSquares;
-        double chiSquared;
         Statistics stat;
-        double degreesOfFreedom;
-        double chiSquaredPercentile[] = new double[1];
         double diameter;
-        double integral[] = new double[1];
         double analyticalMean;
         double analyticalMeanSquared;
         double analyticalVariance;
@@ -263,6 +243,11 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double highestForbiddenSquared;
         double highestRegenerationSquared;
         boolean intermediateRejected;
+        IntModelMean meanModel;
+        IntModelMeanSquared meanSquaredModel;
+        int steps;
+        double numInt;
+        double eps = 1.0e-8;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -424,10 +409,14 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     }
                     sphereXCenter[i-1] = xCenter;
                     sphereYCenter[i-1] = yCenter;
-                    for (y = 0; y <= 2*radius; y++) {
-                        for (x = 0; x <= 2*radius; x++) {
-                            if (mask[x + y * xMaskDim] == 1) {
-                                buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  i;
+                    sphereZCenter[i-1] = zCenter;
+                    for (zint = 0; zint <= 2*radius; zint++) {
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                    buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)+
+                                           xySize *(zCenter + zint - radius)] =  i;
+                                }
                             }
                         }
                     }
@@ -446,24 +435,30 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                         found = true;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
-                        for (y = 0; y <= 2*radius; y++) {
-                            for (x = 0; x <= 2*radius; x++) {
-                                if (mask[x + y * xMaskDim] == 1) {
-                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
-                                        found = false;
-                                        attempts++;
-                                        continue wloop;
+                        zCenter = randomGen.genUniformRandomNum(radius, zDim - radius - 1);
+                        for (zint = 0; zint <= 2*radius; zint++) {
+                            for (y = 0; y <= 2*radius; y++) {
+                                for (x = 0; x <= 2*radius; x++) {
+                                    if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                        if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)+
+                                                   xySize * (zCenter + zint - radius)] != 0) {
+                                            found = false;
+                                            attempts++;
+                                            continue wloop;
+                                        }
                                     }
                                 }
-                            }
-                        } // for (y = 0; y <= 2*radius; y++)
+                            } // for (y = 0; y <= 2*radius; y++)
+                        } // for (zint = 0; zint <= 2*radius; zint++)
                         lowestDistSquared = Integer.MAX_VALUE;
                         for (j = 0; j < i-1; j++) {         
                             xDistSquared = sphereXCenter[j] - xCenter;
                             xDistSquared = xDistSquared * xDistSquared;
                             yDistSquared = sphereYCenter[j] - yCenter;
                             yDistSquared = yDistSquared * yDistSquared;
-                            distSquared = xDistSquared + yDistSquared;
+                            zDistSquared = sphereZCenter[j] - zCenter;
+                            zDistSquared = zDistSquared * zDistSquared;
+                            distSquared = xDistSquared + yDistSquared + zDistSquared;
                             if (distSquared < lowestDistSquared) {
                                 lowestDistSquared = distSquared;
                             }  
@@ -479,10 +474,14 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     }
                     sphereXCenter[i-1] = xCenter;
                     sphereYCenter[i-1] = yCenter;
-                    for (y = 0; y <= 2*radius; y++) {
-                        for (x = 0; x <= 2*radius; x++) {
-                            if (mask[x + y * xMaskDim] == 1) {
-                                buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  i;
+                    sphereZCenter[i-1] = zCenter;
+                    for (zint = 0; zint <= 2*radius; zint++) {
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                    buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius) +
+                                           xySize * (zCenter + zint - radius)] =  i;
+                                }
                             }
                         }
                     }
@@ -502,24 +501,30 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                         found = true;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
-                        for (y = 0; y <= 2*radius; y++) {
-                            for (x = 0; x <= 2*radius; x++) {
-                                if (mask[x + y * xMaskDim] == 1) {
-                                    if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] != 0) {
-                                        found = false;
-                                        attempts++;
-                                        continue wl;
+                        zCenter = randomGen.genUniformRandomNum(radius, zDim - radius - 1);
+                        for (zint = 0; zint <= 2*radius; zint++) {
+                            for (y = 0; y <= 2*radius; y++) {
+                                for (x = 0; x <= 2*radius; x++) {
+                                    if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                        if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius) +
+                                                   xySize * (zCenter + zint - radius)] != 0) {
+                                            found = false;
+                                            attempts++;
+                                            continue wl;
+                                        }
                                     }
                                 }
-                            }
-                        } // for (y = 0; y <= 2*radius; y++)
+                            } // for (y = 0; y <= 2*radius; y++)
+                        } // for (zint = 0; zint <= 2*radius; zint++)
                         lowestDistSquared = Integer.MAX_VALUE;
                         for (j = 0; j < i-1; j++) {         
                             xDistSquared = sphereXCenter[j] - xCenter;
                             xDistSquared = xDistSquared * xDistSquared;
                             yDistSquared = sphereYCenter[j] - yCenter;
                             yDistSquared = yDistSquared * yDistSquared;
-                            distSquared = xDistSquared + yDistSquared;
+                            zDistSquared = sphereZCenter[j] - zCenter;
+                            zDistSquared = zDistSquared * zDistSquared;
+                            distSquared = xDistSquared + yDistSquared + zDistSquared;
                             if (distSquared < lowestDistSquared) {
                                 lowestDistSquared = distSquared;
                             }  
@@ -541,10 +546,14 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     }
                     sphereXCenter[i-1] = xCenter;
                     sphereYCenter[i-1] = yCenter;
-                    for (y = 0; y <= 2*radius; y++) {
-                        for (x = 0; x <= 2*radius; x++) {
-                            if (mask[x + y * xMaskDim] == 1) {
-                                buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)] =  i;
+                    sphereZCenter[i-1] = zCenter;
+                    for (zint = 0; zint <= 2*radius; zint++) {
+                        for (y = 0; y <= 2*radius; y++) {
+                            for (x = 0; x <= 2*radius; x++) {
+                                if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                    buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius) +
+                                           xySize * (zCenter + zint - radius)] =  i;
+                                }
                             }
                         }
                     }
@@ -563,7 +572,9 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     xDistSquared = xDistSquared * xDistSquared;
                     yDistSquared = sphereYCenter[i] - sphereYCenter[j];
                     yDistSquared = yDistSquared * yDistSquared;
-                    distSquared = xDistSquared + yDistSquared;
+                    zDistSquared = sphereZCenter[i] - sphereZCenter[j];
+                    zDistSquared = zDistSquared * zDistSquared;
+                    distSquared = xDistSquared + yDistSquared + zDistSquared;
                     if (distSquared < lowestDistSquared) {
                         lowestDistSquared = distSquared;
                         nearestNeighborDistance[i] = Math.sqrt(distSquared);
@@ -583,9 +594,11 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        spheresLeft = 0;
        for (i = 0; i < spheresDrawn; i++) {
            if ((sphereXCenter[i] >= boundaryDistance) && (sphereXCenter[i] <= xDim - 1 - boundaryDistance) &&
-               (sphereYCenter[i] >= boundaryDistance) && (sphereYCenter[i] <= yDim - 1 - boundaryDistance)) {
+               (sphereYCenter[i] >= boundaryDistance) && (sphereYCenter[i] <= yDim - 1 - boundaryDistance) &&
+               (sphereZCenter[i] >= boundaryDistance) && (sphereZCenter[i] <= zDim - 1 - boundaryDistance)) {
                sphereXCenter[spheresLeft] = sphereXCenter[i];
-               sphereYCenter[spheresLeft++] = sphereYCenter[i];
+               sphereYCenter[spheresLeft] = sphereYCenter[i];
+               sphereZCenter[spheresLeft++] = sphereZCenter[i];
            }
        }
        Preferences.debug("To avoid boundary effects only " + spheresLeft + " of the " + spheresDrawn + 
@@ -601,7 +614,9 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                    xDistSquared = xDistSquared * xDistSquared;
                    yDistSquared = sphereYCenter[i] - sphereYCenter[j];
                    yDistSquared = yDistSquared * yDistSquared;
-                   distSquared = xDistSquared + yDistSquared;
+                   zDistSquared = sphereZCenter[i] - sphereZCenter[j];
+                   zDistSquared = zDistSquared * zDistSquared;
+                   distSquared = xDistSquared + yDistSquared + zDistSquared;
                    if (distSquared < lowestDistSquared) {
                        lowestDistSquared = distSquared;
                        nearestNeighborDistance[i] = Math.sqrt(distSquared);
@@ -670,103 +685,6 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        Preferences.debug("Kurtosis = " + kurtosis + "\n");
        System.out.println("Kurtosis = " + kurtosis);
        
-       // Test chi squared goodness of fit for a Gaussian with the calculated mean and standard deviation
-       // The chi squared statistic has a number of degrees of freedom equal to the number of categories
-       // minus 3.  Let's make 7 categories, so degrees of freedom = 4.
-       // The 7 categories have lowest values of (nearestNeighborDistance - mean)/stdDev =
-       // -infinity, -1.40, -0.80, -0.20, 0.40, 1.00, and 1.60.
-       /*for (i = 0; i < spheresLeft; i++) {
-           z = (nearestNeighborDistance[i] - mean)/stdDev;
-           if (z >= 1.60) {
-               observedFrequency[6]++;
-           }
-           else if (z >= 1.00) {
-               observedFrequency[5]++;
-           }
-           else if (z >= 0.40) {
-               observedFrequency[4]++;
-           }
-           else if (z >= -0.20) {
-               observedFrequency[3]++;
-           }
-           else if (z >= -0.80) {
-               observedFrequency[2]++;
-           }
-           else if (z >= -1.40) {
-               observedFrequency[1]++;
-           }
-           else {
-               observedFrequency[0]++;
-           }
-       }
-       
-       theoreticalFrequency[0] = 0.0808 * spheresLeft;
-       theoreticalFrequency[1] = 0.1311 * spheresLeft;
-       theoreticalFrequency[2] = 0.2088 * spheresLeft;
-       theoreticalFrequency[3] = 0.2347 * spheresLeft;
-       theoreticalFrequency[4] = 0.1859 * spheresLeft;
-       theoreticalFrequency[5] = 0.1039 * spheresLeft;
-       theoreticalFrequency[6] = 0.0548 * spheresLeft;
-       chiSquaredOfFour = 0.0;
-       for (i = 0; i < 7; i++) {
-           deviate = observedFrequency[i] - theoreticalFrequency[i];
-           chiSquaredOfFour += deviate * deviate / theoreticalFrequency[i];    
-       }
-       Preferences.debug("Chi squared for a gaussian fit on mean and standard deviation for 4 df = "
-                          + chiSquaredOfFour + "\n");
-       System.out.println("Chi squared for a gaussian fit on mean and standard deviation for 4 df = "
-                          + chiSquaredOfFour);
-       degreesOfFreedom = 4;
-       stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
-               chiSquaredOfFour, degreesOfFreedom, chiSquaredPercentile);
-       stat.run();
-       
-       Preferences.debug("ChiSquared percentile for Gaussian fit on mean and standard deviation = " +
-                         chiSquaredPercentile[0]*100.0 + "\n");
-       System.out.println("chiSquared percentile for Gaussian fit on mean and standard deviation = " +
-                          chiSquaredPercentile[0]*100.0);
-       if (chiSquaredPercentile[0] >= 0.95) {
-           Preferences.debug("chiSquared test rejects Gaussian fit on mean and standard deviation at a " +
-                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n");
-           System.out.println("chiSquared test rejects Gaussian fit on mean and standard deviation at a " +
-                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance"); 
-       }
-       else {
-           Preferences.debug("chiSquared test does not reject Gaussian fit on mean and standard deviation\n");
-           System.out.println("chiSquared test does not reject Gaussian fit on mean and standard deviation");
-       }
-       
-       // Given a large number of observations, the Jarque-bera test can be used as a normality test.
-       // The Jarque-Bera test, a type of Lagrange multiplier test, was developed to test normality,
-       // heteroscedasticy, and serial correlation (autocorrelation) of regression residuals.  The
-       // Jarque-Bera statistic is computed from skewness and kurtosis and asymptotically follows the
-       // chi-squared distribution with 2 degress of freedom.
-       // (sample number)*[skewness**2/6 + (kurtosis - 3)**2/24] follows a chi squared of 2 degrees of freedom
-       // distribution.
-       chiSquaredOfTwo = spheresLeft * (skewness * skewness/6.0 + (kurtosis - 3.0) * (kurtosis - 3.0)/24.0);
-       Preferences.debug("Jarque-Bera test using skewness and kurtosis yields a chi squared for 2 df = " 
-                          + chiSquaredOfTwo + "\n");
-       System.out.println("Jarque-Bera test using skewness and kurtosis yields a chi squared for 2 df = " 
-                          + chiSquaredOfTwo);
-       degreesOfFreedom = 2;
-       stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
-               chiSquaredOfTwo, degreesOfFreedom, chiSquaredPercentile);
-       stat.run();
-       Preferences.debug("chiSquared percentile for Jarque-Bera test using skewness and kurtosis = " +
-                         chiSquaredPercentile[0]*100.0 + "\n");
-       System.out.println("chiSquared percentile for Jarque-Bera test using skewness and kurtosis = " +
-                          chiSquaredPercentile[0]*100.0);
-       if (chiSquaredPercentile[0] >= 0.95) {
-           Preferences.debug("chiSquared test rejects Gaussian fit based on skewness and kurtosis at a " +
-                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance\n");
-           System.out.println("chiSquared test rejects Gaussian fit based on skewness and kurtosis at a  " +
-                   (100.0 - chiSquaredPercentile[0]*100.0) + " level of signficance"); 
-       }
-       else {
-           Preferences.debug("chiSquared test does not reject Gaussian fit based on skewness and kurtosis\n");
-           System.out.println("chiSquared test does not reject Gaussian fit based on skewness and kurtosis");
-       }*/
-       
        // The probability density function for the nearest neighbor distance when spheres of a 
        // fixed radius are generated from a uniform random distribution is a Rayleigh or
        // Weibull distribution.
@@ -784,17 +702,30 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        for (i = 0; i < spheresLeft; i++) {
            nearestNeighborDistanceSumOfSquares += nearestNeighborDistance[i]*nearestNeighborDistance[i];
        }
-       density = (double)spheresLeft/(double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance));
+       density = (double)spheresLeft/(double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance) *
+                                              (zDim - 2 * boundaryDistance));
        diameter = 2.0 * radius;
        
        // Calculate analytical mean
-       z = -diameter*Math.sqrt(2.0 * density * Math.PI);
-       stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, spheresLeft-1, integral);
-       stat.run();
-       analyticalMean = diameter + Math.exp(density*Math.PI*diameter*diameter)*integral[0]/Math.sqrt(density);
+       meanModel = new IntModelMean(diameter, 1.0E30, Integration.MIDINF, eps, density);
+       meanModel.driver();
+       steps = meanModel.getStepsUsed();
+       numInt = meanModel.getIntegral();
+       Preferences.debug("In Integration.MIDINF numerical Integral for mean = " + 
+               numInt + " after " + steps + " steps used\n");
+       analyticalMean = diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt;
        Preferences.debug("Analytical mean = " + analyticalMean + "\n");
        System.out.println("Analytical mean = " + analyticalMean);
-       analyticalMeanSquared = diameter*diameter + 1.0/(density*Math.PI);
+       // Calculate analytical mean squared
+       meanSquaredModel = new IntModelMeanSquared(diameter, 1.0E30, Integration.MIDINF, eps, density);
+       meanSquaredModel.driver();
+       steps = meanSquaredModel.getStepsUsed();
+       numInt = meanSquaredModel.getIntegral();
+       Preferences.debug("In Integration.MIDINF numerical Integral for mean squared = " + 
+               numInt + " after " + steps + " steps used\n");
+       analyticalMeanSquared = diameter*diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt;
+       Preferences.debug("Analytical mean squared = " + analyticalMeanSquared + "\n");
+       System.out.println("Analytical mean squared = " + analyticalMeanSquared);
        analyticalVariance = analyticalMeanSquared - analyticalMean*analyticalMean;
        analyticalStandardError = Math.sqrt(analyticalVariance/spheresLeft);
        z = (mean - analyticalMean)/analyticalStandardError;
@@ -819,30 +750,6 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            Preferences.debug("Measured mean consistent with random distribution\n");
            System.out.println("Measured mean consistent with random distribution");
        }
-       chiSquared = 2.0 * density * Math.PI * (nearestNeighborDistanceSumOfSquares - spheresLeft * diameter * diameter);
-       Preferences.debug("chiSquared for sum of squared NN distances of " + spheresLeft + " spheres = " +
-                         chiSquared + "\n");
-       System.out.println("chiSquared for sum of squared NN distances of " + spheresLeft + " spheres = " +
-                         chiSquared);
-       degreesOfFreedom = 2 * spheresLeft;
-       
-       stat = new Statistics(Statistics.CHI_SQUARED_CUMULATIVE_DISTRIBUTION_FUNCTION,
-               chiSquared, degreesOfFreedom, chiSquaredPercentile);
-       stat.run();
-       Preferences.debug("chiSquared percentile for sum of squared NN distances = " + chiSquaredPercentile[0]*100.0 + "\n");
-       System.out.println("chiSquared percentile for sum of squared NN distances = " + chiSquaredPercentile[0]*100.0);
-       if (chiSquaredPercentile[0] < 0.025) {
-           Preferences.debug("chiSquared test consistent with aggregated nearest neighbor distribution\n");
-           System.out.println("chiSquared test consistent with aggregated nearest neighbor distribution");
-       }
-       else if (chiSquaredPercentile[0] >= 0.975) {
-           Preferences.debug("chiSquared test consistent with uniform nearest neighbor distribution\n");
-           System.out.println("chiSquared tests consistent with uniform nearest neighbor distribution"); 
-       }
-       else {
-           Preferences.debug("chiSquared test does not reject random sphere distribution\n");
-           System.out.println("chiSquared test does not reject random sphere distribution");
-       }
        
        for (i = 0; i < buffer.length; i++) {
            if (buffer[i] > 0) {
@@ -860,5 +767,81 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        
        setCompleted(true);
        return;
+    }
+    
+    class IntModelMean extends Integration {
+        double density;
+        /**
+         * Creates a new IntModel object.
+         *
+         * @param  lower    DOCUMENT ME!
+         * @param  upper    DOCUMENT ME!
+         * @param  routine  DOCUMENT ME!
+         * @param  eps      DOCUMENT ME!
+         */
+        public IntModelMean(double lower, double upper, int routine, double eps, double density) {
+            super(lower, upper, routine, eps);
+            this.density = density;
+        }
+
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double function;
+            function = Math.exp(-density * (4.0/3.0) * Math.PI * x * x * x);
+
+            return function;
+        }
+    }
+    
+    class IntModelMeanSquared extends Integration {
+        double density;
+        /**
+         * Creates a new IntModel object.
+         *
+         * @param  lower    DOCUMENT ME!
+         * @param  upper    DOCUMENT ME!
+         * @param  routine  DOCUMENT ME!
+         * @param  eps      DOCUMENT ME!
+         */
+        public IntModelMeanSquared(double lower, double upper, int routine, double eps, double density) {
+            super(lower, upper, routine, eps);
+            this.density = density;
+        }
+
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double function;
+            function = 2.0 * x * Math.exp(-density * (4.0/3.0) * Math.PI * x * x * x);
+
+            return function;
+        }
     }
 }
