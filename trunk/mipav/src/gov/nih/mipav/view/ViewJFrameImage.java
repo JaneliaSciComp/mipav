@@ -1957,6 +1957,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogNonlocalMeansFilter(this, getActiveImage());
         } else if (command.equals("CircleGen")) {
             new JDialogCircleGeneration(this);
+        } else if (command.equals("SphereGen")) {
+            new JDialogSphereGeneration(this);
         } else if (command.equals("TwoClass")) {
             new JDialogTwoClassGeneration(this);
         } else if (command.equals("ThreeClass")) {
