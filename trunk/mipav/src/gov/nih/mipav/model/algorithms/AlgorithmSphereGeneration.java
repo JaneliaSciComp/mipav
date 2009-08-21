@@ -247,7 +247,28 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         IntModelMeanSquared meanSquaredModel;
         int steps;
         double numInt;
-        double eps = 1.0e-8;
+        double eps = 1.0e-12;
+        IntModelMean2 meanModel2;
+        IntModelMeanSquared2 meanSquaredModel2;
+        /** finite bound of integration range used in dqagie (has no meaning if interval is doubly-infinite). */
+        double bound;
+        /** Integral over (bound, +infinity), (-infinity, bound), or (-infinity, +infinity). */
+        int routine = Integration2.DQAGIE;
+        /**
+         * In dqagie indicates the kind of integration range involved inf = 1 corresponds to (bound, +infinity) inf = -1
+         * corresponds to (-infinity, bound) inf = 2 corresponds to (-infinity, +infinity).
+         */
+        int inf = 1;
+        double epsabs = 0.0;
+        double epsrel = 1.0E-3;
+        /**
+         * Gives an upper bound on the number of subintervals in the partition of lower, upper.
+         */
+        int limit = 100;
+        double numInt2;
+        int errorStatus;
+        double absError;
+        int neval;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -315,7 +336,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         for (i = 1; i <= numRandomSpheres; i++) {
         found = false;
         attempts = 0;
-            while ((!found) && (attempts <= 100)) {
+            while ((!found) && (attempts <= 1000)) {
                 found = true;
                 xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                 yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
@@ -335,7 +356,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                         }
                     } // for (y = 0; y <= 2*radius; y++)
                 } // for (zint = 0; zint <= 2*radius; zint++)
-            } // while ((!found) && (attempts <= 100)
+            } // while ((!found) && (attempts <= 1000)
             if (!found) {
                 break;
             }
@@ -367,7 +388,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
             for (i = initialRandomSpheres+1; i <= numSpheres; i++) {
                 found = false;
                 attempts = 0;
-                    while ((!found) && (attempts <= 1000)) {
+                    while ((!found) && (attempts <= 10000)) {
                         found = true;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
@@ -403,7 +424,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                             found = false;
                             attempts++;
                         } // attemptloop
-                    } // while ((!found) && (attempts <= 1000)
+                    } // while ((!found) && (attempts <= 10000)
                     if (!found) {
                         break;
                     }
@@ -431,7 +452,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                 found = false;
                 attempts = 0;
                 wloop:
-                    while ((!found) && (attempts <= 1000)) {
+                    while ((!found) && (attempts <= 10000)) {
                         found = true;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
@@ -468,7 +489,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                             found = false;
                             attempts++;
                         }  
-                    } // while ((!found) && (attempts <= 1000)
+                    } // while ((!found) && (attempts <= 10000)
                     if (!found) {
                         break;
                     }
@@ -497,7 +518,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                 attempts = 0;
                 intermediateRejected = false;
                 wl:
-                    while ((!found) && (attempts <= 1000)) {
+                    while ((!found) && (attempts <= 10000)) {
                         found = true;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
@@ -540,7 +561,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                             found = false;
                             attempts++;
                         }
-                    } // while ((!found) && (attempts <= 1000)
+                    } // while ((!found) && (attempts <= 10000)
                     if (!found) {
                         break;
                     }
@@ -713,6 +734,17 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        numInt = meanModel.getIntegral();
        Preferences.debug("In Integration.MIDINF numerical Integral for mean = " + 
                numInt + " after " + steps + " steps used\n");
+       bound = diameter;
+       meanModel2 = new IntModelMean2(bound, routine, inf, epsabs, epsrel, limit, density);
+       meanModel2.driver();
+       numInt2 = meanModel2.getIntegral();
+       errorStatus = meanModel2.getErrorStatus();
+       absError = meanModel2.getAbserr();
+       neval = meanModel2.getNeval();
+       Preferences.debug("In Integration2.DQAGIE numerical Integral for mean = " + numInt2 + " after " + neval +
+                         " integrand evaluations used\n");
+       Preferences.debug("Error status = " + errorStatus +
+                         " with absolute error = " + absError + "\n");
        analyticalMean = diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt;
        Preferences.debug("Analytical mean = " + analyticalMean + "\n");
        System.out.println("Analytical mean = " + analyticalMean);
@@ -723,6 +755,17 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        numInt = meanSquaredModel.getIntegral();
        Preferences.debug("In Integration.MIDINF numerical Integral for mean squared = " + 
                numInt + " after " + steps + " steps used\n");
+       bound = diameter;
+       meanSquaredModel2 = new IntModelMeanSquared2(bound, routine, inf, epsabs, epsrel, limit, density);
+       meanSquaredModel2.driver();
+       numInt2 = meanSquaredModel2.getIntegral();
+       errorStatus = meanSquaredModel2.getErrorStatus();
+       absError = meanSquaredModel2.getAbserr();
+       neval = meanSquaredModel2.getNeval();
+       Preferences.debug("In Integration2.DQAGIE numerical Integral for mean squared = " + numInt2 + " after " + neval +
+                         " integrand evaluations used\n");
+       Preferences.debug("Error status = " + errorStatus +
+                         " with absolute error = " + absError + "\n");
        analyticalMeanSquared = diameter*diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt;
        Preferences.debug("Analytical mean squared = " + analyticalMeanSquared + "\n");
        System.out.println("Analytical mean squared = " + analyticalMeanSquared);
@@ -738,7 +781,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        if (percentile[0] < 0.025) {
            // Measured mean signficantly less than analytical mean of random distribution
            Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
-           System.out.println("Clumping or arrgrgation found in nearest neighbor distances");
+           System.out.println("Clumping or aggregation found in nearest neighbor distances");
        }
        else if (percentile[0] > 0.975) {
            // Measured mean significantly greater than analytical mean of random distribution
@@ -822,6 +865,69 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
             this.density = density;
         }
 
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double function;
+            function = 2.0 * x * Math.exp(-density * (4.0/3.0) * Math.PI * x * x * x);
+
+            return function;
+        }
+    }
+    
+    
+    class IntModelMean2 extends Integration2 {
+        double density;
+        public IntModelMean2(double bound, int routine, int inf,
+                double epsabs, double epsrel, int limit, double density) {
+        super(bound, routine, inf, epsabs, epsrel, limit);
+        this.density = density;
+        }
+       
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double function;
+            function = Math.exp(-density * (4.0/3.0) * Math.PI * x * x * x);
+
+            return function;
+        }
+    }
+    
+    class IntModelMeanSquared2 extends Integration2 {
+        double density;
+        public IntModelMeanSquared2(double bound, int routine, int inf,
+                double epsabs, double epsrel, int limit, double density) {
+        super(bound, routine, inf, epsabs, epsrel, limit);
+        this.density = density;
+        }
+       
 
         /**
          * DOCUMENT ME!
