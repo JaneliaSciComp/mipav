@@ -114,11 +114,20 @@ public class JDialogSaveSlices extends JDialogBase {
     /** DOCUMENT ME! */
     private JPanel timePanel;
     
-    private JPanel encapJP2Panel;
+    /** Dicom options panel */
+    private JPanel dicomInfoPanel;
     
+    /** Check box for specifying whether DICOM files should be saved as an encapsulated JPEG2000*/
     private JCheckBox encapJP2Checkbox;
     
+    /**Check box for specifying whether DICOM files should be stamped with MIPAV information*/
+    private JCheckBox stampSecondaryCheckbox;
+    
+    /** whether DICOM files should be saved as an encapsulated JPEG2000 */
     private boolean saveAsEncapJP2 = false;
+    
+    /** Whether to stamp DICOM files with the MIPAV secondary stamp */
+    private boolean stampSecondary = true;
     
     private boolean isDicom;
     
@@ -321,6 +330,7 @@ public class JDialogSaveSlices extends JDialogBase {
                 options.setMultiFile(false);
             }
             saveAsEncapJP2 = encapJP2Checkbox.isSelected();
+            stampSecondary = stampSecondaryCheckbox.isSelected();
             options.setWritePackBit(packBitCheckbox.isSelected());
 
             dispose();
@@ -366,7 +376,9 @@ public class JDialogSaveSlices extends JDialogBase {
         return options;
     }
     
-    
+    public boolean doStampSecondary() {
+    	return stampSecondary;
+    }
 
     public boolean getSaveAsEncapJP2() {
 		return saveAsEncapJP2;
@@ -504,16 +516,22 @@ public class JDialogSaveSlices extends JDialogBase {
         
         //encapsulated jpeg2000 dicom panel
         JPanel encapJP2Panel2 = new JPanel();
-        encapJP2Panel = new JPanel();
-        encapJP2Panel.setLayout(new BorderLayout());
-        encapJP2Panel.setForeground(Color.black);
-        encapJP2Panel.setBorder(buildTitledBorder("DICOM Options"));
+        dicomInfoPanel = new JPanel();
+        dicomInfoPanel.setLayout(new BorderLayout());
+        dicomInfoPanel.setForeground(Color.black);
+        dicomInfoPanel.setBorder(buildTitledBorder("DICOM Options"));
         
         encapJP2Checkbox = new JCheckBox("Save as Encapsulated JPEG2000");
         encapJP2Checkbox.setFont(serif12);
         encapJP2Checkbox.setSelected(false);
         encapJP2Checkbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        encapJP2Panel.add(encapJP2Checkbox);
+        dicomInfoPanel.add(encapJP2Checkbox, BorderLayout.NORTH);
+        
+        stampSecondaryCheckbox = new JCheckBox("Stamp DICOM files with MIPAV information");
+        stampSecondaryCheckbox.setFont(serif12);
+        stampSecondaryCheckbox.setSelected(true);
+        stampSecondaryCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        dicomInfoPanel.add(stampSecondaryCheckbox, BorderLayout.CENTER);
 
         JPanel generalPanel = new JPanel();
         generalPanel.setBorder(buildTitledBorder("General Options"));
@@ -600,7 +618,7 @@ public class JDialogSaveSlices extends JDialogBase {
         tiff2Panel.add(tiffPanel, BorderLayout.CENTER);
         
         encapJP2Panel2.setLayout(new BorderLayout());
-        encapJP2Panel2.add(encapJP2Panel, BorderLayout.CENTER);
+        encapJP2Panel2.add(dicomInfoPanel, BorderLayout.CENTER);
 
         mainPanel.add(generalPanel);
         mainPanel.add(slicePanel);
