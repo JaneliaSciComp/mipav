@@ -523,15 +523,21 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
         opts.setFileDirectory(outputDir + File.separator);
         opts.setFileName(file.getName());
         opts.setRecalculateInstanceNumber(false);
-        opts.doStamp(false); //NINDS would prefer to remove all references to NIH
+        opts.doStamp(false); //NINDS would prefer to not place references to NIH
         if(enableTextArea) {
         	outputTextArea.append("Saving " + file.getName() + " to " + outputDir + " \n\n");
         }
         printStream.println("Saving " + file.getName() + " to " + outputDir);
         printStream.println();
+        
+        //NINDS would prefer to remove all existing references to NIH
+        if (inputImage.isDicomImage()) {
+            FileInfoDicom fileInfo = (FileInfoDicom) inputImage.getFileInfo(0);
+            fileInfo.removeStampSecondaryCapture();
+        }
+        
         fileIO.setDisplayRangeOfSlicesDialog(false);
         fileIO.writeImage(inputImage, opts);
-        
 
         inputImage.disposeLocal();
         inputImage = null;
