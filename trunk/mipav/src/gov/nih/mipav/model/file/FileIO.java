@@ -2602,7 +2602,7 @@ public class FileIO {
                     MipavUtil.displayInfo("Saving of 4D or greater datasets as DICOM is not currently supported");
                     break;
                 }
-
+                
                 // if we save off dicom as encapsulated jpeg2000, call the writeDicom method
                 if (saveAsEncapJP2) {
                     success = writeDicom(image, options);
@@ -3656,6 +3656,8 @@ public class FileIO {
 
             saveAsEncapJP2 = dialogSave.getSaveAsEncapJP2();
             options = dialogSave.getWriteOptions();
+            options.doStamp(dialogSave.doStampSecondary());
+            
 
             if (extents.length == 3) {
 
