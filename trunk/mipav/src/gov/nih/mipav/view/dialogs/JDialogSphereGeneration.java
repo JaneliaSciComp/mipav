@@ -174,10 +174,10 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
                 initialSpheresText.setEnabled(false);
                 minimumDistanceLabel.setEnabled(true);
                 minimumDistanceText.setEnabled(true);
-                minimumDistanceText.setText("25.0");
+                minimumDistanceText.setText("55.0");
                 maximumDistanceLabel.setEnabled(true);
                 maximumDistanceText.setEnabled(true);
-                maximumDistanceText.setText("35.0");
+                maximumDistanceText.setText("70.0");
                 lowestForbiddenLabel.setEnabled(false);
                 lowestForbiddenText.setEnabled(false);
                 highestForbiddenLabel.setEnabled(false);
