@@ -776,7 +776,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        if (percentile[0] < 0.025) {
            // Measured mean signficantly less than analytical mean of random distribution
            Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
-           System.out.println("Clumping or arrgrgation found in nearest neighbor distances");
+           System.out.println("Clumping or aggregation found in nearest neighbor distances");
        }
        else if (percentile[0] > 0.975) {
            // Measured mean significantly greater than analytical mean of random distribution
