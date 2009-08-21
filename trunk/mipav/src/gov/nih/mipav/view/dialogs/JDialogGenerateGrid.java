@@ -4,25 +4,35 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+/**
+ * @author pandyan
+ * Class that writes grid on image
+ *
+ *
+ */
 public class JDialogGenerateGrid extends JDialogBase {
 	
 	private String unitsStr;
 	
-	private JTextField widthField, heightField, intensityField, intensityRField, intensityGField, intensityBField;
+	private JTextField widthField, heightField, intensityField;
 	
 	private float width, height;
 	
@@ -33,6 +43,12 @@ public class JDialogGenerateGrid extends JDialogBase {
 	private float intensity, intensityR, intensityG, intensityB;
 	
 	private int type;
+	
+	private JButton gridColorButton; //for color images
+	
+	private Color gridColor;
+	
+	private ViewJColorChooser colorChooser;
 	
 	
 	public JDialogGenerateGrid(Frame theParentFrame, ViewJComponentEditImage componentImage) {
@@ -52,7 +68,7 @@ public class JDialogGenerateGrid extends JDialogBase {
 	
 	
 	public void init() {
-		setTitle("Generate Grid");
+		setTitle("Generate grid");
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
@@ -96,41 +112,37 @@ public class JDialogGenerateGrid extends JDialogBase {
         
         JPanel intensityPanel = new JPanel();
         if(isColor) {
-        	float maxR = (float)componentImage.getActiveImage().getMaxR();
-        	float maxG = (float)componentImage.getActiveImage().getMaxG();
-        	float maxB = (float)componentImage.getActiveImage().getMaxB();
-        	float max;
+        	float maxR = (int)componentImage.getActiveImage().getMaxR();
+        	float maxG = (int)componentImage.getActiveImage().getMaxG();
+        	float maxB = (int)componentImage.getActiveImage().getMaxB();
+        	int max;
         	if(maxR >= maxG) {
         		if(maxR >= maxB) {
-        			max = maxR;
+        			max = (int)maxR;
         		}else {
-        			max = maxB;
+        			max = (int)maxB;
         		}
         	}else {
         		if(maxG >= maxB) {
-        			max = maxG;
+        			max = (int)maxG;
         		}else {
-        			max = maxB;
+        			max = (int)maxB;
         		}
         	}
-        	intensityRField = new JTextField(Float.toString(max), 4);
-            intensityRField.setFont(MipavUtil.font12);
-            intensityGField = new JTextField(Float.toString(max), 4);
-            intensityGField.setFont(MipavUtil.font12);
-            intensityBField = new JTextField(Float.toString(max), 4);
-            intensityBField.setFont(MipavUtil.font12);
-            JLabel intensityFieldRLabel = new JLabel("grid R value: ");
-            intensityFieldRLabel.setFont(MipavUtil.font12);
-            JLabel intensityFieldGLabel = new JLabel("grid G value: ");
-            intensityFieldGLabel.setFont(MipavUtil.font12);
-            JLabel intensityFieldBLabel = new JLabel("grid B value: ");
-            intensityFieldBLabel.setFont(MipavUtil.font12);
-            intensityPanel.add(intensityFieldRLabel);
-            intensityPanel.add(intensityRField);
-            intensityPanel.add(intensityFieldGLabel);
-            intensityPanel.add(intensityGField);
-            intensityPanel.add(intensityFieldBLabel);
-            intensityPanel.add(intensityBField);
+        	intensityR = (float)max;
+        	intensityG = (float)max;
+        	intensityB = (float)max;
+        	JLabel colorButtonLabel = new JLabel("Grid color: ");
+        	colorButtonLabel.setFont(MipavUtil.font12);
+        	gridColor = new Color(max,max,max);
+        	gridColorButton = new JButton();
+        	gridColorButton.setBackground(gridColor);
+        	gridColorButton.addActionListener(this);
+        	gridColorButton.setActionCommand("gridColor");
+        	gridColorButton.setToolTipText("Click to change grid color");
+        	intensityPanel.add(colorButtonLabel);
+            intensityPanel.add(gridColorButton);
+    
         	
         }else {
         	intensityField = new JTextField(Float.toString((float)componentImage.getActiveImage().getMax()), 4);
@@ -174,7 +186,21 @@ public class JDialogGenerateGrid extends JDialogBase {
 			}
 		}else if(command.equalsIgnoreCase("Cancel")) {
 			dispose();
-		}
+		}else if (command.equalsIgnoreCase("gridColor")) {
+                        	
+			colorChooser = new ViewJColorChooser(null, "Pick grid color", new ActionListener() { // OKAY listener
+                public void actionPerformed(ActionEvent ae) {
+                	gridColor = colorChooser.getColor();
+                	gridColorButton.setBackground(gridColor);
+                	intensityR = (float)colorChooser.getColor().getRed();
+                	intensityG = (float)colorChooser.getColor().getGreen();
+                	intensityB = (float)colorChooser.getColor().getBlue();
+                	
+                }
+            }, new ActionListener() { // CANCEL listener
+                public void actionPerformed(ActionEvent a) { }
+            });
+        }
 
 	}
 	
@@ -188,30 +214,13 @@ public class JDialogGenerateGrid extends JDialogBase {
         try {
             width = Float.parseFloat(widthField.getText());
             height = Float.parseFloat(heightField.getText());
-            if(isColor) {
-            	intensityR = Float.parseFloat(intensityRField.getText());
-            	if(intensityR < 0 || intensityR > (float)ModelStorageBase.getTypeMax(type)) {
-            		MipavUtil.displayError("Value entered is out of range");
-                    return false;
-            	}
-            	intensityG = Float.parseFloat(intensityGField.getText());
-            	if(intensityG < 0 || intensityG > (float)ModelStorageBase.getTypeMax(type)) {
-            		MipavUtil.displayError("Value entered is out of range");
-                    return false;
-            	}
-            	intensityB = Float.parseFloat(intensityBField.getText());
-            	if(intensityB < 0 || intensityB > (float)ModelStorageBase.getTypeMax(type)) {
-            		MipavUtil.displayError("Value entered is out of range");
-                    return false;
-            	}
-            }else {
+            if(!isColor) {
             	intensity = Float.parseFloat(intensityField.getText());
             	if(intensity < 0 || intensity > (float)ModelStorageBase.getTypeMax(type)) {
             		MipavUtil.displayError("Value entered is out of range");
                     return false;
             	}
             }
-
             if ((width <= 0) || (height <= 0)) {
                 MipavUtil.displayError("Values must be greater than 0");
                 return false;

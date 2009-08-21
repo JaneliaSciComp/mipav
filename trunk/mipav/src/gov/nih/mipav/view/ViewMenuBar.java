@@ -652,7 +652,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Horizontal", "ImageFlipY", 0, "fliphoriz.gif", true),
                         menuBuilder.buildMenuItem("Vertical", "ImageFlipX", 0, "flipvert.gif", true),
                         menuBuilder.buildMenuItem("Depth", "ImageFlipZ", 0, "flipvert.gif", true)}),
-                menuBuilder.buildMenuItem("Generate Grid", "writeGrid", 0, null, false),       
+                menuBuilder.buildMenuItem("Generate grid", "writeGrid", 0, null, false),       
                 menuBuilder.buildMenuItem("Image calculator", "Calculator", 0, null, false),
                 menuBuilder.buildMenuItem("Image calculator - Bulk Images", "BulkCalculator", 0, null, false),
                 menuBuilder.buildMenuItem("Image math", null, 0, null, false),
