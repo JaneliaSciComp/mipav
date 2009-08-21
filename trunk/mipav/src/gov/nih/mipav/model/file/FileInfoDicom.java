@@ -509,6 +509,30 @@ public class FileInfoDicom extends FileInfoBase {
 
         return tokenList;
     }
+    
+    /**
+     * In anonymization cases it may be necessary to hide the fact that MIPAV has processed this image 
+     * (to remove any NIH affiliation).  This method removes those tags that identify any secondary capture device information
+     * contained within the image, to make it appear as if the image has not been processed.
+     * 
+     * @param fileInfo File info structure to set.
+     */
+    public void removeStampSecondaryCapture() {
+        //remove (0018,1012): Date of Secondary Capture
+        getTagTable().removeTag("0018,1012");
+
+        // remove (0018,1014): Time of Secondary Capture
+        getTagTable().removeTag("0018,1014");
+
+        // remove (0018,1016): Secondary Capture Device manufacturer
+        getTagTable().removeTag("0018,1016");
+
+        // remove (0018,1018): Secondary Capture Device Manufacturer's Model Name
+        getTagTable().removeTag("0018,1018");
+
+        // remove (0018,1019): Secondary Capture Device Software Version(s)
+        getTagTable().removeTag("0018,1019");
+    }
 
     /**
      * After the tag table is filled, check for a number of tags to set up some fields in this file info object.
