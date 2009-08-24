@@ -249,7 +249,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         IntModelMeanSquared meanSquaredModel;
         int steps;
         double numInt;
-        double eps = 1.0e-8;
+        double eps = 1.0e-7;
         IntModelMean2 meanModel2;
         IntModelMeanSquared2 meanSquaredModel2;
         /** finite bound of integration range used in dqagie (has no meaning if interval is doubly-infinite). */
@@ -732,12 +732,12 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        diameter = 2.0 * radius;
        
        // Calculate analytical mean
-       meanModel = new IntModelMean(diameter, 1.0E30, Integration.MIDINF, eps, density);
+       /*meanModel = new IntModelMean(diameter, 1.0E30, Integration.MIDINF, eps, density);
        meanModel.driver();
        steps = meanModel.getStepsUsed();
        numInt = meanModel.getIntegral();
        Preferences.debug("In Integration.MIDINF numerical Integral for mean = " + 
-               numInt + " after " + steps + " steps used\n");
+               numInt + " after " + steps + " steps used\n");*/
        bound = diameter;
        meanModel2 = new IntModelMean2(bound, routine, inf, epsabs, epsrel, limit, density);
        meanModel2.driver();
@@ -749,18 +749,18 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                          " integrand evaluations used\n");
        Preferences.debug("Error status = " + errorStatus +
                          " with absolute error = " + absError + "\n");
-       analyticalMean = diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt;
+       analyticalMean = diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt2;
        Preferences.debug("Analytical mean = " + analyticalMean + "\n");
        System.out.println("Analytical mean = " + analyticalMean);
        change = ((analyticalMean - mean)/mean) * 100.0;
        Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n");  
        // Calculate analytical mean squared
-       meanSquaredModel = new IntModelMeanSquared(diameter, 1.0E30, Integration.MIDINF, eps, density);
+       /*meanSquaredModel = new IntModelMeanSquared(diameter, 1.0E30, Integration.MIDINF, eps, density);
        meanSquaredModel.driver();
        steps = meanSquaredModel.getStepsUsed();
        numInt = meanSquaredModel.getIntegral();
        Preferences.debug("In Integration.MIDINF numerical Integral for mean squared = " + 
-               numInt + " after " + steps + " steps used\n");
+               numInt + " after " + steps + " steps used\n");*/
        bound = diameter;
        meanSquaredModel2 = new IntModelMeanSquared2(bound, routine, inf, epsabs, epsrel, limit, density);
        meanSquaredModel2.driver();
@@ -772,7 +772,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                          " integrand evaluations used\n");
        Preferences.debug("Error status = " + errorStatus +
                          " with absolute error = " + absError + "\n");
-       analyticalMeanSquared = diameter*diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt;
+       analyticalMeanSquared = diameter*diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt2;
        Preferences.debug("Analytical mean squared = " + analyticalMeanSquared + "\n");
        System.out.println("Analytical mean squared = " + analyticalMeanSquared);
        analyticalVariance = spheresLeft*(analyticalMeanSquared - analyticalMean*analyticalMean)/(spheresLeft - 1);
