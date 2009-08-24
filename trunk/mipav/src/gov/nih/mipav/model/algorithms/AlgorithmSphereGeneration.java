@@ -249,7 +249,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         IntModelMeanSquared meanSquaredModel;
         int steps;
         double numInt;
-        double eps = 1.0e-12;
+        double eps = 1.0e-9;
         IntModelMean2 meanModel2;
         IntModelMeanSquared2 meanSquaredModel2;
         /** finite bound of integration range used in dqagie (has no meaning if interval is doubly-infinite). */
