@@ -213,6 +213,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double mean;
         double variance;
         double stdDev;
+        double standardError;
         double median;
         double deviate;
         double deviateSquared;
@@ -234,6 +235,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double analyticalMean;
         double analyticalMeanSquared;
         double analyticalVariance;
+        double analyticalStandardDeviation;
         double analyticalStandardError;
         double percentile[] = new double[1];
         int numRandomSpheres;
@@ -269,6 +271,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         int errorStatus;
         double absError;
         int neval;
+        double change;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -665,6 +668,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        }
        variance = totalDeviateSquared/(spheresLeft - 1);
        stdDev = Math.sqrt(variance);
+       standardError = stdDev/Math.sqrt(spheresLeft);
        // Skewness is a third standardized moment that measures the degree of symmetry of a probablility
        // distribution.  A distribution that is symmetrical has a skewness of zero.  If the skewness is 
        // positive, that means the right tail is heavier than the left tail.  If the skewness is negative,
@@ -748,6 +752,8 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        analyticalMean = diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt;
        Preferences.debug("Analytical mean = " + analyticalMean + "\n");
        System.out.println("Analytical mean = " + analyticalMean);
+       change = ((analyticalMean - mean)/mean) * 100.0;
+       Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n");  
        // Calculate analytical mean squared
        meanSquaredModel = new IntModelMeanSquared(diameter, 1.0E30, Integration.MIDINF, eps, density);
        meanSquaredModel.driver();
@@ -770,7 +776,10 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        Preferences.debug("Analytical mean squared = " + analyticalMeanSquared + "\n");
        System.out.println("Analytical mean squared = " + analyticalMeanSquared);
        analyticalVariance = spheresLeft*(analyticalMeanSquared - analyticalMean*analyticalMean)/(spheresLeft - 1);
-       analyticalStandardError = Math.sqrt(analyticalVariance);
+       analyticalStandardDeviation = Math.sqrt(analyticalVariance);
+       analyticalStandardError = analyticalStandardDeviation/Math.sqrt(spheresLeft);
+       change = ((analyticalStandardError - standardError)/standardError) * 100.0;
+       Preferences.debug("Percentage increase of analytical standard error over observed standard error = " + change + "\n");
        z = (mean - analyticalMean)/analyticalStandardError;
        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, spheresLeft-1, percentile);
        stat.run();
