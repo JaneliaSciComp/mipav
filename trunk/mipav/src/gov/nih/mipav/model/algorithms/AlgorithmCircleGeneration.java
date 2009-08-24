@@ -770,7 +770,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        change = ((analyticalMean - mean)/mean) * 100.0;
        Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n");  
        analyticalMeanSquared = diameter*diameter + 1.0/(density*Math.PI);
-       analyticalVariance = (analyticalMeanSquared - analyticalMean*analyticalMean/circlesLeft)/(circlesLeft - 1);
+       analyticalVariance = circlesLeft*(analyticalMeanSquared - analyticalMean*analyticalMean)/(circlesLeft - 1);
        analyticalStandardError = Math.sqrt(analyticalVariance);
        change = ((analyticalStandardError - stdDev)/stdDev) * 100.0;
        Preferences.debug("Percentage increase of analytical standard deviation over observed standard deviation = " + change + "\n");  
