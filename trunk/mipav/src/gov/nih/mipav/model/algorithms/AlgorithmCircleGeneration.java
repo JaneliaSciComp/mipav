@@ -548,6 +548,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        // Remember that nearest neighbor statistics will not hold near a boundary, so to be safe only consider those
        // circles at least the maximum nearestNeighborDistance aways from the boundary.  Otherswise, the maximum
        // nearest neighbor distance is artificially inflated by boundary effects.
+       Arrays.sort(nearestNeighborDistance);
        Preferences.debug("Before removing boundary influenced circles maximum nearest neighbor distance = " + 
                          nearestNeighborDistance[circlesDrawn - 1] + "\n");
        System.out.println("Before removing boundary influenced circles maximum nearest neighbor distance = " + 
