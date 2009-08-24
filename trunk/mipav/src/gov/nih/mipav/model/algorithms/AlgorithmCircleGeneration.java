@@ -53,8 +53,7 @@ import java.util.*;
   Get percentile from Gaussian probability integral.
   If the measured mean is significantly greater than the analytical mean, the distribution is uniform or regular.
   If the measured mean is signficantly less than than the analytical mean, the distribution is clumped or 
-  aggregated.  The test on the mean will often show a difference from a random distribution, while the chi square
-  test fails to show a difference from a random distribution.
+  aggregated.
   
   For larger circles these equations become increasingly inaccurate because an assumption of the Poisson
   distribution of rare events is violated: the mean number of circles per sampling unit is not small relative
