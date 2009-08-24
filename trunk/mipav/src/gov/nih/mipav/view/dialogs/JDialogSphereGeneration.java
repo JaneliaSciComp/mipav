@@ -409,7 +409,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         gbc6.gridx = 1;
         paramPanel.add(radiusText, gbc6);
         
-        numCirclesLabel = new JLabel("Number of circles ");
+        numCirclesLabel = new JLabel("Number of spheres ");
         numCirclesLabel.setForeground(Color.black);
         numCirclesLabel.setFont(serif12);
         numCirclesLabel.setEnabled(true);
@@ -461,7 +461,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         gbc6.gridy = 8;
         paramPanel.add(constrainedButton, gbc6);
         
-        initialSpheresLabel = new JLabel("Initial circles randomly generated ");
+        initialSpheresLabel = new JLabel("Initial spheres randomly generated ");
         initialSpheresLabel.setForeground(Color.black);
         initialSpheresLabel.setFont(serif12);
         initialSpheresLabel.setEnabled(false);
