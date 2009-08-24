@@ -769,8 +769,8 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        analyticalMeanSquared = diameter*diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt;
        Preferences.debug("Analytical mean squared = " + analyticalMeanSquared + "\n");
        System.out.println("Analytical mean squared = " + analyticalMeanSquared);
-       analyticalVariance = analyticalMeanSquared - analyticalMean*analyticalMean;
-       analyticalStandardError = Math.sqrt(analyticalVariance/spheresLeft);
+       analyticalVariance = (analyticalMeanSquared - analyticalMean*analyticalMean/spheresLeft)/(spheresLeft - 1);
+       analyticalStandardError = Math.sqrt(analyticalVariance);
        z = (mean - analyticalMean)/analyticalStandardError;
        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, spheresLeft-1, percentile);
        stat.run();
