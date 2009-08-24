@@ -254,6 +254,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         double highestForbiddenSquared;
         double highestRegenerationSquared;
         boolean intermediateRejected;
+        double change;
+        double initialDensity;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -753,6 +755,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        for (i = 0; i < circlesLeft; i++) {
            nearestNeighborDistanceSumOfSquares += nearestNeighborDistance[i]*nearestNeighborDistance[i];
        }
+       initialDensity = (double)circlesDrawn/(double)((xDim - 2*radius) * (yDim - 2 * radius));
+       Preferences.debug("Initial density = " + initialDensity + "\n");
        density = (double)circlesLeft/(double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance));
        diameter = 2.0 * radius;
        
@@ -763,9 +767,13 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        analyticalMean = diameter + Math.exp(density*Math.PI*diameter*diameter)*integral[0]/Math.sqrt(density);
        Preferences.debug("Analytical mean = " + analyticalMean + "\n");
        System.out.println("Analytical mean = " + analyticalMean);
+       change = ((analyticalMean - mean)/mean) * 100.0;
+       Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n");  
        analyticalMeanSquared = diameter*diameter + 1.0/(density*Math.PI);
-       analyticalVariance = analyticalMeanSquared - analyticalMean*analyticalMean;
-       analyticalStandardError = Math.sqrt(analyticalVariance/circlesLeft);
+       analyticalVariance = (analyticalMeanSquared - analyticalMean*analyticalMean/circlesLeft)/(circlesLeft - 1);
+       analyticalStandardError = Math.sqrt(analyticalVariance);
+       change = ((analyticalStandardError - stdDev)/stdDev) * 100.0;
+       Preferences.debug("Percentage increase of analytical standard deviation over observed standard deviation = " + change + "\n");  
        z = (mean - analyticalMean)/analyticalStandardError;
        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, circlesLeft-1, percentile);
        stat.run();
