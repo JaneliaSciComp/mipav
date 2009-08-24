@@ -216,6 +216,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         double mean;
         double variance;
         double stdDev;
+        double standardError;
         double median;
         double deviate;
         double deviateSquared;
@@ -245,6 +246,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         double analyticalMean;
         double analyticalMeanSquared;
         double analyticalVariance;
+        double analyticalStandardDeviation;
         double analyticalStandardError;
         double percentile[] = new double[1];
         int numRandomCircles;
@@ -600,6 +602,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        }
        variance = totalDeviateSquared/(circlesLeft - 1);
        stdDev = Math.sqrt(variance);
+       standardError = stdDev/Math.sqrt(circlesLeft);
        // Skewness is a third standardized moment that measures the degree of symmetry of a probablility
        // distribution.  A distribution that is symmetrical has a skewness of zero.  If the skewness is 
        // positive, that means the right tail is heavier than the left tail.  If the skewness is negative,
@@ -771,9 +774,10 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n");  
        analyticalMeanSquared = diameter*diameter + 1.0/(density*Math.PI);
        analyticalVariance = circlesLeft*(analyticalMeanSquared - analyticalMean*analyticalMean)/(circlesLeft - 1);
-       analyticalStandardError = Math.sqrt(analyticalVariance);
-       change = ((analyticalStandardError - stdDev)/stdDev) * 100.0;
-       Preferences.debug("Percentage increase of analytical standard deviation over observed standard deviation = " + change + "\n");  
+       analyticalStandardDeviation = Math.sqrt(analyticalVariance);
+       analyticalStandardError = analyticalStandardDeviation/Math.sqrt(circlesLeft);
+       change = ((analyticalStandardError - standardError)/standardError) * 100.0;
+       Preferences.debug("Percentage increase of analytical standard error over observed standard error = " + change + "\n");  
        z = (mean - analyticalMean)/analyticalStandardError;
        stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, circlesLeft-1, percentile);
        stat.run();
