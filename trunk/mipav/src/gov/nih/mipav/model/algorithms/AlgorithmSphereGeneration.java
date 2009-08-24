@@ -69,7 +69,7 @@ import java.util.*;
            dm**2 + exp((4/3)*lambda*PI*(dm**3)) * 
            integral from r = dm to r = infinity of 2*r*exp(-(4/3)*lambda*PI*(r**3))dr
            
-           
+ Integration.MIDINF can be too slow for radius = 0.          
              
  */
 public class AlgorithmSphereGeneration extends AlgorithmBase {
@@ -249,7 +249,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         IntModelMeanSquared meanSquaredModel;
         int steps;
         double numInt;
-        double eps = 1.0e-7;
+        double eps = 1.0e-8;
         IntModelMean2 meanModel2;
         IntModelMeanSquared2 meanSquaredModel2;
         /** finite bound of integration range used in dqagie (has no meaning if interval is doubly-infinite). */
@@ -610,6 +610,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        // Remember that nearest neighbor statistics will not hold near a boundary, so to be safe only consider those
        // spheres at least the maximum nearestNeighborDistance aways from the boundary.  Otherswise, the maximum
        // nearest neighbor distance is artificially inflated by boundary effects.
+       Arrays.sort(nearestNeighborDistance);
        Preferences.debug("Before removing boundary influenced spheres maximum nearest neighbor distance = " + 
                          nearestNeighborDistance[spheresDrawn - 1] + "\n");
        System.out.println("Before removing boundary influenced spheres maximum nearest neighbor distance = " + 
