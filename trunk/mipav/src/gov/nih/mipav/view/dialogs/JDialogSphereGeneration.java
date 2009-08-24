@@ -394,7 +394,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         gbc6.gridx = 1;
         paramPanel.add(zDimText, gbc6);
         
-        radiusLabel = new JLabel("Circle radius ");
+        radiusLabel = new JLabel("Sphere radius ");
         radiusLabel.setForeground(Color.black);
         radiusLabel.setFont(serif12);
         radiusLabel.setEnabled(true);
