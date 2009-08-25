@@ -16,6 +16,9 @@ import java.util.*;
   pp. 679-685.
   d = diameter
   lambda = mean number per unit area
+  Dr. Daniel Simberloff writes:
+  "In any event, you are probably correct that it would be more logical to caclulate rho for the points only in
+  the interior, not the border region, remembering to leave out the border region when calculating area."
   mean nearest neighbor value = d + (exp(lambda * PI * d**2)/sqrt(lambda)*integral from t = d*sqrt(2*lambda*PI) to
   t = infinity of (1/sqrt(2*PI))*exp(-t**2/2)dt.  The integral is simply the 1 - Gaussian probability integral.
   E(nearest neighbor distance squared) = d**2 + 1/(lambda * PI)
