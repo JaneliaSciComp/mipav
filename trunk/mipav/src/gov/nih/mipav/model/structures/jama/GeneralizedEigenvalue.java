@@ -31176,8 +31176,8 @@ loop6:                   {
     }
 
     /**
-     * Version 3.1 auxiliary routine ported form LAPACK Original IEEECK created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., November, 2006
+     * Version 3.2 auxiliary routine ported form LAPACK Original IEEECK created by Univ. of Tennessee, Univ. of
+     * California Berkeley, University of Colorado Denver, and NAG Ltd., November, 2006
      * ieeeck is called form the ilaenv routine to verify that infinity and possibly NaN arithmetic is safe
      * (i.e. will not trap)
      *
@@ -31298,8 +31298,8 @@ loop6:                   {
     } // ieeeck
 
     /**
-     * ilaenv is ported from the version 3.1.1 LAPACK auxiliary routine Original ILAENV created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., January, 2007
+     * ilaenv is ported from the version 3.2.1 LAPACK auxiliary routine Original ILAENV created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd., April, 2009
      *
      * <p>ilaenv is called from the LAPACK routines to choose problem-dependent parameters for the local environment.
      * See ispec for a description of the parameters.</p>
@@ -31335,6 +31335,7 @@ loop6:                   {
      *                = 11: infinity can be trusted not to trap
      *                12 <= ispec <= 16:
      *                      xhseqr or one of its subroutines
+     *                      see iparmq for detailed explanation
      * @param   name   input String The name of the calling subroutine, in either upper case or lower case.
      * @param   opts   input String The character options to the subroutine name, concatenated into a single character
      *                 string. For example, uplo = 'U', trans = 'T', and diag = 'N' for a triangular routine would be
@@ -31365,7 +31366,7 @@ loop6:                   {
         int nbmin;
         int nx;
 
-        if ((ispec < 1) || (ispec > 11)) {
+        if ((ispec < 1) || (ispec > 16)) {
 
             // Invalid value for ispec
             return -1;
@@ -31656,14 +31657,14 @@ loop6:                   {
         else if (ispec == 10) {
 
             // ieee NaN arithmetic can be trusted not to trap
-            answer = ieeeck(0, 0.0, 1.0);
+            answer = ieeeck(1, 0.0, 1.0);
 
             return answer;
         } // else if (ispec == 10)
         else if (ispec == 11){
 
             // infinity arithmetic can be trusted not to trap
-            answer = ieeeck(1, 0.0, 1.0);
+            answer = ieeeck(0, 0.0, 1.0);
 
             return answer;
         } // else ispec == 11
