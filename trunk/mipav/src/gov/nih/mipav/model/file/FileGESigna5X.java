@@ -998,7 +998,7 @@ public class FileGESigna5X extends FileBase {
             raFile = new RandomAccessFile(fileHeader, "r");
             
     	} catch (OutOfMemoryError e) {
-            MipavUtil.displayError("Out of memory in FileGESigna4X.isGESigna4X.");
+            MipavUtil.displayError("Out of memory in FileGESigna5X.isGESigna5X.");
             throw new IOException();
     	}
     	if (raFile == null) {
