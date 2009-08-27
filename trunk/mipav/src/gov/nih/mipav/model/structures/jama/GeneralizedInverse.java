@@ -11,6 +11,19 @@ public class GeneralizedInverse {
     // Number of columns in A
     private int NC;
     
+    // Double precision routine variables found in routine dlamch
+    private double base;
+    private double emax;
+    private double emin;
+    private double eps;
+    private boolean first = true;
+    private double prec;
+    private double rmax;
+    private double rmin;
+    private double rnd;
+    private double sfmin;
+    private double t;
+    
     public GeneralizedInverse() {
         
     }
@@ -1732,81 +1745,91 @@ public class GeneralizedInverse {
     *
     
     */
-    private void dgelss(int m, int n, int nrhs, double A[][], int lda, double B[][], int ldb, double S[],
+    private void dgelss(int m, int n, int nrhs, double A[][], int lda, double B[][], int ldb, double s[],
                         double rcond, int rank[], double work[], int lwork, int info[]) {
         /*  Arguments
         *  =========
         *
-        *  M       (input) INTEGER
-        *          The number of rows of the matrix A. M >= 0.
+        *  m       (input) INTEGER
+        *          The number of rows of the matrix A. m >= 0.
         *
-        *  N       (input) INTEGER
-        *          The number of columns of the matrix A. N >= 0.
+        *  n       (input) INTEGER
+        *          The number of columns of the matrix A. n >= 0.
         *
-        *  NRHS    (input) INTEGER
+        *  nrhs    (input) INTEGER
         *          The number of right hand sides, i.e., the number of columns
-        *          of the matrices B and X. NRHS >= 0.
+        *          of the matrices B and X. nrhs >= 0.
         *
-        *  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
-        *          On entry, the M-by-N matrix A.
+        *  A       (input/output) DOUBLE PRECISION array, dimension (lda,n)
+        *          On entry, the m-by-n matrix A.
         *          On exit, the first min(m,n) rows of A are overwritten with
         *          its right singular vectors, stored rowwise.
         *
-        *  LDA     (input) INTEGER
-        *          The leading dimension of the array A.  LDA >= max(1,M).
+        *  lda     (input) INTEGER
+        *          The leading dimension of the array A.  lda >= max(1,m).
         *
-        *  B       (input/output) DOUBLE PRECISION array, dimension (LDB,NRHS)
-        *          On entry, the M-by-NRHS right hand side matrix B.
-        *          On exit, B is overwritten by the N-by-NRHS solution
+        *  B       (input/output) DOUBLE PRECISION array, dimension (ldb,nrhs)
+        *          On entry, the m-by-nrhs right hand side matrix B.
+        *          On exit, B is overwritten by the n-by-nrhs solution
         *          matrix X.  If m >= n and RANK = n, the residual
         *          sum-of-squares for the solution in the i-th column is given
         *          by the sum of squares of elements n+1:m in that column.
         *
-        *  LDB     (input) INTEGER
-        *          The leading dimension of the array B. LDB >= max(1,max(M,N)).
+        *  ldb     (input) INTEGER
+        *          The leading dimension of the array B. ldb >= max(1,max(m,n)).
         *
-        *  S       (output) DOUBLE PRECISION array, dimension (min(M,N))
+        *  s       (output) DOUBLE PRECISION array, dimension (min(m,n))
         *          The singular values of A in decreasing order.
         *          The condition number of A in the 2-norm = S(1)/S(min(m,n)).
         *
-        *  RCOND   (input) DOUBLE PRECISION
-        *          RCOND is used to determine the effective rank of A.
-        *          Singular values S(i) <= RCOND*S(1) are treated as zero.
-        *          If RCOND < 0, machine precision is used instead.
+        *  rcond   (input) DOUBLE PRECISION
+        *          rcond is used to determine the effective rank of A.
+        *          Singular values s(i) <= RCOND*s[0] are treated as zero.
+        *          If  rcond < 0, machine precision is used instead.
         *
-        *  RANK    (output) INTEGER
+        *  rank    (output) INTEGER
         *          The effective rank of A, i.e., the number of singular values
-        *          which are greater than RCOND*S(1).
+        *          which are greater than rcond*s[0].
         *
-        *  WORK    (workspace/output) DOUBLE PRECISION array, dimension (MAX(1,LWORK))
-        *          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+        *  work    (workspace/output) DOUBLE PRECISION array, dimension (MAX(1,lwork))
+        *          On exit, if info[0] = 0, work[0] returns the optimal lwork.
         *
-        *  LWORK   (input) INTEGER
-        *          The dimension of the array WORK. LWORK >= 1, and also:
-        *          LWORK >= 3*min(M,N) + max( 2*min(M,N), max(M,N), NRHS )
+        *  lwork   (input) INTEGER
+        *          The dimension of the array work. lwork >= 1, and also:
+        *          lwork >= 3*min(m,n) + max( 2*min(m,n), max(m,n), nrhs )
         *          For good performance, LWORK should generally be larger.
         *
-        *          If LWORK = -1, then a workspace query is assumed; the routine
-        *          only calculates the optimal size of the WORK array, returns
-        *          this value as the first entry of the WORK array, and no error
-        *          message related to LWORK is issued by XERBLA.
+        *          If lwork = -1, then a workspace query is assumed; the routine
+        *          only calculates the optimal size of the work array, returns
+        *          this value as the first entry of the work array, and no error
+        *          message related to lwork is issued by XERBLA.
         *
-        *  INFO    (output) INTEGER
+        *  info    (output) INTEGER
         *          = 0:  successful exit
-        *          < 0:  if INFO = -i, the i-th argument had an illegal value.
+        *          < 0:  if info[0] = -i, the i-th argument had an illegal value.
         *          > 0:  the algorithm for computing the SVD failed to converge;
-        *                if INFO = i, i off-diagonal elements of an intermediate
+        *                if info[0] = i, i off-diagonal elements of an intermediate
         *                bidiagonal form did not converge to zero.
         */
         int minmn;
         int maxmn;
         boolean lquery;
         int minwrk;
-        int maxwrk;
+        int maxwrk = 0;
         int mm;
-        int mnthr;
+        int mnthr = 0;
         String name;
         String opts;
+        int bdspac;
+        double[] smlnum = new double[1];
+        double[] bignum = new double[1];
+        double anrm;
+        int iascl;
+        int i;
+        double bnrm;
+        int ibscl;
+        int itau;
+        int iwork;
         
         // Test the input arguments
         info[0] = 0;
@@ -1839,10 +1862,166 @@ public class GeneralizedInverse {
             maxwrk = 1;
             if (minmn > 0) {
                 mm = m;
-                name = new String("DGEQRF");
+                name = new String("DGELSS");
                 opts = new String(" ");
+                mnthr = ilaenv(6, name, opts, m, n, nrhs, -1);
+                if ((m >= n) && (m >= mnthr)) {
+                    // Path 1a - overdetermined, with many more rows than columns
+                    mm = n;
+                    name = new String("DGEQRF");
+                    opts = new String(" ");
+                    maxwrk = Math.max(maxwrk, n + n*ilaenv(1, name, opts, m, n, -1, -1));
+                    name = new String("DORMQR");
+                    opts = new String("LT");
+                    maxwrk = Math.max(maxwrk, n + nrhs*ilaenv(1, name, opts, m, nrhs, n, -1));
+                } // if ((m >= n) && (m >= mnthr))
+                if (m >= n) {
+                    // Path 1 - overdetermined or exactly determined
+                    
+                    // Compute workspace needed for dbdsqr
+                    bdspac = Math.max(1, 5*n);
+                    name = new String("DGEBRD");
+                    opts = new String(" ");
+                    maxwrk = Math.max(maxwrk, 3*n + (mm + n)*ilaenv(1, name, opts, mm, n, -1, -1));
+                    name = new String("DORMBR");
+                    opts = new String("QLT");
+                    maxwrk = Math.max(maxwrk, 3*n + nrhs*ilaenv(1, name, opts, mm, nrhs, n, -1));
+                    name = new String("DORGBR");
+                    opts = new String("P");
+                    maxwrk = Math.max(maxwrk, 3*n + (n - 1)*ilaenv(1, name, opts, n, n, n, -1));
+                    maxwrk = Math.max(maxwrk, bdspac);
+                    maxwrk = Math.max(maxwrk, n*nrhs);
+                    minwrk = Math.max(3*n + mm, Math.max(3*n + nrhs, bdspac));
+                    maxwrk = Math.max(minwrk, maxwrk);
+                } // if (m >= n)
+                if (n > m) {
+                    // Compute workspace needed for dbdsqr
+                    
+                    bdspac = Math.max(1, 5*m);
+                    minwrk = Math.max(3*m + nrhs, Math.max(3*m + n, bdspac));
+                    if (n >= mnthr) {
+                        // Path 2a - undetermined, with many more columns than rows
+                        name = new String("DGELQF");
+                        opts = new String(" ");
+                        maxwrk = m + m*ilaenv(1, name, opts, m, n, -1, -1);
+                        name = new String("DGEBRD");
+                        opts = new String(" ");
+                        maxwrk = Math.max(maxwrk, m*m + 4*m + 2*m*ilaenv(1, name, opts, m, m, -1, -1));
+                        name = new String("DORMBR");
+                        opts = new String("QLT");
+                        maxwrk = Math.max(maxwrk, m*m + 4*m + nrhs*ilaenv(1, name, opts, m, nrhs, m, -1));
+                        name = new String("DORGBR");
+                        opts = new String("P");
+                        maxwrk = Math.max(maxwrk, m*m + 4*m + (m - 1)*ilaenv(1, name, opts, m, m, m, -1));
+                        maxwrk = Math.max(maxwrk, m*m + m + bdspac);
+                        if (nrhs > 1) {
+                            maxwrk = Math.max(maxwrk, m*m + m + m*nrhs);    
+                        } // if (nrhs > 1)
+                        else {
+                            maxwrk = Math.max(maxwrk, m*m + 2*m);
+                        }
+                        name = new String("DORMLQ");
+                        opts = new String("LT");
+                        maxwrk = Math.max(maxwrk, m + nrhs*ilaenv(1, name, opts, n, nrhs, m, -1));
+                    } // if (n >= mnthr)
+                    else { // n < mnthr
+                        // Path 2 - underdetermined
+                        name = new String("DGEBRD");
+                        opts = new String(" ");
+                        maxwrk = 3*m + (n + m)*ilaenv(1, name, opts, m, n, -1, -1);
+                        name = new String("DORMBR");
+                        opts = new String("QLT");
+                        maxwrk = Math.max(maxwrk, 3*m + nrhs*ilaenv(1, name, opts, m, nrhs, m, -1));
+                        name = new String("DORGBR");
+                        opts = new String("P");
+                        maxwrk = Math.max(maxwrk, 3*m + m*ilaenv(1, name, opts, m, n, m, -1));
+                        maxwrk = Math.max(maxwrk, bdspac);
+                        maxwrk = Math.max(maxwrk, n*nrhs);
+                    } // else n < mnthr
+                } // if (n > m)
+                maxwrk = Math.max(minwrk, maxwrk);
             } // if (minmn > 0)
+            work[0] = maxwrk;
+            
+            if ((lwork < minwrk) && (!lquery)) {
+                info[0] = -12;
+            }
         } // if (info[0] == 0)
+        
+        if (info[0] != 0) {
+            MipavUtil.displayError("DGELSS exits with error info[0] = " + info[0]);
+            Preferences.debug("DGELSS exits with error info[0] = " + info[0] + "\n");
+            return;
+        }
+        else if (lquery) {
+            return;
+        }
+        
+        // Quick return if possible
+        if ((m == 0) || (n == 0)) {
+            rank[0] = 0;
+            return;
+        }
+        
+        // Get machine parameters
+        eps = dlamch('P');
+        sfmin = dlamch('S');
+        smlnum[0] = sfmin/eps;
+        bignum[0] = 1.0 / smlnum[0];
+        dlabad(smlnum, bignum);
+        
+        // Scale A if max element outside range [smlnum[0], bignum[0]]
+        anrm = dlange('M', m, n, A, lda, work);
+        iascl = 0;
+        if ((anrm > 0.0) && (anrm < smlnum[0])) {
+            // Scale matrix norm up to smlnum[0]
+            dlascl('G', 0, 0, anrm, smlnum[0], m, n, A, lda, info);
+            iascl = 1;
+        } // if ((anrm > 0.0) && (anrm < smlnum[0]))
+        else if (anrm > bignum[0]) {
+            // Scale matrix norm down to bignum[0]
+            dlascl('G', 0, 0, anrm, bignum[0], m, n, A, lda, info);
+            iascl = 2;
+        } // else if (anrm > bignum[0])
+        else if (anrm == 0.0) {
+            // Matrix all zero.  Return zero solution.
+            dlaset('F', Math.max(m,n), nrhs, 0.0, 0.0, B, ldb);
+            for (i = 0; i < minmn; i++) {
+                s[i] = 0.0;
+            }
+            rank[0] = 0;
+            work[0] = maxwrk;
+            return;
+        } // else if (anrm == 0.0)
+        
+        // Scale B if max element outside range [smlnum[0], bignum[0]]
+        bnrm = dlange('M', m, nrhs, B, ldb, work);
+        ibscl = 0;
+        if ((bnrm > 0.0) && (bnrm < smlnum[0])) {
+            // Scale matrix norm up to smlnum[0]
+            dlascl('G', 0, 0, bnrm, smlnum[0], m, nrhs, B, ldb, info);
+            ibscl = 1;
+        }
+        else if (bnrm > bignum[0]) {
+            // Scale matrix down to bignum[0]
+            dlascl('G', 0, 0, bnrm, bignum[0], m, nrhs, B, ldb, info);
+            ibscl = 2;
+        }
+        
+        // Overdetermined case
+        if (m >= n) {
+            // Path 1 - overdetermined or exactly determined
+            mm = m;
+            if (m >= mnthr) {
+                // Path 1a - overdetermined, with many more rows than columns
+                mm = n;
+                itau = 1;
+                iwork = itau + n;
+                
+                // Compute A = Q*R
+                // (Workspace: need 2*n, prefer n + n*nb)
+            }  // if (m >= mnthr)
+        } // if (m >= n)
     } // dgelss
     
     /**
@@ -2344,5 +2523,1080 @@ public class GeneralizedInverse {
 
         return 1;
     } // ieeeck
+    
+    /**
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLAMCH Original DLAMCH created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlamch determines double precision machine parameters.
+     *
+     * @param   cmach  input char Specifies the value to be returned by dlamch
+     *                 = 'E' or 'e', returns eps, relative machine precision 
+     *                 = 'S' or 's', returns sfmin, safe minimum, such that 1/sfmin does not overflow
+     *                 = 'B' or 'b', returns base, base of the machine
+     *                 = 'P' or 'p', returns prec = eps*base
+     *                 = 'N' or 'n', returns t, number of (base) digits in the mantissa
+     *                 = 'R' or 'r', returns rnd = 1.0 when rounding occurs in addition, 0.0 otherwise 
+     *                 = 'M' or 'm', returns emin, minimum exponent before (gradual) underflow 
+     *                 = 'U' or 'u', returns rmin, underflow threshold = base**(emin-1)
+     *                 = 'L' or 'l', emax, largest exponent before overflow 
+     *                 = 'O' or 'o', rmax, overflow threshold = (base**emax)*(1-eps)
+     *
+     * @return  double
+     */
+    private double dlamch(char cmach) {
+
+        boolean[] lrnd = new boolean[1];
+        int[] beta = new int[1];
+        int[] imax = new int[1];
+        int[] imin = new int[1];
+        int[] it = new int[1];
+        double rmach = 0.0;
+        double small;
+
+        if (first) {
+            first = false;
+            dlamc2(beta, it, lrnd, imin, imax);
+            base = beta[0];
+            t = it[0];
+
+            if (lrnd[0]) {
+                rnd = 1.0;
+                eps = Math.pow(base, (1 - it[0])) / 2.0;
+            } else {
+                rnd = 0.0;
+                eps = Math.pow(base, (1 - it[0]));
+            }
+
+            prec = eps * base;
+            emin = imin[0];
+            emax = imax[0];
+            sfmin = rmin;
+            small = 1.0 / rmax;
+
+            if (small >= sfmin) {
+
+                // Use small plus a bit, to avoid the possibility of rounding causing
+                // overflow when computing 1/sfmin.
+                sfmin = small * (1.0 + eps);
+            }
+        } // if (first)
+
+        if ((cmach == 'E') || (cmach == 'e')) {
+            rmach = eps;
+        } else if ((cmach == 'S') || (cmach == 's')) {
+            rmach = sfmin;
+        } else if ((cmach == 'B') || (cmach == 'b')) {
+            rmach = base;
+        } else if ((cmach == 'P') || (cmach == 'p')) {
+            rmach = prec;
+        } else if ((cmach == 'N') || (cmach == 'N')) {
+            rmach = t;
+        } else if ((cmach == 'R') || (cmach == 'r')) {
+            rmach = rnd;
+        } else if ((cmach == 'M') || (cmach == 'm')) {
+            rmach = emin;
+        } else if ((cmach == 'U') || (cmach == 'u')) {
+            rmach = rmin;
+        } else if ((cmach == 'L') || (cmach == 'l')) {
+            rmach = emax;
+        } else if ((cmach == 'O') || (cmach == 'o')) {
+            rmach = rmax;
+        }
+
+        return rmach;
+    } // dlamch
+    
+    /**
+     * Port of version 3.2 LAPACK auxiliary routine DLAMC1 Original DLAMC1 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dlamc1 determines the machine parameters given by beta, t, rnd, and ieee1.
+     *
+     * @param  beta   output int[] The base of the machine.
+     * @param  t      output int[] The number of (beta) digits in the mantissa
+     * @param  rnd    output boolean[] Specifies whether proper rounding (rnd = true) or chopping (rnd = false) occurs in
+     *                addition. This may not be a reliable guide to the way in which the machine performs its
+     *                arithmetic.
+     * @param  ieee1  output boolean[] Specifies whether rounding appears to be done in the IEEE 'round to nearest'
+     *                style.
+     * This routine is based on the routine ENVRON by Malcolm and incorporates suggestions by Gentleman and Marovich. See
+     * Malcolm, M. A. (1972) Algorithms to reveal properties of floating-point arithmetic.  Comms. of the ACM, 15,
+     * pp. 949-951.
+     * Gentleman, W. M. and Marovich S. B. (1974) More on algorithms that reveal properties of floating point
+     * arithmetic units.  Comms. of the ACM, 17, pp. 276-277.
+     */
+    private void dlamc1(int[] beta, int[] t, boolean[] rnd, boolean[] ieee1) {
+        boolean lieee1;
+        boolean lrnd;
+        int lbeta;
+        int lt;
+        double a;
+        double b;
+        double c;
+        double f;
+        double one;
+        double qtr;
+        double savec;
+        double t1;
+        double t2;
+
+        one = 1;
+
+        // lbeta, lieee1, lt, and lrnd are the local values of beta, ieee1, t, and
+        // rnd.
+
+        // Throughout this routine we use the function dlamc3 to ensure that
+        // relevant values are stored and not held in registers, or are not
+        // affected by optimizers.
+
+        // Compute a = 2.0**m with the smallest positive integer m such that
+        // computed value(a + 1.0) = a.
+        a = 1;
+        c = 1;
+
+        while (c == one) {
+            a = 2 * a;
+            c = dlamc3(a, one);
+            c = dlamc3(c, -a);
+        } // while (c == one)
+
+        // Now compute b = 2.0**m with the smallest positive integer m such that
+        // computed value(a + b) > a
+        b = 1;
+        c = dlamc3(a, b);
+
+        while (c == a) {
+            b = 2 * b;
+            c = dlamc3(a, b);
+        } // while (c == a)
+
+        // Now compute the base.  a and c are neighboring floating point numbers
+        // in the interval (beta**t, beta**(t+1)) and so their difference is beta.
+        // Adding 0.25 to c is to ensure that it is truncated to beta and not
+        // (beta - 1).
+
+        qtr = one / 4;
+        savec = c;
+        c = dlamc3(c, -a);
+        lbeta = (int) (c + qtr);
+
+        // Now determine whether rounding or chopping occurs, by adding a
+        // bit less than beta/2 and a bit more than beta/2 to a.
+
+        b = lbeta;
+        f = dlamc3(b / 2, -b / 100);
+        c = dlamc3(f, a);
+
+        if (c == a) {
+            lrnd = true;
+        } else {
+            lrnd = false;
+        }
+
+        f = dlamc3(b / 2, b / 100);
+        c = dlamc3(f, a);
+
+        if ((lrnd) && (c == a)) {
+            lrnd = false;
+        }
+
+        // Try and decide whether rounding is done in the IEEE 'round to nearest'
+        // style. b/2 is half a unit in the last place of the two numbers a and
+        // savec.  Furthermore, a is even, i.e. has last bit zero, and savec is
+        // odd. Thus adding b/2 to a should not change a, but adding b/2 to savec
+        // should change savec.
+
+        t1 = dlamc3(b / 2, a);
+        t2 = dlamc3(b / 2, savec);
+        lieee1 = (t1 == a) && (t2 > savec) && lrnd;
+
+        // Now find the mantissa, t.  It should be the integer part of log to the
+        // base beta of a, however it is safer to determine t by powering.  So we
+        // find t as the smallest positive integer for which
+        // computed value(beta**t + 1.0) = 1.0.
+
+        lt = 0;
+        a = 1;
+        c = 1;
+
+        while (c == one) {
+            lt = lt + 1;
+            a = a * lbeta;
+            c = dlamc3(a, one);
+            c = dlamc3(c, -a);
+        } // while (c == one)
+
+        beta[0] = lbeta;
+        t[0] = lt;
+        rnd[0] = lrnd;
+        ieee1[0] = lieee1;
+
+        return;
+    } // dlamc1
+    
+    /**
+     * Port of LAPACK version 3.2 auxiliary routine DLAMC2 Original DLAMC2 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, nad NAG Ltd., November, 2006
+     * Determines machine parameters 3 globals are determined: 1.) eps double The smallest positive number such that
+     * computed value(1.0 - eps) < 1.0 2.) rmin double The smallest normalized number for the machine, given by
+     * base**(emin - 1), where base is the floating point value of beta. 3.) rmax double The largest positive number for
+     * the machine, given by base**emax*(1-eps), where base is the floating point value of beta.
+     *
+     * @param  beta  output int[] The base of the machine.
+     * @param  t     output int[] The number of (beta) digits in the mantissa.
+     * @param  rnd   ouptut boolean Specifies whether proper rounding (rnd == true) or chopping (rnd == false) occurs in
+     *               addition. This may not be a reliable guide to the way in which the machine performs its arithmetic
+     * @param  emin  output int[] The minimum exponent before (gradual) underflow occurs
+     * @param  emax  output int[] The maximum exponent before overflow occurs
+     * The computation of EPS is based on a routine PARANOIA by W. Kahan of the University of California at Berkeley.
+     */
+    private void dlamc2(int[] beta, int[] t, boolean[] rnd, int[] emin, int[] emax) {
+        boolean ieee;
+        boolean iwarn = false;
+        boolean[] lieee1 = new boolean[1];
+        boolean[] lrnd = new boolean[1];
+        int[] gnmin = new int[1];
+        int[] gpmin = new int[1];
+        int i;
+        int[] lbeta = new int[1];
+        int[] lemax = new int[1];
+        int lemin;
+        int[] lt = new int[1];
+        int[] ngnmin = new int[1];
+        int[] ngpmin = new int[1];
+        double a;
+        double b;
+        double c;
+        double half;
+        double leps;
+        double[] lrmax = new double[1];
+        double lrmin;
+        double one;
+        double rbase;
+        double sixth;
+        double small;
+        double third;
+        double two;
+        double zero;
+
+        zero = 0;
+        one = 1;
+        two = 2;
+
+        // lbeta, lt, lrnd, leps, lemin, and lrmin are the local values of beta, t,
+        // rnd, eps, emin, and rmin.
+
+        // Throughout this routine we use the function dlamc3 to ensure that
+        // relevant values are stored and not held in registers, or are not
+        // affected by optimizers.
+
+        // dlamc1 returns the parameters lbeta, lt, lrnd, and lieee1.
+        dlamc1(lbeta, lt, lrnd, lieee1);
+
+        // Start to find eps
+
+        b = lbeta[0];
+        a = Math.pow(b, -lt[0]);
+        leps = a;
+
+        // Try some tricks to see whether or not this is the correct eps.
+        b = two / 3;
+        half = one / 2;
+        sixth = dlamc3(b, -half);
+        third = dlamc3(sixth, sixth);
+        b = dlamc3(third, -half);
+        b = dlamc3(b, sixth);
+        b = Math.abs(b);
+
+        if (b < leps) {
+            b = leps;
+        }
+
+        leps = 1;
+
+        while ((leps > b) && (b > zero)) {
+            leps = b;
+            c = dlamc3(half * leps, Math.pow(two, 5.0) * (leps * leps));
+            c = dlamc3(half, -c);
+            b = dlamc3(half, c);
+            c = dlamc3(half, -b);
+            b = dlamc3(half, c);
+        } // while ((leps > b) && (b > zero))
+
+        if (a < leps) {
+            leps = a;
+        }
+
+        // Computation of eps complete.
+
+        // Now find emin.  let a = + or - 1, and + or - (1 + base**(-3)).
+        // Keep dividing a by beta until (gradual) underflow occurs. This
+        // is detected when we cannot recover the previous a.
+
+        rbase = one / lbeta[0];
+        small = one;
+
+        for (i = 1; i <= 3; i++) {
+            small = dlamc3(small * rbase, zero);
+        }
+
+        a = dlamc3(one, small);
+        dlamc4(ngpmin, one, lbeta[0]);
+        dlamc4(ngnmin, -one, lbeta[0]);
+        dlamc4(gpmin, a, lbeta[0]);
+        dlamc4(gnmin, -a, lbeta[0]);
+        ieee = false;
+
+        if ((ngpmin[0] == ngnmin[0]) && (gpmin[0] == gnmin[0])) {
+
+            if (ngpmin[0] == gpmin[0]) {
+                lemin = ngpmin[0];
+                // Non twos-complement machnines, no gradual underflow; e.g., VAX
+            } else if ((gpmin[0] - ngpmin[0]) == 3) {
+                lemin = ngpmin[0] - 1 + lt[0];
+                ieee = true;
+                // Non twos-complement machines, with gradual underflow; e.g, IEEE
+                // standard followers
+            } else {
+                lemin = Math.min(ngpmin[0], gpmin[0]);
+
+                // A guess; no known machine
+                iwarn = true;
+            }
+        } // if ((ngpmin[0] == ngnmin[0]) && (gpmin[0] == gnmin[0]))
+        else if ((ngpmin[0] == gpmin[0]) && (ngnmin[0] == gnmin[0])) {
+
+            if (Math.abs(ngpmin[0] - ngnmin[0]) == 1) {
+                lemin = Math.max(ngpmin[0], ngnmin[0]);
+                // Twos-complement machines, no gradual underflow, e.g., CYBER 205
+            } else {
+                lemin = Math.min(ngpmin[0], ngnmin[0]);
+
+                // A guess; no known machine
+                iwarn = true;
+            }
+        } // else if ((ngpmin[0] == gpmin[0]) && (ngnmin[0] == gnmin[0]))
+        else if ((Math.abs(ngpmin[0] - ngnmin[0]) == 1) && (gpmin[0] == gnmin[0])) {
+
+            if ((gpmin[0] - Math.min(ngpmin[0], ngnmin[0])) == 3) {
+                lemin = Math.max(ngpmin[0], ngnmin[0]) - 1 + lt[0];
+                // Twos-complement machines with gradual underflow; no known machine
+            } else {
+                lemin = Math.min(ngpmin[0], ngnmin[0]);
+
+                // A guess; no known machine
+                iwarn = true;
+            }
+        } // else if ((Math.abs(ngpmin[0] - ngnmin[0]) == 1) && (gpmin[0] == gnmin[0]))
+        else {
+            lemin = Math.min(ngpmin[0], Math.min(ngnmin[0], Math.min(gpmin[0], gnmin[0])));
+
+            // A guess; no known machine
+            iwarn = true;
+        }
+
+        if (iwarn) {
+            Preferences.debug("iwarn is true in dlamc2 emin = " + lemin + "\n");
+            Preferences.debug("The emin value may be incorrect\n");
+        }
+
+        // Assume IEEE arithmetic if we found denormalized numbers above, or if
+        // arithmetic seems to round in the IEEE style, determined in routine
+        // dlamc1.  A true IEEE machine should have both things true; however,
+        // faulty macines may have one or the other.
+        ieee = ieee || lieee1[0];
+
+        // Compute rmin by successive division by beta.  We could compute rmin as
+        // base**(emin-1), but some machines underflow during this computation.
+
+        lrmin = 1;
+
+        for (i = 1; i <= (1 - lemin); i++) {
+            lrmin = dlamc3(lrmin * rbase, zero);
+        }
+
+        // Finally, call dlamc5 to compute emax and rmax
+        dlamc5(lbeta[0], lt[0], lemin, ieee, lemax, lrmax);
+
+        beta[0] = lbeta[0];
+        t[0] = lt[0];
+        rnd[0] = lrnd[0];
+        eps = leps;
+        emin[0] = lemin;
+        rmin = lrmin;
+        emax[0] = lemax[0];
+        rmax = lrmax[0];
+
+        return;
+    } // dlamc2
+    
+    /**
+     * This is a port of the LAPACK version 3.2 auxiliary routine DLAMC3 Original DLAMC3 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlamc3 is intended to force a and b to be stored prior to doing the addition of a and b, for use in
+     * situations where optimizers might hold one of these in a register
+     *
+     * @param   a  double
+     * @param   b  double
+     *
+     * @return  double
+     */
+    private double dlamc3(double a, double b) {
+        double answer = a + b;
+
+        return answer;
+    }
+    
+    /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLAMC4 Original DLAMC4 created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006
+     * dlamc4 is a service routine for dlamc2
+     *
+     * @param  emin   output int[] The minimum exponent before (gradual) underflow, computed by setting a = start and
+     *                dividing by base until the previous a cannot be recovered
+     * @param  start  input double The starting point for determining emin.
+     * @param  base   input int The base of the machine.
+     */
+    private void dlamc4(int[] emin, double start, int base) {
+        int i;
+        double a;
+        double b1;
+        double b2;
+        double c1;
+        double c2;
+        double d1;
+        double d2;
+        double one;
+        double rbase;
+        double zero;
+
+        a = start;
+        one = 1;
+        rbase = one / base;
+        zero = 0;
+        emin[0] = 1;
+        b1 = dlamc3(a * rbase, zero);
+        c1 = a;
+        c2 = a;
+        d1 = a;
+        d2 = a;
+
+        while ((c1 == a) && (c2 == a) && (d1 == a) && (d2 == a)) {
+            emin[0] = emin[0] - 1;
+            a = b1;
+            b1 = dlamc3(a / base, zero);
+            c1 = dlamc3(b1 * base, zero);
+            d1 = zero;
+
+            for (i = 1; i <= base; i++) {
+                d1 = d1 + b1;
+            }
+
+            b2 = dlamc3(a * rbase, zero);
+            c2 = dlamc3(b2 / rbase, zero);
+            d2 = zero;
+
+            for (i = 1; i <= base; i++) {
+                d2 = d2 + b2;
+            }
+        } // while ((c1 == a) && (c2 == a) && (d1 == a) && (d2 == a))
+
+        return;
+    } // dlamc4
+    
+    /**
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLAMC5 Original DLAMC5 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlamc5 attempts to compute rmax, the largest machine floating-point number, without overflow. It assumes
+     * that emax + abs(emin) sum approximately to a power of 2. It will fail on machines where this assumption does not
+     * hold, for example, the Cyber 205 (emin = -28625, emax = 28718). It will also fail if the value supplied for emin
+     * is too large (i.e. too close to zero), probably with overflow
+     *
+     * @param  beta  input int The base of floating-point arithmetic.
+     * @param  p     input int The number of base beta digits in the mantissa of a floating-point value.
+     * @param  emin  input int The minimum exponent before (gradual) underflow.
+     * @param  ieee  input boolean A logical flag specifying whether or not the arithmetic system is thought to comply
+     *               with the IEEE standard.
+     * @param  emax  output int[] The largest exponent before overflow.
+     * @param  rmax  output double[] The largest machine floating-point number.
+     */
+    private void dlamc5(int beta, int p, int emin, boolean ieee, int[] emax, double[] rmax) {
+        int exbits;
+        int expsum;
+        int i;
+        int lexp;
+        int nbits;
+        int trya;
+        int uexp;
+        double oldy = 0.0;
+        double recbas;
+        double y;
+        double z;
+
+        // First compute lexp and uexp, two powers of 2 that bound abs(emin).  We
+        // then assume that emax + abs(emin) will sum approximately to the bound
+        // that is closest to abs(emin).  (emax is the exponent of the required
+        // number rmax).
+
+        lexp = 1;
+        exbits = 1;
+        trya = lexp * 2;
+
+        while (trya <= (-emin)) {
+            lexp = trya;
+            exbits = exbits + 1;
+            trya = lexp * 2;
+        } // while (trya <= (-emin))
+
+        if (lexp == -emin) {
+            uexp = lexp;
+        } else {
+            uexp = trya;
+            exbits = exbits + 1;
+        }
+
+        // Now -lexp is less than or equal to emin, and -uexp is greater than or
+        // equal to emin.  exbits is the number of bits needed to store the
+        // exponent.
+
+        if ((uexp + emin) > (-lexp - emin)) {
+            expsum = 2 * lexp;
+        } else {
+            expsum = 2 * uexp;
+        }
+
+        // expsum is the exponent range, approximately equal to emax - emin + 1
+        emax[0] = expsum + emin - 1;
+        nbits = 1 + exbits + p;
+
+        // nbits is the total number of bits needed to store a floating-point
+        // number.
+
+        if (((nbits % 2) == 1) && (beta == 2)) {
+
+            // Either there are an odd number of bits used to store a floating-point
+            // number, which is unlikely, or some bits are not used in the
+            // representation of numbers, which is possible, (e.g Cray machines) or
+            // the mantissa has an implicit bit, (e.g. IEEE machines, Dec VAX
+            // machines), which is perhaps the most likely.  We have to assume the
+            // last alternative.  If this is true, then we need to reduce emax by
+            // one because there must be some way of representing zero in an
+            // implicit-bit system.  On machines like the Cray, we are reducing
+            // emax by one unnecessarily.
+            emax[0] = emax[0] - 1;
+        }
+
+        if (ieee) {
+
+            // Assume we are on an IEEE machine which reserves one exponent for
+            // infinity and NaN
+            emax[0] = emax[0] - 1;
+        }
+
+        // Now create rmax, the largest machine number, which should be equal to
+        // (1.0 - beta**(-p))* beta**emax.
+
+        // First compute 1.0 - beta**(-p), being careful that the result is less
+        // than 1.0.
+
+        recbas = 1.0 / beta;
+        z = beta - 1.0;
+        y = 0.0;
+
+        for (i = 1; i <= p; i++) {
+            z = z * recbas;
+
+            if (y < 1.0) {
+                oldy = y;
+            }
+
+            y = dlamc3(y, z);
+        } // for (i = 1; i <= p; i++)
+
+        if (y >= 1.0) {
+            y = oldy;
+        }
+
+        // Now multiply by beta**emax to get rmax
+
+        for (i = 1; i <= emax[0]; i++) {
+            y = dlamc3(y * beta, 0.0);
+        }
+
+        rmax[0] = y;
+
+        return;
+    } // dlamc5
+    
+    /**
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLABAD Original DLABAD created by Univ. of Tennessee,
+     * Univ. of California Berkeley,  Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlabad takes as input the values computed by dlamch for underflow and overflow, and returns the square root
+     * of each of these values if the log of large is sufficiently big. This routine is intended to identify machines
+     * with a large exponent range, such as the Crays, and redefine the underflow and overflow limits to be the square
+     * roots fo the values computed by dlamch. This subroutine is needed because dlamch does not compensate for poor
+     * arithmetic in the upper half of the exponent range, as is found on a Cray.
+     *
+     * @param  small  input/ouptut double[] On entry, the underflow threshold as computed by dlamch. On exit, if
+     *                log10(large) is sufficiently large, the square root of small, otherwise unchanged.
+     * @param  large  input/output double[] On entry, the overflow threshold as computed by dlamch. On exit, if
+     *                log10(large) is sufficiently large, the square root of large, otherwise unchanged.
+     */
+    private void dlabad(double[] small, double[] large) {
+
+        // If it looks like we're on a Cray, take the square root of small and
+        // large to avoid overflow and underflow problems.
+        if ((0.4342944819 * Math.log(large[0])) > 2000.0) {
+            small[0] = Math.sqrt(small[0]);
+            large[0] = Math.sqrt(large[0]);
+        }
+
+        return;
+    } // dlabad
+    
+    /**
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLANGE Original DLANGE created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlange returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of the
+     * largest absolute value of a real matrix A.
+     *
+     * @param   norm  input char Specifies the value to be returned from dlange as:
+     *                = 'M' or 'm' returns max(abs(A[i][j])). Note that this is not a matrix norm. 
+     *                = '1', 'O' or 'o' returns norm1(A), where norm1 denotes the one norm of a matrix
+     *                                 (maximum column sum) 
+     *                = 'I' or 'i' returns normI(A), where normI denotes the infinity norm of a matrix (maximum row sum)
+     *                = 'F', 'f', 'E', or 'e' returns normF(A), where normF denotes the Frobenius norm of a matrix
+     *                                       (square root of sum of squares).
+     * @param   m     input int The number of rows of the matrix A. m >= 0. When m = 0, dlange returns zero.
+     * @param   n     input int The number of columns of the matrix A. n >= 0. When n = 0, dlange returns zero.
+     * @param   A     input double[][] array of dimension (lda,n). Contains the m by n matrix A.
+     * @param   lda   input int The leading dimension of the array A. lda >= max(1,m).
+     * @param   work  workspace double[] of dimension max(1, lwork), where lwork >= m when norm = 'I';
+     *                otherwise, work is not referenced.
+     *
+     * @return  double
+     */
+    private double dlange(char norm, int m, int n, double[][] A, int lda, double[] work) {
+        int i;
+        int j;
+        double[] scale = new double[1];
+        double[] sum = new double[1];
+        double value = 0.0;
+        double[] x;
+
+        if (Math.min(m, n) == 0) {
+            value = 0.0;
+        } else if ((norm == 'M') || (norm == 'm')) {
+            // Find max(abs(A[i][j]))
+
+            value = 0.0;
+
+            for (j = 0; j < n; j++) {
+
+                for (i = 0; i < m; i++) {
+                    value = Math.max(value, Math.abs(A[i][j]));
+                }
+            }
+        } // else if ((norm == 'M') || (norm == 'm'))
+        else if ((norm == 'O') || (norm == 'o') || (norm == '1')) {
+
+            // Find norm1(A)
+            value = 0.0;
+
+            for (j = 0; j < n; j++) {
+                sum[0] = 0.0;
+
+                for (i = 0; i < m; i++) {
+                    sum[0] = sum[0] + Math.abs(A[i][j]);
+                }
+
+                value = Math.max(value, sum[0]);
+            } // for (j = 0; j < n; j++)
+        } // else if ((norm == 'O') || (norm == 'o') || (norm == '1'))
+        else if ((norm == 'I') || (norm == 'i')) {
+
+            // Find normI(A)
+            for (i = 0; i < m; i++) {
+                work[i] = 0.0;
+            }
+
+            for (j = 0; j < n; j++) {
+
+                for (i = 0; i < m; i++) {
+                    work[i] = work[i] + Math.abs(A[i][j]);
+                }
+            } // for (j = 0; j < n; j++)
+
+            value = 0.0;
+
+            for (i = 0; i < m; i++) {
+                value = Math.max(value, work[i]);
+            }
+        } // else if ((norm == 'I') || (norm == 'i'))
+        else if ((norm == 'F') || (norm == 'f') || (norm == 'E') || (norm == 'e')) {
+
+            // Find normF(A)
+            scale[0] = 0.0;
+            sum[0] = 1.0;
+            x = new double[m];
+
+            for (j = 0; j < n; j++) {
+
+                for (i = 0; i < m; i++) {
+                    x[i] = A[i][j];
+                }
+
+                dlassq(m, x, 1, scale, sum);
+            } // for (j = 0; j < n; j++)
+
+            value = scale[0] * Math.sqrt(sum[0]);
+        } // else if ((norm == 'F') || (norm == 'f') || (norm == 'E') ||
+
+        return value;
+    } // dlange
+    
+    /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLASSQ Original DLASSQ created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlassq returns the values scl and smsq such that
+     *  (scl**2)*smsq = x[0]**2 + x[incx]**2 + ... + x[(n-1)*incx]**2 + (scale**2)*sumsq 
+     * The value of sumsq is assumed to be non-negative and scl returns the value 
+     *  scl =  max(scale,abs(x[i])). 
+     * scale and sumsq refer to the original supplied values in scale[] and sumsq[]. scl and smsq
+     * are the returned values in scale[] and sumsq[] that overwrite the orginal values. 
+     * This routine makes only one pass through the vector x.
+     *
+     * @param  n      input int The number of elements to be used from the vector x
+     * @param  x      input double[] The vector for which a scaled sum of squares is computed, using x[0], x[incx], ...,
+     *                x[(n-1)*incx]
+     * @param  incx   input int The increment between successive values of the vector x. incx > 0.
+     * @param  scale  input/output double[] On entry, the value scale in the equation above. On exit, scale is
+     *                overwritten with scl, the scaling factor for the sum of squares
+     * @param  sumsq  input/output double[] On entry, the value sumsq in the equation above. On exit, sumsq is
+     *                overwritten with smsq, the basic sum of squares from which scl has been factored out.
+     */
+    private void dlassq(int n, double[] x, int incx, double[] scale, double[] sumsq) {
+        int ix;
+        double absxi;
+        double ratio;
+
+        if (n > 0) {
+
+            for (ix = 0; ix <= ((n - 1) * incx); ix += incx) {
+
+                if (x[ix] != 0.0) {
+                    absxi = Math.abs(x[ix]);
+
+                    if (scale[0] < absxi) {
+                        ratio = scale[0] / absxi;
+                        sumsq[0] = 1 + (sumsq[0] * ratio * ratio);
+                        scale[0] = absxi;
+                    } // if (scale[0] < absxi)
+                    else { // scale[0] >= absxi
+                        ratio = absxi / scale[0];
+                        sumsq[0] = sumsq[0] + (ratio * ratio);
+                    } // else scale[0] >= absxi
+                } // if (x[ix] != 0.0)
+            } // for (ix = 0; ix <= (n-1)*incx; ix += incx)
+        } // if (n > 0)
+
+        return;
+    } // dlassq
+    
+    /**
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLASCL Original DLASCL created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlascl multiplies the m by n real matrix A by the real scalar cto/cfrom. This is done without
+     * over/underflow as long as the final result cto*A[i][j]/cfrom does not over/underflow. type specifies that A may
+     * be full, upper triangular, lower triangular, upper Hessenberg, or banded.
+     *
+     * @param  type   input char type indicates the storage type of the input matrix. 
+     *                = 'G': A is a full matrix. 
+     *                = 'L': A is a lower triangular matrix. 
+     *                = 'U': A is an upper triangular matrix. 
+     *                = 'H': A is an upper Hessenberg matrix. 
+     *                = 'B': A is a symmetric band matrix with lower bandwidth kL and upper bandwidth
+     *                       ku and with only the lower half stored. 
+     *                = 'Q': A is a symmetric band matrix with lower bandwidth kL and upper bandwidth
+     *                       ku and with only the upper half stored. 
+     *                = 'Z': A is a band matrix with lower bandwith kL and upper bandwidth ku
+     * @param  kL     input int The lower bandwidth of A. Referenced only if type = 'B', 'Q', or 'Z'.
+     * @param  ku     input int The upper bandwidth of A. Referenced only if type = 'B', 'Q', or 'Z'.
+     * @param  cfrom  input double
+     * @param  cto    input double The matrix A is multiplied by cto/cfrom. A[i][j] is computed without over/underflow
+     *                if the final result cto*A[i][j]/cfrom can be represented without over/underflow. cfrom must be
+     *                nonzero.
+     * @param  m      input int The number of rows of the matrix A. m >= 0.
+     * @param  n      input int The number of columns of the matrix A. n >= 0.
+     * @param  A      input/output double[][] of dimension lda by n. The matrix to be multiplied by cto/cfrom.
+     * @param  lda    input int The leading dimension of the array A. lda >= max(1,m).
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info = -i, the i-th argument had an illegal value
+     */
+    private void dlascl(char type, int kL, int ku, double cfrom, double cto, int m, int n, double[][] A, int lda,
+                        int[] info) {
+        boolean done;
+        int i;
+        int itype;
+        int j;
+        int k1;
+        int k2;
+        int k3;
+        int k4;
+        double bignum;
+        double cfrom1;
+        double cfromc;
+        double cto1;
+        double ctoc;
+        double mul;
+        double smlnum;
+
+        // Test the input arguments
+        info[0] = 0;
+
+        if ((type == 'G') || (type == 'g')) {
+            itype = 0;
+        } else if ((type == 'L') || (type == 'l')) {
+            itype = 1;
+        } else if ((type == 'U') || (type == 'u')) {
+            itype = 2;
+        } else if ((type == 'H') || (type == 'h')) {
+            itype = 3;
+        } else if ((type == 'B') || (type == 'b')) {
+            itype = 4;
+        } else if ((type == 'Q') || (type == 'q')) {
+            itype = 5;
+        } else if ((type == 'Z') || (type == 'z')) {
+            itype = 6;
+        } else {
+            itype = -1;
+        }
+
+        if (itype == -1) {
+            info[0] = -1;
+        } else if ((cfrom == 0.0) || (Double.isNaN(cfrom))) {
+            info[0] = -4;
+        } else if (Double.isNaN(cto)) {
+            info[0] = -5;
+        } else if (m < 0) {
+            info[0] = -6;
+        } else if ((n < 0) || ((itype == 4) && (n != m)) || ((itype == 5) && (n != m))) {
+            info[0] = -7;
+        } else if ((itype <= 3) && (lda < Math.max(1, m))) {
+            MipavUtil.displayError("itype = " + itype + " m = " + m + " lda = " + lda);
+            info[0] = -9;
+        } else if (itype >= 4) {
+
+            if ((kL < 0) || (kL > Math.max(m - 1, 0))) {
+                info[0] = -2;
+            } else if ((ku < 0) || (ku > Math.max(n - 1, 0)) || (((itype == 4) || (itype == 5)) && (kL != ku))) {
+                info[0] = -3;
+            } else if (((itype == 4) && (lda < (kL + 1))) || ((itype == 5) && (lda < (ku + 1))) ||
+                           ((itype == 6) && (lda < ((2 * kL) + ku + 1)))) {
+                info[0] = -9;
+            }
+        } // else if (itype >= 4)
+
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dlascl had info = " + info[0]);
+            Preferences.debug("Error dlascl had info = " + info[0] + "\n");
+            return;
+        }
+
+        // Quick return if possible
+        if ((n == 0) || (m == 0)) {
+            return;
+        }
+
+        // Get machine parameters
+        smlnum = dlamch('S');
+        bignum = 1.0 / smlnum;
+
+        cfromc = cfrom;
+        ctoc = cto;
+
+        do {
+            cfrom1 = cfromc * smlnum;
+            if (cfrom1 == cfromc) {
+                // cfromc is an infinity.  Multiply by a correctly signed zero for finite ctoc,
+                // or a NaN if ctoc is infinite
+                mul = ctoc/cfromc;
+                done = true;
+                cto1 = ctoc;
+            } // if (cfrom1 == cfromc)
+            else {
+                cto1 = ctoc / bignum;
+                if (cto1 == ctoc) {
+                    // ctoc is either 0 or an infinity.  In both cases, ctoc itself
+                    // serves as the correct multiplication factor
+                    mul = ctoc;
+                    done = true;
+                    cfromc = 1.0;
+                }
+                else if ((Math.abs(cfrom1) > Math.abs(ctoc)) && (ctoc != 0.0)) {
+                    mul = smlnum;
+                    done = false;
+                    cfromc = cfrom1;
+                } else if (Math.abs(cto1) > Math.abs(cfromc)) {
+                    mul = bignum;
+                    done = false;
+                    ctoc = cto1;
+                } else {
+                    mul = ctoc / cfromc;
+                    done = true;
+                }
+            }
+
+            if (itype == 0) {
+
+                // Full matrix
+                for (j = 0; j < n; j++) {
+
+                    for (i = 0; i < m; i++) {
+                        A[i][j] = A[i][j] * mul;
+                    }
+                }
+            } // if (itype == 0)
+            else if (itype == 1) {
+
+                // Lower triangular matrix
+                for (j = 0; j < n; j++) {
+
+                    for (i = j; i < m; i++) {
+                        A[i][j] = A[i][j] * mul;
+                    }
+                }
+            } // else if (itype == 1)
+            else if (itype == 2) {
+
+                // Upper triangular matrix
+                for (j = 0; j < n; j++) {
+
+                    for (i = 0; i <= Math.min(j, m - 1); i++) {
+                        A[i][j] = A[i][j] * mul;
+                    }
+                }
+            } // else if (itype == 2)
+            else if (itype == 3) {
+
+                // Upper Hessenberg matrix
+                for (j = 0; j < n; j++) {
+
+                    for (i = 0; i <= Math.min(j + 1, m - 1); i++) {
+                        A[i][j] = A[i][j] * mul;
+                    }
+                }
+            } // else if (itype == 3)
+            else if (itype == 4) {
+
+                // Lower half of a symmetric band matrix
+                k3 = kL + 1;
+                k4 = n + 1;
+
+                for (j = 0; j < n; j++) {
+
+                    for (i = 0; i <= Math.min(k3 - 1, k4 - j - 2); i++) {
+                        A[i][j] = A[i][j] * mul;
+                    }
+                }
+            } // else if (itype == 4)
+            else if (itype == 5) {
+
+                // upper half of a symmetric band matrix
+                k1 = ku + 2;
+                k3 = ku + 1;
+
+                for (j = 0; j < n; j++) {
+
+                    for (i = Math.max(k1 - j - 2, 0); i <= (k3 - 1); i++) {
+                        A[i][j] = A[i][j] * mul;
+                    }
+                }
+            } // else if (itype == 5)
+            else if (itype == 6) {
+
+                // Band matrix
+                k1 = kL + ku + 2;
+                k2 = kL + 1;
+                k3 = (2 * kL) + ku + 1;
+                k4 = kL + ku + 1 + m;
+
+                for (j = 0; j < n; j++) {
+
+                    for (i = Math.max(k1 - j - 2, k2 - 1); i <= Math.min(k3 - 1, k4 - j - 2); i++) {
+                        A[i][j] = A[i][j] * mul;
+                    }
+                }
+            } // else if (itype == 6)
+        } while (!done);
+
+        return;
+    } // dlascl
+    
+    /**
+     * This is a port of version 3.2 auxiliary routine DLASET. Original DLASET created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlaset initializes an m-by-n matrix A to beta on the diagonal and alpha on the offdiagonals.
+     *
+     * @param  uplo   input char Specifies the part of the matrix to be set. 
+     *                = 'U': Upper triangular part is set; the strictly lower triangular part of A is not changed. 
+     *                = 'L': Lower triangular part is set; the strictly upper triangular part of A is not changed.
+     *                Otherwise: All of the matrix A is set.
+     * @param  m      input int The number of rows of the matrix A. m >= 0.
+     * @param  n      input int The number of columns of the matrix A. n >= 0.
+     * @param  alpha  input double The constant to which the offdiagonal elements are to be set.
+     * @param  beta   input double The constant to which the diagonal elements are to be set.
+     * @param  A      input/output double[][] of dimension lda by n. On exit, the leading m-by-n submatrix of A is set
+     *                as follows: 
+     *                If uplo = 'U', A(i,j) = alpha, 0 <= i <= j-1, 0 <= j <= n-1,
+     *                If uplo = 'L', A(i,j) = alpha, j+1 <= i <= m-1, 0 <= j <= n-1, 
+     *                Otherwise, A(i,j) = alpha, 0 <= i <= m-1, 0 <= j <= n-1, i!= j
+     *                and, for all uplo, A(i,i) = beta, 0 <= i <= min(m-1,n-1).
+     * @param  lda    input int The leading dimension of the array A. lda >= max(1,m).
+     */
+    private void dlaset(char uplo, int m, int n, double alpha, double beta, double[][] A, int lda) {
+        int i;
+        int j;
+
+        if ((uplo == 'U') || (uplo == 'u')) {
+
+            // Set the srictly upper triangular or trapezoidal part of the array to
+            // alpha.
+            for (j = 1; j < n; j++) {
+
+                for (i = 0; i <= Math.min(j - 1, m - 1); i++) {
+                    A[i][j] = alpha;
+                }
+            }
+        } // if ((uplo == 'U') || (uplo == 'u'))
+        else if ((uplo == 'L') || (uplo == 'l')) {
+
+            // Set the strictly lower triangular or trapezoidal part of the array to
+            // alpha.
+            for (j = 0; j <= Math.min(m - 1, n - 1); j++) {
+
+                for (i = j + 1; i <= (m - 1); i++) {
+                    A[i][j] = alpha;
+                }
+            }
+        } // else if ((uplo == 'L') || (uplo == 'l'))
+        else {
+
+            // Set the leading m-by-n submatrix to alpha
+            for (j = 0; j < n; j++) {
+
+                for (i = 0; i < m; i++) {
+                    A[i][j] = alpha;
+                }
+            }
+        } // else
+
+        // Set the first min(m,n) diagonal elements to beta
+        for (i = 0; i <= Math.min(m - 1, n - 1); i++) {
+            A[i][i] = beta;
+        }
+
+        return;
+    } // dlaset
 
 }
