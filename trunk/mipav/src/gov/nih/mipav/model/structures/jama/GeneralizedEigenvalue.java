@@ -7500,8 +7500,9 @@ loop1:               {
     } // dgeqr2
 
     /**
-     * This is a port of version 3.1 LAPACK routine DGEQRF Original DGEQRF created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., Noovember, 2006 dgeqrf computes a QR factorization of a real m by n matrix A:
+     * This is a port of version 3.2 LAPACK routine DGEQRF Original DGEQRF created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dgeqrf computes a QR factorization of a real m by n matrix A:
      * A = Q * R.
      *
      * @param  m      input int The number of rows of the matrix A. m >= 0.
@@ -7566,6 +7567,7 @@ loop1:               {
         }
 
         if (info[0] != 0) {
+            Preferences.debug("Error dgeqrf had info[0] = " + info[0] + "\n");
             MipavUtil.displayError("Error dgeqrf had info[0] = " + info[0]);
 
             return;
@@ -10851,8 +10853,8 @@ loop3:                       {
     } // dhgeqz
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLABAD Original DLABAD created by Univ. of Tennessee,
-     * Univ. of California Berkeley,  and NAG Ltd., November, 2006
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLABAD Original DLABAD created by Univ. of Tennessee,
+     * Univ. of California Berkeley,  Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlabad takes as input the values computed by dlamch for underflow and overflow, and returns the square root
      * of each of these values if the log of large is sufficiently big. This routine is intended to identify machines
      * with a large exponent range, such as the Crays, and redefine the underflow and overflow limits to be the square
@@ -12711,7 +12713,7 @@ loop3:                       {
     } // dlaln2
 
     /**
-     * Port of version 3.1 LAPACK auxiliary routine DLAMC1 Original DLAMC1 created by Univ. of Tennessee, Univ. of
+     * Port of version 3.2 LAPACK auxiliary routine DLAMC1 Original DLAMC1 created by Univ. of Tennessee, Univ. of
      * California Berkeley, and NAG Ltd., November, 2006
      * dlamc1 determines the machine parameters given by beta, t, rnd, and ieee1.
      *
@@ -12838,7 +12840,7 @@ loop3:                       {
     } // dlamc1
 
     /**
-     * Port of LAPACK version 3.1 auxiliary routine DLAMC2 Original DLAMC2 created by Univ. of Tennessee, Univ. of
+     * Port of LAPACK version 3.2 auxiliary routine DLAMC2 Original DLAMC2 created by Univ. of Tennessee, Univ. of
      * California Berkeley, nad NAG Ltd., November, 2006
      * Determines machine parameters 3 globals are determined: 1.) eps double The smallest positive number such that
      * computed value(1.0 - eps) < 1.0 2.) rmin double The smallest normalized number for the machine, given by
@@ -12886,7 +12888,7 @@ loop3:                       {
         one = 1;
         two = 2;
 
-        // lbeta, lt, lrnd, leps, lemin, and lrmin are local values of beta, t,
+        // lbeta, lt, lrnd, leps, lemin, and lrmin are the local values of beta, t,
         // rnd, eps, emin, and rmin.
 
         // Throughout this routine we use the function dlamc3 to ensure that
@@ -13034,7 +13036,7 @@ loop3:                       {
     } // dlamc2
 
     /**
-     * This is a port of the LAPACK version 3.1 auxiliary routine DLAMC3 Original DLAMC3 created by Univ. of Tennessee,
+     * This is a port of the LAPACK version 3.2 auxiliary routine DLAMC3 Original DLAMC3 created by Univ. of Tennessee,
      * Univ. of California Berkeley, and NAG Ltd., November, 2006
      * dlamc3 is intended to force a and b to be stored prior to doing the addition of a and b, for use in
      * situations where optimizers might hold one of these in a register
@@ -13051,7 +13053,7 @@ loop3:                       {
     }
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLAMC4 Original DLAMC4 created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.2 LAPACK auxiliary routine DLAMC4 Original DLAMC4 created by Univ. of Tennessee, Univ.
      * of California Berkeley, and NAG Ltd., November, 2006
      * dlamc4 is a service routine for dlamc2
      *
@@ -13105,10 +13107,10 @@ loop3:                       {
         } // while ((c1 == a) && (c2 == a) && (d1 == a) && (d2 == a))
 
         return;
-    }
+    } // dlamc4
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLAMC5 Original DLAMC5 created by Univ. of Tennessee,
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLAMC5 Original DLAMC5 created by Univ. of Tennessee,
      * Univ. of California Berkeley, and NAG Ltd., November, 2006
      * dlamc5 attempts to compute rmax, the largest machine floating-point number, without overflow. It assumes
      * that emax + abs(emin) sum approximately to a power of 2. It will fail on machines where this assumption does not
@@ -13229,10 +13231,10 @@ loop3:                       {
         rmax[0] = y;
 
         return;
-    }
+    } // dlamc5
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLAMCH Original DLAMCH created by Univ. of Tennessee,
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLAMCH Original DLAMCH created by Univ. of Tennessee,
      * Univ. of California Berkeley, and NAG Ltd., November, 2006
      * dlamch determines double precision machine parameters.
      *
@@ -13423,8 +13425,8 @@ loop3:                       {
     }
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLANGE Original DLANGE created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLANGE Original DLANGE created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlange returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of the
      * largest absolute value of a real matrix A.
      *
@@ -16430,8 +16432,8 @@ loop3:                       {
     } // dlaruv
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLASCL Original DLASCL created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLASCL Original DLASCL created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlascl multiplies the m by n real matrix A by the real scalar cto/cfrom. This is done without
      * over/underflow as long as the final result cto*A[i][j]/cfrom does not over/underflow. type specifies that A may
      * be full, upper triangular, lower triangular, upper Hessenberg, or banded.
@@ -16501,8 +16503,10 @@ loop3:                       {
 
         if (itype == -1) {
             info[0] = -1;
-        } else if (cfrom == 0.0) {
+        } else if ((cfrom == 0.0) || (Double.isNaN(cfrom))) {
             info[0] = -4;
+        } else if (Double.isNaN(cto)) {
+            info[0] = -5;
         } else if (m < 0) {
             info[0] = -6;
         } else if ((n < 0) || ((itype == 4) && (n != m)) || ((itype == 5) && (n != m))) {
@@ -16524,7 +16528,7 @@ loop3:                       {
 
         if (info[0] != 0) {
             MipavUtil.displayError("Error dlascl had info = " + info[0]);
-
+            Preferences.debug("Error dlascl had info = " + info[0] + "\n");
             return;
         }
 
@@ -16542,19 +16546,34 @@ loop3:                       {
 
         do {
             cfrom1 = cfromc * smlnum;
-            cto1 = ctoc / bignum;
-
-            if ((Math.abs(cfrom1) > Math.abs(ctoc)) && (ctoc != 0.0)) {
-                mul = smlnum;
-                done = false;
-                cfromc = cfrom1;
-            } else if (Math.abs(cto1) > Math.abs(cfromc)) {
-                mul = bignum;
-                done = false;
-                ctoc = cto1;
-            } else {
-                mul = ctoc / cfromc;
+            if (cfrom1 == cfromc) {
+                // cfromc is an infinity.  Multiply by a correctly signed zero for finite ctoc,
+                // or a NaN if ctoc is infinite
+                mul = ctoc/cfromc;
                 done = true;
+                cto1 = ctoc;
+            } // if (cfrom1 == cfromc)
+            else {
+                cto1 = ctoc / bignum;
+                if (cto1 == ctoc) {
+                    // ctoc is either 0 or an infinity.  In both cases, ctoc itself
+                    // serves as the correct multiplication factor
+                    mul = ctoc;
+                    done = true;
+                    cfromc = 1.0;
+                }
+                else if ((Math.abs(cfrom1) > Math.abs(ctoc)) && (ctoc != 0.0)) {
+                    mul = smlnum;
+                    done = false;
+                    cfromc = cfrom1;
+                } else if (Math.abs(cto1) > Math.abs(cfromc)) {
+                    mul = bignum;
+                    done = false;
+                    ctoc = cto1;
+                } else {
+                    mul = ctoc / cfromc;
+                    done = true;
+                }
             }
 
             if (itype == 0) {
@@ -16644,8 +16663,8 @@ loop3:                       {
     } // dlascl
 
     /**
-     * This is a port of version 3.1 auxiliary routine DLASET. Original DLASET created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 auxiliary routine DLASET. Original DLASET created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlaset initializes an m-by-n matrix A to beta on the diagonal and alpha on the offdiagonals.
      *
      * @param  uplo   input char Specifies the part of the matrix to be set. 
@@ -17286,14 +17305,15 @@ loop4:
     } // dlasrt
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLASSQ Original DLASSQ created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK auxiliary routine DLASSQ Original DLASSQ created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlassq returns the values scl and smsq such that
      *  (scl**2)*smsq = x[0]**2 + x[incx]**2 + ... + x[(n-1)*incx]**2 + (scale**2)*sumsq 
      * The value of sumsq is assumed to be non-negative and scl returns the value 
      *  scl =  max(scale,abs(x[i])). 
      * scale and sumsq refer to the original supplied values in scale[] and sumsq[]. scl and smsq
-     * are the returned values in scale[] and sumsq[]. This routine makes only one pass through the vector x.
+     * are the returned values in scale[] and sumsq[] that overwrite the orginal values. 
+     * This routine makes only one pass through the vector x.
      *
      * @param  n      input int The number of elements to be used from the vector x
      * @param  x      input double[] The vector for which a scaled sum of squares is computed, using x[0], x[incx], ...,
