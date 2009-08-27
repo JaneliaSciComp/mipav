@@ -2128,7 +2128,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         posTextF = new JTextField(10);
         posTextF.setText("  ");
         posTextF.setFont(serif12);
-        posTextF.setEnabled(false);
+        //posTextF.setEnabled(false);
         positionPanel.add(posTextF, gbc);
 
         if (!haveColor) {
