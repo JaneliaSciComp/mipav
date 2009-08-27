@@ -235,6 +235,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
     }
+    
+    
+    
+    public ViewJFrameImage(ModelSimpleImage simpleImage, String name) {
+    	this(new ModelImage(simpleImage,name));
+    	
+    }
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------

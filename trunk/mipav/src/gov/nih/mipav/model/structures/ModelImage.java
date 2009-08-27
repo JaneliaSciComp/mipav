@@ -214,6 +214,22 @@ public class ModelImage extends ModelStorageBase {
     public ModelImage(int type, int[] dimExtents, String name, ViewUserInterface _UI) {
         this(type, dimExtents, name);
     }
+    
+    
+    
+    
+    
+    public ModelImage(ModelSimpleImage simpleImage, String name) {
+    	this(ModelImage.FLOAT, simpleImage.extents, name);
+    	try {
+        	this.importData(0, simpleImage.data, true);
+
+        } catch (IOException ioe) {
+            System.out.println("error importing values");
+
+        }
+    	
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -1063,6 +1079,7 @@ public class ModelImage extends ModelStorageBase {
     public String getImageDirectory() {
 
         if (fileInfo != null) {
+        	System.out.println(fileInfo[0].getFileDirectory());
             return fileInfo[0].getFileDirectory();
         } else {
             return null;
@@ -1077,6 +1094,7 @@ public class ModelImage extends ModelStorageBase {
     public String getImageFileName() {
 
         if (fileInfo != null) {
+        	System.out.println(fileInfo[0].getFileName());
             return fileInfo[0].getFileName();
         } else {
             return null;
