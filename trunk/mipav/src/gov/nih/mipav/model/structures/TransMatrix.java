@@ -777,6 +777,26 @@ public class TransMatrix extends Matrix4f
             throw new ArrayIndexOutOfBoundsException("Submatrix indices");
         }
     }
+    
+    
+    /** Set a submatrix. Borrowed from Jama, useful for copying a Jama
+     * matrix M by passing in M.getArray() for param X
+     *  @param X    A(i0:i1,j0:j1)
+     *  @exception  ArrayIndexOutOfBoundsException Submatrix indices
+     */
+    
+    public void setMatrix (double[][] X) {
+        try {
+            for (int r = 0; r < X.length; r++) {
+                for (int c = 0; c < X[0].length; c++) {
+                    Set(r, c, (float)X[r][c]);
+                }
+            }
+        } catch(ArrayIndexOutOfBoundsException e) {
+            throw new ArrayIndexOutOfBoundsException("Submatrix indices");
+        }
+    }
+    
 
     /**
      * Sets the rotation (2D) of transformation matrix.
