@@ -3795,6 +3795,101 @@ public class AlgorithmConvolver extends AlgorithmBase {
 
         return (float) (((1 - dz) * b1) + (dz * b2));
     }
+    
+    
+    
+    
+    /**
+     * Performs trilinear interpolation of image data.
+     *
+     * @param   i1        index into image
+     * @param   dx        change in x from integer
+     * @param   dy        change in y from integer
+     * @param   dz        change in z from integer
+     * @param   iExtents  dimensions of image
+     * @param   image     image data
+     *
+     * @return  the trilinearly interpolated data value
+     */
+    public static byte[] getTrilinearC(int i1, float dx, float dy, float dz, int[] iExtents, byte[] image) {
+
+        int xDim = iExtents[0];
+        int yDim = iExtents[1];
+        int imageSize = xDim * yDim * 4;
+        int i2, ix1, ix2, iy;
+
+        float a1, a2;
+        float b1, b2;
+        
+        i1 = i1 + 1; //get on red channel
+        
+
+        // The following code prevents an out of bounds array index from occurring
+        // in the case when the z coordinate exactly equals zdim - 1.
+        if (dz == 0.0f) {
+            i2 = i1;
+        } else {
+            i2 = i1 + imageSize;
+        }
+
+        if (dx == 0.0f) {
+            ix1 = i1;
+            ix2 = i2;
+        } else {
+            ix1 = i1 + 4;
+            ix2 = i2 + 4;
+        }
+
+        if (dy == 0.0f) {
+            iy = 0;
+        } else {
+            iy = xDim * 4;
+        }
+
+        
+        a1 = ((1 - dx) * (image[i1] & 0xff)) + (dx * (image[ix1] & 0xff));
+        a2 = ((1 - dx) * (image[i1 + iy] & 0xff)) + (dx * (image[ix1 + iy] & 0xff));
+        b1 = ((1 - dy) * a1) + (dy * a2);
+
+        a1 = ((1 - dx) * (image[i2] & 0xff)) + (dx * (image[ix2] & 0xff));
+        a2 = ((1 - dx) * (image[i2 + iy] & 0xff)) + (dx * (image[ix2 + iy] & 0xff));
+        b2 = ((1 - dy) * a1) + (dy * a2);
+        
+        
+        byte r = (byte) (((1 - dz) * b1) + (dz * b2));
+        
+
+        a1 = ((1 - dx) * (image[i1 + 1] & 0xff)) + (dx * (image[ix1 + 1] & 0xff));
+        a2 = ((1 - dx) * (image[i1 + iy + 1] & 0xff)) + (dx * (image[ix1 + iy + 1] & 0xff));
+        b1 = ((1 - dy) * a1) + (dy * a2);
+
+        a1 = ((1 - dx) * (image[i2 + 1] & 0xff)) + (dx * (image[ix2 + 1] & 0xff));
+        a2 = ((1 - dx) * (image[i2 + iy + 1] & 0xff)) + (dx * (image[ix2 + iy + 1] & 0xff));
+        b2 = ((1 - dy) * a1) + (dy * a2);
+        
+        byte g = (byte) (((1 - dz) * b1) + (dz * b2));
+        
+
+        a1 = ((1 - dx) * (image[i1 + 2] & 0xff)) + (dx * (image[ix1 + 2] & 0xff));
+        a2 = ((1 - dx) * (image[i1 + iy + 2] & 0xff)) + (dx * (image[ix1 + iy + 2] & 0xff));
+        b1 = ((1 - dy) * a1) + (dy * a2);
+
+        a1 = ((1 - dx) * (image[i2 + 2] & 0xff)) + (dx * (image[ix2 + 2] & 0xff));
+        a2 = ((1 - dx) * (image[i2 + iy + 2] & 0xff)) + (dx * (image[ix2 + iy + 2] & 0xff));
+        b2 = ((1 - dy) * a1) + (dy * a2);
+        
+        byte b = (byte) (((1 - dz) * b1) + (dz * b2));
+
+        byte[] rgb = {r,g,b};
+        
+        return rgb;
+    }
+    
+    
+    
+    
+    
+    
 
     /**
      * Initializes the convolver.
