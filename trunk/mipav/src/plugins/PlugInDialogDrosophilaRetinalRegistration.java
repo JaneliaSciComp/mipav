@@ -298,7 +298,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 
         //hard coding for testing...2nd dataset
         //imageX
-        currDir = "C:\\images\\nichd\\2_withBlurring2\\N4A07-TM2-40XO-NA-13-12bit-080608-3x0.ics";
+        /*currDir = "C:\\images\\nichd\\2_withBlurring2\\N4A07-TM2-40XO-NA-13-12bit-080608-3x0.ics";
         FileIO fileIO = new FileIO();
         imageX = fileIO.readImage("N4A07-TM2-40XO-NA-13-12bit-080608-3x0.ics", "C:\\images\\nichd\\2_withBlurring2" + File.separator, true, null);
         imageXFilePathTextField.setText(currDir);
@@ -327,7 +327,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
     		MipavUtil.displayError("Error reading nlt file");
     		return;
     	}
-    	transform3FilePathTextField.setText(currDir);
+    	transform3FilePathTextField.setText(currDir);*/
     	//end hard coding for testing
 	}
 	
