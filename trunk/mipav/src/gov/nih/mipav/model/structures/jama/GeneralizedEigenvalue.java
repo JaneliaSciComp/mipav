@@ -24,7 +24,7 @@ import gov.nih.mipav.view.*;
  * repeated 5 times. ddrvst_test was implemented to test dsyev. The statement All 648 tests for ddrvst passed the
  * threshold was repeated 5 times.</p>
  *
- * <p>The nonsymmetric generalized eigenvalue driver dggev was tested with dggev_test. The resulting statement was 12
+ * <p>The nonsymmetric generalized eigenvalue driver dggev was tested with dggev_test. The resulting statement was 21
  * out of 1092 dggev tests failed to pass the threshold. dchkgl was implemented to test the dggbal balancing routine of
  * dggev. All 8 tests showed no signficant error. dchkgk was implemented to test the dggbak backward balancing routine
  * of dggev. All 8 tests showed no significant error. dchkgg_test was implemented to test the dgghrd, dhgeqz, and dtgevc
@@ -7394,9 +7394,9 @@ loop1:               {
     } // dgemv
 
     /**
-     * This is a port of the version 3.1 LAPACK routine DGEQR2 Original DGEQR2 created by Univ. of Tennessee, Univ. of
-     * California Berkeley, NAG Ltd. November, 2006 dgeqr2 computes a QR factorization of a real m by n matrix A: A = Q
-     * * R
+     * This is a port of the version 3.2 LAPACK routine DGEQR2 Original DGEQR2 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd. November, 2006 
+     * dgeqr2 computes a QR factorization of a real m by n matrix A: A = Q * R
      *
      * @param  m     input int The number of rows of the matrix A. m >= 0.
      * @param  n     input int The number of columns of the matrix A. n >= 0.
@@ -7436,6 +7436,7 @@ loop1:               {
         }
 
         if (info[0] != 0) {
+            Preferences.debug("Error dgeqr2 had info[0] = " + info[0] + "\n");
             MipavUtil.displayError("Error dgeqr2 had info[0] = " + info[0]);
 
             return;
@@ -7453,7 +7454,7 @@ loop1:               {
                 x[j] = A[Math.min(i, m - 1) + j][i - 1];
             }
 
-            dlarfg(m - i + 1, alpha, x, 1, t);
+            dlarfp(m - i + 1, alpha, x, 1, t);
             A[i - 1][i - 1] = alpha[0];
 
             for (j = 0; j < (m - i); j++) {
@@ -14189,8 +14190,8 @@ loop3:                       {
     } // dlansy
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLAPY2 Original DLAPY2 created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLAPY2 Original DLAPY2 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlapy2 returns sqrt(x**2 + y**2), taking care not to cause unnecessary overflow.
      *
      * @param   x  input double
@@ -14318,10 +14319,11 @@ loop3:                       {
     } // dlaran
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLARF Original DLARF created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006 dlarf applies a real elementary reflector H to a real
-     * m by n matrix C, from either the left or right. H is represented in the form H = I - tau * v * v' where tau is a
-     * real scalar and v is a real vector If tau = 0, then H is taken to be the unit matrix.
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLARF Original DLARF created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006 
+     * dlarf applies a real elementary reflector H to a real m by n matrix C, from either the left or right. 
+     * H is represented in the form H = I - tau * v * v' where tau is a real scalar and v is a real vector.
+     * If tau = 0, then H is taken to be the unit matrix.
      *
      * @param  side  input char = 'L': form H * C, = 'R': form C * H
      * @param  m     input int The number of rows of the matrix C
@@ -14337,34 +14339,144 @@ loop3:                       {
      */
     private void dlarf(char side, int m, int n, double[] v, int incv, double tau, double[][] C, int ldc,
                        double[] work) {
+        boolean applyLeft;
+        int i;
+        int lastV;
+        int lastC;
 
-        if ((side == 'L') || (side == 'l')) {
+        applyLeft = ((side == 'L') || (side == 'l'));
+        lastV = 0;
+        lastC = 0;
+        if (tau != 0.0) {
+            // Set up variables for scanning V.  lastV begins pointing to the end of v.
+            if (applyLeft) {
+                lastV = m;
+            }
+            else {
+                lastV = n;
+            }
+            if (incv > 0) {
+                i = 1 + (lastV - 1) * incv;
+            }
+            else {
+                i = 1;
+            }
+            // Look for the last non-zero row in v.
+            while ((lastV > 0) && (v[i-1] == 0.0)) {
+                lastV = lastV - 1;
+                i = i - incv;
+            }
+            if (applyLeft) {
+                // Scan for the last non-zero column in C(0:lastv-1,:)
+                lastC = iladlc(lastV, n, C, ldc);
+            }
+            else {
+                // Scan for the last non-zero row in C(:,0:lastV-1)
+                lastC = iladlr(m, lastV, C, ldc);
+            }
+        } // if (tau != 0.0)
+        // Note that lastC == 0 renders BLAS operations null; no special case is needed at this level.
+        
+        if (applyLeft) {
 
             // Form H * C
-            if (tau != 0.0) {
+            if (lastV > 0) {
 
-                // w = C' * v
-                dgemv('T', m, n, 1.0, C, ldc, v, incv, 0.0, work, 1);
+                // w(0:lastC-1,0) = C(0:lastV-1,0:lastC-1)' * v(0:lastV-1,0)
+                dgemv('T', lastV, lastC, 1.0, C, ldc, v, incv, 0.0, work, 1);
 
-                // C = C - v * w'
-                dger(m, n, -tau, v, incv, work, 1, C, ldc);
-            } // if (tau != 0.0)
-        } // if ((side == 'L') || (side == 'l'))
-        else { // ((side == 'R') || (side == 'r'))
+                // C(0:lastV-1,0:lastC-1) = C(...) - v(0:lastV-1,0) * w(0:lastC-1,0)'
+                dger(lastV, lastC, -tau, v, incv, work, 1, C, ldc);
+            } // if (lastV > 0)
+        } // if (applyLeft)
+        else { // !applyLeft)
 
             // Form C * H
-            if (tau != 0.0) {
+            if (lastV > 0) {
 
-                // w = C * v
-                dgemv('N', m, n, 1.0, C, ldc, v, incv, 0.0, work, 1);
+                // w():lastC-1,0) = C(0:lastC-1,0:lastV-1) * v(0:lastV-1,0)
+                dgemv('N', lastC, lastV, 1.0, C, ldc, v, incv, 0.0, work, 1);
 
-                // C = C - w * v'
-                dger(m, n, -tau, work, 1, v, incv, C, ldc);
-            } // if (tau != 0.0)
-        } // else ((side == 'R') || (side == 'r'))
+                // C(0:lastC-1,0:lastV-1) = C(...) - w(0:lastC-1,0) * v(0:lastV-1,0)'
+                dger(lastC, lastV, -tau, work, 1, v, incv, C, ldc);
+            } // if (lastV > 0)
+        } // else !applyLeft
 
         return;
     } // dlarf
+    
+    /**
+     * This is a port of LAPACK auxiliary routine (version 3.2.1) ILADLC, April 2009
+     * Original ILADLC created by Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado
+     * Denver, and NAG Ltd.
+     * 
+     * iladlc scans A for its last non-zero column
+     * @param m input int The number of rows in matrix A.
+     * @param n input int The number of columns in matrix A.
+     * @param A input double[][] of dimension lda by n.  The m by n matrix A.
+     * @param lda input int The leading dimension of the array A.  lda >= max(1, m)
+     */
+    private int iladlc(int m, int n, double A[][], int lda) {
+        int i;
+        int j;
+        
+        // Quick test for the common case where one corner is non-zero.
+        if (n == 0) {
+            return n;
+        }
+        else if ((A[0][n-1] != 0.0) || (A[m-1][n-1] != 0.0)) {
+            return n;
+        }
+        else {
+            // Now scan each column form the end, returning with the first non-zero.
+            for (j = n; j >= 1; j--) {
+                for (i = 1; i <= m; i++) {
+                    if (A[i-1][j-1] != 0.0) {
+                        return j;
+                    }
+                }
+            }
+            return 0;
+        }
+    } // iladlc
+    
+    /**
+     * This is a port of LAPACK auxiliary routine (version 3.2.1) ILADLR, April 2009
+     * Original ILADLR created by Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado
+     * Denver, and NAG Ltd.
+     * 
+     * iladlc scans A for its last non-zero column
+     * @param m input int The number of rows in matrix A.
+     * @param n input int The number of columns in matrix A.
+     * @param A input double[][] of dimension lda by n.  The m by n matrix A.
+     * @param lda input int The leading dimension of the array A.  lda >= max(1, m)
+     */
+    private int iladlr(int m, int n, double A[][], int lda) {
+        int i;
+        int j;
+        int r;
+        
+        // Quick test for the common case where one corner is non-zero.
+        if (m == 0) {
+            return m;
+        }
+        else if ((A[m-1][0] != 0.0) || (A[m-1][n-1] != 0.0)) {
+            return m;
+        }
+        else {
+            // Scan up each column tracking the last zero row seen.
+            r = 0;
+            for (j = 1; j <= n; j++) {
+                for (i = m; i >= 1; i--) {
+                    if (A[i-1][j-1] != 0.0) {
+                        break;
+                    }
+                }
+                r = Math.max(r, i);
+            }
+            return r;
+        }
+    } // iladlc
 
     /**
      * This is a port of version 3.1 LAPACK auxiliary routine DLARFB Original DLARFB created by Univ. of Tennessee, Univ.
@@ -15040,7 +15152,8 @@ loop3:                       {
 
     /**
      * This is a port of version 3.1 LAPACK auxiliary routine DLARFG Original DLARFG created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006 dlarfg generates a real elementary reflector H of order n,
+     * of California Berkeley, and NAG Ltd., November, 2006 
+     * dlarfg generates a real elementary reflector H of order n,
      * such that H * (alpha) = (beta), H' * H = I. ( x ) ( 0 ) where alpha and beta are scalars, and x is an
      * (n-1)-element real vector. H is represented in the form H = I - tau * (1) * (1 v'), (v) where tau is a real
      * scalar and v is a real (n-1)-element vector. If the elements of x are all zero, then tau = 0 and H is taken to be
@@ -15125,10 +15238,117 @@ loop3:                       {
 
         return;
     } // dlarfg
+    
+    /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLARFP Original DLARFP created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006 
+     * dlarfp generates a real elementary reflector H of order n,
+     * such that H * (alpha) = (beta), H' * H = I. 
+     *               ( x )     ( 0 ) 
+     * where alpha and beta are scalars, beta is non-negative, and x is an (n-1)-element real vector.
+     * H is represented in the form H = I - tau * (1) * (1 v'), 
+     *                                            (v)
+     * where tau is a real scalar and v is a real (n-1)-element vector. If the elements of x are all zero,
+     * then tau = 0 and H is taken to be the unit matrix. Otherwise 1 <= tau <= 2.
+     *
+     * @param  n      input int The order of the elementary reflector.
+     * @param  alpha  input/output double[] On entry, the value alpha. On exit, it is overwritten with the value beta.
+     * @param  x      input/output double[] of dimension (1 + (n-2)*abs(incx)) On entry, the vector x. On exit, it is
+     *                overwritten with the vector v.
+     * @param  incx   input int The increment between elements of x. incx > 0
+     * @param  tau    output double[] The value tau
+     */
+    private void dlarfp(int n, double[] alpha, double[] x, int incx, double[] tau) {
+        int j;
+        int knt;
+        double beta;
+        double rsafmn;
+        double safmin;
+        double xnorm;
+
+        if (n <= 0) {
+            tau[0] = 0.0;
+
+            return;
+        }
+
+        xnorm = dnrm2(n - 1, x, incx);
+
+        if (xnorm == 0.0) {
+
+            // H = [+/-1, 0; I], sign chosen so that alpha[0] >= 0
+            if (alpha[0] >= 0.0) {
+                // When tau[0] == 0.0, the vector is special cased to be all zeros in the
+                // application routines.  We do not need to clear it.
+                tau[0] = 0.0;
+            } // if (alpha[0] >= 0.0)
+            else {
+                // However, the application routines rely on explicit zero checks when 
+                // tau[0] != 0.0, and we must clear x.
+                tau[0] = 2.0;
+                for (j = 1; j<= n-1; j++) {
+                    x[(j-1)*incx] = 0.0;
+                }
+                alpha[0] = -alpha[0];
+            } // else
+        } // if (xnorm == 0.0)
+        else { // general case
+
+            if (alpha[0] >= 0.0) {
+                beta = Math.abs(dlapy2(alpha[0], xnorm));
+            } else {
+                beta = -Math.abs(dlapy2(alpha[0], xnorm));
+            }
+
+            safmin = dlamch('S') / dlamch('E');
+            knt = 0;
+
+            if (Math.abs(beta) < safmin) {
+
+                // xnorm, beta may be inaccurate; scale x and recompute them
+                rsafmn = 1.0 / safmin;
+
+                do {
+                    knt = knt + 1;
+                    dscal(n - 1, rsafmn, x, incx);
+                    beta = beta * rsafmn;
+                    alpha[0] = alpha[0] * rsafmn;
+                } while (Math.abs(beta) < safmin);
+
+                // New beta is at most 1, at least safmin
+                xnorm = dnrm2(n - 1, x, incx);
+
+                if (alpha[0] >= 0.0) {
+                    beta = Math.abs(dlapy2(alpha[0], xnorm));
+                } else {
+                    beta = -Math.abs(dlapy2(alpha[0], xnorm));
+                }
+            } // if (Math.abs(beta) < safmin)
+            
+            alpha[0] = alpha[0] + beta;
+            if (beta < 0.0) {
+                beta = -beta;
+                tau[0] = -alpha[0]/beta;
+            }
+            else {
+                alpha[0] = xnorm * (xnorm/alpha[0]);
+                tau[0] = alpha[0]/beta;
+                alpha[0] = -alpha[0];
+            }
+            dscal(n-1, 1.0/alpha[0], x, incx);
+            
+            for (j = 1; j <= knt; j++) {
+                beta = beta * safmin;
+            }
+            alpha[0] = beta;
+        } // else general case
+
+        return;
+    } // dlarfp
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLARFT Original DLARFT created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLARFT Original DLARFT created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlarft forms the triangular factor T of a real block reflector H of order n, which is defined as the
      * product of k elementary reflectors. 
      * If direct = 'F', H = H[0] H[1] ... H[k-1] and T is upper triangular. 
@@ -15196,6 +15416,8 @@ loop3:                       {
         double[][] array1;
         int p;
         int q;
+        int lastV;
+        int prevLastV;
 
         // Quick return if possible
         if (n == 0) {
@@ -15203,9 +15425,9 @@ loop3:                       {
         }
 
         if ((direct == 'F') || (direct == 'f')) {
-
+            prevLastV = n;
             for (i = 1; i <= k; i++) {
-
+                prevLastV = Math.max(i, prevLastV);
                 if (tau[i - 1] == 0.0) {
 
                     // H[i-1] = I
@@ -15219,88 +15441,102 @@ loop3:                       {
                     vii = V[i - 1][i - 1];
                     V[i - 1][i - 1] = 1.0;
 
-                    if (i != 1) {
-
-                        if ((storev == 'C') || (storev == 'c')) {
-
-                            // T(0:i-2,i-1) = -tau[i-1] * V(i-1:n-1,0:i-2)' * V(i-1:n-1,i-1)
-                            array1 = new double[n - i + 1][i - 1];
-
-                            for (p = 0; p < (n - i + 1); p++) {
-
-                                for (q = 0; q < (i - 1); q++) {
-                                    array1[p][q] = V[p + i - 1][q];
-                                }
+                    if ((storev == 'C') || (storev == 'c')) {
+                        // Skip any trailing zeros
+                        for (lastV = n; lastV >= i+1; lastV--) {
+                            if (V[lastV-1][i-1] != 0.0) {
+                                break;
                             }
+                        }
+                        j = Math.min(lastV, prevLastV);
 
-                            vector1 = new double[n - i + 1];
+                        // T(0:i-2,i-1) = -tau[i-1] * V(i-1:j-1,0:i-2)' * V(i-1:j-1,i-1)
+                        array1 = new double[j - i + 1][i - 1];
 
-                            for (p = 0; p < (n - i + 1); p++) {
-                                vector1[p] = V[p + i - 1][i - 1];
+                        for (p = 0; p < (j - i + 1); p++) {
+
+                            for (q = 0; q < (i - 1); q++) {
+                                array1[p][q] = V[p + i - 1][q];
                             }
+                        }
 
-                            vector2 = new double[i - 1];
+                        vector1 = new double[j - i + 1];
 
-                            for (p = 0; p < (i - 1); p++) {
-                                vector2[p] = T[p][i - 1];
-                            }
+                        for (p = 0; p < (j - i + 1); p++) {
+                            vector1[p] = V[p + i - 1][i - 1];
+                        }
 
-                            dgemv('T', n - i + 1, i - 1, -tau[i - 1], array1, n - i + 1, vector1, 1, 0.0, vector2, 1);
+                        vector2 = new double[i - 1];
 
-                            for (p = 0; p < (i - 1); p++) {
-                                T[p][i - 1] = vector2[p];
-                            }
-                        } // if ((storev == 'C') || (storev == 'c'))
-                        else { // ((storev == 'R') || (storev == 'r'))
+                        for (p = 0; p < (i - 1); p++) {
+                            vector2[p] = T[p][i - 1];
+                        }
 
-                            // T(0:i-2,i-1) = -tau[i-1] * V(0:i-2,i-1:n-1) * V(i-1,i-1:n-1)'
-                            array1 = new double[i - 1][n - i + 1];
-
-                            for (p = 0; p < (i - 1); p++) {
-
-                                for (q = 0; q < (n - i + 1); q++) {
-                                    array1[p][q] = V[p][q + i - 1];
-                                }
-                            }
-
-                            vector1 = new double[n - i + 1];
-
-                            for (p = 0; p < (n - i + 1); p++) {
-                                vector1[p] = V[i - 1][p + i - 1];
-                            }
-
-                            vector2 = new double[i - 1];
-
-                            for (p = 0; p < (i - 1); p++) {
-                                vector2[p] = T[p][i - 1];
-                            }
-
-                            dgemv('N', i - 1, n - i + 1, -tau[i - 1], array1, i - 1, vector1, 1, 0.0, vector2, 1);
-
-                            for (p = 0; p < (i - 1); p++) {
-                                T[p][i - 1] = vector2[p];
-                            }
-                        } // else ((storev == 'R') || (storev == 'r'))
-                    } // if (i != 1)
-
-                    V[i - 1][i - 1] = vii;
-
-                    if (i != 1) {
-
-                        // T(0:i-2,i-1) = T(0:i-2,0:i-2) * T(0:i-2,i-1)
-                        dtrmv('U', 'N', 'N', i - 1, T, ldt, vector2, 1);
+                        dgemv('T', j - i + 1, i - 1, -tau[i - 1], array1, j - i + 1, vector1, 1, 0.0, vector2, 1);
 
                         for (p = 0; p < (i - 1); p++) {
                             T[p][i - 1] = vector2[p];
                         }
-                    } // if (i != 1)
+                    } // if ((storev == 'C') || (storev == 'c'))
+                    else { // ((storev == 'R') || (storev == 'r'))
+                        // Skip any trailing zeros.
+                        for (lastV = n; lastV >= i+1; lastV--) {
+                            if (V[i-1][lastV-1] != 0.0) {
+                                break;
+                            }
+                        }
+                        j = Math.min(lastV, prevLastV);
+                        // T(0:i-2,i-1) = -tau[i-1] * V(0:i-2,i-1:j-1) * V(i-1,i-1:j-1)'
+                        array1 = new double[i - 1][j - i + 1];
+
+                        for (p = 0; p < (i - 1); p++) {
+
+                            for (q = 0; q < (j - i + 1); q++) {
+                                array1[p][q] = V[p][q + i - 1];
+                            }
+                        }
+
+                        vector1 = new double[j - i + 1];
+
+                        for (p = 0; p < (j - i + 1); p++) {
+                            vector1[p] = V[i - 1][p + i - 1];
+                        }
+
+                        vector2 = new double[i - 1];
+
+                        for (p = 0; p < (i - 1); p++) {
+                            vector2[p] = T[p][i - 1];
+                        }
+
+                        dgemv('N', i - 1, j - i + 1, -tau[i - 1], array1, i - 1, vector1, 1, 0.0, vector2, 1);
+
+                        for (p = 0; p < (i - 1); p++) {
+                            T[p][i - 1] = vector2[p];
+                        }
+                    } // else ((storev == 'R') || (storev == 'r'))
+
+                    V[i - 1][i - 1] = vii;
+                    
+                    // T(0:i-2,i-1) = T(0:i-2,0:i-2) * T(0:i-2,i-1)
+                    dtrmv('U', 'N', 'N', i - 1, T, ldt, vector2, 1);
+
+                    for (p = 0; p < (i - 1); p++) {
+                        T[p][i - 1] = vector2[p];
+                    }
 
                     T[i - 1][i - 1] = tau[i - 1];
+                    
+                    if (i > 1) {
+                        prevLastV = Math.max(prevLastV, lastV);
+                    }
+                    else {
+                        prevLastV = lastV;
+                    }
                 } // else tau[i-1] != 0.0
             } // for (i = 1; i <= k; i++)
         } // if ((direct == 'F') || (direct == 'f'))
         else { // ((direct == 'B') || (direct == 'b'))
-
+            prevLastV = 1;
             for (i = k; i >= 1; i--) {
 
                 if (tau[i - 1] == 0.0) {
@@ -15318,22 +15554,28 @@ loop3:                       {
                         if ((storev == 'C') || (storev == 'c')) {
                             vii = V[n - k + i - 1][i - 1];
                             V[n - k + i - 1][i - 1] = 1.0;
+                            // Skip any leading zeros
+                            for (lastV = 1; lastV <= i-1; lastV++) {
+                                if (V[lastV-1][i-1] != 0.0) {
+                                    break;
+                                }
+                            }
+                            j = Math.max(lastV, prevLastV);
+                            // T(i:k-1,i-1) = -tau[i-1] * V(j-1:n-k+i-1,i:k-1)' *
+                            // V(j-1:n-k+i-1,i-1)
+                            array1 = new double[n - k + i - j + 1][k - i];
 
-                            // T(i:k-1,i-1) = -tau[i-1] * V(0:n-k+i-1,i:k-1)' *
-                            // V(0:n-k+i-1,i-1)
-                            array1 = new double[n - k + i][k - i];
-
-                            for (p = 0; p < (n - k + i); p++) {
+                            for (p = 0; p < (n - k + i - j + 1); p++) {
 
                                 for (q = 0; q < (k - i); q++) {
-                                    array1[p][q] = V[p][q + i];
+                                    array1[p][q] = V[j - 1 + p][q + i];
                                 }
                             }
 
-                            vector1 = new double[n - k + i];
+                            vector1 = new double[n - k + i - j + 1];
 
-                            for (p = 0; p < (n - k + i); p++) {
-                                vector1[p] = V[p][i - 1];
+                            for (p = 0; p < (n - k + i - j + 1); p++) {
+                                vector1[p] = V[j - 1 + p][i - 1];
                             }
 
                             vector2 = new double[k - i];
@@ -15342,7 +15584,7 @@ loop3:                       {
                                 vector2[p] = T[p + i][i - 1];
                             }
 
-                            dgemv('T', n - k + i, k - i, -tau[i - 1], array1, n - k + i, vector1, 1, 0.0, vector2, 1);
+                            dgemv('T', n - k + i - j + 1, k - i, -tau[i - 1], array1, n - k + i - j + 1, vector1, 1, 0.0, vector2, 1);
 
                             for (p = 0; p < (k - i); p++) {
                                 T[p + i][i - 1] = vector2[p];
@@ -15353,22 +15595,29 @@ loop3:                       {
                         else { // ((storev == 'R') || (storev == 'r'))
                             vii = V[i - 1][n - k + i - 1];
                             V[i - 1][n - k + i - 1] = 1.0;
+                            // Skip any leading zeros
+                            for (lastV = 1; lastV <= i-1; lastV++) {
+                                if (V[i-1][lastV-1] != 0.0) {
+                                    break;
+                                }
+                            }
+                            j = Math.max(lastV, prevLastV);
 
-                            // T(i:k-1,i-1) = -tau[i-1] * V(i:k-1,0:n-k+i-1) *
-                            // V(i-1,0:n-k+i-1)'
-                            array1 = new double[k - i][n - k + i];
+                            // T(i:k-1,i-1) = -tau[i-1] * V(i:k-1,j-1:n-k+i-1) *
+                            // V(i-1,j-1:n-k+i-1)'
+                            array1 = new double[k - i][n - k + i - j + 1];
 
                             for (p = 0; p < (k - i); p++) {
 
-                                for (q = 0; q < (n - k + i); q++) {
-                                    array1[p][q] = V[p + i][q];
+                                for (q = 0; q < (n - k + i - j + 1); q++) {
+                                    array1[p][q] = V[p + i][j - 1 + q];
                                 }
                             }
 
-                            vector1 = new double[n - k + i];
+                            vector1 = new double[n - k + i - j + 1];
 
-                            for (p = 0; p < (n - k + i); p++) {
-                                vector1[p] = V[i - 1][p];
+                            for (p = 0; p < (n - k + i - j + 1); p++) {
+                                vector1[p] = V[i - 1][j - 1 + p];
                             }
 
                             vector2 = new double[k - i];
@@ -15377,7 +15626,7 @@ loop3:                       {
                                 vector2[p] = T[p + i][i - 1];
                             }
 
-                            dgemv('N', k - i, n - k + i, -tau[i - 1], array1, k - i, vector1, 1, 0.0, vector2, 1);
+                            dgemv('N', k - i, n - k + i - j + 1, -tau[i - 1], array1, k - i, vector1, 1, 0.0, vector2, 1);
 
                             for (p = 0; p < (k - i); p++) {
                                 T[p + i][i - 1] = vector2[p];
@@ -15400,6 +15649,13 @@ loop3:                       {
 
                         for (p = 0; p < (k - i); p++) {
                             T[p + i][i - 1] = vector2[p];
+                        }
+                        
+                        if (i > 1) {
+                            prevLastV = Math.min(prevLastV, lastV);
+                        }
+                        else {
+                            prevLastV = lastV;
                         }
                     } // if (i < k)
 
