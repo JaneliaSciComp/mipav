@@ -43,21 +43,25 @@ void p_ImageReduce_Entropy_2DP ()
 
     if ( data0.r > 0.0 )
     {
+        data0.r = ceil(data0.r);
         gl_FragColor.r += (-data0.r * (log(data0.r) - dLogN));
         gl_FragColor.g += data0.r;
     }
     if ( data1.r > 0.0 )
     {
+        data1.r = ceil(data1.r);
         gl_FragColor.r += (-data1.r * (log(data1.r) - dLogN));
         gl_FragColor.g += data1.r;
     }
     if ( data2.r > 0.0 )
     {
+        data2.r = ceil(data2.r);
         gl_FragColor.r += (-data2.r * (log(data2.r) - dLogN));
         gl_FragColor.g += data2.r;
     }
     if ( data3.r > 0.0 )
     {
+        data3.r = ceil(data3.r);
         gl_FragColor.r += (-data3.r * (log(data3.r) - dLogN));
         gl_FragColor.g += data3.r;
     }
