@@ -22,10 +22,6 @@ implements StreamInterface
 {
     float m_fMin1;
     float m_fMin2;
-    float m_fMax1;
-    float m_fMax2;
-    float m_fRange1;
-    float m_fRange2;
     float m_fScale1;
     float m_fScale2;
     int m_iWidth;
@@ -36,73 +32,9 @@ implements StreamInterface
     int m_iNumTextures;
     boolean m_bHisto2D = false;
 
-
-    public VolumeHistogramEffect ( Texture kTexA, float fMinA, float fMaxA, 
-            int iWidth, int iHeight )
-    {
-        m_iWidth = iWidth;
-        m_iHeight = iHeight;
-        m_kImageTransform = Matrix4f.IDENTITY;
-        m_bUseTransform = false;
-        
-
-        /* Set single-pass rendering: */
-        SetPassQuantity(1);
-
-        PixelShader kPShader = new PixelShader("VolumeHistogramP", true);
-        VertexShader kVShader = new VertexShader("VolumeHistogram1DV", true);
-        SetVShader(0,kVShader);
-        SetPShader(0,kPShader);
-
-        m_iNumTextures = 1;
-        kPShader.SetTextureQuantity(2);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );        
-        m_fMin1 = fMinA;
-        m_fMax1 = fMaxA;
-        m_fRange1 = m_fMax1 - m_fMin1;
-        m_fScale1 = 1.0f / m_fRange1;       
-        
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_aiExtents[i] = kTexA.GetImage().GetBound(i);
-        }
-    }
-
-    public VolumeHistogramEffect ( Texture kTexA, float fMinA, float fMaxA, 
-            int iWidth, int iHeight, Matrix4f kImageTransform, boolean bUseTransform )
-    {
-        m_iWidth = iWidth;
-        m_iHeight = iHeight;
-        m_kImageTransform = kImageTransform;
-        m_bUseTransform = bUseTransform;
-        
-
-        /* Set single-pass rendering: */
-        SetPassQuantity(1);
-        PixelShader kPShader = new PixelShader("VolumeHistogramP", true);
-        VertexShader kVShader = new VertexShader("VolumeHistogram1D_MovingV", true);
-        SetVShader(0,kVShader);
-        SetPShader(0,kPShader);
-
-        m_iNumTextures = 1;
-        kPShader.SetTextureQuantity(2);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );        
-        m_fMin1 = fMinA;
-        m_fMax1 = fMaxA;
-        m_fRange1 = m_fMax1 - m_fMin1;
-        m_fScale1 = 1.0f / m_fRange1;       
-        
-        for ( int i = 0; i < 3; i++ )
-        {
-            m_aiExtents[i] = kTexA.GetImage().GetBound(i);
-        }
-    }
-
     public VolumeHistogramEffect ( Texture kTexA, Texture kTexB, 
             float fMinA, float fMaxA, float fMinB, float fMaxB,
-            int iWidth, int iHeight, Matrix4f kImageTransform, boolean bUseTransform )
+            int iWidth, int iHeight, int iNBins, Matrix4f kImageTransform, boolean bUseTransform )
     {
         m_iWidth = iWidth;
         m_iHeight = iHeight;
@@ -127,14 +59,18 @@ implements StreamInterface
         
        
         m_fMin1 = fMinA;
-        m_fMax1 = fMaxA;
-        m_fRange1 = m_fMax1 - m_fMin1;
-        m_fScale1 = 1.0f / m_fRange1;       
+        m_fScale1 = 1;
+        if ((fMaxA - fMinA) != 0) {
+            //m_fScale1 = (iNBins - 1) / (fMaxA - fMinA);
+            m_fScale1 = (1.0f) / (fMaxA - fMinA);
+        }
 
         m_fMin2 = fMinB;
-        m_fMax2 = fMaxB;
-        m_fRange2 = m_fMax2 - m_fMin2;
-        m_fScale2 = 1.0f / m_fRange2;
+        m_fScale2 = 1;
+        if ((fMaxB - fMinB) != 0) {
+            //m_fScale2 = (iNBins - 1) / (fMaxB - fMinB);
+            m_fScale2 = (1.0f) / (fMaxB - fMinB);
+        }
 
         for ( int i = 0; i < 3; i++ )
         {
@@ -168,15 +104,6 @@ implements StreamInterface
             pkCProgram.GetUC("Scale").GetData()[0] = m_fScale1;
             pkCProgram.GetUC("Scale").GetData()[1] = m_fScale2;
         } 
-        if ( pkCProgram != null && pkCProgram.GetUC("AB") != null ) 
-        {
-            pkCProgram.GetUC("AB").GetData()[0] = m_fRange1 / m_fRange2;
-            pkCProgram.GetUC("AB").GetData()[1] = ((m_fMin1 * m_fMax2) - (m_fMax1 * m_fMin2)) / m_fRange2;
-            
-
-            //System.err.println( "AB = " + pkProgram.GetUC("AB").GetData()[0] + " " 
-            //        + pkProgram.GetUC("AB").GetData()[1]);
-        } 
         if ( pkCProgram != null && pkCProgram.GetUC("VertexScale") != null ) 
         {
             pkCProgram.GetUC("VertexScale").GetData()[0] = m_iWidth;
@@ -204,21 +131,6 @@ implements StreamInterface
                     pkCProgram.GetUC("InverseTransformMatrix").GetData()[i*4+j] = m_kImageTransform.Get(i,j);
                 }
             }
-        } 
-        if ( pkCProgram != null && pkCProgram.GetUC("UseTransform") != null ) 
-        {
-            if ( m_iNumTextures == 1 )
-            {
-                pkCProgram.GetUC("UseTransform").GetData()[0] = m_bUseTransform ? 1 : 0;
-                pkCProgram.GetUC("UseTransform").GetData()[1] = 0;
-            }
-            else
-            {
-                pkCProgram.GetUC("UseTransform").GetData()[0] = 0;
-                pkCProgram.GetUC("UseTransform").GetData()[1] =  m_bUseTransform ? 1 : 0;
-            }
-            //System.err.println( "UseTransform = " + pkProgram.GetUC("UseTransform").GetData()[0] + " " 
-            //        + pkProgram.GetUC("UseTransform").GetData()[1]);
         } 
     }
     

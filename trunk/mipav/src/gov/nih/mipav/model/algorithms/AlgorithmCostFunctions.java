@@ -244,9 +244,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         }
         
 
-        if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
+        //if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
         {
-            m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false);
+            m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false, nBins);
         }
     }
 
@@ -343,6 +343,12 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED:
+                if ( m_kGPUCost != null )
+                {
+                    //double valueGPU = m_kGPUCost.getError(affMatrix);
+                    //value = normalizedMutualInformation(affMatrix);
+                    //System.err.println( "CPU:    " + value + "   gpu:    " + valueGPU );
+                }
                 value = normalizedMutualInformationSmoothed(affMatrix);
                 break;
 
@@ -714,6 +720,8 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             }
         }
 
+        //System.err.println( "CPU: " + nBins + " " + nVoxels + " " + nOverlap + " " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
+        
         // correct for difference in total histogram size
         // that is: nOverlap vs nVoxels
         // H_1 = N_0/N_1 * H_0 + log(N_1/N_0)

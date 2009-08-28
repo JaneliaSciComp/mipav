@@ -3,6 +3,7 @@ uniform sampler2D BaseSampler;
 uniform vec2 Step;
 uniform float dLogN;
 uniform float nVoxels;
+
 void p_ImageReduce_Entropy_1D_y ()
 {
     gl_FragColor = vec4(0.0);
@@ -19,14 +20,18 @@ void p_ImageReduce_Entropy_1D_y ()
     //float p = 0.0;
     if ( data0.r > 0.0 )
     {
+        data0.r = ceil(data0.r);
         //p = data0.r/nVoxels;
         gl_FragColor.r += (-data0.r * (log(data0.r) - dLogN));
+        gl_FragColor.g += data0.r;
         //gl_FragColor.r += (-p * log(p));
     }
     if ( data1.r > 0.0 )
     {
+        data1.r = ceil(data1.r);
         //p = data1.r/nVoxels;
         gl_FragColor.r += (-data1.r * (log(data1.r) - dLogN));
+        gl_FragColor.g += data1.r;
         //gl_FragColor.r += (-p * log(p));
     }
 }

@@ -334,7 +334,7 @@ public class VolumeImage
         GraphicsImage kReturn = null;
         float[] afData = null;
         int iSize = kImage.dataSize;
-        GraphicsImage.FormatMode eType = GraphicsImage.FormatMode.IT_L8;
+        GraphicsImage.FormatMode eType = GraphicsImage.FormatMode.IT_L32F;
         if ( kImage.isColor )
         {
             iSize *= 4;

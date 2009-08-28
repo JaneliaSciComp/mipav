@@ -4,15 +4,14 @@ uniform sampler3D imageA;
 uniform sampler3D imageB; 
 
 uniform float ZSlice;
+
 uniform vec2 Min;
 uniform vec2 Scale;
-uniform vec2 AB;
 
 uniform vec3 ImageSize;
 uniform vec3 ImageSizeInv;
 
 uniform mat4 InverseTransformMatrix;
-uniform vec2 UseTransform;
 
 void v_VolumeHistogram2DV()
 {
@@ -20,7 +19,7 @@ void v_VolumeHistogram2DV()
     texCoord.z = ZSlice;
 
     vec4 vol1 = texture3D(imageA, texCoord );
-//     vol1.r = (vol1.r - Min.x) * Scale.x;
+    vol1.r = (vol1.r - Min.x) * Scale.x;
 
     vec4 vert = gl_Vertex;
     vert.x = (vol1.r - 0.5) * 2.0;
@@ -40,8 +39,6 @@ void v_VolumeHistogram2DV()
     texCoord.y = kPos.y * ImageSizeInv.y;
     texCoord.z = kPos.z * ImageSizeInv.z;
     
-//     if ( (texCoord.x < 0.0) || (texCoord.x > 1.0) ||
-//          (texCoord.y < 0.0) || (texCoord.y > 1.0)    )
     if ( (texCoord.x < 0.0) || (texCoord.x > 1.0) ||
          (texCoord.y < 0.0) || (texCoord.y > 1.0) ||
          (texCoord.z < 0.0) || (texCoord.z > 1.0)    )
@@ -52,10 +49,7 @@ void v_VolumeHistogram2DV()
     else
     {
         vol2 = texture3D(imageB, texCoord );
-        
-        // LinearRescale:
-        //             vol2.r = (AB.x * vol2.r) + AB.y;
-        //             vol2.r = (vol2.r - Min.x) * Scale.x;
+        vol2.r = (vol2.r - Min.y) * Scale.y;
         vert.y = (vol2.r - 0.5) * 2.0;
     }
     

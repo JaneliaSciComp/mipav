@@ -77,10 +77,11 @@ implements GLEventListener, KeyListener
 
     private boolean m_bDispose = false;
     
-    public VolumeImageViewerPoint( ModelSimpleImage kImageA, ModelSimpleImage kImageB )
+    public VolumeImageViewerPoint( ModelSimpleImage kImageA, ModelSimpleImage kImageB, int iNBins )
     {
-        super( Math.max( kImageA.extents[0], kImageB.extents[0]), 
-                Math.max( kImageA.extents[1], kImageB.extents[1]));
+        //super( Math.max( kImageA.extents[0], kImageB.extents[0]), 
+        //        Math.max( kImageA.extents[1], kImageB.extents[1]));
+        super( iNBins,iNBins);
         m_kImageA = kImageA;
         m_kImageB = kImageB;
         
@@ -93,9 +94,9 @@ implements GLEventListener, KeyListener
     /**
      * @param args
      */
-    public static VolumeImageViewerPoint create( ModelSimpleImage kImageA, ModelSimpleImage kImageB, boolean bShowFrame )
+    public static VolumeImageViewerPoint create( ModelSimpleImage kImageA, ModelSimpleImage kImageB, boolean bShowFrame, int iNBins )
     {
-        final VolumeImageViewerPoint kWorld = new VolumeImageViewerPoint(kImageA, kImageB);
+        final VolumeImageViewerPoint kWorld = new VolumeImageViewerPoint(kImageA, kImageB, iNBins);
         final Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
         final Animator animator = new Animator( kWorld.GetCanvas() );  
@@ -317,7 +318,7 @@ implements GLEventListener, KeyListener
         
         m_kImageEffectDual = new VolumeHistogramEffect( m_kTextureA, m_kTextureB,
                 m_kImageA.min, m_kImageA.max, m_kImageB.min, m_kImageB.max, 
-                m_kImageA.extents[0],m_kImageA.extents[1], m_kImageTransform, true );
+                m_kImageA.extents[0],m_kImageA.extents[1], m_iWidth, m_kImageTransform, true );
         
         CreateImageMesh(m_kImageA.extents[0],m_kImageA.extents[1]);
         m_kImagePointsDual.AttachEffect(m_kImageEffectDual);
@@ -331,9 +332,7 @@ implements GLEventListener, KeyListener
         
         
 
-        int iSize = Math.max( m_kImageA.extents[0],m_kImageA.extents[1] );
-        int iCount = (int)Mathf.Log2( iSize );
-        iSize = Math.min( m_kImageA.extents[0],m_kImageA.extents[1] );
+        int iSize = Math.min( iWidth, iHeight );
         m_iCount = (int)Mathf.Log2( iSize );
 
         iWidth = Math.max(iWidth/2, 1);
@@ -370,7 +369,7 @@ implements GLEventListener, KeyListener
         int iWidth = m_iWidth;
         int iHeight = m_iHeight;
 
-        int iSize =  m_kImageA.extents[1];
+        int iSize =  iHeight;
         int iCountY = (int)Mathf.Log2( iSize );
         //System.err.println( iSize + " " + m_iCount );
 
@@ -401,7 +400,7 @@ implements GLEventListener, KeyListener
         iWidth = m_iWidth;
         iHeight = 1;
 
-        iSize =  m_kImageA.extents[0];
+        iSize =  iWidth;
         int iCountX = (int)Mathf.Log2( iSize ) + 1;
         //System.err.println( iSize + " " + m_iCount );
 
@@ -436,7 +435,7 @@ implements GLEventListener, KeyListener
         int iWidth = m_iWidth;
         int iHeight = m_iHeight;
 
-        int iSize =  m_kImageA.extents[0];
+        int iSize =  iWidth;
         int iCountX = (int)Mathf.Log2( iSize );
         //System.err.println( iSize + " " + m_iCount );
 
@@ -466,7 +465,7 @@ implements GLEventListener, KeyListener
         iWidth = 1;
         iHeight = m_iHeight;
 
-        iSize =  m_kImageA.extents[1];
+        iSize =  iHeight;
         int iCountY = (int)Mathf.Log2( iSize ) + 1;
         //System.err.println( iSize + " " + m_iCount );
 
@@ -497,8 +496,8 @@ implements GLEventListener, KeyListener
         calcEntropy( m_kImageA, m_kImageA.dataSize ); 
 
         int nVoxels = m_kImageA.dataSize;
-        if (m_dOverlap > 1000) {
-        //if (m_dOverlap > (0.75 * nVoxels)) {
+        if ( ( (m_kImageA.nDims < 3) && (m_dOverlap > 1000) ) ||
+                ( (m_kImageA.nDims == 3) && (m_dOverlap > (0.15 * nVoxels)) ) ) {
             double nRatio = ((double) nVoxels) / m_dOverlap;
 
             m_dHx  = (nRatio * m_dHx) - Math.log(nRatio);
@@ -545,23 +544,107 @@ implements GLEventListener, KeyListener
     {
         m_pkRenderer.GetTexImage( kTarget );
         float[] afData = kTarget.GetImage().GetFloatData();
-        System.err.println( kMsg + "   TEXTURE NAME = " + kTarget.GetName() );
-        for ( int i = 0; i < afData.length; i++ )
+        System.err.println( kMsg + "   TEXTURE NAME = " + kTarget.GetName() + " size = " +
+                kTarget.GetImage().GetBound(0) + " " + kTarget.GetImage().GetBound(1));
+        int iSum = 0;
+        for ( int i = 0; i < afData.length; i+=4 )
         {
             if ( afData[i] != 0.0f )
             {
                 System.err.println( i + " " + afData[i] );
             }
+            iSum += afData[i];
         }
+        System.err.println( "TOTAL: " + iSum );
+    }
+    
+    
+    private void calcCPU( Texture kTarget, double dNumSamples )
+    {
+        double dSize = m_kImageA.dataSize;
+        m_pkRenderer.GetTexImage( kTarget );
+        float[] afData = kTarget.GetImage().GetFloatData();
+        int iWidth = kTarget.GetImage().GetBound(0);
+        int iHeight = kTarget.GetImage().GetBound(1);
+        float[][] af2DData = new float[iWidth][iHeight];
+        float[] aXSum = new float[iHeight];
+        float[] aYSum = new float[iWidth];
+        float fXEntropy = 0;
+        float fYEntropy = 0;
+        int iSum = 0;
+        for ( int i = 0; i < iWidth; i++ )
+        {
+            for ( int j = 0; j < iHeight; j++ )
+            {
+                af2DData[i][j] = afData[4*(i*iHeight + j)];
+                iSum += af2DData[i][j];
+            }
+        }
+/*
+        for ( int i = 0; i < iWidth; i++ )
+        {
+            aYSum[i] = 0;
+            for ( int j = 0; j < iHeight; j++ )
+            {
+                aYSum[i] += af2DData[i][j];
+            }
+            if ( aYSum[i] != 0 )
+            {
+                System.err.print( i + " " + aYSum[i] + " " );
+                aYSum[i] = (float)(-aYSum[i] * (Math.log(aYSum[i]) -  Math.log(dSize) ));
+                System.err.println( aYSum[i] );
+                fXEntropy += aYSum[i];
+            }
+        }
+        System.err.println( "" );
+        System.err.println( "" );
+        System.err.println( "" );
+        System.err.println( "" );
+        for ( int i = 0; i < iHeight; i++ )
+        {
+            aXSum[i] = 0;
+            for ( int j = 0; j < iWidth; j++ )
+            {
+                aXSum[i] += af2DData[j][i];
+            }
+
+            if ( aXSum[i] != 0 )
+            {
+                System.err.print( i + " " + aXSum[i] + " " );
+                aXSum[i] = (float)(-aXSum[i] * (Math.log(aXSum[i]) -  Math.log(dSize) ));
+                System.err.println( aXSum[i] );
+                fYEntropy += aXSum[i];
+            }
+        }
+        fXEntropy /= dNumSamples;
+        fYEntropy /= dNumSamples;
+        System.err.println( "" );
+        System.err.println( "" );
+        System.err.println( "" );
+        System.err.println( "" );
+        System.err.println( fXEntropy + " " + fYEntropy );
+        System.err.println( "" );
+        System.err.println( "" );
+        System.err.println( "" );
+        System.err.println( "" );
+        */
+        System.err.println( iSum );
     }
     
     private void ReduceDualA( double dNumSamples )
     {
         Texture kTarget = null;
+
+        kTarget = m_akImageReduceSumX[0][0].GetTexture(0, 0);
+        //printTarget( "Reading", kTarget );
+        
         for ( int i = 0; i < 2; i++ )
         {
             kTarget = m_akImageReduceSumX[i][0].GetTexture(0, 0);
-            //printTarget( "Reading", kTarget );
+            if ( i == 1 )
+            {
+                //printTarget( "Reading", kTarget );
+            }
 
 
             m_pkPlane.DetachAllEffects();
@@ -588,7 +671,7 @@ implements GLEventListener, KeyListener
                 {
                     m_pkPlane.AttachEffect( m_akImageReduceSumX[i][iTarget] );
                     m_pkPlane.UpdateGS();
-                    //System.err.println( "Reading " + m_akImageReduceSumX[i][iTarget].GetTexture(0, 0).GetName() );
+                   // System.err.println( "Reading " + m_akImageReduceSumX[i][iTarget].GetTexture(0, 0).GetName() );
                     //System.err.println( "Effect " + m_akImageReduceSumX[i][iTarget].GetName() );
                 }
                 else
@@ -600,13 +683,15 @@ implements GLEventListener, KeyListener
 
         //printTarget( "Result", kTarget );
         double fEntropyX = 0;
+        double fOverlapX = 0;
         if ( kTarget != null )
         {
             m_pkRenderer.GetTexImage( kTarget );
             float[] afData = kTarget.GetImage().GetFloatData();
-            for ( int i = 0; i < afData.length; i++ )
+            for ( int i = 0; i < afData.length; i+=4 )
             {
                 fEntropyX += afData[i];
+                fOverlapX += afData[i+1];
             }
         }            
         //System.err.println( "Entropy = " + fEntropyX );
@@ -628,7 +713,6 @@ implements GLEventListener, KeyListener
         {
             kTarget = m_akImageReduceSumY[i][0].GetTexture(0, 0);
             //printTarget( "Reading", kTarget );
-
 
             m_pkPlane.DetachAllEffects();
             m_pkPlane.AttachEffect( m_akImageReduceSumY[i][0] );
@@ -666,13 +750,15 @@ implements GLEventListener, KeyListener
 
         //printTarget( "Result", kTarget );
         double fEntropyY = 0;
+        double fOverlapY = 0;
         if ( kTarget != null )
         {
             m_pkRenderer.GetTexImage( kTarget );
             float[] afData = kTarget.GetImage().GetFloatData();
-            for ( int i = 0; i < afData.length; i++ )
+            for ( int i = 0; i < afData.length; i+=4 )
             {
                 fEntropyY += afData[i];
+                fOverlapY += afData[i+1];
             }
         }            
         //System.err.println( "Entropy = " + fEntropyY );
@@ -736,11 +822,11 @@ implements GLEventListener, KeyListener
             }
         }            
         
-        m_dOverlap = dOverlap;
+        m_dOverlap = fOverlapX;
         m_dHy = fEntropyX;
         m_dHx = fEntropyY;
         m_dHxy = dEntropyDual/dNumSamples;
-        //System.err.println( m_dOverlap + " " + m_dHy + " " + m_dHxy + " " + fEntropyX + " " + fEntropyY );
+        //System.err.println( "GPU: " + m_iWidth + " " + dNumSamples + " " + m_dOverlap + " " + m_dHx + " " + m_dHy + " " + m_dHxy );
     }
     
     

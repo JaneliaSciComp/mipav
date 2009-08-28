@@ -199,9 +199,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             setPLogP(nBins); // precalculate
         }
 
-        if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
+        //if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
         {
-            m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false);
+            m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false, nBins);
         }
     }
 
@@ -296,26 +296,14 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED:
-                /*
-                value = normalizedMutualInformation(affMatrix);
-                long startTime = System.currentTimeMillis();
-                long start = System.nanoTime();
-                */
                 value = normalizedMutualInformationSmoothed(affMatrix);
-                /*
-                long estimate = System.nanoTime() - start;
-                long time = System.currentTimeMillis() - startTime;
-                System.err.println( "CPU: " + value + " " + estimate + " " + time );
                 if ( m_kGPUCost != null )
                 {
-                    startTime = System.currentTimeMillis();
-                    start = System.nanoTime();
-                    double valueGPU = m_kGPUCost.getError(affMatrix);
-                    estimate = System.nanoTime() - start;
-                    time = System.currentTimeMillis() - startTime;
-                    System.err.println( "GPU: " + valueGPU + " " + estimate + " " + time );
+                    //value = normalizedMutualInformation(affMatrix);
+                    //double valueGPU = m_kGPUCost.getError(affMatrix);
+                    //System.err.println( "CPU: " + value + "   GPU: " + valueGPU );
+                    //value = valueGPU;
                 }
-                */
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
@@ -639,6 +627,8 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             }
         }
 
+        //System.err.println( "CPU: " + nBins + " " + nVoxels + " " + nOverlap + " " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
+        
         // correct for difference in total histogram size
         // that is: nOverlap vs nVoxels
         // H_1 = N_0/N_1 * H_0 + log(N_1/N_0)

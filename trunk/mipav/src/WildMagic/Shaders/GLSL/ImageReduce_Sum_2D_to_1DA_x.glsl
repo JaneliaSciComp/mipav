@@ -14,6 +14,7 @@ void p_ImageReduce_Sum_2D_to_1DA_x ()
     vec4 data0 = texture2D(BaseSampler, index0);
     vec4 data1 = texture2D(BaseSampler, index1);
 
-    gl_FragColor.r = data0.r + data1.r;
+    //gl_FragColor.r = data0.r + data1.r;
+    gl_FragColor = data0 + data1;
 }
 //----------------------------------------------------------------------------
