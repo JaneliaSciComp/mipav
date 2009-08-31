@@ -3,8 +3,7 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.*;
 
 import java.io.*;
 import java.util.*;
@@ -265,8 +264,7 @@ public class FileMincHDF extends FileBase {
         List<Attribute> imageMetaData;
         if (imageNode == null) {
             System.out.println("imageNode == null");
-        }
-        else if (imageNode.getUserObject() == null) {
+        } else if (imageNode.getUserObject() == null) {
             System.out.println("imageNode.getUserObject() == null");
         }
         imageMetaData = ((HObject) imageNode.getUserObject()).getMetadata();
@@ -324,6 +322,10 @@ public class FileMincHDF extends FileBase {
         stepReordered = new double[totalDims];
         isCentered = new boolean[totalDims];
         dirCosines = new double[totalDims][totalDims];
+        // initialize the dirCosines to be identity in case it is not specified in the header
+        for (int i = 0; i < totalDims; i++) {
+            dirCosines[i][i] = 1;
+        }
         dimStringsReordered = new String[totalDims];
         dimStrings = new String[totalDims];
 
@@ -813,21 +815,21 @@ public class FileMincHDF extends FileBase {
                 maxdims, null, 0, null);
         final DefaultMutableTreeNode xSpaceNode = new DefaultMutableTreeNode(xSpaceObj);
         model.insertNodeInto(xSpaceNode, dimNode, dimNode.getChildCount());
-        
-        if ((image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) 
-            ||  (image.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+
+        if ( (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
+                || (image.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
             Preferences.debug("Copying direction cosines from SCANNER ANATOMICAL matrix\n");
             scannerArray = new double[3][3];
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
                     scannerArray[i][j] = image.getMatrix().get(i, j);
-                    Preferences.debug("scannerArray[" + i + "][" + j +"] = " + scannerArray[i][j] + " ");
+                    Preferences.debug("scannerArray[" + i + "][" + j + "] = " + scannerArray[i][j] + " ");
                 }
                 Preferences.debug("\n");
             }
             // MINC is L->R and P->A while MIPAV is R->L and A->P, so multiply first 2 rows by -1
             for (int i = 0; i <= 1; i++) {
-                for (int j = 0; j < 3; j ++) {
+                for (int j = 0; j < 3; j++) {
                     scannerArray[i][j] *= -1;
                 }
             }
@@ -988,9 +990,8 @@ public class FileMincHDF extends FileBase {
         // create an array here
         double[] dirCosines;
         if (scannerArray != null) {
-            dirCosines = new double[] {scannerArray[0][0], scannerArray[1][0], scannerArray[2][0]};    
-        }
-        else {
+            dirCosines = new double[] {scannerArray[0][0], scannerArray[1][0], scannerArray[2][0]};
+        } else {
             dirCosines = new double[] {1, 0, 0};
         }
         dirCosinesAttr.setValue(dirCosines);
@@ -1055,9 +1056,8 @@ public class FileMincHDF extends FileBase {
 
         // direction_cosines
         if (scannerArray != null) {
-            dirCosines = new double[] {scannerArray[0][1], scannerArray[1][1], scannerArray[2][1]};       
-        }
-        else {
+            dirCosines = new double[] {scannerArray[0][1], scannerArray[1][1], scannerArray[2][1]};
+        } else {
             dirCosines = new double[] {0, 1, 0};
         }
         dType = fileFormat.createDatatype(Datatype.CLASS_FLOAT, 8, Datatype.NATIVE, Datatype.SIGN_NONE);
@@ -1121,9 +1121,8 @@ public class FileMincHDF extends FileBase {
 
             // direction_cosines
             if (scannerArray != null) {
-                dirCosines = new double[] {scannerArray[0][2], scannerArray[1][2], scannerArray[2][2]};  
-            }
-            else {
+                dirCosines = new double[] {scannerArray[0][2], scannerArray[1][2], scannerArray[2][2]};
+            } else {
                 dirCosines = new double[] {0, 0, 1};
             }
             dType = fileFormat.createDatatype(Datatype.CLASS_FLOAT, 8, Datatype.NATIVE, Datatype.SIGN_NONE);
