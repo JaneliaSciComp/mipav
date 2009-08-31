@@ -18,7 +18,7 @@ import javax.swing.event.*;
  * @author   Matthew McAuliffe, Ph.D.
  */
 
-public class JDialogZoom extends JDialogBase implements ChangeListener, WindowListener {
+public class JDialogZoom extends JDialogBase implements ChangeListener, WindowListener, MouseListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -237,6 +237,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         magSlider.setEnabled(true);
         magSlider.setValue(Math.round(100 * initZoom));
         magSlider.addChangeListener(this);
+        magSlider.addMouseListener(this);
 
         JLabel maximum = new JLabel(String.valueOf(max / 100f));
         maximum.setForeground(Color.black);
@@ -331,7 +332,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         OKButton.setText("Apply");
         buildCancelButton();
         cancelButton.setText("Close");
-        buttonPanel.add(OKButton);
+        //buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -346,5 +347,49 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         setVisible(true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
+
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseReleased(MouseEvent e) {
+		Object source = e.getSource();
+		
+		if (source == magSlider) {
+            current.setText(String.valueOf(magSlider.getValue() / (float) 100));
+            magSlider.setValue((int) ((magSlider.getValue() / (float) 100) + 0.5) * 100);
+            
+            if (nearest.isSelected()) {
+                componentImage.setInterpolationMode(componentImage.NEAREST);
+                
+            } else if (bilinear.isSelected()) {
+                componentImage.setInterpolationMode(componentImage.BILINEAR);
+                
+
+            }
+
+            int zoom = magSlider.getValue();
+            ((ViewJFrameImage) parentFrame).updateFrame(zoom / 100.0f, zoom / 100.0f);
+            
+        }
+		
+		
+	}
 
 }
