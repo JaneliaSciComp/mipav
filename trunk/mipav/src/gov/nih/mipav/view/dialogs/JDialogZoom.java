@@ -80,13 +80,17 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
+        String command = event.getActionCommand();
 
         if (source == OKButton) {
 
             if (nearest.isSelected()) {
                 componentImage.setInterpolationMode(componentImage.NEAREST);
+                
             } else if (bilinear.isSelected()) {
                 componentImage.setInterpolationMode(componentImage.BILINEAR);
+                
+
             }
 
             int zoom = magSlider.getValue();
@@ -94,6 +98,14 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         } else if (source == cancelButton) {
             ((ViewJFrameImage) parentFrame).setZoomDialogNull();
             dispose();
+        }
+        
+        if(command.equals("nearest")) {
+        	componentImage.setInterpolationMode(componentImage.NEAREST);
+        	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, componentImage.NEAREST);
+        }else if(command.equals("bilinear")) {
+        	componentImage.setInterpolationMode(componentImage.BILINEAR);
+        	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, componentImage.BILINEAR);
         }
     }
 
@@ -108,6 +120,19 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         if (source == magSlider) {
             current.setText(String.valueOf(magSlider.getValue() / (float) 100));
             magSlider.setValue((int) ((magSlider.getValue() / (float) 100) + 0.5) * 100);
+            
+            if (nearest.isSelected()) {
+                componentImage.setInterpolationMode(componentImage.NEAREST);
+                
+            } else if (bilinear.isSelected()) {
+                componentImage.setInterpolationMode(componentImage.BILINEAR);
+                
+
+            }
+
+            //int zoom = magSlider.getValue();
+            //((ViewJFrameImage) parentFrame).updateFrame(zoom / 100.0f, zoom / 100.0f);
+            
         }
     }
 
@@ -265,11 +290,14 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         ButtonGroup radioGroup = new ButtonGroup();
         nearest = new JRadioButton("Nearest");
         nearest.setFont(serif12);
+        nearest.addActionListener(this);
+        nearest.setActionCommand("nearest");
         radioGroup.add(nearest);
 
         bilinear = new JRadioButton("BiLinear          ");
         bilinear.setFont(serif12);
-        bilinear.setEnabled(false);
+        bilinear.addActionListener(this);
+        bilinear.setActionCommand("bilinear");
         radioGroup.add(bilinear);
 
         cubic = new JRadioButton("Cubic");

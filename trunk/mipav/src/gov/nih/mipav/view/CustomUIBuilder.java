@@ -1,5 +1,7 @@
 package gov.nih.mipav.view;
 
+import gov.nih.mipav.view.CustomToolBarBuilder.ButtonParams;
+
 import java.awt.event.KeyEvent;
 
 public class CustomUIBuilder {
@@ -172,6 +174,7 @@ public class CustomUIBuilder {
             "<html>" + "Magnify image 0.5x" + "<br>" + "Hold SHIFT for multiple zooming" +
             "<br>" + "[right-click for options]" + "</html>", "zoomout");
 	public static final UIParams PARAM_IMAGE_MAG_REGION = new UIParams("MagRegion", "Magnify Region", "magregion");
+	public static final UIParams PARAM_IMAGE_MAG_CUSTOM = new UIParams("MagCustom", "Custom Magnification", "zoomCustom");
 	public static final UIParams PARAM_IMAGE_MAG_WINDOW = new UIParams("WinRegion", "Window region of image B", "winregion");
 	public static final UIParams PARAM_IMAGE_MAG_CHECKER = new UIParams("CheckerBoard", "Checker Board A&B", "checker");
 	public static final UIParams PARAM_IMAGE_MAG_ONE_TO_ONE = new UIParams("ZoomOne", "Magnify image 1.0x", "zoom1");

@@ -337,6 +337,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener {
 
         tBar.add(buildToggleButton(CustomUIBuilder.PARAM_IMAGE_MAG, VOIGroup));
         tBar.add(buildToggleButton(CustomUIBuilder.PARAM_IMAGE_UNMAG, VOIGroup));
+        tBar.add(buildToggleButton(CustomUIBuilder.PARAM_IMAGE_MAG_CUSTOM, VOIGroup));
         tBar.add(buildToggleButton(CustomUIBuilder.PARAM_IMAGE_MAG_REGION, VOIGroup));
         regButton = buildToggleButton(CustomUIBuilder.PARAM_IMAGE_MAG_WINDOW, VOIGroup);
         regButton.setEnabled(false);

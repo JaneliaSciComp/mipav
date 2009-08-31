@@ -2383,7 +2383,20 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // decSlice();
         } else if (command.equals("MagImage")) {
             componentImage.setCursorMode(ViewJComponentBase.ZOOMING_IN);
-        } else if (command.equals("UnMagImage")) {
+        }else if (command.equals("MagCustom")) {
+            componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
+            if (zoomDialog == null) {
+
+                try {
+                    zoomDialog = new JDialogZoom(this, componentImage, componentImage.getZoomX());
+                } catch (final OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory.: unable to open LUT frame.");
+                }
+
+                zoomDialog.setVisible(true);
+            }
+        }  
+        else if (command.equals("UnMagImage")) {
             componentImage.setCursorMode(ViewJComponentBase.ZOOMING_OUT);
         } else if (command.equals("LinkFrame")) {
 
