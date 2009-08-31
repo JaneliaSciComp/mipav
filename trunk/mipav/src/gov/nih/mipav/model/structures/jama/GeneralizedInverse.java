@@ -3598,5 +3598,2918 @@ public class GeneralizedInverse {
 
         return;
     } // dlaset
+    
+    /**
+     * This is a port of version 3.2 LAPACK routine DGEQRF Original DGEQRF created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dgeqrf computes a QR factorization of a real m by n matrix A:
+     * A = Q * R.
+     *
+     * @param  m      input int The number of rows of the matrix A. m >= 0.
+     * @param  n      input int The number of columns of the matrix A. n >= 0.
+     * @param  A      input/output double[][] of dimension (lda,n) On entry, the m by n matrix A. On exit, the elements
+     *                on and above the diagonal of the array contain the min(m,n)-by-n upper trapezoidal matrix R ( R is
+     *                upper triangular if m >= n); the elements below the diagonal, with the array tau, represent the
+     *                orthogonal matrix Q as a product of min(m,n) elementary reflectors. The matrix Q is represented as
+     *                a product of elementary reflectors Q = H(1) H(2) . . . H(k), where k = min(m,n) Each H(i) has the
+     *                form H(i) = I - tau * v * v' where tau is a real scalar, and v is a real vector with v(0:i-2) = 0
+     *                and v(i-1) = 1; v(i:m-1) is stored on exit in A(i:m-1,i-1), and tau in tau[i-1].
+     * @param  lda    input int The leading dimension of the array A. lda >= max(1,m).
+     * @param  tau    output double[] of dimension min(m,n). The scalar factors of the elementary reflectors.
+     * @param  work   (workspace/output) double[] of dimension (max(1,lwork)) On exit, if info[0] = 0, work[0] returns
+     *                the optimal lwork.
+     * @param  lwork  input int The dimension of the array work. lwork >= max(1,n). For optimum performance, lwork >=
+     *                n*nb, where nb is the optimal blocksize. If lwork = -1, then a workspace query is assumed; the
+     *                routine only calculates the optimal size of the work array, returns this value as the first entry
+     *                of the work array, and no error message related to lwork is output.
+     * @param  info   output int[] = 0: successful exit, < 0: If info[0] = -i, the i-th argument had an illegal value
+     */
+    private void dgeqrf(int m, int n, double[][] A, int lda, double[] tau, double[] work, int lwork, int[] info) {
+        boolean lquery;
+        int i;
+        int ib;
+        int[] iinfo = new int[1];
+        int iws;
+        int k;
+        int ldwork = 1;
+        int lwkopt;
+        int nb;
+        int nbmin;
+        int nx;
+        String name;
+        String opts;
+        double[][] array1;
+        double[][] array2;
+        int row1;
+        int p;
+        int q;
+        double[] x;
+        double[][] work2d;
+        double[][] w2d;
+
+        // Test the input arguments
+        info[0] = 0;
+        name = new String("DGEQRF");
+        opts = new String(" ");
+        nb = ilaenv(1, name, opts, m, n, -1, -1);
+        lwkopt = n * nb;
+        work[0] = lwkopt;
+        lquery = (lwork == -1);
+
+        if (m < 0) {
+            info[0] = -1;
+        } else if (n < 0) {
+            info[0] = -2;
+        } else if (lda < Math.max(1, m)) {
+            info[0] = -4;
+        } else if ((lwork < Math.max(1, n)) && (!lquery)) {
+            info[0] = -7;
+        }
+
+        if (info[0] != 0) {
+            Preferences.debug("Error dgeqrf had info[0] = " + info[0] + "\n");
+            MipavUtil.displayError("Error dgeqrf had info[0] = " + info[0]);
+
+            return;
+        } else if (lquery) {
+            return;
+        }
+
+        // Quick return if possible
+        k = Math.min(m, n);
+
+        if (k == 0) {
+            work[0] = 1;
+
+            return;
+        } // if (k == 0)
+
+        nbmin = 2;
+        nx = 0;
+        iws = n;
+
+        if ((nb > 1) && (nb < k)) {
+
+            // Determine when to cross over from blocked to unblocked code.
+            nx = Math.max(0, ilaenv(3, name, opts, m, n, -1, -1));
+
+            if (nx < k) {
+
+                // Determine if workspace is large enough for blocked code.
+                ldwork = n;
+                iws = ldwork * nb;
+
+                if (lwork < iws) {
+
+                    // Not enough space to use optimal nb: reduce nb and
+                    // determine the minimum value of nb.
+                    nb = lwork / ldwork;
+                    nbmin = Math.max(2, ilaenv(2, name, opts, m, n, -1, -1));
+                } // if (lwork < iws)
+            } // if  (nx < k)
+        } // if ((nb > 1) && (nb < k))
+
+        if ((nb >= nbmin) && (nb < k) && (nx < k)) {
+
+            // Use blocked code initially.
+            for (i = 1; i <= (k - nx); i += nb) {
+                ib = Math.min(k - i + 1, nb);
+
+                // Compute the QR factorization of the current block
+                // A(i-1:m-1, i-1:i+ib-2)
+                row1 = Math.max(1, m - i + 1);
+                array1 = new double[row1][ib];
+
+                for (p = 0; p < row1; p++) {
+
+                    for (q = 0; q < ib; q++) {
+                        array1[p][q] = A[i - 1 + p][i - 1 + q];
+                    }
+                }
+
+                x = new double[Math.min(m - i + 1, ib)];
+                dgeqr2(m - i + 1, ib, array1, row1, x, work, iinfo);
+
+                for (p = 0; p < row1; p++) {
+
+                    for (q = 0; q < ib; q++) {
+                        A[i - 1 + p][i - 1 + q] = array1[p][q];
+                    }
+                }
+
+                for (p = 0; p < Math.min(m - i + 1, ib); p++) {
+                    tau[i - 1 + p] = x[p];
+                }
+
+                if ((i + ib) <= n) {
+
+                    // Form the triangular factor of the block reflector
+                    // H = H(i) H(i+1) . . . H(i+ib-1)
+                    x = new double[ib];
+
+                    for (p = 0; p < ib; p++) {
+                        x[p] = tau[i - 1 + p];
+                    }
+
+                    work2d = new double[ldwork][ib];
+                    dlarft('F', 'C', m - i + 1, ib, array1, row1, x, work2d, ldwork);
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < ib; q++) {
+                            A[i - 1 + p][i - 1 + q] = array1[p][q];
+                        }
+                    }
+
+                    // Apply H' to A(i-1:m-1,i+ib-1:n-1) from the left
+                    array2 = new double[m - i + 1][n - i - ib + 1];
+
+                    for (p = 0; p < (m - i + 1); p++) {
+
+                        for (q = 0; q < (n - i - ib + 1); q++) {
+                            array2[p][q] = A[i - 1 + p][i + ib - 1 + q];
+                        }
+                    }
+
+                    w2d = new double[ldwork][ib];
+                    dlarfb('L', 'T', 'F', 'C', m - i + 1, n - i - ib + 1, ib, array1, row1, work2d, ldwork, array2,
+                           m - i + 1, w2d, ldwork);
+
+                    for (p = 0; p < (m - i + 1); p++) {
+
+                        for (q = 0; q < (n - i - ib + 1); q++) {
+                            A[i - 1 + p][i + ib - 1 + q] = array2[p][q];
+                        }
+                    }
+                } // if (i+ib <= n)
+            } // for (i = 1; i <= k - nx; i += nb)
+        } // if ((nb >= nbmin) && (nb < k) && (nx < k))
+        else {
+            i = 1;
+        }
+
+        // Use unblocked code to factor the last or only block
+        if (i <= k) {
+            x = new double[Math.min(m - i + 1, n - i + 1)];
+            row1 = Math.max(1, m - i + 1);
+            array1 = new double[row1][n - i + 1];
+
+            for (p = 0; p < row1; p++) {
+
+                for (q = 0; q < (n - i + 1); q++) {
+                    array1[p][q] = A[i - 1 + p][i - 1 + q];
+                }
+            }
+
+            dgeqr2(m - i + 1, n - i + 1, array1, row1, x, work, iinfo);
+
+            for (p = 0; p < Math.min(m - i + 1, n - i + 1); p++) {
+                tau[i - 1 + p] = x[p];
+            }
+
+            for (p = 0; p < row1; p++) {
+
+                for (q = 0; q < (n - i + 1); q++) {
+                    A[i - 1 + p][i - 1 + q] = array1[p][q];
+                }
+            }
+        }
+
+        work[0] = iws;
+
+        return;
+    } // dgeqrf
+    
+    /**
+     * This is a port of the version 3.2 LAPACK routine DGEQR2 Original DGEQR2 created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd. November, 2006 
+     * dgeqr2 computes a QR factorization of a real m by n matrix A: A = Q * R
+     *
+     * @param  m     input int The number of rows of the matrix A. m >= 0.
+     * @param  n     input int The number of columns of the matrix A. n >= 0.
+     * @param  A     (input/output) double[][] of dimension (lda,n) On entry, the m by n matrix A. On exit, the elements
+     *               on and above the diagonal of the array contain the min(m,n) by n upper trapezoidal matrix R (R is
+     *               upper triangular if m >= n). The elements below the diagonal, with the array tau, represent the
+     *               orthogonal matrix Q as a product of elementary reflectors. The matrix Q is represented as a product
+     *               of elementary reflectors Q = H(1) H(2) . . . H(k), where k = min(m,n). Each H(i) has the form H(i)
+     *               = I - tau * v * v' where tau is a real scalar, and v is a real vector with v(0:i-2) = 0 and v(i-1)
+     *               = 1; v(i:m-1) is stored on exit in A(i:m-1, i-1), and tau in tau[i-1].
+     * @param  lda   input int The leading dimension of the array A. lda >= max(1,m).
+     * @param  tau   output double[] of dimension min(m,n) The scalar factors of the elementary reflectors.
+     * @param  work  (workspace) double[] of dimension (n)
+     * @param  info  output int[] = 0: successful exit, < 0: If info[0] = -i, the i-th argument had an illegal value.
+     */
+    private void dgeqr2(int m, int n, double[][] A, int lda, double[] tau, double[] work, int[] info) {
+        int i;
+        int k;
+        double aii;
+        double[] alpha = new double[1];
+        double[] t = new double[1];
+        double[] x;
+        double[][] array1;
+        int row1;
+        int j;
+        int p;
+
+        // Test the input arguments
+        info[0] = 0;
+
+        if (m < 0) {
+            info[0] = -1;
+        } else if (n < 0) {
+            info[0] = -2;
+        } else if (lda < Math.max(1, m)) {
+            info[0] = -4;
+        }
+
+        if (info[0] != 0) {
+            Preferences.debug("Error dgeqr2 had info[0] = " + info[0] + "\n");
+            MipavUtil.displayError("Error dgeqr2 had info[0] = " + info[0]);
+
+            return;
+        }
+
+        k = Math.min(m, n);
+
+        for (i = 1; i <= k; i++) {
+
+            // Generate elementary reflector H(i) to annihilate A(i:m-1,i-1)
+            alpha[0] = A[i - 1][i - 1];
+            x = new double[m - i];
+
+            for (j = 0; j < (m - i); j++) {
+                x[j] = A[Math.min(i, m - 1) + j][i - 1];
+            }
+
+            dlarfp(m - i + 1, alpha, x, 1, t);
+            A[i - 1][i - 1] = alpha[0];
+
+            for (j = 0; j < (m - i); j++) {
+                A[Math.min(i, m - 1) + j][i - 1] = x[j];
+            }
+
+            tau[i - 1] = t[0];
+
+            if (i < n) {
+
+                // Apply H(i) to A(i-1:m-1,i:n-1) from the left
+                aii = A[i - 1][i - 1];
+                A[i - 1][i - 1] = 1.0;
+                x = new double[m - i + 1];
+
+                for (j = 0; j < (m - i + 1); j++) {
+                    x[j] = A[i - 1 + j][i - 1];
+                }
+
+                row1 = Math.max(1, m - i + 1);
+                array1 = new double[row1][n - i];
+
+                for (j = 0; j < row1; j++) {
+
+                    for (p = 0; p < (n - i); p++) {
+                        array1[j][p] = A[i - 1 + j][i + p];
+                    }
+                }
+
+                dlarf('L', m - i + 1, n - i, x, 1, t[0], array1, row1, work);
+
+                for (j = 0; j < row1; j++) {
+
+                    for (p = 0; p < (n - i); p++) {
+                        A[i - 1 + j][i + p] = array1[j][p];
+                    }
+                }
+
+                A[i - 1][i - 1] = aii;
+            } // if (i < n)
+        } // for (i = 1; i <= k; i++)
+
+        return;
+    } // dgeqr2
+    
+    /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLARFB Original DLARFB created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlarfb applies a real block reflector H or its transpose H' to a real m by n matrix C, from either the left or
+     * the right.
+     *
+     * @param  side    input char 
+     *                 = 'L': apply H or H' from the left 
+     *                 = 'R': apply H or H' from the right
+     * @param  trans   input char 
+     *                 = 'N': Apply H (No transpose) 
+     *                 = 'T': Apply H' (Transpose)
+     * @param  direct  input char Indicates how H is formed from a product of elementary reflectors 
+     *                 = 'F': H = H[0] H[1] ... H[k-1] (Forward) 
+     *                 = 'B': H = H[k-1] ... H[1] H[0] (Backward)
+     * @param  storev  input char Indicates how the vectors which define the elementary reflectors are stored: 
+     *                 = 'C': Columnwise 
+     *                 = 'R': Rowwise
+     * @param  m       input int The number of rows of the matrix C.
+     * @param  n       input int The number of columns of the matrix C.
+     * @param  k       input int The order of the matrix T (= the number of elementary reflectors whose product defines
+     *                 the block reflector).
+     * @param  V       input double[][] If storev = 'C', dimensions are ldv by k. If storev = 'R' and side = 'L',
+     *                 dimensions are ldv by m. If storev = 'R' and side = 'R', dimensions are ldv by n.
+     * @param  ldv     input int The leading dimension of the array V. 
+     *                 If storev = 'C' and side = 'L', ldv >= max(1,m).
+     *                 If storev = 'C' and side = 'R', ldv >= max(1,n). 
+     *                 If storev = 'R', ldv >= k.
+     * @param  T       input double[][] of dimensions ldt by k The triangular k by k matrix T in the representation of
+     *                 the block reflector.
+     * @param  ldt     input int The leading dimension of the array T. ldt >= k.
+     * @param  C       input/output double[][] of dimensions ldc by n. On entry, the m by n matrix C. On exit, C is
+     *                 overwritten by H*C or H'*C or C*H or C*H'.
+     * @param  ldc     input int The leading dimension of the array C. ldc >= max(1,m).
+     * @param  work    workspace double[][] of dimensions ldwork by k
+     * @param  ldwork  input int The leading dimension of the array work. 
+     *                 If side = 'L', ldwork >= max(1,n). 
+     *                 If side = 'R', ldwork >= max(1,m).
+     */
+    private void dlarfb(char side, char trans, char direct, char storev, int m, int n, int k, double[][] V, int ldv,
+                        double[][] T, int ldt, double[][] C, int ldc, double[][] work, int ldwork) {
+        char transt;
+        int i;
+        int j;
+        int p;
+        int q;
+        int lastV;
+        int lastC;
+        int row1;
+        int row2;
+        double[][] array1;
+        double[][] array2;
+
+        // Quick return if possible
+        if ((m <= 0) || (n <= 0)) {
+            return;
+        }
+
+        if ((trans == 'N') || (trans == 'n')) {
+            transt = 'T';
+        } else {
+            transt = 'N';
+        }
+
+        if ((storev == 'C') || (storev == 'c')) {
+
+            if ((direct == 'F') || (direct == 'f')) {
+
+                // Let V = (V1)  (first k rows)
+                //         (V2)
+                // where V1 is unit lower triangular
+                if ((side == 'L') || (side == 'l')) {
+
+                    // Form H * C or H' * C where C = ( C1 )
+                    //                                ( C2 )
+                    lastV = Math.max(k, iladlr(m, k, V, ldv));
+                    lastC = iladlc(lastV, n, C, ldc);
+                    // W = C' * V = (C1'*V1 + C2'*V2) (stored in work)
+                    // W = C1'
+                    for (j = 0; j < k; j++) {
+
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[j][p];
+                        }
+                    } // for (j = 0; j < k; j++)
+
+                    // W = W * V1
+                    dtrmm('R', 'L', 'N', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
+
+                    if (lastV > k) {
+
+                        // W = W + C2'* V2
+                        row1 = Math.max(1, lastV - k);
+                        array1 = new double[row1][lastC];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < lastC; q++) {
+                                array1[p][q] = C[p + k][q];
+                            }
+                        }
+
+                        array2 = new double[row1][k];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < k; q++) {
+                                array2[p][q] = V[p + k][q];
+                            }
+                        }
+
+                        dgemm('T', 'N', lastC, k, lastV - k, 1.0, array1, row1, array2, 
+                                              row1, 1.0, work, ldwork);
+                    } // if (lastV > k)
+
+                    // W = W * T' or W * T
+                    dtrmm('R', 'U', transt, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
+
+                    // C = C - V * W'
+                    if (lastV > k) {
+
+                        // C2 = C2 - V2 * W'
+                        row1 = Math.max(1, lastV - k);
+                        array1 = new double[row1][k];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < k; q++) {
+                                array1[p][q] = V[p + k][q];
+                            }
+                        }
+
+                        array2 = new double[row1][lastC];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < lastC; q++) {
+                                array2[p][q] = C[p + k][q];
+                            }
+                        }
+
+                        dgemm('N', 'T', lastV - k, lastC, k, -1.0, array1, row1, work, ldwork, 1.0, array2, row1);
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < lastC; q++) {
+                                C[p + k][q] = array2[p][q];
+                            }
+                        }
+                    } // if (lastV > k)
+
+                    // W = W * V1'
+                    dtrmm('R', 'L', 'T', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
+
+                    // C1 = C1 - W'
+                    for (j = 0; j < k; j++) {
+
+                        for (i = 0; i < lastC; i++) {
+                            C[j][i] = C[j][i] - work[i][j];
+                        }
+                    }
+                } // if ((side == 'L') || (side == 'l'))
+                else if ((side == 'R') || (side == 'r')) {
+
+                    // Form C * H or C * H' where C = ( C1 C2 )
+                    lastV = Math.max(k, iladlr(n, k, V, ldv));
+                    lastC = iladlr(m, lastV, C, ldc);
+                    // W = C * V = (C1*V1 + C2*V2) (stored in work)
+                    // W = C1
+                    for (j = 0; j < k; j++) {
+
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[p][j];
+                        }
+                    } // for (j = 0; j < k; j++)
+
+                    // W = W * V1
+                    dtrmm('R', 'L', 'N', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
+
+                    if (lastV > k) {
+
+                        // W = W + C2 * V2
+                        row1 = Math.max(1, lastC);
+                        array1 = new double[row1][lastV - k];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < (lastV - k); q++) {
+                                array1[p][q] = C[p][q + k];
+                            }
+                        }
+
+                        row2 = Math.max(1, lastV - k);
+                        array2 = new double[row2][k];
+
+                        for (p = 0; p < row2; p++) {
+
+                            for (q = 0; q < k; q++) {
+                                array2[p][q] = V[p + k][q];
+                            }
+                        }
+
+                        dgemm('N', 'N', lastC, k, lastV - k, 1.0, array1, row1, array2, row2, 1.0, work, ldwork);
+                    } // if (lastV > k)
+
+                    // W = W * T or W * T'
+                    dtrmm('R', 'U', trans, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
+
+                    // C = C - W * V'
+                    if (lastV > k) {
+
+                        // C2 = C2 - W * V2'
+                        row1 = Math.max(1, lastV - k);
+                        array1 = new double[row1][k];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < k; q++) {
+                                array1[p][q] = V[p + k][q];
+                            }
+                        }
+
+                        row2 = Math.max(1, lastC);
+                        array2 = new double[row2][lastV - k];
+
+                        for (p = 0; p < row2; p++) {
+
+                            for (q = 0; q < (lastV - k); q++) {
+                                array2[p][q] = C[p][q + k];
+                            }
+                        }
+
+                        dgemm('N', 'T', lastC, lastV - k, k, -1.0, work, ldwork, array1, row1, 1.0, array2, row2);
+
+                        for (p = 0; p < row2; p++) {
+
+                            for (q = 0; q < (lastV - k); q++) {
+                                C[p][q + k] = array2[p][q];
+                            }
+                        }
+                    } // if (lastV > k)
+
+                    // W = W * V1'
+                    dtrmm('R', 'L', 'T', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
+
+                    // C1 = C1 - W
+                    for (j = 0; j < k; j++) {
+
+                        for (i = 0; i < lastC; i++) {
+                            C[i][j] = C[i][j] - work[i][j];
+                        }
+                    }
+                } // else if ((side == 'R') || (side == 'r'))
+            } // if ((direct == 'F') || (direct == 'f'))
+            else { // ((direct == 'B') || (direct == 'b'))
+
+                // Let V =  ( V1 )
+                //          ( V2 )  (last k rows)
+                // where V2 is unit upper triangular.
+                if ((side == 'L') || (side == 'l')) {
+
+                    // Form H * C or H' * C where C = ( C1 )
+                    //                                ( C2 )
+                    lastV = Math.max(k, iladlr(m, k, V, ldv));
+                    lastC = iladlc(lastV, n, C, ldc);
+                    // W = C' * V = (C1'*V1 + C2'*V2) (stored in work)
+                    // W = C2'
+                    for (j = 0; j < k; j++) {
+
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[lastV - k + j][p];
+                        }
+                    } // for (j = 0; j < k; j++)
+
+                    // W = W * V2
+                    row1 = Math.max(1, k);
+                    array1 = new double[row1][k];
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < k; q++) {
+                            array1[p][q] = V[p + lastV - k][q];
+                        }
+                    }
+
+                    dtrmm('R', 'U', 'N', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
+
+                    if (lastV > k) {
+
+                        // W = W + C1' * V1
+                        dgemm('T', 'N', lastC, k, lastV - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
+                    } // if (lastV > k)
+
+                    // W = W * T' or W * T
+                    dtrmm('R', 'L', transt, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
+
+                    // C = C - V * W'
+                    if (lastV > k) {
+
+                        // C1 = C1 - V1 * W'
+                        dgemm('N', 'T', lastV - k, lastC, k, -1.0, V, ldv, work, ldwork, 1.0, C, ldc);
+                    } // if (lastV > k)
+
+                    // W = W * V2'
+                    row1 = Math.max(1, k);
+                    array1 = new double[row1][k];
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < k; q++) {
+                            array1[p][q] = V[p + lastV - k][q];
+                        }
+                    }
+
+                    dtrmm('R', 'U', 'T', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
+
+                    // C2 = C2 - W'
+                    for (j = 0; j < k; j++) {
+
+                        for (i = 0; i < lastC; i++) {
+                            C[lastV - k + j][i] = C[lastV - k + j][i] - work[i][j];
+                        }
+                    }
+                } // if ((side == 'L') || (side == 'l'))
+                else if ((side == 'R') || (side == 'r')) {
+
+                    // Form C * H or C * H' where C = ( C1 C2 )
+                    lastV = Math.max(k, iladlr(n, k, V, ldv));
+                    lastC = iladlr(m, lastV, C, ldc);
+                    // W = C * V = (C1*V1 + C2*V2) (stored in work)
+                    // W = C2
+                    for (j = 0; j < k; j++) {
+
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[p][n - k + j];
+                        }
+                    }
+
+                    // W = W * V2
+                    row1 = Math.max(1, k);
+                    array1 = new double[row1][k];
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < k; q++) {
+                            array1[p][q] = V[p + lastV - k][q];
+                        }
+                    }
+
+                    dtrmm('R', 'U', 'N', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
+
+                    if (lastV > k) {
+
+                        // W = W + C1 * V1
+                        dgemm('N', 'N', lastC, k, lastV - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
+                    } // if (lastV > k)
+
+                    // W = W * T or W * T'
+                    dtrmm('R', 'L', trans, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
+
+                    // C = C - W * V'
+                    if (lastV > k) {
+
+                        // C1 = C1 - W * V1'
+                        dgemm('N', 'T', lastC, lastV - k, k, -1.0, work, ldwork, V, ldv, 1.0, C, ldc);
+                    } // if (lastV > k)
+
+                    // W = W * V2'
+                    row1 = Math.max(1,k);
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < k; q++) {
+                            array1[p][q] = V[p + lastV - k][q];
+                        }
+                    }
+
+                    dtrmm('R', 'U', 'T', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
+
+                    // C2 = C2 - W
+                    for (j = 0; j < k; j++) {
+
+                        for (i = 0; i < lastC; i++) {
+                            C[i][lastV - k + j] = C[i][lastV - k + j] - work[i][j];
+                        }
+                    }
+                } // else if ((side == 'R') || (side == 'r'))
+            } // else ((direct == 'B') || (direct == 'b'))
+        } // if ((storev == 'C') || (storev == 'c'))
+        else if ((storev == 'R') || (storev == 'r')) {
+
+            if ((direct == 'F') || (direct == 'f')) {
+
+                // Let V = ( V1 V2 )  (V1: first k columns)
+                // where V1 is unit upper triangular
+                if ((side == 'L') || (side == 'l')) {
+
+                    // Form H * C or H' * C where C = ( C1 )
+                    //                                ( C2 )
+                    lastV = Math.max(k, iladlc(k, m, V, ldv));
+                    lastC = iladlc(lastV, n, C, ldc);
+                    // W = C' * V' = (C1'*V1' + C2'V2') (stored in work)
+                    // W = C1'
+                    for (j = 0; j < k; j++) {
+
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[j][p];
+                        }
+                    }
+
+                    // W = W * V1'
+                    dtrmm('R', 'U', 'T', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
+
+                    if (lastV > k) {
+
+                        // W = W + C2'*V2'
+                        row1 = Math.max(1, lastV - k);
+                        array1 = new double[row1][lastC];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < lastC; q++) {
+                                array1[p][q] = C[p + k][q];
+                            }
+                        }
+
+                        row2 = Math.max(1,k);
+                        array2 = new double[row2][lastV - k];
+
+                        for (p = 0; p < row2; p++) {
+
+                            for (q = 0; q < (lastV - k); q++) {
+                                array2[p][q] = V[p][q + k];
+                            }
+                        }
+
+                        dgemm('T', 'T', lastC, k, lastV - k, 1.0, array1, row1, array2, row2, 1.0, work, ldwork);
+                    } // if (lastV > k)
+
+                    // W = W * T' or W * T
+                    dtrmm('R', 'U', transt, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
+
+                    // C = C - V' * W'
+                    if (lastV > k) {
+
+                        // C2 = C2 - V2' * W'
+                        row1 = Math.max(1, k);
+                        array1 = new double[row1][lastV - k];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < (lastV - k); q++) {
+                                array1[p][q] = V[p][q + k];
+                            }
+                        }
+
+                        array2 = new double[row1][lastC];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < lastC; q++) {
+                                array2[p][q] = C[p + k][q];
+                            }
+                        }
+
+                        dgemm('T', 'T', lastV - k, lastC, k, -1.0, array1, row1, work, ldwork, 1.0, array2, row1);
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < lastC; q++) {
+                                C[p + k][q] = array2[p][q];
+                            }
+                        }
+                    } // if (lastV > k)
+
+                    // W = W * V1
+                    dtrmm('R', 'U', 'N', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
+
+                    // C1 = C1 - W'
+                    for (j = 0; j < k; j++) {
+
+                        for (i = 0; i < lastC; i++) {
+                            C[j][i] = C[j][i] - work[i][j];
+                        }
+                    }
+                } // if ((side == 'L') || (side == 'l'))
+                else if ((side == 'R') || (side == 'r')) {
+
+                    // Form C * H or C * H' where C = ( C1 C2 )
+                    lastV = Math.max(k, iladlc(k, n, V, ldv));
+                    lastC = iladlr(m, lastV, C, ldc);
+                    // W = C * V' = (C1*V1' + C2*V2') (stored in work)
+                    // W = C1
+                    for (j = 0; j < k; j++) {
+
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[p][j];
+                        }
+                    }
+
+                    // W = W * V1'
+                    dtrmm('R', 'U', 'T', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
+
+                    if (lastV > k) {
+
+                        // W = W + C2 * V2'
+                        row1 = Math.max(1, lastC);
+                        array1 = new double[row1][lastV - k];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < (lastV - k); q++) {
+                                array1[p][q] = C[p][q + k];
+                            }
+                        }
+
+                        row2 = Math.max(1,k);
+                        array2 = new double[row2][lastV - k];
+
+                        for (p = 0; p < row2; p++) {
+
+                            for (q = 0; q < (lastV - k); q++) {
+                                array2[p][q] = V[p][q + k];
+                            }
+                        }
+
+                        dgemm('N', 'T', lastC, k, lastV - k, 1.0, array1, row1, array2, row2, 1.0, work, ldwork);
+                    } // if (lastV > k)
+
+                    // W = W * T or W * T'
+                    dtrmm('R', 'U', trans, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
+
+                    // C = C - W * V
+                    if (lastV > k) {
+
+                        // C2 = C2 - W * V2
+                        row1 = Math.max(1, k);
+                        array1 = new double[row1][lastV - k];
+
+                        for (p = 0; p < row1; p++) {
+
+                            for (q = 0; q < (lastV - k); q++) {
+                                array1[p][q] = V[p][q + k];
+                            }
+                        }
+
+                        row2 = Math.max(1, lastC);
+                        array2 = new double[row2][lastV - k];
+
+                        for (p = 0; p < row2; p++) {
+
+                            for (q = 0; q < (lastV - k); q++) {
+                                array2[p][q] = C[p][q + k];
+                            }
+                        }
+
+                        dgemm('N', 'N', lastC, lastV - k, k, -1.0, work, ldwork, array1, row1, 1.0, array2, row2);
+
+                        for (p = 0; p < row2; p++) {
+
+                            for (q = 0; q < (lastV - k); q++) {
+                                C[p][q + k] = array2[p][q];
+                            }
+                        }
+                    } // if (lastV > k)
+
+                    // W = W * V1
+                    dtrmm('R', 'U', 'N', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
+
+                    // C1 = C1 - W
+                    for (j = 0; j < k; j++) {
+
+                        for (i = 0; i < lastC; i++) {
+                            C[i][j] = C[i][j] - work[i][j];
+                        }
+                    }
+                } // else if ((side == 'R') || (side == 'r'))
+            } // if ((direct == 'F') || (direct == 'f'))
+            else { // ((direct == 'B') || (direct == 'B'))
+
+                // Let V = ( V1 V2 )  (V2: last k columns)
+                // where V2 is unit lower triangular
+                if ((side == 'L') || (side == 'l')) {
+
+                    // Form H * C or H' * C where C = ( C1 )
+                    //                                ( C2 )
+                    lastV = Math.max(k, iladlc(k, m, V, ldv));
+                    lastC = iladlc(lastV, n, C, ldc);
+                    // W = C' * V' = (C1'*V1' + C2'*V2') (stored in work)
+                    // W = C2'
+                    for (j = 0; j < k; j++) {
+
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[lastV - k + j][p];
+                        }
+                    }
+
+                    // W = W * V2'
+                    row1 = Math.max(1,k);
+                    array1 = new double[row1][k];
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < k; q++) {
+                            array1[p][q] = V[p][q + lastV - k];
+                        }
+                    }
+
+                    dtrmm('R', 'L', 'T', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
+
+                    if (lastV > k) {
+
+                        // W = W + C1'*V1'
+                        dgemm('T', 'T', lastC, k, lastV - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
+                    } // if (lastV > k)
+
+                    // W = W * T' or W * T
+                    dtrmm('R', 'L', transt, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
+
+                    // C = C - V' * W'
+                    if (lastV > k) {
+
+                        // C1 = C1 - V1' * W'
+                        dgemm('T', 'T', lastV - k, lastC, k, -1.0, V, ldv, work, ldwork, 1.0, C, ldc);
+                    } // if (lastV > k)
+
+                    // W = W * V2
+                    row1 = Math.max(1, k);
+                    array1 = new double[row1][k];
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < k; q++) {
+                            array1[p][q] = V[p][q + lastV - k];
+                        }
+                    }
+
+                    dtrmm('R', 'L', 'N', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
+
+                    // C2 = C2 - W'
+                    for (j = 0; j < k; j++) {
+
+                        for (i = 0; i < lastC; i++) {
+                            C[lastV - k + j][i] = C[lastV - k + j][i] - work[i][j];
+                        }
+                    }
+                } // if ((side == 'L') || (side == 'l'))
+                else if ((side == 'R') || (side == 'r')) {
+
+                    // Form C * H or C * H' where C = ( C1 C2 )
+                    lastV = Math.max(k, iladlc(k, n, V, ldv));
+                    lastC = iladlr(m, lastV, C, ldc);
+                    // W = C * V' = (C1*V1' + C2*V2') (stored in work)
+                    // W = C2
+                    for (j = 0; j < k; j++) {
+
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[p][lastV - k + j];
+                        }
+                    }
+
+                    // W = W * V2'
+                    row1 = Math.max(1, k);
+                    array1 = new double[row1][k];
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < k; q++) {
+                            array1[p][q] = V[p][q + lastV - k];
+                        }
+                    }
+
+                    dtrmm('R', 'L', 'T', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
+
+                    if (lastV > k) {
+
+                        // W = W + C1 * V1'
+                        dgemm('N', 'T', lastC, k, lastV - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
+                    } // if (lastV > k)
+
+                    // W = W * T or W * T'
+                    dtrmm('R', 'L', trans, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
+
+                    // C = C - W * V
+                    if (lastV > k) {
+
+                        // C1 = C1 - W * V1
+                        dgemm('N', 'N', lastC, lastV - k, k, -1.0, work, ldwork, V, ldv, 1.0, C, ldc);
+                    } // if (lastV > k)
+
+                    // W = W * V2
+                    row1 = Math.max(1,k);
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < k; q++) {
+                            array1[p][q] = V[p][q + lastV - k];
+                        }
+                    }
+
+                    dtrmm('R', 'L', 'N', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
+
+                    // C1 = C1 - W
+                    for (j = 0; j < k; j++) {
+
+                        for (i = 0; i < lastC; i++) {
+                            C[i][lastV - k + j] = C[i][lastV - k + j] - work[i][j];
+                        }
+                    }
+                } // else if ((side == 'R') || (side == 'r'))
+            } // else ((direct == 'B') || (direct == 'B'))
+        } // else if ((storev == 'R') || (storev == 'r'))
+
+        return;
+    } // dlarfb
+    
+    /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLARFP Original DLARFP created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006 
+     * dlarfp generates a real elementary reflector H of order n,
+     * such that H * (alpha) = (beta), H' * H = I. 
+     *               ( x )     ( 0 ) 
+     * where alpha and beta are scalars, beta is non-negative, and x is an (n-1)-element real vector.
+     * H is represented in the form H = I - tau * (1) * (1 v'), 
+     *                                            (v)
+     * where tau is a real scalar and v is a real (n-1)-element vector. If the elements of x are all zero,
+     * then tau = 0 and H is taken to be the unit matrix. Otherwise 1 <= tau <= 2.
+     *
+     * @param  n      input int The order of the elementary reflector.
+     * @param  alpha  input/output double[] On entry, the value alpha. On exit, it is overwritten with the value beta.
+     * @param  x      input/output double[] of dimension (1 + (n-2)*abs(incx)) On entry, the vector x. On exit, it is
+     *                overwritten with the vector v.
+     * @param  incx   input int The increment between elements of x. incx > 0
+     * @param  tau    output double[] The value tau
+     */
+    private void dlarfp(int n, double[] alpha, double[] x, int incx, double[] tau) {
+        int j;
+        int knt;
+        double beta;
+        double rsafmn;
+        double safmin;
+        double xnorm;
+
+        if (n <= 0) {
+            tau[0] = 0.0;
+
+            return;
+        }
+
+        xnorm = dnrm2(n - 1, x, incx);
+
+        if (xnorm == 0.0) {
+
+            // H = [+/-1, 0; I], sign chosen so that alpha[0] >= 0
+            if (alpha[0] >= 0.0) {
+                // When tau[0] == 0.0, the vector is special cased to be all zeros in the
+                // application routines.  We do not need to clear it.
+                tau[0] = 0.0;
+            } // if (alpha[0] >= 0.0)
+            else {
+                // However, the application routines rely on explicit zero checks when 
+                // tau[0] != 0.0, and we must clear x.
+                tau[0] = 2.0;
+                for (j = 1; j<= n-1; j++) {
+                    x[(j-1)*incx] = 0.0;
+                }
+                alpha[0] = -alpha[0];
+            } // else
+        } // if (xnorm == 0.0)
+        else { // general case
+
+            if (alpha[0] >= 0.0) {
+                beta = Math.abs(dlapy2(alpha[0], xnorm));
+            } else {
+                beta = -Math.abs(dlapy2(alpha[0], xnorm));
+            }
+
+            safmin = dlamch('S') / dlamch('E');
+            knt = 0;
+
+            if (Math.abs(beta) < safmin) {
+
+                // xnorm, beta may be inaccurate; scale x and recompute them
+                rsafmn = 1.0 / safmin;
+
+                do {
+                    knt = knt + 1;
+                    dscal(n - 1, rsafmn, x, incx);
+                    beta = beta * rsafmn;
+                    alpha[0] = alpha[0] * rsafmn;
+                } while (Math.abs(beta) < safmin);
+
+                // New beta is at most 1, at least safmin
+                xnorm = dnrm2(n - 1, x, incx);
+
+                if (alpha[0] >= 0.0) {
+                    beta = Math.abs(dlapy2(alpha[0], xnorm));
+                } else {
+                    beta = -Math.abs(dlapy2(alpha[0], xnorm));
+                }
+            } // if (Math.abs(beta) < safmin)
+            
+            alpha[0] = alpha[0] + beta;
+            if (beta < 0.0) {
+                beta = -beta;
+                tau[0] = -alpha[0]/beta;
+            }
+            else {
+                alpha[0] = xnorm * (xnorm/alpha[0]);
+                tau[0] = alpha[0]/beta;
+                alpha[0] = -alpha[0];
+            }
+            dscal(n-1, 1.0/alpha[0], x, incx);
+            
+            for (j = 1; j <= knt; j++) {
+                beta = beta * safmin;
+            }
+            alpha[0] = beta;
+        } // else general case
+
+        return;
+    } // dlarfp
+    
+    /**
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLARF Original DLARF created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006 
+     * dlarf applies a real elementary reflector H to a real m by n matrix C, from either the left or right. 
+     * H is represented in the form H = I - tau * v * v' where tau is a real scalar and v is a real vector.
+     * If tau = 0, then H is taken to be the unit matrix.
+     *
+     * @param  side  input char = 'L': form H * C, = 'R': form C * H
+     * @param  m     input int The number of rows of the matrix C
+     * @param  n     input int The number of columns of the matrix C.
+     * @param  v     input double[] If side = 'L' dimension = (1 + (m-1)*abs(incv)) If side = 'R' dimension = (1 +
+     *               (n-1)*abs(incv)) The vector v in the representation of H. v is not used if tau = 0.
+     * @param  incv  input int The increment between elements of v. incv <> 0.
+     * @param  tau   input double The value of tau in the representation of H.
+     * @param  C     input/output double[][] of dimension ldc by n. On entry, the m by n matrix C. On exit, C is
+     *               overwritten by the matrix H * C if side = 'L', or C * H if side = 'R'.
+     * @param  ldc   input int The leading dimension of array C. ldc >= max(1,m).
+     * @param  work  workspace double[] If side = 'L', dimension = n. If side = 'R', dimension = m.
+     */
+    private void dlarf(char side, int m, int n, double[] v, int incv, double tau, double[][] C, int ldc,
+                       double[] work) {
+        boolean applyLeft;
+        int i;
+        int lastV;
+        int lastC;
+
+        applyLeft = ((side == 'L') || (side == 'l'));
+        lastV = 0;
+        lastC = 0;
+        if (tau != 0.0) {
+            // Set up variables for scanning V.  lastV begins pointing to the end of v.
+            if (applyLeft) {
+                lastV = m;
+            }
+            else {
+                lastV = n;
+            }
+            if (incv > 0) {
+                i = 1 + (lastV - 1) * incv;
+            }
+            else {
+                i = 1;
+            }
+            // Look for the last non-zero row in v.
+            while ((lastV > 0) && (v[i-1] == 0.0)) {
+                lastV = lastV - 1;
+                i = i - incv;
+            }
+            if (applyLeft) {
+                // Scan for the last non-zero column in C(0:lastv-1,:)
+                lastC = iladlc(lastV, n, C, ldc);
+            }
+            else {
+                // Scan for the last non-zero row in C(:,0:lastV-1)
+                lastC = iladlr(m, lastV, C, ldc);
+            }
+        } // if (tau != 0.0)
+        // Note that lastC == 0 renders BLAS operations null; no special case is needed at this level.
+        
+        if (applyLeft) {
+
+            // Form H * C
+            if (lastV > 0) {
+
+                // w(0:lastC-1,0) = C(0:lastV-1,0:lastC-1)' * v(0:lastV-1,0)
+                dgemv('T', lastV, lastC, 1.0, C, ldc, v, incv, 0.0, work, 1);
+
+                // C(0:lastV-1,0:lastC-1) = C(...) - v(0:lastV-1,0) * w(0:lastC-1,0)'
+                dger(lastV, lastC, -tau, v, incv, work, 1, C, ldc);
+            } // if (lastV > 0)
+        } // if (applyLeft)
+        else { // !applyLeft)
+
+            // Form C * H
+            if (lastV > 0) {
+
+                // w():lastC-1,0) = C(0:lastC-1,0:lastV-1) * v(0:lastV-1,0)
+                dgemv('N', lastC, lastV, 1.0, C, ldc, v, incv, 0.0, work, 1);
+
+                // C(0:lastC-1,0:lastV-1) = C(...) - w(0:lastC-1,0) * v(0:lastV-1,0)'
+                dger(lastC, lastV, -tau, work, 1, v, incv, C, ldc);
+            } // if (lastV > 0)
+        } // else !applyLeft
+
+        return;
+    } // dlarf
+    
+    /**
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLARFT Original DLARFT created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlarft forms the triangular factor T of a real block reflector H of order n, which is defined as the
+     * product of k elementary reflectors. 
+     * If direct = 'F', H = H[0] H[1] ... H[k-1] and T is upper triangular. 
+     * If direct = 'B', H = H[k-1] ... H[1] H[0] and T is lower triangular. 
+     * If storev = 'C', the vector which defines the elementary reflector H[i] is stored in the i-th column of the array V, and
+     *     H = I - V * T * V' 
+     * If storev = 'R', the vector which defines the elementary reflector H[i] is stored in the i-th row of the array V, and 
+     *     H = I - V' * T * V.
+     *
+     * @param  direct  input char Specifies the order in which the elementary reflectors are multiplied to form the
+     *                 block reflector: 
+     *                 = 'F': H = H[0] H[1] ... H[k-1] (forward) 
+     *                 = 'B': H = H[k-1] ... H[1] H[0] (Backward)
+     * @param  storev  input char Specifies how the vectors which define the elementary reflectors are stored (see also
+     *                 Further Details): 
+     *                 = 'C': columnwise 
+     *                 = 'R': rowwise
+     * @param  n       input int The order of the block reflector H. n >= 0.
+     * @param  k       input int The order of the triangular factor T ( = the number of elementary reflectors). k >= 1.
+     * @param  V       (input/output) double[][] 
+     *                 If storev = 'C', dimension = ldv by k. 
+     *                 If storev = 'R', dimension = ldv by n. 
+     *                 See further details.
+     * @param  ldv     input int The leading dimension of the array V. If storev = 'C', ldv >= max(1,n). If storev =
+     *                 'R', ldv >= k.
+     * @param  tau     input double[] of dimension k. tau[i] must contain the scalar factor of the elementary reflector
+     *                 H[i].
+     * @param  T       output double[][] of dimension ldt by k. The k by k triangular factor T of the block reflector.
+     *                 If direct = 'F', T is upper triangular. If direct = 'B', T is lower triangular. The rest of the
+     *                 array is not used.
+     * @param  ldt     input int The leading dimension of the array T. ldt >= k.
+     *
+     *                 <p>Further Details: The shape of the matrix V and the storage of the vectors which define the
+     *                 H[i] is best illustrated by the following example with n = 5 and k = 3. The elements equal to 1
+     *                 are not stored; the corresponding array elements are modified but restored on exit. The rest of
+     *                 the array is not used. 
+     *                 direct = 'F' and storev = 'C': 
+     *                 V = ( 1       )
+     *                     (v1  1    ) 
+     *                     (v1 v2  1 )
+     *                     (v1 v2 v3 )
+     *                     (v1 v2 v3 ) 
+     *                 direct = 'F' and storev = 'R': 
+     *                 V = ( 1 v1 v1 v1 v1 ) 
+     *                     (    1 v2 v2 v2 ) 
+     *                     (       1 v3 v3 )
+     *                 direct = 'B' and storev = 'C': 
+     *                 V = ( v1 v2 v3 ) 
+     *                     ( v1 v2 v3 ) 
+     *                     (  1 v2 v3 ) 
+     *                     (     1 v3 ) 
+     *                     (        1 ) 
+     *                 direct = 'B' and storev = 'R': 
+     *                 V = ( v1 v1  1      ) 
+     *                     ( v2 v2 v2  1   ) 
+     *                     ( v3 v3 v3 v3 1 )</p>
+     */
+    private void dlarft(char direct, char storev, int n, int k, double[][] V, int ldv, double[] tau, double[][] T,
+                        int ldt) {
+        int i;
+        int j;
+        double vii;
+        double[] vector1;
+        double[] vector2 = null;
+        double[][] array1;
+        int p;
+        int q;
+        int lastV;
+        int prevLastV;
+
+        // Quick return if possible
+        if (n == 0) {
+            return;
+        }
+
+        if ((direct == 'F') || (direct == 'f')) {
+            prevLastV = n;
+            for (i = 1; i <= k; i++) {
+                prevLastV = Math.max(i, prevLastV);
+                if (tau[i - 1] == 0.0) {
+
+                    // H[i-1] = I
+                    for (j = 1; j <= i; j++) {
+                        T[j - 1][i - 1] = 0.0;
+                    }
+                } // if (tau[i-1] == 0.0)
+                else { // tau[i-1] != 0.0
+
+                    // general case
+                    vii = V[i - 1][i - 1];
+                    V[i - 1][i - 1] = 1.0;
+
+                    if ((storev == 'C') || (storev == 'c')) {
+                        // Skip any trailing zeros
+                        for (lastV = n; lastV >= i+1; lastV--) {
+                            if (V[lastV-1][i-1] != 0.0) {
+                                break;
+                            }
+                        }
+                        j = Math.min(lastV, prevLastV);
+
+                        // T(0:i-2,i-1) = -tau[i-1] * V(i-1:j-1,0:i-2)' * V(i-1:j-1,i-1)
+                        array1 = new double[j - i + 1][i - 1];
+
+                        for (p = 0; p < (j - i + 1); p++) {
+
+                            for (q = 0; q < (i - 1); q++) {
+                                array1[p][q] = V[p + i - 1][q];
+                            }
+                        }
+
+                        vector1 = new double[j - i + 1];
+
+                        for (p = 0; p < (j - i + 1); p++) {
+                            vector1[p] = V[p + i - 1][i - 1];
+                        }
+
+                        vector2 = new double[i - 1];
+
+                        for (p = 0; p < (i - 1); p++) {
+                            vector2[p] = T[p][i - 1];
+                        }
+
+                        dgemv('T', j - i + 1, i - 1, -tau[i - 1], array1, j - i + 1, vector1, 1, 0.0, vector2, 1);
+
+                        for (p = 0; p < (i - 1); p++) {
+                            T[p][i - 1] = vector2[p];
+                        }
+                    } // if ((storev == 'C') || (storev == 'c'))
+                    else { // ((storev == 'R') || (storev == 'r'))
+                        // Skip any trailing zeros.
+                        for (lastV = n; lastV >= i+1; lastV--) {
+                            if (V[i-1][lastV-1] != 0.0) {
+                                break;
+                            }
+                        }
+                        j = Math.min(lastV, prevLastV);
+                        // T(0:i-2,i-1) = -tau[i-1] * V(0:i-2,i-1:j-1) * V(i-1,i-1:j-1)'
+                        array1 = new double[i - 1][j - i + 1];
+
+                        for (p = 0; p < (i - 1); p++) {
+
+                            for (q = 0; q < (j - i + 1); q++) {
+                                array1[p][q] = V[p][q + i - 1];
+                            }
+                        }
+
+                        vector1 = new double[j - i + 1];
+
+                        for (p = 0; p < (j - i + 1); p++) {
+                            vector1[p] = V[i - 1][p + i - 1];
+                        }
+
+                        vector2 = new double[i - 1];
+
+                        for (p = 0; p < (i - 1); p++) {
+                            vector2[p] = T[p][i - 1];
+                        }
+
+                        dgemv('N', i - 1, j - i + 1, -tau[i - 1], array1, i - 1, vector1, 1, 0.0, vector2, 1);
+
+                        for (p = 0; p < (i - 1); p++) {
+                            T[p][i - 1] = vector2[p];
+                        }
+                    } // else ((storev == 'R') || (storev == 'r'))
+
+                    V[i - 1][i - 1] = vii;
+                    
+                    // T(0:i-2,i-1) = T(0:i-2,0:i-2) * T(0:i-2,i-1)
+                    dtrmv('U', 'N', 'N', i - 1, T, ldt, vector2, 1);
+
+                    for (p = 0; p < (i - 1); p++) {
+                        T[p][i - 1] = vector2[p];
+                    }
+
+                    T[i - 1][i - 1] = tau[i - 1];
+                    
+                    if (i > 1) {
+                        prevLastV = Math.max(prevLastV, lastV);
+                    }
+                    else {
+                        prevLastV = lastV;
+                    }
+                } // else tau[i-1] != 0.0
+            } // for (i = 1; i <= k; i++)
+        } // if ((direct == 'F') || (direct == 'f'))
+        else { // ((direct == 'B') || (direct == 'b'))
+            prevLastV = 1;
+            for (i = k; i >= 1; i--) {
+
+                if (tau[i - 1] == 0.0) {
+
+                    // H[i-1] = I
+                    for (j = i; j <= k; j++) {
+                        T[j - 1][i - 1] = 0.0;
+                    }
+                } // if (tau[i-1] == 0.0)
+                else { // tau[i-1] != 0.0
+
+                    // general case
+                    if (i < k) {
+
+                        if ((storev == 'C') || (storev == 'c')) {
+                            vii = V[n - k + i - 1][i - 1];
+                            V[n - k + i - 1][i - 1] = 1.0;
+                            // Skip any leading zeros
+                            for (lastV = 1; lastV <= i-1; lastV++) {
+                                if (V[lastV-1][i-1] != 0.0) {
+                                    break;
+                                }
+                            }
+                            j = Math.max(lastV, prevLastV);
+                            // T(i:k-1,i-1) = -tau[i-1] * V(j-1:n-k+i-1,i:k-1)' *
+                            // V(j-1:n-k+i-1,i-1)
+                            array1 = new double[n - k + i - j + 1][k - i];
+
+                            for (p = 0; p < (n - k + i - j + 1); p++) {
+
+                                for (q = 0; q < (k - i); q++) {
+                                    array1[p][q] = V[j - 1 + p][q + i];
+                                }
+                            }
+
+                            vector1 = new double[n - k + i - j + 1];
+
+                            for (p = 0; p < (n - k + i - j + 1); p++) {
+                                vector1[p] = V[j - 1 + p][i - 1];
+                            }
+
+                            vector2 = new double[k - i];
+
+                            for (p = 0; p < (k - i); p++) {
+                                vector2[p] = T[p + i][i - 1];
+                            }
+
+                            dgemv('T', n - k + i - j + 1, k - i, -tau[i - 1], array1, n - k + i - j + 1, vector1, 1, 0.0, vector2, 1);
+
+                            for (p = 0; p < (k - i); p++) {
+                                T[p + i][i - 1] = vector2[p];
+                            }
+                            
+                            V[n - k + i - 1][i - 1] = vii;
+                        } // if ((storev == 'C') || (storev == 'c'))
+                        else { // ((storev == 'R') || (storev == 'r'))
+                            vii = V[i - 1][n - k + i - 1];
+                            V[i - 1][n - k + i - 1] = 1.0;
+                            // Skip any leading zeros
+                            for (lastV = 1; lastV <= i-1; lastV++) {
+                                if (V[i-1][lastV-1] != 0.0) {
+                                    break;
+                                }
+                            }
+                            j = Math.max(lastV, prevLastV);
+
+                            // T(i:k-1,i-1) = -tau[i-1] * V(i:k-1,j-1:n-k+i-1) *
+                            // V(i-1,j-1:n-k+i-1)'
+                            array1 = new double[k - i][n - k + i - j + 1];
+
+                            for (p = 0; p < (k - i); p++) {
+
+                                for (q = 0; q < (n - k + i - j + 1); q++) {
+                                    array1[p][q] = V[p + i][j - 1 + q];
+                                }
+                            }
+
+                            vector1 = new double[n - k + i - j + 1];
+
+                            for (p = 0; p < (n - k + i - j + 1); p++) {
+                                vector1[p] = V[i - 1][j - 1 + p];
+                            }
+
+                            vector2 = new double[k - i];
+
+                            for (p = 0; p < (k - i); p++) {
+                                vector2[p] = T[p + i][i - 1];
+                            }
+
+                            dgemv('N', k - i, n - k + i - j + 1, -tau[i - 1], array1, k - i, vector1, 1, 0.0, vector2, 1);
+
+                            for (p = 0; p < (k - i); p++) {
+                                T[p + i][i - 1] = vector2[p];
+                            }
+
+                            V[i - 1][n - k + i - 1] = vii;
+                        } // else ((storev == 'R') || (storev == 'r'))
+
+                        // T(i:k-1,i-1) = T(i:k-1,i:k-1) * T(i:k-1,i-1)
+                        array1 = new double[k - i][k - i];
+
+                        for (p = 0; p < (k - i); p++) {
+
+                            for (q = 0; q < (k - i); q++) {
+                                array1[p][q] = T[p + i][q + i];
+                            }
+                        }
+
+                        dtrmv('L', 'N', 'N', k - i, array1, k - i, vector2, 1);
+
+                        for (p = 0; p < (k - i); p++) {
+                            T[p + i][i - 1] = vector2[p];
+                        }
+                        
+                        if (i > 1) {
+                            prevLastV = Math.min(prevLastV, lastV);
+                        }
+                        else {
+                            prevLastV = lastV;
+                        }
+                    } // if (i < k)
+
+                    T[i - 1][i - 1] = tau[i - 1];
+                } // else tau[i-1] != 0.0
+            } // for (i = k; i >= 1; i--)
+        } // else ((direct == 'B') || (direct == 'b'))
+
+        return;
+    } // dlarft
+    
+    /**
+     * This is a port of LAPACK auxiliary routine (version 3.2.1) ILADLC, April 2009
+     * Original ILADLC created by Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado
+     * Denver, and NAG Ltd.
+     * 
+     * iladlc scans A for its last non-zero column
+     * @param m input int The number of rows in matrix A.
+     * @param n input int The number of columns in matrix A.
+     * @param A input double[][] of dimension lda by n.  The m by n matrix A.
+     * @param lda input int The leading dimension of the array A.  lda >= max(1, m)
+     */
+    private int iladlc(int m, int n, double A[][], int lda) {
+        int i;
+        int j;
+        
+        // Quick test for the common case where one corner is non-zero.
+        if (n == 0) {
+            return n;
+        }
+        else if ((A[0][n-1] != 0.0) || (A[m-1][n-1] != 0.0)) {
+            return n;
+        }
+        else {
+            // Now scan each column form the end, returning with the first non-zero.
+            for (j = n; j >= 1; j--) {
+                for (i = 1; i <= m; i++) {
+                    if (A[i-1][j-1] != 0.0) {
+                        return j;
+                    }
+                }
+            }
+            return 0;
+        }
+    } // iladlc
+    
+    /**
+     * This is a port of LAPACK auxiliary routine (version 3.2.1) ILADLR, April 2009
+     * Original ILADLR created by Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado
+     * Denver, and NAG Ltd.
+     * 
+     * iladlc scans A for its last non-zero column
+     * @param m input int The number of rows in matrix A.
+     * @param n input int The number of columns in matrix A.
+     * @param A input double[][] of dimension lda by n.  The m by n matrix A.
+     * @param lda input int The leading dimension of the array A.  lda >= max(1, m)
+     */
+    private int iladlr(int m, int n, double A[][], int lda) {
+        int i;
+        int j;
+        int r;
+        
+        // Quick test for the common case where one corner is non-zero.
+        if (m == 0) {
+            return m;
+        }
+        else if ((A[m-1][0] != 0.0) || (A[m-1][n-1] != 0.0)) {
+            return m;
+        }
+        else {
+            // Scan up each column tracking the last zero row seen.
+            r = 0;
+            for (j = 1; j <= n; j++) {
+                for (i = m; i >= 1; i--) {
+                    if (A[i-1][j-1] != 0.0) {
+                        break;
+                    }
+                }
+                r = Math.max(r, i);
+            }
+            return r;
+        }
+    } // iladlc
+    
+    /**
+     * This is a port of the 10/14/93 DNRM2 function Original code written by Sven Hammarling, Nag Ltd. dnrm2 returns
+     * the euclidean norm of a vector via the function sqrt(x'*x)
+     *
+     * @param   n     int
+     * @param   x     double[]
+     * @param   incx  int
+     *
+     * @return  double
+     */
+    private double dnrm2(int n, double[] x, int incx) {
+        int ix;
+        double absxi;
+        double norm;
+        double scale;
+        double ssq;
+        double ratio;
+
+        if ((n < 1) || (incx < 1)) {
+            norm = 0.0;
+        } else if (n == 1) {
+            norm = Math.abs(x[0]);
+        } else {
+            scale = 0.0;
+            ssq = 1.0;
+
+            for (ix = 0; ix <= ((n - 1) * incx); ix += incx) {
+
+                if (x[ix] != 0.0) {
+                    absxi = Math.abs(x[ix]);
+
+                    if (scale < absxi) {
+                        ratio = scale / absxi;
+                        ssq = 1.0 + (ssq * ratio * ratio);
+                        scale = absxi;
+                    } else {
+                        ratio = absxi / scale;
+                        ssq = ssq + (ratio * ratio);
+                    }
+                } // if (x[ix] != 0.0)
+            } // for (ix = 0; ix <= (n-1)*incx; ix += incx)
+
+            norm = scale * Math.sqrt(ssq);
+        }
+
+        return norm;
+    } // dnrm2
+    
+    /**
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLAPY2 Original DLAPY2 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlapy2 returns sqrt(x**2 + y**2), taking care not to cause unnecessary overflow.
+     *
+     * @param   x  input double
+     * @param   y  input double
+     *
+     * @return  double
+     */
+    private double dlapy2(double x, double y) {
+        double w;
+        double xabs;
+        double yabs;
+        double z;
+        double ratio;
+
+        xabs = Math.abs(x);
+        yabs = Math.abs(y);
+        w = Math.max(xabs, yabs);
+        z = Math.min(xabs, yabs);
+
+        if (z == 0.0) {
+            return w;
+        } else {
+            ratio = z / w;
+
+            return (w * Math.sqrt(1.0 + (ratio * ratio)));
+        }
+    } // dlapy2
+    
+    /**
+     * Routine ported from 12/3/93 linpack dscal Original version written by Jack Dongarra Scales a vector by a
+     * constant.
+     *
+     * @param  n     int
+     * @param  da    double
+     * @param  dx    double[]
+     * @param  incx  int
+     */
+    private void dscal(int n, double da, double[] dx, int incx) {
+        int nincx;
+        int i;
+        int m;
+        int mp1;
+
+        if ((n <= 0) || (incx <= 0)) {
+            return;
+        }
+
+        if (incx != 1) {
+
+            // Code for increment not equal to 1
+            nincx = n * incx;
+
+            for (i = 0; i < nincx; i += incx) {
+                dx[i] = da * dx[i];
+            } // for (i = 0; i < nincx; i += incx)
+
+            return;
+        } // if (incx != 1)
+
+        // Code for increment equal to 1
+        m = n % 5;
+
+        if (m != 0) {
+
+            for (i = 0; i < m; i++) {
+                dx[i] = da * dx[i];
+            }
+
+            if (n < 5) {
+                return;
+            }
+        } // if (m != 0)
+
+        mp1 = m + 1;
+
+        for (i = mp1; i <= n; i += 5) {
+            dx[i - 1] = da * dx[i - 1];
+            dx[i] = da * dx[i];
+            dx[i + 1] = da * dx[i + 1];
+            dx[i + 2] = da * dx[i + 2];
+            dx[i + 3] = da * dx[i + 3];
+        } // for (i = mp1; i <= n; i+= 5)
+
+        return;
+    } // dscal
+    
+    /**
+     * Routine ported from 10/22/86 blas dgemv subroutine Original version written by: Jack Dongarra, Argonne National
+     * Lab. Jeremy Du Croz, Nag Central Office Sven Hammarling, Nag Central Office. Richard Hanson, Sandia National
+     * Labs. dgemv performs one of the matrix-vector operations y = alpha*A*x + beta*y, or y = alpha*A'*x + beta*y,
+     * where alpha and beta are scalars, x and y are vectors, and A is an m by n matrix
+     *
+     * @param  trans  input char On entry, trans specifies the operation to be performed as follows: = 'N' or 'n' y =
+     *                alpha*A*x + beta*y = 'T' or 't' y = alpha*A'*x + beta*y = 'C' or 'c' y = alpha*A'*x + beta*y
+     * @param  m      input int On entry, m specifies the mumber of rows of matrix A. m must be at least zero.
+     * @param  n      input int On entry, n specifies the number of columns of matrix A. n must be at least zero.
+     * @param  alpha  input double specified scalar
+     * @param  A      input double[][] dimension lda by n Before entry, the leading m by n part of the array A must
+     *                contain the matrix of coefficients.
+     * @param  lda    input int On entry, lda specifies the first dimension of A as declared in the calling (sub)
+     *                program. lda must be at least max(1, m).
+     * @param  x      input double[] array of dimension at least (1 + (n-1)*abs(incx)) when trans = 'N' or 'n' and at
+     *                least (1 + (m-1)*abs(incx)) otherwise. Before entry, the incremented array x must contain the
+     *                vector x.
+     * @param  incx   input int On entry, incx specifies the increment for the elements of x. incx must not be zero.
+     * @param  beta   input double specified scalar When beta is supplied as zero, then y need not be set on input.
+     * @param  y      input/output double[] array of dimension at least (1 + (m-1)*abs(incy)) when trans = 'N' or 'n'
+     *                and at least (1 + (n-1)*abs(incy)) otherwise. Before entry with beta non-zero, the incremented
+     *                array y must contain the vector y. On exit, array y is overwritten with the updated vector y.
+     * @param  incy   input int On entry, incy specifies the increment for the elements of y. incy must not be zero.
+     */
+    private void dgemv(char trans, int m, int n, double alpha, double[][] A, int lda, double[] x, int incx, double beta,
+                       double[] y, int incy) {
+        int info;
+        int lenx;
+        int leny;
+        int kx;
+        int ky;
+        int i;
+        int iy;
+        int jx;
+        int j;
+        int jy;
+        int ix;
+        double temp;
+
+        // Test the input parameters
+        info = 0;
+
+        if ((trans != 'N') && (trans != 'n') && (trans != 'T') && (trans != 't') && (trans != 'C') && (trans != 'c')) {
+            info = 1;
+        } else if (m < 0) {
+            info = 2;
+        } else if (n < 0) {
+            info = 3;
+        } else if (lda < Math.max(1, m)) {
+            info = 6;
+        } else if (incx == 0) {
+            info = 8;
+        } else if (incy == 0) {
+            info = 11;
+        }
+
+        if (info != 0) {
+            MipavUtil.displayError("Error dgemv has info = " + info);
+
+            return;
+        } // if (info != 0)
+
+        // Quick return if possible
+        if ((m == 0) || (n == 0) || ((alpha == 0.0) && (beta == 1.0))) {
+            return;
+        }
+
+        // Set lenx and leny, the lengths of vectors x and y, and set up the
+        // start points in arrays x and y.
+
+        if ((trans == 'N') || (trans == 'n')) {
+            lenx = n;
+            leny = m;
+        } else {
+            lenx = m;
+            leny = n;
+        }
+
+        if (incx > 0) {
+            kx = 1;
+        } else {
+            kx = 1 - ((lenx - 1) * incx);
+        }
+
+        if (incy > 0) {
+            ky = 1;
+        } else {
+            ky = 1 - ((leny - 1) * incy);
+        }
+
+        // Start the operations.  In this version the elements of A are accessed
+        // sequentially with one pass through A.
+        // First form y = beta*y.
+        if (beta != 1.0) {
+
+            if (incy == 1) {
+
+                if (beta == 0.0) {
+
+                    for (i = 0; i < leny; i++) {
+                        y[i] = 0.0;
+                    }
+                } // if (beta == 0.0)
+                else { // beta != 0.0
+
+                    for (i = 0; i < leny; i++) {
+                        y[i] = beta * y[i];
+                    }
+                } // else beta != 0.0
+            } // if (incy == 1)
+            else { // incy != 1
+                iy = ky - 1;
+
+                if (beta == 0.0) {
+
+                    for (i = 1; i <= leny; i++) {
+                        y[iy] = 0.0;
+                        iy = iy + incy;
+                    }
+                } // if (beta == 0.0)
+                else { // beta != 0.0
+
+                    for (i = 1; i <= leny; i++) {
+                        y[iy] = beta * y[iy];
+                        iy = iy + incy;
+                    }
+                } // else beta != 0.0
+            } // else incy != 1
+        } // if (beta != 1.0)
+
+        if (alpha == 0.0) {
+            return;
+        }
+
+        if ((trans == 'N') || (trans == 'n')) {
+
+            // Form y = alpha*A*x + y.
+            jx = kx - 1;
+
+            if (incy == 1) {
+
+                for (j = 0; j < n; j++) {
+
+                    if (x[jx] != 0.0) {
+                        temp = alpha * x[jx];
+
+                        for (i = 0; i < m; i++) {
+                            y[i] = y[i] + (temp * A[i][j]);
+                        } // for (i = 0; i < m; i++)
+                    } // if (x[jx] != 0.0)
+
+                    jx = jx + incx;
+                } // for (j = 0; j < n; j++)
+            } // if (incy == 1)
+            else { // incy != 1
+
+                for (j = 0; j < n; j++) {
+
+                    if (x[jx] != 0.0) {
+                        temp = alpha * x[jx];
+                        iy = ky - 1;
+
+                        for (i = 0; i < m; i++) {
+                            y[iy] = y[iy] + (temp * A[i][j]);
+                            iy = iy + incy;
+                        } // for (i = 0; i < m; i++)
+                    } // if (x[jx] != 0.0)
+
+                    jx = jx + incx;
+                } // for (j = 0; j < n; j++)
+            } // else incy != 1
+        } // if (trans == 'N') || (trans == 'n'))
+        else { // trans != 'N' && trans != 'n'
+
+            // Form y = alpha*A'*x + y.
+            jy = ky - 1;
+
+            if (incx == 1) {
+
+                for (j = 0; j < n; j++) {
+                    temp = 0.0;
+
+                    for (i = 0; i < m; i++) {
+                        temp = temp + (A[i][j] * x[i]);
+                    } // for (i = 0; i < m; i++)
+
+                    y[jy] = y[jy] + (alpha * temp);
+                    jy = jy + incy;
+                } // for (j = 0; j < n; j++)
+            } // if (incx == 1)
+            else { // incx != 1
+
+                for (j = 0; j < n; j++) {
+                    temp = 0.0;
+                    ix = kx - 1;
+
+                    for (i = 0; i < m; i++) {
+                        temp = temp + (A[i][j] * x[ix]);
+                        ix = ix + incx;
+                    } // for (i = 0; i < m; i++)
+
+                    y[jy] = y[jy] + (alpha * temp);
+                    jy = jy + incy;
+                } // for (j = 0; j < n; j++)
+            } // else incx != 1
+        } // else trans != 'N' && trans != 'n'
+
+        return;
+    } // dgemv
+    
+    /**
+     * This is a port of the 10/22/86 Blas routine DGER Original version written by: Jack Dongarra, Argonne National
+     * Lab. Jeremy Du Croz, Nag Central Office. Sven Hammarling, Nag Central Office. Richard Hanson, Sandia National
+     * Labs. dger performs the rank 1 operation A = alpha*x*y' + A, where alpha is a scalar, x is an m element vector, y
+     * is an n element vector, and A is an m by n matrix.
+     *
+     * @param  m      input int On entry, m specifies the number of rows of the matrix A. m must be at least zero.
+     * @param  n      input int On entry, n specifies the number of columns of the matrix A. n must be at least zero.
+     * @param  alpha  input double Specified scalar
+     * @param  x      input double[] of dimension at least (1 + (m-1)*abs(incx)). Before entry, the incremented array x
+     *                must contain the m element vector x.
+     * @param  incx   input int On entry, incx specifies the increment for the elements of x. incx must not be zero.
+     * @param  y      input double[] of dimension at least (1 + (n-1)*abs(incy)). Before entry, the incremented array y
+     *                must contain the n element vector y.
+     * @param  incy   input int On entry, incy specifies the increment for the elements of y. incy must not be zero.
+     * @param  A      double[][] of dimension lda by n. Before entry, the leading m by n part of the array A must
+     *                contain the matrix of coefficients. On exit, A is overwritten by the updated matrix.
+     * @param  lda    input int On entry, lda specifies the first dimension of A as declared in the calling (sub)
+     *                program. lda must be at least max(1,m).
+     */
+    private void dger(int m, int n, double alpha, double[] x, int incx, double[] y, int incy, double[][] A, int lda) {
+        double temp;
+        int i;
+        int info;
+        int ix;
+        int j;
+        int jy;
+        int kx;
+
+        // Test the input parameters.
+        info = 0;
+
+        if (m < 0) {
+            info = 1;
+        } else if (n < 0) {
+            info = 2;
+        } else if (incx == 0) {
+            info = 5;
+        } else if (incy == 0) {
+            info = 7;
+        } else if (lda < Math.max(1, m)) {
+            info = 9;
+        }
+
+        if (info != 0) {
+            MipavUtil.displayError("Error dger had info = " + info);
+
+            return;
+        }
+
+        // Quick return if possible
+        if ((m == 0) || (n == 0) || (alpha == 0.0)) {
+            return;
+        }
+
+        // Start the operations.  In this version the elements of A are accessed
+        // sequentially with one pass through A.
+        if (incy > 0) {
+            jy = 0;
+        } else {
+            jy = -(n - 1) * incy;
+        }
+
+        if (incx == 1) {
+
+            for (j = 0; j < n; j++) {
+
+                if (y[jy] != 0.0) {
+                    temp = alpha * y[jy];
+
+                    for (i = 0; i < m; i++) {
+                        A[i][j] = A[i][j] + (x[i] * temp);
+                    }
+                } // if (y[jy] != 0.0)
+
+                jy = jy + incy;
+            } // for (j = 0; j < n; j++)
+        } // if (incx == 1)
+        else { // incx != 1
+
+            if (incx > 0) {
+                kx = 1;
+            } else {
+                kx = 1 - ((m - 1) * incx);
+            }
+
+            for (j = 0; j < n; j++) {
+
+                if (y[jy] != 0.0) {
+                    temp = alpha * y[jy];
+                    ix = kx - 1;
+
+                    for (i = 0; i < m; i++) {
+                        A[i][j] = A[i][j] + (x[ix] * temp);
+                        ix = ix + incx;
+                    } // for (i = 0; i < m; i++)
+                } // if (y[jy] != 0.0)
+
+                jy = jy + incy;
+            } // for (j = 0; j < n; j++)
+        } // else incx != 1
+
+        return;
+    } // dger
+    
+    /**
+     * This is a port of the 10/22/86 blas routine DTRMV Original version written by: Jack Dongarra, Argonne National
+     * Lab. Jeremy Du Croz, Nag Central Office Sven Hammarling, Nag Central Office Richard Hanson, Sandia National Labs.
+     * dtrmv performs one of the matrix-vector operations x = A*x or x = A'*x where x is an n element vector and A is an
+     * n by n unit, or non-unit, upper or lower triangular matrix
+     *
+     * @param  uplo   input char On entry, uplo specifies whether the matrix is an upper or lower triangular matrix as
+     *                follows: = 'U' or 'u' A is an upper triangular matrix = 'L' or 'l' A is a lower triangular matrix
+     * @param  trans  input char On entry, trans specifies the operation to be performed as follows: = 'N' or 'n', x =
+     *                A*x = 'T' or 't', x = A'*x = 'C' or 'c', x = A'*x
+     * @param  diag   input char On entry, diag specifies whether or not A is unit triangular as follows: = 'U' or 'u' A
+     *                is assumed to be unit triangular. = 'N' or 'n' A is not assumed to be unit triangular.
+     * @param  n      input int On entry, n specifies the order of the matrix A. n must be at least zero.
+     * @param  A      input double[][] dimension lda by n Before entry with uplo = 'U' or 'u', the leading n by n upper
+     *                triangular part of the array A must contain the upper triangular matrix and the strictly lower
+     *                triangular part of A is not referenced. Before entry with uplo = 'L' or 'l', the leading n by n
+     *                lower triangular part of the array A must contain the lower triangular matrix and the strictly
+     *                upper triangular part of A is not referenced. Note that when diag = 'U' or 'u', the diagonal
+     *                elements of A are not referenced either, but are assumed to be unity.
+     * @param  lda    input int On entry, lda specifies the first dimension of A as declared in the calling (sub)
+     *                program. lda must be at least max(1,n).
+     * @param  x      input/output double[] of dimension at least (1 + (n-1)*abs(incx)) Before entry, the incremented
+     *                array x must contain the n element vector x. On exit, array x is is overwritten with the
+     *                transformed vector x.
+     * @param  incx   input int On entry, incx specifies the increment for the elements of x. incx must not be zero.
+     */
+    private void dtrmv(char uplo, char trans, char diag, int n, double[][] A, int lda, double[] x, int incx) {
+        double temp;
+        int i;
+        int info;
+        int ix;
+        int j;
+        int jx;
+        int kx = 0;
+        boolean nounit;
+
+        // Test the input parameters
+        info = 0;
+
+        if ((uplo != 'U') && (uplo != 'u') && (uplo != 'L') && (uplo != 'l')) {
+            info = 1;
+        } else if ((trans != 'N') && (trans != 'n') && (trans != 'T') && (trans != 't') && (trans != 'C') &&
+                       (trans != 'c')) {
+            info = 2;
+        } else if ((diag != 'U') && (diag != 'u') && (diag != 'N') && (diag != 'n')) {
+            info = 3;
+        } else if (n < 0) {
+            info = 4;
+        } else if (lda < Math.max(1, n)) {
+            info = 6;
+        } else if (incx == 0) {
+            info = 8;
+        }
+
+        if (info != 0) {
+            MipavUtil.displayError("Error dtrmv had info = " + info);
+
+            return;
+        }
+
+        // Quick return if possible
+        if (n == 0) {
+            return;
+        }
+
+        if ((diag == 'N') || (diag == 'n')) {
+            nounit = true;
+        } else {
+            nounit = false;
+        }
+
+        // Set up the start point in x if the increment is not unity.  This will
+        // be (n-1)*incx too small for descending loops.
+
+        if (incx <= 0) {
+            kx = 1 - ((n - 1) * incx);
+        } else if (incx != 1) {
+            kx = 1;
+        }
+
+        // Start the operations.  In this version the elements of A are accessed
+        // sequentially with one pass through A.
+        if ((trans == 'N') || (trans == 'n')) {
+
+            // Form x = A*x
+            if ((uplo == 'U') || (uplo == 'u')) {
+
+                if (incx == 1) {
+
+                    for (j = 0; j < n; j++) {
+
+                        if (x[j] != 0.0) {
+                            temp = x[j];
+
+                            for (i = 0; i <= (j - 1); i++) {
+                                x[i] = x[i] + (temp * A[i][j]);
+                            }
+
+                            if (nounit) {
+                                x[j] = x[j] * A[j][j];
+                            }
+                        } // if (x[j] != 0.0)
+                    } // for (j = 0; j < n; j++)
+                } // if (incx == 1)
+                else { // incx != 1
+                    jx = kx - 1;
+
+                    for (j = 0; j < n; j++) {
+
+                        if (x[jx] != 0.0) {
+                            temp = x[jx];
+                            ix = kx - 1;
+
+                            for (i = 0; i <= (j - 1); i++) {
+                                x[ix] = x[ix] + (temp * A[i][j]);
+                                ix = ix + incx;
+                            } // for (i = 0; i <= j-1; i++)
+
+                            if (nounit) {
+                                x[jx] = x[jx] * A[j][j];
+                            }
+                        } // if (x[jx] != 0.0)
+
+                        jx = jx + incx;
+                    } // for (j = 0; j < n; j++)
+                } // else incx != 1
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { // uplo == 'L' || uplo == 'l'
+
+                if (incx == 1) {
+
+                    for (j = n - 1; j >= 0; j--) {
+
+                        if (x[j] != 0.0) {
+                            temp = x[j];
+
+                            for (i = n - 1; i >= (j + 1); i--) {
+                                x[i] = x[i] + (temp * A[i][j]);
+                            } // for (i = n-1; i >= j+1; i--)
+
+                            if (nounit) {
+                                x[j] = x[j] * A[j][j];
+                            }
+                        } // if (x[j] != 0.0)
+                    } // for (j = n-1; j >= 0; j--)
+                } // if (incx == 1)
+                else { // incx != 1
+                    kx = kx + ((n - 1) * incx);
+                    jx = kx - 1;
+
+                    for (j = n - 1; j >= 0; j--) {
+
+                        if (x[jx] != 0.0) {
+                            temp = x[jx];
+                            ix = kx - 1;
+
+                            for (i = n - 1; i >= (j + 1); i--) {
+                                x[ix] = x[ix] + (temp * A[i][j]);
+                                ix = ix - incx;
+                            } // for (i = n-1; i >= j+1; i--)
+
+                            if (nounit) {
+                                x[jx] = x[jx] * A[j][j];
+                            }
+                        } // if (x[jx] != 0.0)
+
+                        jx = jx - incx;
+                    } // for (j = n-1; j >= 0; j--)
+                } // else incx != 1
+            } // else uplo == 'L' || uplo == 'l'
+        } // if ((trans == 'N') || (trans == 'n'))
+        else { // trans != 'N' && trans != 'n'
+
+            // Form x = A'*x
+            if ((uplo == 'U') || (uplo == 'u')) {
+
+                if (incx == 1) {
+
+                    for (j = n - 1; j >= 0; j--) {
+                        temp = x[j];
+
+                        if (nounit) {
+                            temp = temp * A[j][j];
+                        }
+
+                        for (i = j - 1; i >= 0; i--) {
+                            temp = temp + (A[i][j] * x[i]);
+                        } // for (i = j-1; i >= 0; i--)
+
+                        x[j] = temp;
+                    } // for (j = n-1; j >= 0; j--)
+                } // if (incx == 1)
+                else { // incx != 1
+                    jx = kx + ((n - 1) * incx) - 1;
+
+                    for (j = n - 1; j >= 0; j--) {
+                        temp = x[jx];
+                        ix = jx;
+
+                        if (nounit) {
+                            temp = temp * A[j][j];
+                        }
+
+                        for (i = j - 1; i >= 0; i--) {
+                            ix = ix - incx;
+                            temp = temp + (A[i][j] * x[ix]);
+                        } // for (i = j-1; i >= 0; i--)
+
+                        x[jx] = temp;
+                        jx = jx - incx;
+                    } // for (j = n-1; j >= 0; j--)
+                } // else incx != 1
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { // ((uplo == 'L') || (uplo == 'l')) {
+
+                if (incx == 1) {
+
+                    for (j = 0; j < n; j++) {
+                        temp = x[j];
+
+                        if (nounit) {
+                            temp = temp * A[j][j];
+                        }
+
+                        for (i = j + 1; i < n; i++) {
+                            temp = temp + (A[i][j] * x[i]);
+                        } // for (i = j+1; i < n; i++)
+
+                        x[j] = temp;
+                    } // for (j = 0; j < n; j++)
+                } // if (incx == 1)
+                else { // incx != 1
+                    jx = kx - 1;
+
+                    for (j = 0; j < n; j++) {
+                        temp = x[jx];
+                        ix = jx;
+
+                        if (nounit) {
+                            temp = temp * A[j][j];
+                        }
+
+                        for (i = j + 1; i < n; i++) {
+                            ix = ix + incx;
+                            temp = temp + (A[i][j] * x[ix]);
+                        } // for (i = j+1; i < n; i++)
+
+                        x[jx] = temp;
+                        jx = jx + incx;
+                    } // for (j = 0; j < n; j++)
+                } // else incx != 1
+            } // else ((uplo == 'L') || (uplo == 'l'))
+        } // else trans != 'N' && trans != 'n'
+
+        return;
+    } // dtrmv
+    
+    /**
+     * This is a port of the 2/8/89 Blas routine DTRMM Original code written by: Jack Dongarra, Argonne National
+     * Laboratory Iain Duff, AERE Harwell. Jeremy Du Croz, Numerical Algorithms Group Ltd. Sven Hammarling, Numerical
+     * Algorithms Group Ltd. dtrmm performs one of the matrix-matrix operations B = alpha*op(A)*B or B = alpha*B*op(A),
+     * where alpha is scalar, B is an m by n matrix, A is a unit, or non-unit, upper or lower tringular matrix and op(A)
+     * is one of op(A) = A or op(A) = A'.
+     *
+     * @param  side    input char On entry, side specifies whether op(A) multiplies B from the left or right as follows:
+     *                 = 'L' or 'l' B = alpha*op(A)*B = 'R' or 'r' B = alpha*B*op(A)
+     * @param  uplo    input char On entry, uplo specifies whether matrix A is an upper or lower triangular matrix as
+     *                 follows: = 'U' or 'u' A is an upper triangular matrix = 'L' or 'l' A is a lower triangular matrix
+     * @param  transa  input char On entry, transa specifies the form of op(A) to be used in the matrix multiplication
+     *                 as follows: = 'N' or 'n' op(A) = A = 'T' or 't' op(A) = A' = 'C' or 'c' op(A) = A'
+     * @param  diag    input char On entry, diag specifies whether or not A is unit triangular as follows: = 'U' or 'u'
+     *                 A is assumed to be unit triangular = 'N' or 'n' A is not assumed to be unit triangular
+     * @param  m       input int On entry, m specifies the number of rows of B. m must be at least zero.
+     * @param  n       input int On entry, n specifies the number of columns of B. n must be at least zero.
+     * @param  alpha   input double Specified scalar. When alpha is zero then A is not referenced and B need not be set
+     *                 before entry.
+     * @param  A       input double[][] of dimension lda by k, where k is m when side = 'L' or 'l' and is n when side =
+     *                 'R' or 'r'. Before entry with uplo = 'U' or 'u', the leading k by k upper triangular part of the
+     *                 array A must contain the upper triangular matrix and the strictly lower triangular part of A is
+     *                 not referenced. Before entry with uplo = 'L' or 'l', the leading k by k lower triangular part of
+     *                 the array A must contain the lower triangular matrix and the strictly upper triangular part of A
+     *                 is not referenced. Note that when diag = 'U' or 'u', the diagonal elements of A are not
+     *                 referenced either, but are assumed to be unity.
+     * @param  lda     input int On entry, lda specifies the first dimension of A as declared in the calling (sub)
+     *                 program. When side = 'L' or 'l' then lda must be at least max(1,m), when side = 'R' or 'r' then
+     *                 lda must be at least max(1,n).
+     * @param  B       input/output double[][] of dimension ldb by n Before entry, the leading m by n part of the array
+     *                 B must contain the matrix B, and on exit is overwritten by the transformed matrix.
+     * @param  ldb     input int On entry, ldb specifies the first dimension of B as declared in the calling (sub)
+     *                 program. ldb must be at least max(1,m).
+     */
+    private void dtrmm(char side, char uplo, char transa, char diag, int m, int n, double alpha, double[][] A, int lda,
+                       double[][] B, int ldb) {
+        boolean lside;
+        boolean nounit;
+        boolean upper;
+        int i;
+        int info;
+        int j;
+        int k;
+        int nrowa;
+        double temp;
+
+        // Test the input parameters
+        if ((side == 'L') || (side == 'l')) {
+            lside = true;
+        } else {
+            lside = false;
+        }
+
+        if (lside) {
+            nrowa = m;
+        } else {
+            nrowa = n;
+        }
+
+        if ((diag == 'N') || (diag == 'n')) {
+            nounit = true;
+        } else {
+            nounit = false;
+        }
+
+        if ((uplo == 'U') || (uplo == 'u')) {
+            upper = true;
+        } else {
+            upper = false;
+        }
+
+        info = 0;
+
+        if ((!lside) && (side != 'R') && (side != 'r')) {
+            info = 1;
+        } else if ((!upper) && (uplo != 'L') && (uplo != 'l')) {
+            info = 2;
+        } else if ((transa != 'N') && (transa != 'n') && (transa != 'T') && (transa != 't') && (transa != 'C') &&
+                       (transa != 'c')) {
+            info = 3;
+        } else if ((diag != 'U') && (diag != 'u') && (diag != 'N') && (diag != 'n')) {
+            info = 4;
+        } else if (m < 0) {
+            info = 5;
+        } else if (n < 0) {
+            info = 6;
+        } else if (lda < Math.max(1, nrowa)) {
+            info = 9;
+        } else if (ldb < Math.max(1, m)) {
+            info = 11;
+        }
+
+        if (info != 0) {
+            MipavUtil.displayError("Error dtrmm had info = " + info);
+
+            return;
+        }
+
+        // Quick return if possible
+        if (n == 0) {
+            return;
+        }
+
+        if (alpha == 0.0) {
+
+            for (j = 0; j < n; j++) {
+
+                for (i = 0; i < m; i++) {
+                    B[i][j] = 0.0;
+                }
+            }
+
+            return;
+        } // if (alpha == 0.0)
+
+        if (lside) {
+
+            if ((transa == 'N') || (transa == 'n')) {
+
+                // Form B = alpha*A*B
+                if (upper) {
+
+                    for (j = 0; j < n; j++) {
+
+                        for (k = 0; k < m; k++) {
+
+                            if (B[k][j] != 0.0) {
+                                temp = alpha * B[k][j];
+
+                                for (i = 0; i <= (k - 1); i++) {
+                                    B[i][j] = B[i][j] + (temp * A[i][k]);
+                                }
+
+                                if (nounit) {
+                                    temp = temp * A[k][k];
+                                }
+
+                                B[k][j] = temp;
+                            } // if (B[k][j] != 0.0)
+                        } // for (k = 0; k < m; k++)
+                    } // for (j = 0; j < n; j++)
+                } // if (upper)
+                else { // lower
+
+                    for (j = 0; j < n; j++) {
+
+                        for (k = m - 1; k >= 0; k--) {
+
+                            if (B[k][j] != 0.0) {
+                                temp = alpha * B[k][j];
+                                B[k][j] = temp;
+
+                                if (nounit) {
+                                    B[k][j] = B[k][j] * A[k][k];
+                                }
+
+                                for (i = k + 1; i < m; i++) {
+                                    B[i][j] = B[i][j] + (temp * A[i][k]);
+                                }
+                            } // if (B[k][j] != 0.0)
+                        } // for (k = m-1; k >= 0; k--)
+                    } // for (j = 0; j < n; j++)
+                } // lower
+            } // if (transa == 'N') || (transa == 'n'))
+            else { // ((transa != 'N') && (transa != 'n'))
+
+                // Form B = alpha*A'*B
+                if (upper) {
+
+                    for (j = 0; j < n; j++) {
+
+                        for (i = m - 1; i >= 0; i--) {
+                            temp = B[i][j];
+
+                            if (nounit) {
+                                temp = temp * A[i][i];
+                            }
+
+                            for (k = 0; k <= (i - 1); k++) {
+                                temp = temp + (A[k][i] * B[k][j]);
+                            }
+
+                            B[i][j] = alpha * temp;
+                        } // for (i = m-1; i >= 0; i--)
+                    } // for (j = 0; j < n; j++)
+                } // if (upper)
+                else { // lower
+
+                    for (j = 0; j < n; j++) {
+
+                        for (i = 0; i < m; i++) {
+                            temp = B[i][j];
+
+                            if (nounit) {
+                                temp = temp * A[i][i];
+                            }
+
+                            for (k = i + 1; k < m; k++) {
+                                temp = temp + (A[k][i] * B[k][j]);
+                            }
+
+                            B[i][j] = alpha * temp;
+                        } // for (i = 0; i < m; i++)
+                    } // for (j = 0; j < n; j++)
+                } // lower
+            } // else ((transa != 'N') && (transa != 'n'))
+        } // if (lside)
+        else { // !lside
+
+            if ((transa == 'N') || (transa == 'n')) {
+
+                // Form B = alpha*B*A
+                if (upper) {
+
+                    for (j = n - 1; j >= 0; j--) {
+                        temp = alpha;
+
+                        if (nounit) {
+                            temp = temp * A[j][j];
+                        }
+
+                        for (i = 0; i < m; i++) {
+                            B[i][j] = temp * B[i][j];
+                        }
+
+                        for (k = 0; k <= (j - 1); k++) {
+
+                            if (A[k][j] != 0.0) {
+                                temp = alpha * A[k][j];
+
+                                for (i = 0; i < m; i++) {
+                                    B[i][j] = B[i][j] + (temp * B[i][k]);
+                                }
+                            } // if (A[k][j] != 0.0)
+                        } // for (k = 0; k <= j-1; k++)
+                    } // for (j = n-1; j >= 0; j--)
+                } // if (upper)
+                else { // lower
+
+                    for (j = 0; j < n; j++) {
+                        temp = alpha;
+
+                        if (nounit) {
+                            temp = temp * A[j][j];
+                        }
+
+                        for (i = 0; i < m; i++) {
+                            B[i][j] = temp * B[i][j];
+                        }
+
+                        for (k = j + 1; k < n; k++) {
+
+                            if (A[k][j] != 0.0) {
+                                temp = alpha * A[k][j];
+
+                                for (i = 0; i < m; i++) {
+                                    B[i][j] = B[i][j] + (temp * B[i][k]);
+                                }
+                            } // if (A[k][j] != 0.0)
+                        } // for (k = j+1; k < n; k++)
+                    } // for (j = 0; j < n; j++)
+                } // lower
+            } // if (transa == 'N') || (transa == 'n'))
+            else { // ((transa != 'N') && (transa != 'n'))
+
+                // Form B = alpha*B*A'
+                if (upper) {
+
+                    for (k = 0; k < n; k++) {
+
+                        for (j = 0; j <= (k - 1); j++) {
+
+                            if (A[j][k] != 0.0) {
+                                temp = alpha * A[j][k];
+
+                                for (i = 0; i < m; i++) {
+                                    B[i][j] = B[i][j] + (temp * B[i][k]);
+                                }
+                            } // if (A[j][k] != 0.0)
+                        } // for (j = 0; j <= k-1; j++)
+
+                        temp = alpha;
+
+                        if (nounit) {
+                            temp = temp * A[k][k];
+                        }
+
+                        if (temp != 1.0) {
+
+                            for (i = 0; i < m; i++) {
+                                B[i][k] = temp * B[i][k];
+                            }
+                        } // if (temp != 1.0)
+                    } // for (k = 0; k < n; k++)
+                } // if (upper)
+                else { // lower
+
+                    for (k = n - 1; k >= 0; k--) {
+
+                        for (j = k + 1; j < n; j++) {
+
+                            if (A[j][k] != 0.0) {
+                                temp = alpha * A[j][k];
+
+                                for (i = 0; i < m; i++) {
+                                    B[i][j] = B[i][j] + (temp * B[i][k]);
+                                }
+                            } // if (A[j][k] != 0.0)
+                        } // for (j = k+1; j < n; j++)
+
+                        temp = alpha;
+
+                        if (nounit) {
+                            temp = temp * A[k][k];
+                        }
+
+                        if (temp != 1.0) {
+
+                            for (i = 0; i < m; i++) {
+                                B[i][k] = temp * B[i][k];
+                            } // for (i = 0; i < m; i++)
+                        } // if (temp != 1.0)
+                    } // for (k = n-1; k >= 0; k--)
+                } // lower
+            } // else ((transa != 'N') && (transa != 'n'))
+        } // else !lside
+
+        return;
+    } // dtrmm
+    
+    /**
+     * This is a port of the 2/8/89 Blas routine Original version written by: Jack Dongarra, Argonne National Laboratory
+     * Iain Duff, AERE Harwell. Jeremy Du Croz, Numerical Algorithms Group Ltd. Sven Hammarling, Numerical Algorithms
+     * Group Ltd. dgemm performs one of the matrix-matrix operations C = alpha*op(A)*op(B) + beta*C, where op(X) is one
+     * of op(X) = X or op(X) = X', alpha and beta are scalars, and A, B, and C are matrices, with op(A) an m by k
+     * matrix, op(B) a k by n matrix, and C an m by n matrix.
+     *
+     * @param  transa  input char On entry, transa specifies the form of op(A) to be used in the matrix multiplication
+     *                 as follows:' = 'N' or 'n', op(A) = A. = 'T' or 't', op(A) = A'. = 'C' or 'c', op(A) = A'.
+     * @param  transb  input char On entry, transb specifies the form of op(B) to be used in the matrix multiplication
+     *                 as follows: = 'N' or 'n', op(B) = B. = 'T' or 't', op(B) = B'. = 'C' or 'c', op(B) = B'.
+     * @param  m       input int On entry, m specifies the number of rows of the matrix op(A) and of the matrix C. m
+     *                 must be at least zero.
+     * @param  n       input int On entry, n specifies the number of columns of the matrix op(B) and the number of
+     *                 columns of the matrix C. n must be at least zero.
+     * @param  k       input int On entry, k specifies the number of columns of the matrix op(A) and the number of rows
+     *                 of the matrix op(B). k must be at least zero.
+     * @param  alpha   input double specified scalar
+     * @param  A       input double[][] dimension lda by ka, where ka is k when transa = 'N' or 'n', and is m otherwise.
+     *                 Before entry with transa = 'N' or 'n', the leading m by k part of the array A must contain the
+     *                 matrix A, otherwise the leading k by m part of the array A must contain the matrix A
+     * @param  lda     input int On entry, lda specifies the first dimension of A as declared in the calling (sub)
+     *                 program. When transa = 'N' or 'n' then lda must be at least max(1,m), otherwise lda must be at
+     *                 least max(1,k)
+     * @param  B       input double[][] dimension ldb by kb, where kb is n when transb = 'N' or 'n', and is k otherwise.
+     *                 Before entry with transb = 'N' or 'n', the leading k by n part of the array B must contain the
+     *                 matrix B, otherwise the leading n by k part of the array B must contain the matrix B
+     * @param  ldb     input int On entry, ldb specifies the first dimension of B as declared in the calling (sub)
+     *                 program. When transb = 'N' or 'n' then ldb must be at least max(1,k), otherwise ldb must be at
+     *                 least max(1,n).
+     * @param  beta    input double specified scalar When beta is supplied as zero, then C need not be set on input.
+     * @param  C       input/output double[][] dimension ldc by n. Before entry, the leading m by n part of the array C
+     *                 must contain the matrix C, except when beta is zero, in which case C need not be set on entry. On
+     *                 exit, the array C is overwritten by the m by n matrix (alpha*op(A)*op(B) + beta*C).
+     * @param  ldc     input int On entry, ldc specifies the first dimension of C as declared in the calling (sub)
+     *                 program. ldc must be at least max(1,m).
+     */
+    private void dgemm(char transa, char transb, int m, int n, int k, double alpha, double[][] A, int lda, double[][] B,
+                       int ldb, double beta, double[][] C, int ldc) {
+        boolean nota;
+        boolean notb;
+        int i;
+        int info;
+        int j;
+        int L;
+        int nrowa;
+        int nrowb;
+        double temp;
+
+        // Set nota and notb as true if A and B respectively are not transposed
+        // and set nrowa and nrowb as the number of rows of A
+        // and the number of rows of B respectively.
+
+        if ((transa == 'N') || (transa == 'n')) {
+            nota = true;
+        } else {
+            nota = false;
+        }
+
+        if ((transb == 'N') || (transb == 'n')) {
+            notb = true;
+        } else {
+            notb = false;
+        }
+
+        if (nota) {
+            nrowa = m;
+        } else {
+            nrowa = k;
+        }
+
+        if (notb) {
+            nrowb = k;
+        } else {
+            nrowb = n;
+        }
+
+        // Test the input parameters
+        info = 0;
+
+        if ((!nota) && (transa != 'C') && (transa != 'c') && (transa != 'T') && (transa != 't')) {
+            info = 1;
+        } else if ((!notb) && (transb != 'C') && (transb != 'c') && (transb != 'T') && (transb != 't')) {
+            info = 2;
+        } else if (m < 0) {
+            info = 3;
+        } else if (n < 0) {
+            info = 4;
+        } else if (k < 0) {
+            info = 5;
+        } else if (lda < Math.max(1, nrowa)) {
+            info = 8;
+        } else if (ldb < Math.max(1, nrowb)) {
+            info = 10;
+        } else if (ldc < Math.max(1, m)) {
+            info = 13;
+        }
+
+        if (info != 0) {
+            MipavUtil.displayError("Error dgemm has info = " + info);
+
+            return;
+        } // if (info != 0)
+
+        // Quick return if possible
+        if ((m == 0) || (n == 0) || (((alpha == 0.0) || (k == 0)) && (beta == 1.0))) {
+            return;
+        }
+
+        if (alpha == 0.0) {
+
+            if (beta == 0.0) {
+
+                for (j = 0; j < n; j++) {
+
+                    for (i = 0; i < m; i++) {
+                        C[i][j] = 0.0;
+                    }
+                }
+            } // if (beta == 0.0)
+            else { // beta != 0.0
+
+                for (j = 0; j < n; j++) {
+
+                    for (i = 0; i < m; i++) {
+                        C[i][j] = beta * C[i][j];
+                    }
+                }
+            } // else beta != 0.0
+
+            return;
+        } // if (alpha == 0.0)
+
+        if (notb) {
+
+            if (nota) {
+
+                // Form C = alpha*A*B + beta*C.
+                for (j = 0; j < n; j++) {
+
+                    if (beta == 0.0) {
+
+                        for (i = 0; i < m; i++) {
+                            C[i][j] = 0.0;
+                        }
+                    } // if (beta == 0.0)
+                    else if (beta != 1.0) {
+
+                        for (i = 0; i < m; i++) {
+                            C[i][j] = beta * C[i][j];
+                        }
+                    } // else if (beta != 1.0)
+
+                    for (L = 0; L < k; L++) {
+
+                        if (B[L][j] != 0.0) {
+                            temp = alpha * B[L][j];
+
+                            for (i = 0; i < m; i++) {
+                                C[i][j] = C[i][j] + (temp * A[i][L]);
+                            }
+                        } // if (B[L][j] != 0.0)
+                    } // for (L = 0; L < k; L++)
+                } // for (j = 0; j < n; j++)
+            } // if (nota)
+            else { // !nota
+
+                // Form C = alpha*A'*B + beta*C
+                for (j = 0; j < n; j++) {
+
+                    for (i = 0; i < m; i++) {
+                        temp = 0.0;
+
+                        for (L = 0; L < k; L++) {
+                            temp = temp + (A[L][i] * B[L][j]);
+                        }
+
+                        if (beta == 0.0) {
+                            C[i][j] = alpha * temp;
+                        } else {
+                            C[i][j] = (alpha * temp) + (beta * C[i][j]);
+                        }
+                    } // for (i = 0; i < m; i++)
+                } // for (j = 0; j < n; j++)
+            } // else !nota
+        } // if (notb)
+        else { // !notb
+
+            if (nota) {
+
+                // Form C = alpha*A*B' + beta*C
+                for (j = 0; j < n; j++) {
+
+                    if (beta == 0.0) {
+
+                        for (i = 0; i < m; i++) {
+                            C[i][j] = 0.0;
+                        }
+                    } // if (beta == 0.0)
+                    else if (beta != 1.0) {
+
+                        for (i = 0; i < m; i++) {
+                            C[i][j] = beta * C[i][j];
+                        }
+                    } // else if (beta != 1.0)
+
+                    for (L = 0; L < k; L++) {
+
+                        if (B[j][L] != 0.0) {
+                            temp = alpha * B[j][L];
+
+                            for (i = 0; i < m; i++) {
+                                C[i][j] = C[i][j] + (temp * A[i][L]);
+                            }
+                        } // if (B[j][L] != 0.0)
+                    } // for (L = 0; L < k; L++)
+                } // for (j = 0; j < n; j++)
+            } // if (nota)
+            else { // !nota
+
+                // Form C = alpha*A'*B' + beta*C
+                for (j = 0; j < n; j++) {
+
+                    for (i = 0; i < m; i++) {
+                        temp = 0.0;
+
+                        for (L = 0; L < k; L++) {
+                            temp = temp + (A[L][i] * B[j][L]);
+                        }
+
+                        if (beta == 0.0) {
+                            C[i][j] = alpha * temp;
+                        } else {
+                            C[i][j] = (alpha * temp) + (beta * C[i][j]);
+                        }
+                    } // for (i = 0; i < m; i++)
+                } // for (j = 0; j < n; j++)
+            } // else !nota
+        } // else !notb
+
+        return;
+    } // dgemm
 
 }
