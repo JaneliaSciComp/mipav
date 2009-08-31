@@ -25,8 +25,9 @@ import gov.nih.mipav.view.*;
  * threshold was repeated 5 times.</p>
  *
  * <p>The nonsymmetric generalized eigenvalue driver dggev was tested with dggev_test. The resulting statement was 21
- * out of 1092 dggev tests failed to pass the threshold. dchkgl was implemented to test the dggbal balancing routine of
- * dggev. All 8 tests showed no signficant error. dchkgk was implemented to test the dggbak backward balancing routine
+ * out of 1092 dggev tests failed to pass the threshold. Note that updating dgeqr2 from 3.1 to 3.2 increased the number of
+ * errors from 17 to 21.  dchkgl was implemented to test the dggbal balancing routine of
+ * dggev.  All 8 tests showed no signficant error. dchkgk was implemented to test the dggbak backward balancing routine
  * of dggev. All 8 tests showed no significant error. dchkgg_test was implemented to test the dgghrd, dhgeqz, and dtgevc
  * routines of the dggev driver. The following output statements resulted: 15 out of 2156 dchkgg tests failed to pass
  * the threshold. 20 out of 2149 dchkgg tests failed to pass the threshold. 17 out of 2163 dchkgg tests failed to pass
@@ -2114,7 +2115,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                lwork + 1 - iwrk, ierr);
 
         if (ierr[0] != 0) {
-            UI.setDataText("dggev call to dgheqz had ierr[0] = " + ierr[0] + "\n");
+            UI.setDataText("dggev call to dhgeqz had ierr[0] = " + ierr[0] + "\n");
             /*for (i = 0; i < n; i++) {
              *  for (j = 0; j < n; j++) {     UI.setDataText("Ainput[" + i +"][" + j + "] = " + Ainput[i][j] + "\n"); }
              * } for (i = 0; i < n; i++) { for (j = 0; j < n; j++) {     UI.setDataText("Binput[" + i +"][" + j + "] = "
@@ -7499,6 +7500,10 @@ loop1:               {
 
         return;
     } // dgeqr2
+    
+    
+    
+    
 
     /**
      * This is a port of version 3.2 LAPACK routine DGEQRF Original DGEQRF created by Univ. of Tennessee, Univ. of
@@ -14317,6 +14322,8 @@ loop3:                       {
         } // while (rndout == 1.0)
         return rndout;
     } // dlaran
+    
+    
 
     /**
      * This is a port of the version 3.2 LAPACK auxiliary routine DLARF Original DLARF created by Univ. of Tennessee,
@@ -14479,8 +14486,8 @@ loop3:                       {
     } // iladlc
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLARFB Original DLARFB created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK auxiliary routine DLARFB Original DLARFB created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlarfb applies a real block reflector H or its transpose H' to a real m by n matrix C, from either the left or
      * the right.
      *
@@ -14524,6 +14531,10 @@ loop3:                       {
         int j;
         int p;
         int q;
+        int lastV;
+        int lastC;
+        int row1;
+        int row2;
         double[][] array1;
         double[][] array2;
 
@@ -14549,84 +14560,89 @@ loop3:                       {
 
                     // Form H * C or H' * C where C = ( C1 )
                     //                                ( C2 )
+                    lastV = Math.max(k, iladlr(m, k, V, ldv));
+                    lastC = iladlc(lastV, n, C, ldc);
                     // W = C' * V = (C1'*V1 + C2'*V2) (stored in work)
                     // W = C1'
                     for (j = 0; j < k; j++) {
 
-                        for (p = 0; p < n; p++) {
+                        for (p = 0; p < lastC; p++) {
                             work[p][j] = C[j][p];
                         }
                     } // for (j = 0; j < k; j++)
 
                     // W = W * V1
-                    dtrmm('R', 'L', 'N', 'U', n, k, 1.0, V, ldv, work, ldwork);
+                    dtrmm('R', 'L', 'N', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
 
-                    if (m > k) {
+                    if (lastV > k) {
 
                         // W = W + C2'* V2
-                        array1 = new double[m - k][n];
+                        row1 = Math.max(1, lastV - k);
+                        array1 = new double[row1][lastC];
 
-                        for (p = 0; p < (m - k); p++) {
+                        for (p = 0; p < row1; p++) {
 
-                            for (q = 0; q < n; q++) {
+                            for (q = 0; q < lastC; q++) {
                                 array1[p][q] = C[p + k][q];
                             }
                         }
 
-                        array2 = new double[m - k][k];
+                        array2 = new double[row1][k];
 
-                        for (p = 0; p < (m - k); p++) {
+                        for (p = 0; p < row1; p++) {
 
                             for (q = 0; q < k; q++) {
                                 array2[p][q] = V[p + k][q];
                             }
                         }
 
-                        dgemm('T', 'N', n, k, m - k, 1.0, array1, m - k, array2, m - k, 1.0, work, ldwork);
-                    } // if (m > k)
+                        dgemm('T', 'N', lastC, k, lastV - k, 1.0, array1, row1, array2, 
+                                              row1, 1.0, work, ldwork);
+                    } // if (lastV > k)
 
                     // W = W * T' or W * T
-                    dtrmm('R', 'U', transt, 'N', n, k, 1.0, T, ldt, work, ldwork);
+                    dtrmm('R', 'U', transt, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
 
                     // C = C - V * W'
-                    if (m > k) {
+                    if (lastV > k) {
 
                         // C2 = C2 - V2 * W'
-                        array1 = new double[m - k][k];
+                        row1 = Math.max(1, lastV - k);
+                        array1 = new double[row1][k];
 
-                        for (p = 0; p < (m - k); p++) {
+                        for (p = 0; p < row1; p++) {
 
                             for (q = 0; q < k; q++) {
                                 array1[p][q] = V[p + k][q];
                             }
                         }
 
-                        array2 = new double[m - k][n];
+                        array2 = new double[row1][lastC];
 
-                        for (p = 0; p < (m - k); p++) {
+                        for (p = 0; p < row1; p++) {
 
-                            for (q = 0; q < n; q++) {
+                            for (q = 0; q < lastC; q++) {
                                 array2[p][q] = C[p + k][q];
                             }
                         }
 
-                        dgemm('N', 'T', m - k, n, k, -1.0, array1, m - k, work, ldwork, 1.0, array2, m - k);
+                        dgemm('N', 'T', lastV - k, lastC, k, -1.0, array1, row1, work, ldwork, 1.0, array2, row1);
 
-                        for (p = 0; p < (m - k); p++) {
+                        for (p = 0; p < row1; p++) {
 
-                            for (q = 0; q < n; q++) {
+                            for (q = 0; q < lastC; q++) {
                                 C[p + k][q] = array2[p][q];
                             }
                         }
-                    } // if (m > k)
+                    } // if (lastV > k)
 
                     // W = W * V1'
-                    dtrmm('R', 'L', 'T', 'U', n, k, 1.0, V, ldv, work, ldwork);
+                    dtrmm('R', 'L', 'T', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
 
                     // C1 = C1 - W'
                     for (j = 0; j < k; j++) {
 
-                        for (i = 0; i < n; i++) {
+                        for (i = 0; i < lastC; i++) {
                             C[j][i] = C[j][i] - work[i][j];
                         }
                     }
@@ -14634,84 +14650,90 @@ loop3:                       {
                 else if ((side == 'R') || (side == 'r')) {
 
                     // Form C * H or C * H' where C = ( C1 C2 )
+                    lastV = Math.max(k, iladlr(n, k, V, ldv));
+                    lastC = iladlr(m, lastV, C, ldc);
                     // W = C * V = (C1*V1 + C2*V2) (stored in work)
                     // W = C1
                     for (j = 0; j < k; j++) {
 
-                        for (p = 0; p < m; p++) {
+                        for (p = 0; p < lastC; p++) {
                             work[p][j] = C[p][j];
                         }
                     } // for (j = 0; j < k; j++)
 
                     // W = W * V1
-                    dtrmm('R', 'L', 'N', 'U', m, k, 1.0, V, ldv, work, ldwork);
+                    dtrmm('R', 'L', 'N', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
 
-                    if (n > k) {
+                    if (lastV > k) {
 
                         // W = W + C2 * V2
-                        array1 = new double[m][n - k];
+                        row1 = Math.max(1, lastC);
+                        array1 = new double[row1][lastV - k];
 
-                        for (p = 0; p < m; p++) {
+                        for (p = 0; p < row1; p++) {
 
-                            for (q = 0; q < (n - k); q++) {
+                            for (q = 0; q < (lastV - k); q++) {
                                 array1[p][q] = C[p][q + k];
                             }
                         }
 
-                        array2 = new double[n - k][k];
+                        row2 = Math.max(1, lastV - k);
+                        array2 = new double[row2][k];
 
-                        for (p = 0; p < (n - k); p++) {
+                        for (p = 0; p < row2; p++) {
 
                             for (q = 0; q < k; q++) {
                                 array2[p][q] = V[p + k][q];
                             }
                         }
 
-                        dgemm('N', 'N', m, k, n - k, 1.0, array1, m, array2, n - k, 1.0, work, ldwork);
-                    } // if (n > k)
+                        dgemm('N', 'N', lastC, k, lastV - k, 1.0, array1, row1, array2, row2, 1.0, work, ldwork);
+                    } // if (lastV > k)
 
                     // W = W * T or W * T'
-                    dtrmm('R', 'U', trans, 'N', m, k, 1.0, T, ldt, work, ldwork);
+                    dtrmm('R', 'U', trans, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
 
                     // C = C - W * V'
-                    if (n > k) {
+                    if (lastV > k) {
 
                         // C2 = C2 - W * V2'
-                        array1 = new double[n - k][k];
+                        row1 = Math.max(1, lastV - k);
+                        array1 = new double[row1][k];
 
-                        for (p = 0; p < (n - k); p++) {
+                        for (p = 0; p < row1; p++) {
 
                             for (q = 0; q < k; q++) {
                                 array1[p][q] = V[p + k][q];
                             }
                         }
 
-                        array2 = new double[m][n - k];
+                        row2 = Math.max(1, lastC);
+                        array2 = new double[row2][lastV - k];
 
-                        for (p = 0; p < m; p++) {
+                        for (p = 0; p < row2; p++) {
 
-                            for (q = 0; q < (n - k); q++) {
+                            for (q = 0; q < (lastV - k); q++) {
                                 array2[p][q] = C[p][q + k];
                             }
                         }
 
-                        dgemm('N', 'T', m, n - k, k, -1.0, work, ldwork, array1, n - k, 1.0, array2, m);
+                        dgemm('N', 'T', lastC, lastV - k, k, -1.0, work, ldwork, array1, row1, 1.0, array2, row2);
 
-                        for (p = 0; p < m; p++) {
+                        for (p = 0; p < row2; p++) {
 
-                            for (q = 0; q < (n - k); q++) {
+                            for (q = 0; q < (lastV - k); q++) {
                                 C[p][q + k] = array2[p][q];
                             }
                         }
-                    } // if (n > k)
+                    } // if (lastV > k)
 
                     // W = W * V1'
-                    dtrmm('R', 'L', 'T', 'U', m, k, 1.0, V, ldv, work, ldwork);
+                    dtrmm('R', 'L', 'T', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
 
                     // C1 = C1 - W
                     for (j = 0; j < k; j++) {
 
-                        for (i = 0; i < m; i++) {
+                        for (i = 0; i < lastC; i++) {
                             C[i][j] = C[i][j] - work[i][j];
                         }
                     }
@@ -14726,118 +14748,126 @@ loop3:                       {
 
                     // Form H * C or H' * C where C = ( C1 )
                     //                                ( C2 )
+                    lastV = Math.max(k, iladlr(m, k, V, ldv));
+                    lastC = iladlc(lastV, n, C, ldc);
                     // W = C' * V = (C1'*V1 + C2'*V2) (stored in work)
                     // W = C2'
                     for (j = 0; j < k; j++) {
 
-                        for (p = 0; p < n; p++) {
-                            work[p][j] = C[m - k + j][p];
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[lastV - k + j][p];
                         }
                     } // for (j = 0; j < k; j++)
 
                     // W = W * V2
-                    array1 = new double[k][k];
+                    row1 = Math.max(1, k);
+                    array1 = new double[row1][k];
 
-                    for (p = 0; p < k; p++) {
+                    for (p = 0; p < row1; p++) {
 
                         for (q = 0; q < k; q++) {
-                            array1[p][q] = V[p + m - k][q];
+                            array1[p][q] = V[p + lastV - k][q];
                         }
                     }
 
-                    dtrmm('R', 'U', 'N', 'U', n, k, 1.0, array1, k, work, ldwork);
+                    dtrmm('R', 'U', 'N', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
 
-                    if (m > k) {
+                    if (lastV > k) {
 
                         // W = W + C1' * V1
-                        dgemm('T', 'N', n, k, m - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
-                    } // if (m > k)
+                        dgemm('T', 'N', lastC, k, lastV - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
+                    } // if (lastV > k)
 
                     // W = W * T' or W * T
-                    dtrmm('R', 'L', transt, 'N', n, k, 1.0, T, ldt, work, ldwork);
+                    dtrmm('R', 'L', transt, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
 
                     // C = C - V * W'
-                    if (m > k) {
+                    if (lastV > k) {
 
                         // C1 = C1 - V1 * W'
-                        dgemm('N', 'T', m - k, n, k, -1.0, V, ldv, work, ldwork, 1.0, C, ldc);
-                    } // if (m > k)
+                        dgemm('N', 'T', lastV - k, lastC, k, -1.0, V, ldv, work, ldwork, 1.0, C, ldc);
+                    } // if (lastV > k)
 
                     // W = W * V2'
-                    array1 = new double[k][k];
+                    row1 = Math.max(1, k);
+                    array1 = new double[row1][k];
 
-                    for (p = 0; p < k; p++) {
+                    for (p = 0; p < row1; p++) {
 
                         for (q = 0; q < k; q++) {
-                            array1[p][q] = V[p + m - k][q];
+                            array1[p][q] = V[p + lastV - k][q];
                         }
                     }
 
-                    dtrmm('R', 'U', 'T', 'U', n, k, 1.0, array1, k, work, ldwork);
+                    dtrmm('R', 'U', 'T', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
 
                     // C2 = C2 - W'
                     for (j = 0; j < k; j++) {
 
-                        for (i = 0; i < n; i++) {
-                            C[m - k + j][i] = C[m - k + j][i] - work[i][j];
+                        for (i = 0; i < lastC; i++) {
+                            C[lastV - k + j][i] = C[lastV - k + j][i] - work[i][j];
                         }
                     }
                 } // if ((side == 'L') || (side == 'l'))
                 else if ((side == 'R') || (side == 'r')) {
 
                     // Form C * H or C * H' where C = ( C1 C2 )
+                    lastV = Math.max(k, iladlr(n, k, V, ldv));
+                    lastC = iladlr(m, lastV, C, ldc);
                     // W = C * V = (C1*V1 + C2*V2) (stored in work)
                     // W = C2
                     for (j = 0; j < k; j++) {
 
-                        for (p = 0; p < m; p++) {
+                        for (p = 0; p < lastC; p++) {
                             work[p][j] = C[p][n - k + j];
                         }
                     }
 
                     // W = W * V2
-                    array1 = new double[k][k];
+                    row1 = Math.max(1, k);
+                    array1 = new double[row1][k];
 
-                    for (p = 0; p < k; p++) {
+                    for (p = 0; p < row1; p++) {
 
                         for (q = 0; q < k; q++) {
-                            array1[p][q] = V[p + n - k][q];
+                            array1[p][q] = V[p + lastV - k][q];
                         }
                     }
 
-                    dtrmm('R', 'U', 'N', 'U', m, k, 1.0, array1, k, work, ldwork);
+                    dtrmm('R', 'U', 'N', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
 
-                    if (n > k) {
+                    if (lastV > k) {
 
                         // W = W + C1 * V1
-                        dgemm('N', 'N', m, k, n - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
-                    } // if (n > k)
+                        dgemm('N', 'N', lastC, k, lastV - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
+                    } // if (lastV > k)
 
                     // W = W * T or W * T'
-                    dtrmm('R', 'L', trans, 'N', m, k, 1.0, T, ldt, work, ldwork);
+                    dtrmm('R', 'L', trans, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
 
                     // C = C - W * V'
-                    if (n > k) {
+                    if (lastV > k) {
 
                         // C1 = C1 - W * V1'
-                        dgemm('N', 'T', m, n - k, k, -1.0, work, ldwork, V, ldv, 1.0, C, ldc);
-                    } // if (n > k)
+                        dgemm('N', 'T', lastC, lastV - k, k, -1.0, work, ldwork, V, ldv, 1.0, C, ldc);
+                    } // if (lastV > k)
 
                     // W = W * V2'
-                    for (p = 0; p < k; p++) {
+                    row1 = Math.max(1,k);
+                    for (p = 0; p < row1; p++) {
 
                         for (q = 0; q < k; q++) {
-                            array1[p][q] = V[p + n - k][q];
+                            array1[p][q] = V[p + lastV - k][q];
                         }
                     }
 
-                    dtrmm('R', 'U', 'T', 'U', m, k, 1.0, array1, k, work, ldwork);
+                    dtrmm('R', 'U', 'T', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
 
                     // C2 = C2 - W
                     for (j = 0; j < k; j++) {
 
-                        for (i = 0; i < m; i++) {
-                            C[i][n - k + j] = C[i][n - k + j] - work[i][j];
+                        for (i = 0; i < lastC; i++) {
+                            C[i][lastV - k + j] = C[i][lastV - k + j] - work[i][j];
                         }
                     }
                 } // else if ((side == 'R') || (side == 'r'))
@@ -14853,84 +14883,89 @@ loop3:                       {
 
                     // Form H * C or H' * C where C = ( C1 )
                     //                                ( C2 )
+                    lastV = Math.max(k, iladlc(k, m, V, ldv));
+                    lastC = iladlc(lastV, n, C, ldc);
                     // W = C' * V' = (C1'*V1' + C2'V2') (stored in work)
                     // W = C1'
                     for (j = 0; j < k; j++) {
 
-                        for (p = 0; p < n; p++) {
+                        for (p = 0; p < lastC; p++) {
                             work[p][j] = C[j][p];
                         }
                     }
 
                     // W = W * V1'
-                    dtrmm('R', 'U', 'T', 'U', n, k, 1.0, V, ldv, work, ldwork);
+                    dtrmm('R', 'U', 'T', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
 
-                    if (m > k) {
+                    if (lastV > k) {
 
                         // W = W + C2'*V2'
-                        array1 = new double[m - k][n];
+                        row1 = Math.max(1, lastV - k);
+                        array1 = new double[row1][lastC];
 
-                        for (p = 0; p < (m - k); p++) {
+                        for (p = 0; p < row1; p++) {
 
-                            for (q = 0; q < n; q++) {
+                            for (q = 0; q < lastC; q++) {
                                 array1[p][q] = C[p + k][q];
                             }
                         }
 
-                        array2 = new double[k][m - k];
+                        row2 = Math.max(1,k);
+                        array2 = new double[row2][lastV - k];
 
-                        for (p = 0; p < k; p++) {
+                        for (p = 0; p < row2; p++) {
 
-                            for (q = 0; q < (m - k); q++) {
+                            for (q = 0; q < (lastV - k); q++) {
                                 array2[p][q] = V[p][q + k];
                             }
                         }
 
-                        dgemm('T', 'T', n, k, m - k, 1.0, array1, m - k, array2, k, 1.0, work, ldwork);
-                    } // if (m > k)
+                        dgemm('T', 'T', lastC, k, lastV - k, 1.0, array1, row1, array2, row2, 1.0, work, ldwork);
+                    } // if (lastV > k)
 
                     // W = W * T' or W * T
-                    dtrmm('R', 'U', transt, 'N', n, k, 1.0, T, ldt, work, ldwork);
+                    dtrmm('R', 'U', transt, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
 
                     // C = C - V' * W'
-                    if (m > k) {
+                    if (lastV > k) {
 
                         // C2 = C2 - V2' * W'
-                        array1 = new double[k][m - k];
+                        row1 = Math.max(1, k);
+                        array1 = new double[row1][lastV - k];
 
-                        for (p = 0; p < k; p++) {
+                        for (p = 0; p < row1; p++) {
 
-                            for (q = 0; q < (m - k); q++) {
+                            for (q = 0; q < (lastV - k); q++) {
                                 array1[p][q] = V[p][q + k];
                             }
                         }
 
-                        array2 = new double[m - k][n];
+                        array2 = new double[row1][lastC];
 
-                        for (p = 0; p < (m - k); p++) {
+                        for (p = 0; p < row1; p++) {
 
-                            for (q = 0; q < n; q++) {
+                            for (q = 0; q < lastC; q++) {
                                 array2[p][q] = C[p + k][q];
                             }
                         }
 
-                        dgemm('T', 'T', m - k, n, k, -1.0, array1, k, work, ldwork, 1.0, array2, m - k);
+                        dgemm('T', 'T', lastV - k, lastC, k, -1.0, array1, row1, work, ldwork, 1.0, array2, row1);
 
-                        for (p = 0; p < (m - k); p++) {
+                        for (p = 0; p < row1; p++) {
 
-                            for (q = 0; q < n; q++) {
+                            for (q = 0; q < lastC; q++) {
                                 C[p + k][q] = array2[p][q];
                             }
                         }
-                    } // if (m > k)
+                    } // if (lastV > k)
 
                     // W = W * V1
-                    dtrmm('R', 'U', 'N', 'U', n, k, 1.0, V, ldv, work, ldwork);
+                    dtrmm('R', 'U', 'N', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
 
                     // C1 = C1 - W'
                     for (j = 0; j < k; j++) {
 
-                        for (i = 0; i < n; i++) {
+                        for (i = 0; i < lastC; i++) {
                             C[j][i] = C[j][i] - work[i][j];
                         }
                     }
@@ -14938,84 +14973,90 @@ loop3:                       {
                 else if ((side == 'R') || (side == 'r')) {
 
                     // Form C * H or C * H' where C = ( C1 C2 )
+                    lastV = Math.max(k, iladlc(k, n, V, ldv));
+                    lastC = iladlr(m, lastV, C, ldc);
                     // W = C * V' = (C1*V1' + C2*V2') (stored in work)
                     // W = C1
                     for (j = 0; j < k; j++) {
 
-                        for (p = 0; p < m; p++) {
+                        for (p = 0; p < lastC; p++) {
                             work[p][j] = C[p][j];
                         }
                     }
 
                     // W = W * V1'
-                    dtrmm('R', 'U', 'T', 'U', m, k, 1.0, V, ldv, work, ldwork);
+                    dtrmm('R', 'U', 'T', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
 
-                    if (n > k) {
+                    if (lastV > k) {
 
                         // W = W + C2 * V2'
-                        array1 = new double[m][n - k];
+                        row1 = Math.max(1, lastC);
+                        array1 = new double[row1][lastV - k];
 
-                        for (p = 0; p < m; p++) {
+                        for (p = 0; p < row1; p++) {
 
-                            for (q = 0; q < (n - k); q++) {
+                            for (q = 0; q < (lastV - k); q++) {
                                 array1[p][q] = C[p][q + k];
                             }
                         }
 
-                        array2 = new double[k][n - k];
+                        row2 = Math.max(1,k);
+                        array2 = new double[row2][lastV - k];
 
-                        for (p = 0; p < k; p++) {
+                        for (p = 0; p < row2; p++) {
 
-                            for (q = 0; q < (n - k); q++) {
+                            for (q = 0; q < (lastV - k); q++) {
                                 array2[p][q] = V[p][q + k];
                             }
                         }
 
-                        dgemm('N', 'T', m, k, n - k, 1.0, array1, m, array2, k, 1.0, work, ldwork);
-                    } // if (n > k)
+                        dgemm('N', 'T', lastC, k, lastV - k, 1.0, array1, row1, array2, row2, 1.0, work, ldwork);
+                    } // if (lastV > k)
 
                     // W = W * T or W * T'
-                    dtrmm('R', 'U', trans, 'N', m, k, 1.0, T, ldt, work, ldwork);
+                    dtrmm('R', 'U', trans, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
 
                     // C = C - W * V
-                    if (n > k) {
+                    if (lastV > k) {
 
                         // C2 = C2 - W * V2
-                        array1 = new double[k][n - k];
+                        row1 = Math.max(1, k);
+                        array1 = new double[row1][lastV - k];
 
-                        for (p = 0; p < k; p++) {
+                        for (p = 0; p < row1; p++) {
 
-                            for (q = 0; q < (n - k); q++) {
+                            for (q = 0; q < (lastV - k); q++) {
                                 array1[p][q] = V[p][q + k];
                             }
                         }
 
-                        array2 = new double[m][n - k];
+                        row2 = Math.max(1, lastC);
+                        array2 = new double[row2][lastV - k];
 
-                        for (p = 0; p < m; p++) {
+                        for (p = 0; p < row2; p++) {
 
-                            for (q = 0; q < (n - k); q++) {
+                            for (q = 0; q < (lastV - k); q++) {
                                 array2[p][q] = C[p][q + k];
                             }
                         }
 
-                        dgemm('N', 'N', m, n - k, k, -1.0, work, ldwork, array1, k, 1.0, array2, m);
+                        dgemm('N', 'N', lastC, lastV - k, k, -1.0, work, ldwork, array1, row1, 1.0, array2, row2);
 
-                        for (p = 0; p < m; p++) {
+                        for (p = 0; p < row2; p++) {
 
-                            for (q = 0; q < (n - k); q++) {
+                            for (q = 0; q < (lastV - k); q++) {
                                 C[p][q + k] = array2[p][q];
                             }
                         }
-                    } // if (n > k)
+                    } // if (lastV > k)
 
                     // W = W * V1
-                    dtrmm('R', 'U', 'N', 'U', m, k, 1.0, V, ldv, work, ldwork);
+                    dtrmm('R', 'U', 'N', 'U', lastC, k, 1.0, V, ldv, work, ldwork);
 
                     // C1 = C1 - W
                     for (j = 0; j < k; j++) {
 
-                        for (i = 0; i < m; i++) {
+                        for (i = 0; i < lastC; i++) {
                             C[i][j] = C[i][j] - work[i][j];
                         }
                     }
@@ -15029,118 +15070,126 @@ loop3:                       {
 
                     // Form H * C or H' * C where C = ( C1 )
                     //                                ( C2 )
+                    lastV = Math.max(k, iladlc(k, m, V, ldv));
+                    lastC = iladlc(lastV, n, C, ldc);
                     // W = C' * V' = (C1'*V1' + C2'*V2') (stored in work)
                     // W = C2'
                     for (j = 0; j < k; j++) {
 
-                        for (p = 0; p < n; p++) {
-                            work[p][j] = C[m - k + j][p];
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[lastV - k + j][p];
                         }
                     }
 
                     // W = W * V2'
-                    array1 = new double[k][k];
+                    row1 = Math.max(1,k);
+                    array1 = new double[row1][k];
 
-                    for (p = 0; p < k; p++) {
+                    for (p = 0; p < row1; p++) {
 
                         for (q = 0; q < k; q++) {
-                            array1[p][q] = V[p][q + m - k];
+                            array1[p][q] = V[p][q + lastV - k];
                         }
                     }
 
-                    dtrmm('R', 'L', 'T', 'U', n, k, 1.0, array1, k, work, ldwork);
+                    dtrmm('R', 'L', 'T', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
 
-                    if (m > k) {
+                    if (lastV > k) {
 
                         // W = W + C1'*V1'
-                        dgemm('T', 'T', n, k, m - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
-                    } // if (m > k)
+                        dgemm('T', 'T', lastC, k, lastV - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
+                    } // if (lastV > k)
 
                     // W = W * T' or W * T
-                    dtrmm('R', 'L', transt, 'N', n, k, 1.0, T, ldt, work, ldwork);
+                    dtrmm('R', 'L', transt, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
 
                     // C = C - V' * W'
-                    if (m > k) {
+                    if (lastV > k) {
 
                         // C1 = C1 - V1' * W'
-                        dgemm('T', 'T', m - k, n, k, -1.0, V, ldv, work, ldwork, 1.0, C, ldc);
-                    } // if (m > k)
+                        dgemm('T', 'T', lastV - k, lastC, k, -1.0, V, ldv, work, ldwork, 1.0, C, ldc);
+                    } // if (lastV > k)
 
                     // W = W * V2
-                    array1 = new double[k][k];
+                    row1 = Math.max(1, k);
+                    array1 = new double[row1][k];
 
-                    for (p = 0; p < k; p++) {
+                    for (p = 0; p < row1; p++) {
 
                         for (q = 0; q < k; q++) {
-                            array1[p][q] = V[p][q + m - k];
+                            array1[p][q] = V[p][q + lastV - k];
                         }
                     }
 
-                    dtrmm('R', 'L', 'N', 'U', n, k, 1.0, array1, k, work, ldwork);
+                    dtrmm('R', 'L', 'N', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
 
                     // C2 = C2 - W'
                     for (j = 0; j < k; j++) {
 
-                        for (i = 0; i < n; i++) {
-                            C[m - k + j][i] = C[m - k + j][i] - work[i][j];
+                        for (i = 0; i < lastC; i++) {
+                            C[lastV - k + j][i] = C[lastV - k + j][i] - work[i][j];
                         }
                     }
                 } // if ((side == 'L') || (side == 'l'))
                 else if ((side == 'R') || (side == 'r')) {
 
                     // Form C * H or C * H' where C = ( C1 C2 )
+                    lastV = Math.max(k, iladlc(k, n, V, ldv));
+                    lastC = iladlr(m, lastV, C, ldc);
                     // W = C * V' = (C1*V1' + C2*V2') (stored in work)
                     // W = C2
                     for (j = 0; j < k; j++) {
 
-                        for (p = 0; p < m; p++) {
-                            work[p][j] = C[p][n - k + j];
+                        for (p = 0; p < lastC; p++) {
+                            work[p][j] = C[p][lastV - k + j];
                         }
                     }
 
                     // W = W * V2'
-                    array1 = new double[k][k];
+                    row1 = Math.max(1, k);
+                    array1 = new double[row1][k];
 
-                    for (p = 0; p < k; p++) {
+                    for (p = 0; p < row1; p++) {
 
                         for (q = 0; q < k; q++) {
-                            array1[p][q] = V[p][q + n - k];
+                            array1[p][q] = V[p][q + lastV - k];
                         }
                     }
 
-                    dtrmm('R', 'L', 'T', 'U', m, k, 1.0, array1, k, work, ldwork);
+                    dtrmm('R', 'L', 'T', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
 
-                    if (n > k) {
+                    if (lastV > k) {
 
                         // W = W + C1 * V1'
-                        dgemm('N', 'T', m, k, n - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
-                    } // if (n > k)
+                        dgemm('N', 'T', lastC, k, lastV - k, 1.0, C, ldc, V, ldv, 1.0, work, ldwork);
+                    } // if (lastV > k)
 
                     // W = W * T or W * T'
-                    dtrmm('R', 'L', trans, 'N', m, k, 1.0, T, ldt, work, ldwork);
+                    dtrmm('R', 'L', trans, 'N', lastC, k, 1.0, T, ldt, work, ldwork);
 
                     // C = C - W * V
-                    if (n > k) {
+                    if (lastV > k) {
 
                         // C1 = C1 - W * V1
-                        dgemm('N', 'N', m, n - k, k, -1.0, work, ldwork, V, ldv, 1.0, C, ldc);
-                    } // if (n > k)
+                        dgemm('N', 'N', lastC, lastV - k, k, -1.0, work, ldwork, V, ldv, 1.0, C, ldc);
+                    } // if (lastV > k)
 
                     // W = W * V2
-                    for (p = 0; p < k; p++) {
+                    row1 = Math.max(1,k);
+                    for (p = 0; p < row1; p++) {
 
                         for (q = 0; q < k; q++) {
-                            array1[p][q] = V[p][q + n - k];
+                            array1[p][q] = V[p][q + lastV - k];
                         }
                     }
 
-                    dtrmm('R', 'L', 'N', 'U', m, k, 1.0, array1, k, work, ldwork);
+                    dtrmm('R', 'L', 'N', 'U', lastC, k, 1.0, array1, row1, work, ldwork);
 
                     // C1 = C1 - W
                     for (j = 0; j < k; j++) {
 
-                        for (i = 0; i < m; i++) {
-                            C[i][n - k + j] = C[i][n - k + j] - work[i][j];
+                        for (i = 0; i < lastC; i++) {
+                            C[i][lastV - k + j] = C[i][lastV - k + j] - work[i][j];
                         }
                     }
                 } // else if ((side == 'R') || (side == 'r'))
