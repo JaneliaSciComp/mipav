@@ -413,21 +413,6 @@ public class FileHistoLUT extends FileBase {
 
     } // end readLUT()
 
-    /**
-     * This method reads a LUT file and its associated transfer function.
-     *
-     * @param      quietMode  if true indicates that warnings should not be displayed.
-     *
-     * @exception  IOException  if there is an error reading the file
-     */
-    public void readOnlyLUT(boolean quietMode) throws IOException {
-
-        if (useLUT) {
-            readOnlyLUT(lut, quietMode);
-        } else {
-            readFunctions(rgb);
-        }
-    }
 
     /**
      * This method reads a LUT file and its associated transfer function.
@@ -647,6 +632,7 @@ public class FileHistoLUT extends FileBase {
                 throw new IOException(e.getMessage());
             }
         }
+       
         /*
         // find the min & max
         int nPts2 = funct.size();
