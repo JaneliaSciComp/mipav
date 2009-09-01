@@ -183,19 +183,19 @@ public class FileHistoLUT extends FileBase {
 
             if (tag2.equals("Transfer")) {
                 useLUT = true;
-                readTransferFunction(raFile, lut.getTransferFunction());
+                readTransferFunction(raFile, lut.getTransferFunction(), "Transfer");
             } else if (tag2.equals("Alpha")) {
-                readTransferFunction(raFile, lut.getAlphaFunction());
+                readTransferFunction(raFile, lut.getAlphaFunction(), "Alpha");
             } else if (tag2.equals("Red")) {
-                readTransferFunction(raFile, lut.getRedFunction());
+                readTransferFunction(raFile, lut.getRedFunction(),"Red");
             } else if (tag2.equals("Green")) {
-                readTransferFunction(raFile, lut.getGreenFunction());
+                readTransferFunction(raFile, lut.getGreenFunction(),"Green");
             } else if (tag2.equals("Blue")) {
-                readTransferFunction(raFile, lut.getBlueFunction());
+                readTransferFunction(raFile, lut.getBlueFunction(),"Blue");
             } else if (tag2.equals("Opacity")) {
 
                 if (opacityFunction != null) {
-                    readTransferFunction(raFile, opacityFunction);
+                    readTransferFunction(raFile, opacityFunction, "Opacity");
                 }
             }
 
@@ -274,11 +274,11 @@ public class FileHistoLUT extends FileBase {
                 // this cannot be set in an rgb, so just ignore it and continue in loop
                 continue;
             } else if (tag2.equals("Red")) {
-                readTransferFunction(raFile, rgb.getRedFunction());
+                readTransferFunction(raFile, rgb.getRedFunction(), "Red");
             } else if (tag2.equals("Green")) {
-                readTransferFunction(raFile, rgb.getGreenFunction());
+                readTransferFunction(raFile, rgb.getGreenFunction(),"Green");
             } else if (tag2.equals("Blue")) {
-                readTransferFunction(raFile, rgb.getBlueFunction());
+                readTransferFunction(raFile, rgb.getBlueFunction(), "Blue");
             }
 
             // get the next tag
@@ -557,19 +557,19 @@ public class FileHistoLUT extends FileBase {
 
             if (tag2.equals("Transfer")) {
                 useLUT = true;
-                readTransferFunction(raFile, _lut.getTransferFunction());
+                readTransferFunction(raFile, _lut.getTransferFunction(), "Transfer");
             } else if (tag2.equals("Alpha")) {
-                readTransferFunction(raFile, _lut.getAlphaFunction());
+                readTransferFunction(raFile, _lut.getAlphaFunction(), "Alpha");
             } else if (tag2.equals("Red")) {
-                readTransferFunction(raFile, _lut.getRedFunction());
+                readTransferFunction(raFile, _lut.getRedFunction(), "Red");
             } else if (tag2.equals("Green")) {
-                readTransferFunction(raFile, _lut.getGreenFunction());
+                readTransferFunction(raFile, _lut.getGreenFunction(), "Green");
             } else if (tag2.equals("Blue")) {
-                readTransferFunction(raFile, _lut.getBlueFunction());
+                readTransferFunction(raFile, _lut.getBlueFunction(), "Blue");
             } else if (tag2.equals("Opacity")) {
 
                 if (opacityFunction != null) {
-                    readTransferFunction(raFile, opacityFunction);
+                    readTransferFunction(raFile, opacityFunction, "Opacity");
                 }
             }
 
@@ -593,10 +593,10 @@ public class FileHistoLUT extends FileBase {
      *
      * @param   file   the file to read from
      * @param   funct  the function to add points to
-     *
+     * @param   functName  the transfer function name
      * @throws  IOException  if there is a problem reading from the file
      */
-    public void readTransferFunction(RandomAccessFile file, TransferFunction funct) throws IOException {
+    public void readTransferFunction(RandomAccessFile file, TransferFunction funct, String functName) throws IOException {
         String s;
         float[] fields;
         float[] x;
@@ -633,24 +633,24 @@ public class FileHistoLUT extends FileBase {
             }
         }
        
-        /*
-        // find the min & max
-        int nPts2 = funct.size();
-        float min = ((Vector2f) funct.getPoint(0)).X;
-        float max = ((Vector2f) funct.getPoint(nPts2 - 1)).X;
-        float diff = max - min;
-
-        System.err.println("min = " + min + " max = " + max + " diff = " + diff);
-        
-        
-        // remap the xfer function from 0->1 to min->max
-        for (int i = 0; i < nPts; i++) {
-            x[i] = (x[i] * diff) + min;
+        if( functName.equals("Transfer")) {
+        	float min, max, diff;    
+        	ModelImage img = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
+        	min = (float)img.getMin();
+        	max = (float)img.getMax();
+        	diff = max - min;
+        	
+        	// remap the xfer function from 0->1 to min->max
+            for (int i = 0; i < nPts; i++) {
+                x[i] = (x[i] * diff) + min;
+            }
+            System.err.println("min = " + min + " max = " + max + " diff = " + diff);               
+            
         }
 
         // import data into function
         funct.importArrays(x, y, nPts);
-        */
+        
     }
 
     
@@ -915,6 +915,20 @@ public class FileHistoLUT extends FileBase {
         file.writeBytes(name + "\r\n");
         file.writeBytes(Integer.toString(nPts) + "\t\t# Number of Points\r\n");
 
+        if( name.equals("Transfer")) {
+        	float min, max, diff;
+        	ModelImage img = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
+        	min = (float)img.getMin();
+        	max = (float)img.getMax();
+        	diff = max - min;
+        	
+        	// remap the xfer function from min->max to 0->1 
+            for (int i = 0; i < nPts; i++) {
+                x[i] = (x[i] / diff) - min;
+            }
+        }
+   
+        
         for (int i = 0; i < nPts; i++) {
             file.writeBytes(Float.toString(x[i]) + "\t" + Float.toString(y[i]) + "\t" + Float.toString(z[i]) + "\r\n");
         }
