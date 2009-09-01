@@ -788,7 +788,7 @@ public class JPanelHistoRGB
                 fileHistoLUT = new FileHistoLUT(filename, dirName, lut);
 
                 if (loadAll) {
-                    fileHistoLUT.readLUT(quietMode);
+                    fileHistoLUT.readLUTandTransferFunction(quietMode);
                 } else {
                     fileHistoLUT.readFunctions();
                 }
@@ -800,7 +800,7 @@ public class JPanelHistoRGB
                 fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
 
                 if (loadAll) {
-                    fileHistoLUT.readLUT(quietMode);
+                    fileHistoLUT.readLUTandTransferFunction(quietMode);
                 } else {
                     fileHistoLUT.readFunctions();
                 }

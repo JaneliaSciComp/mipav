@@ -649,7 +649,9 @@ public class JPanelHistoLUT
                 setLUTB(LUTb);
             }
         } else if (command.equals("SaveUDLUT")) {
-            saveOnlyLUTAs(true, "userdefine.lut", Preferences.getPreferencesDir());
+        	System.err.println("ruida SaveUDLUT");
+        
+        	saveLUTandTransferFunction(true, "userdefine.lut", Preferences.getPreferencesDir());
 
             if (displayMode == IMAGE_A) {
                 setLUTA(LUTa);
@@ -665,6 +667,8 @@ public class JPanelHistoLUT
                 setLUTB(LUTb);
             }
         } else if (command.equals("OpenUDLUT")) {
+        	System.err.println("ruida OpenUDLUT");
+        	
             loadOnlyLUTFrom(true, "userdefine.lut", Preferences.getPreferencesDir(), false);
 
             if (displayMode == IMAGE_A) {
@@ -1174,7 +1178,7 @@ public class JPanelHistoLUT
                 fileHistoLUT = new FileHistoLUT(filename, dirName, lut);
 
                 if (loadAll) {
-                    fileHistoLUT.readLUT(quietMode);
+                    fileHistoLUT.readLUTandTransferFunction(quietMode);
                 } else {
                     fileHistoLUT.readFunctions();
                 }
@@ -1188,7 +1192,7 @@ public class JPanelHistoLUT
                 fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
 
                 if (loadAll) {
-                    fileHistoLUT.readLUT(quietMode);
+                    fileHistoLUT.readLUTandTransferFunction(quietMode);
                 } else {
                     fileHistoLUT.readFunctions();
                 }
@@ -1420,7 +1424,7 @@ public class JPanelHistoLUT
      * @param  filename  filename to save LUT as
      * @param  dirName   directory to save LUT to
      */
-    public void saveOnlyLUTAs(boolean saveAll, String filename, String dirName) {
+    public void saveLUTandTransferFunction(boolean saveAll, String filename, String dirName) {
 
         ModelRGB rgb;
         ModelLUT lut;
@@ -1449,7 +1453,7 @@ public class JPanelHistoLUT
                 fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
             }
 
-            fileHistoLUT.writeLUT();
+            fileHistoLUT.writeLUTandTransferFunction();
 
         } catch (IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());

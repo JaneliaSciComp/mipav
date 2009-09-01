@@ -301,10 +301,10 @@ public class FileHistoLUT extends FileBase {
      *
      * @exception  IOException  if there is an error reading the file
      */
-    public void readLUT(boolean quietMode) throws IOException {
+    public void readLUTandTransferFunction(boolean quietMode) throws IOException {
 
         if (useLUT) {
-            readLUT(lut, quietMode);
+        	readLUTandTransferFunction(lut, quietMode);
         } else {
             readFunctions(rgb);
         }
@@ -318,7 +318,7 @@ public class FileHistoLUT extends FileBase {
      *
      * @exception  IOException  if there is an error reading the file
      */
-    public void readLUT(ModelLUT lut, boolean quietMode) throws IOException {
+    public void readLUTandTransferFunction(ModelLUT lut, boolean quietMode) throws IOException {
         String s;
         int height = 0;
         float[] fields;
@@ -647,96 +647,16 @@ public class FileHistoLUT extends FileBase {
                 throw new IOException(e.getMessage());
             }
         }
-
-        // import data into function
-        funct.importArrays(x, y, nPts);
-    }
-
-    /**
-     * Reads a transfer function (0->1) remaps to min->max and loads into LUT.
-     *
-     * @param   fName  String file name
-     * @param   dName  String dir name
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public void readUDTransferFunction(String fName, String dName) throws IOException {
-
-        // make sure that file is set to the funcFile
-        if (raFile != null) {
-            raFile.close();
-        }
-
-        File file = new File(dName + File.separator + fName);
-
-        if (!file.exists()) {
-            throw new IOException("LUT Functions file does not exist.");
-        }
-
-        raFile = new RandomAccessFile(file, "r");
-
-        String tagStr = raFile.readLine();
-        if (tagStr == null) {
-            raFile.close();
-            throw new IOException("Error reading LUT functions. Functions file has bad format.");
-        }
-
-        tagStr.trim();
-
-        if (!funcTag.equals(tagStr)) {
-            raFile.close();
-            throw new IOException("Error reading LUT Functions. Bad Tag in functions file.");
-        }
-
-        if (lut == null) {
-            raFile.close();
-            throw new IOException("Error reading LUT functions.  Null LUT.");
-        }
-
-        String s;
-        float[] fields;
-        float[] x;
-        float[] y;
-        float[] z;
-
-        // read info from this data section
-        int nPts = Integer.valueOf(readLine(raFile)).intValue();
-
-        try {
-            x = new float[nPts];
-            y = new float[nPts];
-            z = new float[nPts];
-        } catch (OutOfMemoryError error) {
-            raFile.close();
-            throw new IOException("Error reading LUT function. Out of memory.");
-        }
-
-        for (int i = 0; i < nPts; i++) {
-            int j = 0;
-            s = raFile.readLine();
-
-            try {
-                fields = parseString(s, 3);
-                x[i] = fields[j];
-                j++;
-                y[i] = fields[j];
-                j++;
-                z[i] = fields[j];
-                j++;
-            } catch (Exception e) {
-                raFile.close();
-                throw new IOException(e.getMessage());
-            }
-        }
-
-        TransferFunction funct = lut.getTransferFunction();
-
+        /*
         // find the min & max
         int nPts2 = funct.size();
         float min = ((Vector2f) funct.getPoint(0)).X;
         float max = ((Vector2f) funct.getPoint(nPts2 - 1)).X;
         float diff = max - min;
 
+        System.err.println("min = " + min + " max = " + max + " diff = " + diff);
+        
+        
         // remap the xfer function from 0->1 to min->max
         for (int i = 0; i < nPts; i++) {
             x[i] = (x[i] * diff) + min;
@@ -744,8 +664,10 @@ public class FileHistoLUT extends FileBase {
 
         // import data into function
         funct.importArrays(x, y, nPts);
+        */
     }
 
+    
     /**
      * Accessor to set the LUT.
      *
@@ -881,7 +803,7 @@ public class FileHistoLUT extends FileBase {
      *
      * @exception  IOException  if there is an error writing the file
      */
-    public void writeLUT() throws IOException {
+    public void writeLUTandTransferFunction() throws IOException {
     	if (useLUT) {
             writeLUT(lut);
         }

@@ -1011,7 +1011,7 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
             fileHistoLUT.writeLUT(lut);
 
             if (loadAll) {
-                fileHistoLUT.readLUT(quietMode);
+                fileHistoLUT.readLUTandTransferFunction(quietMode);
             } else {
                 fileHistoLUT.readFunctions();
             }

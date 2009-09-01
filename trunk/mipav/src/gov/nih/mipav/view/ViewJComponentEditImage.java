@@ -3786,7 +3786,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
      * @param filename filename to save LUT as
      * @param dirName directory to save LUT to
      */
-    public void saveOnlyLUTAs(String filename, String dirName) {
+    public void saveLUTandTransferFunction(String filename, String dirName) {
         ModelRGB rgb;
         ModelLUT lut;
         ModelImage img;
@@ -3827,7 +3827,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
             }
 
-            fileHistoLUT.writeLUT();
+            fileHistoLUT.writeLUTandTransferFunction();
 
         } catch (IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
@@ -3837,7 +3837,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     
     
     /**
-     * This method reads a LUT from a file. 
+     * This method reads a LUT and Transfer function from a file diretory specified. 
      * 
      * @param filename filename of LUT 
      * @param dirName directory of LUT
@@ -3883,7 +3883,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
                 fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
             }
 
-            fileHistoLUT.readLUT(false);
+            fileHistoLUT.readLUTandTransferFunction(false);
 
         } catch (IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
@@ -3900,7 +3900,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         String fName = "userdefine.lut";
         String dName = Preferences.getPreferencesDir();
 
-        saveOnlyLUTAs(fName, dName);
+        saveLUTandTransferFunction(fName, dName);
 
     }
 
