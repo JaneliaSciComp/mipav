@@ -2641,9 +2641,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Open functions")) {
             loadLUT(false, false);
         } else if (command.equals("Open LUT from...")) {
-            loadLUTFrom(true, null, null, false);
+        	loadLUTandTransferFunctionFrom(true, null, null, false);
         } else if (command.equals("Open functions from...")) {
-            loadLUTFrom(false, null, null, false);
+        	loadLUTandTransferFunctionFrom(false, null, null, false);
         } else if (command.equals("Save LUT")) {
             saveLUT(true);
         } else if (command.equals("Save functions")) {
