@@ -1070,7 +1070,7 @@ public abstract class ViewJFrameBase extends JFrame
         String filename = new String(imageName + ".lut");
         String dirName = img.getFileInfo(0).getFileDirectory();
 
-        loadLUTFrom(loadAll, filename, dirName, quietMode);
+        loadLUTandTransferFunctionFrom(loadAll, filename, dirName, quietMode);
 
     } // end loadLUT()
 
@@ -1084,7 +1084,7 @@ public abstract class ViewJFrameBase extends JFrame
      * @param  dirName    directory to save LUT to
      * @param  quietMode  if true indicates that warnings should not be displayed.
      */
-    public void loadLUTFrom(boolean loadAll, String filename, String dirName, boolean quietMode) {
+    public void loadLUTandTransferFunctionFrom(boolean loadAll, String filename, String dirName, boolean quietMode) {
 
         ModelRGB rgb;
         ModelLUT lut;
@@ -1160,7 +1160,7 @@ public abstract class ViewJFrameBase extends JFrame
                 fileHistoLUT = new FileHistoLUT(filename, dirName, lut);
 
                 if (loadAll) {
-                    fileHistoLUT.readLUT(quietMode);
+                    fileHistoLUT.readLUTandTransferFunction(quietMode);
                 } else {
                     fileHistoLUT.readFunctions();
                 }
@@ -1174,7 +1174,7 @@ public abstract class ViewJFrameBase extends JFrame
                 fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
 
                 if (loadAll) {
-                    fileHistoLUT.readLUT(quietMode);
+                    fileHistoLUT.readLUTandTransferFunction(quietMode);
                 } else {
                     fileHistoLUT.readFunctions();
                 }
@@ -1196,99 +1196,7 @@ public abstract class ViewJFrameBase extends JFrame
         }
     } // end loadLUTFrom()
 
-    /**
-     * This method loads the LUT for the active image. If the image is not a color image then both the functions and the
-     * LUT data are loaded. If this is a color image, then only the functions are loaded.
-     *
-     * @param  loadAll    boolean indicating that both lut and transfer functions should be loaded. If false, then only
-     *                    transfer functions are loaded.
-     * @param  filename   filename to save LUT as
-     * @param  dirName    directory to save LUT to
-     * @param  quietMode  if true indicates that warnings should not be displayed.
-     */
-    public void loadOnlyLUTFrom(boolean loadAll, String filename, String dirName, boolean quietMode) {
-
-        ModelRGB rgb;
-        ModelLUT lut;
-        ModelImage img;
-        FileHistoLUT fileHistoLUT;
-        boolean useLUT = false;
-
-        if (displayMode == IMAGE_A) {
-            img = this.getImageA();
-
-            if (img.isColorImage()) {
-                useLUT = false;
-                rgb = this.getRGBTA();
-                lut = null;
-            } else {
-                useLUT = true;
-                rgb = null;
-                lut = this.getLUTa();
-            }
-        } else {
-            img = this.getImageB();
-
-            if (img.isColorImage()) {
-                useLUT = false;
-                rgb = this.getRGBTB();
-                lut = null;
-            } else {
-                useLUT = true;
-                rgb = null;
-                lut = this.getLUTb();
-            }
-        }
-
-        // if not using a lut (i.e. rgb only), then you
-        // can't loadAll.... there are only functions, so
-        // reset the loadAll variable
-        if (!useLUT) {
-            loadAll = false;
-        }
-
-        try {
-
-            if (useLUT) {
-                fileHistoLUT = new FileHistoLUT(filename, dirName, lut);
-
-                if (loadAll) {
-                    fileHistoLUT.readOnlyLUT(quietMode);
-                } else {
-                    fileHistoLUT.readFunctions();
-                }
-
-                if (displayMode == IMAGE_A) {
-                    this.setLUTa(lut);
-                } else {
-                    this.setLUTb(lut);
-                }
-            } else {
-                fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
-
-                if (loadAll) {
-                    fileHistoLUT.readOnlyLUT(quietMode);
-                } else {
-                    fileHistoLUT.readFunctions();
-                }
-
-                if (displayMode == IMAGE_A) {
-                    this.setRGBTA(rgb);
-                } else {
-                    this.setRGBTB(rgb);
-                }
-            }
-
-            img.notifyImageDisplayListeners(lut, true);
-
-        } catch (IOException error) {
-
-            if (!quietMode) {
-                MipavUtil.displayError("Error reading LUT: \n" + error.getMessage());
-            }
-        }
-    } // end loadLUTFrom()
-
+   
     /**
      * This method opens an existing VOI.
      *
@@ -2639,7 +2547,7 @@ public abstract class ViewJFrameBase extends JFrame
      * @param  filename  filename to save LUT as
      * @param  dirName   directory to save LUT to
      */
-    public void saveOnlyLUTAs(String filename, String dirName) {
+    public void saveLUTandTransferFunction(String filename, String dirName) {
 
         ModelRGB rgb;
         ModelLUT lut;
@@ -2681,7 +2589,7 @@ public abstract class ViewJFrameBase extends JFrame
                 fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
             }
 
-            fileHistoLUT.writeLUT();
+            fileHistoLUT.writeLUTandTransferFunction();
 
         } catch (IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());

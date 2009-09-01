@@ -565,7 +565,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
         } else if (command.equals("OpenFuncts")) {
 
             // open only the transfer functions
-            loadLUTFrom(false, null, null, false);
+        	loadLUTandTransferFunctionFrom(false, null, null, false);
 
             if (displayMode == IMAGE_A) {
                 getHistoLUTComponentA().showHistogram();

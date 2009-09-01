@@ -276,24 +276,18 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
                 setLUTB(getLUTb());
             }
         } else if (command.equals("SaveUDLUT")) {
-
             // save both the LUT and the transfer functions
             String fName = "userdefine.lut";
             String dName = Preferences.getPreferencesDir();
-            saveOnlyLUTAs(fName, dName);
+            saveLUTandTransferFunction(fName, dName);
 
-            // save the transfer function
-            String fName2 = "userdefineTF.fun";
-            saveUDTransferFunction(fName2, dName);
-
-            // saveLUTAs( true, fName, dName );
             if (getDisplayMode() == IMAGE_A) {
                 setLUTA(getLUTa());
             } else {
                 setLUTB(getLUTb());
             }
         } else if (command.equals("OpenLUT")) {
-            loadLUTFrom(true, null, null, false);
+        	loadLUTandTransferFunctionFrom(true, null, null, false);
 
             if (getDisplayMode() == IMAGE_A) {
                 setLUTA(getLUTa());
@@ -301,16 +295,10 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
                 setLUTB(getLUTb());
             }
         } else if (command.equals("OpenUDLUT")) {
-            String fName = "userdefine.lut";
+        	String fName = "userdefine.lut";
             String dName = Preferences.getPreferencesDir();
-            loadOnlyLUTFrom(true, fName, dName, false);
-            // loadLUTFrom( true, fName, dName, false );
-
-            // load the transfer function
-            String fName2 = "userdefineTF.fun";
-
-            loadUDTransferFunction(fName2, dName);
-
+            loadLUTandTransferFunctionFrom( true, fName, dName, false );
+            
             if (getDisplayMode() == IMAGE_A) {
                 setLUTA(getLUTa());
             } else {
@@ -340,7 +328,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
         } else if (command.equals("OpenFuncts")) {
 
             // open only the transfer functions
-            loadLUTFrom(false, null, null, false);
+        	loadLUTandTransferFunctionFrom(false, null, null, false);
 
             if (getDisplayMode() == IMAGE_A) {
                 setLUTA(getLUTa());
@@ -1060,55 +1048,4 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
         setJMenuBar(menuBar);
     }
 
-    /**
-     * Loads the User Defined transfer function into the lut.
-     *
-     * @param  fName  String file name
-     * @param  dName  String directory name
-     */
-    private void loadUDTransferFunction(String fName, String dName) {
-        FileHistoLUT fileHistoLUT;
-        ModelLUT lut = null;
-        String temp = "temp.temp";
-
-        if (displayMode == IMAGE_A) {
-            lut = this.getLUTa();
-        } else {
-            lut = this.getLUTb();
-        }
-
-        try {
-            fileHistoLUT = new FileHistoLUT(temp, dName, lut);
-            fileHistoLUT.readUDTransferFunction(fName, dName);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-    }
-
-    /**
-     * Saves the User Defined transfer function (remapped 0->1).
-     *
-     * @param  fName  String file name
-     * @param  dName  String directory name
-     */
-    private void saveUDTransferFunction(String fName, String dName) {
-        FileHistoLUT fileHistoLUT;
-        ModelLUT lut = null;
-        String temp = "temp.temp";
-
-        if (displayMode == IMAGE_A) {
-            lut = this.getLUTa();
-        } else {
-            lut = this.getLUTb();
-        }
-
-        try {
-            fileHistoLUT = new FileHistoLUT(temp, dName, lut);
-            fileHistoLUT.writeUDTransferFunction(fName, dName);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-    }
 }
