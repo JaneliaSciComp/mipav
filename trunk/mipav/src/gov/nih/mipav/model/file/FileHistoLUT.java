@@ -136,7 +136,7 @@ public class FileHistoLUT extends FileBase {
     } // end readFunctions()
 
     /**
-     * This method reads the transfer and RGB functions associated with a LUT.
+     * This method reads the transfer and RGB functions define the LUT.
      *
      * @param      lut  The ModelLUT that these functions are read to
      *
@@ -676,7 +676,6 @@ public class FileHistoLUT extends FileBase {
         raFile = new RandomAccessFile(file, "r");
 
         String tagStr = raFile.readLine();
-
         if (tagStr == null) {
             raFile.close();
             throw new IOException("Error reading LUT functions. Functions file has bad format.");
@@ -693,8 +692,6 @@ public class FileHistoLUT extends FileBase {
             raFile.close();
             throw new IOException("Error reading LUT functions.  Null LUT.");
         }
-
-        String tag2 = raFile.readLine();
 
         String s;
         float[] fields;
@@ -736,11 +733,8 @@ public class FileHistoLUT extends FileBase {
 
         // find the min & max
         int nPts2 = funct.size();
-
-
         float min = ((Vector2f) funct.getPoint(0)).X;
         float max = ((Vector2f) funct.getPoint(nPts2 - 1)).X;
-
         float diff = max - min;
 
         // remap the xfer function from 0->1 to min->max

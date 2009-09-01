@@ -2799,22 +2799,22 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     }
 
     /**
-     * Open the user defined LUT table.
+     * Open the user defined LUT table and transfer function.
      */
-    public void openUDLUT() {
+    public void openUDLUTandTransferFunct() {
         String fName = "userdefine.lut";
         String dName = Preferences.getPreferencesDir();
         
-        readOnlyLUTFrom(fName, dName);
+        readLUTandTFunctFrom(fName, dName);
         
         try {
 
             if (imageA.isColorImage() == false) {
 
-                imageA.notifyImageDisplayListeners(null, false);
+                imageA.notifyImageDisplayListeners(null, true);
 
                 if (imageB != null) {
-                    imageB.notifyImageDisplayListeners(null, false);
+                    imageB.notifyImageDisplayListeners(null, true);
                 }
 
             } else { // RGB image
@@ -3837,13 +3837,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
     
     
     /**
-     * This method saves the LUT for the active image. If the image is not a color image then both the functions and the
-     * LUT data are saved. If this is a color image, then only the functions are saved.
+     * This method reads a LUT from a file. 
      * 
-     * @param filename filename to save LUT as
-     * @param dirName directory to save LUT to
+     * @param filename filename of LUT 
+     * @param dirName directory of LUT
      */
-    public void readOnlyLUTFrom(String filename, String dirName) {
+    public void readLUTandTFunctFrom(String filename, String dirName) {
         ModelRGB rgb;
         ModelLUT lut;
         ModelImage img;

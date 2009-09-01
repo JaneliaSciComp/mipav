@@ -2773,7 +2773,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 getActiveImage().notifyImageDisplayListeners(componentImage.getLUTb(), false);
             }
         } else if (command.equals("OpenUDLUT")) {
-            componentImage.openUDLUT();
+            componentImage.openUDLUTandTransferFunct();
         } else if (command.equals("SaveUDLUT")) {
             componentImage.saveUDLUT();
         } else if (command.equals("quickLUT")) {
