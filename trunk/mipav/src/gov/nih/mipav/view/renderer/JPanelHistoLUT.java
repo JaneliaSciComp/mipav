@@ -649,8 +649,7 @@ public class JPanelHistoLUT
                 setLUTB(LUTb);
             }
         } else if (command.equals("SaveUDLUT")) {
-        	System.err.println("ruida SaveUDLUT");
-        
+        	
         	saveLUTandTransferFunction(true, "userdefine.lut", Preferences.getPreferencesDir());
 
             if (displayMode == IMAGE_A) {
@@ -667,15 +666,16 @@ public class JPanelHistoLUT
                 setLUTB(LUTb);
             }
         } else if (command.equals("OpenUDLUT")) {
-        	System.err.println("ruida OpenUDLUT");
         	
-            loadOnlyLUTFrom(true, "userdefine.lut", Preferences.getPreferencesDir(), false);
-
+        	loadLUTandTransferFunctionFrom(true, "userdefine.lut", Preferences.getPreferencesDir(), false);
+            
             if (displayMode == IMAGE_A) {
                 setLUTA(LUTa);
             } else {
                 setLUTB(LUTb);
             }
+            
+            
         } else if (event.getActionCommand().equals("GenerateLUT")) {
             histoPanelA.showLUTRecorder();
         } else if (command.equals("SaveFuncts")) {
@@ -1218,7 +1218,7 @@ public class JPanelHistoLUT
      * @param  dirName    dirName directory to save LUT to
      * @param  quietMode  quietMode if true indicates that warnings should not be displayed.
      */
-    public void loadOnlyLUTFrom(boolean loadAll, String filename, String dirName, boolean quietMode) {
+    public void loadLUTandTransferFunctionFrom(boolean loadAll, String filename, String dirName, boolean quietMode) {
 
         ModelRGB rgb;
         ModelLUT lut;
@@ -1251,7 +1251,7 @@ public class JPanelHistoLUT
                 fileHistoLUT = new FileHistoLUT(filename, dirName, lut);
 
                 if (loadAll) {
-                    fileHistoLUT.readOnlyLUT(quietMode);
+                    fileHistoLUT.readLUTandTransferFunction(quietMode);
                 } else {
                     fileHistoLUT.readFunctions();
                 }
@@ -1265,7 +1265,7 @@ public class JPanelHistoLUT
                 fileHistoLUT = new FileHistoLUT(filename, dirName, rgb);
 
                 if (loadAll) {
-                    fileHistoLUT.readOnlyLUT(quietMode);
+                    fileHistoLUT.readLUTandTransferFunction(quietMode);
                 } else {
                     fileHistoLUT.readFunctions();
                 }
