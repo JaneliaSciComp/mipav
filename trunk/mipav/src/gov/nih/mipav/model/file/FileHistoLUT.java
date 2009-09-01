@@ -1,7 +1,5 @@
 package gov.nih.mipav.model.file;
 
-import WildMagic.LibFoundation.Mathematics.Vector2f;
-
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -136,7 +134,7 @@ public class FileHistoLUT extends FileBase {
     } // end readFunctions()
 
     /**
-     * This method reads the transfer and RGB functions define the LUT.
+     * This method reads the transfer for a grayscale image and the RGB functions that define the LUT.
      *
      * @param      lut  The ModelLUT that these functions are read to
      *
@@ -215,7 +213,7 @@ public class FileHistoLUT extends FileBase {
     } // end readFunctions()
 
     /**
-     * This method reads the transfer and RGB functions associated with a ModelRGB.
+     * This method reads the transfers for a RGB image.
      *
      * @param      rgb  The ModelRGB that these functions are read to
      *
@@ -415,180 +413,6 @@ public class FileHistoLUT extends FileBase {
 
 
     /**
-     * This method reads a LUT file and its associated transfer function.
-     *
-     * @param      lut        The ModelLUT that the LUT data gets applied to
-     * @param      quietMode  if true indicates that warnings should not be displayed.
-     *
-     * @exception  IOException  if there is an error reading the file
-     */
-    public void readOnlyLUT(ModelLUT lut, boolean quietMode) throws IOException {
-        String s;
-        int height = 0;
-        float[] fields;
-        float[] alpha;
-        float[] red;
-        float[] blue;
-        float[] green;
-
-        // read functions first (otherwise they may overwrite points on histogram)
-        // since it's possible that the functions file won't exist, but that there
-        // is a LUT -- don't stop processing if this throws an exception
-        /*
-         * try { readFunctions(lut); } catch (IOException e) { if (!quietMode) MipavUtil.displayError ("Unable to read
-         * transfer functions: " + e.getMessage()); }
-         */
-
-        // now read the LUT
-        raFile = new RandomAccessFile(new File(fileDir + File.separator + lutFileName), "r");
-
-        String tagStr = raFile.readLine();
-
-        if (tagStr == null) {
-            raFile.close();
-            throw new IOException("Error reading LUT. LUT file has bad format.");
-        }
-
-        tagStr.trim();
-
-        if (!lutTag.equals(tagStr)) {
-            raFile.close();
-            throw new IOException("Error reading LUT. Bad Tag in LUT file.");
-        }
-
-        height = Integer.valueOf(readLine(raFile)).intValue();
-
-        if (height != lut.getExtents()[1]) {
-            raFile.close();
-            throw new IOException("Error reading LUT.  This LUT is wrong size for this image.");
-        }
-
-        // allocate memory for arrays
-        try {
-            alpha = new float[height];
-            red = new float[height];
-            blue = new float[height];
-            green = new float[height];
-        } catch (OutOfMemoryError error) {
-            raFile.close();
-            throw new IOException("Error reading LUT. Out of memory.");
-        }
-
-        // read the data into the arrays
-        for (int i = 0; i < height; i++) {
-            int j = 1;
-            s = raFile.readLine();
-
-            try {
-                fields = parseString(s, 5);
-                alpha[i] = fields[j];
-                j++;
-                red[i] = fields[j];
-                j++;
-                green[i] = fields[j];
-                j++;
-                blue[i] = fields[j];
-                j++;
-            } catch (Exception e) {
-                raFile.close();
-                throw new IOException(e.getMessage());
-            }
-        }
-
-        raFile.close();
-
-        // set the data in the lut
-        for (int i = 0; i < height; i++) {
-            lut.set(0, i, alpha[i]); // set the alpha level
-            lut.set(1, i, red[i]); // set red channel
-            lut.set(2, i, green[i]); // set green channel
-            lut.set(3, i, blue[i]); // set blue channel
-        }
-
-        lut.makeIndexedLUT(null);
-    } // end readLUT()
-
-    /**
-     * This method reads the transfer and RGB functions associated with a LUT.
-     *
-     * @param      _lut  The ModelLUT that these functions are read to
-     *
-     * @exception  IOException  if there is an error reading the file
-     */
-    public void readOpacityFunctions(ModelLUT _lut) throws IOException {
-        useLUT = false;
-
-        // make sure that file is set to the funcFile
-        if (raFile != null) {
-            raFile.close();
-        }
-
-        File file = new File(fileDir + File.separator + funcFileName);
-
-        if (!file.exists()) {
-            raFile.close();
-            throw new IOException("LUT Functions file does not exist.");
-        }
-
-        raFile = new RandomAccessFile(file, "r");
-
-        String tagStr = raFile.readLine();
-
-        if (tagStr == null) {
-            raFile.close();
-            throw new IOException("Error reading LUT functions. Functions file has bad format.");
-        }
-
-        tagStr.trim();
-
-        if (!funcTag.equals(tagStr)) {
-            raFile.close();
-            throw new IOException("Error reading LUT Functions. Bad Tag in functions file.");
-        }
-
-        if (_lut == null) {
-            raFile.close();
-            throw new IOException("Error reading LUT functions.  Null LUT.");
-        }
-
-        String tag2 = raFile.readLine();
-
-        while (!tag2.equals(endTag)) {
-
-            if (tag2.equals("Transfer")) {
-                useLUT = true;
-                readTransferFunction(raFile, _lut.getTransferFunction(), "Transfer");
-            } else if (tag2.equals("Alpha")) {
-                readTransferFunction(raFile, _lut.getAlphaFunction(), "Alpha");
-            } else if (tag2.equals("Red")) {
-                readTransferFunction(raFile, _lut.getRedFunction(), "Red");
-            } else if (tag2.equals("Green")) {
-                readTransferFunction(raFile, _lut.getGreenFunction(), "Green");
-            } else if (tag2.equals("Blue")) {
-                readTransferFunction(raFile, _lut.getBlueFunction(), "Blue");
-            } else if (tag2.equals("Opacity")) {
-
-                if (opacityFunction != null) {
-                    readTransferFunction(raFile, opacityFunction, "Opacity");
-                }
-            }
-
-            // get the next tag
-            tag2 = raFile.readLine();
-        } // end while
-
-        raFile.close();
-
-        // set the data in the lut
-        if (useLUT) {
-            int height = _lut.getExtents()[1];
-            _lut.makeLUT(height);
-            _lut.makeIndexedLUT(null);
-        }
-
-    } // end readFunctions()
-
-    /**
      * Reads in a transfer function from a file.
      *
      * @param   file   the file to read from
@@ -596,7 +420,7 @@ public class FileHistoLUT extends FileBase {
      * @param   functName  the transfer function name
      * @throws  IOException  if there is a problem reading from the file
      */
-    public void readTransferFunction(RandomAccessFile file, TransferFunction funct, String functName) throws IOException {
+    private void readTransferFunction(RandomAccessFile file, TransferFunction funct, String functName) throws IOException {
         String s;
         float[] fields;
         float[] x;
@@ -845,56 +669,6 @@ public class FileHistoLUT extends FileBase {
     } // end writeLUT()
 
     /**
-     * Writes the transfer and RGB functions to a file.
-     *
-     * @exception  IOException  if there is an error writing the file
-     */
-    public void writeOpacityFunctions() throws IOException {
-
-        if (useLUT && (lut == null)) {
-            throw new IOException("Error writing LUT transfer functions. LUT is null.");
-        } else if (!useLUT && (rgb == null)) {
-            throw new IOException("Error writing RGB transfer functions. RGB is null.");
-        }
-
-        // make sure that file is set to the funcFile
-        if (raFile != null) {
-            raFile.close();
-        }
-
-        File file = new File(fileDir + File.separator + funcFileName);
-        raFile = new RandomAccessFile(file, "rw");
-
-        if (file.exists() == true) {
-            raFile.close();
-            file.delete();
-            file = new File(fileDir + File.separator + funcFileName);
-            raFile = new RandomAccessFile(file, "rw");
-        }
-
-        raFile.writeBytes(funcTag + "\r\n");
-
-        // get the transfer function -- only exists for lut
-        if (useLUT) {
-            writeTransferFunction(raFile, lut.getTransferFunction(), "Transfer");
-            // writeTransferFunction( raFile, lut.getAlphaFunction(), "Alpha" );
-        }
-
-        /*if ( useLUT ) {
-         *  writeTransferFunction( raFile, lut.getRedFunction(), "Red" ); writeTransferFunction( raFile,
-         * lut.getRedFunction(), "Green" ); writeTransferFunction( raFile, lut.getRedFunction(), "Blue" ); } else {
-         * writeTransferFunction( raFile, rgb.getRedFunction(), "Red" ); writeTransferFunction( raFile,
-         * rgb.getRedFunction(), "Green" ); writeTransferFunction( raFile, rgb.getRedFunction(), "Blue" );}*/
-
-        if (opacityFunction != null) {
-            writeTransferFunction(raFile, opacityFunction, "Opacity");
-        }
-
-        raFile.writeBytes(endTag + "\r\n");
-        raFile.close();
-    }
-
-    /**
      * Write out a transfer function to a file.
      *
      * @param   file   the file to write the function to
@@ -932,58 +706,6 @@ public class FileHistoLUT extends FileBase {
         for (int i = 0; i < nPts; i++) {
             file.writeBytes(Float.toString(x[i]) + "\t" + Float.toString(y[i]) + "\t" + Float.toString(z[i]) + "\r\n");
         }
-    }
-
-
-    /**
-     * Remaps the transfer function from 0->1 and writes to a files.
-     *
-     * @param   fName  String file name
-     * @param   dName  String dir name
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public void writeUDTransferFunction(String fName, String dName) throws IOException {
-
-      
-        // make sure that file is set to the funcFile
-        if (raFile != null) {
-            raFile.close();
-        }
-
-        File file = new File(dName + File.separator + fName);
-        raFile = new RandomAccessFile(file, "rw");
-
-        if (file.exists() == true) {
-            raFile.close();
-            file.delete();
-            file = new File(dName + File.separator + fName);
-            raFile = new RandomAccessFile(file, "rw");
-        }
-
-        // write gray-scale image 
-        raFile.writeBytes(funcTag + "\r\n");
-
-        // get the transfer function -- only exists for lut
-        if (useLUT) {
-            writeTransferFunction(raFile, lut.getTransferFunction(), "Transfer");
-            writeTransferFunction(raFile, lut.getAlphaFunction(), "Alpha");
-        }
-
-        if (useLUT) {
-            writeTransferFunction(raFile, lut.getRedFunction(), "Red");
-            writeTransferFunction(raFile, lut.getGreenFunction(), "Green");
-            writeTransferFunction(raFile, lut.getBlueFunction(), "Blue");
-        } else {
-            writeTransferFunction(raFile, rgb.getRedFunction(), "Red");
-            writeTransferFunction(raFile, rgb.getGreenFunction(), "Green");
-            writeTransferFunction(raFile, rgb.getBlueFunction(), "Blue");
-        }
-
-
-        raFile.writeBytes(endTag + "\r\n");
-        raFile.close();
-
     }
 
     /**
