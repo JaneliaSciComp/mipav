@@ -1830,6 +1830,14 @@ public class GeneralizedInverse {
         int ibscl;
         int itau;
         int iwork;
+        double vector1[];
+        double vector2[];
+        int row1;
+        double array1[][];
+        int j;
+        int ie;
+        int itauq;
+        int itaup;
         
         // Test the input arguments
         info[0] = 0;
@@ -2020,7 +2028,52 @@ public class GeneralizedInverse {
                 
                 // Compute A = Q*R
                 // (Workspace: need 2*n, prefer n + n*nb)
+                vector1 = new double[Math.min(m, n)];
+                vector2 = new double[Math.max(1, lwork - iwork + 1)];
+                dgeqrf(m, n, A, Math.max(1, m), vector1, vector2, lwork - iwork + 1, info);
+                for (i = 0; i < vector1.length; i++) {
+                    work[itau - 1 + i] = vector1[i];
+                }
+                for (i = 0; i < vector2.length; i++) {
+                    work[iwork - 1 + i] = vector2[i];
+                }
+                
+                // Multiply B by transpose(Q)
+                // (Workspace: need n + nrhs, prefer n + nrhs*nb)
+                vector1 = new double[n];
+                for (i = 0; i < n; i++) {
+                    vector1[i] = work[itau - 1 + i];
+                }
+                dormqr('L', 'T', m, nrhs, n, A, lda, vector1, B, ldb, vector2, lwork - iwork + 1, info);
+                for (i = 0; i < vector2.length; i++) {
+                    work[iwork - 1 + i] = vector2[i];
+                }
+                
+                // Zero out below R
+                if (n > 1) {
+                    row1 = Math.max(1, n - 1); 
+                    array1 = new double[row1][n-1];
+                    for (i = 0; i < row1; i++) {
+                        for (j = 0; j < n - 1; j++) {
+                            array1[i][j] = A[1 + i][j];    
+                        }
+                    }
+                    dlaset('L', n - 1, n - 1, 0.0, 0.0, array1, row1);
+                    for (i = 0; i < row1; i++) {
+                        for (j = 0; j < n - 1; j++) {
+                            A[1 + i][j] = array1[i][j];    
+                        }
+                    }
+                } // if (n > 1)
             }  // if (m >= mnthr)
+            
+            ie = 1;
+            itauq = ie + n;
+            itaup = itauq + n;
+            iwork = itaup + n;
+            
+            // Bidiagonalize R in A
+            // (Workspace: need 3*n + mm, prefer 3*n + (mm + n)*nb)
         } // if (m >= n)
     } // dgelss
     
@@ -3253,6 +3306,714 @@ public class GeneralizedInverse {
 
         return value;
     } // dlange
+    
+    /* This is a port of the version 3.2 LAPACK auxiliary routine DLABRD.  Original DLABRD created by 
+     * Univ. of Tennessee, Univ. Of California Berkeley, Univ. Of Colorado Denver, and NAG Ltd.,
+     * November, 2006
+     
+       *  Purpose
+       *  =======
+       *
+       *  DLABRD reduces the first NB rows and columns of a real general
+       *  m by n matrix A to upper or lower bidiagonal form by an orthogonal
+       *  transformation Q' * A * P, and returns the matrices X and Y which
+       *  are needed to apply the transformation to the unreduced part of A.
+       *
+       *  If m >= n, A is reduced to upper bidiagonal form; if m < n, to lower
+       *  bidiagonal form.
+       *
+       *  This is an auxiliary routine called by DGEBRD
+       *
+       *  Arguments
+       *  =========
+       *
+       *  M       (input) INTEGER
+       *          The number of rows in the matrix A.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns in the matrix A.
+       *
+       *  NB      (input) INTEGER
+       *          The number of leading rows and columns of A to be reduced.
+       *
+       *  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
+       *          On entry, the m by n general matrix to be reduced.
+       *          On exit, the first NB rows and columns of the matrix are
+       *          overwritten; the rest of the array is unchanged.
+       *          If m >= n, elements on and below the diagonal in the first NB
+       *            columns, with the array TAUQ, represent the orthogonal
+       *            matrix Q as a product of elementary reflectors; and
+       *            elements above the diagonal in the first NB rows, with the
+       *            array TAUP, represent the orthogonal matrix P as a product
+       *            of elementary reflectors.
+       *          If m < n, elements below the diagonal in the first NB
+       *            columns, with the array TAUQ, represent the orthogonal
+       *            matrix Q as a product of elementary reflectors, and
+       *            elements on and above the diagonal in the first NB rows,
+       *            with the array TAUP, represent the orthogonal matrix P as
+       *            a product of elementary reflectors.
+       *          See Further Details.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A.  LDA >= max(1,M).
+       *
+       *  D       (output) DOUBLE PRECISION array, dimension (NB)
+       *          The diagonal elements of the first NB rows and columns of
+       *          the reduced matrix.  D(i) = A(i,i).
+       *
+       *  E       (output) DOUBLE PRECISION array, dimension (NB)
+       *          The off-diagonal elements of the first NB rows and columns of
+       *          the reduced matrix.
+       *
+       *  TAUQ    (output) DOUBLE PRECISION array dimension (NB)
+       *          The scalar factors of the elementary reflectors which
+       *          represent the orthogonal matrix Q. See Further Details.
+       *
+       *  TAUP    (output) DOUBLE PRECISION array, dimension (NB)
+       *          The scalar factors of the elementary reflectors which
+       *          represent the orthogonal matrix P. See Further Details.
+       *
+       *  X       (output) DOUBLE PRECISION array, dimension (LDX,NB)
+       *          The m-by-nb matrix X required to update the unreduced part
+       *          of A.
+       *
+       *  LDX     (input) INTEGER
+       *          The leading dimension of the array X. LDX >= M.
+       *
+       *  Y       (output) DOUBLE PRECISION array, dimension (LDY,NB)
+       *          The n-by-nb matrix Y required to update the unreduced part
+       *          of A.
+       *
+       *  LDY     (input) INTEGER
+       *          The leading dimension of the array Y. LDY >= N.
+       *
+       *  Further Details
+       *  ===============
+       *
+       *  The matrices Q and P are represented as products of elementary
+       *  reflectors:
+       *
+       *     Q = H(1) H(2) . . . H(nb)  and  P = G(1) G(2) . . . G(nb)
+       *
+       *  Each H(i) and G(i) has the form:
+       *
+       *     H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
+       *
+       *  where tauq and taup are real scalars, and v and u are real vectors.
+       *
+       *  If m >= n, v(1:i-1) = 0, v(i) = 1, and v(i:m) is stored on exit in
+       *  A(i:m,i); u(1:i) = 0, u(i+1) = 1, and u(i+1:n) is stored on exit in
+       *  A(i,i+1:n); tauq is stored in TAUQ(i) and taup in TAUP(i).
+       *
+       *  If m < n, v(1:i) = 0, v(i+1) = 1, and v(i+1:m) is stored on exit in
+       *  A(i+2:m,i); u(1:i-1) = 0, u(i) = 1, and u(i:n) is stored on exit in
+       *  A(i,i+1:n); tauq is stored in TAUQ(i) and taup in TAUP(i).
+       *
+       *  The elements of the vectors v and u together form the m-by-nb matrix
+       *  V and the nb-by-n matrix U' which are needed, with X and Y, to apply
+       *  the transformation to the unreduced part of the matrix, using a block
+       *  update of the form:  A := A - V*Y' - X*U'.
+       *
+       *  The contents of A on exit are illustrated by the following examples
+       *  with nb = 2:
+       *
+       *  m = 6 and n = 5 (m > n):          m = 5 and n = 6 (m < n):
+       *
+       *    (  1   1   u1  u1  u1 )           (  1   u1  u1  u1  u1  u1 )
+       *    (  v1  1   1   u2  u2 )           (  1   1   u2  u2  u2  u2 )
+       *    (  v1  v2  a   a   a  )           (  v1  1   a   a   a   a  )
+       *    (  v1  v2  a   a   a  )           (  v1  v2  a   a   a   a  )
+       *    (  v1  v2  a   a   a  )           (  v1  v2  a   a   a   a  )
+       *    (  v1  v2  a   a   a  )
+       *
+       *  where a denotes an element of the original matrix which is unchanged,
+       *  vi denotes an element of the vector defining H(i), and ui an element
+       *  of the vector defining G(i).
+       */
+    private void dlabrd(int m, int n, int nb, double A[][], int lda, double d[], double e[],
+                        double tauq[], double taup[], double X[][], int ldx, double Y[][], int ldy) {
+        int i;
+        int row1;
+        double array1[][];
+        double vector1[];
+        double vector2[];
+        int j;
+        int k;
+        
+        // Quick return if possible
+        if ((m <= 0) || (n <= 0)) {
+            return;
+        }
+        
+        if (m >= n) {
+            // Reduce to upper bidiagonal form
+            for (i = 1; i <= nb; i++) {
+                // Update A(i:m,i)
+                row1 = Math.max(1,m-i+1);
+                array1 = new double[row1][i-1];
+                for (j = 0; j < row1; j++) {
+                    for (k = 0; k < i-1; k++) {
+                        array1[j][k] = A[i-1 + j][k];
+                    }
+                }
+                vector1 = new double[i-1];
+                for (j = 0; j < i-1; j++) {
+                    vector1[j] = Y[i-1][j];
+                }
+                vector2 = new double[m-i+1];
+                for (j = 0; j < m-i+1; j++) {
+                    vector2[j] = A[i-1+j][i-1];
+                }
+                dgemv('N', m-i+1, i-1, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                for (j = 0; j < m-i+1; j++) {
+                    A[i-1+j][i-1] = vector2[j];
+                }
+                
+                for (j = 0; j < row1; j++) {
+                    for (k = 0; k < i-1; k++) {
+                        array1[j][k] = X[i-1 + j][k];
+                    }
+                }
+                for (j = 0; j < i-1; j++) {
+                    vector1[j] = A[j][i-1];
+                }
+                dgemv('N', m-i+1, i-1, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                for (j = 0; j < m-i+1; j++) {
+                    A[i-1+j][i-1] = vector2[j];
+                }
+                
+                // Generate reflection Q(i) to annihilate A(i+1:m,i)
+                
+                d[i-1] = A[i-1][i-1];
+                if (i < n) {
+                    A[i-1][i-1] = 1.0;
+                    
+                    // Compute Y(i+1:n,i)
+                    row1 = Math.max(1,m-i+1);
+                    array1 = new double[row1][n-i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = A[i-1+j][i+k];
+                        }
+                    }
+                    vector1 = new double[m-i+1];
+                    for (j = 0; j < m-i+1; j++) {
+                        vector1[j] = A[i-1+j][i-1];
+                    }
+                    vector2 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector2[j] = Y[i+j][i-1];
+                    }
+                    dgemv('T', m-i+1, n-i, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < n-i; j++) {
+                        Y[i+j][i-1] = vector2[j];
+                    }
+                    
+                    array1 = new double[row1][i-1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i-1; k++) {
+                            array1[j][k] = A[i-1+j][k];
+                        }
+                    }
+                    for (j = 0; j < m-i+1; j++) {
+                        vector1[j] = A[i-1+j][i-1];
+                    }
+                    vector2 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector2[j] = Y[j][i-1];
+                    }
+                    dgemv('T', m-i+1, i-1, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < i-1; j++) {
+                        Y[j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1,n-i);
+                    array1 = new double[row1][i-1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i-1; k++) {
+                            array1[j][k] = Y[i+j][k];
+                        }
+                    }
+                    vector1 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector1[j] = Y[j][i-1];
+                    }
+                    vector2 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector2[j] = Y[i+j][i-1];
+                    }
+                    dgemv('N', n-i, i-1, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < n-i; j++) {
+                        Y[i+j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1, m-i+1);
+                    array1 = new double[row1][i-1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i-1; k++) {
+                            array1[j][k] = X[i-1+j][k];
+                        }
+                    }
+                    vector1 = new double[m-i+1];
+                    for (j = 0; j < m-i+1; j++) {
+                        vector1[j] = A[i-1+j][i-1];
+                    }
+                    vector2 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector2[j] = Y[j][i-1];
+                    }
+                    dgemv('T', m-i+1, i-1, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < i-1; j++) {
+                        Y[j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1, i-1);
+                    array1 = new double[row1][n-i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = A[j][i+k];
+                        }
+                    }
+                    vector1 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector1[j] = Y[j][i-1];
+                    }
+                    vector2 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector2[j] = Y[i+j][i-1];
+                    }
+                    dgemv('T', i-1, n-i, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < n-i; j++) {
+                        Y[i+j][i-1] = vector2[j];
+                    }
+                    
+                    // update A(i,i+1:n)
+                    row1 = Math.max(1,n-i);
+                    array1 = new double[row1][i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i; k++) {
+                            array1[j][k] = Y[i+j][k];
+                        }
+                    }
+                    vector1 = new double[i];
+                    for (j = 0; j < i; j++) {
+                        vector1[j] = A[i-1][j];
+                    }
+                    vector2 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector2[j] = A[i-1][i+j];
+                    }
+                    dgemv('N', n-i, i, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < n-i; j++) {
+                        A[i-1][i+j] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1, i-1);
+                    array1 = new double[row1][n-i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = A[j][i+k];
+                        }
+                    }
+                    vector1 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector1[j] = X[i-1][j];
+                    }
+                    vector2 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector2[j] = A[i-1][i+j];
+                    }
+                    dgemv('T', i-1, n-i, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < n-i; j++) {
+                        A[i-1][i+j] = vector2[j];
+                    }
+                    
+                    // Generate refleciton P(I) to annihilate A(i,i+2:n)
+                    
+                    e[i-1] = A[i-1][i];
+                    A[i-1][i] = 1.0;
+                    
+                    // Compute X(i+1:m,i)
+                    row1 = Math.max(1, m-i);
+                    array1 = new double[row1][n-i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = A[i+j][i+k];
+                        }
+                    }
+                    vector1 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector1[j] = A[i-1][i+j];
+                    }
+                    vector2 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector2[j] = X[i+j][i-1];
+                    }
+                    dgemv('N', m-i, n-i, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < m-i; j++) {
+                        X[i+j][i-1] = vector2[j];
+                    }
+                    row1 = Math.max(1, n-i);
+                    array1 = new double[row1][i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = Y[i+j][k];
+                        }
+                    }
+                    vector1 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector1[j] = A[i-1][i+j];
+                    }
+                    vector2 = new double[i];
+                    for (j = 0; j < i; j++) {
+                        vector2[j] = X[j][i-1];
+                    }
+                    dgemv('T', n-i, i, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < i; j++) {
+                        X[j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1, m-i);
+                    array1 = new double[row1][i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i; k++) {
+                            array1[j][k] = A[i+j][k];
+                        }
+                    }
+                    vector1 = new double[i];
+                    for (j = 0; j < i; j++) {
+                        vector1[j] = X[j][i-1];
+                    }
+                    vector2 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector2[j] = X[i+j][i-1];
+                    }
+                    dgemv('N', m-i, i, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < m-i; j++) {
+                        X[i+j][i-1] = vector2[j];
+                    }
+                } // if (i < n)
+            } // for (i = 1; i <= nb; i++)
+        } // if (m >= n)
+    } // dlabrd
+
+    
+    /**
+     * This is a port of version 3.2 LAPACK routine DGEBD2.  Original DGEBD2 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * *
+*
+*     .. Scalar Arguments ..
+      INTEGER            INFO, LDA, M, N
+*     ..
+*     .. Array Arguments ..
+      DOUBLE PRECISION   A( LDA, * ), D( * ), E( * ), TAUP( * ),
+     $                   TAUQ( * ), WORK( * )
+*     ..
+*
+*  Purpose
+*  =======
+*
+*  DGEBD2 reduces a real general m by n matrix A to upper or lower
+*  bidiagonal form B by an orthogonal transformation: Q' * A * P = B.
+*
+*  If m >= n, B is upper bidiagonal; if m < n, B is lower bidiagonal.
+*
+*  Arguments
+*  =========
+*
+*  M       (input) INTEGER
+*          The number of rows in the matrix A.  M >= 0.
+*
+*  N       (input) INTEGER
+*          The number of columns in the matrix A.  N >= 0.
+*
+*  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
+*          On entry, the m by n general matrix to be reduced.
+*          On exit,
+*          if m >= n, the diagonal and the first superdiagonal are
+*            overwritten with the upper bidiagonal matrix B; the
+*            elements below the diagonal, with the array TAUQ, represent
+*            the orthogonal matrix Q as a product of elementary
+*            reflectors, and the elements above the first superdiagonal,
+*            with the array TAUP, represent the orthogonal matrix P as
+*            a product of elementary reflectors;
+*          if m < n, the diagonal and the first subdiagonal are
+*            overwritten with the lower bidiagonal matrix B; the
+*            elements below the first subdiagonal, with the array TAUQ,
+*            represent the orthogonal matrix Q as a product of
+*            elementary reflectors, and the elements above the diagonal,
+*            with the array TAUP, represent the orthogonal matrix P as
+*            a product of elementary reflectors.
+*          See Further Details.
+*
+*  LDA     (input) INTEGER
+*          The leading dimension of the array A.  LDA >= max(1,M).
+*
+*  D       (output) DOUBLE PRECISION array, dimension (min(M,N))
+*          The diagonal elements of the bidiagonal matrix B:
+*          D(i) = A(i,i).
+*
+*  E       (output) DOUBLE PRECISION array, dimension (min(M,N)-1)
+*          The off-diagonal elements of the bidiagonal matrix B:
+*          if m >= n, E(i) = A(i,i+1) for i = 1,2,...,n-1;
+*          if m < n, E(i) = A(i+1,i) for i = 1,2,...,m-1.
+*
+*  TAUQ    (output) DOUBLE PRECISION array dimension (min(M,N))
+*          The scalar factors of the elementary reflectors which
+*          represent the orthogonal matrix Q. See Further Details.
+*
+*  TAUP    (output) DOUBLE PRECISION array, dimension (min(M,N))
+*          The scalar factors of the elementary reflectors which
+*          represent the orthogonal matrix P. See Further Details.
+*
+*  WORK    (workspace) DOUBLE PRECISION array, dimension (max(M,N))
+*
+*  INFO    (output) INTEGER
+*          = 0: successful exit.
+*          < 0: if INFO = -i, the i-th argument had an illegal value.
+*
+*  Further Details
+*  ===============
+*
+*  The matrices Q and P are represented as products of elementary
+*  reflectors:
+*
+*  If m >= n,
+*
+*     Q = H(1) H(2) . . . H(n)  and  P = G(1) G(2) . . . G(n-1)
+*
+*  Each H(i) and G(i) has the form:
+*
+*     H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
+*
+*  where tauq and taup are real scalars, and v and u are real vectors;
+*  v(1:i-1) = 0, v(i) = 1, and v(i+1:m) is stored on exit in A(i+1:m,i);
+*  u(1:i) = 0, u(i+1) = 1, and u(i+2:n) is stored on exit in A(i,i+2:n);
+*  tauq is stored in TAUQ(i) and taup in TAUP(i).
+*
+*  If m < n,
+*
+*     Q = H(1) H(2) . . . H(m-1)  and  P = G(1) G(2) . . . G(m)
+*
+*  Each H(i) and G(i) has the form:
+*
+*     H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
+*
+*  where tauq and taup are real scalars, and v and u are real vectors;
+*  v(1:i) = 0, v(i+1) = 1, and v(i+2:m) is stored on exit in A(i+2:m,i);
+*  u(1:i-1) = 0, u(i) = 1, and u(i+1:n) is stored on exit in A(i,i+1:n);
+*  tauq is stored in TAUQ(i) and taup in TAUP(i).
+*
+*  The contents of A on exit are illustrated by the following examples:
+*
+*  m = 6 and n = 5 (m > n):          m = 5 and n = 6 (m < n):
+*
+*    (  d   e   u1  u1  u1 )           (  d   u1  u1  u1  u1  u1 )
+*    (  v1  d   e   u2  u2 )           (  e   d   u2  u2  u2  u2 )
+*    (  v1  v2  d   e   u3 )           (  v1  e   d   u3  u3  u3 )
+*    (  v1  v2  v3  d   e  )           (  v1  v2  e   d   u4  u4 )
+*    (  v1  v2  v3  v4  d  )           (  v1  v2  v3  e   d   u5 )
+*    (  v1  v2  v3  v4  v5 )
+*
+*  where d and e denote diagonal and off-diagonal elements of B, vi
+*  denotes an element of the vector defining H(i), and ui an element of
+*  the vector defining G(i).
+*
+*/
+    private void dgebd2(int m, int n, double A[][], int lda, double d[], double e[], double tauq[],
+                        double taup[], double work[], int info[]) {
+        int i;
+        double alpha[] = new double[1];
+        double x[];
+        int j;
+        double tau[] = new double[1];
+        int row1;
+        double array1[][];
+        int k;
+        
+        // Test the input parameters
+        info[0] = 0;
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if (n < 0) {
+            info[0] = -2;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -4;
+        }
+        
+        if (info[0] < 0) {
+            MipavUtil.displayError("dgebd2 had info[0] = " + info[0]);
+            return;
+        }
+        
+        if (m >= n) {
+            // Reduce to upper bidiagonal form
+            for (i = 1; i <= n; i++) {
+                // Generate elementary reflector H(i) to annihilate A(i+1:m,i)
+                alpha[0] = A[i-1][i-1];
+                x = new double[m-i];
+                for (j = 0; j < m-i; j++) {
+                    x[j] = A[Math.min(i,m-1) + j][i-1];
+                }
+                dlarfg(m-i+1, alpha, x, 1, tau);
+                A[i-1][i-1] = alpha[0];
+                for (j = 0; j < m-1; j++) {
+                    A[Math.min(i, m-1) + j][i-1] = x[j];
+                }
+                tauq[i-1] = tau[0];
+                
+                d[i-1] = A[i-1][i-1];
+                A[i-1][i-1] = 1.0;
+                
+                // Apply H(i) to A(i:m,i+1:n) from the left
+                if (i < n) {
+                    x = new double[m-i+1];
+                    for (j = 0; j < m-i+1; j++) {
+                        x[j] = A[i-1+j][i-1];
+                    }
+                    row1 = Math.max(1, m-i+1);
+                    array1 = new double[row1][n-i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = A[i-1+j][i+k];
+                        }
+                    }
+                    dlarf('L', m-i+1, n-i, x, 1, tauq[i-1], array1, row1, work);
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            A[i-1+j][i+k] = array1[j][k];
+                        }
+                    }
+                } // if (i < n)
+                A[i-1][i-1] = d[i-1];
+                
+                if (i < n) {
+                    // Generate elementary reflector G(i) to annihilate A(i,i+2:n)
+                    alpha[0] = A[i-1][i];
+                    x = new double[n-i-1];
+                    for (j = 0; j < n-i-1; j++) {
+                        x[j] = A[i-1][Math.min(i+1,n-1) + j];
+                    }
+                    dlarfg(n-i, alpha, x, 1, tau);
+                    A[i-1][i] = alpha[0];
+                    for (j = 0; j < n-i-1; j++) {
+                        A[i-1][Math.min(i+1, n-1) + j] = x[j];
+                    }
+                    taup[i-1] = tau[0];
+                    
+                    e[i-1] = A[i-1][i];
+                    A[i-1][i] = 1.0;
+                    
+                    // Apply G(i) to A(i+1:m,i+1:n) from the right
+                    x = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        x[j] = A[i-1][i+j];
+                    }
+                    row1 = Math.max(1,m-i);
+                    array1 = new double[row1][n-i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = A[i+j][i+k];
+                        }
+                    }
+                    dlarf('R', m-i, n-i, x, 1, taup[i-1], array1, row1, work);
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            A[i+j][i+k] = array1[j][k];
+                        }
+                    }
+                    A[i-1][i] = e[i-1];
+                } // if (i < n)
+                else {
+                    taup[i-1] = 0.0;
+                }
+            } // for (i = 1; i <= n; i++)
+        } // if (m >= n)
+        else { // m < n
+            // Reduce to lower bidiagonal form
+            for (i = 1; i <= m; i++) {
+                // Generate elementary reflector G(i) to annihilate A(i,i+1:n)
+                alpha[0] = A[i-1][i-1];
+                x = new double[n-i];
+                for (j = 0; j < n-i; j++) {
+                    x[j] = A[i-1][Math.min(i, n-1) + j];
+                }
+                dlarfg(n-i+1, alpha, x, 1, tau);
+                A[i-1][i-1] = alpha[0];
+                for (j = 0; j < n-i; j++) {
+                    A[i-1][Math.min(i, n-1) + j] = x[j];
+                }
+                taup[i-1] = tau[0];
+                d[i-1] = A[i-1][i-1];
+                A[i-1][i-1] = 1.0;
+                
+                // Apply G(i) to A(i+1:m,i:n) from the right
+                if (i < m) {
+                    x = new double[n-i+1];
+                    for (j = 0; j < n-i+1; j++) {
+                        x[j] = A[i-1][i-1+j];
+                    }
+                    row1 = Math.max(1, m-i);
+                    array1 = new double[row1][n-i+1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i+1; k++) {
+                            array1[j][k] = A[i+j][i-1+k];
+                        }
+                    }
+                    dlarf('R', m-i, n-i+1, x, 1, taup[i-1], array1, row1, work);
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i+1; k++) {
+                            A[i+j][i-1+k] = array1[j][k];
+                        }
+                    }
+                } // if (i < m)
+                A[i-1][i-1] = d[i-1];
+                if (i < m) {
+                    // Generate elementary reflector H(i) to annihilate A(i+2:m,i)
+                    alpha[0] = A[i][i-1];
+                    x = new double[m-i-1];
+                    for (j = 0; j < m-i-1; j++) {
+                        x[j] = A[Math.min(i+1,m-1) + j][i-1];
+                    }
+                    dlarfg(m-i, alpha, x, 1, tau);
+                    A[i][i-1] = alpha[0];
+                    for (j = 0; j < m-i-1; j++) {
+                        A[Math.min(i+1,m-1) + j][i-1] = x[j];
+                    }
+                    tauq[i-1] = tau[0];
+                    
+                    e[i-1] = A[i][i-1];
+                    A[i][i-1] = 1.0;
+                    
+                    // Apply H(i) to A(i+1:m,i+1:n) from the left
+                    x = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        x[j] = A[i+j][i-1];
+                    }
+                    row1 = Math.max(1, m-i);
+                    array1 = new double[row1][n-i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = A[i+j][i+k];
+                        }
+                    }
+                    dlarf('L', m-i, n-i, x, 1, tauq[i-1], array1, row1, work);
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            A[i+j][i+k] = array1[j][k];
+                        }
+                    }
+                    A[i][i-1] = e[i-1];
+                } // if (i < m)
+                else {
+                    tauq[i-1] = 0.0;
+                }
+            } // for (i = 1; i <= m; i++)
+        } // else m < n
+    } // dgebd2
     
     /**
      * This is a port of version 3.2 LAPACK auxiliary routine DLASSQ Original DLASSQ created by Univ. of Tennessee, Univ.
@@ -4642,6 +5403,92 @@ public class GeneralizedInverse {
     } // dlarfb
     
     /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLARFG Original DLARFG created by Univ. of Tennessee, Univ.
+     * of California Berkeley, and NAG Ltd., November, 2006 
+     * dlarfg generates a real elementary reflector H of order n,
+     * such that H * (alpha) = (beta), H' * H = I. 
+     *               ( x )     ( 0 ) 
+     * where alpha and beta are scalars, and x is an (n-1)-element real vector. H is represented in the form 
+     * H = I - tau * (1) * (1 v'), 
+     *               (v) 
+     * where tau is a real scalar and v is a real (n-1)-element vector. If the elements of x are all zero,
+     * then tau = 0 and H is taken to be the unit matrix. Otherwise 1 <= tau <= 2.
+     *
+     * @param  n      input int The order of the elementary reflector.
+     * @param  alpha  input/output double[] On entry, the value alpha. On exit, it is overwritten with the value beta.
+     * @param  x      input/output double[] of dimension (1 + (n-2)*abs(incx)) On entry, the vector x. On exit, it is
+     *                overwritten with the vector v.
+     * @param  incx   input int The increment between elements of x. incx > 0
+     * @param  tau    output double[] The value tau
+     */
+    private void dlarfg(int n, double[] alpha, double[] x, int incx, double[] tau) {
+        int j;
+        int knt;
+        double beta;
+        double rsafmn;
+        double safmin;
+        double xnorm;
+
+        if (n <= 1) {
+            tau[0] = 0.0;
+
+            return;
+        }
+
+        xnorm = dnrm2(n - 1, x, incx);
+
+        if (xnorm == 0.0) {
+
+            // H = I
+            tau[0] = 0.0;
+        } // if (xnorm == 0.0)
+        else { // general case
+
+            if (alpha[0] >= 0.0) {
+                beta = -Math.abs(dlapy2(alpha[0], xnorm));
+            } else {
+                beta = Math.abs(dlapy2(alpha[0], xnorm));
+            }
+
+            safmin = dlamch('S') / dlamch('E');
+            knt = 0;
+            if (Math.abs(beta) < safmin) {
+
+                // xnorm, beta may be inaccurate; scale x and recompute them
+                rsafmn = 1.0 / safmin;
+
+                do {
+                    knt = knt + 1;
+                    dscal(n - 1, rsafmn, x, incx);
+                    beta = beta * rsafmn;
+                    alpha[0] = alpha[0] * rsafmn;
+                } while (Math.abs(beta) < safmin);
+
+                // New beta is at most 1, at least safmin
+                xnorm = dnrm2(n - 1, x, incx);
+
+                if (alpha[0] >= 0.0) {
+                    beta = -Math.abs(dlapy2(alpha[0], xnorm));
+                } else {
+                    beta = Math.abs(dlapy2(alpha[0], xnorm));
+                }
+            } // if (Math.abs(beta) < safmin)
+
+            tau[0] = (beta - alpha[0]) / beta;
+            dscal(n - 1, 1.0 / (alpha[0] - beta), x, incx);
+    
+            // If alpha is subnormal, it may lose relative accuracy
+            
+            for (j = 1; j <= knt; j++) {
+                beta = beta * safmin;
+            }
+            alpha[0] = beta;
+        } // else general case
+
+        return;
+    } // dlarfg
+    
+    /**
      * This is a port of version 3.2 LAPACK auxiliary routine DLARFP Original DLARFP created by Univ. of Tennessee, Univ.
      * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006 
      * dlarfp generates a real elementary reflector H of order n,
@@ -5155,6 +6002,597 @@ public class GeneralizedInverse {
 
         return;
     } // dlarft
+    
+    /**
+     * This is a port of version 3.2 LAPACK routine DORMQR Original DORMQR created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006 
+     * dormqr overwrites the general real m by n matrix C with 
+     *                           side = 'L'          side = 'R' 
+     *           trans = 'N':      Q * C               C * Q 
+     *           trans = 'T':      Q**T * C            C * Q**T 
+     * where Q is a real orthogonal matrix defined as the product of k elementary reflectors 
+     *                    Q = H(0) H(1) . . . H(k-1)
+     * as returned by dgeqrf. Q is of order m if side = 'L' and of order n if side = 'R'.
+     *
+     * @param  side   input char 
+     *                = 'L': apply Q or Q**T from the left 
+     *                = 'R': apply Q or Q**T from the right
+     * @param  trans  trans char 
+     *                = 'N': No transpose, apply Q 
+     *                = 'T': Transpose, apply Q**T
+     * @param  m      input int The number of rows of matrix C. m >= 0.
+     * @param  n      input int The number of columns of matrix C. n >= 0.
+     * @param  k      input int The number of elementary reflectors whose product defines the matrix Q. 
+     *                If side = 'L', m >= k >= 0 
+     *                If side = 'R', n >= k >= 0
+     * @param  A      input double[][] of dimension (lda,k) The i-th column must contain the vector which defines the
+     *                elementary reflector H(i), for i = 0,1,...,k-1, as returned by dgeqrf in the first k columns of its
+     *                array argument A. A is modified by the routine but restored on exit.
+     * @param  lda    input int The leading dimension of the array A. 
+     *                If side = 'L', lda >= max(1,m) 
+     *                If side = 'R', lda >= max(1,n)
+     * @param  tau    input double[] of dimension k tau[i] must contain the scalar factor of the elementary reflector
+     *                H(i), as returned by dgeqrf
+     * @param  C      (input/output) double[][] of dimension (ldc,n) 
+     *                On entry, the m by n matrix C. 
+     *                On exit, C is overwritten by Q*C or Q**T*C or C*Q**T or C*Q.
+     * @param  ldc    input int The leading dimension of the array C. ldc >= max(1,m).
+     * @param  work   (workspace/output) double[] of dimension max(1, lwork). On exit, if info[0] = 0, work[0] returns the
+     *                optimal lwork.
+     * @param  lwork  input int The dimension of the array work. 
+     *                If side = 'L', work >= max(1,n). 
+     *                If side = 'R', work >= max(1,m). 
+     *                For optimum performance lwork >= n*nb if side = 'L', and lwork >= m*nb if side = 'R',
+     *                where nb is optimal blocksize. If lwork = -1, then a workspace query is assumed; the routine only
+     *                calculates the optimal size of the work array, returns this value as the first entry of the work
+     *                array, and no error message related to lwork is output.
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info[0] = -i, the i-th argument had an illegal value
+     */
+    private void dormqr(char side, char trans, int m, int n, int k, double[][] A, int lda, double[] tau, double[][] C,
+                        int ldc, double[] work, int lwork, int[] info) {
+        int nbmax = 64;
+        int ldt = nbmax + 1;
+        boolean left;
+        boolean lquery;
+        boolean notran;
+        int i;
+        int i1;
+        int i2;
+        int i3;
+        int ib;
+        int ic = 1;
+        int[] iinfo = new int[1];
+        int iws;
+        int jc = 1;
+        int ldwork;
+        int lwkopt = 1;
+        int mi = 1;
+        int nb = 1;
+        int nbmin;
+        int ni = 1;
+        int nq;
+        int nw;
+        double[][] T = new double[ldt][nbmax];
+        String name = null;
+        String opts = null;
+        char[] optsC = new char[2];
+        double[][] array1;
+        int p;
+        int q;
+        int row1;
+        int row2;
+        double[] x;
+        double[][] array2;
+        double[][] work2d;
+
+        // Test the input arguments
+        info[0] = 0;
+
+        left = ((side == 'L') || (side == 'l'));
+        notran = ((trans == 'N') || (trans == 'n'));
+        lquery = (lwork == -1);
+
+        // nq is the order of Q and nw is the minimum dimension of work
+        if (left) {
+            nq = m;
+            nw = n;
+        } else {
+            nq = n;
+            nw = m;
+        }
+
+        if ((!left) && (side != 'R') && (side != 'r')) {
+            info[0] = -1;
+        } else if ((!notran) && (trans != 'T') && (trans != 't')) {
+            info[0] = -2;
+        } else if (m < 0) {
+            info[0] = -3;
+        } else if (n < 0) {
+            info[0] = -4;
+        } else if ((k < 0) || (k > nq)) {
+            info[0] = -5;
+        } else if (lda < Math.max(1, nq)) {
+            info[0] = -7;
+        } else if (ldc < Math.max(1, m)) {
+            info[0] = -10;
+        } else if ((lwork < Math.max(1, nw)) && (!lquery)) {
+            info[0] = -12;
+        }
+
+        if (info[0] == 0) {
+
+            // Determine the block size.  nb may be at most nbmax, where nbmax
+            // is used to define the local array T.
+            name = new String("DORMQR");
+            optsC[0] = side;
+            optsC[1] = trans;
+            opts = new String(optsC);
+            nb = Math.min(nbmax, ilaenv(1, name, opts, m, n, k, -1));
+            lwkopt = Math.max(1, nw) * nb;
+            work[0] = lwkopt;
+        } // if (info[0] == 0)
+
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dormqr had info[0] = " + info[0]);
+
+            return;
+        } else if (lquery) {
+            return;
+        }
+
+        // Quick return if possible
+        if ((m == 0) || (n == 0) || (k == 0)) {
+            work[0] = 1;
+
+            return;
+        }
+
+        nbmin = 2;
+        ldwork = nw;
+
+        if ((nb > 1) && (nb < k)) {
+            iws = nw * nb;
+
+            if (lwork < iws) {
+                nb = lwork / ldwork;
+                nbmin = Math.max(2, ilaenv(2, name, opts, m, n, k, -1));
+            } // if (lwork < iws)
+        } // if ((nb > 1) && (nb < k))
+        else {
+            iws = nw;
+        }
+
+        if ((nb < nbmin) || (nb >= k)) {
+
+            // use unblocked code
+            dorm2r(side, trans, m, n, k, A, lda, tau, C, ldc, work, iinfo);
+        } // if ((nb < nbmin) || (nb >= k))
+        else {
+
+            // Use blocked code
+            if ((left && (!notran)) || ((!left) && notran)) {
+                i1 = 1;
+                i2 = k;
+                i3 = nb;
+            } else {
+                i1 = (((k - 1) / nb) * nb) + 1;
+                i2 = 1;
+                i3 = -nb;
+            }
+
+            if (left) {
+                ni = n;
+                jc = 1;
+            } else {
+                mi = m;
+                ic = 1;
+            }
+
+            if (i3 == nb) {
+
+                for (i = i1; i <= i2; i += nb) {
+                    ib = Math.min(nb, k - i + 1);
+
+                    // Form the triangular factor of the block reflector
+                    // H = H(i-1) H(i) .  .  .  H(i+ib-2)
+                    row1 = Math.max(1, nq - i + 1);
+                    array1 = new double[row1][ib];
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < ib; q++) {
+                            array1[p][q] = A[i - 1 + p][i - 1 + q];
+                        }
+                    }
+
+                    x = new double[ib];
+
+                    for (p = 0; p < ib; p++) {
+                        x[p] = tau[i - 1 + p];
+                    }
+
+                    dlarft('F', 'C', nq - i + 1, ib, array1, row1, x, T, ldt);
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < ib; q++) {
+                            A[i - 1 + p][i - 1 + q] = array1[p][q];
+                        }
+                    }
+
+                    if (left) {
+
+                        // H or H' is applied to C(i-1:m-1,0:n-1)
+                        mi = m - i + 1;
+                        ic = i;
+                    } else {
+
+                        // H or H' is applied to C(0:m-1,i-1:n-1)
+                        ni = n - i + 1;
+                        jc = i;
+                    }
+
+                    // Apply H or H'
+                    if (left) {
+                        row1 = Math.max(1, mi);
+                    } else {
+                        row1 = Math.max(1, ni);
+                    }
+
+                    array1 = new double[row1][ib];
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < ib; q++) {
+                            array1[p][q] = A[i - 1 + p][i - 1 + q];
+                        }
+                    }
+
+                    row2 = Math.max(1, mi);
+                    array2 = new double[row2][ni];
+
+                    for (p = 0; p < row2; p++) {
+
+                        for (q = 0; q < ni; q++) {
+                            array2[p][q] = C[ic - 1 + p][jc - 1 + q];
+                        }
+                    }
+
+                    work2d = new double[ldwork][ib];
+                    dlarfb(side, trans, 'F', 'C', mi, ni, ib, array1, row1, T, ldt, array2, row2, work2d, ldwork);
+
+                    for (p = 0; p < row2; p++) {
+
+                        for (q = 0; q < ni; q++) {
+                            C[ic - 1 + p][jc - 1 + q] = array2[p][q];
+                        }
+                    }
+                } // for (i = i1; i <= i2; i += nb)
+            } // if (i3 == nb)
+            else { // i3 == -nb
+
+                for (i = i1; i >= i2; i -= nb) {
+                    ib = Math.min(nb, k - i + 1);
+
+                    // Form the triangular factor of the block reflector
+                    // H = H(i-1) H(i) .  .  .  H(i+ib-2)
+                    row1 = Math.max(1, nq - i + 1);
+                    array1 = new double[row1][ib];
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < ib; q++) {
+                            array1[p][q] = A[i - 1 + p][i - 1 + q];
+                        }
+                    }
+
+                    x = new double[ib];
+
+                    for (p = 0; p < ib; p++) {
+                        x[p] = tau[i - 1 + p];
+                    }
+
+                    dlarft('F', 'C', nq - i + 1, ib, array1, row1, x, T, ldt);
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < ib; q++) {
+                            A[i - 1 + p][i - 1 + q] = array1[p][q];
+                        }
+                    }
+
+                    if (left) {
+
+                        // H or H' is applied to C(i-1:m-1,0:n-1)
+                        mi = m - i + 1;
+                        ic = i;
+                    } else {
+
+                        // H or H' is applied to C(0:m-1,i-1:n-1)
+                        ni = n - i + 1;
+                        jc = i;
+                    }
+
+                    // Apply H or H'
+                    if (left) {
+                        row1 = Math.max(1, mi);
+                    } else {
+                        row1 = Math.max(1, ni);
+                    }
+
+                    array1 = new double[row1][ib];
+
+                    for (p = 0; p < row1; p++) {
+
+                        for (q = 0; q < ib; q++) {
+                            array1[p][q] = A[i - 1 + p][i - 1 + q];
+                        }
+                    }
+
+                    row2 = Math.max(1, mi);
+                    array2 = new double[row2][ni];
+
+                    for (p = 0; p < row2; p++) {
+
+                        for (q = 0; q < ni; q++) {
+                            array2[p][q] = C[ic - 1 + p][jc - 1 + q];
+                        }
+                    }
+
+                    work2d = new double[ldwork][ib];
+                    dlarfb(side, trans, 'F', 'C', mi, ni, ib, array1, row1, T, ldt, array2, row2, work2d, ldwork);
+
+                    for (p = 0; p < row2; p++) {
+
+                        for (q = 0; q < ni; q++) {
+                            C[ic - 1 + p][jc - 1 + q] = array2[p][q];
+                        }
+                    }
+                } // for (i = i1; i >= i2; i -= nb)
+            } // else i3 == -nb
+        }
+
+        work[0] = lwkopt;
+
+        return;
+    } // dormqr
+    
+    /**
+     * This is a port of the version 3.2 LAPACK routine DORM2R Original DORM2R created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dorm2r overwrites the general real m by n matrix C with 
+     *     Q * C if side = 'L' and trans = 'N', or 
+     *     Q'* C if side = 'L' and trans = 'T', or 
+     *     C * Q if side = 'R' and trans = 'N', or 
+     *     C * Q' if side = 'R' and trans = 'T',
+     * where Q is a real orthogonal matrix defined as the product of k elementary reflectors Q = H(0) H(1) . . . H(k-1)
+     * as returned by dgeqrf. Q is of order m if side = 'L' and of order n if side = 'R'.
+     *
+     * @param  side   input char 
+     *                = 'L': apply Q or Q' from the left 
+     *                = 'R': apply Q or Q' from the right
+     * @param  trans  input char 
+     *                = 'N': apply Q (no transpose) 
+     *                = 'T': apply Q' (transpose)
+     * @param  m      input int The number of rows of the matrix C. m >= 0.
+     * @param  n      input int The number of columns of the matrix C. n >= 0.
+     * @param  k      input int The number of elementary reflectors whose product defines the matrix Q. 
+     *                If side = 'L', m >= k >= 0 
+     *                If side = 'R', n >= k >= 0
+     * @param  A      input double[][] of dimension (lda, k) The i-th column must contain the vector which defines the
+     *                elementary reflector H(i), for i = 0,1,...,k-1, as returned by dgeqrf in the first k columns of
+     *                its array argument A. A is modified by the routine but restored on exit.
+     * @param  lda    input int The leading dimension of the array A. 
+     *                If side = 'L', lda >= max(1,m) 
+     *                If side = 'R', lda >= max(1,n)
+     * @param  tau    input double[] of dimension (k) tau[i] must contain the scalar factor of the elementary
+     *                reflector H(i), as returned by dgeqrf.
+     * @param  C      (input/output) double[][] of dimension (ldc,n) On entry, the m by n matrix C. On exit, C is
+     *                overwritten by Q*C or Q'*C or C*Q' or C*Q.
+     * @param  ldc    input int The leading dimension of the array C. ldc >= max(1,m).
+     * @param  work   (workspace) double[] of dimension 
+     *                (n) if side = 'L' 
+     *                (m) if side = 'R'
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info[0] = -i, the i-th argument had an illegal value.
+     */
+    private void dorm2r(char side, char trans, int m, int n, int k, double[][] A, int lda, double[] tau, double[][] C,
+                        int ldc, double[] work, int[] info) {
+        boolean left;
+        boolean notran;
+        int i;
+        int i1;
+        int i2;
+        int i3;
+        int ic = 1;
+        int jc = 1;
+        int mi = 1;
+        int ni = 1;
+        int nq;
+        double aii;
+        int j;
+        int p;
+        double[] x;
+        double[][] array1;
+        int row1;
+
+        // Test the input arguments
+        info[0] = 0;
+        left = ((side == 'L') || (side == 'l'));
+        notran = ((trans == 'N') || (trans == 'n'));
+
+        // nq is the order of Q
+        if (left) {
+            nq = m;
+        } else {
+            nq = n;
+        }
+
+        if ((!left) && (side != 'R') && (side != 'r')) {
+            info[0] = -1;
+        } else if ((!notran) && (trans != 'T') && (trans != 't')) {
+            info[0] = -2;
+        } else if (m < 0) {
+            info[0] = -3;
+        } else if (n < 0) {
+            info[0] = -4;
+        } else if ((k < 0) || (k > nq)) {
+            info[0] = -5;
+        } else if (lda < Math.max(1, nq)) {
+            info[0] = -7;
+        } else if (ldc < Math.max(1, m)) {
+            info[0] = -10;
+        }
+
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dorm2r had info[0] = " + info[0]);
+
+            return;
+        }
+
+        // Quick return if possible
+        if ((m == 0) || (n == 0) || (k == 0)) {
+            return;
+        }
+
+        if ((left && (!notran)) || ((!left) && notran)) {
+            i1 = 1;
+            i2 = k;
+            i3 = 1;
+        } else {
+            i1 = k;
+            i2 = 1;
+            i3 = -1;
+        }
+
+        if (left) {
+            ni = n;
+            jc = 1;
+        } else {
+            mi = m;
+            ic = 1;
+        }
+
+        if (i3 == 1) {
+
+            for (i = i1; i <= i2; i++) {
+
+                if (left) {
+
+                    // H(i-1) is applied to C(i-1:m-1,0:n-1)
+                    mi = m - i + 1;
+                    ic = i;
+                } else {
+
+                    // H(i-1) is applied to C(0:m-1,i-1:n-1)
+                    ni = n - i + 1;
+                    jc = i;
+                }
+
+                // Apply H(i-1)
+                aii = A[i - 1][i - 1];
+                A[i - 1][i - 1] = 1.0;
+
+                if (left) {
+                    x = new double[mi];
+
+                    for (j = 0; j < mi; j++) {
+                        x[j] = A[i - 1 + j][i - 1];
+                    }
+                } // if (left)
+                else {
+                    x = new double[ni];
+
+                    for (j = 0; j < ni; j++) {
+                        x[j] = A[i - 1 + j][i - 1];
+                    }
+                }
+
+                row1 = Math.max(1, mi);
+                array1 = new double[row1][ni];
+
+                for (j = 0; j < row1; j++) {
+
+                    for (p = 0; p < ni; p++) {
+                        array1[j][p] = C[ic - 1 + j][jc - 1 + p];
+                    }
+                }
+
+                dlarf(side, mi, ni, x, 1, tau[i - 1], array1, row1, work);
+
+                for (j = 0; j < row1; j++) {
+
+                    for (p = 0; p < ni; p++) {
+                        C[ic - 1 + j][jc - 1 + p] = array1[j][p];
+                    }
+                }
+
+                A[i - 1][i - 1] = aii;
+            } // for (i = i1; i <= i2; i++)
+        } // if (i3 == 1)
+        else { // i3 == -1
+
+            for (i = i1; i >= i2; i--) {
+
+                if (left) {
+
+                    // H(i-1) is applied to C(i-1:m-1,0:n-1)
+                    mi = m - i + 1;
+                    ic = i;
+                } else {
+
+                    // H(i-1) is applied to C(0:m-1,i-1:n-1)
+                    ni = n - i + 1;
+                    jc = i;
+                }
+
+                // Apply H(i-1)
+                aii = A[i - 1][i - 1];
+                A[i - 1][i - 1] = 1.0;
+
+                if (left) {
+                    x = new double[mi];
+
+                    for (j = 0; j < mi; j++) {
+                        x[j] = A[i - 1 + j][i - 1];
+                    }
+                } // if (left)
+                else {
+                    x = new double[ni];
+
+                    for (j = 0; j < ni; j++) {
+                        x[j] = A[i - 1 + j][i - 1];
+                    }
+                }
+
+                row1 = Math.max(1, mi);
+                array1 = new double[row1][ni];
+
+                for (j = 0; j < row1; j++) {
+
+                    for (p = 0; p < ni; p++) {
+                        array1[j][p] = C[ic - 1 + j][jc - 1 + p];
+                    }
+                }
+
+                dlarf(side, mi, ni, x, 1, tau[i - 1], array1, row1, work);
+
+                for (j = 0; j < row1; j++) {
+
+                    for (p = 0; p < ni; p++) {
+                        C[ic - 1 + j][jc - 1 + p] = array1[j][p];
+                    }
+                }
+
+                A[i - 1][i - 1] = aii;
+            } // for (i = i1; i >= i2; i--)
+        } // else i3 == -1
+
+        return;
+    } // dorm2r
     
     /**
      * This is a port of LAPACK auxiliary routine (version 3.2.1) ILADLC, April 2009
