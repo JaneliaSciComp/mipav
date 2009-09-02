@@ -44,6 +44,9 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
     /** DOCUMENT ME! */
     private ViewJFrameColocalizationRegression colRegFrame = null;
 
+    /** Parent frame */
+    private Frame parentFrame = null;
+    
     /** DOCUMENT ME! */
     private boolean entireFlag = true;
 
@@ -60,7 +63,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
 
     /**
      * Makes a frame of the histogram and LUT.
-     *
+     * 
      * @param  _imageA      Model of imageA
      * @param  _imageB      Model of imageB
      * @param  _LUTa        Model of LUT for image A
@@ -91,11 +94,52 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
 
         lutPanel = new ViewJPanelLUT(this);
         getContentPane().add(lutPanel, BorderLayout.NORTH);
-
         pack();
         addWindowListener(this);
         setResizable(false);
         setVisible(true);
+
+    }
+    
+    /**
+     * Makes a frame of the histogram and LUT.
+     *
+     * @param  _parentFrame  parent frame to hold the image. 
+     * @param  _imageA      Model of imageA
+     * @param  _imageB      Model of imageB
+     * @param  _LUTa        Model of LUT for image A
+     * @param  _LUTb        Model of LUT for image B
+     * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     */
+    public ViewJFrameHistoLUT(Frame _parentFrame, ModelImage _imageA, ModelImage _imageB, ModelLUT _LUTa, ModelLUT _LUTb,
+                              boolean _entireFlag) {
+        super(_imageA, _imageB);
+        setLUTs(_LUTa, _LUTb);
+        this.parentFrame = _parentFrame;
+        buildMenu();
+
+        entireFlag = _entireFlag;
+        setTitle("Lookup Table: " + _imageA.getImageName());
+
+        try {
+            setIconImage(MipavUtil.getIconImage("histolut.gif"));
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage() +
+                               ">.  Check that this file is available.\n");
+        }
+
+        setLocation(200, 200);
+        setBackground(new Color(160, 160, 160));
+
+        lutPanel = new ViewJPanelLUT(this);
+        getContentPane().add(lutPanel, BorderLayout.NORTH);
+        pack();
+        addWindowListener(this);
+        setResizable(false);
+        setVisible(true);
+
     }
 
     /**
@@ -295,6 +339,10 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
                 setLUTB(getLUTb());
             }
         } else if (command.equals("OpenUDLUT")) {
+        	if ( ViewUserInterface.getReference().getActiveImageFrame().getActiveImage() != imageA ) {
+        		ViewUserInterface.getReference().setActiveFrame(this.parentFrame);
+        	}
+           
         	String fName = "userdefine.lut";
             String dName = Preferences.getPreferencesDir();
             loadLUTandTransferFunctionFrom( true, fName, dName, false );
@@ -304,6 +352,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
             } else {
                 setLUTB(getLUTb());
             }
+            
         } else if (command.equals("CloseLUT") || command.equals("Close")) {
             setVisible(false);
 
@@ -1048,4 +1097,5 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
         setJMenuBar(menuBar);
     }
 
+    
 }

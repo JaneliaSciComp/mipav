@@ -121,6 +121,7 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
         } else {
             RGBb = _RGBb;
         }
+        addWindowListener(this);
 
     }
 
@@ -142,6 +143,7 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
         LUTa = _LUTa;
         LUTb = _LUTb;
         regComponent = _regComponent;
+        addWindowListener(this);
     }
 
     /**
@@ -158,6 +160,7 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
                                ModelImage imB, ModelRGB _RGBa, ModelRGB _RGBb) {
         this(theParentFrame, imA, imB, _RGBa, _RGBb);
         regComponent = _regComponent;
+        addWindowListener(this);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -259,7 +262,7 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
                 histoLUTFrame = new ViewJFrameHistoLUT((ViewJFrameColocalizationEM) parentFrame, imageA, null, LUTa,
                                                        null, true);
             } else if (regComponent == null) {
-                histoLUTFrame = new ViewJFrameHistoLUT(imageA, imageB, LUTa, LUTb, entireFlag);
+                histoLUTFrame = new ViewJFrameHistoLUT(parentFrame, imageA, imageB, LUTa, LUTb, entireFlag);
             } else {
                 histoLUTFrame = new ViewJFrameHistoLUT(regComponent, imageA, imageB, LUTa, LUTb, entireFlag);
             }
@@ -310,5 +313,67 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
     public void setColocalizationRegFrame(boolean colocalizationRegFrame) {
         this.colocalizationRegFrame = colocalizationRegFrame;
     }
+    
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  WindowEvent
+     */
+    public void windowActivated(WindowEvent event) { 
+    	System.err.println("ruida");
+    	/*
+    	if ( ViewUserInterface.getReference().getActiveImageFrame().getActiveImage() != imageA ) {
+    		ViewUserInterface.getReference().setActiveImageFrame();
+    		ViewUserInterface.getReference().getActiveImageFrame().getControls().setActiveImage(ViewJFrameImage.IMAGE_A);
+    	}
+    	*/
+    }
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  WindowEvent
+     */
+    public void windowClosed(WindowEvent event) { }
+
+    /**
+     * Disposes of error dialog, then frame. Sets cancelled to <code>true</code>.
+     *
+     * @param  event  WindowEvent
+     */
+    public void windowClosing(WindowEvent event) {
+        cancelFlag = true;
+        dispose();
+    }
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  WindowEvent
+     */
+    public void windowDeactivated(WindowEvent event) { }
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  WindowEvent
+     */
+    public void windowDeiconified(WindowEvent event) { }
+
+    /**
+     * Unchanged.
+     *
+     * @param  event WindowEvent
+     */
+    public void windowIconified(WindowEvent event) { }
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  WindowEvent
+     */
+    public void windowOpened(WindowEvent event) { }
+
 
 }
