@@ -15200,13 +15200,16 @@ loop3:                       {
     } // dlarfb
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLARFG Original DLARFG created by Univ. of Tennessee, Univ.
+     * This is a port of version 3.2 LAPACK auxiliary routine DLARFG Original DLARFG created by Univ. of Tennessee, Univ.
      * of California Berkeley, and NAG Ltd., November, 2006 
      * dlarfg generates a real elementary reflector H of order n,
-     * such that H * (alpha) = (beta), H' * H = I. ( x ) ( 0 ) where alpha and beta are scalars, and x is an
-     * (n-1)-element real vector. H is represented in the form H = I - tau * (1) * (1 v'), (v) where tau is a real
-     * scalar and v is a real (n-1)-element vector. If the elements of x are all zero, then tau = 0 and H is taken to be
-     * the unit matrix. Otherwise 1 <= tau <= 2.
+     * such that H * (alpha) = (beta), H' * H = I. 
+     *               ( x )     ( 0 ) 
+     * where alpha and beta are scalars, and x is an (n-1)-element real vector. H is represented in the form 
+     * H = I - tau * (1) * (1 v'), 
+     *               (v) 
+     * where tau is a real scalar and v is a real (n-1)-element vector. If the elements of x are all zero,
+     * then tau = 0 and H is taken to be the unit matrix. Otherwise 1 <= tau <= 2.
      *
      * @param  n      input int The order of the elementary reflector.
      * @param  alpha  input/output double[] On entry, the value alpha. On exit, it is overwritten with the value beta.
@@ -15245,12 +15248,11 @@ loop3:                       {
             }
 
             safmin = dlamch('S') / dlamch('E');
-
+            knt = 0;
             if (Math.abs(beta) < safmin) {
 
                 // xnorm, beta may be inaccurate; scale x and recompute them
                 rsafmn = 1.0 / safmin;
-                knt = 0;
 
                 do {
                     knt = knt + 1;
@@ -15267,22 +15269,17 @@ loop3:                       {
                 } else {
                     beta = Math.abs(dlapy2(alpha[0], xnorm));
                 }
-
-                tau[0] = (beta - alpha[0]) / beta;
-                dscal(n - 1, 1.0 / (alpha[0] - beta), x, incx);
-
-                // If alpha is subnormal, it may lose relative accuracy
-                alpha[0] = beta;
-
-                for (j = 1; j <= knt; j++) {
-                    alpha[0] = alpha[0] * safmin;
-                }
             } // if (Math.abs(beta) < safmin)
-            else { // Math.abs(beta) >= safmin
-                tau[0] = (beta - alpha[0]) / beta;
-                dscal(n - 1, 1.0 / (alpha[0] - beta), x, incx);
-                alpha[0] = beta;
-            } // Math.abs(beta) >= safmin)
+
+            tau[0] = (beta - alpha[0]) / beta;
+            dscal(n - 1, 1.0 / (alpha[0] - beta), x, incx);
+    
+            // If alpha is subnormal, it may lose relative accuracy
+            
+            for (j = 1; j <= knt; j++) {
+                beta = beta * safmin;
+            }
+            alpha[0] = beta;
         } // else general case
 
         return;
@@ -22780,8 +22777,8 @@ loop4:
     } // dorm2l
 
     /**
-     * This is a port of the version 3.1 LAPACK routine DORM2R Original DORM2R created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of the version 3.2 LAPACK routine DORM2R Original DORM2R created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dorm2r overwrites the general real m by n matrix C with 
      *     Q * C if side = 'L' and trans = 'N', or 
      *     Q'* C if side = 'L' and trans = 'T', or 
@@ -22807,7 +22804,7 @@ loop4:
      * @param  lda    input int The leading dimension of the array A. 
      *                If side = 'L', lda >= max(1,m) 
      *                If side = 'R', lda >= max(1,n)
-     * @param  tau    input double[] of dimension (k) tau[i-1] must contain the scalar factor of the elementary
+     * @param  tau    input double[] of dimension (k) tau[i] must contain the scalar factor of the elementary
      *                reflector H(i), as returned by dgeqrf.
      * @param  C      (input/output) double[][] of dimension (ldc,n) On entry, the m by n matrix C. On exit, C is
      *                overwritten by Q*C or Q'*C or C*Q' or C*Q.
@@ -22841,18 +22838,8 @@ loop4:
 
         // Test the input arguments
         info[0] = 0;
-
-        if ((side == 'L') || (side == 'l')) {
-            left = true;
-        } else {
-            left = false;
-        }
-
-        if ((trans == 'N') || (trans == 'n')) {
-            notran = true;
-        } else {
-            notran = false;
-        }
+        left = ((side == 'L') || (side == 'l'));
+        notran = ((trans == 'N') || (trans == 'n'));
 
         // nq is the order of Q
         if (left) {
@@ -23025,14 +23012,14 @@ loop4:
     } // dorm2r
 
     /**
-     * This is a port of version 3.1 LAPACK routine DORMQR Original DORMQR created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., November, 2006 
+     * This is a port of version 3.2 LAPACK routine DORMQR Original DORMQR created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006 
      * dormqr overwrites the general real m by n matrix C with 
      *                           side = 'L'          side = 'R' 
      *           trans = 'N':      Q * C               C * Q 
      *           trans = 'T':      Q**T * C            C * Q**T 
      * where Q is a real orthogonal matrix defined as the product of k elementary reflectors 
-     *                    Q = H(1) H(1) . . . H(k-1)
+     *                    Q = H(0) H(1) . . . H(k-1)
      * as returned by dgeqrf. Q is of order m if side = 'L' and of order n if side = 'R'.
      *
      * @param  side   input char 
@@ -23052,7 +23039,7 @@ loop4:
      * @param  lda    input int The leading dimension of the array A. 
      *                If side = 'L', lda >= max(1,m) 
      *                If side = 'R', lda >= max(1,n)
-     * @param  tau    input double[] of dimension k tau[i-1] must contain the scalar factor of the elementary reflector
+     * @param  tau    input double[] of dimension k tau[i] must contain the scalar factor of the elementary reflector
      *                H(i), as returned by dgeqrf
      * @param  C      (input/output) double[][] of dimension (ldc,n) 
      *                On entry, the m by n matrix C. 
@@ -23111,18 +23098,8 @@ loop4:
         // Test the input arguments
         info[0] = 0;
 
-        if ((side == 'L') || (side == 'l')) {
-            left = true;
-        } else {
-            left = false;
-        }
-
-        if ((trans == 'N') || (trans == 'n')) {
-            notran = true;
-        } else {
-            notran = false;
-        }
-
+        left = ((side == 'L') || (side == 'l'));
+        notran = ((trans == 'N') || (trans == 'n'));
         lquery = (lwork == -1);
 
         // nq is the order of Q and nw is the minimum dimension of work
