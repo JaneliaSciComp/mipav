@@ -3307,6 +3307,265 @@ public class GeneralizedInverse {
         return value;
     } // dlange
     
+    /* This is a port of version 3.2 LAPACK routine DGEBRD.  Original DGEBRD created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+       *  Purpose
+       *  =======
+       *
+       *  DGEBRD reduces a general real M-by-N matrix A to upper or lower
+       *  bidiagonal form B by an orthogonal transformation: Q**T * A * P = B.
+       *
+       *  If m >= n, B is upper bidiagonal; if m < n, B is lower bidiagonal.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  M       (input) INTEGER
+       *          The number of rows in the matrix A.  M >= 0.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns in the matrix A.  N >= 0.
+       *
+       *  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
+       *          On entry, the M-by-N general matrix to be reduced.
+       *          On exit,
+       *          if m >= n, the diagonal and the first superdiagonal are
+       *            overwritten with the upper bidiagonal matrix B; the
+       *            elements below the diagonal, with the array TAUQ, represent
+       *            the orthogonal matrix Q as a product of elementary
+       *            reflectors, and the elements above the first superdiagonal,
+       *            with the array TAUP, represent the orthogonal matrix P as
+       *            a product of elementary reflectors;
+       *          if m < n, the diagonal and the first subdiagonal are
+       *            overwritten with the lower bidiagonal matrix B; the
+       *            elements below the first subdiagonal, with the array TAUQ,
+       *            represent the orthogonal matrix Q as a product of
+       *            elementary reflectors, and the elements above the diagonal,
+       *            with the array TAUP, represent the orthogonal matrix P as
+       *            a product of elementary reflectors.
+       *          See Further Details.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A.  LDA >= max(1,M).
+       *
+       *  D       (output) DOUBLE PRECISION array, dimension (min(M,N))
+       *          The diagonal elements of the bidiagonal matrix B:
+       *          D(i) = A(i,i).
+       *
+       *  E       (output) DOUBLE PRECISION array, dimension (min(M,N)-1)
+       *          The off-diagonal elements of the bidiagonal matrix B:
+       *          if m >= n, E(i) = A(i,i+1) for i = 1,2,...,n-1;
+       *          if m < n, E(i) = A(i+1,i) for i = 1,2,...,m-1.
+       *
+       *  TAUQ    (output) DOUBLE PRECISION array dimension (min(M,N))
+       *          The scalar factors of the elementary reflectors which
+       *          represent the orthogonal matrix Q. See Further Details.
+       *
+       *  TAUP    (output) DOUBLE PRECISION array, dimension (min(M,N))
+       *          The scalar factors of the elementary reflectors which
+       *          represent the orthogonal matrix P. See Further Details.
+       *
+       *  WORK    (workspace/output) DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+       *          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+       *
+       *  LWORK   (input) INTEGER
+       *          The length of the array WORK.  LWORK >= max(1,M,N).
+       *          For optimum performance LWORK >= (M+N)*NB, where NB
+       *          is the optimal blocksize.
+       *
+       *          If LWORK = -1, then a workspace query is assumed; the routine
+       *          only calculates the optimal size of the WORK array, returns
+       *          this value as the first entry of the WORK array, and no error
+       *          message related to LWORK is issued by XERBLA.
+       *
+       *  INFO    (output) INTEGER
+       *          = 0:  successful exit
+       *          < 0:  if INFO = -i, the i-th argument had an illegal value.
+       *
+       *  Further Details
+       *  ===============
+       *
+       *  The matrices Q and P are represented as products of elementary
+       *  reflectors:
+       *
+       *  If m >= n,
+       *
+       *     Q = H(1) H(2) . . . H(n)  and  P = G(1) G(2) . . . G(n-1)
+       *
+       *  Each H(i) and G(i) has the form:
+       *
+       *     H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
+       *
+       *  where tauq and taup are real scalars, and v and u are real vectors;
+       *  v(1:i-1) = 0, v(i) = 1, and v(i+1:m) is stored on exit in A(i+1:m,i);
+       *  u(1:i) = 0, u(i+1) = 1, and u(i+2:n) is stored on exit in A(i,i+2:n);
+       *  tauq is stored in TAUQ(i) and taup in TAUP(i).
+       *
+       *  If m < n,
+       *
+       *     Q = H(1) H(2) . . . H(m-1)  and  P = G(1) G(2) . . . G(m)
+       *
+       *  Each H(i) and G(i) has the form:
+       *
+       *     H(i) = I - tauq * v * v'  and G(i) = I - taup * u * u'
+       *
+       *  where tauq and taup are real scalars, and v and u are real vectors;
+       *  v(1:i) = 0, v(i+1) = 1, and v(i+2:m) is stored on exit in A(i+2:m,i);
+       *  u(1:i-1) = 0, u(i) = 1, and u(i+1:n) is stored on exit in A(i,i+1:n);
+       *  tauq is stored in TAUQ(i) and taup in TAUP(i).
+       *
+       *  The contents of A on exit are illustrated by the following examples:
+       *
+       *  m = 6 and n = 5 (m > n):          m = 5 and n = 6 (m < n):
+       *
+       *    (  d   e   u1  u1  u1 )           (  d   u1  u1  u1  u1  u1 )
+       *    (  v1  d   e   u2  u2 )           (  e   d   u2  u2  u2  u2 )
+       *    (  v1  v2  d   e   u3 )           (  v1  e   d   u3  u3  u3 )
+       *    (  v1  v2  v3  d   e  )           (  v1  v2  e   d   u4  u4 )
+       *    (  v1  v2  v3  v4  d  )           (  v1  v2  v3  e   d   u5 )
+       *    (  v1  v2  v3  v4  v5 )
+       *
+       *  where d and e denote diagonal and off-diagonal elements of B, vi
+       *  denotes an element of the vector defining H(i), and ui an element of
+       *  the vector defining G(i).
+       */
+    private void dgebrd(int m, int n, double A[][], int lda, double d[], double e[], double tauq[],
+                        double taup[], double work[], int lwork, int info[]) {
+        int i;
+        int iinfo;
+        int j;
+        int ldwrkx;
+        int ldwrky;
+        int lwkopt;
+        int minmn;
+        int nb;
+        int nbmin;
+        int nx;
+        double ws;
+        String name;
+        String opts;
+        boolean lquery;
+        int row1;
+        double array1[][];
+        int k;
+        double v1[];
+        double v2[];
+        double v3[];
+        double v4[];
+        double work1[][];
+        double work2[][];
+        
+        // Test the input parameters
+        info[0] = 0;
+        name = new String("DGEBRD");
+        opts = new String(" ");
+        nb = Math.max(1, ilaenv(1, name, opts, m, n, -1, -1));
+        lwkopt = (m + n) * nb;
+        work[0] = lwkopt;
+        lquery = (lwork == -1);
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if (n < 0) {
+            info[0] = -2;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -4;
+        }
+        else if ((lwork < Math.max(1, Math.max(m, n))) && (!lquery)) {
+            info[0] = -10;
+        }
+        
+        if (info[0] < 0) {
+            MipavUtil.displayError("dgebrd had info[0] = " + info[0]);
+            return;
+        }
+        else if (lquery) {
+            return;
+        }
+        
+        // Quick return if possible
+        minmn = Math.min(m, n);
+        if (minmn == 0) {
+            work[0] = 1;
+            return;
+        }
+        
+        ws = Math.max(m, n);
+        ldwrkx = m;
+        ldwrky = n;
+        
+        if ((nb > 1) && (nb < minmn)) {
+            // Set the corssover point nx.
+            
+            nx = Math.max(nb, ilaenv(3, name, opts, m, n, -1, -1));
+            
+            // Determine when to switch from blocked to unblocked code.
+            if (nx < minmn) {
+                ws = (m + n) * nb;
+                if (lwork < ws) {
+                    // Not enough space for the optimal nb, consider using a smaller block size.
+                    
+                    nbmin = ilaenv(2, name, opts, m, n, -1, -1);
+                    if (lwork >= (m+n)*nbmin) {
+                        nb = lwork/(m+n);
+                    }
+                    else {
+                        nb = 1;
+                        nx = minmn;
+                    }
+                } // if (lwork < ws)
+            } // if (nx < minmn)
+        } // if ((nb > 1) && (nb < minmn))
+        else {
+            nx = minmn;
+        }
+        
+        for (i = 1; i <= minmn - nx; i += nb) {
+            // Reduce rows and column i:i+nb-1 to bidiagonal form and return the matrices X and Y 
+            // which are needed to update the unreduced part of the matrix
+            row1 = Math.max(1,m-i+1);
+            array1 = new double[row1][n-i+1];
+            for (j = 0; j < row1; j++) {
+                for (k = 0; k < n-i+1; k++) {
+                    array1[j][k] = A[i-1+j][i-1+k];
+                }
+            }
+            v1 = new double[nb];
+            v2 = new double[nb];
+            v3 = new double[nb];
+            v4 = new double[nb];
+            work1 = new double[ldwrkx][nb];
+            work2 = new double[ldwrky][nb];
+            dlabrd(m-i+1, n-i+1, nb, array1, row1, v1, v2, v3, v4, work1, ldwrkx, work2, ldwrky);
+            for (j = 0; j < row1; j++) {
+                for (k = 0; k < n-i+1; k++) {
+                    A[i-1+j][i-1+k] = array1[j][k];
+                }
+            }
+            for (j = 0; j < nb; j++) {
+                d[i-1+j] = v1[j];
+                e[i-1+j] = v2[j];
+                tauq[i-1+j] = v3[j];
+                taup[i-1+j] = v4[j];
+            }
+            for (j = 0; j < ldwrkx; j++) {
+                for (k = 0; k < nb; k++) {
+                    work[j + k*ldwrkx] = work1[j][k];
+                }
+            }
+            for (j = 0; j < ldwrky; j++) {
+                for (k = 0; k < nb; k++) {
+                    work[j + k*ldwrky + ldwrkx*nb] = work2[j][k];
+                }
+            }
+            
+            // Update the trailing submatrix A(i+nb:m,i+nb:n) using an update of the form
+            // A = A - V*Y' - X*U'
+        } // for (i = 1; i <= minmn - nx; i += nb)
+    } // dgebrd
+
+    
     /* This is a port of the version 3.2 LAPACK auxiliary routine DLABRD.  Original DLABRD created by 
      * Univ. of Tennessee, Univ. Of California Berkeley, Univ. Of Colorado Denver, and NAG Ltd.,
      * November, 2006
@@ -3439,6 +3698,8 @@ public class GeneralizedInverse {
         double vector2[];
         int j;
         int k;
+        double alpha[] = new double[1];
+        double tau[] = new double[1];
         
         // Quick return if possible
         if ((m <= 0) || (n <= 0)) {
@@ -3483,6 +3744,17 @@ public class GeneralizedInverse {
                 }
                 
                 // Generate reflection Q(i) to annihilate A(i+1:m,i)
+                alpha[0] = A[i-1][i-1];
+                vector1 = new double[m-i];
+                for (j = 0; j < m-i; j++) {
+                    vector1[j] = A[Math.min(i,m-1) + j][i-1];
+                }
+                dlarfg(m-i+1, alpha, vector1, 1, tau);
+                A[i-1][i-1] = alpha[0];
+                for (j = 0; j < m-i; j++) {
+                    A[Math.min(i,m-1) + j][i-1] = vector1[j];
+                }
+                tauq[i-1] = tau[0];
                 
                 d[i-1] = A[i-1][i-1];
                 if (i < n) {
@@ -3587,6 +3859,15 @@ public class GeneralizedInverse {
                         Y[i+j][i-1] = vector2[j];
                     }
                     
+                    vector1 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector1[j] = Y[i+j][i-1];
+                    }
+                    dscal(n-i, tauq[i-1], vector1, 1);
+                    for (j = 0; j < n-i; j++) {
+                        Y[i+j][i-1] = vector1[j];
+                    }
+                    
                     // update A(i,i+1:n)
                     row1 = Math.max(1,n-i);
                     array1 = new double[row1][i];
@@ -3628,7 +3909,18 @@ public class GeneralizedInverse {
                         A[i-1][i+j] = vector2[j];
                     }
                     
-                    // Generate refleciton P(I) to annihilate A(i,i+2:n)
+                    // Generate reflection P(I) to annihilate A(i,i+2:n)
+                    alpha[0] = A[i-1][i];
+                    vector1 = new double[n-i-1];
+                    for (j = 0; j < n-i-1; j++) {
+                        vector1[j] = A[i-1][Math.min(i+1, n-1) + j];
+                    }
+                    dlarfg(n-i, alpha, vector1, 1, tau);
+                    A[i-1][i] = alpha[0];
+                    for (j = 0; j < n-i-1; j++) {
+                        A[i-1][Math.min(i+1, n-1) + j] = vector1[j];
+                    }
+                    taup[i-1] = tau[0];
                     
                     e[i-1] = A[i-1][i];
                     A[i-1][i] = 1.0;
@@ -3692,9 +3984,382 @@ public class GeneralizedInverse {
                     for (j = 0; j < m-i; j++) {
                         X[i+j][i-1] = vector2[j];
                     }
+                    row1 = Math.max(1, i-1);
+                    array1 = new double[row1][n-i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = A[j][i+k];
+                        }
+                    }
+                    vector1 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector1[j] = A[i-1][i+j];
+                    }
+                    vector2 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector2[j] = X[j][i-1];
+                    }
+                    dgemv('N', i-1, n-i, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < i-1; j++) {
+                        X[j][i-1] = vector2[j];
+                    }
+                    
+                    vector1 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector1[j] = X[i+j][i-1];
+                    }
+                    dscal(m-i, taup[i-1], vector1, 1);
+                    for (j = 0; j < m-i; j++) {
+                        X[i+j][i-1] = vector1[j];
+                    }
                 } // if (i < n)
             } // for (i = 1; i <= nb; i++)
         } // if (m >= n)
+        else { // m < n
+            // Reduce to lower bidiagonal form
+            for (i = 1; i <= nb; i++) {
+                // Update A(i,i:n)
+                
+                row1 = Math.max(1, n-i+1);
+                array1 = new double[row1][i-1];
+                for (j = 0; j < row1; j++) {
+                    for (k = 0; k < i-1; k++) {
+                        array1[j][k] = Y[i-1+j][k];
+                    }
+                }
+                vector1 = new double[i-1];
+                for (j = 0; j < i-1; j++) {
+                    vector1[j] = A[i-1][j];
+                }
+                vector2 = new double[n-i+1];
+                for (j = 0; j < n-i+1; j++) {
+                    vector2[j] = A[i-1][i-1+j];
+                }
+                dgemv('N', n-i+1, i-1, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                for (j = 0; j < n-i+1; j++) {
+                    A[i-1][i-1+j] = vector2[j];
+                }
+                
+                row1 = Math.max(1, i-1);
+                array1 = new double[row1][n-i+1];
+                for (j = 0; j < row1; j++) {
+                    for (k = 0; k < n-i+1; k++) {
+                        array1[j][k] = A[j][i-1+k];
+                    }
+                }
+                vector1 = new double[i-1];
+                for (j = 0; j < i-1; j++) {
+                    vector1[j] = X[i-1][j];
+                }
+                vector2 = new double[n-i+1];
+                for (j = 0; j < n-i+1; j++) {
+                    vector2[j] = A[i-1][i-1+j];
+                }
+                dgemv('T', i-1, n-i+1, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                for (j = 0; j < n-i+1; j++) {
+                    A[i-1][i-1+j] = vector2[j];
+                }
+                
+                // Generate reflection P(i) to annihilate A(i,i+1:n)
+                alpha[0] = A[i-1][i-1];
+                vector1 = new double[n-i];
+                for (j = 0; j < n-i; j++) {
+                    vector1[j] = A[i-1][Math.min(i, n-1) + j];
+                }
+                dlarfg(n-i+1, alpha, vector1, 1, tau);
+                A[i-1][i-1] = alpha[0];
+                for (j = 0; j < n-i; j++) {
+                    A[i-1][Math.min(i, n-1) + j] = vector1[j];
+                }
+                taup[i-1] = tau[0];
+                
+                d[i-1] = A[i-1][i-1];
+                if (i < m) {
+                    A[i-1][i-1] = 1.0;
+                    
+                    // Compute X(i+1:m,i)
+                    
+                    row1 = Math.max(1, m-i);
+                    array1 = new double[row1][n-i+1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i+1; k++) {
+                            array1[j][k] = A[i+j][i-1+k];
+                        }
+                    }
+                    vector1 = new double[n-i+1];
+                    for (j = 0; j < n-i+1; j++) {
+                        vector1[j] = A[i-1][i-1+j];
+                    }
+                    vector2 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector2[j] = X[i+j][i-1];
+                    }
+                    dgemv('N', m-i, n-i+1, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < m-i; j++) {
+                        X[i+j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1,n-i+1);
+                    array1 = new double[row1][i-1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i-1; k++) {
+                            array1[j][k] = Y[i-1+j][k];
+                        }
+                    }
+                    vector1 = new double[n-i+1];
+                    for (j = 0; j < n-i+1; j++) {
+                        vector1[j] = A[i-1][i-1+j];
+                    }
+                    vector2 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector2[j] = X[j][i-1];
+                    }
+                    dgemv('T', n-i+1, i-1, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < i-1; j++) {
+                        X[j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1,m-i);
+                    array1 = new double[row1][i-1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i-1; k++) {
+                            array1[j][k] = A[i+j][k];
+                        }
+                    }
+                    vector1 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector1[j] = X[j][i-1];
+                    }
+                    vector2 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector2[j] = X[i+j][i-1];
+                    }
+                    dgemv('N', m-i, i-1, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < m-i; j++) {
+                        X[i+j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1, i-i);
+                    array1 = new double[row1][n-i+1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i+1; k++) {
+                            array1[j][k] = A[j][i-1+k];
+                        }
+                    }
+                    vector1 = new double[n-i+1];
+                    for (j = 0; j < n-i+1; j++) {
+                        vector1[j] = A[i-1][i-1+j];
+                    }
+                    vector2 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector2[j] = X[j][i-1];
+                    }
+                    dgemv('N', i-1, n-i+1, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < i-1; j++) {
+                        X[j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1, m-i);
+                    array1 = new double[row1][i-1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i-1; k++) {
+                            array1[j][k] = X[i+j][k];
+                        }
+                    }
+                    vector1 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector1[j] = X[j][i-1];
+                    }
+                    vector2 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector2[j] = X[i+j][i-1];
+                    }
+                    dgemv('N', m-i, i-1, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < m-i; j++) {
+                        X[i+j][i-1] = vector2[j];
+                    }
+                    
+                    vector1 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector1[j] = X[i+j][i-1];
+                    }
+                    dscal(m-i, taup[i-1], vector1, 1);
+                    for (j = 0; j < m-i; j++) {
+                        X[i+j][i-1] = vector1[j];
+                    } 
+                    
+                    // Update A(i+1:m,i)
+                    
+                    row1 = Math.max(1, m-i);
+                    array1 = new double[row1][i-1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i-1; k++) {
+                            array1[j][k] = A[i+j][k];
+                        }
+                    }
+                    vector1 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector1[j] = Y[i-1][j];
+                    }
+                    vector2 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector2[j] = A[i+j][i-1];
+                    }
+                    dgemv('N', m-i, i-1, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < m-i; j++) {
+                        A[i+j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1, m-i);
+                    array1 = new double[row1][i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i; k++) {
+                            array1[j][k] = X[i+j][k];
+                        }
+                    }
+                    vector1 = new double[i];
+                    for (j = 0; j < i; j++) {
+                        vector1[j] = A[j][i-1];
+                    }
+                    vector2 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector2[j] = A[i+j][i-1];
+                    }
+                    dgemv('N', m-i, i, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < m-i; j++) {
+                        A[i+j][i-1] = vector2[j];
+                    }
+                    
+                    // Generate refletion Q(i) to annihilate A(i+2:m,i)
+                    alpha[0] = A[i][i-1];
+                    vector1 = new double[m-i-1];
+                    for (j = 0; j < m-i-1; j++) {
+                        vector1[j] = A[Math.min(i+1, m-1) + j][i-1];
+                    }
+                    dlarfg(m-i, alpha, vector1, 1, tau);
+                    A[i][i-1] = alpha[0];
+                    for (j = 0; j < m-i-1; j++) {
+                        A[Math.min(i+1, m-1) + j][i-1] = vector1[j];
+                    }
+                    tauq[i-1] = tau[0];
+                    
+                    e[i-1] = A[i][i-1];
+                    A[i][i-1] = 1.0;
+                    
+                    // Compute Y(i+1:n,i)
+                    
+                    row1  = Math.max(1,m-i);
+                    array1 = new double[row1][n-i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = A[i+j][i+k];
+                        }
+                    }
+                    vector1 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector1[j] = A[i+j][i-1];
+                    }
+                    vector2 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector2[j] = Y[i+j][i-1];
+                    }
+                    dgemv('T', m-i, n-i, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < n-i; j++) {
+                        Y[i+j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1,m-i);
+                    array1 = new double[row1][i-1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i-1; k++) {
+                            array1[j][k] = A[i+j][k];
+                        }
+                    }
+                    vector1 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector1[j] = A[i+j][i-1];
+                    }
+                    vector2 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector2[j] = Y[j][i-1];
+                    }
+                    dgemv('T', m-i, i-1, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < i-1; j++) {
+                        Y[j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1, n-i);
+                    array1 = new double[row1][i-1];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i-1; k++) {
+                            array1[j][k] = Y[i+j][k];
+                        }
+                    }
+                    vector1 = new double[i-1];
+                    for (j = 0; j < i-1; j++) {
+                        vector1[j] = Y[j][i-1];
+                    }
+                    vector2 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector2[j] = Y[i+j][i-1];
+                    }
+                    dgemv('N', n-i, i-1, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < n-i; j++) {
+                        Y[i+j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1, m-i);
+                    array1 = new double[row1][i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < i; k++) {
+                            array1[j][k] = X[i+j][k];
+                        }
+                    }
+                    vector1 = new double[m-i];
+                    for (j = 0; j < m-i; j++) {
+                        vector1[j] = A[i+j][i-1];
+                    }
+                    vector2 = new double[i];
+                    for (j = 0; j < i; j++) {
+                        vector2[j] = Y[j][i-1];
+                    }
+                    dgemv('T', m-i, i, 1.0, array1, row1, vector1, 1, 0.0, vector2, 1);
+                    for (j = 0; j < i; j++) {
+                        Y[j][i-1] = vector2[j];
+                    }
+                    
+                    row1 = Math.max(1, i);
+                    array1 = new double[row1][n-i];
+                    for (j = 0; j < row1; j++) {
+                        for (k = 0; k < n-i; k++) {
+                            array1[j][k] = A[j][i+k];
+                        }
+                    }
+                    vector1 = new double[i];
+                    for (j = 0; j < i; j++) {
+                        vector1[j] = Y[j][i-1];
+                    }
+                    vector2 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector2[j] = Y[i+j][i-1];
+                    }
+                    dgemv('T', i, n-i, -1.0, array1, row1, vector1, 1, 1.0, vector2, 1);
+                    for (j = 0; j < n-i; j++) {
+                        Y[i+j][i-1] = vector2[j];
+                    }
+                    
+                    vector1 = new double[n-i];
+                    for (j = 0; j < n-i; j++) {
+                        vector1[j] = Y[i+j][i-1];
+                    }
+                    dscal(n-i, tauq[i-1], vector1, 1);
+                    for (j = 0; j < n-i; j++) {
+                        Y[i+j][i-1] = vector1[j];
+                    }
+                } // if (i < m)
+            } // for (i = 1; i <= nb; i++)
+        } // else m < n
+        return;
     } // dlabrd
 
     
