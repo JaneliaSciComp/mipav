@@ -660,10 +660,6 @@ public class FileDicom extends FileDicomBase {
             // ******* Gets the next element
             getNextElement(endianess); // gets group, element, length
             name = convertGroupElement(groupWord, elementWord);
-
-            if(name.equals("6000,3000")) {
-            	System.out.println("Here");
-            }
             
             FileDicomKey key = new FileDicomKey(name);
             int tagVM;
@@ -705,7 +701,7 @@ public class FileDicom extends FileDicomBase {
                 if ( !isQuiet()) {
                     MipavUtil.displayError("Error:  Unexpected end of file: " + fileName + "  Unable to load image.");
                 }
-
+            
                 throw new IOException("Error while reading header");
             }
 
@@ -716,9 +712,9 @@ public class FileDicom extends FileDicomBase {
                 }
 
                 // System.err.println("name: "+ name + " , len: " + Integer.toString(elementLength, 0x10));
-                System.err.println("ERROR CAUSED BY READING IMAGE ON ODD BYTE");
+                 System.err.println("ERROR CAUSED BY READING IMAGE ON ODD BYTE");
                 throw new IOException("Error while reading header");
-            }
+           }
 
             try {
 
