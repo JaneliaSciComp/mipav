@@ -199,7 +199,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             setPLogP(nBins); // precalculate
         }
 
-        //if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
+        if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
         {
             m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false, nBins);
         }
@@ -228,8 +228,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     public double cost(TransMatrix affMatrix) {
 
         costCalled++; // global debuggin variable to keep track of how many times cost function was called.
-
-        //System.err.println( costCalled );
         
         double value = 0;
 
@@ -297,13 +295,18 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED:
                 value = normalizedMutualInformationSmoothed(affMatrix);
+                /*
                 if ( m_kGPUCost != null )
                 {
-                    //value = normalizedMutualInformation(affMatrix);
-                    //double valueGPU = m_kGPUCost.getError(affMatrix);
-                    //System.err.println( "CPU: " + value + "   GPU: " + valueGPU );
+                    value = normalizedMutualInformation(affMatrix);
+                    double valueGPU = m_kGPUCost.getError(affMatrix);
+                    if ( Math.abs( valueGPU - value ) > 0.01 )
+                    {
+                        System.err.println( "CPU: " + value + "   GPU: " + valueGPU );
+                    }
                     //value = valueGPU;
                 }
+                */
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
@@ -529,6 +532,8 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         if ((inputImage.max - inputImage.min) != 0) {
             constantI = (nBins - 1) / (inputImage.max - inputImage.min);
         }
+        
+        //System.err.println( refImage.min + " " + constantR );
 
         Point minMaxPt = new Point();
         for (y = 0; y <= yEnd; y++) {
@@ -537,7 +542,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -596,11 +601,17 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             }
         }
 
+        //System.err.println( "");
+        //System.err.println( "");
+        //System.err.println( "");
+        //System.err.println( "Reference Image: ");
+        int iSum = 0;
         for (int i = 0; i < nBins; i++) {
             n = (int) MipavMath.round(margHistR[i]);
-
+            //System.err.println( i + " " + margHistR[i] );
             if (n > 0) {
 
+                iSum += n;
                 if (n < pSize) {
                     margEntropyR[0] += pLogP[n];
                 } else {
@@ -609,11 +620,18 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                 }
             }
         }
+        //System.err.println( "DONE " + iSum);
 
         int nOverlap = 0;
 
+
+        //System.err.println( "");
+        //System.err.println( "");
+        //System.err.println( "");
+        //System.err.println( "Moving Image: ");
         for (int i = 0; i < nBins; i++) {
             n = (int) MipavMath.round(margHistI[i]);
+            //System.err.println( i + " " + margHistI[i] );
 
             if (n > 0) {
                 nOverlap += n;
@@ -626,8 +644,9 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                 }
             }
         }
+        //System.err.println( "DONE " + nOverlap);
 
-        //System.err.println( "CPU: " + nBins + " " + nVoxels + " " + nOverlap + " " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
+        System.err.println( "CPU: " + nBins + " " + nVoxels + " " + nOverlap + " " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
         
         // correct for difference in total histogram size
         // that is: nOverlap vs nVoxels
@@ -745,7 +764,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -960,7 +979,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -1156,7 +1175,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -1329,7 +1348,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += (minMaxPt.x * T00);
             newPtY += (minMaxPt.x * T10);
@@ -1545,7 +1564,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -1656,16 +1675,13 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
      *
      * @param  minMaxPt  DOCUMENT ME!
      */
-    private void findRangeX(Point minMaxPt, double newPtX, double newPtY, double T00, double T10, double iT00, double iT10) {
+    private void findRangeX(Point minMaxPt, double newPtX, double newPtY, double aT00, double aT10, double iT00, double iT10) {
         double x1, x2, xMin, xMax, xMin0, xMax0;
-        int xminT, xmaxT, xc;
-        double x, y;
-        boolean inbounds;
 
         xMin0 = 0;
         xMax0 = xEnd;
 
-        if (Math.abs(T00) < 1.0e-8) {
+        if (aT00 < 1.0e-8) {
 
             if ((0.0 <= newPtX) && (newPtX <= xEnd2)) {
                 x1 = -1.0e8;
@@ -1695,7 +1711,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             xMax0 = xMax;
         }
 
-        if (Math.abs(T10) < 1.0e-8) {
+        if (aT10 < 1.0e-8) {
 
             if ((0.0 <= newPtY) && (newPtY <= yEnd2)) {
                 x1 = -1.0e8;
@@ -1732,28 +1748,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             minMaxPt.x = (int) Math.ceil(xMin0);
             minMaxPt.y = (int) Math.floor(xMax0);
         }
-        
-        // brute force check to see that the floating point accumulation will
-        // not go wrong later
-        xminT = minMaxPt.x;
-        xmaxT = minMaxPt.y;
-        x = newPtX + xminT * T00;
-        y = newPtY + xminT * T10;
-        for (xc = xminT; xc <= xmaxT; xc++) {
-            inbounds = ((x <= xEnd2) && (x >= 0.0) && (y <= yEnd2) && (y >= 0.0));
-            if ((xc == minMaxPt.x) && (!inbounds)) {
-                minMaxPt.x++;
-            }
-            else {
-                if (!inbounds) {
-                    minMaxPt.y = xc - 1;
-                    return;
-                }
-            }
-            x += T00;
-            y += T10;
-        }
-        
     }
 
     /**
@@ -1816,7 +1810,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -1923,7 +1917,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -2041,7 +2035,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -2176,7 +2170,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -2313,7 +2307,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -2452,7 +2446,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -2703,7 +2697,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             newPtY = (y * T11) + T12;
 
             // determine range
-            findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+            findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
             newPtX += minMaxPt.x * T00;
             newPtY += minMaxPt.x * T10;
@@ -2844,7 +2838,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                 newPtY = (y * T11) + T12;
 
                 // determine range
-                findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+                findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;
@@ -3013,7 +3007,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                 newPtY = (y * T11) + T12;
 
                 // determine range
-                findRangeX(minMaxPt, newPtX, newPtY, T00, T10, iT00, iT10);
+                findRangeX(minMaxPt, newPtX, newPtY, aT00, aT10, iT00, iT10);
 
                 newPtX += minMaxPt.x * T00;
                 newPtY += minMaxPt.x * T10;

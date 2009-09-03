@@ -335,13 +335,19 @@ public class VolumeImage
         float[] afData = null;
         int iSize = kImage.dataSize;
         GraphicsImage.FormatMode eType = GraphicsImage.FormatMode.IT_L32F;
-        if ( kImage.isColor )
-        {
-            iSize *= 4;
-            eType = GraphicsImage.FormatMode.IT_RGBA8888;
-        }
         afData = new float[iSize];
         kImage.exportData( afData, iTimeSlice * iSize, iSize );
+/*
+        int iSliceSize = kImage.extents[0] * kImage.extents[1];
+        for ( int j = 0; j < iSliceSize; j++ )
+        {
+            for ( int i = 0; i < kImage.extents[2]; i++ )
+            {
+                System.err.print( afData[i * iSliceSize + j] + " " );
+            }
+            System.err.println("");
+        }
+        */
         
         if ( kImage.nDims == 3 )
         {
@@ -352,7 +358,7 @@ public class VolumeImage
         else
         {
             kReturn =
-                new GraphicsImage( eType, kImage.extents[0],kImage.extents[1],1, afData, kImageName);
+                new GraphicsImage( eType, kImage.extents[0],kImage.extents[1], 1, afData, kImageName);
         }
         return kReturn;
     }
@@ -370,6 +376,10 @@ public class VolumeImage
             return;
         }
         ModelLUT.exportIndexedLUTMin( kLUT, kColorMap.GetData() );
+        for ( int i = 0; i < kColorMap.GetData().length; i++ )
+        {
+            System.err.println( kColorMap.GetData()[i]);
+        }
         kColorTexture.Reload(true);
     }
     
