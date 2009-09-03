@@ -31,11 +31,14 @@ implements StreamInterface
     boolean m_bUseTransform;
     int m_iNumTextures;
     boolean m_bHisto2D = false;
+    float m_fZStep, m_fZSlice;
+    float m_fNBins;
 
     public VolumeHistogramEffect ( Texture kTexA, Texture kTexB, 
             float fMinA, float fMaxA, float fMinB, float fMaxB,
             int iWidth, int iHeight, int iNBins, Matrix4f kImageTransform, boolean bUseTransform )
     {
+        m_fNBins = iNBins;
         m_iWidth = iWidth;
         m_iHeight = iHeight;
         m_kImageTransform = kImageTransform;
@@ -94,15 +97,39 @@ implements StreamInterface
     public void OnLoadPrograms (int iPass, Program pkVProgram,
             Program pkPProgram, Program pkCProgram)
     {
+
+        if ( pkCProgram.GetUC("Step") != null ) 
+         {
+            pkCProgram.GetUC("Step").GetData()[0] = (1.0f/(float)(m_fNBins*2.0));
+            pkCProgram.GetUC("Step").GetData()[1] = (1.0f/(float)(m_fNBins*2.0));
+         }
+        if ( pkCProgram != null && pkCProgram.GetUC("ZSlice") != null ) 
+        {
+            pkCProgram.GetUC("ZSlice").GetData()[0] = m_fZSlice;
+            //System.err.println( "ZSlice: " + m_fZSlice );
+        } 
+        if ( pkCProgram != null && pkCProgram.GetUC("ZStep") != null ) 
+        {
+            pkCProgram.GetUC("ZStep").GetData()[0] = m_fZStep;
+            //System.err.println( "Step: " + m_fZStep );
+        } 
+        if ( pkCProgram != null && pkCProgram.GetUC("Shift") != null ) 
+        {
+            pkCProgram.GetUC("Shift").GetData()[0] = -20.0f/m_iWidth;
+            pkCProgram.GetUC("Shift").GetData()[1] = 20.0f/m_iHeight;
+            //System.err.println( "Shift = " + m_fMin1 + " " + m_fMin2 );
+        } 
         if ( pkCProgram != null && pkCProgram.GetUC("Min") != null ) 
         {
             pkCProgram.GetUC("Min").GetData()[0] = m_fMin1;
             pkCProgram.GetUC("Min").GetData()[1] = m_fMin2;
+            //System.err.println( "Min = " + m_fMin1 + " " + m_fMin2 );
         } 
         if ( pkCProgram != null && pkCProgram.GetUC("Scale") != null ) 
         {
             pkCProgram.GetUC("Scale").GetData()[0] = m_fScale1;
             pkCProgram.GetUC("Scale").GetData()[1] = m_fScale2;
+            //System.err.println( "Scale = " + m_fScale1 + " " + m_fScale2 );
         } 
         if ( pkCProgram != null && pkCProgram.GetUC("VertexScale") != null ) 
         {
@@ -120,7 +147,15 @@ implements StreamInterface
         {
             pkCProgram.GetUC("ImageSizeInv").GetData()[0] = 1.0f / (m_aiExtents[0]-1);
             pkCProgram.GetUC("ImageSizeInv").GetData()[1] = 1.0f / (m_aiExtents[1]-1);
-            pkCProgram.GetUC("ImageSizeInv").GetData()[2] = 1.0f / (m_aiExtents[2]-1);
+            if ( (m_aiExtents[2]-1) > 0 )
+            {
+                pkCProgram.GetUC("ImageSizeInv").GetData()[2] = 1.0f / (m_aiExtents[2]-1);
+            }
+            else
+            {
+                pkCProgram.GetUC("ImageSizeInv").GetData()[2] = 0f;
+            }
+            //System.err.println( pkCProgram.GetUC("ImageSizeInv").GetData()[2] );
         } 
         if ( pkCProgram != null && pkCProgram.GetUC("InverseTransformMatrix") != null ) 
         {
@@ -151,17 +186,20 @@ implements StreamInterface
     }
 
 
-    public void ZSlice( float fZ )
+    public void ZSlice( float fZ, float fZStep )
     {
+        m_fZSlice = fZ;
+        m_fZStep = fZStep;
         Program pkCProgram = GetCProgram(0);
         if ( pkCProgram != null && pkCProgram.GetUC("ZSlice") != null ) 
         {
-            pkCProgram.GetUC("ZSlice").GetData()[0] = fZ;
+            pkCProgram.GetUC("ZSlice").GetData()[0] = m_fZSlice;
         } 
-        if ( pkCProgram != null && pkCProgram.GetUC("UseZSlice") != null ) 
+        if ( pkCProgram != null && pkCProgram.GetUC("ZStep") != null ) 
         {
-            pkCProgram.GetUC("UseZSlice").GetData()[0] = 1;
-        }  
+            pkCProgram.GetUC("ZStep").GetData()[0] = m_fZStep;
+        } 
+        //System.err.println( "ZSlice: " + m_fZSlice + " Step: " + m_fZStep + " " + (m_fZSlice + m_fZStep) );
     }
 
 }

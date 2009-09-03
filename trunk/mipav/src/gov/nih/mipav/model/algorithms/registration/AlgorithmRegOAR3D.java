@@ -2704,7 +2704,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         /**
          * Perform parallel Powell's method.
          */
-        powell.setParallelPowell(true);
+        powell.setParallelPowell(multiThreadingEnabled);
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.run();
 

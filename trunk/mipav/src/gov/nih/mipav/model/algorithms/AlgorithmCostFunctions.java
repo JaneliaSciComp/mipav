@@ -198,6 +198,9 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     /** DOCUMENT ME! */
     private double zEnd2;
     
+    private float[] m_afJointHisto;
+    private boolean m_bPrint = false;
+    
     VolumeImageViewerPoint m_kGPUCost = null;;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -244,7 +247,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         }
         
 
-        //if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
+        if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
         {
             m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false, nBins);
         }
@@ -273,7 +276,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     public double cost(TransMatrix affMatrix) {
 
         costCalled++; // global debuggin variable to keep track of how many times cost function was called.
-
+        //affMatrix = new TransMatrix(4,4);
         double value = 0;
 
         switch (costFunctID) {
@@ -343,13 +346,28 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED:
+                value = normalizedMutualInformationSmoothed(affMatrix);
+                /*
                 if ( m_kGPUCost != null )
                 {
-                    //double valueGPU = m_kGPUCost.getError(affMatrix);
-                    //value = normalizedMutualInformation(affMatrix);
-                    //System.err.println( "CPU:    " + value + "   gpu:    " + valueGPU );
+                    value = normalizedMutualInformation(affMatrix);
+                    m_kGPUCost.setJoint( m_afJointHisto );
+                    double valueGPU = m_kGPUCost.getError(affMatrix);
+                    if ( Math.abs( valueGPU - value ) > 0.01 )
+                    {
+                        System.err.println( "CPU: " + value + "   GPU: " + valueGPU );
+                        m_bPrint = true;
+                        value = normalizedMutualInformation(affMatrix);
+                        m_kGPUCost.Print(true);
+                        m_kGPUCost.setJoint( m_afJointHisto );
+                        valueGPU = m_kGPUCost.getError(affMatrix);
+                        System.err.println( "22222222 CPU: " + value + "   GPU: " + valueGPU );
+                    }
+                    m_bPrint = false;
+                    m_kGPUCost.Print(false);
+                    value = valueGPU;
                 }
-                value = normalizedMutualInformationSmoothed(affMatrix);
+                */
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
@@ -656,10 +674,13 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 
                     indexValueI = (int) ((value - inputImage.min) * constantI);
                     indexValueR = (int) ((refImage.data[index] - refImage.min) * constantR);
-                    jointHist[(indexValueR * nBins) + indexValueI] += 1;
-                    margHistR[indexValueR] += 1;
-                    margHistI[indexValueI] += 1;
-
+                    
+                    //if ( z == 1 )
+                    {
+                        jointHist[(indexValueR * nBins) + indexValueI] += 1;
+                        margHistR[indexValueR] += 1;
+                        margHistI[indexValueI] += 1;
+                    }
                     index++;
                     newPtX += T00;
                     newPtY += T10;
@@ -674,6 +695,8 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         int pSize = pLogP.length;
 
         nVoxels = refImage.data.length;
+        
+        m_afJointHisto = new float[nBins*nBins*4];
 
         for (int i = 0; i < (nBins * nBins); i++) {
             n = (int) MipavMath.round(jointHist[i]);
@@ -687,11 +710,18 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                     jointEntropy[0] += -p * Math.log(p);
                 }
             }
+            m_afJointHisto[i*4] = (float)jointHist[i];
+            m_afJointHisto[i*4+1] = 0f;
+            m_afJointHisto[i*4+2] = 0f;
+            m_afJointHisto[i*4+3] = (float)jointHist[i];
         }
-
+        //System.err.println("");
+        //System.err.println("");
+        //System.err.println("");
+        //System.err.println("Reference");
         for (int i = 0; i < nBins; i++) {
             n = (int) MipavMath.round(margHistR[i]);
-
+            //System.err.println ( i + " " + n );
             if (n > 0) {
 
                 if (n < pSize) {
@@ -702,6 +732,10 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
                 }
             }
         }
+        //System.err.println("Done");
+        //System.err.println("");
+        //System.err.println("");
+        //System.err.println("");
 
         double nOverlap = 0.0;
 
@@ -732,13 +766,22 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             margEntropyR[0] = (nRatio * margEntropyR[0]) - Math.log(nRatio);
             margEntropyI[0] = (nRatio * margEntropyI[0]) - Math.log(nRatio);
             jointEntropy[0] = (nRatio * jointEntropy[0]) - Math.log(nRatio);
-        } else {
+            if ( m_bPrint )
+            {
+                System.err.println( "CPU: " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
+            }
+            } else {
 
             // System.out.println("nOvelap not high enough, less than 15% of voxels.");
             // Put in maximum entropy values as base cases = BAD registration
             jointEntropy[0] = 2.0 * Math.log(nBins);
             margEntropyR[0] = Math.log(nBins);
             margEntropyI[0] = Math.log(nBins);
+            if ( m_bPrint )
+            {
+                System.out.println("nOvelap not high enough, less than 15% of voxels.");
+                System.err.println( "CPU: " + margEntropyR[0] + " " + margEntropyI[0] + " " + jointEntropy[0] );
+            }
         }
 
         return;

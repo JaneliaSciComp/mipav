@@ -1,9 +1,14 @@
 //----------------------------------------------------------------------------
-uniform mat4 WVPMatrix;
+// uniform mat4 WVPMatrix;
 uniform sampler3D imageA; 
 uniform sampler3D imageB; 
 
+uniform vec2 Step;
+
 uniform float ZSlice;
+uniform float ZStep;
+
+uniform vec2 Shift;
 
 uniform vec2 Min;
 uniform vec2 Scale;
@@ -15,45 +20,43 @@ uniform mat4 InverseTransformMatrix;
 
 void v_VolumeHistogram2DV()
 {
-    vec3 texCoord = gl_MultiTexCoord0.xyz;
-    texCoord.z = ZSlice;
+     vec3 texCoord = gl_MultiTexCoord0.xyz;
+     texCoord.z = ZSlice;
 
-    vec4 vol1 = texture3D(imageA, texCoord );
-    vol1.r = (vol1.r - Min.x) * Scale.x;
+     vec4 vol1 = texture3D(imageA, texCoord );
+     float xPos = (vol1.r - Min.x) * Scale.x;
 
-    vec4 vert = gl_Vertex;
-    vert.x = (vol1.r - 0.5) * 2.0;
+     vec4 vert = gl_Vertex;
+     xPos *= 2.0;
+     xPos -= 1.0;
+     vert.x = xPos;
 
-    gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
+     gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
 
-    vec4 vol2 = vec4(0.0);
+     vec4 kPos = vec4(0.0,0.0,0.0,1.0);
+     kPos.xyz = texCoord * ImageSize;
+     kPos = InverseTransformMatrix*kPos;
+     texCoord = kPos.xyz * ImageSizeInv;
 
-    vec4 kPos = vec4(0.0,0.0,0.0,1.0);
-    kPos.x = (gl_MultiTexCoord0.x * ImageSize.x);
-    kPos.y = (gl_MultiTexCoord0.y * ImageSize.y);
-    kPos.z = (ZSlice * ImageSize.z);
-    
-    kPos = InverseTransformMatrix*kPos;
-    
-    texCoord.x = kPos.x * ImageSizeInv.x;
-    texCoord.y = kPos.y * ImageSizeInv.y;
-    texCoord.z = kPos.z * ImageSizeInv.z;
-    
-    if ( (texCoord.x < 0.0) || (texCoord.x > 1.0) ||
-         (texCoord.y < 0.0) || (texCoord.y > 1.0) ||
-         (texCoord.z < 0.0) || (texCoord.z > 1.0)    )
-    {
-        gl_FrontColor.r = 0.0;
-        gl_FrontColor.a = 0.0;
-    }
-    else
-    {
-        vol2 = texture3D(imageB, texCoord );
-        vol2.r = (vol2.r - Min.y) * Scale.y;
-        vert.y = (vol2.r - 0.5) * 2.0;
-    }
-    
-    // Transform the position from model space to clip space.
-    gl_Position = WVPMatrix*vert;
+     if ( (texCoord.x < 0.0) || (texCoord.x > 1.0) ||
+          (texCoord.y < 0.0) || (texCoord.y > 1.0) ||
+          (texCoord.z < 0.0) || (texCoord.z > 1.0)    )
+     {
+         gl_FrontColor.r = 0.0;
+         gl_FrontColor.a = 0.0;
+     }
+     else
+     {
+         vol1 = texture3D(imageB, texCoord );
+         float yPos = (vol1.r - Min.y) * Scale.y;
+         yPos *= 2.0;
+         yPos -= 1.0;
+         vert.y = yPos;
+     }
+     gl_Position = vert;
+
+     //gl_FrontColor = texture3D(imageB, gl_MultiTexCoord0.xyz );
+     //gl_FrontColor = texture3D(imageB, texCoord.xyz );
+     //gl_Position = gl_Vertex;
 }
 //----------------------------------------------------------------------------
