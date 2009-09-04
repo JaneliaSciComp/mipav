@@ -1,32 +1,27 @@
-import gov.nih.mipav.view.Preferences;
-
-import java.awt.Cursor;
-import java.awt.event.ActionEvent;
-import java.io.File;
-
-import javax.swing.JFileChooser;
 
 
-public class PlugInDialogNINDSIdentificationTool extends
-		PlugInDialogNINDSAnonymizationTool {
-	
-	public PlugInDialogNINDSIdentificationTool(boolean modal) {
+public class PlugInDialogNINDSIdentificationTool extends PlugInDialogNINDSAnonymizationTool {
+
+    /** rename grandparent dir name - moved here because it was removed from PlugInDialogNINDSAnonymizationTool. */
+    protected boolean renameGrandParentDir;
+
+    public PlugInDialogNINDSIdentificationTool(final boolean modal) {
         super(modal);
         subCustomize();
     }
-	
-	private void subCustomize() {
-		setTitle("NINDS Identification Tool " + " v1.0");
-	}
 
-	/**
+    private void subCustomize() {
+        setTitle("NINDS Identification Tool " + " v1.0");
+    }
+
+    /**
      * call algorithm
      */
     protected void callAlgorithm() {
-        String inputDirectoryPath = inputDirectoryTextField.getText().trim();
-        String outputDirectoryPath = outputDirectoryTextField.getText().trim();
+        final String inputDirectoryPath = inputDirectoryTextField.getText().trim();
+        final String outputDirectoryPath = outputDirectoryTextField.getText().trim();
         alg = new PlugInAlgorithmNINDSIdentificationTool(inputDirectoryPath, outputDirectoryPath, outputTextArea,
-                errorMessageLabel, true, renameGrandParentDir, this, csvFilePath,newCSVFile);
+                errorMessageLabel, true, renameGrandParentDir, this, csvFilePath, newCSVFile);
 
         alg.addListener(this);
 
