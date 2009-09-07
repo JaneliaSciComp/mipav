@@ -3333,6 +3333,401 @@ public class GeneralizedInverse {
         return value;
     } // dlange
     
+    /** This is a port of version 3.2 LAPACK routine DORGLQ.  Original DORGLQ created by Univ. of Tennessee,
+     *  Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+    *  Purpose
+    *  =======
+    *
+    *  DORGLQ generates an M-by-N real matrix Q with orthonormal rows,
+    *  which is defined as the first M rows of a product of K elementary
+    *  reflectors of order N
+    *
+    *        Q  =  H(k) . . . H(2) H(1)
+    *
+    *  as returned by DGELQF.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix Q. M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix Q. N >= M.
+    *
+    *  K       (input) INTEGER
+    *          The number of elementary reflectors whose product defines the
+    *          matrix Q. M >= K >= 0.
+    *
+    *  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
+    *          On entry, the i-th row must contain the vector which defines
+    *          the elementary reflector H(i), for i = 1,2,...,k, as returned
+    *          by DGELQF in the first k rows of its array argument A.
+    *          On exit, the M-by-N matrix Q.
+    *
+    *  LDA     (input) INTEGER
+    *          The first dimension of the array A. LDA >= max(1,M).
+    *
+    *  TAU     (input) DOUBLE PRECISION array, dimension (K)
+    *          TAU(i) must contain the scalar factor of the elementary
+    *          reflector H(i), as returned by DGELQF.
+    *
+    *  WORK    (workspace/output) DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+    *          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+    *
+    *  LWORK   (input) INTEGER
+    *          The dimension of the array WORK. LWORK >= max(1,M).
+    *          For optimum performance LWORK >= M*NB, where NB is
+    *          the optimal blocksize.
+    *
+    *          If LWORK = -1, then a workspace query is assumed; the routine
+    *          only calculates the optimal size of the WORK array, returns
+    *          this value as the first entry of the WORK array, and no error
+    *          message related to LWORK is issued by XERBLA.
+    *
+    *  INFO    (output) INTEGER
+    *          = 0:  successful exit
+    *          < 0:  if INFO = -i, the i-th argument has an illegal value
+    */
+    private void dorglq(int m, int n, int k, double A[][], int lda, double tau[], double work[],
+                        int lwork, int info[]) {
+        boolean lquery;
+        int i;
+        int ib;
+        int iinfo[] = new int[1];
+        int iws;
+        int j;
+        int ki = 0;
+        int kk;
+        int L;
+        int ldwork = 0;
+        int lwkopt;
+        int nb; 
+        int nbmin;
+        int nx;
+        String name;
+        String opts;
+        double v1[];
+        int row1;
+        double array1[][];
+        int p;
+        int q;
+        double work2[][];
+        double work3[][];
+        int row2;
+        double array2[][];
+        
+        // Test the input arguments
+        info[0] = 0;
+        name = new String("DORGLQ");
+        opts = new String(" ");
+        nb = ilaenv(1, name, opts, m, n, k, -1);
+        lwkopt = Math.max(1, m) * nb;
+        work[0] = lwkopt;
+        lquery = (lwork == -1);
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if (n < m) {
+            info[0] = -2;
+        }
+        else if ((k < 0) || (k > m)) {
+            info[0] = -3;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -5;
+        }
+        else if ((lwork < Math.max(1, m)) && (!lquery)) {
+            info[0] = -8;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dorglq had info[0] = " + info[0]);
+            return;
+        }
+        else if (lquery) {
+            return;
+        }
+        
+        // Quick return if possible
+        if (m <= 0) {
+            work[0] = 1;
+            return;
+        }
+        
+        nbmin = 2;
+        nx = 0;
+        iws = m;
+        if ((nb > 1) && (nb < k)) {
+            // Determine when to corss over from blocked to unblocked code
+            nx = Math.max(0, ilaenv(3, name, opts, m, n, k, -1));
+            if (nx < k) {
+                // Determine if workspace is large enough for blocked code.
+                ldwork = m;
+                iws = ldwork * nb;
+                if (lwork < iws) {
+                    // Not enough workspace to use optimal nb: reduce nb and 
+                    // determine the minimum value of nb
+                    nb = lwork/ldwork;
+                    nbmin = Math.max(2, ilaenv(2, name, opts, m, n, k, -1));
+                } // if (lwork < iws)
+            } // if (nx < k)
+        } // if ((nb > 1) && (nb < k))
+        
+        if ((nb >= nbmin) && (nb < k) && (nx < k)) {
+            // Use blocked code after the last block.
+            // The first kk rows are handled by the block method.
+            ki = ((k-nx-1)/nb)*nb;
+            kk = Math.min(k, ki+nb);
+            
+            // Set A(kk+1:m,1:kk) to zero.
+            
+            for (j = 1; j <= kk; j++) {
+                for (i = kk+1; i <= m; i++) {
+                    A[i-1][j-1] = 0.0;
+                }
+            }
+        } // if ((nb >= nbmin) && (nb < k) && (nx < k))
+        else {
+            kk = 0;
+        }
+        
+        // Use unblocked code for the last or only block
+        if (kk < m) {
+            row1 = Math.max(1, m - kk);
+            array1 = new double[row1][n-kk];
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < n-kk; q++) {
+                    array1[p][q] = A[kk+p][kk+q];
+                }
+            }
+            v1 = new double[k-kk];
+            for (p = 0; p < k-kk; p++) {
+                v1[p] = tau[kk+p];
+            }
+            dorgl2(m-kk, n-kk, k-kk, array1, row1, v1, work, iinfo);
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < n-kk; q++) {
+                    A[kk+p][kk+q] = array1[p][q];
+                }
+            }
+        } // if (kk < m)
+        
+        if (kk > 0) {
+            // Use blocked code
+            for (i = ki+1; i >= 1; i -= nb) {
+                ib = Math.min(nb, k-i+1);
+                if ((i+ib) <= m) {
+                    // Form the triangular factor of the block reflector
+                    // H = H(i) H(i+1) ... H(i+ib-1)
+                    array1 = new double[ib][n-i+1];
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < n-i+1; q++) {
+                            array1[p][q] = A[i-1+p][i-1+q];
+                        }
+                    }
+                    v1 = new double[ib];
+                    for (p = 0; p < ib; p++) {
+                        v1[p] = tau[i-1+p];
+                    }
+                    work2 = new double[ldwork][ib];
+                    dlarft('F', 'R', n-i+1, ib, array1, ib, v1, work2, ldwork);
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < n-i+1; q++) {
+                            A[i-1+p][i-1+q] = array1[p][q];
+                        }
+                    }
+                    for (q = 0; q < ib; q++) {
+                        for (p = 0; p < ldwork; p++) {
+                            work[p + q * ldwork] = work2[p][q];
+                        }
+                    }
+                    
+                    array1 = new double[ib][n-i+1];
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < n-i+1; q++) {
+                            array1[p][q] = A[i-1+p][i-1+q];
+                        }
+                    }
+                    row2 = Math.max(1, m-i-ib+1);
+                    array2 = new double[row2][n-i+1];
+                    for (p = 0; p < row2; p++) {
+                        for (q = 0; q < n-i+1; q++) {
+                            array2[p][q] = A[i+ib-1+p][i-1+q];
+                        }
+                    }
+                    work3 = new double[row2][ib];
+                    dlarfb('R', 'T', 'F', 'R', m-i-ib+1, n-i+1, ib, array1, ib, work2, ldwork,
+                            array2, row2, work2, row2);
+                    for (p = 0; p < row2; p++) {
+                        for (q = 0; q < n-i+1; q++) {
+                            A[i+ib-1+p][i-1+q] = array2[p][q];
+                        }
+                    }
+                } // if ((i+ib) <= m)
+                
+                // Apply H' to columns i:n of current block
+                row1 = Math.max(1, ib);
+                array1 = new double[row1][n-i+1];
+                for (p = 0; p < row1; p++) {
+                    for (q = 0; q < n-i+1; q++) {
+                        array1[p][q] = A[i-1+p][i-1+q];
+                    }
+                }
+                v1 = new double[ib];
+                for (p = 0; p < ib; p++) {
+                    v1[p] = tau[i-1+p];
+                }
+                dorgl2(ib, n-i+1, ib, array1, row1, v1, work, iinfo);
+                for (p = 0; p < row1; p++) {
+                    for (q = 0; q < n-i+1; q++) {
+                        A[i-1+p][i-1+q] = array1[p][q];
+                    }
+                }
+                
+                // Set columns 1:i-1 of current block to zero.
+                
+                for (j = 1; j <= i-1; j++) {
+                    for (L = i; L <= i+ib-1; L++) {
+                        A[L-1][j-1] = 0.0;
+                    }
+                }
+            } // for (i = ki+1; i >= 1; i -= nb)
+        } // if (kk > 0)
+        
+        work[0] = iws;
+        return;
+    } // dorglq
+
+    
+    /*  This is a port of version 3.2 LAPACK routine DORGL2.  Original DORGL2 created by Univ. of Tennessee,
+     *  Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+    *  Purpose
+    *  =======
+    *
+    *  DORGL2 generates an m by n real matrix Q with orthonormal rows,
+    *  which is defined as the first m rows of a product of k elementary
+    *  reflectors of order n
+    *
+    *        Q  =  H(k) . . . H(2) H(1)
+    *
+    *  as returned by DGELQF.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix Q. M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix Q. N >= M.
+    *
+    *  K       (input) INTEGER
+    *          The number of elementary reflectors whose product defines the
+    *          matrix Q. M >= K >= 0.
+    *
+    *  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
+    *          On entry, the i-th row must contain the vector which defines
+    *          the elementary reflector H(i), for i = 1,2,...,k, as returned
+    *          by DGELQF in the first k rows of its array argument A.
+    *          On exit, the m-by-n matrix Q.
+    *
+    *  LDA     (input) INTEGER
+    *          The first dimension of the array A. LDA >= max(1,M).
+    *
+    *  TAU     (input) DOUBLE PRECISION array, dimension (K)
+    *          TAU(i) must contain the scalar factor of the elementary
+    *          reflector H(i), as returned by DGELQF.
+    *
+    *  WORK    (workspace) DOUBLE PRECISION array, dimension (M)
+    *
+    *  INFO    (output) INTEGER
+    *          = 0: successful exit
+    *          < 0: if INFO = -i, the i-th argument has an illegal value
+    */
+    private void dorgl2(int m, int n, int k, double A[][], int lda, double tau[], double work[], int info[]) {
+        int i;
+        int j;
+        int L;
+        double v1[];
+        int row1;
+        double array1[][];
+        int p;
+        int q;
+        
+        // Test the input arguments
+        info[0] = 0;
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if (n < m) {
+            info[0] = -2;
+        }
+        else if ((k < 0) || (k > m)) {
+            info[0] = -3;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -5;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dorgl2 had info[0] = " + info[0]);
+            return;
+        }
+        
+        // Quick return if possible
+        if (m <= 0) {
+            return;
+        }
+        
+        if (k < m) {
+            // Initialize rows k+1:m to rows of the unit matrix
+            for (j = 1; j <= n; j++) {
+                for (L = k+1; L <= m; L++) {
+                    A[L-1][j-1] = 0;
+                }
+                if ((j > k) && (j <= m)) {
+                    A[j-1][j-1] = 1.0;
+                }
+            } // for (j = 1; j <= n; j++) 
+        } // if (k < m)
+        
+        for (i = k; i >= 1; i--) {
+            // Apply H(i) to A(i:m,i;n) from the right
+            
+            if (i < n) {
+                if (i < m) {
+                    A[i-1][i-1] = 1.0;
+                    v1 = new double[n-i+1];
+                    for (p = 0; p < n - i + 1; p++) {
+                        v1[p] = A[i-1][i-1+p];
+                    }
+                    row1 = Math.max(1, m - i);
+                    array1 = new double[row1][n-i+1];
+                    for (p = 0; p < row1; p++) {
+                        for (q = 0; q < n - i + 1; q++) {
+                            array1[p][q] = A[i + p][i-1+q];
+                        }
+                    }
+                    dlarf('R', m - i, n - i + 1, v1, 1, tau[i-1], array1, row1, work);
+                    for (p = 0; p < row1; p++) {
+                        for (q = 0; q < n - i + 1; q++) {
+                            A[i + p][i-1+q] = array1[p][q];
+                        }
+                    }
+                } // if (i < m)
+                for (p = 0; p < n-i; p++) {
+                    A[i-1][i+p] = -tau[i-1] * A[i-1][i+p];
+                }
+            } // if (i < n)
+            A[i-1][i-1] = 1.0 - tau[i-1];
+            
+            // Set A(i,1:i-1) to zero
+            for (L = 1; L <= i-1; L++) {
+                A[i-1][L-1] = 0.0;
+            }
+        } // for (i = k; i >= 1; i--)
+        return;
+    } // dorgl2
+    
     /*
      *  This is a port of version 3.2 LAPACK routine DORMLQ.  Original DORMLQ created by Univ. of Tennessee,
      *  Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
