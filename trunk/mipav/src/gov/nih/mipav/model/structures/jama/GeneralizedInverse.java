@@ -2093,6 +2093,13 @@ public class GeneralizedInverse {
             
             // Multiply B by transpose of left bidiagonalizing vectors of R
             // (Workspace: need 3*n + nrhs, prefer 3*n + nrhs*nb)
+            dormbr('Q', 'L', 'T', mm, nrhs, n, A, lda, work2, B, ldb, work4, lwork-iwork+1, info);
+            for (j = 0; j < dimw; j++) {
+                work[iwork - 1 + j] = work4[j];
+            }
+            
+            // Generate right bidiagonalizing vectors of R in A
+            // (Workspace: need 4*n - 1, prefer 3*n + (n-1)*nb
         } // if (m >= n)
     } // dgelss
     
@@ -7403,6 +7410,332 @@ ib = Math.min(nb, k-i+1);
 
         return;
     } // dlarft
+    
+    /* This is a port of version 3.2 LAPACK routine dormbr.  Original DORMBR created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006.
+       *  Purpose
+       *  =======
+       *
+       *  If VECT = 'Q', DORMBR overwrites the general real M-by-N matrix C
+       *  with
+       *                  SIDE = 'L'     SIDE = 'R'
+       *  TRANS = 'N':      Q * C          C * Q
+       *  TRANS = 'T':      Q**T * C       C * Q**T
+       *
+       *  If VECT = 'P', DORMBR overwrites the general real M-by-N matrix C
+       *  with
+       *                  SIDE = 'L'     SIDE = 'R'
+       *  TRANS = 'N':      P * C          C * P
+       *  TRANS = 'T':      P**T * C       C * P**T
+       *
+       *  Here Q and P**T are the orthogonal matrices determined by DGEBRD when
+       *  reducing a real matrix A to bidiagonal form: A = Q * B * P**T. Q and
+       *  P**T are defined as products of elementary reflectors H(i) and G(i)
+       *  respectively.
+       *
+       *  Let nq = m if SIDE = 'L' and nq = n if SIDE = 'R'. Thus nq is the
+       *  order of the orthogonal matrix Q or P**T that is applied.
+       *
+       *  If VECT = 'Q', A is assumed to have been an NQ-by-K matrix:
+       *  if nq >= k, Q = H(1) H(2) . . . H(k);
+       *  if nq < k, Q = H(1) H(2) . . . H(nq-1).
+       *
+       *  If VECT = 'P', A is assumed to have been a K-by-NQ matrix:
+       *  if k < nq, P = G(1) G(2) . . . G(k);
+       *  if k >= nq, P = G(1) G(2) . . . G(nq-1).
+       *
+       *  Arguments
+       *  =========
+       *
+       *  VECT    (input) CHARACTER*1
+       *          = 'Q': apply Q or Q**T;
+       *          = 'P': apply P or P**T.
+       *
+       *  SIDE    (input) CHARACTER*1
+       *          = 'L': apply Q, Q**T, P or P**T from the Left;
+       *          = 'R': apply Q, Q**T, P or P**T from the Right.
+       *
+       *  TRANS   (input) CHARACTER*1
+       *          = 'N':  No transpose, apply Q  or P;
+       *          = 'T':  Transpose, apply Q**T or P**T.
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrix C. M >= 0.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of the matrix C. N >= 0.
+       *
+       *  K       (input) INTEGER
+       *          If VECT = 'Q', the number of columns in the original
+       *          matrix reduced by DGEBRD.
+       *          If VECT = 'P', the number of rows in the original
+       *          matrix reduced by DGEBRD.
+       *          K >= 0.
+       *
+       *  A       (input) DOUBLE PRECISION array, dimension
+       *                                (LDA,min(nq,K)) if VECT = 'Q'
+       *                                (LDA,nq)        if VECT = 'P'
+       *          The vectors which define the elementary reflectors H(i) and
+       *          G(i), whose products determine the matrices Q and P, as
+       *          returned by DGEBRD.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A.
+       *          If VECT = 'Q', LDA >= max(1,nq);
+       *          if VECT = 'P', LDA >= max(1,min(nq,K)).
+       *
+       *  TAU     (input) DOUBLE PRECISION array, dimension (min(nq,K))
+       *          TAU(i) must contain the scalar factor of the elementary
+       *          reflector H(i) or G(i) which determines Q or P, as returned
+       *          by DGEBRD in the array argument TAUQ or TAUP.
+       *
+       *  C       (input/output) DOUBLE PRECISION array, dimension (LDC,N)
+       *          On entry, the M-by-N matrix C.
+       *          On exit, C is overwritten by Q*C or Q**T*C or C*Q**T or C*Q
+       *          or P*C or P**T*C or C*P or C*P**T.
+       *
+       *  LDC     (input) INTEGER
+       *          The leading dimension of the array C. LDC >= max(1,M).
+       *
+       *  WORK    (workspace/output) DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+       *          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+       *
+       *  LWORK   (input) INTEGER
+       *          The dimension of the array WORK.
+       *          If SIDE = 'L', LWORK >= max(1,N);
+       *          if SIDE = 'R', LWORK >= max(1,M).
+       *          For optimum performance LWORK >= N*NB if SIDE = 'L', and
+       *          LWORK >= M*NB if SIDE = 'R', where NB is the optimal
+       *          blocksize.
+       *
+       *          If LWORK = -1, then a workspace query is assumed; the routine
+       *          only calculates the optimal size of the WORK array, returns
+       *          this value as the first entry of the WORK array, and no error
+       *          message related to LWORK is issued by XERBLA.
+       *
+       *  INFO    (output) INTEGER
+       *          = 0:  successful exit
+       *          < 0:  if INFO = -i, the i-th argument had an illegal value
+       */
+    private void dormbr(char vect, char side, char trans, int m, int n, int k, double A[][],
+                        int lda, double tau[], double C[][], int ldc, double work[], int lwork,
+                        int info[]) {
+        boolean applyq;
+        boolean left;
+        boolean lquery;
+        boolean notran;
+        char transt;
+        int i1;
+        int i2;
+        int iinfo[] = new int[1];
+        int lwkopt = 0;
+        int mi;
+        int nb;
+        int ni;
+        int nq;
+        int nw;
+        String name = null;
+        String opts = null;
+        char[] optsC = new char[2];
+        int row1;
+        int col1;
+        double array1[][];
+        int row2;
+        double array2[][];
+        int i;
+        int j;
+        
+        // Test the arguments
+        info[0] = 0;
+        applyq = ((vect == 'Q') || (vect == 'q'));
+        left = ((side == 'L') || (side == 'l'));
+        notran = ((trans == 'N') || (trans == 'n'));
+        lquery = (lwork == -1);
+        
+        // nq is the order of Q or P and nw is the minimum dimension of work
+        
+        if (left) {
+            nq = m;
+            nw = n;
+        }
+        else {
+            nq = n;
+            nw = m;
+        }
+        if ((!applyq) && (vect != 'P') && (vect != 'p')) {
+            info[0] = -1;
+        }
+        else if ((!left) && (side !='R') && (side != 'r')) {
+            info[0] = -2;
+        }
+        else if ((!notran) && (trans != 'T') && (trans != 't')) {
+            info[0] = -3;
+        }
+        else if (m < 0) {
+            info[0] = -4;
+        }
+        else if (n < 0) {
+            info[0] = -5;
+        }
+        else if (k < 0) {
+            info[0] = -6;
+        }
+        else if ((applyq && (lda < Math.max(1, nq))) || ((!applyq) && (lda < Math.max(1, Math.min(nq, k))))) {
+            info[0] = -8;
+        }
+        else if (ldc < Math.max(1, m)) {
+            info[0] = -11;
+        }
+        else if ((lwork < Math.max(1, nw)) && (!lquery)) {
+            info[0] = -13;
+        }
+        
+        optsC[0] = side;
+        optsC[1] = trans;
+        opts = new String(optsC);
+        if (info[0] == 0) {
+            if (applyq) {
+                name = new String("DORMQR");
+                if (left) {
+                    nb = ilaenv(1, name, opts, m - 1, n, m - 1, -1);    
+                } // if (left)
+                else {
+                    nb = ilaenv(1, name, opts, m, n - 1, n - 1, -1);
+                }
+            } // if (applyq)
+            else { // !applyq
+                name = new String("DORMLQ");
+                if (left) {
+                    nb = ilaenv(1, name, opts, m - 1, n, m - 1, -1);
+                } // if (left)
+                else {
+                    nb = ilaenv(1, name, opts, m, n - 1, n - 1, -1);
+                }
+            } // else !applyq
+            lwkopt = Math.max(1, nw) * nb;
+            work[0] = lwkopt;
+        } // if (info[0] == 0)
+        
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dormbr had info[0] = " + info[0]);
+            return;
+        }
+        else if (lquery) {
+            return;
+        }
+        
+        // Quick return if possible
+        work[0] = 1;
+        if ((m == 0) || (n == 0)) {
+            return;
+        }
+        
+        if (applyq) {
+            // Apply Q
+            if (nq >= k) {
+                // Q was determined by a call to dgebrd with nq >= k
+                dormqr(side, trans, m, n, k, A, lda, tau, C, ldc, work, lwork, iinfo);
+            } // if (nq >= k)
+            else if (nq > 1) {
+                // Q was determined by a call to dgebrd with nq < k
+                if (left) {
+                    mi = m - 1;
+                    ni = n;
+                    i1 = 2;
+                    i2 = 1;
+                } // if (left)
+                else {
+                    mi = m;
+                    ni = n - 1;
+                    i1 = 1;
+                    i2 = 2;
+                }
+                if (left) {
+                    row1 = Math.max(1, mi);
+                }
+                else {
+                    row1 = Math.max(1, ni);
+                }
+                array1 = new double[row1][nq-1];
+                for (i = 0; i < row1; i++) {
+                    for (j = 0; j < nq - 1; j++) {
+                        array1[i][j] = A[1 + i][j];
+                    }
+                }
+                row2 = Math.max(1, mi);
+                array2 = new double[row2][ni];
+                for (i = 0; i < row2; i++) {
+                    for (j = 0; j < ni; j++) {
+                        array2[i][j] = C[i1-1+i][i2-1+j];
+                    }
+                }
+                dormqr(side, trans, mi, ni, nq - 1, array1, row1, tau, array2, row2, work, lwork, iinfo);
+                for (i = 0; i < row2; i++) {
+                    for (j = 0; j < ni; j++) {
+                        C[i1-1+i][i2-1+j] = array2[i][j];
+                    }
+                }
+            } // else if (nq > 1)
+        } // if (applyq)
+        else { // !applyq
+            // Apply P
+            
+            if (notran) {
+                transt = 'T';
+            }
+            else {
+                transt = 'N';
+            }
+            if (nq > k) {
+                // P was determined by a call to dgebrd with nq > k
+                dormlq(side, transt, m, n, k, A, lda, tau, C, ldc, work, lwork, iinfo);
+            } // if (nq > k)
+            else if (nq > 1) {
+                // P was determined by a call to dgebrd with nq <= k
+                
+                if (left) {
+                    mi = m - 1;
+                    ni = n;
+                    i1 = 2;
+                    i2 = 1;
+                } // if (left)
+                else {
+                    mi = m;
+                    ni = n - 1;
+                    i1 = 1;
+                    i2 = 2;
+                }
+                row1 = Math.max(1, nq - 1);
+                if (left) {
+                    col1 = mi;
+                }
+                else {
+                    col1 = ni;
+                }
+                array1 = new double[row1][col1];
+                for (i = 0; i < row1; i++) {
+                    for (j = 0; j < col1; j++) {
+                        array1[i][j] = A[i][1 + j];
+                    }
+                }
+                row2 = Math.max(1, mi);
+                array2 = new double[row2][ni];
+                for (i = 0; i < row2; i++) {
+                    for (j = 0; j < ni; j++) {
+                        array2[i][j] = C[i1-1+i][i2-1+j];
+                    }
+                }
+                dormlq(side, transt, mi, ni, nq - 1, array1, row1, tau, array2, row2, work, lwork, iinfo);
+                for (i = 0; i < row2; i++) {
+                    for (j = 0; j < ni; j++) {
+                        C[i1-1+i][i2-1+j] = array2[i][j];
+                    }
+                }
+            } // else if (nq > 1)
+        } // !applyq
+        work[0] = lwkopt;
+        return;
+    } // dormbr
     
     /**
      * This is a port of version 3.2 LAPACK routine DORMQR Original DORMQR created by Univ. of Tennessee, Univ. of
