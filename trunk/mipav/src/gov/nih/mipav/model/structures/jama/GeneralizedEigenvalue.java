@@ -21825,8 +21825,8 @@ loop4:
     } // dorg2l
 
     /**
-     * This is a port of version 3.1 LAPACK routine DORG2R Original DORG2R created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK routine DORG2R Original DORG2R created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dorg2r generates an m by n real matrix Q with orthonormal columns, which is defined as the first n columns of a
      * product of k elementary reflectors of order m
      *  Q = H[0] H[1] ... H[k-1] as returned by dgeqrf.
