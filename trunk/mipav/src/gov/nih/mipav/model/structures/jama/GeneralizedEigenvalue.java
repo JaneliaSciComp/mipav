@@ -16040,13 +16040,14 @@ loop3:                       {
     } // dlarot
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLARTG Original DLARTG created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK auxiliary routine DLARTG Original DLARTG created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlartg generates a plane rotation so that 
      * [  cs  sn ] . [ f ] = [ r ] where cs*cs + sn*sn = 1.
      * [ -sn  cs ]   [ g ]   [ 0 ] 
      * If g = 0, then cs = 1 and sn = 0. 
-     * If f = 0 and g != 0, then cs = 0 and sn = 1 without doing any floating point operations. 
+     * If f = 0 and g != 0, then cs = 0 and sn = 1 without doing any floating point operations (saves
+     * work in dbdsqr when there are zeros on the . 
      * If f exceeds g in magnitude, then cs will be positive.
      *
      * @param  f   input double The first component of the vector to be rotated.
