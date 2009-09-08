@@ -168,6 +168,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** reference to the JDialogMultiPaint for shortcuts */
     protected JDialogMultiPaint multipaintDialog = null;
 
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -202,8 +203,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         this(_imageA, LUTa, loc, _imageA.getLogMagDisplay());
     }
 
-    public ViewJFrameImage(final ModelImage _imageA, final ModelLUT LUTa, final Dimension loc, final boolean logMagDisplay, final boolean initialize) {
-        super(_imageA, null);
+    /**
+     * Makes a frame and puts an image component into it, does not display the frame through
+     * ViewJFrameImage's init() method.
+     * 
+     * @param _imageA First image to display
+     * @param _imageB Second image to display
+     */
+    public ViewJFrameImage(final ModelImage _imageA, final ModelImage _imageB) {
+        super(_imageA, _imageB);
     }
 
     /**
@@ -237,11 +245,18 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
     
     
-    
+    /**
+     * Constructs a ModelSimpleImage VJF
+     * @param simpleImage
+     * @param name
+     */
     public ViewJFrameImage(ModelSimpleImage simpleImage, String name) {
     	this(new ModelImage(simpleImage,name));
     	
     }
+    
+    
+  
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
@@ -4436,7 +4451,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @see ViewJComponentEditImage#repaint()
      */
     public void setControls() {
-
         if (getImageB() != null) {
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
             controls.addActiveImageControl();
@@ -5513,11 +5527,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // User interface will have list of frames
         userInterface.registerFrame(this);
 
+
         this.updateImages();
         addComponentListener(this);
 
         if (userInterface.isAppFrameVisible()) {
-            setVisible(true);
+        	setVisible(true);  
         } else {
             setVisible(false);
         }

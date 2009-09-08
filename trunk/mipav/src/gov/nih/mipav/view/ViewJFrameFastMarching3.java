@@ -37,7 +37,7 @@ public class ViewJFrameFastMarching3 extends ViewJFrameImage implements KeyListe
     public ViewJFrameFastMarching3(ModelImage _image, ModelLUT _LUT) {
 
         // super(_image, null, null, null, null, null, ViewJFrameVolumeView.SURFACE, ViewJFrameVolumeView.NONE, null );
-        super(_image, null);
+        super(_image, (ModelLUT)null);
         userInterface = ViewUserInterface.getReference();
         addKeyListener(this);
         new Thread(this).start();

@@ -99,7 +99,7 @@ public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
 
                 // The algorithm has completed and produced a new image to be displayed.
                 updateFileInfo(imageA, resultImage);
-                new ViewJFrameImage(resultImage, null);
+                new ViewJFrameImage(resultImage, (ModelLUT)null);
             }
         }
     }

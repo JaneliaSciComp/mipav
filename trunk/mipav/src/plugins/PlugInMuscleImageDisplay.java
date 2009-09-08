@@ -238,8 +238,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             PlugInSelectableVOI[][] voiList, 
             ImageType imageType, Symmetry symmetry, 
             boolean standAlone, boolean multipleSlices) {
-    	// calls the super that will not call ViewJFrameImage's init() function
-    	super(image, null, null, false, false);
+    	
+    	// calls the ViewJFrameBase constructor that will not call ViewJFrameImage's init() function
+    	super(image, (ModelImage)null);
+    	
+    	
     	
     	commonConstructor(image, titles, voiList,  imageType, symmetry, standAlone, multipleSlices);
 

@@ -25,7 +25,8 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
     * Default constructor
     */
     public PlugInDialogImageVOIDisplay(ModelImage image) {
-    	super(image, null, null, false, false);
+    	// calls the ViewJFrameBase constructor that will not call ViewJFrameImage's init() function
+    	super(image, (ModelImage)null);
         init();
     }
 

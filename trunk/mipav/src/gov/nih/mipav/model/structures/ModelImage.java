@@ -257,7 +257,6 @@ public class ModelImage extends ModelStorageBase {
      * @param  obj  "object' to be added to the list
      */
     public void addImageDisplayListener(ViewImageUpdateInterface obj) {
-
         if (frameList == null) {
             frameList = new Vector<ViewImageUpdateInterface>();
         }
@@ -269,7 +268,6 @@ public class ModelImage extends ModelStorageBase {
                 return;
             }
         }
-
         frameList.addElement(obj);
     }
 
