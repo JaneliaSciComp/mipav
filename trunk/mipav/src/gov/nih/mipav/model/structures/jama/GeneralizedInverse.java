@@ -24,6 +24,12 @@ public class GeneralizedInverse {
     private double sfmin;
     private double t;
     
+    /** Double precison machine variables found in routine dlartg. */
+    private boolean first_dlartg = true;
+    private double safmin;
+    private double safmn2;
+    private double safmx2;
+    
     public GeneralizedInverse() {
         
     }
@@ -2100,6 +2106,16 @@ public class GeneralizedInverse {
             
             // Generate right bidiagonalizing vectors of R in A
             // (Workspace: need 4*n - 1, prefer 3*n + (n-1)*nb
+            dorgbr('P', n, n, n, A, lda, work3, work4, lwork-iwork+1, info);
+            for (j = 0; j < dimw; j++) {
+                work[iwork - 1 + j] = work4[j];
+            }
+            
+            iwork = ie + n;
+            // Perform bidiagonal QR iteration
+            // Multiply B by transpose of left singular vectors
+            // Compute right singular vectors in A
+            // (Workspace: need bdspac)
         } // if (m >= n)
     } // dgelss
     
@@ -3207,6 +3223,136 @@ public class GeneralizedInverse {
     } // dlamc5
     
     /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLARTG Original DLARTG created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlartg generates a plane rotation so that 
+     * [  cs  sn ] . [ f ] = [ r ] where cs*cs + sn*sn = 1.
+     * [ -sn  cs ]   [ g ]   [ 0 ] 
+     * If g = 0, then cs = 1 and sn = 0. 
+     * If f = 0 and g != 0, then cs = 0 and sn = 1 without doing any floating point operations (saves
+     * work in dbdsqr when there are zeros on the diagonal). 
+     * If f exceeds g in magnitude, then cs will be positive.
+     *
+     * @param  f   input double The first component of the vector to be rotated.
+     * @param  g   input double The second component of the vector to be rotated.
+     * @param  cs  output double[] The cosine of the rotation.
+     * @param  sn  output double[] The sine of the rotation.
+     * @param  r   output double[] The nonzero component of the rotated vector.
+     */
+    private void dlartg(double f, double g, double[] cs, double[] sn, double[] r) {
+        int count;
+        int i;
+        double eps;
+        double f1;
+        double g1;
+        double scale;
+
+        if (first_dlartg) {
+            first_dlartg = false;
+            safmin = dlamch('S');
+            eps = dlamch('E');
+            safmn2 = Math.pow(dlamch('B'), (int) (Math.log(safmin / eps) / Math.log(dlamch('B')) / 2.0));
+            safmx2 = 1.0 / safmn2;
+        } // if (first_dlartg)
+
+        if (g == 0.0) {
+            cs[0] = 1.0;
+            sn[0] = 0.0;
+            r[0] = f;
+        } else if (f == 0.0) {
+            cs[0] = 0.0;
+            sn[0] = 1.0;
+            r[0] = g;
+        } else {
+            f1 = f;
+            g1 = g;
+            scale = Math.max(Math.abs(f1), Math.abs(g1));
+
+            if (scale >= safmx2) {
+                count = 0;
+
+                do {
+                    count = count + 1;
+                    f1 = f1 * safmn2;
+                    g1 = g1 * safmn2;
+                    scale = Math.max(Math.abs(f1), Math.abs(g1));
+                } while (scale >= safmx2);
+
+                r[0] = Math.sqrt((f1 * f1) + (g1 * g1));
+                cs[0] = f1 / r[0];
+                sn[0] = g1 / r[0];
+
+                for (i = 1; i <= count; i++) {
+                    r[0] = r[0] * safmx2;
+                }
+            } // if (scale >= safmx2)
+            else if (scale <= safmn2) {
+                count = 0;
+
+                do {
+                    count = count + 1;
+                    f1 = f1 * safmx2;
+                    g1 = g1 * safmx2;
+                    scale = Math.max(Math.abs(f1), Math.abs(g1));
+                } while (scale <= safmn2);
+
+                r[0] = Math.sqrt((f1 * f1) + (g1 * g1));
+                cs[0] = f1 / r[0];
+                sn[0] = g1 / r[0];
+
+                for (i = 1; i <= count; i++) {
+                    r[0] = r[0] * safmn2;
+                }
+            } // else if (scale <= safmn2)
+            else {
+                r[0] = Math.sqrt((f1 * f1) + (g1 * g1));
+                cs[0] = f1 / r[0];
+                sn[0] = g1 / r[0];
+            }
+
+            if ((Math.abs(f) > Math.abs(g)) && (cs[0] < 0.0)) {
+                cs[0] = -cs[0];
+                sn[0] = -sn[0];
+                r[0] = -r[0];
+            }
+        }
+
+        return;
+    } // dlartg
+    
+    /** This is a section of BLAS routine DSWAP created by Jack Dongarra, 3/11/78.  Modified 12/3/93
+     *  Interchanges tow vectors
+     */
+    private void dswap(int n, double dx[], int incx, double dy[], int incy) {
+        int ix;
+        int iy;
+        double dtemp;
+        int i;
+        
+        if (n <= 0) {
+            return;
+        }
+        
+        ix = 0;
+        iy = 0;
+        if (incx < 0) {
+            ix = (-n+1)*incx;
+        }
+        if (incy < 0) {
+            iy = (-n+1)*incy;
+        }
+        for (i = 1; i <= n; i++) {
+            dtemp = dx[ix];
+            dx[ix] = dy[iy];
+            dy[iy] = dtemp;
+            ix = ix + incx;
+            iy = iy + incy;
+        }
+        return;
+        
+    } // dswap
+    
+    /**
      * This is a port of the version 3.2 LAPACK auxiliary routine DLABAD Original DLABAD created by Univ. of Tennessee,
      * Univ. of California Berkeley,  Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlabad takes as input the values computed by dlamch for underflow and overflow, and returns the square root
@@ -3332,6 +3478,612 @@ public class GeneralizedInverse {
 
         return value;
     } // dlange
+    
+    /** This is a port of version 3.2 LAPACK routine DORGBR.  Original DORGBR created by Univ. of Tennessee,
+     *  Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+    *  Purpose
+    *  =======
+    *
+    *  DORGBR generates one of the real orthogonal matrices Q or P**T
+    *  determined by DGEBRD when reducing a real matrix A to bidiagonal
+    *  form: A = Q * B * P**T.  Q and P**T are defined as products of
+    *  elementary reflectors H(i) or G(i) respectively.
+    *
+    *  If VECT = 'Q', A is assumed to have been an M-by-K matrix, and Q
+    *  is of order M:
+    *  if m >= k, Q = H(1) H(2) . . . H(k) and DORGBR returns the first n
+    *  columns of Q, where m >= n >= k;
+    *  if m < k, Q = H(1) H(2) . . . H(m-1) and DORGBR returns Q as an
+    *  M-by-M matrix.
+    *
+    *  If VECT = 'P', A is assumed to have been a K-by-N matrix, and P**T
+    *  is of order N:
+    *  if k < n, P**T = G(k) . . . G(2) G(1) and DORGBR returns the first m
+    *  rows of P**T, where n >= m >= k;
+    *  if k >= n, P**T = G(n-1) . . . G(2) G(1) and DORGBR returns P**T as
+    *  an N-by-N matrix.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  VECT    (input) CHARACTER*1
+    *          Specifies whether the matrix Q or the matrix P**T is
+    *          required, as defined in the transformation applied by DGEBRD:
+    *          = 'Q':  generate Q;
+    *          = 'P':  generate P**T.
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix Q or P**T to be returned.
+    *          M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix Q or P**T to be returned.
+    *          N >= 0.
+    *          If VECT = 'Q', M >= N >= min(M,K);
+    *          if VECT = 'P', N >= M >= min(N,K).
+    *
+    *  K       (input) INTEGER
+    *          If VECT = 'Q', the number of columns in the original M-by-K
+    *          matrix reduced by DGEBRD.
+    *          If VECT = 'P', the number of rows in the original K-by-N
+    *          matrix reduced by DGEBRD.
+    *          K >= 0.
+    *
+    *  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
+    *          On entry, the vectors which define the elementary reflectors,
+    *          as returned by DGEBRD.
+    *          On exit, the M-by-N matrix Q or P**T.
+    *
+    *  LDA     (input) INTEGER
+    *          The leading dimension of the array A. LDA >= max(1,M).
+    *
+    *  TAU     (input) DOUBLE PRECISION array, dimension
+    *                                (min(M,K)) if VECT = 'Q'
+    *                                (min(N,K)) if VECT = 'P'
+    *          TAU(i) must contain the scalar factor of the elementary
+    *          reflector H(i) or G(i), which determines Q or P**T, as
+    *          returned by DGEBRD in its array argument TAUQ or TAUP.
+    *
+    *  WORK    (workspace/output) DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+    *          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+    *
+    *  LWORK   (input) INTEGER
+    *          The dimension of the array WORK. LWORK >= max(1,min(M,N)).
+    *          For optimum performance LWORK >= min(M,N)*NB, where NB
+    *          is the optimal blocksize.
+    *
+    *          If LWORK = -1, then a workspace query is assumed; the routine
+    *          only calculates the optimal size of the WORK array, returns
+    *          this value as the first entry of the WORK array, and no error
+    *          message related to LWORK is issued by XERBLA.
+    *
+    *  INFO    (output) INTEGER
+    *          = 0:  successful exit
+    *          < 0:  if INFO = -i, the i-th argument had an illegal value
+    */
+    private void dorgbr(char vect, int m, int n, int k, double A[][], int lda, double tau[],
+                        double work[], int lwork, int info[]) {
+        boolean lquery;
+        boolean wantq;
+        int i;
+        int iinfo[] = new int[1];
+        int j;
+        int lwkopt = 0;
+        int mn;
+        int nb;
+        double array1[][];
+        int p;
+        int q;
+        
+        // Test the input arguments
+        info[0] = 0;
+        wantq = ((vect == 'Q' ) || (vect == 'q'));
+        mn = Math.min(m, n);
+        lquery = (lwork == -1);
+        if ((!wantq) && (vect != 'P') && (vect != 'p')) {
+            info[0] = -1;
+        }
+        else if (m < 0) {
+            info[0] = -2;
+        }
+        else if ((n < 0) || (wantq && ((n > m) || (n < Math.min(m, k)))) ||
+                ((!wantq) && ((m > n) || (m < Math.min(n, k))))) {
+            info[0] = -3;
+        }
+        else if (k < 0) {
+            info[0] = -4;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -6;
+        }
+        else if ((lwork < Math.max(1, mn)) && (!lquery)) {
+            info[0] = -9;
+        }
+        
+        if (info[0] == 0) {
+            if (wantq) {
+                nb = ilaenv(1, "DORGQR", " ", m, n, k, -1);
+            }
+            else {
+                nb = ilaenv(1, "DORGLQ", " ", m, n, k, -1);
+            }
+            lwkopt = Math.max(1, mn) * nb;
+            work[0] = lwkopt;
+        } // if (info[0] == 0)
+        
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dorgbr had info[0] = " + info[0]);
+            return;
+        }
+        else if (lquery) {
+            return;
+        }
+        
+        // Quick return if possible
+        if ((m == 0) || (n == 0)) {
+            work[0] = 1;
+            return;
+        }
+        
+        if (wantq) {
+            // Form Q, determined by a call to dgebrd to reduce an m-by-k matrix
+            if (m >= k) {
+                // If m >= k, assume m >= n >= k
+                dorgqr(m, n, k, A, lda, tau, work, lwork, iinfo);
+            } // if (m >= k)
+            else { // m < k
+                // If m < k, assume m = n
+                
+                // Shift the vectors which define the elementary reflectors one 
+                // column to the right, and set the first row and column of Q
+                // to those of the unit matrix
+                
+                for (j = m; j >= 2; j--) {
+                    A[0][j-1] = 0.0;
+                    for (i = j+1; i <= m; i++) {
+                        A[i-1][j-1] = A[i-1][j-2];
+                    } // for (i = j+1; i <= m; i++)
+                } // for (j = m; j >= 2; j--)
+                A[0][0] = 1.0;
+                for (i = 2; i <= m; i++) {
+                    A[i-1][0] = 0.0;
+                }
+                if (m > 1) {
+                    // Form Q(2:m,2:m)
+                    array1 = new double[m-1][m-1];
+                    for (p = 0; p < m-1; p++) {
+                        for (q = 0; q < m-1; q++) {
+                            array1[p][q] = A[1 + p][1+q];
+                        }
+                    }
+                    dorgqr(m-1, m-1, m-1, array1, m-1, tau, work, lwork, iinfo);
+                    for (p = 0; p < m-1; p++) {
+                        for (q = 0; q < m-1; q++) {
+                            A[1 + p][1+q] = array1[p][q];
+                        }
+                    }
+                } // if (m > 1)
+            } //  else m < k
+        } // if (wantq)
+        else { // (!wantq)
+            // Form P', determined by a call to dgebrd to reduce a k-by-n matrix
+            if (k < n) {
+                // If k < n, assume k <= m <= n
+                dorglq(m, n, k, A, lda, tau, work, lwork, iinfo);
+            }
+            else { // k >= n
+                // If k >= n, assume m = n
+                
+                // Shift the vectors which define the elementary reflectors one
+                // row downward, and set the first row and column of P' to
+                // those of the unit matrix
+                A[0][0] = 1.0;
+                for (i = 1; i < n; i++) {
+                    A[i][0] = 0.0;
+                }
+                for (j = 2; j <= n; j++) {
+                    for (i = j - 1; i >= 2; i--) {
+                        A[i-1][j-1] = A[i-2][j-1];
+                    } // for (i = j - 1; i >= 2; i--)
+                    A[0][j-1] = 0.0;
+                } // for (j = 2; j <= n; j++)
+                if (n > 1) {
+                    // Form P'(2:n,2:n)
+                    array1 = new double[n-1][n-1];
+                    for (p = 0; p < n-1; p++) {
+                        for (q = 0; q < n-1; q++) {
+                            array1[p][q] = A[1+p][1+q];
+                        }
+                    }
+                    dorglq(n-1, n-1, n-1, array1, n-1, tau, work, lwork, iinfo);
+                    for (p = 0; p < n-1; p++) {
+                        for (q = 0; q < n-1; q++) {
+                            A[1+p][1+q] = array1[p][q];
+                        }
+                    }
+                } // if (n > 1)
+            } // else k >= n
+        } // else (!wantq)
+        work[0] = lwkopt;
+        return;
+    } // dorgbr 
+    
+    /**
+     * This is a port of version 3.2 LAPACK routine DORGQR Original DORGQR created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dorgqr generates an m-by-n real matrix Q with orthonormal columns, which is defined as the first n columns
+     * of a product of k elementary reflectors of order m 
+     *  Q = H[0] H[1] ... H[k-1] as returned by dgeqrf.
+     *
+     * @param  m      input int The number of rows of the matrix Q. m >= 0.
+     * @param  n      input int The number of columns of the matrix Q. m >= n >= 0.
+     * @param  k      input int The number of elementary reflectors whose product defines the matrix Q. n >= k >= 0.
+     * @param  A      input/output double[][] of dimensions lda by n. On entry, the i-th column must contain the vector
+     *                which defines the elementary reflector H[i], for i = 0, 1, ..., k-1, as returned by dgeqrf in the
+     *                first k columns of its array argument A. On exit, the m-by-n matrix Q.
+     * @param  lda    input int The first dimension of the array A. lda >= max(1,m).
+     * @param  tau    input double[] of dimension k. tau[i] must contain the scalar factor of the elementary reflector
+     *                H[i], as returned by dgeqrf.
+     * @param  work   (worksplace/output) double[] of dimension max(1,lwork). 
+     *                On exit, if info[0] = 0, work[0] returns the optimal lwork.
+     * @param  lwork  input int The dimension of the array work. lwork >= max(1,n). For optimum performance lwork >=
+     *                n*nb, where nb is the optimal blocksize. If lwork = -1, then a workspace query is assumed; the
+     *                routine only calculates the optimal size of the work array, returns this value as the first entry
+     *                of the work array, and no error message related to lwork is issued.
+     * @param  info   output int[] 
+     *                = 0: successful exit 
+     *                < 0: If info = -i, the i-th argument has an illegal value
+     */
+    private void dorgqr(int m, int n, int k, double[][] A, int lda, double[] tau, double[] work, int lwork,
+                        int[] info) {
+        boolean lquery;
+        int i;
+        int ib;
+        int[] iinfo = new int[1];
+        int iws;
+        int j;
+        int ki = 1;
+        int kk;
+        int L;
+        int ldwork;
+        int lwkopt;
+        int nb;
+        int nbmin;
+        int nx;
+        double[][] array1;
+        double[][] array2;
+        double[][] array3;
+        double[][] array4;
+        double[] vector1;
+        int p;
+        int q;
+        int row1;
+
+        // Test the input arguments
+        info[0] = 0;
+        nb = ilaenv(1, "DORGQR", " ", m, n, k, -1);
+        lwkopt = Math.max(1, n) * nb;
+        work[0] = lwkopt;
+
+        lquery = (lwork == -1);
+
+        if (m < 0) {
+            info[0] = -1;
+        } else if ((n < 0) || (n > m)) {
+            info[0] = -2;
+        } else if ((k < 0) || (k > n)) {
+            info[0] = -3;
+        } else if (lda < Math.max(1, m)) {
+            info[0] = -5;
+        } else if ((lwork < Math.max(1, n)) && (!lquery)) {
+            info[0] = -8;
+        }
+
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dorgqr had info = " + info[0]);
+
+            return;
+        } else if (lquery) {
+            return;
+        }
+
+        // Quick return if possible
+        if (n <= 0) {
+            work[0] = 1;
+
+            return;
+        }
+
+        nbmin = 2;
+        nx = 0;
+        iws = n;
+
+        if ((nb > 1) && (nb < k)) {
+
+            // Determine when to cross over from blocked to unblocked code
+            nx = Math.max(0, ilaenv(3, "DORGQR", " ", m, n, k, -1));
+
+            if (nx < k) {
+
+                // Determine if workspace is large enough for blocked code.
+                ldwork = n;
+                iws = ldwork * nb;
+
+                if (lwork < iws) {
+
+                    // Not enough workspace to use optimal nb: reduce nb and determine
+                    // the minimum value of nb.
+                    nb = lwork / ldwork;
+                    nbmin = Math.max(2, ilaenv(2, "DORGQR", " ", m, n, k, -1));
+                } // if (lwork < iws)
+            } // if (nx < k)
+        } // if ((nb > 1) && (nb < k))
+
+        if ((nb >= nbmin) && (nb < k) && (nx < k)) {
+
+            // Use blocked code after the last block.
+            // The first kk columns are handled by the block method
+            ki = ((k - nx - 1) / nb) * nb;
+            kk = Math.min(k, ki + nb);
+
+            // Set A(0:kk-1,kk:n-1) to zero.
+
+            for (j = kk; j < n; j++) {
+
+                for (i = 0; i < kk; i++) {
+                    A[i][j] = 0.0;
+                }
+            }
+        } // if ((nb >= nbmin) && (nb < k) && (nx < k))
+        else {
+            kk = 0;
+        }
+
+        // Use unblocked code for the last or only block
+        if (kk < n) {
+            row1 = Math.max(1, m - kk);
+            array1 = new double[row1][n - kk];
+
+            for (p = 0; p < row1; p++) {
+
+                for (q = 0; q < (n - kk); q++) {
+                    array1[p][q] = A[p + kk][q + kk];
+                }
+            }
+
+            vector1 = new double[k - kk];
+
+            for (p = 0; p < (k - kk); p++) {
+                vector1[p] = tau[p + kk];
+            }
+
+            dorg2r(m - kk, n - kk, k - kk, array1, row1, vector1, work, iinfo);
+
+            for (p = 0; p < row1; p++) {
+
+                for (q = 0; q < (n - kk); q++) {
+                    A[p + kk][q + kk] = array1[p][q];
+                }
+            }
+        } // if (kk < n)
+
+        if (kk > 0) {
+
+            // Use blocked code
+            for (i = ki + 1; i >= 1; i -= nb) {
+                ib = Math.min(nb, k - i + 1);
+
+                if ((i + ib) <= n) {
+
+                    // Form the triangular factor of the block reflector
+                    // H = H[i-1] H[i] ... H[i+ib-2]
+                    array1 = new double[m - i + 1][ib];
+
+                    for (p = 0; p < (m - i + 1); p++) {
+
+                        for (q = 0; q < ib; q++) {
+                            array1[p][q] = A[p + i - 1][q + i - 1];
+                        }
+                    }
+
+                    vector1 = new double[ib];
+
+                    for (p = 0; p < ib; p++) {
+                        vector1[p] = tau[p + i - 1];
+                    }
+
+                    array2 = new double[ib][ib];
+                    dlarft('F', 'C', m - i + 1, ib, array1, m - i + 1, vector1, array2, ib);
+
+                    for (p = 0; p < (m - i + 1); p++) {
+
+                        for (q = 0; q < ib; q++) {
+                            A[p + i - 1][q + i - 1] = array1[p][q];
+                        }
+                    }
+
+                    // Apply H to A(i-1:m-1, i+ib-1:n-1) from the left
+                    array3 = new double[m - i + 1][n - i - ib + 1];
+
+                    for (p = 0; p < (m - i + 1); p++) {
+
+                        for (q = 0; q < (n - i - ib + 1); q++) {
+                            array3[p][q] = A[p + i - 1][q + i + ib - 1];
+                        }
+                    }
+
+                    array4 = new double[n - i - ib + 1][ib];
+                    dlarfb('L', 'N', 'F', 'C', m - i + 1, n - i - ib + 1, ib, array1, m - i + 1, array2, ib, array3,
+                           m - i + 1, array4, n - i - ib + 1);
+
+                    for (p = 0; p < (m - i + 1); p++) {
+
+                        for (q = 0; q < (n - i - ib + 1); q++) {
+                            A[p + i - 1][q + i + ib - 1] = array3[p][q];
+                        }
+                    }
+                } // if ((i+ib) <= n)
+
+                // Apply H to rows i-1:m-1 of current block
+                array1 = new double[m - i + 1][ib];
+
+                for (p = 0; p < (m - i + 1); p++) {
+
+                    for (q = 0; q < ib; q++) {
+                        array1[p][q] = A[p + i - 1][q + i - 1];
+                    }
+                }
+
+                vector1 = new double[ib];
+
+                for (p = 0; p < ib; p++) {
+                    vector1[p] = tau[p + i - 1];
+                }
+
+                dorg2r(m - i + 1, ib, ib, array1, m - i + 1, vector1, work, iinfo);
+
+                for (p = 0; p < (m - i + 1); p++) {
+
+                    for (q = 0; q < ib; q++) {
+                        A[p + i - 1][q + i - 1] = array1[p][q];
+                    }
+                }
+
+                // Set rows 0:i-2 of current block to zero
+                for (j = i; j <= (i + ib - 1); j++) {
+
+                    for (L = 1; L <= (i - 1); L++) {
+                        A[L - 1][j - 1] = 0.0;
+                    }
+                }
+            } // for (i = ki+1; i >= 1; i -= nb)
+        } // if (kk > 0)
+
+        work[0] = iws;
+
+        return;
+    } // dorgqr
+    
+    /**
+     * This is a port of version 3.2 LAPACK routine DORG2R Original DORG2R created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dorg2r generates an m by n real matrix Q with orthonormal columns, which is defined as the first n columns of a
+     * product of k elementary reflectors of order m
+     *  Q = H[0] H[1] ... H[k-1] as returned by dgeqrf.
+     *
+     * @param  m     input int The number of rows of the matrix Q. m >= 0.
+     * @param  n     input int The number of columns of the matrix Q. m >= n >= 0.
+     * @param  k     input int The number of elementary reflectors whose product defines the matrix Q. n >= k >= 0.
+     * @param  A     input/output double[][] of dimension lda by n. On entry, the i-th column must contain the vector
+     *               which defines the elementary reflector H[i], for i = 0, 1, ..., k-1, as returned by dgeqrf in the
+     *               first k columns of its array argument A. On exit, the m-by-n matrix Q.
+     * @param  lda   input int The first dimension of the array A. lda >= max(1,m).
+     * @param  tau   input double[] of dimension k. tau[i] must contain the scalar factor of the elementary reflector
+     *               H[i], as returned by dgeqrf.
+     * @param  work  workspace double[] of dimension n.
+     * @param  info  output int[] 
+     *               = 0: successful exit 
+     *               < 0: If info = -i, the i-th argument has an illegal value.
+     */
+    private void dorg2r(int m, int n, int k, double[][] A, int lda, double[] tau, double[] work, int[] info) {
+        int i;
+        int j;
+        int L;
+        double[] vector1;
+        double[][] array1;
+        int p;
+        int q;
+
+        // Test the input arguments
+        info[0] = 0;
+
+        if (m < 0) {
+            info[0] = -1;
+        } else if ((n < 0) || (n > m)) {
+            info[0] = -2;
+        } else if ((k < 0) || (k > n)) {
+            info[0] = -3;
+        } else if (lda < Math.max(1, m)) {
+            info[0] = -5;
+        }
+
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dorg2r had info = " + info[0]);
+
+            return;
+        }
+
+        // Quick return if possible
+        if (n <= 0) {
+            return;
+        }
+
+        // Initialize columns k:n-1 to columns of the unit matrix
+        for (j = k; j < n; j++) {
+
+            for (L = 0; L < m; L++) {
+                A[L][j] = 0.0;
+            }
+
+            A[j][j] = 1.0;
+        } // for (j = k; j < n; j++)
+
+        for (i = k; i >= 1; i--) {
+
+            // Apply H[i-1] to A(i-1:m-1,i-1:n-1) from the left
+            if (i < n) {
+                A[i - 1][i - 1] = 1.0;
+                vector1 = new double[m - i + 1];
+
+                for (p = 0; p < (m - i + 1); p++) {
+                    vector1[p] = A[p + i - 1][i - 1];
+                }
+
+                array1 = new double[m - i + 1][n - i];
+
+                for (p = 0; p < (m - i + 1); p++) {
+
+                    for (q = 0; q < (n - i); q++) {
+                        array1[p][q] = A[p + i - 1][q + i];
+                    }
+                }
+
+                dlarf('L', m - i + 1, n - i, vector1, 1, tau[i - 1], array1, m - i + 1, work);
+
+                for (p = 0; p < (m - i + 1); p++) {
+
+                    for (q = 0; q < (n - i); q++) {
+                        A[p + i - 1][q + i] = array1[p][q];
+                    }
+                }
+            } // if (i < n)
+
+            if (i < m) {
+                vector1 = new double[m - i];
+
+                for (p = 0; p < (m - i); p++) {
+                    vector1[p] = A[p + i][i - 1];
+                }
+
+                dscal(m - i, -tau[i - 1], vector1, 1);
+
+                for (p = 0; p < (m - i); p++) {
+                    A[p + i][i - 1] = vector1[p];
+                }
+            } // if (i < m)
+
+            A[i - 1][i - 1] = 1.0 - tau[i - 1];
+
+            // Set A(0:i-2, i-1) to zero
+            for (L = 1; L <= (i - 1); L++) {
+                A[L - 1][i - 1] = 0.0;
+            }
+
+        } // for (i = k; i >= 1; i--)
+
+        return;
+    } // dorg2r
+
     
     /** This is a port of version 3.2 LAPACK routine DORGLQ.  Original DORGLQ created by Univ. of Tennessee,
      *  Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
