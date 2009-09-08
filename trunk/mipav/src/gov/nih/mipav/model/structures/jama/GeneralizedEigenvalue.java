@@ -22165,8 +22165,8 @@ loop4:
     } // dorgql
 
     /**
-     * This is a port of version 3.1 LAPACK routine DORGQR Original DORGQR created by Univ. of Tennessee, Univ. of
-     * California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK routine DORGQR Original DORGQR created by Univ. of Tennessee, Univ. of
+     * California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dorgqr generates an m-by-n real matrix Q with orthonormal columns, which is defined as the first n columns
      * of a product of k elementary reflectors of order m 
      *  Q = H[0] H[1] ... H[k-1] as returned by dgeqrf.
@@ -22221,11 +22221,7 @@ loop4:
         lwkopt = Math.max(1, n) * nb;
         work[0] = lwkopt;
 
-        if (lwork == -1) {
-            lquery = true;
-        } else {
-            lquery = false;
-        }
+        lquery = (lwork == -1);
 
         if (m < 0) {
             info[0] = -1;
