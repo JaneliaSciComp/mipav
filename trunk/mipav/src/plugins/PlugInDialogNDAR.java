@@ -1,7 +1,11 @@
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.LightboxGenerator;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TransMatrix;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
@@ -91,6 +95,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private static final int GUID_TABLE_GUID_COLUMN = 1;
     
     private DefaultMutableTreeNode top, currentNode;
+    
+
 
 
     private JTree tree;
@@ -705,7 +711,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         ndarData = new NDARWriteData();
 
         int numImages = sourceModel.size();
+        System.out.println(numImages);
         for (int i = 0; i < numImages; i++) {
+        	System.out.println("i is " + i);
             File imageFile = (File) sourceModel.elementAt(i);
 
             printlnToLog("Opening: " + imageFile + ", multifile: " + multiFileTable.get(imageFile));
@@ -718,6 +726,130 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     multiFileTable.get(imageFile), null);
 
             List<String> origFiles = FileUtility.getFileNameList(origImage);
+            
+            //create a thumbnail image...4 colums, 2 rows
+            //grab the middle 8 slices from the image for the thumbnail
+            //need to determine by what percentage...so...need to figure out by what percebtahe the xdim will go down to 128
+            //startSLice will be 3 less than middle slice 
+            //endSlice will be 4 more than middle slixe
+            int xDim = origImage.getExtents()[0];
+            int percentage = 100;
+            if(xDim > 128) {
+            	float perc = 128f/xDim * 100;
+            	percentage = (int)Math.floor(perc);
+            }
+            int columns = 4;
+            int rows = 2;
+            int rBorderVal = 255;
+            int gBorderVal = 0;
+            int bBorderVal = 0;
+            int borderThick = 1;
+            int startSlice = 0;
+            int endSlice = 0;
+            int numSlices = 0;
+            int middleSlice = 0;
+            LightboxGenerator lightGen;
+            ModelImage thumbnailImage = null;
+            String dir = origImage.getImageDirectory();
+            System.out.println(dir);
+            ViewJFrameImage vf = null;
+            if(origImage.is2DImage()) {
+            	
+            	//Creating a blank TransMatrix for resampling
+        		TransMatrix percentSizer = new TransMatrix(4);
+        		percentSizer.Set((float)1, (float)0, (float)0, (float)0, (float)0,
+        				(float)1, (float)0, (float)0, (float)0, (float)0, (float)1, (float)0, 
+        				(float)0, (float)0, (float)0, (float)1);
+            	
+        		//Resample image size based on percent inputted
+            	AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1, (float)(origImage.getResolutions(0)[0]/(percentage*.01)),
+            			(float)(origImage.getResolutions(0)[1]/(percentage*.01)), (int)(origImage.getExtents()[0] * percentage*.01),
+            			(int)(origImage.getExtents()[1]*percentage*.01), origImage.getUnitsOfMeasure(), false, true, false, true, origImage.getImageCentermm(false) );
+            	transformer.runAlgorithm();
+            	thumbnailImage = transformer.getTransformedImage();
+            	thumbnailImage.calcMinMax();
+            	vf = new ViewJFrameImage(thumbnailImage, (ModelImage)null);
+
+            	
+            }else if(origImage.is3DImage()) {
+            	numSlices = origImage.getExtents()[2];
+            	numSlices = numSlices - 1;  //its 0 based
+            	middleSlice = numSlices/2;
+            	startSlice = middleSlice - 3;
+            	if(startSlice < 0) {
+            		startSlice = 0;
+            	}
+            	endSlice = middleSlice + 4;
+            	if(endSlice > numSlices - 1) {
+            		endSlice = numSlices - 1;
+            	}
+            	
+            	try {
+                    // Make algorithm
+            		lightGen = new LightboxGenerator(origImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false, borderThick);
+            		lightGen.run();
+            		thumbnailImage = lightGen.getImage();
+            		thumbnailImage.calcMinMax();
+            		System.out.println("here1");
+            		
+            		vf = new ViewJFrameImage(thumbnailImage, (ModelImage)null);
+
+            		
+            	}catch(Exception e) {
+            		e.printStackTrace();
+            	}	
+            }else if(origImage.is4DImage()) {
+            	//get middle time volume
+            	int[] destExtents = new int[3]; 
+                int xSlices = origImage.getExtents()[0];
+                int ySlices = origImage.getExtents()[1];
+                int zSlices = origImage.getExtents()[2];
+                destExtents[0] = xSlices;
+                destExtents[1] = ySlices;
+                destExtents[2] = zSlices;
+                
+                ModelImage timeImage = new ModelImage(origImage.getType(), destExtents, "");
+                
+                int tSlices =  origImage.getExtents()[3];
+                System.out.println("tSlices is " + tSlices);
+                
+                int middleVol = (int)Math.floor(tSlices/2);
+                if(middleVol > 0) {
+                	middleVol = middleVol - 1;  // 0 based
+                }
+                AlgorithmSubset subsetAlgo = new AlgorithmSubset(origImage, timeImage, AlgorithmSubset.REMOVE_T, middleVol);
+                subsetAlgo.run();
+                
+                numSlices = timeImage.getExtents()[2];
+            	numSlices = numSlices - 1;  //its 0 based
+            	middleSlice = numSlices/2;
+            	startSlice = middleSlice - 3;
+            	if(startSlice < 0) {
+            		startSlice = 0;
+            	}
+            	endSlice = middleSlice + 4;
+            	if(endSlice > numSlices - 1) {
+            		endSlice = numSlices - 1;
+            	}
+            	
+            	try {
+                    // Make algorithm
+            		lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false, borderThick);
+            		lightGen.run();
+            		thumbnailImage = lightGen.getImage();
+            		thumbnailImage.calcMinMax();
+
+            		vf = new ViewJFrameImage(thumbnailImage, (ModelImage)null);
+
+            	}catch(Exception e) {
+            		
+            	}	
+                
+                
+            }
+            
+
+            
 
             String currentGuid = (String) guidTable.getModel().getValueAt(i, GUID_TABLE_GUID_COLUMN);
             int modality = origImage.getFileInfo(0).getModality();
@@ -731,6 +863,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             }
 
             String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
+            
+            //write out thumbnail image
+            FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
+	        fileIO.writeImage(thumbnailImage, opts);
+	        vf.close();
+	        
             try {
                 printlnToLog("Creating ZIP file:\t" + zipFilePath);
                 for (String file : origFiles) {

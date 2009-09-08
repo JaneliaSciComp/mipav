@@ -35,7 +35,7 @@ public class ViewJFrameFastMarching2 extends ViewJFrameImage implements KeyListe
      * @param  _LUT    DOCUMENT ME!
      */
     public ViewJFrameFastMarching2(ModelImage _image, ModelLUT _LUT) {
-        super(_image, null);
+        super(_image, (ModelLUT)null);
         userInterface = ViewUserInterface.getReference();
 
 

@@ -7,6 +7,7 @@ import javax.swing.JFileChooser;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -104,7 +105,7 @@ public class PlugInDialogDTIOpenListFile extends JDialogBase implements Algorith
 			resultImage = alg.getDestImage();
 			
 			try {
-                new ViewJFrameImage(resultImage, null);
+                new ViewJFrameImage(resultImage, (ModelLUT)null);
             } catch (Exception error) {
             	error.printStackTrace();
                 MipavUtil.displayError("Out of memory: unable to open new frame");

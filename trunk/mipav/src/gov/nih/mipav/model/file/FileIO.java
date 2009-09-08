@@ -10308,9 +10308,7 @@ public class FileIO {
         int endSlice = options.getEndSlice();
 
         for (int i = beginSlice; i <= endSlice; i++) {
-
-            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().show(0, i, true);
-
+        	
             ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().createImg(i);
 
             Image im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
