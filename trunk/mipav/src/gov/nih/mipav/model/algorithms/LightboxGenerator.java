@@ -163,18 +163,17 @@ public class LightboxGenerator  extends AlgorithmBase{
 	    	//if image is in color
 	    	if (original.isColorImage())
 	    	{
-	    		numPerRow = numPerRow*4;
-	    		numPerSlice = numPerSlice*4;
+	    		//numPerRow = numPerRow*4;
+	    		//numPerSlice = numPerSlice*4;
 	    		mult = 4;
 	    	}
 	    	
-	    	float currentImageData[] = new float[numPerSlice];
-	    	float currentRowData[] = new float[numPerRow];
-	    	
-	
+	    	float currentImageData[] = new float[numPerSlice*mult];
+	    	float currentRowData[] = new float[numPerRow*mult];
+
 	    	//export slice
-	    	original.exportData(startSlice*numPerSlice, numPerSlice, currentImageData);
-	
+	    	original.exportData(startSlice*numPerSlice*mult, numPerSlice*mult, currentImageData);
+
 	
 	    	//create lightbox image
 	    	for(int i = 0; i < rows; i++)
@@ -185,17 +184,16 @@ public class LightboxGenerator  extends AlgorithmBase{
 	    			fireProgressStateChanged(10+ (((i*j)+j)/(columns*rows))*70);
 					for(int jj = 0; jj < numPerColumn; jj++)
 					{
-						System.arraycopy(currentImageData, jj*numPerRow, currentRowData, 0, numPerRow);
-						newImage.importData(((numPerColumn + thickness) * newWidth * i * mult) + ((numPerRow+thickness) * j)+ (newWidth*jj*mult) + (thickness*newWidth) +thickness , currentRowData, false);
+						System.arraycopy(currentImageData, jj*numPerRow*mult, currentRowData, 0, numPerRow*mult);
+						newImage.importData((((numPerColumn + thickness) * newWidth * i) + ((numPerRow+thickness) * j)+ (newWidth*jj) + (thickness*newWidth) +thickness)*mult , currentRowData, false);
 						Arrays.fill(currentRowData, 0);
 					}	
-	
-			    	
+
 					currentSlice++;
 					if (currentSlice <= endSlice)	
 					{
 						Arrays.fill(currentImageData, 0);
-						original.exportData(currentSlice*numPerSlice, numPerSlice, currentImageData);
+						original.exportData(currentSlice*numPerSlice*mult, numPerSlice*mult, currentImageData);
 					}
 					else
 					{
@@ -207,14 +205,22 @@ public class LightboxGenerator  extends AlgorithmBase{
 	    	}
 	    	newImage.calcMinMax();
 	    	
-	    	//convert to RGB
 	    	
-	    	ModelImage newRGB = new ModelImage(ModelImage.ARGB, newImage.getExtents(), newImage.getImageName());
-	    	AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(newImage, newImage, newImage, newRGB, true, true,
-                                                                 255.0f, true);
-	    	mathAlgo.run();
-	    	fireProgressStateChanged(90);
-	    	newImage.disposeLocal();
+	    	
+	    	//convert to RGB
+	    	ModelImage newRGB;
+	    	if(original.isColorImage()) {
+	    		newRGB = (ModelImage)newImage.clone();
+	    		newImage.disposeLocal();
+	    	}else {
+	    		newRGB = new ModelImage(ModelImage.ARGB, newImage.getExtents(), newImage.getImageName());
+		    	AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(newImage, newImage, newImage, newRGB, true, true,
+	                                                                 255.0f, true);
+		    	mathAlgo.run();
+		    	fireProgressStateChanged(90);
+		    	newImage.disposeLocal();
+	    	}
+	    	
 	    	
 	    	//add borders
 	    	

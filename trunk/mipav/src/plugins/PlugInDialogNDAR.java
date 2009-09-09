@@ -2,6 +2,7 @@ import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.LightboxGenerator;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -14,6 +15,7 @@ import gov.nih.mipav.view.srb.JDialogLoginSRB;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.MemoryImageSource;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -34,6 +36,12 @@ import org.jdom.Document;
 import org.jdom.input.SAXBuilder;
 import org.jdom.Attribute;
 import org.jdom.Element;
+
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+
+import com.sun.jimi.core.Jimi;
+import com.sun.jimi.core.JimiException;
 
 
 
@@ -711,9 +719,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         ndarData = new NDARWriteData();
 
         int numImages = sourceModel.size();
-        System.out.println(numImages);
         for (int i = 0; i < numImages; i++) {
-        	System.out.println("i is " + i);
             File imageFile = (File) sourceModel.elementAt(i);
 
             printlnToLog("Opening: " + imageFile + ", multifile: " + multiFileTable.get(imageFile));
@@ -726,6 +732,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     multiFileTable.get(imageFile), null);
 
             List<String> origFiles = FileUtility.getFileNameList(origImage);
+            
             
             //create a thumbnail image...4 colums, 2 rows
             //grab the middle 8 slices from the image for the thumbnail
@@ -750,11 +757,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             int middleSlice = 0;
             LightboxGenerator lightGen;
             ModelImage thumbnailImage = null;
-            String dir = origImage.getImageDirectory();
-            System.out.println(dir);
-            ViewJFrameImage vf = null;
             if(origImage.is2DImage()) {
-            	
             	//Creating a blank TransMatrix for resampling
         		TransMatrix percentSizer = new TransMatrix(4);
         		percentSizer.Set((float)1, (float)0, (float)0, (float)0, (float)0,
@@ -768,9 +771,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             	transformer.runAlgorithm();
             	thumbnailImage = transformer.getTransformedImage();
             	thumbnailImage.calcMinMax();
-            	vf = new ViewJFrameImage(thumbnailImage, (ModelImage)null);
-
-            	
+            	//convert this image to color image if it is not
+        		if(!thumbnailImage.isColorImage()) {
+        			ModelImage newRGB = new ModelImage(ModelImage.ARGB, thumbnailImage.getExtents(), thumbnailImage.getImageName());
+    		    	AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage, thumbnailImage, newRGB, true, true, 255.0f, true);
+    		    	mathAlgo.run();
+    		    	thumbnailImage.disposeLocal();
+    		    	thumbnailImage = null;
+    		    	thumbnailImage = newRGB;
+        		}
             }else if(origImage.is3DImage()) {
             	numSlices = origImage.getExtents()[2];
             	numSlices = numSlices - 1;  //its 0 based
@@ -790,11 +799,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             		lightGen.run();
             		thumbnailImage = lightGen.getImage();
             		thumbnailImage.calcMinMax();
-            		System.out.println("here1");
-            		
-            		vf = new ViewJFrameImage(thumbnailImage, (ModelImage)null);
-
-            		
             	}catch(Exception e) {
             		e.printStackTrace();
             	}	
@@ -809,10 +813,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 destExtents[2] = zSlices;
                 
                 ModelImage timeImage = new ModelImage(origImage.getType(), destExtents, "");
-                
+
                 int tSlices =  origImage.getExtents()[3];
-                System.out.println("tSlices is " + tSlices);
-                
                 int middleVol = (int)Math.floor(tSlices/2);
                 if(middleVol > 0) {
                 	middleVol = middleVol - 1;  // 0 based
@@ -831,25 +833,20 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             	if(endSlice > numSlices - 1) {
             		endSlice = numSlices - 1;
             	}
-            	
             	try {
                     // Make algorithm
             		lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false, borderThick);
             		lightGen.run();
             		thumbnailImage = lightGen.getImage();
             		thumbnailImage.calcMinMax();
-
-            		vf = new ViewJFrameImage(thumbnailImage, (ModelImage)null);
-
+            		if(timeImage != null) {
+            			timeImage.disposeLocal();
+            			timeImage = null;
+            		}	
             	}catch(Exception e) {
             		
             	}	
-                
-                
             }
-            
-
-            
 
             String currentGuid = (String) guidTable.getModel().getValueAt(i, GUID_TABLE_GUID_COLUMN);
             int modality = origImage.getFileInfo(0).getModality();
@@ -866,8 +863,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             
             //write out thumbnail image
             FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
-	        fileIO.writeImage(thumbnailImage, opts);
-	        vf.close();
+            writeThumbnailJIMI(thumbnailImage, opts);
+            if(thumbnailImage != null) {
+            	thumbnailImage.disposeLocal();
+            	thumbnailImage = null;
+            }
 	        
             try {
                 printlnToLog("Creating ZIP file:\t" + zipFilePath);
@@ -1075,6 +1075,115 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         return buttonPanel1;
     }
+    
+    
+    
+    /**
+     * Writes a JIMI file to store the image.
+     * 
+     * @param image The image to write.
+     * @param options The options to use to write the image.
+     * 
+     * @return Flag indicating that this was a successful write.
+     */
+    private boolean writeThumbnailJIMI(ModelImage image, FileWriteOptions options) {
+    	int imageSize = image.getExtents()[0] * image.getExtents()[1];
+        int[] paintBuffer = new int[imageSize];
+        ColorRGBA colorMappedA = new ColorRGBA();
+        float[] imageBufferA = new float[image.getExtents()[0] * image.getExtents()[1] * 4];
+        int length = imageBufferA.length;
+        ColorRGB[] m_akOffset = { new ColorRGB(0.0f, 0.0f, 0.0f), new ColorRGB(0.0f, 0.0f, 0.0f) };
+        float fMaxColor = 255;
+        float[] m_afNormColor = { 1, 1 };
+        
+        
+        if (image.getMinR() < 0.0) {
+            fMaxColor = (float) (image.getMaxR() - image.getMinR());
+            m_akOffset[0].R = (float) (-image.getMinR());
+        } else {
+            fMaxColor = (float) image.getMaxR();
+        }
+
+        if (image.getMinG() < 0.0) {
+            fMaxColor = Math.max((float) (image.getMaxG() - image.getMinG()), fMaxColor);
+            m_akOffset[0].G = (float) (-image.getMinG());
+        } else {
+            fMaxColor = Math.max((float) image.getMaxG(), fMaxColor);
+        }
+
+        if (image.getMinB() < 0.0) {
+            fMaxColor = Math.max((float) (image.getMaxB() - image.getMinB()), fMaxColor);
+            m_akOffset[0].B = (float) (-image.getMinB());
+        } else {
+            fMaxColor = Math.max((float) image.getMaxB(), fMaxColor);
+        }
+        m_afNormColor[0] = 255 / fMaxColor;
+        
+        try {
+        	image.exportData(0, length, imageBufferA);
+        }catch(Exception e) {
+        	
+        }
+        for (int j = 0; j < image.getExtents()[1]; j++) {
+
+            for (int i = 0; i < image.getExtents()[0]; i++) {
+                int ind4 = (j * image.getExtents()[0]) + i;
+                int index = 4 * ind4;
+                int pixValue;
+                
+                colorMappedA.R = 0;
+                colorMappedA.G = 0;
+                colorMappedA.B = 0;
+                colorMappedA.A = imageBufferA[index];
+                
+                colorMappedA.R = (imageBufferA[index + 1] + m_akOffset[0].R) * m_afNormColor[0];
+                colorMappedA.G = (imageBufferA[index + 2] + m_akOffset[0].G) * m_afNormColor[0];
+                colorMappedA.B = (imageBufferA[index + 3] + m_akOffset[0].B) * m_afNormColor[0];
+                
+                pixValue = 0xff000000 | ((int) (colorMappedA.R) << 16) | ((int) (colorMappedA.G) << 8) | ((int) (colorMappedA.B));
+                
+                paintBuffer[ind4] = pixValue;
+            } 
+        }
+        
+        MemoryImageSource memImageA = new MemoryImageSource(image.getExtents()[0], image.getExtents()[1], paintBuffer, 0, image.getExtents()[0]);
+
+        int extIndex = options.getFileName().indexOf(".");
+        String prefix = options.getFileName().substring(0, extIndex); // Used for setting file name
+        String fileSuffix = options.getFileName().substring(extIndex);
+        String name;
+
+        Image img = createImage(memImageA);
+
+        name = options.getFileDirectory() + prefix + fileSuffix;
+
+
+        try {
+            Jimi.putImage(img, name);
+        } catch (JimiException jimiException) {
+            Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
+
+            jimiException.printStackTrace();
+
+            return false;
+        }
+
+
+
+        return true;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     private class GUIDTableModel extends AbstractTableModel {
         private String[] columnNames = {"Image", "GUID"};
