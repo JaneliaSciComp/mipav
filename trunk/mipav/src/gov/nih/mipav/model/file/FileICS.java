@@ -946,7 +946,7 @@ public class FileICS extends FileBase {
         }
 
         if (image.isColorImage()) {
-            lineString = lineString + "\trgb";
+            lineString = lineString + "\tch";
         }
 
         lineString = lineString + "\r\n";
