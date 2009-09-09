@@ -28,9 +28,6 @@ implements StreamInterface
     int m_iHeight;
     int[] m_aiExtents = new int[3];
     Matrix4f m_kImageTransform;
-    boolean m_bUseTransform;
-    int m_iNumTextures;
-    boolean m_bHisto2D = false;
     float m_fZStep, m_fZSlice;
     float m_fNBins;
 
@@ -42,18 +39,15 @@ implements StreamInterface
         m_iWidth = iWidth;
         m_iHeight = iHeight;
         m_kImageTransform = kImageTransform;
-        m_bUseTransform = bUseTransform;
         
 
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        PixelShader kPShader = new PixelShader("VolumeHistogramP", true);
         VertexShader kVShader = new VertexShader("VolumeHistogram2DV", true);
+        PixelShader kPShader = new PixelShader("VolumeHistogramP", true);
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
         
-        m_bHisto2D = true ;
-        m_iNumTextures =  2;
         kPShader.SetTextureQuantity(2);
         kPShader.SetTexture( 0, kTexA );
         kPShader.SetImageName( 0, kTexA.GetName() );

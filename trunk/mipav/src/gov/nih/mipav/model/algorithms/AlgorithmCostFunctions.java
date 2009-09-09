@@ -377,7 +377,8 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
             case NORMALIZED_MUTUAL_INFORMATION_GPU:
                 if ( m_kGPUCost != null )
                 {
-                    value = m_kGPUCost.getError(affMatrix);
+                    m_kGPUCost.calcError(affMatrix);
+                    value = m_kGPUCost.getError();
                 }
                 break;
         }
@@ -399,7 +400,10 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         if ( m_kGPUCost != null )
         {
             m_kGPUCost.dispose();
-        }
+        }        
+        
+        //System.err.println( "AlgorithmCostFuntions2D.disposeLocal(): " + this + " " + nBins + " " + costCalled );
+
 //        sumY = null;
 //        sumY2 = null;
 //        numY = null;

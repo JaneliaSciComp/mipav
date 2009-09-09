@@ -3,13 +3,7 @@
 uniform sampler3D imageA; 
 uniform sampler3D imageB; 
 
-uniform vec2 Step;
-
 uniform float ZSlice;
-uniform float ZStep;
-
-uniform vec2 Shift;
-
 uniform vec2 Min;
 uniform vec2 Scale;
 
@@ -57,6 +51,6 @@ void v_VolumeHistogram2DV()
 
      //gl_FrontColor = texture3D(imageB, gl_MultiTexCoord0.xyz );
      //gl_FrontColor = texture3D(imageB, texCoord.xyz );
-     //gl_Position = gl_Vertex;
+     //gl_Position = gl_Vertex * 2;
 }
 //----------------------------------------------------------------------------

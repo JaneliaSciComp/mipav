@@ -202,6 +202,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
         {
             m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false, nBins);
+            //m_kGPUCost = new VolumeImageViewerPoint(refImage, inputImage, nBins);
         }
     }
 
@@ -315,7 +316,8 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
             case NORMALIZED_MUTUAL_INFORMATION_GPU:
                 if ( m_kGPUCost != null )
                 {
-                    value = m_kGPUCost.getError(affMatrix);
+                    m_kGPUCost.calcError(affMatrix);
+                    value = m_kGPUCost.getError();
                 }
                 break;
         }
@@ -337,7 +339,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         {
             m_kGPUCost.dispose();
         }
-
+        //System.err.println( "AlgorithmCostFuntions2D.disposeLocal(): " + this + " " + nBins + " " + costCalled );
 //        sumY = null;
 //        sumY2 = null;
 //        numY = null;
