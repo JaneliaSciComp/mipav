@@ -329,38 +329,17 @@ public class VolumeImage
 
     /**
      */
-    public static GraphicsImage UpdateData( ModelSimpleImage kImage, int iTimeSlice, String kImageName )
+    public static GraphicsImage UpdateData( ModelSimpleImage kImage, String kImageName )
     {
-        GraphicsImage kReturn = null;
-        float[] afData = null;
-        int iSize = kImage.dataSize;
         GraphicsImage.FormatMode eType = GraphicsImage.FormatMode.IT_L32F;
-        afData = new float[iSize];
-        kImage.exportData( afData, iTimeSlice * iSize, iSize );
-/*
-        int iSliceSize = kImage.extents[0] * kImage.extents[1];
-        for ( int j = 0; j < iSliceSize; j++ )
-        {
-            for ( int i = 0; i < kImage.extents[2]; i++ )
-            {
-                System.err.print( afData[i * iSliceSize + j] + " " );
-            }
-            System.err.println("");
-        }
-        */
-        
+
         if ( kImage.nDims == 3 )
         {
-            kReturn =
-                new GraphicsImage( eType,
-                        kImage.extents[0],kImage.extents[1],kImage.extents[2], afData, kImageName);
+            return new GraphicsImage( eType, kImage.extents[0],kImage.extents[1],kImage.extents[2], 
+                    kImage.data, kImageName);
         }
-        else
-        {
-            kReturn =
-                new GraphicsImage( eType, kImage.extents[0],kImage.extents[1], 1, afData, kImageName);
-        }
-        return kReturn;
+        return new GraphicsImage( eType, kImage.extents[0],kImage.extents[1], 1, 
+                kImage.data, kImageName);
     }
 
     /**

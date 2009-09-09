@@ -45,20 +45,7 @@ public class VolumeImageViewer extends JavaApplication3D
     protected VolumeTriPlanarInterface m_kParent;
     protected boolean m_bDisplay = true;
     protected boolean m_bInit = false;
-    
-    public VolumeImageViewer( int iWidth, int iHeight )
-    {
-        super( "VolumeImageViewer", 0, 0, iWidth, iHeight,
-               new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
-        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-                                          m_eBuffering, m_eMultisampling,
-                                           m_iWidth, m_iHeight );
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );    
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );    
-        m_kParent = null;
-        m_kVolumeImage = null;
-        //MipavInitGPU.InitGPU();
-    }    
+
     
     public VolumeImageViewer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
@@ -167,7 +154,7 @@ public class VolumeImageViewer extends JavaApplication3D
         if ( m_kFrame != null )
         {
             m_kFrame.setVisible(false);
-            m_kFrame.dispose();
+            //m_kFrame.dispose();
             m_kFrame = null;
         }
         m_kParent = null;

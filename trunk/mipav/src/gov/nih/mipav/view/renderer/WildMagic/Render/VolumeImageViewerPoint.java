@@ -1,42 +1,27 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.MipavInitGPU;
-import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.view.Preferences;
 
-import java.awt.Frame;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import javax.swing.JFrame;
 
-import javax.imageio.ImageIO;
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
+import javax.media.opengl.GLCanvas;
+import javax.media.opengl.GLContext;
 
-import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Mathf;
-import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibFoundation.Mathematics.Vector4f;
-import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
-import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
-import WildMagic.LibGraphics.SceneGraph.Geometry;
-import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polypoint;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
-import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
@@ -47,11 +32,12 @@ import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.sun.opengl.util.Animator;
-
-public class VolumeImageViewerPoint extends VolumeImageViewer
-implements GLEventListener, KeyListener
+public class VolumeImageViewerPoint extends JavaApplication3D
+//implements GLEventListener, KeyListener
 {
+    protected Node m_spkScene;    
+    protected TriMesh m_pkPlane;
+    
     protected ImageReduceEffect m_akImageReduceEntropy;
     protected ImageReduceEffect[] m_akImageReduceSum;
     protected ImageReduceEffect[][] m_akImageReduceSumX;
@@ -79,18 +65,30 @@ implements GLEventListener, KeyListener
     private double m_dOverlap;
     private Matrix4f m_kImageTransform = new Matrix4f(false);
 
+    protected JFrame m_kFrame;
+    
+    private boolean m_bDisposeComplete = false;
     private boolean m_bDispose = false;
     private float[] m_afJoint;
     private boolean m_bUseJoint = false;
 
+    protected boolean m_bDisplay = true;
+    protected boolean m_bInit = false;
     private boolean m_bPrint = false;
+    private boolean m_bErrorReady = false;
     
     public VolumeImageViewerPoint( ModelSimpleImage kImageA, ModelSimpleImage kImageB, int iNBins )
     {
         //super( Math.max( kImageA.extents[0], kImageB.extents[0]), 
         //        Math.max( kImageA.extents[1], kImageB.extents[1]));
-        //super( kImageA.extents[0],kImageA.extents[1] );
-        super( iNBins, iNBins );
+        //super( kImageA.extents[0],kImageA.extents[1] );    
+        
+        super( "VolumeImageViewer", 0, 0, iNBins, iNBins,
+               new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
+        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
+                                          m_eBuffering, m_eMultisampling,
+                                           m_iWidth, m_iHeight );
+        GetCanvas().getContext().setSynchronized(true);  
         m_afJoint = new float[iNBins*iNBins*4];
         
         m_kImageA = kImageA;
@@ -102,29 +100,25 @@ implements GLEventListener, KeyListener
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
         CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
     }
+    
+    public void SetFrame( JFrame kFrame )
+    {
+        m_kFrame = kFrame;
+    }
+
+    public GLCanvas GetCanvas()
+    {
+        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
+    }
     /**
      * @param args
      */
     public static VolumeImageViewerPoint create( ModelSimpleImage kImageA, ModelSimpleImage kImageB, boolean bShowFrame, int iNBins )
     {
         final VolumeImageViewerPoint kWorld = new VolumeImageViewerPoint(kImageA, kImageB, iNBins);
-        final Frame frame = new Frame(kWorld.GetWindowTitle());
+        final JFrame frame = new JFrame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
-        final Animator animator = new Animator( kWorld.GetCanvas() );  
-        /*
-        frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                // Run this on another thread than the AWT event queue to
-                // avoid deadlocks on shutdown on some platforms
-                new Thread(new Runnable() {
-                    public void run() {
-                        animator.stop();
-                    }
-                }).start();
-                frame.setVisible(false);
-            }
-        });
-        */
+        
         // setting the frame to be undecorated removes the frame title bar and edges
         // this prevents flashing on-screen.
         frame.setUndecorated(!bShowFrame);
@@ -133,21 +127,15 @@ implements GLEventListener, KeyListener
         frame.setBounds(0,0,
                 kWorld.GetWidth(), kWorld.GetHeight() );
         frame.setVisible(bShowFrame);
-        kWorld.SetAnimator(animator);
         kWorld.SetFrame(frame);
-        //animator.start();
-        //kWorld.GetCanvas().display();
         return kWorld;
     }
 
     public void display(GLAutoDrawable arg0) {
         if ( m_bDispose )
         {
+            m_bDispose = false;
             dispose(arg0);
-            return;
-        }
-        if ( m_kAnimator == null )
-        {
             return;
         }
         if ( !m_bInit )
@@ -160,13 +148,20 @@ implements GLEventListener, KeyListener
         }
         m_bDisplay = false;
         calcEntropy();
+        m_bErrorReady = true;
     }
 
 
     public void dispose()
     {
-        m_bDispose = true;
-        GetCanvas().display();  
+        if ( !m_bDisposeComplete )
+        {
+            m_bDisposeComplete = true;
+            GetCanvas().getContext().makeCurrent();
+            m_bDispose = true; 
+            display(GetCanvas());  
+            //GetCanvas().display();
+        }
     }
 
     public void dispose(GLAutoDrawable arg0)
@@ -221,15 +216,27 @@ implements GLEventListener, KeyListener
         VertexProgramCatalog.GetActive().dispose();     
         PixelProgramCatalog.GetActive().dispose();
         CompiledProgramCatalog.GetActive().dispose();
-        
-        super.dispose(arg0);
+                
+        super.dispose();
     }
     
-    public double getError(TransMatrix kTransform) {
+    public void calcError(TransMatrix kTransform) {
+        if ( GetCanvas().getContext().makeCurrent() == GLContext.CONTEXT_NOT_CURRENT )
+        {
+            System.err.println( "Context not made current" );
+        }
         setTransform(kTransform);
         m_bDisplay = true;
-        GetCanvas().display();  
+        m_bErrorReady = false;
+        //GetCanvas().display();  
+        display(GetCanvas());  
+        //while ( !m_bErrorReady );
         m_bUseJoint = false;
+        GetCanvas().getContext().release();
+    }
+
+    public double getError()
+    {
         return m_dHxy / (m_dHx + m_dHy);
     }
 
@@ -291,27 +298,39 @@ implements GLEventListener, KeyListener
         Attributes kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         kAttributes.SetTChannels(0,3);
-        /*
+        
         int iVQuantity = iWidth*iHeight;
         VertexBuffer pkVB = new VertexBuffer(kAttributes,iVQuantity);
 
         // generate geometry
         float fInv0 = 1.0f/(iWidth - 1.0f);
         float fInv1 = 1.0f/(iHeight - 1.0f);
-        for (int y = 0, i = 0; y < iHeight; y++)
+        float fU, fV;
+        int i, i0, i1;
+
+        Vector3f kYTmp = new Vector3f();
+        Vector3f kXTmp = new Vector3f();
+        for (i1 = 0, i = 0; i1 < iHeight; i1++)
         {
-            for (int x = 0; x < iWidth; x++)
+            fV = i1*fInv1;
+            kYTmp.Set(0f, ((2.0f*fV-1.0f)), 0f );
+            for (i0 = 0; i0 < iWidth; i0++)
             {
-                pkVB.SetPosition3(i, x*fInv0, y*fInv1, 0 );
-                pkVB.SetTCoord3(0, i, x*fInv0, y*fInv1, 0);
+                fU = i0*fInv0;
+                kXTmp.Set(((2.0f*fU-1.0f)), 0f, 0f);
+                kXTmp.Add( kYTmp );
+                pkVB.SetPosition3(i,kXTmp );
+
+                pkVB.SetTCoord2(0,i, fU,fV);
+
                 i++;
             }
         }
+        
+        //StandardMesh kSM = new StandardMesh(kAttributes);
+        //TriMesh kMesh = kSM.Rectangle(iWidth,iHeight,1,1);
+        //m_kImagePointsDual = new Polypoint( kMesh.VBuffer );
         m_kImagePointsDual = new Polypoint( pkVB );
-        */
-        StandardMesh kSM = new StandardMesh(kAttributes);
-        TriMesh kMesh = kSM.Rectangle(iWidth,iHeight,1,1);
-        m_kImagePointsDual = new Polypoint( kMesh.VBuffer );
         m_kAlpha = new AlphaState();
         m_kAlpha.BlendEnabled = true;
         m_kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
@@ -334,15 +353,10 @@ implements GLEventListener, KeyListener
     
     private void CreateImageTextures()
     {
-        //ModelImage kImageA = new ModelImage( m_kImageA, "newA" );
-        //ModelImage kImageB = new ModelImage( m_kImageB, "newB" );
         SamplerInformation.Type eSamplerType = SamplerInformation.Type.SAMPLER_3D;
         
         m_kTextureA = new Texture();
-        m_kTextureA.SetImage(VolumeImage.UpdateData(m_kImageA, 0, m_kNameA ));
-        //m_kTextureA.SetImage(VolumeImage.UpdateData(kImageA, 0, null, null, null, m_kNameA, true ));
-        
-        
+        m_kTextureA.SetImage(VolumeImage.UpdateData(m_kImageA, m_kNameA ));
         m_kTextureA.SetShared(true);
         m_kTextureA.SetFilterType(Texture.FilterType.NEAREST);
         m_kTextureA.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
@@ -352,8 +366,7 @@ implements GLEventListener, KeyListener
         m_pkRenderer.LoadTexture( m_kTextureA );
         
         m_kTextureB = new Texture();
-        m_kTextureB.SetImage(VolumeImage.UpdateData(m_kImageB, 0, m_kNameB ));
-        //m_kTextureB.SetImage(VolumeImage.UpdateData(kImageB, 0, null, null, null, m_kNameB, true ));
+        m_kTextureB.SetImage(VolumeImage.UpdateData(m_kImageB, m_kNameB ));
         m_kTextureB.SetShared(true);
         m_kTextureB.SetFilterType(Texture.FilterType.NEAREST);
         m_kTextureB.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
@@ -382,7 +395,6 @@ implements GLEventListener, KeyListener
         m_kHistogramOutput = CreateRenderTarget( "Histogram2D", iWidth, iHeight );
 
         double dSize = m_kImageA.dataSize;
-        //m_akImageReduceEntropy = new ImageReduceEffect( m_kHistogramOutput.GetTarget(0), m_kImageA.extents[0], m_kImageA.extents[1], dSize, ImageReduceEffect.ENTROPY );
         m_akImageReduceEntropy = new ImageReduceEffect( m_kHistogramOutput.GetTarget(0), iWidth, iHeight, dSize, ImageReduceEffect.ENTROPY );
         
         
@@ -607,11 +619,13 @@ implements GLEventListener, KeyListener
                 //if ( i == 0 )
                 {
                     m_pkRenderer.Draw(m_kImagePointsDual);
+                    //m_pkRenderer.Finish();
                     //writeImage();
                 }
             }
             m_kHistogramOutput.Disable();
         }
+        //m_pkRenderer.Finish();
         //m_pkRenderer.DisplayBackBuffer();
         ReduceDualA(dNumSamples);
     }
@@ -644,78 +658,7 @@ implements GLEventListener, KeyListener
     }
     
     
-    private void calcCPU( Texture kTarget, double dNumSamples )
-    {
-        double dSize = m_kImageA.dataSize;
-        m_pkRenderer.GetTexImage( kTarget );
-        float[] afData = kTarget.GetImage().GetFloatData();
-        int iWidth = kTarget.GetImage().GetBound(0);
-        int iHeight = kTarget.GetImage().GetBound(1);
-        float[][] af2DData = new float[iWidth][iHeight];
-        float[] aXSum = new float[iHeight];
-        float[] aYSum = new float[iWidth];
-        float fXEntropy = 0;
-        float fYEntropy = 0;
-        int iSum = 0;
-        for ( int i = 0; i < iWidth; i++ )
-        {
-            for ( int j = 0; j < iHeight; j++ )
-            {
-                af2DData[i][j] = afData[4*(i*iHeight + j)];
-                iSum += af2DData[i][j];
-            }
-        }
-/*
-        for ( int i = 0; i < iWidth; i++ )
-        {
-            aYSum[i] = 0;
-            for ( int j = 0; j < iHeight; j++ )
-            {
-                aYSum[i] += af2DData[i][j];
-            }
-            if ( aYSum[i] != 0 )
-            {
-                System.err.print( i + " " + aYSum[i] + " " );
-                aYSum[i] = (float)(-aYSum[i] * (Math.log(aYSum[i]) -  Math.log(dSize) ));
-                System.err.println( aYSum[i] );
-                fXEntropy += aYSum[i];
-            }
-        }
-        System.err.println( "" );
-        System.err.println( "" );
-        System.err.println( "" );
-        System.err.println( "" );
-        for ( int i = 0; i < iHeight; i++ )
-        {
-            aXSum[i] = 0;
-            for ( int j = 0; j < iWidth; j++ )
-            {
-                aXSum[i] += af2DData[j][i];
-            }
 
-            if ( aXSum[i] != 0 )
-            {
-                System.err.print( i + " " + aXSum[i] + " " );
-                aXSum[i] = (float)(-aXSum[i] * (Math.log(aXSum[i]) -  Math.log(dSize) ));
-                System.err.println( aXSum[i] );
-                fYEntropy += aXSum[i];
-            }
-        }
-        fXEntropy /= dNumSamples;
-        fYEntropy /= dNumSamples;
-        System.err.println( "" );
-        System.err.println( "" );
-        System.err.println( "" );
-        System.err.println( "" );
-        System.err.println( fXEntropy + " " + fYEntropy );
-        System.err.println( "" );
-        System.err.println( "" );
-        System.err.println( "" );
-        System.err.println( "" );
-        */
-        System.err.println( iSum );
-    }
-    
     private void ReduceDualA( double dNumSamples )
     {
         Texture kTarget = null;
@@ -745,6 +688,7 @@ implements GLEventListener, KeyListener
                 m_pkRenderer.ClearBuffers();
                 m_pkRenderer.Draw(m_pkPlane);
                 m_akReduceOutputX[i][iTarget].Disable();
+                //m_pkRenderer.Finish();
                 kTarget = m_akReduceOutputX[i][iTarget].GetTarget(0);
 
 
@@ -772,6 +716,7 @@ implements GLEventListener, KeyListener
         if ( kTarget != null )
         {
             m_pkRenderer.GetTexImage( kTarget );
+            //m_pkRenderer.Finish();
             float[] afData = kTarget.GetImage().GetFloatData();
             for ( int i = 0; i < afData.length; i+=4 )
             {
@@ -812,6 +757,7 @@ implements GLEventListener, KeyListener
                 m_pkRenderer.ClearBuffers();
                 m_pkRenderer.Draw(m_pkPlane);
                 m_akReduceOutputY[i][iTarget].Disable();
+                //m_pkRenderer.Finish();
                 kTarget = m_akReduceOutputY[i][iTarget].GetTarget(0);
 
 
@@ -839,6 +785,7 @@ implements GLEventListener, KeyListener
         if ( kTarget != null )
         {
             m_pkRenderer.GetTexImage( kTarget );
+            //m_pkRenderer.Finish();
             float[] afData = kTarget.GetImage().GetFloatData();
             for ( int i = 0; i < afData.length; i+=4 )
             {
@@ -872,6 +819,7 @@ implements GLEventListener, KeyListener
             m_pkRenderer.ClearBuffers();
             m_pkRenderer.Draw(m_pkPlane);
             m_akReduceOutput[iTarget].Disable();
+            //m_pkRenderer.Finish();
             kTarget = m_akReduceOutput[iTarget].GetTarget(0);
             m_pkPlane.DetachAllEffects();
             m_pkPlane.AttachEffect( m_akImageReduceSum[iTarget] );
@@ -890,6 +838,7 @@ implements GLEventListener, KeyListener
             int iStep = (int)Math.max( 1.0, (int)(kTarget.GetImage().GetBytesPerPixel()/4.0f) );
             //m_lStartTime = System.nanoTime();
             m_pkRenderer.GetTexImage( kTarget );
+            //m_pkRenderer.Finish();
             //m_pkRenderer.Finish();
             //m_lEstimatedTime = System.nanoTime() - m_lStartTime;
             //System.err.println( "GetTexImage =     " + m_lEstimatedTime );
