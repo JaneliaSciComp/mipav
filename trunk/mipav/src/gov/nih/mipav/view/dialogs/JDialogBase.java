@@ -611,6 +611,20 @@ public abstract class JDialogBase extends JDialog
             fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
         } else if (resultImage.getNDims() == 3) {
             fileInfo = resultImage.getFileInfo();
+            int newUnits[] = new int[3];
+            float newRes[] = new float[3];
+            float newOrigin[] = new float[3];
+            if (image.getNDims() == 2) {
+                newUnits[0] = image.getFileInfo()[0].getUnitsOfMeasure()[0];
+                newUnits[1] = image.getFileInfo()[0].getUnitsOfMeasure()[1];
+                newUnits[2] = FileInfoBase.UNKNOWN_MEASURE;
+                newRes[0] = image.getFileInfo()[0].getResolutions()[0];
+                newRes[1] = image.getFileInfo()[0].getResolutions()[1];
+                newRes[2] = 1.0f;
+                newOrigin[0] = image.getFileInfo()[0].getOrigin()[0];
+                newOrigin[1] = image.getFileInfo()[0].getOrigin()[1];
+                newOrigin[2] = 0.0f;
+            }
 
             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
                 int j;
@@ -626,16 +640,25 @@ public abstract class JDialogBase extends JDialog
 
                 // fileInfo[i].setDataType(image.getFileInfo()[j].getDataType());
                 fileInfo[i].setEndianess(image.getFileInfo()[j].getEndianess());
-                fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[j].getUnitsOfMeasure());
-                fileInfo[i].setResolutions(image.getFileInfo()[j].getResolutions());
+                if (image.getNDims() > 2) {
+                    fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[j].getUnitsOfMeasure());
+                    fileInfo[i].setResolutions(image.getFileInfo()[j].getResolutions());
+                }
+                else {
+                    fileInfo[i].setUnitsOfMeasure(newUnits);
+                    fileInfo[i].setResolutions(newRes);
+                }
                 fileInfo[i].setExtents(resultImage.getExtents());
                 fileInfo[i].setMax(resultImage.getMax());
                 fileInfo[i].setMin(resultImage.getMin());
                 if (image.getNDims() > 2) {
                     fileInfo[i].setImageOrientation(image.getImageOrientation());
                     fileInfo[i].setAxisOrientation(image.getFileInfo()[j].getAxisOrientation());
+                    fileInfo[i].setOrigin(image.getFileInfo()[j].getOrigin());
                 }
-                fileInfo[i].setOrigin(image.getFileInfo()[j].getOrigin());
+                else {
+                    fileInfo[0].setOrigin(newOrigin);    
+                }
                 fileInfo[i].setPixelPadValue(image.getFileInfo()[j].getPixelPadValue());
                 fileInfo[i].setPhotometric(image.getFileInfo()[j].getPhotometric());
             }
