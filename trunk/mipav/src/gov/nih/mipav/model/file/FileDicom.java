@@ -1058,7 +1058,7 @@ public class FileDicom extends FileDicomBase {
 	        if (photometricInterp == null) { // Default to MONOCROME2 and hope for the best
 	            photometricInterp = new String("MONOCHROME2");
 	        }
-	
+	        
 	        if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
 	                && (fileInfo.pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP) && (fileInfo.bitsAllocated == 8)) {
 	            fileInfo.setDataType(ModelStorageBase.UBYTE);
@@ -1111,12 +1111,83 @@ public class FileDicom extends FileDicomBase {
 	            dimExtents[0] = 4;
 	            dimExtents[1] = 256;
 	            lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
-	
+	            
 	            for (int q = 0; q < dimExtents[1]; q++) {
 	                lut.set(0, q, 1); // the alpha channel is preloaded.
 	            }
 	            // sets the LUT to exist; we wait for the pallete tags to
 	            // describe what the lut should actually look like.
+	            //TODO: these should be specified by 0028,1101 - 1103
+	            
+	            //once thse have been processed, the LUT data can now be read and set
+	            if (tagTable.getValue("0028,1201") != null) {
+	            	
+		            // red channel LUT
+		            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1201"));
+		            Object[] values = tag.getValueList();
+		            int lutVals = values.length;
+		
+		            // load LUT.
+		            if (values instanceof Byte[]) {
+		
+		                for (int qq = 0; qq < lutVals; qq++) {
+		                    lut.set(1, qq, ((Byte) values[qq]).intValue());
+		                }
+		            } else {
+		
+		                for (int qq = 0; qq < lutVals; qq++) {
+		                    lut.set(1, qq, ((Short) values[qq]).intValue());
+		                }
+		            }
+		        }
+		
+		        if (tagTable.getValue("0028,1202") != null) {
+		
+		            // green channel LUT
+		            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1202"));
+		            Object[] values = tag.getValueList();
+		            int lutVals = values.length;
+		            
+		            // load LUT.
+		            if (values instanceof Byte[]) {
+		
+		                for (int qq = 0; qq < lutVals; qq++) {
+		                    lut.set(2, qq, ((Byte) values[qq]).intValue());
+		                }
+		            } else {
+		
+		                for (int qq = 0; qq < lutVals; qq++) {
+		                    lut.set(2, qq, ((Short) values[qq]).intValue());
+		                }
+		            }
+		        }
+		
+		        if (tagTable.getValue("0028,1203") != null) {
+		
+		            // blue channel LUT
+		            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1203"));
+		            Object[] values = tag.getValueList();
+		            int lutVals = values.length;
+		
+		            // load LUT.
+		            if (values instanceof Byte[]) {
+		
+		                for (int qq = 0; qq < lutVals; qq++) {
+		                    lut.set(3, qq, ((Byte) values[qq]).intValue());
+		                }
+		            } else {
+		
+		                for (int qq = 0; qq < lutVals; qq++) {
+		                    lut.set(3, qq, ((Short) values[qq]).intValue());
+		                }
+		            }
+	            
+	
+		            // here we make the lut indexed because we know that
+		            // all the LUT tags are in the LUT.
+		            lut.makeIndexedLUT(null);
+		        }
+	            
 	        } else {
 	            Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation", Preferences.DEBUG_FILEIO);
 	
@@ -1144,73 +1215,6 @@ public class FileDicom extends FileDicomBase {
 	            } else if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
 	                fileInfo.displayType = ModelStorageBase.SHORT;
 	            }
-	        }
-	
-	        if (tagTable.getValue("0028,1201") != null) {
-	
-	            // red channel LUT
-	            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1201"));
-	            Object[] values = tag.getValueList();
-	            int lutVals = values.length;
-	
-	            // load LUT.
-	            if (values instanceof Byte[]) {
-	
-	                for (int qq = 0; qq < lutVals; qq++) {
-	                    lut.set(1, qq, ((Byte) values[qq]).intValue());
-	                }
-	            } else {
-	
-	                for (int qq = 0; qq < lutVals; qq++) {
-	                    lut.set(1, qq, ((Short) values[qq]).intValue());
-	                }
-	            }
-	        }
-	
-	        if (tagTable.getValue("0028,1202") != null) {
-	
-	            // green channel LUT
-	            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1202"));
-	            Object[] values = tag.getValueList();
-	            int lutVals = values.length;
-	
-	            // load LUT.
-	            if (values instanceof Byte[]) {
-	
-	                for (int qq = 0; qq < lutVals; qq++) {
-	                    lut.set(2, qq, ((Byte) values[qq]).intValue());
-	                }
-	            } else {
-	
-	                for (int qq = 0; qq < lutVals; qq++) {
-	                    lut.set(2, qq, ((Short) values[qq]).intValue());
-	                }
-	            }
-	        }
-	
-	        if (tagTable.getValue("0028,1203") != null) {
-	
-	            // blue channel LUT
-	            FileDicomTag tag = tagTable.get(new FileDicomKey("0028,1203"));
-	            Object[] values = tag.getValueList();
-	            int lutVals = values.length;
-	
-	            // load LUT.
-	            if (values instanceof Byte[]) {
-	
-	                for (int qq = 0; qq < lutVals; qq++) {
-	                    lut.set(3, qq, ((Byte) values[qq]).intValue());
-	                }
-	            } else {
-	
-	                for (int qq = 0; qq < lutVals; qq++) {
-	                    lut.set(3, qq, ((Short) values[qq]).intValue());
-	                }
-	            }
-	
-	            // here we make the lut indexed because we know that
-	            // all the LUT tags are in the LUT.
-	            lut.makeIndexedLUT(null);
 	        }
 	
 	        hasHeaderBeenRead = true;
