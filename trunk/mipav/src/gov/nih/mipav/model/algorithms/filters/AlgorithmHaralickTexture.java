@@ -12,9 +12,13 @@ import java.io.*;
 /**
  * DOCUMENT ME!
  *
- * @version  0.5 September 9, 2009
+ * @version  0.5 September 10, 2009
  * @author   William Gandler This code is based on the material in the GLCM Texture Tutorial by Myrka Hall-Beyer at
  *           http://www.fp.ucalgary.ca/mhallbey/tutorial.htm.
+ *           <p> This code can be used for 2D or 2.5D processing.  If optional concatenation is used, then only 1 result
+ *           image is formed by concatenating the calculated features after the original source.  For 3D images the features
+ *           are selected with the t dimension slider.  Note that optional concatenation cannot be used with color
+ *           images.</p>
  *
  *           <p>The Haralick features are based on the frequency of occurrence of the pixel intensity values of 2 pixels
  *           an offset distance apart. The offset distance will almost always be 1. The frequency of occurrence is
@@ -346,6 +350,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int sliceSize = xDim * yDim;
+        int zDim;
         boolean doneNS = false;
         boolean doneNESW = false;
         boolean doneEW = false;
@@ -394,6 +399,14 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         double factor = (greyLevels - 1)/range;
         float sum;
         float product;
+        int z;
+        
+        if (srcImage.getNDims() == 2) {
+            zDim = 1;
+        }
+        else {
+            zDim = srcImage.getExtents()[2];
+        }
         
         if ((srcImage.getType() == ModelStorageBase.FLOAT) || (srcImage.getType() == ModelStorageBase.DOUBLE) ||
             (srcImage.getType() == ModelStorageBase.ARGB_FLOAT)) {
@@ -401,45 +414,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         } else if (range >= 64) {
             rescale = true;
         }
-
-        try {
-            if (srcImage.isColorImage()) {
-                floatBuffer = new float[sliceSize];
-                srcImage.exportRGBData(RGBOffset, 0, sliceSize, floatBuffer);  
-                for (i = 0; i < sliceSize; i++) {
-                    sourceBuffer[i] = (double)floatBuffer[i];
-                }
-                floatBuffer = null;
-            }
-            else {
-                srcImage.exportData(0, sliceSize, sourceBuffer);
-            }
-        } catch (IOException error) {
-            MipavUtil.displayError("AlgorithmHaralickTexture: IOException on srcImage.exportData(0,sliceSize,sourceBuffer)");
-            setCompleted(false);
-
-            return;
-        }
         
-        for (i = 0; i < sliceSize; i++) {
-            sourceBuffer[i] -= imageMin;
-        }
-        
-        if (rescale) {
-            for (i = 0; i < sliceSize; i++) {
-                byteBuffer[i] = (byte) ((sourceBuffer[i] * factor) + 0.5f);       
-            }
-        }
-        else {
-            for (i = 0; i < sliceSize; i++) {
-                byteBuffer[i] = (byte)Math.round(sourceBuffer[i]);
-            }
-        }
-        
-        if (!concatenate) {
-            sourceBuffer = null;
-        }
-
         if (ns) {
             numDirections++;
         }
@@ -548,9 +523,56 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         glcm = new float[matrixSize][matrixSize];
         resultBuffer = new float[resultNumber][sliceSize];
 
+
+        for (z = 0; z < zDim; z++) {
+        try {
+            if (srcImage.isColorImage()) {
+                floatBuffer = new float[sliceSize];
+                srcImage.exportRGBData(RGBOffset, 4*z*sliceSize, sliceSize, floatBuffer);  
+                for (i = 0; i < sliceSize; i++) {
+                    sourceBuffer[i] = (double)floatBuffer[i];
+                }
+                floatBuffer = null;
+            }
+            else {
+                srcImage.exportData(z*sliceSize, sliceSize, sourceBuffer);
+            }
+        } catch (IOException error) {
+            MipavUtil.displayError("AlgorithmHaralickTexture: IOException on srcImage.exportData(0,sliceSize,sourceBuffer)");
+            setCompleted(false);
+
+            return;
+        }
+        
+        for (i = 0; i < sliceSize; i++) {
+            sourceBuffer[i] -= imageMin;
+        }
+        
+        if (rescale) {
+            for (i = 0; i < sliceSize; i++) {
+                byteBuffer[i] = (byte) ((sourceBuffer[i] * factor) + 0.5f);       
+            }
+        }
+        else {
+            for (i = 0; i < sliceSize; i++) {
+                byteBuffer[i] = (byte)Math.round(sourceBuffer[i]);
+            }
+        }
+        
+        if ((!concatenate) && (z == zDim - 1)) {
+            sourceBuffer = null;
+        }
+        
+        for (i = 0; i < resultNumber; i++) {
+            for (j = 0; j < sliceSize; j++) {
+                resultBuffer[i][j] = 0;
+            }
+        }
+
+        
         for (y = yStart; (y <= yEnd) && !threadStopped; y++) {
             
-            fireProgressStateChanged(((int) ((y - yStart) * (100.0f / (yEnd - yStart)))), null, null);
+            fireProgressStateChanged(((int)((z * 100.0f/zDim) + ((y - yStart) * (100.0f / (zDim*(yEnd - yStart)))))), null, null);
             
             for (x = xStart; x <= xEnd; x++) {
                 pos = x + (y * xDim);
@@ -914,7 +936,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
         if (concatenate) {
             try {
-                destImage[0].importData(0, sourceBuffer, false);
+                destImage[0].importData(z*sliceSize, sourceBuffer, false);
             } catch (IOException error) {
                 MipavUtil.displayError("" +
                         "AlgorithmHaralickTexture: IOException on destImage[0].importData(0, sourceBuffer, true)");
@@ -925,31 +947,40 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
             for (i = 0; i < resultNumber; i++) {
                 
                 try {
-                    destImage[0].importData((i+1)*sliceSize, resultBuffer[i], false);
+                    destImage[0].importData((i+1)*zDim*sliceSize + z*sliceSize, resultBuffer[i], false);
                 } catch (IOException error) {
                     MipavUtil.displayError("AlgorithmHaralickTexture: IOException on destImage[" + i +
-                                           "].importData(0,resultBuffer[" + i + "],true)");
+                                           "].importData(0,resultBuffer[" + i + "],false)");
                     setCompleted(false);
     
                     return;
                 }
             } // for (i = 0; i < resultNumber; i++)
-            destImage[0].calcMinMax();
         } // if (concatenate)
         else { // !concatenate
             for (i = 0; i < resultNumber; i++) {
     
                 try {
-                    destImage[i].importData(0, resultBuffer[i], true);
+                    destImage[i].importData(z*sliceSize, resultBuffer[i], false);
                 } catch (IOException error) {
                     MipavUtil.displayError("AlgorithmHaralickTexture: IOException on destImage[" + i +
-                                           "].importData(0,resultBuffer[" + i + "],true)");
+                                           "].importData(0,resultBuffer[" + i + "],false)");
                     setCompleted(false);
     
                     return;
                 }
             } // for (i = 0; i < resultNumber; i++)
         } // else !concatenate
+        } // for (z = 0; z < zDim; z++)
+        
+        if (concatenate) {
+            destImage[0].calcMinMax();
+        }
+        else {
+            for (i = 0; i < resultNumber; i++) {
+                destImage[i].calcMinMax();
+            }
+        }
 
         setCompleted(true);
 
