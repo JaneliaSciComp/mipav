@@ -1347,9 +1347,6 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         gbc3.gridy = 0;
         outputPanel.add(concatenateCheckBox, gbc3);
         concatenateCheckBox.setSelected(false);
-        if (image.isColorImage()) {
-            concatenateCheckBox.setEnabled(false);
-        }
         
         gbc.gridx = 0;
         gbc.gridy = ypos++;
