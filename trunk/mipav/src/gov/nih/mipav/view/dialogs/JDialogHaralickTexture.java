@@ -657,7 +657,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
             resultNumber = numDirections * numOperators;
         }
 
-        String[] name;
+        String[] name = null;
+        String[] imageNameArray = null;
         String dirString = null;
         String opString = null;
         boolean doneNS = false;
@@ -694,96 +695,104 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                 newExtents[1] = image.getExtents()[1];
                 newExtents[2] = zDim;
                 resultImage[0] = new ModelImage(ModelStorageBase.FLOAT, newExtents, name[0]);
-    
+                imageNameArray = new String[zDim];
+                imageNameArray[0] = name[0];
             } // if (concatenate)
-            else { // !concatenate
-                for (i = 0; i < numDirections; i++) {
+            for (i = 0; i < numDirections; i++) {
+
+                if (ns && (!doneNS)) {
+                    dirString = "_ns";
+                    doneNS = true;
+                } else if (nesw && (!doneNESW)) {
+                    dirString = "_nesw";
+                    doneNESW = true;
+                } else if (ew && (!doneEW)) {
+                    dirString = "_ew";
+                    doneEW = true;
+                } else if (senw && (!doneSENW)) {
+                    dirString = "_senw";
+                    doneSENW = true;
+                } else if (invariantDir && (!doneInvariant)) {
+                    dirString = "_invariantDir";
+                    doneInvariant = true;
+                }
     
-                    if (ns && (!doneNS)) {
-                        dirString = "_ns";
-                        doneNS = true;
-                    } else if (nesw && (!doneNESW)) {
-                        dirString = "_nesw";
-                        doneNESW = true;
-                    } else if (ew && (!doneEW)) {
-                        dirString = "_ew";
-                        doneEW = true;
-                    } else if (senw && (!doneSENW)) {
-                        dirString = "_senw";
-                        doneSENW = true;
-                    } else if (invariantDir && (!doneInvariant)) {
-                        dirString = "_invariantDir";
-                        doneInvariant = true;
+                doneContrast = false;
+                doneDissimilarity = false;
+                doneHomogeneity = false;
+                doneInverseOrder1 = false;
+                doneASM = false;
+                doneEnergy = false;
+                doneMaxProbability = false;
+                doneEntropy = false;
+                doneMean = false;
+                doneVariance = false;
+                doneStandardDeviation = false;
+                doneCorrelation = false;
+                doneShade = false;
+                donePromenance = false;
+    
+                for (j = 0; j < numOperators; j++) {
+                    index = j + (i * numOperators);
+    
+                    if (contrast && (!doneContrast)) {
+                        opString = "_contrast";
+                        doneContrast = true;
+                    } else if (dissimilarity && (!doneDissimilarity)) {
+                        opString = "_dissimilarity";
+                        doneDissimilarity = true;
+                    } else if (homogeneity && (!doneHomogeneity)) {
+                        opString = "_homogeneity";
+                        doneHomogeneity = true;
+                    } else if (inverseOrder1 && (!doneInverseOrder1)) {
+                        opString = "_inverseOrder1";
+                        doneInverseOrder1 = true;
+                    } else if (asm && (!doneASM)) {
+                        opString = "_asm";
+                        doneASM = true;
+                    } else if (energy && (!doneEnergy)) {
+                        opString = "_energy";
+                        doneEnergy = true;
+                    } else if (maxProbability && (!doneMaxProbability)) {
+                        opString = "_maxProbability";
+                        doneMaxProbability = true;
+                    } else if (entropy && (!doneEntropy)) {
+                        opString = "_entropy";
+                        doneEntropy = true;
+                    } else if (mean && (!doneMean)) {
+                        opString = "_mean";
+                        doneMean = true;
+                    } else if (variance && (!doneVariance)) {
+                        opString = "_variance";
+                        doneVariance = true;
+                    } else if (standardDeviation && (!doneStandardDeviation)) {
+                        opString = "_standardDeviation";
+                        doneStandardDeviation = true;
+                    } else if (correlation && (!doneCorrelation)) {
+                        opString = "_correlation";
+                        doneCorrelation = true;
+                    } else if (shade && (!doneShade)) {
+                        opString = "_shade";
+                        doneShade = true;
+                    } else if (promenance && (!donePromenance)) {
+                        opString = "_promenance";
+                        donePromenance = true;
                     }
     
-                    doneContrast = false;
-                    doneDissimilarity = false;
-                    doneHomogeneity = false;
-                    doneInverseOrder1 = false;
-                    doneASM = false;
-                    doneEnergy = false;
-                    doneMaxProbability = false;
-                    doneEntropy = false;
-                    doneMean = false;
-                    doneVariance = false;
-                    doneStandardDeviation = false;
-                    doneCorrelation = false;
-                    doneShade = false;
-                    donePromenance = false;
-    
-                    for (j = 0; j < numOperators; j++) {
-                        index = j + (i * numOperators);
-    
-                        if (contrast && (!doneContrast)) {
-                            opString = "_contrast";
-                            doneContrast = true;
-                        } else if (dissimilarity && (!doneDissimilarity)) {
-                            opString = "_dissimilarity";
-                            doneDissimilarity = true;
-                        } else if (homogeneity && (!doneHomogeneity)) {
-                            opString = "_homogeneity";
-                            doneHomogeneity = true;
-                        } else if (inverseOrder1 && (!doneInverseOrder1)) {
-                            opString = "_inverseOrder1";
-                            doneInverseOrder1 = true;
-                        } else if (asm && (!doneASM)) {
-                            opString = "_asm";
-                            doneASM = true;
-                        } else if (energy && (!doneEnergy)) {
-                            opString = "_energy";
-                            doneEnergy = true;
-                        } else if (maxProbability && (!doneMaxProbability)) {
-                            opString = "_maxProbability";
-                            doneMaxProbability = true;
-                        } else if (entropy && (!doneEntropy)) {
-                            opString = "_entropy";
-                            doneEntropy = true;
-                        } else if (mean && (!doneMean)) {
-                            opString = "_mean";
-                            doneMean = true;
-                        } else if (variance && (!doneVariance)) {
-                            opString = "_variance";
-                            doneVariance = true;
-                        } else if (standardDeviation && (!doneStandardDeviation)) {
-                            opString = "_standardDeviation";
-                            doneStandardDeviation = true;
-                        } else if (correlation && (!doneCorrelation)) {
-                            opString = "_correlation";
-                            doneCorrelation = true;
-                        } else if (shade && (!doneShade)) {
-                            opString = "_shade";
-                            doneShade = true;
-                        } else if (promenance && (!donePromenance)) {
-                            opString = "_promenance";
-                            donePromenance = true;
-                        }
-    
+                    if (concatenate) {
+                        imageNameArray[index+1] = makeImageName(image.getImageName(), dirString + opString);  
+                    }
+                    else {
                         name[index] = makeImageName(image.getImageName(), dirString + opString);
                         resultImage[index] = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name[index]);
-    
-                    } // for (j = 0; j < numOperators; j++)
-                } // for (i = 0; i < numDirections; i++)
-            } // else !concatenate
+                    }
+
+            } // for (j = 0; j < numOperators; j++)
+        } // for (i = 0; i < numDirections; i++)
+                
+        if (concatenate) {
+            resultImage[0].setImageNameArray(imageNameArray);
+        }
 
             if (image.isColorImage()) {
                 textureAlgo = new AlgorithmHaralickTexture(resultImage, image, RGBOffset, windowSize, offsetDistance,
