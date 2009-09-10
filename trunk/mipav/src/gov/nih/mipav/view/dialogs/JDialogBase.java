@@ -591,6 +591,7 @@ public abstract class JDialogBase extends JDialog
      */
     public static final void updateFileInfo(ModelImage image, ModelImage resultImage) {
         FileInfoBase[] fileInfo;
+        int j;
 
         if (resultImage.getNDims() == 2) {
             fileInfo = resultImage.getFileInfo();
@@ -627,7 +628,6 @@ public abstract class JDialogBase extends JDialog
             }
 
             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                int j;
                 if (image.getNDims() > 2) {
                     j = Math.min(i, image.getExtents()[2] - 1);
                 }
@@ -664,23 +664,25 @@ public abstract class JDialogBase extends JDialog
             }
         } else if (resultImage.getNDims() == 4) {
             fileInfo = resultImage.getFileInfo();
+            int len = image.getFileInfo().length;
 
             for (int i = 0; i < (resultImage.getExtents()[2] * resultImage.getExtents()[3]); i++) {
-                fileInfo[i].setModality(image.getFileInfo()[i].getModality());
-                fileInfo[i].setFileDirectory(image.getFileInfo()[i].getFileDirectory());
-                fileInfo[i].setEndianess(image.getFileInfo()[i].getEndianess());
-                fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[i].getUnitsOfMeasure());
-                fileInfo[i].setResolutions(image.getFileInfo()[i].getResolutions());
+                j = Math.min(i, len - 1);
+                fileInfo[i].setModality(image.getFileInfo()[j].getModality());
+                fileInfo[i].setFileDirectory(image.getFileInfo()[j].getFileDirectory());
+                fileInfo[i].setEndianess(image.getFileInfo()[j].getEndianess());
+                fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[j].getUnitsOfMeasure());
+                fileInfo[i].setResolutions(image.getFileInfo()[j].getResolutions());
                 fileInfo[i].setExtents(resultImage.getExtents());
                 fileInfo[i].setMax(resultImage.getMax());
                 fileInfo[i].setMin(resultImage.getMin());
                 if (image.getNDims() > 2) {
                     fileInfo[i].setImageOrientation(image.getImageOrientation());
-                    fileInfo[i].setAxisOrientation(image.getFileInfo()[i].getAxisOrientation());
+                    fileInfo[i].setAxisOrientation(image.getFileInfo()[j].getAxisOrientation());
                 }
-                fileInfo[i].setOrigin(image.getFileInfo()[i].getOrigin());
-                fileInfo[i].setPixelPadValue(image.getFileInfo()[i].getPixelPadValue());
-                fileInfo[i].setPhotometric(image.getFileInfo()[i].getPhotometric());
+                fileInfo[i].setOrigin(image.getFileInfo()[j].getOrigin());
+                fileInfo[i].setPixelPadValue(image.getFileInfo()[j].getPixelPadValue());
+                fileInfo[i].setPhotometric(image.getFileInfo()[j].getPhotometric());
             }
         }
     }
