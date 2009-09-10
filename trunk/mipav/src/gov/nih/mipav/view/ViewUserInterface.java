@@ -742,7 +742,63 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } catch (final IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
-        } else if (command.startsWith("PlugInGeneric")) {
+        } else if (command.startsWith("PlugInFile")) {
+        	Object thePlugIn = null;
+            final String plugInName = "PlugIn" + command.substring(10);
+            // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+
+            try {
+                thePlugIn = Class.forName(plugInName).newInstance();
+
+                if (thePlugIn instanceof PlugInFile) {
+
+                    if ( ((PlugInFile) thePlugIn).canWriteImages() && ((PlugInFile) thePlugIn).canReadImages()) {
+                    	Object[] options = new String[2];
+                    	String read = "Read image";
+                    	options[0] = read;
+                    	options[1] = "Write image";
+                    	String title = "Select plugin type";
+                    	String message = "This plugin can both read and write images.  "+
+                    						"Which action should the plugin perform?";
+                    	int opt = JOptionPane.showOptionDialog(mainFrame, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, 
+                    												null, options, read);
+                    	if(opt == 0) {
+                    		ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"+plugInName);
+                        	this.actionPerformed(e);
+                    	} else if(opt == 1) {
+                    		ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"+plugInName);
+                        	this.actionPerformed(e);
+                    	}
+                    	
+                    } else if ( ((PlugInFile) thePlugIn).canReadImages()) {
+                    	ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"+plugInName);
+                    	this.actionPerformed(e);
+                    } else if ( ((PlugInFile) thePlugIn).canWriteImages()) {
+                    	ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"+plugInName);
+                    	this.actionPerformed(e);
+                    } else {
+                        MipavUtil.displayInfo(plugInName + " is a PlugInFile that neither writes nor reads images.");
+                    }
+                } else {
+                    MipavUtil.displayError("PlugIn " + plugInName
+                            + " claims to be an File PlugIn, but does not implement PlugInFile.");
+                }
+            } catch (final UnsupportedClassVersionError ucve) {
+                Preferences
+                        .debug(
+                                "Unable to load plugin: "
+                                        + plugInName
+                                        + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
+                                Preferences.DEBUG_MINOR);
+                ucve.printStackTrace();
+            } catch (final ClassNotFoundException e) {
+                MipavUtil.displayError("PlugIn not found: " + plugInName);
+            } catch (final InstantiationException e) {
+                MipavUtil.displayError("Unable to load plugin (ins)");
+            } catch (final IllegalAccessException e) {
+                MipavUtil.displayError("Unable to load plugin (acc)");
+            }
+    	} else if (command.startsWith("PlugInGeneric")) {
             Object thePlugIn = null;
 
             final String plugInName = "PlugIn" + command.substring(13);
