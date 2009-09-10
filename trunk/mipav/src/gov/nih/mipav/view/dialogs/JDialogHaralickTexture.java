@@ -649,7 +649,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
      * Once all the necessary variables are set, call the Gaussian Haralick feature algorithm.
      */
     protected void callAlgorithm() {
-        int i, j, index;
+        int i, j, k, index;
         if (concatenate) {
             resultNumber = 1;
         }
@@ -681,6 +681,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         boolean doneShade;
         boolean donePromenance;
         int zDim;
+        int tDim;
         int newExtents[];
 
         try {
@@ -688,15 +689,31 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
             name = new String[resultNumber];
             
             if (concatenate) {
-                name[0] = makeImageName(image.getImageName(), "_Haralick");
-                zDim = 1 + numDirections * numOperators;
-                newExtents = new int[3];
-                newExtents[0] = image.getExtents()[0];
-                newExtents[1] = image.getExtents()[1];
-                newExtents[2] = zDim;
-                resultImage[0] = new ModelImage(ModelStorageBase.FLOAT, newExtents, name[0]);
-                imageNameArray = new String[zDim];
-                imageNameArray[0] = name[0];
+                if (image.getNDims() == 2) {
+                    name[0] = makeImageName(image.getImageName(), "_Haralick");
+                    zDim = 1 + numDirections * numOperators;
+                    newExtents = new int[3];
+                    newExtents[0] = image.getExtents()[0];
+                    newExtents[1] = image.getExtents()[1];
+                    newExtents[2] = zDim;
+                    resultImage[0] = new ModelImage(ModelStorageBase.FLOAT, newExtents, name[0]);
+                    imageNameArray = new String[zDim];
+                    imageNameArray[0] = name[0];
+                } // if (image.getNDims() == 2)
+                else { // image.getNDims() == 3
+                    name[0] = makeImageName(image.getImageName(), "_Haralick");
+                    tDim = 1 + numDirections * numOperators;
+                    newExtents = new int[4];
+                    newExtents[0] = image.getExtents()[0];
+                    newExtents[1] = image.getExtents()[1];
+                    newExtents[2] = image.getExtents()[2];
+                    newExtents[3] = tDim;
+                    resultImage[0] = new ModelImage(ModelStorageBase.FLOAT, newExtents, name[0]);
+                    imageNameArray = new String[newExtents[2]*newExtents[3]];
+                    for (i = 0; i < image.getExtents()[2]; i++) {
+                        imageNameArray[i] = name[0];
+                    }
+                }
             } // if (concatenate)
             for (i = 0; i < numDirections; i++) {
 
@@ -780,7 +797,15 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                     }
     
                     if (concatenate) {
-                        imageNameArray[index+1] = makeImageName(image.getImageName(), dirString + opString);  
+                        if (image.getNDims() == 2) {
+                            imageNameArray[index+1] = makeImageName(image.getImageName(), dirString + opString);
+                        }
+                        else {
+                            for (k = 0; k < image.getExtents()[2]; k++) {
+                                imageNameArray[(index+1)*image.getExtents()[2] + k] = 
+                                    makeImageName(image.getImageName(), dirString + opString);
+                            }
+                        }
                     }
                     else {
                         name[index] = makeImageName(image.getImageName(), dirString + opString);
