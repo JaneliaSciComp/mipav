@@ -12,7 +12,7 @@ import java.io.*;
 /**
  * DOCUMENT ME!
  *
- * @version  0.4 April 14, 2009
+ * @version  0.5 September 9, 2009
  * @author   William Gandler This code is based on the material in the GLCM Texture Tutorial by Myrka Hall-Beyer at
  *           http://www.fp.ucalgary.ca/mhallbey/tutorial.htm.
  *
@@ -158,6 +158,11 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * Sum over i,j of ((i + j - 2 * glcm mean)**4) * Probability(i,j)
      */
     private boolean promenance;
+    
+    /** If true, form only 1 result image by concatenating the original source to each of the 
+     * calculated features.
+     */
+    private boolean concatenate;
 
     /** Size of square window used in calculating each glcm matrix - must be an odd number. */
     private int windowSize = 7;
@@ -196,13 +201,15 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * @param              correlation        true if gray level coordinate matrix correlation calculated
      * @param              shade              true if cluster shade calculated
      * @param              promenance         true if cluster promenance calculated
+     * @param              concatenate        If true, only 1 result image formed by concatenating the original 
+     *                                        source to each of the calculated features
      */
     public AlgorithmHaralickTexture(ModelImage[] destImg, ModelImage srcImg, int windowSize, int offsetDistance, int greyLevels,
                                     boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
                                     boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
                                     boolean variance, boolean standardDeviation, boolean correlation,
-                                    boolean shade, boolean promenance) {
+                                    boolean shade, boolean promenance, boolean concatenate) {
         super(null, srcImg);
         destImage = destImg;
         this.windowSize = windowSize;
@@ -227,6 +234,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         this.correlation = correlation;
         this.shade = shade;
         this.promenance = promenance;
+        this.concatenate = concatenate;
     }
     
     /**
@@ -256,14 +264,16 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * @param              standardDeviation  true if gray level coordinate matrix standard deviation calculated
      * @param              correlation        true if gray level coordinate matrix correlation calculated
      * @param              shade              true if cluster shade calculated
-     * @param              promenance         true if cluster promenance calculated     
+     * @param              promenance         true if cluster promenance calculated 
+     * @param              concatenate        If true, only 1 result image formed by concatenating the original 
+     *                                        source to each of the calculated features    
      */
     public AlgorithmHaralickTexture(ModelImage[] destImg, ModelImage srcImg, int RGBOffset, int windowSize, int offsetDistance, int greyLevels,
                                     boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
                                     boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
                                     boolean variance, boolean standardDeviation, boolean correlation,
-                                    boolean shade, boolean promenance) {
+                                    boolean shade, boolean promenance, boolean concatenate) {
         super(null, srcImg);
         destImage = destImg;
         this.RGBOffset = RGBOffset;
@@ -289,6 +299,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         this.correlation = correlation;
         this.shade = shade;
         this.promenance = promenance;
+        this.concatenate = concatenate;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -425,7 +436,9 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
             }
         }
         
-        sourceBuffer = null;
+        if (!concatenate) {
+            sourceBuffer = null;
+        }
 
         if (ns) {
             numDirections++;
@@ -899,18 +912,44 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
             return;
         }
 
-        for (i = 0; i < resultNumber; i++) {
-
+        if (concatenate) {
             try {
-                destImage[i].importData(0, resultBuffer[i], true);
+                destImage[0].importData(0, sourceBuffer, false);
             } catch (IOException error) {
-                MipavUtil.displayError("AlgorithmHaralickTexture: IOException on destImage[" + i +
-                                       "].importData(0,resultBuffer[" + i + "],true)");
-                setCompleted(false);
+                MipavUtil.displayError("" +
+                        "AlgorithmHaralickTexture: IOException on destImage[0].importData(0, sourceBuffer, true)");
+               setCompleted(false);
 
-                return;
-            }
-        } // for (i = 0; i < resultNumber; i++)
+               return;
+           }
+            for (i = 0; i < resultNumber; i++) {
+                
+                try {
+                    destImage[0].importData((i+1)*sliceSize, resultBuffer[i], false);
+                } catch (IOException error) {
+                    MipavUtil.displayError("AlgorithmHaralickTexture: IOException on destImage[" + i +
+                                           "].importData(0,resultBuffer[" + i + "],true)");
+                    setCompleted(false);
+    
+                    return;
+                }
+            } // for (i = 0; i < resultNumber; i++)
+            destImage[0].calcMinMax();
+        } // if (concatenate)
+        else { // !concatenate
+            for (i = 0; i < resultNumber; i++) {
+    
+                try {
+                    destImage[i].importData(0, resultBuffer[i], true);
+                } catch (IOException error) {
+                    MipavUtil.displayError("AlgorithmHaralickTexture: IOException on destImage[" + i +
+                                           "].importData(0,resultBuffer[" + i + "],true)");
+                    setCompleted(false);
+    
+                    return;
+                }
+            } // for (i = 0; i < resultNumber; i++)
+        } // else !concatenate
 
         setCompleted(true);
 
