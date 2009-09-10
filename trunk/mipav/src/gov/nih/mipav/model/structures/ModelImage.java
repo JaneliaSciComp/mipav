@@ -64,6 +64,9 @@ public class ModelImage extends ModelStorageBase {
      * file name.
      */
     private String imageName;
+    
+    /** If imageNameArray is not null, then a different image name will appear on every slice */
+    private String imageNameArray[] = null;
 
     /** Indicates the image order when two images are displayed in the same frame. */
     private int imageOrder = IMAGE_A;
@@ -2724,6 +2727,18 @@ public class ModelImage extends ModelStorageBase {
         if (fileInfo != null) {
             fileInfo[0].setModality(type);
         }
+    }
+    
+    /** 
+     * Accesor to set imageNameArray
+     * @param imageNameArray
+     */
+    public void setImageNameArray(String imageNameArray[]) {
+        this.imageNameArray = imageNameArray.clone();
+    }
+    
+    public String[] getImageNameArray() {
+        return imageNameArray;
     }
 
     /**
