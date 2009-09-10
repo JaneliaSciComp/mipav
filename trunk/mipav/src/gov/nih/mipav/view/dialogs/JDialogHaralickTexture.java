@@ -216,6 +216,13 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     
     /** Number of grey levels used if data must be rescaled */
     private int greyLevels;
+    
+    private JCheckBox concatenateCheckBox;
+    
+    /** If true, only one result image with the original source concatenated with the
+     *  calculated features.
+     */
+    private boolean concatenate = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -359,7 +366,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         str += standardDeviation + delim;
         str += correlation + delim;
         str += shade + delim;
-        str += promenance;
+        str += promenance + delim;
+        str += concatenate;
 
         return str;
     }
@@ -405,6 +413,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                 correlationCheckBox.setSelected(MipavUtil.getBoolean(st));
                 shadeCheckBox.setSelected(MipavUtil.getBoolean(st));
                 promenanceCheckBox.setSelected(MipavUtil.getBoolean(st));
+                concatenateCheckBox.setSelected(MipavUtil.getBoolean(st));
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -600,6 +609,15 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     public void setPromenance(boolean promenance) {
         this.promenance = promenance;
     }
+    /**
+     * Accessor that sets if there is only 1 result image with the original
+     * source concatenated with the calculated features
+     * @param concatenate
+     */
+    
+    public void setConcatenate(boolean concatenate) {
+        this.concatenate = concatenate;
+    }
 
     /**
      * Accessor that sets the window size.
@@ -628,12 +646,16 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     }
 
     /**
-     * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
-     * and whether or not there is a separate destination image.
+     * Once all the necessary variables are set, call the Gaussian Haralick feature algorithm.
      */
     protected void callAlgorithm() {
         int i, j, index;
-        resultNumber = numDirections * numOperators;
+        if (concatenate) {
+            resultNumber = 1;
+        }
+        else {
+            resultNumber = numDirections * numOperators;
+        }
 
         String[] name;
         String dirString = null;
@@ -657,110 +679,126 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         boolean doneCorrelation;
         boolean doneShade;
         boolean donePromenance;
+        int zDim;
+        int newExtents[];
 
         try {
             resultImage = new ModelImage[resultNumber];
             name = new String[resultNumber];
-
-            for (i = 0; i < numDirections; i++) {
-
-                if (ns && (!doneNS)) {
-                    dirString = "_ns";
-                    doneNS = true;
-                } else if (nesw && (!doneNESW)) {
-                    dirString = "_nesw";
-                    doneNESW = true;
-                } else if (ew && (!doneEW)) {
-                    dirString = "_ew";
-                    doneEW = true;
-                } else if (senw && (!doneSENW)) {
-                    dirString = "_senw";
-                    doneSENW = true;
-                } else if (invariantDir && (!doneInvariant)) {
-                    dirString = "_invariantDir";
-                    doneInvariant = true;
-                }
-
-                doneContrast = false;
-                doneDissimilarity = false;
-                doneHomogeneity = false;
-                doneInverseOrder1 = false;
-                doneASM = false;
-                doneEnergy = false;
-                doneMaxProbability = false;
-                doneEntropy = false;
-                doneMean = false;
-                doneVariance = false;
-                doneStandardDeviation = false;
-                doneCorrelation = false;
-                doneShade = false;
-                donePromenance = false;
-
-                for (j = 0; j < numOperators; j++) {
-                    index = j + (i * numOperators);
-
-                    if (contrast && (!doneContrast)) {
-                        opString = "_contrast";
-                        doneContrast = true;
-                    } else if (dissimilarity && (!doneDissimilarity)) {
-                        opString = "_dissimilarity";
-                        doneDissimilarity = true;
-                    } else if (homogeneity && (!doneHomogeneity)) {
-                        opString = "_homogeneity";
-                        doneHomogeneity = true;
-                    } else if (inverseOrder1 && (!doneInverseOrder1)) {
-                        opString = "_inverseOrder1";
-                        doneInverseOrder1 = true;
-                    } else if (asm && (!doneASM)) {
-                        opString = "_asm";
-                        doneASM = true;
-                    } else if (energy && (!doneEnergy)) {
-                        opString = "_energy";
-                        doneEnergy = true;
-                    } else if (maxProbability && (!doneMaxProbability)) {
-                        opString = "_maxProbability";
-                        doneMaxProbability = true;
-                    } else if (entropy && (!doneEntropy)) {
-                        opString = "_entropy";
-                        doneEntropy = true;
-                    } else if (mean && (!doneMean)) {
-                        opString = "_mean";
-                        doneMean = true;
-                    } else if (variance && (!doneVariance)) {
-                        opString = "_variance";
-                        doneVariance = true;
-                    } else if (standardDeviation && (!doneStandardDeviation)) {
-                        opString = "_standardDeviation";
-                        doneStandardDeviation = true;
-                    } else if (correlation && (!doneCorrelation)) {
-                        opString = "_correlation";
-                        doneCorrelation = true;
-                    } else if (shade && (!doneShade)) {
-                        opString = "_shade";
-                        doneShade = true;
-                    } else if (promenance && (!donePromenance)) {
-                        opString = "_promenance";
-                        donePromenance = true;
+            
+            if (concatenate) {
+                name[0] = makeImageName(image.getImageName(), "_Haralick");
+                zDim = 1 + numDirections * numOperators;
+                newExtents = new int[3];
+                newExtents[0] = image.getExtents()[0];
+                newExtents[1] = image.getExtents()[1];
+                newExtents[2] = zDim;
+                resultImage[0] = new ModelImage(ModelStorageBase.FLOAT, newExtents, name[0]);
+    
+            } // if (concatenate)
+            else { // !concatenate
+                for (i = 0; i < numDirections; i++) {
+    
+                    if (ns && (!doneNS)) {
+                        dirString = "_ns";
+                        doneNS = true;
+                    } else if (nesw && (!doneNESW)) {
+                        dirString = "_nesw";
+                        doneNESW = true;
+                    } else if (ew && (!doneEW)) {
+                        dirString = "_ew";
+                        doneEW = true;
+                    } else if (senw && (!doneSENW)) {
+                        dirString = "_senw";
+                        doneSENW = true;
+                    } else if (invariantDir && (!doneInvariant)) {
+                        dirString = "_invariantDir";
+                        doneInvariant = true;
                     }
-
-                    name[index] = makeImageName(image.getImageName(), dirString + opString);
-                    resultImage[index] = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name[index]);
-
-                } // for (j = 0; j < numOperators; j++)
-            } // for (i = 0; i < numDirections; i++)
+    
+                    doneContrast = false;
+                    doneDissimilarity = false;
+                    doneHomogeneity = false;
+                    doneInverseOrder1 = false;
+                    doneASM = false;
+                    doneEnergy = false;
+                    doneMaxProbability = false;
+                    doneEntropy = false;
+                    doneMean = false;
+                    doneVariance = false;
+                    doneStandardDeviation = false;
+                    doneCorrelation = false;
+                    doneShade = false;
+                    donePromenance = false;
+    
+                    for (j = 0; j < numOperators; j++) {
+                        index = j + (i * numOperators);
+    
+                        if (contrast && (!doneContrast)) {
+                            opString = "_contrast";
+                            doneContrast = true;
+                        } else if (dissimilarity && (!doneDissimilarity)) {
+                            opString = "_dissimilarity";
+                            doneDissimilarity = true;
+                        } else if (homogeneity && (!doneHomogeneity)) {
+                            opString = "_homogeneity";
+                            doneHomogeneity = true;
+                        } else if (inverseOrder1 && (!doneInverseOrder1)) {
+                            opString = "_inverseOrder1";
+                            doneInverseOrder1 = true;
+                        } else if (asm && (!doneASM)) {
+                            opString = "_asm";
+                            doneASM = true;
+                        } else if (energy && (!doneEnergy)) {
+                            opString = "_energy";
+                            doneEnergy = true;
+                        } else if (maxProbability && (!doneMaxProbability)) {
+                            opString = "_maxProbability";
+                            doneMaxProbability = true;
+                        } else if (entropy && (!doneEntropy)) {
+                            opString = "_entropy";
+                            doneEntropy = true;
+                        } else if (mean && (!doneMean)) {
+                            opString = "_mean";
+                            doneMean = true;
+                        } else if (variance && (!doneVariance)) {
+                            opString = "_variance";
+                            doneVariance = true;
+                        } else if (standardDeviation && (!doneStandardDeviation)) {
+                            opString = "_standardDeviation";
+                            doneStandardDeviation = true;
+                        } else if (correlation && (!doneCorrelation)) {
+                            opString = "_correlation";
+                            doneCorrelation = true;
+                        } else if (shade && (!doneShade)) {
+                            opString = "_shade";
+                            doneShade = true;
+                        } else if (promenance && (!donePromenance)) {
+                            opString = "_promenance";
+                            donePromenance = true;
+                        }
+    
+                        name[index] = makeImageName(image.getImageName(), dirString + opString);
+                        resultImage[index] = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name[index]);
+    
+                    } // for (j = 0; j < numOperators; j++)
+                } // for (i = 0; i < numDirections; i++)
+            } // else !concatenate
 
             if (image.isColorImage()) {
                 textureAlgo = new AlgorithmHaralickTexture(resultImage, image, RGBOffset, windowSize, offsetDistance,
                         greyLevels, ns, nesw, ew,
                         senw, invariantDir, contrast, dissimilarity, homogeneity,
                         inverseOrder1, asm, energy, maxProbability, entropy, mean,
-                        variance, standardDeviation, correlation, shade, promenance);    
+                        variance, standardDeviation, correlation, shade, promenance,
+                        concatenate);    
             }
             else {
                 textureAlgo = new AlgorithmHaralickTexture(resultImage, image, windowSize, offsetDistance, greyLevels, ns, nesw, ew,
                                                            senw, invariantDir, contrast, dissimilarity, homogeneity,
                                                            inverseOrder1, asm, energy, maxProbability, entropy, mean,
-                                                           variance, standardDeviation, correlation, shade, promenance);
+                                                           variance, standardDeviation, correlation, shade, promenance,
+                                                           concatenate);
             }
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -849,6 +887,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         setCorrelation(scriptParameters.getParams().getBoolean("do_calc_correlation"));
         setShade(scriptParameters.getParams().getBoolean("do_calc_shade"));
         setPromenance(scriptParameters.getParams().getBoolean("do_calc_promenance"));
+        setConcatenate(scriptParameters.getParams().getBoolean("do_concatenate"));
 
         if ((windowSize % 2) == 0) {
             throw new ParameterException("window_size", "Window size must not be even");
@@ -904,6 +943,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_correlation", correlation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_shade", shade));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_promenance", promenance));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_concatenate", concatenate));
     }
 
     /**
@@ -1256,6 +1296,30 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         gbc.gridx = 0;
         gbc.gridy = ypos++;
         mainPanel.add(operatorPanel, gbc);
+        
+        JPanel outputPanel = new JPanel(new GridBagLayout());
+        gbc3 = new GridBagConstraints();
+        gbc3.gridwidth = 1;
+        gbc3.gridheight = 1;
+        gbc3.anchor = GridBagConstraints.WEST;
+        gbc3.weightx = 1;
+        gbc3.insets = new Insets(3, 3, 3, 3);
+        gbc3.fill = GridBagConstraints.HORIZONTAL;
+        outputPanel.setBorder(buildTitledBorder("Output options"));
+        
+        concatenateCheckBox = new JCheckBox("Concatenate source and calculated features together");
+        concatenateCheckBox.setFont(serif12);
+        gbc3.gridx = 0;
+        gbc3.gridy = 0;
+        outputPanel.add(concatenateCheckBox, gbc3);
+        concatenateCheckBox.setSelected(false);
+        if (image.isColorImage()) {
+            concatenateCheckBox.setEnabled(false);
+        }
+        
+        gbc.gridx = 0;
+        gbc.gridy = ypos++;
+        mainPanel.add(outputPanel, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -1403,6 +1467,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
             return false;
         }
+        
+        concatenate = concatenateCheckBox.isSelected();
 
         return true;
     }
