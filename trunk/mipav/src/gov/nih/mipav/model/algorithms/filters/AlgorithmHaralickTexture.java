@@ -17,8 +17,7 @@ import java.io.*;
  *           http://www.fp.ucalgary.ca/mhallbey/tutorial.htm.
  *           <p> This code can be used for 2D or 2.5D processing.  If optional concatenation is used, then only 1 result
  *           image is formed by concatenating the calculated features after the original source.  For 3D images the features
- *           are selected with the t dimension slider.  Note that optional concatenation cannot be used with color
- *           images.</p>
+ *           are selected with the t dimension slider.</p>
  *
  *           <p>The Haralick features are based on the frequency of occurrence of the pixel intensity values of 2 pixels
  *           an offset distance apart. The offset distance will almost always be 1. The frequency of occurrence is
