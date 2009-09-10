@@ -953,7 +953,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
-            menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Barrel distortion correction", false);
             menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
             menuBuilder.setMenuItemEnabled("Circle to rectangle", false);
