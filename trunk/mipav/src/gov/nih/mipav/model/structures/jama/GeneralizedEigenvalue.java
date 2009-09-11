@@ -17032,8 +17032,8 @@ loop3:                       {
     } // dlaset
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLASR Original DLASR created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK auxiliary routine DLASR Original DLASR created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlasr applies a sequence of plane rotations to a real matrix A, from either the left or the right.
      * when side = 'L', the transformation takes the form
      *     A = P * A
@@ -17044,7 +17044,7 @@ loop3:                       {
      * 
      * When direct = 'F' (Forward sequence), then
      *     P = P(z-2) * ... * P(1) * P(0)
-     * and when dired = 'B' (Backward sequence), then
+     * and when direct = 'B' (Backward sequence), then
      *     P = P(0) * P(1) * ... * P(z-2)
      * where P(k) is a plane rotation matrix defined by the 2-by-2 rotation
      *     R(k) = (  c(k)  s(k)  )
@@ -17656,8 +17656,8 @@ loop4:
     } // dlassq
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLASV2 Original DLASV2 created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK auxiliary routine DLASV2 Original DLASV2 created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlasv2 computes the singular value decomposition of a 2-by-2 triangular matrix 
      *  [ f g ]
      *  [ 0 h ]. 
