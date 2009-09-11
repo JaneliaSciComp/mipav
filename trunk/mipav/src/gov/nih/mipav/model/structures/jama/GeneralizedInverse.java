@@ -3353,6 +3353,63 @@ public class GeneralizedInverse {
     } // dswap
     
     /**
+     * This is a port of the 3/11/78 linpack routine drot Original code written by Jack Dongarra.
+     *
+     * @param  n     int
+     * @param  dx    double[]
+     * @param  incx  int
+     * @param  dy    double[]
+     * @param  incy  int
+     * @param  c     double
+     * @param  s     double
+     */
+    private void drot(int n, double[] dx, int incx, double[] dy, int incy, double c, double s) {
+        double dtemp;
+        int i;
+        int ix;
+        int iy;
+
+        if (n <= 0) {
+            return;
+        }
+
+        if ((incx != 1) || (incy != 1)) {
+
+            // Code for unequal increments or equal increments not equal to 1
+            ix = 0;
+            iy = 0;
+
+            if (incx < 0) {
+                ix = (-n + 1) * incx;
+            }
+
+            if (incy < 0) {
+                iy = (-n + 1) * incy;
+            }
+
+            for (i = 1; i <= n; i++) {
+                dtemp = (c * dx[ix]) + (s * dy[iy]);
+                dy[iy] = (c * dy[iy]) - (s * dx[ix]);
+                dx[ix] = dtemp;
+                ix = ix + incx;
+                iy = iy + incy;
+            } // for (i = 1; i <= n; i++)
+
+            return;
+        } // if ((incx != 1) || (incy != 1))
+
+        // Code for both increments equal to 1
+        for (i = 0; i < n; i++) {
+            dtemp = (c * dx[i]) + (s * dy[i]);
+            dy[i] = (c * dy[i]) - (s * dx[i]);
+            dx[i] = dtemp;
+        } // for (i = 0; i < n; i++)
+
+        return;
+    } // drot
+
+    
+    /**
      * This is a port of the version 3.2 LAPACK auxiliary routine DLABAD Original DLABAD created by Univ. of Tennessee,
      * Univ. of California Berkeley,  Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlabad takes as input the values computed by dlamch for underflow and overflow, and returns the square root
@@ -3478,6 +3535,732 @@ public class GeneralizedInverse {
 
         return value;
     } // dlange
+    
+    /**  This is a port of version 3.2 LAPACK auxiliary routine DLAS2.  Original DLAS2 created by 
+     *   Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., 
+     *   November, 2006
+    *  Purpose
+    *  =======
+    *
+    *  DLAS2  computes the singular values of the 2-by-2 matrix
+    *     [  F   G  ]
+    *     [  0   H  ].
+    *  On return, SSMIN is the smaller singular value and SSMAX is the
+    *  larger singular value.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  F       (input) DOUBLE PRECISION
+    *          The (1,1) element of the 2-by-2 matrix.
+    *
+    *  G       (input) DOUBLE PRECISION
+    *          The (1,2) element of the 2-by-2 matrix.
+    *
+    *  H       (input) DOUBLE PRECISION
+    *          The (2,2) element of the 2-by-2 matrix.
+    *
+    *  SSMIN   (output) DOUBLE PRECISION
+    *          The smaller singular value.
+    *
+    *  SSMAX   (output) DOUBLE PRECISION
+    *          The larger singular value.
+    *
+    *  Further Details
+    *  ===============
+    *
+    *  Barring over/underflow, all output quantities are correct to within
+    *  a few units in the last place (ulps), even in the absence of a guard
+    *  digit in addition/subtraction.
+    *
+    *  In IEEE arithmetic, the code works correctly if one matrix element is
+    *  infinite.
+    *
+    *  Overflow will not occur unless the largest singular value itself
+    *  overflows, or is within a few ulps of overflow. (On machines with
+    *  partial overflow, like the Cray, overflow may occur if the largest
+    *  singular value is within a factor of 2 of overflow.)
+    *
+    *  Underflow is harmless if underflow is gradual. Otherwise, results
+    *  may correspond to a matrix modified by perturbations of size near
+    *  the underflow threshold.
+    */
+    private void dlas2(double f[], double g[], double h[], double ssmin[], double ssmax[]) {
+        double as;
+        double at;
+        double au;
+        double c;
+        double fa;
+        double fhmn;
+        double fhmx;
+        double ga;
+        double ha;
+        double temp;
+        
+        fa = Math.abs(f[0]);
+        ga = Math.abs(g[0]);
+        ha = Math.abs(h[0]);
+        fhmn = Math.min(fa, ha);
+        fhmx = Math.max(fa, ha);
+        if (fhmn == 0.0) {
+            ssmin[0] = 0.0;
+            if (fhmx == 0.0) {
+                ssmax[0] = ga;
+            }
+            else {
+                temp = Math.min(fhmx, ga)/Math.max(fhmx, ga);
+                ssmax[0] = Math.max(fhmx, ga) * Math.sqrt(1.0 + temp*temp);
+             }
+        } // if (fhmn == 0.0)
+        else { // fhmn != 0.0
+            if (ga < fhmx) {
+                as = 1.0 + fhmn/fhmx;
+                at = (fhmx - fhmn)/fhmx;
+                au = ga/fhmx;
+                au = au * au;
+                c = 2.0/(Math.sqrt(as*as+au) + Math.sqrt(at*at+au));
+                ssmin[0] = fhmn * c;
+                ssmax[0] = fhmx/c;
+            } // if (ga < fhmx)
+            else { // ga >= fhmx
+                au = fhmx/ga;
+                if (au == 0.0) {
+                    // Avoid possible harmful underflow if exponent range
+                    // asymmetric (true ssmin[0] may not underflow even if 
+                    // au underflows.)
+                    ssmin[0] = (fhmn * fhmx) / ga;
+                    ssmax[0] = ga;
+                } // if (au == 0.0)
+                else { // au != 0.0
+                    as = 1.0 + fhmn/fhmx;
+                    at = (fhmx - fhmn)/fhmx;
+                    c = 1.0/(Math.sqrt(1.0 + (as*au)*(as*au)) + Math.sqrt(1.0 + (at*au)*(at*au)));
+                    ssmin[0] = (fhmn*c)*au;
+                    ssmin[0] = ssmin[0] + ssmin[0];
+                    ssmax[0] = ga / (c+c);
+                } // else au != 0.0
+            } // else ga >= fhmx
+        } // else fhmn != 0.0
+        return;
+    } // dlas2
+
+    
+    /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLASR Original DLASR created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlasr applies a sequence of plane rotations to a real matrix A, from either the left or the right.
+     * when side = 'L', the transformation takes the form
+     *     A = P * A
+     * and when side = 'R', the transformation takes the form
+     *     A = A * P**T
+     * where P is an orthogonal matrix consisting of a sequence of z plane rotations, with z = m when side = 'L' and
+     * z = n when side = 'R', and P**T is the transpose of P.
+     * 
+     * When direct = 'F' (Forward sequence), then
+     *     P = P(z-2) * ... * P(1) * P(0)
+     * and when direct = 'B' (Backward sequence), then
+     *     P = P(0) * P(1) * ... * P(z-2)
+     * where P(k) is a plane rotation matrix defined by the 2-by-2 rotation
+     *     R(k) = (  c(k)  s(k)  )
+     *            ( -s(k)  c(k)  )
+     *  
+     *  When pivot = 'V' (Variable pivot), the rotation is performed for the plane (k,k+1), i.e., P(k) has the form
+     *     P(k) = (  1                                                )
+     *            (       ...                                         )
+     *            (                1                                  )
+     *            (                     c(k)   s(k)                   )
+     *            (                    -s(k)   c(k)                   )
+     *            (                                   1               )
+     *            (                                         ...       )
+     *            (                                                1  )
+     *  where R(k) appears as a rank-2 modification to the identity matrix in rows and columns k and k+1.
+     *  
+     *  When pivot = 'T' (Top pivot), the rotation is performed for the plane (1,k+1), so P(k) has the form
+     *      P(k) = (  c(k)                    s(k)                  )
+     *             (        1                                       )
+     *             (             ...                                )
+     *             (                     1                          )
+     *             ( -s(k)                    c(k)                  )
+     *             (                                 1              )
+     *             (                                     ...        )
+     *             (                                             1  )
+     * where R(k) appears in rows and column 1 and k+1
+     * 
+     * 
+     * Similarly, when pivot = 'B' (Bottom pivot), the rotation is performed for the plane (k,z), giving 
+     * P(k) the form
+     *     P(k) = (  1                                          )
+     *            (      ...                                    )
+     *            (             1                               )
+     *            (                  c(k)                  s(k) )
+     *            (                        1                    )
+     *            (                            ...              )
+     *            (                                   1         )
+     *            (                 -s(k)                  c(k) )
+     * where R(k) appears in rows and columns k and z.  The rotations are performed without ever forming
+     * P(k) explicitly.
+     *             
+     *
+     * @param  side    input char Specifies whether the plane rotation matrix P is applied to A on the left or the
+     *                 right. 
+     *                 = 'L': Left, compute A = P*A 
+     *                 = 'R': Right, compute A = A*P'
+     * @param  pivot   input char Specifies the plane for which p[k] is a plane rotation matrix. 
+     *                            = 'V': Variable pivot, the plane (k,k+1) 
+     *                            = 'T': Top pivot, the plane (1,k+1) 
+     *                            = 'B': Bottom pivot, the plane (k,z)
+     * @param  direct  input char Specifies whether P is a forward or backward sequence of plane rotations. 
+     *                            = 'F': Forward, p = p[z-2]*...*p[1]*p[0] 
+     *                            = 'B': Backward, p = p[0]*p[1]*...*p[z-2]
+     * @param  m       input int The number of rows of the matrix A. If m <= 1, an immediate return is effected.
+     * @param  n       input int The number of columns of the matrix A. If n <= 1, an immediate return is effected.
+     * @param  c       input double[]
+     * @param  s       input double[] c and s are dimension (m-1) if side = 'L', (n-1) if side = 'R' c[k] and s[k]
+     *                 contain the cosine and sine that define the matrix p[k]. The two by two plane rotation part of
+     *                 the matrix p[k], R[k], has the form R[k] = ( c[k] s[k])
+     *                                                            (-s[k] c[k])
+     * @param  A       input/output double[][] of dimension lda by n. On entry, the m by n matrix A. On exit, A is
+     *                 overwritten by P*A if side = 'L' or by A*P' if side = 'R'.
+     * @param  lda     input int The leading dimension of the array A. lda >= max(1,m).
+     */
+    private void dlasr(char side, char pivot, char direct, int m, int n, double[] c, double[] s, double[][] A,
+                       int lda) {
+        int i;
+        int info;
+        int j;
+        double ctemp;
+        double stemp;
+        double temp;
+
+        // Test the input parameters
+        info = 0;
+
+        if ((side != 'L') && (side != 'l') && (side != 'R') && (side != 'r')) {
+            info = 1;
+        } else if ((pivot != 'V') && (pivot != 'v') && (pivot != 'T') && (pivot != 't') && (pivot != 'B') &&
+                       (pivot != 'b')) {
+            info = 2;
+        } else if ((direct != 'F') && (direct != 'f') && (direct != 'B') && (direct != 'b')) {
+            info = 3;
+        } else if (m < 0) {
+            info = 4;
+        } else if (n < 0) {
+            info = 5;
+        } else if (lda < Math.max(1, m)) {
+            info = 9;
+        }
+
+        if (info != 0) {
+            MipavUtil.displayError("Error dlasr had info = " + info);
+
+            return;
+        }
+
+        // Quick return if possible
+        if ((m == 0) || (n == 0)) {
+            return;
+        }
+
+        if ((side == 'L') || (side == 'l')) {
+
+            // Form P*A
+            if ((pivot == 'V') || (pivot == 'v')) {
+
+                if ((direct == 'F') || (direct == 'f')) {
+
+                    for (j = 0; j < (m - 1); j++) {
+                        ctemp = c[j];
+                        stemp = s[j];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < n; i++) {
+                                temp = A[j + 1][i];
+                                A[j + 1][i] = (ctemp * temp) - (stemp * A[j][i]);
+                                A[j][i] = (stemp * temp) + (ctemp * A[j][i]);
+                            } // for (i = 0; i < n; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = 0; j < m-1; j++)
+                } // if ((direct == 'F') || (direct == 'f'))
+                else if ((direct == 'B') || (direct == 'b')) {
+
+                    for (j = m - 2; j >= 0; j--) {
+                        ctemp = c[j];
+                        stemp = s[j];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < n; i++) {
+                                temp = A[j + 1][i];
+                                A[j + 1][i] = (ctemp * temp) - (stemp * A[j][i]);
+                                A[j][i] = (stemp * temp) + (ctemp * A[j][i]);
+                            } // for (i = 0; i < n; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = m-2; j >= 0; j--)
+                } // else if ((direct == 'B') || (direct == 'b'))
+            } // if ((pivot == 'V') || (pivot == 'v'))
+            else if ((pivot == 'T') || (pivot == 't')) {
+
+                if ((direct == 'F') || (direct == 'f')) {
+
+                    for (j = 1; j < m; j++) {
+                        ctemp = c[j - 1];
+                        stemp = s[j - 1];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < n; i++) {
+                                temp = A[j][i];
+                                A[j][i] = (ctemp * temp) - (stemp * A[0][i]);
+                                A[0][i] = (stemp * temp) + (ctemp * A[0][i]);
+                            } // for (i = 0; i < n; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = 1; j < m; j++)
+                } // if ((direct == 'F') || (direct == 'f'))
+                else if ((direct == 'B') || (direct == 'b')) {
+
+                    for (j = m - 1; j >= 1; j--) {
+                        ctemp = c[j - 1];
+                        stemp = s[j - 1];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < n; i++) {
+                                temp = A[j][i];
+                                A[j][i] = (ctemp * temp) - (stemp * A[0][i]);
+                                A[0][i] = (stemp * temp) + (ctemp * A[0][i]);
+                            } // for (i = 0; i < n; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = m-1; j >= 1; j--)
+                } // else if ((direct == 'B') || (direct == 'b'))
+            } // else if ((pivot == 'T') || (pivot == 't'))
+            else if ((pivot == 'B') || (pivot == 'b')) {
+
+                if ((direct == 'F') || (direct == 'f')) {
+
+                    for (j = 0; j < (m - 1); j++) {
+                        ctemp = c[j];
+                        stemp = s[j];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < n; i++) {
+                                temp = A[j][i];
+                                A[j][i] = (stemp * A[m - 1][i]) + (ctemp * temp);
+                                A[m - 1][i] = (ctemp * A[m - 1][i]) - (stemp * temp);
+                            } // for (i = 0; i < n; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = 0; j < m-1; j++)
+                } // if ((direct == 'F') || (direct == 'f'))
+                else if ((direct == 'B') || (direct == 'b')) {
+
+                    for (j = m - 2; j >= 0; j--) {
+                        ctemp = c[j];
+                        stemp = s[j];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < n; i++) {
+                                temp = A[j][i];
+                                A[j][i] = (stemp * A[m - 1][i]) + (ctemp * temp);
+                                A[m - 1][i] = (ctemp * A[m - 1][i]) - (stemp * temp);
+                            } // for (i = 0; i < n; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = m-2; j >= 0; j--)
+                } // else if (direct == 'B') || (direct == 'b'))
+            } // else if ((pivot == 'B') || (pivot == 'b'))
+        } // if ((side == 'L') || (side == 'l'))
+        else if ((side == 'R') || (side == 'r')) {
+
+            // Form A * P'
+            if ((pivot == 'V') || (pivot == 'v')) {
+
+                if ((direct == 'F') || (direct == 'f')) {
+
+                    for (j = 0; j < (n - 1); j++) {
+                        ctemp = c[j];
+                        stemp = s[j];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < m; i++) {
+                                temp = A[i][j + 1];
+                                A[i][j + 1] = (ctemp * temp) - (stemp * A[i][j]);
+                                A[i][j] = (stemp * temp) + (ctemp * A[i][j]);
+                            } // for (i = 0; i < m; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = 0; j < n-1; j++)
+                } // if ((direct == 'F') || (direct == 'f'))
+                else if ((direct == 'B') || (direct == 'b')) {
+
+                    for (j = n - 2; j >= 0; j--) {
+                        ctemp = c[j];
+                        stemp = s[j];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < m; i++) {
+                                temp = A[i][j + 1];
+                                A[i][j + 1] = (ctemp * temp) - (stemp * A[i][j]);
+                                A[i][j] = (stemp * temp) + (ctemp * A[i][j]);
+                            } // for (i = 0; i < m; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = n-2; j >= 0; j--)
+                } // else if ((direct == 'B') || (direct == 'b'))
+            } // if ((pivot == 'V') || (pivot == 'v'))
+            else if ((pivot == 'T') || (pivot == 't')) {
+
+                if ((direct == 'F') || (direct == 'f')) {
+
+                    for (j = 1; j < n; j++) {
+                        ctemp = c[j - 1];
+                        stemp = s[j - 1];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < m; i++) {
+                                temp = A[i][j];
+                                A[i][j] = (ctemp * temp) - (stemp * A[i][0]);
+                                A[i][0] = (stemp * temp) + (ctemp * A[i][0]);
+                            } // for (i = 0; i < m; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = 1; j < n; j++)
+                } // if ((direct == 'F') || (direct == 'f'))
+                else if ((direct == 'B') || (direct == 'b')) {
+
+                    for (j = n - 1; j >= 1; j--) {
+                        ctemp = c[j - 1];
+                        stemp = s[j - 1];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < m; i++) {
+                                temp = A[i][j];
+                                A[i][j] = (ctemp * temp) - (stemp * A[i][0]);
+                                A[i][0] = (stemp * temp) + (ctemp * A[i][0]);
+                            } // for (i = 0; i < m; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = n-1; j >= 1; j--)
+                } // else if ((direct == 'B') || (direct == 'b'))
+            } // else if ((pivot == 'T') || (pivot == 't'))
+            else if ((pivot == 'B') || (pivot == 'b')) {
+
+                if ((direct == 'F') || (direct == 'f')) {
+
+                    for (j = 0; j < (n - 1); j++) {
+                        ctemp = c[j];
+                        stemp = s[j];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < m; i++) {
+                                temp = A[i][j];
+                                A[i][j] = (stemp * A[i][n - 1]) + (ctemp * temp);
+                                A[i][n - 1] = (ctemp * A[i][n - 1]) - (stemp * temp);
+                            } // for (i = 0; i < m; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = 0; j < n-1; j++)
+                } // if ((direct == 'F') || (direct == 'f'))
+                else if ((direct == 'B') || (direct == 'b')) {
+
+                    for (j = n - 2; j >= 0; j--) {
+                        ctemp = c[j];
+                        stemp = s[j];
+
+                        if ((ctemp != 1.0) || (stemp != 0.0)) {
+
+                            for (i = 0; i < m; i++) {
+                                temp = A[i][j];
+                                A[i][j] = (stemp * A[i][n - 1]) + (ctemp * temp);
+                                A[i][n - 1] = (ctemp * A[i][n - 1]) - (stemp * temp);
+                            } // for (i = 0; i < m; i++)
+                        } // if ((ctemp != 1.0) || (stemp != 0.0))
+                    } // for (j = n-2; j >= 0; j--)
+                } // else if ((direct == 'B') || (direct == 'b'))
+            } // else if ((pivot == 'B') || (pivot == 'b'))
+        } // else if ((side == 'R') || (side == 'r'))
+
+        return;
+    } // dlasr
+    
+    /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLASV2 Original DLASV2 created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlasv2 computes the singular value decomposition of a 2-by-2 triangular matrix 
+     *  [ f g ]
+     *  [ 0 h ]. 
+     * On return, abs(ssmax[0]) is the larger singular value, abs(ssmin[0]) is the smaller singular value,
+     * and (csl[0],snl[0]) and (csr[0],snr[0]) are the left and right singular vectors for abs(ssmax[0]),
+     * giving the decomposition
+     *  [ csl snl] [f  g ] [ csr -snr] = [ ssmax 0 ] 
+     *  [-snl csl] [0  h ] [ snr csr]    [ 0 ssmin ].
+     *
+     * @param  f      input double The (0,0) element of a 2-by-2 matrix.
+     * @param  g      input double The (0,1) element of a 2-by-2 matrix.
+     * @param  h      input double The (1,1) element of a 2-by-2 matrix.
+     * @param  ssmin  output double[] abs(ssmin[0]) is the smaller singular value.
+     * @param  ssmax  output double[] abs(ssmax[0]) is the larger singular value.
+     * @param  snr    output double[]
+     * @param  csr    output double[] The vector (csr[0],snr[0]) is a unit right singular vector for the singular value
+     *                abs(ssmax[0]).
+     * @param  snl    output double[]
+     * @param  csl    output double[] The vector (csl[0],snl[0]) is a unit left singular vector for the singular value
+     *                abs(ssmax[0]).
+     * Further details: Any input parameter may be aliased with any output parameter.
+     *
+     * <p>Barring over/underflow and assuming a guard digit in subtraction, all output quantities are
+     *    correct to within a few units in the last place (ulps).</p>
+     *
+     * <p>In IEEE arithmetic, the code works correctly if one matrix element is infinite.</p>
+     *
+     * <p>Overflow will not occur unless the largest singular value itself overflows or is within a few
+     *    ulps of overflow. (On machines with partial overflow, like the Cray, overflow may occur if the
+     *    largest singular value is within a factor of 2 of overflow.)</p>
+     *
+     * <p>Underflow is harmless if underflow is gradual. Otherwise, results may correspond to a matrix
+     *    modified by perturbations of size near the underflow threshold.</p>
+     */
+    private void dlasv2(double f, double g, double h, double[] ssmin, double[] ssmax, double[] snr, double[] csr,
+                        double[] snl, double[] csl) {
+        boolean gasmal;
+        boolean swap;
+        int pmax;
+        double a;
+        double clt = 0.0;
+        double crt = 0.0;
+        double d;
+        double fa;
+        double ft;
+        double ga;
+        double gt;
+        double ha;
+        double ht;
+        double L;
+        double m;
+        double mm;
+        double r;
+        double s;
+        double slt = 0.0;
+        double srt = 0.0;
+        double t;
+        double temp;
+        double tsign;
+        double tt;
+
+        ft = f;
+        fa = Math.abs(ft);
+        ht = h;
+        ha = Math.abs(h);
+
+        // pmax points to the maximum value of the matrix
+        // pmax = 1 if f largest in absolute value
+        // pmax = 2 if g largest in absolute value
+        // pmax = 3 if h largest in absolute value
+        pmax = 1;
+        swap = (ha > fa);
+
+        if (swap) {
+            pmax = 3;
+            temp = ft;
+            ft = ht;
+            ht = temp;
+            temp = fa;
+            fa = ha;
+            ha = temp;
+            // Now fa >= ha
+        } // if (swap)
+
+        gt = g;
+        ga = Math.abs(gt);
+
+        if (ga == 0.0) {
+
+            // Diagonal matrix
+            ssmin[0] = ha;
+            ssmax[0] = fa;
+            clt = 1.0;
+            crt = 1.0;
+            slt = 0.0;
+            srt = 0.0;
+        } // if (ga == 0.0)
+        else {
+            gasmal = true;
+
+            if (ga > fa) {
+                pmax = 2;
+
+                if ((fa / ga) < dlamch('E')) {
+
+                    // Case of very large ga
+                    gasmal = false;
+                    ssmax[0] = ga;
+
+                    if (ha > 1.0) {
+                        ssmin[0] = fa / (ga / ha);
+                    } else {
+                        ssmin[0] = (fa / ga) * ha;
+                    }
+
+                    clt = 1.0;
+                    slt = ht / gt;
+                    srt = 1.0;
+                    crt = ft / gt;
+                } // if ((fa/ga) < dlamch('E'))
+            } // if (ga > fa)
+
+            if (gasmal) {
+
+                // Normal case
+                d = fa - ha;
+
+                if (d == fa) {
+
+                    // Copes with infinite F or H
+                    L = 1.0;
+                } // if (d == fa)
+                else {
+                    L = d / fa;
+                } // else
+
+                // Note that 0 <= L <= 1
+                m = gt / ft;
+
+                // Note that abs(m) <= 1/macheps
+                t = 2.0 - L;
+
+                // Note that t >= 1
+                mm = m * m;
+                tt = t * t;
+                s = Math.sqrt(tt + mm);
+
+                // Note that 1 <= s <= 1 + 1/macheps
+                if (L == 0.0) {
+                    r = Math.abs(m);
+                } else {
+                    r = Math.sqrt((L * L) + mm);
+                }
+
+                // Note that 0 <= r <= 1 + 1/macheps
+                a = 0.5 * (s + r);
+
+                // Note that 1 <= a <= 1 + abs(m);
+                ssmin[0] = ha / a;
+                ssmax[0] = fa * a;
+
+                if (mm == 0.0) {
+
+                    // Note that m is very tiny
+                    if (L == 0.0) {
+
+                        if (((ft >= 0.0) && (gt >= 0.0)) || ((ft < 0.0) && (gt < 0.0))) {
+                            t = 2.0;
+                        } else {
+                            t = -2.0;
+                        }
+                    } // if (L == 0.0)
+                    else if (ft >= 0.0) {
+                        t = (gt / Math.abs(d)) + (m / t);
+                    } // else if (ft >= 0.0)
+                    else {
+                        t = (-gt / Math.abs(d)) + (m / t);
+                    } // else
+                } // if (mm == 0.0)
+                else {
+                    t = ((m / (s + t)) + (m / (r + L))) * (1.0 + a);
+                }
+
+                L = Math.sqrt((t * t) + 4.0);
+                crt = 2.0 / L;
+                srt = t / L;
+                clt = (crt + (srt * m)) / a;
+                slt = (ht / ft) * srt / a;
+            } // if (gasmal)
+        } // else
+
+        if (swap) {
+            csl[0] = srt;
+            snl[0] = crt;
+            csr[0] = slt;
+            snr[0] = clt;
+        } // if (swap)
+        else {
+            csl[0] = clt;
+            snl[0] = slt;
+            csr[0] = crt;
+            snr[0] = srt;
+        } // else
+
+        // Correct signs of ssmax and ssmin
+        tsign = 1.0;
+
+        if (pmax == 1) {
+
+            if (csr[0] < 0.0) {
+                tsign = -tsign;
+            }
+
+            if (csl[0] < 0.0) {
+                tsign = -tsign;
+            }
+
+            if (f < 0) {
+                tsign = -tsign;
+            }
+        } // if (pmax == 1)
+
+        if (pmax == 2) {
+
+            if (snr[0] < 0.0) {
+                tsign = -tsign;
+            }
+
+            if (csl[0] < 0.0) {
+                tsign = -tsign;
+            }
+
+            if (g < 0.0) {
+                tsign = -tsign;
+            }
+        } // if (pmax == 2)
+
+        if (pmax == 3) {
+
+            if (snr[0] < 0.0) {
+                tsign = -tsign;
+            }
+
+            if (snl[0] < 0.0) {
+                tsign = -tsign;
+            }
+
+            if (h < 0.0) {
+                tsign = -tsign;
+            }
+        } // if (pmax == 3)
+
+        if (tsign >= 0.0) {
+            ssmax[0] = Math.abs(ssmax[0]);
+        } else {
+            ssmax[0] = -Math.abs(ssmax[0]);
+        }
+
+        if (f < 0.0) {
+            tsign = -tsign;
+        }
+
+        if (h < 0.0) {
+            tsign = -tsign;
+        }
+
+        if (tsign >= 0.0) {
+            ssmin[0] = Math.abs(ssmin[0]);
+        } else {
+            ssmin[0] = -Math.abs(ssmin[0]);
+        }
+
+        return;
+    } // dlasv2
+
     
     /** This is a port of version 3.2 LAPACK routine DORGBR.  Original DORGBR created by Univ. of Tennessee,
      *  Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
