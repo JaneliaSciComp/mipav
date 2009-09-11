@@ -745,6 +745,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.startsWith("PlugInFile")) {
         	Object thePlugIn = null;
             final String plugInName = "PlugIn" + command.substring(10);
+            String plugInNameRecall = plugInName.substring(6); 
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
@@ -763,18 +764,18 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     	int opt = JOptionPane.showOptionDialog(mainFrame, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, 
                     												null, options, read);
                     	if(opt == 0) {
-                    		ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"+plugInName);
+                    		ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"+plugInNameRecall);
                         	this.actionPerformed(e);
                     	} else if(opt == 1) {
-                    		ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"+plugInName);
+                    		ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"+plugInNameRecall);
                         	this.actionPerformed(e);
-                    	}
+                    	} 
                     	
                     } else if ( ((PlugInFile) thePlugIn).canReadImages()) {
-                    	ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"+plugInName);
+                    	ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"+plugInNameRecall);
                     	this.actionPerformed(e);
                     } else if ( ((PlugInFile) thePlugIn).canWriteImages()) {
-                    	ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"+plugInName);
+                    	ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"+plugInNameRecall);
                     	this.actionPerformed(e);
                     } else {
                         MipavUtil.displayInfo(plugInName + " is a PlugInFile that neither writes nor reads images.");
