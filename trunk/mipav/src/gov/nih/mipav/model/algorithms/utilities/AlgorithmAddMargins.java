@@ -1819,8 +1819,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                            //Float.toString(imgOriginLPS[1]) + ", " + Float.toString(imgOriginLPS[2]));
 
         originImgOrd = originLPS2Img(imgOriginLPS, srcImage);
-        // System.out.println("Original origin in image order: " +Float.toString(originImgOrd[0]) +", "      +
-        // Float.toString(originImgOrd[1]) + ", " + Float.toString(originImgOrd[2]));
+        //System.out.println("Original origin in image order: " +Float.toString(originImgOrd[0]) +", "      +
+        //Float.toString(originImgOrd[1]) + ", " + Float.toString(originImgOrd[2]));
 
         float[] tmpResol = fileInfoBuffer.getResolutions();
         float[] resol = new float[3];
@@ -1862,12 +1862,14 @@ public class AlgorithmAddMargins extends AlgorithmBase {
     private float[] originImg2LPS(float[] origImg, ModelImage img) {
         float[] origLPS = new float[3];
         TransMatrix img2LPS = img.getMatrix();
+        float val;
 
         for (int i = 0; i < 3; i++) { // i's are the rows
-
+            val = 0.0f;
             for (int j = 0; j < 3; j++) { // j's are the columns
 
-                if (img2LPS.Get(i, j) != 0) {
+                if (Math.abs(img2LPS.Get(i, j)) > val) {
+                    val = Math.abs(img2LPS.Get(i, j));
                     origLPS[i] = origImg[j];
                 }
             }
@@ -1888,12 +1890,14 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         float[] origImg = new float[3];
         TransMatrix LPS2img = new TransMatrix(img.getMatrix());
         LPS2img.Inverse();
+        float val;
 
         for (int i = 0; i < 3; i++) { // i's are the rows
-
+            val = 0.0f;
             for (int j = 0; j < 3; j++) { // j's are the columns
 
-                if (LPS2img.Get(i, j) != 0) {
+                if (Math.abs(LPS2img.Get(i, j)) > val) {
+                    val = Math.abs(LPS2img.Get(i,j));
                     origImg[i] = origLPS[j];
                 }
             }
