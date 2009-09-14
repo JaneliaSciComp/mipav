@@ -178,6 +178,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     /** Boolean indicating a new patient folder */
     private boolean isNewPatient = false;
     
+    /** Patient id of previous patient folder */
+    private String previousPatientId = "";
+    
     /** File count in series, will be odd numbers 1,3,5,... */
     int fileCountInSeries = 1;
     
@@ -210,6 +213,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 	
 	/** Boolean to identify the top-level folder to get the count of number of patients*/
 	private boolean isTopLevelFolder = true;
+	
+	/** Boolean to skip patient for anonymization. Patients only in blinded csv file will be anonymized. */
+	private boolean skipPatient = false;
 	
 	/** Total patients which is equal to total folders in input directory */
 	private int totalPatients = 0;
@@ -411,6 +417,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 		fileIO = new FileIO();
 		fileIO.setQuiet(true);
 		
+		totalPatients = blindedPatientIdMap.size();
+		
 		//remove last slash from input directory path if it has it
         if(String.valueOf(inputDirectoryPath.charAt(inputDirectoryPath.length() - 1)).equals(File.separator)) {
         	inputDirectoryPath = inputDirectoryPath.substring(0,inputDirectoryPath.length() - 1);
@@ -510,7 +518,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 	 public boolean parse(File file) {
 
 	        File[] children = file.listFiles();
-
+	        
 	        for (int i = 0; i < children.length; i++) {
 
                 if (algCanceled) {
@@ -519,16 +527,11 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 
                 if (children[i].isDirectory()) {
                 	//create this directory in output directory if its not there yet
-                    File test = new File(children[i].getAbsolutePath().replace(inputDirectoryPath, outputDirectoryPath));
-                    if(!test.exists()) {
-                    	test.mkdir();
+                    File outputDataFolder = new File(children[i].getAbsolutePath().replace(inputDirectoryPath, outputDirectoryPath));
+                    if(!outputDataFolder.exists() && !skipPatient) {
+                    	outputDataFolder.mkdir();
                     }
-                    
-                    if (isTopLevelFolder) {
-                    	totalPatients = children.length;
-                    	isTopLevelFolder = false;
-                    } 
-                    
+                                                           
                     parse(children[i]);
             		 
                               	
@@ -549,12 +552,12 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 	                				patientFolder = currentPatientFolder;
 	                				totalStudies = children[i].getParentFile().getParentFile().getParentFile().listFiles().length;
 	                				totalSeries = children[i].getParentFile().getParentFile().listFiles().length;
-	                				currentPatient += 1;
 	                				currentStudy = 1;
 	                				currentSeries = 1;
-	                				progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy + "/" + totalStudies + "  Series " + currentSeries + "/" + totalSeries;
-	                				fireProgressStateChanged(0, "Image De-identification Progress", progressMsg);
 	                			} else if (currentPatientFolder.equalsIgnoreCase(patientFolder) && (!(currentStudyFolder.equalsIgnoreCase(studyFolder)))) {
+	                				if (skipPatient == true) {
+	                					break;
+	                				}
 	                				isNewPatient = false;
 	                				isNewStudy = true;
 	                				isNewSeries = true;
@@ -563,29 +566,37 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 	                				totalSeries = children[i].getParentFile().getParentFile().listFiles().length;
 	                				currentStudy += 1;
 	                				currentSeries = 1;
-	                				progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy + "/" + totalStudies + "  Series " + currentSeries + "/" + totalSeries;
-	                				fireProgressStateChanged(0, "Image De-identification Progress", progressMsg);
+	                				if (skipPatient == false) {
+	                					progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy + "/" + totalStudies + "  Series " + currentSeries + "/" + totalSeries;
+		                				fireProgressStateChanged(0, "Image De-identification Progress", progressMsg);
+	                				}
 	                			} else if (currentPatientFolder.equalsIgnoreCase(patientFolder) && currentStudyFolder.equalsIgnoreCase(studyFolder) && (!(currentSeriesFolder.equalsIgnoreCase(seriesFolder)))) {
+	                				if (skipPatient == true) {
+	                					break;
+	                				}
 	                				isNewPatient = false;
 	                				isNewStudy = false;
 	                				isNewSeries = true;
 	                				seriesFolder = currentSeriesFolder;
 	                				currentSeries += 1;
-	                				progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy + "/" + totalStudies + "  Series " + currentSeries + "/" + totalSeries;
-	                				fireProgressStateChanged(0, "Image De-identification Progress", progressMsg);
+	                				if (skipPatient == false) {
+	                					progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy + "/" + totalStudies + "  Series " + currentSeries + "/" + totalSeries;
+		                				fireProgressStateChanged(0, "Image De-identification Progress", progressMsg);
+	                				}
 	                			} else {
 	                				isNewPatient = false;
 	                				isNewStudy = false;
 	                				isNewSeries = false;
-	                				int progressValue = (i * 100)/children.length;
-	                				fireProgressStateChanged(progressValue, "Image De-identification Progress", progressMsg);
+	                				if (skipPatient == false) {
+	                					int progressValue = (i * 100)/children.length;
+	                					fireProgressStateChanged(progressValue, "Image De-identification Progress", progressMsg);
+	                				}
 	                			}
 	                			
 	                			success = anonymizeDICOM(children[i]);
 	                	        if (success == false) {
-	                	        	if(fatalError == true) {
-	                	        		algCanceled = true;
-	                	        		return false;
+	                	        	if (skipPatient == true) {
+	                	        		break;
 	                	        	}
 	                				outputTextArea.append("WARNING: Error in anonymizing. Skipping file " + children[i].getName() + " \n\n");
 	                				printStream.println("WARNING: Error in anonymizing. Skipping file " + children[i].getName());
@@ -604,7 +615,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
                 }
                 
 	        }
-
+	        
 	        return true;
 	 }
 	
@@ -619,18 +630,17 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 	 */
 	public boolean anonymizeDICOM(File file) {
 		//read in image
-		/*if(enableTextArea) {
-			outputTextArea.append("Reading in " + file.getName() + " from " + file.getParent() + " \n");
-		}
-		printStream.println("Reading in " + file.getName() + " from " + file.getParent());*/
 		String absPath = file.getAbsolutePath();
-		inputImage = fileIO.readImage(absPath);
-		fileInfoDicom = (FileInfoDicom)inputImage.getFileInfo(0);
+		try {
+			inputImage = fileIO.readImage(absPath);
+			fileInfoDicom = (FileInfoDicom)inputImage.getFileInfo(0);
+		} catch (Exception e) {
+			outputTextArea.append("ERROR: Unexpected IO error occurred. Cannot read image " + absPath + ".\n");
+			printStream.println("ERROR: Unexpected IO error occured. Cannot read image " + absPath);
+			return false;
+		}
 		
-		//anonymize
-		outputTextArea.append("Anonymizing " + file.getName() + " from " + file.getParent() + " \n");
-		printStream.println("Anonymizing " + file.getName() + " from " + file.getParent());
-		success = anonymizeDICOMTags();
+		success = anonymizeDICOMTags(file);
 		if (success == false) {
 			fileInfoDicom.finalize();
 			inputImage.disposeLocal();
@@ -641,7 +651,6 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 		//save anonymized image
 		String outputDir = file.getParent().replace(inputDirectoryPath, outputDirectoryPath);
 		
-		 
 		
 		File outputFile = new File(outputDir);
 		File parentFile = outputFile.getParentFile();
@@ -696,7 +705,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 	 * this method does the actual anonymizing part
 	 * @return
 	 */
-    public boolean anonymizeDICOMTags() {
+    public boolean anonymizeDICOMTags(File file) {
     	tagTable = fileInfoDicom.getTagTable();
     	String studyID = ((String)tagTable.getValue(studyIDKey)).trim();
     	String seriesNo = ((String)tagTable.getValue(seriesNoKey)).trim();
@@ -718,6 +727,26 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     		patientID = ((String)tagTable.getValue(patientIDKey)).trim();
     		
     	}
+    	
+    	//New patient is taken from blinded patient id map
+    	
+    	if (blindedPatientIdMap.containsKey(patientID)) {
+    		skipPatient = false;
+    		if (!patientID.equals(previousPatientId)) {
+    			previousPatientId = patientID;
+    			currentPatient += 1;
+    			progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy + "/" + totalStudies + "  Series " + currentSeries + "/" + totalSeries;
+				fireProgressStateChanged(0, "Image De-identification Progress", progressMsg);
+    		}
+    		outputTextArea.append("Anonymizing " + inputImage.getImageFileName() + " from " + inputImage.getImageDirectory() + " \n");
+    		printStream.println("Anonymizing " + inputImage.getImageFileName() + " from " + inputImage.getImageDirectory());
+			newUID = (String)blindedPatientIdMap.get(patientID);
+		} else {
+			skipPatient = true;
+			File skippedPatientFolder = new File(file.getParentFile().getParentFile().getParentFile().getAbsolutePath().replace(inputDirectoryPath, outputDirectoryPath));
+			delete(skippedPatientFolder);
+			return false;
+		}
 				
 		studyDate = ((String)tagTable.getValue(studyDateKey)).trim();
 		if(studyDate.contains("/")) {
@@ -761,7 +790,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 		
 		//New patient is taken from blinded patient id map
 		
-		if (blindedPatientIdMap.containsKey(patientID)) {
+		/*if (blindedPatientIdMap.containsKey(patientID)) {
 			newUID = (String)blindedPatientIdMap.get(patientID);
 		} else {
 			outputTextArea.append("ERROR: Algorithm Canceled \n");
@@ -770,7 +799,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
         	
         	fatalError = true;
             return false;
-		}
+		}*/
 		
 		//int newUIDInt = 0;
 		//if dob is there and in right format , create newUID using this field....otherwise if dob is not there
