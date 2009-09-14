@@ -3536,6 +3536,369 @@ public class GeneralizedInverse {
         return value;
     } // dlange
     
+    /** This is a port of version 3.2 LAPACK routine DALSQ5
+    *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    *  -- Berkeley                                                        --
+    *  -- November 2008                                                   --
+    *
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *
+    *     .. Scalar Arguments ..
+          LOGICAL            IEEE
+          INTEGER            I0, N0, PP
+          DOUBLE PRECISION   DMIN, DMIN1, DMIN2, DN, DNM1, DNM2, TAU
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   Z( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DLASQ5 computes one dqds transform in ping-pong form, one
+    *  version for IEEE machines another for non IEEE machines.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  I0    (input) INTEGER
+    *        First index.
+    *
+    *  N0    (input) INTEGER
+    *        Last index.
+    *
+    *  Z     (input) DOUBLE PRECISION array, dimension ( 4*N )
+    *        Z holds the qd array. EMIN is stored in Z(4*N0) to avoid
+    *        an extra argument.
+    *
+    *  PP    (input) INTEGER
+    *        PP=0 for ping, PP=1 for pong.
+    *
+    *  TAU   (input) DOUBLE PRECISION
+    *        This is the shift.
+    *
+    *  DMIN  (output) DOUBLE PRECISION
+    *        Minimum value of d.
+    *
+    *  DMIN1 (output) DOUBLE PRECISION
+    *        Minimum value of d, excluding D( N0 ).
+    *
+    *  DMIN2 (output) DOUBLE PRECISION
+    *        Minimum value of d, excluding D( N0 ) and D( N0-1 ).
+    *
+    *  DN    (output) DOUBLE PRECISION
+    *        d(N0), the last value of d.
+    *
+    *  DNM1  (output) DOUBLE PRECISION
+    *        d(N0-1).
+    *
+    *  DNM2  (output) DOUBLE PRECISION
+    *        d(N0-2).
+    *
+    *  IEEE  (input) LOGICAL
+    *        Flag for IEEE or non IEEE arithmetic.
+    */
+    private void dlasq5(int i0, int n0, double z[], int pp, double tau, double dmin[], double dmin1[],
+                        double dmin2[], double dn[], double dnm1[], double dnm2[], boolean ieee)  {
+        int j4;
+        int j4p2;
+        double d;
+        double emin;
+        double temp;
+        
+        if ((n0 - i0 - 1) <= 0) {
+            return;
+        }
+        
+        j4 = 4*i0 + pp - 3;
+        emin = z[j4+3];
+        d = z[j4-1] - tau;
+        dmin[0] = d;
+        dmin1[0] = -z[j4-1];
+        
+        if (ieee) {
+            // Code for IEEE arithmetic.
+            if (pp == 0) {
+                for (j4 = 4*i0; j4 <= 4*(n0-3); j4 += 4) {
+                    z[j4-3] = d + z[j4-2];
+                    temp = z[j4]/z[j4-3];
+                    d = d * temp - tau;
+                    dmin[0] = Math.min(dmin[0], d);
+                    z[j4-1] = z[j4-2] * temp;
+                    emin = Math.min(z[j4-1], emin);
+                } // for (j4 = 4*i0; j4 <= 4*(n0-3); j4 += 4)
+            } // if (pp == 0)
+            else { // pp != 0
+                for (j4 = 4*i0; j4 <= 4*(n0-3); j4 += 4) {
+                    z[j4-4] = d + z[j4-1];
+                    temp = z[j4+1]/z[j4-4];
+                    d = d * temp - tau;
+                    dmin[0] = Math.min(dmin[0], d);
+                    z[j4-2] = z[j4-1] * temp;
+                    emin = Math.min(z[j4-2], emin);
+                } // for (j4 = 4*i0; j4 <= 4*(n0-3); j4 += 4)
+            } // else pp != 0
+            
+            // Unroll last 2 steps.
+            
+            dnm2[0] = d;
+            dmin2[0] = dmin[0];
+            j4 = 4*(n0-2) - pp;
+            j4p2 = j4 + 2*pp - 1;
+            z[j4-3] = dnm2[0] + z[j4p2-1];
+            z[j4-1] = z[j4p2+1] * (z[j4p2-1]/z[j4-3]);
+            dnm1[0] = z[j4p2+1] * (dnm2[0]/z[j4-3]) - tau;
+            dmin[0] = Math.min(dmin[0], dnm1[0]);
+            
+            dmin1[0] = dmin[0];
+            j4 = j4 + 4;
+            j4p2 = j4 + 2*pp - 1;
+            z[j4-3] = dnm1[0] + z[j4p2-1];
+            z[j4-1] = z[j4p2+1] * (z[j4p2-1]/z[j4-3]);
+            dn[0] = z[j4p2+1] * (dnm1[0]/z[j4-3]) - tau;
+            dmin[0] = Math.min(dmin[0], dn[0]);
+        } // if (ieee)
+        else { // !ieee
+            // Code for non IEEE arithmetic.
+            
+            if (pp == 0) {
+                for (j4 = 4*i0; j4 <= 4*(n0-3); j4 += 4) {
+                    z[j4-3] = d + z[j4-2];
+                    if (d < 0.0) {
+                        return;
+                    }
+                    else {
+                        z[j4-1] = z[j4] * (z[j4-2]/z[j4-3]);
+                        d = z[j4] * (d/z[j4-3]) - tau;
+                    }
+                    dmin[0] = Math.min(dmin[0], d);
+                    emin = Math.min(emin, z[j4-1]);
+                } // for (j4 = 4*i0; j4 <= 4*(n0-3); j4 += 4)
+            } // if (pp == 0)
+            else { // pp != 0
+                for (j4 = 4*i0; j4 <= 4*(n0-3); j4 += 4) {
+                    z[j4-4] = d + z[j4-1];
+                    if (d < 0.0) {
+                        return;
+                    }
+                    else {
+                        z[j4-2] = z[j4+1] * (z[j4-1]/z[j4-4]);
+                        d = z[j4+1] * (d/z[j4-4]) - tau;
+                    }
+                    dmin[0] = Math.min(dmin[0], d);
+                    emin = Math.min(emin, z[j4-2]);
+                } // for (j4 = 4*i0; j4 <= 4*(n0-3); j4 += 4)
+            } // else pp != 0
+            
+            // Unroll last 2 steps.
+            dnm2[0] = d;
+            dmin2[0] = dmin[0];
+            j4 = 4*(n0-2) - pp;
+            j4p2 = j4 + 2*pp - 1;
+            z[j4-3] = dnm2[0] + z[j4p2-1];
+            if (dnm2[0] < 0.0) {
+                return;
+            }
+            else {
+                z[j4-1] = z[j4p2+1] * (z[j4p2-1]/z[j4-3]);
+                dnm1[0] = z[j4p2+1] * (dnm2[0]/z[j4-3]) - tau;
+            }
+            dmin[0] = Math.min(dmin[0], dnm1[0]);
+            
+            dmin1[0] = dmin[0];
+            j4 = j4 + 4;
+            j4p2 = j4 + 2*pp - 1;
+            z[j4-3] = dnm1[0] + z[j4p2-1];
+            if (dnm1[0] < 0.0) {
+                return;
+            }
+            else {
+                z[j4-1] = z[j4p2+1] * (z[j4p2-1]/z[j4-3]);
+                dn[0] = z[j4p2 + 1] * (dnm1[0]/z[j4-3]) - tau;
+            }
+            dmin[0] = Math.min(dmin[0], dn[0]);
+        } // else !ieee
+        
+        z[j4+1] = dn[0];
+        z[4*n0 - pp - 1] = emin;
+        return;
+    } // dlasq5
+    
+    /** This is a port of version 3.2 LAPACK routine DLASQ6.
+     * 
+    *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    *  -- Berkeley                                                        --
+    *  -- November 2008                                                   --
+    *
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            I0, N0, PP
+          DOUBLE PRECISION   DMIN, DMIN1, DMIN2, DN, DNM1, DNM2
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   Z( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DLASQ6 computes one dqd (shift equal to zero) transform in
+    *  ping-pong form, with protection against underflow and overflow.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  I0    (input) INTEGER
+    *        First index.
+    *
+    *  N0    (input) INTEGER
+    *        Last index.
+    *
+    *  Z     (input) DOUBLE PRECISION array, dimension ( 4*N )
+    *        Z holds the qd array. EMIN is stored in Z(4*N0) to avoid
+    *        an extra argument.
+    *
+    *  PP    (input) INTEGER
+    *        PP=0 for ping, PP=1 for pong.
+    *
+    *  DMIN  (output) DOUBLE PRECISION
+    *        Minimum value of d.
+    *
+    *  DMIN1 (output) DOUBLE PRECISION
+    *        Minimum value of d, excluding D( N0 ).
+    *
+    *  DMIN2 (output) DOUBLE PRECISION
+    *        Minimum value of d, excluding D( N0 ) and D( N0-1 ).
+    *
+    *  DN    (output) DOUBLE PRECISION
+    *        d(N0), the last value of d.
+    *
+    *  DNM1  (output) DOUBLE PRECISION
+    *        d(N0-1).
+    *
+    *  DNM2  (output) DOUBLE PRECISION
+    *        d(N0-2).
+    */
+    private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dmin1[],
+                        double dmin2[], double dn[], double dnm1[], double dnm2[]) {
+        int j4;
+        int j4p2;
+        double d;
+        double emin;
+        double safmin;
+        double temp;
+        
+        if ((n0 - i0 - 1) <= 0) {
+            return;
+        }
+        
+        safmin = dlamch('S'); // safe minimum
+        j4 = 4*i0 + pp - 3;
+        emin = z[j4+3];
+        d = z[j4-1];
+        dmin[0] = d;
+        
+        if (pp == 0) {
+            for (j4 = 4*i0; j4 <= 4*(n0-3); j4 += 4) {
+                z[j4-3] = d + z[j4-2];
+                if (z[j4-3] == 0.0) {
+                    z[j4-1] = 0.0;
+                    d = z[j4];
+                    dmin[0] = d;
+                    emin = 0.0;
+                } // if (z[j4-3] == 0.0)
+                else if ((safmin*z[j4] < z[j4-3]) && (safmin*z[j4-3] < z[j4])) {
+                    temp = z[j4]/z[j4-3];
+                    z[j4-1] = z[j4-2] * temp;
+                    d = d * temp;
+                } // else if ((safmin*z[j4] < z[j4-3]) && (safmin*z[j4-3] < z[j4]))
+                else {
+                    z[j4-1] = z[j4] * (z[j4-2]/z[j4-3]);
+                    d = z[j4] * (d/z[j4-3]);
+                }
+                dmin[0] = Math.min(dmin[0], d);
+                emin = Math.min(emin, z[j4-1]);
+            } // for (j4 = 4*i0; j4 <= 4*(n0-3); j4 += 4)
+        } // if (pp == 0)
+        else { // pp != 0
+            for (j4 = 4*i0; j4 <= 4*(n0 - 3); j4 += 4) {
+                z[j4-4] = d + z[j4-1];
+                if (z[j4-4] == 0.0) {
+                    z[j4-2] = 0.0;
+                    d = z[j4+1];
+                    dmin[0] = d;
+                    emin = 0.0;
+                } // if (z[j4-4] == 0.0)
+                else if ((safmin*z[j4+1] < z[j4-4]) && (safmin*z[j4-4] < z[j4+1])) {
+                    temp = z[j4+1]/z[j4-4];
+                    z[j4-2] = z[j4-1] * temp;
+                    d = d * temp;
+                } // else if ((safmin*z[j4+1] < z[j4-4]) && (safmin*z[j4-4] < z[j4+1]))
+                else {
+                    z[j4-2] = z[j4+1] * (z[j4-1]/z[j4-4]);
+                    d = z[j4+1] * (d/z[j4-4]);
+                }
+                dmin[0] = Math.min(dmin[0], d);
+                emin = Math.min(emin, z[j4-2]);
+            } // for (j4 = 4*i0; j4 <= 4*(n0 - 3); j4 += 4)
+        } // else pp != 0
+        
+        // Unroll last 2 steps.
+        
+        dnm2[0] = d;
+        dmin2[0] = dmin[0];
+        j4 = 4*(n0-2) - pp;
+        j4p2 = j4 + 2*pp - 1;
+        z[j4-3] = dnm2[0] + z[j4p2-1];
+        if (z[j4-3] == 0.0) {
+            z[j4-1] = 0.0;
+            dnm1[0] = z[j4p2+1];
+            dmin[0] = dnm1[0];
+            emin = 0.0;
+        } // if (z[j4-3] == 0.0)
+        else if ((safmin*z[j4p2+1] < z[j4-3]) && (safmin*z[j4-3] < z[j4p2+1])) {
+            temp = z[j4p2+1]/z[j4-3];
+            z[j4-1] = z[j4p2-1] * temp;
+            dnm1[0] = dnm2[0] * temp;
+        } // else if ((safmin*z[j4p2+1] < z[j4-3]) && (safmin*z[j4-3] < z[j4p2+1]))
+        else {
+            z[j4-1] = z[j4p2+1] * (z[j4p2-1]/z[j4-3]);
+            dnm1[0] = z[j4p2+1] * (dnm2[0]/z[j4-3]);
+        }
+        dmin[0] = Math.min(dmin[0], dnm1[0]);
+        
+        dmin1[0] = dmin[0];
+        j4 = j4 + 4;
+        j4p2 = j4 + 2*pp - 1;
+        z[j4-3] = dnm1[0] + z[j4p2-1];
+        if (z[j4-3] == 0.0) {
+            z[j4-1] = 0.0;
+            dn[0] = z[j4p2+1];
+            dmin[0] = dn[0];
+            emin = 0.0;
+        } // if (z[j4-3] == 0.0)
+        else if ((safmin*z[j4p2+1] < z[j4-3]) && (safmin*z[j4-3] < z[j4p2+1])) {
+            temp = z[j4p2+1]/z[j4-3];
+            z[j4-1] = z[j4p2-1]*temp;
+            dn[0] = dnm1[0] * temp;
+        } // else if ((safmin*z[j4p2+1] < z[j4-3]) && (safmin*z[j4-3] < z[j4p2+1]))
+        else {
+            z[j4-1] = z[j4p2+1] * (z[j4p2-1]/z[j4-3]);
+            dn[0] = z[j4p2+1] * (dnm1[0]/z[j4-3]);
+        }
+        dmin[0] = Math.min(dmin[0], dn[0]);
+        
+        z[j4+1] = dn[0];
+        z[4*n0 - pp - 1] = emin;
+        return;
+    } // dlasq6
+
+    
     /**  This is a port of version 3.2 LAPACK auxiliary routine DLAS2.  Original DLAS2 created by 
      *   Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., 
      *   November, 2006
