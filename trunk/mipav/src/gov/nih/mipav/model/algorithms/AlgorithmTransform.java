@@ -4967,16 +4967,9 @@ public class AlgorithmTransform extends AlgorithmBase {
     private static void updateOrigin(final TransMatrix xfrm) {
 
 		if (xfrm.getDim() == 3) {
-			final float[] tempOrigin = new float[2];
-			xfrm.transform(0f, 0f, tempOrigin);
-			AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0] + tempOrigin[0] * iXres;
-			AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1] + tempOrigin[1] * iYres;
+			xfrm.transform(imgOrigin[0], imgOrigin[1], imgOrigin);
 		} else {
-			final float[] tempOrigin = new float[3];
-			xfrm.transform(0f, 0f, 0f, tempOrigin);
-			AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0] + tempOrigin[0] * iXres;
-			AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1] + tempOrigin[1] * iYres;
-			AlgorithmTransform.imgOrigin[2] = AlgorithmTransform.imgOrigin[2] + tempOrigin[2] * iZres;
+			xfrm.transform(imgOrigin[0], imgOrigin[1], imgOrigin[2], imgOrigin);
 		}
 
 	}
@@ -4990,8 +4983,9 @@ public class AlgorithmTransform extends AlgorithmBase {
 	 */
     private void updateOrigin() {
 
-        // uses inverse transform to transform backwards
-        TransMatrix xfrm = null;
+        // Remmember the the interpolation routines going from the output to the input image
+        // use the inverse matrix, but that here we wish to take the input origin to the 
+        // output origin, so we do not take the inverse.
         TransMatrix trans;
         TransMatrix xfrmC;
        
@@ -5036,23 +5030,14 @@ public class AlgorithmTransform extends AlgorithmBase {
                     trans.setTranslate( -center.X, -center.Y);
                 }
             } // if ((doCenter) && (!haveCentered))
-
-            xfrm = AlgorithmTransform.matrixtoInverseArray(trans);
            
-            if (xfrm.getDim() == 3) {
-                final float[] tempOrigin = new float[2];
-                xfrm.transform(0f, 0f, tempOrigin);
-                AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0]+tempOrigin[0] * iXres;
-                AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1]+tempOrigin[1] * iYres;
+            if (trans.getDim() == 3) {
+                trans.transform(imgOrigin[0], imgOrigin[1], imgOrigin);
             } else {
-                final float[] tempOrigin = new float[3];
                 System.err.println("Before: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
                 		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
                 		"AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
-                xfrm.transform(0f, 0f, 0f, tempOrigin);
-                AlgorithmTransform.imgOrigin[0] = AlgorithmTransform.imgOrigin[0]+tempOrigin[0] * iXres;
-                AlgorithmTransform.imgOrigin[1] = AlgorithmTransform.imgOrigin[1]+tempOrigin[1] * iYres;
-                AlgorithmTransform.imgOrigin[2] = AlgorithmTransform.imgOrigin[2]+tempOrigin[2] * iZres;
+                trans.transform(imgOrigin[0], imgOrigin[1], imgOrigin[2], imgOrigin);
                 
                 System.err.println("After: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
                 		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
