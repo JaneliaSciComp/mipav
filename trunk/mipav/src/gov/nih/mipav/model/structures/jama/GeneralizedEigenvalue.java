@@ -17370,8 +17370,8 @@ loop3:                       {
     } // dlasr
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLASRT Original DLASRT created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLASRT Original DLASRT created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlasrt sorts the numbers in d in increasing order if id == 'I' or in decreasing order if id == 'D'. Use
      * quick sort, reverting to insertion sort on arrays of size <= 20. Dimension of stack limits n to about 2**32.
      *
