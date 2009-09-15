@@ -3536,7 +3536,991 @@ public class GeneralizedInverse {
         return value;
     } // dlange
     
-    /** This is a port of version 3.2 LAPACK routine DALSQ5
+    /** This is a port of version 3.2 LAPACK routine DLASQ2.
+    *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    *  -- Berkeley                                                        --
+    *  -- November 2008                                                   --
+    *
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INFO, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   Z( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DLASQ2 computes all the eigenvalues of the symmetric positive 
+    *  definite tridiagonal matrix associated with the qd array Z to high
+    *  relative accuracy are computed to high relative accuracy, in the
+    *  absence of denormalization, underflow and overflow.
+    *
+    *  To see the relation of Z to the tridiagonal matrix, let L be a
+    *  unit lower bidiagonal matrix with subdiagonals Z(2,4,6,,..) and
+    *  let U be an upper bidiagonal matrix with 1's above and diagonal
+    *  Z(1,3,5,,..). The tridiagonal is L*U or, if you prefer, the
+    *  symmetric tridiagonal to which it is similar.
+    *
+    *  Note : DLASQ2 defines a logical variable, IEEE, which is true
+    *  on machines which follow ieee-754 floating-point standard in their
+    *  handling of infinities and NaNs, and false otherwise. This variable
+    *  is passed to DLASQ3.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  N     (input) INTEGER
+    *        The number of rows and columns in the matrix. N >= 0.
+    *
+    *  Z     (input/output) DOUBLE PRECISION array, dimension ( 4*N )
+    *        On entry Z holds the qd array. On exit, entries 1 to N hold
+    *        the eigenvalues in decreasing order, Z( 2*N+1 ) holds the
+    *        trace, and Z( 2*N+2 ) holds the sum of the eigenvalues. If
+    *        N > 2, then Z( 2*N+3 ) holds the iteration count, Z( 2*N+4 )
+    *        holds NDIVS/NIN^2, and Z( 2*N+5 ) holds the percentage of
+    *        shifts that failed.
+    *
+    *  INFO  (output) INTEGER
+    *        = 0: successful exit
+    *        < 0: if the i-th argument is a scalar and had an illegal
+    *             value, then INFO = -i, if the i-th argument is an
+    *             array and the j-entry had an illegal value, then
+    *             INFO = -(i*100+j)
+    *        > 0: the algorithm failed
+    *              = 1, a split was marked by a positive value in E
+    *              = 2, current block of Z not diagonalized after 30*N
+    *                   iterations (in inner while loop)
+    *              = 3, termination criterion of outer while loop not met 
+    *                   (program created more than N unreduced blocks)
+    *
+    *  Further Details
+    *  ===============
+    *  Local Variables: I0:N0 defines a current unreduced segment of Z.
+    *  The shifts are accumulated in SIGMA. Iteration count is in ITER.
+    *  Ping-pong is controlled by PP (alternates between 0 and 1).
+    */
+    private void dlasq2(int n, double z[], int info[]) {
+        double cbias = 1.50;
+        boolean ieee;
+        int i0;
+        int i4;
+        int iinfo[] = new int[1];
+        int ipn4;
+        int iter;
+        int iwhila;
+        int iwhilb;
+        int k;
+        int kmin;
+        int n0;
+        int nbig;
+        int ndiv;
+        int nfail;
+        int pp;
+        int splt;
+        int ttype;
+        double d;
+        double dee;
+        double deemin;
+        double desig;
+        double dmin;
+        double dmin1;
+        double dmin2;
+        double dn;
+        double dn1;
+        double dn2;
+        double e;
+        double emax;
+        double emin;
+        double eps;
+        double g;
+        double oldemn;
+        double qmax;
+        double qmin;
+        double s;
+        double safmin;
+        double sigma;
+        double t;
+        double tau;
+        double temp;
+        double tol;
+        double tol2;
+        double trace;
+        double zmax;
+        
+        // Test the input arguments
+        // (in case dlasq2 is not called by dlasq1)
+        info[0] = 0;
+        eps = dlamch('P'); // precision
+        safmin = dlamch('S'); // Safe minimum
+        tol = 100 * eps;
+        tol2 = tol * tol;
+        
+        if (n < 0) {
+            info[0] = -1;
+            MipavUtil.displayError("Error dlasq2 had n < 0");
+            return;
+        }
+        else if (n == 0) {
+            return;
+        }
+        else if (n == 1) {
+            // 1-by-1 case
+            if (z[0] < 0.0) {
+                info[0] = -201;
+                MipavUtil.displayError("Error dlsaq2 had z[0] < 0.0")
+            }
+            return;
+        } // else if (n == 1)
+        else if (n == 2) {
+            // 2-by-2 case
+        } // else if (n == 2)
+    } // dlasq2
+
+    
+    /**
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLASRT Original DLASRT created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlasrt sorts the numbers in d in increasing order if id == 'I' or in decreasing order if id == 'D'. Use
+     * quick sort, reverting to insertion sort on arrays of size <= 20. Dimension of stack limits n to about 2**32.
+     *
+     * @param  id    input char 
+     *               = 'I': sort d in increasing order 
+     *               = 'D': sort d in decreasing order
+     * @param  n     input int The length of the array d.
+     * @param  d     input/output double[] of dimension n. On entry, the array to be sorted. On exit, d has been sorted
+     *               into increasing order (d[0] <= ... <= d[n-1]) or into decreasing order (d[0] >= ... >= d[n-1]),
+     *               depending on id.
+     * @param  info  output int[] 
+     *               = 0: successful exit 
+     *               < 0: If info = -i, the i-th argument had an illegal value
+     */
+    private void dlasrt(char id, int n, double[] d, int[] info) {
+        int select = 20;
+        int dir;
+        int endd;
+        int i;
+        int j;
+        int start;
+        int stkpnt;
+        double d1;
+        double d2;
+        double d3;
+        double dmnmx;
+        double tmp;
+        int[][] stack = new int[2][32];
+
+        // Test the input parameters
+        info[0] = 0;
+        dir = -1;
+
+        if ((id == 'D') || (id == 'd')) {
+            dir = 0;
+        } else if ((id == 'I') || (id == 'i')) {
+            dir = 1;
+        }
+
+        if (dir == -1) {
+            info[0] = -1;
+        } else if (n < 0) {
+            info[0] = -2;
+        }
+
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dlasrt had info = " + info[0]);
+
+            return;
+        }
+
+        // Quick return if possible
+        if (n <= 1) {
+            return;
+        }
+
+        stkpnt = 0;
+        stack[0][0] = 0;
+        stack[1][0] = n - 1;
+
+        do {
+            start = stack[0][stkpnt];
+            endd = stack[1][stkpnt];
+            stkpnt = stkpnt - 1;
+
+            if (((endd - start) <= select) && ((endd - start) > 0)) {
+
+                // Do insertion sort on d(start:endd)
+                if (dir == 0) {
+
+// Sort into decreasing order
+loop1:
+                    for (i = start + 1; i <= endd; i++) {
+
+                        for (j = i; j >= (start + 1); j--) {
+
+                            if (d[j] > d[j - 1]) {
+                                dmnmx = d[j];
+                                d[j] = d[j - 1];
+                                d[j - 1] = dmnmx;
+                            } else {
+                                continue loop1;
+                            }
+                        } // for (j = i; j >= start+1; j--)
+                    } // for (i = start+1; i <= endd; i++)
+                } // if (dir == 0)
+                else { // dir == 1
+
+// Sort into increasing order
+loop2:
+                    for (i = start + 1; i <= endd; i++) {
+
+                        for (j = i; j >= (start + 1); j--) {
+
+                            if (d[j] < d[j - 1]) {
+                                dmnmx = d[j];
+                                d[j] = d[j - 1];
+                                d[j - 1] = dmnmx;
+                            } else {
+                                continue loop2;
+                            }
+                        } // for (j = i; j >= start+1; j--)
+                    } // for (i = start+1; i <= endd; i++)
+                } // else dir == 1
+            } // if (((endd - start) <= select) && ((endd - start) > 0))
+            else if ((endd - start) > select) {
+
+                // Partition d(start:endd) and stack parts, largest one first
+                // Choose partition entry as median of 3
+                d1 = d[start];
+                d2 = d[endd];
+                i = (start + endd) / 2;
+                d3 = d[i];
+
+                if (d1 < d2) {
+
+                    if (d3 < d1) {
+                        dmnmx = d1;
+                    } else if (d3 < d2) {
+                        dmnmx = d3;
+                    } else {
+                        dmnmx = d2;
+                    }
+                } // if (d1 < d2)
+                else { // d1 >= d2
+
+                    if (d3 < d2) {
+                        dmnmx = d2;
+                    } else if (d3 < d1) {
+                        dmnmx = d3;
+                    } else {
+                        dmnmx = d1;
+                    }
+                } // else d1 >= d2
+
+                if (dir == 0) {
+
+                    // Sort into decreasing order
+                    i = start - 1;
+                    j = endd + 1;
+
+loop3:
+                    do {
+                        j = j - 1;
+
+                        if (d[j] < dmnmx) {
+                            continue loop3;
+                        }
+
+                        do {
+                            i = i + 1;
+                        } while (d[i] > dmnmx);
+
+                        if (i < j) {
+                            tmp = d[i];
+                            d[i] = d[j];
+                            d[j] = tmp;
+
+                            continue loop3;
+                        } // if (i < j)
+
+                        break loop3;
+                    } // loop3
+                    while (true);
+
+                    if ((j - start) > (endd - j - 1)) {
+                        stkpnt = stkpnt + 1;
+                        stack[0][stkpnt] = start;
+                        stack[1][stkpnt] = j;
+                        stkpnt = stkpnt + 1;
+                        stack[0][stkpnt] = j + 1;
+                        stack[1][stkpnt] = endd;
+                    } // if ((j - start) > (endd - j - 1))
+                    else { // ((j - start) <= (endd - j - 1))
+                        stkpnt = stkpnt + 1;
+                        stack[0][stkpnt] = j + 1;
+                        stack[1][stkpnt] = endd;
+                        stkpnt = stkpnt + 1;
+                        stack[0][stkpnt] = start;
+                        stack[1][stkpnt] = j;
+                    } // else ((j - start) <= (endd - j - 1))
+                } // if (dir == 0)
+                else { // dir == 1
+
+                    // Sort into increasing order
+                    i = start - 1;
+                    j = endd + 1;
+
+loop4:
+                    do {
+                        j = j - 1;
+
+                        if (d[j] > dmnmx) {
+                            continue loop4;
+                        }
+
+                        do {
+                            i = i + 1;
+                        } while (d[i] < dmnmx);
+
+                        if (i < j) {
+                            tmp = d[i];
+                            d[i] = d[j];
+                            d[j] = tmp;
+
+                            continue loop4;
+                        } // if (i < j)
+
+                        break loop4;
+                    } // loop4
+                    while (true);
+
+                    if ((j - start) > (endd - j - 1)) {
+                        stkpnt = stkpnt + 1;
+                        stack[0][stkpnt] = start;
+                        stack[1][stkpnt] = j;
+                        stkpnt = stkpnt + 1;
+                        stack[0][stkpnt] = j + 1;
+                        stack[1][stkpnt] = endd;
+                    } // if ((j-start) > (endd-j-1))
+                    else { // ((j-start) <= (endd-j-1))
+                        stkpnt = stkpnt + 1;
+                        stack[0][stkpnt] = j + 1;
+                        stack[1][stkpnt] = endd;
+                        stkpnt = stkpnt + 1;
+                        stack[0][stkpnt] = start;
+                        stack[1][stkpnt] = j;
+                    } // else ((j-start) <= (endd-j-1)
+                } // else dir == 1
+            } // else if ((endd - start) > select)
+        } while (stkpnt > -1);
+
+        return;
+    } // dlasrt
+    
+    /** This is a port of version 3.2 LAPACK routine DLASQ3
+       *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+       *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
+       *  -- Berkeley                                                        --
+       *  -- November 2008                                                   --
+       *
+       *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+       *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       *
+       *     .. Scalar Arguments ..
+             LOGICAL            IEEE
+             INTEGER            I0, ITER, N0, NDIV, NFAIL, PP
+             DOUBLE PRECISION   DESIG, DMIN, DMIN1, DMIN2, DN, DN1, DN2, G,
+            $                   QMAX, SIGMA, TAU
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   Z( * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DLASQ3 checks for deflation, computes a shift (TAU) and calls dqds.
+       *  In case of failure it changes shifts, and tries again until output
+       *  is positive.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  I0     (input) INTEGER
+       *         First index.
+       *
+       *  N0     (input) INTEGER
+       *         Last index.
+       *
+       *  Z      (input) DOUBLE PRECISION array, dimension ( 4*N )
+       *         Z holds the qd array.
+       *
+       *  PP     (input/output) INTEGER
+       *         PP=0 for ping, PP=1 for pong.
+       *         PP=2 indicates that flipping was applied to the Z array   
+       *         and that the initial tests for deflation should not be 
+       *         performed.
+       *
+       *  DMIN   (output) DOUBLE PRECISION
+       *         Minimum value of d.
+       *
+       *  SIGMA  (output) DOUBLE PRECISION
+       *         Sum of shifts used in current segment.
+       *
+       *  DESIG  (input/output) DOUBLE PRECISION
+       *         Lower order part of SIGMA
+       *
+       *  QMAX   (input) DOUBLE PRECISION
+       *         Maximum value of q.
+       *
+       *  NFAIL  (output) INTEGER
+       *         Number of times shift was too big.
+       *
+       *  ITER   (output) INTEGER
+       *         Number of iterations.
+       *
+       *  NDIV   (output) INTEGER
+       *         Number of divisions.
+       *
+       *  IEEE   (input) LOGICAL
+       *         Flag for IEEE or non IEEE arithmetic (passed to DLASQ5).
+       *
+       *  TTYPE  (input/output) INTEGER
+       *         Shift type.
+       *
+       *  DMIN1, DMIN2, DN, DN1, DN2, G, TAU (input/output) DOUBLE PRECISION
+       *         These are passed as arguments in order to save their values
+       *         between calls to DLASQ3.
+       */
+    private void dlasq3(int i0, int n0, double z[], int pp[], double dmin[], double sigma[],
+                   double desig[], double qmax, int nfail[], int iter[], int ndiv[],
+                   boolean ieee, int ttype[], double dmin1[], double dmin2[], double dn[],
+                   double dn1[], double dn2[], double g[], double tau[]) {
+        double cbias = 1.50;
+        int ipn4;
+        int j4;
+        int n0in;
+        int nn;
+        double eps;
+        double s;
+        double t;
+        double temp;
+        double tol;
+        double tol2;
+        boolean calldlasq6;
+        
+        n0in = n0;
+        eps = dlamch('P'); // Precision
+        tol = 100.0 * eps;
+        tol2 = tol * tol;
+        
+        // Check for deflation.
+        while (true) {
+            if (n0 < i0) {
+                return;
+            }
+            if (n0 == i0) {
+                z[4*n0-4] = z[4*n0+pp[0]-4] + sigma[0];
+                n0 = n0 - 1;
+                continue;
+            }
+            nn = 4*n0 + pp[0];
+            if (n0 != (i0+1)) {
+                // Check whether e[n0-2] is negligible, 1 eigenvalue.
+                if ((z[nn-6] <= tol2*(sigma[0]+z[nn-4])) ||
+                    (z[nn-2*pp[0]-5] <= tol2*z[nn-8])) {
+                    z[4*n0-4] = z[4*n0+pp[0]-4] + sigma[0];
+                    n0 = n0 - 1;
+                    continue;    
+                }
+                // Check whether e[n0-3] is negligible, 2 eigenvalues.
+                if ((z[nn-10] > tol2*sigma[0]) && (z[nn-2*pp[0]-9] > tol2*z[nn-12])) {
+                    break;
+                }
+            } // if (n0 != (i0 + 1))
+            
+            if (z[nn - 4] > z[nn-8]) {
+                s = z[nn-4];
+                z[nn-4] = z[nn-8];
+                z[nn-8] = s;
+            } // if (z[nn - 4] > z[nn-8])
+            if (z[nn-6] > z[nn-4]*tol2) {
+                t = 0.5 * ((z[nn-8] - z[nn-4]) + z[nn-6]);
+                s = z[nn-4] * (z[nn-6]/t);
+                if (s <= t) {
+                    s = z[nn-4] * (z[nn-6]/(t*(1.0 + Math.sqrt(1.0 + s/t))));
+                }
+                else {
+                    s = z[nn-4] * (z[nn-6]/(t + Math.sqrt(t)*Math.sqrt(t+s)));
+                }
+                t = z[nn-8] + (s + z[nn-6]);
+                z[nn-4] = z[nn-4] * (z[nn-8]/t);
+                z[nn-8] = t;
+            } // if (z[nn-6] > z[nn-4]*tol2)
+            z[4*n0-8] = z[nn-8] + sigma[0];
+            z[4*n0-4] = z[nn-4] + sigma[0];
+            n0 = n0 - 2;
+        } // while (true)
+        
+        if (pp[0] == 2) {
+            pp[0] = 0;
+        }
+        
+        // Reverse the qd-array, if warranted.
+        
+        if ((dmin[0] <= 0.0) || (n0 < n0in)) {
+            if (cbias*z[4*i0+pp[0]-4] < z[4*n0+pp[0]-4]) {
+                ipn4 = 4 * (i0 + n0);
+                for (j4 = 4*i0; j4 <= 2*(i0 + n0 - 1); j4 += 4) {
+                    temp = z[j4-4];
+                    z[j4-4] = z[ipn4-j4-4];
+                    z[ipn4-j4-4] = temp;
+                    temp = z[j4-3];
+                    z[j4-3] = z[ipn4-j4-3];
+                    z[ipn4-j4-3] = temp;
+                    temp = z[j4-2];
+                    z[j4-2] = z[ipn4-j4-6];
+                    z[ipn4-j4-6] = temp;
+                    temp = z[j4-1];
+                    z[j4-1] = z[ipn4-j4-5];
+                    z[ipn4-j4-5] = temp;
+                } // for (j4 = 4*i0; j4 <= 2*(i0 + n0 - 1); j4 += 4)
+                if (n0 - i0 <= 4) {
+                    z[4*n0+pp[0]-2] = z[4*i0+pp[0]-2];
+                    z[4*n0-pp[0]-1] = z[4*i0-pp[0]-1];
+                }
+                dmin2[0] = Math.min(dmin2[0], z[4*n0+pp[0]-2]);
+                z[4*n0+pp[0]-2] = Math.min(z[4*n0+pp[0]-2], Math.min(z[4*i0+pp[0]-2],
+                                           z[4*i0+pp[0]+2]));
+                z[4*n0-pp[0]-1] = Math.min(z[4*n0-pp[0]-1], Math.min(z[4*i0-pp[0]-1], 
+                                           z[4*i0-pp[0]+3]));
+                qmax = Math.max(qmax, Math.max(z[4*i0+pp[0]-4], z[4*i0+pp[0]]));
+                dmin[0] = -0.0;
+            } // if (cbias*z[4*i0+pp[0]-4] < z[4*n0+pp[0]-4])
+        } // if ((dmin[0] <= 0.0) || (n0 < n0in))
+        
+        // Choose a shift
+        dlasq4(i0, n0, z, pp[0], n0in, dmin[0], dmin1[0], dmin2[0], dn[0], dn1[0], dn2[0], tau, ttype, g);
+        
+        // Call dqds until dmin > 0
+        
+        while (true) {
+            dlasq5(i0, n0, z, pp[0], tau[0], dmin, dmin1, dmin2, dn, dn1, dn2, ieee);
+            
+            ndiv[0] = ndiv[0] + (n0 - i0 + 2);
+            iter[0] = iter[0] + 1;
+            
+            // Check status
+            if ((dmin[0] > 0.0) && (dmin1[0] > 0.0)) {
+                // Success
+                calldlasq6 = false;
+                break;
+            }
+            else if ((dmin[0] < 0.0) && (dmin1[0] > 0.0) && 
+                    (z[4*(n0-1)-pp[0]-1] < tol*(sigma[0]+dn1[0])) &&
+                    (Math.abs(dn[0]) < tol*sigma[0])) {
+                // Convergence hidden by negative dn[0]
+                z[4*(n0-1)-pp[0]+1] = 0.0;
+                dmin[0] = 0.0;
+                calldlasq6 = false;
+                break;
+            }
+            else if (dmin[0] < 0.0) {
+                //tau[0] too big.  Select new tau[0] and try again.
+                nfail[0] = nfail[0] + 1;
+                if (ttype[0] < -22) {
+                    // Failed twice.  Play it safe.
+                    tau[0] = 0.0;
+                }
+                else if (dmin1[0] > 0.0) {
+                    // Late failure.  Gives excellent shift.
+                    tau[0] = (tau[0] + dmin[0]) * (1.0 - 2.0 * eps);
+                    ttype[0] = ttype[0] - 11;
+                }
+                else {
+                    // Early failure.  Divide by 4.
+                    tau[0] = 0.25 * tau[0];
+                    ttype[0] = ttype[0] - 12;
+                }
+                continue;
+            } // else if (dmin[0] < 0.0)
+            else if (Double.isNaN(dmin[0])) {
+                // NaN
+                
+                if (tau[0] == 0.0) {
+                    calldlasq6 = true;
+                    break;
+                }
+                else {
+                    tau[0] = 0.0;
+                    continue;
+                }
+            } // else if (Double.isNaN(dmin[0]))
+            // Possible underflow.  Play it safe.
+            calldlasq6 = true;
+            break;
+        } // while (true)
+        
+        if (calldlasq6) {
+            // Risk of underflow
+            dlasq6(i0, n0, z, pp[0], dmin, dmin1, dmin2, dn, dn1, dn2);
+            ndiv[0] = ndiv[0] + (n0 - i0 + 2);
+            iter[0] = iter[0] + 1;
+            tau[0] = 0.0;
+        } // if (calldlasq6)
+        
+        if (tau[0] < sigma[0]) {
+            desig[0] = desig[0] + tau[0];
+            t = sigma[0] + desig[0];
+            desig[0] = desig[0] - (t - sigma[0]);
+        }
+        else {
+            t = sigma[0] + tau[0];
+            desig[0] = sigma[0] - (t - tau[0]) + desig[0];
+        }
+        sigma[0] = t;
+        return;
+    } // dlasq3
+
+    
+    /** This is a port of version 3.2 LAPACK routine DLASQ4.
+       *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+       *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
+       *  -- Berkeley                                                        --
+       *  -- November 2008                                                   --
+       *
+       *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+       *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       *
+       *     .. Scalar Arguments ..
+             INTEGER            I0, N0, N0IN, PP, TTYPE
+             DOUBLE PRECISION   DMIN, DMIN1, DMIN2, DN, DN1, DN2, G, TAU
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   Z( * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DLASQ4 computes an approximation TAU to the smallest eigenvalue
+       *  using values of d from the previous transform.
+       *
+       *  I0    (input) INTEGER
+       *        First index.
+       *
+       *  N0    (input) INTEGER
+       *        Last index.
+       *
+       *  Z     (input) DOUBLE PRECISION array, dimension ( 4*N )
+       *        Z holds the qd array.
+       *
+       *  PP    (input) INTEGER
+       *        PP=0 for ping, PP=1 for pong.
+       *
+       *  NOIN  (input) INTEGER
+       *        The value of N0 at start of EIGTEST.
+       *
+       *  DMIN  (input) DOUBLE PRECISION
+       *        Minimum value of d.
+       *
+       *  DMIN1 (input) DOUBLE PRECISION
+       *        Minimum value of d, excluding D( N0 ).
+       *
+       *  DMIN2 (input) DOUBLE PRECISION
+       *        Minimum value of d, excluding D( N0 ) and D( N0-1 ).
+       *
+       *  DN    (input) DOUBLE PRECISION
+       *        d(N)
+       *
+       *  DN1   (input) DOUBLE PRECISION
+       *        d(N-1)
+       *
+       *  DN2   (input) DOUBLE PRECISION
+       *        d(N-2)
+       *
+       *  TAU   (output) DOUBLE PRECISION
+       *        This is the shift.
+       *
+       *  TTYPE (output) INTEGER
+       *        Shift type.
+       *
+       *  G     (input/output) REAL
+       *        G is passed as an argument in order to save its value between
+       *        calls to DLASQ4.
+       *
+       *  Further Details
+       *  ===============
+       *  CNST1 = 9/16
+       */
+    private void dlasq4(int i0, int n0, double z[], int pp, int n0in, double dmin, double dmin1,
+                        double dmin2, double dn, double dn1, double dn2, double tau[], int ttype[],
+                        double g[]) {
+        double cnst1 = 0.5630;
+        double cnst2 = 1.010;
+        double cnst3 = 1.050;
+        double third = 0.3330;
+        int i4;
+        int nn;
+        int np;
+        double a2;
+        double b1;
+        double b2;
+        double gam;
+        double gap1;
+        double gap2;
+        double s = 0.0;
+        
+        // A negative dmin forces the shift to take that absolute value.
+        // ttype records the type of shift.
+        if (dmin <= 0.0) {
+            tau[0] = -dmin;
+            ttype[0] = -1;
+            return;
+        }  // if (dmin <= 0.0)
+        
+        nn = 4*n0 + pp;
+        if (n0in == n0) {
+            // No eigenvalues deflated.
+            if ((dmin == dn) || (dmin == dn1)) {
+                b1 = Math.sqrt(z[nn-4]) * Math.sqrt(z[nn-6]);
+                b2 = Math.sqrt(z[nn-8]) * Math.sqrt(z[nn-10]);
+                a2 = z[nn-8] + z[nn-6];
+                
+                // Cases 2 and 3
+                
+                if ((dmin == dn) && (dmin1 == dn1)) {
+                    gap2 = 0.75*dmin2 - a2;
+                    if ((gap2 > 0.0) && (gap2 > b2)) {
+                        gap1 = a2 - dn - (b2/gap2)*b2;
+                    }
+                    else {
+                        gap1 = a2 - dn - (b1 + b2);
+                    }
+                    if ((gap1 > 0.0) && (gap1 > b1)) {
+                        s = Math.max(dn-(b1/gap1)*b1, 0.5*dmin);
+                        ttype[0] = -2;
+                    }
+                    else {
+                        s = 0.0;
+                        if (dn > b1) {
+                            s = dn - b1;
+                        }
+                        if (a2 > (b1 + b2)) {
+                            s = Math.min(s, a2 - (b1 + b2));
+                        }
+                        s = Math.max(s, third * dmin);
+                        ttype[0] = -3;
+                    }
+                } // if ((dmin == dn) && (dmin1 == dn1))
+                else {
+                    // Case 4.
+                    
+                    ttype[0] = -4;
+                    s = 0.25 * dmin;
+                    if (dmin == dn) {
+                        gam = dn;
+                        a2 = 0.0;
+                        if (z[nn-6] > z[nn-8]) {
+                            return;
+                        }
+                        b2 = z[nn-6]/z[nn-8];
+                        np = nn - 9;
+                    } // if (dmin == dn)
+                    else { // dmin != dn
+                        np = nn - 2*pp;
+                        b2 = z[np-3];
+                        gam = dn1;
+                        if (z[np-5] > z[np-3]) {
+                            return;
+                        }
+                        a2 = z[np-5]/z[np-3];
+                        if (z[nn-10] > z[nn-12]) {
+                            return;
+                        }
+                        b2 = z[nn-10]/z[nn-12];
+                        np = nn - 13;
+                    } // else dmin != dn
+                    // Approximate contribution to norm squared form i < nn - 1.
+                    a2 = a2 + b2;
+                    for (i4 = np; i4 >= 4*i0 - 1 + pp; i4 -= 4) {
+                        if (b2 == 0.0) {
+                            break;
+                        }
+                        b1 = b2;
+                        if (z[i4-1] > z[i4-3]) {
+                            return;
+                        }
+                        b2 = b2 *(z[i4-1]/z[i4-3]);
+                        a2 = a2 + b2;
+                        if ((100.0 * Math.max(b2, b1) < a2) || (cnst1 < a2)) {
+                            break;
+                        }
+                    } // for (i4 = np; i4 >= 4*i0 - 1 + pp; i4 -= 4)
+                    a2 = cnst3 * a2;
+                    
+                    // Rayleigh quotient residual bond.
+                    if (a2 < cnst1) {
+                        s = gam * (1.0 - Math.sqrt(a2)) / (1.0 + a2); 
+                    }
+                } // else
+            } // if ((dmin == dn) || (dmin == dn1))
+            else if (dmin == dn2) {
+                // Case 5.
+                
+                ttype[0] = -5;
+                s = 0.25*dmin;
+                
+                // Compute contribution to norm squared from i > nn - 2.
+                np = nn - 2*pp;
+                b1 = z[np-3];
+                b2 = z[np-7];
+                gam = dn2;
+                if ((z[np-9] > b2) || (z[np-5] > b1)) {
+                    return;
+                }
+                a2 = (z[np-9]/b2)* (1.0 + z[np-5]/b1);
+                
+                // Approixmate contribution to norm squared from i < nn - 2.
+                
+                if (n0 - i0 > 2) {
+                    b2 = z[nn-14]/z[nn-16];
+                    a2 = a2 + b2;
+                    for (i4 = nn - 17; i4 >= 4*i0 - 1 + pp; i4 -= 4) {
+                        if (b2 == 0.0) {
+                            break;
+                        }
+                        b1 = b2; 
+                        if (z[i4-1] > z[i4-3]) {
+                            return;
+                        }
+                        b2 = b2 * (z[i4-1]/z[i4-3]);
+                        a2 = a2 + b2;
+                        if ((100.0 * Math.max(b2,b1) < a2) || (cnst1 < a2)) {
+                            break;
+                        }
+                    } // for (i4 = nn - 17; i4 >= 4*i0 - 1 + pp[0]; i4 -= 4)
+                    a2 = cnst3 * a2;
+                } // if (n0 - i0 > 2)
+                if (a2 < cnst1) {
+                    s = gam * (1.0 - Math.sqrt(a2))/(1.0 + a2);
+                }
+            } // else if (dmin == dn2)
+            else {
+                // Case 6, no information to guide us.
+                if (ttype[0] == -6) {
+                    g[0] = g[0] + third * (1.0 - g[0]);
+                }
+                else if (ttype[0] == -18) {
+                    g[0] = 0.25*third;
+                }
+                else {
+                    g[0] = 0.25;
+                }
+                s = g[0] * dmin;
+                ttype[0] = -6;
+            } // else
+        } // if (n0in == n0)
+        else if (n0in == (n0 + 1)) {
+            // One eigenvalue just deflated.  Use dmin, dn1 for dmin and dn.
+            if ((dmin1 == dn1) && (dmin2 == dn2)) {
+                // Cases 7 and 8.
+                
+                ttype[0] = -7;
+                s = third * dmin1;
+                if (z[nn-6] > z[nn-8]) {
+                    return;
+                }
+                b1 = z[nn-6]/z[nn-8];
+                b2 = b1;
+                if (b2 != 0.0) {
+                    for (i4 = 4*n0 - 9 + pp; i4 >= 4*i0 - 1 + pp; i4 -= 4) {
+                        a2 = b1;
+                        if (z[i4-1] > z[i4-3]) {
+                            return;
+                        }
+                        b1 = b1 *(z[i4-1]/z[i4-3]);
+                        b2 = b2 + b1;
+                        if (100.0 * Math.max(b1, a2) < b2) {
+                            break;
+                        }
+                    } // for (i4 = 4*n0 - 9 + pp; i4 >= 4*i0 - 1 + pp; i4 -= 4)
+                } // if (b2 != 0.0)
+                b2 = Math.sqrt(cnst3*b2);
+                a2 = dmin1 / (1.0 + b2*b2);
+                gap2 = 0.5*dmin2 - a2;
+                if ((gap2 > 0.0) && (gap2 > b2*a2)) {
+                    s = Math.max(s, a2*(1.0 - cnst2*a2*(b2/gap2)*b2));
+                }
+                else {
+                    s = Math.max(s, a2 * (1.0 - cnst2 * b2));
+                    ttype[0] = -8;
+                }
+            } // if ((dmin1 == dn1) && (dmin2 == dn2))
+            else {
+                // Case 9.
+                
+                s = 0.25 * dmin1;
+                if (dmin1 == dn1) {
+                    s = 0.5 * dmin1;
+                }
+                ttype[0] = -9;
+            }
+        } // else if (n0in == (n0 + 1))
+        else if (n0in == (n0 + 2)) {
+            // Two eigenvalues deflated.  Use dmin2, dn2 for dmin and dn.
+            // Cases 10 and 11
+            
+            if ((dmin2 == dn2) && (2.0*z[nn-6] < z[nn-8])) {
+                ttype[0] = -10;
+                s = third * dmin2;
+                if (z[nn-6] > z[nn-8]) {
+                    return;
+                }
+                b1 = z[nn-6]/z[nn-8];
+                b2 = b1;
+                if (b2 != 0.0) {
+                    for (i4 = 4*n0 - 9 + pp; i4 >= 4*i0 - 1 + pp; i4 -= 4) {
+                        if (z[i4 - 1] > z[i4-3]) {
+                            return;
+                        }
+                        b1 = b1 * (z[i4-1]/z[i4-3]);
+                        b2 = b2 + b1;
+                        if (100.0 * b1 < b2) {
+                            break;
+                        }
+                    } // for (i4 = 4*n0 - 9 + pp; i4 >= 4*i0 - 1 + pp; i4 -= 4)
+                } // if (b2 != 0.0)
+                b2 = Math.sqrt(cnst3 * b2);
+                a2 = dmin2 / (1.0 + b2*b2);
+                gap2 = z[nn-8] + z[nn-10] - Math.sqrt(z[nn-12]) * Math.sqrt(z[nn-10]) - a2;
+                if ((gap2 > 0.0) && (gap2 > b2*a2)) {
+                    s = Math.max(s, a2*(1.0 - cnst2*a2*(b2/gap2)*b2));
+                }
+                else {
+                    s = Math.max(s, a2*(1.0 - cnst2 * b2));
+                }
+            } // if ((dmin2 == dn2) && (2.0*z[nn-6] < z[nn-8]))
+            else {
+                s = 0.25 * dmin2;
+                ttype[0] = -11;
+            }
+        } // else if (n0in == (n0 + 2))
+        else if (n0in > (n0 + 2)) {
+            // Case 12, more than two eigenvalues deflated.  No information.
+            s = 0.0;
+            ttype[0] = -12;
+        } // else if (n0in > (n0 + 2))
+        
+        tau[0] = s;
+        return;
+    } // dlasq4
+
+    
+    /** This is a port of version 3.2 LAPACK routine DLASQ5
     *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
     *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
     *  -- Berkeley                                                        --
