@@ -3672,7 +3672,7 @@ public class GeneralizedInverse {
             // 1-by-1 case
             if (z[0] < 0.0) {
                 info[0] = -201;
-                MipavUtil.displayError("Error dlsaq2 had z[0] < 0.0")
+                MipavUtil.displayError("Error dlsaq2 had z[0] < 0.0");
             }
             return;
         } // else if (n == 1)
