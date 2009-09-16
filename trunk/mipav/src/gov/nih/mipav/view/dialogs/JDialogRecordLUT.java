@@ -306,7 +306,8 @@ public class JDialogRecordLUT extends JDialogBase {
                 chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
 
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+            File f = new File(chooser.getCurrentDirectory() + File.separator + image.getImageName() + "_LUT.tif");
+            chooser.setSelectedFile(f);
 
             int returnVal = chooser.showSaveDialog(this);
 
