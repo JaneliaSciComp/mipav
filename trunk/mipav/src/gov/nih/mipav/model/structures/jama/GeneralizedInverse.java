@@ -3536,6 +3536,828 @@ public class GeneralizedInverse {
         return value;
     } // dlange
     
+    /** This is a port of version 3.2 LAPACK routine DBDSQR.
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     January 2007
+    *
+    *     .. Scalar Arguments ..
+          CHARACTER          UPLO
+          INTEGER            INFO, LDC, LDU, LDVT, N, NCC, NCVT, NRU
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   C( LDC, * ), D( * ), E( * ), U( LDU, * ),
+         $                   VT( LDVT, * ), WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DBDSQR computes the singular values and, optionally, the right and/or
+    *  left singular vectors from the singular value decomposition (SVD) of
+    *  a real N-by-N (upper or lower) bidiagonal matrix B using the implicit
+    *  zero-shift QR algorithm.  The SVD of B has the form
+    * 
+    *     B = Q * S * P**T
+    * 
+    *  where S is the diagonal matrix of singular values, Q is an orthogonal
+    *  matrix of left singular vectors, and P is an orthogonal matrix of
+    *  right singular vectors.  If left singular vectors are requested, this
+    *  subroutine actually returns U*Q instead of Q, and, if right singular
+    *  vectors are requested, this subroutine returns P**T*VT instead of
+    *  P**T, for given real input matrices U and VT.  When U and VT are the
+    *  orthogonal matrices that reduce a general matrix A to bidiagonal
+    *  form:  A = U*B*VT, as computed by DGEBRD, then
+    *
+    *     A = (U*Q) * S * (P**T*VT)
+    *
+    *  is the SVD of A.  Optionally, the subroutine may also compute Q**T*C
+    *  for a given real input matrix C.
+    *
+    *  See "Computing  Small Singular Values of Bidiagonal Matrices With
+    *  Guaranteed High Relative Accuracy," by J. Demmel and W. Kahan,
+    *  LAPACK Working Note #3 (or SIAM J. Sci. Statist. Comput. vol. 11,
+    *  no. 5, pp. 873-912, Sept 1990) and
+    *  "Accurate singular values and differential qd algorithms," by
+    *  B. Parlett and V. Fernando, Technical Report CPAM-554, Mathematics
+    *  Department, University of California at Berkeley, July 1992
+    *  for a detailed description of the algorithm.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  UPLO    (input) CHARACTER*1
+    *          = 'U':  B is upper bidiagonal;
+    *          = 'L':  B is lower bidiagonal.
+    *
+    *  N       (input) INTEGER
+    *          The order of the matrix B.  N >= 0.
+    *
+    *  NCVT    (input) INTEGER
+    *          The number of columns of the matrix VT. NCVT >= 0.
+    *
+    *  NRU     (input) INTEGER
+    *          The number of rows of the matrix U. NRU >= 0.
+    *
+    *  NCC     (input) INTEGER
+    *          The number of columns of the matrix C. NCC >= 0.
+    *
+    *  D       (input/output) DOUBLE PRECISION array, dimension (N)
+    *          On entry, the n diagonal elements of the bidiagonal matrix B.
+    *          On exit, if INFO=0, the singular values of B in decreasing
+    *          order.
+    *
+    *  E       (input/output) DOUBLE PRECISION array, dimension (N-1)
+    *          On entry, the N-1 offdiagonal elements of the bidiagonal
+    *          matrix B. 
+    *          On exit, if INFO = 0, E is destroyed; if INFO > 0, D and E
+    *          will contain the diagonal and superdiagonal elements of a
+    *          bidiagonal matrix orthogonally equivalent to the one given
+    *          as input.
+    *
+    *  VT      (input/output) DOUBLE PRECISION array, dimension (LDVT, NCVT)
+    *          On entry, an N-by-NCVT matrix VT.
+    *          On exit, VT is overwritten by P**T * VT.
+    *          Not referenced if NCVT = 0.
+    *
+    *  LDVT    (input) INTEGER
+    *          The leading dimension of the array VT.
+    *          LDVT >= max(1,N) if NCVT > 0; LDVT >= 1 if NCVT = 0.
+    *
+    *  U       (input/output) DOUBLE PRECISION array, dimension (LDU, N)
+    *          On entry, an NRU-by-N matrix U.
+    *          On exit, U is overwritten by U * Q.
+    *          Not referenced if NRU = 0.
+    *
+    *  LDU     (input) INTEGER
+    *          The leading dimension of the array U.  LDU >= max(1,NRU).
+    *
+    *  C       (input/output) DOUBLE PRECISION array, dimension (LDC, NCC)
+    *          On entry, an N-by-NCC matrix C.
+    *          On exit, C is overwritten by Q**T * C.
+    *          Not referenced if NCC = 0.
+    *
+    *  LDC     (input) INTEGER
+    *          The leading dimension of the array C.
+    *          LDC >= max(1,N) if NCC > 0; LDC >=1 if NCC = 0.
+    *
+    *  WORK    (workspace) DOUBLE PRECISION array, dimension (4*N)
+    *
+    *  INFO    (output) INTEGER
+    *          = 0:  successful exit
+    *          < 0:  If INFO = -i, the i-th argument had an illegal value
+    *          > 0:
+    *             if NCVT = NRU = NCC = 0,
+    *                = 1, a split was marked by a positive value in E
+    *                = 2, current block of Z not diagonalized after 30*N
+    *                     iterations (in inner while loop)
+    *                = 3, termination criterion of outer while loop not met 
+    *                     (program created more than N unreduced blocks)
+    *             else NCVT = NRU = NCC = 0,
+    *                   the algorithm did not converge; D and E contain the
+    *                   elements of a bidiagonal matrix which is orthogonally
+    *                   similar to the input matrix B;  if INFO = i, i
+    *                   elements of E have not converged to zero.
+    *
+    *  Internal Parameters
+    *  ===================
+    *
+    *  TOLMUL  DOUBLE PRECISION, default = max(10,min(100,EPS**(-1/8)))
+    *          TOLMUL controls the convergence criterion of the QR loop.
+    *          If it is positive, TOLMUL*EPS is the desired relative
+    *             precision in the computed singular values.
+    *          If it is negative, abs(TOLMUL*EPS*sigma_max) is the
+    *             desired absolute accuracy in the computed singular
+    *             values (corresponds to relative accuracy
+    *             abs(TOLMUL*EPS) in the largest singular value.
+    *          abs(TOLMUL) should be between 1 and 1/EPS, and preferably
+    *             between 10 (for fast convergence) and .1/EPS
+    *             (for there to be some accuracy in the results).
+    *          Default is to lose at either one eighth or 2 of the
+    *             available decimal digits in each computed singular value
+    *             (whichever is smaller).
+    *
+    *  MAXITR  INTEGER, default = 6
+    *          MAXITR controls the maximum number of passes of the
+    *          algorithm through its inner loop. The algorithms stops
+    *          (and so fails to converge) if the number of passes
+    *          through the inner loop exceeds MAXITR*N**2.
+    */
+    private void dbdsqr(char uplo, int n, int ncvt, int nru, int ncc, double d[], double e[],
+                        double VT[][], int ldvt, double U[][], int ldu, double C[][], int ldc,
+                        double work[], int info[]) {
+        int maxitr = 6;
+        boolean lower;
+        boolean rotate;
+        int i;
+        int idir;
+        int isub;
+        int iter;
+        int j;
+        int k;
+        int p;
+        int ll;
+        int lll;
+        int m;
+        int maxit;
+        int nm1;
+        int nm12;
+        int nm13;
+        int oldll;
+        int oldm;
+        double abse;
+        double abss;
+        double cosl[] = new double[1];
+        double cosr[] = new double[1];
+        double cs[] = new double[1];
+        double eps;
+        double f;
+        double g;
+        double h;
+        double mu;
+        double oldcs[] = new double[1];
+        double oldsn[] = new double[1];
+        double r[] = new double[1];
+        double shift[] = new double[1];
+        double sigmn[] = new double[1];
+        double sigmx[] = new double[1];
+        double sinl[] = new double[1];
+        double sinr[] = new double[1];
+        double sll;
+        double smax;
+        double smin;
+        double sminl;
+        double sminoa;
+        double sn[] = new double[1];
+        double temp;
+        double thresh;
+        double tol;
+        double tolmul;
+        double unfl;
+        double w1[];
+        double w2[];
+        double w3[];
+        double array1[][];
+        int row1;
+        
+        // Test the input parameters.
+        info[0] = 0;
+        lower = ((uplo == 'L') || (uplo == 'l'));
+        if ((uplo != 'U') && (uplo != 'u') && (!lower)) {
+            info[0] = -1;
+        }
+        else if (n < 0) {
+            info[0] = -2;
+        }
+        else if (ncvt < 0) {
+            info[0] = -3;
+        }
+        else if (nru < 0) {
+            info[0] = -4;
+        }
+        else if (ncc < 0) {
+            info[0] = -5;
+        }
+        else if (((ncvt == 0) && (ldvt < 1)) || ((ncvt > 0) && (ldvt < Math.max(1,n)))) {
+            info[0] = -9;
+        }
+        else if (ldu < Math.max(1, nru)) {
+            info[0] = -11;
+        }
+        else if (((ncc == 0) && (ldc < 1)) || ((ncc > 0) && (ldc < Math.max(1,n)))) {
+            info[0] = -13;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dbdsqr had info[0] = " + info[0]);
+            return;
+        }
+        if (n == 0) {
+            return;
+        }
+        if (n != 1) {
+            // Rotate is true if any singular vectors desired, false otherwise
+            rotate = (ncvt > 0) || (nru > 0) || (ncc > 0);
+            
+            // If no singular vectors desired, use qd algorithm
+            if (!rotate) {
+                dlasq1(n, d, e, work, info);
+                return;
+            }
+            
+            nm1 = n - 1;
+            nm12 = nm1 + nm1;
+            nm13 = nm12 + nm1;
+            idir = 0;
+            
+            // Get machine constants
+            
+            eps = dlamch('E'); // Epsilon
+            unfl = dlamch('S'); // Safe minimum
+            
+            // If matrix lower bidiagonal, rotate to be upper bidiagonal
+            // by applying Givens rotations on the left
+            
+            if (lower) {
+                for (i = 1; i <= n-1; i++) {
+                    dlartg(d[i-1], e[i-1], cs, sn, r);  
+                    d[i-1] = r[0];
+                    e[i-1] = sn[0]*d[i];
+                    d[i] = cs[0]*d[i];
+                    work[i-1] = cs[0];
+                    work[nm1+i-1] = sn[0];
+                } // for (i = 1; i <= n-1; i++)
+                
+                // Update singular vectors if desired
+                if (nru > 0) {
+                    w1 = new double[n-1];
+                    w2 = new double[n-1];
+                    for (k = 0; k < n-1; k++) {
+                        w1[k] = work[k];
+                        w2[k] = work[n-1+k];
+                    }
+                    dlasr('R', 'V', 'F', nru, n, w1, w2, U, ldu);
+                } // if (nru > 0)
+                
+                if (ncc > 0) {
+                    w1 = new double[n-1];
+                    w2 = new double[n-1];
+                    for (k = 0; k < n-1; k++) {
+                        w1[k] = work[k];
+                        w2[k] = work[n-1+k];
+                    } 
+                    dlasr('L', 'V', 'F', n, ncc, w1, w2, C, ldc);
+                } // if (ncc > 0)
+            } // if (lower)
+            
+            // Compute singular values to relative accuracy tol
+            // (By setting tol to be negative, algorithm will compute
+            // singular values to absolute accuracy abs(tol)*norm(input matrix))
+            
+            tolmul = Math.max(10.0, Math.min(100.0, Math.pow(eps, -0.125)));
+            tol = tolmul * eps;
+            
+            // Compute azpproximate maximum, minimum singular values
+            
+            smax = 0.0;
+            for (i = 1; i <= n; i++) {
+                smax = Math.max(smax, Math.abs(d[i-1]));
+            }
+            for (i = 1; i <= n-1; i++) {
+                smax = Math.max(smax, Math.abs(e[i-1]));
+            }
+            sminl = 0.0;
+            if (tol >= 0.0) {
+                // Relative accuracy desired
+                sminoa = Math.abs(d[0]);
+                if (sminoa != 0.0) {
+                    mu = sminoa;
+                    for (i = 2; i <= n; i++) {
+                        mu = Math.abs(d[i-1]) * (mu/(mu + Math.abs(e[i-2])));
+                        sminoa = Math.min(sminoa, mu);
+                        if (sminoa == 0.0) {
+                            break;
+                        }
+                    } // for (i = 2; i <= n; i++)
+                } // if (sminoa != 0.0)
+                sminoa = sminoa/Math.sqrt((double)n);
+                thresh = Math.max(tol * sminoa, maxitr * n * n * unfl);
+            } // if (tol >= 0.0)
+            else {
+                // Absolute accuracy required
+                thresh = Math.max(Math.abs(tol)*smax, maxitr * n * n * unfl);
+            }
+            
+            // Prepare for main iteration loop for the singular values
+            // (maxit is the maximum number of passes through the inner
+            // loop permitted before nonconvergence signalled.)
+            
+            maxit = maxitr * n * n;
+            iter = 0;
+            oldll = -1;
+            oldm = -1;
+            
+            // m points to the last element of unconverged part of matrix
+            
+            m = n;
+            
+            // Begin main iteration loop
+            loop1: while (true) {
+                // Check for convergence or exceeding iteration count
+                if (m <= 1) {
+                    break;
+                }
+                if (iter > maxit) {
+                    info[0] = 0;
+                    for (i = 1; i <= n-1; i++) {
+                        if (e[i-1] != 0.0) {
+                            info[0] = info[0] + 1;
+                        }
+                    }
+                    return;
+                } // if (iter > maxit)
+                
+                // Find diagonal block of matrix to work on
+                
+                if ((tol < 0.0) && (Math.abs(d[m-1]) <= thresh)) {
+                    d[m-1] = 0.0;
+                }
+                smax = Math.abs(d[m-1]);
+                smin = smax;
+                loop2: {
+                    for(lll = 1; lll <= m-1; lll++) {
+                        ll = m - lll;
+                        abss = Math.abs(d[ll-1]);
+                        abse = Math.abs(e[ll-1]);
+                        if ((tol < 0.0) && (abss <= thresh)) {
+                            d[ll-1] = 0.0;
+                        }
+                        if (abse <= thresh) {
+                            e[ll-1] = 0.0;
+                            
+                            // Matrix splits since e[ll-1] = 0.0
+                            
+                            if (ll == m-1) {
+                                // Convergence of bottom singular value, return to top of loop1
+                                m = m - 1;
+                                continue loop1;
+                            } // if (ll == m-1)
+                            break loop2;
+                        } // if (abse <= thresh)
+                        smin = Math.min(smin, abss);
+                        smax = Math.max(smax, Math.max(abss, abse));
+                    } // for(lll = 1; lll <= m-1; lll++)
+                    ll = 0;
+                } // loop2:
+                
+                ll = ll + 1;
+                
+                // e[ll-1] through e[m-2] are nonzero, e[ll-2] is zero.
+                
+                if (ll == m-1) {
+                    // 2 by 2 block, handle separately
+                    dlasv2(d[m-2], e[m-2], d[m-1], sigmn, sigmx, sinr, cosr, sinl, cosl);
+                    d[m-2] = sigmx[0];
+                    e[m-2] = 0.0;
+                    d[m-1] = sigmn[0];
+                    
+                    // Compute singular vectors if desired
+                    if (ncvt > 0) {
+                        w1 = new double[ncvt];
+                        w2 = new double[ncvt];
+                        for (k = 0; k < ncvt; k++) {
+                            w1[k] = VT[m-2][k];
+                            w2[k] = VT[m-1][k];
+                        }
+                        drot(ncvt, w1, 1, w2, 1, cosr[0], sinr[0]);
+                        for (k = 0; k < ncvt; k++) {
+                            VT[m-2][k] = w1[k];
+                            VT[m-1][k] = w2[k];
+                        }
+                    } // if (ncvt > 0)
+                    
+                    if (nru > 0) {
+                        w1 = new double[nru];
+                        w2 = new double[nru];
+                        for (k = 0; k < nru; k++) {
+                            w1[k] = U[k][m-2];
+                            w2[k] = U[k][m-1];
+                        }
+                        drot(nru, w1, 1, w2, 1, cosl[0], sinl[0]);
+                        for (k = 0; k < nru; k++) {
+                            U[k][m-2] = w1[k];
+                            U[k][m-1] = w2[k];
+                        }    
+                    } // if (nru > 0)
+                    
+                    if (ncc > 0) {
+                        w1 = new double[ncc];
+                        w2 = new double[ncc];
+                        for (k = 0; k < ncc; k++) {
+                            w1[k] = C[m-2][k];
+                            w2[k] = C[m-1][k];
+                        }
+                        drot(ncc, w1, 1, w2, 1, cosl[0], sinl[0]);
+                        for (k = 0; k < ncc; k++) {
+                            C[m-2][k] = w1[k];
+                            C[m-1][k] = w2[k];
+                        }    
+                    } // if (ncc > 0)
+                    
+                    m = m-2;
+                    continue loop1;
+                } // if (ll == m-1)
+                
+                // If working on new submatrix, choose shift direction
+                // (from larger end diagonal element towards smaller)
+                
+                if ((ll > oldm) || (m < oldll)) {
+                    if (Math.abs(d[ll-1]) >= Math.abs(d[m-1])) {
+                        // Chase bulge from top (big end) to bottom (small end)
+                        idir = 1;
+                    }
+                    else {
+                        // Chase bulge from bottom (big end) to top (small end)
+                        idir = 2;
+                    }
+                } // if ((ll > oldm) || (m < oldll))
+                
+                // Apply convergence tests
+                
+                if (idir == 1) {
+                    // Run convergence test in forward direction
+                    // First apply standard test to bottom of matrix
+                    
+                    if ((Math.abs(e[m-2]) <= Math.abs(tol)*Math.abs(d[m-1])) ||
+                        ((tol < 0.0) && (Math.abs(e[m-2]) <= thresh))) {
+                        e[m-2] = 0.0;
+                        continue loop1;
+                    }
+                    
+                    if (tol >= 0.0) {
+                        // If relative accuracy desired,
+                        // apply convergence criterion forward
+                        mu = Math.abs(d[ll-1]);
+                        sminl = mu;
+                        for (lll = ll; lll <= m-1; lll++) {
+                            if (Math.abs(e[lll-1]) <= tol*mu) {
+                                e[lll-1] = 0.0;
+                                continue loop1;
+                            }
+                            mu = Math.abs(d[lll]) * (mu/(mu + Math.abs(e[lll-1])));
+                            sminl = Math.min(sminl, mu);
+                        } // for (lll = ll; lll <= m-1; lll++)
+                    } // if (tol >= 0.0)
+                } // if (idir == 1)
+                else { // idir == 2
+                    // Run convergence test in backward direction
+                    // First apply standard test to top of matrix
+                    if ((Math.abs(e[ll-1]) <= Math.abs(tol) * Math.abs(d[ll-1])) || 
+                        ((tol < 0.0) && (Math.abs(e[ll-1]) <= thresh))) {
+                        e[ll-1] = 0.0;
+                        continue loop1;
+                    }
+                    
+                    if (tol >= 0.0) {
+                        // If relative accuracy desired,
+                        // apply convergence criterion backward
+                        mu = Math.abs(d[m-1]);
+                        sminl = mu;
+                        for (lll = m - 1; lll >= ll; lll--) {
+                            if (Math.abs(e[lll-1]) <= tol*mu) {
+                                e[lll-1] = 0.0;
+                                continue loop1;
+                            }
+                            mu = Math.abs(d[lll-1]) * (mu/ (mu + Math.abs(e[lll-1])));
+                            sminl = Math.min(sminl, mu);
+                        } // for (lll = m - 1; lll >= ll; lll--)
+                    } // if (tol >= 0.0)
+                } // else idir == 2
+                oldll = ll;
+                oldm = m;
+                
+                // Compute shift.  First, test if shifting would ruin relative
+                // accuracy, and if so set the shift to zero.
+                
+                if ((tol >= 0.0) && (n*tol*(sminl/smax) <= Math.max(eps, 0.01*tol))) {
+                    // Use a zero shift to avoid loss of relative accuracy
+                    shift[0] = 0;
+                }
+                else {
+                    // Compute the shift from 2-by-2 block at end of matrix
+                    w1 = new double[1];
+                    w2 = new double[1];
+                    w3 = new double[1];
+                    if (idir == 1) {
+                        sll = Math.abs(d[ll-1]);
+                        w1[0] = d[m-2];
+                        w2[0] = e[m-2];
+                        w3[0] = d[m-1];
+                        dlas2(w1, w2, w3, shift, r);
+                    }
+                    else {
+                        sll = Math.abs(d[m-1]);
+                        w1[0] = d[ll-1];
+                        w2[0] = e[ll-1];
+                        w3[0] = d[ll];
+                        dlas2(w1, w2, w3, shift, r);
+                    }
+                    
+                    // Test if shift negligible, and if so set to zero
+                    if (sll > 0.0) {
+                        temp = shift[0]/sll;
+                        if (temp*temp < eps) {
+                            shift[0] = 0.0;
+                        }
+                    } // if (sll > 0.0)
+                } // else
+                
+                // Increment iteration count
+                iter = iter + m - ll;
+                
+                // If shift[0] = 0, do simplified QR iteration
+                if (shift[0] == 0) {
+                    if (idir == 1) {
+                        // Chase bulge from top to bottom
+                        // Save cosines and sines for later singular vector updates
+                        
+                        cs[0] = 1.0;
+                        oldcs[0] = 1.0;
+                        w1 = new double[1];
+                        for (i = ll; i <= m-1; i++) {
+                            dlartg(d[i-1]*cs[0], e[i-1], cs, sn, r);
+                            if (i > ll) {
+                                e[i-2] = oldsn[0] * r[0];
+                            }
+                            dlartg(oldcs[0]*r[0], d[i]*sn[0], oldcs, oldsn, w1);
+                            d[i-1] = w1[0];
+                            work[i-ll] = cs[0];
+                            work[i-ll+nm1] = sn[0];
+                            work[i-ll+nm12] = oldcs[0];
+                            work[i-ll+nm13] = oldsn[0];
+                        } // for (i = ll; i <= m-1; i++)
+                        h = d[m-1] * cs[0];
+                        d[m-1] = h * oldcs[0];
+                        e[m-2] = h * oldsn[0];
+                        
+                        // Update singular vectors
+                        if (ncvt > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[k];
+                                w2[k] = work[n-1+k];
+                            }
+                            row1 = Math.max(1, m-ll+1);
+                            array1 = new double[row1][ncvt];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncvt; p++) {
+                                    array1[k][p] = VT[ll-1+k][p];
+                                }
+                            }
+                            dlasr('L', 'V', 'F', m-ll+1, ncvt, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncvt; p++) {
+                                    VT[ll-1+k][p] = array1[k][p];
+                                }
+                            }
+                        } // if (ncvt > 0)
+                        
+                        if (nru > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[k+nm12];
+                                w2[k] = work[k+nm13];
+                            }
+                            row1 = Math.max(1, nru);
+                            array1 = new double[row1][m-ll+1];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < m-ll+1; p++) {
+                                    array1[k][p] = U[k][ll-1+p];
+                                }
+                            }
+                            dlasr('R', 'V', 'F', nru, m-ll+1, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < m-ll+1; p++) {
+                                    U[k][ll-1+p] = array1[k][p];
+                                }
+                            }    
+                        } // if (nru > 0)
+                        
+                        if (ncc > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[k+nm12];
+                                w2[k] = work[k+nm13];
+                            }
+                            row1 = Math.max(1, m-ll+1);
+                            array1 = new double[row1][ncc];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncc; p++) {
+                                    array1[k][p] = C[ll-1+k][p];
+                                }
+                            }
+                            dlasr('L', 'V', 'F', m-ll+1, ncc, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncc; p++) {
+                                    C[ll-1+k][p] = array1[k][p];
+                                }
+                            }    
+                        } // if (ncc > 0)
+                        
+                        // Test convergence
+                        if (Math.abs(e[m-2]) <= thresh) {
+                            e[m-2] = 0.0;
+                        }
+                    } // if (idir == 1)
+                    else { // idir == 2
+                        // Chase bulge from bottom to top
+                        // Save cosines and sines for later singular vector updates
+                        cs[0] = 1.0;
+                        oldcs[0] = 1.0;
+                    } // else idir == 2
+                } // if (shift[0] == 0)
+            } // loop1: while(true)
+        } // if (n != 1)
+    } // dbdsqr
+
+    
+    /** This is a port of version 3.2 LAPACK routine DLASQ1.                                 --
+    *
+    *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    *  -- Berkeley                                                        --
+    *  -- November 2008                                                   --
+    *
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INFO, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   D( * ), E( * ), WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DLASQ1 computes the singular values of a real N-by-N bidiagonal
+    *  matrix with diagonal D and off-diagonal E. The singular values
+    *  are computed to high relative accuracy, in the absence of
+    *  denormalization, underflow and overflow. The algorithm was first
+    *  presented in
+    *
+    *  "Accurate singular values and differential qd algorithms" by K. V.
+    *  Fernando and B. N. Parlett, Numer. Math., Vol-67, No. 2, pp. 191-230,
+    *  1994,
+    *
+    *  and the present implementation is described in "An implementation of
+    *  the dqds Algorithm (Positive Case)", LAPACK Working Note.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  N     (input) INTEGER
+    *        The number of rows and columns in the matrix. N >= 0.
+    *
+    *  D     (input/output) DOUBLE PRECISION array, dimension (N)
+    *        On entry, D contains the diagonal elements of the
+    *        bidiagonal matrix whose SVD is desired. On normal exit,
+    *        D contains the singular values in decreasing order.
+    *
+    *  E     (input/output) DOUBLE PRECISION array, dimension (N)
+    *        On entry, elements E(1:N-1) contain the off-diagonal elements
+    *        of the bidiagonal matrix whose SVD is desired.
+    *        On exit, E is overwritten.
+    *
+    *  WORK  (workspace) DOUBLE PRECISION array, dimension (4*N)
+    *
+    *  INFO  (output) INTEGER
+    *        = 0: successful exit
+    *        < 0: if INFO = -i, the i-th argument had an illegal value
+    *        > 0: the algorithm failed
+    *             = 1, a split was marked by a positive value in E
+    *             = 2, current block of Z not diagonalized after 30*N
+    *                  iterations (in inner while loop)
+    *             = 3, termination criterion of outer while loop not met 
+    *                  (program created more than N unreduced blocks)
+    */
+    private void dlasq1(int n, double d[], double e[], double work[], int info[]) {
+        int i;
+        int iinfo[] = new int[1];
+        double eps;
+        double scale;
+        double safmin;
+        double sigmn[] = new double[1];
+        double sigmx[] = new double[1];
+        double d0[] = new double[1];
+        double e0[] = new double[1];
+        double d1[] = new double[1];
+        double work1[][] = new double[2*n-1][1];
+        double dmat[][] = new double[d.length][1];
+        
+        info[0] = 0;
+        if (n < 0) {
+            info[0] = -2;
+            MipavUtil.displayError("Error dlasq1 had n < 0");
+            return;
+        }
+        else if (n == 0) {
+            return;
+        }
+        else if (n == 1) {
+            d[0] = Math.abs(d[0]);
+            return;
+        }
+        else if (n == 2) {
+            d0[0] = d[0];
+            e0[0] = e[0];
+            d1[0] = d[1];
+            dlas2(d0, e0, d1, sigmn, sigmx);
+            d[0] = sigmx[0];
+            d[1] = sigmn[0];
+            return;
+        }
+        
+        // Estimate the largest singular value.
+        sigmx[0] = 0.0;
+        for (i = 1; i <= n-1; i++) {
+            d[i-1] = Math.abs(d[i-1]);
+            sigmx[0] = Math.max(sigmx[0], Math.abs(e[i-1]));
+        }
+        d[n-1] = Math.abs(d[n-1]);
+        
+        // Early return if simgx[0] is zero (matrix is already diagonal).
+        if (sigmx[0] == 0) {
+            dlasrt('D', n, d, iinfo);
+            return;
+        }
+        
+        for (i = 1; i <= n; i++) {
+            sigmx[0] = Math.max(sigmx[0], d[i-1]);
+        }
+        
+        // Copy d and e int work (in the Z format) and scale (squaring the
+        // input data makes scaling by a power of the radix pointless).
+        eps = dlamch('P'); // Precision
+        safmin = dlamch('S'); // Safe minimum
+        scale = Math.sqrt(eps/safmin);
+        for (i = 0; i < n; i++) {
+            work1[2*i][0] = d[i];
+        }
+        for (i = 0; i < n-1; i++) {
+            work1[2*i + 1][0] = e[i];
+        }
+        dlascl('G', 0, 0, sigmx[0], scale, 2*n-1, 1, work1, 2*n-1, iinfo);
+        for (i = 0; i < 2*n-1; i++) {
+            work[i] = work1[i][0];
+        }
+        
+        // Compute the q's and e's
+        
+        for (i = 1; i <= 2*n - 1; i++) {
+            work[i-1] = work[i-1] * work[i-1];
+        }
+        work[2*n-1] = 0.0;
+        
+        dlasq2(n, work, info);
+        
+        if (info[0] == 0) {
+            for (i = 1; i <= n; i++) {
+                dmat[i-1][0] = Math.sqrt(work[i-1]);
+            }
+            dlascl('G', 0, 0, scale, sigmx[0], n, 1, dmat, n, iinfo);
+            for (i = 0; i < n; i++) {
+                d[i] = dmat[i][0];
+            }
+        } // if (info[0] == 0)
+        
+        return;
+    } // dlasq1
+
+    
     /** This is a port of version 3.2 LAPACK routine DLASQ2.
     *  -- Contributed by Osni Marques of the Lawrence Berkeley National   --
     *  -- Laboratory and Beresford Parlett of the Univ. of California at  --
@@ -3611,46 +4433,48 @@ public class GeneralizedInverse {
         int i4;
         int iinfo[] = new int[1];
         int ipn4;
-        int iter;
+        int iter[] = new int[1];
         int iwhila;
         int iwhilb;
         int k;
         int kmin;
         int n0;
         int nbig;
-        int ndiv;
-        int nfail;
-        int pp;
+        int ndiv[] = new int[1];
+        int nfail[] = new int[1];
+        int pp[] = new int[1];
         int splt;
-        int ttype;
+        int ttype[] = new int[1];
         double d;
         double dee;
         double deemin;
-        double desig;
-        double dmin;
-        double dmin1;
-        double dmin2;
-        double dn;
-        double dn1;
-        double dn2;
+        double desig[] = new double[1];
+        double dmin[] = new double[1];
+        double dmin1[] = new double[1];
+        double dmin2[] = new double[1];
+        double dn[] = new double[1];
+        double dn1[] = new double[1];
+        double dn2[] = new double[1];
         double e;
         double emax;
         double emin;
         double eps;
-        double g;
+        double g[] = new double[1];
         double oldemn;
         double qmax;
         double qmin;
         double s;
         double safmin;
-        double sigma;
+        double sigma[] = new double[1];
         double t;
-        double tau;
+        double tau[] = new double[1];
         double temp;
         double tol;
         double tol2;
         double trace;
         double zmax;
+        String name;
+        String opts;
         
         // Test the input arguments
         // (in case dlasq2 is not called by dlasq1)
@@ -3678,7 +4502,350 @@ public class GeneralizedInverse {
         } // else if (n == 1)
         else if (n == 2) {
             // 2-by-2 case
+            if ((z[1] < 0.0) || (z[2] < 0.0)) {
+                info[0] = -2;
+                MipavUtil.displayError("Error dlasq2 had z[1] < 0.0 or z[2] < 0.0");
+                return;
+            }
+            else if (z[2] > z[0]) {
+                d = z[2];
+                z[2] = z[0];
+                z[0] = d;
+            }
+            z[4] = z[0] + z[1] + z[2];
+            if (z[1] > z[2]*tol2) {
+                t = 0.5 *(z[0] - z[2]) + z[1];
+                s = z[2] * (z[1]/t);
+                if (s <= t) {
+                    s = z[2] * (z[1]/(t*(1.0 + Math.sqrt(1.0 + s/t))));
+                }
+                else {
+                    s = z[2] * (z[1]/(t + Math.sqrt(t)*Math.sqrt(t+s)));
+                }
+                t = z[0] + (s + z[1]);
+                z[2] = z[2] * (z[0]/t);
+                z[0] = t;
+            } // if (z[1] > z[2]*tol2)
+            z[1] = z[2];
+            z[5] = z[1] + z[0];
+            return;
         } // else if (n == 2)
+        
+        // Check for negative data and compute sums of q's and e's.
+        
+        z[2*n-1] = 0.0;
+        emin = z[1];
+        qmax = 0.0;
+        zmax = 0.0;
+        d = 0.0;
+        e = 0.0;
+        
+        for (k = 1; k <= 2*(n-1); k += 2) {
+            if (z[k-1] < 0.0) {
+                info[0] = -(200+k);
+                MipavUtil.displayError("Error dlasq2 had info[0] = " + info[0]);
+                return;
+            }
+            else if (z[k] < 0.0) {
+                info[0] = -(200+k+1);
+                MipavUtil.displayError("Error dlasq2 had info[0] = " + info[0]);
+                return;
+            }
+            d = d + z[k-1];
+            e = e + z[k];
+            qmax = Math.max(qmax, z[k-1]);
+            emin = Math.min(emin, z[k]);
+            zmax = Math.max(qmax, Math.max(zmax, z[k]));
+        } // (k = 1; k <= 2*(n-1); k += 2)
+        if (z[2*n-2] < 0.0) {
+            info[0] = -(200+2*n-1);
+            MipavUtil.displayError("Error dlasq2 had info[0] = " + info[0]);
+            return;
+        }
+        d = d + z[2*n-2];
+        qmax = Math.max(qmax, z[2*n-2]);
+        zmax = Math.max(qmax, zmax);
+        
+        // Check for diagonality
+        
+        if (e == 0.0) {
+            for (k = 2; k <= n; k++) {
+                z[k-1] = z[2*k-2];
+            }
+            dlasrt('D', n, z, iinfo);
+            z[2*n-2] = d;
+            return;
+        } // if (e == 0.0)
+        
+        trace = d + e;
+        
+        // Check for zero data
+        
+        if (trace == 0.0) {
+            z[2*n-2] = 0.0;
+            return;
+        }
+        
+        // Check whether the machine is IEEE conformable.
+        name = new String("DLASQ2");
+        opts = new String("N");
+        ieee = ((ilaenv(10, name, opts, 1, 2, 3, 4) == 1) && (ilaenv(11, name, opts, 1, 2, 3, 4) == 1));
+        
+        // Rearrange data for locality: a = (q1,qq1,e1,ee1,q2,qq2,e2,ee2,...).
+        
+        for (k = 2*n; k >= 2; k -= 2) {
+            z[2*k-1] = 0.0;
+            z[2*k-2] = z[k-1];
+            z[2*k-3] = 0.0;
+            z[2*k-4] = z[k-2];
+        } // for (k = 2*n; k >= 2; k -= 2)
+        
+        i0 = 1;
+        n0 = n;
+        
+        // Reverse the qd-array, if warranted
+        
+        if (cbias * z[4*i0-4] < z[4*n0-4]) {
+            ipn4 = 4 * (i0 + n0);
+            for (i4 = 4*i0; i4 <= 2*(i0+n0-1); i4 += 4) {
+                temp = z[i4-4];
+                z[i4-4] = z[ipn4 -i4 - 4];
+                z[ipn4 - i4 - 4] = temp;
+                temp = z[i4-2];
+                z[i4-2] = z[ipn4 - i4 - 6];
+                z[ipn4 - i4 - 6] = temp;
+            } // for (i4 = 4*i0; i4 <= 2*(i0+n0-1); i4 += 4)
+        } // if (cbias * z[4*i0-4] < z[4*n0-4])
+        
+        // Initial split checking via dqd and Li's test.
+        
+        pp[0] = 0;
+        
+        for (k = 1; k <= 2; k++) {
+            d = z[4*n0+pp[0]-4];
+            for (i4 = 4*(n0-1) + pp[0]; i4 >= 4*i0 + pp[0]; i4 -= 4) {
+                if (z[i4-2] <= tol2*d) {
+                    z[i4-2] = -0.0;
+                    d = z[i4-4];
+                }
+                else {
+                    d = z[i4-4]*(d/(d + z[i4-2]));
+                }
+            } // for (i4 = 4*(n0-1) + pp[0]; i4 >= 4*i0 + pp[0]; i4 -= 4)
+            
+            // dqd maps z to zz plus Li's test
+            
+            emin = z[4*i0+pp[0]];
+            d = z[4*i0+pp[0]-4];
+            for (i4 = 4*i0 + pp[0]; i4 <= 4*(n0-1) + pp[0]; i4 += 4) {
+                z[i4-2*pp[0]-3] = d + z[i4-2];
+                if (z[i4-2] <= tol2*d) {
+                    z[i4-2] = -0.0;
+                    z[i4-2*pp[0]-3] = d;
+                    z[i4-2*pp[0]-1] = 0.0;
+                    d = z[i4];
+                } // if (z[i4-2] <= tol2*d)
+                else if ((safmin * z[i4] < z[i4-2*pp[0]-3]) && (safmin*z[i4-2*pp[0]-3] < z[i4])) {
+                    temp = z[i4]/z[i4-2*pp[0]-3];
+                    z[i4-2*pp[0]-1] = z[i4-2]*temp;
+                    d = d * temp;
+                }
+                else {
+                    z[i4-2*pp[0]-1] = z[i4] *(z[i4-2]/z[i4-2*pp[0]-3]);
+                    d = z[i4] * (d/z[i4-2*pp[0]-3]);
+                }
+                emin = Math.min(emin, z[i4-2*pp[0]-1]);
+            } // for (i4 = 4*i0 + pp[0]; i4 <= 4*(n0-1) + pp[0]; i4 += 4)
+            z[4*n0 - pp[0] - 3] = d;
+            
+            // Now find qmax.
+            
+            for (i4 = 4*i0 - pp[0] + 2; i4 <= 4*n0 - pp[0] - 2; i4 += 4) {
+                qmax = Math.max(qmax, z[i4-1]);
+            }
+            
+            // Prepare for the next iteration on k.
+            pp[0] = 1 - pp[0];
+        } // for (k = 1; k <= 2; k++)
+        
+        // Initialize variables to pass to dlasq3
+        
+        ttype[0] = 0;
+        dmin1[0] = 0.0;
+        dmin2[0] = 0.0;
+        dn[0] = 0.0;
+        dn1[0] = 0.0;
+        dn2[0] = 0.0;
+        g[0] = 0.0;
+        tau[0] = 0.0;
+        
+        iter[0] = 2;
+        nfail[0] = 0;
+        ndiv[0] = 2*(n0 - i0);
+        
+        loop1: {
+            loop2: for (iwhila = 1; iwhila <= n + 1; iwhila++) {
+                if (n0 < 1) {
+                    break loop1;
+                }
+                
+                // While array unfinished do
+                
+                // e[n0-1] holds the value of sigma when submatrix in i0-1:n0-1
+                // splits form the rest of the array, but is negated.
+                
+                desig[0] = 0.0;
+                if (n0 == n) {
+                    sigma[0] = 0.0;
+                }
+                else {
+                    sigma[0] = -z[4*n0-2];
+                }
+                if (sigma[0] < 0.0) {
+                    info[0] = 1;
+                    return;
+                }
+                
+                // Find the last unreduced submatrix's top index i0, find qmax and
+                // emin.  Find Gershgorin-type bound if Q's much greater than E's.
+                
+                emax = 0.0;
+                if (n0 > i0) {
+                    emin = Math.abs(z[4*n0-6]);
+                }
+                else {
+                    emin = 0.0;
+                }
+                qmin = z[4*n0-4];
+                qmax = qmin;
+                loop3: {
+                    for (i4 = 4*n0; i4 >= 8; i4 -= 4) {
+                        if (z[i4-6] <= 0.0) {
+                            break loop3;
+                        }
+                        if (qmin >= 4.0*emax) {
+                            qmin = Math.min(qmin, z[i4-4]);
+                            emax = Math.max(emax, z[i4-6]);
+                        }
+                        qmax = Math.max(qmax, z[i4-8] + z[i4-6]);
+                        emin = Math.min(emin, z[i4-6]);
+                    } // for (i4 = 4*n0; i4 >= 8; i4 -= 4)
+                    i4 = 4;
+                } // loop3
+                
+                i0 = i4/4;
+                pp[0] = 0;
+                
+                if (n0 - i0 > 1) {
+                    dee = z[4*i0 - 4];
+                    deemin = dee;
+                    kmin = i0;
+                    for (i4 = 4*i0+1; i4 <= 4*n0-3; i4 += 4) {
+                        dee = z[i4-1] * (dee/(dee + z[i4-3]));
+                        if (dee <= deemin) {
+                            deemin = dee;
+                            kmin = (i4+3)/4;
+                        }
+                    } // for (i4 = 4*i0+1; i4 <= 4*n0-3; i4 += 4)
+                    if ((2*(kmin - i0) < n0 - kmin) && (deemin <= 0.5 * z[4*n0-4])) {
+                        ipn4 = 4*(i0+n0);
+                        pp[0] = 2;
+                        for (i4 = 4*i0; i4 <= 2*(i0 + n0 - 1); i4 += 4) {
+                            temp = z[i4-4];
+                            z[i4-4] = z[ipn4-i4-4];
+                            z[ipn4-i4-4] = temp;
+                            temp = z[i4-3];
+                            z[i4-3] = z[ipn4-i4-3];
+                            z[ipn4-i4-3] = temp;
+                            temp = z[i4-2];
+                            z[i4-2] = z[ipn4-i4-6];
+                            z[ipn4-i4-6] = temp;
+                            temp = z[i4-1];
+                            z[i4-1] = z[ipn4-i4-5];
+                            z[ipn4-i4-5] = temp;
+                        } // for (i4 = 4*i0; i4 <= 2*(i0 + n0 - 1); i4 += 4)
+                    } // if ((2*(kmin - i0) < n0 - kmin) && (deemin <= 0.5 * z[4*n0-4]))
+                } // if (n0 - i0 > 1)
+                
+                // Put -(initial shift) into dmin.
+                
+                dmin[0] = -Math.max(0.0, qmin - 2.0*Math.sqrt(qmin)*Math.sqrt(emax));
+                
+                // Now i0:n0 is unreduced.
+                // pp = 0 for ping, pp = 1 for pong.
+                // pp = 2 indicates tht flipping was applied to the z array and
+                // that the tests for deflation upon entry in dlasq3 should not
+                // be performed.
+                
+                nbig = 30*(n0 - i0 + 1);
+                for (iwhilb = 1; iwhilb <= nbig; iwhilb++) {
+                    if (i0 > n0) {
+                        continue loop2;
+                    }
+                    
+                    // While submatrix unfinished take a good dqds step.
+                    dlasq3(i0, n0, z, pp, dmin, sigma, desig, qmax, nfail, iter, ndiv, ieee, ttype,
+                           dmin1, dmin2, dn, dn1, dn2, g, tau);
+                    
+                    pp[0] = 1 - pp[0];
+                    
+                    // Whem emin is very small check for splits
+                    if ((pp[0] == 0) && (n0 - i0 >= 3)) {
+                        if ((z[4*n0-1] <= tol2*qmax) || (z[4*n0-2] <= tol2*sigma[0])) {
+                            splt = i0 - 1;
+                            qmax = z[4*i0-4];
+                            emin = z[4*i0-2];
+                            oldemn = z[4*i0-1];
+                            for (i4 = 4*i0; i4 <= 4*(n0-3); i4 += 4) {
+                                if ((z[i4-1] <= tol2*z[i4-4]) || (z[i4-2] <= tol2*sigma[0])) {
+                                    z[i4-2] = -sigma[0];
+                                    splt = i4/4;
+                                    qmax = 0.0;
+                                    emin = z[i4+2];
+                                    oldemn = z[i4+3];
+                                } // if ((z[i4-1] <= tol2*z[i4-4]) || (z[i4-2] <= tol2*sigma[0]))
+                                else {
+                                    qmax = Math.max(qmax, z[i4]);
+                                    emin = Math.min(emin, z[i4-2]);
+                                    oldemn = Math.min(oldemn, z[i4-1]);
+                                }
+                            } // for (i4 = 4*i0; i4 <= 4*(n0-3); i4 += 4)
+                            z[4*n0-2] = emin;
+                            z[4*n0-1] = oldemn;
+                            i0 = splt + 1;
+                        } // if ((z[4*n0-1] <= tol2*qmax) || (z[4*n0-2] <= tol2*sigma[0]))
+                    } // if ((pp[0] == 0) && (n0 - i0 >= 3))
+                } // for (iwhilb = 1; iwhilb <= nbig; iwhilb++)
+                info[0] = 2;
+                return;
+            } // loop2: for (iwhila = 1; iwhila <= n + 1; iwhila++)
+            info[0] = 3;
+            return;
+        } // loop1
+        
+        // Move q's to the front.
+        
+        for (k = 2; k <= n; k++) {
+            z[k-1] = z[4*k-4];
+        }
+        
+        // Sort and compute sum of eigenvalues.
+        
+        dlasrt('D', n, z, iinfo);
+        
+        e = 0.0;
+        for (k = n; k >= 1; k--) {
+            e = e + z[k-1];
+        }
+        
+        // Store trace, sum(eigenvalues), and information on performance.
+        
+        z[2*n] = trace;
+        z[2*n+1] = e;
+        z[2*n+2] = (double)iter[0];
+        z[2*n+3] = (double)ndiv[0]/(double)(n*n);
+        z[2*n+4] = 100.0 * nfail[0]/(double)iter[0];
+        return;
     } // dlasq2
 
     
