@@ -4335,6 +4335,21 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public final short getUByte(int x, int y, int z) {
         return (data.getUByte((z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
     }
+    
+    /**
+     * 4D get data fuction where bounds checking is NOT performed.
+     *
+     * @param   x  x coordinate
+     * @param   y  y coordinate
+     * @param   z  z coordinate
+     * @param   t  t coordinate
+     *
+     * @return  The value at that position in the data array
+     */
+    public final short getUByte(int x, int y, int z, int t) {
+        return (data.getUByte((t * (dimExtents[0] * dimExtents[1] * dimExtents[2])) +
+                              (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x));
+    }
 
     /**
      * Version of get that performs bi-linear interpoloation. Note - does NOT perform bounds checking
