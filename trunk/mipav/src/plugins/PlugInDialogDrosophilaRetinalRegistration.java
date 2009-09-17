@@ -28,6 +28,7 @@ import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.BSplineProcessing;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
@@ -133,7 +134,13 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
     /** DOCUMENT ME! */
     private BSplineLattice3Df m_kBSpline3D;
     
+    private float[][][] imageX_R_coeff;
+    private float[][][] imageX_G_coeff;
+    private float[][][] imageX_B_coeff;
     
+    private float[][][] imageY_R_coeff;
+    private float[][][] imageY_G_coeff;
+    private float[][][] imageY_B_coeff;
     
     
     
@@ -461,7 +468,8 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 			 float[] resultImageResols = new float[3];
 			 resultImageResols[0] = imageY.getResolutions(0)[0];
 			 resultImageResols[1] = imageY.getResolutions(0)[1];
-			 resultImageResols[2] = imageY.getResolutions(0)[2]*imageY.getExtents()[2]/512;
+			 //resultImageResols[2] = imageY.getResolutions(0)[2]*imageY.getExtents()[2]/512;
+			 resultImageResols[2] = imageX.getResolutions(0)[1];
 			 for(int i=0;i<resultImage.getExtents()[2];i++) {
 				 resultImage.setResolutions(i, resultImageResols);
 			 }
@@ -480,6 +488,40 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	             return;
 	         }
 	         
+	         imageX_R_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
+	         imageX_G_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
+	         imageX_B_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
+	         
+	         
+	         for (int c = 0; c < 4; c++) {
+	             for (int z = 0; z < imageX.getExtents()[2]; z++) {
+	                 for (int y = 0; y < imageX.getExtents()[1]; y++) {
+	                     for (int x = 0; x < imageX.getExtents()[0]; x++) {
+	                    	 if(c==1) {
+	                    		 imageX_R_coeff[x][y][z] = (float)(imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX.getExtents()[0] * imageX.getExtents()[1] * z))) + c] & 0xff);
+	                    	 }else if(c==2) {
+	                    		 imageX_G_coeff[x][y][z] = (float)(imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX.getExtents()[0] * imageX.getExtents()[1] * z))) + c] & 0xff);
+	                    	 }else if(c==3) {
+	                    		 imageX_B_coeff[x][y][z] = (float)(imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX.getExtents()[0] * imageX.getExtents()[1] * z))) + c] & 0xff);
+	                    	 }
+	                         
+	                     }
+	                 }
+	             }
+	         }
+	         BSplineProcessing splineAlgX_R;
+	         splineAlgX_R = new BSplineProcessing();
+	         splineAlgX_R.samplesToCoefficients(imageX_R_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX.getExtents()[2], 3);
+	         
+	         BSplineProcessing splineAlgX_G;
+	         splineAlgX_G = new BSplineProcessing();
+	         splineAlgX_G.samplesToCoefficients(imageX_G_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX.getExtents()[2], 3);
+	         
+	         BSplineProcessing splineAlgX_B;
+	         splineAlgX_B = new BSplineProcessing();
+	         splineAlgX_B.samplesToCoefficients(imageX_B_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX.getExtents()[2], 3);
+	         
+	         
 	         byte[] imageYBuffer;
 	         int length2 = imageY.getExtents()[0] * imageY.getExtents()[1] * imageY.getExtents()[2] * 4;
 	         imageYBuffer = new byte[length2];
@@ -489,6 +531,42 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	             System.out.println("IO exception");
 	             return;
 	         }
+	         
+	         imageY_R_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
+	         imageY_G_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
+	         imageY_B_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
+	         
+	         
+	         for (int c = 0; c < 4; c++) {
+	             for (int z = 0; z < imageY.getExtents()[2]; z++) {
+	                 for (int y = 0; y < imageY.getExtents()[1]; y++) {
+	                     for (int x = 0; x < imageY.getExtents()[0]; x++) {
+	                    	 if(c==1) {
+	                    		 imageY_R_coeff[x][y][z] = (float)(imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY.getExtents()[0] * imageY.getExtents()[1] * z))) + c] & 0xff);
+	                    		 
+	                    	 }else if(c==2) {
+	                    		 imageY_G_coeff[x][y][z] = (float)(imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY.getExtents()[0] * imageY.getExtents()[1] * z))) + c] & 0xff);
+	                    	 }else if(c==3) {
+	                    		 imageY_B_coeff[x][y][z] = (float)(imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY.getExtents()[0] * imageY.getExtents()[1] * z))) + c] & 0xff);
+	                    	 }
+	                         
+	                     }
+	                 }
+	             }
+	         }
+	         
+	         BSplineProcessing splineAlgY_R;
+	         splineAlgY_R = new BSplineProcessing();
+	         splineAlgY_R.samplesToCoefficients(imageY_R_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY.getExtents()[2], 3);
+	         
+	         BSplineProcessing splineAlgY_G;
+	         splineAlgY_G = new BSplineProcessing();
+	         splineAlgY_G.samplesToCoefficients(imageY_G_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY.getExtents()[2], 3);
+	         
+	         BSplineProcessing splineAlgY_B;
+	         splineAlgY_B = new BSplineProcessing();
+	         splineAlgY_B.samplesToCoefficients(imageY_B_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY.getExtents()[2], 3);
+	         
 	         
 	         ModelSimpleImage[] akSimpleImageSourceMap = null;
 	         if(!transform3FilePathTextField.getText().trim().equals("")){
@@ -528,6 +606,9 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 			 float xmm,ymm,zmm;
 			 byte[] rgb1 = new byte[3];
 			 byte[] rgb2 = new byte[3];
+			 //float[] argb1_float = new float[4];
+			 //float[] argb2_float = new float[4];
+			 float r1_float, g1_float, b1_float, r2_float, g2_float, b2_float;
 			 short[] rgb1_short = new short[3];
 			 short[] rgb2_short = new short[3];
 			 //loop through each point in result image
@@ -535,6 +616,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 				 	System.out.println("z is " +  z);
 				 for(int y=0;y<512;y++) {
 					 for(int x=0;x<512;x++) {
+						 //System.out.println("   y is " + y + " and x is " + x);
 						 if(!transform3FilePathTextField.getText().trim().equals("")){
 							 xmm = x * resultImage.getResolutions(0)[0];
 							 ymm = y * resultImage.getResolutions(0)[1];
@@ -606,10 +688,37 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 								 int[] extents1 = imageX.getExtents();
 								 floorPointIndex1 = (int)(((tZ1_floor * (extents1[0] * extents1[1])) + (tY1_floor * extents1[0]) + tX1_floor) * 4);
 								 if(floorPointIndex1 < imageXBuffer.length) {
-									 rgb1 = AlgorithmConvolver.getTrilinearC(floorPointIndex1, dx1, dy1, dz1, extents1, imageXBuffer);
+									 /*rgb1 = AlgorithmConvolver.getTrilinearC(floorPointIndex1, dx1, dy1, dz1, extents1, imageXBuffer);
 									 rgb1_short[0] = (short)(rgb1[0] & 0xff);
 									 rgb1_short[1] = (short)(rgb1[1] & 0xff);
-									 rgb1_short[2] = (short)(rgb1[2] & 0xff);
+									 rgb1_short[2] = (short)(rgb1[2] & 0xff);*/
+									 
+									r1_float = splineAlgX_R.interpolatedValue(imageX_R_coeff, tX1_floor, tY1_floor, tZ1_floor, extents1[0], extents1[1], extents1[2], 3);
+							        if (r1_float > 255) {
+							        	r1_float = 255;
+							        } else if (r1_float < 0) {
+							        	r1_float = 0;
+							        }
+							        
+							        g1_float = splineAlgX_G.interpolatedValue(imageX_G_coeff, tX1_floor, tY1_floor, tZ1_floor, extents1[0], extents1[1], extents1[2], 3);
+							        if (g1_float > 255) {
+							        	g1_float = 255;
+							        } else if (g1_float < 0) {
+							        	g1_float = 0;
+							        }
+							        
+							        b1_float = splineAlgX_B.interpolatedValue(imageX_B_coeff, tX1_floor, tY1_floor, tZ1_floor, extents1[0], extents1[1], extents1[2], 3);
+							        if (b1_float > 255) {
+							        	b1_float = 255;
+							        } else if (b1_float < 0) {
+							        	b1_float = 0;
+							        }
+							        
+							        rgb1_short[0] = (short)(r1_float);
+									rgb1_short[1] = (short)(g1_float);
+									rgb1_short[2] = (short)(b1_float);
+									 
+								
 								 }else{
 									 rgb1_short[0] = 0;
 									 rgb1_short[1] = 0;
@@ -631,10 +740,38 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 								 int[] extents2 = imageY.getExtents();
 								 floorPointIndex2 = (int)(((tZ2_floor * (extents2[0] * extents2[1])) + (tY2_floor * extents2[0]) + tX2_floor) * 4);
 								 if(floorPointIndex2 < imageYBuffer.length) {
-									 rgb2 = AlgorithmConvolver.getTrilinearC(floorPointIndex2, dx2, dy2, dz2, extents2, imageYBuffer); 
+									/* rgb2 = AlgorithmConvolver.getTrilinearC(floorPointIndex2, dx2, dy2, dz2, extents2, imageYBuffer); 
 									 rgb2_short[0] = (short)(rgb2[0] & 0xff);
 									 rgb2_short[1] = (short)(rgb2[1] & 0xff);
-									 rgb2_short[2] = (short)(rgb2[2] & 0xff);
+									 rgb2_short[2] = (short)(rgb2[2] & 0xff);*/
+
+									 r2_float = splineAlgY_R.interpolatedValue(imageY_R_coeff, tX2_floor, tY2_floor, tZ2_floor, extents2[0], extents2[1], extents2[2], 3);
+								        if (r2_float > 255) {
+								        	r2_float = 255;
+								        } else if (r2_float < 0) {
+								        	r2_float = 0;
+								        }
+								        
+								        g2_float = splineAlgY_G.interpolatedValue(imageY_G_coeff, tX2_floor, tY2_floor, tZ2_floor, extents2[0], extents2[1], extents2[2], 3);
+								        if (g2_float > 255) {
+								        	g2_float = 255;
+								        } else if (g2_float < 0) {
+								        	g2_float = 0;
+								        }
+								        
+								        b2_float = splineAlgY_B.interpolatedValue(imageY_B_coeff, tX2_floor, tY2_floor, tZ2_floor, extents2[0], extents2[1], extents2[2], 3);
+								        if (b2_float > 255) {
+								        	b2_float = 255;
+								        } else if (b2_float < 0) {
+								        	b2_float = 0;
+								        }
+								        
+								        rgb2_short[0] = (short)(r2_float);
+										rgb2_short[1] = (short)(g2_float);
+										rgb2_short[2] = (short)(b2_float);
+									 
+									 
+									 
 								 }else {
 									 rgb2_short[0] = 0;
 									 rgb2_short[1] = 0;
@@ -643,11 +780,23 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 							 }
 
 							 byte avgR, avgG, avgB;
+							 
+							 //dont do averaging if other point is all background
+							 if(rgb1_short[0] == 0 && rgb1_short[1] == 0 && rgb1_short[2] == 0) {
+								 avgR = (byte)rgb2_short[0];
+								 avgG = (byte)rgb2_short[1];
+								 avgB = (byte)rgb2_short[2];
+							 }else if (rgb2_short[0] == 0 && rgb2_short[1] == 0 && rgb2_short[2] == 0) {
+								 avgR = (byte)rgb1_short[0];
+								 avgG = (byte)rgb1_short[1];
+								 avgB = (byte)rgb1_short[2];
+							 }else {
+								 //averaging
+								 avgR = (byte)Math.round(((rgb1_short[0] + rgb2_short[0])/2.0f));
+								 avgG = (byte)Math.round(((rgb1_short[1] + rgb2_short[1])/2.0f));
+								 avgB = (byte)Math.round(((rgb1_short[2] + rgb2_short[2])/2.0f));
+							 }
 
-							 //now do the averaging
-							 avgR = (byte)Math.round(((rgb1_short[0] + rgb2_short[0])/2.0f));
-							 avgG = (byte)Math.round(((rgb1_short[1] + rgb2_short[1])/2.0f));
-							 avgB = (byte)Math.round(((rgb1_short[2] + rgb2_short[2])/2.0f));
 
 							 //alpha
 							 resultBuffer[index] = (byte)1;
@@ -695,10 +844,36 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 								 float dz1 = (float)(tPt1[2] - tZ1_floor);
 								 int[] extents1 = imageX.getExtents();
 								 floorPointIndex1 = (int)(((tZ1_floor * (extents1[0] * extents1[1])) + (tY1_floor * extents1[0]) + tX1_floor) * 4);
-								 rgb1 = AlgorithmConvolver.getTrilinearC(floorPointIndex1, dx1, dy1, dz1, extents1, imageXBuffer);
+								 /*rgb1 = AlgorithmConvolver.getTrilinearC(floorPointIndex1, dx1, dy1, dz1, extents1, imageXBuffer);
 								 rgb1_short[0] = (short)(rgb1[0] & 0xff);
 								 rgb1_short[1] = (short)(rgb1[1] & 0xff);
-								 rgb1_short[2] = (short)(rgb1[2] & 0xff);
+								 rgb1_short[2] = (short)(rgb1[2] & 0xff);*/
+
+								 r1_float = splineAlgX_R.interpolatedValue(imageX_R_coeff, tX1_floor, tY1_floor, tZ1_floor, extents1[0], extents1[1], extents1[2], 3);
+							        if (r1_float > 255) {
+							        	r1_float = 255;
+							        } else if (r1_float < 0) {
+							        	r1_float = 0;
+							        }
+							        
+							        g1_float = splineAlgX_G.interpolatedValue(imageX_G_coeff, tX1_floor, tY1_floor, tZ1_floor, extents1[0], extents1[1], extents1[2], 3);
+							        if (g1_float > 255) {
+							        	g1_float = 255;
+							        } else if (g1_float < 0) {
+							        	g1_float = 0;
+							        }
+							        
+							        b1_float = splineAlgX_B.interpolatedValue(imageX_B_coeff, tX1_floor, tY1_floor, tZ1_floor, extents1[0], extents1[1], extents1[2], 3);
+							        if (b1_float > 255) {
+							        	b1_float = 255;
+							        } else if (b1_float < 0) {
+							        	b1_float = 0;
+							        }
+							        
+							        rgb1_short[0] = (short)(r1_float);
+									rgb1_short[1] = (short)(g1_float);
+									rgb1_short[2] = (short)(b1_float);
+								 
 							 }
 							
 							 
@@ -715,10 +890,35 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 								 float dz2 = (float)(tPt2[2] - tZ2_floor);
 								 int[] extents2 = imageY.getExtents();
 								 floorPointIndex2 = (int)(((tZ2_floor * (extents2[0] * extents2[1])) + (tY2_floor * extents2[0]) + tX2_floor) * 4);
-								 rgb2 = AlgorithmConvolver.getTrilinearC(floorPointIndex2, dx2, dy2, dz2, extents2, imageYBuffer); 
+								 /*rgb2 = AlgorithmConvolver.getTrilinearC(floorPointIndex2, dx2, dy2, dz2, extents2, imageYBuffer); 
 								 rgb2_short[0] = (short)(rgb2[0] & 0xff);
 								 rgb2_short[1] = (short)(rgb2[1] & 0xff);
-								 rgb2_short[2] = (short)(rgb2[2] & 0xff);
+								 rgb2_short[2] = (short)(rgb2[2] & 0xff);*/
+
+								 r2_float = splineAlgY_R.interpolatedValue(imageY_R_coeff, tX2_floor, tY2_floor, tZ2_floor, extents2[0], extents2[1], extents2[2], 3);
+							        if (r2_float > 255) {
+							        	r2_float = 255;
+							        } else if (r2_float < 0) {
+							        	r2_float = 0;
+							        }
+							        
+							        g2_float = splineAlgY_G.interpolatedValue(imageY_G_coeff, tX2_floor, tY2_floor, tZ2_floor, extents2[0], extents2[1], extents2[2], 3);
+							        if (g2_float > 255) {
+							        	g2_float = 255;
+							        } else if (g2_float < 0) {
+							        	g2_float = 0;
+							        }
+							        
+							        b2_float = splineAlgY_B.interpolatedValue(imageY_B_coeff, tX2_floor, tY2_floor, tZ2_floor, extents2[0], extents2[1], extents2[2], 3);
+							        if (b2_float > 255) {
+							        	b2_float = 255;
+							        } else if (b2_float < 0) {
+							        	b2_float = 0;
+							        }
+							        
+							        rgb2_short[0] = (short)(r2_float);
+									rgb2_short[1] = (short)(g2_float);
+									rgb2_short[2] = (short)(b2_float);
 							 }
 
 							 
@@ -740,13 +940,13 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 								//g = (byte)(g1);
 								//b = (byte)(b1);
 								
-								r = (byte)((r1+r2)/2);
-								g = (byte)((g1+g2)/2);
-								b = (byte)((b1+b2)/2);
+								//r = (byte)((r1+r2)/2);
+								//g = (byte)((g1+g2)/2);
+								//b = (byte)((b1+b2)/2);
 								
-								//r = (byte)rgb1_short[0];
-								//g = (byte)rgb1_short[1];
-								//b = (byte)rgb1_short[2]; 
+								r = (byte)rgb1_short[0];
+								g = (byte)rgb1_short[1];
+								b = (byte)rgb1_short[2]; 
 							}else {
 								r1 = ((1-(float)diff2) * rgb2_short[0]) + ((float)diff2 * rgb1_short[0]);
 								r2 = ((float)diff1 * rgb2_short[0]) + ((1 - (float)diff1) * rgb1_short[0]);
@@ -761,13 +961,13 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 								//g = (byte)(g1);
 								//b = (byte)(b1);
 								
-								r = (byte)((r1+r2)/2);
-								g = (byte)((g1+g2)/2);
-								b = (byte)((b1+b2)/2);
+								//r = (byte)((r1+r2)/2);
+								//g = (byte)((g1+g2)/2);
+								//b = (byte)((b1+b2)/2);
 
-								//r = (byte)rgb2_short[0];
-								//g = (byte)rgb2_short[1];
-								//b = (byte)rgb2_short[2];
+								r = (byte)rgb2_short[0];
+								g = (byte)rgb2_short[1];
+								b = (byte)rgb2_short[2];
 							}
 
 							 //alpha
