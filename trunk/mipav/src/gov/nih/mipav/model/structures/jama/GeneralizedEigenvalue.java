@@ -10885,8 +10885,8 @@ loop3:                       {
     } // dlabad
 
     /**
-     * This is a port of LAPACK version 3.1 auxiliary routine DLACPY. Original DLACPY created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of LAPACK version 3.2 auxiliary routine DLACPY. Original DLACPY created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlacpy copies all or part of a two-dimensional matrix A to another matrix B.
      *
      * @param  uplo  input char Specifies the part of the matrix A to be copied to B. 
@@ -10931,6 +10931,7 @@ loop3:                       {
                 }
             }
         } // else
+        return;
     } // dlacpy
 
     /**
