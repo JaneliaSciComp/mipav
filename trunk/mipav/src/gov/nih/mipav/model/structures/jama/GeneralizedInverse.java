@@ -1840,7 +1840,9 @@ public class GeneralizedInverse {
         double vector2[];
         int row1;
         double array1[][];
+        double array2[][];
         int j;
+        int k;
         int ie;
         int itauq;
         int itaup;
@@ -1848,6 +1850,12 @@ public class GeneralizedInverse {
         double work3[];
         double work4[];
         int dimw;
+        double vdum2[][] = new double[1][1];
+        double thr;
+        int chunk;
+        int bl;
+        int len;
+        int ldwork;
         
         // Test the input arguments
         info[0] = 0;
@@ -2116,8 +2124,161 @@ public class GeneralizedInverse {
             // Multiply B by transpose of left singular vectors
             // Compute right singular vectors in A
             // (Workspace: need bdspac)
+            dbdsqr('U', n, n, 0, nrhs, s, work, A, lda, vdum2, 1, B, ldb, work4, info);
+            if (info[0] != 0) {
+                work[0] = maxwrk;
+                return;
+            }
+            
+            // Multiply B by reciprocals of singular values
+            
+            thr = Math.max(rcond*s[0], sfmin);
+            if (rcond < 0.0) {
+                thr = Math.max(eps*s[0], sfmin);
+            }
+            rank[0] = 0;
+            for (i = 1; i <= n; i++) {
+                if (s[i-1] > thr) {
+                    vector1 = new double[nrhs];
+                    for (j = 0; j < nrhs; j++) {
+                        vector1[j] = B[i-1][j];
+                    }
+                    drscl(nrhs, s[i-1], vector1, 1);
+                    for (j = 0; j < nrhs; j++) {
+                        B[i-1][j] = vector1[j];
+                    }
+                    rank[0] = rank[0] + 1;
+                } // if (s[i-1] > thr)
+                else {
+                    array1 = new double[1][nrhs];
+                    for (j = 0; j < nrhs; j++) {
+                        array1[0][j] = B[i-1][j];
+                    }
+                    dlaset('F', 1, nrhs, 0.0, 0.0, array1, 1);
+                    for (j = 0; j < nrhs; j++) {
+                        B[i-1][j] = array1[0][j];
+                    }
+                } // else
+            } // for (i = 1; i <= n; i++)
+            
+            // Multiply B by right singular vectors
+            // (Workspace: need n, prefer n*nrhs)
+            
+            if ((lwork >= ldb*nrhs) && (nrhs > 1)) {
+                array1 = new double[ldb][nrhs];
+                // For beta = 0.0 array1 need not be set on input.
+                dgemm('T', 'N', n, nrhs, n, 1.0, A, lda, B, ldb, 0.0, array1, ldb);
+                dlacpy('G', n, nrhs, array1, ldb, B, ldb);
+                for (j = 0; j < ldb; j++) {
+                    for (k = 0; k < nrhs; k++) {
+                        work[j + k*ldb] = array1[j][k];    
+                    }
+                }
+            } // if ((lwork >= ldb*nrhs) && (nrhs > 1))
+            else if (nrhs > 1) {
+                chunk = lwork/n;
+                for (i = 1; i <= nrhs; i += chunk) {
+                    bl = Math.min(nrhs-i+1, chunk);
+                    array1 = new double[n][bl];
+                    array2 = new double[n][bl];
+                    for (j = 0; j < n; j++) {
+                        for (k = 0; k < bl; k++) {
+                            array1[j][k] = B[j][i-1+k];
+                        }
+                    }
+                    // For beta = 0.0 array2 need not be set on input
+                    dgemm('T', 'N', n, bl, n, 1.0, A, lda, array1, n, 0.0, array2, n);
+                    dlacpy('G', n, bl, array2, n, array1, n);
+                    for (j = 0; j < n; j++) {
+                        for (k = 0; k < bl; k++) {
+                            B[j][i-1+k] = array1[j][k];
+                        }
+                    }
+                } // for (i = 1; i <= nrhs; i += chunk)
+            } // else if (nrhs > 1)
+            else {
+                vector1 = new double[n];
+                len = 0;
+                for (k = 0; k < B[0].length && len < n; k++) {
+                    for (j = 0; j < B.length && len < n; j++) {
+                        vector1[len++] = B[j][k];
+                    }
+                }
+                dgemv('T', n, n, 1.0, A, lda, vector1, 1, 0.0, work, 1); 
+                len = 0;
+                for (k = 0; k < B[0].length && len < n; k++) {
+                    for (j = 0; j < B.length && len < n; j++) {
+                        B[j][k] = work[len++];
+                    }
+                }
+            } // else
         } // if (m >= n)
+        else if ((n >= mnthr) && (lwork >= 4*m + m*m + Math.max(m, Math.max(2*m-4, 
+                  Math.max(nrhs, n - 3*m))))) {
+            // Path2a - underdetermined, with many more columns than rows
+            // and sufficient workspace for an efficient algorithm
+            ldwork = m;
+            if (lwork >= Math.max(4*m + m*lda + Math.max(m, Math.max(2*m-4, 
+                    Math.max(nrhs, n-3*m))), m*lda + m + m*nrhs)) {
+                ldwork = lda;
+            }
+            itau = 1;
+            iwork = m + 1;
+            
+            // Compute A = L*Q
+            // (Workspace: need 2*m, prefer m + m*nb)
+        } // else if ((n >= mnthr) && (lwork >= 4*m + m*m + Math.max(m, Math.max(2*m-4, 
     } // dgelss
+    
+    /**
+     * This is a port of LAPACK version 3.2 auxiliary routine DLACPY. Original DLACPY created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlacpy copies all or part of a two-dimensional matrix A to another matrix B.
+     *
+     * @param  uplo  input char Specifies the part of the matrix A to be copied to B. 
+     *               = 'U': Upper triangular part
+     *               = 'L': Lower triangular part
+     *               Otherwise: All of the matrix A
+     * @param  m     input int The number of rows of the matrix A. m >= 0.
+     * @param  n     input int The number of columns of the matrix A. n >= 0.
+     * @param  A     input double[][] of dimension (lda,n). Has m by n matrix A. If uplo = 'U', only the upper triangle
+     *               or trapezoid is accessed; if uplo = 'L', only the lower triangle or trapezoid is accessed.
+     * @param  lda   input int The leading dimension of the array A. lda >= max(1,m).
+     * @param  B     output double[][] of dimension (ldb,n). On exit, B = A in the locations specified by uplo.
+     * @param  ldb   input int The leading dimension of the array B. ldb >= max(1,m).
+     */
+    private void dlacpy(char uplo, int m, int n, double[][] A, int lda, double[][] B, int ldb) {
+        int i, j;
+
+        if ((uplo == 'U') || (uplo == 'u')) {
+
+            for (j = 0; j < n; j++) {
+
+                for (i = 0; i <= Math.min(j, m - 1); i++) {
+                    B[i][j] = A[i][j];
+                }
+            }
+        } // if ((uplo == 'U') || (uplo == 'u'))
+        else if ((uplo == 'L') || (uplo == 'l')) {
+
+            for (j = 0; j < n; j++) {
+
+                for (i = j; i < m; i++) {
+                    B[i][j] = A[i][j];
+                }
+            }
+        } // else if ((uplo == 'L') || (uplo == 'l'))
+        else {
+
+            for (j = 0; j < n; j++) {
+
+                for (i = 0; i < m; i++) {
+                    B[i][j] = A[i][j];
+                }
+            }
+        } // else
+        return;
+    } // dlacpy
     
     /**
      * ilaenv is ported from the version 3.2.1 LAPACK auxiliary routine Original ILAENV created by Univ. of Tennessee,
@@ -3536,6 +3697,137 @@ public class GeneralizedInverse {
         return value;
     } // dlange
     
+    /** This is a port of version 3.2 LAPACK routine DGELQ2
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INFO, LDA, M, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   A( LDA, * ), TAU( * ), WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DGELQ2 computes an LQ factorization of a real m by n matrix A:
+    *  A = L * Q.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix A.  M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix A.  N >= 0.
+    *
+    *  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
+    *          On entry, the m by n matrix A.
+    *          On exit, the elements on and below the diagonal of the array
+    *          contain the m by min(m,n) lower trapezoidal matrix L (L is
+    *          lower triangular if m <= n); the elements above the diagonal,
+    *          with the array TAU, represent the orthogonal matrix Q as a
+    *          product of elementary reflectors (see Further Details).
+    *
+    *  LDA     (input) INTEGER
+    *          The leading dimension of the array A.  LDA >= max(1,M).
+    *
+    *  TAU     (output) DOUBLE PRECISION array, dimension (min(M,N))
+    *          The scalar factors of the elementary reflectors (see Further
+    *          Details).
+    *
+    *  WORK    (workspace) DOUBLE PRECISION array, dimension (M)
+    *
+    *  INFO    (output) INTEGER
+    *          = 0: successful exit
+    *          < 0: if INFO = -i, the i-th argument had an illegal value
+    *
+    *  Further Details
+    *  ===============
+    *
+    *  The matrix Q is represented as a product of elementary reflectors
+    *
+    *     Q = H(k) . . . H(2) H(1), where k = min(m,n).
+    *
+    *  Each H(i) has the form
+    *
+    *     H(i) = I - tau * v * v'
+    *
+    *  where tau is a real scalar, and v is a real vector with
+    *  v(1:i-1) = 0 and v(i) = 1; v(i+1:n) is stored on exit in A(i,i+1:n),
+    *  and tau in TAU(i).
+    */
+    private void dgelq2(int m, int n, double A[][], int lda, double tau[], double work[], int info[]) {
+        int i;
+        int k;
+        double aii;
+        double v1[] = new double[1];
+        double v2[];
+        double v3[] = new double[1];
+        double array1[][];
+        int j;
+        int p;
+        
+        // Test the input arguments
+        info[0] = 0;
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if (n < 0) {
+            info[0] = -2;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -4;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dgelq2 had info[0] = " + info[0]);
+            return;
+        }
+        
+        k = Math.min(m, n);
+        for (i = 1; i <= k; i++) {
+            // Generate elementary reflector H(i) to annihilate A(i,i+1:n)
+            v1[0] = A[i-1][i-1];
+            v2 = new double[n-i];
+            for (j = 0; j < n-i; j++) {
+                v2[j] = A[i-1][Math.min(i,n-1)+j];
+            }
+            dlarfp(n-i+1, v1, v2, 1, v3);
+            A[i-1][i-1] = v1[0];
+            for (j = 0; j < n-i; j++) {
+                A[i-1][Math.min(i,n-1)+j] = v2[j];
+            }
+            tau[i-1] = v3[0];
+            if (i < m) {
+                // Apply H(i) to A(i+1:m,i:n) from the right
+                aii = A[i-1][i-1];
+                A[i-1][i-1] = 1.0;
+                v2 = new double[n-i+1];
+                for (j = 0; j < n-i+1; j++) {
+                    v2[j] = A[i-1][i-1+j];
+                }
+                array1 = new double[m-i][n-i+1];
+                for (j = 0; j < m-i; j++) {
+                    for (p = 0; p < n-i+1; p++) {
+                        array1[j][p] = A[i+j][i-1+p];
+                    }
+                }
+                dlarf('R', m-i, n-i+1, v2, 1, v3[0], array1, m-i, work);
+                for (j = 0; j < m-i; j++) {
+                    for (p = 0; p < n-i+1; p++) {
+                        A[i+j][i-1+p] = array1[j][p];
+                    }
+                }
+                A[i-1][i-1] = aii;
+            } // if (i < m)
+        } // for (i = 1; i <= k; i++)
+        return;
+    } // dgelq2
+
+    
     /** This is a port of version 3.2 LAPACK routine DBDSQR.
     *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
     *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
@@ -4196,10 +4488,381 @@ public class GeneralizedInverse {
                         // Save cosines and sines for later singular vector updates
                         cs[0] = 1.0;
                         oldcs[0] = 1.0;
+                        w1 = new double[1];
+                        for (i = m; i >= ll + 1; i--) {
+                            dlartg(d[i-1]*cs[0], e[i-2], cs, sn, r);
+                            if (i < m) {
+                                e[i-1] = oldsn[0]*r[0];
+                            }
+                            dlartg(oldcs[0]*r[0], d[i-2]*sn[0], oldcs, oldsn, w1);
+                            d[i-1] = w1[0];
+                            work[i-ll-1] = cs[0];
+                            work[i-ll+nm1-1] = -sn[0];
+                            work[i-ll+nm12-1] = oldcs[0];
+                            work[i-ll+nm13-1] = -oldsn[0];
+                        } // for (i = m; i >= ll + 1; i--)
+                        h = d[ll-1]*cs[0];
+                        d[ll-1] = h * oldcs[0];
+                        e[ll-1] = h * oldsn[0];
+                        
+                        // Update singular vectors
+                        if (ncvt > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[nm12 + k];
+                                w2[k] = work[nm13+k];
+                            }
+                            row1 = Math.max(1, m-ll+1);
+                            array1 = new double[row1][ncvt];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncvt; p++) {
+                                    array1[k][p] = VT[ll-1+k][p];
+                                }
+                            }
+                            dlasr('L', 'V', 'B', m-ll+1, ncvt, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncvt; p++) {
+                                    VT[ll-1+k][p] = array1[k][p];
+                                }
+                            }
+                        } // if (ncvt > 0)
+                        
+                        if (nru > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[k];
+                                w2[k] = work[n-1+k];
+                            }
+                            row1 = Math.max(1, nru);
+                            array1 = new double[row1][m-ll+1];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < m-ll+1; p++) {
+                                    array1[k][p] = U[k][ll-1+p];
+                                }
+                            }
+                            dlasr('R', 'V', 'B', nru, m-ll+1, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < m-ll+1; p++) {
+                                    U[k][ll-1+p] = array1[k][p];
+                                }
+                            }    
+                        } // if (nru > 0)
+                        
+                        if (ncc > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[k];
+                                w2[k] = work[n-1+k];
+                            }
+                            row1 = Math.max(1, m-ll+1);
+                            array1 = new double[row1][ncc];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncc; p++) {
+                                    array1[k][p] = C[ll-1+k][p];
+                                }
+                            }
+                            dlasr('L', 'V', 'B', m-ll+1, ncc, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncc; p++) {
+                                    C[ll-1+k][p] = array1[k][p];
+                                }
+                            }    
+                        } // if (ncc > 0)
+                        
+                        // Test convergence
+                        if (Math.abs(e[ll-1]) <= thresh) {
+                            e[ll-1] = 0.0;
+                        }
                     } // else idir == 2
                 } // if (shift[0] == 0)
+                else { // shift[0] != 0
+                    // Use nonzero shift
+                    
+                    if (idir == 1) {
+                        // Chase bulge from top to bottom
+                        // Save cosines and sines for later singular vector updates
+                        if (d[ll-1] >= 0) {
+                            f = (Math.abs(d[ll-1]) - shift[0]) * (1.0 + shift[0]/d[ll-1]);
+                        }
+                        else {
+                            f = (Math.abs(d[ll-1]) - shift[0]) * (-1.0 + shift[0]/d[ll-1]);
+                        }
+                        g = e[ll-1];
+                        for (i = ll; i <= m-1; i++) {
+                            dlartg(f, g, cosr, sinr, r);
+                            if (i > ll) {
+                                e[i-2] = r[0];
+                            }
+                            f = cosr[0]*d[i-1] + sinr[0]*e[i-1];
+                            e[i-1] = cosr[0]*e[i-1] - sinr[0]*d[i-1];
+                            g = sinr[0]*d[i];
+                            d[i] = cosr[0]*d[i];
+                            dlartg(f, g, cosl, sinl, r);
+                            d[i-1] = r[0];
+                            f = cosl[0]*e[i-1] + sinl[0]*d[i];
+                            d[i] = cosl[0]*d[i] - sinl[0]*e[i-1];
+                            if (i < m-1) {
+                                g = sinl[0]*e[i];
+                                e[i] = cosl[0]*e[i];
+                            }
+                            work[i-ll] = cosr[0];
+                            work[i-ll+nm1] = sinr[0];
+                            work[i-ll+nm12] = cosl[0];
+                            work[i-ll+nm13] = sinl[0];
+                        } // for (i = ll; i <= m-1; i++)
+                        e[m-2] = f;
+                        
+                        // Update singular vectors
+                        if (ncvt > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[k];
+                                w2[k] = work[n-1+k];
+                            }
+                            row1 = Math.max(1, m-ll+1);
+                            array1 = new double[row1][ncvt];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncvt; p++) {
+                                    array1[k][p] = VT[ll-1+k][p];
+                                }
+                            }
+                            dlasr('L', 'V', 'F', m-ll+1, ncvt, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncvt; p++) {
+                                    VT[ll-1+k][p] = array1[k][p];
+                                }
+                            }
+                        } // if (ncvt > 0)
+                        
+                        if (nru > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[nm12+k];
+                                w2[k] = work[nm13+k];
+                            }
+                            row1 = Math.max(1, nru);
+                            array1 = new double[row1][m-ll+1];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < m-ll+1; p++) {
+                                    array1[k][p] = U[k][ll-1+p];
+                                }
+                            }
+                            dlasr('R', 'V', 'F', nru, m-ll+1, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < m-ll+1; p++) {
+                                    U[k][ll-1+p] = array1[k][p];
+                                }
+                            }    
+                        } // if (nru > 0)
+                        
+                        if (ncc > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[nm12+k];
+                                w2[k] = work[nm13+k];
+                            }
+                            row1 = Math.max(1, m-ll+1);
+                            array1 = new double[row1][ncc];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncc; p++) {
+                                    array1[k][p] = C[ll-1+k][p];
+                                }
+                            }
+                            dlasr('L', 'V', 'F', m-ll+1, ncc, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncc; p++) {
+                                    C[ll-1+k][p] = array1[k][p];
+                                }
+                            }    
+                        } // if (ncc > 0)
+                        
+                        // Test convergence
+                        if (Math.abs(e[m-2]) <= thresh) {
+                            e[m-2] = 0.0;
+                        }
+                    } // if (idir == 1)
+                    else { // idir == 2
+                        // Chase bulge from bottom to top
+                        // Save cosines and sines for later singular vector updates
+                        if (d[m-1] >= 0.0) {
+                            f = (Math.abs(d[m-1]) - shift[0]) * (1.0 + shift[0]/d[m-1]);
+                        }
+                        else {
+                            f = (Math.abs(d[m-1]) - shift[0]) * (-1.0 + shift[0]/d[m-1]);
+                        }
+                        g = e[m-2];
+                        for (i = m; i >= ll + 1; i--) {
+                            dlartg(f, g, cosr, sinr, r);
+                            if (i < m) {
+                                e[i-1] = r[0];
+                            }
+                            f = cosr[0]*d[i-1] + sinr[0]*e[i-2];
+                            e[i-2] = cosr[0]*e[i-2] - sinr[0]*d[i-1];
+                            g = sinr[0]*d[i-2];
+                            d[i-2] = cosr[0] * d[i-2];
+                            dlartg(f, g, cosl, sinl, r);
+                            d[i-1] = r[0];
+                            f = cosl[0]*e[i-2] + sinl[0]*d[i-2];
+                            d[i-2] = cosl[0]*d[i-2] - sinl[0]*e[i-2];
+                            if (i > ll+1) {
+                                g = sinl[0]*e[i-3];
+                                e[i-3] = cosl[0]*e[i-3];
+                            }
+                            work[i-ll-1] = cosr[0];
+                            work[i-ll+nm1-1] = -sinr[0];
+                            work[i-ll+nm12-1] = cosl[0];
+                            work[i-ll+nm13-1] = -sinl[0];
+                        } // for (i = m;i >= ll + 1; i--)
+                        e[ll-1] = f;
+                        
+                        // Test convergence
+                        if (Math.abs(e[ll-1]) <= thresh) {
+                            e[ll-1] = 0.0;
+                        }
+                        
+                        // Update singular vectors if desired
+                        
+                        if (ncvt > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[k+nm12];
+                                w2[k] = work[k+nm13];
+                            }
+                            row1 = Math.max(1, m-ll+1);
+                            array1 = new double[row1][ncvt];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncvt; p++) {
+                                    array1[k][p] = VT[ll-1+k][p];
+                                }
+                            }
+                            dlasr('L', 'V', 'B', m-ll+1, ncvt, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncvt; p++) {
+                                    VT[ll-1+k][p] = array1[k][p];
+                                }
+                            }
+                        } // if (ncvt > 0)
+                        
+                        if (nru > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[k];
+                                w2[k] = work[k+n-1];
+                            }
+                            row1 = Math.max(1, nru);
+                            array1 = new double[row1][m-ll+1];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < m-ll+1; p++) {
+                                    array1[k][p] = U[k][ll-1+p];
+                                }
+                            }
+                            dlasr('R', 'V', 'B', nru, m-ll+1, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < m-ll+1; p++) {
+                                    U[k][ll-1+p] = array1[k][p];
+                                }
+                            }    
+                        } // if (nru > 0)
+                        
+                        if (ncc > 0) {
+                            w1 = new double[m-ll];
+                            w2 = new double[m-ll];
+                            for (k = 0; k < m-ll; k++) {
+                                w1[k] = work[k];
+                                w2[k] = work[k+n-1];
+                            }
+                            row1 = Math.max(1, m-ll+1);
+                            array1 = new double[row1][ncc];
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncc; p++) {
+                                    array1[k][p] = C[ll-1+k][p];
+                                }
+                            }
+                            dlasr('L', 'V', 'B', m-ll+1, ncc, w1, w2, array1, row1);
+                            for (k = 0; k < row1; k++) {
+                                for (p = 0; p < ncc; p++) {
+                                    C[ll-1+k][p] = array1[k][p];
+                                }
+                            }    
+                        } // if (ncc > 0)
+                    } // else idir == 2
+                } // else shift[0] != 0
+                
+                // QR iteration finished, go back and check convergence
             } // loop1: while(true)
         } // if (n != 1)
+        
+        // All singular values converged, so make them positive
+        for (i = 1; i <= n; i++) {
+            if (d[i-1] < 0.0) {
+                d[i-1] = -d[i-1];
+                
+                // Change sign of singular vectors, if desired
+                if (ncvt > 0) {
+                    for (k = 0; k < ncvt; k++) {
+                        VT[i-1][k] = -1.0 * VT[i-1][k];
+                    }
+                } // if (ncvt > 0)
+            } // if (d[i-1] < 0.0)
+        } // for (i = 1; i <= n; i++)
+        
+        // Sort the singular values into decreasing order (insertion sort on
+        // singular values, but only one transposition per singular vector)
+        for (i = 1; i <= n-1; i++) {
+            // Scan for the smallest d[i-1]
+            
+            isub = 1;
+            smin = d[0];
+            for (j = 2; j <= n+1-i; j++) {
+                if (d[j-1] <= smin) {
+                    isub = j;
+                    smin = d[j-1];
+                }
+            } // for (j = 2; j <= n+1-i; j++)
+            if (isub != n+i-1) {
+                // Swap singular values and vectors
+                d[isub-1] = d[n-i];
+                d[n-i] = smin;
+                if (ncvt > 0) {
+                    w1 = new double[ncvt];
+                    w2 = new double[ncvt];
+                    for (k = 0; k < ncvt; k++) {
+                        temp = VT[isub-1][k];
+                        VT[isub-1][k] = VT[n-i][k];
+                        VT[n-i][k] = temp;
+                    }
+                } // if (ncvt > 0)
+                
+                if (nru > 0) {
+                    w1 = new double[nru];
+                    w2 = new double[nru];
+                    for (k = 0; k < nru; k++) {
+                        temp = U[k][isub-1];
+                        U[k][isub-1] = U[k][n-i];
+                        U[k][n-i] = temp;
+                    }
+                } // if (nru > 0)
+                
+                if (ncc > 0) {
+                    w1 = new double[ncc];
+                    w2 = new double[ncc];
+                    for (k = 0; k < ncc; k++) {
+                        temp = C[isub-1][k];
+                        C[isub-1][k] = C[n-i][k];
+                        C[n-i][k] = temp;
+                    }
+                } // if (ncc > 0)
+            } // if (isub != n+i-1)
+        } // for (i = 1; i <= n-1; i++)
+        return;
     } // dbdsqr
 
     
@@ -12923,6 +13586,96 @@ ib = Math.min(nb, k-i+1);
             return (w * Math.sqrt(1.0 + (ratio * ratio)));
         }
     } // dlapy2
+    
+    /** This is a port of version 3.2 LAPACK auxiliary routine DRSCL.
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INCX, N
+          DOUBLE PRECISION   SA
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   SX( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DRSCL multiplies an n-element real vector x by the real scalar 1/a.
+    *  This is done without overflow or underflow as long as
+    *  the final result x/a does not overflow or underflow.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  N       (input) INTEGER
+    *          The number of components of the vector x.
+    *
+    *  SA      (input) DOUBLE PRECISION
+    *          The scalar a which is used to divide each component of x.
+    *          SA must be >= 0, or the subroutine will divide by zero.
+    *
+    *  SX      (input/output) DOUBLE PRECISION array, dimension
+    *                         (1+(N-1)*abs(INCX))
+    *          The n-element vector x.
+    *
+    *  INCX    (input) INTEGER
+    *          The increment between successive values of the vector SX.
+    *          > 0:  SX(1) = X(1) and SX(1+(i-1)*INCX) = x(i),     1< i<= n
+    */
+    private void drscl(int n, double sa, double sx[], int incx) {
+        boolean done = false;
+        double bignum[] = new double[1];
+        double cden;
+        double cden1;
+        double cnum;
+        double cnum1;
+        double mul;
+        double smlnum[] = new double[1];
+        
+        // Quick return if possible
+        if (n <= 0) {
+            return;
+        }
+        
+        // Get machine parameters
+        smlnum[0] = dlamch('S');
+        bignum[0] = 1.0/smlnum[0];
+        dlabad(smlnum, bignum);
+        
+        // Initialize the denominator to sa and the numerator to 1.
+        cden = sa;
+        cnum = 1.0;
+        
+        do {
+            cden1 = cden * smlnum[0];
+            cnum1 = cnum/bignum[0];
+            if ((Math.abs(cden1) > Math.abs(cnum)) && (cnum != 0.0)) {
+                // Pre-multiply X by smlnum[0] if cden is large compared to cnum.
+                mul = smlnum[0];
+                done = false;
+                cden = cden1;
+            } // if ((Math.abs(cden1) > Math.abs(cnum)) && (cnum != 0.0))
+            else if (Math.abs(cnum1) > Math.abs(cden)) {
+                // Pre-multiply X by bignum[0] if cden is small compared to cnum.
+                mul = bignum[0];
+                done = false;
+                cnum = cnum1;
+            } // else if (Math.abs(cnum1) > Math.abs(cden))
+            else {
+                // Multiply X by cnum/cden and return.
+                mul = cnum/cden;
+                done = true;
+            } // else
+            
+            // Scale the vector X by mul.
+            dscal(n, mul, sx, incx);
+        } while(!done);
+        return;
+    } // drscl
+
     
     /**
      * Routine ported from 12/3/93 linpack dscal Original version written by Jack Dongarra Scales a vector by a
