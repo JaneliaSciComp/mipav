@@ -24,7 +24,7 @@ public class ImageReduceEffect extends ShaderEffect
     /** Creates a new TextureEffect with the texture specified.
      * @param rkBaseName the name of the texture image.
      */
-    public ImageReduceEffect (Texture kTarget, int iWidth, int iHeight, double dNumSamples, int iType)
+    public ImageReduceEffect (Texture kTarget, Texture kTargetB, int iWidth, int iHeight, double dNumSamples, int iType)
     {
         super(1);
         m_kVShader.set(0, new VertexShader("TextureV", true));
@@ -89,32 +89,51 @@ public class ImageReduceEffect extends ShaderEffect
         m_kPShader.get(0).SetTextureQuantity(1);
         m_kPShader.get(0).SetTexture(0,kTarget);
         m_kPShader.get(0).SetImageName(0,kTarget.GetName());
+        if ( kTargetB != null )
+        {
+            //m_kPShader.get(0).SetTexture(1,kTargetB);
+            //m_kPShader.get(0).SetImageName(1,kTargetB.GetName());
+        }
         
         m_iWidth = iWidth;
         m_iHeight = iHeight;      
         m_dNumSamples = dNumSamples;
     }
     
+
+
+
+    public ImageReduceEffect ( Texture kTexA, double dNumSamples )
+    {
+        super(1);
+        m_dNumSamples = dNumSamples;
+        
+        VertexShader kVShader = new VertexShader("EntropyV", true);
+        PixelShader kPShader = new PixelShader("EntropyP", true);
+        SetVShader(0,kVShader);
+        SetPShader(0,kPShader);
+        
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetTexture( 0, kTexA );
+        kPShader.SetImageName( 0, kTexA.GetName() );
+    }
+    
     public void OnLoadPrograms (int iPass, Program pkVProgram,
             Program pkPProgram, Program pkCProgram)
     {
-       if ( pkCProgram.GetUC("Step") != null ) 
+        if ( pkCProgram.GetUC("Step") != null ) 
         {
-           pkCProgram.GetUC("Step").GetData()[0] = (1.0f/(float)(m_iWidth*2.0));
-           pkCProgram.GetUC("Step").GetData()[1] = (1.0f/(float)(m_iHeight*2.0));
-            
-/*
-            pkProgram.GetUC("Step").GetData()[0] = fScale * (1.0f/(float)(m_iWidth*2.0));
-            pkProgram.GetUC("Step").GetData()[1] = fScale * (1.0f/(float)(m_iHeight*2.0));
-            System.err.println( "OnLoad " + pkProgram.GetUC("Step").GetData()[0] + " " +
-                    pkProgram.GetUC("Step").GetData()[1] );
-*/
+            pkCProgram.GetUC("Step").GetData()[0] = (1.0f/(float)(m_iWidth*2.0));
+            pkCProgram.GetUC("Step").GetData()[1] = (1.0f/(float)(m_iHeight*2.0));
+
+            //System.err.println( GetName() +  " OnLoad " + pkCProgram.GetUC("Step").GetData()[0] + " " +
+            //        pkCProgram.GetUC("Step").GetData()[1] );
         }
         if ( pkCProgram.GetUC("dLogN") != null ) 
         {
             double dLogN = Math.log(m_dNumSamples);
             pkCProgram.GetUC("dLogN").GetData()[0] = (float)dLogN;
-            //System.err.println( "dLogN = " + pkProgram.GetUC("dLogN").GetData()[0]);
+            //System.err.println( GetName() +  " dLogN = " + pkCProgram.GetUC("dLogN").GetData()[0]);
        }
         if ( pkCProgram.GetUC("nVoxels") != null ) 
         {
