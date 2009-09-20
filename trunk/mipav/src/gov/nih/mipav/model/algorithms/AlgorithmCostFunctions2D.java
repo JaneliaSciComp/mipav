@@ -202,7 +202,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
         {
             m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false, nBins);
-            //m_kGPUCost = new VolumeImageViewerPoint(refImage, inputImage, nBins);
         }
     }
 
@@ -230,6 +229,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
         costCalled++; // global debuggin variable to keep track of how many times cost function was called.
         
+        //System.err.println( "Cost fn: " + affMatrix.ToString() );
         double value = 0;
 
         switch (costFunctID) {
@@ -296,18 +296,17 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED:
                 value = normalizedMutualInformationSmoothed(affMatrix);
-                /*
                 if ( m_kGPUCost != null )
                 {
                     value = normalizedMutualInformation(affMatrix);
-                    double valueGPU = m_kGPUCost.getError(affMatrix);
+                    m_kGPUCost.calcError(affMatrix);
+                    double valueGPU = m_kGPUCost.getError();
                     if ( Math.abs( valueGPU - value ) > 0.01 )
                     {
                         System.err.println( "CPU: " + value + "   GPU: " + valueGPU );
                     }
                     //value = valueGPU;
                 }
-                */
                 break;
 
             case NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
@@ -339,7 +338,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         {
             m_kGPUCost.dispose();
         }
-        //System.err.println( "AlgorithmCostFuntions2D.disposeLocal(): " + this + " " + nBins + " " + costCalled );
+        //System.err.println( "AlgorithmCostFuntions2D.disposeLocal(): " + nBins + " " + costCalled );
 //        sumY = null;
 //        sumY2 = null;
 //        numY = null;

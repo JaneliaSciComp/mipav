@@ -20,6 +20,9 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
 public class VolumeHistogramEffect extends ShaderEffect
 implements StreamInterface
 {
+    public static final int COLLAPSE_COLUMNS = 0;
+    public static final int COLLAPSE_ROWS = 1;
+    public static final int NONE = 2;
     float m_fMin1;
     float m_fMin2;
     float m_fScale1;
@@ -75,6 +78,38 @@ implements StreamInterface
         }
     }
 
+
+
+    public VolumeHistogramEffect ( Texture kTexA, int iType )
+    {
+        VertexShader kVShader;
+        PixelShader kPShader;
+        /* Set single-pass rendering: */
+        SetPassQuantity(1);
+        if ( iType == COLLAPSE_COLUMNS )
+        {
+            kVShader = new VertexShader("VolumeHistogramColumnsV", true);
+            kPShader = new PixelShader("VolumeHistogramP", true);
+        }
+        else if ( iType == COLLAPSE_ROWS )
+        {
+            kVShader = new VertexShader("VolumeHistogramRowsV", true);
+            kPShader = new PixelShader("VolumeHistogramP", true);
+        }
+        else
+        {
+            kVShader = new VertexShader("VolumeHistogramPassThroughV", true);
+            kPShader = new PixelShader("VolumeHistogramP", true);
+        }
+        SetVShader(0,kVShader);
+        SetPShader(0,kPShader);
+        
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetTexture( 0, kTexA );
+        kPShader.SetImageName( 0, kTexA.GetName() );
+    }
+    
+    
     /**
      * memory cleanup.
      */

@@ -4,7 +4,7 @@ uniform vec2 Step;
 uniform float dLogN;
 void p_ImageReduce_Sum_2DP ()
 {
-    gl_FragColor = vec4(0.0,0.0,0.0,1.0);
+    gl_FragColor = vec4(0.0,0.0,0.0,0.0);
 
     vec2 index0 = gl_TexCoord[0].xy;
     index0.x -= Step.x;

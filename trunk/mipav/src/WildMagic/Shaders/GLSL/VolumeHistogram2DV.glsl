@@ -15,7 +15,7 @@ uniform mat4 InverseTransformMatrix;
 void v_VolumeHistogram2DV()
 {
      vec3 texCoord = gl_MultiTexCoord0.xyz;
-     texCoord.z = ZSlice;
+     //texCoord.z = ZSlice;
 
      vec4 vol1 = texture3D(imageA, texCoord );
      float xPos = (vol1.r - Min.x) * Scale.x;

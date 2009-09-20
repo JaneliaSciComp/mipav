@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 import gov.nih.mipav.MipavInitGPU;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.view.Preferences;
 
 import javax.swing.JFrame;
 
@@ -36,21 +37,24 @@ public class VolumeImageViewerPoint extends JavaApplication3D
 //implements GLEventListener, KeyListener
 {
     protected Node m_spkScene;    
-    protected TriMesh m_pkPlane;
+
+    protected VolumeHistogramEffect m_akCollapse2D;
+    protected VolumeHistogramEffect m_akCollapseColumns;
+    protected VolumeHistogramEffect m_akCollapseRows;
     
     protected ImageReduceEffect m_akImageReduceEntropy;
-    protected ImageReduceEffect[] m_akImageReduceSum;
-    protected ImageReduceEffect[][] m_akImageReduceSumX;
-    protected ImageReduceEffect[][] m_akImageReduceSumY;
     protected VolumeHistogramEffect m_kImageEffectDual;
     private GLAutoDrawable m_kGLAutoDrawable = null;
-    
+
     private Polypoint m_kImagePointsDual;
+    private Polypoint m_kHistogramPoints2D;
+    private Polypoint m_kEntropyPoints2D;
+    private Polypoint m_kHistogramPointsColumns;
+    private Polypoint m_kHistogramPointsRows;
 
     private OpenGLFrameBuffer m_kHistogramOutput;
-    private OpenGLFrameBuffer[] m_akReduceOutput;
-    private OpenGLFrameBuffer[][] m_akReduceOutputX;
-    private OpenGLFrameBuffer[][] m_akReduceOutputY;
+    private OpenGLFrameBuffer m_kHistogramOutputB;
+    private OpenGLFrameBuffer m_kEntropyOut;
     
     private int m_iCount = 0;
     private AlphaState m_kAlpha;
@@ -75,19 +79,17 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     protected boolean m_bDisplay = true;
     protected boolean m_bInit = false;
     private boolean m_bPrint = false;
-    private boolean m_bErrorReady = false;
+    private float m_l2DRunTime = 0;
+    private float m_lEntropyRunTime = 0;
+    private boolean m_bFirstRun = false;
     
     public VolumeImageViewerPoint( ModelSimpleImage kImageA, ModelSimpleImage kImageB, int iNBins )
     {
-        //super( Math.max( kImageA.extents[0], kImageB.extents[0]), 
-        //        Math.max( kImageA.extents[1], kImageB.extents[1]));
-        //super( kImageA.extents[0],kImageA.extents[1] );    
-        
         super( "VolumeImageViewer", 0, 0, iNBins, iNBins,
-               new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
+                new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-                                          m_eBuffering, m_eMultisampling,
-                                           m_iWidth, m_iHeight );
+                m_eBuffering, m_eMultisampling,
+                m_iWidth, m_iHeight );
         GetCanvas().getContext().setSynchronized(true);  
         m_afJoint = new float[iNBins*iNBins*4];
         
@@ -148,7 +150,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         }
         m_bDisplay = false;
         calcEntropy();
-        m_bErrorReady = true;
     }
 
 
@@ -160,13 +161,36 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             GetCanvas().getContext().makeCurrent();
             m_bDispose = true; 
             display(GetCanvas());  
-            //GetCanvas().display();
         }
     }
 
     public void dispose(GLAutoDrawable arg0)
     {
         //System.err.println( "VolumeImageViewerPoint dispose()" );
+        if ( m_kHistogramPointsColumns != null )
+        {
+            m_pkRenderer.ReleaseResources(m_kHistogramPointsColumns);
+            m_kHistogramPointsColumns.dispose();
+            m_kHistogramPointsColumns = null;
+        }
+        if ( m_kHistogramPointsRows != null )
+        {
+            m_pkRenderer.ReleaseResources(m_kHistogramPointsRows);
+            m_kHistogramPointsRows.dispose();
+            m_kHistogramPointsRows = null;
+        }
+        if ( m_kHistogramPoints2D != null )
+        {
+            m_pkRenderer.ReleaseResources(m_kHistogramPoints2D);
+            m_kHistogramPoints2D.dispose();
+            m_kHistogramPoints2D = null;
+        }
+        if ( m_kEntropyPoints2D != null )
+        {
+            m_pkRenderer.ReleaseResources(m_kEntropyPoints2D);
+            m_kEntropyPoints2D.dispose();
+            m_kEntropyPoints2D = null;
+        }
         if ( m_kImagePointsDual != null )
         {
             m_pkRenderer.ReleaseResources(m_kImagePointsDual);
@@ -188,29 +212,34 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_spkScene = null;
 
         m_kImageEffectDual.dispose();
-              
+
 
         m_kHistogramOutput.GetTarget(0).GetImage().dispose();
         m_kHistogramOutput.GetTarget(0).dispose();
         m_kHistogramOutput.TerminateBuffer();
         m_kHistogramOutput.dispose();
 
+        m_kHistogramOutputB.GetTarget(0).GetImage().dispose();
+        m_kHistogramOutputB.GetTarget(0).dispose();
+        m_kHistogramOutputB.TerminateBuffer();
+        m_kHistogramOutputB.dispose();
+
+        m_kEntropyOut.GetTarget(0).GetImage().dispose();
+        m_kEntropyOut.GetTarget(0).dispose();
+        m_kEntropyOut.TerminateBuffer();
+        m_kEntropyOut.dispose();
+
         m_pkRenderer.ReleaseResources(m_akImageReduceEntropy);
         m_akImageReduceEntropy.dispose();
 
-        m_pkRenderer.ReleaseResources(m_pkPlane);
-        m_pkPlane.dispose();   
-        
-        for ( int i = 0; i < (m_iCount-1); i++ )
-        {
+        m_pkRenderer.ReleaseResources(m_akCollapse2D);
+        m_akCollapse2D.dispose();
 
-            m_akReduceOutput[i].GetTarget(0).GetImage().dispose();  
-            m_akReduceOutput[i].GetTarget(0).dispose();   
-            m_akReduceOutput[i].TerminateBuffer();   
-            m_akReduceOutput[i].dispose();            
-            m_pkRenderer.ReleaseResources(m_akImageReduceSum[i]);
-            m_akImageReduceSum[i].dispose();
-        }
+        m_pkRenderer.ReleaseResources(m_akCollapseColumns);
+        m_akCollapseColumns.dispose();
+
+        m_pkRenderer.ReleaseResources(m_akCollapseRows);
+        m_akCollapseRows.dispose();
     
         ImageCatalog.GetActive().dispose();
         VertexProgramCatalog.GetActive().dispose();     
@@ -225,12 +254,28 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         {
             System.err.println( "Context not made current" );
         }
+        if ( m_bFirstRun )
+        {
+            long lStartTime = System.currentTimeMillis();
+
+            setTransform( new TransMatrix(4,4));
+            m_bDisplay = true;
+            display(GetCanvas());  
+            m_bUseJoint = false;
+
+            long time = (System.currentTimeMillis() - lStartTime);
+            System.err.println("");
+            System.err.println( "nBins " + m_iWidth + " count " + m_iCount );
+            System.err.println( "Initialization time: " + (time * .001f) + " seconds" );
+            System.err.println( "2D Histogram time: " + (m_l2DRunTime * .001f) + " seconds" );
+            System.err.println( "Entropy time: " + (m_lEntropyRunTime * .001f) + " seconds" );
+
+            System.err.println("");
+            m_bFirstRun = false;
+        }
         setTransform(kTransform);
         m_bDisplay = true;
-        m_bErrorReady = false;
-        //GetCanvas().display();  
         display(GetCanvas());  
-        //while ( !m_bErrorReady );
         m_bUseJoint = false;
         GetCanvas().getContext().release();
     }
@@ -293,7 +338,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         }
     }
 
-    protected void CreateImageMesh(int iWidth, int iHeight)
+    protected void CreateHistogramMesh(int iWidth, int iHeight)
     {
         Attributes kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
@@ -303,8 +348,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         VertexBuffer pkVB = new VertexBuffer(kAttributes,iVQuantity);
 
         // generate geometry
-        float fInv0 = 1.0f/(iWidth - 1.0f);
-        float fInv1 = 1.0f/(iHeight - 1.0f);
+        float fInv0 = 1.0f/((float)iWidth);
+        float fInv1 = 1.0f/((float)iHeight);
         float fU, fV;
         int i, i0, i1;
 
@@ -319,11 +364,82 @@ public class VolumeImageViewerPoint extends JavaApplication3D
                 fU = i0*fInv0;
                 kXTmp.Set(((2.0f*fU-1.0f)), 0f, 0f);
                 kXTmp.Add( kYTmp );
+                //kXTmp.Add( kZTmp );
                 pkVB.SetPosition3(i,kXTmp );
 
-                pkVB.SetTCoord2(0,i, fU,fV);
-
+                pkVB.SetTCoord3(0,i, fU,fV,0);
+                //System.err.println( kXTmp.ToString() + " " + fU + " " + fV );
                 i++;
+            }
+        }
+        m_kHistogramPoints2D = new Polypoint( pkVB );
+        m_kEntropyPoints2D = new Polypoint( new VertexBuffer(pkVB) );
+        m_kHistogramPointsColumns = new Polypoint( new VertexBuffer(pkVB) );
+        m_kHistogramPointsRows = new Polypoint( new VertexBuffer(pkVB) );
+        
+        AlphaState kAlpha = new AlphaState();
+        kAlpha.BlendEnabled = true;
+        kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
+        kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+
+        m_kHistogramPoints2D.AttachGlobalState(kAlpha);
+        m_kHistogramPoints2D.UpdateGS();
+        m_kHistogramPoints2D.UpdateRS();    
+        
+        m_kEntropyPoints2D.AttachGlobalState(kAlpha);
+        m_kEntropyPoints2D.UpdateGS();
+        m_kEntropyPoints2D.UpdateRS();    
+        
+        m_kHistogramPointsColumns.AttachGlobalState(kAlpha);
+        m_kHistogramPointsColumns.UpdateGS();
+        m_kHistogramPointsColumns.UpdateRS();    
+        
+        m_kHistogramPointsRows.AttachGlobalState(kAlpha);
+        m_kHistogramPointsRows.UpdateGS();
+        m_kHistogramPointsRows.UpdateRS();    
+        
+    }
+
+    protected void CreateImageMesh(int iWidth, int iHeight, int iDepth)
+    {
+        //System.err.println( iWidth + " " + iHeight + " " + iDepth );
+        Attributes kAttributes = new Attributes();
+        kAttributes.SetPChannels(3);
+        kAttributes.SetTChannels(0,3);
+        
+        int iVQuantity = iWidth*iHeight*iDepth;
+        VertexBuffer pkVB = new VertexBuffer(kAttributes,iVQuantity);
+
+        // generate geometry
+        float fInv0 = 1.0f/(iWidth - 1.0f);
+        float fInv1 = 1.0f/(iHeight - 1.0f);
+        float fInv2 = 1.0f/(iDepth);
+        float fU, fV, fW;
+        int i, i0, i1, i2;
+
+        Vector3f kZTmp = new Vector3f();
+        Vector3f kYTmp = new Vector3f();
+        Vector3f kXTmp = new Vector3f();
+        for (i2 = 0, i = 0; i2 < iDepth; i2++ )
+        {
+            fW = i2*fInv2;
+            //kZTmp.Set(0f, 0f, ((2.0f*fW-1.0f)));
+            for (i1 = 0; i1 < iHeight; i1++)
+            {
+                fV = i1*fInv1;
+                kYTmp.Set(0f, ((2.0f*fV-1.0f)), 0f );
+                for (i0 = 0; i0 < iWidth; i0++)
+                {
+                    fU = i0*fInv0;
+                    kXTmp.Set(((2.0f*fU-1.0f)), 0f, 0f);
+                    kXTmp.Add( kYTmp );
+                    //kXTmp.Add( kZTmp );
+                    pkVB.SetPosition3(i,kXTmp );
+
+                    pkVB.SetTCoord3(0,i, fU,fV,fW);
+
+                    i++;
+                }
             }
         }
         
@@ -340,16 +456,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_kImagePointsDual.UpdateRS();    
     }
     
-    protected TriMesh CreateLocalPlaneNode(int iWidth, int iHeight)
-    {
-        Attributes kAttributes = new Attributes();
-        kAttributes.SetPChannels(3);
-        kAttributes.SetTChannels(0,3);
-        StandardMesh kSM = new StandardMesh(kAttributes);
-        TriMesh kPlane = kSM.Rectangle(iWidth,iHeight,1,1);
-        return kPlane;
-    }
-
     
     private void CreateImageTextures()
     {
@@ -378,184 +484,37 @@ public class VolumeImageViewerPoint extends JavaApplication3D
 
     protected void CreateScene ()
     {           
+        
+        int iWidth = m_iWidth;
+        int iHeight = m_iHeight;
+        m_kHistogramOutput = CreateRenderTarget( "Histogram2D", iWidth, iHeight );
+        m_kHistogramOutputB = CreateRenderTarget( "Histogram2DB", iWidth, iHeight );
+        m_kEntropyOut = CreateRenderTarget( "EntropyOut", 1, 1 );
+        
         m_spkScene = new Node();
 
-        m_pkPlane = CreateLocalPlaneNode(m_iWidth,m_iHeight);      
         CreateImageTextures();
         
         m_kImageEffectDual = new VolumeHistogramEffect( m_kTextureA, m_kTextureB,
                 m_kImageA.min, m_kImageA.max, m_kImageB.min, m_kImageB.max, 
                 m_kImageA.extents[0],m_kImageA.extents[1], m_iWidth, m_kImageTransform, true );
-        
-        CreateImageMesh(m_kImageA.extents[0],m_kImageA.extents[1]);
+        int iDepth = m_kImageA.nDims == 3 ? m_kImageA.extents[2] : 1;
+        CreateImageMesh(m_kImageA.extents[0],m_kImageA.extents[1],iDepth);
         m_kImagePointsDual.AttachEffect(m_kImageEffectDual);
         
-        int iWidth = m_iWidth;
-        int iHeight = m_iHeight;
-        m_kHistogramOutput = CreateRenderTarget( "Histogram2D", iWidth, iHeight );
+
+        CreateHistogramMesh(m_iWidth, m_iHeight);
+        m_akCollapse2D = new VolumeHistogramEffect( m_kHistogramOutput.GetTarget(0), VolumeHistogramEffect.NONE );
+        m_akCollapseColumns = new VolumeHistogramEffect( m_kHistogramOutput.GetTarget(0), VolumeHistogramEffect.COLLAPSE_COLUMNS );
+        m_akCollapseRows = new VolumeHistogramEffect( m_kHistogramOutput.GetTarget(0), VolumeHistogramEffect.COLLAPSE_ROWS );
+
+        m_kHistogramPoints2D.AttachEffect(m_akCollapse2D);
+        m_kHistogramPointsColumns.AttachEffect(m_akCollapseColumns);
+        m_kHistogramPointsRows.AttachEffect(m_akCollapseRows);
 
         double dSize = m_kImageA.dataSize;
-        m_akImageReduceEntropy = new ImageReduceEffect( m_kHistogramOutput.GetTarget(0), iWidth, iHeight, dSize, ImageReduceEffect.ENTROPY );
-        
-        
-
-        int iSize = Math.min( iWidth, iHeight );
-        m_iCount = (int)Mathf.Log2( iSize );
-
-        iWidth = Math.max(iWidth/2, 1);
-         iHeight = Math.max(iHeight/2, 1);
-        m_akImageReduceSum = new ImageReduceEffect[m_iCount-1];
-        m_akReduceOutput = new OpenGLFrameBuffer[m_iCount-1];
-        for ( int i = 0; i < (m_iCount-1); i++ )
-        {
-            String kImageName = new String("Reduce" + iWidth + "_" + iHeight);
-            m_akReduceOutput[i] = CreateRenderTarget( kImageName, iWidth, iHeight );            
-            m_akImageReduceSum[i] = new ImageReduceEffect(m_akReduceOutput[i].GetTarget(0), iWidth, iHeight, 0, ImageReduceEffect.SUM );
-            
-            
-            iWidth = Math.max(iWidth/2, 1);
-            iHeight = Math.max(iHeight/2, 1);  
-            if ( iWidth < 2 || iHeight < 2 )
-            {
-                m_iCount = i+1;
-                break;
-            }
-        }
-
-        setupReferenceReduce(dSize);
-        setupReferenceMoving(dSize);
-        
-        
-    }
-    
-    private void setupReferenceMoving(double dSize)
-    {
-
-        
-
-        int iWidth = m_iWidth;
-        int iHeight = m_iHeight;
-
-        int iSize =  iHeight;
-        int iCountY = (int)Mathf.Log2( iSize );
-        //System.err.println( iSize + " " + m_iCount );
-
-        m_akImageReduceSumY = new ImageReduceEffect[2][];
-        m_akImageReduceSumY[0] = new ImageReduceEffect[iCountY+1];
-        m_akReduceOutputY = new OpenGLFrameBuffer[2][];
-        m_akReduceOutputY[0] = new OpenGLFrameBuffer[iCountY+1];
-        
-        m_akImageReduceSumY[0][0] = new ImageReduceEffect( m_kHistogramOutput.GetTarget(0), iWidth, iHeight, 0, ImageReduceEffect.SUM_YA );
-        iHeight = Math.max(iHeight/2, 1);
-        
-        Texture kLast = null;
-        for ( int i = 1; i < iCountY+1; i++ )
-        {
-            String kImageName = new String("Reduce2dto1D" + iWidth + "_" + iHeight + "_" + 1);
-            m_akReduceOutputY[0][i] = CreateRenderTarget( kImageName, iWidth, iHeight );            
-            m_akImageReduceSumY[0][i] = new ImageReduceEffect(m_akReduceOutputY[0][i].GetTarget(0), iWidth, iHeight, 0, ImageReduceEffect.SUM_YA );
-            kLast = m_akReduceOutputY[0][i].GetTarget(0);
-
-            iHeight = Math.max(iHeight/2, 1);
-            if ( iHeight < 1 )
-            {
-                break;
-            }
-        }       
-        
-
-        iWidth = m_iWidth;
-        iHeight = 1;
-
-        iSize =  iWidth;
-        int iCountX = (int)Mathf.Log2( iSize ) + 1;
-        //System.err.println( iSize + " " + m_iCount );
-
-        m_akImageReduceSumY[1] = new ImageReduceEffect[iCountX];
-        m_akReduceOutputY[1] = new OpenGLFrameBuffer[iCountX];
-        
-        m_akImageReduceSumY[1][0] = new ImageReduceEffect( kLast, iWidth, iHeight, dSize, ImageReduceEffect.ENTROPY_X );
-        iWidth = Math.max(iWidth/2, 1);
-        
-        for ( int i = 1; i < iCountX; i++ )
-        {
-            String kImageName = new String("Reduce2dto1D" + iWidth + "_" + iHeight + "_" + 1);
-            m_akReduceOutputY[1][i] = CreateRenderTarget( kImageName, iWidth, iHeight );            
-            m_akImageReduceSumY[1][i] = new ImageReduceEffect(m_akReduceOutputY[1][i].GetTarget(0), iWidth, iHeight, 0, ImageReduceEffect.SUM_XA );
-
-            iWidth = Math.max(iWidth/2, 1);
-            if ( iWidth < 4 )
-            {
-                break;
-            }
-        }
-        
-        
-    }
-    
-    
-    private void setupReferenceReduce(double dSize)
-    {
-
-        
-
-        int iWidth = m_iWidth;
-        int iHeight = m_iHeight;
-
-        int iSize =  iWidth;
-        int iCountX = (int)Mathf.Log2( iSize );
-        //System.err.println( iSize + " " + m_iCount );
-
-        m_akImageReduceSumX = new ImageReduceEffect[2][];
-        m_akImageReduceSumX[0] = new ImageReduceEffect[iCountX+1];
-        m_akReduceOutputX = new OpenGLFrameBuffer[2][];
-        m_akReduceOutputX[0] = new OpenGLFrameBuffer[iCountX+1];
-        
-        m_akImageReduceSumX[0][0] = new ImageReduceEffect( m_kHistogramOutput.GetTarget(0), iWidth, iHeight, 0, ImageReduceEffect.SUM_XA );
-        iWidth = Math.max(iWidth/2, 1);
-        Texture kLast = null;
-        for ( int i = 1; i < iCountX+1; i++ )
-        {
-            String kImageName = new String("Reduce2dto1D" + iWidth + "_" + iHeight + "_" + 1);
-            m_akReduceOutputX[0][i] = CreateRenderTarget( kImageName, iWidth, iHeight );            
-            m_akImageReduceSumX[0][i] = new ImageReduceEffect(m_akReduceOutputX[0][i].GetTarget(0), iWidth, iHeight, 0, ImageReduceEffect.SUM_XA );
-            kLast = m_akReduceOutputX[0][i].GetTarget(0);
-
-            iWidth = Math.max(iWidth/2, 1);
-            if ( iWidth < 1 )
-            {
-                break;
-            }
-        }       
-        
-
-        iWidth = 1;
-        iHeight = m_iHeight;
-
-        iSize =  iHeight;
-        int iCountY = (int)Mathf.Log2( iSize ) + 1;
-        //System.err.println( iSize + " " + m_iCount );
-
-        m_akImageReduceSumX[1] = new ImageReduceEffect[iCountY];
-        m_akReduceOutputX[1] = new OpenGLFrameBuffer[iCountY];
-        
-        m_akImageReduceSumX[1][0] = new ImageReduceEffect( kLast, iWidth, iHeight, dSize, ImageReduceEffect.ENTROPY_Y );
-        iHeight = Math.max(iHeight/2, 1);
-        
-        for ( int i = 1; i < iCountY; i++ )
-        {
-            String kImageName = new String("Reduce2dto1D" + iWidth + "_" + iHeight + "_" + 1);
-            m_akReduceOutputX[1][i] = CreateRenderTarget( kImageName, iWidth, iHeight );            
-            m_akImageReduceSumX[1][i] = new ImageReduceEffect(m_akReduceOutputX[1][i].GetTarget(0), iWidth, iHeight, 0, ImageReduceEffect.SUM_YA );
-
-            iHeight = Math.max(iHeight/2, 1);
-            if ( iHeight < 4 )
-            {
-                break;
-            }
-        }
-        
-        
+        m_akImageReduceEntropy = new ImageReduceEffect( m_kHistogramOutputB.GetTarget(0), dSize );
+        m_kEntropyPoints2D.AttachEffect( m_akImageReduceEntropy );              
     }
     
     private void calcEntropy()
@@ -587,10 +546,36 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         }
     }
     
-    
-    private long m_lStartTime, m_lEstimatedTime;
     private void calcEntropy( ModelSimpleImage kImage, double dNumSamples )
     {
+        long lStartTime = 0;
+        if ( m_bFirstRun )
+        {
+            lStartTime = System.currentTimeMillis();
+            
+            for ( int t = 0; t < 100; t++ )
+            {
+
+                m_kHistogramOutput.Enable();
+                m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
+                m_pkRenderer.ClearBuffers();
+                m_pkRenderer.Draw(m_kImagePointsDual);
+                m_kHistogramOutput.Disable();
+            }
+
+            long time = (System.currentTimeMillis() - lStartTime);
+            m_l2DRunTime = time/100.0f;
+            lStartTime = System.currentTimeMillis();
+
+
+            for ( int t = 0; t < 100; t++ )
+            {
+                ReduceDualA(dNumSamples);
+            }
+            time = (System.currentTimeMillis() - lStartTime);
+            m_lEntropyRunTime = time/100.0f;
+            
+        }
         if ( m_bUseJoint )
         {
             Texture kTarget = m_kHistogramOutput.GetTarget(0);
@@ -600,30 +585,24 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         }
         else
         {
-            //m_lStartTime = System.nanoTime();        
             m_kHistogramOutput.Enable();
             m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
             m_pkRenderer.ClearBuffers();
-            int iZExtents = (kImage.nDims == 3) ? kImage.extents[2]: 1;
-            for ( int i = iZExtents-1; i >= 0; i-- )
-                //for ( int i = 0; i < iZExtents; i++ )
-            {
-                if ( iZExtents == 1 )
-                {
-                    m_kImageEffectDual.ZSlice( 0f, 0.5f ); 
-                }
-                else
-                {
-                    m_kImageEffectDual.ZSlice( (float)i / (float)(iZExtents), (1.0f/(float)((iZExtents)*2.0)) );
-                }
-                //if ( i == 0 )
-                {
-                    m_pkRenderer.Draw(m_kImagePointsDual);
-                    //m_pkRenderer.Finish();
-                    //writeImage();
-                }
-            }
+            m_pkRenderer.Draw(m_kImagePointsDual);
             m_kHistogramOutput.Disable();
+            
+            m_kHistogramOutputB.Enable();
+            m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
+            m_pkRenderer.ClearBuffers();
+            //System.err.println( "");
+            //System.err.println( "");
+            //System.err.println( "");
+            //System.err.println( "Drawing pass through points ");
+            m_pkRenderer.Draw(m_kHistogramPoints2D);
+            m_pkRenderer.Draw(m_kHistogramPointsColumns);
+            m_pkRenderer.Draw(m_kHistogramPointsRows);
+            m_kHistogramOutputB.Disable();
+            //printTarget( "2D Histogram -- collapsed", m_kHistogramOutputB.GetTarget(0) );
         }
         //m_pkRenderer.Finish();
         //m_pkRenderer.DisplayBackBuffer();
@@ -638,11 +617,17 @@ public class VolumeImageViewerPoint extends JavaApplication3D
                 kTarget.GetImage().GetBound(0) + " " + kTarget.GetImage().GetBound(1));
         int iSum = 0;
         float fMax = 0, fMin = 1;
+        int iCount = 0;
         for ( int i = 0; i < afData.length; i+=4 )
         {
             //if ( afData[i] != 0.0f )
             {
-                System.err.println( i + " " + afData[i] );
+                System.err.print( afData[i] + " " + afData[i+1] + " " + afData[i+2] + " " + afData[i+3] + "  " );
+                iCount++;
+            }
+            if ( ((iCount)%(m_iWidth) == 0) )
+            {
+                System.err.println("");
             }
             if ( afData[i] > fMax )
             {
@@ -654,236 +639,58 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             }
             iSum += afData[i+3];
         }
-        System.err.println( "TOTAL: " + iSum + " " + fMin + " " + fMax );
+        //System.err.println( "TOTAL: " + iSum + " " + fMin + " " + fMax );
     }
     
     
 
     private void ReduceDualA( double dNumSamples )
-    {
-        Texture kTarget = null;
-
-        kTarget = m_akImageReduceSumX[0][0].GetTexture(0, 0);
-        //printTarget( "Reading", kTarget );
-        
-        for ( int i = 0; i < 2; i++ )
-        {
-            kTarget = m_akImageReduceSumX[i][0].GetTexture(0, 0);
-            if ( i == 1 )
-            {
-                //printTarget( "Reading", kTarget );
-            }
-
-
-            m_pkPlane.DetachAllEffects();
-            m_pkPlane.AttachEffect( m_akImageReduceSumX[i][0] );
-            m_pkPlane.UpdateGS();
-            //System.err.println( "Reading " + kTarget.GetName() );
-            //System.err.println( "Effect " + m_akImageReduceSumX[i][0].GetName() );
-            for ( int iTarget = 1; iTarget < m_akReduceOutputX[i].length; iTarget++ )
-            {                    
-                //System.err.println( "Writing " + m_akReduceOutputX[i][iTarget].GetTarget(0).GetName() );
-                m_akReduceOutputX[i][iTarget].Enable();
-                m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-                m_pkRenderer.ClearBuffers();
-                m_pkRenderer.Draw(m_pkPlane);
-                m_akReduceOutputX[i][iTarget].Disable();
-                //m_pkRenderer.Finish();
-                kTarget = m_akReduceOutputX[i][iTarget].GetTarget(0);
-
-
-                //printTarget( new String("Round" + iTarget), kTarget );
-
-
-                m_pkPlane.DetachAllEffects();
-                if ( (iTarget+1 < m_akReduceOutputX[i].length) && (m_akImageReduceSumX[i][iTarget+1] != null) )
-                {
-                    m_pkPlane.AttachEffect( m_akImageReduceSumX[i][iTarget] );
-                    m_pkPlane.UpdateGS();
-                   // System.err.println( "Reading " + m_akImageReduceSumX[i][iTarget].GetTexture(0, 0).GetName() );
-                    //System.err.println( "Effect " + m_akImageReduceSumX[i][iTarget].GetName() );
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-
+    { 
+        Texture kTarget = null; //m_akImageReduceEntropy.GetTexture(0, 0);
         //printTarget( "Result", kTarget );
-        double fEntropyX = 0;
-        double fOverlapX = 0;
-        if ( kTarget != null )
-        {
-            m_pkRenderer.GetTexImage( kTarget );
-            //m_pkRenderer.Finish();
-            float[] afData = kTarget.GetImage().GetFloatData();
-            for ( int i = 0; i < afData.length; i+=4 )
-            {
-                fEntropyX += afData[i];
-                fOverlapX += afData[i+1];
-            }
-        }            
-        //System.err.println( "Entropy = " + fEntropyX );
-        fEntropyX/=dNumSamples;
-        //System.err.println( "Entropy = " + fEntropyX );
+        m_kEntropyOut.Enable();
+        m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
+        m_pkRenderer.ClearBuffers();
+        m_pkRenderer.Draw(m_kEntropyPoints2D);
+        m_kEntropyOut.Disable();
+        kTarget = m_kEntropyOut.GetTarget(0);
         
-        
-
-        
-        
-        
-        
-        
-        
-        
-        
-
-        for ( int i = 0; i < 2; i++ )
-        {
-            kTarget = m_akImageReduceSumY[i][0].GetTexture(0, 0);
-            //printTarget( "Reading", kTarget );
-
-            m_pkPlane.DetachAllEffects();
-            m_pkPlane.AttachEffect( m_akImageReduceSumY[i][0] );
-            m_pkPlane.UpdateGS();
-            //System.err.println( "Reading " + kTarget.GetName() );
-            //System.err.println( "Effect " + m_akImageReduceSumY[i][0].GetName() );
-            for ( int iTarget = 1; iTarget < m_akReduceOutputY[i].length; iTarget++ )
-            {                    
-                //System.err.println( "Writing " + m_akReduceOutputY[i][iTarget].GetTarget(0).GetName() );
-                m_akReduceOutputY[i][iTarget].Enable();
-                m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-                m_pkRenderer.ClearBuffers();
-                m_pkRenderer.Draw(m_pkPlane);
-                m_akReduceOutputY[i][iTarget].Disable();
-                //m_pkRenderer.Finish();
-                kTarget = m_akReduceOutputY[i][iTarget].GetTarget(0);
-
-
-                //printTarget( new String("Round" + iTarget), kTarget );
-
-
-                m_pkPlane.DetachAllEffects();
-                if ( (iTarget+1 < m_akReduceOutputY[i].length) && (m_akImageReduceSumY[i][iTarget+1] != null) )
-                {
-                    m_pkPlane.AttachEffect( m_akImageReduceSumY[i][iTarget] );
-                    m_pkPlane.UpdateGS();
-                    //System.err.println( "Reading " + m_akImageReduceSumY[i][iTarget].GetTexture(0, 0).GetName() );
-                    //System.err.println( "Effect " + m_akImageReduceSumY[i][iTarget].GetName() );
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-
-        //printTarget( "Result", kTarget );
-        double fEntropyY = 0;
-        double fOverlapY = 0;
-        if ( kTarget != null )
-        {
-            m_pkRenderer.GetTexImage( kTarget );
-            //m_pkRenderer.Finish();
-            float[] afData = kTarget.GetImage().GetFloatData();
-            for ( int i = 0; i < afData.length; i+=4 )
-            {
-                fEntropyY += afData[i];
-                fOverlapY += afData[i+1];
-            }
-        }            
-        //System.err.println( "Entropy = " + fEntropyY );
-        fEntropyY/=dNumSamples;
-        //System.err.println( "Entropy = " + fEntropyY );
-        
-        
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        m_pkPlane.DetachAllEffects();
-        m_pkPlane.AttachEffect( m_akImageReduceEntropy );
-        m_pkPlane.UpdateGS();
-        for ( int iTarget = 0; iTarget < (m_iCount-1); iTarget++ )
-        {                    
-            m_akReduceOutput[iTarget].Enable();
-            m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-            m_pkRenderer.ClearBuffers();
-            m_pkRenderer.Draw(m_pkPlane);
-            m_akReduceOutput[iTarget].Disable();
-            //m_pkRenderer.Finish();
-            kTarget = m_akReduceOutput[iTarget].GetTarget(0);
-            m_pkPlane.DetachAllEffects();
-            m_pkPlane.AttachEffect( m_akImageReduceSum[iTarget] );
-            m_pkPlane.UpdateGS();
-        }
-
-        //m_pkRenderer.Finish();
-        //m_lEstimatedTime = System.nanoTime() - m_lStartTime;
-        //System.err.println( "reduce =   " + m_lEstimatedTime );
-        double dEntropyMoving = 0;
         double dEntropyDual = 0;
         double dOverlap = 0;
+        double dEntropyX = 0, dEntropyY = 0;
         if ( kTarget != null )
         {
             int iIndex = 0;
             int iStep = (int)Math.max( 1.0, (int)(kTarget.GetImage().GetBytesPerPixel()/4.0f) );
-            //m_lStartTime = System.nanoTime();
             m_pkRenderer.GetTexImage( kTarget );
-            //m_pkRenderer.Finish();
-            //m_pkRenderer.Finish();
-            //m_lEstimatedTime = System.nanoTime() - m_lStartTime;
-            //System.err.println( "GetTexImage =     " + m_lEstimatedTime );
             for ( int i = 0; i < kTarget.GetImage().GetBound(1); i++  )
             {
                 for ( int j = 0; j < kTarget.GetImage().GetBound(0); j++  )
                 {
-                    dEntropyMoving += kTarget.GetImage().GetFloatData()[iIndex];
-                    dOverlap += kTarget.GetImage().GetFloatData()[iIndex+1];
-                    //dEntropyDual += kTarget.GetImage().GetFloatData()[iIndex+2];
+                    /*
+                    System.err.println( kTarget.GetImage().GetFloatData()[iIndex] + " " + 
+                            kTarget.GetImage().GetFloatData()[iIndex+1] + " " +
+                            kTarget.GetImage().GetFloatData()[iIndex+2] + " " +
+                            kTarget.GetImage().GetFloatData()[iIndex+3]  );
+                            */
                     dEntropyDual += kTarget.GetImage().GetFloatData()[iIndex];
-                    //System.err.println( i + " " + j + " " + dEntropyMoving + " " + dOverlap + " " + dEntropyDual );
+                    dEntropyY += kTarget.GetImage().GetFloatData()[iIndex+1];
+                    dEntropyX += kTarget.GetImage().GetFloatData()[iIndex+2];
+                    dOverlap += kTarget.GetImage().GetFloatData()[iIndex+3];
                     iIndex += iStep;
                 }
             }
         }            
+        dEntropyX = dEntropyX/dNumSamples;
+        dEntropyY = dEntropyY/dNumSamples;
         
-        m_dOverlap = fOverlapX;
-        m_dHx = fEntropyX;
-        m_dHy = fEntropyY;
+        m_dOverlap = dOverlap;
+        m_dHx = dEntropyX;
+        m_dHy = dEntropyY;
         m_dHxy = dEntropyDual/dNumSamples;
         //System.err.println( "GPU: " + m_iWidth + " " + dNumSamples + " " + m_dOverlap + " " + m_dHx + " " + m_dHy + " " + m_dHxy );
     }
-    
-    
-
-    private OpenGLFrameBuffer CreateSingleRenderTarget( String kImageName, int iWidth, int iHeight )
-    {        
-        float[] afData = new float[iWidth*iHeight];
-        GraphicsImage pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_L32F,iWidth,iHeight,afData,
-                kImageName);
-        Texture[] akSceneTarget = new Texture[1];
-        akSceneTarget[0] = new Texture();
-        akSceneTarget[0].SetImage(pkSceneImage);
-        akSceneTarget[0].SetShared(true);
-        akSceneTarget[0].SetFilterType(Texture.FilterType.NEAREST);
-        akSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP);
-        akSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP);
-        akSceneTarget[0].SetSamplerInformation( new SamplerInformation( kImageName, SamplerInformation.Type.SAMPLER_2D, 0, 0 ) );
-        m_pkRenderer.LoadTexture( akSceneTarget[0] );
         
-        return new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
-                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget,m_kGLAutoDrawable,0);
-    }
-    
     public void setJoint( float[] afJoint )
     {
         for ( int i = 0; i < afJoint.length; i++ )
