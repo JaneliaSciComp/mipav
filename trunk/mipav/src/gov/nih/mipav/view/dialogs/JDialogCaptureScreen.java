@@ -419,7 +419,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         ModelImage testImage = null;
         Robot robot;
         String imageName;
-        ViewJFrameImage vFrame;
+
 
         try {
             robot = new Robot();
@@ -479,9 +479,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         }
 
         testImage.getFileInfo()[0].setPhotometric((short) 2); // Indicates RGB tiff file format
-        // Needed  because some code writing the file makes a reference to the ViewJFrameImage
-        vFrame = new ViewJFrameImage(testImage);
-        vFrame.setVisible(false);
 
         if (save) {
             String fileName;
