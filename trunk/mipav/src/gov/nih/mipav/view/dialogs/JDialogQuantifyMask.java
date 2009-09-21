@@ -30,6 +30,11 @@ public class JDialogQuantifyMask
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+	/**
+     * Empty constructor needed for dynamic instantiation (used during scripting).
+     */
+    public JDialogQuantifyMask() { }
+	
     /**
      * Creates modal dialog for entering number of colors for histogram LUT.
      *
@@ -49,6 +54,11 @@ public class JDialogQuantifyMask
     protected void callAlgorithm() {
     	AlgorithmQuantifyMask algo = new AlgorithmQuantifyMask(image);
     	
+    	// This is very important. Adding this object as a listener allows the algorithm to
+        // notify this object when it has completed or failed. See algorithm performed event.
+        // This is made possible by implementing AlgorithmedPerformed interface
+        algo.addListener(this);
+    	
     	if (runInSeparateThread) {
             // Start the thread as a low priority because we wish to still have user interface work fast.
             if (algo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -66,7 +76,9 @@ public class JDialogQuantifyMask
     }
     
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       
+    	if (algorithm.isCompleted()) {
+        	insertScriptLine();
+        }
     }
     
     /**

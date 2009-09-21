@@ -18,6 +18,8 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+	
+	
     /**
      * Creates a new AlgorithmMask object.
      *
@@ -111,6 +113,8 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
     	}
         System.err.println(consoleString);
     	ViewUserInterface.getReference().getMessageFrame().append(outputString, ViewJFrameMessage.DATA);
+    	
+    	setCompleted(true);
     }
     
     private void calc34D() {
@@ -185,5 +189,7 @@ public class AlgorithmQuantifyMask extends AlgorithmBase {
         
         System.err.println(consoleString);
     	ViewUserInterface.getReference().getMessageFrame().append(outputString, ViewJFrameMessage.DATA);
+    	
+    	setCompleted(true);
     }
 }
