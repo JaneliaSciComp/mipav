@@ -124,12 +124,12 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
             if ((laplacianSepAlgo.isCompleted() == true) && (resultImage != null)) {
 
-                // updateFileInfo(image, resultImage);
                 // resultImage.clearMask();
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
 
                     edgeImage = laplacianSepAlgo.getZeroXMask();
+                    updateFileInfo(image, edgeImage);
                     resultImage.disposeLocal();
                     resultImage = null;
                     new ViewJFrameImage(edgeImage);
@@ -155,6 +155,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                     // imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610,200), userInterface);
 
                     edgeImage = laplacianAlgo.getZeroXMask();
+                    updateFileInfo(image,edgeImage);
                     resultImage.disposeLocal();
                     new ViewJFrameImage(edgeImage);
 
