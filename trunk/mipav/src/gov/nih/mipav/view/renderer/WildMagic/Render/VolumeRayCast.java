@@ -217,7 +217,7 @@ public class VolumeRayCast extends VolumeObject
 
         // Create the RGBA frame-buffer object to be bound to the scene polygon.
         m_pkPBuffer = new OpenGLFrameBuffer(eFormat,eDepth,eStencil,
-                eBuffering,eMultisampling,kRenderer,m_apkSceneTarget,arg0,0);
+                eBuffering,eMultisampling,kRenderer,m_apkSceneTarget,arg0);
         assert(m_pkPBuffer != null);
 
         m_kScene.UpdateGS();

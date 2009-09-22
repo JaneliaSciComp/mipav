@@ -1,5 +1,9 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
 import gov.nih.mipav.MipavInitGPU;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.TransMatrix;
@@ -7,6 +11,7 @@ import gov.nih.mipav.view.Preferences;
 
 import javax.swing.JFrame;
 
+import javax.imageio.ImageIO;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCanvas;
 import javax.media.opengl.GLContext;
@@ -16,6 +21,7 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
@@ -32,12 +38,15 @@ import WildMagic.LibGraphics.Shaders.SamplerInformation;
 import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
+import WildMagic.LibRenderers.OpenGLRenderer.TextureID;
 
 public class VolumeImageViewerPoint extends JavaApplication3D
 //implements GLEventListener, KeyListener
 {
+    protected static int m_iScreenCaptureCounter = 0;
     protected Node m_spkScene;    
 
+    protected VolumeHistogramEffect m_akTransformImage;
     protected VolumeHistogramEffect m_akCollapse2D;
     protected VolumeHistogramEffect m_akCollapseColumns;
     protected VolumeHistogramEffect m_akCollapseRows;
@@ -46,12 +55,14 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     protected VolumeHistogramEffect m_kImageEffectDual;
     private GLAutoDrawable m_kGLAutoDrawable = null;
 
+    protected TriMesh m_pkPlane;
     private Polypoint m_kImagePointsDual;
     private Polypoint m_kHistogramPoints2D;
     private Polypoint m_kEntropyPoints2D;
     private Polypoint m_kHistogramPointsColumns;
     private Polypoint m_kHistogramPointsRows;
 
+    private OpenGLFrameBuffer m_kTransformedImage;
     private OpenGLFrameBuffer m_kHistogramOutput;
     private OpenGLFrameBuffer m_kHistogramOutputB;
     private OpenGLFrameBuffer m_kEntropyOut;
@@ -85,6 +96,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     
     public VolumeImageViewerPoint( ModelSimpleImage kImageA, ModelSimpleImage kImageB, int iNBins )
     {
+        //super( "VolumeImageViewer", 0, 0, kImageA.extents[0],kImageA.extents[1],
         super( "VolumeImageViewer", 0, 0, iNBins, iNBins,
                 new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
@@ -312,6 +324,17 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight){}
     
+    public boolean writeImage()
+    {
+        BufferedImage kScreenShot = m_pkRenderer.Screenshot();
+        try {
+            ImageIO.write(kScreenShot, "jpg", new File("captureImage" + m_iScreenCaptureCounter++ + "." + "jpg"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+    
     public void setTransform( TransMatrix kTransform )
     {
         if ( kTransform.getDim() == 3 )
@@ -336,8 +359,22 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         {
             m_kImageEffectDual.SetTransform(m_kImageTransform);
         }
+        if ( m_akTransformImage != null )
+        {
+            m_akTransformImage.SetTransform(m_kImageTransform);
+        }
     }
-
+    
+    protected TriMesh CreateLocalPlaneNode()
+    {
+        Attributes kAttributes = new Attributes();
+        kAttributes.SetPChannels(3);
+        kAttributes.SetTChannels(0,3);
+        StandardMesh kSM = new StandardMesh(kAttributes);
+        TriMesh kPlane = kSM.Rectangle(2,2,1,1);
+        return kPlane;
+    }
+    
     protected void CreateHistogramMesh(int iWidth, int iHeight)
     {
         Attributes kAttributes = new Attributes();
@@ -406,6 +443,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         Attributes kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         kAttributes.SetTChannels(0,3);
+        kAttributes.SetCChannels(0,3);
         
         int iVQuantity = iWidth*iHeight*iDepth;
         VertexBuffer pkVB = new VertexBuffer(kAttributes,iVQuantity);
@@ -420,6 +458,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         Vector3f kZTmp = new Vector3f();
         Vector3f kYTmp = new Vector3f();
         Vector3f kXTmp = new Vector3f();
+        
+        float fVal = 0;
         for (i2 = 0, i = 0; i2 < iDepth; i2++ )
         {
             fW = i2*fInv2;
@@ -437,6 +477,9 @@ public class VolumeImageViewerPoint extends JavaApplication3D
                     pkVB.SetPosition3(i,kXTmp );
 
                     pkVB.SetTCoord3(0,i, fU,fV,fW);
+                    
+                    fVal = m_kImageA.data[ i2*iWidth*iHeight + i1*iWidth + i0];
+                    pkVB.SetColor3(0, i, fVal, fVal, fVal);
 
                     i++;
                 }
@@ -484,25 +527,32 @@ public class VolumeImageViewerPoint extends JavaApplication3D
 
     protected void CreateScene ()
     {           
-        
         int iWidth = m_iWidth;
         int iHeight = m_iHeight;
-        m_kHistogramOutput = CreateRenderTarget( "Histogram2D", iWidth, iHeight );
-        m_kHistogramOutputB = CreateRenderTarget( "Histogram2DB", iWidth, iHeight );
-        m_kEntropyOut = CreateRenderTarget( "EntropyOut", 1, 1 );
-        
         m_spkScene = new Node();
 
         CreateImageTextures();
+
+        int iDepth = m_kImageA.nDims == 3 ? m_kImageA.extents[2] : 1;
+        /*
+        m_pkPlane = CreateLocalPlaneNode();
+        m_akTransformImage = new VolumeHistogramEffect( m_kTextureB, m_kImageTransform );
+        m_pkPlane.AttachEffect(m_akTransformImage);
+        m_kTransformedImage = CreateRenderTarget( "TransformedImage", m_kImageB.extents[0],m_kImageB.extents[1],iDepth );
+        */
+        m_kHistogramOutput = CreateRenderTarget( "Histogram2D", iWidth, iHeight, 1 );
+        m_kHistogramOutputB = CreateRenderTarget( "Histogram2DB", iWidth, iHeight, 1  );
+        m_kEntropyOut = CreateRenderTarget( "EntropyOut", 1, 1, 1  );
         
-        m_kImageEffectDual = new VolumeHistogramEffect( m_kTextureA, m_kTextureB,
+
+        m_kImageEffectDual = new VolumeHistogramEffect( m_kTextureB, m_kTextureA,
+                //m_kImageEffectDual = new VolumeHistogramEffect( m_kTransformedImage.GetTarget(0), m_kTextureA,
                 m_kImageA.min, m_kImageA.max, m_kImageB.min, m_kImageB.max, 
                 m_kImageA.extents[0],m_kImageA.extents[1], m_iWidth, m_kImageTransform, true );
-        int iDepth = m_kImageA.nDims == 3 ? m_kImageA.extents[2] : 1;
         CreateImageMesh(m_kImageA.extents[0],m_kImageA.extents[1],iDepth);
         m_kImagePointsDual.AttachEffect(m_kImageEffectDual);
         
-
+        
         CreateHistogramMesh(m_iWidth, m_iHeight);
         m_akCollapse2D = new VolumeHistogramEffect( m_kHistogramOutput.GetTarget(0), VolumeHistogramEffect.NONE );
         m_akCollapseColumns = new VolumeHistogramEffect( m_kHistogramOutput.GetTarget(0), VolumeHistogramEffect.COLLAPSE_COLUMNS );
@@ -513,7 +563,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_kHistogramPointsRows.AttachEffect(m_akCollapseRows);
 
         double dSize = m_kImageA.dataSize;
-        m_akImageReduceEntropy = new ImageReduceEffect( m_kHistogramOutputB.GetTarget(0), dSize );
+        m_akImageReduceEntropy = new ImageReduceEffect( m_kHistogramOutputB.GetTarget(0), null, dSize );
         m_kEntropyPoints2D.AttachEffect( m_akImageReduceEntropy );              
     }
     
@@ -553,25 +603,26 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         {
             lStartTime = System.currentTimeMillis();
             
-            for ( int t = 0; t < 100; t++ )
+            m_pkRenderer.Resize(m_kTransformedImage.GetTarget(0).GetImage().GetBound(0),
+                    m_kTransformedImage.GetTarget(0).GetImage().GetBound(1));
+            m_kTransformedImage.Enable();
+            m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
+            m_pkRenderer.ClearBuffers();
+            int iDepth = m_kImageB.nDims == 3 ? m_kImageB.extents[2] : 1;
+            for ( int i = 0; i < iDepth; i++ )
             {
-
-                m_kHistogramOutput.Enable();
-                m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-                m_pkRenderer.ClearBuffers();
-                m_pkRenderer.Draw(m_kImagePointsDual);
-                m_kHistogramOutput.Disable();
+                //m_kTransformedImage.SetZOffset(i);
+                m_akTransformImage.ZSlice( (float)i/(float)(iDepth), 0 );
+                m_pkRenderer.Draw(m_pkPlane);
+                writeImage();
             }
+            m_kTransformedImage.Disable();
 
             long time = (System.currentTimeMillis() - lStartTime);
             m_l2DRunTime = time/100.0f;
             lStartTime = System.currentTimeMillis();
 
 
-            for ( int t = 0; t < 100; t++ )
-            {
-                ReduceDualA(dNumSamples);
-            }
             time = (System.currentTimeMillis() - lStartTime);
             m_lEntropyRunTime = time/100.0f;
             
@@ -585,12 +636,34 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         }
         else
         {
+/*
+            m_pkRenderer.Resize(m_kTransformedImage.GetTarget(0).GetImage().GetBound(0),
+                    m_kTransformedImage.GetTarget(0).GetImage().GetBound(1));
+            m_kTransformedImage.Enable();
+            m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
+            m_pkRenderer.ClearBuffers();
+            int iDepth = m_kImageB.nDims == 3 ? m_kImageB.extents[2] : 1;
+            for ( int i = 0; i < iDepth; i++ )
+            {
+                m_kTransformedImage.SetZOffset(i);
+                m_akTransformImage.ZSlice( (float)i/(float)(iDepth), 0 );
+                m_pkRenderer.Draw(m_pkPlane);
+                //writeImage();
+            }
+            m_kTransformedImage.Disable();
+            */
+            
+            m_pkRenderer.Resize(m_kHistogramOutput.GetTarget(0).GetImage().GetBound(0),
+                    m_kHistogramOutput.GetTarget(0).GetImage().GetBound(1));
             m_kHistogramOutput.Enable();
             m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
             m_pkRenderer.ClearBuffers();
             m_pkRenderer.Draw(m_kImagePointsDual);
+            //writeImage();
             m_kHistogramOutput.Disable();
-            
+
+            m_pkRenderer.Resize(m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(0),
+                    m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(1));
             m_kHistogramOutputB.Enable();
             m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
             m_pkRenderer.ClearBuffers();
@@ -601,12 +674,64 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_pkRenderer.Draw(m_kHistogramPoints2D);
             m_pkRenderer.Draw(m_kHistogramPointsColumns);
             m_pkRenderer.Draw(m_kHistogramPointsRows);
+            //writeImage();
             m_kHistogramOutputB.Disable();
+            
             //printTarget( "2D Histogram -- collapsed", m_kHistogramOutputB.GetTarget(0) );
         }
         //m_pkRenderer.Finish();
         //m_pkRenderer.DisplayBackBuffer();
         ReduceDualA(dNumSamples);
+        
+        /*
+        System.err.println("");
+        
+        System.err.println( m_kHistogramOutput.GetTarget(0).GetName() + " " + 
+                m_kHistogramOutput.GetTarget(0).GetSamplerInformation().GetBaseRegister() + " " +
+                m_kHistogramOutput.GetTarget(0).GetSamplerInformation().GetTextureUnit() + " " +
+                ((TextureID)m_kHistogramOutput.GetTarget(0).GetIdentifier(m_pkRenderer)).ID );
+        
+        System.err.println( m_kHistogramOutputB.GetTarget(0).GetName() + " " + 
+                m_kHistogramOutputB.GetTarget(0).GetSamplerInformation().GetBaseRegister() + " " +
+                m_kHistogramOutputB.GetTarget(0).GetSamplerInformation().GetTextureUnit() + " " +
+                ((TextureID)m_kHistogramOutputB.GetTarget(0).GetIdentifier(m_pkRenderer)).ID  );
+        
+        System.err.println( m_kEntropyOut.GetTarget(0).GetName() + " " + 
+                m_kEntropyOut.GetTarget(0).GetSamplerInformation().GetBaseRegister() + " " +
+                m_kEntropyOut.GetTarget(0).GetSamplerInformation().GetTextureUnit() + " " +
+                ((TextureID)m_kEntropyOut.GetTarget(0).GetIdentifier(m_pkRenderer)).ID );
+        
+
+        System.err.println( "ImagePointsDual " + ((ShaderEffect)m_kImagePointsDual.GetEffect(0)).GetTexture(0, 0).GetName() + " " + 
+                ((ShaderEffect)m_kImagePointsDual.GetEffect(0)).GetTexture(0, 0).GetSamplerInformation().GetBaseRegister() + " " +
+                ((ShaderEffect)m_kImagePointsDual.GetEffect(0)).GetTexture(0, 0).GetSamplerInformation().GetTextureUnit() + " " +
+                ((TextureID)((ShaderEffect)m_kImagePointsDual.GetEffect(0)).GetTexture(0, 0).GetIdentifier(m_pkRenderer)).ID );
+
+        System.err.println( "Histo2D " + ((ShaderEffect)m_kHistogramPoints2D.GetEffect(0)).GetTexture(0, 0).GetName() + " " + 
+                ((ShaderEffect)m_kHistogramPoints2D.GetEffect(0)).GetTexture(0, 0).GetSamplerInformation().GetBaseRegister() + " " +
+                ((ShaderEffect)m_kHistogramPoints2D.GetEffect(0)).GetTexture(0, 0).GetSamplerInformation().GetTextureUnit() + " " +
+                ((TextureID)((ShaderEffect)m_kHistogramPoints2D.GetEffect(0)).GetTexture(0, 0).GetIdentifier(m_pkRenderer)).ID );
+        
+        System.err.println( "HistoC " + ((ShaderEffect)m_kHistogramPointsColumns.GetEffect(0)).GetTexture(0, 0).GetName() + " " + 
+                ((ShaderEffect)m_kHistogramPointsColumns.GetEffect(0)).GetTexture(0, 0).GetSamplerInformation().GetBaseRegister() + " " +
+                ((ShaderEffect)m_kHistogramPointsColumns.GetEffect(0)).GetTexture(0, 0).GetSamplerInformation().GetTextureUnit() + " " +
+                ((TextureID)((ShaderEffect)m_kHistogramPointsColumns.GetEffect(0)).GetTexture(0, 0).GetIdentifier(m_pkRenderer)).ID );
+        
+
+        System.err.println( "HistoR " + ((ShaderEffect)m_kHistogramPointsRows.GetEffect(0)).GetTexture(0, 0).GetName() + " " + 
+                ((ShaderEffect)m_kHistogramPointsRows.GetEffect(0)).GetTexture(0, 0).GetSamplerInformation().GetBaseRegister() + " " +
+                ((ShaderEffect)m_kHistogramPointsRows.GetEffect(0)).GetTexture(0, 0).GetSamplerInformation().GetTextureUnit() + " " +
+                ((TextureID)((ShaderEffect)m_kHistogramPointsRows.GetEffect(0)).GetTexture(0, 0).GetIdentifier(m_pkRenderer)).ID );
+        
+
+        System.err.println( "Entropy " + ((ShaderEffect)m_kEntropyPoints2D.GetEffect(0)).GetTexture(0, 0).GetName() + " " + 
+                ((ShaderEffect)m_kEntropyPoints2D.GetEffect(0)).GetTexture(0, 0).GetSamplerInformation().GetBaseRegister() + " " +
+                ((ShaderEffect)m_kEntropyPoints2D.GetEffect(0)).GetTexture(0, 0).GetSamplerInformation().GetTextureUnit() + " " +
+                ((TextureID)((ShaderEffect)m_kEntropyPoints2D.GetEffect(0)).GetTexture(0, 0).GetIdentifier(m_pkRenderer)).ID );
+        
+
+        System.err.println("");
+        */
     }
     
     private void printTarget( String kMsg, Texture kTarget )
@@ -648,6 +773,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     { 
         Texture kTarget = null; //m_akImageReduceEntropy.GetTexture(0, 0);
         //printTarget( "Result", kTarget );
+        m_pkRenderer.Resize(m_kEntropyOut.GetTarget(0).GetImage().GetBound(0),
+                m_kEntropyOut.GetTarget(0).GetImage().GetBound(1));
         m_kEntropyOut.Enable();
         m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
         m_pkRenderer.ClearBuffers();
@@ -705,10 +832,28 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_bPrint = bPrint;
     }
 
-    private OpenGLFrameBuffer CreateRenderTarget( String kImageName, int iWidth, int iHeight )
+    private OpenGLFrameBuffer CreateRenderTarget( String kImageName, int iWidth, int iHeight, int iDepth )
     {      
-        float[] afData = new float[iWidth*iHeight*4];
-        GraphicsImage pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,afData,
+        float[] afData = new float[iWidth*iHeight*iDepth*4];
+        if ( iDepth == 1 )
+        {
+            GraphicsImage pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,afData,
+                    kImageName);
+
+            Texture[] akSceneTarget = new Texture[1];
+            akSceneTarget[0] = new Texture();
+            akSceneTarget[0].SetImage(pkSceneImage);
+            akSceneTarget[0].SetShared(false);
+            akSceneTarget[0].SetFilterType(Texture.FilterType.NEAREST);
+            akSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP);
+            akSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP);
+            akSceneTarget[0].SetSamplerInformation( new SamplerInformation( kImageName, SamplerInformation.Type.SAMPLER_2D, 0, 0 ) );
+            m_pkRenderer.LoadTexture( akSceneTarget[0] );
+
+            return new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
+                    m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget,m_kGLAutoDrawable);
+        }
+        GraphicsImage pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,iDepth,afData,
                 kImageName);
 
         Texture[] akSceneTarget = new Texture[1];
@@ -718,10 +863,11 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         akSceneTarget[0].SetFilterType(Texture.FilterType.NEAREST);
         akSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP);
         akSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP);
-        akSceneTarget[0].SetSamplerInformation( new SamplerInformation( kImageName, SamplerInformation.Type.SAMPLER_2D, 0, 0 ) );
+        akSceneTarget[0].SetWrapType(2,Texture.WrapType.CLAMP);
+        akSceneTarget[0].SetSamplerInformation( new SamplerInformation( kImageName, SamplerInformation.Type.SAMPLER_3D, 0, 0 ) );
         m_pkRenderer.LoadTexture( akSceneTarget[0] );
-        
+
         return new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
-                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget,m_kGLAutoDrawable,0);
+                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget,m_kGLAutoDrawable);
     }
 }

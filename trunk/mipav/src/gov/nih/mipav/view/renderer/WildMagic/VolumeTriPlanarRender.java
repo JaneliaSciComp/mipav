@@ -2758,7 +2758,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_pkPlane.UpdateRS();
         
         m_kFBO = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
-                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget, arg0,0);
+                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget, arg0);
         
 
         m_pkScreenCamera = new Camera();
