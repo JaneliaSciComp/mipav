@@ -35,6 +35,8 @@ public class JDialogCaptureScreens extends JDialogBase {
 
     /** Number of slices in the image. */
     private int numSlices;
+    
+    private int currentSlice;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -55,7 +57,7 @@ public class JDialogCaptureScreens extends JDialogBase {
         }
 
         this.numSlices = imageFrame.getImageA().getExtents()[2];
-        
+        currentSlice = imageFrame.getViewableSlice();
         writeImage();
         
         dispose();
@@ -180,8 +182,11 @@ public class JDialogCaptureScreens extends JDialogBase {
 
 
         }
+        
+        
 
         imageFrame.getComponentImage().setShowSliceNumber(true);
+        imageFrame.setSlice(currentSlice);
 
         testImage.calcMinMax();
         testImage.getFileInfo()[0].setResolutions(imageFrame.getImageA().getFileInfo()[0].getResolutions());
