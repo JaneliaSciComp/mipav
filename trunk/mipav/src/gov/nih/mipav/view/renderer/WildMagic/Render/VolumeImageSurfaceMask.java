@@ -1,8 +1,11 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.KeyListener;
 import java.util.Vector;
@@ -55,6 +58,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
             return;
         }
         boolean bSurfaceAdded = true;
+        boolean bDrawSurface = false;
         while ( bSurfaceAdded )
         {
             ModelImage kImage = m_kVolumeImage.GetImage();
@@ -72,7 +76,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
                 {
                     if ( m_kDisplayList.get(i) instanceof VolumeSurface )
                     {                
-
+                        bDrawSurface = true;
                         Matrix3f kSave = new Matrix3f(m_kDisplayList.get(i).GetScene().Local.GetRotate());
                         m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(Matrix3f.IDENTITY);
                         
@@ -100,11 +104,21 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
                 m_pkRenderer.EndScene();
                 //writeImage();
             }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetSurfaceTarget(), m_iSlice, false );
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetSurfaceTarget(), m_iSlice, true );
             //m_pkRenderer.DisplayBackBuffer();
             m_iSlice++; 
             if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
             {
+                if ( bDrawSurface )
+                {
+                    ModelImage kMask = VolumeImage.CreateImageFromTexture( m_kVolumeImage.GetSurfaceTarget().GetImage(), true );
+                    // The algorithm has completed and produced a new image to be displayed.
+                    try {
+                        new ViewJFrameImage(kMask, null, new Dimension(610, 200));
+                    } catch (OutOfMemoryError error) {
+                        MipavUtil.displayError("Out of memory: unable to open new frame");
+                    }
+                }
                 bSurfaceAdded = false;
                 m_iSlice = 0;
             }

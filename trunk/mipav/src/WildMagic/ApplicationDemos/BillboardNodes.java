@@ -465,7 +465,7 @@ public class BillboardNodes extends JavaApplication3D
         m_pkPlane.UpdateRS();
         
         m_kFBO = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
-                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget, arg0,0);
+                m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget, arg0);
     }
     
 }

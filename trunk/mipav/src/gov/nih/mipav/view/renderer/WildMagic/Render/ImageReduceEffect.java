@@ -103,7 +103,7 @@ public class ImageReduceEffect extends ShaderEffect
 
 
 
-    public ImageReduceEffect ( Texture kTexA, double dNumSamples )
+    public ImageReduceEffect ( Texture kTexA, Texture kTexB, double dNumSamples )
     {
         super(1);
         m_dNumSamples = dNumSamples;
@@ -116,6 +116,13 @@ public class ImageReduceEffect extends ShaderEffect
         kPShader.SetTextureQuantity(1);
         kPShader.SetTexture( 0, kTexA );
         kPShader.SetImageName( 0, kTexA.GetName() );
+        /*
+        kPShader.SetTextureQuantity(2);
+        kPShader.SetTexture( 0, kTexA );
+        kPShader.SetImageName( 0, kTexA.GetName() );
+        kPShader.SetTexture( 1, kTexB );
+        kPShader.SetImageName( 1, kTexB.GetName() );
+        */
     }
     
     public void OnLoadPrograms (int iPass, Program pkVProgram,

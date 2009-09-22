@@ -173,14 +173,20 @@ public class VolumeImage
             byte[] aucData = kImage.GetData();
             if ( bSwap )
             {
+                byte bVal = 0;
                 aucData = new byte[4*iXBound*iYBound*iZBound];
                 for ( int i = 0; i < iSize; i += 4)
                 {
+                    if ( kImage.GetData()[i+1] > bVal )
+                    {
+                        bVal = kImage.GetData()[i+1];
+                    }
                     aucData[i] = kImage.GetData()[i+3];
                     aucData[i+1] = kImage.GetData()[i+1];
                     aucData[i+2] = kImage.GetData()[i+2];
                     aucData[i+3] = kImage.GetData()[i];
                 }
+                System.err.println( bVal );
             }
             try {
                 kResult = new ModelImage(ModelStorageBase.ARGB, extents, "" );
@@ -821,8 +827,8 @@ public class VolumeImage
         m_kOpacityMapTarget_GM.SetShared(true);
         
 
-        m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888,
-                                       iXBound,iYBound,iZBound,(byte[])null,
+        m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_L8,
+                                       iXBound,iYBound,iZBound,new byte[iXBound*iYBound*iZBound],
                                        "SurfaceImage");
         m_kSurfaceTarget = new Texture();
         m_kSurfaceTarget.SetImage(m_kSurfaceImage);

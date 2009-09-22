@@ -50,13 +50,18 @@ implements StreamInterface
         PixelShader kPShader = new PixelShader("VolumeHistogramP", true);
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
-        
         kPShader.SetTextureQuantity(2);
         kPShader.SetTexture( 0, kTexA );
         kPShader.SetImageName( 0, kTexA.GetName() );
         kPShader.SetTexture( 1, kTexB );
         kPShader.SetImageName( 1, kTexB.GetName() );
+
+/*
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetTexture( 0, kTexB );
+        kPShader.SetImageName( 0, kTexB.GetName() );
         
+*/
        
         m_fMin1 = fMinA;
         m_fScale1 = 1;
@@ -79,6 +84,26 @@ implements StreamInterface
     }
 
 
+
+    public VolumeHistogramEffect ( Texture kTexA, Matrix4f kImageTransform )
+    {
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_aiExtents[i] = kTexA.GetImage().GetBound(i);
+        }
+        m_kImageTransform = kImageTransform;
+        
+        VertexShader kVShader = new VertexShader("TransformImageV");
+        PixelShader kPShader = new PixelShader("TransformImageP");
+        SetPassQuantity(1);
+        SetVShader(0,kVShader);
+        SetPShader(0,kPShader);
+        
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetTexture( 0, kTexA );
+        kPShader.SetImageName( 0, kTexA.GetName() );
+    }
 
     public VolumeHistogramEffect ( Texture kTexA, int iType )
     {
