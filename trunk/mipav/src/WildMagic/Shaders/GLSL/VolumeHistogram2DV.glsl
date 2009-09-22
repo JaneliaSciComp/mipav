@@ -24,16 +24,17 @@ void v_VolumeHistogram2DV()
     texCoord = kPos.xyz * ImageSizeInv;
 
     vec4 vol1 = vec4(0.0);
-    if ( (texCoord.x < 0.0) || (texCoord.x > 1.0) ||
-         (texCoord.y < 0.0) || (texCoord.y > 1.0) ||
-         (texCoord.z < 0.0) || (texCoord.z > 1.0)    )
-    {
-        gl_FrontColor.r = 0.0;
-        gl_FrontColor.a = 0.0;
-    }
-    else
-    {
-        vol1 = texture3D(imageA, texCoord );
+//     if ( (texCoord.x < 0.0) || (texCoord.x > 1.0) ||
+//          (texCoord.y < 0.0) || (texCoord.y > 1.0) ||
+//          (texCoord.z < 0.0) || (texCoord.z > 1.0)    )
+//     {
+//         gl_FrontColor.r = 0.0;
+//         gl_FrontColor.a = 0.0;
+//     }
+//     else
+//     {
+    vol1 = texture3D(imageA, texCoord );
+    gl_FrontColor.a = vol1.a;
         float yPos = (vol1.r - Min.y) * Scale.y;
         yPos *= 2.0;
         yPos -= 1.0;
@@ -44,7 +45,7 @@ void v_VolumeHistogram2DV()
         xPos *= 2.0;
         xPos -= 1.0;
         vert.x = xPos;
-    }
+//     }
 
 
 

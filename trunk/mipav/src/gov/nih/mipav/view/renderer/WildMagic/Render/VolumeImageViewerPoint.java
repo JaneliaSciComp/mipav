@@ -277,11 +277,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
 
             long time = (System.currentTimeMillis() - lStartTime);
             System.err.println("");
-            System.err.println( "nBins " + m_iWidth + " count " + m_iCount );
-            System.err.println( "Initialization time: " + (time * .001f) + " seconds" );
-            System.err.println( "2D Histogram time: " + (m_l2DRunTime * .001f) + " seconds" );
-            System.err.println( "Entropy time: " + (m_lEntropyRunTime * .001f) + " seconds" );
-
+            System.err.println( "nBins " + m_iWidth + " time: " + (time * .001f) + " seconds" );
             System.err.println("");
             m_bFirstRun = false;
         }
@@ -517,6 +513,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_kTextureB = new Texture();
         m_kTextureB.SetImage(VolumeImage.UpdateData(m_kImageB, m_kNameB ));
         m_kTextureB.SetShared(true);
+        m_kTextureB.SetBorderColor( new ColorRGBA(0,0,0,0) );
         m_kTextureB.SetFilterType(Texture.FilterType.NEAREST);
         m_kTextureB.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kTextureB.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
@@ -598,34 +595,29 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     
     private void calcEntropy( ModelSimpleImage kImage, double dNumSamples )
     {
-        long lStartTime = 0;
         if ( m_bFirstRun )
         {
-            lStartTime = System.currentTimeMillis();
-            
-            m_pkRenderer.Resize(m_kTransformedImage.GetTarget(0).GetImage().GetBound(0),
-                    m_kTransformedImage.GetTarget(0).GetImage().GetBound(1));
-            m_kTransformedImage.Enable();
-            m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-            m_pkRenderer.ClearBuffers();
-            int iDepth = m_kImageB.nDims == 3 ? m_kImageB.extents[2] : 1;
-            for ( int i = 0; i < iDepth; i++ )
+            for ( int i = 0; i < 100; i++ )
             {
-                //m_kTransformedImage.SetZOffset(i);
-                m_akTransformImage.ZSlice( (float)i/(float)(iDepth), 0 );
-                m_pkRenderer.Draw(m_pkPlane);
-                writeImage();
+                m_pkRenderer.Resize(m_kHistogramOutput.GetTarget(0).GetImage().GetBound(0),
+                        m_kHistogramOutput.GetTarget(0).GetImage().GetBound(1));
+                m_kHistogramOutput.Enable();
+                m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
+                m_pkRenderer.ClearBuffers();
+                m_pkRenderer.Draw(m_kImagePointsDual);
+                m_kHistogramOutput.Disable();
+
+                m_pkRenderer.Resize(m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(0),
+                        m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(1));
+                m_kHistogramOutputB.Enable();
+                m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
+                m_pkRenderer.ClearBuffers();
+                m_pkRenderer.Draw(m_kHistogramPoints2D);
+                m_pkRenderer.Draw(m_kHistogramPointsColumns);
+                m_pkRenderer.Draw(m_kHistogramPointsRows);
+                m_kHistogramOutputB.Disable();
+                ReduceDualA(dNumSamples);
             }
-            m_kTransformedImage.Disable();
-
-            long time = (System.currentTimeMillis() - lStartTime);
-            m_l2DRunTime = time/100.0f;
-            lStartTime = System.currentTimeMillis();
-
-
-            time = (System.currentTimeMillis() - lStartTime);
-            m_lEntropyRunTime = time/100.0f;
-            
         }
         if ( m_bUseJoint )
         {
