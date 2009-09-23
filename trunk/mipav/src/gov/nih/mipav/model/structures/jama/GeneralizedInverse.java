@@ -1841,6 +1841,7 @@ public class GeneralizedInverse {
         int row1;
         double array1[][];
         double array2[][];
+        double array3[][];
         int j;
         int k;
         int ie;
@@ -1849,6 +1850,7 @@ public class GeneralizedInverse {
         double work2[];
         double work3[];
         double work4[];
+        double work5[];
         int dimw;
         double vdum2[][] = new double[1][1];
         double thr;
@@ -1856,6 +1858,8 @@ public class GeneralizedInverse {
         int bl;
         int len;
         int ldwork;
+        int il;
+        int p;
         
         // Test the input arguments
         info[0] = 0;
@@ -2227,7 +2231,443 @@ public class GeneralizedInverse {
             
             // Compute A = L*Q
             // (Workspace: need 2*m, prefer m + m*nb)
-        } // else if ((n >= mnthr) && (lwork >= 4*m + m*m + Math.max(m, Math.max(2*m-4, 
+            work2 = new double[Math.max(1, lwork-iwork+1)];
+            dgelqf(m, n, A, lda, work, work2, lwork-iwork+1, info);
+            for (j = 0; j < Math.max(1, lwork-iwork+1); j++) {
+                work[j+iwork-1] = work2[j];
+            }
+            il = iwork;
+            
+            // Copy L to work(il), zeroing out above it.
+            array1 = new double[m][m];
+            dlacpy('L', m, m, A, lda, array1, m);
+            for (k = 0; k < m; k++) {
+                for (j = 0; j < m; j++) {
+                    work[il - 1 + j + k*m] = array1[j][k]; 
+                }
+            }
+            array1 = new double[m-1][m-1];
+            p = 0;
+            for (k = 0; k < m-1; k++) {
+                for (j = 0; j < m-1; j++, p++) {
+                    array1[j][k] = work[il+ldwork-1+p];
+                }
+            }
+            dlaset('U', m-1, m-1, 0.0, 0.0, array1, m-1);
+            p = 0;
+            for (k = 0; k < m-1; k++) {
+                for (j = 0; j < m-1; j++, p++) {
+                    work[il+ldwork-1+p] = array1[j][k];
+                }
+            }
+            ie = il + ldwork*m;
+            itauq = ie + m;
+            itaup = itauq + m;
+            iwork = itaup + m;
+            
+            // Bidiagonalize L in work(il)
+            // (Workspace: need m*m+5*m prefer m*m+4*m+2*m*nb)
+            array1 = new double[m][m];
+            p = 0;
+            for (k = 0; k < m; k++) {
+                for (j = 0; j < m; j++, p++) {
+                    array1[j][k] = work[il-1+p];
+                }
+            }
+            work2 = new double[m-1];
+            work3 = new double[m];
+            work4 = new double[m];
+            work5 = new double[Math.max(1, lwork-iwork+1)];
+            dgebrd(m, m, array1, m, s, work2, work3, work4, work5, lwork-iwork+1, info);
+            p = 0;
+            for (k = 0; k < m; k++) {
+                for (j = 0; j < m; j++, p++) {
+                    work[il-1+p] = array1[j][k];
+                }
+            }
+            for (j = 0; j < m-1; j++) {
+                work[ie-1+j] = work2[j];
+            }
+            for (j = 0; j < m; j++) {
+                work[itauq-1+j] = work3[j];
+                work[itaup-1+j] = work4[j];
+            }
+            for (j = 0; j < Math.max(1, lwork-iwork+1); j++) {
+                work[iwork-1+j] = work5[j];
+            }
+            
+            // Multiply B by transpose of left bidiagonalizing vectors of L
+            // (Workspace: need m*m+4*m+nrhs, prefer m*m + 4*m + nrhs*nb)
+            dormbr('Q', 'L', 'T', m, nrhs, m, array1, m, work3, B, ldb, work5, lwork-iwork+1, info);
+            for (j = 0; j < Math.max(1, lwork-iwork+1); j++) {
+                work[iwork-1+j] = work5[j];
+            }
+            
+            // Generate right bidiagonalizing vectors of R in work[il]
+            // (Workspace:  need m*m +5*m - 1, prefer m*m + 4*m + (m-1)*nb)
+            p = 0;
+            for (k = 0; k < m; k++) {
+                for (j = 0; j < m; j++, p++) {
+                    array1[j][k] = work[il-1+p];
+                }
+            }
+            work2 = new double[m];
+            for (p = 0; p < m; p++) {
+                work2[p] = work[itaup - 1 + p];
+            }
+            work3 = new double[Math.max(1, lwork-iwork+1)];
+            dorgbr('P', m, m, m, array1, m, work2, work3, lwork-iwork+1, info);
+            p = 0;
+            for (k = 0; k < m; k++) {
+                for (j = 0; j < m; j++, p++) {
+                    work[il-1+p] = array1[j][k];
+                }
+            }
+            for (p = 0; p < Math.max(1, lwork-iwork+1); p++) {
+                work[iwork-1+p] = work3[p];
+            }
+            iwork = ie + m;
+            
+            // Perform bidiagonal QR iteration,
+            // computing right singular vectors of L in work[il-1] and
+            // multiplying B by transpose of left singular vectors
+            // (Workspace: need m*m + m + bdspac)
+            work2 = new double[m-1];
+            for (p = 0; p < m-1; p++) {
+                work2[p] = work[ie-1+p];
+            }
+            p = 0;
+            for (k = 0; k < m; k++) {
+                for (j = 0; j < m; j++, p++) {
+                    array1[j][k] = work[il-1+p];
+                }
+            }
+            work3 = new double[4*m];
+            dbdsqr('U', m, m, 0, nrhs, s, work2, array1, m, A, lda, B, ldb, work3, info);
+            for (p = 0; p < m-1; p++) {
+                work[ie-1+p] = work2[p];
+            }
+            p = 0;
+            for (k = 0; k < m; k++) {
+                for (j = 0; j < m; j++, p++) {
+                    work[il-1+p] = array1[j][k];
+                }
+            }
+            if (info[0] != 0) {
+                work[0] = maxwrk;
+                return;
+            }
+            
+            // Multiply B by reciprocals of singular values
+            thr = Math.max(rcond*s[0], sfmin);
+            if (rcond < 0.0) {
+                thr = Math.max(eps*s[0], sfmin);
+            }
+            rank[0] = 0;
+            for (i = 1; i <= m; i++) {
+                if (s[i-1] > thr) {
+                    work2 = new double[nrhs];
+                    for (p = 0; p < nrhs; p++) {
+                        work2[p] = B[i-1][p];
+                    }
+                    drscl(nrhs, s[i-1], work2, 1);
+                    for (p = 0; p < nrhs; p++) {
+                        B[i-1][p] = work2[p];
+                    }
+                    rank[0] = rank[0] + 1;
+                } // if (s[i-1] > thr)
+                else {
+                    array1 = new double[1][nrhs];
+                    for (p = 0; p < nrhs; p++) {
+                        array1[0][p] = B[i-1][p];
+                    }
+                    dlaset('F', 1, nrhs, 0.0, 0.0, array1, 1);
+                    for (p = 0; p < nrhs; p++) {
+                        B[i-1][p] = array1[0][p];
+                    }
+                } // else
+            } // for (i = 1; i <= m; i++)
+            iwork = ie;
+            
+            // Multiply B by right singular vectors of L in work[il-1]
+            // (Workspace: need m*m + 2*m, prefer m*m + m + m*nrhs)
+            
+            if ((lwork >= ldb*nrhs+iwork-1) && (nrhs > 1)) {
+                array1 = new double[m][m]; 
+                p = 0;
+                for (k = 0; k < m; k++) {
+                    for (j = 0; j < m; j++, p++) {
+                        array1[j][k] = work[il-1+p];
+                    }
+                }
+                array2 = new double[m][nrhs];
+                p = 0;
+                for (k = 0; k < nrhs; k++) {
+                    for (j = 0; j < m; j++, p++) {
+                        array2[j][k] = work[iwork-1+p];
+                    }
+                }
+                dgemm('T', 'N', m, nrhs, m, 1.0, array1, m, B, ldb, 0.0, array2, m);
+                p = 0;
+                for (k = 0; k < nrhs; k++) {
+                    for (j = 0; j < m; j++, p++) {
+                        work[iwork-1+p] = array2[j][k];
+                    }
+                }
+                dlacpy('G', m, nrhs, array2, m, B, ldb);
+            } // if ((lwork >= ldb*nrhs+iwork-1) && (nrhs > 1))
+            else if (nrhs > 1) {
+                chunk = (lwork-iwork+1)/m;
+                for (i = 1; i <= nrhs; i += chunk) {
+                    bl = Math.min(nrhs-i+1, chunk);
+                    array1 = new double[m][m];
+                    p = 0;
+                    for (k = 0; k < m; k++) {
+                        for (j = 0; j < m; j++, p++) {
+                            array1[j][k] = work[il-1+p];
+                        }
+                    }
+                    array2 = new double[m][bl];
+                    for (j = 0; j < m; j++) {
+                        for (k = 0; k < bl; k++) {
+                            array2[j][k] = B[j][i-1+k];
+                        }
+                    }
+                    array3 = new double[m][bl];
+                    p = 0;
+                    for (k = 0; k < bl; k++) {
+                        for (j = 0; j < m; j++, p++) {
+                            array3[j][k] = work[iwork-1+p];
+                        }
+                    }
+                    dgemm('T', 'N', m, bl, m, 1.0, array1, m, array2, m, 0.0, array3, m);
+                    p = 0;
+                    for (k = 0; k < bl; k++) {
+                        for (j = 0; j < m; j++, p++) {
+                            work[iwork-1+p] = array3[j][k];
+                        }
+                    }
+                    dlacpy('G', m, bl, array3, m, array2, m);
+                    for (j = 0; j < m; j++) {
+                        for (k = 0; k < bl; k++) {
+                            B[j][i-1+k] = array2[j][k];
+                        }
+                    }
+                } // for (i = 1; i <= nrhs; i += chunk)
+            } // else if (nrhs > 1)
+            else {
+                array1 = new double[m][m];
+                p = 0;
+                for (k = 0; k < m; k++) {
+                    for (j = 0; j < m; j++, p++) {
+                        array1[j][k] = work[il-1+p];
+                    }
+                }
+                work2 = new double[m];
+                for (p = 0; p < m; p++) {
+                    work2[p] = B[p][0];
+                }
+                work3 = new double[m];
+                dgemv('T', m, m, 1.0, array1, m, work2, 1, 0.0, work3, 1);
+                for (p = 0; p < m; p++) {
+                    work[iwork-1+p] = work3[p];
+                }
+                for (p = 0; p < m; p++) {
+                    B[p][0] = work[iwork-1+p];
+                }
+            } // else
+            
+            // Zero out below first m rows of B
+            row1 = Math.max(1, n-m);
+            array1 = new double[row1][nrhs];
+            for (j = 0; j < row1; j++) {
+                for (k = 0; k < nrhs; k++) {
+                    array1[j][k] = B[m+j][k];
+                }
+            }
+            dlaset('F', n-m, nrhs, 0.0, 0.0, array1, row1);
+            for (j = 0; j < row1; j++) {
+                for (k = 0; k < nrhs; k++) {
+                    B[m+j][k] = array1[j][k];
+                }
+            }
+            iwork = itau + m;
+            
+            // Multiply transpose(Q) by B
+            // (Workspace: need m + nrhs, prefer m + nrhs*nb)
+            work2 = new double[m];
+            for (p = 0; p < m; p++) {
+                work2[p] = work[itau-1+p];
+            }
+            work3 = new double[Math.max(1, lwork - iwork + 1)];
+            dormlq('L', 'T', n, nrhs, m, A, lda, work2, B, ldb, work3, lwork-iwork+1, info);
+            for (p = 0; p < Math.max(1, lwork-iwork+1); p++) {
+                work[iwork-1+p] = work3[p];
+            }
+        } // else if ((n >= mnthr) && (lwork >= 4*m + m*m + Math.max(m, Math.max(2*m-4,
+        else {
+            // Path 2 - remaining underdetermined cases
+            
+            ie = 1;
+            itauq = ie + m;
+            itaup = itauq + m;
+            iwork = itaup + m;
+            
+            // Bidiagonalize A
+            // (Workspace: need 3*m + m, prefer 3*m+(m+n)*nb)
+            
+            work2 = new double[Math.min(m, n)];
+            work3 = new double[Math.min(m, n)];
+            work4 = new double[Math.max(1, lwork-iwork+1)];
+            dgebrd(m, n, A, lda, s, work, work2, work3, work4, lwork-iwork+1, info);
+            for (p = 0; p < Math.min(m, n); p++) {
+                work[itauq-1+p] = work2[p];
+                work[itaup-1+p] = work3[p];
+            }
+            for (p = 0; p < Math.max(1, lwork-iwork+1); p++) {
+                work[iwork-1+p] = work4[p];    
+            }
+            
+            // Multiply B by transpose of left bidiagonalizing vectors
+            // (Workspace: need 3*m+nrhs, prefer 3*m+nrhs*nb)
+            dormbr('Q', 'L', 'T', m, nrhs, n, A, lda, work2, B, ldb, work4, lwork-iwork+1, info);
+            for (p = 0; p < Math.max(1, lwork-iwork+1); p++) {
+                work[iwork-1+p] = work4[p];    
+            }
+            
+            // Generate right bidiagonalizing vectors in A
+            // (Workspace: need 4*m, prefer 3*m + m*nb)
+            dorgbr('P', m, n, m, A, lda, work3, work4, lwork-iwork+1, info);
+            for (p = 0; p < Math.max(1, lwork-iwork+1); p++) {
+                work[iwork-1+p] = work4[p];    
+            }
+            iwork = ie + m;
+            
+            // Perform bidiagonal QR iteration.
+            // computing right singular vectors of A in A and
+            // multiplying B by transpose of left singular vectors
+            // (Workspace: need bdspac)
+            work2 = new double[4*m];
+            dbdsqr('L', m, n, 0, nrhs, s, work, A, lda, vdum2, 1, B, ldb, work2, info);
+            if (info[0] != 0) {
+                work[0] = maxwrk;
+                return;
+            }
+            
+            // Multiply B by reciprocals of singular values
+            thr = Math.max(rcond*s[0], sfmin);
+            if (rcond < 0.0) {
+                thr = Math.max(eps*s[0], sfmin);
+            }
+            rank[0] = 0;
+            for (i = 1; i <= m; i++) {
+                if (s[i-1] > thr) {
+                    work2 = new double[nrhs];
+                    for (p = 0; p < nrhs; p++) {
+                        work2[p] = B[i-1][p];
+                    }
+                    drscl(nrhs, s[i-1], work2, 1);
+                    for (p = 0; p < nrhs; p++) {
+                        B[i-1][p] = work2[p];
+                    }
+                    rank[0] = rank[0] + 1;
+                }// if (s[i-1] > thr)
+                else {
+                    array1 = new double[1][nrhs];
+                    for (p = 0; p < nrhs; p++) {
+                        array1[0][p] = B[i-1][p];
+                    }
+                    dlaset('F', 1, nrhs, 0.0, 0.0, array1, 1);
+                    for (p = 0; p < nrhs; p++) {
+                        B[i-1][p] = array1[0][p];
+                    }
+                } // else
+            } // for (i = 1; i <= m; i++)
+            
+            // Multiply B by right singular vectors of A
+            // (Workspace: need n, prefer n*nrhs)
+            
+            if ((lwork >= ldb*nrhs) && (nrhs > 1)) {
+                array1 = new double[ldb][nrhs];
+                dgemm('T', 'N', n, nrhs, m, 1.0, A, lda, B, ldb, 0.0, array1, ldb); 
+                p = 0;
+                for (k = 0; k < nrhs; k++) {
+                    for (j = 0; j < ldb; j++,p++) {
+                        work[p] = array1[j][k];
+                    }
+                }
+                dlacpy('F', n, nrhs, array1, ldb, B, ldb);
+            } // if ((lwork >= ldb*nrhs) && (nrhs > 1))
+            else if (nrhs > 1) {
+                chunk = lwork/n;
+                for (i = 1; i <= nrhs; i += chunk) {
+                    bl = Math.min(nrhs-i+1, chunk);
+                    array1 = new double[n][bl];
+                    for (j = 0; j < n; j++) {
+                        for (k = 0; k < bl; k++) {
+                            array1[j][k] = B[j][i-1+k];
+                        }
+                    }
+                    array2 = new double[n][bl];
+                    dgemm('T', 'N', n, bl, m, 1.0, A, lda, array1, n, 0.0, array2, n);
+                    p = 0;
+                    for (k = 0; k < bl; k++) {
+                        for (j = 0; j < n; j++,p++) {
+                            work[p] = array2[j][k];
+                        }
+                    }
+                    dlacpy('F', n, bl, array2, n, array1, n);
+                    for (j = 0; j < n; j++) {
+                        for (k = 0; k < bl; k++) {
+                            B[j][i-1+k] = array1[j][k];
+                        }
+                    }
+                } // for (i = 1; i <= nrhs; i += chunk)
+            } // else if (nrhs > 1)
+            else {
+                work2 = new double[m];
+                for (p = 0; p < m; p++) {
+                    work2[p] = B[p][0];
+                }
+                dgemv('T', m, n, 1.0, A, lda, work2, 1, 0.0, work, 1); 
+                for (p = 0; p < n; p++) {
+                    B[p][0] = work[p];
+                }
+            } // else
+        } // else
+        
+        // Undo scaling
+        if (iascl == 1) {
+            dlascl('G', 0, 0, anrm, smlnum[0], n, nrhs, B, ldb, info);
+            array1 = new double[minmn][1];
+            for (p = 0; p < minmn; p++) {
+                array1[p][0] = s[p];
+            }
+            dlascl('G', 0, 0, smlnum[0], anrm, minmn, 1, array1, minmn, info);
+            for (p = 0; p < minmn; p++) {
+                s[p] = array1[p][0];
+            }
+        } // if (iascl == 1)
+        else if (iascl == 2) {
+            dlascl('G', 0, 0, anrm, bignum[0], n, nrhs, B, ldb, info);
+            array1 = new double[minmn][1];
+            for (p = 0; p < minmn; p++) {
+                array1[p][0] = s[p];
+            }
+            dlascl('G', 0, 0, bignum[0], anrm, minmn, 1, array1, minmn, info);
+            for (p = 0; p < minmn; p++) {
+                s[p] = array1[p][0];
+            }
+        } // else if (iascl == 2)
+        if (ibscl == 1) {
+            dlascl('G', 0, 0, smlnum[0], bnrm, n, nrhs, B, ldb, info);
+        }
+        else if (ibscl == 2) {
+            dlascl('G', 0, 0, bignum[0], bnrm, n, nrhs, B, ldb, info);
+        }
+        
+        work[0] = maxwrk;
+        return;
     } // dgelss
     
     /**
@@ -3696,6 +4136,251 @@ public class GeneralizedInverse {
 
         return value;
     } // dlange
+    
+    /** This is a port of version 3.2 LAPACK routine DGELQF
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INFO, LDA, LWORK, M, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   A( LDA, * ), TAU( * ), WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DGELQF computes an LQ factorization of a real M-by-N matrix A:
+    *  A = L * Q.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix A.  M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix A.  N >= 0.
+    *
+    *  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
+    *          On entry, the M-by-N matrix A.
+    *          On exit, the elements on and below the diagonal of the array
+    *          contain the m-by-min(m,n) lower trapezoidal matrix L (L is
+    *          lower triangular if m <= n); the elements above the diagonal,
+    *          with the array TAU, represent the orthogonal matrix Q as a
+    *          product of elementary reflectors (see Further Details).
+    *
+    *  LDA     (input) INTEGER
+    *          The leading dimension of the array A.  LDA >= max(1,M).
+    *
+    *  TAU     (output) DOUBLE PRECISION array, dimension (min(M,N))
+    *          The scalar factors of the elementary reflectors (see Further
+    *          Details).
+    *
+    *  WORK    (workspace/output) DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+    *          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+    *
+    *  LWORK   (input) INTEGER
+    *          The dimension of the array WORK.  LWORK >= max(1,M).
+    *          For optimum performance LWORK >= M*NB, where NB is the
+    *          optimal blocksize.
+    *
+    *          If LWORK = -1, then a workspace query is assumed; the routine
+    *          only calculates the optimal size of the WORK array, returns
+    *          this value as the first entry of the WORK array, and no error
+    *          message related to LWORK is issued by XERBLA.
+    *
+    *  INFO    (output) INTEGER
+    *          = 0:  successful exit
+    *          < 0:  if INFO = -i, the i-th argument had an illegal value
+    *
+    *  Further Details
+    *  ===============
+    *
+    *  The matrix Q is represented as a product of elementary reflectors
+    *
+    *     Q = H(k) . . . H(2) H(1), where k = min(m,n).
+    *
+    *  Each H(i) has the form
+    *
+    *     H(i) = I - tau * v * v'
+    *
+    *  where tau is a real scalar, and v is a real vector with
+    *  v(1:i-1) = 0 and v(i) = 1; v(i+1:n) is stored on exit in A(i,i+1:n),
+    *  and tau in TAU(i).
+    */
+    private void dgelqf(int m, int n, double A[][], int lda, double tau[], double work[],
+                        int lwork, int info[]) {
+        boolean lquery;
+        int i;
+        int ib;
+        int iinfo[] = new int[1];
+        int iws;
+        int k;
+        int ldwork;
+        int lwkopt;
+        int nb;
+        int nbmin;
+        int nx;
+        String name;
+        String opts;
+        int row1;
+        double array1[][];
+        int p;
+        int q;
+        double v1[];
+        double work2[][];
+        double array2[][];
+        int row2;
+        double work3[][];
+        
+        // Test the input arguments
+        
+        info[0] = 0;
+        name = new String("DGELQF");
+        opts = new String(" ");
+        nb = ilaenv(1, name, opts, m, n, -1, -1);
+        lwkopt = m*nb;
+        work[0] = lwkopt;
+        lquery = (lwork == -1);
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if (n < 0) {
+            info[0] = -2;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -4;
+        }
+        else if (lwork < Math.max(1, m) && (!lquery)) {
+            info[0] = -7;
+        }
+        if (info[0] != 0) {
+             MipavUtil.displayError("Error dgelqf had info[0] = " + info[0]);
+             return;
+        }
+        else if (lquery) {
+            return;
+        }
+        
+        // Quick return if possible
+        k = Math.min(m, n);
+        if (k == 0) {
+            work[0] = 1;
+            return;
+        }
+        
+        nbmin = 2;
+        nx = 0;
+        iws = m;
+        if ((nb > 1) && (nb < k)) {
+            // Determine when to cross over from blocked to unblocked code.
+            nx = Math.max(0, ilaenv(3, name, opts, m, n, -1, -1));
+            if (nx < k) {
+                // Determine if workspace is large enough for blocked code.
+                ldwork = m;
+                iws = ldwork * nb;
+                if (lwork < iws) {
+                    //  Not enough workspace to used optimal nb:  reduce nb and
+                    // determine the minimum value of nb;
+                    nb = lwork/ldwork;
+                    nbmin = Math.max(2, ilaenv(2, name, opts, m, n, -1, -1));
+                } // if (lwork < iws)
+            } // if (nx < k)
+        } // if ((nb > 1) && (nb < k))
+        
+        if ((nb >= nbmin) && (nb < k) && (nx < k)) {
+            // Use blocked code initially
+            for (i = 1; i <= k - nx; i += nb) {
+                ib = Math.min(k-i+1, nb);
+                // Compute the LQ factorization of the current block A(i:i+ib-1,i:n)
+                row1 = Math.max(1, ib);
+                array1 = new double[row1][n-i+1];
+                for (p = 0; p < row1; p++) {
+                    for (q = 0; q < n-i+1; q++) {
+                        array1[p][q] = A[i-1+p][i-1+q];    
+                    }
+                }
+                v1 = new double[Math.min(ib, n-i+1)];
+                dgelq2(ib, n-i+1, array1, row1, v1, work, iinfo);
+                for (p = 0; p < row1; p++) {
+                    for (q = 0; q < n-i+1; q++) {
+                        A[i-1+p][i-1+q] = array1[p][q];    
+                    }
+                }
+                for (p = 0; p < Math.min(ib, n-i+1); p++) {
+                    tau[i-1+p] = v1[p];
+                }
+                if (i+ib <= m) {
+                    // Form the triangular factor of the block reflector
+                    // H = H(i) H(i+1) ... H(i+ib-1)
+                    v1 = new double[ib];
+                    for (p = 0; p < ib; p++) {
+                        v1[p] = tau[i-1+p];
+                    }
+                    work2 = new double[ib][ib];
+                    dlarft('F', 'R', n-i+1, ib, array1, ib, v1, work2, ib);
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < n-i+1; q++) {
+                            A[i-1+p][i-1+q] = array1[p][q];    
+                        }
+                    }
+                    for (q = 0; q < ib; q++) {
+                        for (p = 0; p < ib; p++) {
+                            work[p + ib*q] = work2[p][q];
+                        }
+                    }
+                    
+                    // Apply H to A(i+ib:m, i:n) from the right
+                    row2 = Math.max(1,m-i-ib+1);
+                    array2 = new double[row2][n-i+1];
+                    for (p = 0; p < row2; p++) {
+                        for (q = 0; q < n-i+1; q++) {
+                            array2[p][q] = A[i+ib-1+p][i-1+q];
+                        }
+                    }
+                    work3 = new double[row2][ib];
+                    dlarfb('R', 'N', 'F', 'R', m-i-ib+1, n-i+1, ib, array1, ib, work2, ib,
+                            array2, row2, work3, row2);
+                    for (p = 0; p < row2; p++) {
+                        for (q = 0; q < n-i+1; q++) {
+                            A[i+ib-1+p][i-1+q] = array2[p][q];
+                        }
+                    }
+                } // if (i+ib <= m)
+            } // for (i = 1; i <= k - nx; i+= nb)
+        } // if ((nb >= nbmin) && (nb < k) && (nx < k))
+        else {
+            i = 1;
+        }
+        
+        // Use unblocked code to factor the last or only block
+        if (i <= k) {
+            row1 = Math.max(1, m-i+1);
+            array1 = new double[row1][n-i+1];
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < n-i+1; q++) {
+                    array1[p][q] = A[i-1+p][i-1+q];    
+                }
+            }
+            v1 = new double[Math.min(m-i+1, n-i+1)];
+            dgelq2(m-i+1, n-i+1, array1, row1, v1, work, iinfo);
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < n-i+1; q++) {
+                    A[i-1+p][i-1+q] = array1[p][q];    
+                }
+            }
+            for (p = 0; p < Math.min(m-i+1, n-i+1); p++) {
+                tau[i-1+p] = v1[p];
+            }
+        } // if (i <= k)
+        
+        work[0] = iws;
+        return;
+    } // dgelqf
+
     
     /** This is a port of version 3.2 LAPACK routine DGELQ2
     *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
