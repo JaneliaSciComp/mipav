@@ -344,7 +344,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 
         //hard coding for testing...1st dataset
         //imageX      
-        /*currDir = "C:\\images\\nichd\\1\\N4A07-TM2-40XO-NA-13-12bit-080608-1x0.ics";
+        currDir = "C:\\images\\nichd\\1\\N4A07-TM2-40XO-NA-13-12bit-080608-1x0.ics";
         FileIO fileIO = new FileIO();
         imageX = fileIO.readImage("N4A07-TM2-40XO-NA-13-12bit-080608-1x0.ics", "C:\\images\\nichd\\1" + File.separator, true, null);
         vjfX = new ViewJFrameImage(imageX);
@@ -362,7 +362,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
     	//transform2
     	currDir = "C:\\images\\nichd\\1\\N4A07-TM2-40XO-NA-13-12bit-080608-1x0Gray-afterTransformUsingGreenChannelTransformMatrix_To_N4A07-TM2-40XO-NA-13-12bit-080608-1y0Gray-12degrees-5-3-1.mtx";
     	transform2File = new File(currDir);
-    	readTransform2(transform2File);*/
+    	readTransform2(transform2File);
     	//end hard coding for testing
 
         //hard coding for testing...2nd dataset
@@ -498,6 +498,8 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		    	 imageY.disposeLocal();
 		    	 imageY = null;
 		     }
+		     vjfX.close();
+		     vjfY.close();
 			 dispose();
 		 }else if(command.equalsIgnoreCase("ok")) {
 			 setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -839,7 +841,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 							 xmm = x * resultImage.getResolutions(0)[0];
 							 ymm = y * resultImage.getResolutions(0)[1];
 							 zmm = z * resultImage.getResolutions(0)[2];
-							 
+					 
 							 intermMatrix1.transform(xmm, ymm, zmm, tPt1);
 							 
 							 tPt1[0] = tPt1[0]/imageX.getResolutions(0)[0];
@@ -853,6 +855,28 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 							 tPt2[0] = xmm /imageY.getResolutions(0)[0];
 							 tPt2[1] = ymm /imageY.getResolutions(0)[1];
 							 tPt2[2] = zmm /imageY.getResolutions(0)[2];
+							 
+							 
+							 //TESTING....9/21/2009
+							 /*int xInt1 = (int)Math.round(tPt1[0]);
+							 int yInt1 = (int)Math.round(tPt1[1]);
+							 int zInt1 = (int)Math.round(tPt1[2]);
+							 try {
+								 imageX.setC(xInt1, yInt1, zInt1, 3, 200);
+							 }catch(Exception ex) {
+								 
+							 }
+							 
+							 int xInt2 = (int)Math.round(tPt2[0]);
+							 int yInt2 = (int)Math.round(tPt2[1]);
+							 int zInt2 = (int)Math.round(tPt2[2]);
+							 try {
+								 imageY.setC(xInt2, yInt2, zInt2, 3, 200);
+							 }catch(Exception ex) {
+								 
+							 }*/
+							 
+							 
 						 }
 						 //Now either do averaging or closest-Z
 						 int floorPointIndex1=0, floorPointIndex2=0;
@@ -1184,10 +1208,10 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	        }
 
 	        
-	        resultImageResols[2] = imageX.getResolutions(0)[0];
-			 for(int i=0;i<resultImage.getExtents()[2];i++) {
-				 resultImage.setResolutions(i, resultImageResols);
-			 }
+	         //resultImageResols[2] = imageX.getResolutions(0)[0];
+			 //for(int i=0;i<resultImage.getExtents()[2];i++) {
+			 //	 resultImage.setResolutions(i, resultImageResols);
+			 //}
 			 FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[resultImage.getExtents()[2]];
 			 for (int i = 0; i < fileInfoBases.length; i++) {
 		            fileInfoBases[i] = new FileInfoImageXML(resultImage.getImageName(), null, FileUtility.XML);
@@ -1215,6 +1239,10 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		    	 imageY.disposeLocal();
 		    	 imageY = null;
 		     }
+		     vjfX.close();
+		     vjfY.close();
+		     //new ViewJFrameImage(imageX); //testing
+		     //new ViewJFrameImage(imageY); //testing
 			 dispose();
 		 }
 	}
