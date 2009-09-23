@@ -660,7 +660,6 @@ public class FileDicom extends FileDicomBase {
             // ******* Gets the next element
             getNextElement(endianess); // gets group, element, length
             name = convertGroupElement(groupWord, elementWord);
-            
             FileDicomKey key = new FileDicomKey(name);
             int tagVM;
             int dirLength;
@@ -1043,11 +1042,17 @@ public class FileDicom extends FileDicomBase {
                     throw npe;
                 }
             }
+            
+            //for dicom files that contain no image information, the image tag will never be encountered
+            if(getFilePointer() == fLength) {
+            	flag = false;
+            }
+            
         }
         // Done reading tags, if DICOMDIR then don't do anything else
-
-        if (notDir)
-	        {
+        
+        if (notDir) {
+        	
 	        String photometricInterp = null;
 	
 	        if (tagTable.getValue("0028,0004") != null) {
