@@ -594,6 +594,8 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		        	 newRed = getNewValue(red,slopeR,bR);
 		        	 if(newRed < 0) {
 		        		 newRed = 0;
+		        	 }else if(newRed > 255) {
+		        		 newRed = 255;
 		        	 }
 	        	 }
 	        	 buffer[i+1] = newRed;
@@ -605,6 +607,8 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		        	 newGreen = getNewValue(green,slopeG,bG);
 		        	 if(newGreen < 0) {
 		        		 newGreen = 0;
+		        	 }else if(newGreen > 255) {
+		        		 newGreen = 255;
 		        	 }
 	        	 }
 	        	 buffer[i+2] = newGreen;
@@ -616,6 +620,8 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		        	 newBlue = getNewValue(blue,slopeB,bB);
 		        	 if(newBlue < 0) {
 		        		 newBlue = 0;
+		        	 }else if(newBlue > 255) {
+		        		 newBlue = 255;
 		        	 }
 	        	 }
 	        	 buffer[i+3] = newBlue;           
