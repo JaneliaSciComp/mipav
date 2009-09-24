@@ -344,7 +344,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 
         //hard coding for testing...1st dataset
         //imageX      
-        currDir = "C:\\images\\nichd\\1\\N4A07-TM2-40XO-NA-13-12bit-080608-1x0.ics";
+        /*currDir = "C:\\images\\nichd\\1\\N4A07-TM2-40XO-NA-13-12bit-080608-1x0.ics";
         FileIO fileIO = new FileIO();
         imageX = fileIO.readImage("N4A07-TM2-40XO-NA-13-12bit-080608-1x0.ics", "C:\\images\\nichd\\1" + File.separator, true, null);
         vjfX = new ViewJFrameImage(imageX);
@@ -362,7 +362,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
     	//transform2
     	currDir = "C:\\images\\nichd\\1\\N4A07-TM2-40XO-NA-13-12bit-080608-1x0Gray-afterTransformUsingGreenChannelTransformMatrix_To_N4A07-TM2-40XO-NA-13-12bit-080608-1y0Gray-12degrees-5-3-1.mtx";
     	transform2File = new File(currDir);
-    	readTransform2(transform2File);
+    	readTransform2(transform2File);*/
     	//end hard coding for testing
 
         //hard coding for testing...2nd dataset
