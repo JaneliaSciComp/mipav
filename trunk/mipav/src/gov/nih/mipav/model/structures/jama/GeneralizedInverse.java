@@ -15565,5 +15565,347 @@ ib = Math.min(nb, k-i+1);
 
         return;
     } // dgemm
+    
+    /** This dchkr_test routine is a port of a portion of the version 3.1.1 LAPACK test routine DCHKAA by
+     * Univ. of Tennessee, Univ. Of California Berkeley and NAG Ltd., January, 2007. and some values from 
+     * the test data file dtest.in.
+     */
+    private void dchkqr_test() {
+        
+        // Number of values of m
+        int nm = 7;
+        
+        // Values of m (row dimension)
+        // dtest.in uses 50 rather than 16
+        int[] mval = new int[] { 0, 1, 2, 3, 5, 10, 16 };
+        
+        // Number of values of n
+        int nn = 7;
+        
+        // Values of n (column dimension)
+        // dtest.in uses 50 rather than 16
+        int[] nval = new int[] { 0, 1, 2, 3, 5, 10, 16 };
+        
+        // Number of values of nrhs
+        // dchkaa has nns = 1.  dtest.in uses nns = 3.
+        int nns = 3;
+        
+        // Values of nrhs (number of right hand sides)
+        // dchkaa uses only 2.
+        int[] nsval = new int[]{1, 2, 15};
+        
+        // Number of values of nb
+        int nnb = 5;
+        
+        // Values of nb (the blocksize)
+        int nbval[] = new int[] {1, 3, 3, 3, 20};
+        
+        // Values of nx (crossover point)
+        // There are nnb values of nx.
+        int nxval[] = new int[] {1, 0, 5, 9, 1};
+        
+        // Number of values of rank
+        int nrank = 3;
+        
+        // Values of rank (as a % of n)
+        int rankval[] = new int[] {30, 50, 90};
+        
+        // Threshold value of test ratio
+        // dchkaa has 20.0, dtest.in has 30.0
+        double thresh = 20.0;
+        
+        // Test the LAPACK routines
+        boolean tstchk = true;
+        
+        // Test the driver routines
+        boolean tstdrv = true;
+        
+        // Test the error exits
+        boolean tsterr = true;
+        
+        // The maximum allowable value for n
+        int nmax = 132;
+        
+        // The number of different values that can be used for each of m, n, nrhs, nb, and nx
+        int maxin = 12;
+        
+        // The maximum number of right hand sides
+        int maxrhs = 16;
+        int nmats = 8;
+        int ntypes = 8;
+        int nrhs = nsval[0];
+        boolean dotype[] = new boolean[ntypes];
+        double a[] = new double[nmax*nmax];
+        double af[] = new double[nmax*nmax];
+        double aq[] = new double[nmax*nmax];
+        double ar[] = new double[nmax*nmax];
+        double ac[] = new double[nmax*nmax];
+        double b[] = new double[nmax*nrhs];
+        double x[] = new double[nmax*nrhs];
+        double xact[] = new double[nmax*nrhs];
+        double tau[] = new double[nmax];
+        double work[] = new double[nmax*nmax];
+        double rwork[] = new double[nmax];
+        int iwork[] = new int[nmax];
+        int i;
+        double eps;
+       
+        for (i = 0; i < ntypes; i++) {
+            dotype[i] = true;
+        }
+        
+        // Output the machine dependent constants
+        eps = dlamch('U');
+        Preferences.debug("Underflow threshold = " + eps + "\n");
+        eps = dlamch('O');
+        Preferences.debug("Overflow threshold = " + eps + "\n");
+        eps = dlamch('E');
+        Preferences.debug("Precision = " + eps + "\n");
+        
+        dchkqr(dotype, nm, mval, nn, nval, nnb, nbval, nxval, nrhs, thresh, tsterr, nmax, 
+               a, af, aq, ar, ac, b, x, xact, tau, work, rwork, iwork);
+    } // dchkqr_test
+    
+    /** This is a port of version 3.1 LAPACK test routine DCHKQR
+    *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          LOGICAL            TSTERR
+          INTEGER            NM, NMAX, NN, NNB, NOUT, NRHS
+          DOUBLE PRECISION   THRESH
+    *     ..
+    *     .. Array Arguments ..
+          LOGICAL            DOTYPE( * )
+          INTEGER            IWORK( * ), MVAL( * ), NBVAL( * ), NVAL( * ),
+         $                   NXVAL( * )
+          DOUBLE PRECISION   A( * ), AC( * ), AF( * ), AQ( * ), AR( * ),
+         $                   B( * ), RWORK( * ), TAU( * ), WORK( * ),
+         $                   X( * ), XACT( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DCHKQR tests DGEQRF, DORGQR and DORMQR.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  DOTYPE  (input) LOGICAL array, dimension (NTYPES)
+    *          The matrix types to be used for testing.  Matrices of type j
+    *          (for 1 <= j <= NTYPES) are used for testing if DOTYPE(j) =
+    *          .TRUE.; if DOTYPE(j) = .FALSE., then type j is not used.
+    *
+    *  NM      (input) INTEGER
+    *          The number of values of M contained in the vector MVAL.
+    *
+    *  MVAL    (input) INTEGER array, dimension (NM)
+    *          The values of the matrix row dimension M.
+    *
+    *  NN      (input) INTEGER
+    *          The number of values of N contained in the vector NVAL.
+    *
+    *  NVAL    (input) INTEGER array, dimension (NN)
+    *          The values of the matrix column dimension N.
+    *
+    *  NNB     (input) INTEGER
+    *          The number of values of NB and NX contained in the
+    *          vectors NBVAL and NXVAL.  The blocking parameters are used
+    *          in pairs (NB,NX).
+    *
+    *  NBVAL   (input) INTEGER array, dimension (NNB)
+    *          The values of the blocksize NB.
+    *
+    *  NXVAL   (input) INTEGER array, dimension (NNB)
+    *          The values of the crossover point NX.
+    *
+    *  NRHS    (input) INTEGER
+    *          The number of right hand side vectors to be generated for
+    *          each linear system.
+    *
+    *  THRESH  (input) DOUBLE PRECISION
+    *          The threshold value for the test ratios.  A result is
+    *          included in the output file if RESULT >= THRESH.  To have
+    *          every test ratio printed, use THRESH = 0.
+    *
+    *  TSTERR  (input) LOGICAL
+    *          Flag that indicates whether error exits are to be tested.
+    *
+    *  NMAX    (input) INTEGER
+    *          The maximum value permitted for M or N, used in dimensioning
+    *          the work arrays.
+    *
+    *  A       (workspace) DOUBLE PRECISION array, dimension (NMAX*NMAX)
+    *
+    *  AF      (workspace) DOUBLE PRECISION array, dimension (NMAX*NMAX)
+    *
+    *  AQ      (workspace) DOUBLE PRECISION array, dimension (NMAX*NMAX)
+    *
+    *  AR      (workspace) DOUBLE PRECISION array, dimension (NMAX*NMAX)
+    *
+    *  AC      (workspace) DOUBLE PRECISION array, dimension (NMAX*NMAX)
+    *
+    *  B       (workspace) DOUBLE PRECISION array, dimension (NMAX*NRHS)
+    *
+    *  X       (workspace) DOUBLE PRECISION array, dimension (NMAX*NRHS)
+    *
+    *  XACT    (workspace) DOUBLE PRECISION array, dimension (NMAX*NRHS)
+    *
+    *  TAU     (workspace) DOUBLE PRECISION array, dimension (NMAX)
+    *
+    *  WORK    (workspace) DOUBLE PRECISION array, dimension (NMAX*NMAX)
+    *
+    *  RWORK   (workspace) DOUBLE PRECISION array, dimension (NMAX)
+    *
+    *  IWORK   (workspace) INTEGER array, dimension (NMAX)
+    */
+    private void dchkqr(boolean[] dotype, int nm, int[] mval, int nn, int[] nval, int nnb, int[] nbval,
+                        int[] nxval, int nrhs, double thresh, boolean tsterr, int nmax, double a[],
+                        double[] af, double[] aq, double[] ar, double[] ac, double[] b, double[] x,
+                        double xact[], double[] tau, double[] work, double[] rwork, int[] iwork) {
+        int ntests = 8;
+        int ntypes = 8;
+        int iseedy[] = new int[] {1988, 1989, 1990, 1991};
+        int i;
+        int ik;
+        int im;
+        int imat;
+        int in;
+        int inb;
+        int info[] = new int[1];
+        int k;
+        int kl;
+        int ku;
+        int lda;
+        int lwork;
+        int m;
+        int minmn;
+        int mode;
+        int n;
+        int nb;
+        int nerrs;
+        int nfail;
+        int nk;
+        int nrun;
+        int nt;
+        int nx;
+        double anorm;
+        double cndnum;
+        int iseed[] = new int[4];
+        int kval[] = new int[4];
+        double result[] = new double[ntests];
+        int infot;
+        
+        // Initialize constants and the random number seed
+        nrun  = 0;
+        nfail = 0;
+        nerrs = 0;
+        for (i = 0; i < 4; i++) {
+            iseed[i] = iseedy[i];
+        }
+        
+        // Test the error exits
+        if (tsterr) {
+            derrqr();
+        }
+    } // dchkqr
+    
+    /** This is a port of a portion of version 3.1 LAPACK routine DERRQR.
+     * *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *     November 2006
+     */
+    private void derrqr() {
+        int nmax = 2;
+        int i;
+        int info[] = new int[1];
+        int j;
+        double A[][] = new double[nmax][nmax];
+        double AF[][] = new double[nmax][nmax];
+        double b[] = new double[nmax];
+        double w[] = new double[nmax];
+        double x[] = new double[nmax];
+        int npass = 42;
+        int ntotal = 42;
+        
+        // Set the variables to innocuous values
+        for (j = 1; j <= nmax; j++) {
+            for (i = 1; i <= nmax; i++) {
+                A[i-1][j-1] = 1.0/(double)(i+j);
+                AF[i-1][j-1] = 1.0/(double)(i+j);
+            }
+            b[j-1] = 0.0;
+            w[j-1] = 0.0;
+            x[j-1] = 0.0;
+        }
+        
+        // Error exits for QR factorization
+        
+        // DGEQRF
+        dgeqrf(-1, 0, A, 1, b, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgeqrf(-1, 0, A, 1, b, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of -1\n");
+            npass--;
+        }
+        
+        dgeqrf(0, -1, A, 1, b, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgeqrf(-0, -1, A, 1, b, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;    
+        }
+        
+        dgeqrf(2, 1, A, 1, b, w, 1, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgeqrf(2, 1, A, 1, b, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -4\n");
+            npass--;    
+        }
+        
+        dgeqrf(1, 2, A, 1, b, w, 1, info);
+        if (info[0] != -7) {
+            Preferences.debug("dgeqrf(1, 2, A, 1, b, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -7\n");
+            npass--;    
+        }
+        
+        // DGEQR2
+        dgeqr2(-1, 0, A, 1, b, w, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgeqr2(-1, 0, A, 1, b, w, info) produced info[0] = " + info[0] +
+            " instead of -1\n");
+            npass--;     
+        }
+        
+        dgeqr2(2, 1, A, 1, b, w, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgeqr2(2, 1, A, 1, b, w, info) produced info[0] = " + info[0] +
+            " instead of -4\n");
+            npass--;     
+        }
+        
+        // DORGQR
+        dorgqr(-1, 0, 0, A, 1, x, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dorgqr(-1, 0, 0, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -1\n");
+            npass--;      
+        }
+        
+        dorgqr(0, -1, 0, A, 1, x, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorgqr(0, -1, 0, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;      
+        }
+        
+        dorgqr(1, 2, 0, A, 1, x, w, 2, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorgqr(1, 2, 0, A, 1, x, w, 2, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;      
+        }
+    } // derrqr
 
 }
