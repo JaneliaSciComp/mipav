@@ -415,7 +415,22 @@ public class FileIO {
             // use the selectedFileName as the reference slice for the file info tag tables
             imageFile = new FileDicom(selectedFileName, fileDir);
             imageFile.setQuiet(quiet); // if we want quiet, we tell the reader, too.
-            imageFile.readHeader(true); // can we read the header?
+            boolean headerRead = imageFile.readHeader(true); // can we read the header?
+            String modality = getModality(imageFile);
+            if(modality.equals("SR")) {
+            	//TODO:Structured report handling would be implemented here (since the rest of this method reads the image file
+            	fileList = removeFromImageList(selectedFileName, fileList);
+            	if(fileList.length == 0) {
+            		if(!quiet) {
+            			MipavUtil.displayInfo("MIPAV cannot process this structured report DICOM file.");
+            		}
+            		return null;
+            	} else {
+            		Preferences.debug(selectedFileName+" contained unreadable DICOM data", Preferences.DEBUG_FILEIO);
+            		selectedFileName = fileList[0];
+            	}
+            	return readDicom(selectedFileName, fileList, performSort);
+            }
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -590,6 +605,22 @@ public class FileIO {
                     } else {
                         fileInfoTemp = refFileInfo;
                     }
+                    
+                    String modality = getModality(imageFile);
+                    if(modality.equals("SR")) {
+                    	//TODO:Structured report handling would be implemented here (since the rest of this method reads the image file
+                    	fileList = removeFromImageList(selectedFileName, fileList);
+                    	if(fileList.length == 0) {
+                    		if(!quiet) {
+                    			MipavUtil.displayInfo("MIPAV cannot process this structured report DICOM file.");
+                    		}
+                    		return null;
+                    	} else {
+                    		Preferences.debug(selectedFileName+" contained unreadable DICOM data", Preferences.DEBUG_FILEIO);
+                    		selectedFileName = fileList[0];
+                    	}
+                    	return readDicom(selectedFileName, fileList, performSort);
+                    }
 
                     // If study and series number match - Continue;
                     if (fileInfoTemp.getTagTable().getValue("0020,0010") != null) {
@@ -687,8 +718,7 @@ public class FileIO {
             FileDicomTagTable[] childrenTagTables = new FileDicomTagTable[savedFileInfos.length-1];
 
             for (int i = 0, j = 0; i < savedFileInfos.length; i++) {
-
-                if (savedFileInfos[i] != refFileInfo  && childrenTagTables.length != 0) {
+            	if (savedFileInfos[i] != refFileInfo  && childrenTagTables.length != 0) {
                     childrenTagTables[j] = savedFileInfos[i].getTagTable();
                     j++;
                 }
@@ -1312,7 +1342,37 @@ public class FileIO {
         return image;
     }
 
-    /**
+    private String[] removeFromImageList(String selectedFileName, String[] fileList) {
+		String[] fileListTemp = new String[fileList.length - 1];
+		int indexTemp = 0;
+		for(int i=0; i<fileList.length; i++) {
+			if(!fileList[i].contains(selectedFileName)) {
+				fileListTemp[indexTemp++] = fileList[i];
+			}
+		}
+		fileList = fileListTemp;
+		if(fileList.length > 0) {
+			selectedFileName = fileList[0];
+		} else {
+			selectedFileName = null;
+		}
+		return fileList;
+	}
+
+	/**
+     * Gets the value of the Dicom modality tag, 0008,0060.  SR tags indicate a structured report file.
+     * @param imageFile
+     * @return
+     */
+    private String getModality(FileDicom imageFile) {
+    	FileDicomTag modalityTag = ((FileInfoDicom)imageFile.getFileInfo()).getTagTable().get(new FileDicomKey("0008,0060"));
+        if(modalityTag != null && modalityTag.getValue(true) != null) {
+        	return modalityTag.getValue(true).toString();
+        }
+        return null;
+	}
+
+	/**
      * Reads generic file from an absolute filename.
      * 
      * @param absoluteFilename String - the absolute filename, including the path
