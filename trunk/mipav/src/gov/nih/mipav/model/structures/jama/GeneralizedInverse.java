@@ -30,6 +30,20 @@ public class GeneralizedInverse {
     private double safmn2;
     private double safmx2;
     
+    /** Found in routine dchkqr */
+    private int infot;
+    
+    /** Found in routine xlaenv */
+    private int iparms[] = new int[11];
+    
+    /** Found in routine dlatb4 */
+    private boolean first_dlatb4 = true;
+    private double eps_dlatb4;
+    private double small_dlatb4[] = new double[1];
+    private double large_dlatb4[] = new double[1];
+    private double badc1_dlatb4;
+    private double badc2_dlatb4;
+    
     public GeneralizedInverse() {
         
     }
@@ -15570,7 +15584,7 @@ ib = Math.min(nb, k-i+1);
      * Univ. of Tennessee, Univ. Of California Berkeley and NAG Ltd., January, 2007. and some values from 
      * the test data file dtest.in.
      */
-    private void dchkqr_test() {
+    public void dchkqr_test() {
         
         // Number of values of m
         int nm = 7;
@@ -15588,11 +15602,12 @@ ib = Math.min(nb, k-i+1);
         
         // Number of values of nrhs
         // dchkaa has nns = 1.  dtest.in uses nns = 3.
-        int nns = 3;
+        int nns = 1;
         
         // Values of nrhs (number of right hand sides)
-        // dchkaa uses only 2.
-        int[] nsval = new int[]{1, 2, 15};
+        // dchkaa uses only 2.  dtest.in uses 1, 2, 15.
+        // Since dchkr only accepts nrhs = nsval[0] use only 2.
+        int[] nsval = new int[]{2};
         
         // Number of values of nb
         int nnb = 5;
@@ -15621,7 +15636,9 @@ ib = Math.min(nb, k-i+1);
         boolean tstdrv = true;
         
         // Test the error exits
-        boolean tsterr = true;
+        // Passed all 49 exits on test.
+        // Put at false so as not to have to hit okay to 49 displayError messages.
+        boolean tsterr = false;
         
         // The maximum allowable value for n
         int nmax = 132;
@@ -15775,13 +15792,13 @@ ib = Math.min(nb, k-i+1);
         int inb;
         int info[] = new int[1];
         int k;
-        int kl;
-        int ku;
+        int kl[] = new int[1];
+        int ku[] = new int[1];
         int lda;
         int lwork;
         int m;
         int minmn;
-        int mode;
+        int mode[] = new int[1];
         int n;
         int nb;
         int nerrs;
@@ -15790,14 +15807,17 @@ ib = Math.min(nb, k-i+1);
         int nrun;
         int nt;
         int nx;
-        double anorm;
-        double cndnum;
+        double anorm[] = new double[1];
+        double cndnum[] = new double[1];
         int iseed[] = new int[4];
         int kval[] = new int[4];
         double result[] = new double[ntests];
-        int infot;
+        String path;
+        char type[] = new char[1];
+        char dist[] = new char[1];
         
         // Initialize constants and the random number seed
+        path = new String("DQR"); // D for double precision
         nrun  = 0;
         nfail = 0;
         nerrs = 0;
@@ -15809,6 +15829,33 @@ ib = Math.min(nb, k-i+1);
         if (tsterr) {
             derrqr();
         }
+        infot = 0;
+        xlaenv(2, 2);
+        
+        lda = nmax;
+        lwork = nmax * Math.max(nmax, nrhs);
+        
+        // Do for each value of m in mval.
+        
+        for (im = 1; im <= nm; im++) {
+            m = mval[im-1];
+            
+            // Do for each value of n in nval.
+            for (in = 1; in <= nn; in++) {
+                n = nval[in-1];
+                minmn = Math.min(m, n);
+                for (imat = 1; imat <= ntypes; imat++) {
+                    // Do the tests only if dotype[imat-1] is true
+                    if (!dotype[imat-1]) {
+                        continue;
+                    }
+                    
+                    // Set up the parameters with dlatb4 and generate a test matrix
+                    // with dlatms.
+                    dlatb4(path, imat, m, n, type, kl, ku, anorm, mode, cndnum, dist);
+                } // for (imat = 1; imat <= ntypes; imat++)
+            } // for (in = 1; in <= nn; in++)
+        } // for (im = 1; im <= nm; im++)
     } // dchkqr
     
     /** This is a port of a portion of version 3.1 LAPACK routine DERRQR.
@@ -15822,17 +15869,19 @@ ib = Math.min(nb, k-i+1);
         int j;
         double A[][] = new double[nmax][nmax];
         double AF[][] = new double[nmax][nmax];
+        double B[][] = new double[nmax][nmax];
         double b[] = new double[nmax];
         double w[] = new double[nmax];
         double x[] = new double[nmax];
-        int npass = 42;
-        int ntotal = 42;
+        int npass = 49;
+        int ntotal = 49;
         
         // Set the variables to innocuous values
         for (j = 1; j <= nmax; j++) {
             for (i = 1; i <= nmax; i++) {
                 A[i-1][j-1] = 1.0/(double)(i+j);
                 AF[i-1][j-1] = 1.0/(double)(i+j);
+                B[i-1][j-1] = 1.0/(double)(i+j);
             }
             b[j-1] = 0.0;
             w[j-1] = 0.0;
@@ -15885,6 +15934,56 @@ ib = Math.min(nb, k-i+1);
             npass--;     
         }
         
+        // DGEQRS
+        dgeqrs(-1, 0, 0, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgeqrs(-1, 0, 0, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -1\n");
+            npass--;
+        }
+        
+        dgeqrs(0, -1, 0, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgeqrs(0, -1, 0, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dgeqrs(1, 2, 0, A, 2, x, B, 2, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgeqrs(1, 2, 0, A, 2, x, B, 2, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dgeqrs(0, 0, -1, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dgeqrs(0, 0, -1, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -3\n");
+            npass--;
+        }
+        
+        dgeqrs(2, 1, 0, A, 1, x, B, 2, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dgeqrs(2, 1, 0, A, 1, x, B, 2, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dgeqrs(2, 1, 0, A, 2, x, B, 1, w, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dgeqrs(2, 1, 0, A, 2, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -8\n");
+            npass--;
+        }
+        
+        dgeqrs(1, 1, 2, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -10) {
+            Preferences.debug("dgeqrs(1, 1, 2, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -10\n");
+            npass--;
+        }
+        
         // DORGQR
         dorgqr(-1, 0, 0, A, 1, x, w, 1, info);
         if (info[0] != -1) {
@@ -15906,6 +16005,987 @@ ib = Math.min(nb, k-i+1);
             " instead of -2\n");
             npass--;      
         }
+        
+        dorgqr(0, 0, -1, A, 1, x, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgqr(0, 0, -1, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;      
+        }
+        
+        dorgqr(1, 1, 2, A, 1, x, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgqr(1, 1, 2, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;      
+        }
+        
+        dorgqr(2, 2, 0, A, 1, x, w, 2, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorgqr(2, 2, 0, A, 1, x, w, 2, info) produced info[0] = " + info[0] +
+            " instead of -5\n");
+            npass--;      
+        }
+        
+        dorgqr(2, 2, 0, A, 2, x, w, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dorgqr(2, 2, 0, A, 2, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -8\n");
+            npass--;      
+        }
+        
+        // DORG2R
+        dorg2r(-1, 0, 0, A, 1, x, w, info);
+        if (info[0] != -1) {
+            Preferences.debug("dorg2r(-1, 0, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -1\n");
+            npass--;
+        }
+        
+        dorg2r(0, -1, 0, A, 1, x, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorg2r(0, -1, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;
+        }
+        
+        dorg2r(1, 2, 0, A, 1, x, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorg2r(1, 2, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;
+        }
+        
+        dorg2r(0, 0, -1, A, 1, x, w, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorg2r(0, 0, -1, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;
+        }
+        
+        dorg2r(2, 1, 2, A, 2, x, w, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorg2r(2, 1, 2, A, 2, x, w, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;
+        }
+        
+        dorg2r(2, 1, 0, A, 1, x, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorg2r(2, 1, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -5\n");
+            npass--;
+        }
+        
+        // DORMQR
+        dormqr('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dormqr('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -1\n");
+            npass--;
+        }
+        
+        dormqr('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dormqr('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dormqr('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -3\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -4) {
+            Preferences.debug("dormqr('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -4\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dormqr('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dormqr('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dormqr('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dormqr('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 2, 1, 0, A, 1, x, AF, 2, w, 1, info);
+        if (info[0] != -7) {
+            Preferences.debug("dormqr('L', 'N', 2, 1, 0, A, 1, x, AF, 2, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dormqr('R', 'N', 1, 2, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -7) {
+            Preferences.debug("dormqr('R', 'N', 1, 2, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, 1, info);
+        if (info[0] != -10) {
+            Preferences.debug("dormqr('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -10\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 1, 2, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -12) {
+            Preferences.debug("dormqr('L', 'N', 1, 2, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -12\n");
+            npass--;
+        }
+        
+        dormqr('R', 'N', 2, 1, 0, A, 1, x, AF, 2, w, 1, info);
+        if (info[0] != -12) {
+            Preferences.debug("dormqr('R', 'N', 2, 1, 0, A, 1, x, AF, 2, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -12\n");
+            npass--;
+        }
+        
+        // DORM2R
+        dorm2r('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -1) {
+            Preferences.debug("dorm2r('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -1\n");
+            npass--;
+        }
+        
+        dorm2r('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorm2r('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorm2r('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -3\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -4) {
+            Preferences.debug("dorm2r('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -4\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorm2r('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorm2r('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dorm2r('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorm2r('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', 2, 1, 0, A, 1, x, AF, 2, w, info);
+        if (info[0] != -7) {
+            Preferences.debug("dorm2r('L', 'N', 2, 1, 0, A, 1, x, AF, 2, w, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dorm2r('R', 'N', 1, 2, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -7) {
+            Preferences.debug("dorm2r('R', 'N', 1, 2, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, info);
+        if (info[0] != -10) {
+            Preferences.debug("dorm2r('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -10\n");
+            npass--;
+        }
+        
+        Preferences.debug("derrqr correctly found " + npass + " of " + ntotal + " error exits\n");
+        return;
     } // derrqr
+    
+    /** This is a port of version 3.1 LAPACK routine DGEQRS.
+    *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INFO, LDA, LDB, LWORK, M, N, NRHS
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   A( LDA, * ), B( LDB, * ), TAU( * ),
+         $                   WORK( LWORK )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  Solve the least squares problem
+    *      min || A*X - B ||
+    *  using the QR factorization
+    *      A = Q*R
+    *  computed by DGEQRF.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix A.  M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix A.  M >= N >= 0.
+    *
+    *  NRHS    (input) INTEGER
+    *          The number of columns of B.  NRHS >= 0.
+    *
+    *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+    *          Details of the QR factorization of the original matrix A as
+    *          returned by DGEQRF.
+    *
+    *  LDA     (input) INTEGER
+    *          The leading dimension of the array A.  LDA >= M.
+    *
+    *  TAU     (input) DOUBLE PRECISION array, dimension (N)
+    *          Details of the orthogonal matrix Q.
+    *
+    *  B       (input/output) DOUBLE PRECISION array, dimension (LDB,NRHS)
+    *          On entry, the m-by-nrhs right hand side matrix B.
+    *          On exit, the n-by-nrhs solution matrix X.
+    *
+    *  LDB     (input) INTEGER
+    *          The leading dimension of the array B. LDB >= M.
+    *
+    *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+    *
+    *  LWORK   (input) INTEGER
+    *          The length of the array WORK.  LWORK must be at least NRHS,
+    *          and should be at least NRHS*NB, where NB is the block size
+    *          for this environment.
+    *
+    *  INFO    (output) INTEGER
+    *          = 0: successful exit
+    *          < 0: if INFO = -i, the i-th argument had an illegal value
+    */
+    private void dgeqrs(int m, int n, int nrhs, double A[][], int lda, double[] tau, double[][] B,
+                        int ldb, double[] work, int lwork, int info[]) {
+        
+        // Test the input arguments.
+        info[0] = 0;
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if ((n < 0) || (n > m)) {
+            info[0] = -2;
+        }
+        else if (nrhs < 0) {
+            info[0] = -3;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -5;
+        }
+        else if (ldb < Math.max(1, m)) {
+            info[0] = -8;
+        }
+        else if ((lwork < 1) || (lwork < nrhs) && (m > 0) && (n > 0)) {
+            info[0] = -10;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("dgeqrs had info[0] = " + info[0]);
+            return;
+        }
+        
+        // Quick return if possible
+        if ((n == 0) || (nrhs == 0) || (m == 0)) {
+            return;
+        }
+        
+        // B := Q' * B
+        dormqr('L', 'T', m, nrhs, n, A, lda, tau, B, ldb, work, lwork, info);
+        
+        // Solve R*X = B(1:n,:)
+        
+        dtrsm('L', 'U', 'N', 'N', n, nrhs, 1.0, A, lda, B, ldb);
+        return;
+    } // dgeqrs
+    
+    /**
+     * This is a port of the 2/8/89 Blas routine DTRSM Original code written by: Jack Dongarra, Argonne National
+     * Laboratory Iain Duff, AERE Harwell. Jeremy Du Croz, Numerical Algorithms Group Ltd. Sven Hammarling, Numerical
+     * Algorithms Group Ltd. dtrsm solves one of the matrix equations op(A)*X = alpha*B or X*op(A) = alpha*B, where
+     * alpha is a scalar, X and B are m by n matrices, A is a unit, or non-unit, upper or lower triangular matrix and
+     * op(A) is one of op(A) = A or op(A) = A'. The matrix X is overwritten on B.
+     *
+     * @param  side    input char On entry, side specifies whether op(A) appears on the left or right or X as follows: =
+     *                 'L' or 'l' op(A)*X = alpha*B = 'R' or 'r' X*op(A) = alpha*B
+     * @param  uplo    input char On entry, uplo specifies whether the matrix A is an upper or lower triangular matrix
+     *                 as follows: = 'U' or 'u' A is an upper triangular matrix = 'L' or 'l' A is a lower triangular
+     *                 matrix
+     * @param  transa  input char On entry, transa specifies the form of op(A) to be used in the matrix multiplication
+     *                 as follows: = 'N' or 'n' op(A) = A = 'T' or 't' op(A) = A' = 'C' or 'c' op(A) = A'
+     * @param  diag    input char On entry, diag specifies whether or not A is unit triangular as follows: = 'U' or 'u'
+     *                 A is assumed to be unit triangular. = 'N' or 'n' A is not assumed to be unit triangular.
+     * @param  m       input int On entry, m specifies the number of rows of B. m must be at least zero.
+     * @param  n       input int On entry, n specifies the number of columns of B. n must be at least zero.
+     * @param  alpha   input double Specified scalar. When alpha is zero then A is not referenced and B need not be set
+     *                 before entry.
+     * @param  A       input double[][] of dimension lda by k, where k is m when side = 'L' or 'l' and is n when side =
+     *                 'R' or 'r'. Before entry with uplo = 'U' or 'u', the leading k by k upper triangular part of the
+     *                 array A must contain the upper triangular matrix and the strictly lower part of A is not
+     *                 referenced. Before entry with uplo = 'L' or 'l', the leading k by k lower triangular part of the
+     *                 array A must contain the lower triangular matrix and the strictly upper triangular part of A is
+     *                 not referenced. Note that when diag = 'U' or 'u', the diagonal elements of A are not referenced
+     *                 either, but are assumed to be unity.
+     * @param  lda     input int On entry, lda specifies the first dimension of A as declared in the calling (sub)
+     *                 program. When side = 'L' or 'l', then lda must be at least max(1,m). When side = 'R' or 'r', then
+     *                 lda must be at least max(1,n).
+     * @param  B       input/output double[][] of dimension ldb by n. Before entry, the leading m by n part of the array
+     *                 B must contain the right-hand side matrix B, and on exit is overwritten by the solution matrix X.
+     * @param  ldb     input int On entry, ldb specifies the first dimension of B as declared in the calling (sub)
+     *                 program. ldb must be at least max(1,m).
+     */
+    private void dtrsm(char side, char uplo, char transa, char diag, int m, int n, double alpha, double[][] A, int lda,
+                       double[][] B, int ldb) {
+        boolean lside;
+        boolean nounit;
+        boolean upper;
+        int i;
+        int info;
+        int j;
+        int k;
+        int nrowa;
+        double temp;
 
+        // Test the input parameters
+        if ((side == 'L') || (side == 'l')) {
+            lside = true;
+        } else {
+            lside = false;
+        }
+
+        if (lside) {
+            nrowa = m;
+        } else {
+            nrowa = n;
+        }
+
+        if ((diag == 'N') || (diag == 'n')) {
+            nounit = true;
+        } else {
+            nounit = false;
+        }
+
+        if ((uplo == 'U') || (uplo == 'u')) {
+            upper = true;
+        } else {
+            upper = false;
+        }
+
+        info = 0;
+
+        if ((!lside) && (side != 'R') && (side != 'r')) {
+            info = 1;
+        } else if ((!upper) && (uplo != 'L') && (uplo != 'l')) {
+            info = 2;
+        } else if ((transa != 'N') && (transa != 'n') && (transa != 'T') && (transa != 't') && (transa != 'C') &&
+                       (transa != 'c')) {
+            info = 3;
+        } else if ((diag != 'U') && (diag != 'u') && (diag != 'N') && (diag != 'n')) {
+            info = 4;
+        } else if (m < 0) {
+            info = 5;
+        } else if (n < 0) {
+            info = 6;
+        } else if (lda < Math.max(1, nrowa)) {
+            info = 9;
+        } else if (ldb < Math.max(1, m)) {
+            info = 11;
+        }
+
+        if (info != 0) {
+            MipavUtil.displayError("Error dtrsm had info = " + info);
+
+            return;
+        }
+
+        // Quick return if possible
+        if (n == 0) {
+            return;
+        }
+
+        if (alpha == 0.0) {
+
+            for (j = 0; j < n; j++) {
+
+                for (i = 0; i < m; i++) {
+                    B[i][j] = 0.0;
+                }
+            }
+
+            return;
+        } // if (alpha == 0.0)
+
+        if (lside) {
+
+            if ((transa == 'N') || (transa == 'n')) {
+
+                // Form B = alpha*inv(A)*B
+                if (upper) {
+
+                    for (j = 0; j < n; j++) {
+
+                        if (alpha != 1.0) {
+
+                            for (i = 0; i < m; i++) {
+                                B[i][j] = alpha * B[i][j];
+                            }
+                        } // if (alpha != 1.0)
+
+                        for (k = m - 1; k >= 0; k--) {
+
+                            if (B[k][j] != 0.0) {
+
+                                if (nounit) {
+                                    B[k][j] = B[k][j] / A[k][k];
+                                }
+
+                                for (i = 0; i <= (k - 1); i++) {
+                                    B[i][j] = B[i][j] - (B[k][j] * A[i][k]);
+                                }
+                            } // if (B[k][j] != 0.0)
+                        } // for (k = m-1; k >= 0; k--)
+                    } // for (j = 0; j < n; j++)
+                } // if (upper)
+                else { // lower
+
+                    for (j = 0; j < n; j++) {
+
+                        if (alpha != 1.0) {
+
+                            for (i = 0; i < m; i++) {
+                                B[i][j] = alpha * B[i][j];
+                            }
+                        } // if (alpha != 1.0)
+
+                        for (k = 0; k < m; k++) {
+
+                            if (B[k][j] != 0.0) {
+
+                                if (nounit) {
+                                    B[k][j] = B[k][j] / A[k][k];
+                                }
+
+                                for (i = k + 1; i < m; i++) {
+                                    B[i][j] = B[i][j] - (B[k][j] * A[i][k]);
+                                }
+                            } // if (B[k][j] != 0.0)
+                        } // for (k = 0; k < m; k++)
+                    } // for (j = 0; j < n; j++)
+                } // else lower
+            } // if ((transa == 'N') || (transa == 'n')
+            else { // ((transa != 'N') && (transa != 'n'))
+
+                // Form B = alpha*inv(A')*B
+                if (upper) {
+
+                    for (j = 0; j < n; j++) {
+
+                        for (i = 0; i < m; i++) {
+                            temp = alpha * B[i][j];
+
+                            for (k = 0; k <= (i - 1); k++) {
+                                temp = temp - (A[k][i] * B[k][j]);
+                            }
+
+                            if (nounit) {
+                                temp = temp / A[i][i];
+                            }
+
+                            B[i][j] = temp;
+                        } // for (i = 0; i < m; i++)
+                    } // for (j = 0; j < n; j++)
+                } // if (upper)
+                else { // lower
+
+                    for (j = 0; j < n; j++) {
+
+                        for (i = m - 1; i >= 0; i--) {
+                            temp = alpha * B[i][j];
+
+                            for (k = i + 1; k < m; k++) {
+                                temp = temp - (A[k][i] * B[k][j]);
+                            }
+
+                            if (nounit) {
+                                temp = temp / A[i][i];
+                            }
+
+                            B[i][j] = temp;
+                        } // for (i = m-1; i >= 0; i--)
+                    } // for (j = 0; j < n; j++)
+                } // else lower
+            } // else ((transa != 'N') && (transa != 'n'))
+        } // if (lside)
+        else { // !lside
+
+            if ((transa == 'N') || (transa == 'n')) {
+
+                // Form B = alpha*B*inv(A)
+                if (upper) {
+
+                    for (j = 0; j < n; j++) {
+
+                        if (alpha != 1.0) {
+
+                            for (i = 0; i < m; i++) {
+                                B[i][j] = alpha * B[i][j];
+                            }
+                        } // if (alpha != 1.0)
+
+                        for (k = 0; k <= (j - 1); k++) {
+
+                            if (A[k][j] != 0.0) {
+
+                                for (i = 0; i < m; i++) {
+                                    B[i][j] = B[i][j] - (A[k][j] * B[i][k]);
+                                }
+                            } // if (A[k][j] != 0.0)
+                        } // for (k = 0; k <= j-1; k++)
+
+                        if (nounit) {
+                            temp = 1.0 / A[j][j];
+
+                            for (i = 0; i < m; i++) {
+                                B[i][j] = temp * B[i][j];
+                            }
+                        } // if (nounit)
+                    } // for (j = 0; j < n; j++)
+                } // if (upper)
+                else { // lower
+
+                    for (j = n - 1; j >= 0; j--) {
+
+                        if (alpha != 1.0) {
+
+                            for (i = 0; i < m; i++) {
+                                B[i][j] = alpha * B[i][j];
+                            }
+                        } // if (alpha != 1.0)
+
+                        for (k = j + 1; k < n; k++) {
+
+                            if (A[k][j] != 0.0) {
+
+                                for (i = 0; i < m; i++) {
+                                    B[i][j] = B[i][j] - (A[k][j] * B[i][k]);
+                                }
+                            } // if (A[k][j] != 0.0)
+                        } // for (k = j+1; k < n; k++)
+
+                        if (nounit) {
+                            temp = 1.0 / A[j][j];
+
+                            for (i = 0; i < m; i++) {
+                                B[i][j] = temp * B[i][j];
+                            }
+                        } // if (nounit)
+                    } // for (j = n-1; j >= 0; j--)
+                } // else lower
+            } // if ((transa == 'N') || (transa == 'n')
+            else { // ((transa != 'N') && (transa != 'n'))
+
+                // Form B = alpha*B*inv(A')
+                if (upper) {
+
+                    for (k = n - 1; k >= 0; k--) {
+
+                        if (nounit) {
+                            temp = 1.0 / A[k][k];
+
+                            for (i = 0; i < m; i++) {
+                                B[i][k] = temp * B[i][k];
+                            }
+                        } // if (nounit)
+
+                        for (j = 0; j <= (k - 1); j++) {
+
+                            if (A[j][k] != 0.0) {
+                                temp = A[j][k];
+
+                                for (i = 0; i < m; i++) {
+                                    B[i][j] = B[i][j] - (temp * B[i][k]);
+                                }
+                            } // if (A[j][k] != 0.0)
+                        } // for (j = 0; j <= k-1; j++)
+
+                        if (alpha != 1.0) {
+
+                            for (i = 0; i < m; i++) {
+                                B[i][k] = alpha * B[i][k];
+                            }
+                        } // if (alpha != 1.0)
+                    } // for (k = n-1; k >= 0; k--)
+                } // if (upper)
+                else { // lower
+
+                    for (k = 0; k < n; k++) {
+
+                        if (nounit) {
+                            temp = 1.0 / A[k][k];
+
+                            for (i = 0; i < m; i++) {
+                                B[i][k] = temp * B[i][k];
+                            }
+                        } // if (nounit)
+
+                        for (j = k + 1; j < n; j++) {
+
+                            if (A[j][k] != 0.0) {
+                                temp = A[j][k];
+
+                                for (i = 0; i < m; i++) {
+                                    B[i][j] = B[i][j] - (temp * B[i][k]);
+                                }
+                            } // if (A[j][k] != 0.0)
+                        } // for (j = k+1; j < n; j++)
+
+                        if (alpha != 1.0) {
+
+                            for (i = 0; i < m; i++) {
+                                B[i][k] = alpha * B[i][k];
+                            }
+                        } // if (alpha != 1.0)
+                    } // for (k = 0; k < n; k++)
+                } // else lower
+            } // else ((transa != 'N') && (transa != 'n'))
+        } // else !lside
+
+        return;
+    } // dtrsm
+
+    /** This is a port of version 3.1 LAPACK auxiliary routine XLAENV.
+    *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            ISPEC, NVALUE
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  XLAENV sets certain machine- and problem-dependent quantities
+    *  which will later be retrieved by ILAENV.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  ISPEC   (input) INTEGER
+    *          Specifies the parameter to be set in the COMMON array IPARMS.
+    *          = 1: the optimal blocksize; if this value is 1, an unblocked
+    *               algorithm will give the best performance.
+    *          = 2: the minimum block size for which the block routine
+    *               should be used; if the usable block size is less than
+    *               this value, an unblocked routine should be used.
+    *          = 3: the crossover point (in a block routine, for N less
+    *               than this value, an unblocked routine should be used)
+    *          = 4: the number of shifts, used in the nonsymmetric
+    *               eigenvalue routines
+    *          = 5: the minimum column dimension for blocking to be used;
+    *               rectangular blocks must have dimension at least k by m,
+    *               where k is given by ILAENV(2,...) and m by ILAENV(5,...)
+    *          = 6: the crossover point for the SVD (when reducing an m by n
+    *               matrix to bidiagonal form, if max(m,n)/min(m,n) exceeds
+    *               this value, a QR factorization is used first to reduce
+    *               the matrix to a triangular form)
+    *          = 7: the number of processors
+    *          = 8: another crossover point, for the multishift QR and QZ
+    *               methods for nonsymmetric eigenvalue problems.
+    *          = 9: maximum size of the subproblems at the bottom of the
+    *               computation tree in the divide-and-conquer algorithm
+    *               (used by xGELSD and xGESDD)
+    *          =10: ieee NaN arithmetic can be trusted not to trap
+    *          =11: infinity arithmetic can be trusted not to trap
+    *
+    *  NVALUE  (input) INTEGER
+    *          The value of the parameter specified by ISPEC.
+    */
+    private void xlaenv(int ispec, int nvalue) {
+        if ((ispec >= 1) && (ispec <= 9)) {
+            iparms[ispec-1] = nvalue;
+        }
+        return;
+    } // xlaenv
+    
+    /** This is a port of version 3.1 LAPACK test routine DLATB4.
+     *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *     November 2006
+     *
+     *     .. Scalar Arguments ..
+           CHARACTER          DIST, TYPE
+           CHARACTER*3        PATH
+           INTEGER            IMAT, KL, KU, M, MODE, N
+           DOUBLE PRECISION   ANORM, CNDNUM
+     *     ..
+     *
+     *  Purpose
+     *  =======
+     *
+     *  DLATB4 sets parameters for the matrix generator based on the type of
+     *  matrix to be generated.
+     *
+     *  Arguments
+     *  =========
+     *
+     *  PATH    (input) String
+     *          The LAPACK path name.
+     *
+     *  IMAT    (input) INTEGER
+     *          An integer key describing which matrix to generate for this
+     *          path.
+     *
+     *  M       (input) INTEGER
+     *          The number of rows in the matrix to be generated.
+     *
+     *  N       (input) INTEGER
+     *          The number of columns in the matrix to be generated.
+     *
+     *  TYPE    (output) CHARACTER*1
+     *          The type of the matrix to be generated:
+     *          = 'S':  symmetric matrix
+     *          = 'P':  symmetric positive (semi)definite matrix
+     *          = 'N':  nonsymmetric matrix
+     *
+     *  KL      (output) INTEGER
+     *          The lower band width of the matrix to be generated.
+     *
+     *  KU      (output) INTEGER
+     *          The upper band width of the matrix to be generated.
+     *
+     *  ANORM   (output) DOUBLE PRECISION
+     *          The desired norm of the matrix to be generated.  The diagonal
+     *          matrix of singular values or eigenvalues is scaled by this
+     *          value.
+     *
+     *  MODE    (output) INTEGER
+     *          A key indicating how to choose the vector of eigenvalues.
+     *
+     *  CNDNUM  (output) DOUBLE PRECISION
+     *          The desired condition number.
+     *
+     *  DIST    (output) CHARACTER*1
+     *          The type of distribution to be used by the random number
+     *          generator.
+     */
+    private void dlatb4(String path, int imat, int m, int n, char[] type, int[] kl, int[] ku,
+                        double anorm[], int[] mode, double[] cndnum, char[] dist) {
+        String c2;
+        // Set some constants for use in the subroutine.
+        
+        if (first_dlatb4) {
+            first_dlatb4 = false;
+            eps_dlatb4 = dlamch('P'); // Precision
+            badc2_dlatb4 = 0.1/eps;
+            badc1_dlatb4 = Math.sqrt(badc2_dlatb4);
+            small_dlatb4[0] = dlamch('S'); // Safe minimum
+            large_dlatb4[0] = 1.0/small_dlatb4[0];
+            
+            // If it looks like we're on a Cray, take the square root of
+            // small_dlatb4 and large_dlatb4 to avoid overflow and underflow problems.
+            dlabad(small_dlatb4, large_dlatb4);
+            small_dlatb4[0] = 0.25 * (small_dlatb4[0]/eps_dlatb4);
+            large_dlatb4[0] = 1.0/small_dlatb4[0];
+        } // if (first_dlatb4)
+        
+        c2 = path.substring(1, 3);
+        
+        // Set some parameters we don't plan to change.
+        
+        dist[0] = 'S';
+        mode[0] = 3;
+        if ((c2.equalsIgnoreCase("QR")) || (c2.equalsIgnoreCase("LQ")) ||
+            (c2.equalsIgnoreCase("QL")) || (c2.equalsIgnoreCase("RQ"))) {
+            // xQR, xLQ, xQL, xRQ: Set parameters to generate a general m x n matrix.
+            // Set type[0], the type of matrix to be generated.
+            type[0] = 'N';
+            
+            // Set the lower and upper bandwidths.
+            if (imat == 1) {
+                kl[0] = 0;
+                ku[0] = 0;
+            }
+            else if (imat == 2) {
+                kl[0] = 0;
+                ku[0] = Math.max(n-1, 0);
+            }
+            else if (imat == 3) {
+                kl[0] = Math.max(m-1, 0);
+                ku[0] = 0;
+            }
+            else {
+                kl[0] = Math.max(m-1, 0);
+                ku[0] = Math.max(n-1, 0);
+            }
+            
+            // Set the condition number and norm.
+            if (imat == 5) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 6) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if (imat == 7) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if (imat == 8) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // if ((c2.equalsIgnoreCase("QR")) || (c2.equalsIgnoreCase("LQ")) ||
+        else if (c2.equalsIgnoreCase("GE")) {
+            // xGE: Set parameters to generate a general m x n matrix.
+            
+            // Set type[0], the type of matrix to be generated.
+            type[0] = 'N';
+            
+            // Set the lower and upper bandwidths.
+            if (imat == 1) {
+                kl[0] = 0;
+                ku[0] = 0;
+            }
+            else if (imat == 2) {
+                kl[0] = 0;
+                ku[0] = Math.max(n-1, 0);
+            }
+            else if (imat == 3) {
+                kl[0] = Math.max(m-1, 0);
+                ku[0] = 0;
+            }
+            else {
+                kl[0] = Math.max(m-1, 0);
+                ku[0] = Math.max(n-1, 0);
+            }
+            
+            // Set the condition number and norm.
+            if (imat == 8) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 9) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if (imat == 10) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if (imat == 11) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if (c2.equalsIgnoreCase("GE"))
+        else if (c2.equalsIgnoreCase("GB")) {
+            // xGB: Set parameters to generate a general banded matrix.
+            
+            // Set type[0], the type of matrix to be generated.
+            type[0] = 'N';
+            
+            // Set the condition number and norm
+            if (imat == 5) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 6) {
+                cndnum[0] = 0.1 * badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if (imat == 7) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if (imat == 8) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if (c2.equalsIgnoreCase("GB"))
+        else if (c2.equalsIgnoreCase("GT")) {
+            // xGT; Set parameters to generate a generate tridiagonal matrix.
+            
+            // Set type[0], the type of matrix to be generated
+            type[0] = 'N';
+            
+            // Set the lower and upper bandwidths.
+            if (imat == 1) {
+                kl[0] = 0;
+            }
+            else {
+                kl[0] = 1;
+            }
+            ku[0] = kl[0];
+            
+            // Set the condition number and norm.
+            if (imat == 3) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 4) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if ((imat == 5) || (imat == 11)) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if ((imat == 6) || (imat == 12)) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if (c2.equalsIgnoreCase("GT))
+    } // dlatb4
 }
