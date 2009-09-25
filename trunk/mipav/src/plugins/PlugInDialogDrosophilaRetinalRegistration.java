@@ -195,11 +195,11 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Retinal Registration");
+        setTitle("Drosophila Retinal Registration v1.0");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
 
-        JLabel imageXLabel = new JLabel("ImageX");
+        JLabel imageXLabel = new JLabel("Image H");
         imageXFilePathTextField = new JTextField(20);
         imageXFilePathTextField.setEditable(false);
         imageXFilePathTextField.setBackground(Color.white);
@@ -207,7 +207,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         imageXBrowseButton.addActionListener(this);
         imageXBrowseButton.setActionCommand("imageXBrowse");
 
-        JLabel imageYLabel = new JLabel("ImageY");
+        JLabel imageYLabel = new JLabel("Image F");
         imageYFilePathTextField = new JTextField(20);
         imageYFilePathTextField.setEditable(false);
         imageYFilePathTextField.setBackground(Color.white);
