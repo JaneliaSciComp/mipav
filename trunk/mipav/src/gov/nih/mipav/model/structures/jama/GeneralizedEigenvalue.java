@@ -14046,8 +14046,8 @@ loop3:                       {
     } // dlanst
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLANSY. Original DLANSY created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLANSY. Original DLANSY created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlansy returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
      * largest absolute value of a real symmetric matrix A.
      *
@@ -15794,8 +15794,8 @@ loop3:                       {
     } // dlarnd
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLARNV Original DLARNV created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK auxiliary routine DLARNV Original DLARNV created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlarnv returns a vector of n random real numbers from a uniform or normal distribution
      *
      * @param  idist  input int Specifies the distribution of the random numbers: 
@@ -16139,8 +16139,8 @@ loop3:                       {
     } // dlartg
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLARUV Original DLARUV created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK auxiliary routine DLARUV Original DLARUV created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlaruv returns a vector of n random real numbers from a uniform (0,1) distribution (n <= 128). This is an
      * auxiliary routine called by dlarnv.
      *
@@ -16169,7 +16169,6 @@ loop3:                       {
         int it2 = 0;
         int it3 = 0;
         int it4 = 0;
-        int j;
         int[][] mm = new int[lv][4];
 
         mm[0][0] = 494;
