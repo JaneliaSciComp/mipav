@@ -734,7 +734,7 @@ public class FileIO {
              * if this method was told to, we will sort in more than one way: we will first try to order the image set
              * based on orientation of slices. If there are slices in the image set which have the same location on the
              * Z-axis, the data may be a time-based set. If we guess that it is (and there aren't nearly enough
-             * test-datasets), we attempt to re-order the ordered Z-locations based on instance number to pull out the
+             * test-datasets), we attempt  re-order the ordered Z-locations based on instance number to pull out the
              * time-data (ie., of two images with the same Z-axis, a lower instance number was taken at an earlier time;
              * all such earlier-time images are grouped). If neither solution seemed to work, then we order all the
              * images strictly on the instance number. There might be some problems if we had to do this. If the list

@@ -436,11 +436,13 @@ public class FileDicomTag extends ModelSerialCloneable {
                 // cast items into array, if they can't be, use as array of one.
                 try {
 
-                    if (value instanceof Short[]) {
+                	if (value instanceof Byte[]) {
+                        stuff = (Byte[]) value;
+                    } else if (value instanceof Short[]) {
                         stuff = (Short[]) value;
-                    }
-
-                    if (value instanceof String) {
+                    } else if (value instanceof Integer[]) {
+                        stuff = (Integer[]) value;
+                    } else if (value instanceof String) {
                         stuff[0] = value;
                     }
                 } catch (final ClassCastException cce) {
