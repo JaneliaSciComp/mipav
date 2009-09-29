@@ -428,6 +428,26 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         double minDist = 0.1 * unit_tolerance;
         double xNew, yNew;
         int count = 0;
+        
+        boolean bLineMinDone = false;
+        /*
+        if ( costFunction instanceof AlgorithmCostFunctions2D )
+        {
+            if ( ((AlgorithmCostFunctions2D)costFunction).isGPULineMin() )
+            {
+                
+                float[] bracketB = ((AlgorithmCostFunctions2D)costFunction).lineMin( toOrigin, fromOrigin, 
+                        0f, 2f, startPoint, pt, pt.length, unit_directions, (float)minDist,
+                        bracket.a, bracket.functionAtA, bracket.b, bracket.functionAtB, 
+                        bracket.c, bracket.functionAtC );
+                //bracket.b = bracketB[0];
+                //bracket.functionAtB = bracketB[1];
+                //bLineMinDone = true;
+            }
+        }
+        */
+        if ( !bLineMinDone )
+        {
 
         while (((++count) < 100) && (Math.abs(bracket.c - bracket.a) > unit_tolerance) && ((parent == null)?true:!parent.isThreadStopped())) {
 
@@ -464,7 +484,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
             }
 
             yNew = oneDimension(startPoint, pt, xNew, unit_directions);
-
+            //System.err.println( yNew );
             if (((xNew - bracket.b) * (bracket.c - bracket.b)) > 0) { // is xnew between bracket.c and bracket.b ?
 
                 // swap bracket.a and bracket.c so that xnew is between bracket.a and bracket.b
@@ -493,7 +513,10 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                 bracket.functionAtA = yNew;
             }
         }
-
+        }
+        //System.err.println( "CPU BracketA = " + bracket.a + " " + bracket.functionAtA );
+        //System.err.println( "BracketB = " + bracket.b + " " + bracket.functionAtB );
+        //System.err.println( "BracketC = " + bracket.c + " " + bracket.functionAtC );
         for (int i = 0; i < dof; i++) {
             pt[i] = (bracket.b * unit_directions[i]) + pt[i];
         }

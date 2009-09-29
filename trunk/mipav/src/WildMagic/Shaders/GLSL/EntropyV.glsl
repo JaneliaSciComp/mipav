@@ -1,9 +1,14 @@
 //----------------------------------------------------------------------------
-uniform sampler3D imageA; 
+uniform sampler2D imageA; 
 uniform float dLogN;
 void v_EntropyV()
 {
-    vec4 dataA0 = texture3D(imageA, gl_MultiTexCoord0.xyz );
+    vec2 texCoord = gl_Vertex.xy;
+    texCoord += 1.0;
+    texCoord /= 2.0;
+
+    //vec4 dataA0 = texture2D(imageA, gl_MultiTexCoord0.xy );
+    vec4 dataA0 = texture2D(imageA, texCoord );
     gl_FrontColor = vec4(0.0,0.0,0.0,0.0);
 
     if ( dataA0.r > 0.0 )

@@ -127,11 +127,7 @@ public class Rope extends JavaApplication3D
     }
 
     public void init(GLAutoDrawable arg0) {
-        arg0.setAutoSwapBufferMode( false );
-
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        ((OpenGLRenderer)m_pkRenderer).InitializeState();
-
+        m_pkRenderer.InitializeState();
         super.OnInitialize();     
         
         CreateScene();

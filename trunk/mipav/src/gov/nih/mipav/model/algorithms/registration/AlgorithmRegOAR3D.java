@@ -9,8 +9,11 @@ import gov.nih.mipav.model.structures.*;
 import Jama.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewerPoint;
 
 import java.util.*;
+
+import com.mentorgen.tools.profile.runtime.Profile;
 
 
 /**
@@ -329,6 +332,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int weightedRefPixelsSub8 = 0;
+
+    private VolumeImageViewerPoint m_kGPUCost = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -858,6 +863,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
     public void runAlgorithm() {
     	long startTime = System.currentTimeMillis();
         int i;
+        
+        //Profile.clear();
+        //Profile.start();
 
         if (refImage.getNDims() != 3) {
             MipavUtil.displayError("" + refImage.getNDims() + "D registration not supported.");
@@ -1446,6 +1454,15 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         } // end of (if weighted && fullAnalysisMode)
 
+        if (costChoice >= AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU )
+        {
+            m_kGPUCost = VolumeImageViewerPoint.create(simpleRef, simpleInput);
+            if ( m_kGPUCost == null )
+            {
+                MipavUtil.displayError( "Not enough memory on the GPU, reverting to CPU registration" );
+                costChoice = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED;                
+            }
+        }
         if (fullAnalysisMode) {
 
             if ((simpleRef.dataSize > subMinFactor) && (simpleInput.dataSize > subMinFactor) && allowLevel2XY &&
@@ -1657,6 +1674,11 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
             return;
         }
+
+
+        //Profile.stop();
+        //Profile.setFileName( "profile_out"  );
+        //Profile.shutdown();
 
         answer.matrix.Inverse();
         fireProgressStateChanged(100);
@@ -2048,7 +2070,13 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
     @SuppressWarnings("unchecked")
     public Vector<MatrixListItem>[] levelEight(ModelSimpleImage ref, ModelSimpleImage input,
 			float progressFrom, float progressTo) {
-        AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 32, 1);
+        AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 32, 1);      
+        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        {
+            System.err.println( "Level 8 " );
+            m_kGPUCost.initImages( ref, input, 32 );
+            cost.setGPUCost(m_kGPUCost);
+        }
 
         /*
          * // To test the amount of time for a single cost evaluation at this level: timeNow =
@@ -2395,7 +2423,12 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 			Vector<MatrixListItem> minima, Vector<MatrixListItem> optMinima, float progressFrom,
 			float progressTo) {
 		AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 64, 1);
-
+        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        {
+            System.err.println( "Level 4 " );
+            m_kGPUCost.initImages( ref, input, 64 );
+            cost.setGPUCost(m_kGPUCost);
+        }
         /*
          * // To test the amount of time for a single cost evaluation at this level: timeNow =
          * System.currentTimeMillis(); initialCost = cost.cost(tMatrix); timeLater = System.currentTimeMillis();
@@ -2657,8 +2690,14 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 			float progressFrom, float progressTo) {
         fireProgressStateChanged((int)progressFrom);
 		MatrixListItem item2;
+		
         AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 256, 1);
-
+        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        {
+            System.err.println( "Level 1 " );
+            m_kGPUCost.initImages( ref, input, 256 );
+            cost.setGPUCost(m_kGPUCost);
+        }
         /*
          * // To test the amount of time for a single cost evaluation at this level: timeNow =
          * System.currentTimeMillis(); initialCost = cost.cost(tMatrix); timeLater = System.currentTimeMillis();
@@ -2724,7 +2763,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         
         cost.disposeLocal();
         powell.disposeLocal();
-
         return item2;
     }
 
@@ -2746,7 +2784,12 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 			float progressTo) {
         fireProgressStateChanged((int)progressFrom);
 		AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 128, 1);
-
+        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        {
+            System.err.println( "Level 2 " );
+            m_kGPUCost.initImages( ref, input, 128 );
+            cost.setGPUCost(m_kGPUCost);
+        }
         /*
          * // To test the amount of time for a single cost evaluation at this level: timeNow =
          * System.currentTimeMillis(); initialCost = cost.cost(tMatrix); timeLater = System.currentTimeMillis();

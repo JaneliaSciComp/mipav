@@ -171,11 +171,7 @@ public class BillboardNodes extends JavaApplication3D
     }
 
     public void init(GLAutoDrawable arg0) {
-        arg0.setAutoSwapBufferMode( false );
-
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        ((OpenGLRenderer)m_pkRenderer).InitializeState();
-
+        m_pkRenderer.InitializeState();
         super.OnInitialize();
 
         // set up camera
@@ -427,7 +423,7 @@ public class BillboardNodes extends JavaApplication3D
         akSceneTarget[0].SetFilterType(Texture.FilterType.NEAREST);
         akSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP);
         akSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP);
-        akSceneTarget[0].SetSamplerInformation( new SamplerInformation( "ColorTex0", SamplerInformation.Type.SAMPLER_2D, 0, 0 ) );
+        //akSceneTarget[0].SetSamplerInformation( new SamplerInformation( "ColorTex0", 0, 0 ) );
         m_pkRenderer.LoadTexture( akSceneTarget[0] );
         
         
@@ -439,7 +435,7 @@ public class BillboardNodes extends JavaApplication3D
         akSceneTarget[1].SetFilterType(Texture.FilterType.NEAREST);
         akSceneTarget[1].SetWrapType(0,Texture.WrapType.CLAMP);
         akSceneTarget[1].SetWrapType(1,Texture.WrapType.CLAMP);
-        akSceneTarget[1].SetSamplerInformation( new SamplerInformation( "ColorTex1", SamplerInformation.Type.SAMPLER_2D, 0, 0 ) );
+        //akSceneTarget[1].SetSamplerInformation( new SamplerInformation( "ColorTex1", 0, 0 ) );
         m_pkRenderer.LoadTexture( akSceneTarget[1] );
         
         pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,(float[])null,
@@ -450,7 +446,7 @@ public class BillboardNodes extends JavaApplication3D
         akSceneTarget[2].SetFilterType(Texture.FilterType.NEAREST);
         akSceneTarget[2].SetWrapType(0,Texture.WrapType.CLAMP);
         akSceneTarget[2].SetWrapType(1,Texture.WrapType.CLAMP);
-        akSceneTarget[2].SetSamplerInformation( new SamplerInformation( "ColorTex2", SamplerInformation.Type.SAMPLER_2D, 0, 0 ) );
+        //akSceneTarget[2].SetSamplerInformation( new SamplerInformation( "ColorTex2", 0, 0 ) );
         m_pkRenderer.LoadTexture( akSceneTarget[2] );
       
         Attributes kAttributes = new Attributes();

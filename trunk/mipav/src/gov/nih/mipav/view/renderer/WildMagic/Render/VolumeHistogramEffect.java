@@ -1,7 +1,5 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
-import gov.nih.mipav.model.structures.ModelSimpleImage;
-
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
@@ -32,13 +30,11 @@ implements StreamInterface
     int[] m_aiExtents = new int[3];
     Matrix4f m_kImageTransform;
     float m_fZStep, m_fZSlice;
-    float m_fNBins;
 
     public VolumeHistogramEffect ( Texture kTexA, Texture kTexB, 
             float fMinA, float fMaxA, float fMinB, float fMaxB,
-            int iWidth, int iHeight, int iNBins, Matrix4f kImageTransform, boolean bUseTransform )
+            int iWidth, int iHeight, Matrix4f kImageTransform )
     {
-        m_fNBins = iNBins;
         m_iWidth = iWidth;
         m_iHeight = iHeight;
         m_kImageTransform = kImageTransform;
@@ -50,18 +46,18 @@ implements StreamInterface
         PixelShader kPShader = new PixelShader("VolumeHistogramP", true);
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
+        
         kPShader.SetTextureQuantity(2);
         kPShader.SetTexture( 0, kTexA );
         kPShader.SetImageName( 0, kTexA.GetName() );
         kPShader.SetTexture( 1, kTexB );
         kPShader.SetImageName( 1, kTexB.GetName() );
-
-/*
-        kPShader.SetTextureQuantity(1);
-        kPShader.SetTexture( 0, kTexB );
-        kPShader.SetImageName( 0, kTexB.GetName() );
         
-*/
+        /*
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetTexture( 0, kTexA );
+        kPShader.SetImageName( 0, kTexA.GetName() );
+        */
        
         m_fMin1 = fMinA;
         m_fScale1 = 1;
@@ -152,26 +148,10 @@ implements StreamInterface
             Program pkPProgram, Program pkCProgram)
     {
 
-        if ( pkCProgram.GetUC("Step") != null ) 
-         {
-            pkCProgram.GetUC("Step").GetData()[0] = (1.0f/(float)(m_fNBins*2.0));
-            pkCProgram.GetUC("Step").GetData()[1] = (1.0f/(float)(m_fNBins*2.0));
-         }
         if ( pkCProgram != null && pkCProgram.GetUC("ZSlice") != null ) 
         {
             pkCProgram.GetUC("ZSlice").GetData()[0] = m_fZSlice;
             //System.err.println( "ZSlice: " + m_fZSlice );
-        } 
-        if ( pkCProgram != null && pkCProgram.GetUC("ZStep") != null ) 
-        {
-            pkCProgram.GetUC("ZStep").GetData()[0] = m_fZStep;
-            //System.err.println( "Step: " + m_fZStep );
-        } 
-        if ( pkCProgram != null && pkCProgram.GetUC("Shift") != null ) 
-        {
-            pkCProgram.GetUC("Shift").GetData()[0] = -20.0f/m_iWidth;
-            pkCProgram.GetUC("Shift").GetData()[1] = 20.0f/m_iHeight;
-            //System.err.println( "Shift = " + m_fMin1 + " " + m_fMin2 );
         } 
         if ( pkCProgram != null && pkCProgram.GetUC("Min") != null ) 
         {
@@ -185,11 +165,6 @@ implements StreamInterface
             pkCProgram.GetUC("Scale").GetData()[1] = m_fScale2;
             //System.err.println( "Scale = " + m_fScale1 + " " + m_fScale2 );
         } 
-        if ( pkCProgram != null && pkCProgram.GetUC("VertexScale") != null ) 
-        {
-            pkCProgram.GetUC("VertexScale").GetData()[0] = m_iWidth;
-            pkCProgram.GetUC("VertexScale").GetData()[1] = m_iHeight;
-        }  
         if ( pkCProgram != null && pkCProgram.GetUC("ImageSize") != null ) 
         {
             pkCProgram.GetUC("ImageSize").GetData()[0] = (m_aiExtents[0]-1);
@@ -229,6 +204,8 @@ implements StreamInterface
         Program pkCProgram = GetCProgram(0);
         if ( pkCProgram != null && pkCProgram.GetUC("InverseTransformMatrix") != null ) 
         {
+            m_kImageTransform.GetData(pkCProgram.GetUC("InverseTransformMatrix").GetData());
+            /*
             for ( int i = 0; i < 4; i++ )
             {
                 for ( int j = 0; j < 4; j++ )
@@ -236,6 +213,7 @@ implements StreamInterface
                     pkCProgram.GetUC("InverseTransformMatrix").GetData()[i*4+j] = m_kImageTransform.Get(i,j);
                 }
             }
+            */
         }
     }
 

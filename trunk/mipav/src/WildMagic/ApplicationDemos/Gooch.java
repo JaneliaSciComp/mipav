@@ -144,11 +144,7 @@ public class Gooch extends JavaApplication3D
      * objects.
      */
     public void init(GLAutoDrawable arg0) {
-        arg0.setAutoSwapBufferMode( false );
-
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        ((OpenGLRenderer)m_pkRenderer).InitializeState();
-
+        m_pkRenderer.InitializeState();
         super.OnInitialize();
 
         m_spkCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,100.0f);

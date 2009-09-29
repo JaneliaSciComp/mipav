@@ -186,7 +186,7 @@ public class VolumeImage
                     aucData[i+2] = kImage.GetData()[i+2];
                     aucData[i+3] = kImage.GetData()[i];
                 }
-                System.err.println( bVal );
+                //System.err.println( bVal );
             }
             try {
                 kResult = new ModelImage(ModelStorageBase.ARGB, extents, "" );
@@ -361,10 +361,10 @@ public class VolumeImage
             return;
         }
         ModelLUT.exportIndexedLUTMin( kLUT, kColorMap.GetData() );
-        for ( int i = 0; i < kColorMap.GetData().length; i++ )
-        {
-            System.err.println( kColorMap.GetData()[i]);
-        }
+        //for ( int i = 0; i < kColorMap.GetData().length; i++ )
+        //{
+        //    System.err.println( kColorMap.GetData()[i]);
+        //}
         kColorTexture.Reload(true);
     }
     
@@ -1242,7 +1242,7 @@ public class VolumeImage
                 iTMaxY = iMaxY;
             }
             
-            System.err.println( iMinX + ", " + iMinY + "    " + iMaxX + ", " + iMaxY );
+            //System.err.println( iMinX + ", " + iMinY + "    " + iMaxX + ", " + iMaxY );
             //iMinX = 0; iMaxX = 255;
             //iMinY = 0; iMaxY = 255;
 
@@ -1266,7 +1266,7 @@ public class VolumeImage
         m_akHistoTCoord[2] = new Vector2f( iTMaxX/255.0f, iTMaxY/255.0f );
         m_akHistoTCoord[3] = new Vector2f( iTMinX/255.0f, iTMaxY/255.0f );
         
-        System.err.println( iTMinX + ", " + iTMinY + "    " + iTMaxX + ", " + iTMaxY );
+        //System.err.println( iTMinX + ", " + iTMinY + "    " + iTMaxX + ", " + iTMaxY );
     }
    
     

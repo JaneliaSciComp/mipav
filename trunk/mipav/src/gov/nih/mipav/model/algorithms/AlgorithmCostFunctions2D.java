@@ -10,6 +10,8 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewerPoint;
 
 import java.awt.*;
 
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
+
 
 /**
  * CostFunction - class for specifying optimization function.
@@ -198,11 +200,6 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         if ((costFunctID >= MUTUAL_INFORMATION_SMOOTHED) && (costFunctID <= NORMALIZED_MUTUAL_INFORMATION)) {
             setPLogP(nBins); // precalculate
         }
-
-        if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
-        {
-            m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false, nBins);
-        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -306,6 +303,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                         System.err.println( "CPU: " + value + "   GPU: " + valueGPU );
                     }
                     //value = valueGPU;
+
                 }
                 break;
 
@@ -316,7 +314,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                 if ( m_kGPUCost != null )
                 {
                     m_kGPUCost.calcError(affMatrix);
-                    value = m_kGPUCost.getError();
+                    value = m_kGPUCost.getError();   
                 }
                 break;
         }
@@ -334,10 +332,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         refWgtImage = null;
         inputWgtImage = null;
 
-        if ( m_kGPUCost != null )
-        {
-            m_kGPUCost.dispose();
-        }
+        m_kGPUCost = null;
         //System.err.println( "AlgorithmCostFuntions2D.disposeLocal(): " + nBins + " " + costCalled );
 //        sumY = null;
 //        sumY2 = null;
@@ -347,7 +342,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 //        margHistR = null;
 //        margHistI = null;
         pLogP = null;
-        System.gc();
+        //System.gc();
     }
 
     /**
@@ -360,7 +355,38 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         disposeLocal();
         super.finalize();
     }
+    
+    public void setGPUCost( VolumeImageViewerPoint kGPUCost )
+    {
+        m_kGPUCost = kGPUCost;
+    }
+    /*
+    public boolean isGPULineMin()
+    {
+        if ( m_kGPUCost != null )
+            return true;
+        return false;
+    }
 
+    public float[] lineMin(Matrix4f kToOrigin, Matrix4f kFromOrigin,
+            float rigid, float dim, double[] startPoint, double[] pt, int ptLength,
+            double[] unitDirections, double fMinDist,
+            double bracketA, double functionA,
+            double bracketB, double functionB,
+            double bracketC, double functionC
+            )
+    {
+        m_kGPUCost.initLineMin( kToOrigin,  kFromOrigin,
+                rigid,  dim, startPoint, pt, ptLength,
+                unitDirections,  fMinDist,
+                bracketA, functionA,
+                bracketB, functionB,
+                bracketC, functionC);
+        m_kGPUCost.calcLineMinimization();
+        return m_kGPUCost.getBracketB();
+        return null;
+    }
+*/
     /**
      * Accessor that returns how many times the cost function has been called.
      *
