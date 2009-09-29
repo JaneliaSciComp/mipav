@@ -2559,25 +2559,15 @@ public class FileIO {
             options.setSaveAs(true); // can't tell from extension, so must be a save as.
             // options.setSaveInSubdirectory(true);// .... "" ...., so save into its own subdirectory.
             if (fileType == FileUtility.UNDEFINED) { // file type wasn't set, so call dialog
-            	 //in the case when MIPAV is in quiet mode, if the filetype is
-                //still undefined, we will defaultly write in .nii format
-            	if(isQuiet()) {
-            		fileType = FileUtility.NIFTI;
-            		suffix = ".nii";
-            		options.setFileType(fileType);
-            		System.err.println("FileIO save: filetype could not be determined...saving in .nii format");
-            	}else {
-            		fileType = getFileType(); // popup dialog to determine filetype
+        		fileType = getFileType(); // popup dialog to determine filetype
 
-                    if (unknownIODialog.isCancelled()) {
-                        return;
-                    }
+                if (unknownIODialog.isCancelled()) {
+                    return;
+                }
 
-                    suffix = unknownIODialog.getSuffix(); // get the expected suffix from the dialog
+                suffix = unknownIODialog.getSuffix(); // get the expected suffix from the dialog
 
-                    options.setFileType(fileType);
-            	}
-                
+                options.setFileType(fileType);
             } else if (fileType == FileUtility.JIMI) { // if type is JIMI, then try and use suffix from fileInfo
                 suffix = image.getFileInfo(0).getFileSuffix();
 

@@ -751,8 +751,19 @@ public class FileUtility {
         if (fileType == FileUtility.MINC) {
             try {
                 if (doWrite) {
-                    fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame())
-                            .fileType();
+                	if(!quiet) {
+                		fileType = new JDialogSaveMincVersionChoice(ViewUserInterface.getReference().getMainFrame()).fileType();
+                	}else {
+                		if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1)) {
+                			fileType = FileUtility.MINC;
+                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2)) {
+                        	fileType = FileUtility.MINC_HDF;
+                        }else {
+                        	fileType = FileUtility.MINC;
+                        	System.err.println("Could not determine default filetype from preferences...saving in MINC-1.0 format");
+                        }
+                	}
+                    
                 }
                 // inspect the file to see if it is really a MINC1 (suppressing any error dialogs).
                 // if not, set the file type using isMincHDF()
@@ -814,14 +825,29 @@ public class FileUtility {
 
                 // ANALYZE, Interfile, and NIFTI use .img and .hdr
                 if (doWrite) {
-                    JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference()
-                            .getMainFrame());
+                	if(!quiet) {
+                		JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference()
+                                .getMainFrame());
 
-                    if ( !choice.okayPressed()) {
-                        fileType = FileUtility.ERROR;
-                    } else {
-                        fileType = choice.fileType();
-                    }
+                        if ( !choice.okayPressed()) {
+                            fileType = FileUtility.ERROR;
+                        } else {
+                            fileType = choice.fileType();
+                        }
+                	}else {
+                		//when in quiet mode, we will default to NIFTI format if Prefs are not there
+                		if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
+                			fileType = FileUtility.ANALYZE;
+                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
+                        	fileType = FileUtility.INTERFILE;
+                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
+                        	fileType = FileUtility.NIFTI;
+                        }else {
+                        	fileType = FileUtility.NIFTI;
+                        	System.err.println("Could not determine default filetype from preferences...saving in NIFTI format");
+                        }
+                	}
+                    
                 } else { // read
                     if (FileCheshire.isCheshire(fileName, fileDir)) {
                         fileType = FileUtility.CHESHIRE;
@@ -873,15 +899,29 @@ public class FileUtility {
                 }
             } else if (suffix.equalsIgnoreCase(".hdr")) {
                 if (doWrite) {
-                    // ANALYZE, Interfile, and NIFTI use .img and .hdr
-                    JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference()
-                            .getMainFrame());
-
-                    if ( !choice.okayPressed()) {
-                        fileType = FileUtility.ERROR;
-                    } else {
-                        fileType = choice.fileType();
-                    }
+                	if(!quiet) {
+	                    // ANALYZE, Interfile, and NIFTI use .img and .hdr
+	                    JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(ViewUserInterface.getReference()
+	                            .getMainFrame());
+	
+	                    if ( !choice.okayPressed()) {
+	                        fileType = FileUtility.ERROR;
+	                    } else {
+	                        fileType = choice.fileType();
+	                    }
+                	}else {
+                		//when in quiet mode, we will default to NIFTI format if Prefs are not there
+                		if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
+                			fileType = FileUtility.ANALYZE;
+                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE)) {
+                        	fileType = FileUtility.INTERFILE;
+                        }else if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI)) {
+                        	fileType = FileUtility.NIFTI;
+                        }else {
+                        	fileType = FileUtility.NIFTI;
+                        	System.err.println("Could not determine default filetype from preferences...saving in NIFTI format");
+                        }
+                	}
                 } else { // read
                     int p = fileName.lastIndexOf(".");
                     String bfloatDataName = fileName.substring(0, p + 1) + "bfloat";
