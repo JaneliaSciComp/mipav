@@ -18,6 +18,7 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewerPoint;
 
 import java.awt.Dimension;
 import java.io.IOException;
@@ -25,6 +26,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Vector;
+
+import com.mentorgen.tools.profile.runtime.Profile;
 
 /**
  * This is an automatic registration method based on FLIRT. FLIRT stands for
@@ -316,6 +319,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     private int weightedRefPixelsSub8 = 0;
     
     private AlgorithmCostFunctions2D cost;
+
+    private VolumeImageViewerPoint m_kGPUCost = null;
 
     /**
      * Used to store all paths for levelEigth, levelFour, levelTwo and levelOne.
@@ -1053,6 +1058,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * final "answer", or minimum, which will then be accessed by the dialog that called this algorithm.
      */
     public void runAlgorithm() {
+                
         long startTime = System.currentTimeMillis();
         int i;
 
@@ -1577,6 +1583,15 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         fireProgressStateChanged("Registering images", "Beginning registration");
 
 
+        if (costChoice >= AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU )
+        {
+            m_kGPUCost = VolumeImageViewerPoint.create(simpleRef, simpleInput);
+            if ( m_kGPUCost == null )
+            {
+                MipavUtil.displayError( "Not enough memory on the GPU, reverting to CPU registration" );
+                costChoice = AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED;                
+            }
+        }
         long time = System.currentTimeMillis();
 
         /* If the algorithm is to run in "Brute Force" mode, do so now: */
@@ -1659,6 +1674,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         setCompleted(true);
         time = (System.currentTimeMillis() - startTime);
         Preferences.debug( "Time consumed by OAR registration algorithm: " +  (time * .001f) + " seconds");
+        
+
     }
     
     
@@ -2307,7 +2324,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     public Vector<MatrixListItem>[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
         double factor;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 32, 1);
-
+        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        {
+            m_kGPUCost.initImages( ref, input, 32 );
+            cost.setGPUCost(m_kGPUCost);
+        }
         if (weighted) {
             cost.setRefWgtImage(simpleWeightRefSub8);
             cost.setInputWgtImage(simpleWeightInputSub8);
@@ -2523,7 +2544,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      */
     public Vector<MatrixListItem> levelFour(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima, Vector<MatrixListItem> optMinima) {
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 64, 1);
-
+        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        {
+            m_kGPUCost.initImages( ref, input, 64 );
+            cost.setGPUCost(m_kGPUCost);
+        }
         if (weighted) {
             cost.setRefWgtImage(simpleWeightRefSub4);
             cost.setInputWgtImage(simpleWeightInputSub4);
@@ -2720,11 +2745,19 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @return  Best minimum after optimization.
      */
     public MatrixListItem levelOne(ModelSimpleImage ref, ModelSimpleImage input, MatrixListItem item) {
+        //System.err.println( "level 1" );
+        //Profile.clear();
+        //Profile.start();
+        
     	int degree;
         AlgorithmPowellOptBase powell;
         MatrixListItem item2;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 256, 1);
-
+        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        {
+            m_kGPUCost.initImages( ref, input, 256 );
+            cost.setGPUCost(m_kGPUCost);
+        }
         if (weighted) {
             cost.setRefWgtImage(simpleWeightRef);
             cost.setInputWgtImage(simpleWeightInput);
@@ -2771,6 +2804,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         cost.disposeLocal();
         powell.disposeLocal();
 
+
+        //Profile.stop();
+        //Profile.setFileName( "profile_out"  );
+        //Profile.shutdown();
+        
         return item2;
     }
 
@@ -2789,7 +2827,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         AlgorithmPowellOptBase powell;
         MatrixListItem item2;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 256, 1);
-
+        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        {
+            m_kGPUCost.initImages( ref, input, 256 );
+            cost.setGPUCost(m_kGPUCost);
+        }
         if (weighted) {
             cost.setRefWgtImage(simpleWeightRef);
             cost.setInputWgtImage(simpleWeightInput);
@@ -2859,7 +2901,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      */
     public MatrixListItem levelTwo(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima) {
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 128, 1);
-
+        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        {
+            m_kGPUCost.initImages( ref, input, 128 );
+            cost.setGPUCost(m_kGPUCost);
+        }
         if (weighted) {
             cost.setRefWgtImage(simpleWeightRefSub2);
             cost.setInputWgtImage(simpleWeightInputSub2);

@@ -1,6 +1,7 @@
 //----------------------------------------------------------------------------
 uniform sampler3D imageA; 
 uniform sampler3D imageB; 
+uniform sampler2D transformBracket;
 
 uniform vec2 Min;
 uniform vec2 Scale;
@@ -8,10 +9,32 @@ uniform vec2 Scale;
 uniform vec3 ImageSize;
 uniform vec3 ImageSizeInv;
 
-uniform mat4 InverseTransformMatrix;
-
-void v_VolumeHistogram2DV()
+void v_VolumeHistogramTransformV()
 {
+    vec2 index = vec2(0.0,0.0);
+    vec4 row1 = texture2D( transformBracket, index );
+    index.y = 0.5;
+    vec4 row2 = texture2D( transformBracket, index );
+    index.y = 1.0;
+    vec4 row3 = texture2D( transformBracket, index );
+
+    mat4 InverseTransform = mat4(1.0);
+    
+    InverseTransform[0][0] = row1.x;
+    InverseTransform[1][0] = row1.y;
+    InverseTransform[2][0] = row1.z;
+    InverseTransform[3][0] = row1.w;
+
+    InverseTransform[0][1] = row2.x;
+    InverseTransform[1][1] = row2.y;
+    InverseTransform[2][1] = row2.z;
+    InverseTransform[3][1] = row2.w;
+
+    InverseTransform[0][2] = row3.x;
+    InverseTransform[1][2] = row3.y;
+    InverseTransform[2][2] = row3.z;
+    InverseTransform[3][2] = row3.w;
+
     gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
 
     vec3 texCoord = gl_Vertex.xyz;
@@ -25,7 +48,7 @@ void v_VolumeHistogram2DV()
 
     vec4 kPos = vec4(0.0,0.0,0.0,1.0);
     kPos.xyz = texCoord * ImageSize;
-    kPos = InverseTransformMatrix*kPos;
+    kPos = InverseTransform*kPos;
     texCoord = kPos.xyz * ImageSizeInv;
 
     vec4 moving = texture3D(imageB, texCoord );

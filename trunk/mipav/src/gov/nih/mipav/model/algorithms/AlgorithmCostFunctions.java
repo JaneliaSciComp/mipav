@@ -245,12 +245,6 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         if ((costFunctID >= MUTUAL_INFORMATION_SMOOTHED) && (costFunctID <= NORMALIZED_MUTUAL_INFORMATION)) {
             setPLogP(nBins); // precalculate
         }
-        
-
-        if (costFunctID >= NORMALIZED_MUTUAL_INFORMATION_GPU)
-        {
-            m_kGPUCost = VolumeImageViewerPoint.create(refImage, inputImage, false, nBins);
-        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -397,10 +391,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
         refWgtImage = null;
         inputWgtImage = null;
 
-        if ( m_kGPUCost != null )
-        {
-            m_kGPUCost.dispose();
-        }        
+        m_kGPUCost = null;
         
         //System.err.println( "AlgorithmCostFuntions2D.disposeLocal(): " + this + " " + nBins + " " + costCalled );
 
@@ -412,7 +403,7 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
 //        margHistR = null;
 //        margHistI = null;
         pLogP = null;
-        System.gc();
+        //System.gc();
     }
 
     /**
@@ -424,6 +415,11 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     public void finalize() throws Throwable {
         disposeLocal();
         super.finalize();
+    }    
+    
+    public void setGPUCost( VolumeImageViewerPoint kGPUCost )
+    {
+        m_kGPUCost = kGPUCost;
     }
 
     /**

@@ -839,13 +839,8 @@ public class PlaneRender_WM extends GPURenderBase
             return;
         }
 
-        m_bInit = true;
-        
-        arg0.setAutoSwapBufferMode( false );
-
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        ((OpenGLRenderer)m_pkRenderer).InitializeState();
-
+        m_bInit = true;        
+        m_pkRenderer.InitializeState();
         super.OnInitialize();
 
         // set up camera

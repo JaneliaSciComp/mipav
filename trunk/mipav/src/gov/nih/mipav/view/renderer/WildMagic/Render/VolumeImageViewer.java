@@ -171,12 +171,7 @@ public class VolumeImageViewer extends JavaApplication3D
         {
             return;
         }
-        
-        arg0.setAutoSwapBufferMode( false );
-
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        ((OpenGLRenderer)m_pkRenderer).InitializeState();
-
+        m_pkRenderer.InitializeState();
         super.OnInitialize();
 
         // set up camera

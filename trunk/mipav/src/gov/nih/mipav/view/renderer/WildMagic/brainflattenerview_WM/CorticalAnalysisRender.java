@@ -424,8 +424,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
      */
     public void init(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
-        ((OpenGLRenderer)m_pkRenderer).InitializeState();
+        m_pkRenderer.InitializeState();
         m_pkRenderer.SetLineWidth(3);
 
         super.OnInitialize();
