@@ -15658,9 +15658,9 @@ ib = Math.min(nb, k-i+1);
         double AQ[][] = new double[nmax][nmax];
         double AR[][] = new double[nmax][nmax];
         double AC[][] = new double[nmax][nmax];
-        double b[] = new double[nmax*nrhs];
-        double x[] = new double[nmax*nrhs];
-        double xact[] = new double[nmax*nrhs];
+        double B[][] = new double[nmax][nrhs];
+        double X[][] = new double[nmax][nrhs];
+        double XACT[][] = new double[nmax][nrhs];
         double tau[] = new double[nmax];
         double work[] = new double[nmax*nmax];
         double rwork[] = new double[nmax];
@@ -15681,7 +15681,7 @@ ib = Math.min(nb, k-i+1);
         Preferences.debug("Precision = " + eps + "\n");
         
         dchkqr(dotype, nm, mval, nn, nval, nnb, nbval, nxval, nrhs, thresh, tsterr, nmax, 
-               A, AF, AQ, AR, AC, b, x, xact, tau, work, rwork, iwork);
+               A, AF, AQ, AR, AC, B, X, XACT, tau, work, rwork, iwork);
     } // dchkqr_test
     
     /** This is a port of version 3.1 LAPACK test routine DCHKQR
@@ -15764,11 +15764,11 @@ ib = Math.min(nb, k-i+1);
     *
     *  AC      (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX}
     *
-    *  B       (workspace) DOUBLE PRECISION array, dimension (NMAX*NRHS)
+    *  B       (workspace) DOUBLE PRECISION array, dimension [NMAX*][NRHS]
     *
-    *  X       (workspace) DOUBLE PRECISION array, dimension (NMAX*NRHS)
+    *  X       (workspace) DOUBLE PRECISION array, dimension [NMAX][NRHS]
     *
-    *  XACT    (workspace) DOUBLE PRECISION array, dimension (NMAX*NRHS)
+    *  XACT    (workspace) DOUBLE PRECISION array, dimension [NMAX][NRHS]
     *
     *  TAU     (workspace) DOUBLE PRECISION array, dimension (NMAX)
     *
@@ -15780,8 +15780,8 @@ ib = Math.min(nb, k-i+1);
     */
     private void dchkqr(boolean[] dotype, int nm, int[] mval, int nn, int[] nval, int nnb, int[] nbval,
                         int[] nxval, int nrhs, double thresh, boolean tsterr, int nmax, double[][] A,
-                        double[][] AF, double[][] AQ, double[][] AR, double[][] AC, double[] b, double[] x,
-                        double xact[], double[] tau, double[] work, double[] rwork, int[] iwork) {
+                        double[][] AF, double[][] AQ, double[][] AR, double[][] AC, double[][] B, double[][] X,
+                        double[][] XACT, double[] tau, double[] work, double[] rwork, int[] iwork) {
         int ntests = 8;
         int ntypes = 8;
         int iseedy[] = new int[] {1988, 1989, 1990, 1991};
@@ -15816,6 +15816,10 @@ ib = Math.min(nb, k-i+1);
         String path;
         char type[] = new char[1];
         char dist[] = new char[1];
+        double res[] = new double[4];
+        int p;
+        int q;
+        double vec1[];
         
         // Initialize constants and the random number seed
         path = new String("DQR"); // D for double precision
@@ -15932,7 +15936,42 @@ ib = Math.min(nb, k-i+1);
                             } // if (ik == 1)
                             else if (m >= n) {
                                 // Test dorgqr, using factorization returned by dqrt01
+                                dqrt02(m, n, k, A, AF, AQ, AR, lda, tau, work, lwork, rwork,
+                                       result);
                             } // else if (m >= n)
+                            if (m >= k) {
+                                // Test DORMQR, using factorization returned by DQRT01 
+                                dqrt03(m, n, k, AF, AC, AR, AQ, lda, tau, work, lwork, rwork, res);
+                                for (p = 0; p < 4; p++) {
+                                    result[2+p] = res[p];
+                                }
+                                nt = nt + 4;
+                                
+                                // If m >= n and k == n, call dgers to solve a system
+                                // with nrhs right hand sides and compute the residual.
+                                if ((k == n) && (inb == 1)) {
+                                    // Generate a solution and set the right hand side.
+                                    // Here to dgemm extracted from dlarhs
+                                    vec1 = new double[n];
+                                    for (p = 1; p <= nrhs; p++) {
+                                        dlarnv(2, iseed, n, vec1);
+                                        for (q = 0; q < n; q++) {
+                                            XACT[q][p-1] = vec1[q];    
+                                        }
+                                    } // for (p = 1; p <= nrhs; p++)
+                                    dgemm('N', 'N', m, nrhs, n, 1.0, A, lda, XACT, lda, 0.0,
+                                            B, lda);
+                                    dlacpy('F', m, nrhs, B, lda, X, lda);
+                                    srnamt = new String("DGEQRS");
+                                    dgeqrs(m, n, nrhs, AF, lda, tau, X,
+                                           lda, work, lwork, info);
+                                    
+                                    // Check error code from dgeqrs.
+                                    if (info[0] != 0) {
+                                        
+                                    } // if (info[0] != 0)
+                                } // if ((k == n) && (inb == 1))
+                            } // if (m >= k)
                         } // for (inb = 1; inb <= nnb; inb++)
                     } // for (ik = 1; ik <= nk; ik++)
                 } // for (imat = 1; imat <= ntypes; imat++)
@@ -21721,6 +21760,7 @@ ib = Math.min(nb, k-i+1);
         int q;
         double array1[][];
         double array2[][];
+        double vec1[];
         
         // Quick return if possible
         if ((m == 0) || (n == 0) || (k == 0)) {
@@ -21749,5 +21789,1337 @@ ib = Math.min(nb, k-i+1);
                 }
             }
         } // if (k < n)
+        
+        if (k > 1) {
+            array1 = new double[k-1][k-1];
+            array2 = new double[k-1][k-1];
+            for (p = 0; p < k-1; p++) {
+                for (q = 0; q < k-1; q++) {
+                    array1[p][q] = AF[m-k+p+1][n-k+q];
+                }
+            }
+            dlacpy('L', k-1, k-1, array1, k-1, array2, k-1);
+            for (p = 0; p < k-1; p++) {
+                for (q = 0; q < k-1; q++) {
+                    Q[m-k+p+1][n-k+q] = array2[p][q];
+                }
+            }    
+        } // if (k > 1)
+        
+        // Generate the last n rows of the matrix Q
+        srnamt = new String("DORGRQ");
+        vec1 = new double[k];
+        for (p = 0; p < k; p++) {
+            vec1[p] = tau[m-k+p];
+        }
+        dorgrq(m, n, k, Q, lda, vec1, work, lwork, info);
+        
+        // Copy R(m-k+1:m,n-m+1:n)
+        array1 = new double[k][m];
+        for (p = 0; p < k; p++) {
+            for (q = 0; q < m; q++) {
+                array1[p][q] = R[m-k+p][n-m+q];
+            }
+        }
+        dlaset('F', k, m, 0.0, 0.0, array1, k);
+        for (p = 0; p < k; p++) {
+            for (q = 0; q < m; q++) {
+                R[m-k+p][n-m+q] = array1[p][q];
+            }
+        }
+        for (p = 0; p < k; p++) {
+            for (q = 0; q < m; q++) {
+                array1[p][q] = AF[m-k+p][n-m+q];
+            }
+        }
+        array2 = new double[k][m];
+        dlacpy('U', k, k, array1, k, array2, k);
+        for (p = 0; p < k; p++) {
+            for (q = 0; q < m; q++) {
+                R[m-k+p][n-m+q] = array2[p][q];
+            }
+        }
+        
+        // Compute R(m-k+1:m,n-m+1:n) - A(m-k+1:m,1:n) * Q(n-m+1:n,1:n)'
+        array1 = new double[k][n];
+        for (p = 0; p < k; p++) {
+            for (q = 0; q < n; q++) {
+                array1[p][q] = A[m-k+p][q];
+            }
+        }
+        array2 = new double[k][m];
+        for (p = 0; p < k; p++) {
+            for (q = 0; q < m; q++) {
+                array2[p][q] = R[m-k+p][n-m+q];
+            }
+        }
+        dgemm('N', 'T', k, m, n, -1.0, array1, k, Q, lda, 1.0, array2, k);
+        for (p = 0; p < k; p++) {
+            for (q = 0; q < m; q++) {
+                R[m-k+p][n-m+q] = array2[p][q];
+            }
+        }
+        
+        // Compute norm(R - A*Q') / (N * norm(A) * eps).
+        array1 = new double[k][n];
+        for (p = 0; p < k; p++) {
+            for (q = 0; q < n; q++) {
+                array1[p][q] = A[m-k+p][q];
+            }
+        }
+        anorm = dlange('1', k, n, array1, k, rwork);
+        array1 = new double[k][m];
+        for (p = 0; p < k; p++) {
+            for (q = 0; q < m; q++) {
+                array1[p][q] = R[m-k+p][n-m+q];
+            }
+        }
+        resid = dlange('1', k, m, array1, k , rwork);
+        if (anorm > 0) {
+            result[0] = ((resid/(double)Math.max(1,n ))/anorm)/eps;
+        }
+        else {
+            result[0] = 0;
+        }
+        
+        // Compute I - Q*Q'
+        dlaset('F', m, m, 0.0, 1.0, R, lda);
+        dsyrk('U', 'N', m, n, -1.0, Q, lda, 1.0, R, lda);
+        
+        // Compute norm(I - Q*Q')/(n * eps).
+        resid = dlansy('1', 'U', m, R, lda, rwork);
+        result[1] = (resid/(double)Math.max(1, n))/eps;
+        return;
     } // drqt02
+    
+    /** This is a port of version 3.2 LAPACK routine DORMRQ.
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          CHARACTER          SIDE, TRANS
+          INTEGER            INFO, K, LDA, LDC, LWORK, M, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   A( LDA, * ), C( LDC, * ), TAU( * ), WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DORMRQ overwrites the general real M-by-N matrix C with
+    *
+    *                  SIDE = 'L'     SIDE = 'R'
+    *  TRANS = 'N':      Q * C          C * Q
+    *  TRANS = 'T':      Q**T * C       C * Q**T
+    *
+    *  where Q is a real orthogonal matrix defined as the product of k
+    *  elementary reflectors
+    *
+    *        Q = H(1) H(2) . . . H(k)
+    *
+    *  as returned by DGERQF. Q is of order M if SIDE = 'L' and of order N
+    *  if SIDE = 'R'.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  SIDE    (input) CHARACTER*1
+    *          = 'L': apply Q or Q**T from the Left;
+    *          = 'R': apply Q or Q**T from the Right.
+    *
+    *  TRANS   (input) CHARACTER*1
+    *          = 'N':  No transpose, apply Q;
+    *          = 'T':  Transpose, apply Q**T.
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix C. M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix C. N >= 0.
+    *
+    *  K       (input) INTEGER
+    *          The number of elementary reflectors whose product defines
+    *          the matrix Q.
+    *          If SIDE = 'L', M >= K >= 0;
+    *          if SIDE = 'R', N >= K >= 0.
+    *
+    *  A       (input) DOUBLE PRECISION array, dimension
+    *                               (LDA,M) if SIDE = 'L',
+    *                               (LDA,N) if SIDE = 'R'
+    *          The i-th row must contain the vector which defines the
+    *          elementary reflector H(i), for i = 1,2,...,k, as returned by
+    *          DGERQF in the last k rows of its array argument A.
+    *          A is modified by the routine but restored on exit.
+    *
+    *  LDA     (input) INTEGER
+    *          The leading dimension of the array A. LDA >= max(1,K).
+    *
+    *  TAU     (input) DOUBLE PRECISION array, dimension (K)
+    *          TAU(i) must contain the scalar factor of the elementary
+    *          reflector H(i), as returned by DGERQF.
+    *
+    *  C       (input/output) DOUBLE PRECISION array, dimension (LDC,N)
+    *          On entry, the M-by-N matrix C.
+    *          On exit, C is overwritten by Q*C or Q**T*C or C*Q**T or C*Q.
+    *
+    *  LDC     (input) INTEGER
+    *          The leading dimension of the array C. LDC >= max(1,M).
+    *
+    *  WORK    (workspace/output) DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+    *          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+    *
+    *  LWORK   (input) INTEGER
+    *          The dimension of the array WORK.
+    *          If SIDE = 'L', LWORK >= max(1,N);
+    *          if SIDE = 'R', LWORK >= max(1,M).
+    *          For optimum performance LWORK >= N*NB if SIDE = 'L', and
+    *          LWORK >= M*NB if SIDE = 'R', where NB is the optimal
+    *          blocksize.
+    *
+    *          If LWORK = -1, then a workspace query is assumed; the routine
+    *          only calculates the optimal size of the WORK array, returns
+    *          this value as the first entry of the WORK array, and no error
+    *          message related to LWORK is issued by XERBLA.
+    *
+    *  INFO    (output) INTEGER
+    *          = 0:  successful exit
+    *          < 0:  if INFO = -i, the i-th argument had an illegal value
+    */
+    private void dormrq(char side, char trans, int m, int n, int k, double[][] A, int lda,
+                        double[] tau, double[][] C, int ldc, double[] work, int lwork, int[] info) {
+        int nbmax = 64;
+        int ldt = nbmax + 1;
+        boolean left;
+        boolean lquery;
+        boolean notran;
+        char transt;
+        int i;
+        int i1;
+        int i2;
+        int i3;
+        int ib;
+        int iinfo[] = new int[1];
+        int iws;
+        int ldwork;
+        int lwkopt = 0;
+        int mi = 0;
+        int nb = 0;
+        int nbmin;
+        int ni = 0;
+        int nq;
+        int nw;
+        double T[][] = new double[ldt][nbmax];
+        String name = null;
+        String opts = null;
+        char optsC[] = new char[2];
+        int p;
+        int q;
+        double array1[][];
+        double vec1[];
+        int len;
+        double work2[][];
+        
+        // Test the input arguments
+        info[0] = 0;
+        left = ((side == 'L') || (side == 'l'));
+        notran = ((trans == 'N') || (trans == 'n'));
+        lquery = (lwork == -1);
+        
+        // nq is the order of Q and nw is the minimum dimension of work.
+        if (left) {
+            nq = m;
+            nw = Math.max(1, n);
+        }
+        else {
+            nq = n;
+            nw = Math.max(1, m);
+        }
+        if ((!left) && (side != 'R') && (side != 'r')) {
+            info[0] = -1;
+        }
+        else if ((!notran) && (trans != 'T') && (trans != 't')) {
+            info[0] = -2;
+        }
+        else if (m < 0) {
+            info[0] = -3;
+        }
+        else if (n < 0) {
+            info[0] = -4;
+        }
+        else if ((k < 0) || (k > nq)) {
+            info[0] = -5;
+        }
+        else if (lda > Math.max(1, k)) {
+            info[0] = -7;
+        }
+        else if (ldc > Math.max(1, m)) {
+            info[0] = -10;
+        }
+        
+        if (info[0] == 0) {
+            if ((m == 0) || (n == 0)) {
+                lwkopt = 1;
+            }
+            else {
+                // Determine the block size. nb may be at most nbmax, where
+                // nbmax is used to define the local array T.
+                name = new String("DORMRQ");
+                optsC[0] = side;
+                optsC[1] = trans;
+                opts = new String(optsC);
+                nb = Math.min(nbmax, ilaenv(1, name, opts, m, n, k, -1));
+                lwkopt = nw*nb;
+            }
+            work[0] = lwkopt;
+            
+            if ((lwork < nw) && (!lquery)) {
+                info[0] = -12;
+            }
+        } // if (info[0] == 0)
+        
+        if (info[0] != 0) {
+            MipavUtil.displayError("dormrq had info[0] = " + info[0]);
+            return;
+        }
+        else if (lquery) {
+            return;
+        }
+        
+        // Quick return if possible
+        if ((m == 0) || (n == 0)) {
+            return;
+        }
+        
+        nbmin = 2;
+        ldwork = nw;
+        if ((nb > 1) && (nb < k)) {
+            iws = nw*nb;
+            if (lwork < iws) {
+                nb = lwork/ldwork;
+                name = new String("DORMRQ");
+                optsC[0] = side;
+                optsC[1] = trans;
+                opts = new String(optsC);
+                nbmin = Math.max(2, ilaenv(2, name, opts, m, n, k, -1));
+            } // if (lwork < iws)
+        } // if ((nb > 1) && (nb < k))
+        else {
+            iws = nw;
+        }
+        
+        if ((nb < nbmin) || (nb >= k)) {
+            // Used unblocked code
+            dormr2(side, trans, m, n, k, A, lda, tau, C, ldc, work, iinfo);
+        } // if ((nb < nbmin) || (nb >= k))
+        else {
+            // Use blocked code
+            if ((left && (!notran)) || ((!left) && notran)) {
+                i1 = 1;
+                i2 = k;
+                i3 = nb;
+            }
+            else {
+                i1 = ((k-1)/nb)*nb + 1;
+                i2 = 1;
+                i3 = -nb;
+            }
+            
+            if (left) {
+                ni = n;
+            }
+            else {
+                mi = m;
+            }
+            
+            if (notran) {
+                transt = 'T';
+            }
+            else {
+                transt = 'N';
+            }
+            
+            if (i3 == nb) {
+                for (i = i1; i <= i2; i += nb) {
+                    ib = Math.min(nb, k-i+1);  
+                    // Form the triangular factor of the block reflector
+                    // H = H(i+ib-1)...H(i+1) H(i)
+                    array1 = new double[ib][nq-k+i+ib-1];
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < nq-k+i+ib-1; q++) {
+                            array1[p][q] = A[i-1+p][q];
+                        }
+                    }
+                    vec1 = new double[ib];
+                    for (p = 0; p < ib; p++) {
+                        vec1[p] = tau[i-1+p];
+                    }
+                    dlarft('B', 'R', nq-k+i+ib-1, ib, array1, ib, vec1, T, ldt);
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < nq-k+i+ib-1; q++) {
+                            A[i-1+p][q] = array1[p][q];
+                        }
+                    }
+                    if (left) {
+                        // H or H' is applied to C(1:m-k+i+ib-1,1:n)
+                        mi = m - k + i + ib - 1;
+                        len = mi;
+                    }
+                    else {
+                        // H oro H' is applied to C(1:m,1:n-k+i+ib-1)
+                        ni = n - k + i + ib - 1;
+                        len = ni;
+                    }
+                    
+                    // Apply H or H'
+                    array1 = new double[ib][len];
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < len; q++) {
+                            array1[p][q] = A[i-1+p][q];
+                        }
+                    }
+                    work2 = new double[ldwork][ib];
+                    dlarfb(side, transt, 'B', 'R', mi, ni, ib, array1, ib, T, ldt, C, ldc, work2, ldwork);
+                } // for (i = i1; i <= i2; i += nb)
+            } // if (i3 == nb)
+            else { // i3 == -nb
+                for (i = i1; i >= i2; i -= nb) {
+                    ib = Math.min(nb, k-i+1);  
+                    // Form the triangular factor of the block reflector
+                    // H = H(i+ib-1)...H(i+1) H(i)
+                    array1 = new double[ib][nq-k+i+ib-1];
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < nq-k+i+ib-1; q++) {
+                            array1[p][q] = A[i-1+p][q];
+                        }
+                    }
+                    vec1 = new double[ib];
+                    for (p = 0; p < ib; p++) {
+                        vec1[p] = tau[i-1+p];
+                    }
+                    dlarft('B', 'R', nq-k+i+ib-1, ib, array1, ib, vec1, T, ldt);
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < nq-k+i+ib-1; q++) {
+                            A[i-1+p][q] = array1[p][q];
+                        }
+                    }
+                    if (left) {
+                        // H or H' is applied to C(1:m-k+i+ib-1,1:n)
+                        mi = m - k + i + ib - 1;
+                        len = mi;
+                    }
+                    else {
+                        // H oro H' is applied to C(1:m,1:n-k+i+ib-1)
+                        ni = n - k + i + ib - 1;
+                        len = ni;
+                    }
+                    
+                    // Apply H or H'
+                    array1 = new double[ib][len];
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < len; q++) {
+                            array1[p][q] = A[i-1+p][q];
+                        }
+                    }
+                    work2 = new double[ldwork][ib];
+                    dlarfb(side, transt, 'B', 'R', mi, ni, ib, array1, ib, T, ldt, C, ldc, work2, ldwork);    
+                } // for (i = i1; i >= i2; i-= nb)
+            } // else i3 == -nb
+        } // else 
+        work[0] = lwkopt;
+        return;
+    } // dormrq
+    
+    /** This is a port of version 3.2 LAPACK routine DORMR2.
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          CHARACTER          SIDE, TRANS
+          INTEGER            INFO, K, LDA, LDC, M, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   A( LDA, * ), C( LDC, * ), TAU( * ), WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DORMR2 overwrites the general real m by n matrix C with
+    *
+    *        Q * C  if SIDE = 'L' and TRANS = 'N', or
+    *
+    *        Q'* C  if SIDE = 'L' and TRANS = 'T', or
+    *
+    *        C * Q  if SIDE = 'R' and TRANS = 'N', or
+    *
+    *        C * Q' if SIDE = 'R' and TRANS = 'T',
+    *
+    *  where Q is a real orthogonal matrix defined as the product of k
+    *  elementary reflectors
+    *
+    *        Q = H(1) H(2) . . . H(k)
+    *
+    *  as returned by DGERQF. Q is of order m if SIDE = 'L' and of order n
+    *  if SIDE = 'R'.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  SIDE    (input) CHARACTER*1
+    *          = 'L': apply Q or Q' from the Left
+    *          = 'R': apply Q or Q' from the Right
+    *
+    *  TRANS   (input) CHARACTER*1
+    *          = 'N': apply Q  (No transpose)
+    *          = 'T': apply Q' (Transpose)
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix C. M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix C. N >= 0.
+    *
+    *  K       (input) INTEGER
+    *          The number of elementary reflectors whose product defines
+    *          the matrix Q.
+    *          If SIDE = 'L', M >= K >= 0;
+    *          if SIDE = 'R', N >= K >= 0.
+    *
+    *  A       (input) DOUBLE PRECISION array, dimension
+    *                               (LDA,M) if SIDE = 'L',
+    *                               (LDA,N) if SIDE = 'R'
+    *          The i-th row must contain the vector which defines the
+    *          elementary reflector H(i), for i = 1,2,...,k, as returned by
+    *          DGERQF in the last k rows of its array argument A.
+    *          A is modified by the routine but restored on exit.
+    *
+    *  LDA     (input) INTEGER
+    *          The leading dimension of the array A. LDA >= max(1,K).
+    *
+    *  TAU     (input) DOUBLE PRECISION array, dimension (K)
+    *          TAU(i) must contain the scalar factor of the elementary
+    *          reflector H(i), as returned by DGERQF.
+    *
+    *  C       (input/output) DOUBLE PRECISION array, dimension (LDC,N)
+    *          On entry, the m by n matrix C.
+    *          On exit, C is overwritten by Q*C or Q'*C or C*Q' or C*Q.
+    *
+    *  LDC     (input) INTEGER
+    *          The leading dimension of the array C. LDC >= max(1,M).
+    *
+    *  WORK    (workspace) DOUBLE PRECISION array, dimension
+    *                                   (N) if SIDE = 'L',
+    *                                   (M) if SIDE = 'R'
+    *
+    *  INFO    (output) INTEGER
+    *          = 0: successful exit
+    *          < 0: if INFO = -i, the i-th argument had an illegal value
+    */
+    private void dormr2(char side, char trans, int m, int n, int k, double[][] A, int lda,
+                        double[] tau, double[][] C, int ldc, double[] work, int[] info) {
+        boolean left;
+        boolean notran;
+        int i;
+        int i1;
+        int i2;
+        int i3;
+        int mi = 0;
+        int ni = 0;
+        int nq;
+        double aii;
+        int len;
+        double vec[];
+        int p;
+        
+        // Test the input arguments
+        info[0] = 0;
+        left = ((side == 'L') || (side == 'l'));
+        notran = ((trans == 'N') || (trans == 'n'));
+        
+        // nq is the order of Q
+        if (left) {
+            nq = m;
+        }
+        else {
+            nq = n;
+        }
+        if ((!left) && (side != 'R') && (side != 'r')) {
+            info[0] = -1;
+        }
+        else if ((!notran) && (trans != 'T') && (trans != 't')) {
+            info[0] = -2;
+        }
+        else if (m < 0) {
+            info[0] = -3;
+        }
+        else if (n < 0) {
+            info[0] = -4;
+        }
+        else if ((k < 0) || (k > nq)) {
+            info[0] = -5;
+        }
+        else if (lda < Math.max(1, k)) {
+            info[0] = -7;
+        }
+        else if (ldc < Math.max(1, m)) {
+            info[0] = -10;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dormr2 had info[0] = " + info[0]);
+            return;
+        }
+        
+        // Quick return if possible
+        if ((m == 0) || (n == 0) || (k == 0)) {
+            return;
+        }
+        
+        if ((left && (!notran)) || ((!left) && notran)) {
+            i1 = 1;
+            i2 = k;
+            i3 = 1;
+        }
+        else {
+            i1 = k;
+            i2 = 1;
+            i3 = -1;
+        }
+        
+        if (left) {
+            ni = n;
+        }
+        else {
+            mi = m;
+        }
+        
+        if (i3 == 1) {
+            for (i = i1; i <= i2; i++) {
+                if (left) {
+                    // H(i) is applied to C(1:m-k+i,1:n)
+                    mi = m - k + i;
+                    len = mi;
+                }
+                else {
+                    // H(i) is applied to C(1:m,1:n-k+i)
+                    ni = n - k + i;
+                    len = ni;
+                }
+                
+                // Apply H(i)
+                aii = A[i-1][nq-k+i-1];
+                A[i-1][nq-k+i-1] = 1.0;
+                vec = new double[len];
+                for (p = 0; p < len; p++) {
+                    vec[p] = A[i-1][p];
+                }
+                dlarf(side, mi, ni, vec, 1, tau[i-1], C, ldc, work);
+                A[i-1][nq-k+i-1] = aii;
+            } // for (i = i1; i <= i2; i++)
+        } // if (i3 == 1)
+        else { // i3 == -1
+            for (i = i1; i >= i2; i--) {
+                if (left) {
+                    // H(i) is applied to C(1:m-k+i,1:n)
+                    mi = m - k + i;
+                    len = mi;
+                }
+                else {
+                    // H(i) is applied to C(1:m,1:n-k+i)
+                    ni = n - k + i;
+                    len = ni;
+                }
+                
+                // Apply H(i)
+                aii = A[i-1][nq-k+i-1];
+                A[i-1][nq-k+i-1] = 1.0;
+                vec = new double[len];
+                for (p = 0; p < len; p++) {
+                    vec[p] = A[i-1][p];
+                }
+                dlarf(side, mi, ni, vec, 1, tau[i-1], C, ldc, work);
+                A[i-1][nq-k+i-1] = aii;    
+            } // for (i = i1; i >= i2; i--)
+        } // else i3 == -1
+        return;
+    } // dormr2
+    
+    /** This is a port of version 3.2 LAPACK routine DORGRQ.
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INFO, K, LDA, LWORK, M, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   A( LDA, * ), TAU( * ), WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DORGRQ generates an M-by-N real matrix Q with orthonormal rows,
+    *  which is defined as the last M rows of a product of K elementary
+    *  reflectors of order N
+    *
+    *        Q  =  H(1) H(2) . . . H(k)
+    *
+    *  as returned by DGERQF.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix Q. M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix Q. N >= M.
+    *
+    *  K       (input) INTEGER
+    *          The number of elementary reflectors whose product defines the
+    *          matrix Q. M >= K >= 0.
+    *
+    *  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
+    *          On entry, the (m-k+i)-th row must contain the vector which
+    *          defines the elementary reflector H(i), for i = 1,2,...,k, as
+    *          returned by DGERQF in the last k rows of its array argument
+    *          A.
+    *          On exit, the M-by-N matrix Q.
+    *
+    *  LDA     (input) INTEGER
+    *          The first dimension of the array A. LDA >= max(1,M).
+    *
+    *  TAU     (input) DOUBLE PRECISION array, dimension (K)
+    *          TAU(i) must contain the scalar factor of the elementary
+    *          reflector H(i), as returned by DGERQF.
+    *
+    *  WORK    (workspace/output) DOUBLE PRECISION array, dimension (MAX(1,LWORK))
+    *          On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+    *
+    *  LWORK   (input) INTEGER
+    *          The dimension of the array WORK. LWORK >= max(1,M).
+    *          For optimum performance LWORK >= M*NB, where NB is the
+    *          optimal blocksize.
+    *
+    *          If LWORK = -1, then a workspace query is assumed; the routine
+    *          only calculates the optimal size of the WORK array, returns
+    *          this value as the first entry of the WORK array, and no error
+    *          message related to LWORK is issued by XERBLA.
+    *
+    *  INFO    (output) INTEGER
+    *          = 0:  successful exit
+    *          < 0:  if INFO = -i, the i-th argument has an illegal value
+    */
+    private void dorgrq(int m, int n, int k, double A[][], int lda, double[] tau,
+                        double[] work, int lwork, int[] info) {
+        boolean lquery;
+        int i;
+        int ib;
+        int ii;
+        int iinfo[] = new int[1];
+        int iws;
+        int j;
+        int kk;
+        int L;
+        int ldwork = 0;
+        int lwkopt;
+        int nb = 0;
+        int nbmin;
+        int nx;
+        String name;
+        String opts;
+        double vec1[];
+        double array1[][];
+        int p;
+        int q;
+        double work2[][];
+        double work3[][];
+        
+        // Test the input arguments
+        info[0] = 0;
+        lquery = (lwork == -1);
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if (n < m) {
+            info[0] = -2;
+        }
+        else if ((k < 0) || (k > m)) {
+            info[0] = -3;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -5;
+        }
+        
+        if (info[0] == 0) {
+            if (m <= 0) {
+                lwkopt = 1;
+            }
+            else {
+                name = new String("DORGRQ");
+                opts = new String(" ");
+                nb = ilaenv(1, name, opts, m, n, k, -1);
+                lwkopt = m * nb;
+            }
+            work[0] = lwkopt;
+            
+            if ((lwork < Math.max(1, m)) && (!lquery)) {
+                info[0] = -8;
+            }
+        } // if (info[0] == 0)
+        
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dorgqr had info[0] = " + info[0]);
+            return;
+        }
+        else if (lquery) {
+            return;
+        }
+        
+        // Quick return if possible
+        if (m <= 0) {
+            return;
+        }
+        
+        nbmin = 2;
+        nx = 0;
+        iws = m;
+        if ((nb > 1) && (nb < k)) {
+            // Detrmine when to cross over from blocked to unblocked code.
+            name = new String("DORGRQ");
+            opts = new String(" ");
+            nx = Math.max(0, ilaenv(3, name, opts, m, n, k, -1));
+            if (nx < k) {
+                // Determine if workspace is large enough for blocked code.
+                
+                ldwork = m;
+                iws = ldwork * nb;
+                if (lwork < iws) {
+                    // Not enough workspace to use optimal nb:  reduce nb and
+                    // determine the minimum value of nb.
+                    nb = lwork/ldwork;
+                    nbmin = Math.max(2, ilaenv(2, name, opts, m, n, k, -1));
+                } // if (lwork < iws)
+            } // if (nx < k)
+        } // if ((nb > 1) && (nb < k))
+        
+        if ((nb >= nbmin) && (nb < k) && (nx < k)) {
+            // Use blocked code after the first block.
+            // The last kk rows are handled by the block method.
+            kk = Math.min(k, ((k-nx+nb-1)/nb)*nb);
+            
+            // Set A(1:m-kk,n-kk+1:n) to zero.
+            for (j = n-kk+1; j <= n; j++) {
+                for (i = 1; i <= m - kk; i++) {
+                    A[i-1][j-1] = 0.0;
+                }
+            }
+        } // if ((nb >= nbmin) && (nb < k) && (nx < k)) 
+        else {
+            kk = 0;
+        }
+        
+        // Use unblocked code for the first or only block.
+        dorgr2(m-kk, n-kk, k-kk, A, lda, tau, work, iinfo);
+        
+        if (kk > 0) {
+            // Use blocked code
+            for (i = k-kk+1; i <= k; i += nb) {
+                ib = Math.min(nb, k-i+1); 
+                ii = m - k + i;
+                if (ii > 1) {
+                    // Form the triangular factor of the block reflector
+                    // H = H(i+ib-1) ... H(i+1) H(i)
+                    array1 = new double[ib][n-k+i+ib-1];
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < n-k+i+ib-1; q++) {
+                            array1[p][q] = A[ii-1+p][q];
+                        }
+                    }
+                    vec1 = new double[ib];
+                    for (p = 0; p < ib; p++) {
+                        vec1[p] = tau[i-1+p];
+                    }
+                    work2 = new double[ldwork][ib];
+                    dlarft('B', 'R', n-k+i+ib-1, ib, array1, ib, vec1, work2, ldwork);
+                    for (p = 0; p < ib; p++) {
+                        for (q = 0; q < n-k+i+ib-1; q++) {
+                            A[ii-1+p][q] = array1[p][q];
+                        }
+                    }
+                    for (q = 0; q < ib; q++) {
+                        for (p = 0; p < ldwork; p++) {
+                            work[p + ldwork * q] = work2[p][q];
+                        }
+                    }
+                    work3 = new double[ldwork][ib];
+                    dlarfb('R', 'T', 'B', 'R', ii-1, n-k+i+ib-1, ib, array1, ib, work2,
+                           ldwork, A, lda, work3, ldwork);
+                } // if (ii > 1)
+                
+                // Apply H' to columns 1:n-k+i+ib-1 of current block
+                array1 = new double[ib][n-k+i+ib-1];
+                for (p = 0; p < ib; p++) {
+                    for (q = 0; q < n-k+i+ib-1; q++) {
+                        array1[p][q] = A[ii-1+p][q];
+                    }
+                }
+                vec1 = new double[ib];
+                for (p = 0; p < ib; p++) {
+                    vec1[p] = tau[i-1+p];
+                }
+                dorgr2(ib, n-k+i+ib-1, ib, array1, ib, vec1, work, iinfo);
+                for (p = 0; p < ib; p++) {
+                    for (q = 0; q < n-k+i+ib-1; q++) {
+                        A[ii-1+p][q] = array1[p][q];
+                    }
+                }
+                
+                // Set columns n-k+i+ib:n of current block to zero
+                for (L = n-k+i+ib; L <= n; L++) {
+                    for (j = ii; j <= ii + ib - 1; j++) {
+                        A[j-1][L-1] = 0.0;    
+                    } // for (j = ii; j <= ii + ib - 1; j++)
+                } // for (L = n-k+i+ib; L <= n; L++)
+            } // for (i = k-kk+1; i <= k; i += nb)
+            
+            work[0] = iws;
+            return;
+        } // if (kk > 0)
+    } // dorgrq
+    
+    /** This is a port of version 3.2 LAPACK routine DORGR2.
+    *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INFO, K, LDA, M, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   A( LDA, * ), TAU( * ), WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DORGR2 generates an m by n real matrix Q with orthonormal rows,
+    *  which is defined as the last m rows of a product of k elementary
+    *  reflectors of order n
+    *
+    *        Q  =  H(1) H(2) . . . H(k)
+    *
+    *  as returned by DGERQF.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix Q. M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix Q. N >= M.
+    *
+    *  K       (input) INTEGER
+    *          The number of elementary reflectors whose product defines the
+    *          matrix Q. M >= K >= 0.
+    *
+    *  A       (input/output) DOUBLE PRECISION array, dimension (LDA,N)
+    *          On entry, the (m-k+i)-th row must contain the vector which
+    *          defines the elementary reflector H(i), for i = 1,2,...,k, as
+    *          returned by DGERQF in the last k rows of its array argument
+    *          A.
+    *          On exit, the m by n matrix Q.
+    *
+    *  LDA     (input) INTEGER
+    *          The first dimension of the array A. LDA >= max(1,M).
+    *
+    *  TAU     (input) DOUBLE PRECISION array, dimension (K)
+    *          TAU(i) must contain the scalar factor of the elementary
+    *          reflector H(i), as returned by DGERQF.
+    *
+    *  WORK    (workspace) DOUBLE PRECISION array, dimension (M)
+    *
+    *  INFO    (output) INTEGER
+    *          = 0: successful exit
+    *          < 0: if INFO = -i, the i-th argument has an illegal value
+    */
+    private void dorgr2(int m, int n, int k, double[][] A, int lda, double[] tau,
+                        double[] work, int[] info) {
+        int i;
+        int ii;
+        int j;
+        int L;
+        int p;
+        double vec1[];
+        
+        // Test the input arguments
+        info[0] = 0;
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if (n < m) {
+            info[0] = -2;
+        }
+        else if ((k < 0) || (k > m)) {
+            info[0] = -3;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -5;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dorgr2 had info[0] = " + info[0]);
+            return;
+        }
+        
+        // Quick return if possible
+        if (m <= 0) {
+            return;
+        }
+        
+        if (k < m) {
+            // initialize rows 1:m-k to rows of the unit matrix
+            for (j = 1; j <= n; j++) {
+                for (L = 1; L <= m-k; L++) {
+                    A[L-1][j-1] = 0.0;
+                } // for (L = 1; L <= m-k; L++)
+                if ((j > n-m) && (j <= n-k)) {
+                    A[m+n+j-1][j-1] = 1.0;
+                }
+            } // for (j = 1; j <= n; j++)
+        } // if (k < m)
+        
+        for (i = 1; i <= k; i++) {
+            ii = m - k + i;
+            
+            // Apply H(i) to A(1:m-k+i,1:n-k+i) from the right
+            A[ii-1][n-m+ii-1] = 1.0;
+            vec1 = new double[n-m+ii];
+            for (p = 0; p < n-m+ii; p++) {
+                vec1[p] = A[ii-1][p];
+            }
+            dlarf('R', ii-1, n-m+ii, vec1, 1, tau[i-1], A, lda, work);
+            for (p = 0; p < n-m+ii-1; p++) {
+                A[ii-1][p] = -tau[i-1] * A[ii-1][p];
+            }
+            A[ii-1][n-m+ii-1] = 1.0 - tau[i-1];
+            
+            // Set A(m-k+i,n-k+i+1:n) to zero
+            for (L = n - m + ii + 1; L <= n; L++) {
+                A[ii-1][L-1] = 0.0;
+            }
+        } // for (i = 1; i <= k; i++)
+        return;
+    } // dorgr2
+    
+    /** This is a port of version 3.1 LAPACK test routine DQRT02.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             INTEGER            K, LDA, LWORK, M, N
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   A( LDA, * ), AF( LDA, * ), Q( LDA, * ),
+            $                   R( LDA, * ), RESULT( * ), RWORK( * ), TAU( * ),
+            $                   WORK( LWORK )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DQRT02 tests DORGQR, which generates an m-by-n matrix Q with
+       *  orthonornmal columns that is defined as the product of k elementary
+       *  reflectors.
+       *
+       *  Given the QR factorization of an m-by-n matrix A, DQRT02 generates
+       *  the orthogonal matrix Q defined by the factorization of the first k
+       *  columns of A; it compares R(1:n,1:k) with Q(1:m,1:n)'*A(1:m,1:k),
+       *  and checks that the columns of Q are orthonormal.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrix Q to be generated.  M >= 0.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of the matrix Q to be generated.
+       *          M >= N >= 0.
+       *
+       *  K       (input) INTEGER
+       *          The number of elementary reflectors whose product defines the
+       *          matrix Q. N >= K >= 0.
+       *
+       *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          The m-by-n matrix A which was factorized by DQRT01.
+       *
+       *  AF      (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          Details of the QR factorization of A, as returned by DGEQRF.
+       *          See DGEQRF for further details.
+       *
+       *  Q       (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+       *
+       *  R       (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the arrays A, AF, Q and R. LDA >= M.
+       *
+       *  TAU     (input) DOUBLE PRECISION array, dimension (N)
+       *          The scalar factors of the elementary reflectors corresponding
+       *          to the QR factorization in AF.
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+       *
+       *  LWORK   (input) INTEGER
+       *          The dimension of the array WORK.
+       *
+       *  RWORK   (workspace) DOUBLE PRECISION array, dimension (M)
+       *
+       *  RESULT  (output) DOUBLE PRECISION array, dimension (2)
+       *          The test ratios:
+       *          RESULT(1) = norm( R - Q'*A ) / ( M * norm(A) * EPS )
+       *          RESULT(2) = norm( I - Q'*Q ) / ( M * EPS )
+       */
+    private void dqrt02(int m, int n, int k, double[][] A, double[][] AF, double [][] Q,
+                        double[][] R, int lda, double[] tau, double[] work, int lwork,
+                        double[] rwork, double[] result) {
+        double rogue = -1.0E10;
+        int info[] = new int[1];
+        double anorm;
+        double eps;
+        double resid;
+        int row1;
+        int p;
+        int q;
+        double array1[][];
+        double array2[][];
+        
+        eps = dlamch('E'); // Epsilon
+        
+        // Copy trhe first k columns of the factorization to the array Q
+        dlaset('F', m, n, rogue, rogue, Q, lda);
+        row1 = Math.max(1, m-1);
+        array1 = new double[row1][k];
+        for (p = 0; p < row1; p++) {
+            for (q = 0; q < k; q++) {
+                array1[p][q] = AF[p+1][q];
+            }
+        }
+        array2 = new double[row1][k];
+        dlacpy('L', m-1, k, array1, row1, array2, row1);
+        for (p = 0; p < row1; p++) {
+            for (q = 0; q < k; q++) {
+                Q[p+1][q] = array2[p][q];
+            }
+        }
+        
+        // Generate the first n column of the matrix Q
+        srnamt = new String("DORGQR");
+        dorgqr(m, n, k, Q, lda, tau, work, lwork, info);
+        
+        // Copy R(1:n,1:k)
+        dlaset('F', n, k, 0.0, 0.0, R, lda);
+        dlacpy('U', n, k, AF, lda, R, lda);
+        
+        // Compute R(1:n,1:k) - Q(1:m,1:n)' * A(1:m,1:k)
+        dgemm('T', 'N', n, k, m, -1.0, Q, lda, A, lda, 1.0, R, lda);
+        
+        // Compute norm(R - Q'*A)/(m * norm(A) * eps).
+        anorm = dlange('1', m, k, A, lda, rwork);
+        resid = dlange('1', n, k, R, lda, rwork);
+        if (anorm > 0) {
+            result[0] = ((resid/(double)Math.max(1, m))/anorm)/eps;
+        }
+        else {
+            result[0] = 0;
+        }
+        
+        // Compute I - Q'*Q
+        dlaset('F', n, n, 0.0, 1.0, R, lda);
+        dsyrk('U', 'T', n, m, -1.0, Q, lda, 1.0, R, lda);
+        
+        // Compute norm(I - Q'*Q)/(m * eps).
+        resid = dlansy('1', 'U', n, R, lda, rwork);
+        result[1] = (resid/(double)Math.max(1,m))/eps;
+        return;
+    } // dqrt02
+    
+    /** This is a port of version 3.1 LAPACK test routine DQRT03.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             INTEGER            K, LDA, LWORK, M, N
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   AF( LDA, * ), C( LDA, * ), CC( LDA, * ),
+            $                   Q( LDA, * ), RESULT( * ), RWORK( * ), TAU( * ),
+            $                   WORK( LWORK )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DQRT03 tests DORMQR, which computes Q*C, Q'*C, C*Q or C*Q'.
+       *
+       *  DQRT03 compares the results of a call to DORMQR with the results of
+       *  forming Q explicitly by a call to DORGQR and then performing matrix
+       *  multiplication by a call to DGEMM.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  M       (input) INTEGER
+       *          The order of the orthogonal matrix Q.  M >= 0.
+       *
+       *  N       (input) INTEGER
+       *          The number of rows or columns of the matrix C; C is m-by-n if
+       *          Q is applied from the left, or n-by-m if Q is applied from
+       *          the right.  N >= 0.
+       *
+       *  K       (input) INTEGER
+       *          The number of elementary reflectors whose product defines the
+       *          orthogonal matrix Q.  M >= K >= 0.
+       *
+       *  AF      (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          Details of the QR factorization of an m-by-n matrix, as
+       *          returnedby DGEQRF. See SGEQRF for further details.
+       *
+       *  C       (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+       *
+       *  CC      (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+       *
+       *  Q       (workspace) DOUBLE PRECISION array, dimension (LDA,M)
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the arrays AF, C, CC, and Q.
+       *
+       *  TAU     (input) DOUBLE PRECISION array, dimension (min(M,N))
+       *          The scalar factors of the elementary reflectors corresponding
+       *          to the QR factorization in AF.
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+       *
+       *  LWORK   (input) INTEGER
+       *          The length of WORK.  LWORK must be at least M, and should be
+       *          M*NB, where NB is the blocksize for this environment.
+       *
+       *  RWORK   (workspace) DOUBLE PRECISION array, dimension (M)
+       *
+       *  RESULT  (output) DOUBLE PRECISION array, dimension (4)
+       *          The test ratios compare two techniques for multiplying a
+       *          random matrix C by an m-by-m orthogonal matrix Q.
+       *          RESULT(1) = norm( Q*C - Q*C )  / ( M * norm(C) * EPS )
+       *          RESULT(2) = norm( C*Q - C*Q )  / ( M * norm(C) * EPS )
+       *          RESULT(3) = norm( Q'*C - Q'*C )/ ( M * norm(C) * EPS )
+       *          RESULT(4) = norm( C*Q' - C*Q' )/ ( M * norm(C) * EPS )
+       */
+    private void dqrt03(int m, int n, int k, double[][] AF, double[][] C, double[][] CC,
+                        double[][] Q, int lda, double[] tau, double[] work, int lwork,
+                        double[] rwork, double[] result) {
+        double rogue = -1.0E10;
+        char side;
+        char trans;
+        int info[] = new int[1];
+        int iside;
+        int itrans;
+        int j;
+        int mc;
+        int nc;
+        double cnorm;
+        double eps;
+        double resid;
+        int iseed[] = new int[]{1988, 1989, 1990, 1991};
+        int row1;
+        int p;
+        int q;
+        double array1[][];
+        double array2[][];
+        double vec1[];
+        
+        eps = dlamch('E'); // epsilon
+        
+        // Copy the first k columns of the factorization to the array Q
+        dlaset('F', m, m, rogue, rogue, Q, lda);
+        row1 = Math.max(1, m-1);
+        array1 = new double[row1][k];
+        for (p = 0; p < row1; p++) {
+            for (q = 0; q < k; q++) {
+                array1[p][q] = AF[p+1][q];
+            }
+        }
+        array2 = new double[row1][k];
+        dlacpy('L', m-1, k, array1, row1, array2, row1);
+        for (p = 0; p < row1; p++) {
+            for (q = 0; q < k; q++) {
+                Q[p+1][q] = array2[p][q];
+            }
+        }
+        
+        // Generate the m by m matrix Q
+        srnamt = new String("DORGQR");
+        dorgqr(m, m, k, Q, lda, tau, work, lwork, info);
+        
+        for (iside = 1; iside <= 2; iside++) {
+            if (iside == 1) {
+                side = 'L';
+                mc = m;
+                nc = n;
+            }
+            else {
+                side = 'R';
+                mc = n;
+                nc = m;
+            }
+            
+            // Generate mc by nc matrix C
+            vec1 = new double[mc];
+            for (j = 1; j <= nc; j++) {
+                dlarnv(2, iseed, mc, vec1);
+                for (p = 0; p < mc; p++) {
+                    C[p][j-1] = vec1[p];
+                }
+            } // for (j = 1; j <= nc; j++)
+            cnorm = dlange('1', mc, nc, C, lda, rwork);
+            if (cnorm == 0.0) {
+                cnorm = 1.0;
+            }
+            
+            for (itrans = 1; itrans <= 2; itrans++) {
+                if (itrans == 1) {
+                    trans = 'N';
+                }
+                else {
+                    trans = 'T';
+                }
+                
+                // Copy C
+                dlacpy('F', mc, nc, C, lda, CC, lda);
+                
+                // Apply Q or Q' to C
+                srnamt = new String("DORMQR");
+                dormqr(side, trans, mc, nc, k, AF, lda, tau, CC, lda, work, lwork,
+                       info);
+                
+                // Form explicit product and subtract
+                if ((side == 'L') || (side == 'l')) {
+                    dgemm(trans, 'N', mc, nc, mc, -1.0, Q, lda, C, lda, 1.0, CC, lda);
+                }
+                else {
+                    dgemm('N', trans, mc, nc, nc, -1.0, C, lda, Q, lda, 1.0, CC, lda);
+                }
+                
+                // Compute error in the difference
+                resid = dlange('1', mc, nc, CC, lda, rwork);
+                result[(iside-1)*2+itrans-1] = resid/(Math.max(1,m)*cnorm*eps);
+            } // for (itrans = 1; itrans <= 2; itrans++)
+        } // for (iside = 1; iside <= 2; iside++)
+        return;
+    } // dqrt03
+
+
 }
