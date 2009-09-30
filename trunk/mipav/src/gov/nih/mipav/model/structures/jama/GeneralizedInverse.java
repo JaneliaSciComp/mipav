@@ -35,7 +35,7 @@ public class GeneralizedInverse {
     private String srnamt;
     
     /** Found in routine xlaenv */
-    private int iparms[] = new int[11];
+    private int iparms[];
     
     /** Found in routine dlatb4 */
     private boolean first_dlatb4 = true;
@@ -1728,6 +1728,9 @@ public class GeneralizedInverse {
         } // for (i = 0; i < n[0]; i++)
         return;
     } // ginvse
+    
+    // There are 3 self tests used in testing the port of dgelss.
+    // 1.) dchkqr_test() tests dgeqrf, dorgqr, and dormqr.  It gave all 30744 tests run passed the threshold.
     
     /* This is a port of dgelss, LAPACK driver routine from version 3.2
     *
@@ -15665,6 +15668,7 @@ ib = Math.min(nb, k-i+1);
         double work[] = new double[nmax*nmax];
         double rwork[] = new double[nmax];
         int iwork[] = new int[nmax];
+        iparms = new int[11];
         int i;
         double eps;
        
@@ -15820,6 +15824,7 @@ ib = Math.min(nb, k-i+1);
         int p;
         int q;
         double vec1[];
+        double resid[] = new double[1];
         
         // Initialize constants and the random number seed
         path = new String("DQR"); // D for double precision
@@ -15968,15 +15973,89 @@ ib = Math.min(nb, k-i+1);
                                     
                                     // Check error code from dgeqrs.
                                     if (info[0] != 0) {
-                                        
+                                        if ((nfail == 0) && (nerrs == 0)) {
+                                            Preferences.debug("Path = DQR\n");
+                                            Preferences.debug("QR decomposition of rectangular matrices\n");
+                                            Preferences.debug("QR matrix types:\n");
+                                            Preferences.debug("1. Diagonal\n");
+                                            Preferences.debug("2. Upper triangular\n");
+                                            Preferences.debug("3. Lower triangular\n");
+                                            Preferences.debug("4. Random, cndnum[0] = 2\n");
+                                            Preferences.debug("5. Random, cndnum[0] = sqrt(1.0/eps)\n");
+                                            Preferences.debug("6. Random, cndnum[0] = 0.1/eps\n");
+                                            Preferences.debug("7. Scaled near underflow\n");
+                                            Preferences.debug("8. Scaled near overflow\n");
+                                            Preferences.debug("Test ratios:\n");
+                                            Preferences.debug("1: norm(R - Q' * A)/(M * norm(A) * eps)\n");
+                                            Preferences.debug("2: norm(I - Q'*Q)/(M * eps)\n");
+                                            Preferences.debug("3: norm(Q*C - Q*C)/(M * norm(C) * eps)\n");
+                                            Preferences.debug("4: norm(C*Q - C*Q)/(M * norm(C) * eps)\n");
+                                            Preferences.debug("5: norm(Q' * C - Q' * C)/(M * norm(C) * eps)\n");
+                                            Preferences.debug("6: norm(C*Q' - C*Q')/(M * norm(C) * eps)\n");
+                                            Preferences.debug("7: norm(B - A * X)/(norm(A) * norm(X) * eps)\n");
+                                            Preferences.debug("8: Diagonal is not non-negative\n");
+                                        } // if ((nfail == 0) && (nerrs == 0))
+                                        nerrs++;
+                                        Preferences.debug("Error code from dgeqrs info[0] = " + info[0] + "\n");
+                                        Preferences.debug("m = " + m + " n = " + n + " nrhs = " + nrhs + "\n");
+                                        Preferences.debug("nb = " + nb + " type = " + imat + "\n");
                                     } // if (info[0] != 0)
+                                    
+                                    dget02('N', m, n, nrhs, A, lda, X, lda, B, lda, rwork, resid);
+                                    result[6] = resid[0];
+                                    nt++;
                                 } // if ((k == n) && (inb == 1))
                             } // if (m >= k)
+                            
+                            // Output information about the tests that did not pass the threshold.
+                            for (i = 1; i <= nt; i++) {
+                                if (result[i-1] >= thresh) {
+                                    if ((nfail == 0) && (nerrs == 0)) {
+                                        Preferences.debug("Path = DQR\n");
+                                        Preferences.debug("QR decomposition of rectangular matrices\n");
+                                        Preferences.debug("QR matrix types:\n");
+                                        Preferences.debug("1. Diagonal\n");
+                                        Preferences.debug("2. Upper triangular\n");
+                                        Preferences.debug("3. Lower triangular\n");
+                                        Preferences.debug("4. Random, cndnum[0] = 2\n");
+                                        Preferences.debug("5. Random, cndnum[0] = sqrt(1.0/eps)\n");
+                                        Preferences.debug("6. Random, cndnum[0] = 0.1/eps\n");
+                                        Preferences.debug("7. Scaled near underflow\n");
+                                        Preferences.debug("8. Scaled near overflow\n");
+                                        Preferences.debug("Test ratios:\n");
+                                        Preferences.debug("1: norm(R - Q' * A)/(M * norm(A) * eps)\n");
+                                        Preferences.debug("2: norm(I - Q'*Q)/(M * eps)\n");
+                                        Preferences.debug("3: norm(Q*C - Q*C)/(M * norm(C) * eps)\n");
+                                        Preferences.debug("4: norm(C*Q - C*Q)/(M * norm(C) * eps)\n");
+                                        Preferences.debug("5: norm(Q' * C - Q' * C)/(M * norm(C) * eps)\n");
+                                        Preferences.debug("6: norm(C*Q' - C*Q')/(M * norm(C) * eps)\n");
+                                        Preferences.debug("7: norm(B - A * X)/(norm(A) * norm(X) * eps)\n");
+                                        Preferences.debug("8: Diagonal is not non-negative\n");
+                                    } // if ((nfail == 0) && (nerrs == 0))
+                                    Preferences.debug("m = " + m + " n = " + n + " k = " + k + "\n");
+                                    Preferences.debug("nb = " + nb + " nx = " + nx + " type = " + imat + "\n");
+                                    Preferences.debug("Test = " + i + " with result = " + result[i-1] + "\n");
+                                    nfail++;
+                                } // if (result[i-1] >= thresh)
+                            } // for (i = 1; i <= nt; i++)
+                            nrun = nrun + nt;
                         } // for (inb = 1; inb <= nnb; inb++)
                     } // for (ik = 1; ik <= nk; ik++)
                 } // for (imat = 1; imat <= ntypes; imat++)
             } // for (in = 1; in <= nn; in++)
         } // for (im = 1; im <= nm; im++)
+        
+        // Output a summary of the results.
+        if (nfail > 0) {
+            Preferences.debug("In dchkqr " + nfail + " out of " + nrun + " tests failed to pass the threshold\n");
+        }
+        else {
+            Preferences.debug("In dchkqr all " + nrun + " tests run passed the threshold\n");
+        }
+        if (nerrs > 0) {
+            Preferences.debug("In dchkqr " + nerrs + " errors occurred\n");
+        }
+        return;
     } // dchkqr
     
     /** This is a port of a portion of version 3.1 LAPACK routine DERRQR.
@@ -17434,7 +17513,7 @@ ib = Math.min(nb, k-i+1);
         int irsign = 0;
         int iskew;
         int isym;
-        int isympk = 1;
+        int isympk = 0;
         int j;
         int jc;
         int jch;
@@ -23121,5 +23200,133 @@ ib = Math.min(nb, k-i+1);
         return;
     } // dqrt03
 
-
+    /** This is a port of version 3.1 LAPACK test routine DGET02.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             CHARACTER          TRANS
+             INTEGER            LDA, LDB, LDX, M, N, NRHS
+             DOUBLE PRECISION   RESID
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   A( LDA, * ), B( LDB, * ), RWORK( * ),
+            $                   X( LDX, * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DGET02 computes the residual for a solution of a system of linear
+       *  equations  A*x = b  or  A'*x = b:
+       *     RESID = norm(B - A*X) / ( norm(A) * norm(X) * EPS ),
+       *  where EPS is the machine epsilon.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  TRANS   (input) CHARACTER*1
+       *          Specifies the form of the system of equations:
+       *          = 'N':  A *x = b
+       *          = 'T':  A'*x = b, where A' is the transpose of A
+       *          = 'C':  A'*x = b, where A' is the transpose of A
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrix A.  M >= 0.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of the matrix A.  N >= 0.
+       *
+       *  NRHS    (input) INTEGER
+       *          The number of columns of B, the matrix of right hand sides.
+       *          NRHS >= 0.
+       *
+       *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          The original M x N matrix A.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A.  LDA >= max(1,M).
+       *
+       *  X       (input) DOUBLE PRECISION array, dimension (LDX,NRHS)
+       *          The computed solution vectors for the system of linear
+       *          equations.
+       *
+       *  LDX     (input) INTEGER
+       *          The leading dimension of the array X.  If TRANS = 'N',
+       *          LDX >= max(1,N); if TRANS = 'T' or 'C', LDX >= max(1,M).
+       *
+       *  B       (input/output) DOUBLE PRECISION array, dimension (LDB,NRHS)
+       *          On entry, the right hand side vectors for the system of
+       *          linear equations.
+       *          On exit, B is overwritten with the difference B - A*X.
+       *
+       *  LDB     (input) INTEGER
+       *          The leading dimension of the array B.  IF TRANS = 'N',
+       *          LDB >= max(1,M); if TRANS = 'T' or 'C', LDB >= max(1,N).
+       *
+       *  RWORK   (workspace) DOUBLE PRECISION array, dimension (M)
+       *
+       *  RESID   (output) DOUBLE PRECISION
+       *          The maximum over the number of right hand sides of
+       *          norm(B - A*X) / ( norm(A) * norm(X) * EPS ).
+       */
+    private void dget02(char trans, int m, int n, int nrhs, double[][] A, int lda,
+                        double[][] X, int ldx, double[][] B, int ldb, double[] rwork,
+                        double[] resid) {
+        int j;
+        int n1;
+        int n2;
+        double anorm;
+        double bnorm;
+        double eps;
+        double xnorm;
+        int p;
+        
+        // Quick exit if m == 0 or n == 0 or nrhs == 0
+        if ((m <= 0) || (n <= 0) || (nrhs <= 0)) {
+            resid[0] = 0.0;
+            return;
+        }
+        
+        if ((trans == 'T') || (trans == 't') || (trans == 'C') || (trans == 'c')) {
+            n1 = n;
+            n2 = m;
+        }
+        else {
+            n1 = m;
+            n2 = n;
+        }
+        
+        // Exit with resid[0] = 1/eps if anorm = 0.
+        eps = dlamch('E'); // Epsilon
+        anorm = dlange('1', n1, n2, A, lda, rwork);
+        if (anorm <= 0.0) {
+            resid[0] = 1.0/eps;
+            return;
+        }
+        
+        // Compute B - A*X  (or B - A'*X) and store in B.
+        dgemm(trans, 'N', n1, nrhs, n2, -1.0, A, lda, X, ldx, 1.0, B, ldb);
+        
+        // Compute the maximum overr the number of right hand sides of
+        // norm(B - A*X)/(norm(A) * norm(X) * eps).
+        resid[0] = 0.0;
+        for (j = 1; j <= nrhs; j++) {
+            bnorm = 0.0;
+            for (p = 0; p < n1; p++) {
+                bnorm += Math.abs(B[p][j-1]);
+            }
+            xnorm = 0.0;
+            for (p = 0; p < n2; p++) {
+                xnorm += Math.abs(X[p][j-1]);
+            }
+            if (xnorm <= 0.0) {
+                resid[0] = 1.0/eps;
+            }
+            else {
+                resid[0] = Math.max(resid[0], ((bnorm/anorm)/xnorm)/eps);
+            }
+        } // for (j = 1; j <= nrhs; j++)
+        return;
+    } // dget02
 }
