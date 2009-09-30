@@ -779,6 +779,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
+    
     /**
      * Class for specifying optimization function for AlgorithmSimplexOpt.
      */
@@ -788,7 +789,11 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
          * CostFunction constructor.
          */
         public CostFunction() { }
-
+        
+        public int getCostFunction()
+        {
+            return 0;
+        }
         /**
          * Filler to implement cost functions from AlgorithmOptimizeFunctionBase.
          *

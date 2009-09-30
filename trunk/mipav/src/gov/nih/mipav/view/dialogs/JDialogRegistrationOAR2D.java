@@ -1646,6 +1646,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         if (!doColor) {
             comboBoxCostFunct.addItem("Normalized mutual information");
             comboBoxCostFunct.addItem("Normalized mutual information - GPU");
+            comboBoxCostFunct.addItem("Normalized mutual information - GPU2");
         }
 
         comboBoxCostFunct.setSelectedIndex(0);
@@ -2432,7 +2433,10 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                         break;
 
                     case 4:
-                        cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU;
+                        cost = AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU;
+                        break;
+                    case 5:
+                        cost = AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU_LM;
                         break;
 
                     default:

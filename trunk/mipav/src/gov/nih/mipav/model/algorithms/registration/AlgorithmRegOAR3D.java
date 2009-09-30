@@ -2071,7 +2071,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
     public Vector<MatrixListItem>[] levelEight(ModelSimpleImage ref, ModelSimpleImage input,
 			float progressFrom, float progressTo) {
         AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 32, 1);      
-        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        if ((m_kGPUCost != null) && 
+                ((costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
+                        (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) )
         {
             System.err.println( "Level 8 " );
             m_kGPUCost.initImages( ref, input, 32 );
@@ -2423,7 +2425,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 			Vector<MatrixListItem> minima, Vector<MatrixListItem> optMinima, float progressFrom,
 			float progressTo) {
 		AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 64, 1);
-        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        if ((m_kGPUCost != null) && 
+                ((costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
+                        (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) )
         {
             System.err.println( "Level 4 " );
             m_kGPUCost.initImages( ref, input, 64 );
@@ -2692,7 +2696,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 		MatrixListItem item2;
 		
         AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 256, 1);
-        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        if ((m_kGPUCost != null) && 
+                ((costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
+                        (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) )
         {
             System.err.println( "Level 1 " );
             m_kGPUCost.initImages( ref, input, 256 );
@@ -2784,7 +2790,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 			float progressTo) {
         fireProgressStateChanged((int)progressFrom);
 		AlgorithmCostFunctions cost = new AlgorithmCostFunctions(ref, input, costChoice, 128, 1);
-        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        if ((m_kGPUCost != null) && 
+                ((costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
+                        (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) )
         {
             System.err.println( "Level 2 " );
             m_kGPUCost.initImages( ref, input, 128 );

@@ -414,7 +414,10 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         public CostFunction() {
             slice = 0;
         }
-
+        public int getCostFunction()
+        {
+            return 0;
+        }
         /**
          * DOCUMENT ME!
          *
