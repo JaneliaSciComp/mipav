@@ -240,34 +240,17 @@ void v_LineMinimizationV()
     }
     
     gl_FrontColor = InverseTransform[0];
-//     gl_FrontColor.r = InverseTransform[0][0];
-//     gl_FrontColor.g = InverseTransform[0][1];
-//     gl_FrontColor.b = InverseTransform[0][2];
-//     gl_FrontColor.a = InverseTransform[0][3];
-
     if ( gl_Vertex.z == 0.3 )
     {
-    gl_FrontColor = InverseTransform[1];
-//         gl_FrontColor.r = InverseTransform[1][0];
-//         gl_FrontColor.g = InverseTransform[1][1];
-//         gl_FrontColor.b = InverseTransform[1][2];
-//         gl_FrontColor.a = InverseTransform[1][3];
+        gl_FrontColor = InverseTransform[1];
     }
     else if ( gl_Vertex.z == 0.7 )
     {
-    gl_FrontColor = InverseTransform[2];
-//         gl_FrontColor.r = InverseTransform[2][0];
-//         gl_FrontColor.g = InverseTransform[2][1];
-//         gl_FrontColor.b = InverseTransform[2][2];
-//         gl_FrontColor.a = InverseTransform[2][3];
+        gl_FrontColor = InverseTransform[2];
     }
     else if ( gl_Vertex.z == 1.0 )
     {
-    gl_FrontColor = InverseTransform[3];
-//         gl_FrontColor.r = InverseTransform[3][0];
-//         gl_FrontColor.g = InverseTransform[3][1];
-//         gl_FrontColor.b = InverseTransform[3][2];
-//         gl_FrontColor.a = InverseTransform[3][3];
+        gl_FrontColor = InverseTransform[3];
     }
     gl_Position = gl_Vertex;
     gl_Position.z = 0;
