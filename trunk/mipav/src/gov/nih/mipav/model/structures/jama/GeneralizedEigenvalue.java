@@ -1749,7 +1749,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
          return;
      } // dchkqr
     
-    /** This dchkr_test routine is a port of a portion of the version 3.1.1 LAPACK test routine DCHKAA by
+    /** This dchkqr_test routine is a port of a portion of the version 3.1.1 LAPACK test routine DCHKAA by
      * Univ. of Tennessee, Univ. Of California Berkeley and NAG Ltd., January, 2007. and some values from 
      * the test data file dtest.in.
      */
@@ -2227,6 +2227,13 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
         if (info[0] != -1) {
             Preferences.debug("dgeqr2(-1, 0, A, 1, b, w, info) produced info[0] = " + info[0] +
             " instead of -1\n");
+            npass--;     
+        }
+        
+        dgeqr2(0, -1, A, 1, b, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgeqr2(0, -1, A, 1, b, w, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
             npass--;     
         }
         
