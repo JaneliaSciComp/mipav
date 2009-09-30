@@ -314,7 +314,11 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
          * Empty constructor.
          */
         public CostFunction() { }
-
+        
+        public int getCostFunction()
+        {
+            return 0;
+        }
         /**
          * Filler to implement cost functions from AlgorithmOptimizeFunctionBase.
          *

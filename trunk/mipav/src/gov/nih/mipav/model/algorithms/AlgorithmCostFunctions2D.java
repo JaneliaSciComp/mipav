@@ -77,6 +77,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     /** DOCUMENT ME! */
     public static final int LEAST_SQUARES_COLOR = 18;
     public static final int NORMALIZED_MUTUAL_INFORMATION_GPU = 19;
+    public static final int NORMALIZED_MUTUAL_INFORMATION_GPU_LM = 20;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -203,7 +204,12 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+    public int getCostFunction()
+    {
+        return costFunctID;
+    }
+    
+    
     /**
      * Not implemented in this class.
      *
@@ -311,6 +317,13 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
                 value = normalizedMutualInformationSmoothedWgt(affMatrix);
                 break;                
             case NORMALIZED_MUTUAL_INFORMATION_GPU:
+                if ( m_kGPUCost != null )
+                {
+                    m_kGPUCost.calcError(affMatrix);
+                    value = m_kGPUCost.getError();   
+                }
+                break;
+            case NORMALIZED_MUTUAL_INFORMATION_GPU_LM:
                 if ( m_kGPUCost != null )
                 {
                     m_kGPUCost.calcError(affMatrix);

@@ -170,6 +170,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         {
             kWorld.display( kWorld.GetCanvas() );
         }
+        kWorld.GetCanvas().getContext().release();
         if ( !kWorld.checkStatus() )
         {
             return null;

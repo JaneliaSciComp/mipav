@@ -1577,6 +1577,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         if (!doColor) {
             comboBoxCostFunct.addItem("Normalized mutual information");
             comboBoxCostFunct.addItem("Normalized mutual information - GPU");
+            comboBoxCostFunct.addItem("Normalized mutual information - GPU2");
         }
 
         // comboBoxCostFunct.addItem("Normalized mutual information smoothed");
@@ -2279,10 +2280,15 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                         cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED;
                         costName = "NORMALIZED_MUTUAL_INFORMATION_SMOOTHED";
                         break;
-                        
+
                     case 4:
                         cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU;
                         costName = "NORMALIZED_MUTUAL_INFORMATION_GPU";
+                        break;
+                        
+                    case 5:
+                        cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM;
+                        costName = "NORMALIZED_MUTUAL_INFORMATION_GPU_LM";
                         break;
 
                     default:

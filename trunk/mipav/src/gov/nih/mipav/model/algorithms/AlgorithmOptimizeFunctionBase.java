@@ -28,4 +28,6 @@ public interface AlgorithmOptimizeFunctionBase {
      * @return  DOCUMENT ME!
      */
     double cost(TransMatrix tMatrix);
+    
+    int getCostFunction();
 }

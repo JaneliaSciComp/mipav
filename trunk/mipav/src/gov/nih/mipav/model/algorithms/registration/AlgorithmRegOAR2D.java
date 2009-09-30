@@ -2330,7 +2330,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     public Vector<MatrixListItem>[] levelEight(ModelSimpleImage ref, ModelSimpleImage input) {
         double factor;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 32, 1);
-        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        if ((m_kGPUCost != null) && 
+                ((costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
+                        (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) ) 
         {
             m_kGPUCost.initImages( ref, input, 32 );
             cost.setGPUCost(m_kGPUCost);
@@ -2550,7 +2552,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      */
     public Vector<MatrixListItem> levelFour(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima, Vector<MatrixListItem> optMinima) {
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 64, 1);
-        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        if ((m_kGPUCost != null) && 
+                ((costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
+                        (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) ) 
         {
             m_kGPUCost.initImages( ref, input, 64 );
             cost.setGPUCost(m_kGPUCost);
@@ -2759,7 +2763,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         AlgorithmPowellOptBase powell;
         MatrixListItem item2;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 256, 1);
-        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        if ((m_kGPUCost != null) && 
+                ((costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
+                        (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) ) 
         {
             m_kGPUCost.initImages( ref, input, 256 );
             cost.setGPUCost(m_kGPUCost);
@@ -2833,7 +2839,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         AlgorithmPowellOptBase powell;
         MatrixListItem item2;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 256, 1);
-        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        if ((m_kGPUCost != null) && 
+                ((costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
+                        (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) ) 
         {
             m_kGPUCost.initImages( ref, input, 256 );
             cost.setGPUCost(m_kGPUCost);
@@ -2907,7 +2915,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      */
     public MatrixListItem levelTwo(ModelSimpleImage ref, ModelSimpleImage input, Vector<MatrixListItem> minima) {
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 128, 1);
-        if ((m_kGPUCost != null) && (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) )
+        if ((m_kGPUCost != null) && 
+                ((costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
+                        (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) ) 
         {
             m_kGPUCost.initImages( ref, input, 128 );
             cost.setGPUCost(m_kGPUCost);

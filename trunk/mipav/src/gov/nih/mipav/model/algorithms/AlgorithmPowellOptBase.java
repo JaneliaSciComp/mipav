@@ -433,11 +433,11 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         //Profile.clear();
         //Profile.start();
         boolean bLineMinDone = false;
-        if ( costFunction instanceof AlgorithmCostFunctions2D )
+        if ( (costFunction instanceof AlgorithmCostFunctions2D) && (costFunction.getCostFunction() == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU_LM) )
         {
             if ( ((AlgorithmCostFunctions2D)costFunction).isGPULineMin() )
             {
-                
+                //System.err.println( "GPU LineMinimization" );
                 float[] bracketB = ((AlgorithmCostFunctions2D)costFunction).lineMin( toOrigin, fromOrigin, 
                         0f, 2f, startPoint, pt, pt.length, unit_directions, unit_tolerance, (float)minDist,
                         bracket.a, bracket.functionAtA, bracket.b, bracket.functionAtB, 
@@ -447,11 +447,11 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                 bLineMinDone = true;
             }
         }
-        else if ( costFunction instanceof AlgorithmCostFunctions )
+        else if ( (costFunction instanceof AlgorithmCostFunctions) && (costFunction.getCostFunction() == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM) )
         {
             if ( ((AlgorithmCostFunctions)costFunction).isGPULineMin() )
             {
-                
+                //System.err.println( "3D GPU LineMinimization" );
                 float[] bracketB = ((AlgorithmCostFunctions)costFunction).lineMin( toOrigin, fromOrigin, 
                         0f, 3f, startPoint, pt, pt.length, unit_directions, unit_tolerance, (float)minDist,
                         bracket.a, bracket.functionAtA, bracket.b, bracket.functionAtB, 
@@ -461,80 +461,75 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                 bLineMinDone = true;
             }
         }
-
-        //Profile.stop();
-        //Profile.setFileName( "profile_out"  );
-        //Profile.shutdown();
         if ( !bLineMinDone )
         {
+            while (((++count) < 100) && (Math.abs(bracket.c - bracket.a) > unit_tolerance) && ((parent == null)?true:!parent.isThreadStopped())) {
 
-        while (((++count) < 100) && (Math.abs(bracket.c - bracket.a) > unit_tolerance) && ((parent == null)?true:!parent.isThreadStopped())) {
+                if (count > 0) {
+                    xNew = nextPoint(bracket);
+                } else {
+                    xNew = extrapolatePoint(bracket);
+                }
 
-            if (count > 0) {
-                xNew = nextPoint(bracket);
-            } else {
-                xNew = extrapolatePoint(bracket);
+                double directionN = 1.0;
+
+                if (bracket.c < bracket.a) {
+                    directionN = -1.0;
+                }
+
+                if (Math.abs(xNew - bracket.a) < minDist) {
+                    xNew = bracket.a + (directionN * minDist);
+                }
+
+                if (Math.abs(xNew - bracket.c) < minDist) {
+                    xNew = bracket.c - (directionN * minDist);
+                }
+
+                if (Math.abs(xNew - bracket.b) < minDist) {
+                    xNew = extrapolatePoint(bracket);
+                }
+
+                if (Math.abs(bracket.b - bracket.a) < (4 * minDist)) {
+                    xNew = bracket.b + (directionN * 5 * minDist);
+                }
+
+                if (Math.abs(bracket.b - bracket.c) < (4 * minDist)) {
+                    xNew = bracket.b - (directionN * 5 * minDist);
+                }
+
+                yNew = oneDimension(startPoint, pt, xNew, unit_directions);
+                //System.err.println( yNew );
+                if (((xNew - bracket.b) * (bracket.c - bracket.b)) > 0) { // is xnew between bracket.c and bracket.b ?
+
+                    // swap bracket.a and bracket.c so that xnew is between bracket.a and bracket.b
+                    double xtemp = bracket.a;
+
+                    bracket.a = bracket.c;
+                    bracket.c = xtemp;
+
+                    double ytemp = bracket.functionAtA;
+
+                    bracket.functionAtA = bracket.functionAtC;
+                    bracket.functionAtC = ytemp;
+                }
+
+                if (yNew < bracket.functionAtB) {
+
+                    // new interval is [bracket.b,bracket.a] with xNew as best point in the middle
+                    bracket.c = bracket.b;
+                    bracket.functionAtC = bracket.functionAtB;
+                    bracket.b = xNew;
+                    bracket.functionAtB = yNew;
+                } else {
+
+                    // new interval is  [bracket.c,xnew] with bracket.b as best point still
+                    bracket.a = xNew;
+                    bracket.functionAtA = yNew;
+                }
             }
-
-            double directionN = 1.0;
-
-            if (bracket.c < bracket.a) {
-                directionN = -1.0;
-            }
-
-            if (Math.abs(xNew - bracket.a) < minDist) {
-                xNew = bracket.a + (directionN * minDist);
-            }
-
-            if (Math.abs(xNew - bracket.c) < minDist) {
-                xNew = bracket.c - (directionN * minDist);
-            }
-
-            if (Math.abs(xNew - bracket.b) < minDist) {
-                xNew = extrapolatePoint(bracket);
-            }
-
-            if (Math.abs(bracket.b - bracket.a) < (4 * minDist)) {
-                xNew = bracket.b + (directionN * 5 * minDist);
-            }
-
-            if (Math.abs(bracket.b - bracket.c) < (4 * minDist)) {
-                xNew = bracket.b - (directionN * 5 * minDist);
-            }
-
-            yNew = oneDimension(startPoint, pt, xNew, unit_directions);
-            //System.err.println( yNew );
-            if (((xNew - bracket.b) * (bracket.c - bracket.b)) > 0) { // is xnew between bracket.c and bracket.b ?
-
-                // swap bracket.a and bracket.c so that xnew is between bracket.a and bracket.b
-                double xtemp = bracket.a;
-
-                bracket.a = bracket.c;
-                bracket.c = xtemp;
-
-                double ytemp = bracket.functionAtA;
-
-                bracket.functionAtA = bracket.functionAtC;
-                bracket.functionAtC = ytemp;
-            }
-
-            if (yNew < bracket.functionAtB) {
-
-                // new interval is [bracket.b,bracket.a] with xNew as best point in the middle
-                bracket.c = bracket.b;
-                bracket.functionAtC = bracket.functionAtB;
-                bracket.b = xNew;
-                bracket.functionAtB = yNew;
-            } else {
-
-                // new interval is  [bracket.c,xnew] with bracket.b as best point still
-                bracket.a = xNew;
-                bracket.functionAtA = yNew;
-            }
-        }
-        //System.err.println( "CPU BracketA = " + bracket.a + " " + bracket.functionAtA );
-        //System.err.println( "BracketB = " + bracket.b + " " + bracket.functionAtB );
-        //System.err.println( "BracketC = " + bracket.c + " " + bracket.functionAtC );
+            //System.err.println( "CPU BracketA = " + bracket.a + " " + bracket.functionAtA );
+            //System.err.println( "BracketB = " + bracket.b + " " + bracket.functionAtB );
+            //System.err.println( "BracketC = " + bracket.c + " " + bracket.functionAtC );
         }
         for (int i = 0; i < dof; i++) {
             pt[i] = (bracket.b * unit_directions[i]) + pt[i];
