@@ -1730,7 +1730,8 @@ public class GeneralizedInverse {
     } // ginvse
     
     // There are 3 self tests used in testing the port of dgelss.
-    // 1.) dchkqr_test() tests dgeqrf, dorgqr, and dormqr.  It gave all 30744 tests run passed the threshold.
+    // 1.) dchkqr_test() tests dgeqrf, dorgqr, and dormqr.  All 30744 tests run passed the threshold.
+    // 2.) dchklq_test() tests dgelqf, dorglq, and dormlq.  All 30744 tests run passed the threshold.
     
     /* This is a port of dgelss, LAPACK driver routine from version 3.2
     *
@@ -15584,7 +15585,7 @@ ib = Math.min(nb, k-i+1);
         return;
     } // dgemm
     
-    /** This dchkr_test routine is a port of a portion of the version 3.1.1 LAPACK test routine DCHKAA by
+    /** This dchkqr_test routine is a port of a portion of the version 3.1.1 LAPACK test routine DCHKAA by
      * Univ. of Tennessee, Univ. Of California Berkeley and NAG Ltd., January, 2007. and some values from 
      * the test data file dtest.in.
      */
@@ -16056,7 +16057,7 @@ ib = Math.min(nb, k-i+1);
             Preferences.debug("In dchkqr " + nerrs + " errors occurred\n");
         }
         return;
-    } // dchkqr
+    } // dchkqr // dchkqr
     
     /** This is a port of a portion of version 3.1 LAPACK routine DERRQR.
      * *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
@@ -16124,6 +16125,13 @@ ib = Math.min(nb, k-i+1);
         if (info[0] != -1) {
             Preferences.debug("dgeqr2(-1, 0, A, 1, b, w, info) produced info[0] = " + info[0] +
             " instead of -1\n");
+            npass--;     
+        }
+        
+        dgeqr2(0, -1, A, 1, b, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgeqr2(0, -1, A, 1, b, w, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
             npass--;     
         }
         
@@ -22979,7 +22987,7 @@ ib = Math.min(nb, k-i+1);
         
         eps = dlamch('E'); // Epsilon
         
-        // Copy trhe first k columns of the factorization to the array Q
+        // Copy the first k columns of the factorization to the array Q
         dlaset('F', m, n, rogue, rogue, Q, lda);
         row1 = Math.max(1, m-1);
         array1 = new double[row1][k];
@@ -22996,7 +23004,7 @@ ib = Math.min(nb, k-i+1);
             }
         }
         
-        // Generate the first n column of the matrix Q
+        // Generate the first n columns of the matrix Q
         srnamt = new String("DORGQR");
         dorgqr(m, n, k, Q, lda, tau, work, lwork, info);
         
@@ -23329,4 +23337,1449 @@ ib = Math.min(nb, k-i+1);
         } // for (j = 1; j <= nrhs; j++)
         return;
     } // dget02
+    
+    /** This dchklq_test routine is a port of a portion of the version 3.1.1 LAPACK test routine DCHKAA by
+     * Univ. of Tennessee, Univ. Of California Berkeley and NAG Ltd., January, 2007. and some values from 
+     * the test data file dtest.in.
+     */
+    public void dchklq_test() {
+        
+        // Number of values of m
+        int nm = 7;
+        
+        // Values of m (row dimension)
+        // dtest.in uses 50 rather than 16
+        int[] mval = new int[] { 0, 1, 2, 3, 5, 10, 16 };
+        
+        // Number of values of n
+        int nn = 7;
+        
+        // Values of n (column dimension)
+        // dtest.in uses 50 rather than 16
+        int[] nval = new int[] { 0, 1, 2, 3, 5, 10, 16 };
+        
+        // Number of values of nrhs
+        // dchkaa has nns = 1.  dtest.in uses nns = 3.
+        int nns = 1;
+        
+        // Values of nrhs (number of right hand sides)
+        // dchkaa uses only 2.  dtest.in uses 1, 2, 15.
+        // Since dchkr only accepts nrhs = nsval[0] use only 2.
+        int[] nsval = new int[]{2};
+        
+        // Number of values of nb
+        int nnb = 5;
+        
+        // Values of nb (the blocksize)
+        int nbval[] = new int[] {1, 3, 3, 3, 20};
+        
+        // Values of nx (crossover point)
+        // There are nnb values of nx.
+        int nxval[] = new int[] {1, 0, 5, 9, 1};
+        
+        // Number of values of rank
+        int nrank = 3;
+        
+        // Values of rank (as a % of n)
+        int rankval[] = new int[] {30, 50, 90};
+        
+        // Threshold value of test ratio
+        // dchkaa has 20.0, dtest.in has 30.0
+        double thresh = 20.0;
+        
+        // Test the LAPACK routines
+        boolean tstchk = true;
+        
+        // Test the driver routines
+        boolean tstdrv = true;
+        
+        // Test the error exits
+        // Passed all 49 exits on test.
+        // Put at false so as not to have to hit okay to 49 displayError messages.
+        boolean tsterr = false;
+        
+        // The maximum allowable value for n
+        int nmax = 132;
+        
+        // The number of different values that can be used for each of m, n, nrhs, nb, and nx
+        int maxin = 12;
+        
+        // The maximum number of right hand sides
+        int maxrhs = 16;
+        int nmats = 8;
+        int ntypes = 8;
+        int nrhs = nsval[0];
+        boolean dotype[] = new boolean[ntypes];
+        double A[][] = new double[nmax][nmax];
+        double AF[][] = new double[nmax][nmax];
+        double AQ[][] = new double[nmax][nmax];
+        double AL[][] = new double[nmax][nmax];
+        double AC[][] = new double[nmax][nmax];
+        double B[][] = new double[nmax][nrhs];
+        double X[][] = new double[nmax][nrhs];
+        double XACT[][] = new double[nmax][nrhs];
+        double tau[] = new double[nmax];
+        double work[] = new double[nmax*nmax];
+        double rwork[] = new double[nmax];
+        int iwork[] = new int[nmax];
+        iparms = new int[11];
+        int i;
+        double eps;
+       
+        for (i = 0; i < ntypes; i++) {
+            dotype[i] = true;
+        }
+        
+        // Output the machine dependent constants
+        eps = dlamch('U');
+        Preferences.debug("Underflow threshold = " + eps + "\n");
+        eps = dlamch('O');
+        Preferences.debug("Overflow threshold = " + eps + "\n");
+        eps = dlamch('E');
+        Preferences.debug("Precision = " + eps + "\n");
+        
+        dchklq(dotype, nm, mval, nn, nval, nnb, nbval, nxval, nrhs, thresh, tsterr, nmax, 
+               A, AF, AQ, AL, AC, B, X, XACT, tau, work, rwork, iwork);
+    } // dchklq_test
+    
+    /** This is a port of version 3.1 LAPACK test routine DCHKLQ.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             LOGICAL            TSTERR
+             INTEGER            NM, NMAX, NN, NNB, NOUT, NRHS
+             DOUBLE PRECISION   THRESH
+       *     ..
+       *     .. Array Arguments ..
+             LOGICAL            DOTYPE( * )
+             INTEGER            IWORK( * ), MVAL( * ), NBVAL( * ), NVAL( * ),
+            $                   NXVAL( * )
+             DOUBLE PRECISION   A( * ), AC( * ), AF( * ), AL( * ), AQ( * ),
+            $                   B( * ), RWORK( * ), TAU( * ), WORK( * ),
+            $                   X( * ), XACT( * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DCHKLQ tests DGELQF, DORGLQ and DORMLQ.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  DOTYPE  (input) LOGICAL array, dimension (NTYPES)
+       *          The matrix types to be used for testing.  Matrices of type j
+       *          (for 1 <= j <= NTYPES) are used for testing if DOTYPE(j) =
+       *          .TRUE.; if DOTYPE(j) = .FALSE., then type j is not used.
+       *
+       *  NM      (input) INTEGER
+       *          The number of values of M contained in the vector MVAL.
+       *
+       *  MVAL    (input) INTEGER array, dimension (NM)
+       *          The values of the matrix row dimension M.
+       *
+       *  NN      (input) INTEGER
+       *          The number of values of N contained in the vector NVAL.
+       *
+       *  NVAL    (input) INTEGER array, dimension (NN)
+       *          The values of the matrix column dimension N.
+       *
+       *  NNB     (input) INTEGER
+       *          The number of values of NB and NX contained in the
+       *          vectors NBVAL and NXVAL.  The blocking parameters are used
+       *          in pairs (NB,NX).
+       *
+       *  NBVAL   (input) INTEGER array, dimension (NNB)
+       *          The values of the blocksize NB.
+       *
+       *  NXVAL   (input) INTEGER array, dimension (NNB)
+       *          The values of the crossover point NX.
+       *
+       *  NRHS    (input) INTEGER
+       *          The number of right hand side vectors to be generated for
+       *          each linear system.
+       *
+       *  THRESH  (input) DOUBLE PRECISION
+       *          The threshold value for the test ratios.  A result is
+       *          included in the output file if RESULT >= THRESH.  To have
+       *          every test ratio printed, use THRESH = 0.
+       *
+       *  TSTERR  (input) LOGICAL
+       *          Flag that indicates whether error exits are to be tested.
+       *
+       *  NMAX    (input) INTEGER
+       *          The maximum value permitted for M or N, used in dimensioning
+       *          the work arrays.
+       *
+       *  A       (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX]
+       *
+       *  AF      (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX]
+       *
+       *  AQ      (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX]
+       *
+       *  AL      (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX]
+       *
+       *  AC      (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX]
+       *
+       *  B       (workspace) DOUBLE PRECISION array, dimension [NMAX][NRHS]
+       *
+       *  X       (workspace) DOUBLE PRECISION array, dimension [NMAX[NRHS]
+       *
+       *  XACT    (workspace) DOUBLE PRECISION array, dimension [NMAX][NRHS]
+       *
+       *  TAU     (workspace) DOUBLE PRECISION array, dimension (NMAX)
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (NMAX*NMAX)
+       *
+       *  RWORK   (workspace) DOUBLE PRECISION array, dimension (NMAX)
+       *
+       *  IWORK   (workspace) INTEGER array, dimension (NMAX)
+       *
+       *  NOUT    (input) INTEGER
+       *          The unit number for output.
+       */
+    private void dchklq(boolean[] dotype, int nm, int[] mval, int nn, int[] nval, int nnb, int[] nbval,
+            int[] nxval, int nrhs, double thresh, boolean tsterr, int nmax, double[][] A,
+            double[][] AF, double[][] AQ, double[][] AL, double[][] AC, double[][] B, double[][] X,
+            double[][] XACT, double[] tau, double[] work, double[] rwork, int[] iwork) {
+        int ntests = 8;
+        int ntypes = 8;
+        int iseedy[] = new int[] {1988, 1989, 1990, 1991};
+        int i;
+        int ik;
+        int im;
+        int imat;
+        int in;
+        int inb;
+        int info[] = new int[1];
+        int k;
+        int kl[] = new int[1];
+        int ku[] = new int[1];
+        int lda;
+        int lwork;
+        int m;
+        int minmn;
+        int mode[] = new int[1];
+        int n;
+        int nb;
+        int nerrs;
+        int nfail;
+        int nk;
+        int nrun;
+        int nt;
+        int nx;
+        double anorm[] = new double[1];
+        double cndnum[] = new double[1];
+        int iseed[] = new int[4];
+        int kval[] = new int[4];
+        double result[] = new double[ntests];
+        String path;
+        char type[] = new char[1];
+        char dist[] = new char[1];
+        double res[] = new double[4];
+        int p;
+        int q;
+        double vec1[];
+        double resid[] = new double[1];
+        
+        // Initialize constants and the random number seed
+        path = new String("DLQ"); // D for double precision
+        nrun  = 0;
+        nfail = 0;
+        nerrs = 0;
+        for (i = 0; i < 4; i++) {
+            iseed[i] = iseedy[i];
+        }
+        
+        // Test the error exits
+        if (tsterr) {
+            derrlq();
+        }
+        infot = 0;
+        xlaenv(2, 2);
+        
+        lda = nmax;
+        lwork = nmax * Math.max(nmax, nrhs);
+        
+        // Do for each value of m in mval.
+        
+        for (im = 1; im <= nm; im++) {
+            m = mval[im-1];
+            
+            // Do for each value of n in nval.
+            for (in = 1; in <= nn; in++) {
+                n = nval[in-1];
+                minmn = Math.min(m, n);
+                for (imat = 1; imat <= ntypes; imat++) {
+                    // Do the tests only if dotype[imat-1] is true
+                    if (!dotype[imat-1]) {
+                        continue;
+                    }
+                    
+                    // Set up the parameters with dlatb4 and generate a test matrix
+                    // with dlatms.
+                    dlatb4(path, imat, m, n, type, kl, ku, anorm, mode, cndnum, dist);
+                    
+                    srnamt = new String("DLATMS");
+                    dlatms(m, n, dist[0], iseed, type[0], rwork, mode[0], cndnum[0], anorm[0],
+                           kl[0], ku[0], 'N', A, lda, work, info);
+                    
+                    // Check error code from dlamts.
+                    if (info[0] != 0) {
+                        if ((nfail == 0) && (nerrs == 0)) {
+                            Preferences.debug("Path = DLQ\n");
+                            Preferences.debug("LQ decomposition of rectangular matrices\n");
+                            Preferences.debug("LQ matrix types:\n");
+                            Preferences.debug("1. Diagonal\n");
+                            Preferences.debug("2. Upper triangular\n");
+                            Preferences.debug("3. Lower triangular\n");
+                            Preferences.debug("4. Random, cndnum[0] = 2\n");
+                            Preferences.debug("5. Random, cndnum[0] = sqrt(1.0/eps)\n");
+                            Preferences.debug("6. Random, cndnum[0] = 0.1/eps\n");
+                            Preferences.debug("7. Scaled near underflow\n");
+                            Preferences.debug("8. Scaled near overflow\n");
+                            Preferences.debug("Test ratios:\n");
+                            Preferences.debug("1: norm(L - A*Q')/(N * norm(A) * eps)\n");
+                            Preferences.debug("2: norm(I - Q*Q')/(N * eps)\n");
+                            Preferences.debug("3: norm(Q*C - Q*C)/(N * norm(C) * eps)\n");
+                            Preferences.debug("4: norm(C*Q - C*Q)/(N * norm(C) * eps)\n");
+                            Preferences.debug("5: norm(Q' * C - Q' * C)/(N * norm(C) * eps)\n");
+                            Preferences.debug("6: norm(C*Q' - C*Q')/(N * norm(C) * eps)\n");
+                            Preferences.debug("7: norm(B - A * X)/(norm(A) * norm(X) * eps)\n");
+                        } // if ((nfail == 0) && (nerrs == 0))
+                        nerrs++;
+                        Preferences.debug("Error code from dlatms is info[0] = " + info +
+                                          " for m = " + m + " n = " + n + " type = " + imat + "\n");
+                        continue;
+                    } // if (info[0] != 0)
+                    
+                    // Get some values for k: the first value must be minmn,
+                    // corresponding to the call of dlqt01; other values are
+                    // used in the calls of dlqt02, and must not exceed minmn.
+                    kval[0] = minmn;
+                    kval[1] = 0;
+                    kval[2] = 1;
+                    kval[3] = minmn/2;
+                    if (minmn == 0) {
+                        nk = 1;
+                    }
+                    else if (minmn == 1) {
+                        nk = 2;
+                    }
+                    else if (minmn <= 3) {
+                        nk = 3;
+                    }
+                    else {
+                        nk = 4;
+                    }
+                    
+                    for (ik = 1; ik <= nk; ik++) {
+                        k = kval[ik-1];
+                        
+                        // Do for each pair of values (nb, nx) in nbval and nxval.
+                        for (inb = 1; inb <= nnb; inb++) {
+                            nb = nbval[inb-1];
+                            xlaenv(1, nb);
+                            nx = nxval[inb-1];
+                            xlaenv(3, nx);
+                            for (i = 0; i < ntests; i++) {
+                                result[i] = 0.0;
+                            }
+                            nt = 2;
+                            if (ik == 1) {
+                                // Test dgelqf
+                                dlqt01(m, n, A, AF, AQ, AL, lda, tau, work, lwork, rwork, result);
+                                if (!dgennd(m, n, AF, lda)) {
+                                    result[7] = 2*thresh;
+                                }
+                                nt = nt + 1;
+                            } // if (ik == 1)
+                            else if (m <= n) {
+                                // Test dorglq, using factorization returned by dlqt01
+                                dlqt02(m, n, k, A, AF, AQ, AL, lda, tau, work, lwork, rwork,
+                                       result);
+                            } // else if (m <= n)
+                            else {
+                                result[0] = 0.0;
+                                result[1] = 0.0;
+                            } // else
+                            if (m >= k) {
+                                // Test DORMLQ, using factorization returned by DLQT01 
+                                dlqt03(m, n, k, AF, AC, AL, AQ, lda, tau, work, lwork, rwork, res);
+                                for (p = 0; p < 4; p++) {
+                                    result[2+p] = res[p];
+                                }
+                                nt = nt + 4;
+                                
+                                // If m >= n and k == n, call dgelqs to solve a system
+                                // with nrhs right hand sides and compute the residual.
+                                if ((k == m) && (inb == 1)) {
+                                    // Generate a solution and set the right hand side.
+                                    // Here to dgemm extracted from dlarhs
+                                    vec1 = new double[n];
+                                    for (p = 1; p <= nrhs; p++) {
+                                        dlarnv(2, iseed, n, vec1);
+                                        for (q = 0; q < n; q++) {
+                                            XACT[q][p-1] = vec1[q];    
+                                        }
+                                    } // for (p = 1; p <= nrhs; p++)
+                                    dgemm('N', 'N', m, nrhs, n, 1.0, A, lda, XACT, lda, 0.0,
+                                            B, lda);
+                                    dlacpy('F', m, nrhs, B, lda, X, lda);
+                                    srnamt = new String("DGELQS");
+                                    dgelqs(m, n, nrhs, AF, lda, tau, X,
+                                           lda, work, lwork, info);
+                                    
+                                    // Check error code from dgelqs.
+                                    if (info[0] != 0) {
+                                        if ((nfail == 0) && (nerrs == 0)) {
+                                            Preferences.debug("Path = DLQ\n");
+                                            Preferences.debug("LQ decomposition of rectangular matrices\n");
+                                            Preferences.debug("LQ matrix types:\n");
+                                            Preferences.debug("1. Diagonal\n");
+                                            Preferences.debug("2. Upper triangular\n");
+                                            Preferences.debug("3. Lower triangular\n");
+                                            Preferences.debug("4. Random, cndnum[0] = 2\n");
+                                            Preferences.debug("5. Random, cndnum[0] = sqrt(1.0/eps)\n");
+                                            Preferences.debug("6. Random, cndnum[0] = 0.1/eps\n");
+                                            Preferences.debug("7. Scaled near underflow\n");
+                                            Preferences.debug("8. Scaled near overflow\n");
+                                            Preferences.debug("Test ratios:\n");
+                                            Preferences.debug("1: norm(L - A*Q')/(N * norm(A) * eps)\n");
+                                            Preferences.debug("2: norm(I - Q*Q')/(N * eps)\n");
+                                            Preferences.debug("3: norm(Q*C - Q*C)/(N * norm(C) * eps)\n");
+                                            Preferences.debug("4: norm(C*Q - C*Q)/(N * norm(C) * eps)\n");
+                                            Preferences.debug("5: norm(Q' * C - Q' * C)/(N * norm(C) * eps)\n");
+                                            Preferences.debug("6: norm(C*Q' - C*Q')/(N * norm(C) * eps)\n");
+                                            Preferences.debug("7: norm(B - A * X)/(norm(A) * norm(X) * eps)\n");
+                                        } // if ((nfail == 0) && (nerrs == 0))
+                                        nerrs++;
+                                        Preferences.debug("Error code from dgelqs info[0] = " + info[0] + "\n");
+                                        Preferences.debug("m = " + m + " n = " + n + " nrhs = " + nrhs + "\n");
+                                        Preferences.debug("nb = " + nb + " type = " + imat + "\n");
+                                    } // if (info[0] != 0)
+                                    
+                                    dget02('N', m, n, nrhs, A, lda, X, lda, B, lda, rwork, resid);
+                                    result[6] = resid[0];
+                                    nt++;
+                                } // if ((k == m) && (inb == 1))
+                                else {
+                                    result[6] = 0.0;
+                                }
+                            } // if (m >= k)
+                            else {
+                                result[2] = 0.0;
+                                result[3] = 0.0;
+                                result[4] = 0.0;
+                                result[5] = 0.0;
+                            }
+                            
+                            // Output information about the tests that did not pass the threshold.
+                            for (i = 1; i <= nt; i++) {
+                                if (result[i-1] >= thresh) {
+                                    if ((nfail == 0) && (nerrs == 0)) {
+                                        Preferences.debug("Path = DLQ\n");
+                                        Preferences.debug("LQ decomposition of rectangular matrices\n");
+                                        Preferences.debug("LQ matrix types:\n");
+                                        Preferences.debug("1. Diagonal\n");
+                                        Preferences.debug("2. Upper triangular\n");
+                                        Preferences.debug("3. Lower triangular\n");
+                                        Preferences.debug("4. Random, cndnum[0] = 2\n");
+                                        Preferences.debug("5. Random, cndnum[0] = sqrt(1.0/eps)\n");
+                                        Preferences.debug("6. Random, cndnum[0] = 0.1/eps\n");
+                                        Preferences.debug("7. Scaled near underflow\n");
+                                        Preferences.debug("8. Scaled near overflow\n");
+                                        Preferences.debug("Test ratios:\n");
+                                        Preferences.debug("1: norm(L - A*Q')/(N * norm(A) * eps)\n");
+                                        Preferences.debug("2: norm(I - Q*Q')/(N * eps)\n");
+                                        Preferences.debug("3: norm(Q*C - Q*C)/(N * norm(C) * eps)\n");
+                                        Preferences.debug("4: norm(C*Q - C*Q)/(N * norm(C) * eps)\n");
+                                        Preferences.debug("5: norm(Q' * C - Q' * C)/(N * norm(C) * eps)\n");
+                                        Preferences.debug("6: norm(C*Q' - C*Q')/(N * norm(C) * eps)\n");
+                                        Preferences.debug("7: norm(B - A * X)/(norm(A) * norm(X) * eps)\n");
+                                    } // if ((nfail == 0) && (nerrs == 0))
+                                    Preferences.debug("m = " + m + " n = " + n + " k = " + k + "\n");
+                                    Preferences.debug("nb = " + nb + " nx = " + nx + " type = " + imat + "\n");
+                                    Preferences.debug("Test = " + i + " with result = " + result[i-1] + "\n");
+                                    nfail++;
+                                } // if (result[i-1] >= thresh)
+                            } // for (i = 1; i <= nt; i++)
+                            nrun = nrun + nt;
+                        } // for (inb = 1; inb <= nnb; inb++)
+                    } // for (ik = 1; ik <= nk; ik++)
+                } // for (imat = 1; imat <= ntypes; imat++)
+            } // for (in = 1; in <= nn; in++)
+        } // for (im = 1; im <= nm; im++)
+        
+        // Output a summary of the results.
+        if (nfail > 0) {
+            Preferences.debug("In dchklq " + nfail + " out of " + nrun + " tests failed to pass the threshold\n");
+        }
+        else {
+            Preferences.debug("In dchklq all " + nrun + " tests run passed the threshold\n");
+        }
+        if (nerrs > 0) {
+            Preferences.debug("In dchklq " + nerrs + " errors occurred\n");
+        }
+        return;
+    } // dchklq
+    
+    /** This is a port of version 3.1 LAPACK routine DGELQS.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             INTEGER            INFO, LDA, LDB, LWORK, M, N, NRHS
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   A( LDA, * ), B( LDB, * ), TAU( * ),
+            $                   WORK( LWORK )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  Compute a minimum-norm solution
+       *      min || A*X - B ||
+       *  using the LQ factorization
+       *      A = L*Q
+       *  computed by DGELQF.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrix A.  M >= 0.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of the matrix A.  N >= M >= 0.
+       *
+       *  NRHS    (input) INTEGER
+       *          The number of columns of B.  NRHS >= 0.
+       *
+       *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          Details of the LQ factorization of the original matrix A as
+       *          returned by DGELQF.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A.  LDA >= M.
+       *
+       *  TAU     (input) DOUBLE PRECISION array, dimension (M)
+       *          Details of the orthogonal matrix Q.
+       *
+       *  B       (input/output) DOUBLE PRECISION array, dimension (LDB,NRHS)
+       *          On entry, the m-by-nrhs right hand side matrix B.
+       *          On exit, the n-by-nrhs solution matrix X.
+       *
+       *  LDB     (input) INTEGER
+       *          The leading dimension of the array B. LDB >= N.
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+       *
+       *  LWORK   (input) INTEGER
+       *          The length of the array WORK.  LWORK must be at least NRHS,
+       *          and should be at least NRHS*NB, where NB is the block size
+       *          for this environment.
+       *
+       *  INFO    (output) INTEGER
+       *          = 0: successful exit
+       *          < 0: if INFO = -i, the i-th argument had an illegal value
+       */
+    private void dgelqs(int m, int n, int nrhs, double[][] A, int lda, double[] tau,
+                        double[][] B, int ldb, double[] work, int lwork,
+                        int[] info) {
+        int p;
+        int q;
+        int row1;
+        double array1[][];
+        
+        // Test the input parameters.
+        info[0] = 0;
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if ((n < 0) || (m > n)) {
+            info[0] = -2;
+        }
+        else if (nrhs < 0) {
+            info[0] = -3;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -5;
+        }
+        else if (ldb < Math.max(1, n)) {
+            info[0] = -8;
+        }
+        else if ((lwork < 1) || (lwork < nrhs) && (m > 0) && (n > 0)) {
+            info[0] = -10;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dgeqls had info[0] = " + info[0]);
+            return;
+        }
+        
+        // Quick return if possible
+        if ((n == 0) || (nrhs == 0) || (m == 0)) {
+            return;
+        }
+        
+        // Solve L*X = B(1:m,:)
+        
+        dtrsm('L', 'L', 'N', 'N', m, nrhs, 1.0, A, lda, B, ldb);
+        
+        // Set B(m+1:n,:) to zero
+        
+        if (m < n) {
+            row1 = Math.max(1, n-m);
+            array1 = new double[row1][nrhs];
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < nrhs; q++) {
+                    array1[p][q] = B[m+p][q];
+                }
+            }
+            dlaset('F', n-m, nrhs, 0.0, 0.0, array1, row1);
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < nrhs; q++) {
+                    B[m+p][q] = array1[p][q];
+                }
+            }
+        } // if (m < n)
+        
+        // B = Q' * B
+        dormlq('L', 'T', n, nrhs, m, A, lda, tau, B, ldb, work, lwork, info);
+        return;
+    } // dgelqs
+    
+    /** This is a port of a portion of version 3.1 LAPACK routine DERRLQ.
+     * *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *     November 2006
+     */
+    private void derrlq() {
+        int nmax = 2;
+        int i;
+        int info[] = new int[1];
+        int j;
+        double A[][] = new double[nmax][nmax];
+        double AF[][] = new double[nmax][nmax];
+        double B[][] = new double[nmax][nmax];
+        double b[] = new double[nmax];
+        double w[] = new double[nmax];
+        double x[] = new double[nmax];
+        int npass = 49;
+        int ntotal = 49;
+        
+        // Set the variables to innocuous values
+        for (j = 1; j <= nmax; j++) {
+            for (i = 1; i <= nmax; i++) {
+                A[i-1][j-1] = 1.0/(double)(i+j);
+                AF[i-1][j-1] = 1.0/(double)(i+j);
+                B[i-1][j-1] = 1.0/(double)(i+j);
+            }
+            b[j-1] = 0.0;
+            w[j-1] = 0.0;
+            x[j-1] = 0.0;
+        }
+        
+        // Error exits for LQ factorization
+        
+        // DGELQF
+        dgelqf(-1, 0, A, 1, b, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgelqf(-1, 0, A, 1, b, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of -1\n");
+            npass--;
+        }
+        
+        dgelqf(0, -1, A, 1, b, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgelqf(-0, -1, A, 1, b, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;    
+        }
+        
+        dgelqf(2, 1, A, 1, b, w, 2, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgelqf(2, 1, A, 1, b, w, 2, info) produced info[0] = " + info[0] +
+            " instead of -4\n");
+            npass--;    
+        }
+        
+        dgelqf(2, 1, A, 2, b, w, 1, info);
+        if (info[0] != -7) {
+            Preferences.debug("dgelqf(2, 1, A, 2, b, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -7\n");
+            npass--;    
+        }
+        
+        // DGELQ2
+        dgelq2(-1, 0, A, 1, b, w, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgelq2(-1, 0, A, 1, b, w, info) produced info[0] = " + info[0] +
+            " instead of -1\n");
+            npass--;     
+        }
+        
+        dgelq2(0, -1, A, 1, b, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgelq2(0, -1, A, 1, b, w, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;     
+        }
+        
+        dgelq2(2, 1, A, 1, b, w, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgelq2(2, 1, A, 1, b, w, info) produced info[0] = " + info[0] +
+            " instead of -4\n");
+            npass--;     
+        }
+        
+        // DGELQS
+        dgelqs(-1, 0, 0, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgelqs(-1, 0, 0, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -1\n");
+            npass--;
+        }
+        
+        dgelqs(0, -1, 0, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgelqs(0, -1, 0, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dgelqs(2, 1, 0, A, 2, x, B, 1, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgelqs(2, 1, 0, A, 2, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dgelqs(0, 0, -1, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dgelqs(0, 0, -1, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -3\n");
+            npass--;
+        }
+        
+        dgelqs(2, 2, 0, A, 1, x, B, 2, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dgelqs(2, 2, 0, A, 1, x, B, 2, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dgelqs(1, 2, 0, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dgelqs(1, 2, 0, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -8\n");
+            npass--;
+        }
+        
+        dgelqs(1, 1, 2, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -10) {
+            Preferences.debug("dgelqs(1, 1, 2, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -10\n");
+            npass--;
+        }
+        
+        // DORGLQ
+        dorglq(-1, 0, 0, A, 1, x, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dorglq(-1, 0, 0, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -1\n");
+            npass--;      
+        }
+        
+        dorglq(0, -1, 0, A, 1, x, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorglq(0, -1, 0, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;      
+        }
+        
+        dorglq(2, 1, 0, A, 2, x, w, 2, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorglq(2, 1, 0, A, 2, x, w, 2, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;      
+        }
+        
+        dorglq(0, 0, -1, A, 1, x, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorglq(0, 0, -1, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;      
+        }
+        
+        dorglq(1, 1, 2, A, 1, x, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorglq(1, 1, 2, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;      
+        }
+        
+        dorglq(2, 2, 0, A, 1, x, w, 2, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorglq(2, 2, 0, A, 1, x, w, 2, info) produced info[0] = " + info[0] +
+            " instead of -5\n");
+            npass--;      
+        }
+        
+        dorglq(2, 2, 0, A, 2, x, w, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dorglq(2, 2, 0, A, 2, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -8\n");
+            npass--;      
+        }
+        
+        // DORGL2
+        dorgl2(-1, 0, 0, A, 1, x, w, info);
+        if (info[0] != -1) {
+            Preferences.debug("dorgl2(-1, 0, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -1\n");
+            npass--;
+        }
+        
+        dorgl2(0, -1, 0, A, 1, x, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorgl2(0, -1, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;
+        }
+        
+        dorgl2(2, 1, 0, A, 2, x, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorgl2(2, 1, 0, A, 2, x, w, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;
+        }
+        
+        dorgl2(0, 0, -1, A, 1, x, w, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgl2(0, 0, -1, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;
+        }
+        
+        dorgl2(1, 1, 2, A, 1, x, w, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgl2(1, 1, 2, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;
+        }
+        
+        dorgl2(2, 2, 0, A, 1, x, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorgl2(2, 2, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -5\n");
+            npass--;
+        }
+        
+        // DORMLQ
+        dormlq('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dormlq('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -1\n");
+            npass--;
+        }
+        
+        dormlq('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dormlq('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dormlq('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dormlq('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -3\n");
+            npass--;
+        }
+        
+        dormlq('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -4) {
+            Preferences.debug("dormlq('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -4\n");
+            npass--;
+        }
+        
+        dormlq('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dormlq('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dormlq('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dormlq('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dormlq('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dormlq('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dormlq('L', 'N', 2, 0, 2, A, 1, x, AF, 2, w, 1, info);
+        if (info[0] != -7) {
+            Preferences.debug("dormlq('L', 'N', 2, 0, 2, A, 1, x, AF, 2, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dormlq('R', 'N', 0, 2, 2, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -7) {
+            Preferences.debug("dormlq('R', 'N', 0, 2, 2, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dormlq('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, 1, info);
+        if (info[0] != -10) {
+            Preferences.debug("dormlq('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -10\n");
+            npass--;
+        }
+        
+        dormlq('L', 'N', 1, 2, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -12) {
+            Preferences.debug("dormlq('L', 'N', 1, 2, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -12\n");
+            npass--;
+        }
+        
+        dormlq('R', 'N', 2, 1, 0, A, 1, x, AF, 2, w, 1, info);
+        if (info[0] != -12) {
+            Preferences.debug("dormlq('R', 'N', 2, 1, 0, A, 1, x, AF, 2, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -12\n");
+            npass--;
+        }
+        
+        // DORML2
+        dorml2('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -1) {
+            Preferences.debug("dorml2('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -1\n");
+            npass--;
+        }
+        
+        dorml2('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorml2('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dorml2('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorml2('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -3\n");
+            npass--;
+        }
+        
+        dorml2('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -4) {
+            Preferences.debug("dorml2('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -4\n");
+            npass--;
+        }
+        
+        dorml2('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorml2('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dorml2('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorml2('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dorml2('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorml2('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dorml2('L', 'N', 2, 1, 2, A, 1, x, AF, 2, w, info);
+        if (info[0] != -7) {
+            Preferences.debug("dorml2('L', 'N', 2, 1, 2, A, 1, x, AF, 2, w, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dorml2('R', 'N', 1, 2, 2, A, 1, x, AF, 1, w, info);
+        if (info[0] != -7) {
+            Preferences.debug("dorml2('R', 'N', 1, 2, 2, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dorml2('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, info);
+        if (info[0] != -10) {
+            Preferences.debug("dorml2('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -10\n");
+            npass--;
+        }
+        
+        Preferences.debug("derrqr correctly found " + npass + " of " + ntotal + " error exits\n");
+        return;
+    } // derrlq
+    
+    /** This is a port of the version 3.1 LAPACK test routine DLQT01.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             INTEGER            LDA, LWORK, M, N
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   A( LDA, * ), AF( LDA, * ), L( LDA, * ),
+            $                   Q( LDA, * ), RESULT( * ), RWORK( * ), TAU( * ),
+            $                   WORK( LWORK )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DLQT01 tests DGELQF, which computes the LQ factorization of an m-by-n
+       *  matrix A, and partially tests DORGLQ which forms the n-by-n
+       *  orthogonal matrix Q.
+       *
+       *  DLQT01 compares L with A*Q', and checks that Q is orthogonal.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrix A.  M >= 0.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of the matrix A.  N >= 0.
+       *
+       *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          The m-by-n matrix A.
+       *
+       *  AF      (output) DOUBLE PRECISION array, dimension (LDA,N)
+       *          Details of the LQ factorization of A, as returned by DGELQF.
+       *          See DGELQF for further details.
+       *
+       *  Q       (output) DOUBLE PRECISION array, dimension (LDA,N)
+       *          The n-by-n orthogonal matrix Q.
+       *
+       *  L       (workspace) DOUBLE PRECISION array, dimension (LDA,max(M,N))
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the arrays A, AF, Q and L.
+       *          LDA >= max(M,N).
+       *
+       *  TAU     (output) DOUBLE PRECISION array, dimension (min(M,N))
+       *          The scalar factors of the elementary reflectors, as returned
+       *          by DGELQF.
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+       *
+       *  LWORK   (input) INTEGER
+       *          The dimension of the array WORK.
+       *
+       *  RWORK   (workspace) DOUBLE PRECISION array, dimension (max(M,N))
+       *
+       *  RESULT  (output) DOUBLE PRECISION array, dimension (2)
+       *          The test ratios:
+       *          RESULT(1) = norm( L - A*Q' ) / ( N * norm(A) * EPS )
+       *          RESULT(2) = norm( I - Q*Q' ) / ( N * EPS )
+       */
+    private void dlqt01(int m, int n, double[][] A, double[][] AF, double[][] Q,
+                        double[][] L, int lda, double[] tau, double[] work,
+                        int lwork, double[] rwork, double[] result) {
+        double rogue = -1.0E10;
+        int info[] = new int[1];
+        int minmn;
+        double anorm;
+        double eps;
+        double resid;
+        double array1[][];
+        double array2[][];
+        int row1;
+        int p;
+        int q;
+        
+        minmn = Math.min(m, n);
+        eps = dlamch('E'); // Epsilon
+        
+        // Copy the matrix A to the array AF.
+        dlacpy('F', m, n, A, lda, AF, lda);
+        
+        // Factorize the matrix A in the array AF.
+        srnamt = new String("DGELQF");
+        dgelqf(m, n, AF, lda, tau, work, lwork, info);
+        
+        // Copy details of Q
+        dlaset('F', n, n, rogue, rogue, Q, lda);
+        if (n > 1) {
+            row1 = Math.max(1, m);
+            array1 = new double[row1][n-1];
+            array2 = new double[row1][n-1];
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < n-1; q++) {
+                    array1[p][q] = AF[p][q+1];
+                }
+            }
+            dlacpy('U', m, n-1, array1, row1, array2, row1);
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < n-1; q++) {
+                    Q[p][q+1] = array2[p][q];
+                }
+            }
+        } // if (n > 1)
+        
+        // Generate the n-by-n matrix Q
+        srnamt = new String("DORGLQ");
+        dorglq(n, n, minmn, Q, lda, tau, work, lwork, info);
+        
+        // Copy L
+        dlaset('F', m, n, 0.0, 0.0, L, lda);
+        dlacpy('L', m, n, AF, lda, L, lda);
+        
+        // Compute L - A*Q'
+        dgemm('N', 'T', m, n, n, -1.0, A, lda, Q, lda, 1.0, L, lda);
+        
+        // Compute norm(L - Q'*A)/(N * norm(A) * eps).
+        anorm = dlange('1', m, n, A, lda, rwork);
+        resid = dlange('1', m, n, L, lda, rwork);
+        if (anorm > 0.0) {
+            result[0] = ((resid /(double)Math.max(1,n))/anorm)/eps;
+        }
+        else {
+            result[0] = 0;
+        }
+        
+        // Compute I - Q*Q'
+        dlaset('F', n, n, 0.0, 1.0, L, lda);
+        dsyrk('U', 'N', n, n, -1.0, Q, lda, 1.0, L, lda);
+        
+        // Compute norm(I - Q*Q')/(N * eps)
+        resid = dlansy('1', 'U', n, L, lda, rwork);
+        result[1] = (resid/(double)Math.max(1, n))/eps;
+        return;
+    } // dlqt01
+    
+    /** This is a port of version 3.1 LAPACK routine DLQT02.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             INTEGER            K, LDA, LWORK, M, N
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   A( LDA, * ), AF( LDA, * ), L( LDA, * ),
+            $                   Q( LDA, * ), RESULT( * ), RWORK( * ), TAU( * ),
+            $                   WORK( LWORK )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DLQT02 tests DORGLQ, which generates an m-by-n matrix Q with
+       *  orthonornmal rows that is defined as the product of k elementary
+       *  reflectors.
+       *
+       *  Given the LQ factorization of an m-by-n matrix A, DLQT02 generates
+       *  the orthogonal matrix Q defined by the factorization of the first k
+       *  rows of A; it compares L(1:k,1:m) with A(1:k,1:n)*Q(1:m,1:n)', and
+       *  checks that the rows of Q are orthonormal.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrix Q to be generated.  M >= 0.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of the matrix Q to be generated.
+       *          N >= M >= 0.
+       *
+       *  K       (input) INTEGER
+       *          The number of elementary reflectors whose product defines the
+       *          matrix Q. M >= K >= 0.
+       *
+       *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          The m-by-n matrix A which was factorized by DLQT01.
+       *
+       *  AF      (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          Details of the LQ factorization of A, as returned by DGELQF.
+       *          See DGELQF for further details.
+       *
+       *  Q       (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+       *
+       *  L       (workspace) DOUBLE PRECISION array, dimension (LDA,M)
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the arrays A, AF, Q and L. LDA >= N.
+       *
+       *  TAU     (input) DOUBLE PRECISION array, dimension (M)
+       *          The scalar factors of the elementary reflectors corresponding
+       *          to the LQ factorization in AF.
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+       *
+       *  LWORK   (input) INTEGER
+       *          The dimension of the array WORK.
+       *
+       *  RWORK   (workspace) DOUBLE PRECISION array, dimension (M)
+       *
+       *  RESULT  (output) DOUBLE PRECISION array, dimension (2)
+       *          The test ratios:
+       *          RESULT(1) = norm( L - A*Q' ) / ( N * norm(A) * EPS )
+       *          RESULT(2) = norm( I - Q*Q' ) / ( N * EPS )
+       */
+    private void dlqt02(int m, int n, int k, double[][] A, double[][] AF, double[][] Q,
+                        double[][] L, int lda, double[] tau, double[] work, int lwork,
+                        double[] rwork, double[] result) {
+        double rogue = -1.0E10;
+        int info[] = new int[1];
+        double anorm;
+        double eps;
+        double resid;
+        int row1;
+        int p;
+        int q;
+        double array1[][];
+        double array2[][];
+        
+        eps = dlamch('E'); // Epsilon
+        
+        // Copy the first k columns of the factorization to the array Q
+        dlaset('F', m, n, rogue, rogue, Q, lda);
+        row1 = Math.max(1, k);
+        array1 = new double[row1][n-1];
+        for (p = 0; p < row1; p++) {
+            for (q = 0; q < n-1; q++) {
+                array1[p][q] = AF[p][q+1];
+            }
+        }
+        array2 = new double[row1][n-1];
+        dlacpy('U', k, n-1, array1, row1, array2, row1);
+        for (p = 0; p < row1; p++) {
+            for (q = 0; q < n-1; q++) {
+                Q[p][q+1] = array2[p][q];
+            }
+        }
+        
+        // Generate the first n columns of the matrix Q
+        srnamt = new String("DORGLQ");
+        dorglq(m, n, k, Q, lda, tau, work, lwork, info);
+        
+        // Copy L(1:k,1:m)
+        dlaset('F', k, m, 0.0, 0.0, L, lda);
+        dlacpy('L', k, m, AF, lda, L, lda);
+        
+        // Compute L(1:k,1:m) - A(1:k,1:n) * Q(1:m,1:n)'
+        dgemm('N', 'T', k, m, n, -1.0, A, lda, Q, lda, 1.0, L, lda);
+        
+        // Compute norm(L - A*Q')/(n * norm(A) * eps).
+        anorm = dlange('1', k, n, A, lda, rwork);
+        resid = dlange('1', k, m, L, lda, rwork);
+        if (anorm > 0) {
+            result[0] = ((resid/(double)Math.max(1, n))/anorm)/eps;
+        }
+        else {
+            result[0] = 0;
+        }
+        
+        // Compute I - Q*Q'
+        dlaset('F', m, m, 0.0, 1.0, L, lda);
+        dsyrk('U', 'N', m, n, -1.0, Q, lda, 1.0, L, lda);
+        
+        // Compute norm(I - Q*Q')/(n * eps).
+        resid = dlansy('1', 'U', m, L, lda, rwork);
+        result[1] = (resid/(double)Math.max(1,n))/eps;
+        return;   
+    } // dlqt02
+
+    /** This is a port of version 3.1 LAPACK test routine DLQT03.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             INTEGER            K, LDA, LWORK, M, N
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   AF( LDA, * ), C( LDA, * ), CC( LDA, * ),
+            $                   Q( LDA, * ), RESULT( * ), RWORK( * ), TAU( * ),
+            $                   WORK( LWORK )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DLQT03 tests DORMLQ, which computes Q*C, Q'*C, C*Q or C*Q'.
+       *
+       *  DLQT03 compares the results of a call to DORMLQ with the results of
+       *  forming Q explicitly by a call to DORGLQ and then performing matrix
+       *  multiplication by a call to DGEMM.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  M       (input) INTEGER
+       *          The number of rows or columns of the matrix C; C is n-by-m if
+       *          Q is applied from the left, or m-by-n if Q is applied from
+       *          the right.  M >= 0.
+       *
+       *  N       (input) INTEGER
+       *          The order of the orthogonal matrix Q.  N >= 0.
+       *
+       *  K       (input) INTEGER
+       *          The number of elementary reflectors whose product defines the
+       *          orthogonal matrix Q.  N >= K >= 0.
+       *
+       *  AF      (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          Details of the LQ factorization of an m-by-n matrix, as
+       *          returned by DGELQF. See SGELQF for further details.
+       *
+       *  C       (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+       *
+       *  CC      (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+       *
+       *  Q       (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the arrays AF, C, CC, and Q.
+       *
+       *  TAU     (input) DOUBLE PRECISION array, dimension (min(M,N))
+       *          The scalar factors of the elementary reflectors corresponding
+       *          to the LQ factorization in AF.
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+       *
+       *  LWORK   (input) INTEGER
+       *          The length of WORK.  LWORK must be at least M, and should be
+       *          M*NB, where NB is the blocksize for this environment.
+       *
+       *  RWORK   (workspace) DOUBLE PRECISION array, dimension (M)
+       *
+       *  RESULT  (output) DOUBLE PRECISION array, dimension (4)
+       *          The test ratios compare two techniques for multiplying a
+       *          random matrix C by an n-by-n orthogonal matrix Q.
+       *          RESULT(1) = norm( Q*C - Q*C )  / ( N * norm(C) * EPS )
+       *          RESULT(2) = norm( C*Q - C*Q )  / ( N * norm(C) * EPS )
+       *          RESULT(3) = norm( Q'*C - Q'*C )/ ( N * norm(C) * EPS )
+       *          RESULT(4) = norm( C*Q' - C*Q' )/ ( N * norm(C) * EPS )
+       */
+    private void dlqt03(int m, int n, int k, double[][] AF, double[][] C,
+                        double[][] CC, double[][] Q, int lda, double[] tau,
+                        double[] work, int lwork, double[] rwork, double[] result) {
+        double rogue = -1.0E10;
+        char side;
+        char trans;
+        int info[] = new int[1];
+        int iside;
+        int itrans;
+        int j;
+        int mc;
+        int nc;
+        double cnorm;
+        double eps;
+        double resid;
+        int iseed[] = new int[]{1988, 1989, 1990, 1991};
+        int row1;
+        int p;
+        int q;
+        double array1[][];
+        double array2[][];
+        double vec1[];
+        
+        eps = dlamch('E'); // epsilon
+        
+        // Copy the first k columns of the factorization to the array Q
+        dlaset('F', n, n, rogue, rogue, Q, lda);
+        if (n >= 1) {
+            row1 = Math.max(1, k);
+            array1 = new double[row1][n-1];
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < n-1; q++) {
+                    array1[p][q] = AF[p][q+1];
+                }
+            }
+            array2 = new double[row1][n-1];
+            dlacpy('U', k, n-1, array1, row1, array2, row1);
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < n-1; q++) {
+                    Q[p][q+1] = array2[p][q];
+                }
+            }
+        } // if (n >= 1)
+        
+        // Generate the n by n matrix Q
+        srnamt = new String("DORGLQ");
+        dorglq(n, n, k, Q, lda, tau, work, lwork, info);
+        
+        for (iside = 1; iside <= 2; iside++) {
+            if (iside == 1) {
+                side = 'L';
+                mc = n;
+                nc = m;
+            }
+            else {
+                side = 'R';
+                mc = m;
+                nc = n;
+            }
+            
+            // Generate mc by nc matrix C
+            vec1 = new double[mc];
+            for (j = 1; j <= nc; j++) {
+                dlarnv(2, iseed, mc, vec1);
+                for (p = 0; p < mc; p++) {
+                    C[p][j-1] = vec1[p];
+                }
+            } // for (j = 1; j <= nc; j++)
+            cnorm = dlange('1', mc, nc, C, lda, rwork);
+            if (cnorm == 0.0) {
+                cnorm = 1.0;
+            }
+            
+            for (itrans = 1; itrans <= 2; itrans++) {
+                if (itrans == 1) {
+                    trans = 'N';
+                }
+                else {
+                    trans = 'T';
+                }
+                
+                // Copy C
+                dlacpy('F', mc, nc, C, lda, CC, lda);
+                
+                // Apply Q or Q' to C
+                srnamt = new String("DORMLQ");
+                dormlq(side, trans, mc, nc, k, AF, lda, tau, CC, lda, work, lwork,
+                       info);
+                
+                // Form explicit product and subtract
+                if ((side == 'L') || (side == 'l')) {
+                    dgemm(trans, 'N', mc, nc, mc, -1.0, Q, lda, C, lda, 1.0, CC, lda);
+                }
+                else {
+                    dgemm('N', trans, mc, nc, nc, -1.0, C, lda, Q, lda, 1.0, CC, lda);
+                }
+                
+                // Compute error in the difference
+                resid = dlange('1', mc, nc, CC, lda, rwork);
+                result[(iside-1)*2+itrans-1] = resid/(Math.max(1,n)*cnorm*eps);
+            } // for (itrans = 1; itrans <= 2; itrans++)
+        } // for (iside = 1; iside <= 2; iside++)
+        return;   
+    } // dlqt03
 }
