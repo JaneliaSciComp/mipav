@@ -66,6 +66,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     private OpenGLFrameBuffer m_kEntropyOut;
 
     private OpenGLFrameBuffer m_kTransformOut;
+    private OpenGLFrameBuffer m_kTransformNewOut;
     private OpenGLFrameBuffer m_kBracketOut;
     private OpenGLFrameBuffer m_kBracketNewOut;
     
@@ -86,7 +87,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
 
     protected JFrame m_kFrame;
     
-
+    private float m_fUnitTolerance;
     private Matrix4f m_kToOrigin = Matrix4f.IDENTITY;
     private Matrix4f m_kFromOrigin = Matrix4f.IDENTITY;
     private float m_fRigid = 1.0f;
@@ -198,9 +199,12 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     }
     
     public void calcError(TransMatrix kTransform) {
-        if ( GetCanvas().getContext().makeCurrent() == GLContext.CONTEXT_NOT_CURRENT )
+        if ( ((OpenGLRenderer)m_pkRenderer).GetContext() !=  GetCanvas().getContext().getCurrent() )
         {
-            System.err.println( "Context not made current" );
+            if ( GetCanvas().getContext().makeCurrent() == GLContext.CONTEXT_NOT_CURRENT )
+            {
+                System.err.println( "Context not made current" );
+            }
         }
         setTransform(kTransform);
         m_bDisplay = true;
@@ -213,26 +217,22 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         return m_bStatus;
     }
     
-/*
     public void calcLineMinimization()
     {
-        if ( GetCanvas().getContext().makeCurrent() == GLContext.CONTEXT_NOT_CURRENT )
+        if ( ((OpenGLRenderer)m_pkRenderer).GetContext() !=  GetCanvas().getContext().getCurrent() )
         {
-            System.err.println( "Context not made current" );
+            if ( GetCanvas().getContext().makeCurrent() == GLContext.CONTEXT_NOT_CURRENT )
+            {
+                System.err.println( "Context not made current" );
+            }
         }
 
         m_bDisplay = true;
         m_bCalcLineMin = true;
         display(GetCanvas());  
         GetCanvas().getContext().release();
-        
-        TransMatrix kMat = new TransMatrix(4,4);
-        kMat.Copy( m_kImageTransform );
-        kMat.Transpose();
-        calcError( new TransMatrix(kMat) );
-        getError();
     }
-    */
+    
     public void display(GLAutoDrawable arg0) {
         if ( m_bDispose )
         {
@@ -256,19 +256,15 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_bCleanUp = false;
         }
         m_bDisplay = false;
-        /*
         if ( m_bCalcLineMin )
         {
             m_bCalcLineMin = false;
-            //calcLineMin();
+            calcLineMin();
         }
         else
         {
-        */
             calcEntropy();
-            /*
         }
-        */
     }
 
     public void dispose()
@@ -308,12 +304,11 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         super.dispose();
     }
 
-/*
     public float[] getBracketB()
     {
         return m_afBracketB;
     }
-*/
+
     public GLCanvas GetCanvas()
     {
         return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
@@ -338,10 +333,9 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_afPt[i] = 0f;
             m_afUnitDirections[i] = 0f;
         }
-        
-        GetCanvas().setAutoSwapBufferMode( false );
 
         m_pkRenderer.InitializeState();
+        m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
         OnResize(m_iWidth,m_iHeight);
 
         CreateImageTextures();
@@ -372,15 +366,15 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_bCleanUp = true;
         }
     }
-    /*
+    
     public void initLineMin(Matrix4f kToOrigin, Matrix4f kFromOrigin,
             float rigid, float dim, double[] startPoint, double[] pt, int ptLength,
-            double[] unitDirections, double fMinDist,
+            double[] unitDirections, double unit_tolerance, double fMinDist,
             double bracketA, double functionA,
             double bracketB, double functionB,
             double bracketC, double functionC )
     {
-        
+        m_fUnitTolerance = (float)unit_tolerance;
         m_kToOrigin = convertTo4D(kToOrigin);
         m_kFromOrigin = convertTo4D(kFromOrigin);
         m_fRigid = rigid;
@@ -397,12 +391,12 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         if ( m_kImageLineMinDual != null )
         {
             m_kImageLineMinDual.updateParameters( m_kToOrigin, m_kFromOrigin, 
-                    m_fRigid, m_fDim, m_afStartPoint, m_afPt, m_fPtLength, m_afUnitDirections, m_fMinDist );
+                    m_fRigid, m_fDim, m_afStartPoint, m_afPt, m_fPtLength, m_afUnitDirections, m_fUnitTolerance, m_fMinDist );
         }
         if ( m_kCalcTransform != null )
         {
             m_kCalcTransform.updateParameters( m_kToOrigin, m_kFromOrigin, 
-                    m_fRigid, m_fDim, m_afStartPoint, m_afPt, m_fPtLength, m_afUnitDirections, m_fMinDist );
+                    m_fRigid, m_fDim, m_afStartPoint, m_afPt, m_fPtLength, m_afUnitDirections, m_fUnitTolerance, m_fMinDist );
         }
 
         int index = 0;
@@ -420,6 +414,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_afBracket[index++] = (float)functionC;
         m_afBracket[index++] = 0f;
         m_afBracket[index++] = 0f;
+        
         if ( m_kBracketOut != null )
         {
             if ( m_kBracketOut.GetTarget(0) != null )
@@ -432,7 +427,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             }
         }
     }
-    */
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight){}
     
@@ -441,7 +435,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_kFrame = kFrame;
     }
     
-    /*
     public Matrix4f convertTo4D( Matrix4f kTransform )
     {
         if ( m_kImageA.nDims == 2 )
@@ -460,7 +453,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         }
         return kTransform;
     }
-    */
+
     public void setTransform( TransMatrix kTransform )
     {
         if ( kTransform.getDim() == 3 )
@@ -502,7 +495,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         }
         return true;
     }
-/*
+    
     protected void CreateBracketMesh()
     {
         //System.err.println( iWidth + " " + iHeight + " " + iDepth );
@@ -537,7 +530,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         Attributes kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         
-        int iVQuantity = 3;
+        int iVQuantity = 4;
         VertexBuffer pkVB = new VertexBuffer(kAttributes,iVQuantity);
 
         // generate geometry
@@ -545,7 +538,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         float[] afChannels = pkVB.GetData();
         int iIndex = 0;
         afChannels[iIndex++] = 0; afChannels[iIndex++] = -1.0f; afChannels[iIndex++] = 0.0f;        
-        afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.0f; afChannels[iIndex++] = 0.5f;        
+        afChannels[iIndex++] = 0; afChannels[iIndex++] = -0.34f; afChannels[iIndex++] = 0.3f;        
+        afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.34f; afChannels[iIndex++] = 0.7f;  
         afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.95f; afChannels[iIndex++] = 1.0f;
         
         
@@ -558,7 +552,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_kTransformPoints.UpdateGS();
         m_kTransformPoints.UpdateRS();    
     }
-*/
+    
     protected void CreateHistogramMesh(int iWidth, int iHeight)
     {
         Attributes kAttributes = new Attributes();
@@ -686,7 +680,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_akImageReduceEntropy = new ImageReduceEffect( m_kHistogramOutputB.GetTarget(0), null, dSize );
         m_kEntropyPoints2D.AttachEffect( m_akImageReduceEntropy );     
 
-        //m_kImageLineMinPass2a = new LineMinimizationEffect( m_kBracketOut.GetTarget(0), m_kEntropyOut.GetTarget(0), m_fMinDist, (float)dSize, m_kImageA.nDims  );
+        m_kImageLineMinPass2a = new LineMinimizationEffect( m_kBracketOut.GetTarget(0), m_kEntropyOut.GetTarget(0), m_fMinDist, (float)dSize, m_kImageA.nDims  );
         //m_kImageLineMinPass2b = new LineMinimizationEffect( m_kBracketNewOut.GetTarget(0) );
     }
     
@@ -711,13 +705,12 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     
     private void calcEntropy( ModelSimpleImage kImage, double dNumSamples )
     {
-        //m_kImagePointsDual.DetachAllEffects();
-        //m_kImagePointsDual.AttachEffect( m_kImageEffectDual );
+        m_kImagePointsDual.DetachAllEffects();
+        m_kImagePointsDual.AttachEffect( m_kImageEffectDual );
         m_pkRenderer.Resize(m_kHistogramOutput.GetTarget(0).GetImage().GetBound(0),
                 m_kHistogramOutput.GetTarget(0).GetImage().GetBound(1));
         m_kHistogramOutput.Enable();
-        m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-        m_pkRenderer.ClearBuffers();
+        m_pkRenderer.ClearColorDepth();
         m_pkRenderer.Draw(m_kImagePointsDual);
         //writeImage();
         m_kHistogramOutput.Disable();
@@ -725,91 +718,58 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_pkRenderer.Resize(m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(0),
                 m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(1));
         m_kHistogramOutputB.Enable();
-        m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-        m_pkRenderer.ClearBuffers();
+        m_pkRenderer.ClearColorDepth();
         m_pkRenderer.Draw(m_kHistogramPoints2D);
         m_kHistogramOutputB.Disable();
         ReduceDualA(dNumSamples);        
     }
-    /*
+    
     private void calcLineMin()
     {
         m_kImagePointsDual.DetachAllEffects();
         m_kImagePointsDual.AttachEffect( m_kImageLineMinDual );
-        //m_kEntropyPoints2D.DetachAllEffects();
-        //m_kEntropyPoints2D.AttachEffect( m_kImageLineMinEntropy );
-        Texture kTarget = null;
-        Matrix4f kMat = new Matrix4f(false);
-        //for ( int i = 0; i < 100; i++ )
+        boolean bEarly = false;
+        for ( int i = 0; i < 100; i++ )
         {
             // 1. Create the transform matrix based on the current bracket.
-            m_pkRenderer.Resize(m_kTransformOut.GetTarget(0).GetImage().GetBound(0),
-                    m_kTransformOut.GetTarget(0).GetImage().GetBound(1));
-            m_kTransformOut.Enable();
-            m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-            m_pkRenderer.ClearBuffers();
+            m_pkRenderer.Resize(m_kTransformNewOut.GetTarget(0).GetImage().GetBound(0),
+                    m_kTransformNewOut.GetTarget(0).GetImage().GetBound(1));
+            m_kTransformNewOut.Enable();
+            m_pkRenderer.ClearColorDepth();
             m_pkRenderer.Draw(m_kTransformPoints);
-            m_kTransformOut.Disable();
-            kTarget = m_kTransformOut.GetTarget(0);
+            m_pkRenderer.FrameBufferToTexture( m_kTransformOut.GetTarget(0) );
+            m_kTransformNewOut.Disable();            
+            Texture kTarget = m_kTransformOut.GetTarget(0);
             m_pkRenderer.GetTexImage( kTarget );
-            System.err.println( " " );
-            for ( int i = 0; i < kTarget.GetImage().GetFloatData().length; i++ )
+            for ( int j = 0; j < kTarget.GetImage().GetFloatData().length; j++ )
             {
-                System.err.print( kTarget.GetImage().GetFloatData()[i] + " " );
+                //System.err.print( kTarget.GetImage().GetFloatData()[j] + " " );
             }
-            System.err.println( " " );
-            kMat.M00 = kTarget.GetImage().GetFloatData()[0];
-            kMat.M01 = kTarget.GetImage().GetFloatData()[1];
-            kMat.M02 = kTarget.GetImage().GetFloatData()[2];
-            kMat.M03 = kTarget.GetImage().GetFloatData()[3];
-            
-            kMat.M10 = kTarget.GetImage().GetFloatData()[4];
-            kMat.M11 = kTarget.GetImage().GetFloatData()[5];
-            kMat.M12 = kTarget.GetImage().GetFloatData()[6];
-            kMat.M13 = kTarget.GetImage().GetFloatData()[7];
-            
-            kMat.M20 = kTarget.GetImage().GetFloatData()[8];
-            kMat.M21 = kTarget.GetImage().GetFloatData()[9];
-            kMat.M22 = kTarget.GetImage().GetFloatData()[10];
-            kMat.M23 = kTarget.GetImage().GetFloatData()[11];
-            
+            //System.err.println( " " );
             
             // 1. Render all image points w/LineMin1 shaders
             m_pkRenderer.Resize(m_kHistogramOutput.GetTarget(0).GetImage().GetBound(0),
                     m_kHistogramOutput.GetTarget(0).GetImage().GetBound(1));
             m_kHistogramOutput.Enable();
-            m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-            m_pkRenderer.ClearBuffers();
+            m_pkRenderer.ClearColorDepth();
             m_pkRenderer.Draw(m_kImagePointsDual);
-            //writeImage();
             m_kHistogramOutput.Disable();
 
             // 2. Render Histogram points
             m_pkRenderer.Resize(m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(0),
                     m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(1));
             m_kHistogramOutputB.Enable();
-            m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-            m_pkRenderer.ClearBuffers();
+            m_pkRenderer.ClearColorDepth();
             m_pkRenderer.Draw(m_kHistogramPoints2D);
             m_kHistogramOutputB.Disable();
-            //kTarget = m_kHistogramOutputB.GetTarget(0);
-            //m_pkRenderer.GetTexImage( kTarget );
-
+            
             // 3. Render Entropy points w/LineMin1 shader
             m_pkRenderer.Resize(m_kEntropyOut.GetTarget(0).GetImage().GetBound(0),
                     m_kEntropyOut.GetTarget(0).GetImage().GetBound(1));
             m_kEntropyOut.Enable();
-            m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-            m_pkRenderer.ClearBuffers();
+            m_pkRenderer.ClearColorDepth();
             m_pkRenderer.Draw(m_kEntropyPoints2D);
-            //ColorRGBA kResult = m_pkRenderer.GetPixelColor(0, 0);
             m_kEntropyOut.Disable();
-            kTarget = m_kEntropyOut.GetTarget(0);
-            m_pkRenderer.GetTexImage( kTarget );
-            System.err.println( "Entropy = " + kTarget.GetImage().GetFloatData()[0] + " "
-                    + kTarget.GetImage().GetFloatData()[1] + " "
-                    + kTarget.GetImage().GetFloatData()[2] + " "
-                    + kTarget.GetImage().GetFloatData()[3] );
 
             // 4. Render bracket points w/LineMin2 shader
             m_kBracketPoints.DetachAllEffects();
@@ -817,48 +777,36 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_pkRenderer.Resize(m_kBracketNewOut.GetTarget(0).GetImage().GetBound(0),
                     m_kBracketNewOut.GetTarget(0).GetImage().GetBound(1));
             m_kBracketNewOut.Enable();
-            m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-            m_pkRenderer.ClearBuffers();
+            m_pkRenderer.ClearColorDepth();
             m_pkRenderer.Draw(m_kBracketPoints);
             m_pkRenderer.FrameBufferToTexture( m_kBracketOut.GetTarget(0) );
-            m_kBracketNewOut.Disable();
-            kTarget = m_kBracketNewOut.GetTarget(0);
-            m_pkRenderer.GetTexImage( kTarget );
-            System.err.println( "Entropy = " + kTarget.GetImage().GetFloatData()[3] + " "
-                    + kTarget.GetImage().GetFloatData()[6] + " "
-                    + kTarget.GetImage().GetFloatData()[7] + " "
-                    + kTarget.GetImage().GetFloatData()[10] );
+            m_kBracketNewOut.Disable();            
             
-            
-            // 5. Render bracket points w/pass-through
-            //m_kBracketPoints.DetachAllEffects();
-            //m_kBracketPoints.AttachEffect(m_kImageLineMinPass2b);
-            //m_pkRenderer.Resize(m_kBracketOut.GetTarget(0).GetImage().GetBound(0),
-            //        m_kBracketOut.GetTarget(0).GetImage().GetBound(1));
-            //m_kBracketOut.Enable();
-            //m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-            //m_pkRenderer.ClearBuffers();
-            //m_pkRenderer.Draw(m_kBracketPoints);
-            //m_kBracketOut.Disable();
+            if ( (i%4) == 0 )
+            {
+                kTarget = m_kBracketOut.GetTarget(0);
+                m_pkRenderer.GetTexImage( kTarget );
+                if ( (Math.abs(kTarget.GetImage().GetFloatData()[8] - kTarget.GetImage().GetFloatData()[0]) <= m_fUnitTolerance) )
+                {
+                    m_afBracketB[0] = kTarget.GetImage().GetFloatData()[4];
+                    m_afBracketB[1] = kTarget.GetImage().GetFloatData()[5];
+                    bEarly = true;
+                    break;
+                }
+            }
         }
-        kTarget = m_kBracketOut.GetTarget(0);
-        m_pkRenderer.GetTexImage( kTarget );
-        m_afBracketB[0] = kTarget.GetImage().GetFloatData()[4];
-        m_afBracketB[1] = kTarget.GetImage().GetFloatData()[5];
-        System.err.println( "GPU BracketA = " + kTarget.GetImage().GetFloatData()[0] + " " + kTarget.GetImage().GetFloatData()[1]);
-        System.err.println( "BracketB = " + kTarget.GetImage().GetFloatData()[4] + " " + kTarget.GetImage().GetFloatData()[5]);
-        System.err.println( "BracketC = " + kTarget.GetImage().GetFloatData()[8] + " " + kTarget.GetImage().GetFloatData()[9]);
-        System.err.println( "yNew = " + kTarget.GetImage().GetFloatData()[2] );
-        
-
-        System.err.println( "Entropy = " + kTarget.GetImage().GetFloatData()[3] + " "
-                + kTarget.GetImage().GetFloatData()[6] + " "
-                + kTarget.GetImage().GetFloatData()[7] + " "
-                + kTarget.GetImage().GetFloatData()[10] );
-
-        m_kImageTransform.Copy(kMat);
+        if ( !bEarly )
+        {
+            Texture kTarget = m_kBracketOut.GetTarget(0);
+            m_pkRenderer.GetTexImage( kTarget );
+            m_afBracketB[0] = kTarget.GetImage().GetFloatData()[4];
+            m_afBracketB[1] = kTarget.GetImage().GetFloatData()[5];
+        }
+        //System.err.println( "GPU BracketA = " + kTarget.GetImage().GetFloatData()[0] + " " + kTarget.GetImage().GetFloatData()[1]);
+        //System.err.println( "BracketB = " + kTarget.GetImage().GetFloatData()[4] + " " + kTarget.GetImage().GetFloatData()[5]);
+        //System.err.println( "BracketC = " + kTarget.GetImage().GetFloatData()[8] + " " + kTarget.GetImage().GetFloatData()[9]);
     }
-    */
+    
     private void cleanUp()
     {
         //System.err.println( "VolumeImageViewerPoint dispose()" );
@@ -961,16 +909,17 @@ public class VolumeImageViewerPoint extends JavaApplication3D
                 m_kTarget.min, m_kTarget.max, m_kMoving.min, m_kMoving.max, 
                 m_kTarget.extents[0],m_kTarget.extents[1], m_kImageTransform );
         
-/*
         m_kBracketOut = CreateRenderTargetInit( "bracketImage", 1, 3 );   
 
         CreateTransformMesh();
-        m_kTransformOut = CreateRenderTargetInit( "Transform", 1, 3 );
-        m_kTransformOut.GetTarget(0).GetImage().SetData( m_afBracket, 1, 3 );
-        m_kCalcTransform = new LineMinimizationEffect( m_kBracketOut.GetTarget(0), 
+        m_kTransformOut = CreateRenderTargetInit( "Transform", 1, 4 );
+        m_kTransformNewOut = CreateRenderTargetInit( "TransformNew", 1, 4 );
+        m_kBracketOut.GetTarget(0).GetImage().SetData( m_afBracket, 1, 4 );
+        m_kCalcTransform = new LineMinimizationEffect( m_kBracketOut.GetTarget(0), m_kTransformOut.GetTarget(0),
+                (m_kTarget.nDims == 2),
                 m_kToOrigin, m_kFromOrigin,
                 m_fRigid, m_fDim, m_afStartPoint, m_afPt, m_fPtLength,
-                m_afUnitDirections, m_fMinDist );
+                m_afUnitDirections, m_fUnitTolerance, m_fMinDist );
         m_kTransformPoints.AttachEffect(m_kCalcTransform);           
         
         m_kImageLineMinDual = new LineMinimizationEffect( m_kTextureA, m_kTextureB, m_kTransformOut.GetTarget(0),
@@ -979,7 +928,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         
         CreateBracketMesh();
         m_kBracketNewOut = CreateRenderTargetInit( "bracketNew", 1, 3 );
-        */
     }
         
     private OpenGLFrameBuffer CreateRenderTarget( String kImageName, int iWidth, int iHeight, int iDepth )
@@ -1023,7 +971,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         return new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
                 m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget,GetCanvas());
     }
-    /*
+
     private OpenGLFrameBuffer CreateRenderTargetInit( String kImageName, int iWidth, int iHeight )
     {      
         float[] afData = new float[iWidth*iHeight*4];
@@ -1041,14 +989,13 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         akSceneTarget[0].SetFilterType(Texture.FilterType.NEAREST);
         akSceneTarget[0].SetWrapType(0,Texture.WrapType.CLAMP);
         akSceneTarget[0].SetWrapType(1,Texture.WrapType.CLAMP);
-        akSceneTarget[0].SetSamplerInformation( new SamplerInformation( kImageName, SamplerInformation.Type.SAMPLER_2D, 0, 0 ) );
         m_pkRenderer.LoadTexture( akSceneTarget[0] );
 
         return new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
                 m_eBuffering,m_eMultisampling,m_pkRenderer,akSceneTarget,GetCanvas());
 
     }
-*/
+
     private void printTarget( String kMsg, Texture kTarget )
     {
         m_pkRenderer.GetTexImage( kTarget );
@@ -1091,8 +1038,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_pkRenderer.Resize(m_kEntropyOut.GetTarget(0).GetImage().GetBound(0),
                 m_kEntropyOut.GetTarget(0).GetImage().GetBound(1));
         m_kEntropyOut.Enable();
-        m_pkRenderer.SetBackgroundColor(new ColorRGBA(0,0,0,0));
-        m_pkRenderer.ClearBuffers();
+        m_pkRenderer.ClearColorDepth();
         m_pkRenderer.Draw(m_kEntropyPoints2D);
         //ColorRGBA kResult = m_pkRenderer.GetPixelColor(0, 0);
         m_kEntropyOut.Disable();

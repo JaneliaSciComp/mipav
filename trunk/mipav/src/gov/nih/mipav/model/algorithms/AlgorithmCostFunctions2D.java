@@ -360,7 +360,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     {
         m_kGPUCost = kGPUCost;
     }
-    /*
+    
     public boolean isGPULineMin()
     {
         if ( m_kGPUCost != null )
@@ -370,7 +370,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
 
     public float[] lineMin(Matrix4f kToOrigin, Matrix4f kFromOrigin,
             float rigid, float dim, double[] startPoint, double[] pt, int ptLength,
-            double[] unitDirections, double fMinDist,
+            double[] unitDirections, double unit_tolerance, double fMinDist,
             double bracketA, double functionA,
             double bracketB, double functionB,
             double bracketC, double functionC
@@ -378,15 +378,14 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     {
         m_kGPUCost.initLineMin( kToOrigin,  kFromOrigin,
                 rigid,  dim, startPoint, pt, ptLength,
-                unitDirections,  fMinDist,
+                unitDirections, unit_tolerance, fMinDist,
                 bracketA, functionA,
                 bracketB, functionB,
                 bracketC, functionC);
         m_kGPUCost.calcLineMinimization();
         return m_kGPUCost.getBracketB();
-        return null;
     }
-*/
+    
     /**
      * Accessor that returns how many times the cost function has been called.
      *
