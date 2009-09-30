@@ -566,10 +566,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         float fInv0 = 1.0f/(iWidth - 1.0f);
         float fInv1 = 1.0f/(iHeight - 1.0f);
         float fInv2 = 1.0f/(iDepth);
-        if ( iDepth > 1 )
-        {
-            fInv2 = 1.0f/(iDepth-1);
-        }
         float fU, fV, fW;
         int i0, i1, i2;
 
