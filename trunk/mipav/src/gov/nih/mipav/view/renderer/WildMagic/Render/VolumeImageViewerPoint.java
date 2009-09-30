@@ -39,9 +39,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
 //implements GLEventListener, KeyListener
 {
     protected static int m_iScreenCaptureCounter = 0;
-    protected Node m_spkScene;    
 
-    protected VolumeHistogramEffect m_akTransformImage;
     protected VolumeHistogramEffect m_akCollapse2D;
     protected VolumeHistogramEffect m_akCollapseColumns;
     protected VolumeHistogramEffect m_akCollapseRows;
@@ -49,12 +47,9 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     protected ImageReduceEffect m_akImageReduceEntropy;
     protected VolumeHistogramEffect m_kImageEffectDual;
     protected LineMinimizationEffect m_kImageLineMinPass2a;
-    protected LineMinimizationEffect m_kImageLineMinPass2b;
-    //protected LineMinimizationEffect m_kImageLineMinEntropy;
     protected LineMinimizationEffect m_kImageLineMinDual;
     protected LineMinimizationEffect m_kCalcTransform;
 
-    protected TriMesh m_pkPlane;
     private Polypoint m_kImagePointsDual;
     private Polypoint m_kHistogramPoints2D;
     private Polypoint m_kEntropyPoints2D;
@@ -70,7 +65,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     private OpenGLFrameBuffer m_kBracketOut;
     private OpenGLFrameBuffer m_kBracketNewOut;
     
-    private int m_iCount = 0;
     private AlphaState m_kAlpha;
     private ModelSimpleImage m_kImageA;
     private ModelSimpleImage m_kImageB;
@@ -131,25 +125,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
         CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
     } 
-    public VolumeImageViewerPoint( ModelSimpleImage kImageA, ModelSimpleImage kImageB, int iNBins )
-    {
-        //super( "VolumeImageViewer", 0, 0, kImageA.extents[0],kImageA.extents[1],
-        super( "VolumeImageViewer", 0, 0, iNBins, iNBins,
-                new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
-        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-                m_eBuffering, m_eMultisampling,
-                m_iWidth, m_iHeight );
-        GetCanvas().getContext().setSynchronized(true);  
-        
-        m_kTarget = m_kImageA = kImageA;
-        m_kMoving = m_kImageB = kImageB;
-        
-        String kExternalDirs = MipavInitGPU.getExternalDirs();        
-        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
-    }
     
     public static VolumeImageViewerPoint create( ModelSimpleImage kTarget, ModelSimpleImage kMoving )
     {
@@ -173,29 +148,9 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         kWorld.GetCanvas().getContext().release();
         if ( !kWorld.checkStatus() )
         {
+            kWorld.dispose( );
             return null;
         }
-        return kWorld;
-    }
-    
-    /**
-     * @param args
-     */
-    public static VolumeImageViewerPoint create( ModelSimpleImage kImageA, ModelSimpleImage kImageB, boolean bShowFrame, int iNBins )
-    {
-        final VolumeImageViewerPoint kWorld = new VolumeImageViewerPoint(kImageA, kImageB, iNBins);
-        final JFrame frame = new JFrame(kWorld.GetWindowTitle());
-        frame.add( kWorld.GetCanvas() );
-        
-        // setting the frame to be undecorated removes the frame title bar and edges
-        // this prevents flashing on-screen.
-        frame.setUndecorated(!bShowFrame);
-        // frame must be set to visible for the gl canvas to be properly initialized.
-        frame.setVisible(true);
-        frame.setBounds(0,0,
-                kWorld.GetWidth(), kWorld.GetHeight() );
-        frame.setVisible(bShowFrame);
-        kWorld.SetFrame(frame);
         return kWorld;
     }
     
@@ -283,12 +238,14 @@ public class VolumeImageViewerPoint extends JavaApplication3D
 
         if ( m_kTextureA != null )
         {
+            m_kTextureA.Release();
             m_kTextureA.GetImage().dispose();
             m_kTextureA.dispose();
             m_kTextureA = null;
         }
         if ( m_kTextureB != null )
         {
+            m_kTextureB.Release();
             m_kTextureB.GetImage().dispose();
             m_kTextureB.dispose();
             m_kTextureB = null;
@@ -478,10 +435,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         if ( m_kImageEffectDual != null )
         {
             m_kImageEffectDual.SetTransform(m_kImageTransform);
-        }
-        if ( m_akTransformImage != null )
-        {
-            m_akTransformImage.SetTransform(m_kImageTransform);
         }
     }
 
@@ -678,11 +631,10 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         pkAState.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
         
         double dSize = m_kImageA.dataSize;
-        m_akImageReduceEntropy = new ImageReduceEffect( m_kHistogramOutputB.GetTarget(0), null, dSize );
+        m_akImageReduceEntropy = new ImageReduceEffect( m_kHistogramOutputB.GetTarget(0), dSize );
         m_kEntropyPoints2D.AttachEffect( m_akImageReduceEntropy );     
 
         m_kImageLineMinPass2a = new LineMinimizationEffect( m_kBracketOut.GetTarget(0), m_kEntropyOut.GetTarget(0), m_fMinDist, (float)dSize, m_kImageA.nDims  );
-        //m_kImageLineMinPass2b = new LineMinimizationEffect( m_kBracketNewOut.GetTarget(0) );
     }
     
     private void calcEntropy()
@@ -783,7 +735,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_pkRenderer.FrameBufferToTexture( m_kBracketOut.GetTarget(0) );
             m_kBracketNewOut.Disable();            
             
-            if ( (i%4) == 0 )
+            //if ( (i%2) == 0 )
             {
                 kTarget = m_kBracketOut.GetTarget(0);
                 m_pkRenderer.GetTexImage( kTarget );
@@ -885,7 +837,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_kTextureA.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kTextureA.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kTextureA.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);           
-        //m_kTextureA.SetSamplerInformation( new SamplerInformation( m_kNameA, 0, 0 ) );
         if ( !m_pkRenderer.LoadTexture( m_kTextureA ) )
         {
             m_bStatus = false;
@@ -899,8 +850,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_kTextureB.SetWrapType(0,Texture.WrapType.CLAMP_BORDER);
         m_kTextureB.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kTextureB.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);           
-       // m_kTextureB.SetSamplerInformation( new SamplerInformation( m_kNameB, 0, 0 ) );
-        //m_pkRenderer.LoadTexture( m_kTextureB );
         if ( !m_pkRenderer.LoadTexture( m_kTextureB ) )
         {
             m_bStatus = false;
