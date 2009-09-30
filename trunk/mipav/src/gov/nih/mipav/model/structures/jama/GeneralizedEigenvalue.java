@@ -37,7 +37,9 @@ import gov.nih.mipav.view.*;
  * 7.77E-16 on the FORTRAN and -2.61E-15 on the Java. So apparently the Java failures are due to the Java 64 bit
  * arithmetic having a greater error than the FORTRAN 64 bit arithmetic.</p>
  * 
- * Running 7 self-tests:
+ * <p>dckkqr.test() tests dgeqrf, dorgqr, and dormqr.  All 30744 tests run passed the threshold.</p>
+ * 
+ * Running 8 self-tests:
  * if (runTest) {
             GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
             //ge.dchkgg_test();
@@ -47,6 +49,7 @@ import gov.nih.mipav.view.*;
             //ge.dsygv_test();
             //ge.dchkgl();
             //ge.dchkgk();
+            //ge.dchkqr.test();
             return;
         }
  *
@@ -128,6 +131,18 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
 
     /** Double precison machine variables found in routine dlartg. */
     private boolean first_dlartg = true;
+    
+    /** Found in routine dchkqr */
+    private int infot;
+    private String srnamt;
+    
+    /** Found in routine dlatb4 */
+    private boolean first_dlatb4 = true;
+    private double eps_dlatb4;
+    private double small_dlatb4[] = new double[1];
+    private double large_dlatb4[] = new double[1];
+    private double badc1_dlatb4;
+    private double badc2_dlatb4;
 
     /** DOCUMENT ME! */
     private int[] iparms;
@@ -1363,6 +1378,480 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
 
         return;
     } // dchkgl
+    
+    /** This is a port of version 3.1 LAPACK test routine DCHKQR
+     *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *     November 2006
+     *
+     *     .. Scalar Arguments ..
+           LOGICAL            TSTERR
+           INTEGER            NM, NMAX, NN, NNB, NOUT, NRHS
+           DOUBLE PRECISION   THRESH
+     *     ..
+     *     .. Array Arguments ..
+           LOGICAL            DOTYPE( * )
+           INTEGER            IWORK( * ), MVAL( * ), NBVAL( * ), NVAL( * ),
+          $                   NXVAL( * )
+           DOUBLE PRECISION   A( * ), AC( * ), AF( * ), AQ( * ), AR( * ),
+          $                   B( * ), RWORK( * ), TAU( * ), WORK( * ),
+          $                   X( * ), XACT( * )
+     *     ..
+     *
+     *  Purpose
+     *  =======
+     *
+     *  DCHKQR tests DGEQRF, DORGQR and DORMQR.
+     *
+     *  Arguments
+     *  =========
+     *
+     *  DOTYPE  (input) LOGICAL array, dimension (NTYPES)
+     *          The matrix types to be used for testing.  Matrices of type j
+     *          (for 1 <= j <= NTYPES) are used for testing if DOTYPE(j) =
+     *          .TRUE.; if DOTYPE(j) = .FALSE., then type j is not used.
+     *
+     *  NM      (input) INTEGER
+     *          The number of values of M contained in the vector MVAL.
+     *
+     *  MVAL    (input) INTEGER array, dimension (NM)
+     *          The values of the matrix row dimension M.
+     *
+     *  NN      (input) INTEGER
+     *          The number of values of N contained in the vector NVAL.
+     *
+     *  NVAL    (input) INTEGER array, dimension (NN)
+     *          The values of the matrix column dimension N.
+     *
+     *  NNB     (input) INTEGER
+     *          The number of values of NB and NX contained in the
+     *          vectors NBVAL and NXVAL.  The blocking parameters are used
+     *          in pairs (NB,NX).
+     *
+     *  NBVAL   (input) INTEGER array, dimension (NNB)
+     *          The values of the blocksize NB.
+     *
+     *  NXVAL   (input) INTEGER array, dimension (NNB)
+     *          The values of the crossover point NX.
+     *
+     *  NRHS    (input) INTEGER
+     *          The number of right hand side vectors to be generated for
+     *          each linear system.
+     *
+     *  THRESH  (input) DOUBLE PRECISION
+     *          The threshold value for the test ratios.  A result is
+     *          included in the output file if RESULT >= THRESH.  To have
+     *          every test ratio printed, use THRESH = 0.
+     *
+     *  TSTERR  (input) LOGICAL
+     *          Flag that indicates whether error exits are to be tested.
+     *
+     *  NMAX    (input) INTEGER
+     *          The maximum value permitted for M or N, used in dimensioning
+     *          the work arrays.
+     *
+     *  A       (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX]
+     *
+     *  AF      (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX]
+     *
+     *  AQ      (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX]
+     *
+     *  AR      (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX]
+     *
+     *  AC      (workspace) DOUBLE PRECISION array, dimension [NMAX][NMAX}
+     *
+     *  B       (workspace) DOUBLE PRECISION array, dimension [NMAX*][NRHS]
+     *
+     *  X       (workspace) DOUBLE PRECISION array, dimension [NMAX][NRHS]
+     *
+     *  XACT    (workspace) DOUBLE PRECISION array, dimension [NMAX][NRHS]
+     *
+     *  TAU     (workspace) DOUBLE PRECISION array, dimension (NMAX)
+     *
+     *  WORK    (workspace) DOUBLE PRECISION array, dimension (NMAX*NMAX)
+     *
+     *  RWORK   (workspace) DOUBLE PRECISION array, dimension (NMAX)
+     *
+     *  IWORK   (workspace) INTEGER array, dimension (NMAX)
+     */
+     private void dchkqr(boolean[] dotype, int nm, int[] mval, int nn, int[] nval, int nnb, int[] nbval,
+                         int[] nxval, int nrhs, double thresh, boolean tsterr, int nmax, double[][] A,
+                         double[][] AF, double[][] AQ, double[][] AR, double[][] AC, double[][] B, double[][] X,
+                         double[][] XACT, double[] tau, double[] work, double[] rwork, int[] iwork) {
+         int ntests = 8;
+         int ntypes = 8;
+         int iseedy[] = new int[] {1988, 1989, 1990, 1991};
+         int i;
+         int ik;
+         int im;
+         int imat;
+         int in;
+         int inb;
+         int info[] = new int[1];
+         int k;
+         int kl[] = new int[1];
+         int ku[] = new int[1];
+         int lda;
+         int lwork;
+         int m;
+         int minmn;
+         int mode[] = new int[1];
+         int n;
+         int nb;
+         int nerrs;
+         int nfail;
+         int nk;
+         int nrun;
+         int nt;
+         int nx;
+         double anorm[] = new double[1];
+         double cndnum[] = new double[1];
+         int iseed[] = new int[4];
+         int kval[] = new int[4];
+         double result[] = new double[ntests];
+         String path;
+         char type[] = new char[1];
+         char dist[] = new char[1];
+         double res[] = new double[4];
+         int p;
+         int q;
+         double vec1[];
+         double resid[] = new double[1];
+         
+         // Initialize constants and the random number seed
+         path = new String("DQR"); // D for double precision
+         nrun  = 0;
+         nfail = 0;
+         nerrs = 0;
+         for (i = 0; i < 4; i++) {
+             iseed[i] = iseedy[i];
+         }
+         
+         // Test the error exits
+         if (tsterr) {
+             derrqr();
+         }
+         infot = 0;
+         xlaenv(2, 2);
+         
+         lda = nmax;
+         lwork = nmax * Math.max(nmax, nrhs);
+         
+         // Do for each value of m in mval.
+         
+         for (im = 1; im <= nm; im++) {
+             m = mval[im-1];
+             
+             // Do for each value of n in nval.
+             for (in = 1; in <= nn; in++) {
+                 n = nval[in-1];
+                 minmn = Math.min(m, n);
+                 for (imat = 1; imat <= ntypes; imat++) {
+                     // Do the tests only if dotype[imat-1] is true
+                     if (!dotype[imat-1]) {
+                         continue;
+                     }
+                     
+                     // Set up the parameters with dlatb4 and generate a test matrix
+                     // with dlatms.
+                     dlatb4(path, imat, m, n, type, kl, ku, anorm, mode, cndnum, dist);
+                     
+                     srnamt = new String("DLATMS");
+                     dlatms(m, n, dist[0], iseed, type[0], rwork, mode[0], cndnum[0], anorm[0],
+                            kl[0], ku[0], 'N', A, lda, work, info);
+                     
+                     // Check error code from dlamts.
+                     if (info[0] != 0) {
+                         if ((nfail == 0) && (nerrs == 0)) {
+                             Preferences.debug("Path = DQR\n");
+                             Preferences.debug("QR decomposition of rectangular matrices\n");
+                             Preferences.debug("QR matrix types:\n");
+                             Preferences.debug("1. Diagonal\n");
+                             Preferences.debug("2. Upper triangular\n");
+                             Preferences.debug("3. Lower triangular\n");
+                             Preferences.debug("4. Random, cndnum[0] = 2\n");
+                             Preferences.debug("5. Random, cndnum[0] = sqrt(1.0/eps)\n");
+                             Preferences.debug("6. Random, cndnum[0] = 0.1/eps\n");
+                             Preferences.debug("7. Scaled near underflow\n");
+                             Preferences.debug("8. Scaled near overflow\n");
+                             Preferences.debug("Test ratios:\n");
+                             Preferences.debug("1: norm(R - Q' * A)/(M * norm(A) * eps)\n");
+                             Preferences.debug("2: norm(I - Q'*Q)/(M * eps)\n");
+                             Preferences.debug("3: norm(Q*C - Q*C)/(M * norm(C) * eps)\n");
+                             Preferences.debug("4: norm(C*Q - C*Q)/(M * norm(C) * eps)\n");
+                             Preferences.debug("5: norm(Q' * C - Q' * C)/(M * norm(C) * eps)\n");
+                             Preferences.debug("6: norm(C*Q' - C*Q')/(M * norm(C) * eps)\n");
+                             Preferences.debug("7: norm(B - A * X)/(norm(A) * norm(X) * eps)\n");
+                             Preferences.debug("8: Diagonal is not non-negative\n");
+                         } // if ((nfail == 0) && (nerrs == 0))
+                         nerrs++;
+                         Preferences.debug("Error code from dlatms is info[0] = " + info +
+                                           " for m = " + m + " n = " + n + " type = " + imat + "\n");
+                         continue;
+                     } // if (info[0] != 0)
+                     
+                     // Get some values for k: the first value must be minmn,
+                     // corresponding to the call of dqrt01; other values are
+                     // used in the calls of dqrt02, and must not exceed minmn.
+                     kval[0] = minmn;
+                     kval[1] = 0;
+                     kval[2] = 1;
+                     kval[3] = minmn/2;
+                     if (minmn == 0) {
+                         nk = 1;
+                     }
+                     else if (minmn == 1) {
+                         nk = 2;
+                     }
+                     else if (minmn <= 3) {
+                         nk = 3;
+                     }
+                     else {
+                         nk = 4;
+                     }
+                     
+                     for (ik = 1; ik <= nk; ik++) {
+                         k = kval[ik-1];
+                         
+                         // Do for each pair of values (nb, nx) in nbval and nxval.
+                         for (inb = 1; inb <= nnb; inb++) {
+                             nb = nbval[inb-1];
+                             xlaenv(1, nb);
+                             nx = nxval[inb-1];
+                             xlaenv(3, nx);
+                             for (i = 0; i < ntests; i++) {
+                                 result[i] = 0.0;
+                             }
+                             nt = 2;
+                             if (ik == 1) {
+                                 // Test dgeqrf
+                                 dqrt01(m, n, A, AF, AQ, AR, lda, tau, work, lwork, rwork, result);
+                                 if (!dgennd(m, n, AF, lda)) {
+                                     result[7] = 2*thresh;
+                                 }
+                                 nt = nt + 1;
+                             } // if (ik == 1)
+                             else if (m >= n) {
+                                 // Test dorgqr, using factorization returned by dqrt01
+                                 dqrt02(m, n, k, A, AF, AQ, AR, lda, tau, work, lwork, rwork,
+                                        result);
+                             } // else if (m >= n)
+                             if (m >= k) {
+                                 // Test DORMQR, using factorization returned by DQRT01 
+                                 dqrt03(m, n, k, AF, AC, AR, AQ, lda, tau, work, lwork, rwork, res);
+                                 for (p = 0; p < 4; p++) {
+                                     result[2+p] = res[p];
+                                 }
+                                 nt = nt + 4;
+                                 
+                                 // If m >= n and k == n, call dgers to solve a system
+                                 // with nrhs right hand sides and compute the residual.
+                                 if ((k == n) && (inb == 1)) {
+                                     // Generate a solution and set the right hand side.
+                                     // Here to dgemm extracted from dlarhs
+                                     vec1 = new double[n];
+                                     for (p = 1; p <= nrhs; p++) {
+                                         dlarnv(2, iseed, n, vec1);
+                                         for (q = 0; q < n; q++) {
+                                             XACT[q][p-1] = vec1[q];    
+                                         }
+                                     } // for (p = 1; p <= nrhs; p++)
+                                     dgemm('N', 'N', m, nrhs, n, 1.0, A, lda, XACT, lda, 0.0,
+                                             B, lda);
+                                     dlacpy('F', m, nrhs, B, lda, X, lda);
+                                     srnamt = new String("DGEQRS");
+                                     dgeqrs(m, n, nrhs, AF, lda, tau, X,
+                                            lda, work, lwork, info);
+                                     
+                                     // Check error code from dgeqrs.
+                                     if (info[0] != 0) {
+                                         if ((nfail == 0) && (nerrs == 0)) {
+                                             Preferences.debug("Path = DQR\n");
+                                             Preferences.debug("QR decomposition of rectangular matrices\n");
+                                             Preferences.debug("QR matrix types:\n");
+                                             Preferences.debug("1. Diagonal\n");
+                                             Preferences.debug("2. Upper triangular\n");
+                                             Preferences.debug("3. Lower triangular\n");
+                                             Preferences.debug("4. Random, cndnum[0] = 2\n");
+                                             Preferences.debug("5. Random, cndnum[0] = sqrt(1.0/eps)\n");
+                                             Preferences.debug("6. Random, cndnum[0] = 0.1/eps\n");
+                                             Preferences.debug("7. Scaled near underflow\n");
+                                             Preferences.debug("8. Scaled near overflow\n");
+                                             Preferences.debug("Test ratios:\n");
+                                             Preferences.debug("1: norm(R - Q' * A)/(M * norm(A) * eps)\n");
+                                             Preferences.debug("2: norm(I - Q'*Q)/(M * eps)\n");
+                                             Preferences.debug("3: norm(Q*C - Q*C)/(M * norm(C) * eps)\n");
+                                             Preferences.debug("4: norm(C*Q - C*Q)/(M * norm(C) * eps)\n");
+                                             Preferences.debug("5: norm(Q' * C - Q' * C)/(M * norm(C) * eps)\n");
+                                             Preferences.debug("6: norm(C*Q' - C*Q')/(M * norm(C) * eps)\n");
+                                             Preferences.debug("7: norm(B - A * X)/(norm(A) * norm(X) * eps)\n");
+                                             Preferences.debug("8: Diagonal is not non-negative\n");
+                                         } // if ((nfail == 0) && (nerrs == 0))
+                                         nerrs++;
+                                         Preferences.debug("Error code from dgeqrs info[0] = " + info[0] + "\n");
+                                         Preferences.debug("m = " + m + " n = " + n + " nrhs = " + nrhs + "\n");
+                                         Preferences.debug("nb = " + nb + " type = " + imat + "\n");
+                                     } // if (info[0] != 0)
+                                     
+                                     dget02('N', m, n, nrhs, A, lda, X, lda, B, lda, rwork, resid);
+                                     result[6] = resid[0];
+                                     nt++;
+                                 } // if ((k == n) && (inb == 1))
+                             } // if (m >= k)
+                             
+                             // Output information about the tests that did not pass the threshold.
+                             for (i = 1; i <= nt; i++) {
+                                 if (result[i-1] >= thresh) {
+                                     if ((nfail == 0) && (nerrs == 0)) {
+                                         Preferences.debug("Path = DQR\n");
+                                         Preferences.debug("QR decomposition of rectangular matrices\n");
+                                         Preferences.debug("QR matrix types:\n");
+                                         Preferences.debug("1. Diagonal\n");
+                                         Preferences.debug("2. Upper triangular\n");
+                                         Preferences.debug("3. Lower triangular\n");
+                                         Preferences.debug("4. Random, cndnum[0] = 2\n");
+                                         Preferences.debug("5. Random, cndnum[0] = sqrt(1.0/eps)\n");
+                                         Preferences.debug("6. Random, cndnum[0] = 0.1/eps\n");
+                                         Preferences.debug("7. Scaled near underflow\n");
+                                         Preferences.debug("8. Scaled near overflow\n");
+                                         Preferences.debug("Test ratios:\n");
+                                         Preferences.debug("1: norm(R - Q' * A)/(M * norm(A) * eps)\n");
+                                         Preferences.debug("2: norm(I - Q'*Q)/(M * eps)\n");
+                                         Preferences.debug("3: norm(Q*C - Q*C)/(M * norm(C) * eps)\n");
+                                         Preferences.debug("4: norm(C*Q - C*Q)/(M * norm(C) * eps)\n");
+                                         Preferences.debug("5: norm(Q' * C - Q' * C)/(M * norm(C) * eps)\n");
+                                         Preferences.debug("6: norm(C*Q' - C*Q')/(M * norm(C) * eps)\n");
+                                         Preferences.debug("7: norm(B - A * X)/(norm(A) * norm(X) * eps)\n");
+                                         Preferences.debug("8: Diagonal is not non-negative\n");
+                                     } // if ((nfail == 0) && (nerrs == 0))
+                                     Preferences.debug("m = " + m + " n = " + n + " k = " + k + "\n");
+                                     Preferences.debug("nb = " + nb + " nx = " + nx + " type = " + imat + "\n");
+                                     Preferences.debug("Test = " + i + " with result = " + result[i-1] + "\n");
+                                     nfail++;
+                                 } // if (result[i-1] >= thresh)
+                             } // for (i = 1; i <= nt; i++)
+                             nrun = nrun + nt;
+                         } // for (inb = 1; inb <= nnb; inb++)
+                     } // for (ik = 1; ik <= nk; ik++)
+                 } // for (imat = 1; imat <= ntypes; imat++)
+             } // for (in = 1; in <= nn; in++)
+         } // for (im = 1; im <= nm; im++)
+         
+         // Output a summary of the results.
+         if (nfail > 0) {
+             Preferences.debug("In dchkqr " + nfail + " out of " + nrun + " tests failed to pass the threshold\n");
+         }
+         else {
+             Preferences.debug("In dchkqr all " + nrun + " tests run passed the threshold\n");
+         }
+         if (nerrs > 0) {
+             Preferences.debug("In dchkqr " + nerrs + " errors occurred\n");
+         }
+         return;
+     } // dchkqr
+    
+    /** This dchkr_test routine is a port of a portion of the version 3.1.1 LAPACK test routine DCHKAA by
+     * Univ. of Tennessee, Univ. Of California Berkeley and NAG Ltd., January, 2007. and some values from 
+     * the test data file dtest.in.
+     */
+    public void dchkqr_test() {
+        
+        // Number of values of m
+        int nm = 7;
+        
+        // Values of m (row dimension)
+        // dtest.in uses 50 rather than 16
+        int[] mval = new int[] { 0, 1, 2, 3, 5, 10, 16 };
+        
+        // Number of values of n
+        int nn = 7;
+        
+        // Values of n (column dimension)
+        // dtest.in uses 50 rather than 16
+        int[] nval = new int[] { 0, 1, 2, 3, 5, 10, 16 };
+        
+        // Number of values of nrhs
+        // dchkaa has nns = 1.  dtest.in uses nns = 3.
+        int nns = 1;
+        
+        // Values of nrhs (number of right hand sides)
+        // dchkaa uses only 2.  dtest.in uses 1, 2, 15.
+        // Since dchkr only accepts nrhs = nsval[0] use only 2.
+        int[] nsval = new int[]{2};
+        
+        // Number of values of nb
+        int nnb = 5;
+        
+        // Values of nb (the blocksize)
+        int nbval[] = new int[] {1, 3, 3, 3, 20};
+        
+        // Values of nx (crossover point)
+        // There are nnb values of nx.
+        int nxval[] = new int[] {1, 0, 5, 9, 1};
+        
+        // Number of values of rank
+        int nrank = 3;
+        
+        // Values of rank (as a % of n)
+        int rankval[] = new int[] {30, 50, 90};
+        
+        // Threshold value of test ratio
+        // dchkaa has 20.0, dtest.in has 30.0
+        double thresh = 20.0;
+        
+        // Test the LAPACK routines
+        boolean tstchk = true;
+        
+        // Test the driver routines
+        boolean tstdrv = true;
+        
+        // Test the error exits
+        // Passed all 49 exits on test.
+        // Put at false so as not to have to hit okay to 49 displayError messages.
+        boolean tsterr = false;
+        
+        // The maximum allowable value for n
+        int nmax = 132;
+        
+        // The number of different values that can be used for each of m, n, nrhs, nb, and nx
+        int maxin = 12;
+        
+        // The maximum number of right hand sides
+        int maxrhs = 16;
+        int nmats = 8;
+        int ntypes = 8;
+        int nrhs = nsval[0];
+        boolean dotype[] = new boolean[ntypes];
+        double A[][] = new double[nmax][nmax];
+        double AF[][] = new double[nmax][nmax];
+        double AQ[][] = new double[nmax][nmax];
+        double AR[][] = new double[nmax][nmax];
+        double AC[][] = new double[nmax][nmax];
+        double B[][] = new double[nmax][nrhs];
+        double X[][] = new double[nmax][nrhs];
+        double XACT[][] = new double[nmax][nrhs];
+        double tau[] = new double[nmax];
+        double work[] = new double[nmax*nmax];
+        double rwork[] = new double[nmax];
+        int iwork[] = new int[nmax];
+        iparms = new int[11];
+        int i;
+        double eps;
+       
+        for (i = 0; i < ntypes; i++) {
+            dotype[i] = true;
+        }
+        
+        // Output the machine dependent constants
+        eps = dlamch('U');
+        Preferences.debug("Underflow threshold = " + eps + "\n");
+        eps = dlamch('O');
+        Preferences.debug("Overflow threshold = " + eps + "\n");
+        eps = dlamch('E');
+        Preferences.debug("Precision = " + eps + "\n");
+        
+        dchkqr(dotype, nm, mval, nn, nval, nnb, nbval, nxval, nrhs, thresh, tsterr, nmax, 
+               A, AF, AQ, AR, AC, B, X, XACT, tau, work, rwork, iwork);
+    } // dchkqr_test
 
     /**
      * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive dchkst, that tests
@@ -1671,6 +2160,618 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
             } // if (tstchk)
         } // for (i = 1; i <= nparms; i++)
     } // ddrvst_test
+    
+    /** This is a port of a portion of version 3.1 LAPACK routine DERRQR.
+     * *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *     November 2006
+     */
+    private void derrqr() {
+        int nmax = 2;
+        int i;
+        int info[] = new int[1];
+        int j;
+        double A[][] = new double[nmax][nmax];
+        double AF[][] = new double[nmax][nmax];
+        double B[][] = new double[nmax][nmax];
+        double b[] = new double[nmax];
+        double w[] = new double[nmax];
+        double x[] = new double[nmax];
+        int npass = 49;
+        int ntotal = 49;
+        
+        // Set the variables to innocuous values
+        for (j = 1; j <= nmax; j++) {
+            for (i = 1; i <= nmax; i++) {
+                A[i-1][j-1] = 1.0/(double)(i+j);
+                AF[i-1][j-1] = 1.0/(double)(i+j);
+                B[i-1][j-1] = 1.0/(double)(i+j);
+            }
+            b[j-1] = 0.0;
+            w[j-1] = 0.0;
+            x[j-1] = 0.0;
+        }
+        
+        // Error exits for QR factorization
+        
+        // DGEQRF
+        dgeqrf(-1, 0, A, 1, b, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgeqrf(-1, 0, A, 1, b, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of -1\n");
+            npass--;
+        }
+        
+        dgeqrf(0, -1, A, 1, b, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgeqrf(-0, -1, A, 1, b, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;    
+        }
+        
+        dgeqrf(2, 1, A, 1, b, w, 1, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgeqrf(2, 1, A, 1, b, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -4\n");
+            npass--;    
+        }
+        
+        dgeqrf(1, 2, A, 1, b, w, 1, info);
+        if (info[0] != -7) {
+            Preferences.debug("dgeqrf(1, 2, A, 1, b, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -7\n");
+            npass--;    
+        }
+        
+        // DGEQR2
+        dgeqr2(-1, 0, A, 1, b, w, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgeqr2(-1, 0, A, 1, b, w, info) produced info[0] = " + info[0] +
+            " instead of -1\n");
+            npass--;     
+        }
+        
+        dgeqr2(2, 1, A, 1, b, w, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgeqr2(2, 1, A, 1, b, w, info) produced info[0] = " + info[0] +
+            " instead of -4\n");
+            npass--;     
+        }
+        
+        // DGEQRS
+        dgeqrs(-1, 0, 0, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgeqrs(-1, 0, 0, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -1\n");
+            npass--;
+        }
+        
+        dgeqrs(0, -1, 0, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgeqrs(0, -1, 0, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dgeqrs(1, 2, 0, A, 2, x, B, 2, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgeqrs(1, 2, 0, A, 2, x, B, 2, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dgeqrs(0, 0, -1, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dgeqrs(0, 0, -1, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -3\n");
+            npass--;
+        }
+        
+        dgeqrs(2, 1, 0, A, 1, x, B, 2, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dgeqrs(2, 1, 0, A, 1, x, B, 2, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dgeqrs(2, 1, 0, A, 2, x, B, 1, w, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dgeqrs(2, 1, 0, A, 2, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -8\n");
+            npass--;
+        }
+        
+        dgeqrs(1, 1, 2, A, 1, x, B, 1, w, 1, info);
+        if (info[0] != -10) {
+            Preferences.debug("dgeqrs(1, 1, 2, A, 1, x, B, 1, w, 1, info) produced info[0] = " + 
+            info[0] + " instead of -10\n");
+            npass--;
+        }
+        
+        // DORGQR
+        dorgqr(-1, 0, 0, A, 1, x, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dorgqr(-1, 0, 0, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -1\n");
+            npass--;      
+        }
+        
+        dorgqr(0, -1, 0, A, 1, x, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorgqr(0, -1, 0, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;      
+        }
+        
+        dorgqr(1, 2, 0, A, 1, x, w, 2, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorgqr(1, 2, 0, A, 1, x, w, 2, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;      
+        }
+        
+        dorgqr(0, 0, -1, A, 1, x, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgqr(0, 0, -1, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;      
+        }
+        
+        dorgqr(1, 1, 2, A, 1, x, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgqr(1, 1, 2, A, 1, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;      
+        }
+        
+        dorgqr(2, 2, 0, A, 1, x, w, 2, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorgqr(2, 2, 0, A, 1, x, w, 2, info) produced info[0] = " + info[0] +
+            " instead of -5\n");
+            npass--;      
+        }
+        
+        dorgqr(2, 2, 0, A, 2, x, w, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dorgqr(2, 2, 0, A, 2, x, w, 1, info) produced info[0] = " + info[0] +
+            " instead of -8\n");
+            npass--;      
+        }
+        
+        // DORG2R
+        dorg2r(-1, 0, 0, A, 1, x, w, info);
+        if (info[0] != -1) {
+            Preferences.debug("dorg2r(-1, 0, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -1\n");
+            npass--;
+        }
+        
+        dorg2r(0, -1, 0, A, 1, x, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorg2r(0, -1, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;
+        }
+        
+        dorg2r(1, 2, 0, A, 1, x, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorg2r(1, 2, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -2\n");
+            npass--;
+        }
+        
+        dorg2r(0, 0, -1, A, 1, x, w, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorg2r(0, 0, -1, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;
+        }
+        
+        dorg2r(2, 1, 2, A, 2, x, w, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorg2r(2, 1, 2, A, 2, x, w, info) produced info[0] = " + info[0] +
+            " instead of -3\n");
+            npass--;
+        }
+        
+        dorg2r(2, 1, 0, A, 1, x, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorg2r(2, 1, 0, A, 1, x, w, info) produced info[0] = " + info[0] +
+            " instead of -5\n");
+            npass--;
+        }
+        
+        // DORMQR
+        dormqr('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dormqr('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -1\n");
+            npass--;
+        }
+        
+        dormqr('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dormqr('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dormqr('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -3\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -4) {
+            Preferences.debug("dormqr('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -4\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dormqr('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dormqr('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dormqr('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dormqr('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 2, 1, 0, A, 1, x, AF, 2, w, 1, info);
+        if (info[0] != -7) {
+            Preferences.debug("dormqr('L', 'N', 2, 1, 0, A, 1, x, AF, 2, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dormqr('R', 'N', 1, 2, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -7) {
+            Preferences.debug("dormqr('R', 'N', 1, 2, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, 1, info);
+        if (info[0] != -10) {
+            Preferences.debug("dormqr('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -10\n");
+            npass--;
+        }
+        
+        dormqr('L', 'N', 1, 2, 0, A, 1, x, AF, 1, w, 1, info);
+        if (info[0] != -12) {
+            Preferences.debug("dormqr('L', 'N', 1, 2, 0, A, 1, x, AF, 1, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -12\n");
+            npass--;
+        }
+        
+        dormqr('R', 'N', 2, 1, 0, A, 1, x, AF, 2, w, 1, info);
+        if (info[0] != -12) {
+            Preferences.debug("dormqr('R', 'N', 2, 1, 0, A, 1, x, AF, 2, w, 1, info) produced info[0] = " +
+            info[0] + " instead of -12\n");
+            npass--;
+        }
+        
+        // DORM2R
+        dorm2r('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -1) {
+            Preferences.debug("dorm2r('/', 'N', 0, 0, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -1\n");
+            npass--;
+        }
+        
+        dorm2r('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorm2r('L', '/', 0, 0, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -2\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorm2r('L', 'N', -1, 0, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -3\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -4) {
+            Preferences.debug("dorm2r('L', 'N', 0, -1, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -4\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorm2r('L', 'N', 0, 0, -1, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorm2r('L', 'N', 0, 1, 1, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dorm2r('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, info);
+        if (info[0] != -5) {
+            Preferences.debug("dorm2r('R', 'N', 1, 0, 1, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -5\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', 2, 1, 0, A, 1, x, AF, 2, w, info);
+        if (info[0] != -7) {
+            Preferences.debug("dorm2r('L', 'N', 2, 1, 0, A, 1, x, AF, 2, w, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dorm2r('R', 'N', 1, 2, 0, A, 1, x, AF, 1, w, info);
+        if (info[0] != -7) {
+            Preferences.debug("dorm2r('R', 'N', 1, 2, 0, A, 1, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -7\n");
+            npass--;
+        }
+        
+        dorm2r('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, info);
+        if (info[0] != -10) {
+            Preferences.debug("dorm2r('L', 'N', 2, 1, 0, A, 2, x, AF, 1, w, info) produced info[0] = " +
+            info[0] + " instead of -10\n");
+            npass--;
+        }
+        
+        Preferences.debug("derrqr correctly found " + npass + " of " + ntotal + " error exits\n");
+        return;
+    } // derrqr
+    
+    /** This is a port of version 3.1 LAPACK routine DGEQRS.
+     *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *     November 2006
+     *
+     *     .. Scalar Arguments ..
+           INTEGER            INFO, LDA, LDB, LWORK, M, N, NRHS
+     *     ..
+     *     .. Array Arguments ..
+           DOUBLE PRECISION   A( LDA, * ), B( LDB, * ), TAU( * ),
+          $                   WORK( LWORK )
+     *     ..
+     *
+     *  Purpose
+     *  =======
+     *
+     *  Solve the least squares problem
+     *      min || A*X - B ||
+     *  using the QR factorization
+     *      A = Q*R
+     *  computed by DGEQRF.
+     *
+     *  Arguments
+     *  =========
+     *
+     *  M       (input) INTEGER
+     *          The number of rows of the matrix A.  M >= 0.
+     *
+     *  N       (input) INTEGER
+     *          The number of columns of the matrix A.  M >= N >= 0.
+     *
+     *  NRHS    (input) INTEGER
+     *          The number of columns of B.  NRHS >= 0.
+     *
+     *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+     *          Details of the QR factorization of the original matrix A as
+     *          returned by DGEQRF.
+     *
+     *  LDA     (input) INTEGER
+     *          The leading dimension of the array A.  LDA >= M.
+     *
+     *  TAU     (input) DOUBLE PRECISION array, dimension (N)
+     *          Details of the orthogonal matrix Q.
+     *
+     *  B       (input/output) DOUBLE PRECISION array, dimension (LDB,NRHS)
+     *          On entry, the m-by-nrhs right hand side matrix B.
+     *          On exit, the n-by-nrhs solution matrix X.
+     *
+     *  LDB     (input) INTEGER
+     *          The leading dimension of the array B. LDB >= M.
+     *
+     *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+     *
+     *  LWORK   (input) INTEGER
+     *          The length of the array WORK.  LWORK must be at least NRHS,
+     *          and should be at least NRHS*NB, where NB is the block size
+     *          for this environment.
+     *
+     *  INFO    (output) INTEGER
+     *          = 0: successful exit
+     *          < 0: if INFO = -i, the i-th argument had an illegal value
+     */
+     private void dgeqrs(int m, int n, int nrhs, double A[][], int lda, double[] tau, double[][] B,
+                         int ldb, double[] work, int lwork, int info[]) {
+         
+         // Test the input arguments.
+         info[0] = 0;
+         if (m < 0) {
+             info[0] = -1;
+         }
+         else if ((n < 0) || (n > m)) {
+             info[0] = -2;
+         }
+         else if (nrhs < 0) {
+             info[0] = -3;
+         }
+         else if (lda < Math.max(1, m)) {
+             info[0] = -5;
+         }
+         else if (ldb < Math.max(1, m)) {
+             info[0] = -8;
+         }
+         else if ((lwork < 1) || (lwork < nrhs) && (m > 0) && (n > 0)) {
+             info[0] = -10;
+         }
+         if (info[0] != 0) {
+             MipavUtil.displayError("dgeqrs had info[0] = " + info[0]);
+             return;
+         }
+         
+         // Quick return if possible
+         if ((n == 0) || (nrhs == 0) || (m == 0)) {
+             return;
+         }
+         
+         // B := Q' * B
+         dormqr('L', 'T', m, nrhs, n, A, lda, tau, B, ldb, work, lwork, info);
+         
+         // Solve R*X = B(1:n,:)
+         
+         dtrsm('L', 'U', 'N', 'N', n, nrhs, 1.0, A, lda, B, ldb);
+         return;
+     } // dgeqrs
+     
+     /** This is a port of version 3.1 LAPACK test routine DGET02.
+      *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+      *     November 2006
+      *
+      *     .. Scalar Arguments ..
+            CHARACTER          TRANS
+            INTEGER            LDA, LDB, LDX, M, N, NRHS
+            DOUBLE PRECISION   RESID
+      *     ..
+      *     .. Array Arguments ..
+            DOUBLE PRECISION   A( LDA, * ), B( LDB, * ), RWORK( * ),
+           $                   X( LDX, * )
+      *     ..
+      *
+      *  Purpose
+      *  =======
+      *
+      *  DGET02 computes the residual for a solution of a system of linear
+      *  equations  A*x = b  or  A'*x = b:
+      *     RESID = norm(B - A*X) / ( norm(A) * norm(X) * EPS ),
+      *  where EPS is the machine epsilon.
+      *
+      *  Arguments
+      *  =========
+      *
+      *  TRANS   (input) CHARACTER*1
+      *          Specifies the form of the system of equations:
+      *          = 'N':  A *x = b
+      *          = 'T':  A'*x = b, where A' is the transpose of A
+      *          = 'C':  A'*x = b, where A' is the transpose of A
+      *
+      *  M       (input) INTEGER
+      *          The number of rows of the matrix A.  M >= 0.
+      *
+      *  N       (input) INTEGER
+      *          The number of columns of the matrix A.  N >= 0.
+      *
+      *  NRHS    (input) INTEGER
+      *          The number of columns of B, the matrix of right hand sides.
+      *          NRHS >= 0.
+      *
+      *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+      *          The original M x N matrix A.
+      *
+      *  LDA     (input) INTEGER
+      *          The leading dimension of the array A.  LDA >= max(1,M).
+      *
+      *  X       (input) DOUBLE PRECISION array, dimension (LDX,NRHS)
+      *          The computed solution vectors for the system of linear
+      *          equations.
+      *
+      *  LDX     (input) INTEGER
+      *          The leading dimension of the array X.  If TRANS = 'N',
+      *          LDX >= max(1,N); if TRANS = 'T' or 'C', LDX >= max(1,M).
+      *
+      *  B       (input/output) DOUBLE PRECISION array, dimension (LDB,NRHS)
+      *          On entry, the right hand side vectors for the system of
+      *          linear equations.
+      *          On exit, B is overwritten with the difference B - A*X.
+      *
+      *  LDB     (input) INTEGER
+      *          The leading dimension of the array B.  IF TRANS = 'N',
+      *          LDB >= max(1,M); if TRANS = 'T' or 'C', LDB >= max(1,N).
+      *
+      *  RWORK   (workspace) DOUBLE PRECISION array, dimension (M)
+      *
+      *  RESID   (output) DOUBLE PRECISION
+      *          The maximum over the number of right hand sides of
+      *          norm(B - A*X) / ( norm(A) * norm(X) * EPS ).
+      */
+   private void dget02(char trans, int m, int n, int nrhs, double[][] A, int lda,
+                       double[][] X, int ldx, double[][] B, int ldb, double[] rwork,
+                       double[] resid) {
+       int j;
+       int n1;
+       int n2;
+       double anorm;
+       double bnorm;
+       double eps;
+       double xnorm;
+       int p;
+       
+       // Quick exit if m == 0 or n == 0 or nrhs == 0
+       if ((m <= 0) || (n <= 0) || (nrhs <= 0)) {
+           resid[0] = 0.0;
+           return;
+       }
+       
+       if ((trans == 'T') || (trans == 't') || (trans == 'C') || (trans == 'c')) {
+           n1 = n;
+           n2 = m;
+       }
+       else {
+           n1 = m;
+           n2 = n;
+       }
+       
+       // Exit with resid[0] = 1/eps if anorm = 0.
+       eps = dlamch('E'); // Epsilon
+       anorm = dlange('1', n1, n2, A, lda, rwork);
+       if (anorm <= 0.0) {
+           resid[0] = 1.0/eps;
+           return;
+       }
+       
+       // Compute B - A*X  (or B - A'*X) and store in B.
+       dgemm(trans, 'N', n1, nrhs, n2, -1.0, A, lda, X, ldx, 1.0, B, ldb);
+       
+       // Compute the maximum overr the number of right hand sides of
+       // norm(B - A*X)/(norm(A) * norm(X) * eps).
+       resid[0] = 0.0;
+       for (j = 1; j <= nrhs; j++) {
+           bnorm = 0.0;
+           for (p = 0; p < n1; p++) {
+               bnorm += Math.abs(B[p][j-1]);
+           }
+           xnorm = 0.0;
+           for (p = 0; p < n2; p++) {
+               xnorm += Math.abs(X[p][j-1]);
+           }
+           if (xnorm <= 0.0) {
+               resid[0] = 1.0/eps;
+           }
+           else {
+               resid[0] = Math.max(resid[0], ((bnorm/anorm)/xnorm)/eps);
+           }
+       } // for (j = 1; j <= nrhs; j++)
+       return;
+   } // dget02
 
     /**
      * This is a port of the version 3.1 LAPACK driver routine DGGEV Original DGGEV created by Univ. of Tennessee, Univ.
@@ -7393,6 +8494,50 @@ loop1:               {
 
         return;
     } // dgemv
+    
+    /** This is a port of version 3.1 LAPACK test routine DGENND.
+     *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *     February 2008
+     *
+     *     .. Scalar Arguments ..
+           INTEGER M, N, LDA
+     *     ..
+     *     .. Array Arguments ..
+           DOUBLE PRECISION A( LDA, * )
+     *     ..
+     *
+     *  Purpose
+     *  =======
+     *
+     *     DGENND tests that its argument has a non-negative diagonal.
+     *
+     *  Arguments
+     *  =========
+     *
+     *  M       (input) INTEGER
+     *          The number of rows in A.
+     *
+     *  N       (input) INTEGER
+     *          The number of columns in A.
+     *
+     *  A       (input) DOUBLE PRECISION array, dimension (LDA, N)
+     *          The matrix.
+     *
+     *  LDA     (input) INTEGER
+     *          Leading dimension of A.
+     */
+     private boolean dgennd(int m, int n, double A[][], int lda) {
+         int i;
+         int k;
+         
+         k = Math.min(m, n);
+         for (i = 0; i < k; i++) {
+             if (A[i][i] < 0.0) {
+                 return false;
+             }
+         }
+         return true;
+     } // dgennd;
 
     /**
      * This is a port of the version 3.2 LAPACK routine DGEQR2 Original DGEQR2 created by Univ. of Tennessee, Univ. of
@@ -17932,6 +19077,419 @@ loop4:
 
         return;
     } // dlasv2
+    
+    /** This is a port of version 3.1 LAPACK test routine DLATB4.
+     *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *     November 2006
+     *
+     *     .. Scalar Arguments ..
+           CHARACTER          DIST, TYPE
+           CHARACTER*3        PATH
+           INTEGER            IMAT, KL, KU, M, MODE, N
+           DOUBLE PRECISION   ANORM, CNDNUM
+     *     ..
+     *
+     *  Purpose
+     *  =======
+     *
+     *  DLATB4 sets parameters for the matrix generator based on the type of
+     *  matrix to be generated.
+     *
+     *  Arguments
+     *  =========
+     *
+     *  PATH    (input) String
+     *          The LAPACK path name.
+     *
+     *  IMAT    (input) INTEGER
+     *          An integer key describing which matrix to generate for this
+     *          path.
+     *
+     *  M       (input) INTEGER
+     *          The number of rows in the matrix to be generated.
+     *
+     *  N       (input) INTEGER
+     *          The number of columns in the matrix to be generated.
+     *
+     *  TYPE    (output) CHARACTER*1
+     *          The type of the matrix to be generated:
+     *          = 'S':  symmetric matrix
+     *          = 'P':  symmetric positive (semi)definite matrix
+     *          = 'N':  nonsymmetric matrix
+     *
+     *  KL      (output) INTEGER
+     *          The lower band width of the matrix to be generated.
+     *
+     *  KU      (output) INTEGER
+     *          The upper band width of the matrix to be generated.
+     *
+     *  ANORM   (output) DOUBLE PRECISION
+     *          The desired norm of the matrix to be generated.  The diagonal
+     *          matrix of singular values or eigenvalues is scaled by this
+     *          value.
+     *
+     *  MODE    (output) INTEGER
+     *          A key indicating how to choose the vector of eigenvalues.
+     *
+     *  CNDNUM  (output) DOUBLE PRECISION
+     *          The desired condition number.
+     *
+     *  DIST    (output) CHARACTER*1
+     *          The type of distribution to be used by the random number
+     *          generator.
+     */
+    private void dlatb4(String path, int imat, int m, int n, char[] type, int[] kl, int[] ku,
+                        double anorm[], int[] mode, double[] cndnum, char[] dist) {
+        String c2;
+        int mat;
+        // Set some constants for use in the subroutine.
+        if (first_dlatb4) {
+            first_dlatb4 = false;
+            eps_dlatb4 = dlamch('P'); // Precision
+            badc2_dlatb4 = 0.1/eps;
+            badc1_dlatb4 = Math.sqrt(badc2_dlatb4);
+            small_dlatb4[0] = dlamch('S'); // Safe minimum
+            large_dlatb4[0] = 1.0/small_dlatb4[0];
+            
+            // If it looks like we're on a Cray, take the square root of
+            // small_dlatb4 and large_dlatb4 to avoid overflow and underflow problems.
+            dlabad(small_dlatb4, large_dlatb4);
+            small_dlatb4[0] = 0.25 * (small_dlatb4[0]/eps_dlatb4);
+            large_dlatb4[0] = 1.0/small_dlatb4[0];
+        } // if (first_dlatb4)
+        
+        c2 = path.substring(1, 3);
+        
+        // Set some parameters we don't plan to change.
+        
+        dist[0] = 'S';
+        mode[0] = 3;
+        if ((c2.equalsIgnoreCase("QR")) || (c2.equalsIgnoreCase("LQ")) ||
+            (c2.equalsIgnoreCase("QL")) || (c2.equalsIgnoreCase("RQ"))) {
+            // xQR, xLQ, xQL, xRQ: Set parameters to generate a general m x n matrix.
+            // Set type[0], the type of matrix to be generated.
+            type[0] = 'N';
+            
+            // Set the lower and upper bandwidths.
+            if (imat == 1) {
+                kl[0] = 0;
+                ku[0] = 0;
+            }
+            else if (imat == 2) {
+                kl[0] = 0;
+                ku[0] = Math.max(n-1, 0);
+            }
+            else if (imat == 3) {
+                kl[0] = Math.max(m-1, 0);
+                ku[0] = 0;
+            }
+            else {
+                kl[0] = Math.max(m-1, 0);
+                ku[0] = Math.max(n-1, 0);
+            }
+            
+            // Set the condition number and norm.
+            if (imat == 5) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 6) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if (imat == 7) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if (imat == 8) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // if ((c2.equalsIgnoreCase("QR")) || (c2.equalsIgnoreCase("LQ")) ||
+        else if (c2.equalsIgnoreCase("GE")) {
+            // xGE: Set parameters to generate a general m x n matrix.
+            
+            // Set type[0], the type of matrix to be generated.
+            type[0] = 'N';
+            
+            // Set the lower and upper bandwidths.
+            if (imat == 1) {
+                kl[0] = 0;
+                ku[0] = 0;
+            }
+            else if (imat == 2) {
+                kl[0] = 0;
+                ku[0] = Math.max(n-1, 0);
+            }
+            else if (imat == 3) {
+                kl[0] = Math.max(m-1, 0);
+                ku[0] = 0;
+            }
+            else {
+                kl[0] = Math.max(m-1, 0);
+                ku[0] = Math.max(n-1, 0);
+            }
+            
+            // Set the condition number and norm.
+            if (imat == 8) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 9) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if (imat == 10) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if (imat == 11) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if (c2.equalsIgnoreCase("GE"))
+        else if (c2.equalsIgnoreCase("GB")) {
+            // xGB: Set parameters to generate a general banded matrix.
+            
+            // Set type[0], the type of matrix to be generated.
+            type[0] = 'N';
+            
+            // Set the condition number and norm
+            if (imat == 5) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 6) {
+                cndnum[0] = 0.1 * badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if (imat == 7) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if (imat == 8) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if (c2.equalsIgnoreCase("GB"))
+        else if (c2.equalsIgnoreCase("GT")) {
+            // xGT; Set parameters to generate a generate tridiagonal matrix.
+            
+            // Set type[0], the type of matrix to be generated
+            type[0] = 'N';
+            
+            // Set the lower and upper bandwidths.
+            if (imat == 1) {
+                kl[0] = 0;
+            }
+            else {
+                kl[0] = 1;
+            }
+            ku[0] = kl[0];
+            
+            // Set the condition number and norm.
+            if (imat == 3) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 4) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if ((imat == 5) || (imat == 11)) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if ((imat == 6) || (imat == 12)) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if (c2.equalsIgnoreCase("GT))
+        else if ((c2.equalsIgnoreCase("PO")) || (c2.equalsIgnoreCase("PP")) ||
+                 (c2.equalsIgnoreCase("SY")) || (c2.equalsIgnoreCase("SP"))) {
+            // xPO, xPP, XSY, xSP: Set parameters to generate a symmetric matrx.
+            
+            // Set type[0], the type of matrix to be generated
+            type[0] = c2.charAt(0);
+            
+            // Set the lower and upper bandwidths.
+            if (imat == 1) {
+                kl[0] = 0;
+            }
+            else {
+                kl[0] = Math.max(0, n-1);
+            }
+            ku[0] = kl[0];
+            
+            // Set the condition number and norm.
+            if (imat == 6) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 7) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if (imat == 8) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if (imat == 9) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if ((c2.equalsIgnoreCase("PO")) || (c2.equalsIgnoreCase("PP")) ||
+        else if (c2.equalsIgnoreCase("PB")) {
+            // xPB: Set the parameters to generate a symmetric band matrix.
+            
+            // Set type[0], the type of matrix to be generated.
+            type[0] = 'P';
+            
+            // Set the norm and condition number.
+            if (imat == 5) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 6) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if (imat == 7) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if (imat == 8) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if (c2.equalsIgnoreCase("PB))
+        else if (c2.equalsIgnoreCase("PT")) {
+            // xPT: Set parameters to generate a symmetric positive definite tridiagonal matrix.
+            
+            type[0] = 'P';
+            if (imat == 1) {
+                kl[0] = 0;
+            }
+            else {
+                kl[0] = 1;
+            }
+            ku[0] = kl[0];
+            
+            // Set the condition number and norm.
+            if (imat == 3) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if (imat == 4) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if ((imat == 5) || (imat == 11)) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if ((imat == 6) || (imat == 12)) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if (c2.equalsIgnoreCase("PT"))
+        else if ((c2.equalsIgnoreCase("TR")) || (c2.equalsIgnoreCase("TP"))) {
+            // xTR, xTP: Set parameters to generate a triangular matrix
+            
+            // Set type[0], the type of matrix to be generated.
+            type[0] = 'N';
+            
+            // Set the lower and upper bandwidths.
+            mat = Math.abs(imat);
+            if ((mat == 1) || (mat == 7)) {
+                kl[0] = 0;
+                ku[0] = 0;
+            }
+            else if (imat < 0) {
+                kl[0] = Math.max(0, n-1);
+                ku[0] = 0;
+            }
+            else {
+                kl[0] = 0;
+                ku[0] = Math.max(0, n-1);
+            }
+            
+            // Set the condition number and norm.
+            if ((mat == 3) || (mat == 9)) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if ((mat == 4) || (mat == 10)) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if (mat == 5) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if (mat == 6) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if ((c2.equalsIgnoreCase("TR")) || (c2.equalsIgnoreCase("TP")))
+        else if (c2.equalsIgnoreCase("TB")) {
+            // xTB: Set parameters to generate a triangular band matrix.
+            
+            // Set type[0], the type of matrix to be generated.
+            type[0] = 'N';
+            
+            // Set the norm and condition number.
+            if ((imat == 2) || (imat == 8)) {
+                cndnum[0] = badc1_dlatb4;
+            }
+            else if ((imat == 3) || (imat == 9)) {
+                cndnum[0] = badc2_dlatb4;
+            }
+            else {
+                cndnum[0] = 2.0;
+            }
+            
+            if (imat == 4) {
+                anorm[0] = small_dlatb4[0];
+            }
+            else if (imat == 5) {
+                anorm[0] = large_dlatb4[0];
+            }
+            else {
+                anorm[0] = 1.0;
+            }
+        } // else if (c2.equalsIgnoreCase("TB"))
+        
+        if (n <= 1) {
+            cndnum[0] = 1.0;
+        }
+        
+        return;
+    } // dlatb4
 
     /**
      * This is a port of version 3.1 LAPACK auxiliary test routine DLATM1 Original DLATM1 created by Univ. of Tennessee,
@@ -19860,7 +21418,7 @@ loop4:
         int irsign = 0;
         int iskew;
         int isym;
-        int isympk = 1;
+        int isympk = 0;
         int j;
         int jc;
         int jch;
@@ -23871,6 +25429,448 @@ loop4:
 
         return;
     } // dpotrf
+    
+    /** This is a port of version 3.1 LAPACK test routine DQRT01.
+     *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *     November 2006
+     *
+     *     .. Scalar Arguments ..
+           INTEGER            LDA, LWORK, M, N
+     *     ..
+     *     .. Array Arguments ..
+           DOUBLE PRECISION   A( LDA, * ), AF( LDA, * ), Q( LDA, * ),
+          $                   R( LDA, * ), RESULT( * ), RWORK( * ), TAU( * ),
+          $                   WORK( LWORK )
+     *     ..
+     *
+     *  Purpose
+     *  =======
+     *
+     *  DQRT01 tests DGEQRF, which computes the QR factorization of an m-by-n
+     *  matrix A, and partially tests DORGQR which forms the m-by-m
+     *  orthogonal matrix Q.
+     *
+     *  DQRT01 compares R with Q'*A, and checks that Q is orthogonal.
+     *
+     *  Arguments
+     *  =========
+     *
+     *  M       (input) INTEGER
+     *          The number of rows of the matrix A.  M >= 0.
+     *
+     *  N       (input) INTEGER
+     *          The number of columns of the matrix A.  N >= 0.
+     *
+     *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+     *          The m-by-n matrix A.
+     *
+     *  AF      (output) DOUBLE PRECISION array, dimension (LDA,N)
+     *          Details of the QR factorization of A, as returned by DGEQRF.
+     *          See DGEQRF for further details.
+     *
+     *  Q       (output) DOUBLE PRECISION array, dimension (LDA,M)
+     *          The m-by-m orthogonal matrix Q.
+     *
+     *  R       (workspace) DOUBLE PRECISION array, dimension (LDA,max(M,N))
+     *
+     *  LDA     (input) INTEGER
+     *          The leading dimension of the arrays A, AF, Q and R.
+     *          LDA >= max(M,N).
+     *
+     *  TAU     (output) DOUBLE PRECISION array, dimension (min(M,N))
+     *          The scalar factors of the elementary reflectors, as returned
+     *          by DGEQRF.
+     *
+     *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+     *
+     *  LWORK   (input) INTEGER
+     *          The dimension of the array WORK.
+     *
+     *  RWORK   (workspace) DOUBLE PRECISION array, dimension (M)
+     *
+     *  RESULT  (output) DOUBLE PRECISION array, dimension (2)
+     *          The test ratios:
+     *          RESULT(1) = norm( R - Q'*A ) / ( M * norm(A) * EPS )
+     *          RESULT(2) = norm( I - Q'*Q ) / ( M * EPS )
+     */
+     private void dqrt01(int m, int n, double[][] A, double[][] AF, double[][] Q, 
+                         double[][] R, int lda, double[] tau, double[] work, int lwork,
+                         double[] rwork, double[] result) {
+         double rogue = -1.0E10;
+         int info[] = new int[1];
+         int minmn;
+         double anorm;
+         double eps;
+         double resid;
+         double array1[][];
+         double array2[][];
+         int row1;
+         int p;
+         int q;
+         
+         minmn = Math.min(m, n);
+         eps = dlamch('E'); // Epsilon
+         
+         // Copy the matrix A to the array AF.
+         dlacpy('F', m, n, A, lda, AF, lda);
+         
+         // Factorize the matrix A in the array AF.
+         srnamt = new String("DGEQRF");
+         dgeqrf(m, n, AF, lda, tau, work, lwork, info);
+         
+         // Copy details of Q
+         dlaset('F', m, m, rogue, rogue, Q, lda);
+         row1 = Math.max(1, m-1);
+         array1 = new double[row1][n];
+         array2 = new double[row1][n];
+         for (p = 0; p < row1; p++) {
+             for (q = 0; q < n; q++) {
+                 array1[p][q] = AF[1+p][q];
+             }
+         }
+         dlacpy('L', m-1, n, array1, row1, array2, row1);
+         for (p = 0; p < row1; p++) {
+             for (q = 0; q < n; q++) {
+                 Q[1+p][q] = array2[p][q];
+             }
+         }
+         
+         // Generate the m-by-m matrix Q
+         srnamt = new String("DORGQR");
+         dorgqr(m, m, minmn, Q, lda, tau, work, lwork, info);
+         
+         // Copy R
+         dlaset('F', m, n, 0.0, 0.0, R, lda);
+         dlacpy('U', m, n, AF, lda, R, lda);
+         
+         // Compute R - Q'*A
+         dgemm('T', 'N', m, n, m, -1.0, Q, lda, A, lda, 1.0, R, lda);
+         
+         // Compute norm(R - Q'*A)/(M * norm(A) * eps).
+         anorm = dlange('1', m, n, A, lda, rwork);
+         resid = dlange('1', m, n, R, lda, rwork);
+         if (anorm > 0.0) {
+             result[0] = ((resid /(double)Math.max(1,m))/anorm)/eps;
+         }
+         else {
+             result[0] = 0;
+         }
+         
+         // Compute I - Q'*Q
+         dlaset('F', m, m, 0.0, 1.0, R, lda);
+         dsyrk('U', 'T', m, m, -1.0, Q, lda, 1.0, R, lda);
+         
+         // Compute norm(I - Q'*Q)/(M * eps)
+         resid = dlansy('1', 'U', m, R, lda, rwork);
+         result[1] = (resid/(double)Math.max(1, m))/eps;
+         return;
+     } // dqrt01
+     
+     /** This is a port of version 3.1 LAPACK test routine DQRT02.
+      *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+      *     November 2006
+      *
+      *     .. Scalar Arguments ..
+            INTEGER            K, LDA, LWORK, M, N
+      *     ..
+      *     .. Array Arguments ..
+            DOUBLE PRECISION   A( LDA, * ), AF( LDA, * ), Q( LDA, * ),
+           $                   R( LDA, * ), RESULT( * ), RWORK( * ), TAU( * ),
+           $                   WORK( LWORK )
+      *     ..
+      *
+      *  Purpose
+      *  =======
+      *
+      *  DQRT02 tests DORGQR, which generates an m-by-n matrix Q with
+      *  orthonornmal columns that is defined as the product of k elementary
+      *  reflectors.
+      *
+      *  Given the QR factorization of an m-by-n matrix A, DQRT02 generates
+      *  the orthogonal matrix Q defined by the factorization of the first k
+      *  columns of A; it compares R(1:n,1:k) with Q(1:m,1:n)'*A(1:m,1:k),
+      *  and checks that the columns of Q are orthonormal.
+      *
+      *  Arguments
+      *  =========
+      *
+      *  M       (input) INTEGER
+      *          The number of rows of the matrix Q to be generated.  M >= 0.
+      *
+      *  N       (input) INTEGER
+      *          The number of columns of the matrix Q to be generated.
+      *          M >= N >= 0.
+      *
+      *  K       (input) INTEGER
+      *          The number of elementary reflectors whose product defines the
+      *          matrix Q. N >= K >= 0.
+      *
+      *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+      *          The m-by-n matrix A which was factorized by DQRT01.
+      *
+      *  AF      (input) DOUBLE PRECISION array, dimension (LDA,N)
+      *          Details of the QR factorization of A, as returned by DGEQRF.
+      *          See DGEQRF for further details.
+      *
+      *  Q       (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+      *
+      *  R       (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+      *
+      *  LDA     (input) INTEGER
+      *          The leading dimension of the arrays A, AF, Q and R. LDA >= M.
+      *
+      *  TAU     (input) DOUBLE PRECISION array, dimension (N)
+      *          The scalar factors of the elementary reflectors corresponding
+      *          to the QR factorization in AF.
+      *
+      *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+      *
+      *  LWORK   (input) INTEGER
+      *          The dimension of the array WORK.
+      *
+      *  RWORK   (workspace) DOUBLE PRECISION array, dimension (M)
+      *
+      *  RESULT  (output) DOUBLE PRECISION array, dimension (2)
+      *          The test ratios:
+      *          RESULT(1) = norm( R - Q'*A ) / ( M * norm(A) * EPS )
+      *          RESULT(2) = norm( I - Q'*Q ) / ( M * EPS )
+      */
+   private void dqrt02(int m, int n, int k, double[][] A, double[][] AF, double [][] Q,
+                       double[][] R, int lda, double[] tau, double[] work, int lwork,
+                       double[] rwork, double[] result) {
+       double rogue = -1.0E10;
+       int info[] = new int[1];
+       double anorm;
+       double eps;
+       double resid;
+       int row1;
+       int p;
+       int q;
+       double array1[][];
+       double array2[][];
+       
+       eps = dlamch('E'); // Epsilon
+       
+       // Copy trhe first k columns of the factorization to the array Q
+       dlaset('F', m, n, rogue, rogue, Q, lda);
+       row1 = Math.max(1, m-1);
+       array1 = new double[row1][k];
+       for (p = 0; p < row1; p++) {
+           for (q = 0; q < k; q++) {
+               array1[p][q] = AF[p+1][q];
+           }
+       }
+       array2 = new double[row1][k];
+       dlacpy('L', m-1, k, array1, row1, array2, row1);
+       for (p = 0; p < row1; p++) {
+           for (q = 0; q < k; q++) {
+               Q[p+1][q] = array2[p][q];
+           }
+       }
+       
+       // Generate the first n column of the matrix Q
+       srnamt = new String("DORGQR");
+       dorgqr(m, n, k, Q, lda, tau, work, lwork, info);
+       
+       // Copy R(1:n,1:k)
+       dlaset('F', n, k, 0.0, 0.0, R, lda);
+       dlacpy('U', n, k, AF, lda, R, lda);
+       
+       // Compute R(1:n,1:k) - Q(1:m,1:n)' * A(1:m,1:k)
+       dgemm('T', 'N', n, k, m, -1.0, Q, lda, A, lda, 1.0, R, lda);
+       
+       // Compute norm(R - Q'*A)/(m * norm(A) * eps).
+       anorm = dlange('1', m, k, A, lda, rwork);
+       resid = dlange('1', n, k, R, lda, rwork);
+       if (anorm > 0) {
+           result[0] = ((resid/(double)Math.max(1, m))/anorm)/eps;
+       }
+       else {
+           result[0] = 0;
+       }
+       
+       // Compute I - Q'*Q
+       dlaset('F', n, n, 0.0, 1.0, R, lda);
+       dsyrk('U', 'T', n, m, -1.0, Q, lda, 1.0, R, lda);
+       
+       // Compute norm(I - Q'*Q)/(m * eps).
+       resid = dlansy('1', 'U', n, R, lda, rwork);
+       result[1] = (resid/(double)Math.max(1,m))/eps;
+       return;
+   } // dqrt02
+   
+   /** This is a port of version 3.1 LAPACK test routine DQRT03.
+    *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            K, LDA, LWORK, M, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   AF( LDA, * ), C( LDA, * ), CC( LDA, * ),
+         $                   Q( LDA, * ), RESULT( * ), RWORK( * ), TAU( * ),
+         $                   WORK( LWORK )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DQRT03 tests DORMQR, which computes Q*C, Q'*C, C*Q or C*Q'.
+    *
+    *  DQRT03 compares the results of a call to DORMQR with the results of
+    *  forming Q explicitly by a call to DORGQR and then performing matrix
+    *  multiplication by a call to DGEMM.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  M       (input) INTEGER
+    *          The order of the orthogonal matrix Q.  M >= 0.
+    *
+    *  N       (input) INTEGER
+    *          The number of rows or columns of the matrix C; C is m-by-n if
+    *          Q is applied from the left, or n-by-m if Q is applied from
+    *          the right.  N >= 0.
+    *
+    *  K       (input) INTEGER
+    *          The number of elementary reflectors whose product defines the
+    *          orthogonal matrix Q.  M >= K >= 0.
+    *
+    *  AF      (input) DOUBLE PRECISION array, dimension (LDA,N)
+    *          Details of the QR factorization of an m-by-n matrix, as
+    *          returnedby DGEQRF. See SGEQRF for further details.
+    *
+    *  C       (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+    *
+    *  CC      (workspace) DOUBLE PRECISION array, dimension (LDA,N)
+    *
+    *  Q       (workspace) DOUBLE PRECISION array, dimension (LDA,M)
+    *
+    *  LDA     (input) INTEGER
+    *          The leading dimension of the arrays AF, C, CC, and Q.
+    *
+    *  TAU     (input) DOUBLE PRECISION array, dimension (min(M,N))
+    *          The scalar factors of the elementary reflectors corresponding
+    *          to the QR factorization in AF.
+    *
+    *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+    *
+    *  LWORK   (input) INTEGER
+    *          The length of WORK.  LWORK must be at least M, and should be
+    *          M*NB, where NB is the blocksize for this environment.
+    *
+    *  RWORK   (workspace) DOUBLE PRECISION array, dimension (M)
+    *
+    *  RESULT  (output) DOUBLE PRECISION array, dimension (4)
+    *          The test ratios compare two techniques for multiplying a
+    *          random matrix C by an m-by-m orthogonal matrix Q.
+    *          RESULT(1) = norm( Q*C - Q*C )  / ( M * norm(C) * EPS )
+    *          RESULT(2) = norm( C*Q - C*Q )  / ( M * norm(C) * EPS )
+    *          RESULT(3) = norm( Q'*C - Q'*C )/ ( M * norm(C) * EPS )
+    *          RESULT(4) = norm( C*Q' - C*Q' )/ ( M * norm(C) * EPS )
+    */
+ private void dqrt03(int m, int n, int k, double[][] AF, double[][] C, double[][] CC,
+                     double[][] Q, int lda, double[] tau, double[] work, int lwork,
+                     double[] rwork, double[] result) {
+     double rogue = -1.0E10;
+     char side;
+     char trans;
+     int info[] = new int[1];
+     int iside;
+     int itrans;
+     int j;
+     int mc;
+     int nc;
+     double cnorm;
+     double eps;
+     double resid;
+     int iseed[] = new int[]{1988, 1989, 1990, 1991};
+     int row1;
+     int p;
+     int q;
+     double array1[][];
+     double array2[][];
+     double vec1[];
+     
+     eps = dlamch('E'); // epsilon
+     
+     // Copy the first k columns of the factorization to the array Q
+     dlaset('F', m, m, rogue, rogue, Q, lda);
+     row1 = Math.max(1, m-1);
+     array1 = new double[row1][k];
+     for (p = 0; p < row1; p++) {
+         for (q = 0; q < k; q++) {
+             array1[p][q] = AF[p+1][q];
+         }
+     }
+     array2 = new double[row1][k];
+     dlacpy('L', m-1, k, array1, row1, array2, row1);
+     for (p = 0; p < row1; p++) {
+         for (q = 0; q < k; q++) {
+             Q[p+1][q] = array2[p][q];
+         }
+     }
+     
+     // Generate the m by m matrix Q
+     srnamt = new String("DORGQR");
+     dorgqr(m, m, k, Q, lda, tau, work, lwork, info);
+     
+     for (iside = 1; iside <= 2; iside++) {
+         if (iside == 1) {
+             side = 'L';
+             mc = m;
+             nc = n;
+         }
+         else {
+             side = 'R';
+             mc = n;
+             nc = m;
+         }
+         
+         // Generate mc by nc matrix C
+         vec1 = new double[mc];
+         for (j = 1; j <= nc; j++) {
+             dlarnv(2, iseed, mc, vec1);
+             for (p = 0; p < mc; p++) {
+                 C[p][j-1] = vec1[p];
+             }
+         } // for (j = 1; j <= nc; j++)
+         cnorm = dlange('1', mc, nc, C, lda, rwork);
+         if (cnorm == 0.0) {
+             cnorm = 1.0;
+         }
+         
+         for (itrans = 1; itrans <= 2; itrans++) {
+             if (itrans == 1) {
+                 trans = 'N';
+             }
+             else {
+                 trans = 'T';
+             }
+             
+             // Copy C
+             dlacpy('F', mc, nc, C, lda, CC, lda);
+             
+             // Apply Q or Q' to C
+             srnamt = new String("DORMQR");
+             dormqr(side, trans, mc, nc, k, AF, lda, tau, CC, lda, work, lwork,
+                    info);
+             
+             // Form explicit product and subtract
+             if ((side == 'L') || (side == 'l')) {
+                 dgemm(trans, 'N', mc, nc, mc, -1.0, Q, lda, C, lda, 1.0, CC, lda);
+             }
+             else {
+                 dgemm('N', trans, mc, nc, nc, -1.0, C, lda, Q, lda, 1.0, CC, lda);
+             }
+             
+             // Compute error in the difference
+             resid = dlange('1', mc, nc, CC, lda, rwork);
+             result[(iside-1)*2+itrans-1] = resid/(Math.max(1,m)*cnorm*eps);
+         } // for (itrans = 1; itrans <= 2; itrans++)
+     } // for (iside = 1; iside <= 2; iside++)
+     return;
+ } // dqrt03
 
     /**
      * This is a port of the 3/11/78 linpack routine drot Original code written by Jack Dongarra.
@@ -31973,5 +33973,59 @@ loop6:                   {
             return -1;
         }
     } // ilaenv
+    
+    /** This is a port of version 3.1 LAPACK auxiliary routine XLAENV.
+     *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *     November 2006
+     *
+     *     .. Scalar Arguments ..
+           INTEGER            ISPEC, NVALUE
+     *     ..
+     *
+     *  Purpose
+     *  =======
+     *
+     *  XLAENV sets certain machine- and problem-dependent quantities
+     *  which will later be retrieved by ILAENV.
+     *
+     *  Arguments
+     *  =========
+     *
+     *  ISPEC   (input) INTEGER
+     *          Specifies the parameter to be set in the COMMON array IPARMS.
+     *          = 1: the optimal blocksize; if this value is 1, an unblocked
+     *               algorithm will give the best performance.
+     *          = 2: the minimum block size for which the block routine
+     *               should be used; if the usable block size is less than
+     *               this value, an unblocked routine should be used.
+     *          = 3: the crossover point (in a block routine, for N less
+     *               than this value, an unblocked routine should be used)
+     *          = 4: the number of shifts, used in the nonsymmetric
+     *               eigenvalue routines
+     *          = 5: the minimum column dimension for blocking to be used;
+     *               rectangular blocks must have dimension at least k by m,
+     *               where k is given by ILAENV(2,...) and m by ILAENV(5,...)
+     *          = 6: the crossover point for the SVD (when reducing an m by n
+     *               matrix to bidiagonal form, if max(m,n)/min(m,n) exceeds
+     *               this value, a QR factorization is used first to reduce
+     *               the matrix to a triangular form)
+     *          = 7: the number of processors
+     *          = 8: another crossover point, for the multishift QR and QZ
+     *               methods for nonsymmetric eigenvalue problems.
+     *          = 9: maximum size of the subproblems at the bottom of the
+     *               computation tree in the divide-and-conquer algorithm
+     *               (used by xGELSD and xGESDD)
+     *          =10: ieee NaN arithmetic can be trusted not to trap
+     *          =11: infinity arithmetic can be trusted not to trap
+     *
+     *  NVALUE  (input) INTEGER
+     *          The value of the parameter specified by ISPEC.
+     */
+     private void xlaenv(int ispec, int nvalue) {
+         if ((ispec >= 1) && (ispec <= 9)) {
+             iparms[ispec-1] = nvalue;
+         }
+         return;
+     } // xlaenv
 
 }
