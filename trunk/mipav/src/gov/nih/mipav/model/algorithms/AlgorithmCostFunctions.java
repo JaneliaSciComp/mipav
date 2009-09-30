@@ -10,6 +10,8 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewerPoint;
 
 import java.awt.*;
 
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
+
 
 /**
  * CostFunction - class for specifying optimization function.
@@ -430,7 +432,32 @@ public class AlgorithmCostFunctions implements AlgorithmOptimizeFunctionBase {
     public int getCostCalled() {
         return costCalled;
     }
+    
+    public boolean isGPULineMin()
+    {
+        if ( m_kGPUCost != null )
+            return true;
+        return false;
+    }
 
+    public float[] lineMin(Matrix4f kToOrigin, Matrix4f kFromOrigin,
+            float rigid, float dim, double[] startPoint, double[] pt, int ptLength,
+            double[] unitDirections, double unit_tolerance, double fMinDist,
+            double bracketA, double functionA,
+            double bracketB, double functionB,
+            double bracketC, double functionC
+            )
+    {
+        m_kGPUCost.initLineMin( kToOrigin,  kFromOrigin,
+                rigid,  dim, startPoint, pt, ptLength,
+                unitDirections, unit_tolerance, fMinDist,
+                bracketA, functionA,
+                bracketB, functionB,
+                bracketC, functionC);
+        m_kGPUCost.calcLineMinimization();
+        return m_kGPUCost.getBracketB();
+    }
+    
     /**
      * Accessor that returns the amount of overlap, the total voxels, and the percentage.
      *

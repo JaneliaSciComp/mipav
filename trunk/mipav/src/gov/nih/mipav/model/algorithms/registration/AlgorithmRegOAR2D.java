@@ -1058,7 +1058,10 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * final "answer", or minimum, which will then be accessed by the dialog that called this algorithm.
      */
     public void runAlgorithm() {
-                
+        //-javaagent:E:\MagicConsulting\mipav\src\lib\profile.jar -Dprofile.properties=E:\MagicConsulting\mipav\src\lib\profile.properties
+        //Profile.clear();
+        //Profile.start();
+        
         long startTime = System.currentTimeMillis();
         int i;
 
@@ -1676,6 +1679,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Preferences.debug( "Time consumed by OAR registration algorithm: " +  (time * .001f) + " seconds");
         
 
+        //Profile.stop();
+        //Profile.setFileName( "profile_out"  );
+        //Profile.shutdown();
     }
     
     

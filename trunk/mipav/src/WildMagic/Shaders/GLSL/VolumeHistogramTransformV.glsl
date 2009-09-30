@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------
 uniform sampler3D imageA; 
 uniform sampler3D imageB; 
-uniform sampler2D transformBracket;
+uniform sampler2D transformImage;
 
 uniform vec2 Min;
 uniform vec2 Scale;
@@ -12,28 +12,39 @@ uniform vec3 ImageSizeInv;
 void v_VolumeHistogramTransformV()
 {
     vec2 index = vec2(0.0,0.0);
-    vec4 row1 = texture2D( transformBracket, index );
-    index.y = 0.5;
-    vec4 row2 = texture2D( transformBracket, index );
+    vec4 row0 = texture2D( transformImage, index );
+    index.y = 0.33;
+    vec4 row1 = texture2D( transformImage, index );
+    index.y = 0.66;
+    vec4 row2 = texture2D( transformImage, index );
     index.y = 1.0;
-    vec4 row3 = texture2D( transformBracket, index );
+    vec4 row3 = texture2D( transformImage, index );
 
     mat4 InverseTransform = mat4(1.0);
-    
-    InverseTransform[0][0] = row1.x;
-    InverseTransform[1][0] = row1.y;
-    InverseTransform[2][0] = row1.z;
-    InverseTransform[3][0] = row1.w;
+    InverseTransform[0] = row0;
+    InverseTransform[1] = row1;
+    InverseTransform[2] = row2;
+    InverseTransform[3] = row3;
 
-    InverseTransform[0][1] = row2.x;
-    InverseTransform[1][1] = row2.y;
-    InverseTransform[2][1] = row2.z;
-    InverseTransform[3][1] = row2.w;
+//     InverseTransform[0][0] = row0.x;
+//     InverseTransform[1][0] = row0.y;
+//     InverseTransform[2][0] = row0.z;
+//     InverseTransform[3][0] = row0.w;
 
-    InverseTransform[0][2] = row3.x;
-    InverseTransform[1][2] = row3.y;
-    InverseTransform[2][2] = row3.z;
-    InverseTransform[3][2] = row3.w;
+//     InverseTransform[0][1] = row1.x;
+//     InverseTransform[1][1] = row1.y;
+//     InverseTransform[2][1] = row1.z;
+//     InverseTransform[3][1] = row1.w;
+
+//     InverseTransform[0][2] = row2.x;
+//     InverseTransform[1][2] = row2.y;
+//     InverseTransform[2][2] = row2.z;
+//     InverseTransform[3][2] = row2.w;
+
+//     InverseTransform[0][3] = row2.x;
+//     InverseTransform[1][3] = row2.y;
+//     InverseTransform[2][3] = row2.z;
+//     InverseTransform[3][3] = row2.w;
 
     gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
 

@@ -26,6 +26,7 @@ public class LineMinimizationEffect extends ShaderEffect
     float[] m_afPt;
     float m_fPtLength;
     float[] m_afUnitDirections;
+    private float m_fUnitTolerance;
     private float m_fMinDist;
 
 
@@ -72,10 +73,10 @@ public class LineMinimizationEffect extends ShaderEffect
     }
     
 
-    public LineMinimizationEffect ( Texture kTexBracket,
+    public LineMinimizationEffect ( Texture kTexBracket, Texture kTransform, boolean bIs2D,
                                     Matrix4f kToOrigin, Matrix4f kFromOrigin,
                                     float rigid, float dim, float[] startPoint, float[] pt, float ptLength,
-                                    float[] unitDirections, float fMinDist )
+                                    float[] unitDirections, float unit_tolerance, float fMinDist )
     {
 
         m_kToOrigin = kToOrigin;
@@ -86,39 +87,33 @@ public class LineMinimizationEffect extends ShaderEffect
         m_afStartPoint = startPoint;
         m_afPt = pt;
         m_afUnitDirections = unitDirections;
+        m_fUnitTolerance = unit_tolerance;
         m_fPtLength = ptLength;
         m_fMinDist = fMinDist;
 
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        VertexShader kVShader = new VertexShader("LineMinimizationV", true);
+        VertexShader kVShader = null;
+        if ( bIs2D )
+        {
+            kVShader = new VertexShader("LineMinimizationV", true);
+        }
+        else
+        {
+            kVShader = new VertexShader("LineMinimization3DV", true);
+        }
+        
         PixelShader kPShader = new PixelShader("PassThrough4", true);
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
         
-        kPShader.SetTextureQuantity(1);
+        kPShader.SetTextureQuantity(2);
         kPShader.SetTexture( 0, kTexBracket );
         kPShader.SetImageName( 0, kTexBracket.GetName() );
+        kPShader.SetTexture( 1, kTransform );
+        kPShader.SetImageName( 1, kTransform.GetName() );
     }
     
-
-    public LineMinimizationEffect ( Texture kTexA, float dNumSamples, int iDim )
-    {
-        super(1);
-        m_dNumSamples = dNumSamples;
-        m_fDim = iDim;
-        
-        VertexShader kVShader = new VertexShader("EntropyV", true);
-        PixelShader kPShader = new PixelShader("EntropyP", true);
-        //PixelShader kPShader = new PixelShader("LineMinimizationP", true);
-        SetVShader(0,kVShader);
-        SetPShader(0,kPShader);
-        
-        kPShader.SetTextureQuantity(1);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
-    }
-
     public LineMinimizationEffect ( Texture kTexA, Texture kTexB, float fMinDist, float dNumSamples, int iDim )
     {
         super(1);
@@ -138,19 +133,6 @@ public class LineMinimizationEffect extends ShaderEffect
         kPShader.SetImageName( 1, kTexB.GetName() );
     }
 
-    public LineMinimizationEffect ( Texture kTexA )
-    {
-        super(1);
-        
-        VertexShader kVShader = new VertexShader("LineMinimizationStep2Va", true);
-        PixelShader kPShader = new PixelShader("PassThrough4", true);
-        SetVShader(0,kVShader);
-        SetPShader(0,kPShader);
-
-        kPShader.SetTextureQuantity(1);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
-    }
 
     /**
      * memory cleanup.
@@ -175,17 +157,17 @@ public class LineMinimizationEffect extends ShaderEffect
         if ( pkCProgram.GetUC("nSamples") != null ) 
         {
             pkCProgram.GetUC("nSamples").GetData()[0] = m_dNumSamples;
-            //System.err.println( pkCProgram.GetUC("nSamples").GetData()[0] );
+            //System.err.println( "nSamples = " + pkCProgram.GetUC("nSamples").GetData()[0] );
        }
         if ( pkCProgram.GetUC("nSamplesInv") != null ) 
         {
             pkCProgram.GetUC("nSamplesInv").GetData()[0] = 1.0f/m_dNumSamples;
-            //System.err.println( pkCProgram.GetUC("nSamplesInv").GetData()[0] );
+            //System.err.println( "nSamplesInv = " + pkCProgram.GetUC("nSamplesInv").GetData()[0] );
        }
         if ( pkCProgram.GetUC("nDims") != null ) 
         {
             pkCProgram.GetUC("nDims").GetData()[0] = m_fDim;
-            //System.err.println( pkCProgram.GetUC("nDims").GetData()[0] );
+            //System.err.println( "nDims = " + pkCProgram.GetUC("nDims").GetData()[0] );
        }
         if ( pkCProgram.GetUC("logSamples") != null ) 
         {
@@ -234,6 +216,14 @@ public class LineMinimizationEffect extends ShaderEffect
         {
             m_kFromOrigin.GetData(pkCProgram.GetUC("fromOrigin").GetData());
         }
+        if ( pkCProgram != null && pkCProgram.GetUC("toOriginMatrix") != null ) 
+        {
+            m_kToOrigin.GetData(pkCProgram.GetUC("toOriginMatrix").GetData());
+        }
+        if ( pkCProgram != null && pkCProgram.GetUC("fromOriginMatrix") != null ) 
+        {
+            m_kFromOrigin.GetData(pkCProgram.GetUC("fromOriginMatrix").GetData());
+        }
         if ( pkCProgram != null && pkCProgram.GetUC("rigid") != null ) 
         {
             pkCProgram.GetUC("rigid").GetData()[0] = m_fRigid;
@@ -258,7 +248,11 @@ public class LineMinimizationEffect extends ShaderEffect
         {
             pkCProgram.GetUC("unit_directions").SetDataSource(m_afUnitDirections);
         }
-        if ( pkCProgram != null && pkCProgram.GetUC("minDist") != null ) 
+        if ( pkCProgram.GetUC("unit_tolerance") != null ) 
+        {
+            pkCProgram.GetUC("unit_tolerance").GetData()[0] = m_fUnitTolerance;
+        }             
+        if ( pkCProgram.GetUC("minDist") != null ) 
         {
             pkCProgram.GetUC("minDist").GetData()[0] = m_fMinDist;
         }     
@@ -336,7 +330,7 @@ public class LineMinimizationEffect extends ShaderEffect
     
     public void updateParameters( Matrix4f kToOrigin, Matrix4f kFromOrigin,
                                     float rigid, float dim, float[] startPoint, float[] pt, float ptLength,
-                                    float[] unitDirections, float fMinDist )
+                                    float[] unitDirections, float unit_tolerance, float fMinDist )
     {
         m_kToOrigin = kToOrigin;
         m_kFromOrigin = kFromOrigin;
@@ -346,6 +340,7 @@ public class LineMinimizationEffect extends ShaderEffect
         m_afPt = pt;
         m_fPtLength = ptLength;
         m_afUnitDirections = unitDirections;
+        m_fUnitTolerance = unit_tolerance;
         m_fMinDist = fMinDist;
         
         Program pkCProgram = GetCProgram(0);
@@ -360,6 +355,14 @@ public class LineMinimizationEffect extends ShaderEffect
         if ( pkCProgram.GetUC("fromOrigin") != null ) 
         {
             m_kFromOrigin.GetData(pkCProgram.GetUC("fromOrigin").GetData());
+        }
+        if ( pkCProgram.GetUC("toOriginMatrix") != null ) 
+        {
+            m_kToOrigin.GetData(pkCProgram.GetUC("toOriginMatrix").GetData());
+        }
+        if ( pkCProgram.GetUC("fromOriginMatrix") != null ) 
+        {
+            m_kFromOrigin.GetData(pkCProgram.GetUC("fromOriginMatrix").GetData());
         }
         if ( pkCProgram.GetUC("rigid") != null ) 
         {
@@ -385,6 +388,10 @@ public class LineMinimizationEffect extends ShaderEffect
         {
             pkCProgram.GetUC("unit_directions").SetDataSource(m_afUnitDirections);
         }     
+        if ( pkCProgram.GetUC("unit_tolerance") != null ) 
+        {
+            pkCProgram.GetUC("unit_tolerance").GetData()[0] = m_fUnitTolerance;
+        }             
         if ( pkCProgram.GetUC("minDist") != null ) 
         {
             pkCProgram.GetUC("minDist").GetData()[0] = m_fMinDist;

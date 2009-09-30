@@ -1,5 +1,6 @@
 //----------------------------------------------------------------------------
 uniform sampler2D bracketImage;
+uniform sampler2D transformImage;
 
 uniform vec2 Min;
 uniform vec2 Scale;
@@ -7,8 +8,8 @@ uniform vec2 Scale;
 uniform vec3 ImageSize;
 uniform vec3 ImageSizeInv;
 
-uniform mat4 toOrigin;
-uniform mat4 fromOrigin;
+uniform mat4 toOriginMatrix;
+uniform mat4 fromOriginMatrix;
 uniform float rigid;
 uniform float Dim_2D;
 uniform mat4 startPoint;
@@ -16,6 +17,7 @@ uniform mat4 pt;
 uniform float ptLength;
 uniform mat4 unit_directions;
 uniform float minDist;
+uniform float unit_tolerance;
 
 mat4 constructPoint( mat4 defaultPoint, mat4 point )
 {
@@ -99,10 +101,10 @@ mat4 constructPoint( mat4 defaultPoint, mat4 point )
     M01 = sy * M01;
     M11 = sy * M11;
 
-    mat4 matrix = mat4( M00, M01, 0.0, M02,
-                        M10, M11, 0.0, M12,
-                        M20, M21, 1.0, M22,
-                        0.0, 0.0, 0.0, 1.0 );
+    mat4 matrix = mat4( M00, M10, 0.0, 0.0,
+                        M01, M11, 0.0, 0.0,
+                        0.0, 0.0, 1.0, 0.0,
+                        M02, M12, 0.0, 1.0 );
     return matrix;
 }
 
@@ -110,7 +112,7 @@ mat4 oneDimension( float x )
 {
     mat4 xt = pt + x * unit_directions;
     mat4 matrix = constructPoint( startPoint, xt );
-    return toOrigin * matrix * fromOrigin;
+    return toOriginMatrix * matrix * fromOriginMatrix;
 }
 
 float estimateMinimum(vec2 A, vec2 B, vec2 C )
@@ -193,54 +195,79 @@ void v_LineMinimizationV()
     bracketTCoord.y = 1.0;
     vec2 C = texture2D(bracketImage, bracketTCoord ).xy;
     
-
-    float xNew = nextPoint( A, B, C );
-    float directionN = 1.0;
-
-    if (C.x < A.x) {
-        directionN = -1.0;
-    }
-    
-    if (abs(xNew - A.x) < minDist) {
-        xNew = A.x + (directionN * minDist);
-    }
-    
-    if (abs(xNew - C.x) < minDist) {
-        xNew = C.x - (directionN * minDist);
-    }
-    
-    if (abs(xNew - B.x) < minDist) {
-        xNew = extrapolatePoint(A, B, C);
-    }
-    
-    if (abs(B.x - A.x) < (4.0 * minDist)) {
-        xNew = B.x + (directionN * 5.0 * minDist);
-    }
-    
-    if (abs(B.x - C.x) < (4.0 * minDist)) {
-        xNew = B.x - (directionN * 5.0 * minDist);
-    }
-
-    mat4 InverseTransform = oneDimension( xNew );
-    
-    gl_FrontColor.r = InverseTransform[0][0];
-    gl_FrontColor.g = InverseTransform[0][1];
-    gl_FrontColor.b = InverseTransform[0][2];
-    gl_FrontColor.a = InverseTransform[0][3];
-
-    if ( gl_Vertex.z == 0.5 )
+    mat4 InverseTransform = mat4(1.0); 
+    if ( abs( C.x - A.x ) <= unit_tolerance )
     {
-        gl_FrontColor.r = InverseTransform[1][0];
-        gl_FrontColor.g = InverseTransform[1][1];
-        gl_FrontColor.b = InverseTransform[1][2];
-        gl_FrontColor.a = InverseTransform[1][3];
+        vec2 index = vec2(0.0,0.0);
+        InverseTransform[0] = texture2D( transformImage, index );
+        index.y = 0.33;
+        InverseTransform[1] = texture2D( transformImage, index );
+        index.y = 0.66;
+        InverseTransform[2] = texture2D( transformImage, index );
+        index.y = 1.0;
+        InverseTransform[3] = texture2D( transformImage, index );
     }
-    else if ( gl_Vertex.z == 1.0 ) // write bracketC
+    else
     {
-        gl_FrontColor.r = InverseTransform[2][0];
-        gl_FrontColor.g = InverseTransform[2][1];
-        gl_FrontColor.b = InverseTransform[2][2];
-        gl_FrontColor.a = InverseTransform[2][3];
+        float xNew = nextPoint( A, B, C );
+        float directionN = 1.0;
+
+        if (C.x < A.x) {
+            directionN = -1.0;
+        }
+    
+        if (abs(xNew - A.x) < minDist) {
+            xNew = A.x + (directionN * minDist);
+        }
+    
+        if (abs(xNew - C.x) < minDist) {
+            xNew = C.x - (directionN * minDist);
+        }
+    
+        if (abs(xNew - B.x) < minDist) {
+            xNew = extrapolatePoint(A, B, C);
+        }
+    
+        if (abs(B.x - A.x) < (4.0 * minDist)) {
+            xNew = B.x + (directionN * 5.0 * minDist);
+        }
+    
+        if (abs(B.x - C.x) < (4.0 * minDist)) {
+            xNew = B.x - (directionN * 5.0 * minDist);
+        }
+
+        InverseTransform = oneDimension( xNew );
+    }
+    
+    gl_FrontColor = InverseTransform[0];
+//     gl_FrontColor.r = InverseTransform[0][0];
+//     gl_FrontColor.g = InverseTransform[0][1];
+//     gl_FrontColor.b = InverseTransform[0][2];
+//     gl_FrontColor.a = InverseTransform[0][3];
+
+    if ( gl_Vertex.z == 0.3 )
+    {
+    gl_FrontColor = InverseTransform[1];
+//         gl_FrontColor.r = InverseTransform[1][0];
+//         gl_FrontColor.g = InverseTransform[1][1];
+//         gl_FrontColor.b = InverseTransform[1][2];
+//         gl_FrontColor.a = InverseTransform[1][3];
+    }
+    else if ( gl_Vertex.z == 0.7 )
+    {
+    gl_FrontColor = InverseTransform[2];
+//         gl_FrontColor.r = InverseTransform[2][0];
+//         gl_FrontColor.g = InverseTransform[2][1];
+//         gl_FrontColor.b = InverseTransform[2][2];
+//         gl_FrontColor.a = InverseTransform[2][3];
+    }
+    else if ( gl_Vertex.z == 1.0 )
+    {
+    gl_FrontColor = InverseTransform[3];
+//         gl_FrontColor.r = InverseTransform[3][0];
+//         gl_FrontColor.g = InverseTransform[3][1];
+//         gl_FrontColor.b = InverseTransform[3][2];
+//         gl_FrontColor.a = InverseTransform[3][3];
     }
     gl_Position = gl_Vertex;
     gl_Position.z = 0;

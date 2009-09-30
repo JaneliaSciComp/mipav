@@ -89,16 +89,16 @@ void v_LineMinimizationStep2V()
     if ( ( (nDims < 3) && (fOverlap > 1000) ) ||
          ( (nDims == 3) && (fOverlap > (0.15 * nSamples)) ) )
     {
-        float nRatio = nDims / fOverlap;
+        float nRatio = nSamples / fOverlap;
         float logRatio = log(nRatio);
         fEntropyX  = (nRatio * fEntropyX) - logRatio;
         fEntropyY  = (nRatio * fEntropyY) - logRatio;
         fEntropyDual = (nRatio * fEntropyDual) - logRatio;
     } else
     {
-        fEntropyX = logSamples;
-        fEntropyY = logSamples;
-        fEntropyDual = 2.0 * logSamples;
+        fEntropyX = 1.0;
+        fEntropyY = 1.0;
+        fEntropyDual = 2.0;
     }
 
     float yNew = fEntropyDual/(fEntropyX + fEntropyY);
