@@ -566,6 +566,10 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         float fInv0 = 1.0f/(iWidth - 1.0f);
         float fInv1 = 1.0f/(iHeight - 1.0f);
         float fInv2 = 1.0f/(iDepth);
+        if ( iDepth > 1 )
+        {
+            fInv2 = 1.0f/(iDepth-1);
+        }
         float fU, fV, fW;
         int i0, i1, i2;
 
@@ -981,16 +985,12 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     
     private void ReduceDualA( double dNumSamples )
     { 
-        Texture kTarget = null; //m_akImageReduceEntropy.GetTexture(0, 0);
-        //printTarget( "Result", kTarget );
-        //m_kEntropyPoints2D.DetachAllEffects();
-        //m_kEntropyPoints2D.AttachEffect(m_akImageReduceEntropy);
+        Texture kTarget = null;
         m_pkRenderer.Resize(m_kEntropyOut.GetTarget(0).GetImage().GetBound(0),
                 m_kEntropyOut.GetTarget(0).GetImage().GetBound(1));
         m_kEntropyOut.Enable();
         m_pkRenderer.ClearColorDepth();
         m_pkRenderer.Draw(m_kEntropyPoints2D);
-        //ColorRGBA kResult = m_pkRenderer.GetPixelColor(0, 0);
         m_kEntropyOut.Disable();
         kTarget = m_kEntropyOut.GetTarget(0);
         
