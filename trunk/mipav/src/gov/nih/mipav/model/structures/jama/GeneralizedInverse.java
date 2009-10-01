@@ -15611,7 +15611,7 @@ ib = Math.min(nb, k-i+1);
         
         // Values of nrhs (number of right hand sides)
         // dchkaa uses only 2.  dtest.in uses 1, 2, 15.
-        // Since dchkr only accepts nrhs = nsval[0] use only 2.
+        // Since dchkqr only accepts nrhs = nsval[0] use only 2.
         int[] nsval = new int[]{2};
         
         // Number of values of nb
@@ -23364,7 +23364,7 @@ ib = Math.min(nb, k-i+1);
         
         // Values of nrhs (number of right hand sides)
         // dchkaa uses only 2.  dtest.in uses 1, 2, 15.
-        // Since dchkr only accepts nrhs = nsval[0] use only 2.
+        // Since dchklq only accepts nrhs = nsval[0] use only 2.
         int[] nsval = new int[]{2};
         
         // Number of values of nb
@@ -24782,4 +24782,876 @@ ib = Math.min(nb, k-i+1);
         } // for (iside = 1; iside <= 2; iside++)
         return;   
     } // dlqt03
+    
+    /** This ddrvls_test routine is a port of a portion of the version 3.1.1 LAPACK test routine DCHKAA by
+     * Univ. of Tennessee, Univ. Of California Berkeley and NAG Ltd., January, 2007. and some values from 
+     * the test data file dtest.in.
+     */
+    public void ddrvls_test() {
+        int i;
+        
+        // Number of values of m
+        int nm = 7;
+        
+        // Values of m (row dimension)
+        // dtest.in uses 50 rather than 16
+        int[] mval = new int[] { 0, 1, 2, 3, 5, 10, 16 };
+        
+        // mmax is the maximum value of m in mval.
+        int mmax = 0;
+        for (i = 0; i < mval.length; i++) {
+            if (mval[i] > mmax) {
+                mmax = mval[i];
+            }
+        }
+        
+        // Number of values of n
+        int nn = 7;
+        
+        // Values of n (column dimension)
+        // dtest.in uses 50 rather than 16
+        int[] nval = new int[] { 0, 1, 2, 3, 5, 10, 16 };
+        
+        // nmax is the maximum value of n in nval.
+        int nmax = 0;
+        for (i = 0; i < nval.length; i++) {
+            if (nval[i] > nmax) {
+                nmax = nval[i];
+            }
+        }
+        
+        // Number of values of nrhs
+        // dchkaa has nns = 1.  dtest.in uses nns = 3.
+        int nns = 3;
+        
+        // Values of nrhs (number of right hand sides)
+        // dchkaa uses only 2.  dtest.in uses 1, 2, 15.
+        int[] nsval = new int[]{1,2,15};
+        
+        // nsmax is the maximum value of nrhs in nsval.
+        int nsmax = 0;
+        for (i = 0; i < nsval.length; i++) {
+            if (nsval[i] > nsmax) {
+                nsmax = nsval[i];
+            }
+        }
+        
+        // Number of values of nb
+        int nnb = 5;
+        
+        // Values of nb (the blocksize)
+        int nbval[] = new int[] {1, 3, 3, 3, 20};
+        
+        // Values of nx (crossover point)
+        // There are nnb values of nx.
+        int nxval[] = new int[] {1, 0, 5, 9, 1};
+        
+        // Number of values of rank
+        int nrank = 3;
+        
+        // Values of rank (as a % of n)
+        int rankval[] = new int[] {30, 50, 90};
+        
+        // Threshold value of test ratio
+        // dchkaa has 20.0, dtest.in has 30.0
+        double thresh = 20.0;
+        
+        // Test the LAPACK routines
+        boolean tstchk = true;
+        
+        // Test the driver routines
+        boolean tstdrv = true;
+        
+        // Test the error exits
+        // Passed all 5 exits on test.
+        // Put at false so as not to have to hit okay to 5 displayError messages.
+        boolean tsterr = false;
+        
+        // The number of different values that can be used for each of m, n, nrhs, nb, and nx
+        int maxin = 12;
+        
+        // The maximum number of right hand sides
+        int maxrhs = 16;
+        int nmats = 6;
+        int ntypes = 6;
+        int nrhs = nsval[0];
+        boolean dotype[] = new boolean[ntypes];
+        double A[][] = new double[mmax][nmax];
+        double COPYA[][] = new double[mmax][nmax];
+        double B[][] = new double[mmax][nsmax];
+        double COPYB[][] = new double[mmax][nsmax];
+        double C[][] = new double[mmax][nsmax];
+        double s[] = new double[Math.min(mmax, nmax)];
+        double copys[] = new double[Math.min(mmax, nmax)];
+        double work[] = new double[mmax*nmax + 4*nmax + mmax];
+        int iwork[] = new int[15*nmax];
+        iparms = new int[11];
+        double eps;
+       
+        for (i = 0; i < ntypes; i++) {
+            dotype[i] = true;
+        }
+        
+        // Output the machine dependent constants
+        eps = dlamch('U');
+        Preferences.debug("Underflow threshold = " + eps + "\n");
+        eps = dlamch('O');
+        Preferences.debug("Overflow threshold = " + eps + "\n");
+        eps = dlamch('E');
+        Preferences.debug("Precision = " + eps + "\n");
+        
+        ddrvls(dotype, nm, mval, nn, nval, nns, nsval, nnb, nbval, nxval, thresh, tsterr, 
+               A, COPYA, B, COPYB, C, s, copys, work, iwork);
+    } // ddrvls_test
+    
+    /** This is a port of that part of version 3.1.1 LAPACK test routine DDRVLS used for
+     *  testing the least squares driver routine DGELSS.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     January 2007
+       *
+       *     .. Scalar Arguments ..
+             LOGICAL            TSTERR
+             INTEGER            NM, NN, NNB, NNS, NOUT
+             DOUBLE PRECISION   THRESH
+       *     ..
+       *     .. Array Arguments ..
+             LOGICAL            DOTYPE( * )
+             INTEGER            IWORK( * ), MVAL( * ), NBVAL( * ), NSVAL( * ),
+            $                   NVAL( * ), NXVAL( * )
+             DOUBLE PRECISION   A( * ), B( * ), C( * ), COPYA( * ), COPYB( * ),
+            $                   COPYS( * ), S( * ), WORK( * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DDRVLS tests the least squares driver routines DGELS, DGELSS, DGELSX,
+       *  DGELSY and DGELSD.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  DOTYPE  (input) LOGICAL array, dimension (NTYPES)
+       *          The matrix types to be used for testing.  Matrices of type j
+       *          (for 1 <= j <= NTYPES) are used for testing if DOTYPE(j) =
+       *          .TRUE.; if DOTYPE(j) = .FALSE., then type j is not used.
+       *          The matrix of type j is generated as follows:
+       *          j=1: A = U*D*V where U and V are random orthogonal matrices
+       *               and D has random entries (> 0.1) taken from a uniform 
+       *               distribution (0,1). A is full rank.
+       *          j=2: The same of 1, but A is scaled up.
+       *          j=3: The same of 1, but A is scaled down.
+       *          j=4: A = U*D*V where U and V are random orthogonal matrices
+       *               and D has 3*min(M,N)/4 random entries (> 0.1) taken
+       *               from a uniform distribution (0,1) and the remaining
+       *               entries set to 0. A is rank-deficient. 
+       *          j=5: The same of 4, but A is scaled up.
+       *          j=6: The same of 5, but A is scaled down.
+       *
+       *  NM      (input) INTEGER
+       *          The number of values of M contained in the vector MVAL.
+       *
+       *  MVAL    (input) INTEGER array, dimension (NM)
+       *          The values of the matrix row dimension M.
+       *
+       *  NN      (input) INTEGER
+       *          The number of values of N contained in the vector NVAL.
+       *
+       *  NVAL    (input) INTEGER array, dimension (NN)
+       *          The values of the matrix column dimension N.
+       *
+       *  NNS     (input) INTEGER
+       *          The number of values of NRHS contained in the vector NSVAL.
+       *
+       *  NSVAL   (input) INTEGER array, dimension (NNS)
+       *          The values of the number of right hand sides NRHS.
+       *
+       *  NNB     (input) INTEGER
+       *          The number of values of NB and NX contained in the
+       *          vectors NBVAL and NXVAL.  The blocking parameters are used
+       *          in pairs (NB,NX).
+       *
+       *  NBVAL   (input) INTEGER array, dimension (NNB)
+       *          The values of the blocksize NB.
+       *
+       *  NXVAL   (input) INTEGER array, dimension (NNB)
+       *          The values of the crossover point NX.
+       *
+       *  THRESH  (input) DOUBLE PRECISION
+       *          The threshold value for the test ratios.  A result is
+       *          included in the output file if RESULT >= THRESH.  To have
+       *          every test ratio printed, use THRESH = 0.
+       *
+       *  TSTERR  (input) LOGICAL
+       *          Flag that indicates whether error exits are to be tested.
+       *
+       *  A       (workspace) DOUBLE PRECISION array, dimension (MMAX*NMAX)
+       *          where MMAX is the maximum value of M in MVAL and NMAX is the
+       *          maximum value of N in NVAL.
+       *
+       *  COPYA   (workspace) DOUBLE PRECISION array, dimension (MMAX*NMAX)
+       *
+       *  B       (workspace) DOUBLE PRECISION array, dimension (MMAX*NSMAX)
+       *          where MMAX is the maximum value of M in MVAL and NSMAX is the
+       *          maximum value of NRHS in NSVAL.
+       *
+       *  COPYB   (workspace) DOUBLE PRECISION array, dimension (MMAX*NSMAX)
+       *
+       *  C       (workspace) DOUBLE PRECISION array, dimension (MMAX*NSMAX)
+       *
+       *  S       (workspace) DOUBLE PRECISION array, dimension
+       *                      (min(MMAX,NMAX))
+       *
+       *  COPYS   (workspace) DOUBLE PRECISION array, dimension
+       *                      (min(MMAX,NMAX))
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array,
+       *                      dimension (MMAX*NMAX + 4*NMAX + MMAX).
+       *
+       *  IWORK   (workspace) INTEGER array, dimension (15*NMAX)
+       */
+    private void ddrvls(boolean[] dotype, int nm, int[] mval, int nn, int[]nval,
+                        int nns, int[] nsval, int nnb, int[] nbval, int[] nxval,
+                        double thresh, boolean tsterr, double[][] A, double[][] COPYA,
+                        double[][] B, double[][] COPYB, double[][] C, double[] s,
+                        double[] copys, double[] work, int[] iwork) {
+        int ntests = 18;
+        int smlsiz = 25;
+        int iseedy[] = new int[]{1988, 1989, 1990, 1991};
+        char trans;
+        String path;
+        int crank;
+        int i;
+        int im;
+        int in;
+        int inb;
+        int info[] = new int[1];
+        int ins;
+        int irank;
+        int iscale;
+        int itran;
+        int itype;
+        int j;
+        int k;
+        int lda;
+        int ldb;
+        int ldwork;
+        int lwlsy;
+        int lwork;
+        int m;
+        int mnmin;
+        int n;
+        int nb;
+        int ncols;
+        int nerrs;
+        int nfail;
+        int nlvl;
+        int nrhs;
+        int nrows;
+        int nrun;
+        int rank;
+        double eps;
+        double norma;
+        double normb;
+        double rcond;
+        int iseed[] = new int[4];
+        double result[] = new double[ntests];
+        
+        // Initialize constants and the random number seed.
+        path = new String("DLS"); // Double precision
+        nrun = 0;
+        nfail = 0;
+        nerrs = 0;
+        for (i = 0; i < 4; i++) {
+            iseed[i] = iseedy[i];
+        }
+        eps = dlamch('E'); // Epsilon
+        
+        // Threshold for rank estimation
+        rcond = Math.sqrt(eps) - (Math.sqrt(eps) - eps)/2;
+        
+        // Test the error exits
+        xlaenv(2, 2);
+        xlaenv(9, smlsiz);
+        if (tsterr) {
+            derrls();
+        }
+        
+        // Output the header if (NM == 0 || NN == 0) && THRESH === 0.
+        if (((nm == 0) || (nn == 0)) && (thresh == 0.0)) {
+            Preferences.debug("Least squares driver routine dgelss\n");
+            Preferences.debug("Matrix types:\n");
+            Preferences.debug("1: Full rank normal scaling\n");
+            Preferences.debug("2: Full rank scaled near overflow\n");
+            Preferences.debug("3: Full rank scaled near underflow\n");
+            Preferences.debug("4: Rank deficient normal scaling\n");
+            Preferences.debug("5: Rank deficient scaled near overflow\n");
+            Preferences.debug("6: Rank deficient scaled near underflow\n");
+            // Do 11-14 of 18 test ratios
+            Preferences.debug("Test ratios:\n");
+            Preferences.debug("11-14: DGELSS\n");
+            Preferences.debug("11-14 same as 3-6\n");
+            Preferences.debug("3: norm(svd(A) - svd(R))/(min(m,n) * norm(svd(R)) * eps)\n");
+            Preferences.debug("4: norm(B - A * X)/(max(m,n) * norm(A) * norm(X) * eps)\n");
+            Preferences.debug("5: norm((A*X-B)' * A)/(max(m,n,nrhs) * norm(A) * norm(B) * eps)\n");
+            Preferences.debug("6: Check if X is in the row space of A or A'\n");
+        } // if (((nm == 0) || (nn == 0)) && (thresh == 0.0))
+        infot = 0;
+        xlaenv(2, 2);
+        xlaenv(9, smlsiz);
+        
+        for (im = 1; im <= nm; im++) {
+            m = mval[im-1];
+            lda = Math.max(1, m);
+            
+            for (in = 1; in <= nn; in++) {
+                n = nval[in-1];
+                mnmin = Math.min(m, n);
+                ldb = Math.max(1, Math.max(m, n));
+                
+                for (ins = 1; ins <= nns; ins++) {
+                    nrhs = nsval[ins-1];
+                    nlvl = Math.max((int)(Math.log(Math.max(1.0, (double)(mnmin))/
+                           (double)(smlsiz+1))/Math.log(2.0)) + 1, 0);
+                    lwork = Math.max(1, (m+nrhs)*(n+2));
+                    lwork = Math.max(lwork, (n+nrhs)*(m+2));
+                    lwork = Math.max(lwork, m*n+4*mnmin + Math.max(m, n));
+                    lwork = Math.max(lwork, 12*mnmin+2*mnmin*smlsiz+
+                            8*mnmin*nlvl+mnmin*nrhs+(smlsiz+1)*(smlsiz+1));
+                    
+                    for (irank = 1; irank <= 2; irank++) {
+                        for (iscale = 1; iscale <= 3; iscale++) {
+                            itype = (irank-1)*3 + iscale;
+                            if (!dotype[itype-1]) {
+                                continue;
+                            }
+                            
+                            // Generate a matrix of scaling type iscale and rank type irank.
+                        } // for (iscale = 1; iscale <= 3; iscale++)
+                    } // for (irank = 1; irank <= 2; irank++)
+                } // for (ins = 1; ins <= nns; ins++)
+            } // for (in = 1; in <= nn; in++)
+        } // for (im = 1; im <= nm; im++)
+    } // ddrvls
+    
+    /** This is a port of that portion of version 3.1 LAPACK test routine DERRLS used to test
+     * the error exits of the least squares driver routine DGELSS.
+     */
+    private void derrls() {
+        int nmax = 2;
+        int i;
+        int info[] = new int[1];
+        int j;
+        double A[][] = new double[nmax][nmax];
+        double B[][] = new double[nmax][nmax];
+        double s[] = new double[nmax];
+        double w[] = new double[nmax];
+        int irnk[] = new int[1];
+        double rcond = 0.0;
+        int npass = 5;
+        int ntotal = 5;
+        
+        A[0][0] = 1.0;
+        A[0][1] = 2.0;
+        A[1][1] = 3.0;
+        A[1][0] = 4.0;
+        
+        // DGELSS
+        dgelss(-1, 0, 0, A, 1, B, 1, s, rcond, irnk, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgelss(-1, 0, 0, A, 1, B, 1, s, rcond, irnk, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of -1\n");
+            npass--;
+        }
+        
+        dgelss(0, -1, 0, A, 1, B, 1, s, rcond, irnk, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgelss(0, -1, 0, A, 1, B, 1, s, rcond, irnk, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of -2\n");
+            npass--;
+        }
+        
+        dgelss(0, 0, -1, A, 1, B, 1, s, rcond, irnk, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dgelss(0, 0, -1, A, 1, B, 1, s, rcond, irnk, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of -3\n");
+            npass--;
+        }
+        
+        dgelss(2, 0, 0, A, 1, B, 2, s, rcond, irnk, w, 2, info);
+        if (info[0] != -5) {
+            Preferences.debug("dgelss(2, 0, 0, A, 1, B, 2, s, rcond, irnk, w, 2, info) produced info[0] = " + info[0] +
+                              " instead of -5\n");
+            npass--;
+        }
+        
+        dgelss(2, 0, 0, A, 2, B, 1, s, rcond, irnk, w, 2, info);
+        if (info[0] != -7) {
+            Preferences.debug("dgelss(2, 0, 0, A, 2, B, 1, s, rcond, irnk, w, 2, info) produced info[0] = " + info[0] +
+                              " instead of -7\n");
+            npass--;
+        }
+        
+        Preferences.debug("derrls correctly found " + npass + " of " + ntotal + " error exits\n");
+        return;
+    } // derrls
+    
+    /** This is a port of version 3.1 LAPACK test routine DQRt15.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             INTEGER            LDA, LDB, LWORK, M, N, NRHS, RANK, RKSEL, SCALE
+             DOUBLE PRECISION   NORMA, NORMB
+       *     ..
+       *     .. Array Arguments ..
+             INTEGER            ISEED( 4 )
+             DOUBLE PRECISION   A( LDA, * ), B( LDB, * ), S( * ), WORK( LWORK )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DQRT15 generates a matrix with full or deficient rank and of various
+       *  norms.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  SCALE   (input) INTEGER
+       *          SCALE = 1: normally scaled matrix
+       *          SCALE = 2: matrix scaled up
+       *          SCALE = 3: matrix scaled down
+       *
+       *  RKSEL   (input) INTEGER
+       *          RKSEL = 1: full rank matrix
+       *          RKSEL = 2: rank-deficient matrix
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrix A.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of A.
+       *
+       *  NRHS    (input) INTEGER
+       *          The number of columns of B.
+       *
+       *  A       (output) DOUBLE PRECISION array, dimension (LDA,N)
+       *          The M-by-N matrix A.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A.
+       *
+       *  B       (output) DOUBLE PRECISION array, dimension (LDB, NRHS)
+       *          A matrix that is in the range space of matrix A.
+       *
+       *  LDB     (input) INTEGER
+       *          The leading dimension of the array B.
+       *
+       *  S       (output) DOUBLE PRECISION array, dimension MIN(M,N)
+       *          Singular values of A.
+       *
+       *  RANK    (output) INTEGER
+       *          number of nonzero singular values of A.
+       *
+       *  NORMA   (output) DOUBLE PRECISION
+       *          one-norm of A.
+       *
+       *  NORMB   (output) DOUBLE PRECISION
+       *          one-norm of B.
+       *
+       *  ISEED   (input/output) integer array, dimension (4)
+       *          seed for random number generator.
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+       *
+       *  LWORK   (input) INTEGER
+       *          length of work space required.
+       *          LWORK >= MAX(M+MIN(M,N),NRHS*MIN(M,N),2*N+M)
+       */
+    private void dqrt15(int scale, int rksel, int m, int n, int nrhs, double[][] A,
+                        int lda, double[][] B, int ldb, double[] s, int[]rank,
+                        double[] norma, double[] normb, int[] iseed, double[] work,
+                        int lwork) {
+        double svmin = 0.1;
+        int info[] = new int[1];
+        int j;
+        int mn;
+        double bignum;
+        double eps;
+        double smlnum;
+        double temp;
+        double dummy[] = new double[1];
+        double work2[];
+        double array1[][];
+        int row1;
+        int p;
+        int q;
+        
+        mn = Math.min(m, n);
+        if (lwork < Math.max(m+mn, Math.max(mn*nrhs, 2*n+m))) {
+            MipavUtil.displayError("dqrt15 had lwork too small");
+            return;
+        }
+        
+        smlnum = dlamch('S'); // Safe minimum
+        bignum = 1.0/smlnum;
+        eps = dlamch('E'); // Epsilon
+        smlnum = (smlnum/eps)/eps;
+        bignum = 1.0/smlnum;
+        
+        // Determine rank and (unscaled) singular values
+        if (rksel == 1) {
+            rank[0] = mn;
+        }
+        else if (rksel == 2) {
+            rank[0] = (3*mn)/4;
+            for (j = rank[0]+1; j <= mn; j++) {
+                s[j-1] = 0.0;
+            }
+        } // else if (rksel == 2)
+        else {
+            MipavUtil.displayError("dqrt15 had rksel = " + rksel);
+            return;
+        }
+        
+        if (rank[0] > 0) {
+            // Nontrivial case
+            s[0] = 1.0;
+            for (j = 2; j <= rank[0];) {
+                temp = dlarnd(1, iseed);
+                if (temp > svmin) {
+                    s[j-1] = Math.abs(temp);
+                    j++;
+                }
+            } // for (j = 2; j <= rank[0];)
+        } // if (rank[0] > 0)
+        dlaord('D', rank[0], s, 1);
+        
+        // Generate 'rank' columns of a random orthogonal matrix in A
+        dlarnv(2, iseed, m, work);
+        dscal(m, 1.0/dnrm2(m, work, 1), work, 1);
+        dlaset('F', m, rank[0], 0.0, 1.0, A, lda);
+        work2 = new double[rank[0]];
+        dlarf('L', m, rank[0], work, 1, 2.0, A, lda, work2);
+        
+        // workspace used: m+mn
+        // Generate consistent rhs in the range space of A
+        dlarnv(2, iseed, rank[0]*nrhs, work);
+        array1 = new double[rank[0]][nrhs];
+        for (q = 0; q < nrhs; q++) {
+            for (p = 0; p < rank[0]; p++) {
+                array1[p][q] = work[p + q*rank[0]];
+            }
+        }
+        dgemm('N', 'N', m, nrhs, rank[0], 1.0, A, lda, array1, rank[0], 0.0, B, ldb);
+        
+        // work space used <= mn * nrhs
+        // generate (unscaled) matrix A
+        for (j = 1; j <= rank[0]; j++) {
+            for (p = 0; p < m; p++) {
+                A[p][j-1] = s[j-1] * A[p][j-1];
+            }
+        } // for (j = 1; j <= rank[0]; j++)
+        if (rank[0] < n) {
+            row1 = Math.max(1, m);
+            array1 = new double[row1][n-rank[0]];
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < n-rank[0]; q++) {
+                    array1[p][q] = A[p][rank[0]+q];
+                }
+            }
+            dlaset('F', m, n-rank[0], 0.0, 0.0, array1, row1);
+            for (p = 0; p < row1; p++) {
+                for (q = 0; q < n-rank[0]; q++) {
+                    A[p][rank[0]+q] = array1[p][q];
+                }
+            }
+        } // if (rank[0] < n)
+    } // dqrt15
+    
+    /** This is a port of version 3.1 LAPACK auxiliary routine DLAORD.
+    *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          CHARACTER          JOB
+          INTEGER            INCX, N
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   X( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DLAORD sorts the elements of a vector x in increasing or decreasing
+    *  order.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  JOB     (input) CHARACTER
+    *          = 'I':  Sort in increasing order
+    *          = 'D':  Sort in decreasing order
+    *
+    *  N       (input) INTEGER
+    *          The length of the vector X.
+    *
+    *  X       (input/output) DOUBLE PRECISION array, dimension
+    *                         (1+(N-1)*INCX)
+    *          On entry, the vector of length n to be sorted.
+    *          On exit, the vector x is sorted in the prescribed order.
+    *
+    *  INCX    (input) INTEGER
+    *          The spacing between successive elements of X.  INCX >= 0.
+    */
+    private void dlaord(char job, int n, double[] x, int incx) {
+        int i;
+        int inc;
+        int ix;
+        int ixnext;
+        double temp;
+        
+        inc = Math.abs(incx);
+        if ((job == 'I') || (job == 'i')) {
+            // Sort in increasing order
+            loop1:
+            for (i = 2; i <= n; i++) {
+                ix = 1 + (i-1)*inc;
+                do {
+                    if (ix == 1) {
+                        continue loop1;
+                    }
+                    ixnext = ix - inc;
+                    if (x[ix-1] > x[ixnext-1]) {
+                        continue loop1;
+                    }
+                    else {
+                        temp = x[ix-1];
+                        x[ix-1] = x[ixnext-1];
+                        x[ixnext-1] = temp;
+                    }
+                    ix = ixnext;
+                } while (true);
+            } // for (i = 2; i <= n; i++)
+        } // if ((job == 'I) || (job == 'i))
+        else if ((job == 'D') || (job == 'd')) {
+            // Sort inn decreasing order
+            loop2:
+            for (i = 2; i <= n; i++) {
+                ix = 1 + (i-1)*inc;
+                do {
+                    if (ix == 1) {
+                        continue loop2;
+                    }
+                    ixnext = ix - inc;
+                    if (x[ix-1] < x[ixnext-1]) {
+                        continue loop2;
+                    }
+                    else {
+                        temp = x[ix-1];
+                        x[ix-1] = x[ixnext-1];
+                        x[ixnext-1] = temp;
+                    }
+                    ix = ixnext;
+                } while (true);    
+            } // for (i = 2; i <= n; i++)
+        } // else if ((job == 'D') || (job == 'd'))
+        return;
+    } // dlaord
+
+    /** This is a port of version 3.1 LAPACK auxiliary test routine DLAROR.
+    *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          CHARACTER          INIT, SIDE
+          INTEGER            INFO, LDA, M, N
+    *     ..
+    *     .. Array Arguments ..
+          INTEGER            ISEED( 4 )
+          DOUBLE PRECISION   A( LDA, * ), X( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DLAROR pre- or post-multiplies an M by N matrix A by a random
+    *  orthogonal matrix U, overwriting A.  A may optionally be initialized
+    *  to the identity matrix before multiplying by U.  U is generated using
+    *  the method of G.W. Stewart (SIAM J. Numer. Anal. 17, 1980, 403-409).
+    *
+    *  Arguments
+    *  =========
+    *
+    *  SIDE    (input) CHARACTER*1
+    *          Specifies whether A is multiplied on the left or right by U.
+    *          = 'L':         Multiply A on the left (premultiply) by U
+    *          = 'R':         Multiply A on the right (postmultiply) by U'
+    *          = 'C' or 'T':  Multiply A on the left by U and the right
+    *                          by U' (Here, U' means U-transpose.)
+    *
+    *  INIT    (input) CHARACTER*1
+    *          Specifies whether or not A should be initialized to the
+    *          identity matrix.
+    *          = 'I':  Initialize A to (a section of) the identity matrix
+    *                   before applying U.
+    *          = 'N':  No initialization.  Apply U to the input matrix A.
+    *
+    *          INIT = 'I' may be used to generate square or rectangular
+    *          orthogonal matrices:
+    *
+    *          For M = N and SIDE = 'L' or 'R', the rows will be orthogonal
+    *          to each other, as will the columns.
+    *
+    *          If M < N, SIDE = 'R' produces a dense matrix whose rows are
+    *          orthogonal and whose columns are not, while SIDE = 'L'
+    *          produces a matrix whose rows are orthogonal, and whose first
+    *          M columns are orthogonal, and whose remaining columns are
+    *          zero.
+    *
+    *          If M > N, SIDE = 'L' produces a dense matrix whose columns
+    *          are orthogonal and whose rows are not, while SIDE = 'R'
+    *          produces a matrix whose columns are orthogonal, and whose
+    *          first M rows are orthogonal, and whose remaining rows are
+    *          zero.
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of A.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of A.
+    *
+    *  A       (input/output) DOUBLE PRECISION array, dimension (LDA, N)
+    *          On entry, the array A.
+    *          On exit, overwritten by U A ( if SIDE = 'L' ),
+    *           or by A U ( if SIDE = 'R' ),
+    *           or by U A U' ( if SIDE = 'C' or 'T').
+    *
+    *  LDA     (input) INTEGER
+    *          The leading dimension of the array A.  LDA >= max(1,M).
+    *
+    *  ISEED   (input/output) INTEGER array, dimension (4)
+    *          On entry ISEED specifies the seed of the random number
+    *          generator. The array elements should be between 0 and 4095;
+    *          if not they will be reduced mod 4096.  Also, ISEED(4) must
+    *          be odd.  The random number generator uses a linear
+    *          congruential sequence limited to small integers, and so
+    *          should produce machine independent random numbers. The
+    *          values of ISEED are changed on exit, and can be used in the
+    *          next call to DLAROR to continue the same random number
+    *          sequence.
+    *
+    *  X       (workspace) DOUBLE PRECISION array, dimension (3*MAX( M, N ))
+    *          Workspace of length
+    *              2*M + N if SIDE = 'L',
+    *              2*N + M if SIDE = 'R',
+    *              3*N     if SIDE = 'C' or 'T'.
+    *
+    *  INFO    (output) INTEGER
+    *          An error flag.  It is set to:
+    *          = 0:  normal return
+    *          < 0:  if INFO = -k, the k-th argument had an illegal value
+    *          = 1:  if the random numbers generated by DLARND are bad.
+    */
+    private void dlaror(char side, char init, int m, int n, double[][] A, int lda,
+                        int[] iseed, double[] x, int[] info) {
+        double toosml = 1.0E-20;
+        int irow;
+        int itype;
+        int ixfrm;
+        int j;
+        int jcol;
+        int kbeg;
+        int nxfrm;
+        double factor;
+        double xnorm;
+        double xnorms;
+        double vec1[];
+        int p;
+        
+        if ((m == 0) || (n == 0)) {
+            return;
+        }
+        
+        itype = 0;
+        if ((side == 'L') || (side == 'l')) {
+            itype = 1;
+        }
+        else if ((side == 'R') || (side == 'r')) {
+            itype = 2;
+        }
+        else if ((side == 'C') || (side == 'c') || (side == 'T') || (side == 't')) {
+            itype = 3;
+        }
+        
+        // Check for argument errors
+        info[0] = 0;
+        if (itype == 0) {
+            info[0] = -1;
+        }
+        else if (m < 0) {
+            info[0] = -3;
+        }
+        else if ((n < 0) || ((itype == 3) && (m != n))) {
+            info[0] = -4;
+        }
+        else if (lda < m) {
+            info[0] = -6;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dlaror had info[0] = " + info[0]);
+            return;
+        }
+        
+        if (itype == 1) {
+            nxfrm = m;
+        }
+        else {
+            nxfrm = n;
+        }
+        
+        // Initialize A to the identity matrix if desired
+        if ((init == 'I') || (init == 'i')) {
+            dlaset('F', m, n, 0.0, 1.0, A, lda);
+        }
+        
+        // If no rotation possible, multiply by random +/-1
+        // Compute rotation by computing Householder transformations
+        // H(2), H(3), ..., H(nhouse)
+        
+        for (j = 0; j < nxfrm; j++) {
+            x[j] = 0.0;
+        }
+        
+        for (ixfrm = 2; ixfrm <= nxfrm; ixfrm++) {
+            kbeg = nxfrm - ixfrm + 1;
+            
+            // Generate independent normal(0, 1) random numbers
+            for (j = kbeg; j <= nxfrm; j++) {
+                x[j-1] = dlarnd(3, iseed);
+            }
+            
+            // Generate a Householder transformation from the random vector x
+            vec1 = new double[ixfrm];
+            for (p = 0; p < ixfrm; p++) {
+                vec1[p] = x[kbeg-1+p];
+            }
+            xnorm = dnrm2(ixfrm, vec1, 1);
+            if (x[kbeg-1] >= 0.0) {
+                xnorms = Math.abs(xnorm);
+            }
+            else {
+                xnorms = -Math.abs(xnorm);
+            }
+            if (-x[kbeg-1] >= 0.0) {
+                x[kbeg+nxfrm-1] = 1.0;
+            }
+            else {
+                x[kbeg+nxfrm-1] = -1.0;
+            }
+        } // for (ixfrm = 2; ixfrm <= nxfrm; ixfrm++)
+    } // dlaror
+
 }
