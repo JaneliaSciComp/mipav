@@ -25015,12 +25015,13 @@ ib = Math.min(nb, k-i+1);
                         double thresh, boolean tsterr, double[][] A, double[][] COPYA,
                         double[][] B, double[][] COPYB, double[][] C, double[] s,
                         double[] copys, double[] work, int[] iwork) {
-        int ntests = 18;
+        // Only use 4 of the 18 tests, since only 4 apply to dgelss
+        int ntests = 4;
         int smlsiz = 25;
         int iseedy[] = new int[]{1988, 1989, 1990, 1991};
         char trans;
         String path;
-        int crank;
+        int crank[] = new int[1];
         int i;
         int im;
         int in;
@@ -25049,13 +25050,20 @@ ib = Math.min(nb, k-i+1);
         int nrhs;
         int nrows;
         int nrun;
-        int rank;
+        int rank[] = new int[1];
         double eps;
-        double norma;
-        double normb;
+        double norma[] = new double[1];
+        double normb[] = new double[1];
         double rcond;
         int iseed[] = new int[4];
         double result[] = new double[ntests];
+        double das;
+        double dacopys;
+        int p;
+        double work2[][];
+        int q;
+        double vec1[];
+        double resid[] = new double[1];
         
         // Initialize constants and the random number seed.
         path = new String("DLS"); // Double precision
@@ -25127,6 +25135,98 @@ ib = Math.min(nb, k-i+1);
                             }
                             
                             // Generate a matrix of scaling type iscale and rank type irank.
+                            dqrt15(iscale, irank, m, n, nrhs, COPYA, lda, COPYB, ldb, copys,
+                                   rank, norma, normb, iseed, work, lwork);
+                            
+                            // workspace used: max(m+min(m,n),nrhs*min(m,n),2*n+m)
+                            // Initialize vector iwork
+                            for (j = 0; j < n; j++) {
+                                iwork[j] = 0;
+                            }
+                            ldwork = Math.max(1, m);
+                            
+                            // Loop for testing different block sizes.
+                            for (inb = 1; inb <= nnb; inb++) {
+                                nb = nbval[inb-1];
+                                xlaenv(1, nb);
+                                xlaenv(3, nxval[inb-1]);
+                                
+                                // Test dgelss
+                                // dgelss: Compute the minimum-norm solution X
+                                // to min(norm(A * X - B)) using the SVD.
+                                dlacpy('F', m, n, COPYA, lda, A, lda);
+                                dlacpy('F', m, nrhs, COPYB, ldb, B, ldb);
+                                srnamt = new String("DGELSS");
+                                dgelss(m, n, nrhs, A, lda, B, ldb, s, rcond, crank,
+                                       work, lwork, info);
+                                if (info[0] != 0) {
+                                    if ((nfail == 0) && (nerrs == 0)) {
+                                        Preferences.debug("Least squares driver routine dgelss\n");
+                                        Preferences.debug("Matrix types:\n");
+                                        Preferences.debug("1: Full rank normal scaling\n");
+                                        Preferences.debug("2: Full rank scaled near overflow\n");
+                                        Preferences.debug("3: Full rank scaled near underflow\n");
+                                        Preferences.debug("4: Rank deficient normal scaling\n");
+                                        Preferences.debug("5: Rank deficient scaled near overflow\n");
+                                        Preferences.debug("6: Rank deficient scaled near underflow\n");
+                                        // Do 11-14 of 18 test ratios
+                                        Preferences.debug("Test ratios:\n");
+                                        Preferences.debug("11-14: DGELSS\n");
+                                        Preferences.debug("11-14 same as 3-6\n");
+                                        Preferences.debug("3: norm(svd(A) - svd(R))/(min(m,n) * norm(svd(R)) * eps)\n");
+                                        Preferences.debug("4: norm(B - A * X)/(max(m,n) * norm(A) * norm(X) * eps)\n");
+                                        Preferences.debug("5: norm((A*X-B)' * A)/(max(m,n,nrhs) * norm(A) * norm(B) * eps)\n");
+                                        Preferences.debug("6: Check if X is in the row space of A or A'\n");    
+                                    } // if ((nfail == 0) && (nerrs == 0))
+                                    nerrs++;
+                                    Preferences.debug("dgelss returned with info[0] = " + info[0] + "\n");
+                                    Preferences.debug("m = " + m + " n = " + n + " nrhs = " + nrhs + "\n");
+                                    Preferences.debug("nb = " + nb + " itype = " + itype + "\n");
+                                } // if (info[0] != 0)
+                                
+                                // workspace used: 3*min(m,n) + max(2*min(mn), nrhs, max(m,n))
+                                
+                                // Test 11: Compute relative error in svd
+                                if (rank[0] > 0) {
+                                    daxpy(mnmin, -1.0, copys, 1, s, 1);
+                                    das = 0.0;
+                                    dacopys = 0.0;
+                                    for (p = 0; p < mnmin; p++) {
+                                        das += Math.abs(s[p]);
+                                        dacopys += Math.abs(copys[p]);
+                                    }
+                                    result[0] = das/dacopys/(eps * mnmin);
+                                } // if (rank[0] > 0)
+                                else {
+                                    result[0] = 0.0;
+                                }
+                                
+                                // Test 12; Compute error in solution
+                                work2 = new double[ldwork][nrhs];
+                                dlacpy('F', m, nrhs, COPYB, ldb, work2, ldwork);
+                                vec1 = new double[m];
+                                dqrt16('N', m, n, nrhs, COPYA, lda, B, ldb, work2, ldwork,
+                                        vec1, resid);
+                                for (q = 0; q < nrhs; q++) {
+                                    for (p = 0; p < ldwork; p++) {
+                                        work[p + q * ldwork] = work2[p][q];
+                                    }
+                                }
+                                result[1] = resid[0];
+                                
+                                // Test 13: Check norm of r'*A
+                                result[2] = 0.0;
+                                if (m > crank[0]) {
+                                    result[2] = dqrt17('N', 1, m, n, nrhs, COPYA, lda, B, ldb,
+                                                       COPYB, ldb, C);    
+                                } // if (m > crank[0])
+                                
+                                // Test 14: Check if x is in the rowspace of A
+                                result[3] = 0.0;
+                                if (n > crank[0]) {
+                                    
+                                } // if (n > crank[0])
+                            } // for (inb = 1; inb <= nnb; inb++)
                         } // for (iscale = 1; iscale <= 3; iscale++)
                     } // for (irank = 1; irank <= 2; irank++)
                 } // for (ins = 1; ins <= nns; ins++)
@@ -25325,49 +25425,104 @@ ib = Math.min(nb, k-i+1);
                     j++;
                 }
             } // for (j = 2; j <= rank[0];)
+            dlaord('D', rank[0], s, 1);
+            
+            // Generate 'rank' columns of a random orthogonal matrix in A
+            dlarnv(2, iseed, m, work);
+            dscal(m, 1.0/dnrm2(m, work, 1), work, 1);
+            dlaset('F', m, rank[0], 0.0, 1.0, A, lda);
+            work2 = new double[rank[0]];
+            dlarf('L', m, rank[0], work, 1, 2.0, A, lda, work2);
+            
+            // workspace used: m+mn
+            // Generate consistent rhs in the range space of A
+            dlarnv(2, iseed, rank[0]*nrhs, work);
+            array1 = new double[rank[0]][nrhs];
+            for (q = 0; q < nrhs; q++) {
+                for (p = 0; p < rank[0]; p++) {
+                    array1[p][q] = work[p + q*rank[0]];
+                }
+            }
+            dgemm('N', 'N', m, nrhs, rank[0], 1.0, A, lda, array1, rank[0], 0.0, B, ldb);
+            
+            // work space used <= mn * nrhs
+            // generate (unscaled) matrix A
+            for (j = 1; j <= rank[0]; j++) {
+                for (p = 0; p < m; p++) {
+                    A[p][j-1] = s[j-1] * A[p][j-1];
+                }
+            } // for (j = 1; j <= rank[0]; j++)
+            if (rank[0] < n) {
+                row1 = Math.max(1, m);
+                array1 = new double[row1][n-rank[0]];
+                for (p = 0; p < row1; p++) {
+                    for (q = 0; q < n-rank[0]; q++) {
+                        array1[p][q] = A[p][rank[0]+q];
+                    }
+                }
+                dlaset('F', m, n-rank[0], 0.0, 0.0, array1, row1);
+                for (p = 0; p < row1; p++) {
+                    for (q = 0; q < n-rank[0]; q++) {
+                        A[p][rank[0]+q] = array1[p][q];
+                    }
+                }
+            } // if (rank[0] < n)
+            dlaror('R', 'N', m, n, A, lda, iseed, work, info);
         } // if (rank[0] > 0)
-        dlaord('D', rank[0], s, 1);
-        
-        // Generate 'rank' columns of a random orthogonal matrix in A
-        dlarnv(2, iseed, m, work);
-        dscal(m, 1.0/dnrm2(m, work, 1), work, 1);
-        dlaset('F', m, rank[0], 0.0, 1.0, A, lda);
-        work2 = new double[rank[0]];
-        dlarf('L', m, rank[0], work, 1, 2.0, A, lda, work2);
-        
-        // workspace used: m+mn
-        // Generate consistent rhs in the range space of A
-        dlarnv(2, iseed, rank[0]*nrhs, work);
-        array1 = new double[rank[0]][nrhs];
-        for (q = 0; q < nrhs; q++) {
-            for (p = 0; p < rank[0]; p++) {
-                array1[p][q] = work[p + q*rank[0]];
+        else { // rank[0] == 0
+            // work space used 2*n+m
+            // Generate null matrix and rhs
+            for (j = 0; j < mn; j++) {
+                s[j] = 0.0;
             }
+            dlaset('F', m, n, 0.0, 0.0, A, lda);
+            dlaset('F', m, nrhs, 0.0, 0.0, B, ldb);
+        } // else rank[0] == 0
+        
+        // Scale the matrix
+        if (scale != 1) {
+            norma[0] = dlange('M', m, n, A, lda, dummy);
+            if (norma[0] != 0.0) {
+                if (scale == 2) {
+                    // matrix scaled up
+                    dlascl('G', 0, 0, norma[0], bignum, m, n, A, lda, info);
+                    array1 = new double[mn][1];
+                    for (p = 0; p < mn; p++) {
+                        array1[p][0] = s[p];
+                    }
+                    dlascl('G', 0, 0, norma[0], bignum, mn, 1, array1, mn, info);
+                    for (p = 0; p < mn; p++) {
+                        s[p] = array1[p][0];
+                    }
+                    dlascl('G', 0, 0, norma[0], bignum, m, nrhs, B, ldb, info);
+                } // if (scale == 2)
+                else if (scale == 3) {
+                    // matrix scaled down
+                    dlascl('G', 0, 0, norma[0], smlnum, m, n, A, lda, info);
+                    array1 = new double[mn][1];
+                    for (p = 0; p < mn; p++) {
+                        array1[p][0] = s[p];
+                    }
+                    dlascl('G', 0, 0, norma[0], smlnum, mn, 1, array1, mn, info);
+                    for (p = 0; p < mn; p++) {
+                        s[p] = array1[p][0];
+                    }
+                    dlascl('G', 0, 0, norma[0], smlnum, m, nrhs, B, ldb, info);
+                } // else if (scale == 3)
+                else {
+                    MipavUtil.displayError("dqrt15 had info[0] = 1");
+                    return;
+                }
+            } // if (norma[0] != 0.0)
+        } // if (scale != 1)
+        
+        norma[0] = 0;
+        for (p = 0; p < mn; p++) {
+            norma[0] += Math.abs(s[p]);
         }
-        dgemm('N', 'N', m, nrhs, rank[0], 1.0, A, lda, array1, rank[0], 0.0, B, ldb);
+        normb[0] = dlange('1', m, nrhs, B, ldb, dummy);
         
-        // work space used <= mn * nrhs
-        // generate (unscaled) matrix A
-        for (j = 1; j <= rank[0]; j++) {
-            for (p = 0; p < m; p++) {
-                A[p][j-1] = s[j-1] * A[p][j-1];
-            }
-        } // for (j = 1; j <= rank[0]; j++)
-        if (rank[0] < n) {
-            row1 = Math.max(1, m);
-            array1 = new double[row1][n-rank[0]];
-            for (p = 0; p < row1; p++) {
-                for (q = 0; q < n-rank[0]; q++) {
-                    array1[p][q] = A[p][rank[0]+q];
-                }
-            }
-            dlaset('F', m, n-rank[0], 0.0, 0.0, array1, row1);
-            for (p = 0; p < row1; p++) {
-                for (q = 0; q < n-rank[0]; q++) {
-                    A[p][rank[0]+q] = array1[p][q];
-                }
-            }
-        } // if (rank[0] < n)
+        return;
     } // dqrt15
     
     /** This is a port of version 3.1 LAPACK auxiliary routine DLAORD.
@@ -25570,6 +25725,10 @@ ib = Math.min(nb, k-i+1);
         double xnorms;
         double vec1[];
         int p;
+        int q;
+        double array1[][];
+        int row1;
+        double vec2[];
         
         if ((m == 0) || (n == 0)) {
             return;
@@ -25651,7 +25810,612 @@ ib = Math.min(nb, k-i+1);
             else {
                 x[kbeg+nxfrm-1] = -1.0;
             }
+            factor = xnorms * (xnorms + x[kbeg-1]);
+            if (Math.abs(factor) < toosml) {
+                info[0] = 1;
+                MipavUtil.displayError("Error dlaror had info[0] = " + info[0]);
+                return;
+            }
+            else {
+                factor = 1.0/factor;
+            }
+            x[kbeg-1] = x[kbeg-1] + xnorms;
+            
+            //Apply Householder transformation to A
+            if ((itype == 1) || (itype == 3)) {
+                // Apply H(k) from the left.
+                row1 = Math.max(1, ixfrm);
+                array1 = new double[row1][n];
+                for (p = 0; p < row1; p++) {
+                    for (q = 0; q < n; q++) {
+                        array1[p][q] = A[kbeg-1+p][q];
+                    }
+                }
+                vec1 = new double[ixfrm];
+                for (p = 0; p < ixfrm; p++) {
+                    vec1[p] = x[kbeg-1+p];
+                }
+                vec2 = new double[n];
+                for (p = 0; p < n; p++) {
+                    vec2[p] = x[2*nxfrm+p];
+                }
+                dgemv('T', ixfrm, n, 1.0, array1, row1, vec1, 1, 0.0, vec2, 1);
+                for (p = 0; p < n; p++) {
+                    x[2*nxfrm+p] = vec2[p];
+                }
+                for (p = 0; p < ixfrm; p++) {
+                    vec1[p] = x[kbeg-1+p];
+                }
+                dger(ixfrm, n, -factor, vec1, 1, vec2, 1, array1, row1);
+                for (p = 0; p < row1; p++) {
+                    for (q = 0; q < n; q++) {
+                        A[kbeg-1+p][q] = array1[p][q];
+                    }
+                }
+            } // if ((itype == 1) || (itype == 3))
+            
+            if ((itype == 2) || (itype == 3)) {
+                // Apply H(k) from the right
+                row1 = Math.max(1, m);
+                array1 = new double[row1][ixfrm];
+                for (p = 0; p < row1; p++) {
+                    for (q = 0; q < ixfrm; q++) {
+                        array1[p][q] = A[p][kbeg-1+q];
+                    }
+                }
+                vec1 = new double[ixfrm];
+                for (p = 0; p < ixfrm; p++) {
+                    vec1[p] = x[kbeg-1+p];
+                }
+                vec2 = new double[m];
+                for (p = 0; p < m; p++) {
+                    vec2[p] = x[2*nxfrm+p];
+                }
+                dgemv('N', m, ixfrm, 1.0, array1, row1, vec1, 1, 0.0, vec2, 1);
+                for (p = 0; p < m; p++) {
+                    x[2*nxfrm+p] = vec2[p];
+                }
+                for (p = 0; p < ixfrm; p++) {
+                    vec1[p] = x[kbeg-1+p];
+                }
+                dger(m, ixfrm, -factor, vec2, 1, vec1, 1, array1, row1);
+                for (p = 0; p < row1; p++) {
+                    for (q = 0; q < ixfrm; q++) {
+                        A[p][kbeg-1+q] = array1[p][q];
+                    }
+                }
+            } // if ((itype == 2) || (itype == 3))
         } // for (ixfrm = 2; ixfrm <= nxfrm; ixfrm++)
+        
+        if (dlarnd(3, iseed) >= 0.0) {
+            x[2*nxfrm-1] = 1.0;
+        }
+        else {
+            x[2*nxfrm-1] = -1.0;
+        }
+        
+        // Scale the matrix A by D.
+        if ((itype == 1) || (itype == 3)) {
+            for (irow = 1; irow <= m; irow++) {
+                for (p = 0; p < n; p++) {
+                    A[irow-1][p] = x[nxfrm+irow-1] * A[irow-1][p];
+                }
+            } // for (irow = 1; irow <= m; irow++)
+        } // if ((itype == 1) || (itype == 3))
+        
+        if ((itype == 2) || (itype == 3)) {
+            for (jcol = 1; jcol <= n; jcol++) {
+                for (p = 0; p < m; p++) {
+                    A[p][jcol-1] = x[nxfrm+jcol-1] * A[p][jcol-1];
+                }
+            } // for (jcol = 1; jcol <= n; jcol++)
+        } // if ((itype == 2) || (itype == 3))
+        return;
     } // dlaror
+    
+    /** This is a port of version 3.1 LAPACK test routine DQRT16.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             CHARACTER          TRANS
+             INTEGER            LDA, LDB, LDX, M, N, NRHS
+             DOUBLE PRECISION   RESID
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   A( LDA, * ), B( LDB, * ), RWORK( * ),
+            $                   X( LDX, * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DQRT16 computes the residual for a solution of a system of linear
+       *  equations  A*x = b  or  A'*x = b:
+       *     RESID = norm(B - A*X) / ( max(m,n) * norm(A) * norm(X) * EPS ),
+       *  where EPS is the machine epsilon.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  TRANS   (input) CHARACTER*1
+       *          Specifies the form of the system of equations:
+       *          = 'N':  A *x = b
+       *          = 'T':  A'*x = b, where A' is the transpose of A
+       *          = 'C':  A'*x = b, where A' is the transpose of A
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrix A.  M >= 0.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of the matrix A.  N >= 0.
+       *
+       *  NRHS    (input) INTEGER
+       *          The number of columns of B, the matrix of right hand sides.
+       *          NRHS >= 0.
+       *
+       *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          The original M x N matrix A.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A.  LDA >= max(1,M).
+       *
+       *  X       (input) DOUBLE PRECISION array, dimension (LDX,NRHS)
+       *          The computed solution vectors for the system of linear
+       *          equations.
+       *
+       *  LDX     (input) INTEGER
+       *          The leading dimension of the array X.  If TRANS = 'N',
+       *          LDX >= max(1,N); if TRANS = 'T' or 'C', LDX >= max(1,M).
+       *
+       *  B       (input/output) DOUBLE PRECISION array, dimension (LDB,NRHS)
+       *          On entry, the right hand side vectors for the system of
+       *          linear equations.
+       *          On exit, B is overwritten with the difference B - A*X.
+       *
+       *  LDB     (input) INTEGER
+       *          The leading dimension of the array B.  IF TRANS = 'N',
+       *          LDB >= max(1,M); if TRANS = 'T' or 'C', LDB >= max(1,N).
+       *
+       *  RWORK   (workspace) DOUBLE PRECISION array, dimension (M)
+       *
+       *  RESID   (output) DOUBLE PRECISION
+       *          The maximum over the number of right hand sides of
+       *          norm(B - A*X) / ( max(m,n) * norm(A) * norm(X) * EPS ).
+       */
+    private void dqrt16(char trans, int m, int n, int nrhs, double[][] A, int lda,
+                        double[][] X, int ldx, double[][] B, int ldb, double[] rwork,
+                        double[] resid) {
+        int j;
+        int n1;
+        int n2;
+        double anorm;
+        double bnorm;
+        double eps;
+        double xnorm;
+        int p;
+        
+        // Quick exit if m == 0 or n == 0 or nrhs == 0
+        if ((m <= 0) || (n <= 0) || (nrhs == 0)) {
+            resid[0] = 0;
+            return;
+        }
+        
+        if ((trans == 'T') || (trans == 't') || (trans == 'C') || (trans == 'C')) {
+            anorm = dlange('I', m, n, A, lda, rwork);
+            n1 = n;
+            n2 = m;
+        }
+        else {
+            anorm = dlange('1', m, n, A, lda, rwork);
+            n1 = m;
+            n2 = n;
+        }
+        
+        eps = dlamch('E'); // epsilon
+        
+        // Compute B -A*X (or B - A'*X) and store in B.
+        dgemm(trans, 'N', n1, nrhs, n2, -1.0, A, lda, X, ldx, 1.0, B, ldb);
+        
+        // Compute the maximum over the number of right hand sides of
+        // norm(B - A*X)/(max(m,n) * norm(A) * norm(X) * eps).
+        
+        resid[0] = 0.0;
+        for (j = 1; j <= nrhs; j++) {
+            bnorm = 0.0;
+            for (p = 0; p < n1; p++) {
+                bnorm += Math.abs(B[p][j-1]);
+            }
+            xnorm = 0.0;
+            for (p = 0; p < n2; p++) {
+                xnorm += Math.abs(X[p][j-1]);
+            }
+            if ((anorm == 0.0) && (bnorm == 0.0)) {
+                resid[0] = 0.0;
+            }
+            else if ((anorm <= 0.0) || (xnorm <= 0.0)) {
+                resid[0] = 1.0/eps;
+            }
+            else {
+                resid[0] = Math.max(resid[0], ((bnorm/anorm)/xnorm)/
+                             (Math.max(m, n) * eps));
+            }
+        } // for (j = 1; j <= nrhs; j++)
+        return;
+    } // dqrt16
+    
+    /** This is a port of version 3.1 LAPACK test routine DQRT17.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             CHARACTER          TRANS
+             INTEGER            IRESID, LDA, LDB, LDX, LWORK, M, N, NRHS
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   A( LDA, * ), B( LDB, * ), C( LDB, * ),
+            $                   WORK( LWORK ), X( LDX, * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DQRT17 computes the ratio
+       *
+       *     || R'*op(A) ||/(||A||*alpha*max(M,N,NRHS)*eps)
+       *
+       *  where R = op(A)*X - B, op(A) is A or A', and
+       *
+       *     alpha = ||B|| if IRESID = 1 (zero-residual problem)
+       *     alpha = ||R|| if IRESID = 2 (otherwise).
+       *
+       *  Arguments
+       *  =========
+       *
+       *  TRANS   (input) CHARACTER*1
+       *          Specifies whether or not the transpose of A is used.
+       *          = 'N':  No transpose, op(A) = A.
+       *          = 'T':  Transpose, op(A) = A'.
+       *
+       *  IRESID  (input) INTEGER
+       *          IRESID = 1 indicates zero-residual problem.
+       *          IRESID = 2 indicates non-zero residual.
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrix A.
+       *          If TRANS = 'N', the number of rows of the matrix B.
+       *          If TRANS = 'T', the number of rows of the matrix X.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of the matrix  A.
+       *          If TRANS = 'N', the number of rows of the matrix X.
+       *          If TRANS = 'T', the number of rows of the matrix B.
+       *
+       *  NRHS    (input) INTEGER
+       *          The number of columns of the matrices X and B.
+       *
+       *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          The m-by-n matrix A.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A. LDA >= M.
+       *
+       *  X       (input) DOUBLE PRECISION array, dimension (LDX,NRHS)
+       *          If TRANS = 'N', the n-by-nrhs matrix X.
+       *          If TRANS = 'T', the m-by-nrhs matrix X.
+       *
+       *  LDX     (input) INTEGER
+       *          The leading dimension of the array X.
+       *          If TRANS = 'N', LDX >= N.
+       *          If TRANS = 'T', LDX >= M.
+       *
+       *  B       (input) DOUBLE PRECISION array, dimension (LDB,NRHS)
+       *          If TRANS = 'N', the m-by-nrhs matrix B.
+       *          If TRANS = 'T', the n-by-nrhs matrix B.
+       *
+       *  LDB     (input) INTEGER
+       *          The leading dimension of the array B.
+       *          If TRANS = 'N', LDB >= M.
+       *          If TRANS = 'T', LDB >= N.
+       *
+       *  C       (workspace) DOUBLE PRECISION array, dimension (LDB,NRHS)
+       *
+       */
+    private double dqrt17(char trans, int iresid, int m, int n, int nrhs, double[][] A,
+                          int lda, double[][] X, int ldx, double[][] B, int ldb,
+                          double[][] C) {
+        double val;;
+        int info[] = new int[1];
+        int iscl;
+        int ncols;
+        int nrows;
+        double bignum;
+        double err;
+        double norma;
+        double normb;
+        double normrs;
+        double normx;
+        double smlnum;
+        double rwork[] = new double[1];
+        double work2[][];
+        int p;
+        int q;
+        
+        val = 0.0;
+        
+        if ((trans == 'N') || (trans == 'n')) {
+            nrows = m;
+            ncols = n;
+        }
+        else if ((trans == 'T') || (trans == 't')) {
+            nrows = n;
+            ncols = m;
+        }
+        else {
+            MipavUtil.displayError("dqrt17 had an illegal trans value");
+            return val; 
+        }
+        
+        if ((m <= 0) || (n <= 0) || (nrhs <= 0)) {
+            return val;
+        }
+        
+        norma = dlange('1', m, n, A, lda, rwork);
+        smlnum = dlamch('S')/dlamch('P'); // Safe minimum/precision
+        bignum = 1.0/smlnum;
+        iscl = 0;
+        
+        // Compute residual and scale it
+        dlacpy('A', nrows, nrhs, B, ldb, C, ldb);
+        dgemm(trans, 'N', nrows, nrhs, ncols, -1.0, A, lda, X, ldx, 1.0, C, ldb);
+        normrs = dlange('M', nrows, nrhs, C, ldb, rwork);
+        if (normrs > smlnum) {
+            iscl = 1;
+            dlascl('G', 0, 0, normrs, 1.0, nrows, nrhs, C, ldb, info);
+        }
+        
+        // Compute R'*A
+        work2 = new double[nrhs][ncols];
+        dgemm('T', trans, nrhs, ncols, nrows, 1.0, C, ldb, A, lda, 0.0, work2, nrhs);
+        
+        // Compute and properly scale error
+        err = dlange('O', nrhs, ncols, work2, nrhs, rwork);
+        if (norma != 0.0) {
+            err = err/norma;
+        }
+        
+        if (iscl == 1) {
+            err = err * normrs;
+        }
+        
+        if (iresid == 1) {
+            normb = dlange('O', nrows, nrhs, B, ldb, rwork);
+            if (normb != 0.0) {
+                err = err/normb;
+            }
+        } // if (iresid == 1)
+        else {
+            normx = dlange('O', ncols, nrhs, X, ldx, rwork);
+            if (normx != 0.0) {
+                err = err/normx;
+            }
+        } // else
+        
+        val = err / (dlamch('E') * Math.max(m, Math.max(n, nrhs)));
+        return val;
+    } // dqrt17
+    
+    /** This is a port of version 3.1 LAPACK test routine DQRT14. 
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             CHARACTER          TRANS
+             INTEGER            LDA, LDX, LWORK, M, N, NRHS
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   A( LDA, * ), WORK( LWORK ), X( LDX, * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DQRT14 checks whether X is in the row space of A or A'.  It does so
+       *  by scaling both X and A such that their norms are in the range
+       *  [sqrt(eps), 1/sqrt(eps)], then computing a QR factorization of [A,X]
+       *  (if TRANS = 'T') or an LQ factorization of [A',X]' (if TRANS = 'N'),
+       *  and returning the norm of the trailing triangle, scaled by
+       *  MAX(M,N,NRHS)*eps.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  TRANS   (input) CHARACTER*1
+       *          = 'N':  No transpose, check for X in the row space of A
+       *          = 'T':  Transpose, check for X in the row space of A'.
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrix A.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of the matrix A.
+       *
+       *  NRHS    (input) INTEGER
+       *          The number of right hand sides, i.e., the number of columns
+       *          of X.
+       *
+       *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          The M-by-N matrix A.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A.
+       *
+       *  X       (input) DOUBLE PRECISION array, dimension (LDX,NRHS)
+       *          If TRANS = 'N', the N-by-NRHS matrix X.
+       *          IF TRANS = 'T', the M-by-NRHS matrix X.
+       *
+       *  LDX     (input) INTEGER
+       *          The leading dimension of the array X.
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array dimension (LWORK)
+       *
+       *  LWORK   (input) INTEGER
+       *          length of workspace array required
+       *          If TRANS = 'N', LWORK >= (M+NRHS)*(N+2);
+       *          if TRANS = 'T', LWORK >= (N+NRHS)*(M+2).
+       */
+    private double dqrt14(char trans, int m, int n, int nrhs, double[][] A, int lda,
+                          double[][] X, int ldx, double[] work, int lwork) {
+        double val;
+        boolean tpsd;
+        int i;
+        int info[] = new int[1];
+        int j;
+        int ldwork;
+        double anrm;
+        double err;
+        double xnrm;
+        double rwork[] = new double[1];
+        double work2[][];
+        double work3[][];
+        double work23[][];
+        int p;
+        int q;
+        double work4[];
+        double work5[];
+        
+        val = 0.0;
+        if ((trans == 'N') || (trans == 'n')) {
+            ldwork = m + nrhs;
+            tpsd = false;
+            if (lwork < (m+nrhs)*(n+2)) {
+                MipavUtil.displayError("dqrt14 had lwork < (m+nrhs)*(n+2)");
+                return val;
+            }
+            else if ((n <= 0) || (nrhs <= 0)) {
+                return val;
+            }
+        } // if ((trans == 'N) || (trans == 'n))
+        else if ((trans == 'T') || (trans == 't')) {
+            ldwork = m;
+            tpsd = true;
+            if (lwork < (n+nrhs)*(m+2)) {
+                MipavUtil.displayError("dqrt14 had lwork < (n+nrhs)*(m+2)");
+                return val;
+            }
+            else if ((m <= 0) || (nrhs <= 0)) {
+                return val;
+            }
+        } // else if ((trans == 'T) || (trans == 't))
+        else {
+            MipavUtil.displayError("dqrt14 had an illegal trans value");
+            return val;
+        }
+        
+        // Copy and scale A
+        work2 = new double[ldwork][n];
+        dlacpy('A', m, n, A, lda, work2, ldwork);
+        anrm = dlange('M', m, n, work2, ldwork, rwork);
+        if (anrm != 0.0) {
+            dlascl('G', 0, 0, anrm, 1.0, m, n, work2, ldwork, info);
+        }
+        
+        // Copy X or X' into the right place and scale it
+        if (tpsd) {
+            // Copy X into columns n+1:n+nrhs of work.
+            work3 = new double[ldwork][nrhs];
+            dlacpy('A', m, nrhs, X, ldx, work3, ldwork);
+            xnrm = dlange('M', m, nrhs, work3, ldwork, rwork);
+            if (xnrm != 0.0) {
+                dlascl('G', 0, 0, xnrm, 1.0, m, nrhs, work3, ldwork, info);    
+            } // if (xnrm != 0.0)
+            work23 = new double[ldwork][n+nrhs];
+            for (q = 0; q < n; q++) {
+                for (p = 0; p < ldwork; p++) {
+                    work23[p][q] = work2[p][q];
+                }
+            }
+            for (q = 0; q < nrhs; q++) {
+                for (p = 0; p < ldwork; p++) {
+                    work23[p][q+n] = work3[p][q];
+                }
+            }
+            anrm = dlange('O', m, n+nrhs, work23, ldwork, rwork);
+            // Compute QR factorization of X
+            work4 = new double[Math.min(m, n+nrhs)];
+            work5 = new double[n+nrhs];
+            dgeqr2(m, n+nrhs, work23, ldwork, work4, work5, info);
+            
+            // Compute the largest entry in the upper triangle of
+            // work(n+1:m,n+1:n+nrhs)
+            err = 0.0;
+            for (q = 0; q < n+nrhs; q++) {
+                for (p = 0; p < ldwork; p++) {
+                    work[p + q * ldwork] = work23[p][q];
+                }
+            }
+            for (p = 0; p < Math.min(m, n+nrhs); p++) {
+                work[ldwork*(n+nrhs) + p] = work4[p];
+            }
+            for (j = n+1; j <= n+nrhs; j++) {
+                for (i = n + 1; i <= Math.min(m, j); i++) {
+                    err = Math.max(err, Math.abs(work[i-1+(j-1)*m]));
+                }
+            }
+        } // if (tpsd)
+        else { // !tpsd
+            // Copy X' into rows m+1:m+nrhs of work
+            for (i = 1; i <= n; i++) {
+                for (j = 1; j <= nrhs; j++) {
+                    work[m-1+j+(i-1)*ldwork] = X[i-1][j-1];
+                }
+            }
+            work2 = new double[ldwork][n];
+            for (q = 0; q < n; q++) {
+                for (p = 0; p < ldwork; p++) {
+                    work2[p][q] = work[m + p + q*ldwork];
+                }
+            }
+            xnrm = dlange('M', nrhs, n, work2, ldwork, rwork);
+            if (xnrm != 0.0) {
+                dlascl('G', 0, 0, xnrm, 1.0, nrhs, n, work2, ldwork, info);
+            }
+            
+            // Compute LQ factorization of work
+            for (q = 0; q < n; q++) {
+                for (p = 0; p < ldwork; p++) {
+                    work[m + p + q*ldwork] = work2[p][q];
+                }
+            }
+            for (q = 0; q < n; q++) {
+                for (p = 0; p < ldwork; p++) {
+                    work2[p][q] = work[p + q*ldwork];
+                }
+            }
+            work4 = new double[Math.min(ldwork, n)];
+            work5 = new double[ldwork];
+            dgelq2(ldwork, n, work2, ldwork, work4, work5, info);
+            for (q = 0; q < n; q++) {
+                for (p = 0; p < ldwork; p++) {
+                    work[p + q*ldwork] = work2[p][q];
+                }
+            }
+            for (p = 0; p < Math.min(ldwork, n); p++) {
+                work[ldwork*n + p] = work4[p];
+            }
+            
+            // Compute largest entry in lower triangle in
+            // work(m+1:m+nrhs,m+1:n)
+            err = 0.0;
+            for (j = m+1; j <= n; j++) {
+                for (i = j; i <= ldwork; i++) {
+                    err = Math.max(err, Math.abs(work[i-1+(j-1)*ldwork]));
+                }
+            }
+        } // else !tpsd
+        
+        val = err/(Math.max(m, Math.max(n, nrhs)) * dlamch('E'));
+        return val;
+    } // dqrt14
 
 }
