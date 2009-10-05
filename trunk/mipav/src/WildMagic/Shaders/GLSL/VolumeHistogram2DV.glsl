@@ -8,7 +8,7 @@ uniform vec2 Scale;
 uniform vec3 ImageSize;
 uniform vec3 ImageSizeInv;
 
-uniform mat4 InverseTransformMatrix;
+uniform mat4 InverseTransform;
 
 void v_VolumeHistogram2DV()
 {
@@ -19,13 +19,14 @@ void v_VolumeHistogram2DV()
     texCoord /= 2.0;
 
     vec4 target = texture3D(imageA, texCoord );
+    //gl_FrontColor = texture3D(imageA, texCoord ); 
 
     vec4 vert = gl_Vertex;
     vert.z = 0;
 
     vec4 kPos = vec4(0.0,0.0,0.0,1.0);
     kPos.xyz = texCoord * ImageSize;
-    kPos = InverseTransformMatrix*kPos;
+    kPos = InverseTransform*kPos;
     texCoord = kPos.xyz * ImageSizeInv;
 
     vec4 moving = texture3D(imageB, texCoord );
@@ -40,5 +41,8 @@ void v_VolumeHistogram2DV()
     xPos -= 1.0;
     vert.x = xPos;
     gl_Position = vert;
+
+    //gl_FrontColor += texture3D(imageB, texCoord ); 
+    //gl_Position = gl_Vertex;
 }
 //----------------------------------------------------------------------------

@@ -17,6 +17,7 @@ import javax.swing.JFrame;
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
@@ -82,8 +83,10 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     protected JFrame m_kFrame;
     
     private float m_fUnitTolerance;
-    private Matrix4f m_kToOrigin = Matrix4f.IDENTITY;
-    private Matrix4f m_kFromOrigin = Matrix4f.IDENTITY;
+    private Matrix4f m_kToOrigin = new Matrix4f(false);
+    private Matrix4f m_kFromOrigin = new Matrix4f(false);
+    private Matrix4f m_kToOriginInv = new Matrix4f(false);
+    private Matrix4f m_kFromOriginInv = new Matrix4f(false);
     private float m_fRigid = 1.0f;
     private float m_fDim;
     private float[] m_afStartPoint = new float[16];
@@ -154,8 +157,21 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         return kWorld;
     }
     
+
+    public void setToOrigin( TransMatrix kToOrigin ) 
+    {
+        m_kToOrigin = convertTo4D(kToOrigin);
+        m_kToOriginInv.Inverse(m_kToOrigin);
+    }
+    public void setFromOrigin( TransMatrix kFromOrigin )
+    {
+        m_kFromOrigin = convertTo4D(kFromOrigin);
+        m_kFromOriginInv.Inverse(m_kFromOrigin);
+        
+    }
+    
     public void calcError(TransMatrix kTransform) {
-        if ( ((OpenGLRenderer)m_pkRenderer).GetContext() !=  GetCanvas().getContext().getCurrent() )
+        //if ( ((OpenGLRenderer)m_pkRenderer).GetContext() !=  GetCanvas().getContext().getCurrent() )
         {
             if ( GetCanvas().getContext().makeCurrent() == GLContext.CONTEXT_NOT_CURRENT )
             {
@@ -175,7 +191,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     
     public void calcLineMinimization()
     {
-        if ( ((OpenGLRenderer)m_pkRenderer).GetContext() !=  GetCanvas().getContext().getCurrent() )
+        //if ( ((OpenGLRenderer)m_pkRenderer).GetContext() !=  GetCanvas().getContext().getCurrent() )
         {
             if ( GetCanvas().getContext().makeCurrent() == GLContext.CONTEXT_NOT_CURRENT )
             {
@@ -313,8 +329,9 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     
     public void initImages( ModelSimpleImage kImageA, ModelSimpleImage kImageB, int iNBins )
     {
-        //m_iWidth = kImageA.extents[0];
-        //m_iHeight = kImageA.extents[1];
+        m_iWidth = kImageA.extents[0];
+        m_iHeight = kImageA.extents[1];
+        
         m_iWidth = iNBins;
         m_iHeight = iNBins;
         m_kImageA = kImageA;
@@ -434,6 +451,56 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         }
         if ( m_kImageEffectDual != null )
         {
+            /*
+            Matrix4f toOrigin = new Matrix4f(false);
+            Matrix4f fromOrigin = new Matrix4f(false);
+            toOrigin.M03 = -m_kImageA.extents[0]/2.0f;
+            toOrigin.M13 = -m_kImageA.extents[1]/2.0f;
+            fromOrigin.M03 = m_kImageA.extents[0]/2.0f;
+            fromOrigin.M13 = m_kImageA.extents[1]/2.0f;
+            TransMatrix kMat = new TransMatrix(4,4);
+            kMat.setTransform(0,0,0,0,0,15,1,1,1,0,0,0);
+            m_kImageTransform.Copy(kMat);
+            System.err.println( "captureImage" + m_iScreenCaptureCounter + " " + m_kImageTransform.ToString() );
+
+            m_kImageTransform.MakeIdentity();
+            m_kImageTransform.M00 = 0.9666009f;
+            m_kImageTransform.M01 = -0.25924882f;
+            m_kImageTransform.M02 = 0f;
+            m_kImageTransform.M03 = 74.82431f;
+            m_kImageTransform.M10 = 0.25845572f;
+            m_kImageTransform.M11 = 0.9654881f;
+            m_kImageTransform.M12 = 0f;
+            m_kImageTransform.M13 = -57.23043f;
+            System.err.println( m_kImageTransform.ToString() );
+            m_kImageTransform.Inverse();
+            System.err.println( m_kImageTransform.ToString() );
+            
+            m_kImageTransform.MakeIdentity();
+            m_kImageTransform.M00 = 0.9652507f;
+            m_kImageTransform.M01 = 0.25918508f;
+            m_kImageTransform.M02 = 0f;
+            m_kImageTransform.M03 = -56.043213f;
+            m_kImageTransform.M10 = -0.25839218f;
+            m_kImageTransform.M11 = 0.96636325f;
+            m_kImageTransform.M12 = 0f;
+            m_kImageTransform.M13 = 72.88661f;
+            */
+            //m_kImageTransform.MultLeft( m_kToOriginInv );
+            //m_kImageTransform.Mult( m_kFromOriginInv );
+            
+
+            //System.err.println( "setTransform " + m_kImageTransform.ToString() );
+            
+            //m_kImageTransform.Inverse();
+
+            //m_kImageTransform.MultLeft( m_kToOrigin );
+            //m_kImageTransform.Mult( m_kFromOrigin );
+            
+            
+            //m_kImageTransform.MultLeft(fromOrigin);
+            //m_kImageTransform.Mult(toOrigin);
+            
             m_kImageEffectDual.SetTransform(m_kImageTransform);
         }
     }
@@ -618,8 +685,13 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_akCollapseRows = new VolumeHistogramEffect( m_kHistogramOutput.GetTarget(0), VolumeHistogramEffect.COLLAPSE_ROWS );
 
         m_kHistogramPoints2D.AttachEffect(m_akCollapse2D);
+        AlphaState pkAState = m_akCollapse2D.GetBlending(0);
+        pkAState.BlendEnabled = true;
+        pkAState.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
+        pkAState.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+        
         m_kHistogramPoints2D.AttachEffect(m_akCollapseColumns);
-        AlphaState pkAState = m_akCollapseColumns.GetBlending(0);
+        pkAState = m_akCollapseColumns.GetBlending(0);
         pkAState.BlendEnabled = true;
         pkAState.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
         pkAState.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
@@ -635,6 +707,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_kEntropyPoints2D.AttachEffect( m_akImageReduceEntropy );     
 
         m_kImageLineMinPass2a = new LineMinimizationEffect( m_kBracketOut.GetTarget(0), m_kEntropyOut.GetTarget(0), m_fMinDist, (float)dSize, m_kImageA.nDims  );
+        
+        m_kImageEffectDual.SetImageSize( m_kImageA.extents[0],m_kImageA.extents[1],iDepth );
     }
     
     private void calcEntropy()
@@ -663,7 +737,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_pkRenderer.Resize(m_kHistogramOutput.GetTarget(0).GetImage().GetBound(0),
                 m_kHistogramOutput.GetTarget(0).GetImage().GetBound(1));
         m_kHistogramOutput.Enable();
-        m_pkRenderer.ClearColorDepth();
+        //m_pkRenderer.ClearColorDepth();
+        m_pkRenderer.ClearBuffers();
         m_pkRenderer.Draw(m_kImagePointsDual);
         //writeImage();
         m_kHistogramOutput.Disable();
@@ -671,7 +746,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_pkRenderer.Resize(m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(0),
                 m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(1));
         m_kHistogramOutputB.Enable();
-        m_pkRenderer.ClearColorDepth();
+        //m_pkRenderer.ClearColorDepth();
+        m_pkRenderer.ClearBuffers();
         m_pkRenderer.Draw(m_kHistogramPoints2D);
         m_kHistogramOutputB.Disable();
         ReduceDualA(dNumSamples);        
@@ -688,7 +764,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_pkRenderer.Resize(m_kTransformNewOut.GetTarget(0).GetImage().GetBound(0),
                     m_kTransformNewOut.GetTarget(0).GetImage().GetBound(1));
             m_kTransformNewOut.Enable();
-            m_pkRenderer.ClearColorDepth();
+            //m_pkRenderer.ClearColorDepth();
+            m_pkRenderer.ClearBuffers();
             m_pkRenderer.Draw(m_kTransformPoints);
             m_pkRenderer.FrameBufferToTexture( m_kTransformOut.GetTarget(0) );
             m_kTransformNewOut.Disable();            
@@ -704,7 +781,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_pkRenderer.Resize(m_kHistogramOutput.GetTarget(0).GetImage().GetBound(0),
                     m_kHistogramOutput.GetTarget(0).GetImage().GetBound(1));
             m_kHistogramOutput.Enable();
-            m_pkRenderer.ClearColorDepth();
+            //m_pkRenderer.ClearColorDepth();
+            m_pkRenderer.ClearBuffers();
             m_pkRenderer.Draw(m_kImagePointsDual);
             m_kHistogramOutput.Disable();
 
@@ -712,7 +790,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_pkRenderer.Resize(m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(0),
                     m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(1));
             m_kHistogramOutputB.Enable();
-            m_pkRenderer.ClearColorDepth();
+            //m_pkRenderer.ClearColorDepth();
+            m_pkRenderer.ClearBuffers();
             m_pkRenderer.Draw(m_kHistogramPoints2D);
             m_kHistogramOutputB.Disable();
             
@@ -720,7 +799,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_pkRenderer.Resize(m_kEntropyOut.GetTarget(0).GetImage().GetBound(0),
                     m_kEntropyOut.GetTarget(0).GetImage().GetBound(1));
             m_kEntropyOut.Enable();
-            m_pkRenderer.ClearColorDepth();
+            //m_pkRenderer.ClearColorDepth();
+            m_pkRenderer.ClearBuffers();
             m_pkRenderer.Draw(m_kEntropyPoints2D);
             m_kEntropyOut.Disable();
 
@@ -730,7 +810,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_pkRenderer.Resize(m_kBracketNewOut.GetTarget(0).GetImage().GetBound(0),
                     m_kBracketNewOut.GetTarget(0).GetImage().GetBound(1));
             m_kBracketNewOut.Enable();
-            m_pkRenderer.ClearColorDepth();
+            //m_pkRenderer.ClearColorDepth();
+            m_pkRenderer.ClearBuffers();
             m_pkRenderer.Draw(m_kBracketPoints);
             m_pkRenderer.FrameBufferToTexture( m_kBracketOut.GetTarget(0) );
             m_kBracketNewOut.Disable();            
@@ -985,7 +1066,8 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_pkRenderer.Resize(m_kEntropyOut.GetTarget(0).GetImage().GetBound(0),
                 m_kEntropyOut.GetTarget(0).GetImage().GetBound(1));
         m_kEntropyOut.Enable();
-        m_pkRenderer.ClearColorDepth();
+        //m_pkRenderer.ClearColorDepth();
+        m_pkRenderer.ClearBuffers();
         m_pkRenderer.Draw(m_kEntropyPoints2D);
         m_kEntropyOut.Disable();
         kTarget = m_kEntropyOut.GetTarget(0);
