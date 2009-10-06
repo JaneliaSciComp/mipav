@@ -14475,8 +14475,8 @@ loop3:                       {
     } // dlamch
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLANGB Original DLANGB created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK auxiliary routine DLANGB Original DLANGB created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlangb returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of largest
      * absolute value of an n by n band matrix A, with kl sub-diagonals and ku super-diagonals.
      *
@@ -14784,8 +14784,8 @@ loop3:                       {
     } // dlanhs
 
     /**
-     * This is a port of version 3.1 LAPACK auxiliary routine DLANSB Original DLANSB created by Univ. of Tennessee, Univ.
-     * of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of version 3.2 LAPACK auxiliary routine DLANSB Original DLANSB created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlansb retruns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of largest
      * absolute value of an n by n symmetric band matrix A, with k super-diagonals.
      *
@@ -14948,8 +14948,8 @@ loop3:                       {
     } // dlansb
 
     /**
-     * This is a port of the version 3.1 LAPACK auxiliary routine DLANSP Original DLANSP created by Univ. of Tennessee,
-     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLANSP Original DLANSP created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
      * dlansp returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
      * largest absolute value of a real symmetric matrix A, supplied in packed form.
      *
