@@ -1729,9 +1729,11 @@ public class GeneralizedInverse {
         return;
     } // ginvse
     
-    // There are 3 self tests used in testing the port of dgelss.
+    // There are 4 self tests used in testing the port of dgelss.
     // 1.) dchkqr_test() tests dgeqrf, dorgqr, and dormqr.  All 30744 tests run passed the threshold.
     // 2.) dchklq_test() tests dgelqf, dorglq, and dormlq.  All 30744 tests run passed the threshold.
+    // 3.) dchkbd_test() tests dgebrd, dorgbr, and dbdsqr.
+    // 4.) ddrvls_test() tests dgelss.  Not yet working.  7343 out of 17640 tests failed to pass the threshold.
     
     /* This is a port of dgelss, LAPACK driver routine from version 3.2
     *
@@ -25325,5 +25327,2798 @@ ib = Math.min(nb, k-i+1);
         val = err/(Math.max(m, Math.max(n, nrhs)) * dlamch('E'));
         return val;
     } // dqrt14
+    
+    /**
+     * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive dchkbd in
+     * order to run dchkbd to test the singular value decomposition routines, dgebrd, dorgbr, and dbdsqr.
+     * Numerical values were obtained from the svd.in datafile. Original DCHKEE created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., January, 2007
+     */
+    public void dchkbd_test() {
 
+        // The number of values of m and n contained in the vectors mval and nval.
+        // The matrix sizes are used in pairs (m, n).
+        int nsizes = 19;
+
+        // The values of the matrix row dimension m
+        int[] mval = new int[] {0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 10, 10, 16, 16, 30, 30, 40, 40};
+        
+        // The values of the matrix column dimension n
+        int[] nval = new int[] {0, 1, 3, 0, 1, 2, 0, 1, 0, 1, 3, 10, 16, 10, 16, 30, 40, 30, 40};
+
+        // Number of values of NB, NBMIN, NX, and NRHS.
+        int nparms = 5;
+
+        // Values of blocksize NB
+        int[] nbval = new int[] { 1, 3, 3, 3, 20 };
+
+        // Values for the minimum blocksize NBMIN
+        int[] nbmin = new int[] { 2, 2, 2, 2, 2 };
+        
+        // Values for the nx crossover point, NXVAL
+        int[] nxval = new int[] { 1, 0, 5, 9, 1};
+
+        // The values for the number of right hand sides nrhs.
+        int[] nsval = new int[] { 2, 0, 2, 2, 2 };
+
+        // Threshold value for the test ratios.  Information will be printed
+        // about each test for which the test ratio is greater than or equal
+        // to threshold.
+        double thresh = 35.0;
+
+        // Test the LAPACK routines
+        boolean tstchk = true;
+
+        // Test the driver routines
+        boolean tstdrv = false;
+
+        // Test the error exits for the LAPACK routines and driver routines.
+        // Passed all 38 exits on test.
+        // Put at false so as not to have to hit okay to 38 displayError messages.
+        boolean tsterr = false;
+
+        // Code describing how to set the random number seed.
+        // = 0: Set the seed to a default number before each run.
+        // = 1: Initialize the seed to a default value only before the first
+        // run.
+        // = 2: Like 1, but use the seed values in the 4 integer array
+        // ioldsd
+        int newsd = 1;
+        // Number of matrix test types
+        int maxtyp = 16;
+        int ntypes = 16;
+        boolean[] dotype = new boolean[maxtyp];
+        int[] ioldsd = new int[] { 0, 0, 0, 1 };
+        int[] iseed = new int[] { 0, 0, 0, 1 };
+        int nmax = 132;
+        int lwork = (nmax * ((5 * nmax) + 5)) + 1;
+        double[] work = new double[lwork];
+        double[] result = new double[500];
+        int[] info = new int[1];
+        int liwork = nmax * (5 * nmax + 20);
+        int[] iwork = new int[liwork];
+        double[][] A;
+        double[] bd;
+        double[] be;
+        double[] s1;
+        double[] s2;
+        double[][] X;
+        double[][] Y;
+        double[][] Z;
+        double[][] Q;
+        double[][] PT;
+        double[][] U;
+        double[][] V;
+
+        int i;
+        int k;
+        int nrhs;
+
+        for (i = 0; i < maxtyp; i++) {
+            dotype[i] = true;
+        }
+
+        iparms = new int[9];
+        A = new double[nmax][nmax];
+        bd = new double[nmax];
+        be = new double[nmax];
+        s1 = new double[nmax];
+        s2 = new double[nmax];
+        X = new double[nmax][nmax];
+        Y = new double[nmax][nmax];
+        Z = new double[nmax][nmax];
+        Q = new double[nmax][nmax];
+        PT = new double[nmax][nmax];
+        U = new double[nmax][nmax];
+        V = new double[nmax][nmax];
+        
+        xlaenv(1, 1);
+        xlaenv(9, 25);
+        
+        if (tsterr && tstchk) {
+            derrbd();
+        }
+
+        for (i = 1; i <= nparms; i++) {
+
+            nrhs = nsval[i-1];
+            xlaenv(1, nbval[i-1]);
+            xlaenv(2, nbmin[i-1]);
+            xlaenv(3, nxval[i-1]);
+            if (newsd == 0) {
+
+                for (k = 0; k < 4; k++) {
+                    iseed[k] = ioldsd[k];
+                }
+            } // if (newsd == 0)
+
+            Preferences.debug("Paramter " + i + " for dchkbd\n");
+            Preferences.debug("Blocksize nb = " + nbval[i-1] + "\n");
+            Preferences.debug("Minimum blocksize nbmin = " + nbmin[i - 1] + "\n");
+            Preferences.debug("Crossover point nx = " + nxval[i-1] + "\n");
+            Preferences.debug("Number of right hand sides nrhs = " + nrhs + "\n");
+
+            if (tstchk) {
+                dchkbd(nsizes, mval, nval, maxtyp, dotype, nrhs, iseed, thresh, A,
+                       nmax, bd, be, s1, s2, X, nmax, Y, Z, Q, nmax, PT, nmax, U, V,
+                       work, lwork, iwork, info);
+
+                if (info[0] != 0) {
+                    MipavUtil.displayError("dchkbd had info = " + info[0]);
+                }
+            } // if (tstchk)
+        } // for (i = 1; i <= nparms; i++)
+    } // dchkbd_test
+    
+    /** This is a port of most of version 3.1 LAPACK test routine DCHKBD.
+    
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             INTEGER            INFO, LDA, LDPT, LDQ, LDX, LWORK, NOUT, NRHS,
+            $                   NSIZES, NTYPES
+             DOUBLE PRECISION   THRESH
+       *     ..
+       *     .. Array Arguments ..
+             LOGICAL            DOTYPE( * )
+             INTEGER            ISEED( 4 ), IWORK( * ), MVAL( * ), NVAL( * )
+             DOUBLE PRECISION   A( LDA, * ), BD( * ), BE( * ), PT( LDPT, * ),
+            $                   Q( LDQ, * ), S1( * ), S2( * ), U( LDPT, * ),
+            $                   VT( LDPT, * ), WORK( * ), X( LDX, * ),
+            $                   Y( LDX, * ), Z( LDX, * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DCHKBD checks the singular value decomposition (SVD) routines.
+       *
+       *  DGEBRD reduces a real general m by n matrix A to upper or lower
+       *  bidiagonal form B by an orthogonal transformation:  Q' * A * P = B
+       *  (or A = Q * B * P').  The matrix B is upper bidiagonal if m >= n
+       *  and lower bidiagonal if m < n.
+       *
+       *  DORGBR generates the orthogonal matrices Q and P' from DGEBRD.
+       *  Note that Q and P are not necessarily square.
+       *
+       *  DBDSQR computes the singular value decomposition of the bidiagonal
+       *  matrix B as B = U S V'.  It is called three times to compute
+       *     1)  B = U S1 V', where S1 is the diagonal matrix of singular
+       *         values and the columns of the matrices U and V are the left
+       *         and right singular vectors, respectively, of B.
+       *     2)  Same as 1), but the singular values are stored in S2 and the
+       *         singular vectors are not computed.
+       *     3)  A = (UQ) S (P'V'), the SVD of the original matrix A.
+       *  In addition, DBDSQR has an option to apply the left orthogonal matrix
+       *  U to a matrix X, useful in least squares applications.
+       *
+       *  DBDSDC computes the singular value decomposition of the bidiagonal
+       *  matrix B as B = U S V' using divide-and-conquer. It is called twice
+       *  to compute
+       *     1) B = U S1 V', where S1 is the diagonal matrix of singular
+       *         values and the columns of the matrices U and V are the left
+       *         and right singular vectors, respectively, of B.
+       *     2) Same as 1), but the singular values are stored in S2 and the
+       *         singular vectors are not computed.
+       *
+       *  For each pair of matrix dimensions (M,N) and each selected matrix
+       *  type, an M by N matrix A and an M by NRHS matrix X are generated.
+       *  The problem dimensions are as follows
+       *     A:          M x N
+       *     Q:          M x min(M,N) (but M x M if NRHS > 0)
+       *     P:          min(M,N) x N
+       *     B:          min(M,N) x min(M,N)
+       *     U, V:       min(M,N) x min(M,N)
+       *     S1, S2      diagonal, order min(M,N)
+       *     X:          M x NRHS
+       *
+       *  For each generated matrix, 14 tests are performed:
+       *
+       *  Test DGEBRD and DORGBR
+       *
+       *  (1)   | A - Q B PT | / ( |A| max(M,N) ulp ), PT = P'
+       *
+       *  (2)   | I - Q' Q | / ( M ulp )
+       *
+       *  (3)   | I - PT PT' | / ( N ulp )
+       *
+       *  Test DBDSQR on bidiagonal matrix B
+       *
+       *  (4)   | B - U S1 VT | / ( |B| min(M,N) ulp ), VT = V'
+       *
+       *  (5)   | Y - U Z | / ( |Y| max(min(M,N),k) ulp ), where Y = Q' X
+       *                                                   and   Z = U' Y.
+       *  (6)   | I - U' U | / ( min(M,N) ulp )
+       *
+       *  (7)   | I - VT VT' | / ( min(M,N) ulp )
+       *
+       *  (8)   S1 contains min(M,N) nonnegative values in decreasing order.
+       *        (Return 0 if true, 1/ULP if false.)
+       *
+       *  (9)   | S1 - S2 | / ( |S1| ulp ), where S2 is computed without
+       *                                    computing U and V.
+       *
+       *  (10)  0 if the true singular values of B are within THRESH of
+       *        those in S1.  2*THRESH if they are not.  (Tested using
+       *        DSVDCH)
+       *
+       *  Test DBDSQR on matrix A
+       *
+       *  (11)  | A - (QU) S (VT PT) | / ( |A| max(M,N) ulp )
+       *
+       *  (12)  | X - (QU) Z | / ( |X| max(M,k) ulp )
+       *
+       *  (13)  | I - (QU)'(QU) | / ( M ulp )
+       *
+       *  (14)  | I - (VT PT) (PT'VT') | / ( N ulp )
+       *
+       *  Test DBDSDC on bidiagonal matrix B
+       *
+       *  (15)  | B - U S1 VT | / ( |B| min(M,N) ulp ), VT = V'
+       *
+       *  (16)  | I - U' U | / ( min(M,N) ulp )
+       *
+       *  (17)  | I - VT VT' | / ( min(M,N) ulp )
+       *
+       *  (18)  S1 contains min(M,N) nonnegative values in decreasing order.
+       *        (Return 0 if true, 1/ULP if false.)
+       *
+       *  (19)  | S1 - S2 | / ( |S1| ulp ), where S2 is computed without
+       *                                    computing U and V.
+       *  The possible matrix types are
+       *
+       *  (1)  The zero matrix.
+       *  (2)  The identity matrix.
+       *
+       *  (3)  A diagonal matrix with evenly spaced entries
+       *       1, ..., ULP  and random signs.
+       *       (ULP = (first number larger than 1) - 1 )
+       *  (4)  A diagonal matrix with geometrically spaced entries
+       *       1, ..., ULP  and random signs.
+       *  (5)  A diagonal matrix with "clustered" entries 1, ULP, ..., ULP
+       *       and random signs.
+       *
+       *  (6)  Same as (3), but multiplied by SQRT( overflow threshold )
+       *  (7)  Same as (3), but multiplied by SQRT( underflow threshold )
+       *
+       *  (8)  A matrix of the form  U D V, where U and V are orthogonal and
+       *       D has evenly spaced entries 1, ..., ULP with random signs
+       *       on the diagonal.
+       *
+       *  (9)  A matrix of the form  U D V, where U and V are orthogonal and
+       *       D has geometrically spaced entries 1, ..., ULP with random
+       *       signs on the diagonal.
+       *
+       *  (10) A matrix of the form  U D V, where U and V are orthogonal and
+       *       D has "clustered" entries 1, ULP,..., ULP with random
+       *       signs on the diagonal.
+       *
+       *  (11) Same as (8), but multiplied by SQRT( overflow threshold )
+       *  (12) Same as (8), but multiplied by SQRT( underflow threshold )
+       *
+       *  (13) Rectangular matrix with random entries chosen from (-1,1).
+       *  (14) Same as (13), but multiplied by SQRT( overflow threshold )
+       *  (15) Same as (13), but multiplied by SQRT( underflow threshold )
+       *
+       *  Special case:
+       *  (16) A bidiagonal matrix with random entries chosen from a
+       *       logarithmic distribution on [ulp^2,ulp^(-2)]  (I.e., each
+       *       entry is  e^x, where x is chosen uniformly on
+       *       [ 2 log(ulp), -2 log(ulp) ] .)  For *this* type:
+       *       (a) DGEBRD is not called to reduce it to bidiagonal form.
+       *       (b) the bidiagonal is  min(M,N) x min(M,N); if M<N, the
+       *           matrix will be lower bidiagonal, otherwise upper.
+       *       (c) only tests 5--8 and 14 are performed.
+       *
+       *  A subset of the full set of matrix types may be selected through
+       *  the logical array DOTYPE.
+       *
+       *  Arguments
+       *  ==========
+       *
+       *  NSIZES  (input) INTEGER
+       *          The number of values of M and N contained in the vectors
+       *          MVAL and NVAL.  The matrix sizes are used in pairs (M,N).
+       *
+       *  MVAL    (input) INTEGER array, dimension (NM)
+       *          The values of the matrix row dimension M.
+       *
+       *  NVAL    (input) INTEGER array, dimension (NM)
+       *          The values of the matrix column dimension N.
+       *
+       *  NTYPES  (input) INTEGER
+       *          The number of elements in DOTYPE.   If it is zero, DCHKBD
+       *          does nothing.  It must be at least zero.  If it is MAXTYP+1
+       *          and NSIZES is 1, then an additional type, MAXTYP+1 is
+       *          defined, which is to use whatever matrices are in A and B.
+       *          This is only useful if DOTYPE(1:MAXTYP) is .FALSE. and
+       *          DOTYPE(MAXTYP+1) is .TRUE. .
+       *
+       *  DOTYPE  (input) LOGICAL array, dimension (NTYPES)
+       *          If DOTYPE(j) is .TRUE., then for each size (m,n), a matrix
+       *          of type j will be generated.  If NTYPES is smaller than the
+       *          maximum number of types defined (PARAMETER MAXTYP), then
+       *          types NTYPES+1 through MAXTYP will not be generated.  If
+       *          NTYPES is larger than MAXTYP, DOTYPE(MAXTYP+1) through
+       *          DOTYPE(NTYPES) will be ignored.
+       *
+       *  NRHS    (input) INTEGER
+       *          The number of columns in the "right-hand side" matrices X, Y,
+       *          and Z, used in testing DBDSQR.  If NRHS = 0, then the
+       *          operations on the right-hand side will not be tested.
+       *          NRHS must be at least 0.
+       *
+       *  ISEED   (input/output) INTEGER array, dimension (4)
+       *          On entry ISEED specifies the seed of the random number
+       *          generator. The array elements should be between 0 and 4095;
+       *          if not they will be reduced mod 4096.  Also, ISEED(4) must
+       *          be odd.  The values of ISEED are changed on exit, and can be
+       *          used in the next call to DCHKBD to continue the same random
+       *          number sequence.
+       *
+       *  THRESH  (input) DOUBLE PRECISION
+       *          The threshold value for the test ratios.  A result is
+       *          included in the output file if RESULT >= THRESH.  To have
+       *          every test ratio printed, use THRESH = 0.  Note that the
+       *          expected value of the test ratios is O(1), so THRESH should
+       *          be a reasonably small multiple of 1, e.g., 10 or 100.
+       *
+       *  A       (workspace) DOUBLE PRECISION array, dimension (LDA,NMAX)
+       *          where NMAX is the maximum value of N in NVAL.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A.  LDA >= max(1,MMAX),
+       *          where MMAX is the maximum value of M in MVAL.
+       *
+       *  BD      (workspace) DOUBLE PRECISION array, dimension
+       *                      (max(min(MVAL(j),NVAL(j))))
+       *
+       *  BE      (workspace) DOUBLE PRECISION array, dimension
+       *                      (max(min(MVAL(j),NVAL(j))))
+       *
+       *  S1      (workspace) DOUBLE PRECISION array, dimension
+       *                      (max(min(MVAL(j),NVAL(j))))
+       *
+       *  S2      (workspace) DOUBLE PRECISION array, dimension
+       *                      (max(min(MVAL(j),NVAL(j))))
+       *
+       *  X       (workspace) DOUBLE PRECISION array, dimension (LDX,NRHS)
+       *
+       *  LDX     (input) INTEGER
+       *          The leading dimension of the arrays X, Y, and Z.
+       *          LDX >= max(1,MMAX)
+       *
+       *  Y       (workspace) DOUBLE PRECISION array, dimension (LDX,NRHS)
+       *
+       *  Z       (workspace) DOUBLE PRECISION array, dimension (LDX,NRHS)
+       *
+       *  Q       (workspace) DOUBLE PRECISION array, dimension (LDQ,MMAX)
+       *
+       *  LDQ     (input) INTEGER
+       *          The leading dimension of the array Q.  LDQ >= max(1,MMAX).
+       *
+       *  PT      (workspace) DOUBLE PRECISION array, dimension (LDPT,NMAX)
+       *
+       *  LDPT    (input) INTEGER
+       *          The leading dimension of the arrays PT, U, and V.
+       *          LDPT >= max(1, max(min(MVAL(j),NVAL(j)))).
+       *
+       *  U       (workspace) DOUBLE PRECISION array, dimension
+       *                      (LDPT,max(min(MVAL(j),NVAL(j))))
+       *
+       *  V       (workspace) DOUBLE PRECISION array, dimension
+       *                      (LDPT,max(min(MVAL(j),NVAL(j))))
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (LWORK)
+       *
+       *  LWORK   (input) INTEGER
+       *          The number of entries in WORK.  This must be at least
+       *          3(M+N) and  M(M + max(M,N,k) + 1) + N*min(M,N)  for all
+       *          pairs  (M,N)=(MM(j),NN(j))
+       *
+       *  IWORK   (workspace) INTEGER array, dimension at least 8*min(M,N)
+       *
+       *  NOUT    (input) INTEGER
+       *          The FORTRAN unit number for printing out error messages
+       *          (e.g., if a routine returns IINFO not equal to 0.)
+       *
+       *  INFO    (output) INTEGER
+       *          If 0, then everything ran OK.
+       *           -1: NSIZES < 0
+       *           -2: Some MM(j) < 0
+       *           -3: Some NN(j) < 0
+       *           -4: NTYPES < 0
+       *           -6: NRHS  < 0
+       *           -8: THRESH < 0
+       *          -11: LDA < 1 or LDA < MMAX, where MMAX is max( MM(j) ).
+       *          -17: LDB < 1 or LDB < MMAX.
+       *          -21: LDQ < 1 or LDQ < MMAX.
+       *          -23: LDPT< 1 or LDPT< MNMAX.
+       *          -27: LWORK too small.
+       *          If  DLATMR, SLATMS, DGEBRD, DORGBR, or DBDSQR,
+       *              returns an error code, the
+       *              absolute value of it is returned.
+       */
+    private void dchkbd(int nsizes, int[] mval, int[] nval, int ntypes, boolean[] dotype, int nrhs,
+                        int[] iseed, double thresh, double[][] A, int lda, double[] bd, double[] be,
+                        double[] s1, double[] s2, double[][] X, int ldx, double[][] Y, double[][] Z,
+                        double[][] Q, int ldq, double[][] PT, int ldpt, double[][] U, double[][] V,
+                        double[] work, int lwork, int[] iwork, int[] info) {
+        int maxtyp = 16;
+        boolean badmm;
+        boolean badnn;
+        boolean bidiag;
+        char uplo;
+        String path;
+        int i;
+        int iinfo[] = new int[1];
+        int imode;
+        int itype;
+        int j;
+        int jcol;
+        int jsize;
+        int jtype;
+        int log2ui;
+        int m;
+        int minwrk;
+        int mmax;
+        int mnmax;
+        int mnmin;
+        int mq;
+        int mtypes;
+        int n;
+        int nfail;
+        int nmax;
+        int ntest;
+        double amninv;
+        double anorm;
+        double cond;
+        double ovfl[] = new double[1];
+        double rtovfl;
+        double rtunfl;
+        double temp1;
+        double temp2;
+        double ulp;
+        double ulpinv;
+        double unfl[] = new double[1];
+        int idum[] = new int[1];
+        int ioldsd[] = new int[4];
+        int kmagn[] = new int[] {1, 1, 1, 1, 1, 2, 3, 1, 1, 1, 2, 3, 1, 2, 3, 0};
+        int kmode[] = new int[] {0, 0, 4, 3, 1, 4, 4, 4, 3, 1, 4, 4, 0, 0, 0, 0};
+        int ktype[] = new int[] {1, 2, 4, 4, 4, 4, 4, 6, 6, 6, 6, 6, 9, 9, 9, 10};
+        double dum[] = new double[1];
+        double dumma[] = new double[1];
+        // Use only first 14 of 19 tests.  Last 5 are for dbdsc.
+        double result[] = new double[14];
+        double work2[];
+        double work3[];
+        int p;
+        
+        info[0] = 0;
+        
+        badmm = false;
+        badnn = false;
+        mmax = 1;
+        nmax = 1;
+        mnmax = 1;
+        minwrk = 1;
+        for (j = 0; j < nsizes; j++) {
+            mmax = Math.max(mmax, mval[j]);
+            if (mval[j] < 0) {
+                badmm = true;
+            }
+            nmax = Math.max(nmax, nval[j]);
+            if (nval[j] < 0) {
+                badnn = true;
+            }
+            mnmax = Math.max(mnmax, Math.min(mval[j], nval[j]));
+            minwrk = Math.max(minwrk, 3*(mval[j] + nval[j]));
+            minwrk = Math.max(minwrk, mval[j]*(mval[j] + Math.max(mval[j],
+                     Math.max(nval[j], nrhs))+1) + nval[j]*Math.min(nval[j], mval[j]));
+        } // for (j = 0; j < nsizes; j++)
+        
+        // Check for errors
+        if (nsizes < 0) {
+            info[0] = -1;
+        }
+        else if (badmm) {
+            info[0] = -2;
+        }
+        else if (badnn) {
+            info[0] = -3;
+        }
+        else if (ntypes < 0) {
+            info[0] = -4;
+        }
+        else if (nrhs < 0) {
+            info[0] = -6;
+        }
+        else if (lda < mmax) {
+            info[0] = -11;
+        }
+        else if (ldx < mmax) {
+            info[0] = -17;
+        }
+        else if (ldq < mmax) {
+            info[0] = -21;
+        }
+        else if (ldpt < mnmax) {
+            info[0] = -23;
+        }
+        else if (minwrk > lwork) {
+            info[0] = -27;
+        }
+        
+        if (info[0] != 0) {
+            MipavUtil.displayError("dchkbd had info[0] = " + info[0]);
+            return;
+        }
+        
+        // Initialize constants
+        
+        path = new String("DBD"); // D for Double precision
+        nfail = 0;
+        ntest = 0;
+        unfl[0] = dlamch('S'); // Safe minimum
+        ovfl[0] = dlamch('O'); // Overflow
+        dlabad(unfl, ovfl);
+        ulp = dlamch('P'); // Precision
+        ulpinv = 1.0 / ulp;
+        log2ui = (int)(Math.log(ulpinv)/Math.log(2.0));
+        rtunfl = Math.sqrt(unfl[0]);
+        rtovfl = Math.sqrt(ovfl[0]);
+        infot = 0;
+        
+        // Loop over sizes, types
+        
+        for (jsize = 1; jsize <= nsizes; j++) {
+            m = mval[jsize-1];
+            n = nval[jsize-1];
+            mnmin = Math.min(m, n);
+            amninv = 1.0/Math.max(m, Math.max(n, 1));
+            
+            if (nsizes != 1) {
+                mtypes = Math.min(maxtyp, ntypes);
+            }
+            else {
+                mtypes = Math.min(maxtyp+1, ntypes);
+            }
+            
+            for (jtype = 1; jtype <= mtypes; jtype++) {
+                if (!dotype[jtype-1]) {
+                    continue;
+                }
+                
+                for (j = 0; j < 4; j++) {
+                    ioldsd[j] = iseed[j];
+                }
+                
+                for (j = 0; j < 14; j++) {
+                    result[j] = -1.0;
+                }
+                
+                uplo = ' ';
+                
+                //          Compute "A"
+                //
+                //          Control parameters:
+                //
+                //          KMAGN  KMODE        KTYPE
+                //      =1  O(1)   clustered 1  zero
+                //      =2  large  clustered 2  identity
+                //      =3  small  exponential  (none)
+                //      =4         arithmetic   diagonal, (w/ eigenvalues)
+                //      =5         random       symmetric, w/ eigenvalues
+                //      =6                      nonsymmetric, w/ singular values
+                //      =7                      random diagonal
+                //      =8                      random symmetric
+                //     =9                      random nonsymmetric
+                //      =10                     random bidiagonal (log. distrib.)
+                
+                if (mtypes <= maxtyp) {
+                    itype = ktype[jtype-1];
+                    imode = kmode[jtype-1];
+                    
+                    // Compute norm
+                    if (kmagn[jtype-1] == 1) {
+                        anorm = 1.0;
+                    }
+                    else if (kmagn[jtype-1] == 2) {
+                        anorm = (rtovfl * ulp) * amninv;
+                    }
+                    else if (kmagn[jtype-1] == 3) {
+                        anorm = rtunfl * Math.max(m, n) * ulpinv;
+                    }
+                    else {
+                        anorm = 1.0;
+                    }
+                    
+                    dlaset('F', lda, n, 0.0, 0.0, A, lda);
+                    iinfo[0] = 0;
+                    cond = ulpinv;
+                    
+                    bidiag = false;
+                    if (itype == 1) {
+                        // Zero matrix
+                        iinfo[0] = 0;
+                    } // if (itype == 1)
+                    else if (itype == 2) {
+                        // Identity
+                        for (jcol = 0; jcol < mnmin; jcol++) {
+                            A[jcol][jcol] = anorm;
+                        }
+                    } // else if (itype == 2)
+                    else if (itype == 4) {
+                        // Diagonal matrix, [Eigen]values specified
+                        work2 = new double[3*mnmin];
+                        dlatms(mnmin, mnmin, 'S', iseed, 'N', work, imode, cond, anorm,
+                               0, 0, 'N', A, lda, work2, iinfo);
+                    } // else if (itype == 4)
+                    else if (itype == 5) {
+                        // Symmetric, eigenvalues specified
+                        work2 = new double[3*mnmin];
+                        dlatms(mnmin, mnmin, 'S', iseed, 'S', work, imode, cond, anorm,
+                               m, n, 'N', A, lda, work2, iinfo);
+                    } // else if (itype == 5)
+                    else if (itype == 6) {
+                        // Nonsymmetric, singular values specified
+                        work2 = new double[3*Math.max(m,n)];
+                        dlatms(m, n, 'S', iseed, 'N', work, imode, cond, anorm,
+                               m, n, 'N', A, lda, work2, iinfo);
+                    } // else if (itype == 6)
+                    else if (itype == 7) {
+                        // Diagonal, random entries
+                        work2 = new double[mnmin];
+                        work3 = new double[mnmin];
+                        for (p = 0; p < mnmin; p++) {
+                            work2[p] = work[mnmin + p];
+                            work3[p] = work[2*mnmin+p];
+                        }
+                        dlatmr(mnmin, mnmin, 'S', iseed, 'N', work, 6, 1.0,
+                               1.0, 'T', 'N', work2, 1, 1.0, work3, 1, 1.0,
+                               'N', iwork, 0, 0, 0.0, anorm, 'N', A, lda, 
+                               iwork, iinfo);
+                        for (p = 0; p < mnmin; p++) {
+                            work[mnmin + p] = work2[p];
+                            work[2*mnmin+p] = work3[p];
+                        }
+                    } // else if (itype == 7)
+                    else if (itype == 8) {
+                        // Symmetric, random entries
+                        work2 = new double[mnmin];
+                        work3 = new double[mnmin];
+                        for (p = 0; p < mnmin; p++) {
+                            work2[p] = work[mnmin + p];
+                            work3[p] = work[m+mnmin+p];
+                        }
+                        dlatmr(mnmin, mnmin, 'S', iseed, 'S', work, 6, 1.0,
+                               1.0, 'T', 'N', work2, 1, 1.0, work3, 1, 1.0,
+                               'N', iwork, m, n, 0.0, anorm, 'N', A, lda, 
+                               iwork, iinfo);
+                        for (p = 0; p < mnmin; p++) {
+                            work[mnmin + p] = work2[p];
+                            work[m+mnmin+p] = work3[p];
+                        }
+                    } // else if (itype == 8)
+                    else if (itype == 9) {
+                        // Nonsymmetric, random entries
+                        work2 = new double[m];
+                        work3 = new double[n];
+                        for (p = 0; p < m; p++) {
+                            work2[p] = work[mnmin + p];
+                        }
+                        for (p = 0; p < n; p++) {
+                            work3[p] = work[m+mnmin+p];
+                        }
+                        dlatmr(m, n, 'S', iseed, 'N', work, 6, 1.0,
+                               1.0, 'T', 'N', work2, 1, 1.0, work3, 1, 1.0,
+                               'N', iwork, m, n, 0.0, anorm, 'N', A, lda, 
+                               iwork, iinfo);
+                        for (p = 0; p < m; p++) {
+                            work[mnmin + p] = work2[p];
+                        } 
+                        for (p = 0; p < n; p++) {
+                            work[m+mnmin+p] = work3[p];
+                        }
+                    } // else if (itype == 9)
+                    else if (itype == 10) {
+                        // Bidiagonal, random entries
+                        temp1 = -2.0*Math.log(ulp);
+                        for (j = 1; j <= mnmin; j++) {
+                            bd[j-1] = Math.exp(temp1*dlarnd(2, iseed));
+                            if (j < mnmin) {
+                                be[j-1] = Math.exp(temp1*dlarnd(2, iseed));
+                            }
+                        } // for (j = 1; j <= mnmin; j++)
+                        
+                        iinfo[0] = 0;
+                        bidiag = true;
+                        if (m >= n) {
+                            uplo = 'U';
+                        }
+                        else {
+                            uplo = 'L';
+                        }
+                    } // else if (itype == 10)
+                    else {
+                        iinfo[0] = 1;
+                    }
+                    
+                    if (iinfo[0] == 0) {
+                        
+                    } // if (iinfo[0] == 0)
+                } // if (mtypes <= maxtype)
+
+            } // for (jtype = 1; jtype <= mtypes; jtype++)
+        } // for (jsize = 1; jsize <= nsizes; j++)
+    } // dchkbd
+
+    /** This is a port of that portion of version 3.1 LAPACK test routine DERRBD used to test the
+     * error exits for dgebrd, dorgbr, dormbr, and dbdsqr.
+     */
+    private void derrbd() {
+        int nmax = 4;
+        int lw = nmax;
+        int i;
+        int info[] = new int[1];
+        int j;
+        int IQ[][] = new int[nmax][nmax];
+        int IW[] = new int[nmax];
+        double A[][] = new double[nmax][nmax];
+        double D[] = new double[nmax];
+        double E[] = new double[nmax];
+        double Q[][] = new double[nmax][nmax];
+        double TP[] = new double[nmax];
+        double TQ[] = new double[nmax];
+        double U[][] = new double[nmax][nmax];
+        double V[][] = new double[nmax][nmax];
+        double W[] = new double[lw];
+        int npass = 38;
+        int ntotal = 38;
+        
+        for (j = 1; j <= nmax; j++) {
+            for (i = 1; i <= nmax; i++) {
+                A[i-1][j-1] = 1.0/(double)(i+j);
+            }
+        }
+        
+        // Test the error eixts of the SVD routines.
+        
+        // DGEBRD
+        dgebrd(-1, 0, A, 1, D, E, TQ, TP, W, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgebrd(-1, 0, A, 1, D, E, TQ, TP, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -1\n");
+            npass--;
+        }
+        
+        dgebrd(0, -1, A, 1, D, E, TQ, TP, W, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgebrd(0, -1, A, 1, D, E, TQ, TP, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -2\n");
+            npass--;
+        }
+        
+        dgebrd(2, 1, A, 1, D, E, TQ, TP, W, 2, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgebrd(2, 1, A, 1, D, E, TQ, TP, W, 2, info) produced info[0] = " + info[0] +
+                              " instead of -4\n");
+            npass--;
+        }
+        
+        dgebrd(2, 1, A, 2, D, E, TQ, TP, W, 1, info);
+        if (info[0] != -10) {
+            Preferences.debug("dgebrd(2, 1, A, 2, D, E, TQ, TP, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -10\n");
+            npass--;
+        }
+        
+        // DGEBD2
+        dgebd2(-1, 0, A, 1, D, E, TQ, TP, W, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgebd2(-1, 0, A, 1, D, E, TQ, TP, W, info) produced info[0] = " + info[0] +
+                              " instead of -1\n");
+            npass--;
+        }
+        
+        dgebd2(0, -1, A, 1, D, E, TQ, TP, W, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgebd2(0, -1, A, 1, D, E, TQ, TP, W, info) produced info[0] = " + info[0] +
+                              " instead of -2\n");
+            npass--;
+        }
+        
+        dgebd2(2, 1, A, 1, D, E, TQ, TP, W, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgebd2(2, 1, A, 1, D, E, TQ, TP, W, info) produced info[0] = " + info[0] +
+                              " instead of -4\n");
+            npass--;
+        }
+        
+        // DORGBR
+        dorgbr('/', 0, 0, 0, A, 1, TQ, W, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dorgbr('/', 0, 0, 0, A, 1, TQ, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -1\n");
+            npass--;
+        }
+        
+        dorgbr('Q', -1, 0, 0, A, 1, TQ, W, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dorgbr('Q', -1, 0, 0, A, 1, TQ, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -2\n");
+            npass--;
+        }
+        
+        dorgbr('Q', 0, -1, 0, A, 1, TQ, W, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgbr('Q', 0, -1, 0, A, 1, TQ, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -3\n");
+            npass--;
+        }
+        
+        dorgbr('Q', 0, 1, 0, A, 1, TQ, W, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgbr('Q', 0, 1, 0, A, 1, TQ, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -3\n");
+            npass--;
+        }
+        
+        dorgbr('Q', 1, 0, 1, A, 1, TQ, W, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgbr('Q', 1, 0, 1, A, 1, TQ, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -3\n");
+            npass--;
+        }
+        
+        dorgbr('P', 1, 0, 0, A, 1, TQ, W, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgbr('P', 1, 0, 0, A, 1, TQ, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -3\n");
+            npass--;
+        }
+        
+        dorgbr('P', 0, 1, 1, A, 1, TQ, W, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dorgbr('P', 0, 1, 1, A, 1, TQ, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -3\n");
+            npass--;
+        }
+        
+        dorgbr('Q', 0, 0, -1, A, 1, TQ, W, 1, info);
+        if (info[0] != -4) {
+            Preferences.debug("dorgbr('Q', 0, 0, -1, A, 1, TQ, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -4\n");
+            npass--;
+        }
+        
+        dorgbr('Q', 2, 1, 1, A, 1, TQ, W, 1, info);
+        if (info[0] != -6) {
+            Preferences.debug("dorgbr('Q', 2, 1, 1, A, 1, TQ, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -6\n");
+            npass--;
+        }
+        
+        dorgbr('Q', 2, 2, 1, A, 2, TQ, W, 1, info);
+        if (info[0] != -9) {
+            Preferences.debug("dorgbr('Q', 2, 2, 1, A, 2, TQ, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -9\n");
+            npass--;
+        }
+        
+        // DORMBR
+        dormbr('/', 'L', 'T', 0, 0, 0, A, 1, TQ, U, 1, W, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dormbr('/', 'L', 'T', 0, 0, 0, A, 1, TQ, U, 1, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -1\n");
+            npass--;
+        }
+        
+        dormbr('Q', '/', 'T', 0, 0, 0, A, 1, TQ, U, 1, W, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dormbr('Q', '/', 'T', 0, 0, 0, A, 1, TQ, U, 1, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -2\n");
+            npass--;
+        }
+        
+        dormbr('Q', 'L', '/', 0, 0, 0, A, 1, TQ, U, 1, W, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dormbr('Q', 'L', '/', 0, 0, 0, A, 1, TQ, U, 1, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -3\n");
+            npass--;
+        }
+        
+        dormbr('Q', 'L', 'T', -1, 0, 0, A, 1, TQ, U, 1, W, 1, info);
+        if (info[0] != -4) {
+            Preferences.debug("dormbr('Q', 'L', 'T', -1, 0, 0, A, 1, TQ, U, 1, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -4\n");
+            npass--;
+        }
+        
+        dormbr('Q', 'L', 'T', 0, -1, 0, A, 1, TQ, U, 1, W, 1, info);
+        if (info[0] != -5) {
+            Preferences.debug("dormbr('Q', 'L', 'T', 0, -1, 0, A, 1, TQ, U, 1, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -5\n");
+            npass--;
+        }
+        
+        dormbr('Q', 'L', 'T', 0, 0, -1, A, 1, TQ, U, 1, W, 1, info);
+        if (info[0] != -6) {
+            Preferences.debug("dormbr('Q', 'L', 'T', 0, 0, -1, A, 1, TQ, U, 1, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -6\n");
+            npass--;
+        }
+        
+        dormbr('Q', 'L', 'T', 2, 0, 0, A, 1, TQ, U, 2, W, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dormbr('Q', 'L', 'T', 2, 0, 0, A, 1, TQ, U, 2, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -8\n");
+            npass--;
+        }
+        
+        dormbr('Q', 'R', 'T', 0, 2, 0, A, 1, TQ, U, 1, W, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dormbr('Q', 'R', 'T', 0, 2, 0, A, 1, TQ, U, 1, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -8\n");
+            npass--;
+        }
+        
+        dormbr('P', 'L', 'T', 2, 0, 2, A, 1, TQ, U, 2, W, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dormbr('P', 'L', 'T', 2, 0, 2, A, 1, TQ, U, 2, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -4\n");
+            npass--;
+        }
+        
+        dormbr('P', 'R', 'T', 0, 2, 2, A, 1, TQ, U, 1, W, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dormbr('P', 'R', 'T', 0, 2, 2, A, 1, TQ, U, 1, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -4\n");
+            npass--;
+        }
+        
+        dormbr('Q', 'R', 'T', 2, 0, 0, A, 1, TQ, U, 1, W, 1, info);
+        if (info[0] != -11) {
+            Preferences.debug("dormbr('Q', 'R', 'T', 2, 0, 0, A, 1, TQ, U, 1, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -11\n");
+            npass--;
+        }
+        
+        dormbr('Q', 'L', 'T', 0, 2, 0, A, 1, TQ, U, 1, W, 1, info);
+        if (info[0] != -13) {
+            Preferences.debug("dormbr('Q', 'L', 'T', 0, 2, 0, A, 1, TQ, U, 1, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -13\n");
+            npass--;
+        }
+        
+        dormbr('Q', 'R', 'T', 2, 0, 0, A, 1, TQ, U, 2, W, 1, info);
+        if (info[0] != -13) {
+            Preferences.debug("dormbr('Q', 'R', 'T', 2, 0, 0, A, 1, TQ, U, 2, W, 1, info) produced info[0] = " + info[0] +
+                              " instead of -13\n");
+            npass--;
+        }
+        
+        // DBDSQR
+        dbdsqr('/', 0, 0, 0, 0, D, E, V, 1, U, 1, A, 1, W, info);
+        if (info[0] != -1) {
+            Preferences.debug("dbdsqr('/', 0, 0, 0, 0, D, E, V, 1, U, 1, A, 1, W, info) produced info[0] = " + info[0] +
+                              " instead of -1\n");
+            npass--;
+        }
+        
+        dbdsqr('U', -1, 0, 0, 0, D, E, V, 1, U, 1, A, 1, W, info);
+        if (info[0] != -2) {
+            Preferences.debug("dbdsqr('U', -1, 0, 0, 0, D, E, V, 1, U, 1, A, 1, W, info) produced info[0] = " + info[0] +
+                              " instead of -2\n");
+            npass--;
+        }
+        
+        dbdsqr('U', 0, -1, 0, 0, D, E, V, 1, U, 1, A, 1, W, info);
+        if (info[0] != -3) {
+            Preferences.debug("dbdsqr('U', 0, -1, 0, 0, D, E, V, 1, U, 1, A, 1, W, info) produced info[0] = " + info[0] +
+                              " instead of -3\n");
+            npass--;
+        }
+        
+        dbdsqr('U', 0, 0, -1, 0, D, E, V, 1, U, 1, A, 1, W, info);
+        if (info[0] != -4) {
+            Preferences.debug("dbdsqr('U', 0, 0, -1, 0, D, E, V, 1, U, 1, A, 1, W, info) produced info[0] = " + info[0] +
+                              " instead of -4\n");
+            npass--;
+        }
+        
+        dbdsqr('U', 0, 0, 0, -1, D, E, V, 1, U, 1, A, 1, W, info);
+        if (info[0] != -5) {
+            Preferences.debug("dbdsqr('U', 0, 0, 0, -1, D, E, V, 1, U, 1, A, 1, W, info) produced info[0] = " + info[0] +
+                              " instead of -5\n");
+            npass--;
+        }
+        
+        dbdsqr('U', 2, 1, 0, 0, D, E, V, 1, U, 1, A, 1, W, info);
+        if (info[0] != -9) {
+            Preferences.debug("dbdsqr('U', 2, 1, 0, 0, D, E, V, 1, U, 1, A, 1, W, info) produced info[0] = " + info[0] +
+                              " instead of -9\n");
+            npass--;
+        }
+        
+        dbdsqr('U', 0, 0, 2, 0, D, E, V, 1, U, 1, A, 1, W, info);
+        if (info[0] != -11) {
+            Preferences.debug("dbdsqr('U', 0, 0, 2, 0, D, E, V, 1, U, 1, A, 1, W, info) produced info[0] = " + info[0] +
+                              " instead of -11\n");
+            npass--;
+        }
+        
+        dbdsqr('U', 2, 0, 0, 1, D, E, V, 1, U, 1, A, 1, W, info);
+        if (info[0] != -13) {
+            Preferences.debug("dbdsqr('U', 2, 0, 0, 1, D, E, V, 1, U, 1, A, 1, W, info) produced info[0] = " + info[0] +
+                              " instead of -13\n");
+            npass--;
+        }
+        
+        Preferences.debug("derrbd correctly found " + npass + " of " + ntotal + " error exits\n");
+        return;
+    } // derrbd
+    
+    /**
+     * This is a port of version 3.1 LAPACK test routine DLATMR Original DLATMR created by Univ. of Tennessee, Univ. of
+     * California Berkeley, and NAG Ltd., November, 2006
+     * dlatmr generates random matrices of various types for testing LAPACK programs. dlatmr operates by applying the
+     * following sequence of operations: 1.) Generate a matrix A with random entries of distribution dist which is
+     * symmetric if sym = 'S' and nonsymmetric if sym = 'N'. 2.) Set the diagonal to D, where D may be input or computed
+     * according to mode, cond, dmax, and rsign as described below. 3.) Grade the matrix, if desired, from the left
+     * and/or right as specified by grade. The inputs dl, model, condl, dr, moder, and condr also determine the grading
+     * as described below. 4.) Permute, if desired, the rows and/or columns as specified by pivtng and ipivot. 5.) Set
+     * random entries to zero, if desired, to get a random sparse matrix as specified by sparse. 6.) Make A a band
+     * matrix, if desired, by zeroing out the matrix outside a band of lower bandwidth kl and upper bandwidth ku. 7.)
+     * Scale A, if desired, to have maximum entry anorm 8.) Pack the matrix if desired. Options specified by pack are:
+     * no packing, zero out upper half (if symmetric), zero out lower half (if symmetric), store the upper half columnwise
+     * (if symmetric or square upper triangular), store the lower half columnwise (if symmetric or square lower
+     * triangular), same as upper half rowwise if symmetric, store the lower triangle in banded format (if symmetric),
+     * store the upper triangle if banded format (if symmetric), and store the entire matrix in banded format
+     *
+     * <p>Note: If two calls to dlatmr differ only in the pack parameter, they will generate mathematically equivalent
+     * matrices.</p>
+     *
+     * <p>If two calls to dlatmr both have full bandwidth (kl = m-1 and ku = n-1), and differ only in the pivtng and
+     * pack parameters, then the matrices generated will differ only in the order of the rows and/or columns, and
+     * otherwise contain the same data. This consistency cannot be and is not maintained with less than full bandwidth.
+     * </p>
+     *
+     * @param  m       input int Number of rows of A.
+     * @param  n       input int Number of columns of A.
+     * @param  dist    input char On entry, dist specifies the type of distribution to be used to generate a random
+     *                 matrix. 
+     *                 'U' => uniform(0,1) ('U' for uniform) 
+     *                 'S' => uniform(-1,1) ('S' for symmetric) 
+     *                 'N' => normal(0,1) ('N' for normal)
+     * @param  iseed   input/output int[] of dimension 4 On entry iseed specifies the seed of the random number
+     *                 generator. They should lie between 0 and 4095 inclusive, and iseed[3] should be odd. The random
+     *                 number generator uses a linear congruential sequence limited to small integers, and so should
+     *                 produce machine independent random numbers. The values of iseed are changed on exit, and can be
+     *                 used in the next call to dlatmr to continue the same random number sequence.
+     * @param  sym     input char 
+     *                 If sym = 'S' or 'H', generated matrix is symmetric. 
+     *                 If sym = 'N', generated matrix is nonsymmetric.
+     * @param  D       (input/output) double[] of dimension (min(m,n)) On entry this array specifies the diagonal
+     *                 entries of the diagonal of A. D may either be specified on entry, or set according to mode and
+     *                 cond as described below. May be changed on exit if mode is nonzero.
+     * @param  mode    input int On entry describes how D is to be used: 
+     *                 = 0 means use D as input 
+     *                 = 1 sets D[0] = 1 and D[1:n-1] = 1.0/cond 
+     *                 = 2 sets D[0:n-2] = 1 and D[n-1] = 1.0/cond 
+     *                 = 3 sets D[i] = cond**(-(i)/(n-1)) 
+     *                 = 4 sets D[i] = 1 - (i)/(n-1)*(1 - 1/cond) 
+     *                 = 5 sets D to random numbers in the range (1/cond, 1) such that their logarithms are uniformly distributed.
+     *                 = 6 sets D to random numbers from the same distribution as the rest of the matrix. 
+     *                 < 0 has the same meaning as abs(mode), except that the order of the elements of D is reversed.
+     *                    Thus, if mode is positive, D has entries ranging from 1 to 1/cond, and if negative, from 1/cond to 1.
+     * @param  cond    input double On entry, used as described under mode above. If used, it must be >= 1.
+     * @param  dmax    input double If mode is neither -6, 0, nor 6, the diagonal is scaled by dmax/max(abs(D[i])), so
+     *                 that maximum absolute entry of diagonal is abs(dmax). If dmax is negative (or zero), diagonal
+     *                 will be scaled by a negative number (or zero).
+     * @param  rsign   input char If mode is neither -6, 0, nor 6, specifies sign of diagonal as follows: 
+     *                 'T' => diagonal entries are multiplied by 1 or -1 with probability 0.5. 
+     *                 'F' => diagonal unchanged
+     * @param  grade   input char Specifies grading of matrix as follows: 
+     *                 'N' => no grading 
+     *                 'L' => matrix premultiplied by diag(dl) (only if matrix nonsymmetric) 
+     *                 'R' => matrix postmultiplied by diag(dr) (only if matrix nonsymmetric) 
+     *                 'B' => matrix premultiplied by diag(dl) and postmultiplied by diag(dr) (only if matrix nonsymmetric)
+     *                 'S' or 'H' => matrix premultiplied by diag(dl) and postmultiplied by diag(dl) 
+     *                              ('S' for symmetric, or 'H' for Hermitian)
+     *                 'E' => matrix premultiplied for diag(dl) and postmultiplied by inv(diag(dl))
+     *                        ( 'E' for eigenvalue invariance) (only if matrix nonsymmetric)
+     *                        Note: If grade = 'E', then m must equal n.
+     * @param  dl      input/output double[] of dimension m If model = 0, then on entry this array specifies the
+     *                 diagonal entries of a diagonal matrix used as described under grade above. If model is not zero,
+     *                 then dl will be set according to model and condl, analagous to the way D is set according to mode
+     *                 and cond (except that there is no dmax parameter for dl). If grade = 'E', then dl cannot have
+     *                 zero entries. Not referenced if grade = 'N' or 'R'.
+     * @param  model   input int This specifies how the diagonal array dl is to be computed, just as mode specifies how
+     *                 D is to be computed.
+     * @param  condl   input double When model is not zero, this specifies the condition number of the computed dl.
+     * @param  dr      input/output double[] of dimension n. If moder = 0, then on entry this array specifies the
+     *                 diaognal entries of a diagonal matrix used as described under grade above. If moder is not zero,
+     *                 then dr will be set according to moder and condr, analagous to the way D is set according to mode
+     *                 and cond (except that there is no dmax parameter for dr). Not referenced if grade = 'N', 'L',
+     *                 'H', 'S', or 'E'.
+     * @param  moder   input int This specifies how the diagonal array dr is to be computed, just as mode specifies how
+     *                 D is to be computed.
+     * @param  condr   input double While moder is not zero, this specifies the condition number of the computed dr.
+     * @param  pivtng  input char On entry specifies the pivoting permutations as follows:
+     *                 'N' or ' ' => none 
+     *                 'L' => left or row pivoting (matrix must be nonsymmetric). 
+     *                 'R' => right or column pivoting (matrix must be nonsymmetric). 
+     *                 'B' or 'F' => both or full pivoting, i.e., on both sides. In this case, m must equal n.]
+     *                 
+     *                 If two calls to dlatmr both have full bandwidth (kl = m-1 and ku = n-1), and differ only
+     *                 in the pivtng and pack parameters, then the matrices generated will differ only in the order of
+     *                 the rows and/or the columns, and otherwise contain the same data. This consistency cannot be
+     *                 maintained with less than full bandwidth.
+     * @param  ipivot  input int[] of dimension m or n. This array specifies the permutation used. After the basic
+     *                 matrix is generated, the rows, columns, or both are permuted. If, say, row pivoting is selected,
+     *                 dlatmr starts with the *last* row and interchanges the m-th and ipivot(m)-th rows, then moves to
+     *                 the next-to-last row, interchanging the (m-1)-th and the ipivot(m-1)-th rows, and so on. In terms
+     *                 of "2-cycles", the permutation is (1 ipivot[0]) (2 ipivot[1]) ... (m ipivot[m-1]) where the
+     *                 rightmost cycle is applied first. This is the *inverse* of the effect of pivoting in LINPACK. The
+     *                 idea is that factoring (with pivoting) an identity matrix which has been inverse-pivoted in this
+     *                 way should result in a pivot vector identical to ipivot. Not referenced if pivtng = 'N'.
+     * @param  kl      input int On entry, specifies the lower bandwidth of the matrix. For example, kl = 0 implies
+     *                 upper triangular, kl = 1 implies upper Hessenberg, and kl at least m-1 implies the matrix is
+     *                 not banded. Must equal ku if matrix is symmetric.
+     * @param  ku      input int On entry specifies the upper bandwidth of the matrix. For example, ku = 0 implies lower
+     *                 triangular, ku = 1 implies lower Hessenberg, and ku at least n-1 implies the matrix is not
+     *                 banded. Must equal kl if the matrix is symmetric.
+     * @param  sparse  input double On entry specifies the sparsity of the matrix if a sparse matrix is to be generated.
+     *                 sparse should lie between 0 and 1. To generate a sparse matrix, for each matrix entry a uniform
+     *                 (0,1) random number x is generated and compared to sparse; if x is larger the matrix entry is
+     *                 unchanged and if x is smaller the entry is set to zero. Thus on average a fraction sparse of the
+     *                 entries will be set to zero.
+     * @param  anorm   input double On entry specifies the maximum entry of output matrix (output matrix will be
+     *                 multiplied by a constant so that its largest absolute entry equals anorm) if anorm is
+     *                 nonnegative. If anorm is negative, no scaling is done.
+     * @param  pack    input char On entry specifies packing of matrix as follows: 
+     *                 'N' => no packing 
+     *                 'U' => zero out all subdiagonal entries (if symmetric) 
+     *                 'L' => zero out all superdiagonal entries (if symmetric) 
+     *                 'C' => store the upper triangle columnwise (only if matrix symmetric or square upper triangular) 
+     *                 'R' => store the lower triangle columnwise (only if matrix symmetric or square lower triangular)
+     *                       (same as upper half rowwise if symmetric)
+     *                 'B' => store the lower triangle in band storage scheme (only if matrix symmetric)
+     *                 'Q' => store the upper triangle in band storage scheme (only if matrix symmetric) 
+     *                 'Z' => store the entire matrix in band storage scheme (pivoting can be provided for by
+     *                        using this option to store A in the trailing rows of the allocated storage)
+     *                        
+     *                 Using these options, the various LAPACK packed and banded storage schemes can be obtained: 
+     *                 GB - use 'Z' 
+     *                 PB, SB, or TB - use 'B' or 'Q' 
+     *                 PP, SP, or TP - use 'C' or 'R' 
+     *                 
+     *                 If two calls to dlatmr differ only in the pack parameter, they will generate mathematically
+     *                 equivalent matrices.
+     * @param  A       output double[][] of dimension (lda, n) On exit A is the desired test matrix. Only those entries
+     *                 of A which are significant on output will be referenced (even if A is in packed or band storage
+     *                 format). The 'unoccupied corners' of A in band format will be zeroed out.
+     * @param  lda     input int On entry lda specifies the first dimension of A as declared in the calling program. 
+     *                 If pack = 'N', 'U', or 'L', lda must be at least max(1,m). 
+     *                 If pack = 'C' or 'R', lda must be at least 1. 
+     *                 If pack = 'B' or 'Q', lda must be at least min (ku+1,n).
+     *                 If pack = 'Z', lda must be at least kuu+kll+1, where kuu = min(ku,n-1) and kll = min(kl,n-1).
+     * @param  iwork   workspace int[] of dimension m or n Not referenced if pivtng = 'N'.
+     * @param  info    output int[] Error parameter on exit: 
+     *                 0 => normal return 
+     *                 -1 => m negative or unequal to n and sym = 'S' or 'H' 
+     *                 -2 => n negative 
+     *                 -3 => dist illegal string 
+     *                 -5 => sym illegal string 
+     *                 -7 => mode not in range -6 to 6 
+     *                 -8 => cond less than 1.0, and mode neither -6, 0, nor 6 
+     *                 -10 => mode neither -6, 0, nor 6 and rsign illegal string 
+     *                 -11 => grade illegal string, or grade = 'E' and m not equal to
+     *                        n, or grade = 'L', 'R', 'B', or 'E', and sym = 'S' or 'H'
+     *                 -12 => grade = 'E' and dl contains zero
+     *                 -13 => model not in range -6 to 6 and grade = 'L', 'B', 'H', 'S', or 'E'
+     *                 -14 => condl less than 1.0, grade = 'L', 'B', 'H', 'S', or 'E', and model neither -6, 0, nor 6. 
+     *                 -16 => moder not in range -6 to 6 and grade = 'R' or 'B' 
+     *                 -17 => condr less than 1.0, grade = 'R' or 'B', and moder neither -6, 0, nor 6. 
+     *                 -18 => pivtng illegal string, or pivtng = 'B' or 'F' and m not equal to n, or
+     *                        pivtng = 'L' or 'R' and sym = 'S' or 'H'. 
+     *                 -19 => ipivot contains out of range number and pivtng not equal to 'N' 
+     *                 -20 => kl negative 
+     *                 -21 => ku negative, or sym = 'S' or 'H' and ku not equal to kl 
+     *                 -22 => sparse not in range 0 to 1. 
+     *                 -24 => pack illegal string, or pack = 'U', 'L', 'B', or 'Q' and sym = 'N', 
+     *                        or pack = 'C' and sym = 'N' and either kl not equal to 0 or n not equal to m, or
+     *                        pack = 'R' and sym = 'N', and either ku not equal to 0 or n not equal to m. 
+     *                 -26 => lda too small
+     *                 1 => Error return from dlatm1 (computing D) 
+     *                 2 => Cannot scale diagonal to dmax (max. entry is 0)
+     *                 3 => Error return from dlatm1 (computing dl) 
+     *                 4 => Error return form dlatm1 (computing dr) 
+     *                 5 => anorm is positive, but matrix, constructed prior to attempting to scale it to have
+     *                      norm anorm, is zero.
+     */
+    private void dlatmr(int m, int n, char dist, int[] iseed, char sym, double[] D, int mode, double cond, double dmax,
+                        char rsign, char grade, double[] dl, int model, double condl, double[] dr, int moder,
+                        double condr, char pivtng, int[] ipivot, int kl, int ku, double sparse, double anorm, char pack,
+                        double[][] A, int lda, int[] iwork, int[] info) {
+        boolean badpvt;
+        boolean dzero;
+        boolean fulbnd;
+        int i;
+        int idist;
+        int igrade;
+        int iisub;
+        int ipack;
+        int ipvtng;
+        int irsign;
+        int[] isub = new int[1];
+        int isym;
+        int j;
+        int jjsub;
+        int[] jsub = new int[1];
+        int k;
+        int kll;
+        int kuu;
+        int mnmin;
+        int mnsub;
+        int mxsub;
+        int npvts = 0;
+        double alpha;
+        double onorm = 0.0;
+        double temp;
+        double[] tempa = new double[1];
+        double[] ap = null;
+
+        // Decode and test the input parameters.  Initialize flags & seed.
+        info[0] = 0;
+
+        // Quick return if possible
+        if ((m == 0) || (n == 0)) {
+            return;
+        }
+
+        // Decode dist
+        if ((dist == 'U') || (dist == 'u')) {
+            idist = 1;
+        } else if ((dist == 'S') || (dist == 's')) {
+            idist = 2;
+        } else if ((dist == 'N') || (dist == 'n')) {
+            idist = 3;
+        } else {
+            idist = -1;
+        }
+
+        // Decode sym
+        if ((sym == 'S') || (sym == 's')) {
+            isym = 0;
+        } else if ((sym == 'N') || (sym == 'n')) {
+            isym = 1;
+        } else if ((sym == 'H') || (sym == 'h')) {
+            isym = 0;
+        } else {
+            isym = -1;
+        }
+
+        // Decode rsign
+        if ((rsign == 'F') || (rsign == 'f')) {
+            irsign = 0;
+        } else if ((rsign == 'T') || (rsign == 't')) {
+            irsign = 1;
+        } else {
+            irsign = -1;
+        }
+
+        // Decode pivtng
+        if ((pivtng == 'N') || (pivtng == 'n')) {
+            ipvtng = 0;
+        } else if (pivtng == ' ') {
+            ipvtng = 0;
+        } else if ((pivtng == 'L') || (pivtng == 'l')) {
+            ipvtng = 1;
+            npvts = m;
+        } else if ((pivtng == 'R') || (pivtng == 'r')) {
+            ipvtng = 2;
+            npvts = n;
+        } else if ((pivtng == 'B') || (pivtng == 'b')) {
+            ipvtng = 3;
+            npvts = Math.min(n, m);
+        } else if ((pivtng == 'F') || (pivtng == 'f')) {
+            ipvtng = 3;
+            npvts = Math.min(n, m);
+        } else {
+            ipvtng = -1;
+        }
+
+        // Decode grade
+        if ((grade == 'N') || (grade == 'n')) {
+            igrade = 0;
+        } else if ((grade == 'L') || (grade == 'l')) {
+            igrade = 1;
+        } else if ((grade == 'R') || (grade == 'r')) {
+            igrade = 2;
+        } else if ((grade == 'B') || (grade == 'b')) {
+            igrade = 3;
+        } else if ((grade == 'E') || (grade == 'e')) {
+            igrade = 4;
+        } else if ((grade == 'H') || (grade == 'h') || (grade == 'S') || (grade == 's')) {
+            igrade = 5;
+        } else {
+            igrade = -1;
+        }
+
+        // Decode pack
+        if ((pack == 'N') || (pack == 'n')) {
+            ipack = 0;
+        } else if ((pack == 'U') || (pack == 'u')) {
+            ipack = 1;
+        } else if ((pack == 'L') || (pack == 'l')) {
+            ipack = 2;
+        } else if ((pack == 'C') || (pack == 'c')) {
+            ipack = 3;
+        } else if ((pack == 'R') || (pack == 'r')) {
+            ipack = 4;
+        } else if ((pack == 'B') || (pack == 'b')) {
+            ipack = 5;
+        } else if ((pack == 'Q') || (pack == 'q')) {
+            ipack = 6;
+        } else if ((pack == 'Z') || (pack == 'z')) {
+            ipack = 7;
+        } else {
+            ipack = -1;
+        }
+
+        // Set certain internal parameters
+        mnmin = Math.min(m, n);
+        kll = Math.min(kl, m - 1);
+        kuu = Math.min(ku, n - 1);
+
+        // If inv(dl) is used, check to see if dl has a zero entry.
+        dzero = false;
+
+        if ((igrade == 4) && (model == 0)) {
+
+            for (i = 0; i < m; i++) {
+
+                if (dl[i] == 0.0) {
+                    dzero = true;
+                }
+            }
+        } // if ((igrade == 4) && (model == 0))
+
+        // Check values in ipivot
+        badpvt = false;
+
+        if (ipvtng > 0) {
+
+            for (j = 0; j < npvts; j++) {
+
+                if ((ipivot[j] <= 0) || (ipivot[j] > npvts)) {
+                    badpvt = true;
+                }
+            }
+        } // if (ipvtng > 0)
+
+        // Set info if an error
+        if (m < 0) {
+            info[0] = -1;
+        } else if ((m != n) && (isym == 0)) {
+            info[0] = -1;
+        } else if (n < 0) {
+            info[0] = -2;
+        } else if (idist == -1) {
+            info[0] = -3;
+        } else if (isym == -1) {
+            info[0] = -5;
+        } else if ((mode < -6) || (mode > 6)) {
+            info[0] = -7;
+        } else if ((mode != -6) && (mode != 0) && (mode != 6) && (cond < 1.0)) {
+            info[0] = -8;
+        } else if ((mode != -6) && (mode != 0) && (mode != 6) && (irsign == -1)) {
+            info[0] = -10;
+        } else if ((igrade == -1) || ((igrade == 4) && (m != n)) || (((igrade >= 1) && (igrade <= 4)) && (isym == 0))) {
+            info[0] = -11;
+        } else if ((igrade == 4) && dzero) {
+            info[0] = -12;
+        } else if (((igrade == 1) || (igrade == 3) || (igrade == 4) || (igrade == 5)) &&
+                       ((model < -6) || (model > 6))) {
+            info[0] = -13;
+        } else if (((igrade == 1) || (igrade == 3) || (igrade == 4) || (igrade == 5)) && (model != -6) &&
+                       (model != 0) && (model != 6) && (condl < 1.0)) {
+            info[0] = -14;
+        } else if (((igrade == 2) || (igrade == 3)) && ((moder < -6) || (moder > 6))) {
+            info[0] = -16;
+        } else if (((igrade == 2) || (igrade == 3)) &&
+                       ((moder != -6) && (moder != 0) && (moder != 6) && (condr < 1.0))) {
+            info[0] = -17;
+        } else if ((ipvtng == -1) || ((ipvtng == 3) && (m != n)) || (((ipvtng == 1) || (ipvtng == 2)) && (isym == 0))) {
+            info[0] = -18;
+        } else if ((ipvtng != 0) && badpvt) {
+            info[0] = -19;
+        } else if (kl < 0) {
+            info[0] = -20;
+        } else if ((ku < 0) || ((isym == 0) && (kl != ku))) {
+            info[0] = -21;
+        } else if ((sparse < 0.0) || (sparse > 1.0)) {
+            info[0] = -22;
+        } else if ((ipack == -1) || (((ipack == 1) || (ipack == 2) || (ipack == 5) || (ipack == 6)) && (isym == 1)) ||
+                       ((ipack == 3) && (isym == 1) && ((kl != 0) || (m != n))) ||
+                       ((ipack == 4) && (isym == 1) && ((ku != 0) || (m != n)))) {
+            info[0] = -24;
+        } else if ((((ipack == 0) || (ipack == 1) || (ipack == 2)) && (lda < Math.max(1, m))) ||
+                       (((ipack == 3) || (ipack == 4)) && (lda < 1)) ||
+                       (((ipack == 5) || (ipack == 6)) && (lda < (kuu + 1))) ||
+                       ((ipack == 7) && (lda < (kll + kuu + 1)))) {
+            info[0] = -26;
+        }
+
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dlamtr had info[0] = " + info[0]);
+
+            return;
+        }
+
+        // Decide if we can pivot consistently
+        fulbnd = false;
+
+        if ((kuu == (n - 1)) && (kll == (m - 1))) {
+            fulbnd = true;
+        }
+
+        // Initialize random number generator
+        for (i = 0; i < 4; i++) {
+            iseed[i] = Math.abs(iseed[i]) % 4096;
+        }
+
+        iseed[3] = (2 * (iseed[3] / 2)) + 1;
+
+        // Set up D, dl, and dr, if indicated
+        // Compute D according to cond and mode
+        dlatm1(mode, cond, irsign, idist, iseed, D, mnmin, info);
+
+        if (info[0] != 0) {
+            info[0] = 1;
+
+            return;
+        }
+
+        if ((mode != 0) && (mode != -6) && (mode != 6)) {
+
+            // Scale by dmax
+            temp = Math.abs(D[0]);
+
+            for (i = 1; i < mnmin; i++) {
+                temp = Math.max(temp, Math.abs(D[i]));
+            }
+
+            if ((temp == 0.0) && (dmax != 0.0)) {
+                info[0] = 2;
+
+                return;
+            }
+
+            if (temp != 0.0) {
+                alpha = dmax / temp;
+            } else {
+                alpha = 1.0;
+            }
+
+            for (i = 0; i < mnmin; i++) {
+                D[i] = alpha * D[i];
+            }
+        } // if ((mode != 0) && (mode != -6) && (mode != 6))
+
+        // Compute dl if grading set
+        if ((igrade == 1) || (igrade == 3) || (igrade == 4) || (igrade == 5)) {
+            dlatm1(model, condl, 0, idist, iseed, dl, m, info);
+
+            if (info[0] != 0) {
+                info[0] = 3;
+
+                return;
+            }
+        } // if ((igrade == 1) || (igrade == 3) || (igrade == 4) || (igrade == 5))
+
+        // Compute dr if grading set
+        if ((igrade == 2) || (igrade == 3)) {
+            dlatm1(moder, condr, 0, idist, iseed, dr, n, info);
+
+            if (info[0] != 0) {
+                info[0] = 4;
+
+                return;
+            }
+        } // if ((igrade == 2) || (igrade == 3))
+
+        // Generate iwork if pivoting
+        if (ipvtng > 0) {
+
+            for (i = 1; i <= npvts; i++) {
+                iwork[i - 1] = i;
+            }
+
+            if (fulbnd) {
+
+                for (i = 1; i <= npvts; i++) {
+                    k = ipivot[i - 1];
+                    j = iwork[i - 1];
+                    iwork[i - 1] = iwork[k - 1];
+                    iwork[k - 1] = j;
+                }
+            } else {
+
+                for (i = npvts; i >= 1; i--) {
+                    k = ipivot[i - 1];
+                    j = iwork[i - 1];
+                    iwork[i - 1] = iwork[k - 1];
+                    iwork[k - 1] = j;
+                }
+            }
+        } // if (ipvtng > 0)
+
+        // Generate matrices for each kind of packing.  Always sweep matrix
+        // columnwise (if symmetric, upper half only) so that matrix generated
+        // does not depend on pack.
+
+        if (fulbnd) {
+
+            // Use dlatm3 so matrices generated with differing pivoting only
+            // differ only in the order of their rows and/or columns
+            if (ipack == 0) {
+
+                if (isym == 0) {
+
+                    for (j = 1; j <= n; j++) {
+
+                        for (i = 1; i <= j; i++) {
+                            temp = dlatm3(m, n, i, j, isub, jsub, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng,
+                                          iwork, sparse);
+                            A[isub[0] - 1][jsub[0] - 1] = temp;
+                            A[jsub[0] - 1][isub[0] - 1] = temp;
+                        }
+                    }
+                } // if (isym == 0)
+                else if (isym == 1) {
+
+                    for (j = 1; j <= n; j++) {
+
+                        for (i = 1; i <= m; i++) {
+                            temp = dlatm3(m, n, i, j, isub, jsub, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng,
+                                          iwork, sparse);
+                            A[isub[0] - 1][jsub[0] - 1] = temp;
+                        }
+                    }
+                } // else if (isym == 1)
+            } // if (ipack == 0)
+            else if (ipack == 1) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = 1; i <= j; i++) {
+                        temp = dlatm3(m, n, i, j, isub, jsub, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng, iwork,
+                                      sparse);
+                        mnsub = Math.min(isub[0], jsub[0]);
+                        mxsub = Math.max(isub[0], jsub[0]);
+                        A[mnsub - 1][mxsub - 1] = temp;
+
+                        if (mnsub != mxsub) {
+                            A[mxsub - 1][mnsub - 1] = 0.0;
+                        }
+                    }
+                }
+            } // else if (ipack == 1)
+            else if (ipack == 2) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = 1; i <= j; i++) {
+                        temp = dlatm3(m, n, i, j, isub, jsub, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng, iwork,
+                                      sparse);
+                        mnsub = Math.min(isub[0], jsub[0]);
+                        mxsub = Math.max(isub[0], jsub[0]);
+                        A[mxsub - 1][mnsub - 1] = temp;
+
+                        if (mnsub != mxsub) {
+                            A[mnsub - 1][mxsub - 1] = 0.0;
+                        }
+                    }
+                }
+            } // else if (ipack == 2)
+            else if (ipack == 3) {
+                ap = new double[n * (n + 1) / 2];
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = 1; i <= j; i++) {
+                        temp = dlatm3(m, n, i, j, isub, jsub, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng, iwork,
+                                      sparse);
+
+                        // Compute k = location of (isub,jsub) entry in
+                        // packed array
+                        mnsub = Math.min(isub[0], jsub[0]);
+                        mxsub = Math.max(isub[0], jsub[0]);
+                        k = (mxsub * (mxsub - 1) / 2) + mnsub;
+
+                        // Convert k to (iisub,jjsub) location
+                        jjsub = ((k - 1) / lda) + 1;
+                        iisub = k - (lda * (jjsub - 1));
+                        A[iisub - 1][jjsub - 1] = temp;
+                        ap[k - 1] = temp;
+                    }
+                }
+            } // else if (ipack == 3)
+            else if (ipack == 4) {
+                ap = new double[n * (n + 1) / 2];
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = 1; i <= j; i++) {
+                        temp = dlatm3(m, n, i, j, isub, jsub, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng, iwork,
+                                      sparse);
+
+                        // Compute k = location of (isub,jsub) entry in
+                        // packed array
+                        mnsub = Math.min(isub[0], jsub[0]);
+                        mxsub = Math.max(isub[0], jsub[0]);
+
+                        if (mnsub == 1) {
+                            k = mxsub;
+                        } else {
+                            k = (n * (n + 1) / 2) - ((n - mnsub + 1) * (n - mnsub + 2) / 2) + mxsub - mnsub + 1;
+                        }
+
+                        // Convert k to (iisub,jjsub) location
+                        jjsub = ((k - 1) / lda) + 1;
+                        iisub = k - (lda * (jjsub - 1));
+                        A[iisub - 1][jjsub - 1] = temp;
+                        ap[k - 1] = temp;
+                    }
+                }
+            } // else if (ipack == 4)
+            else if (ipack == 5) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = j - kuu; i <= j; i++) {
+
+                        if (i < 1) {
+                            A[j - i][i + n - 1] = 0.0;
+                        } else {
+                            temp = dlatm3(m, n, i, j, isub, jsub, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng,
+                                          iwork, sparse);
+                            mnsub = Math.min(isub[0], jsub[0]);
+                            mxsub = Math.max(isub[0], jsub[0]);
+                            A[mxsub - mnsub][mnsub - 1] = temp;
+                        }
+                    }
+                }
+            } // else if (ipack == 5)
+            else if (ipack == 6) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = j - kuu; i <= j; i++) {
+                        temp = dlatm3(m, n, i, j, isub, jsub, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng, iwork,
+                                      sparse);
+                        mnsub = Math.min(isub[0], jsub[0]);
+                        mxsub = Math.max(isub[0], jsub[0]);
+                        A[mnsub - mxsub + kuu][mxsub - 1] = temp;
+                    }
+                }
+            } // else if (ipack == 6)
+            else if (ipack == 7) {
+
+                if (isym == 0) {
+
+                    for (j = 1; j <= n; j++) {
+
+                        for (i = j - kuu; i <= j; i++) {
+                            temp = dlatm3(m, n, i, j, isub, jsub, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng,
+                                          iwork, sparse);
+                            mnsub = Math.min(isub[0], jsub[0]);
+                            mxsub = Math.max(isub[0], jsub[0]);
+                            A[mnsub - mxsub + kuu][mxsub - 1] = temp;
+
+                            if (i < 1) {
+                                A[j - i + kuu][i + n - 1] = 0.0;
+                            }
+
+                            if ((i >= 1) && (mnsub != mxsub)) {
+                                A[mxsub - mnsub + kuu][mnsub - 1] = temp;
+                            }
+                        }
+                    }
+                } // if (isym == 0)
+                else if (isym == 1) {
+
+                    for (j = 1; j <= n; j++) {
+
+                        for (i = j - kuu; i <= (j + kll); i++) {
+                            temp = dlatm3(m, n, i, j, isub, jsub, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng,
+                                          iwork, sparse);
+                            A[isub[0] - jsub[0] + kuu][jsub[0] - 1] = temp;
+                        }
+                    }
+                } // else if (isym == 1)
+            } // else if (ipack == 7)
+        } // if (fulbnd)
+        else { // not fulbnd
+
+            // Use dlatm2
+            if (ipack == 0) {
+
+                if (isym == 0) {
+
+                    for (j = 1; j <= n; j++) {
+
+                        for (i = 1; i <= j; i++) {
+                            A[i - 1][j - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng, iwork,
+                                                     sparse);
+                            A[j - 1][i - 1] = A[i - 1][j - 1];
+                        }
+                    }
+                } // if (isym == 0)
+                else if (isym == 1) {
+
+                    for (j = 1; j <= n; j++) {
+
+                        for (i = 1; i <= m; i++) {
+                            A[i - 1][j - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng, iwork,
+                                                     sparse);
+                        }
+                    }
+                } // else if (isym == 1)
+            } // if (ipack == 0)
+            else if (ipack == 1) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = 1; i <= j; i++) {
+                        A[i - 1][j - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng, iwork,
+                                                 sparse);
+
+                        if (i != j) {
+                            A[j - 1][i - 1] = 0.0;
+                        }
+                    }
+                }
+            } // else if (ipack == 1)
+            else if (ipack == 2) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = 1; i <= j; i++) {
+                        A[j - 1][i - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng, iwork,
+                                                 sparse);
+
+                        if (i != j) {
+                            A[i - 1][j - 1] = 0.0;
+                        }
+                    }
+                }
+            } // else if (ipack == 2)
+            else if (ipack == 3) {
+                ap = new double[n * (n + 1) / 2];
+                isub[0] = 0;
+                jsub[0] = 1;
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = 1; i <= j; i++) {
+                        isub[0] = isub[0] + 1;
+
+                        if (isub[0] > lda) {
+                            isub[0] = 1;
+                            jsub[0] = jsub[0] + 1;
+                        }
+
+                        A[isub[0] - 1][jsub[0] - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr,
+                                                             ipvtng, iwork, sparse);
+                        k = isub[0] + (lda * (jsub[0] - 1));
+                        ap[k - 1] = A[isub[0] - 1][jsub[0] - 1];
+                    }
+                }
+            } // else if (ipack == 3)
+            else if (ipack == 4) {
+                ap = new double[n * (n + 1) / 2];
+
+                if (isym == 0) {
+
+                    for (j = 1; j <= n; j++) {
+
+                        for (i = 1; i <= j; i++) {
+
+                            // Compute k = location of (i,j) entry in packed
+                            // array
+                            if (i == 1) {
+                                k = j;
+                            } else {
+                                k = (n * (n + 1) / 2) - ((n - i + 1) * (n - i + 2) / 2) + j - i + 1;
+                            }
+
+                            // Convert k to (isub,jsub) location
+                            jsub[0] = ((k - 1) / lda) + 1;
+                            isub[0] = k - (lda * (jsub[0] - 1));
+                            A[isub[0] - 1][jsub[0] - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr,
+                                                                 ipvtng, iwork, sparse);
+                            ap[k - 1] = A[isub[0] - 1][jsub[0] - 1];
+                        }
+                    }
+                } // if (isym == 0)
+                else { // isym != 0
+                    isub[0] = 0;
+                    jsub[0] = 1;
+
+                    for (j = 1; j <= n; j++) {
+
+                        for (i = j; i <= m; i++) {
+                            isub[0] = isub[0] + 1;
+
+                            if (isub[0] > lda) {
+                                isub[0] = 1;
+                                jsub[0] = jsub[0] + 1;
+                            }
+
+                            A[isub[0] - 1][jsub[0] - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr,
+                                                                 ipvtng, iwork, sparse);
+                            k = isub[0] + (lda * (jsub[0] - 1));
+                            ap[k - 1] = A[isub[0] - 1][jsub[0] - 1];
+                        }
+                    }
+                } // else isym != 0
+            } // else if (ipack == 4)
+            else if (ipack == 5) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = j - kuu; i <= j; i++) {
+
+                        if (i < 1) {
+                            A[j - i][i + n - 1] = 0.0;
+                        } else {
+                            A[j - i][i - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng, iwork,
+                                                     sparse);
+                        }
+                    }
+                }
+            } // else if (ipack == 5)
+            else if (ipack == 6) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = j - kuu; i <= j; i++) {
+                        A[i - j + kuu][j - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng,
+                                                       iwork, sparse);
+                    }
+                }
+            } // else if (ipack == 6)
+            else if (ipack == 7) {
+
+                if (isym == 0) {
+
+                    for (j = 1; j <= n; j++) {
+
+                        for (i = j - kuu; i <= j; i++) {
+                            A[i - j + kuu][j - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng,
+                                                           iwork, sparse);
+
+                            if (i < 1) {
+                                A[j - i + kuu][i + n - 1] = 0.0;
+                            }
+
+                            if ((i >= 1) && (i != j)) {
+                                A[j - i + kuu][i - 1] = A[i - j + kuu][j - 1];
+                            }
+                        }
+                    }
+                } // if (isym == 0)
+                else if (isym == 1) {
+
+                    for (j = 1; j <= n; j++) {
+
+                        for (i = j - kuu; i <= (j + kll); i++) {
+                            A[i - j + kuu][j - 1] = dlatm2(m, n, i, j, kl, ku, idist, iseed, D, igrade, dl, dr, ipvtng,
+                                                           iwork, sparse);
+                        }
+                    }
+                } // else if (isym == 1)
+            } // else if (ipack == 7)
+        } // else not fulbnd
+
+        // Scaling the norm
+        if (ipack == 0) {
+            onorm = dlange('M', m, n, A, lda, tempa);
+        } else if (ipack == 1) {
+            onorm = dlansy('M', 'U', n, A, lda, tempa);
+        } else if (ipack == 2) {
+            onorm = dlansy('M', 'L', n, A, lda, tempa);
+        } else if (ipack == 3) {
+            onorm = dlansp('M', 'U', n, ap, tempa);
+        } // else if (ipack == 3)
+        else if (ipack == 4) {
+            onorm = dlansp('M', 'L', n, ap, tempa);
+        } // else if (ipack == 4)
+        else if (ipack == 5) {
+            onorm = dlansb('M', 'L', n, kll, A, lda, tempa);
+        } // else if (ipack == 5)
+        else if (ipack == 6) {
+            onorm = dlansb('M', 'U', n, kuu, A, lda, tempa);
+        } // else if (ipack == 6)
+        else if (ipack == 7) {
+            onorm = dlangb('M', n, kll, kuu, A, lda, tempa);
+        } // else if (ipack == 7)
+
+        if (anorm >= 0.0) {
+
+            if ((anorm > 0.0) && (onorm == 0.0)) {
+
+                // Desired scaling impossible
+                info[0] = 5;
+
+                return;
+            } else if (((anorm > 1.0) && (onorm < 1.0)) || ((anorm < 1.0) && (onorm > 1.0))) {
+
+                // Scale carefully to avoid over / underflow
+                if (ipack <= 2) {
+
+                    for (j = 0; j < n; j++) {
+
+                        for (i = 0; i < m; i++) {
+                            A[i][j] = (1.0 / onorm) * A[i][j];
+                            A[i][j] = anorm * A[i][j];
+                        }
+                    }
+                } // if (ipack <= 2)
+                else if ((ipack == 3) || (ipack == 4)) {
+
+                    for (i = 0; i < (n * (n + 1) / 2); i++) {
+                        ap[i] = (1.0 / onorm) * ap[i];
+                        ap[i] = anorm * ap[i];
+                    }
+                } // else if ((ipack == 3) || (ipack == 4))
+                else if (ipack >= 5) {
+
+                    for (j = 0; j < n; j++) {
+
+                        for (i = 0; i < (kll + kuu + 1); i++) {
+                            A[i][j] = (1.0 / onorm) * A[i][j];
+                            A[i][j] = anorm * A[i][j];
+                        }
+                    }
+                } // else if (ipack >= 5)
+            } // else if (((anorm > 1.0) && (onorm < 1.0)) || ((anorm < 1.0) &&
+            else {
+
+                // Scale straightforwardly
+                if (ipack <= 2) {
+
+                    for (j = 0; j < n; j++) {
+
+                        for (i = 0; i < m; i++) {
+                            A[i][j] = (anorm / onorm) * A[i][j];
+                        }
+                    }
+                } // if (ipack <= 2)
+                else if ((ipack == 3) || (ipack == 4)) {
+
+                    for (i = 0; i < (n * (n + 1) / 2); i++) {
+                        ap[i] = (anorm / onorm) * ap[i];
+                    }
+                } // else if ((ipack == 3) || (ipack == 4))
+                else if (ipack >= 5) {
+
+                    for (j = 0; j < n; j++) {
+
+                        for (i = 0; i < (kll + kuu + 1); i++) {
+                            A[i][j] = (anorm / onorm) * A[i][j];
+                        }
+                    }
+                } // else if (ipack >= 5)
+            } // else
+        } // if (anorm >= 0.0)
+
+        if (ipack == 3) {
+            isub[0] = 0;
+            jsub[0] = 1;
+
+            for (j = 1; j <= n; j++) {
+
+                for (i = 1; i <= j; i++) {
+                    isub[0] = isub[0] + 1;
+
+                    if (isub[0] > lda) {
+                        isub[0] = 1;
+                        jsub[0] = jsub[0] + 1;
+                    }
+
+                    k = isub[0] + (lda * (jsub[0] - 1));
+                    A[isub[0] - 1][jsub[0] - 1] = ap[k - 1];
+                }
+            }
+        } // else if (ipack == 3)
+        else if (ipack == 4) {
+
+            if (isym == 0) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = 1; i <= j; i++) {
+
+                        // Compute k = location of (i,j) entry in packed
+                        // array
+                        if (i == 1) {
+                            k = j;
+                        } else {
+                            k = (n * (n + 1) / 2) - ((n - i + 1) * (n - i + 2) / 2) + j - i + 1;
+                        }
+
+                        // Convert k to (isub,jsub) location
+                        jsub[0] = ((k - 1) / lda) + 1;
+                        isub[0] = k - (lda * (jsub[0] - 1));
+                        A[isub[0] - 1][jsub[0] - 1] = ap[k - 1];
+                    }
+                }
+            } // if (isym == 0)
+            else { // isym != 0
+                isub[0] = 0;
+                jsub[0] = 1;
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = j; i <= m; i++) {
+                        isub[0] = isub[0] + 1;
+
+                        if (isub[0] > lda) {
+                            isub[0] = 1;
+                            jsub[0] = jsub[0] + 1;
+                        }
+
+                        k = isub[0] + (lda * (jsub[0] - 1));
+                        A[isub[0] - 1][jsub[0] - 1] = ap[k - 1];
+                    }
+                }
+            } // else isym != 0
+        } // else if (ipack == 4)
+        return;
+    } // dlatmr
+    
+    /**
+     * This is a port of version 3.1 LAPACK auxiliary test routine DLATM2 Original DLATM2 created by Univ. of Tennessee,
+     * Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlatm2 returns the (i,j) entry of a random matrix of dimension (m,n) described by the other parameters.
+     * It is called by the dlatmr routine in order to build random test matrices. No error checking on parameters is
+     * done, because this routine is called in a tight loop by dlatmr which has already checked the parameters.
+     *
+     * <p>Use of dlatm2 differs from dlatm3 in the order in which the random number generator is called to fill in
+     * random matrix entries. With dlatm2, the generator is called to fill in the pivoted matrix columnwise. With
+     * dlatm3, the generator is called to fill in the matrix columnwise, after which it is pivoted. Thus, dlatm3 can be
+     * used to construct random matrices which differ only in their order of rows and/or columns. dlatm2 is used to
+     * construct band matrices while avoiding calling the random number generator for entries outisde the band (and
+     * therefore generating random numbers).</p>
+     *
+     * <p>The matrix whose (i,j) entry is returned is constructed as follows (this routine only computes one entry):</p>
+     *
+     * <p>If i is outside (1..m) or j is outside (1..n), return zero. (This is convenient for generating matrices in
+     * band format).</p>
+     *
+     * <p>Generate a matrix A with random entries of distribution idist.</p>
+     *
+     * <p>Set the diagonal to D.</p>
+     *
+     * <p>Grade the matrix, if desired, from the left (by dl) and/or from the right (by dr or dl) as specified by
+     * igrade.</p>
+     *
+     * <p>Permute, if desired, the rows and/or columns as specified by ipvtng and iwork.</p>
+     *
+     * <p>Band the matrix to have lower bandwidth kl and upper bandwidth ku.</p>
+     *
+     * <p>Set random entries to zero as specified by sparse.</p>
+     *
+     * @param   m       input int Number of rows of the matrix.
+     * @param   n       input int Number of columns of the matrix.
+     * @param   i       input int Row of entry to be returned.
+     * @param   j       input int Column of entry to be returned.
+     * @param   kl      input int Lower bandwidth.
+     * @param   ku      input int Upper bandwidth.
+     * @param   idist   input int On entry, idist specifies the type of distribution to be used to generate a random
+     *                  matrix. 
+     *                  1 => uniform(0,1) 
+     *                  2 => uniform(-1,1) 
+     *                  3 => normal(0,1)
+     * @param   iseed   input/output int[] of dimension 4 Seed for random number generator. Changed on exit.
+     * @param   D       input double[] of dimension min(i,j) Diagonal entries of matrix.
+     * @param   igrade  input int Specifies grading of matrix as follows: 
+     *                  0 => no grading 
+     *                  1 => matrix premultiplied by diag(dl) 
+     *                  2 => matrix postmultiplied by diag(dr) 
+     *                  3 => matrix premultiplied by diag(dl) and postmultiplied by diag(dr) 
+     *                  4 => matrix premultiplied by diag(dl) and postmultiplied by inv(diag(dl)) 
+     *                  5 => matrix premultiplied by diag(dl) and postmultiplied by diag(dl)
+     * @param   dl      input double[] of dimension i or j, as appropriate Left scale factors for grading matrix.
+     * @param   dr      input double[] of dimension i or j, as appropriate Right scale factors for grading matrix.
+     * @param   ipvtng  input int On entry specifies pivoting permutations as follows: 
+     *                  0 => none. 
+     *                  1 => row pivoting. 
+     *                  2 => column pivoting. 
+     *                  3 => full pivoting, i.e., on both sides
+     * @param   iwork   input int[] of dimension i or j, as appropriate This array specifies the permutation used. The
+     *                  row (or column) in position k was originally in position iwork[k-1]. This differs from iwork for
+     *                  dlatm3.
+     * @param   sparse  input double between 0.0 and 1.0. On entry specifies the sparsity of the matrix if sparse matrix
+     *                  is to be generated. A uniform (0,1) random number x is generated and compared to sparse; if x is
+     *                  larger the matrix entry is unchanged and if x is smaller the entry is set to zero. Thus on
+     *                  average a fraction sparse of the entries will be set to zero.
+     *
+     * @return  double
+     */
+    private double dlatm2(int m, int n, int i, int j, int kl, int ku, int idist, int[] iseed, double[] D, int igrade,
+                          double[] dl, double[] dr, int ipvtng, int[] iwork, double sparse) {
+        int isub = 0;
+        int jsub = 0;
+        double temp;
+
+        // Check for i and j in range
+        if ((i < 1) || (i > m) || (j < 1) || (j > n)) {
+            return 0.0;
+        }
+
+        // Check for banding
+        if ((j > (i + ku)) || (j < (i - kl))) {
+            return 0.0;
+        }
+
+        // Check for sparsity
+        if (sparse > 0.0) {
+
+            if (dlaran(iseed) < sparse) {
+                return 0.0;
+            }
+        }
+
+        // Compute subscripts depending on ipvtng
+        if (ipvtng == 0) {
+            isub = i;
+            jsub = j;
+        } else if (ipvtng == 1) {
+            isub = iwork[i - 1];
+            jsub = j;
+        } else if (ipvtng == 2) {
+            isub = i;
+            jsub = iwork[j - 1];
+        } else if (ipvtng == 3) {
+            isub = iwork[i - 1];
+            jsub = iwork[j - 1];
+        }
+
+        // Compute entry and grade it according to igrade
+        if (isub == jsub) {
+            temp = D[isub - 1];
+        } else {
+            temp = dlarnd(idist, iseed);
+        }
+
+        if (igrade == 1) {
+            temp = temp * dl[isub - 1];
+        } else if (igrade == 2) {
+            temp = temp * dr[jsub - 1];
+        } else if (igrade == 3) {
+            temp = temp * dl[isub - 1] * dr[jsub - 1];
+        } else if ((igrade == 4) && (isub != jsub)) {
+            temp = temp * dl[isub - 1] / dl[jsub - 1];
+        } else if (igrade == 5) {
+            temp = temp * dl[isub - 1] * dl[jsub - 1];
+        }
+
+        return temp;
+    } // dlatm2
+    
+    /**
+     * This is the port of the version 3.1 LAPACK auxiliary test routine DLATM3 Original DLATM3 created by Univ. of
+     * Tennessee, Univ. of California Berkeley, and NAG Ltd., November, 2006
+     * dlatm3 returns the (isub, jsub) entry of a random matrix of dimension (m,n) described by the
+     * other parameters. (isub, jsub) is the final position of the (i,j) entry after pivoting according to ipvtng and
+     * iwork. dlatm3 is called by the dlatmr routine in order to build random test matrices. No error checking is done,
+     * because this routine is called in a tight loop by dlatmr which has already checked the parameters.
+     *
+     * <p>Use of dlatm3 differs from dlatm2 in the order in which the random number generator is called to fill in
+     * random matrix entries. With dlatm2, the generator is called to fill in the pivoted matrix columnwise. With
+     * dlatm3, the generator is called to fill in the matrix columnwise, after which it is pivoted. Thus, dlatm3 can be
+     * used to construct random matrices which differ only in their order of rows and/or columns. dlatm2 is used to
+     * construct band matrices while avoiding calling the random number generator for entries outside the band (and
+     * therefore generating random numbers in different orders for different pivot orders).</p>
+     *
+     * <p>The matrix whose (isub, jsub) entry is returned is constructed as follows (this routine only computes one
+     * entry):</p>
+     *
+     * <p>If isub is outside (1...m) or jsub is outside (1...n), return zero. (this is convenient for generating
+     * matrices in band format).</p>
+     *
+     * <p>Generate a matrix A with random entries of distribution idist.</p>
+     *
+     * <p>Set the diagonal to D.</p>
+     *
+     * <p>Grade the matrix, if desired, from the left (by dl) and/or from the right (by dr or dl) as specified by
+     * igrade.</p>
+     *
+     * <p>Permute, if desired, the rows and/or columns as specified by ipvtng and iwork.</p>
+     *
+     * <p>Band the matrix to have lower bandwidth kl and upper bandwidth ku.</p>
+     *
+     * <p>Set random entries to zero as specified by sparse.</p>
+     *
+     * @param   m       input int Number of rows of matrix
+     * @param   n       input int Number of columns of matrix.
+     * @param   i       input int Row of unpivoted entry to be returned.
+     * @param   j       input int Column of unpivoted entry to be returned.
+     * @param   isub    output int[] Row of pivoted entry to be returned.
+     * @param   jsub    output int[] Column of pivoted entry to be returned.
+     * @param   kl      input int Lower bandwidth
+     * @param   ku      input int Upper bandwidth
+     * @param   idist   input int On entry, idist specifies the type of distribution to be used to generate a random
+     *                  matrix. 
+     *                  1 => uniform (0,1) 
+     *                  2 => uniform (-1,1) 
+     *                  3 => normal (0,1)
+     * @param   iseed   input/output int[] of dimension 4 Seed for random number generator. Changed on exit.
+     * @param   D       input double[] of dimension min(i,j). Diagonal entries of matrix.
+     * @param   igrade  input int Specifies the grading of the matrix as follows: 
+     *                  0 => no grading 
+     *                  1 => matrix premultiplied by diag (dl) 
+     *                  2 => matrix postmultiplied by diag (dr) 
+     *                  3 => matrix premultiplied by diag (dl) and postmultiplied by diag (dr) 
+     *                  4 => matrix premultiplied by diag (dl) and postmultiplied by inv(diag(dl)) 
+     *                  5 => matrix premultiplied by diag(dl) and postmultiplied by diag(dl)
+     * @param   dl      input double[] of dimension i or j, as appropriate Left scale factors for grading matrix.
+     * @param   dr      input double[] of dimension i or j, as appropriate Right scale factors for grading matrix.
+     * @param   ipvtng  input int On entry specifies the pivoting permutations as follows: 
+     *                  0 => none 
+     *                  1 => row pivoting 
+     *                  2 => column pivoting 
+     *                  3 => full pivoting, i.e., on both sides
+     * @param   iwork   input int[] of dimension i or j, as appropriate This array specifies the permutation used. The
+     *                  row (or column) originally in position k is in position iwork[k-1] after pivoting. This differs
+     *                  from iwork for dlatm2.
+     * @param   sparse  input double between 0.0 and 1.0. On entry specifies the sparsity of the matrix if sparse matrix
+     *                  is to be generated. A uniform (0,1) random number x is generated and compared to sparse; if x is
+     *                  larger the matrix entry is unchanged and if x is smaller the entry is set to zero. Thus on the
+     *                  average a fraction sparse of the entries will be set to zero.
+     *
+     * @return  double
+     */
+    private double dlatm3(int m, int n, int i, int j, int[] isub, int[] jsub, int kl, int ku, int idist, int[] iseed,
+                          double[] D, int igrade, double[] dl, double[] dr, int ipvtng, int[] iwork, double sparse) {
+        double temp;
+
+        // Check for i and j in range
+        if ((i < 1) || (i > m) || (j < 1) || (j > n)) {
+            isub[0] = i;
+            jsub[0] = j;
+
+            return 0.0;
+        }
+
+        // Compute subscripts depending on ipvtng
+        if (ipvtng == 0) {
+            isub[0] = i;
+            jsub[0] = j;
+        } else if (ipvtng == 1) {
+            isub[0] = iwork[i - 1];
+            jsub[0] = j;
+        } else if (ipvtng == 2) {
+            isub[0] = i;
+            jsub[0] = iwork[j - 1];
+        } else if (ipvtng == 3) {
+            isub[0] = iwork[i - 1];
+            jsub[0] = iwork[j - 1];
+        }
+
+        // Check for banding
+        if ((jsub[0] > (isub[0] + ku)) || (jsub[0] < (isub[0] - kl))) {
+            return 0.0;
+        }
+
+        // Check for sparsity
+        if (sparse > 0.0) {
+
+            if (dlaran(iseed) < sparse) {
+                return 0.0;
+            }
+        }
+
+        // Compute entry and grade it according it according to igrade
+        if (i == j) {
+            temp = D[i - 1];
+        } else {
+            temp = dlarnd(idist, iseed);
+        }
+
+        if (igrade == 1) {
+            temp = temp * dl[i - 1];
+        } else if (igrade == 2) {
+            temp = temp * dr[j - 1];
+        } else if (igrade == 3) {
+            temp = temp * dl[i - 1] * dr[j - 1];
+        } else if ((igrade == 4) && (i != j)) {
+            temp = temp * dl[i - 1] / dl[j - 1];
+        } else if (igrade == 5) {
+            temp = temp * dl[i - 1] * dl[j - 1];
+        }
+
+        return temp;
+    } // dlatm3
+    
+    /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLANSB Original DLANSB created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlansb retruns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of largest
+     * absolute value of an n by n symmetric band matrix A, with k super-diagonals.
+     *
+     * @param   norm  input char Specifies the value to be returned as: 
+     *                = 'M' or 'm', returns max(abs(A[i][j])), which is not a matrix norm 
+     *                = '1', 'O', or 'o', returns norm1(A), the one norm of a matrix (maximum column sum) 
+     *                = 'I' or 'i', returns normI(A), the inifinity norm of a matrix (maximum row sum) 
+     *                = 'F', 'f', 'E', or 'e', returns normF(A), the Frobenius norm of a matrix
+     *                  (square root of sum of squares)
+     * @param   uplo  input char Specifies whether the upper or lower triangular part of the band matrix A is supplied 
+     *                = 'U': Upper triangular part is supplied. 
+     *                = 'L': Lower triangular part is supplied.
+     * @param   n     input int The order of the matrix A. n >= 0. When n = 0, dlansb returns zero.
+     * @param   k     input int The number of super-diagonals or sub-diagonals of the band matrix A. k >= 0.
+     * @param   ab    input double[][] of dimension (ldab,n) The upper or lower triangle of the symmetric band matrix A,
+     *                stored in the first k+1 rows of ab. The j-th column of A is stored in the j-th column of the array
+     *                ab as follows:
+     *                If uplo = 'U', ab[k+1+i-j][j] = A[i][j] for max(0,j-k) <= i <= j
+     *                If uplo = 'L', ab[1+i-j][j] = A[i][j] for j <= i <= min(n-1,j+k)
+     * @param   ldab  input int The leading dimension of array ab. ldab >= k + 1.
+     * @param   work  workspace double[] of dimension max(1, lwork), where lwork >= n when norm = 'I' or '1' or 'O';
+     *                otherwise, work is not referenced.
+     *
+     * @return  DOCUMENT ME!
+     */
+    private double dlansb(char norm, char uplo, int n, int k, double[][] ab, int ldab, double[] work) {
+        int i;
+        int j;
+        int L;
+        double absa;
+        double[] scale = new double[1];
+        double[] sum = new double[1];
+        double value = 0.0;
+        double[] x;
+
+        if (n == 0) {
+            value = 0.0;
+        } else if ((norm == 'M') || (norm == 'm')) {
+
+            // Find max(abs(A[i][j]))
+            value = 0.0;
+
+            if ((uplo == 'U') || (uplo == 'u')) {
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = Math.max(k + 2 - j, 1); i <= (k + 1); i++) {
+                        value = Math.max(value, Math.abs(ab[i - 1][j - 1]));
+                    }
+                }
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { // ((uplo == 'L') || (uplo == 'l'))
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = 1; i <= Math.min(n + 1 - j, k + 1); i++) {
+                        value = Math.max(value, Math.abs(ab[i - 1][j - 1]));
+                    }
+                }
+            } // else ((uplo == 'L') || (uplo == 'l'))
+        } // else if ((norm == 'M') || (norm == 'm'))
+        else if ((norm == 'I') || (norm == 'i') || (norm == 'O') || (norm == 'o') || (norm == '1')) {
+
+            // Find normI(A) = norm1(A), since A is symmetric
+            value = 0.0;
+
+            if ((uplo == 'U') || (uplo == 'u')) {
+
+                for (j = 1; j <= n; j++) {
+                    sum[0] = 0.0;
+                    L = k + 1 - j;
+
+                    for (i = Math.max(1, j - k); i <= (j - 1); i++) {
+                        absa = Math.abs(ab[L + i - 1][j - 1]);
+                        sum[0] = sum[0] + absa;
+                        work[i - 1] = work[i - 1] + absa;
+                    }
+
+                    work[j - 1] = sum[0] + Math.abs(ab[k][j - 1]);
+                } // for (j = 1; j <= n; j++)
+
+                for (i = 0; i < n; i++) {
+                    value = Math.max(value, work[i]);
+                }
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { // ((uplo == 'L') || (uplo == 'l'))
+
+                for (i = 0; i < n; i++) {
+                    work[i] = 0.0;
+                }
+
+                for (j = 1; j <= n; j++) {
+                    sum[0] = work[j - 1] + Math.abs(ab[0][j - 1]);
+                    L = 1 - j;
+
+                    for (i = j + 1; i <= Math.min(n, j + k); i++) {
+                        absa = Math.abs(ab[L + i - 1][j - 1]);
+                        sum[0] = sum[0] + absa;
+                        work[i - 1] = work[i - 1] + absa;
+                    }
+
+                    value = Math.max(value, sum[0]);
+                } // for (j = 1; j <= n; j++)
+            } // else ((uplo == 'L') || (uplo == 'l'))
+        } // else if ((norm == 'I') || (norm == 'i') || (norm == 'O') ||
+        else if ((norm == 'F') || (norm == 'f') || (norm == 'E') || (norm == 'e')) {
+
+            // Find normF(A)
+            scale[0] = 0.0;
+            sum[0] = 1.0;
+
+            if (k > 0) {
+
+                if ((uplo == 'U') || (uplo == 'u')) {
+
+                    for (j = 2; j <= n; j++) {
+                        x = new double[Math.min(j - 1, k)];
+
+                        for (i = 0; i < Math.min(j - 1, k); i++) {
+                            x[i] = ab[Math.max(k + 1 - j, 0) + i][j - 1];
+                        }
+
+                        dlassq(Math.min(j - 1, k), x, 1, scale, sum);
+                    }
+
+                    L = k + 1;
+                } // if ((uplo == 'U') || (uplo == 'u'))
+                else { // ((uplo == 'L') || (uplo == 'l'))
+
+                    for (j = 1; j <= (n - 1); j++) {
+                        x = new double[Math.min(n - j, k)];
+
+                        for (i = 0; i <= Math.min(n - j, k); i++) {
+                            x[i] = ab[i + 1][j - 1];
+                        }
+
+                        dlassq(Math.min(n - j, k), x, 1, scale, sum);
+                    }
+
+                    L = 1;
+                } // else ((uplo == 'L') || (uplo == 'l'))
+
+                sum[0] = 2.0 * sum[0];
+            } // if (k > 0)
+            else { // k == 0
+                L = 1;
+            } // else k == 0
+
+            x = new double[n];
+
+            for (i = 0; i < n; i++) {
+                x[i] = ab[L - 1][i];
+            }
+
+            dlassq(n, x, 1, scale, sum);
+            value = scale[0] * Math.sqrt(sum[0]);
+        } // else if ((norm == 'F') || (norm == 'f') || (norm == 'E') ||
+
+        return value;
+    } // dlansb
+    
+    /**
+     * This is a port of the version 3.2 LAPACK auxiliary routine DLANSP Original DLANSP created by Univ. of Tennessee,
+     * Univ. of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlansp returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of
+     * largest absolute value of a real symmetric matrix A, supplied in packed form.
+     *
+     * @param   norm  input char Specifies the value to be returned as: 
+     *                = 'M' or 'm' , max(abs(A[i,j])) Note that this is not a matrix norm. 
+     *                = '1', 'O', or 'o', norm1(A) where norm1 denotes the one norm of a matrix (maximum column sum) 
+     *                = 'I' or 'i', normI(A) where normI denotes the infinity norm of a matrix (maximum row sum) 
+     *                = 'F', 'f', 'E', or 'e', normF(A) where normF denotes the Frobenius norm of a matrix 
+     *                  (square root of sum of squares)
+     * @param   uplo  input char Specifies whether the upper or lower triangular part of the symmetric matrix A is
+     *                supplied. 
+     *                = 'U': Upper triangular part of A is supplied 
+     *                = 'L': Lower triangular part of A is supplied
+     * @param   n     input int The order of the matrix A. n >= 0. When n = 0, dlansp is set to zero.
+     * @param   ap    input double[] of dimension (n*(n+1)/2) The upper or lower triangle of the symmetric matrix A,
+     *                packed columnwise in a linear array. The j-th column of A is stored in the array AP as follows:
+     *                If uplo = 'U', ap[i + (j-1)*j/2] = A[i][j] for 0 <= i <= j
+     *                If uplo = 'L', ap[i + (j-1)*(2n-j)/2] = A[i][j] for j <= i <= n-1.
+     * @param   work  workspace double[] of dimension max(1, lwork), where lwork >= n when norm = 'I' or '1' or 'O';
+     *                otherwise work is not referenced.
+     *
+     * @return  double
+     */
+    private double dlansp(char norm, char uplo, int n, double[] ap, double[] work) {
+        int i;
+        int j;
+        int k;
+        double absa;
+        double[] scale = new double[1];
+        double[] sum = new double[1];
+        double[] x;
+        double value = 0.0;
+        double ratio;
+
+        if (n == 0) {
+            value = 0.0;
+        } else if ((norm == 'M') || (norm == 'm')) {
+
+            // Find max(abs(A[i][j]))
+            value = 0.0;
+
+            if ((uplo == 'U') || (uplo == 'u')) {
+                k = 1;
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = k; i <= (k + j - 1); i++) {
+                        value = Math.max(value, Math.abs(ap[i - 1]));
+                    }
+
+                    k = k + j;
+                }
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { // ((uplo == 'L') || (uplo == 'l'))
+                k = 1;
+
+                for (j = 1; j <= n; j++) {
+
+                    for (i = k; i <= (k + n - j); i++) {
+                        value = Math.max(value, Math.abs(ap[i - 1]));
+                    }
+
+                    k = k + n - j + 1;
+                }
+            } // else ((uplo == 'L') || (uplo == 'l'))
+        } // else if ((norm == 'M') || (norm == 'm'))
+        else if ((norm == 'I') || (norm == 'i') || (norm == 'O') || (norm == 'o') || (norm == '1')) {
+
+            // Find normI(A) == norm1(A), since A is symmetric
+            value = 0.0;
+            k = 1;
+
+            if ((uplo == 'U') || (uplo == 'u')) {
+
+                for (j = 1; j <= n; j++) {
+                    sum[0] = 0.0;
+
+                    for (i = 1; i <= (j - 1); i++) {
+                        absa = Math.abs(ap[k - 1]);
+                        sum[0] = sum[0] + absa;
+                        work[i - 1] = work[i - 1] + absa;
+                        k = k + 1;
+                    }
+
+                    work[j - 1] = sum[0] + Math.abs(ap[k - 1]);
+                    k = k + 1;
+                } // for (j = 1; j <= n; j++)
+
+                for (i = 0; i < n; i++) {
+                    value = Math.max(value, work[i]);
+                }
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { // ((uplo == 'L') || (uplo == 'l'))
+
+                for (i = 0; i < n; i++) {
+                    work[i] = 0.0;
+                }
+
+                for (j = 1; j <= n; j++) {
+                    sum[0] = work[j - 1] + Math.abs(ap[k - 1]);
+                    k = k + 1;
+
+                    for (i = j + 1; i <= n; i++) {
+                        absa = Math.abs(ap[k - 1]);
+                        sum[0] = sum[0] + absa;
+                        work[i - 1] = work[i - 1] + absa;
+                        k = k + 1;
+                    } // for (i = j+1; i <= n; i++)
+
+                    value = Math.max(value, sum[0]);
+                } // for (j = 1; j <= n; j++)
+            } // else ((uplo == 'L') || (uplo == 'l'))
+        } // else if ((norm == 'I') || (norm == 'i') || (norm == 'O') ||
+        else if ((norm == 'F') || (norm == 'f') || (norm == 'E') || (norm == 'e')) {
+
+            // Find normF(A)
+            scale[0] = 0.0;
+            sum[0] = 1.0;
+            k = 2;
+
+            if ((uplo == 'U') || (uplo == 'u')) {
+
+                for (j = 2; j <= n; j++) {
+                    x = new double[j - 1];
+
+                    for (i = 0; i < (j - 1); i++) {
+                        x[i] = ap[k - 1 + i];
+                    }
+
+                    dlassq(j - 1, x, 1, scale, sum);
+                    k = k + j;
+                }
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { // ((uplo == 'L') || (uplo == 'l'))
+
+                for (j = 1; j <= (n - 1); j++) {
+                    x = new double[n - j];
+
+                    for (i = 0; i < (n - j); i++) {
+                        x[i] = ap[k - 1 + i];
+                    }
+
+                    dlassq(n - j, x, 1, scale, sum);
+                    k = k + n - j + 1;
+                }
+            } // else ((uplo == 'L') || (uplo == 'l'))
+
+            sum[0] = 2.0 * sum[0];
+            k = 1;
+
+            for (i = 1; i <= n; i++) {
+
+                if (ap[k - 1] != 0.0) {
+                    absa = Math.abs(ap[k - 1]);
+
+                    if (scale[0] < absa) {
+                        ratio = scale[0] / absa;
+                        sum[0] = 1.0 + (sum[0] * ratio * ratio);
+                        scale[0] = absa;
+                    } else {
+                        ratio = absa / scale[0];
+                        sum[0] = sum[0] + (ratio * ratio);
+                    }
+                } // if (ap[k-1] != 0.0)
+
+                if ((uplo == 'U') || (uplo == 'u')) {
+                    k = k + i + 1;
+                } else {
+                    k = k + n - i + 1;
+                }
+            } // for (i = 1; i <= n; i++)
+
+            value = scale[0] * Math.sqrt(sum[0]);
+        } // else if ((norm == 'F') || (norm == 'f') || (norm == 'E') ||
+
+        return value;
+    } // dlansp
+    
+    /**
+     * This is a port of version 3.2 LAPACK auxiliary routine DLANGB Original DLANGB created by Univ. of Tennessee, Univ.
+     * of California Berkeley, Univ. of Colorado Denver, and NAG Ltd., November, 2006
+     * dlangb returns the value of the one norm, or the Frobenius norm, or the infinity norm, or the element of largest
+     * absolute value of an n by n band matrix A, with kl sub-diagonals and ku super-diagonals.
+     *
+     * @param   norm  input char Specifies the value to be returned as: 
+     *                = 'M' or 'm', returns max(abs(A[i][j])), which is not a matrix norm. 
+     *                = '1', 'O', or 'o', returns norm1(A), where norm1 denotes the one norm of a matrix
+     *                                   (maximum column sum) 
+     *                = 'I' or 'i', returns normI(A), the infinity norm of a matrix (maximum row sum) 
+     *                = 'F', 'f', 'E', or 'e', returns normF(A), the Frobenius norm of a matrix (square root of
+     *                                         sum of squares)
+     * @param   n     input int The order of the matrix A. n >= 0. When n = 0, dlangb returns zero.
+     * @param   kl    input int The number of sub-diagonals of the matrix A. kl >= 0.
+     * @param   ku    input int The number of super-diagonals of the matrix A. ku >= 0.
+     * @param   ab    input double[][] of dimension (ldab,n) The band matrix A, stored in rows 0 to kl + ku. The
+     *                j-th column of A is stored in the j-th column of the array ab as follows: ab[ku+1+i-j][j] =
+     *                A[i][j] for max(0,j-ku) <= i <= min(n-1,j+kl)
+     * @param   ldab  input int The leading dimension of the array ab. ldab >= kl + ku + 1
+     * @param   work  workspace double[] of dimension max(1, lwork), where lwork >= n when norm = 'I';
+     *                otherwise work is notreferenced.
+     *
+     * @return  double
+     */
+    private double dlangb(char norm, int n, int kl, int ku, double[][] ab, int ldab, double[] work) {
+        int i;
+        int j;
+        int k;
+        int L;
+        double[] scale = new double[1];
+        double[] sum = new double[1];
+        double value = 0.0;
+        double[] x;
+
+        if (n == 0) {
+            value = 0.0;
+        } else if ((norm == 'M') || (norm == 'm')) {
+
+            // Find max(abs(A[i][j]))
+            value = 0.0;
+
+            for (j = 1; j <= n; j++) {
+
+                for (i = Math.max(ku + 2 - j, 1); i <= Math.min(n + ku + 1 - j, kl + ku + 1); i++) {
+                    value = Math.max(value, Math.abs(ab[i - 1][j - 1]));
+                }
+            }
+        } // else if ((norm == 'M') || (norm == 'm'))
+        else if ((norm == 'O') || (norm == 'o') || (norm == '1')) {
+
+            // Find norm1(A)
+            value = 0.0;
+
+            for (j = 1; j <= n; j++) {
+                sum[0] = 0.0;
+
+                for (i = Math.max(ku + 2 - j, 1); i <= Math.min(n + ku + 1 - j, kl + ku + 1); i++) {
+                    sum[0] = sum[0] + Math.abs(ab[i - 1][j - 1]);
+                }
+
+                value = Math.max(value, sum[0]);
+            }
+        } // else if ((norm == 'O') || (norm == 'o') || (norm == '1'))
+        else if ((norm == 'I') || (norm == 'i')) {
+
+            // Find normI(A)
+            for (i = 0; i < n; i++) {
+                work[i] = 0.0;
+            }
+
+            for (j = 1; j <= n; j++) {
+                k = ku + 1 - j;
+
+                for (i = Math.max(1, j - ku); i <= Math.min(n, j + kl); i++) {
+                    work[i - 1] = work[i - 1] + Math.abs(ab[k + i - 1][j - 1]);
+                }
+            }
+
+            value = 0.0;
+
+            for (i = 0; i < n; i++) {
+                value = Math.max(value, work[i]);
+            }
+        } // else if ((norm == 'I') || (norm == 'i'))
+        else if ((norm == 'F') || (norm == 'f') || (norm == 'E') || (norm == 'e')) {
+
+            // Find normF(A)
+            scale[0] = 0.0;
+            sum[0] = 1.0;
+
+            for (j = 1; j <= n; j++) {
+                L = Math.max(1, j - ku);
+                k = ku + 1 - j + L;
+                x = new double[Math.min(n, j + kl) - L + 1];
+
+                for (i = 0; i < (Math.min(n, j + kl) - L + 1); i++) {
+                    x[i] = ab[k + i - 1][j - 1];
+                }
+
+                dlassq(Math.min(n, j + kl) - L + 1, x, 1, scale, sum);
+            }
+
+            value = scale[0] * Math.sqrt(sum[0]);
+        } // else if ((norm == 'F') || (norm == 'f') || (norm == 'E')
+
+        return value;
+    } // dlangb
 }
