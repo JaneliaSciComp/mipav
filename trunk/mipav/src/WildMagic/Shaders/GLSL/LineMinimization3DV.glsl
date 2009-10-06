@@ -8,8 +8,10 @@ uniform vec2 Scale;
 uniform vec3 ImageSize;
 uniform vec3 ImageSizeInv;
 
-uniform mat4 toOriginMatrix;
-uniform mat4 fromOriginMatrix;
+// uniform mat4 toOriginMatrix;
+// uniform mat4 fromOriginMatrix;
+uniform mat4 toOrigin;
+uniform mat4 fromOrigin;
 uniform float rigid;
 uniform float Dim_2D;
 uniform mat4 startPoint;
@@ -114,7 +116,8 @@ mat4 oneDimension( float x )
 {
     mat4 xt = pt + x * unit_directions;
     mat4 matrix = constructPoint( startPoint, xt );
-    return toOriginMatrix * matrix * fromOriginMatrix;
+    //return toOriginMatrix * matrix * fromOriginMatrix;
+    return toOrigin * matrix * fromOrigin;
 }
 
 float estimateMinimum(vec2 A, vec2 B, vec2 C )

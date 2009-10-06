@@ -252,6 +252,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     public void dispose(GLAutoDrawable arg0)
     {
 
+        cleanUp();
         if ( m_kTextureA != null )
         {
             m_kTextureA.Release();
@@ -268,7 +269,6 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         }
 
         m_kImageEffectDual.dispose();
-        cleanUp();
     
         ImageCatalog.GetActive().dispose();
         VertexProgramCatalog.GetActive().dispose();     
@@ -769,12 +769,12 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_pkRenderer.Draw(m_kTransformPoints);
             m_pkRenderer.FrameBufferToTexture( m_kTransformOut.GetTarget(0) );
             m_kTransformNewOut.Disable();            
-            Texture kTarget = m_kTransformOut.GetTarget(0);
-            m_pkRenderer.GetTexImage( kTarget );
-            for ( int j = 0; j < kTarget.GetImage().GetFloatData().length; j++ )
-            {
+            //Texture kTarget = m_kTransformOut.GetTarget(0);
+            //m_pkRenderer.GetTexImage( kTarget );
+            //for ( int j = 0; j < kTarget.GetImage().GetFloatData().length; j++ )
+            //{
                 //System.err.print( kTarget.GetImage().GetFloatData()[j] + " " );
-            }
+            //}
             //System.err.println( " " );
             
             // 1. Render all image points w/LineMin1 shaders
@@ -816,9 +816,9 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             m_pkRenderer.FrameBufferToTexture( m_kBracketOut.GetTarget(0) );
             m_kBracketNewOut.Disable();            
             
-            //if ( (i%2) == 0 )
+            if ( (i%6) == 0 )
             {
-                kTarget = m_kBracketOut.GetTarget(0);
+                Texture kTarget = m_kBracketOut.GetTarget(0);
                 m_pkRenderer.GetTexImage( kTarget );
                 if ( (Math.abs(kTarget.GetImage().GetFloatData()[8] - kTarget.GetImage().GetFloatData()[0]) <= m_fUnitTolerance) )
                 {
@@ -858,7 +858,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         }
         if ( m_kImagePointsDual != null )
         {
-            //m_pkRenderer.ReleaseResources(m_kImagePointsDual);
+            m_pkRenderer.ReleaseResources(m_kImagePointsDual);
             m_kImagePointsDual.dispose();
             m_kImagePointsDual = null;
         }
