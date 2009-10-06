@@ -1678,7 +1678,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         time = (System.currentTimeMillis() - startTime);
         Preferences.debug( "Time consumed by OAR registration algorithm: " +  (time * .001f) + " seconds");
         
-
+        if ( m_kGPUCost != null )
+        {
+            m_kGPUCost.dispose();
+            m_kGPUCost = null;
+        }
         //Profile.stop();
         //Profile.setFileName( "profile_out"  );
         //Profile.shutdown();

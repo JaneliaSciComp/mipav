@@ -214,7 +214,7 @@ implements StreamInterface
             pkCProgram.GetUC("ImageSize").GetData()[0] = (m_aiExtents[0]-1);
             pkCProgram.GetUC("ImageSize").GetData()[1] = (m_aiExtents[1]-1);
             pkCProgram.GetUC("ImageSize").GetData()[2] = (m_aiExtents[2]-1);
-            System.err.println( m_aiExtents[0] + " " + m_aiExtents[1] + " " + m_aiExtents[2]);
+            //System.err.println( m_aiExtents[0] + " " + m_aiExtents[1] + " " + m_aiExtents[2]);
         } 
         if ( pkCProgram != null && pkCProgram.GetUC("ImageSizeInv") != null ) 
         {
@@ -228,7 +228,7 @@ implements StreamInterface
             {
                 pkCProgram.GetUC("ImageSizeInv").GetData()[2] = 0f;
             }
-            System.err.println( pkCProgram.GetUC("ImageSizeInv").GetData()[2] );
+            //System.err.println( pkCProgram.GetUC("ImageSizeInv").GetData()[2] );
         } 
     }
     

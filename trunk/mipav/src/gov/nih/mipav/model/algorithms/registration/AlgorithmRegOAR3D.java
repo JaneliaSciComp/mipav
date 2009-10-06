@@ -1688,6 +1688,14 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         Preferences.debug("Time consumed by OAR registration algorithm: " + (System.currentTimeMillis() - startTime));
         time = (System.currentTimeMillis() - startTime);
         Preferences.debug( "Time consumed by OAR registration algorithm: " +  (time * .001f) + " seconds");
+    
+    
+        
+        if ( m_kGPUCost != null )
+        {
+            m_kGPUCost.dispose();
+            m_kGPUCost = null;
+        }
     }
 
     /**
