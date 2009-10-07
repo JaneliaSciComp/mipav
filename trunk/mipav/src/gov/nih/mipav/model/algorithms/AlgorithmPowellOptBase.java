@@ -565,7 +565,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         {
             if ( ((AlgorithmCostFunctions)costFunction).isGPULineMin() )
             {
-                System.err.println( "3D GPU LineMinimization" );
+                //System.err.println( "3D GPU LineMinimization" );
                 float[] bracketB = ((AlgorithmCostFunctions)costFunction).lineMin( toOrigin, fromOrigin, 
                         0f, 3f, startPoint, pt, pt.length, unit_directions, unit_tolerance, (float)minDist,
                         bracket.a, bracket.functionAtA, bracket.b, bracket.functionAtB, 
