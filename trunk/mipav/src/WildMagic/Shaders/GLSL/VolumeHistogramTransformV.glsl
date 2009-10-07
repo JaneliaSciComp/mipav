@@ -21,30 +21,31 @@ void v_VolumeHistogramTransformV()
     vec4 row3 = texture2D( transformImage, index );
 
     mat4 InverseTransform = mat4(1.0);
-    InverseTransform[0] = row0;
-    InverseTransform[1] = row1;
-    InverseTransform[2] = row2;
-    InverseTransform[3] = row3;
+    InverseTransform[0][0] = row0.x;
+    InverseTransform[1][0] = row0.y;
+    InverseTransform[2][0] = row0.z;
+    InverseTransform[3][0] = row0.w;
 
-//     InverseTransform[0][0] = row0.x;
-//     InverseTransform[1][0] = row0.y;
-//     InverseTransform[2][0] = row0.z;
-//     InverseTransform[3][0] = row0.w;
+    InverseTransform[0][1] = row1.x;
+    InverseTransform[1][1] = row1.y;
+    InverseTransform[2][1] = row1.z;
+    InverseTransform[3][1] = row1.w;
 
-//     InverseTransform[0][1] = row1.x;
-//     InverseTransform[1][1] = row1.y;
-//     InverseTransform[2][1] = row1.z;
-//     InverseTransform[3][1] = row1.w;
+    InverseTransform[0][2] = row2.x;
+    InverseTransform[1][2] = row2.y;
+    InverseTransform[2][2] = row2.z;
+    InverseTransform[3][2] = row2.w;
 
-//     InverseTransform[0][2] = row2.x;
-//     InverseTransform[1][2] = row2.y;
-//     InverseTransform[2][2] = row2.z;
-//     InverseTransform[3][2] = row2.w;
+    InverseTransform[0][3] = row3.x;
+    InverseTransform[1][3] = row3.y;
+    InverseTransform[2][3] = row3.z;
+    InverseTransform[3][3] = row3.w;
 
-//     InverseTransform[0][3] = row2.x;
-//     InverseTransform[1][3] = row2.y;
-//     InverseTransform[2][3] = row2.z;
-//     InverseTransform[3][3] = row2.w;
+//     InverseTransform[0] = row0;
+//     InverseTransform[1] = row1;
+//     InverseTransform[2] = row2;
+//     InverseTransform[3] = row3;
+    
 
     gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
 
@@ -74,5 +75,29 @@ void v_VolumeHistogramTransformV()
     xPos -= 1.0;
     vert.x = xPos;
     gl_Position = vert;
+
+    if ( (InverseTransform[0][0] == 0.0) &&
+         (InverseTransform[0][1] == 0.0) &&
+         (InverseTransform[0][2] == 0.0) &&
+         (InverseTransform[0][3] == 0.0) &&
+
+         (InverseTransform[1][0] == 0.0) &&
+         (InverseTransform[1][1] == 0.0) &&
+         (InverseTransform[1][2] == 0.0) &&
+         (InverseTransform[1][3] == 0.0) &&
+
+         (InverseTransform[2][0] == 0.0) &&
+         (InverseTransform[2][1] == 0.0) &&
+         (InverseTransform[2][2] == 0.0) &&
+         (InverseTransform[2][3] == 0.0) &&
+
+         (InverseTransform[3][0] == 0.0) &&
+         (InverseTransform[3][1] == 0.0) &&
+         (InverseTransform[3][2] == 0.0) &&
+         (InverseTransform[3][3] == 0.0)
+         )
+    {
+        gl_FrontColor.a = 0.0;
+    }
 }
 //----------------------------------------------------------------------------

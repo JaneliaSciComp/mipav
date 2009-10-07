@@ -255,7 +255,13 @@ public class LineMinimizationEffect extends ShaderEffect
         if ( pkCProgram.GetUC("minDist") != null ) 
         {
             pkCProgram.GetUC("minDist").GetData()[0] = m_fMinDist;
-        }     
+        }  
+        if ( pkCProgram.GetUC("params") != null ) 
+        {
+            pkCProgram.GetUC("params").GetData()[0] = m_fPtLength;
+            pkCProgram.GetUC("params").GetData()[1] = m_fMinDist;
+            pkCProgram.GetUC("params").GetData()[2] = m_fUnitTolerance;
+       }
     }
     
     public void SetOrigin( Matrix4f kToOrigin, Matrix4f kFromOrigin )
@@ -396,6 +402,43 @@ public class LineMinimizationEffect extends ShaderEffect
         {
             pkCProgram.GetUC("minDist").GetData()[0] = m_fMinDist;
         }     
+        if ( pkCProgram.GetUC("params") != null ) 
+        {
+            pkCProgram.GetUC("params").GetData()[0] = m_fPtLength;
+            pkCProgram.GetUC("params").GetData()[1] = m_fMinDist;
+            pkCProgram.GetUC("params").GetData()[2] = m_fUnitTolerance;
+       }
+    }
+    
+    
+    public void SetImageSize( int iX, int iY, int iZ )
+    {
+        m_aiExtents[0] = iX;
+        m_aiExtents[1] = iY;
+        m_aiExtents[2] = iZ;
+
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("ImageSize") != null ) 
+        {
+            pkCProgram.GetUC("ImageSize").GetData()[0] = (m_aiExtents[0]-1);
+            pkCProgram.GetUC("ImageSize").GetData()[1] = (m_aiExtents[1]-1);
+            pkCProgram.GetUC("ImageSize").GetData()[2] = (m_aiExtents[2]-1);
+            //System.err.println( m_aiExtents[0] + " " + m_aiExtents[1] + " " + m_aiExtents[2]);
+        } 
+        if ( pkCProgram != null && pkCProgram.GetUC("ImageSizeInv") != null ) 
+        {
+            pkCProgram.GetUC("ImageSizeInv").GetData()[0] = 1.0f / (m_aiExtents[0]-1);
+            pkCProgram.GetUC("ImageSizeInv").GetData()[1] = 1.0f / (m_aiExtents[1]-1);
+            if ( (m_aiExtents[2]-1) > 0 )
+            {
+                pkCProgram.GetUC("ImageSizeInv").GetData()[2] = 1.0f / (m_aiExtents[2]-1);
+            }
+            else
+            {
+                pkCProgram.GetUC("ImageSizeInv").GetData()[2] = 0f;
+            }
+            //System.err.println( pkCProgram.GetUC("ImageSizeInv").GetData()[2] );
+        } 
     }
     
 }

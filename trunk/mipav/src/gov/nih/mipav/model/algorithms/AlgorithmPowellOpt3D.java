@@ -65,6 +65,7 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
             gov.nih.mipav.view.MipavUtil.displayError("The default vector either is null or has incorrect dimension.");
             return null;
         }
+
         
         if(point == null || (point.length != 3 && point.length != 4
                 && point.length != 6 && point.length != 7 && point.length != 9
@@ -76,6 +77,13 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
         // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
         double[] fullPoint = new double[defaultPoint.length];
         System.arraycopy(defaultPoint, 0, fullPoint, 0, fullPoint.length);
+
+        //System.err.print( "Point = "  );
+        //for ( int i = 0; i < point.length; i++ )
+        //{
+        //    System.err.print( point[i] + " " );
+        //}
+        //System.err.println("");
         
         // set up parts of transform properly
         if (point.length == 3) {
@@ -130,9 +138,12 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
         matrix.setTransform(vector[3], vector[4], vector[5], vector[0],
                             vector[1], vector[2], vector[6], vector[7], vector[8],
                             vector[9], vector[10], vector[11]);
+
+        
         
         matrix.MultLeft(toOrigin);
         matrix.Mult(fromOrigin);
+        //System.err.println( "Matrix = " + matrix.ToString() );
         
         return matrix;
         

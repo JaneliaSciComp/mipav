@@ -2,50 +2,43 @@
 uniform sampler2D bracketImage;
 uniform sampler2D transformImage;
 
-uniform vec2 Min;
-uniform vec2 Scale;
-
-uniform vec3 ImageSize;
-uniform vec3 ImageSizeInv;
-
-// uniform mat4 toOriginMatrix;
-// uniform mat4 fromOriginMatrix;
 uniform mat4 toOrigin;
 uniform mat4 fromOrigin;
-uniform float rigid;
-uniform float Dim_2D;
 uniform mat4 startPoint;
 uniform mat4 pt;
-uniform float ptLength;
 uniform mat4 unit_directions;
-uniform float minDist;
-uniform float unit_tolerance;
+uniform vec3 params;
+//uniform float ptLength;
+//uniform float minDist;
+//uniform float unit_tolerance;
 
 mat4 constructPoint( mat4 defaultPoint, mat4 point )
 {
 
-    float tx = defaultPoint[0][3];
-    float ty = defaultPoint[1][0];
+    float tx = defaultPoint[3][0];
+    float ty = defaultPoint[0][1];
     float tz = defaultPoint[1][1];
     float rx = defaultPoint[0][0];
-    float ry = defaultPoint[0][1];
-    float rz = defaultPoint[0][2];
-    float sx = defaultPoint[1][2];
-    float sy = defaultPoint[1][3];
-    float sz = defaultPoint[2][0];
-    float skX = defaultPoint[2][1];
+    float ry = defaultPoint[1][0];
+    float rz = defaultPoint[2][0];
+    float sx = defaultPoint[2][1];
+    float sy = defaultPoint[3][1];
+    float sz = defaultPoint[0][2];
+    float skX = defaultPoint[1][2];
     float skY = defaultPoint[2][2];
-    float skZ = defaultPoint[2][3];
+    float skZ = defaultPoint[3][2];
+
+    float ptLength = params.x;
 
     if (ptLength == 3.0) {
         tx = point[0][0];
-        ty = point[0][1];
-        tz = point[0][2];
+        ty = point[1][0];
+        tz = point[2][0];
     }
     else if (ptLength == 4.0) {
-        tx = point[0][1];
-        ty = point[0][2];
-        tz = point[0][3];
+        tx = point[1][0];
+        ty = point[2][0];
+        tz = point[3][0];
         sx = point[0][0];
         sy = point[0][0];
         sz = point[0][0];
@@ -53,26 +46,26 @@ mat4 constructPoint( mat4 defaultPoint, mat4 point )
     else if ((ptLength == 6.0) || (ptLength == 7.0) 
              || (ptLength == 9.0) || (ptLength == 12.0)) {
         rx = point[0][0];
-        ry = point[0][1];
-        rz = point[0][2];
-        tx = point[0][3];
-        ty = point[1][0];
+        ry = point[1][0];
+        rz = point[2][0];
+        tx = point[3][0];
+        ty = point[0][1];
         tz = point[1][1];
 
         if (ptLength == 7.0)
         {
-            sx = point[1][2];
-            sy = point[1][2];
-            sz = point[1][2];
+            sx = point[2][1];
+            sy = point[2][1];
+            sz = point[2][1];
         } else if (ptLength > 7.0) {
-            sx = point[1][2];
-            sy = point[1][3];
-            sz = point[2][0];
+            sx = point[2][1];
+            sy = point[3][1];
+            sz = point[0][2];
 
             if (ptLength > 9.0) {
-                skX = point[2][1];
+                skX = point[1][2];
                 skY = point[2][2];
-                skZ = point[2][3];
+                skZ = point[3][2];
             }
         }
     }
@@ -104,11 +97,16 @@ mat4 constructPoint( mat4 defaultPoint, mat4 point )
                   (((sinrZ * sinrY * cosrX) + (cosrZ * sinrX)) * skZ) + (cosrY * cosrX)) * sz);
     float M23 = (tz);
     
+//     mat4 matrix = mat4( tx, ty, tz, rx,
+//                         ry, rz, sx, sy,
+//                         sz, skX, skY, skZ,
+//                         0.0, 0.0, 0.0, 1.0 );
 
-    mat4 matrix = mat4( M00, M10, M20, 0.0,
-                        M01, M11, M21, 0.0,
-                        M02, M12, M22, 0.0,
-                        M03, M13, M23, 1.0  );
+
+    mat4 matrix = mat4( M00, M01, M02, M03,
+                        M10, M11, M12, M13,
+                        M20, M21, M22, M23,
+                        0.0, 0.0, 0.0, 1.0 );
     return matrix;
 }
 
@@ -116,8 +114,8 @@ mat4 oneDimension( float x )
 {
     mat4 xt = pt + x * unit_directions;
     mat4 matrix = constructPoint( startPoint, xt );
-    //return toOriginMatrix * matrix * fromOriginMatrix;
-    return toOrigin * matrix * fromOrigin;
+    return fromOrigin * matrix * toOrigin;
+    //return matrix;
 }
 
 float estimateMinimum(vec2 A, vec2 B, vec2 C )
@@ -135,10 +133,7 @@ float estimateMinimum(vec2 A, vec2 B, vec2 C )
     /** Used to prevent division by zero. */
     float TINY = 1.0 * pow(10.0, -20.0);
     if ((abs(det) > TINY) && ((ad / det) < 0.0)) { // quadratic only has a maxima
-        A.y = -1.0;
-        B.y = -1.0;
-        B.y = -1.0;
-        xNew = 0.0;
+        xNew = -999;
     }
     
     if (abs(ad) > TINY) {
@@ -147,10 +142,7 @@ float estimateMinimum(vec2 A, vec2 B, vec2 C )
 
     else
     {
-        A.y = -1.0;
-        B.y = -1.0;
-        B.y = -1.0;
-        xNew = 0.0;
+        xNew = -999;
     }
     return xNew;
 }
@@ -181,7 +173,7 @@ float nextPoint( vec2 A, vec2 B, vec2 C )
     float xNew = estimateMinimum( A, B, C );
     float min = (A.x < C.x) ? A.x : C.x;
     float max = (C.x < A.x) ? A.x : C.x;
-    if ( ((A.y == -1.0) && (B.y == -1.0) && (C.y == -1.0)) || (xNew < min) || (xNew > max) )
+    if ( (xNew==-999) || (xNew < min) || (xNew > max) )
     {
         xNew = extrapolatePoint( A, B, C );
     }
@@ -201,21 +193,19 @@ void v_LineMinimization3DV()
     vec2 C = texture2D(bracketImage, bracketTCoord ).xy;
     
     mat4 InverseTransform = mat4(1.0); 
+    float unit_tolerance = params.z;
     if ( abs( C.x - A.x ) <= unit_tolerance )
     {
-        vec2 index = vec2(0.0,0.0);
-        InverseTransform[0] = texture2D( transformImage, index );
-        index.y = 0.33;
-        InverseTransform[1] = texture2D( transformImage, index );
-        index.y = 0.66;
-        InverseTransform[2] = texture2D( transformImage, index );
-        index.y = 1.0;
-        InverseTransform[3] = texture2D( transformImage, index );
+        InverseTransform[0] = vec4(0.0);
+        InverseTransform[1] = vec4(0.0);
+        InverseTransform[2] = vec4(0.0);
+        InverseTransform[3] = vec4(0.0);
     }
     else
     {
         float xNew = nextPoint( A, B, C );
         float directionN = 1.0;
+        float minDist = params.y;
 
         if (C.x < A.x) {
             directionN = -1.0;
@@ -244,63 +234,19 @@ void v_LineMinimization3DV()
         InverseTransform = oneDimension( xNew );
     }
     
-    gl_FrontColor.r = InverseTransform[0][0];
-    gl_FrontColor.g = InverseTransform[0][1];
-    gl_FrontColor.b = InverseTransform[0][2];
-    gl_FrontColor.a = InverseTransform[0][3];
-
+    gl_FrontColor = InverseTransform[0];
     if ( gl_Vertex.z == 0.3 )
     {
-        gl_FrontColor.r = InverseTransform[1][0];
-        gl_FrontColor.g = InverseTransform[1][1];
-        gl_FrontColor.b = InverseTransform[1][2];
-        gl_FrontColor.a = InverseTransform[1][3];
+        gl_FrontColor = InverseTransform[1];
     }
     else if ( gl_Vertex.z == 0.7 )
     {
-        gl_FrontColor.r = InverseTransform[2][0];
-        gl_FrontColor.g = InverseTransform[2][1];
-        gl_FrontColor.b = InverseTransform[2][2];
-        gl_FrontColor.a = InverseTransform[2][3];
+        gl_FrontColor = InverseTransform[2];
     }
     else if ( gl_Vertex.z == 1.0 )
     {
-        gl_FrontColor.r = InverseTransform[3][0];
-        gl_FrontColor.g = InverseTransform[3][1];
-        gl_FrontColor.b = InverseTransform[3][2];
-        gl_FrontColor.a = InverseTransform[3][3];
+        gl_FrontColor = InverseTransform[3];
     }
-
-//     gl_FrontColor = InverseTransform[0];
-// //     gl_FrontColor.r = InverseTransform[0][0];
-// //     gl_FrontColor.g = InverseTransform[0][1];
-// //     gl_FrontColor.b = InverseTransform[0][2];
-// //     gl_FrontColor.a = InverseTransform[0][3];
-
-//     if ( gl_Vertex.z == 0.3 )
-//     {
-//         gl_FrontColor = InverseTransform[1];
-// //         gl_FrontColor.r = InverseTransform[1][0];
-// //         gl_FrontColor.g = InverseTransform[1][1];
-// //         gl_FrontColor.b = InverseTransform[1][2];
-// //         gl_FrontColor.a = InverseTransform[1][3];
-//     }
-//     else if ( gl_Vertex.z == 0.7 )
-//     {
-//         gl_FrontColor = InverseTransform[2];
-// //         gl_FrontColor.r = InverseTransform[2][0];
-// //         gl_FrontColor.g = InverseTransform[2][1];
-// //         gl_FrontColor.b = InverseTransform[2][2];
-// //         gl_FrontColor.a = InverseTransform[2][3];
-//     }
-//     else if ( gl_Vertex.z == 1.0 )
-//     {
-//         gl_FrontColor = InverseTransform[3];
-// //         gl_FrontColor.r = InverseTransform[3][0];
-// //         gl_FrontColor.g = InverseTransform[3][1];
-// //         gl_FrontColor.b = InverseTransform[3][2];
-// //         gl_FrontColor.a = InverseTransform[3][3];
-//     }
     gl_Position = gl_Vertex;
     gl_Position.z = 0;
 }

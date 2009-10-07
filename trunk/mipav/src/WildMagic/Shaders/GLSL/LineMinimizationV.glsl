@@ -2,18 +2,9 @@
 uniform sampler2D bracketImage;
 uniform sampler2D transformImage;
 
-uniform vec2 Min;
-uniform vec2 Scale;
-
-uniform vec3 ImageSize;
-uniform vec3 ImageSizeInv;
-
-// uniform mat4 toOriginMatrix;
-// uniform mat4 fromOriginMatrix;
 uniform mat4 toOrigin;
 uniform mat4 fromOrigin;
 uniform float rigid;
-uniform float Dim_2D;
 uniform mat4 startPoint;
 uniform mat4 pt;
 uniform float ptLength;
@@ -24,52 +15,52 @@ uniform float unit_tolerance;
 mat4 constructPoint( mat4 defaultPoint, mat4 point )
 {
     float r = defaultPoint[0][0];
-    float tx = defaultPoint[0][1];
-    float ty = defaultPoint[0][2];
-    float sx = defaultPoint[0][3];
-    float sy = defaultPoint[1][0];
+    float tx = defaultPoint[1][0];
+    float ty = defaultPoint[2][0];
+    float sx = defaultPoint[3][0];
+    float sy = defaultPoint[0][1];
     float skX = defaultPoint[1][1];
-    float skY = defaultPoint[1][2];
+    float skY = defaultPoint[2][1];
 
 
     if (ptLength == 2.0)
     {
         tx = point[0][0];
-        ty = point[0][1];
+        ty = point[1][0];
     }
     else if ( ptLength == 3.0 )
     {
         if (rigid == 1.0)
         {
             r = point[0][0];
-            tx = point[0][1];
-            ty = point[0][2];
+            tx = point[1][0];
+            ty = point[2][0];
         }
         else
         {
             sx = point[0][0];
             sy = point[0][0];
-            tx = point[0][1];
-            ty = point[0][2];
+            tx = point[1][0];
+            ty = point[2][0];
         }
     }
     else if (ptLength == 4.0)
     {
         r = point[0][0];
-        tx = point[0][1];
-        ty = point[0][2];
-        sx = point[0][3];
-        sy = point[0][3];
+        tx = point[1][0];
+        ty = point[2][0];
+        sx = point[3][0];
+        sy = point[0][1];
     }
     else if (ptLength > 4.0)
     {
         r = point[0][0];
-        tx = point[0][1];
-        ty = point[0][2];
-        sx = point[0][3];
-        sy = point[1][0];
+        tx = point[1][0];
+        ty = point[2][0];
+        sx = point[3][0];
+        sy = point[0][1];
         skX = point[1][1];
-        skY = point[1][2];
+        skY = point[2][1];
     }
     // Translate * Rotate:
     float angle = radians(r);
@@ -103,10 +94,14 @@ mat4 constructPoint( mat4 defaultPoint, mat4 point )
     M01 = sy * M01;
     M11 = sy * M11;
 
-    mat4 matrix = mat4( M00, M10, 0.0, 0.0,
-                        M01, M11, 0.0, 0.0,
-                        0.0, 0.0, 1.0, 0.0,
-                        M02, M12, 0.0, 1.0 );
+//     mat4 matrix = mat4( r, tx, ty, 0.0,
+//                         sx, sy, skY, skY,
+//                         0.0, 0.0, 1.0, 0.0,
+//                         0.0, 0.0, 0.0, 1.0 );
+     mat4 matrix = mat4( M00, M01, 0.0, M02,
+                         M10, M11, 0.0, M12,
+                         0.0, 0.0, 1.0, 0.0,
+                         0.0, 0.0, 0.0, 1.0 );
     return matrix;
 }
 
@@ -114,8 +109,9 @@ mat4 oneDimension( float x )
 {
     mat4 xt = pt + x * unit_directions;
     mat4 matrix = constructPoint( startPoint, xt );
-    //return toOriginMatrix * matrix * fromOriginMatrix;
-    return toOrigin * matrix * fromOrigin;
+    //return toOrigin * matrix * fromOrigin;
+    return fromOrigin * matrix * toOrigin;
+    //return toOrigin;
 }
 
 float estimateMinimum(vec2 A, vec2 B, vec2 C )
@@ -133,10 +129,7 @@ float estimateMinimum(vec2 A, vec2 B, vec2 C )
     /** Used to prevent division by zero. */
     float TINY = 1.0 * pow(10.0, -20.0);
     if ((abs(det) > TINY) && ((ad / det) < 0.0)) { // quadratic only has a maxima
-        A.y = -1.0;
-        B.y = -1.0;
-        B.y = -1.0;
-        xNew = 0.0;
+        xNew = -999;
     }
     
     if (abs(ad) > TINY) {
@@ -145,10 +138,7 @@ float estimateMinimum(vec2 A, vec2 B, vec2 C )
 
     else
     {
-        A.y = -1.0;
-        B.y = -1.0;
-        B.y = -1.0;
-        xNew = 0.0;
+        xNew = -999;
     }
     return xNew;
 }
@@ -179,7 +169,7 @@ float nextPoint( vec2 A, vec2 B, vec2 C )
     float xNew = estimateMinimum( A, B, C );
     float min = (A.x < C.x) ? A.x : C.x;
     float max = (C.x < A.x) ? A.x : C.x;
-    if ( ((A.y == -1.0) && (B.y == -1.0) && (C.y == -1.0)) || (xNew < min) || (xNew > max) )
+    if ( (xNew==-999) || (xNew < min) || (xNew > max) )
     {
         xNew = extrapolatePoint( A, B, C );
     }
@@ -190,7 +180,8 @@ float nextPoint( vec2 A, vec2 B, vec2 C )
 void v_LineMinimizationV()
 {
     vec2 bracketTCoord = vec2(0,0);
-    vec2 A = texture2D(bracketImage, bracketTCoord ).xy;
+    vec3 A1 = texture2D(bracketImage, bracketTCoord ).xyz;
+    vec2 A = A1.xy;
 
     bracketTCoord.y = 0.5;
     vec2 B = texture2D(bracketImage, bracketTCoord ).xy;
@@ -201,18 +192,22 @@ void v_LineMinimizationV()
     mat4 InverseTransform = mat4(1.0); 
     if ( abs( C.x - A.x ) <= unit_tolerance )
     {
-        vec2 index = vec2(0.0,0.0);
-        InverseTransform[0] = texture2D( transformImage, index );
-        index.y = 0.33;
-        InverseTransform[1] = texture2D( transformImage, index );
-        index.y = 0.66;
-        InverseTransform[2] = texture2D( transformImage, index );
-        index.y = 1.0;
-        InverseTransform[3] = texture2D( transformImage, index );
+        InverseTransform[0] = vec4(0.0);
+        InverseTransform[1] = vec4(0.0);
+        InverseTransform[2] = vec4(0.0);
+        InverseTransform[3] = vec4(0.0);
     }
     else
     {
-        float xNew = nextPoint( A, B, C );
+        float xNew;
+//         if ( A1.z == -1 )
+//         {
+//             xNew = extrapolatePoint( A, B, C );
+//         }
+//         else
+//         {
+            xNew = nextPoint( A, B, C );
+//         }
         float directionN = 1.0;
 
         if (C.x < A.x) {
@@ -258,7 +253,4 @@ void v_LineMinimizationV()
     gl_Position = gl_Vertex;
     gl_Position.z = 0;
 }
-
-
-
 //----------------------------------------------------------------------------
