@@ -25763,12 +25763,12 @@ ib = Math.min(nb, k-i+1);
     private void dchkbd(int nsizes, int[] mval, int[] nval, int ntypes, boolean[] dotype, int nrhs,
                         int[] iseed, double thresh, double[][] A, int lda, double[] bd, double[] be,
                         double[] s1, double[] s2, double[][] X, int ldx, double[][] Y, double[][] Z,
-                        double[][] Q, int ldq, double[][] PT, int ldpt, double[][] U, double[][] V,
+                        double[][] Q, int ldq, double[][] PT, int ldpt, double[][] U, double[][] VT,
                         double[] work, int lwork, int[] iwork, int[] info) {
         int maxtyp = 16;
         boolean badmm;
         boolean badnn;
-        boolean bidiag;
+        boolean bidiag = false;
         char uplo;
         String path;
         int i;
@@ -25813,7 +25813,12 @@ ib = Math.min(nb, k-i+1);
         double result[] = new double[14];
         double work2[];
         double work3[];
+        double array1[][];
         int p;
+        int q;
+        int row1;
+        int index;
+        double resid[] = new double[1];
         
         info[0] = 0;
         
@@ -26066,10 +26071,261 @@ ib = Math.min(nb, k-i+1);
                     }
                     
                     if (iinfo[0] == 0) {
-                        
+                        // Generate right-hand side
+                        if (bidiag) {
+                            work2 = new double[mnmin];
+                            work3 = new double[nrhs];
+                            for (p = 0; p < mnmin; p++) {
+                                work2[p] = work[mnmin+p];
+                            }
+                            for (p = 0; p < nrhs; p++) {
+                                work3[p] = work[2*mnmin+p];
+                            }
+                            dlatmr(mnmin, nrhs, 'S', iseed, 'N', work, 6, 1.0, 1.0, 
+                                   'T', 'N', work2, 1, 1.0, work3, 1, 1.0, 'N', iwork,
+                                   mnmin, nrhs, 0.0, 1.0, 'N', Y, ldx, iwork, iinfo);
+                            for (p = 0; p < mnmin; p++) {
+                                work[mnmin+p] = work2[p];
+                            }
+                            for (p = 0; p < nrhs; p++) {
+                                work[2*mnmin+p] = work3[p];
+                            }
+                        } // if (bidiag)
+                        else { // !bidiag
+                            work2 = new double[m];
+                            work3 = new double[nrhs];
+                            for (p = 0; p < m; p++) {
+                                work2[p] = work[m+p];
+                            }
+                            for (p = 0; p < nrhs; p++) {
+                                work3[p] = work[2*m+p];
+                            }
+                            dlatmr(m, nrhs, 'S', iseed, 'N', work, 6, 1.0, 1.0, 
+                                   'T', 'N', work2, 1, 1.0, work3, 1, 1.0, 'N', iwork,
+                                   m, nrhs, 0.0, 1.0, 'N', X, ldx, iwork, iinfo);
+                            for (p = 0; p < m; p++) {
+                                work[m+p] = work2[p];
+                            }
+                            for (p = 0; p < nrhs; p++) {
+                                work[2*m+p] = work3[p];
+                            }    
+                        } // else !bidiag
                     } // if (iinfo[0] == 0)
+                    
+                    // Error exit
+                    if (iinfo[0] != 0) {
+                        Preferences.debug("dchkbd generator returned iinfo[0] = " + iinfo[0] + "\n");
+                        Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                        Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                        Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                        MipavUtil.displayError("Error exit from dchkbd");
+                        return;
+                    } // if (iinfo[0] != 0)
                 } // if (mtypes <= maxtype)
 
+                // Call dgebrd and dorgbr to compute B, Q, and P, do tests.
+                if (!bidiag) {
+                    // Compute transformations to reduce A to bidiagonal form:
+                    // B := Q' * A * P.
+                    dlacpy(' ', m, n, A, lda, Q, ldq);
+                    work2 = new double[Math.min(m,n)];
+                    work3 = new double[Math.max(1, lwork-2*mnmin)];
+                    dgebrd(m, n, Q, ldq, bd, be, work, work2, work3, lwork-2*mnmin, iinfo);
+                    for (p = 0; p < Math.min(m,n); p++) {
+                        work[mnmin+p] = work2[p];
+                    }
+                    for (p = 0; p < Math.max(1, lwork-2*mnmin); p++) {
+                        work[2*mnmin+p] = work3[p];
+                    }
+                    
+                    // Check error code from dgebrd.
+                    if (iinfo[0] != 0) {
+                        Preferences.debug("dchkbd dgebrd returned iinfo[0] = " + iinfo[0] + "\n");
+                        Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                        Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                        Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                        MipavUtil.displayError("Error exit from dchkbd");
+                        return;    
+                    } // if (iinfo[0] != 0)
+                    
+                    dlacpy(' ', m, n, Q, ldq, PT, ldpt);
+                    if (m >= n) {
+                        uplo = 'U';
+                    }
+                    else {
+                        uplo = 'L';
+                    }
+                    
+                    // Generate Q
+                    mq = m;
+                    if (nrhs <= 0) {
+                        mq = mnmin;
+                    }
+                    work2 = new double[Math.max(1, lwork-2*mnmin)];
+                    dorgbr('Q', m, mq, n, Q, ldq, work, work2, lwork-2*mnmin, iinfo);
+                    for (p = 0; p < Math.max(1, lwork-2*mnmin); p++) {
+                        work[2*mnmin+p] = work2[p];
+                    }
+                    
+                    // Check error code from dorgbr.
+                    if (iinfo[0] != 0) {
+                        Preferences.debug("dchkbd dorgbr(Q) returned iinfo[0] = " + iinfo[0] + "\n");
+                        Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                        Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                        Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                        MipavUtil.displayError("Error exit from dchkbd");
+                        return;        
+                    } // if (iinfo[0] != 0)
+                    
+                    // Generate P'
+                    work2 = new double[Math.min(m,n)];
+                    work3 = new double[Math.max(1, lwork-2*mnmin)];
+                    for (p = 0; p < Math.min(m, n); p++) {
+                        work2[p] = work[mnmin+p];
+                    }
+                    dorgbr('P', mnmin, n, m, PT, ldpt, work2, work3, lwork-2*mnmin, iinfo);
+                    for (p = 0; p < Math.max(1, lwork-2*mnmin); p++) {
+                        work[2*mnmin+p] = work3[p];
+                    }
+                    
+                    // Check error code from dorgbr.
+                    if (iinfo[0] != 0) {
+                        Preferences.debug("dchkbd dorgbr(P) returned iinfo[0] = " + iinfo[0] + "\n");
+                        Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                        Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                        Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                        MipavUtil.displayError("Error exit from dchkbd");
+                        return;        
+                    } // if (iinfo[0] != 0)
+                    
+                    // Apply Q' to an M by NRHS matrix X:     Y := Q' * X.
+                    dgemm('T', 'N', m, nrhs, m, 1.0, Q, ldq, X, ldx, 0.0, Y, ldx);
+                    
+                    // Test 1:  Check the decomposition of A := Q * B * PT
+                    //      2:  Check the orthogonality of Q
+                    //      3:  Check the orthogonality of PT
+                    
+                    dbdt01(m, n, 1, A, lda, Q, ldq, bd, be, PT, ldpt, work, result);
+                    row1 = Math.min(m, mq);
+                    array1 = new double[row1][row1];
+                    index = 0;
+                    for (q = 0; q < row1; q++) {
+                        for (p = 0; p < row1; p++) {
+                            array1[p][q] = work[index++];
+                        }
+                    }
+                    dort01('C', m, mq, Q, ldq, array1, lwork, resid);
+                    index = 0;
+                    for (q = 0; q < row1; q++) {
+                        for (p = 0; p < row1; p++) {
+                            work[index++] = array1[p][q];
+                        }
+                    }
+                    result[1] = resid[0];
+                    row1 = Math.min(mnmin, n);
+                    array1 = new double[row1][row1];
+                    index = 0;
+                    for (q = 0; q < row1; q++) {
+                        for (p = 0; p < row1; p++) {
+                            array1[p][q] = work[index++];
+                        }
+                    }
+                    dort01('R', mnmin, n, PT, ldpt, array1, lwork, resid);
+                    index = 0;
+                    for (q = 0; q < row1; q++) {
+                        for (p = 0; p < row1; p++) {
+                            work[index++] = array1[p][q];
+                        }
+                    }
+                    result[2] = resid[0];
+                } // if (!bidiag)
+                
+                // Use dbdsqr to form the SVD of the bidiagonal matrix B:
+                // B := U * S1 * VT, and compute Z = U' * Y.
+                for (p = 0; p < mnmin; p++) {
+                    s1[p] = bd[p];
+                }
+                if (mnmin > 1) {
+                    for (p = 0; p < mnmin - 1; p++) {
+                        work[p] = be[p];
+                    }
+                } // if (mnmin > 1)
+                dlacpy(' ', m, nrhs, Y, ldx, Z, ldx);
+                dlaset('F', mnmin, mnmin, 0.0, 1.0, U, ldpt);
+                dlaset('F', mnmin, mnmin, 0.0, 1.0, VT, ldpt);
+                
+                work2 = new double[4*mnmin];
+                dbdsqr(uplo, mnmin, mnmin, mnmin, nrhs, s1, work, VT,
+                       ldpt, U, ldpt, Z, ldx, work2, iinfo);
+                
+                // check error code from dbdsqr.
+                if (iinfo[0] != 0) {
+                    Preferences.debug("dchkbd dbdsqr(vects) returned iinfo[0] = " + iinfo[0] + "\n");
+                    Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                    Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                    Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                    if (iinfo[0] < 0) {
+                        MipavUtil.displayError("Error exit from dchkbd");
+                        return; 
+                    }
+                    else {
+                        result[3] = ulpinv;
+                        for (j = 0; j < 4; j++) {
+                            if (result[j] >= thresh) {
+                                if (nfail == 0) {
+                                    Preferences.debug("Real singular value decomposition\n");
+                                    Preferences.debug("Matrix types:\n");
+                                    Preferences.debug("1: Zero\n");
+                                    Preferences.debug("2: Identity\n");
+                                    Preferences.debug("3: Evenly splaced entries\n");
+                                    Preferences.debug("4: Geometrically spaced entries\n");
+                                    Preferences.debug("5: Clustered entries\n");
+                                    Preferences.debug("6: Large, evenly spaced entries\n");
+                                    Preferences.debug("7: Small, evenly spaced entries\n");
+                                    Preferences.debug("8: Evenly spaced singular values\n");
+                                    Preferences.debug("9: Geometrically spaced singular values\n");
+                                    Preferences.debug("10: Clustered singular values\n");
+                                    Preferences.debug("11: Large, evenly spaced singular values\n");
+                                    Preferences.debug("12: Small, evenly spaced singular values\n");
+                                    Preferences.debug("13: Random, O(1) entries\n");
+                                    Preferences.debug("14: Random, scaled near overflow\n");
+                                    Preferences.debug("15: Random, scaled near underflow\n");
+                                    Preferences.debug("Test ratios:\n");
+                                    Preferences.debug("B: bidiagonal, S: diagonal, Q, P, U, and V: orthogonal\n");
+                                    Preferences.debug("X: m x nrhs, Y = Q' X, and Z = U' Y\n");
+                                    Preferences.debug("1: norm( A - Q B P'' ) / ( norm(A) max(m,n) ulp )\n");
+                                    Preferences.debug("2: norm( I - Q'' Q )   / ( m ulp )\n");
+                                    Preferences.debug("3: norm( I - P'' P )   / ( n ulp )\n");
+                                    Preferences.debug("4: norm( B - U S V'' ) / ( norm(B) min(m,n) ulp )\n");
+                                    Preferences.debug("5: norm( Y - U Z )    / ( norm(Z) max(min(m,n),k) ulp )\n");
+                                    Preferences.debug("6: norm( I - U'' U )   / ( min(m,n) ulp )\n");
+                                    Preferences.debug("7: norm( I - V'' V )   / ( min(m,n) ulp )\n");
+                                    Preferences.debug("8: Test ordering of S  (0 if nondecreasing, 1/ulp otherwise)\n");
+                                    Preferences.debug("9: norm( S - S2 )     / ( norm(S) ulp )\n");
+                                    Preferences.debug("where S2 is computed without computing U and V\n");
+                                    Preferences.debug("10: Sturm sequence test\n");
+                                    Preferences.debug("0 if sing. vals of B within THRESH of S\n");
+                                    Preferences.debug("11: norm( A - (QU) S (V' P') ) / ( norm(A) max(m,n) ulp )\n");
+                                    Preferences.debug("12: norm( X - (QU) Z )         / ( |X| max(M,k) ulp )\n");
+                                    Preferences.debug("13: norm( I - (QU)''(QU) )      / ( M ulp )\n");
+                                    Preferences.debug("14: norm( I - (V'' P'') (P V) )  / ( N ulp )\n"); 
+                                } // if (nfail == 0)
+                                Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                                Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                                Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                                Preferences.debug("test(" + (j+1) + ") = " + result[j] + "\n");
+                                nfail++;
+                            } // if (result[j] >= thresh)
+                        } // for (j = 0; j < 4; j++)
+                        if (!bidiag) {
+                            ntest = ntest + 4;
+                        }
+                        else {
+                            ntest = ntest + 1;
+                        }
+                        continue;
+                    }
+                } // if (iinfo[0] != 0)
             } // for (jtype = 1; jtype <= mtypes; jtype++)
         } // for (jsize = 1; jsize <= nsizes; j++)
     } // dchkbd
@@ -28121,4 +28377,401 @@ ib = Math.min(nb, k-i+1);
 
         return value;
     } // dlangb
+    
+    /** This is a port of version 3.1 LAPACK test routine DBDT01.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             INTEGER            KD, LDA, LDPT, LDQ, M, N
+             DOUBLE PRECISION   RESID
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   A( LDA, * ), D( * ), E( * ), PT( LDPT, * ),
+            $                   Q( LDQ, * ), WORK( * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DBDT01 reconstructs a general matrix A from its bidiagonal form
+       *     A = Q * B * P'
+       *  where Q (m by min(m,n)) and P' (min(m,n) by n) are orthogonal
+       *  matrices and B is bidiagonal.
+       *
+       *  The test ratio to test the reduction is
+       *     RESID = norm( A - Q * B * PT ) / ( n * norm(A) * EPS )
+       *  where PT = P' and EPS is the machine precision.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  M       (input) INTEGER
+       *          The number of rows of the matrices A and Q.
+       *
+       *  N       (input) INTEGER
+       *          The number of columns of the matrices A and P'.
+       *
+       *  KD      (input) INTEGER
+       *          If KD = 0, B is diagonal and the array E is not referenced.
+       *          If KD = 1, the reduction was performed by xGEBRD; B is upper
+       *          bidiagonal if M >= N, and lower bidiagonal if M < N.
+       *          If KD = -1, the reduction was performed by xGBBRD; B is
+       *          always upper bidiagonal.
+       *
+       *  A       (input) DOUBLE PRECISION array, dimension (LDA,N)
+       *          The m by n matrix A.
+       *
+       *  LDA     (input) INTEGER
+       *          The leading dimension of the array A.  LDA >= max(1,M).
+       *
+       *  Q       (input) DOUBLE PRECISION array, dimension (LDQ,N)
+       *          The m by min(m,n) orthogonal matrix Q in the reduction
+       *          A = Q * B * P'.
+       *
+       *  LDQ     (input) INTEGER
+       *          The leading dimension of the array Q.  LDQ >= max(1,M).
+       *
+       *  D       (input) DOUBLE PRECISION array, dimension (min(M,N))
+       *          The diagonal elements of the bidiagonal matrix B.
+       *
+       *  E       (input) DOUBLE PRECISION array, dimension (min(M,N)-1)
+       *          The superdiagonal elements of the bidiagonal matrix B if
+       *          m >= n, or the subdiagonal elements of B if m < n.
+       *
+       *  PT      (input) DOUBLE PRECISION array, dimension (LDPT,N)
+       *          The min(m,n) by n orthogonal matrix P' in the reduction
+       *          A = Q * B * P'.
+       *
+       *  LDPT    (input) INTEGER
+       *          The leading dimension of the array PT.
+       *          LDPT >= max(1,min(M,N)).
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (M+N)
+       *
+       *  RESID   (output) DOUBLE PRECISION
+       *          The test ratio:  norm(A - Q * B * P') / ( n * norm(A) * EPS )
+       */
+    private void dbdt01(int m, int n, int kd, double[][] A, int lda, double[][] Q,
+                        int ldq, double[] d, double[] e, double[][] PT, int ldpt,
+                        double[] work, double[] resid) {
+        int i;
+        int j;
+        double anorm;
+        double eps;
+        int p;
+        double work2[];
+        double absSum;
+        
+        // Quick return if possible
+        if ((m <= 0) || (n <= 0)) {
+            resid[0] = 0.0;
+            return;
+        }
+        
+        // Compute A - Q * B * P' one column at a time.
+        resid[0] = 0.0;
+        if (kd != 0) {
+            // B is bidiagonal.
+            if (m >= n) {
+                // B is upper bidiagonal and m >= n.
+                for (j = 1; j <= n; j++) {
+                    for (p = 0; p < m; p++) {
+                        work[p] = A[p][j-1];
+                    }
+                    for (i = 1; i <= n-1; i++) {
+                        work[m+i-1] = d[i-1]*PT[i-1][j-1] + e[i-1]*PT[i][j-1];
+                    }
+                    work[m+n-1] = d[n-1]*PT[n-1][j-1];
+                    work2 = new double[n];
+                    for (p = 0; p < n; p++) {
+                        work2[p] = work[m+p];
+                    }
+                    dgemv('N', m, n, -1.0, Q, ldq, work2, 1, 1.0, work, 1);
+                    absSum = 0.0;
+                    for (p = 0; p < m; p++) {
+                        absSum += Math.abs(work[p]);
+                    }
+                    resid[0] = Math.max(resid[0], absSum);
+                } // for (j = 1; j <= n; j++)
+            } // if (m >= n)
+            else if (kd < 0) {
+                // B is upper diagonal and M < N.
+                for (j = 1; j <= n; j++) {
+                    for (p = 0; p < m; p++) {
+                        work[p] = A[p][j-1];
+                    }
+                    for (i = 1; i <= m-1; i++) {
+                        work[m+i-1] = d[i-1]*PT[i-1][j-1] + e[i-1]*PT[i][j-1];
+                    }
+                    work[2*m-1] = d[m-1]*PT[m-1][j-1];
+                    work2 = new double[m];
+                    for (p = 0; p < m; p++) {
+                        work2[p] = work[m+p];
+                    }
+                    dgemv('N', m, m, -1.0, Q, ldq, work2, 1, 1.0, work, 1);
+                    absSum = 0.0;
+                    for (p = 0; p < m; p++) {
+                        absSum += Math.abs(work[p]);
+                    }
+                    resid[0] = Math.max(resid[0], absSum);
+                } // for (j = 1; j <= n; j++)
+            } // else if (kd < 0)
+            else {
+                // B is lower bidiagonal.
+                for (j = 1; j <= n; j++) {
+                    for (p = 0; p < m; p++) {
+                        work[p] = A[p][j-1];
+                    }
+                    work[m] = d[0]*PT[0][j-1];
+                    for (i = 2; i <= m; i++) {
+                        work[m+i-1] = e[i-2]*PT[i-2][j-1] + d[i-1]*PT[i-1][j-1];
+                    } // for (i = 2; i <= m; i++)
+                    work2 = new double[m];
+                    for (p = 0; p < m; p++) {
+                        work2[p] = work[m+p];
+                    }
+                    dgemv('N', m, m, -1.0, Q, ldq, work2, 1, 1.0, work, 1);
+                    absSum = 0.0;
+                    for (p = 0; p < m; p++) {
+                        absSum += Math.abs(work[p]);
+                    }
+                    resid[0] = Math.max(resid[0], absSum);
+                } // for (j = 1; j <= n; j++)
+            } // else
+        } // if (kd != 0)
+        else { // kd == 0
+            // B is dialgonal.
+            if (m >= n) {
+                for (j = 1; j <= n; j++) {
+                    for (p = 0; p < m; p++) {
+                        work[p] = A[p][j-1];
+                    }
+                    for (i = 1; i <= n; i++) {
+                        work[m+i-1] = d[i-1]*PT[i-1][j-1];
+                    }
+                    work2 = new double[n];
+                    for (p = 0; p < n; p++) {
+                        work2[p] = work[m+p];
+                    }
+                    dgemv('N', m, n, -1.0, Q, ldq, work2, 1, 1.0, work, 1);
+                    absSum = 0.0;
+                    for (p = 0; p < m; p++) {
+                        absSum += Math.abs(work[p]);
+                    }
+                    resid[0] = Math.max(resid[0], absSum);
+                } // for (j = 1; j <= n; j++)
+            } // if (m >= n)
+            else { // m < n
+                for (j = 1; j <= n; j++) {
+                    for (p = 0; p < m; p++) {
+                        work[p] = A[p][j-1];
+                    }
+                    for (i = 1; i <= m; i++) {
+                        work[m+i-1] = d[i-1]*PT[i-1][j-1];
+                    }
+                    work2 = new double[m];
+                    for (p = 0; p < m; p++) {
+                        work2[p] = work[m+p];
+                    }
+                    dgemv('N', m, m, -1.0, Q, ldq, work2, 1, 1.0, work, 1);
+                    absSum = 0.0;
+                    for (p = 0; p < m; p++) {
+                        absSum += Math.abs(work[p]);
+                    }
+                    resid[0] = Math.max(resid[0], absSum);
+                } // for (j = 1; j <= n; j++)
+            } // else m < n
+        } // else kd == 0
+        
+        // Compute norm(A - Q * B * P') / (n * norm(A) * eps)
+        anorm = dlange('1', m, n, A, lda, work);
+        eps = dlamch('P'); // Precision
+        
+        if (anorm <= 0.0) {
+            if (resid[0] != 0.0) {
+                resid[0] = 1.0/eps;
+            }
+        }
+        else {
+            if (anorm >= resid[0]) {
+                resid[0] = (resid[0]/anorm)/((double)n * eps);
+            }
+            else {
+                if (anorm < 1.0) {
+                    resid[0] = (Math.min(resid[0], (double)n * anorm)/anorm)/((double)n * eps);
+                }
+                else {
+                    resid[0] = Math.min(resid[0]/anorm, (double)n)/((double)n * eps);
+                }
+            }
+        } // else
+        return;
+    } // dbdt01
+    
+    /** This is the port of version 3.1 LAPACK test routine DORT01.
+    *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          CHARACTER          ROWCOL
+          INTEGER            LDU, LWORK, M, N
+          DOUBLE PRECISION   RESID
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   U( LDU, * ), WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DORT01 checks that the matrix U is orthogonal by computing the ratio
+    *
+    *     RESID = norm( I - U*U' ) / ( n * EPS ), if ROWCOL = 'R',
+    *  or
+    *     RESID = norm( I - U'*U ) / ( m * EPS ), if ROWCOL = 'C'.
+    *
+    *  Alternatively, if there isn't sufficient workspace to form
+    *  I - U*U' or I - U'*U, the ratio is computed as
+    *
+    *     RESID = abs( I - U*U' ) / ( n * EPS ), if ROWCOL = 'R',
+    *  or
+    *     RESID = abs( I - U'*U ) / ( m * EPS ), if ROWCOL = 'C'.
+    *
+    *  where EPS is the machine precision.  ROWCOL is used only if m = n;
+    *  if m > n, ROWCOL is assumed to be 'C', and if m < n, ROWCOL is
+    *  assumed to be 'R'.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  ROWCOL  (input) CHARACTER
+    *          Specifies whether the rows or columns of U should be checked
+    *          for orthogonality.  Used only if M = N.
+    *          = 'R':  Check for orthogonal rows of U
+    *          = 'C':  Check for orthogonal columns of U
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrix U.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrix U.
+    *
+    *  U       (input) DOUBLE PRECISION array, dimension (LDU,N)
+    *          The orthogonal matrix U.  U is checked for orthogonal columns
+    *          if m > n or if m = n and ROWCOL = 'C'.  U is checked for
+    *          orthogonal rows if m < n or if m = n and ROWCOL = 'R'.
+    *
+    *  LDU     (input) INTEGER
+    *          The leading dimension of the array U.  LDU >= max(1,M).
+    *
+    *  WORK    (workspace) DOUBLE PRECISION array, dimension (min(m,n),min(m,n))
+    *          In dlaset, dsyrk, and dlansy work must be 2D array.
+    *
+    *  LWORK   (input) INTEGER
+    *          The length of the array WORK.  For best performance, LWORK
+    *          should be at least N*(N+1) if ROWCOL = 'C' or M*(M+1) if
+    *          ROWCOL = 'R', but the test will be done even if LWORK is 0.
+    *
+    *  RESID   (output) DOUBLE PRECISION
+    *          RESID = norm( I - U * U' ) / ( n * EPS ), if ROWCOL = 'R', or
+    *          RESID = norm( I - U' * U ) / ( m * EPS ), if ROWCOL = 'C'.
+    */
+    private void dort01(char rowcol, int m, int n, double[][] U, int ldu,
+                        double[][] work, int lwork, double[] resid) {
+        char transu;
+        int i;
+        int j;
+        int k;
+        int ldwork;
+        int mnmin;
+        double eps;
+        double tmp;
+        double work2[];
+        double v1[];
+        double v2[];
+        int p;
+        
+        resid[0] = 0.0;
+        
+        // Quick return if possible.
+        if ((m <= 0) || (n <= 0)) {
+            return;
+        }
+        
+        eps = dlamch('P'); // Precision
+        if ((m < n) || ((m == n) && ((rowcol == 'R') || (rowcol == 'r')))) {
+            transu = 'N';
+            k = n;
+        }
+        else {
+            transu = 'T';
+            k = m;
+        }
+        mnmin = Math.min(m, n);
+        
+        if ((mnmin + 1)*mnmin <= lwork) {
+            ldwork = mnmin;
+        }
+        else {
+            ldwork = 0;
+        }
+        if (ldwork > 0) {
+            // Compute I - U*U' or I - U'*U
+            dlaset('U', mnmin, mnmin, 0.0, 1.0, work, ldwork);
+            dsyrk('U', transu, mnmin, k, -1.0, U, ldu, 1.0, work, ldwork);
+            
+            // Compute norm(I - U*U') /(k * eps).
+            work2 = new double[Math.max(1, mnmin)];
+            resid[0] = dlansy('1', 'U', mnmin, work, ldwork, work2);
+            resid[0] = (resid[0]/(double)k)/eps;
+        } // if (ldwork > 0)
+        else if (transu == 'T') {
+            // Find the maximum element in abs(I - U'*U)/(m * eps)
+            for (j = 1; j <= n; j++) {
+                for (i = 1; i <= j; i++) {
+                    if (i != j) {
+                        tmp = 0.0;
+                    }
+                    else {
+                        tmp = 1.0;
+                    }
+                    v1 = new double[m];
+                    v2 = new double[m];
+                    for (p = 0; p < m; p++) {
+                        v1[p] = U[p][i-1];
+                        v2[p] = U[p][j-1];
+                    }
+                    tmp = tmp - ddot(m, v1, 1, v2, 1);
+                    resid[0] = Math.max(resid[0], Math.abs(tmp));
+                } // for (i = 1; i <= j; i++)
+            } // for (j = 1; j <= n; j++)
+            resid[0] = (resid[0]/(double)m)/eps;
+        } // else if (transu == 'T')
+        else {
+            // Find the maximum element in abs(I - U*U')/(n * eps)
+            for (j = 1; j <= m; j++) {
+                for (i = 1; i <= j; i++) {
+                    if (i != j) {
+                        tmp = 0.0;
+                    }
+                    else {
+                        tmp = 1.0;
+                    }
+                    v1 = new double[n];
+                    v2 = new double[n];
+                    for (p = 0; p < n; p++) {
+                        v1[p] = U[j-1][p];
+                        v2[p] = U[i-1][p];
+                    }
+                    tmp = tmp - ddot(n, v1, 1, v2, 1);
+                    resid[0] = Math.max(resid[0], Math.abs(tmp));
+                } // for (i = 1; i <= j; i++)
+            } // for (j = 1; j <= m; j++)
+            resid[0] = (resid[0]/(double)n)/eps;
+        } // else
+        return;
+    } // dort01
+
+
 }
