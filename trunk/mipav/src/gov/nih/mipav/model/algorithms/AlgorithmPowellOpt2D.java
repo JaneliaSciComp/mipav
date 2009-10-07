@@ -80,7 +80,13 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
     	}
     	double[] workingPoint = new double[defaultPoint.length];
     	System.arraycopy(defaultPoint, 0, workingPoint, 0, defaultPoint.length);
-
+    	
+    	//for ( int i = 0; i < point.length; i++ )
+    	//{
+    	//    System.err.print( point[i] + " " );
+    	//}
+    	//System.err.println("");
+    	
         // set up parts of transform properly
         if (point.length == 2) {
             workingPoint[1] = point[0];
@@ -117,14 +123,20 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
 		}
 		TransMatrix matrix = new TransMatrix(3);
 
+		//System.err.println( vector[0] + " " + vector[1] + " " + vector[2] + " " + 0.0 + " " +
+		//        vector[3] + " " + vector[4] + " " + vector[5] + " " + vector[6] );
+		
+		
 		matrix.setTransform(vector[1], vector[2], vector[0]);
 		matrix.setSkew(vector[5], vector[6]);
 		matrix.setZoom(vector[3], vector[4]);
 
+        //System.err.println( matrix.ToString() );
         matrix.MultLeft(toOrigin);
         matrix.Mult(fromOrigin);
 
-		return matrix;
+        //System.err.println( matrix.ToString() );
+        return matrix;
 	}
     
     /**

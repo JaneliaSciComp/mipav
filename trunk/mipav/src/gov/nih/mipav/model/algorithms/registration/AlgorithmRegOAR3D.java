@@ -1678,7 +1678,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         //Profile.stop();
         //Profile.setFileName( "profile_out"  );
-        //Profile.shutdown();
+       // Profile.shutdown();
 
         answer.matrix.Inverse();
         fireProgressStateChanged(100);
