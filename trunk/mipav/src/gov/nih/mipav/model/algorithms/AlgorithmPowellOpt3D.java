@@ -78,10 +78,10 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
         double[] fullPoint = new double[defaultPoint.length];
         System.arraycopy(defaultPoint, 0, fullPoint, 0, fullPoint.length);
 
-        //System.err.print( "Point = "  );
-        //for ( int i = 0; i < point.length; i++ )
+        //System.err.print( "DefaultPoint = "  );
+        //for ( int i = 0; i < defaultPoint.length; i++ )
         //{
-        //    System.err.print( point[i] + " " );
+         //   System.err.print( defaultPoint[i] + " " );
         //}
         //System.err.println("");
         

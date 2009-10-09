@@ -429,7 +429,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
         double minDist = 0.1 * unit_tolerance;
         double xNew, yNew;
         int count = 0;
-
         //Profile.clear();
         //Profile.start();
         boolean bLineMinDone = false; 
@@ -447,6 +446,8 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
             float case1 = -1;
             float case2 = -1;
             float case3 = -1;
+            System.err.println("");
+            System.err.println("START");
             while (((++count) < 100) && (Math.abs(bracket.c - bracket.a) > unit_tolerance) && ((parent == null)?true:!parent.isThreadStopped())) {
 
                 if (count > 0) {
@@ -461,8 +462,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                 case2 = -1;
                 case3 = -1;
 
-                System.err.println("");
-                System.err.println( "   " + count + " " + xNew );
                 if (bracket.c < bracket.a) {
                     directionN = -1.0;
                     case1 = 1.0f;
@@ -529,16 +528,14 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                 System.err.println( "   CPU BracketB = " + bracket.b + " " + bracket.functionAtB );
                 System.err.println( "   CPU BracketC = " + bracket.c + " " + bracket.functionAtC );       
                 System.err.println( "   " + count + " xNew = " + xNew + " yNew = " + 
-                        yNew );
-                System.err.println( "    " + " case: " + case1 + " " + 
+                        yNew  + " case: " + case1 + " " + 
                         case2 + " " + 
-                        case3 );
             }
-            System.err.println("");
-            System.err.println("");
-            System.err.println( "CPU BracketA = " + bracket.a + " " + bracket.functionAtA );
+            //System.err.println("");
+            //System.err.println("");
+            //System.err.println( "CPU BracketA = " + bracket.a + " " + bracket.functionAtA );
             System.err.println( "CPU BracketB = " + bracket.b + " " + bracket.functionAtB );
-            System.err.println( "CPU BracketC = " + bracket.c + " " + bracket.functionAtC );
+            //System.err.println( "CPU BracketC = " + bracket.c + " " + bracket.functionAtC );
         }
         bracket.a = backUp.a;
         bracket.b = backUp.b;
@@ -583,6 +580,10 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
                     xNew = nextPoint(bracket);
                 } else {
                     xNew = extrapolatePoint(bracket);
+                }
+                if ( xNew == 0 )
+                {
+                    System.err.println( xNew );
                 }
 
                 double directionN = 1.0;

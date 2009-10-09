@@ -18,7 +18,7 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewerPoint;
+import gov.nih.mipav.view.renderer.WildMagic.Render.ImageRegistrationGPU;
 
 import java.awt.Dimension;
 import java.io.IOException;
@@ -320,7 +320,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     
     private AlgorithmCostFunctions2D cost;
 
-    private VolumeImageViewerPoint m_kGPUCost = null;
+    private ImageRegistrationGPU m_kGPUCost = null;
 
     /**
      * Used to store all paths for levelEigth, levelFour, levelTwo and levelOne.
@@ -1237,7 +1237,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                 blurredRef = null;
             }
 
-            System.gc();
+            //System.gc();
 
             imageRefIso = transform.getTransformedImage();
 
@@ -1309,7 +1309,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             transform = null;
         }
 
-        System.gc();
+        //System.gc();
 
         if (resampleInput) {
             transform2 = new AlgorithmTransform(blurredInput, new TransMatrix(3), interp, resInputIso[0],
@@ -1332,7 +1332,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                 blurredInput = null;
             }
 
-            System.gc();
+            //System.gc();
 
             imageInputIso = transform2.getTransformedImage();
 
@@ -1408,7 +1408,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             transform2 = null;
         }
 
-        System.gc();
+        //System.gc();
 
         int subMinFactor = 15000;
 
@@ -1588,7 +1588,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         if (costChoice >= AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU )
         {
-            m_kGPUCost = VolumeImageViewerPoint.create(simpleRef, simpleInput);
+            m_kGPUCost = ImageRegistrationGPU.create(simpleRef, simpleInput);
             if ( m_kGPUCost == null )
             {
                 MipavUtil.displayError( "Not enough memory on the GPU, reverting to CPU registration" );

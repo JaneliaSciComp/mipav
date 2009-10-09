@@ -1082,6 +1082,9 @@ public class TransMatrix extends Matrix4f
      */
     public void setTransform(double tX, double tY, double tZ, double rX, double rY, double rZ, double sX, double sY,
                              double sZ, double skX, double skY, double skZ) {
+        //System.err.println( rX + " " + rY + " " + rZ + " " + tX + " " + tY + " " + tZ + " " +
+        //        sX + " " + sY + " " + sZ + " " + skX + " " + skY + " " + skZ );
+        
         float sinrX, sinrY, sinrZ, cosrX, cosrY, cosrZ;
         cosrX = (float)Math.cos((rX / 180.0) * Math.PI);
         sinrX = (float)Math.sin((rX / 180.0) * Math.PI);

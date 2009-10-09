@@ -9,7 +9,7 @@ import gov.nih.mipav.model.structures.*;
 import Jama.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewerPoint;
+import gov.nih.mipav.view.renderer.WildMagic.Render.ImageRegistrationGPU;
 
 import java.util.*;
 
@@ -333,7 +333,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int weightedRefPixelsSub8 = 0;
 
-    private VolumeImageViewerPoint m_kGPUCost = null;
+    private ImageRegistrationGPU m_kGPUCost = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1456,7 +1456,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         if (costChoice >= AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU )
         {
-            m_kGPUCost = VolumeImageViewerPoint.create(simpleRef, simpleInput);
+            m_kGPUCost = ImageRegistrationGPU.create(simpleRef, simpleInput);
             if ( m_kGPUCost == null )
             {
                 MipavUtil.displayError( "Not enough memory on the GPU, reverting to CPU registration" );
