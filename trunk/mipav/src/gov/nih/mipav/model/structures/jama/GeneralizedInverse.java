@@ -9962,7 +9962,7 @@ ib = Math.min(nb, k-i+1);
         ldwrky = n;
         
         if ((nb > 1) && (nb < minmn)) {
-            // Set the corssover point nx.
+            // Set the crossover point nx.
             
             nx = Math.max(nb, ilaenv(3, name, opts, m, n, -1, -1));
             
@@ -9986,7 +9986,7 @@ ib = Math.min(nb, k-i+1);
         else {
             nx = minmn;
         }
-        
+     
         for (i = 1; i <= minmn - nx; i += nb) {
             // Reduce rows and column i:i+nb-1 to bidiagonal form and return the matrices X and Y 
             // which are needed to update the unreduced part of the matrix
@@ -10504,7 +10504,7 @@ ib = Math.min(nb, k-i+1);
                     row1 = Math.max(1, n-i);
                     array1 = new double[row1][i];
                     for (j = 0; j < row1; j++) {
-                        for (k = 0; k < n-i; k++) {
+                        for (k = 0; k < i; k++) {
                             array1[j][k] = Y[i+j][k];
                         }
                     }
@@ -11081,7 +11081,7 @@ ib = Math.min(nb, k-i+1);
                 }
                 dlarfg(m-i+1, alpha, x, 1, tau);
                 A[i-1][i-1] = alpha[0];
-                for (j = 0; j < m-1; j++) {
+                for (j = 0; j < m-i; j++) {
                     A[Math.min(i, m-1) + j][i-1] = x[j];
                 }
                 tauq[i-1] = tau[0];
@@ -25785,7 +25785,7 @@ ib = Math.min(nb, k-i+1);
         int mmax;
         int mnmax;
         int mnmin;
-        int mq;
+        int mq = 0;
         int mtypes;
         int n;
         int nfail;
@@ -25897,7 +25897,7 @@ ib = Math.min(nb, k-i+1);
         
         // Loop over sizes, types
         
-        for (jsize = 1; jsize <= nsizes; j++) {
+        for (jsize = 1; jsize <= nsizes; jsize++) {
             m = mval[jsize-1];
             n = nval[jsize-1];
             mnmin = Math.min(m, n);
@@ -25911,6 +25911,7 @@ ib = Math.min(nb, k-i+1);
             }
             
             for (jtype = 1; jtype <= mtypes; jtype++) {
+               
                 if (!dotype[jtype-1]) {
                     continue;
                 }
@@ -26326,8 +26327,243 @@ ib = Math.min(nb, k-i+1);
                         continue;
                     }
                 } // if (iinfo[0] != 0)
+                
+                // Use dbdsqr to compute only the singular values of the 
+                // bidiagonal matrix B; U, VT, and Z should not be modified.
+                for (p = 0; p < mnmin; p++) {
+                    s2[p] = bd[p];
+                }
+                if (mnmin > 1) {
+                    for (p = 0; p < mnmin-1; p++) {
+                        work[p] = be[p];
+                    }
+                } // if (mnmin > 1)
+                
+                work2 = new double[4*mnmin];
+                dbdsqr(uplo, mnmin, 0, 0, 0, s2, work, VT, ldpt, U,
+                       ldpt, Z, ldx, work2, iinfo);
+                
+                // check error code from dbdsqr.
+                if (iinfo[0] != 0) {
+                    Preferences.debug("dchkbd dbdsqr(values) returned iinfo[0] = " + iinfo[0] + "\n");
+                    Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                    Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                    Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                    if (iinfo[0] < 0) {
+                        MipavUtil.displayError("Error exit from dchkbd");
+                        return; 
+                    }
+                    else {
+                        result[8] = ulpinv;
+                        for (j = 0; j < 9; j++) {
+                            if (result[j] >= thresh) {
+                                if (nfail == 0) {
+                                    Preferences.debug("Real singular value decomposition\n");
+                                    Preferences.debug("Matrix types:\n");
+                                    Preferences.debug("1: Zero\n");
+                                    Preferences.debug("2: Identity\n");
+                                    Preferences.debug("3: Evenly splaced entries\n");
+                                    Preferences.debug("4: Geometrically spaced entries\n");
+                                    Preferences.debug("5: Clustered entries\n");
+                                    Preferences.debug("6: Large, evenly spaced entries\n");
+                                    Preferences.debug("7: Small, evenly spaced entries\n");
+                                    Preferences.debug("8: Evenly spaced singular values\n");
+                                    Preferences.debug("9: Geometrically spaced singular values\n");
+                                    Preferences.debug("10: Clustered singular values\n");
+                                    Preferences.debug("11: Large, evenly spaced singular values\n");
+                                    Preferences.debug("12: Small, evenly spaced singular values\n");
+                                    Preferences.debug("13: Random, O(1) entries\n");
+                                    Preferences.debug("14: Random, scaled near overflow\n");
+                                    Preferences.debug("15: Random, scaled near underflow\n");
+                                    Preferences.debug("Test ratios:\n");
+                                    Preferences.debug("B: bidiagonal, S: diagonal, Q, P, U, and V: orthogonal\n");
+                                    Preferences.debug("X: m x nrhs, Y = Q' X, and Z = U' Y\n");
+                                    Preferences.debug("1: norm( A - Q B P'' ) / ( norm(A) max(m,n) ulp )\n");
+                                    Preferences.debug("2: norm( I - Q'' Q )   / ( m ulp )\n");
+                                    Preferences.debug("3: norm( I - P'' P )   / ( n ulp )\n");
+                                    Preferences.debug("4: norm( B - U S V'' ) / ( norm(B) min(m,n) ulp )\n");
+                                    Preferences.debug("5: norm( Y - U Z )    / ( norm(Z) max(min(m,n),k) ulp )\n");
+                                    Preferences.debug("6: norm( I - U'' U )   / ( min(m,n) ulp )\n");
+                                    Preferences.debug("7: norm( I - V'' V )   / ( min(m,n) ulp )\n");
+                                    Preferences.debug("8: Test ordering of S  (0 if nondecreasing, 1/ulp otherwise)\n");
+                                    Preferences.debug("9: norm( S - S2 )     / ( norm(S) ulp )\n");
+                                    Preferences.debug("where S2 is computed without computing U and V\n");
+                                    Preferences.debug("10: Sturm sequence test\n");
+                                    Preferences.debug("0 if sing. vals of B within THRESH of S\n");
+                                    Preferences.debug("11: norm( A - (QU) S (V' P') ) / ( norm(A) max(m,n) ulp )\n");
+                                    Preferences.debug("12: norm( X - (QU) Z )         / ( |X| max(M,k) ulp )\n");
+                                    Preferences.debug("13: norm( I - (QU)''(QU) )      / ( M ulp )\n");
+                                    Preferences.debug("14: norm( I - (V'' P'') (P V) )  / ( N ulp )\n"); 
+                                } // if (nfail == 0)
+                                Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                                Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                                Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                                Preferences.debug("test(" + (j+1) + ") = " + result[j] + "\n");
+                                nfail++;
+                            } // if (result[j] >= thresh)
+                        } // for (j = 0; j < 9; j++)
+                        if (!bidiag) {
+                            ntest = ntest + 5;
+                        }
+                        else {
+                            ntest = ntest + 2;
+                        }
+                        continue;
+                    }
+                } // if (iinfo[0] != 0)
+                
+                // Test 4:  Check the decomposition B := U * S1 * VT
+                //      5:  Check the computation Z := U' * Y
+                //      6:  Check the orthogonality of U
+                //      7:  Check the orthogonality of VT
+                dbdt03(uplo, mnmin, 1, bd, be, U, ldpt, s1, VT, ldpt, work, resid);
+                result[3] = resid[0];
+                dbdt02(mnmin, nrhs, Y, ldx, Z, ldx, U, ldpt, work, resid);
+                result[4] = resid[0];
+                array1 = new double[mnmin][mnmin];
+                dort01('C', mnmin, mnmin, U, ldpt, array1, lwork, resid);
+                result[5] = resid[0];
+                dort01('R', mnmin, mnmin, VT, ldpt, array1, lwork, resid);
+                result[6] = resid[0];
+                
+                // Test 8: Check that the singular values are sorted in
+                //         non-increasing order and are non-negative
+                result[7] = 0.0;
+                for (i = 1; i <= mnmin - 1; i++) {
+                    if (s1[i-1] < s1[i]) {
+                        result[7] = ulpinv;
+                    }
+                    if (s1[i-1] < 0.0) {
+                        result[7] = ulpinv;
+                    }
+                } // for (i = 1; i <= mnmin - 1; i++)
+                if (mnmin >= 1) {
+                    if (s1[mnmin-1] < 0.0) {
+                        result[7] = ulpinv;
+                    }
+                } // if (mnmin >= 1)
+                
+                // Test 9: Compare dbdsqr with and without singular vectors
+                temp2 = 0.0;
+                
+                for (j = 0; j < mnmin; j++) {
+                    temp1 = Math.abs(s1[j]-s2[j])/
+                    Math.max(Math.sqrt(unfl[0]) * Math.max(s1[0], 1.0),
+                    ulp * Math.max(Math.abs(s1[j]), Math.abs(s2[j])));
+                    temp2 = Math.max(temp1, temp2);
+                } // for (j = 0; j < mnmin; j++)
+                
+                result[8] = temp2;
+                
+                // Test 10: Sturm sequence test of singular values
+                //          Go up by factors of two until it succeeds
+                temp1 = thresh * (0.5 - ulp);
+                
+                for (j = 0; j <= log2ui; j++) {
+                    dsvdch(mnmin, bd, be, s1, temp1, iinfo);
+                    if (iinfo[0] == 0) {
+                        break;
+                    }
+                    temp1 = 2.0 * temp1;
+                } // for (j = 0; j <= log2ui; j++)
+                result[9] = temp1;
+                
+                // Use dbdsqr to form the decomposition A := (QU) S (VT PT)
+                // frpom the bidiagonal form A := Q B PT
+                if (!bidiag) {
+                    for (p = 0; p < mnmin; p++) {
+                        s2[p] = bd[p];
+                    }
+                    if (mnmin > 1) {
+                        for (p = 0; p < mnmin - 1; p++) {
+                            work[p] = be[p];
+                        }
+                    } // if (mnmin > 1)
+                    
+                    work2 = new double[4*mnmin];
+                    dbdsqr(uplo, mnmin, n, m, nrhs, s2, work, PT, ldpt,
+                           Q, ldq, Y, ldx, work2, iinfo);
+                    
+                    // Test 11:  Check the decomposition A := Q*U * S2 * VT*PT
+                    //      12:  Check the computation Z := U' * Q' * X
+                    //      13:  Check the orthogonality of Q*U
+                    //      14:  Check the orthogonality of VT*PT
+                    dbdt01(m, n, 0, A, lda, Q, ldq, s2, dumma, PT, ldpt, work, resid);
+                    result[10] = resid[0];
+                    dbdt02(m, nrhs, X, ldx, Y, ldx, Q, ldq, work, resid);
+                    result[11] = resid[0];
+                    array1 = new double[Math.min(m, mq)][Math.min(m, mq)];
+                    dort01('C', m, mq, Q, ldq, array1, lwork, resid);
+                    result[12] = resid[0];
+                    array1 = new double[Math.min(mnmin, n)][Math.min(mnmin, n)];
+                    dort01('R', mnmin, n, PT, ldpt, array1, lwork, resid);
+                    result[13] = resid[0];
+                } // if (!bidiag)
+                
+                for (j = 0; j < 14; j++) {
+                    if (result[j] >= thresh) {
+                        if (nfail == 0) {
+                            Preferences.debug("Real singular value decomposition\n");
+                            Preferences.debug("Matrix types:\n");
+                            Preferences.debug("1: Zero\n");
+                            Preferences.debug("2: Identity\n");
+                            Preferences.debug("3: Evenly splaced entries\n");
+                            Preferences.debug("4: Geometrically spaced entries\n");
+                            Preferences.debug("5: Clustered entries\n");
+                            Preferences.debug("6: Large, evenly spaced entries\n");
+                            Preferences.debug("7: Small, evenly spaced entries\n");
+                            Preferences.debug("8: Evenly spaced singular values\n");
+                            Preferences.debug("9: Geometrically spaced singular values\n");
+                            Preferences.debug("10: Clustered singular values\n");
+                            Preferences.debug("11: Large, evenly spaced singular values\n");
+                            Preferences.debug("12: Small, evenly spaced singular values\n");
+                            Preferences.debug("13: Random, O(1) entries\n");
+                            Preferences.debug("14: Random, scaled near overflow\n");
+                            Preferences.debug("15: Random, scaled near underflow\n");
+                            Preferences.debug("Test ratios:\n");
+                            Preferences.debug("B: bidiagonal, S: diagonal, Q, P, U, and V: orthogonal\n");
+                            Preferences.debug("X: m x nrhs, Y = Q' X, and Z = U' Y\n");
+                            Preferences.debug("1: norm( A - Q B P'' ) / ( norm(A) max(m,n) ulp )\n");
+                            Preferences.debug("2: norm( I - Q'' Q )   / ( m ulp )\n");
+                            Preferences.debug("3: norm( I - P'' P )   / ( n ulp )\n");
+                            Preferences.debug("4: norm( B - U S V'' ) / ( norm(B) min(m,n) ulp )\n");
+                            Preferences.debug("5: norm( Y - U Z )    / ( norm(Z) max(min(m,n),k) ulp )\n");
+                            Preferences.debug("6: norm( I - U'' U )   / ( min(m,n) ulp )\n");
+                            Preferences.debug("7: norm( I - V'' V )   / ( min(m,n) ulp )\n");
+                            Preferences.debug("8: Test ordering of S  (0 if nondecreasing, 1/ulp otherwise)\n");
+                            Preferences.debug("9: norm( S - S2 )     / ( norm(S) ulp )\n");
+                            Preferences.debug("where S2 is computed without computing U and V\n");
+                            Preferences.debug("10: Sturm sequence test\n");
+                            Preferences.debug("0 if sing. vals of B within THRESH of S\n");
+                            Preferences.debug("11: norm( A - (QU) S (V' P') ) / ( norm(A) max(m,n) ulp )\n");
+                            Preferences.debug("12: norm( X - (QU) Z )         / ( |X| max(M,k) ulp )\n");
+                            Preferences.debug("13: norm( I - (QU)''(QU) )      / ( M ulp )\n");
+                            Preferences.debug("14: norm( I - (V'' P'') (P V) )  / ( N ulp )\n"); 
+                        } // if (nfail == 0)
+                        Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                        Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                        Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                        Preferences.debug("test(" + (j+1) + ") = " + result[j] + "\n");
+                        nfail++;
+                    } // if (result[j] >= thresh)
+                } // for (j = 0; j < 14; j++)
+                if (!bidiag) {
+                    ntest = ntest + 14;
+                }
+                else {
+                    ntest = ntest + 7;
+                }
             } // for (jtype = 1; jtype <= mtypes; jtype++)
-        } // for (jsize = 1; jsize <= nsizes; j++)
+        } // for (jsize = 1; jsize <= nsizes; jsize++)
+        
+        if (nfail > 0) {
+            Preferences.debug("In dchkbd " + nfail + " out of " + ntest + " failed to pass the threshold\n");
+            MipavUtil.displayError("In dchkbd " + nfail + " out of " + ntest + " failed to pass the threshold");
+        }
+        else {
+            Preferences.debug("In dchkbd all " + ntest + " tests run passed the threshold\n");
+            MipavUtil.displayError("In dchkbd all " + ntest + " tests run passed the threshold");
+        }
     } // dchkbd
 
     /** This is a port of that portion of version 3.1 LAPACK test routine DERRBD used to test the
@@ -28773,5 +29009,605 @@ ib = Math.min(nb, k-i+1);
         return;
     } // dort01
 
-
+    /** This is a port of version 3.1 LAPACK test routine DBDT02.
+    *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            LDB, LDC, LDU, M, N
+          DOUBLE PRECISION   RESID
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   B( LDB, * ), C( LDC, * ), U( LDU, * ),
+         $                   WORK( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DBDT02 tests the change of basis C = U' * B by computing the residual
+    *
+    *     RESID = norm( B - U * C ) / ( max(m,n) * norm(B) * EPS ),
+    *
+    *  where B and C are M by N matrices, U is an M by M orthogonal matrix,
+    *  and EPS is the machine precision.
+    *
+    *  Arguments
+    *  =========
+    *
+    *  M       (input) INTEGER
+    *          The number of rows of the matrices B and C and the order of
+    *          the matrix Q.
+    *
+    *  N       (input) INTEGER
+    *          The number of columns of the matrices B and C.
+    *
+    *  B       (input) DOUBLE PRECISION array, dimension (LDB,N)
+    *          The m by n matrix B.
+    *
+    *  LDB     (input) INTEGER
+    *          The leading dimension of the array B.  LDB >= max(1,M).
+    *
+    *  C       (input) DOUBLE PRECISION array, dimension (LDC,N)
+    *          The m by n matrix C, assumed to contain U' * B.
+    *
+    *  LDC     (input) INTEGER
+    *          The leading dimension of the array C.  LDC >= max(1,M).
+    *
+    *  U       (input) DOUBLE PRECISION array, dimension (LDU,M)
+    *          The m by m orthogonal matrix U.
+    *
+    *  LDU     (input) INTEGER
+    *          The leading dimension of the array U.  LDU >= max(1,M).
+    *
+    *  WORK    (workspace) DOUBLE PRECISION array, dimension (M)
+    *
+    *  RESID   (output) DOUBLE PRECISION
+    *          RESID = norm( B - U * C ) / ( max(m,n) * norm(B) * EPS ),
+    */
+    private void dbdt02(int m, int n, double[][] B, int ldb, double[][] C,
+                        int ldc, double[][] U, int ldu, double[] work,
+                        double[] resid) {
+        int j;
+        double bnorm;
+        double eps;
+        double realmn;
+        int p;
+        double v1[];
+        double absSum;
+        
+        // Quick return if possible
+        resid[0] = 0.0;
+        if ((m <= 0) || (n <= 0)) {
+            return;
+        }
+        realmn = (double)Math.max(m, n);
+        eps = dlamch('P'); // Precision
+        
+        // Compute norm(B - U * C)
+        for (j = 1; j <= n; j++) {
+            for (p = 0; p < m; p++) {
+                work[p] = B[p][j-1];
+            }
+            v1 = new double[m];
+            for (p = 0; p < m; p++) {
+                v1[p] = C[p][j-1];
+            }
+            dgemv('N', m, m, -1.0, U, ldu, v1, 1, 1.0, work, 1);
+            absSum = 0.0;
+            for (p = 0; p < m; p++) {
+                absSum += Math.abs(work[p]);
+            }
+            resid[0] = Math.max(resid[0], absSum);
+        } // for (j = 1; j <= n; j++)
+        
+        // Compute norm of B.
+        bnorm = dlange('1', m, n, B, ldb, work);
+        
+        if (bnorm <= 0.0) {
+            if (resid[0] != 0.0) {
+                resid[0] = 1.0/eps;
+            }
+        } // if (bnorm <= 0.0)
+        else {
+            if (bnorm >= resid[0]) {
+                resid[0] = (resid[0]/bnorm)/(realmn * eps);
+            }
+            else {
+                if (bnorm < 1.0) {
+                    resid[0] = (Math.min(resid[0], realmn * bnorm)/ bnorm)/(realmn * eps);
+                }
+                else {
+                    resid[0] = Math.min(resid[0]/bnorm, realmn)/(realmn * eps);
+                }
+            }
+        }
+        return;
+    } // dbdt02
+    
+    /** This is a port of version 3.1 LAPACK test routine DBDT03.
+       *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       *     November 2006
+       *
+       *     .. Scalar Arguments ..
+             CHARACTER          UPLO
+             INTEGER            KD, LDU, LDVT, N
+             DOUBLE PRECISION   RESID
+       *     ..
+       *     .. Array Arguments ..
+             DOUBLE PRECISION   D( * ), E( * ), S( * ), U( LDU, * ),
+            $                   VT( LDVT, * ), WORK( * )
+       *     ..
+       *
+       *  Purpose
+       *  =======
+       *
+       *  DBDT03 reconstructs a bidiagonal matrix B from its SVD:
+       *     S = U' * B * V
+       *  where U and V are orthogonal matrices and S is diagonal.
+       *
+       *  The test ratio to test the singular value decomposition is
+       *     RESID = norm( B - U * S * VT ) / ( n * norm(B) * EPS )
+       *  where VT = V' and EPS is the machine precision.
+       *
+       *  Arguments
+       *  =========
+       *
+       *  UPLO    (input) CHARACTER*1
+       *          Specifies whether the matrix B is upper or lower bidiagonal.
+       *          = 'U':  Upper bidiagonal
+       *          = 'L':  Lower bidiagonal
+       *
+       *  N       (input) INTEGER
+       *          The order of the matrix B.
+       *
+       *  KD      (input) INTEGER
+       *          The bandwidth of the bidiagonal matrix B.  If KD = 1, the
+       *          matrix B is bidiagonal, and if KD = 0, B is diagonal and E is
+       *          not referenced.  If KD is greater than 1, it is assumed to be
+       *          1, and if KD is less than 0, it is assumed to be 0.
+       *
+       *  D       (input) DOUBLE PRECISION array, dimension (N)
+       *          The n diagonal elements of the bidiagonal matrix B.
+       *
+       *  E       (input) DOUBLE PRECISION array, dimension (N-1)
+       *          The (n-1) superdiagonal elements of the bidiagonal matrix B
+       *          if UPLO = 'U', or the (n-1) subdiagonal elements of B if
+       *          UPLO = 'L'.
+       *
+       *  U       (input) DOUBLE PRECISION array, dimension (LDU,N)
+       *          The n by n orthogonal matrix U in the reduction B = U'*A*P.
+       *
+       *  LDU     (input) INTEGER
+       *          The leading dimension of the array U.  LDU >= max(1,N)
+       *
+       *  S       (input) DOUBLE PRECISION array, dimension (N)
+       *          The singular values from the SVD of B, sorted in decreasing
+       *          order.
+       *
+       *  VT      (input) DOUBLE PRECISION array, dimension (LDVT,N)
+       *          The n by n orthogonal matrix V' in the reduction
+       *          B = U * S * V'.
+       *
+       *  LDVT    (input) INTEGER
+       *          The leading dimension of the array VT.
+       *
+       *  WORK    (workspace) DOUBLE PRECISION array, dimension (2*N)
+       *
+       *  RESID   (output) DOUBLE PRECISION
+       *          The test ratio:  norm(B - U * S * V') / ( n * norm(A) * EPS )
+       */
+    private void dbdt03(char uplo, int n, int kd, double[] d, double[] e, double[][] U,
+                        int ldu, double[] s, double[][] VT, int ldvt, double[] work,
+                        double[] resid) {
+        int i;
+        int j;
+        double bnorm;
+        double eps;
+        double work2[];
+        int p;
+        double absSum;
+        
+        // Quick return if possible
+        resid[0] = 0.0;
+        if (n <= 0) {
+            return;
+        }
+        
+        // Compute B - U * S * V' one column at a time.
+        bnorm = 0.0;
+        if (kd >= 1) {
+            // B is bidiagonal
+            if ((uplo == 'U') || (uplo == 'u')) {
+                // B is upper bidiagonal.
+                for (j = 1; j <= n; j++) {
+                    for (i = 1; i <= n; i++) {
+                        work[n+i-1] = s[i-1]*VT[i-1][j-1];
+                    }
+                    work2 = new double[n];
+                    for (p = 0; p < n; p++) {
+                        work2[p] = work[n+p];
+                    }
+                    dgemv('N', n, n, -1.0, U, ldu, work2, 1, 0.0, work, 1);
+                    work[j-1] = work[j-1] + d[j-1];
+                    if (j > 1) {
+                        work[j-2] = work[j-2] + e[j-2];
+                        bnorm = Math.max(bnorm, Math.abs(d[j-1]) + Math.abs(e[j-2]));
+                    }
+                    else {
+                        bnorm = Math.max(bnorm, Math.abs(d[j-1]));
+                    }
+                    absSum = 0.0;
+                    for (p = 0; p < n; p++) {
+                        absSum += Math.abs(work[p]);
+                    }
+                    resid[0] = Math.max(resid[0], absSum);
+                } // for (j = 1; j <= n; j++)
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { 
+                // B is lower bidiagonal.
+                for (j = 1; j <= n; j++) {
+                    for (i = 1; i <= n; i++) {
+                        work[n+i-1] = s[i-1] * VT[i-1][j-1];
+                    }
+                    work2 = new double[n];
+                    for (p = 0; p < n; p++) {
+                        work2[p] = work[n+p];
+                    }
+                    dgemv('N', n, n, -1.0, U, ldu, work2, 1, 0.0, work, 1);
+                    work[j-1] = work[j-1] + d[j-1];
+                    if (j < n) {
+                        work[j] = work[j] + e[j-1];
+                        bnorm = Math.max(bnorm, Math.abs(d[j-1]) + Math.abs(e[j-1]));
+                    }
+                    else {
+                        bnorm = Math.max(bnorm, Math.abs(d[j-1]));
+                    }
+                    absSum = 0.0;
+                    for (p = 0; p < n; p++) {
+                        absSum += Math.abs(work[p]);
+                    }
+                    resid[0] = Math.max(resid[0], absSum);
+                } // for (j = 1; j <= n; j++)
+            } // else
+        } // if (kd >= 1)
+        else {
+            // B is diagonal.
+            for (j = 1; j <= n; j++) {
+                for (i = 1; i <= n; i++) {
+                    work[n+i-1] = s[i-1] * VT[i-1][j-1];
+                }
+                work2 = new double[n];
+                for (p = 0; p < n; p++) {
+                    work2[p] = work[n+p];
+                }
+                dgemv('N', n, n, -1.0, U, ldu, work2, 1, 0.0, work, 1);
+                work[j-1] = work[j-1] + d[j-1];
+                absSum = 0.0;
+                for (p = 0; p < n; p++) {
+                    absSum += Math.abs(work[p]);
+                }
+                resid[0] = Math.max(resid[0], absSum);
+            } // for (j = 1; j <= n; j++)
+            bnorm = 0.0;
+            for (j = 0; j < n; j++) {
+                if (Math.abs(d[j]) > bnorm) {
+                    bnorm = Math.abs(d[j]);
+                }
+            }
+        } // else
+        
+        // Compute norm(B - U * S * V')/ (n * morm(B) * eps)
+        eps = dlamch('P'); // Precision
+        
+        if (bnorm <= 0.0) {
+            if (resid[0] != 0.0) {
+                resid[0] = 1.0/eps;
+            }
+        } // if (bnorm <= 0.0)
+        else {
+            if (bnorm >= resid[0]) {
+                resid[0] = (resid[0]/bnorm)/((double)n * eps);
+            }
+            else {
+                if (bnorm < 1.0) {
+                    resid[0] = (Math.min(resid[0], (double)n * bnorm)/bnorm)/((double)n * eps);
+                }
+                else {
+                    resid[0] = Math.min(resid[0]/bnorm, (double)n)/((double)n * eps);
+                }
+            }
+        } // else
+        return;
+    } // dbdt03
+    
+    /** This is a port of version 3.1 LAPACK test routine DSVDCH.
+    *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            INFO, N
+          DOUBLE PRECISION   TOL
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   E( * ), S( * ), SVD( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DSVDCH checks to see if SVD(1) ,..., SVD(N) are accurate singular
+    *  values of the bidiagonal matrix B with diagonal entries
+    *  S(1) ,..., S(N) and superdiagonal entries E(1) ,..., E(N-1)).
+    *  It does this by expanding each SVD(I) into an interval
+    *  [SVD(I) * (1-EPS) , SVD(I) * (1+EPS)], merging overlapping intervals
+    *  if any, and using Sturm sequences to count and verify whether each
+    *  resulting interval has the correct number of singular values (using
+    *  DSVDCT). Here EPS=TOL*MAX(N/10,1)*MAZHEP, where MACHEP is the
+    *  machine precision. The routine assumes the singular values are sorted
+    *  with SVD(1) the largest and SVD(N) smallest.  If each interval
+    *  contains the correct number of singular values, INFO = 0 is returned,
+    *  otherwise INFO is the index of the first singular value in the first
+    *  bad interval.
+    *
+    *  Arguments
+    *  ==========
+    *
+    *  N       (input) INTEGER
+    *          The dimension of the bidiagonal matrix B.
+    *
+    *  S       (input) DOUBLE PRECISION array, dimension (N)
+    *          The diagonal entries of the bidiagonal matrix B.
+    *
+    *  E       (input) DOUBLE PRECISION array, dimension (N-1)
+    *          The superdiagonal entries of the bidiagonal matrix B.
+    *
+    *  SVD     (input) DOUBLE PRECISION array, dimension (N)
+    *          The computed singular values to be checked.
+    *
+    *  TOL     (input) DOUBLE PRECISION
+    *          Error tolerance for checking, a multiplier of the
+    *          machine precision.
+    *
+    *  INFO    (output) INTEGER
+    *          =0 if the singular values are all correct (to within
+    *             1 +- TOL*MAZHEPS)
+    *          >0 if the interval containing the INFO-th singular value
+    *             contains the incorrect number of singular values.
+    */
+    private void dsvdch(int n, double[] s, double[] e, double[] svd, double tol, int[] info) {
+        int bpnt;
+        int count;
+        int numl[] = new int[1];
+        int numu[] = new int[1];
+        int tpnt;
+        double eps;
+        double lower;
+        double ovfl;
+        double tuppr;
+        double unfl;
+        double unflep;
+        double upper;
+        
+        // Get the machine constants
+        info[0] = 0;
+        if (n <= 0) {
+            return;
+        }
+        unfl = dlamch('S'); // Safe minimum;
+        ovfl = dlamch('O'); // Overflow
+        eps = dlamch('E') * dlamch('B');
+        
+        // unflep is chosen so that when an eigenvalue is multiplied by the
+        // scale factor sqrt(ovfl)*sqrt(sqrt(unfl))/mx in dsvdct, it exceeds
+        // sqrt(unfl), which is the lower limit for dsvdct.
+        
+        unflep = (Math.sqrt(Math.sqrt(unfl))/Math.sqrt(ovfl))*svd[0] + unfl/eps;
+        
+        // The value of eps works best when tol >= 10.
+        eps = tol * Math.max(n/10, 1)*eps;
+        
+        // tpnt points to singular value at right endpoint of interval
+        // bpnt points to singular value at left endpoint of interval
+        tpnt = 1;
+        bpnt = 1;
+        
+        // Begin loop over all intervals
+        do {
+            upper = (1.0 + eps) * svd[tpnt-1] + unflep;
+            lower = (1.0 - eps) * svd[bpnt-1] - unflep;
+            if (lower <= unflep) {
+                lower = -upper;
+            }
+            
+            // Begin loop merging overlapping intervals
+            do {
+                if (bpnt == n) {
+                    break;
+                }
+                tuppr = (1.0 + eps) * svd[bpnt] + unflep;
+                if (tuppr < lower) {
+                    break;
+                }
+                // Merge
+                
+                bpnt++;
+                lower = (1.0 - eps)*svd[bpnt-1] - unflep;
+                if (lower <= unflep) {
+                    lower = -upper;
+                }
+            } while(true);
+            
+            // Count singular values in interval [lower, upper]
+            dsvdct(n, s, e, lower, numl);
+            dsvdct(n, s, e, upper, numu);
+            count = numu[0] - numl[0];
+            if (lower < 0.0) {
+                count = count/2;
+            }
+            if (count != bpnt-tpnt+1) {
+                // Wrong number of singular values in interval
+                info[0] = tpnt;
+                break;
+            }
+            tpnt = bpnt + 1;
+            bpnt = tpnt;
+        } while (tpnt <= n);
+        return;
+    } // dsvdch
+    
+    /** This is a port of version 3.1 LAPACK test routine DSVDCT.
+    *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+    *     November 2006
+    *
+    *     .. Scalar Arguments ..
+          INTEGER            N, NUM
+          DOUBLE PRECISION   SHIFT
+    *     ..
+    *     .. Array Arguments ..
+          DOUBLE PRECISION   E( * ), S( * )
+    *     ..
+    *
+    *  Purpose
+    *  =======
+    *
+    *  DSVDCT counts the number NUM of eigenvalues of a 2*N by 2*N
+    *  tridiagonal matrix T which are less than or equal to SHIFT.  T is
+    *  formed by putting zeros on the diagonal and making the off-diagonals
+    *  equal to S(1), E(1), S(2), E(2), ... , E(N-1), S(N).  If SHIFT is
+    *  positive, NUM is equal to N plus the number of singular values of a
+    *  bidiagonal matrix B less than or equal to SHIFT.  Here B has diagonal
+    *  entries S(1), ..., S(N) and superdiagonal entries E(1), ... E(N-1).
+    *  If SHIFT is negative, NUM is equal to the number of singular values
+    *  of B greater than or equal to -SHIFT.
+    *
+    *  See W. Kahan "Accurate Eigenvalues of a Symmetric Tridiagonal
+    *  Matrix", Report CS41, Computer Science Dept., Stanford University,
+    *  July 21, 1966
+    *
+    *  Arguments
+    *  =========
+    *
+    *  N       (input) INTEGER
+    *          The dimension of the bidiagonal matrix B.
+    *
+    *  S       (input) DOUBLE PRECISION array, dimension (N)
+    *          The diagonal entries of the bidiagonal matrix B.
+    *
+    *  E       (input) DOUBLE PRECISION array of dimension (N-1)
+    *          The superdiagonal entries of the bidiagonal matrix B.
+    *
+    *  SHIFT   (input) DOUBLE PRECISION
+    *          The shift, used as described under Purpose.
+    *
+    *  NUM     (output) INTEGER
+    *          The number of eigenvalues of T less than or equal to SHIFT.
+    */
+    private void dsvdct(int n, double[] s, double[] e, double shift, int[] num) {
+        int i;
+        double m1;
+        double m2;
+        double mx;
+        double ovfl;
+        double sov;
+        double sshift;
+        double ssun;
+        double sun;
+        double tmp;
+        double tom;
+        double u;
+        double unfl;
+        
+        // Get machine constants
+        unfl = 2 * dlamch('S'); // Sage minimum
+        ovfl = 1.0/unfl;
+        
+        // Find largest entry
+        mx = Math.abs(s[0]);
+        for (i = 1; i <= n-1; i++) {
+            mx = Math.max(mx, Math.max(Math.abs(s[i]), Math.abs(e[i-1])));
+        }
+        
+        if (mx == 0.0) {
+            if (shift < 0.0) {
+                num[0] = 0;
+            }
+            else {
+                num[0] = 2*n;
+            }
+        } // if (mx == 0.0)
+        
+        // Compute scale factors as in Kahn's report
+        sun = Math.sqrt(unfl);
+        ssun = Math.sqrt(sun);
+        sov = Math.sqrt(ovfl);
+        tom = ssun * sov;
+        if (mx <= 1.0) {
+            m1 = 1.0/mx;
+            m2 = tom;
+        }
+        else {
+            m1 = 1.0;
+            m2 = tom/mx;
+        }
+        
+        // Being counting
+        u = 1.0;
+        num[0] = 0;
+        sshift = (shift*m1)*m2;
+        u = -sshift;
+        if (u <= sun) {
+            if (u <= 0.0) {
+                num[0]++;
+                if (u > -sun) {
+                    u = -sun;
+                }
+            } // if (u <= 0.0)
+            else {
+                u = sun;
+            }
+        } // if (u <= sun)
+        tmp = (s[0]*m1)*m2;
+        u = -tmp*(tmp/u) - sshift;
+        if (u <= sun) {
+            if (u <= 0.0) {
+                num[0]++;
+                if (u > -sun) {
+                    u = -sun;
+                }
+            } // if (u <= 0.0)
+            else {
+                u = sun;
+            }
+        } // if (u <= sun)
+        for (i = 1; i <= n-1; i++) {
+            tmp = (e[i-1]*m1)*m2;
+            u = -tmp*(tmp/u) - sshift;
+            if (u <= sun) {
+                if (u <= 0.0) {
+                    num[0]++;
+                    if (u > -sun) {
+                        u = -sun;
+                    }
+                } // if (u <= 0.0)
+                else {
+                    u = sun;
+                }
+            } // if (u <= sun)
+            tmp = (s[i]*m1)*m2;
+            u = -tmp*(tmp/u) - sshift;
+            if (u <= sun) {
+                if (u <= 0.0) {
+                    num[0]++;
+                    if (u > -sun) {
+                        u = -sun;
+                    }
+                } // if (u <= 0.0)
+                else {
+                    u = sun;
+                }
+            } // if (u <= sun)
+        } // for (i = 1; i <= n-1; i++)
+        return;
+    } // dsvdct
 }
