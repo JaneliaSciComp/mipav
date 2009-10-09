@@ -36,7 +36,7 @@ import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.mentorgen.tools.profile.runtime.Profile;
 
-public class VolumeImageViewerPoint extends JavaApplication3D
+public class ImageRegistrationGPU extends JavaApplication3D
 //implements GLEventListener, KeyListener
 {
     protected static int m_iScreenCaptureCounter = 0;
@@ -62,7 +62,7 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     private OpenGLFrameBuffer m_kEntropyOut;
 
     private OpenGLFrameBuffer m_kTransformOut;
-    private OpenGLFrameBuffer m_kTransformNewOut;
+    //private OpenGLFrameBuffer m_kTransformNewOut;
     private OpenGLFrameBuffer m_kBracketOut;
     private OpenGLFrameBuffer m_kBracketNewOut;
     
@@ -111,10 +111,10 @@ public class VolumeImageViewerPoint extends JavaApplication3D
     
     private float[] m_afBracket = new float[3*4];
     
-    public VolumeImageViewerPoint( ModelSimpleImage kTarget, ModelSimpleImage kMoving )
+    public ImageRegistrationGPU( ModelSimpleImage kTarget, ModelSimpleImage kMoving )
     {
         //super( "VolumeImageViewer", 0, 0, kImageA.extents[0],kImageA.extents[1],
-        super( "VolumeImageViewer", 0, 0, 256, 256,
+        super( "ImageRegistrationGPU", 0, 0, 256, 256,
                 new ColorRGBA( 0.0f,0.0f,0.0f,1.0f ) );
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
@@ -129,9 +129,9 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
     } 
     
-    public static VolumeImageViewerPoint create( ModelSimpleImage kTarget, ModelSimpleImage kMoving )
+    public static ImageRegistrationGPU create( ModelSimpleImage kTarget, ModelSimpleImage kMoving )
     {
-        final VolumeImageViewerPoint kWorld = new VolumeImageViewerPoint( kTarget, kMoving );
+        final ImageRegistrationGPU kWorld = new ImageRegistrationGPU( kTarget, kMoving );
         final JFrame frame = new JFrame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
         
@@ -354,11 +354,18 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_kFromOrigin = convertTo4D(kFromOrigin);
         m_fRigid = rigid;
         m_fDim = dim;
-        for ( int i = 0; i < pt.length; i++ )
+
+        for ( int i = 0; i < startPoint.length; i++ )
         {
             m_afStartPoint[i] = (float)startPoint[i];
-            m_afPt[i] = (float)pt[i];
+        }
+        for ( int i = 0; i < unitDirections.length; i++ )
+        {
             m_afUnitDirections[i] = (float)unitDirections[i];
+        }
+        for ( int i = 0; i < pt.length; i++ )
+        {
+            m_afPt[i] = (float)pt[i];
         }
         m_fPtLength = ptLength;
         m_fMinDist = (float)fMinDist;
@@ -372,6 +379,10 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         {
             m_kCalcTransform.updateParameters( m_kToOrigin, m_kFromOrigin, 
                     m_fRigid, m_fDim, m_afStartPoint, m_afPt, m_fPtLength, m_afUnitDirections, m_fUnitTolerance, m_fMinDist );
+        }
+        if ( m_kImageLineMinPass2a != null )
+        {
+            m_kImageLineMinPass2a.setMinDist(m_fMinDist);
         }
 
         int index = 0;
@@ -762,17 +773,22 @@ public class VolumeImageViewerPoint extends JavaApplication3D
         m_kImagePointsDual.AttachEffect( m_kImageLineMinDual );
         boolean bEarly = false;
         Texture kTarget = null;
+        OpenGLFrameBuffer kCurrentBracket = m_kBracketOut;
+        OpenGLFrameBuffer kNewBracket = m_kBracketNewOut;
+        OpenGLFrameBuffer kTempBracket;
         for ( int i = 0; i < 100; i++ )
         {
+            m_kCalcTransform.SetTexture( kCurrentBracket.GetTarget(0), 0, 0 );
+            m_kImageLineMinPass2a.SetTexture( kCurrentBracket.GetTarget(0), 0, 0 );
+            
             // 1. Create the transform matrix based on the current bracket.
-            m_pkRenderer.Resize(m_kTransformNewOut.GetTarget(0).GetImage().GetBound(0),
-                    m_kTransformNewOut.GetTarget(0).GetImage().GetBound(1));
-            m_kTransformNewOut.Enable();
+            m_pkRenderer.Resize(m_kTransformOut.GetTarget(0).GetImage().GetBound(0),
+                    m_kTransformOut.GetTarget(0).GetImage().GetBound(1));
+            m_kTransformOut.Enable();
             m_pkRenderer.ClearColorDepth();
             //m_pkRenderer.ClearBuffers();
             m_pkRenderer.Draw(m_kTransformPoints);
-            m_pkRenderer.FrameBufferToTexture( m_kTransformOut.GetTarget(0) );
-            m_kTransformNewOut.Disable();    
+            m_kTransformOut.Disable();    
             /*
             kTarget = m_kTransformOut.GetTarget(0);
             m_pkRenderer.GetTexImage( kTarget );
@@ -812,56 +828,66 @@ public class VolumeImageViewerPoint extends JavaApplication3D
             // 4. Render bracket points w/LineMin2 shader
             m_kBracketPoints.DetachAllEffects();
             m_kBracketPoints.AttachEffect(m_kImageLineMinPass2a);
-            m_pkRenderer.Resize(m_kBracketNewOut.GetTarget(0).GetImage().GetBound(0),
-                    m_kBracketNewOut.GetTarget(0).GetImage().GetBound(1));
-            m_kBracketNewOut.Enable();
+            m_pkRenderer.Resize(kNewBracket.GetTarget(0).GetImage().GetBound(0),
+                    kNewBracket.GetTarget(0).GetImage().GetBound(1));
+            kNewBracket.Enable();
             m_pkRenderer.ClearColorDepth();
             //m_pkRenderer.ClearBuffers();
             m_pkRenderer.Draw(m_kBracketPoints);
-            m_pkRenderer.FrameBufferToTexture( m_kBracketOut.GetTarget(0) );
-            m_kBracketNewOut.Disable();            
+            kNewBracket.Disable();            
+            kTempBracket = kCurrentBracket;
+            kCurrentBracket = kNewBracket;
+            kNewBracket = kTempBracket;
             
             if ( (i%6) == 0 )
             {
-                kTarget = m_kBracketOut.GetTarget(0);
-                m_pkRenderer.GetTexImage( kTarget );
+                //kTarget = m_kBracketOut.GetTarget(0);
+                kTarget = kCurrentBracket.GetTarget(0);
+                m_pkRenderer.GetTexImage( kTarget );  
+                /*
+                System.err.println("");
+                System.err.println("");
+                System.err.println( "GPU BracketA = " + kTarget.GetImage().GetFloatData()[0] + " " + kTarget.GetImage().GetFloatData()[1]);
+                System.err.println( "GPU BracketB = " + kTarget.GetImage().GetFloatData()[4] + " " + kTarget.GetImage().GetFloatData()[5]);
+                System.err.println( "GPU BracketC = " + kTarget.GetImage().GetFloatData()[8] + " " + kTarget.GetImage().GetFloatData()[9]);                
+                System.err.println( "   " + i + " xNew = " + kTarget.GetImage().GetFloatData()[3] + " yNew = " + 
+                        kTarget.GetImage().GetFloatData()[6]  + " case: " + kTarget.GetImage().GetFloatData()[7] + " " + 
+                        kTarget.GetImage().GetFloatData()[10] + " " + 
+                        kTarget.GetImage().GetFloatData()[11]);
+                        */
                 if ( (Math.abs(kTarget.GetImage().GetFloatData()[8] - kTarget.GetImage().GetFloatData()[0]) <= m_fUnitTolerance) )
                 {
                     m_afBracketB[0] = kTarget.GetImage().GetFloatData()[4];
                     m_afBracketB[1] = kTarget.GetImage().GetFloatData()[5];
                     bEarly = true;
-                    /*
-                    System.err.println("");
-                    System.err.println("");
-                    System.err.println( "GPU BracketA = " + kTarget.GetImage().GetFloatData()[0] + " " + kTarget.GetImage().GetFloatData()[1]);
-                    System.err.println( "GPU BracketB = " + kTarget.GetImage().GetFloatData()[4] + " " + kTarget.GetImage().GetFloatData()[5]);
-                    System.err.println( "GPU BracketC = " + kTarget.GetImage().GetFloatData()[8] + " " + kTarget.GetImage().GetFloatData()[9]);
-                
-                    System.err.println( "   " + i + " xNew = " + kTarget.GetImage().GetFloatData()[3] + " yNew = " + 
-                            kTarget.GetImage().GetFloatData()[6] );
-                    System.err.println( "    " + " case: " + kTarget.GetImage().GetFloatData()[7] + " " + 
-                            kTarget.GetImage().GetFloatData()[10] + " " + 
-                            kTarget.GetImage().GetFloatData()[11]);
-                    bEarly = false;
-*/
                     break;
+                }
+                if ( kTarget.GetImage().GetFloatData()[3] == 0 )
+                {
+                    m_afBracketB[0] = kTarget.GetImage().GetFloatData()[4];
+                    m_afBracketB[1] = kTarget.GetImage().GetFloatData()[5];
+                    bEarly = true;
+                    System.err.println( "BREAK EARLY BAD");
+                    break;    
                 }
             }
         }
         if ( !bEarly )
         {
-            kTarget = m_kBracketOut.GetTarget(0);
+            //kTarget = m_kBracketOut.GetTarget(0);
+            kTarget = kCurrentBracket.GetTarget(0);
             m_pkRenderer.GetTexImage( kTarget );
             m_afBracketB[0] = kTarget.GetImage().GetFloatData()[4];
             m_afBracketB[1] = kTarget.GetImage().GetFloatData()[5];
-
-            //System.err.println("");
-            //System.err.println("");
-            //System.err.println( "GPU BracketA = " + kTarget.GetImage().GetFloatData()[0] + " " + kTarget.GetImage().GetFloatData()[1]);
-            //System.err.println( "GPU BracketB = " + kTarget.GetImage().GetFloatData()[4] + " " + kTarget.GetImage().GetFloatData()[5]);
-            //System.err.println( "GPU BracketC = " + kTarget.GetImage().GetFloatData()[8] + " " + kTarget.GetImage().GetFloatData()[9]);
-        
+/*
+            System.err.println("");
+            System.err.println("");
+            System.err.println( "GPU BracketA = " + kTarget.GetImage().GetFloatData()[0] + " " + kTarget.GetImage().GetFloatData()[1]);
+            System.err.println( "GPU BracketB = " + kTarget.GetImage().GetFloatData()[4] + " " + kTarget.GetImage().GetFloatData()[5]);
+            System.err.println( "GPU BracketC = " + kTarget.GetImage().GetFloatData()[8] + " " + kTarget.GetImage().GetFloatData()[9]);
+        */
         }
+        //System.err.println( m_afBracketB[0] + " " + m_afBracketB[1] );
     }
     
     private void cleanUp()
@@ -966,9 +992,9 @@ public class VolumeImageViewerPoint extends JavaApplication3D
 
         CreateTransformMesh();
         m_kTransformOut = CreateRenderTargetInit( "Transform", 1, 4 );
-        m_kTransformNewOut = CreateRenderTargetInit( "TransformNew", 1, 4 );
+        //m_kTransformNewOut = CreateRenderTargetInit( "TransformNew", 1, 4 );
         m_kBracketOut.GetTarget(0).GetImage().SetData( m_afBracket, 1, 4 );
-        m_kCalcTransform = new LineMinimizationEffect( m_kBracketOut.GetTarget(0), m_kTransformOut.GetTarget(0),
+        m_kCalcTransform = new LineMinimizationEffect( m_kBracketOut.GetTarget(0),
                 (m_kTarget.nDims == 2),
                 m_kToOrigin, m_kFromOrigin,
                 m_fRigid, m_fDim, m_afStartPoint, m_afPt, m_fPtLength,

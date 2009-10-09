@@ -1,6 +1,5 @@
 //----------------------------------------------------------------------------
 uniform sampler2D bracketImage;
-uniform sampler2D transformImage;
 
 uniform mat4 toOrigin;
 uniform mat4 fromOrigin;
@@ -50,7 +49,7 @@ mat4 constructPoint( mat4 defaultPoint, mat4 point )
         tx = point[1][0];
         ty = point[2][0];
         sx = point[3][0];
-        sy = point[0][1];
+        sy = point[3][0];
     }
     else if (ptLength > 4.0)
     {
@@ -94,10 +93,10 @@ mat4 constructPoint( mat4 defaultPoint, mat4 point )
     M01 = sy * M01;
     M11 = sy * M11;
 
-//     mat4 matrix = mat4( r, tx, ty, 0.0,
-//                         sx, sy, skY, skY,
-//                         0.0, 0.0, 1.0, 0.0,
-//                         0.0, 0.0, 0.0, 1.0 );
+//      mat4 matrix = mat4( r, tx, ty, 0.0,
+//                          sx, sy, skY, skY,
+//                          0.0, 0.0, 1.0, 0.0,
+//                          0.0, 0.0, 0.0, 1.0 );
      mat4 matrix = mat4( M00, M01, 0.0, M02,
                          M10, M11, 0.0, M12,
                          0.0, 0.0, 1.0, 0.0,
@@ -109,9 +108,8 @@ mat4 oneDimension( float x )
 {
     mat4 xt = pt + x * unit_directions;
     mat4 matrix = constructPoint( startPoint, xt );
-    //return toOrigin * matrix * fromOrigin;
     return fromOrigin * matrix * toOrigin;
-    //return toOrigin;
+    //return matrix;
 }
 
 float estimateMinimum(vec2 A, vec2 B, vec2 C )

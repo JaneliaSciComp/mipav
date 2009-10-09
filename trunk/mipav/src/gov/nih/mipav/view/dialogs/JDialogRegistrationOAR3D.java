@@ -1578,7 +1578,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         if (!doColor) {
             comboBoxCostFunct.addItem("Normalized mutual information");
             comboBoxCostFunct.addItem("Normalized mutual information - GPU");
-            //comboBoxCostFunct.addItem("Normalized mutual information - GPU2");
+            comboBoxCostFunct.addItem("Normalized mutual information - GPU2");
         }
 
         // comboBoxCostFunct.addItem("Normalized mutual information smoothed");

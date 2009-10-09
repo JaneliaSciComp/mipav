@@ -6,7 +6,7 @@ import gov.nih.mipav.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewerPoint;
+import gov.nih.mipav.view.renderer.WildMagic.Render.ImageRegistrationGPU;
 
 import java.awt.*;
 
@@ -162,7 +162,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
     /** DOCUMENT ME! */
     private double yEnd2;
 
-    VolumeImageViewerPoint m_kGPUCost = null;
+    private ImageRegistrationGPU m_kGPUCost = null;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -369,7 +369,7 @@ public class AlgorithmCostFunctions2D implements AlgorithmOptimizeFunctionBase {
         super.finalize();
     }
     
-    public void setGPUCost( VolumeImageViewerPoint kGPUCost )
+    public void setGPUCost( ImageRegistrationGPU kGPUCost )
     {
         m_kGPUCost = kGPUCost;
     }
