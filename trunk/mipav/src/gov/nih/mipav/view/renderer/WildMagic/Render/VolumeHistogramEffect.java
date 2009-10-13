@@ -29,7 +29,7 @@ implements StreamInterface
     int m_iHeight;
     int[] m_aiExtents = new int[3];
     Matrix4f m_kImageTransform;
-    float m_fZStep, m_fZSlice;
+    float m_fZSlice = 0.0f;
 
     public VolumeHistogramEffect ( Texture kTexA, Texture kTexB, 
             float fMinA, float fMaxA, float fMinB, float fMaxB,
@@ -110,17 +110,17 @@ implements StreamInterface
         if ( iType == COLLAPSE_COLUMNS )
         {
             kVShader = new VertexShader("VolumeHistogramColumnsV", true);
-            kPShader = new PixelShader("VolumeHistogramP", true);
+            kPShader = new PixelShader("VolumeHistogramColumnsP", true);
         }
         else if ( iType == COLLAPSE_ROWS )
         {
             kVShader = new VertexShader("VolumeHistogramRowsV", true);
-            kPShader = new PixelShader("VolumeHistogramP", true);
+            kPShader = new PixelShader("VolumeHistogramRowsP", true);
         }
         else
         {
             kVShader = new VertexShader("VolumeHistogramPassThroughV", true);
-            kPShader = new PixelShader("VolumeHistogramP", true);
+            kPShader = new PixelShader("TextureP", true);
         }
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
@@ -256,18 +256,13 @@ implements StreamInterface
     }
 
 
-    public void ZSlice( float fZ, float fZStep )
+    public void ZSlice( float fZ )
     {
         m_fZSlice = fZ;
-        m_fZStep = fZStep;
         Program pkCProgram = GetCProgram(0);
         if ( pkCProgram != null && pkCProgram.GetUC("ZSlice") != null ) 
         {
             pkCProgram.GetUC("ZSlice").GetData()[0] = m_fZSlice;
-        } 
-        if ( pkCProgram != null && pkCProgram.GetUC("ZStep") != null ) 
-        {
-            pkCProgram.GetUC("ZStep").GetData()[0] = m_fZStep;
         } 
         //System.err.println( "ZSlice: " + m_fZSlice + " Step: " + m_fZStep + " " + (m_fZSlice + m_fZStep) );
     }

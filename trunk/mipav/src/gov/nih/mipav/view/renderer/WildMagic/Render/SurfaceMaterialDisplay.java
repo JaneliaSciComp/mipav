@@ -77,7 +77,11 @@ implements GLEventListener, KeyListener
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
-    public void display(GLAutoDrawable arg0) {
+    public void display(GLAutoDrawable arg0) {      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
         m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene())
         {
@@ -104,7 +108,11 @@ implements GLEventListener, KeyListener
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
      */
-    public void init(GLAutoDrawable arg0) {
+    public void init(GLAutoDrawable arg0) {      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
         m_bInit = true;
         m_pkRenderer.InitializeState();
         super.OnInitialize();
@@ -139,7 +147,11 @@ implements GLEventListener, KeyListener
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#reshape(javax.media.opengl.GLAutoDrawable, int, int, int, int)
      */
-    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)

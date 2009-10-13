@@ -23,6 +23,7 @@ import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.sun.opengl.util.Animator;
 
@@ -75,6 +76,10 @@ public class VolumeImageExtract extends VolumeImageViewer
         if ( m_kAnimator == null )
         {
             return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
         while ( m_bDisplayFirst )
         {

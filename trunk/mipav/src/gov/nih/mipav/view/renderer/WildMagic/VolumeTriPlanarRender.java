@@ -389,6 +389,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         
         if ( m_kVolumeImageA == null ) {
         	return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
         
         if ( !m_bInit )
@@ -985,6 +989,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void init(GLAutoDrawable arg0) {	
     	if ( m_kVolumeImageA == null ) {
         	return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
     	
         m_bInit = true;

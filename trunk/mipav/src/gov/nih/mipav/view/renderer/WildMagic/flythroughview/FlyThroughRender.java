@@ -184,7 +184,11 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
      * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
      */
     public void display(GLAutoDrawable arg0)
-    {
+    {      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
         if ( !m_bInit )
         {
             init(arg0);
@@ -441,7 +445,11 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /* (non-Javadoc)
      * @see javax.media.opengl.GLEventListener#init(javax.media.opengl.GLAutoDrawable)
      */
-    public void init(GLAutoDrawable arg0) {
+    public void init(GLAutoDrawable arg0) {      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
         m_pkRenderer.InitializeState();
         m_pkRenderer.SetLineWidth(3);
 

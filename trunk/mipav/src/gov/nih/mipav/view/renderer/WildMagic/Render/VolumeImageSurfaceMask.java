@@ -15,6 +15,7 @@ import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibGraphics.Rendering.WireframeState;
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.sun.opengl.util.Animator;
 
@@ -56,6 +57,10 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
         if ( m_kAnimator == null )
         {
             return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
         boolean bSurfaceAdded = true;
         boolean bDrawSurface = false;

@@ -89,7 +89,7 @@ public class Multieffects extends JavaApplication3D
     }
 
     public void display(GLAutoDrawable arg0) {
-        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
         MeasureTime();
         
@@ -124,6 +124,7 @@ public class Multieffects extends JavaApplication3D
     }
 
     public void init(GLAutoDrawable arg0) {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         m_pkRenderer.InitializeState();
         super.OnInitialize();
 
@@ -152,7 +153,7 @@ public class Multieffects extends JavaApplication3D
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0)
         {
             if (m_pkRenderer != null)

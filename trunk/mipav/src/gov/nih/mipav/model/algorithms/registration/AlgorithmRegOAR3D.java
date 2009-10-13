@@ -2083,7 +2083,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                 ((costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
                         (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) )
         {
-            System.err.println( "Level 8 " );
+            //System.err.println( "Level 8 " );
             m_kGPUCost.initImages( ref, input, 32 );
             cost.setGPUCost(m_kGPUCost);
         }
@@ -2437,7 +2437,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                 ((costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
                         (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) )
         {
-            System.err.println( "Level 4 " );
+            //System.err.println( "Level 4 " );
             m_kGPUCost.initImages( ref, input, 64 );
             cost.setGPUCost(m_kGPUCost);
         }
@@ -2708,7 +2708,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                 ((costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
                         (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) )
         {
-            System.err.println( "Level 1 " );
+            //System.err.println( "Level 1 " );
             m_kGPUCost.initImages( ref, input, 256 );
             cost.setGPUCost(m_kGPUCost);
         }
@@ -2802,7 +2802,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                 ((costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU) ||
                         (costChoice == AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM)) )
         {
-            System.err.println( "Level 2 " );
+            //System.err.println( "Level 2 " );
             m_kGPUCost.initImages( ref, input, 128 );
             cost.setGPUCost(m_kGPUCost);
         }

@@ -180,7 +180,7 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
      * drawn, and the back-buffer displayed with Renderer.DisplayBackBuffer().
      */
     public void display(GLAutoDrawable arg0) {
-        // ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
         MeasureTime();
         if (MoveCamera()) {
@@ -248,6 +248,7 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
      * up the camera model, creates the scene, and initializes the culling object with the camera and scene objects.
      */
     public void init(GLAutoDrawable arg0) {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         m_pkRenderer.InitializeState();
         super.OnInitialize();
 
@@ -342,7 +343,7 @@ public class Iridescence extends JavaApplication3D implements GLEventListener, K
     }
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-        // ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if (iWidth > 0 && iHeight > 0) {
             if (m_pkRenderer != null) {
                 m_pkRenderer.Resize(iWidth, iHeight);

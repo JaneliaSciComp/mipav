@@ -1,5 +1,5 @@
 
-uniform sampler3D bVolumeImageA_TEXUNIT1; 
+uniform sampler3D bVolumeImageA; 
 uniform float DoClip;
 uniform float clipX;
 uniform float clipXInv;
@@ -72,7 +72,7 @@ void main()
     }
     else
     {
-        gl_FragColor = texture3D( bVolumeImageA_TEXUNIT1,  gl_TexCoord[0].xyz );
+        gl_FragColor = texture3D( bVolumeImageA,  gl_TexCoord[0].xyz );
     }
     gl_FragColor.a = 1;
 }
