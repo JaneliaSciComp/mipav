@@ -1732,8 +1732,8 @@ public class GeneralizedInverse {
     // There are 4 self tests used in testing the port of dgelss.
     // 1.) dchkqr_test() tests dgeqrf, dorgqr, and dormqr.  All 30744 tests run passed the threshold.
     // 2.) dchklq_test() tests dgelqf, dorglq, and dormlq.  All 30744 tests run passed the threshold.
-    // 3.) dchkbd_test() tests dgebrd, dorgbr, and dbdsqr.
-    // 4.) ddrvls_test() tests dgelss.  Not yet working.  7343 out of 17640 tests failed to pass the threshold.
+    // 3.) dchkbd_test() tests dgebrd, dorgbr, and dbdsqr.  94 out of 3430 tests failed to pass the threshold.
+    // 4.) ddrvls_test() tests dgelss.  Not yet working.  1125 out of 17640 tests failed to pass the threshold.
     
     /* This is a port of dgelss, LAPACK driver routine from version 3.2
     *
@@ -19998,8 +19998,8 @@ ib = Math.min(nb, k-i+1);
                 }
             } // else if (idist == 3)
 
-            return;
         } // for (iv = 1; iv <= n; iv += lv/2)
+        return;
     } // dlarnv
     
     /**
@@ -23887,7 +23887,6 @@ ib = Math.min(nb, k-i+1);
         int ntests = 4;
         int smlsiz = 25;
         int iseedy[] = new int[]{1988, 1989, 1990, 1991};
-        char trans;
         String path;
         int crank[] = new int[1];
         int i;
@@ -23905,18 +23904,15 @@ ib = Math.min(nb, k-i+1);
         int lda;
         int ldb;
         int ldwork;
-        int lwlsy;
         int lwork;
         int m;
         int mnmin;
         int n;
         int nb;
-        int ncols;
         int nerrs;
         int nfail;
         int nlvl;
         int nrhs;
-        int nrows;
         int nrun;
         int rank[] = new int[1];
         double eps;
@@ -24349,17 +24345,6 @@ ib = Math.min(nb, k-i+1);
                 }
             }
             dgemm('N', 'N', m, nrhs, rank[0], 1.0, A, lda, array1, rank[0], 0.0, B, ldb);
-            boolean nanfound = false;
-            for (p = 0; p < m; p++) {
-                for (q = 0; q < nrhs; q++) {
-                    if (Double.isNaN(B[p][q])) {
-                        nanfound = true;
-                    }
-                }
-            }
-            if (nanfound) {
-                MipavUtil.displayError("m = " + m + " n = " + n + " nrhs = " + nrhs);  
-            }
             
             // work space used <= mn * nrhs
             // generate (unscaled) matrix A
