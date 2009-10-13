@@ -13,7 +13,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.ImageRegistrationGPU;
 
 import java.util.*;
 
-import com.mentorgen.tools.profile.runtime.Profile;
+//import com.mentorgen.tools.profile.runtime.Profile;
 
 
 /**

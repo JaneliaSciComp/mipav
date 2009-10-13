@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import com.mentorgen.tools.profile.runtime.Profile;
+//import com.mentorgen.tools.profile.runtime.Profile;
 
 /**
  * This is an automatic registration method based on FLIRT. FLIRT stands for

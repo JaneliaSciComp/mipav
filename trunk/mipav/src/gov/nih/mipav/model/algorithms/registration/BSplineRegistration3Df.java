@@ -6,6 +6,7 @@ import WildMagic.LibFoundation.Mathematics.*;
 import gov.nih.mipav.model.structures.BSplineLattice3Df;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.util.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -152,7 +153,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         }
 
         // Update the initial registered source and error images.
-        if(nthreads < 2){
+        if(!Preferences.isMultiThreadingEnabled() ){
         	updateSamplesST(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
         }else{
             updateSamplesMT(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);        	
@@ -391,7 +392,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         }
 
         // Update the initial registered source and error images.
-        if(nthreads < 2){
+        if(!Preferences.isMultiThreadingEnabled()){
         	kReg.updateSamplesST(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
         }else{
         	kReg.updateSamplesMT(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
@@ -457,7 +458,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         }
 
         // Update the initial registered source and error images.
-        if(nthreads < 2){
+        if(!Preferences.isMultiThreadingEnabled()){
         	kReg.updateSamplesST(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);
         }else{
         	kReg.updateSamplesMT(0, kImageTrg.extents[0] - 1, 0, kImageTrg.extents[1] - 1, 0, kImageTrg.extents[2] - 1);        	
@@ -965,7 +966,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
      * @param  iControlZ  int Identifies the control point in the 3D lattice.
      */
     protected void updateControlPointSamples(int iControlX, int iControlY, int iControlZ) {
-    	if(nthreads < 2){
+    	if(!Preferences.isMultiThreadingEnabled()){
     		updateSamplesST(m_kBSplineBasisX.GetControlPointSampleIndexMin(iControlX),
                       m_kBSplineBasisX.GetControlPointSampleIndexMax(iControlX),
                       m_kBSplineBasisY.GetControlPointSampleIndexMin(iControlY),
@@ -1064,7 +1065,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                 }
             }
         }
-        System.out.println("Time consumed by updateSamplesST(): " + (System.nanoTime()-startTime) + "," + ((iMaxX-iMinX)*(iMaxY-iMinY)*(iMaxZ-iMinZ)));
+        //System.out.println("Time consumed by updateSamplesST(): " + (System.nanoTime()-startTime) + "," + ((iMaxX-iMinX)*(iMaxY-iMinY)*(iMaxZ-iMinZ)));
     }
 
     protected void updateSamplesMT(int iMinX, int iMaxX, int iMinY, int iMaxY, int iMinZ, int iMaxZ) {
@@ -1091,7 +1092,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
     	float stepX = (float)(iMaxX-iMinX+1)/nx;
     	float stepY = (float)(iMaxY-iMinY+1)/ny;
     	float stepZ = (float)(iMaxZ-iMinZ+1)/nz;
-        final CountDownLatch doneSignal = new CountDownLatch(4);
+        final CountDownLatch doneSignal = new CountDownLatch(nthreads);
         for(int i = 0; i < nz; i++){
         	final int startZ = iMinZ + (int)(i*stepZ);
         	final int endZ = iMinZ + (int)((i+1)*stepZ);
