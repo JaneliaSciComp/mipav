@@ -154,8 +154,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     {
         m_kVolumeImageA = null;
         m_kVolumeImageB = null;
-        m_kPShaderInit.dispose();
-        m_kPShaderInit = null;
+        //m_kPShaderInit.dispose();
+        //m_kPShaderInit = null;
 
         m_kSceneTarget = null;;
   
