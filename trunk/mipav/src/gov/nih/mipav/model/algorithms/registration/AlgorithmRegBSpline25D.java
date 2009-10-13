@@ -275,7 +275,7 @@ iteration:
                     // point is moved once per iteration.
                     double dError = kReg.getError();
 
-                    if (((dErrorPrev - dError) / dErrorPrev) <= kOptions.fConvergenceLimit) {
+                    if ((Math.abs(dErrorPrev - dError) / dErrorPrev) <= kOptions.fConvergenceLimit) {
                         break;
                     }
 
