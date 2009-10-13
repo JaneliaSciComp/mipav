@@ -19,9 +19,11 @@ import gov.nih.mipav.view.renderer.J3D.surfaceview.SurfaceRender;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -68,7 +70,39 @@ import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
  * @see  FileSurfaceXML.java
  */
 public class FileSurface_WM {
-    //~ Methods --------------------------------------------------------------------------------------------------------
+
+	/** flag indicates to flip y, z coordinate or not. */
+	private static boolean flip;
+	
+	/** flag indicates to read dicom matrix or not. */
+	private static boolean dicom;
+	
+	/** inverse dicom matrix array. */
+	private static double[][] inverseDicomArray;
+	
+	/** inverset dicom matrix. */
+	private static TransMatrix inverseDicomMatrix = new TransMatrix(4);
+	
+	/** image x, y, z orientation. */
+	private static int[] direction = new int[3];
+	
+	/** image start location. */
+	private static float[] startLocation = new float[3];
+	
+	/** image volume bounding box. */
+	private static float[] box = new float[3];
+	
+	/** coordinate used to transform data point from image coordinate to dicom coordinate. */
+	private static float[] tCoord = new float[3];
+	
+	/** coordinate used to transform data point from image coordinate to dicom coordinate */
+	private static float[] coord = new float[3];
+	
+	/** dicom matrix file. */
+	private static File dicomMatrixFile = null;
+	
+	
+	//~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Load the clod mesh from a binary file. The caller must have already opened the file and read the mesh type (0 =
@@ -832,14 +866,17 @@ public class FileSurface_WM {
         }
         else if ( kExt.equals(".ply" ) )
         {
+        	saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
             saveSinglePlyMesh(kName, null, kMesh);
         }
         else if ( kExt.equals(".stla" ) )
         {
+        	saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
         	saveSingleSTLMesh(kName, null, kMesh);
         }
         else if ( kExt.equals(".stlb" ) )
         {
+        	saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
         	saveSingleSTLMesh(kName, null, kMesh);
         }
         else if ( kExt.equals(".txt" ) )
@@ -1153,13 +1190,16 @@ public class FileSurface_WM {
         boolean readHeader = true;
         float x = 0f, y = 0f, z = 0f;
         int idx1 = 0, idx2 = 0, idx3 = 0;
-		
+       
         Vector<Vector3f> vertexArray = new Vector<Vector3f>();
         Vector<Integer> connectivity = new Vector<Integer>();
         VertexBuffer kVBuffer;
         int[] aiConnect;
 		
         try {
+        	
+        	readDicomMatrix();
+        	
             DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
             String s, token;
             while ( (s = readLine(in)).length() > 0) {
@@ -1187,6 +1227,26 @@ public class FileSurface_WM {
                 x = Float.valueOf(st.nextToken());
                 y = Float.valueOf(st.nextToken());
                 z = Float.valueOf(st.nextToken());
+                
+                if (dicom) {
+                    tCoord[0] = x - startLocation[0];
+                    tCoord[1] = y - startLocation[1];
+                    tCoord[2] = z - startLocation[2];
+                    inverseDicomMatrix.transform(tCoord, coord);
+                    x = (coord[0] * direction[0]) + startLocation[0];
+                    y = (coord[1] * direction[1]) + startLocation[1];
+                    z = (coord[2] * direction[2]) + startLocation[2];
+                } // if (dicom)
+
+                if (flip) {
+
+                    //                  Flip (kVertex.y - startLocation[1], but
+                    //                  don't flip startLocation[1]
+                    y = ( (2 * startLocation[1]) + (box[1] * direction[1]) - y );
+                    z = ( (2 * startLocation[2]) + (box[2] * direction[2]) - z );
+                }
+
+                
                 vertexArray.add(new Vector3f(x, y, z));
             }
 		    
@@ -1292,6 +1352,9 @@ public class FileSurface_WM {
         Vector3f surfaceNormal = new Vector3f();
 
         try {
+        	
+        	readDicomMatrix();
+        	
             // nothing header
             kIn.read(header);
 
@@ -1319,6 +1382,20 @@ public class FileSurface_WM {
                 kIn.read(value);
                 z = FileBase.bytesToFloat(false, 0, value);
 
+                if (dicom) {
+                    tCoord[0] = x - startLocation[0];
+                    tCoord[1] = y - startLocation[1];
+                    tCoord[2] = z - startLocation[2];
+                    inverseDicomMatrix.transform(tCoord, coord);
+                    x = (coord[0] * direction[0]) + startLocation[0];
+                    y = (coord[1] * direction[1]) + startLocation[1];
+                    z = (coord[2] * direction[2]) + startLocation[2];
+                } // if (dicom)
+
+                if (flip) {
+                    y = ( (2 * startLocation[1]) + (box[1] * direction[1]) - y );
+                    z = ( (2 * startLocation[2]) + (box[2] * direction[2]) - z );
+                }
                 vertex1 = new Vector3f(x, y, z);
 
                 // index 2
@@ -1328,7 +1405,20 @@ public class FileSurface_WM {
                 y = FileBase.bytesToFloat(false, 0, value);
                 kIn.read(value);
                 z = FileBase.bytesToFloat(false, 0, value);
+                if (dicom) {
+                    tCoord[0] = x - startLocation[0];
+                    tCoord[1] = y - startLocation[1];
+                    tCoord[2] = z - startLocation[2];
+                    inverseDicomMatrix.transform(tCoord, coord);
+                    x = (coord[0] * direction[0]) + startLocation[0];
+                    y = (coord[1] * direction[1]) + startLocation[1];
+                    z = (coord[2] * direction[2]) + startLocation[2];
+                } // if (dicom)
 
+                if (flip) {
+                    y = ( (2 * startLocation[1]) + (box[1] * direction[1]) - y );
+                    z = ( (2 * startLocation[2]) + (box[2] * direction[2]) - z );
+                }
                 vertex2 = new Vector3f(x, y, z);
 
                 // index 3
@@ -1338,7 +1428,20 @@ public class FileSurface_WM {
                 y = FileBase.bytesToFloat(false, 0, value);
                 kIn.read(value);
                 z = FileBase.bytesToFloat(false, 0, value);
+                if (dicom) {
+                    tCoord[0] = x - startLocation[0];
+                    tCoord[1] = y - startLocation[1];
+                    tCoord[2] = z - startLocation[2];
+                    inverseDicomMatrix.transform(tCoord, coord);
+                    x = (coord[0] * direction[0]) + startLocation[0];
+                    y = (coord[1] * direction[1]) + startLocation[1];
+                    z = (coord[2] * direction[2]) + startLocation[2];
+                } // if (dicom)
 
+                if (flip) {
+                    y = ( (2 * startLocation[1]) + (box[1] * direction[1]) - y );
+                    z = ( (2 * startLocation[2]) + (box[2] * direction[2]) - z );
+                }
                 vertex3 = new Vector3f(x, y, z);
 
                 // Check that the normal is in the correct direction
@@ -1679,12 +1782,174 @@ public class FileSurface_WM {
         return null;
     }
 
+    
+    /**
+     * Returns a dicomMatrix file objects, based on the user-selected filed from the FileChooser dialog.
+     * @param   bLoad  whether the files are opened for reading (bLoad = true) or writing (bLoad = false)
+     * @return  File of opened file.
+     */
+    private static File openDicomMatrixFiles(boolean bLoad) {
+
+        // file dialog to select the dicom matrix info file
+        JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(bLoad);
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.DICOMMATRIX));
+
+        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        } else {
+            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+        }
+
+        int returnVal;
+
+        if (bLoad) {
+            returnVal = chooser.showOpenDialog(null);
+        } else {
+            returnVal = chooser.showSaveDialog(null);
+        }
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            ViewUserInterface.getReference().setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) +
+                                                                 File.separatorChar);
+
+            if (bLoad) {
+                File file = chooser.getSelectedFile();
+
+                return file;
+            } 
+            File[] file = new File[1];
+            file[0] = chooser.getSelectedFile();
+            return file[0];
+        }
+
+        return null;
+    }
+    
+    
+    /**
+     * Read dicom matrix info file
+     */
+    public static void readDicomMatrix() {
+		try {
+			// read the dicom info first, then read the .ply surface file.
+			dicomMatrixFile = openDicomMatrixFiles(true);
+			FileInputStream fis = new FileInputStream(dicomMatrixFile
+					.getParent()
+					+ File.separatorChar + dicomMatrixFile.getName());
+			DataInputStream dis = new DataInputStream(fis);
+
+			int actions = dis.readInt();
+
+			if ((actions == 1) || (actions == 3)) {
+				flip = true;
+			} else {
+				flip = false;
+			}
+			flip = !flip;
+			if ((actions == 2) || (actions == 3)) {
+				dicom = true;
+			} else {
+				dicom = false;
+			}
+
+			direction[0] = dis.readInt();
+			direction[1] = dis.readInt();
+			direction[2] = dis.readInt();
+
+			startLocation[0] = dis.readFloat();
+			startLocation[1] = dis.readFloat();
+			startLocation[2] = dis.readFloat();
+
+			box[0] = dis.readFloat();
+			box[1] = dis.readFloat();
+			box[2] = dis.readFloat();
+
+			if (dicom) {
+				inverseDicomArray = new double[4][4];
+
+				for (int i = 0; i <= 3; i++) {
+					for (int j = 0; j <= 3; j++) {
+						inverseDicomArray[i][j] = dis.readDouble();
+					}
+				}
+				inverseDicomMatrix.copyMatrix(inverseDicomArray);
+			}
+		} catch (FileNotFoundException e) {
+			System.err.println("ERROR: Can't find file "
+					+ dicomMatrixFile.getName());
+		} catch (IOException e) {
+
+		}
+	}
 
     /**
-     * Print the contents of the TriMesh in ascii format.
-     * @param kOut output
-     * @param kMesh TriMesh
+     * Save the dicom matrix header info.  The .ply file format can't save the dicom info.   We decide to 
+     * save the dicom info when save the VOI file.  So, the dicom info will be read when load the .ply surface
+     * into the volume render.  This ensures the correct scale of surface.   The dicom matrix info is 
+     * saved in the current image directory with the .dicomMatrix suffix. 
      */
+    private static void saveDicomMatrixInfo(boolean flip, int[] direction, float[] startLocation, float[] box, TransMatrix inverseDicomMatrix) {
+    
+ 		try {
+			dicomMatrixFile = openDicomMatrixFiles(false);
+			
+			FileOutputStream  fOut = new FileOutputStream(dicomMatrixFile.getParent()
+					+ File.separatorChar + dicomMatrixFile.getName());
+			DataOutputStream  kOut = new DataOutputStream(fOut);
+ 
+			
+			 if (inverseDicomMatrix == null) {
+		            
+		            if (flip) {
+		                kOut.writeInt(1);
+		            } else {
+		                kOut.writeInt(0);
+		            }
+		        } else {
+		            
+		            if (flip) {
+		                kOut.writeInt(3);
+		            } else {
+		                kOut.writeInt(2);
+		            }
+		        }
+
+		        kOut.writeInt(direction[0]);
+		        kOut.writeInt(direction[1]);
+		        kOut.writeInt(direction[2]);
+
+		        kOut.writeFloat(startLocation[0]);
+		        kOut.writeFloat(startLocation[1]);
+		        kOut.writeFloat(startLocation[2]);
+		        kOut.writeFloat(box[0]);
+		        kOut.writeFloat(box[1]);
+		        kOut.writeFloat(box[2]);
+		        
+		        if (inverseDicomMatrix != null) {
+		            for (int i = 0; i <= 3; i++) {
+		                for (int j = 0; j <= 3; j++) {
+		                	kOut.writeDouble(inverseDicomMatrix.Get(i, j));
+		                }
+		            }
+		        }
+		        kOut.close();
+		        
+		} catch (Exception e) {
+			System.err.println("CAUGHT EXCEPTION WITHIN saveDicomMatrixInfo() of FileVOI");
+			e.printStackTrace();
+		}
+
+	}
+    
+    /**
+	 * Print the contents of the TriMesh in ascii format.
+	 * 
+	 * @param kOut
+	 *            output
+	 * @param kMesh
+	 *            TriMesh
+	 */
     private static void printAscii(PrintWriter kOut, TriMesh kMesh) {
     	Vector3f kVertex = new Vector3f();
         Vector3f kNormal = new Vector3f();
@@ -2043,6 +2308,9 @@ public class FileSurface_WM {
         Vector<Integer> connectivity = new Vector<Integer>();
         HashMap<String, Integer> vertexHashtable = new HashMap<String, Integer>();
         try {
+        	
+        	readDicomMatrix();
+        	
             while (true) {
                 if ((temp = readPoint(tokenizer, "normal")) == null)
                     break;
@@ -2071,6 +2339,21 @@ public class FileSurface_WM {
                 y = vertex1.Y;
                 z = vertex1.Z;
 
+                if (dicom) {
+                    tCoord[0] = x - startLocation[0];
+                    tCoord[1] = y - startLocation[1];
+                    tCoord[2] = z - startLocation[2];
+                    inverseDicomMatrix.transform(tCoord, coord);
+                    x = (coord[0] * direction[0]) + startLocation[0];
+                    y = (coord[1] * direction[1]) + startLocation[1];
+                    z = (coord[2] * direction[2]) + startLocation[2];
+                } // if (dicom)
+
+                if (flip) {
+                    y = ( (2 * startLocation[1]) + (box[1] * direction[1]) - y );
+                    z = ( (2 * startLocation[2]) + (box[2] * direction[2]) - z );
+                }
+                
                 searchIndex = vertexHashtable.get((x + " " + y + " " + z));
                 if (searchIndex == null) { // not found
                     vertexHashtable.put((x + " " + y + " " + z), new Integer(
@@ -2087,6 +2370,21 @@ public class FileSurface_WM {
                 y = vertex2.Y;
                 z = vertex2.Z;
 
+                if (dicom) {
+                    tCoord[0] = x - startLocation[0];
+                    tCoord[1] = y - startLocation[1];
+                    tCoord[2] = z - startLocation[2];
+                    inverseDicomMatrix.transform(tCoord, coord);
+                    x = (coord[0] * direction[0]) + startLocation[0];
+                    y = (coord[1] * direction[1]) + startLocation[1];
+                    z = (coord[2] * direction[2]) + startLocation[2];
+                } // if (dicom)
+
+                if (flip) {
+                    y = ( (2 * startLocation[1]) + (box[1] * direction[1]) - y );
+                    z = ( (2 * startLocation[2]) + (box[2] * direction[2]) - z );
+                }
+                
                 searchIndex = vertexHashtable.get((x + " " + y + " " + z));
                 if (searchIndex == null) { // not found
                     vertexHashtable.put((x + " " + y + " " + z), new Integer(
@@ -2103,6 +2401,21 @@ public class FileSurface_WM {
                 y = vertex3.Y;
                 z = vertex3.Z;
 
+                if (dicom) {
+                    tCoord[0] = x - startLocation[0];
+                    tCoord[1] = y - startLocation[1];
+                    tCoord[2] = z - startLocation[2];
+                    inverseDicomMatrix.transform(tCoord, coord);
+                    x = (coord[0] * direction[0]) + startLocation[0];
+                    y = (coord[1] * direction[1]) + startLocation[1];
+                    z = (coord[2] * direction[2]) + startLocation[2];
+                } // if (dicom)
+
+                if (flip) {
+                    y = ( (2 * startLocation[1]) + (box[1] * direction[1]) - y );
+                    z = ( (2 * startLocation[2]) + (box[2] * direction[2]) - z );
+                }
+                
                 searchIndex = vertexHashtable.get((x + " " + y + " " + z));
                 if (searchIndex == null) { // not found
                     vertexHashtable.put((x + " " + y + " " + z), new Integer(

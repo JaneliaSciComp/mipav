@@ -177,6 +177,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /** Storage location of image data. */
     private BufferBase data;
+    
+    private BufferBase dataClass;
 
     /** Total buffer length. */
     private int dataSize;
@@ -1382,6 +1384,32 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export data error - bounds incorrect");
 
     }
+    
+    public final synchronized void exportDataClass(int start, int length, float[] values) throws IOException {
+        int i, j;
+
+        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
+
+            try {
+                setLock(W_LOCKED);
+
+                for (i = start, j = 0; j < length; i++, j++) {
+                    values[j] = dataClass.getFloat(i);
+                }
+
+            } catch (IOException error) {
+                throw error;
+            } finally {
+                releaseLock();
+            }
+
+            return;
+        }
+
+        throw new IOException("Export data error - bounds incorrect");
+
+    }
+    
 
     /**
      * Export data in values array.
@@ -5166,6 +5194,35 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         throw new IOException("Import data error: bounds incorrect");
     }
+    
+    public final synchronized void importDataClass(int start, float[] values, boolean mmFlag) throws IOException {
+        int length = values.length;
+        int ptr;
+
+        if ((start >= 0) && ((start + length) <= dataSize)) {
+
+            try {
+                setLock(RW_LOCKED);
+                ptr = start;
+
+                for (int i = 0; i < length; i++, ptr++) {
+                    dataClass.setFloat(ptr, values[i]);
+                }
+
+                if (mmFlag) {
+                //     calcMinMax();
+                }
+            } catch (IOException error) {
+                throw error;
+            } finally {
+                releaseLock();
+            }
+
+            return;
+        }
+
+        throw new IOException("Import data error: bounds incorrect");
+    }
 
     /**
      * import double data into data array.
@@ -6983,6 +7040,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
                 try {
                     this.data = new BufferBoolean(this.dataSize);
+                    this.dataClass = new BufferBoolean(this.dataSize);
 
                     // Reset dataSize to reflect change in buffer size
                     // because BitSet structure may increase buffer.
@@ -6998,6 +7056,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case BYTE:
                 try {
                     this.data = new BufferByte(this.dataSize);
+                    this.dataClass = new BufferByte(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate byte data");
@@ -7009,6 +7068,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case UBYTE:
                 try {
                     this.data = new BufferUByte(this.dataSize);
+                    this.dataClass = new BufferByte(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate unsigned byte data");
@@ -7020,6 +7080,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case SHORT:
                 try {
                     this.data = new BufferShort(this.dataSize);
+                    this.dataClass = new BufferShort(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate short data");
@@ -7031,6 +7092,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case USHORT:
                 try {
                     this.data = new BufferUShort(this.dataSize);
+                    this.dataClass = new BufferShort(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate unsigned short data");
@@ -7042,6 +7104,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case INTEGER:
                 try {
                     this.data = new BufferInt(this.dataSize);
+                    this.dataClass = new BufferInt(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate integer data buffer");
@@ -7053,6 +7116,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case UINTEGER:
                 try {
                     this.data = new BufferUInt(this.dataSize);
+                    this.dataClass = new BufferUInt(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate unsigned integer data buffer");
@@ -7064,6 +7128,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case LONG:
                 try {
                     this.data = new BufferLong(this.dataSize);
+                    this.dataClass = new BufferLong(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate long data buffer");
@@ -7075,6 +7140,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case FLOAT:
                 try {
                     this.data = new BufferFloat(this.dataSize);
+                    this.dataClass = new BufferFloat(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate float data buffer");
@@ -7086,6 +7152,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case COMPLEX:
                 try {
                     this.data = new BufferFloat(this.dataSize);
+                    this.dataClass = new BufferFloat(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate complex data buffer");
@@ -7097,6 +7164,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case DOUBLE:
                 try {
                     this.data = new BufferDouble(this.dataSize);
+                    this.dataClass = new BufferDouble(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate double data buffer");
@@ -7108,6 +7176,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case DCOMPLEX:
                 try {
                     this.data = new BufferDouble(this.dataSize);
+                    this.dataClass = new BufferDouble(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate double complex data buffer");
@@ -7119,6 +7188,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case ARGB:
                 try {
                     this.data = new BufferUByte(this.dataSize);
+                    this.dataClass = new BufferUByte(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate ARGB-UByte data buffer");
@@ -7135,6 +7205,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case ARGB_USHORT:
                 try {
                     this.data = new BufferUShort(this.dataSize);
+                    this.dataClass = new BufferUShort(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate ARGB-UShort data buffer");
@@ -7151,6 +7222,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
             case ARGB_FLOAT:
                 try {
                     this.data = new BufferFloat(this.dataSize);
+                    this.dataClass = new BufferFloat(this.dataSize);
                 } catch (OutOfMemoryError error) {
                     disposeLocal();
                     MipavUtil.displayError("ImageModel: Unable to allocate ARGB- float data buffer");
