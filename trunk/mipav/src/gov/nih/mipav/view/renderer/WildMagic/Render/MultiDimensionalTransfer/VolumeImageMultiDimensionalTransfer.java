@@ -96,6 +96,10 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         if ( m_kAnimator == null )
         {
             return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
         for ( int i = 0; i < m_akLev.size(); i++ )
         {
@@ -159,6 +163,10 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         if ( m_bInit )
         {
             return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
         super.init(arg0);
         m_spkCamera.SetFrustum(0, 1, 0, 1,1f,10.0f);
@@ -277,7 +285,11 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     }
     
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
-    {
+    {      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
         m_iWidth = 256;
         m_iHeight = 256;
         m_spkCamera.Perspective = false;

@@ -92,7 +92,7 @@ public class BillboardNodes extends JavaApplication3D
     }
 
     public void display(GLAutoDrawable arg0) {
-        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 
         m_pkRenderer.SetCamera( m_spkCamera );
         if (MoveCamera())
@@ -171,6 +171,7 @@ public class BillboardNodes extends JavaApplication3D
     }
 
     public void init(GLAutoDrawable arg0) {
+        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         m_pkRenderer.InitializeState();
         super.OnInitialize();
 

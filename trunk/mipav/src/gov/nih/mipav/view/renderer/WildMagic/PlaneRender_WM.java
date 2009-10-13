@@ -521,6 +521,10 @@ public class PlaneRender_WM extends GPURenderBase
         if ( m_kVolumeImageA == null ) {
         	return;
         }
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
         if ( !m_bInit )
         {
             init(arg0);
@@ -602,7 +606,11 @@ public class PlaneRender_WM extends GPURenderBase
      * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#displayChanged(javax.media.opengl.GLAutoDrawable, boolean, boolean)
      */
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2)
-    {
+    {      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
         m_bModified = true;
     }
 
@@ -837,6 +845,10 @@ public class PlaneRender_WM extends GPURenderBase
     public void init(GLAutoDrawable arg0) {
     	if ( m_kVolumeImageA == null ) {
             return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
 
         m_bInit = true;        
@@ -998,7 +1010,6 @@ public class PlaneRender_WM extends GPURenderBase
         if ((kEvent.getButton() == MouseEvent.BUTTON3) && !kEvent.isShiftDown()) {
             m_bRightMousePressed = true;
         }
-        
     }
 
 
@@ -1102,6 +1113,10 @@ public class PlaneRender_WM extends GPURenderBase
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
     	if ( m_kVolumeImageA == null ) {
         	return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
     	
         if (iWidth > 0 && iHeight > 0)

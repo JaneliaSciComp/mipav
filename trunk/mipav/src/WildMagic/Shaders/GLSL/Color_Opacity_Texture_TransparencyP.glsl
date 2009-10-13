@@ -1,9 +1,9 @@
 //----------------------------------------------------------------------------
-uniform sampler3D bVolumeImageA_TEXUNIT1; 
-uniform sampler1D cColorMapA_TEXUNIT2; 
-uniform sampler3D iSurfaceImage_TEXUNIT8;
-uniform sampler3D jVolumeImageB_TEXUNIT9; 
-uniform sampler1D kColorMapB_TEXUNIT10; 
+uniform sampler3D bVolumeImageA; 
+uniform sampler1D cColorMapA; 
+uniform sampler3D iSurfaceImage;
+uniform sampler3D jVolumeImageB; 
+uniform sampler1D kColorMapB; 
 
 uniform vec3 ColorLUTOnA;
 uniform vec3 ColorLUTOnB;
@@ -24,36 +24,34 @@ void p_Color_Opacity_Texture_TransparencyP()
         texCoord.z = ZSlice;
     }
     vec4 kOutputColor = vec4(0.0);
-    //vec4 color = texture3D(bVolumeImageA_TEXUNIT1, gl_TexCoord[0].xyz);
-    vec4 color = texture3D(bVolumeImageA_TEXUNIT1, texCoord );
+    vec4 color = texture3D(bVolumeImageA, texCoord );
     if ( IsColorA != 0.0 )
     {
         if ( ColorLUTOnA.x != 0.0 )
         {
-            kOutputColor.r = texture1D(cColorMapA_TEXUNIT2,color.r).r;
+            kOutputColor.r = texture1D(cColorMapA,color.r).r;
         }
         if ( ColorLUTOnA.y != 0.0 )
         {
-            kOutputColor.g = texture1D(cColorMapA_TEXUNIT2,color.g).g;
+            kOutputColor.g = texture1D(cColorMapA,color.g).g;
         }
         if ( ColorLUTOnA.z != 0.0 )
         {
-            kOutputColor.b = texture1D(cColorMapA_TEXUNIT2,color.b).b;
+            kOutputColor.b = texture1D(cColorMapA,color.b).b;
         }
     }
     else
     {
-        kOutputColor.rgb = texture1D(cColorMapA_TEXUNIT2, color.r).rgb;
+        kOutputColor.rgb = texture1D(cColorMapA, color.r).rgb;
     }
     if ( ABBlend != 1.0 )
     {
-        //color = texture3D(jVolumeImageB_TEXUNIT9,gl_TexCoord[0].xyz);
-        color = texture3D(jVolumeImageB_TEXUNIT9, texCoord );
+        color = texture3D(jVolumeImageB, texCoord );
         if ( IsColorB != 0.0 )
         {
             if ( ColorLUTOnB.x != 0.0 )
             {
-                kOutputColor.r = ABBlend * kOutputColor.r + (1.0 - ABBlend) * texture1D(kColorMapB_TEXUNIT10, color.r).r;
+                kOutputColor.r = ABBlend * kOutputColor.r + (1.0 - ABBlend) * texture1D(kColorMapB, color.r).r;
             }
             else
             {
@@ -61,7 +59,7 @@ void p_Color_Opacity_Texture_TransparencyP()
             }
             if ( ColorLUTOnB.y != 0.0 )
             {
-                kOutputColor.g = ABBlend * kOutputColor.g + (1.0 - ABBlend) * texture1D(kColorMapB_TEXUNIT10, color.g).g;
+                kOutputColor.g = ABBlend * kOutputColor.g + (1.0 - ABBlend) * texture1D(kColorMapB, color.g).g;
             }
             else
             {
@@ -69,7 +67,7 @@ void p_Color_Opacity_Texture_TransparencyP()
             }
             if ( ColorLUTOnB.z != 0.0 )
             {
-                kOutputColor.b = ABBlend * kOutputColor.b + (1.0 - ABBlend) * texture1D(kColorMapB_TEXUNIT10, color.b).b;
+                kOutputColor.b = ABBlend * kOutputColor.b + (1.0 - ABBlend) * texture1D(kColorMapB, color.b).b;
             }
             else
             {
@@ -78,14 +76,13 @@ void p_Color_Opacity_Texture_TransparencyP()
         }
         else
         {
-            kOutputColor.rgb = ABBlend * kOutputColor.rgb + (1.0 - ABBlend) * texture1D(kColorMapB_TEXUNIT10, color.r).rgb;
+            kOutputColor.rgb = ABBlend * kOutputColor.rgb + (1.0 - ABBlend) * texture1D(kColorMapB, color.r).rgb;
         }
     }
 
     if ( ShowSurface != 0.0 )
     {
-        //vec4 surfaceColor = texture3D(iSurfaceImage_TEXUNIT8,gl_TexCoord[0].xyz);
-        vec4 surfaceColor = texture3D(iSurfaceImage_TEXUNIT8, texCoord);
+        vec4 surfaceColor = texture3D(iSurfaceImage, texCoord);
         if ( (surfaceColor.r != 0) || (surfaceColor.g != 0) || (surfaceColor.b != 0))
         {
             kOutputColor.rgb = surfaceColor.rgb;

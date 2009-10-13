@@ -360,7 +360,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @param iHeight the new height
      */
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
-    	
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
     	if ( m_kVolumeImageA == null ) {
         	return;
         }

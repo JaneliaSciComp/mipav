@@ -8,6 +8,8 @@ import java.awt.event.KeyListener;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
+import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
+
 import com.sun.opengl.util.Animator;
 
 public class VolumeImageCrop extends VolumeImageViewer
@@ -47,6 +49,10 @@ public class VolumeImageCrop extends VolumeImageViewer
         if ( m_kAnimator == null )
         {
             return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
         boolean bCrop = true;
         while ( bCrop )

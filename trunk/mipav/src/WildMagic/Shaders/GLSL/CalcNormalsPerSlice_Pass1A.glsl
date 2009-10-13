@@ -1,7 +1,7 @@
 //----------------------------------------------------------------------------
 uniform vec4    StepSize;
 uniform float     IsColor;
-uniform sampler3D bVolumeImageA_TEXUNIT1; 
+uniform sampler3D bVolumeImageA; 
 void p_CalcNormalsPerSlice_Pass1A()
 {
     vec3 indexX1 = gl_TexCoord[0].xyz; indexX1.y -= StepSize.y; indexX1.x -= StepSize.x;
@@ -11,12 +11,12 @@ void p_CalcNormalsPerSlice_Pass1A()
     vec3 indexX5 = gl_TexCoord[0].xyz; indexX5.y += StepSize.y; indexX5.x -= StepSize.x;
     vec3 indexX6 = gl_TexCoord[0].xyz; indexX6.y += StepSize.y; indexX6.x += StepSize.x;
 
-    indexX1 = texture3D( bVolumeImageA_TEXUNIT1, indexX1 ).xyz;
-    indexX2 = texture3D( bVolumeImageA_TEXUNIT1, indexX2 ).xyz;
-    indexX3 = texture3D( bVolumeImageA_TEXUNIT1, indexX3 ).xyz;
-    indexX4 = texture3D( bVolumeImageA_TEXUNIT1, indexX4 ).xyz;
-    indexX5 = texture3D( bVolumeImageA_TEXUNIT1, indexX5 ).xyz;
-    indexX6 = texture3D( bVolumeImageA_TEXUNIT1, indexX6 ).xyz;
+    indexX1 = texture3D( bVolumeImageA, indexX1 ).xyz;
+    indexX2 = texture3D( bVolumeImageA, indexX2 ).xyz;
+    indexX3 = texture3D( bVolumeImageA, indexX3 ).xyz;
+    indexX4 = texture3D( bVolumeImageA, indexX4 ).xyz;
+    indexX5 = texture3D( bVolumeImageA, indexX5 ).xyz;
+    indexX6 = texture3D( bVolumeImageA, indexX6 ).xyz;
 
     if ( IsColor == 1.0 )
     {
@@ -40,12 +40,12 @@ void p_CalcNormalsPerSlice_Pass1A()
     vec3 indexY5 = gl_TexCoord[0].xyz; indexY5.x += StepSize.x; indexY5.y -= StepSize.y;
     vec3 indexY6 = gl_TexCoord[0].xyz; indexY6.x += StepSize.x; indexY6.y += StepSize.y;
 
-    indexY1 = texture3D( bVolumeImageA_TEXUNIT1, indexY1 ).xyz;
-    indexY2 = texture3D( bVolumeImageA_TEXUNIT1, indexY2 ).xyz;
-    indexY3 = texture3D( bVolumeImageA_TEXUNIT1, indexY3 ).xyz;
-    indexY4 = texture3D( bVolumeImageA_TEXUNIT1, indexY4 ).xyz;
-    indexY5 = texture3D( bVolumeImageA_TEXUNIT1, indexY5 ).xyz;
-    indexY6 = texture3D( bVolumeImageA_TEXUNIT1, indexY6 ).xyz;
+    indexY1 = texture3D( bVolumeImageA, indexY1 ).xyz;
+    indexY2 = texture3D( bVolumeImageA, indexY2 ).xyz;
+    indexY3 = texture3D( bVolumeImageA, indexY3 ).xyz;
+    indexY4 = texture3D( bVolumeImageA, indexY4 ).xyz;
+    indexY5 = texture3D( bVolumeImageA, indexY5 ).xyz;
+    indexY6 = texture3D( bVolumeImageA, indexY6 ).xyz;
 
     if ( IsColor == 1.0 )
     {
@@ -69,12 +69,12 @@ void p_CalcNormalsPerSlice_Pass1A()
     vec3 indexZ5 = gl_TexCoord[0].xyz; indexZ5.x += StepSize.x; indexZ5.z -= StepSize.z;
     vec3 indexZ6 = gl_TexCoord[0].xyz; indexZ6.x += StepSize.x; indexZ6.z += StepSize.z;
 
-    indexZ1 = texture3D( bVolumeImageA_TEXUNIT1, indexZ1 ).xyz;
-    indexZ2 = texture3D( bVolumeImageA_TEXUNIT1, indexZ2 ).xyz;
-    indexZ3 = texture3D( bVolumeImageA_TEXUNIT1, indexZ3 ).xyz;
-    indexZ4 = texture3D( bVolumeImageA_TEXUNIT1, indexZ4 ).xyz;
-    indexZ5 = texture3D( bVolumeImageA_TEXUNIT1, indexZ5 ).xyz;
-    indexZ6 = texture3D( bVolumeImageA_TEXUNIT1, indexZ6 ).xyz;
+    indexZ1 = texture3D( bVolumeImageA, indexZ1 ).xyz;
+    indexZ2 = texture3D( bVolumeImageA, indexZ2 ).xyz;
+    indexZ3 = texture3D( bVolumeImageA, indexZ3 ).xyz;
+    indexZ4 = texture3D( bVolumeImageA, indexZ4 ).xyz;
+    indexZ5 = texture3D( bVolumeImageA, indexZ5 ).xyz;
+    indexZ6 = texture3D( bVolumeImageA, indexZ6 ).xyz;
 
     if ( IsColor == 1.0 )
     {

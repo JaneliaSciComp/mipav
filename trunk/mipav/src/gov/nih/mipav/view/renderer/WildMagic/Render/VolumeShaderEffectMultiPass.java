@@ -710,13 +710,14 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
         initTexturesVol(m_kPShaderCMP);
          
-        m_kPShaderInit = new PixelShader("LoadMIPAVTextures");
-        initTextures(m_kPShaderInit);
+        //m_kPShaderInit = new PixelShader("LoadMIPAVTextures");
+        //initTextures(m_kPShaderInit);
         
         for ( int i = 0; i < m_iPasses; i++ )
         {
             SetVShader(i,m_pkVShader);
-            SetPShader(i,m_kPShaderInit);
+            //SetPShader(i,m_kPShaderInit);
+            SetPShader(i,m_kPShaderCMP);
         }
     }
 

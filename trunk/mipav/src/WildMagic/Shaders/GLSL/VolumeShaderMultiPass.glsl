@@ -437,14 +437,13 @@ vec4 computeColor( vec3 kModelPosition, vec3 kModelNormal, vec3 CameraWorldPosit
 
 varying vec4 outPos;
 uniform mat4 WVPMatrix;
-uniform sampler2D aSceneImage_TEXUNIT0; 
-uniform sampler3D bVolumeImageA_TEXUNIT1; 
-uniform sampler1D cColorMapA_TEXUNIT2; 
-//uniform sampler1D dOpacityMapA_TEXUNIT3; 
-uniform sampler3D eNormalMapA_TEXUNIT4; 
-uniform sampler3D fVolumeImageA_GM_TEXUNIT5; 
-uniform sampler1D gOpacityMapA_GM_TEXUNIT6; 
-uniform sampler3D hVolumeImageA_2nd_TEXUNIT7; 
+uniform sampler2D aSceneImage; 
+uniform sampler3D bVolumeImageA; 
+uniform sampler1D cColorMapA; 
+uniform sampler3D eNormalMapA; 
+uniform sampler3D fVolumeImageA_GM; 
+uniform sampler1D gOpacityMapA_GM; 
+uniform sampler3D hVolumeImageA_2nd; 
 
 uniform vec4 BackgroundColor;
 uniform vec3 ColorLUTOnA;
@@ -572,7 +571,7 @@ void p_VolumeShaderMultiPass()
 {
     // find the right place to lookup in the backside buffer
     vec2 texc = ((outPos.xy / outPos.w) + 1.0) * 0.5;
-    vec3 back_position  = texture2D(aSceneImage_TEXUNIT0, texc).xyz;
+    vec3 back_position  = texture2D(aSceneImage, texc).xyz;
 
 
     if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) )
@@ -669,11 +668,11 @@ void p_VolumeShaderMultiPass()
     // The value is not clipped, compute the color:
     else
     {
-        color = texture3D(bVolumeImageA_TEXUNIT1,position);
+        color = texture3D(bVolumeImageA,position);
         
         if ( MULTIHISTO != 0.0 )
         {
-            colorGM = texture3D(fVolumeImageA_GM_TEXUNIT5,position);
+            colorGM = texture3D(fVolumeImageA_GM,position);
             
             if ( IsColorA != 0.0 )
             {
@@ -686,7 +685,7 @@ void p_VolumeShaderMultiPass()
                 fMapY = colorGM.r;
             }
           
-            fMapZ = texture3D(hVolumeImageA_2nd_TEXUNIT7,position).r;
+            fMapZ = texture3D(hVolumeImageA_2nd,position).r;
             if ( UseWidget0 != 0.0 )
             {
                 float opacity0 =
@@ -786,7 +785,7 @@ void p_VolumeShaderMultiPass()
                 //opacity = texture1D(dOpacityMapA_TEXUNIT3,opacity).r;
                 if ( ColorLUTOnA.x != 0.0 )
                 {
-                    colorTemp = texture1D(cColorMapA_TEXUNIT2,color.r);
+                    colorTemp = texture1D(cColorMapA,color.r);
                     color.r = colorTemp.r;
                     opacity += colorTemp.a;
                 }
@@ -796,7 +795,7 @@ void p_VolumeShaderMultiPass()
                 }
                 if ( ColorLUTOnA.y != 0.0 )
                 {
-                    colorTemp = texture1D(cColorMapA_TEXUNIT2,color.g);
+                    colorTemp = texture1D(cColorMapA,color.g);
                     color.g = colorTemp.g;
                     opacity += colorTemp.a;
                 }
@@ -806,7 +805,7 @@ void p_VolumeShaderMultiPass()
                 }
                 if ( ColorLUTOnA.z != 0.0 )
                 {
-                    colorTemp = texture1D(cColorMapA_TEXUNIT2,color.b);
+                    colorTemp = texture1D(cColorMapA,color.b);
                     color.b = colorTemp.b;
                     opacity += colorTemp.a;
                 }
@@ -817,14 +816,14 @@ void p_VolumeShaderMultiPass()
             }
             else
             {
-                color = texture1D(cColorMapA_TEXUNIT2,color.r);
+                color = texture1D(cColorMapA,color.r);
                 opacity = color.a;
             }
             
             if ( GradientMagnitude != 0.0 )
             {
-                colorGM = texture3D(fVolumeImageA_GM_TEXUNIT5,position);
-                opacityGM = texture1D(gOpacityMapA_GM_TEXUNIT6,colorGM.r).r;
+                colorGM = texture3D(fVolumeImageA_GM,position);
+                opacityGM = texture1D(gOpacityMapA_GM,colorGM.r).r;
                 opacity = opacity * opacityGM;
             }
         }
@@ -832,7 +831,7 @@ void p_VolumeShaderMultiPass()
         if ( Surface != 0.0 )
         {
             // Surface and Composite surface display:
-            vec4 normal = texture3D(eNormalMapA_TEXUNIT4,position);
+            vec4 normal = texture3D(eNormalMapA,position);
             normal.w = 0.0;
             
             // First light is static light:

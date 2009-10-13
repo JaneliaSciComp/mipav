@@ -100,6 +100,10 @@ public class VolumeImageViewer extends JavaApplication3D
         if ( m_kAnimator == null )
         {
             return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
         m_pkPlane.DetachAllEffects();
         m_pkPlane.AttachEffect(m_spkEffect);
@@ -118,7 +122,11 @@ public class VolumeImageViewer extends JavaApplication3D
 
 
     public void displayChanged(GLAutoDrawable arg0, boolean arg1, boolean arg2) 
-    { 
+    {       
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
         m_bDisplay = true;
     }
     
@@ -170,6 +178,10 @@ public class VolumeImageViewer extends JavaApplication3D
         if ( m_bInit )
         {
             return;
+        }      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         }
         m_pkRenderer.InitializeState();
         super.OnInitialize();
@@ -246,7 +258,11 @@ public class VolumeImageViewer extends JavaApplication3D
 
 
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
-    {
+    {      
+        if ( m_pkRenderer != null )
+        {
+            ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
         if (iWidth > 0 && iHeight > 0)
         {
             m_iWidth = iWidth;

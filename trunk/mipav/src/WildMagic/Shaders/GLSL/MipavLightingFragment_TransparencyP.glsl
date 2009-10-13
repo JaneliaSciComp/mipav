@@ -412,10 +412,10 @@ bool myClip ( vec3 myVec,
 
 varying vec4        kInPos;
 varying vec3        kInNormal;
-uniform sampler3D bVolumeImageA_TEXUNIT1; 
-uniform sampler1D cColorMapA_TEXUNIT2; 
-uniform sampler3D fVolumeImageNew_TEXUNIT16;
-uniform sampler1D gColorMapNew_TEXUNIT17;
+uniform sampler3D bVolumeImageA; 
+uniform sampler1D cColorMapA; 
+uniform sampler3D fVolumeImageNew;
+uniform sampler1D gColorMapNew;
 
 uniform float IsColor;
 uniform float IsColorNew;
@@ -519,36 +519,36 @@ void p_MipavLightingFragment_TransparencyP()
         {
             if ( UseImageNew != 0.0 )
             {
-                color = texture3D(fVolumeImageNew_TEXUNIT16,gl_TexCoord[0].xyz);
+                color = texture3D(fVolumeImageNew,gl_TexCoord[0].xyz);
             }
             else
             {
-                color = texture3D(bVolumeImageA_TEXUNIT1,gl_TexCoord[0].xyz);
+                color = texture3D(bVolumeImageA,gl_TexCoord[0].xyz);
             }
             if ( UseLUTNew != 0.0 )
             {
                 if ( IsColorNew != 0.0 )
                 {
-                    LocalMaterialDiffuse.r = texture1D(gColorMapNew_TEXUNIT17,color.r).r;
-                    LocalMaterialDiffuse.g = texture1D(gColorMapNew_TEXUNIT17,color.g).g;
-                    LocalMaterialDiffuse.b = texture1D(gColorMapNew_TEXUNIT17,color.b).b;
+                    LocalMaterialDiffuse.r = texture1D(gColorMapNew,color.r).r;
+                    LocalMaterialDiffuse.g = texture1D(gColorMapNew,color.g).g;
+                    LocalMaterialDiffuse.b = texture1D(gColorMapNew,color.b).b;
                 }
                 else
                 {
-                    LocalMaterialDiffuse.rgb = texture1D(gColorMapNew_TEXUNIT17,color.r).rgb;
+                    LocalMaterialDiffuse.rgb = texture1D(gColorMapNew,color.r).rgb;
                 }
             }
             else
             {
                 if ( IsColor != 0.0 )
                 {
-                    LocalMaterialDiffuse.r = texture1D(cColorMapA_TEXUNIT2,color.r).r;
-                    LocalMaterialDiffuse.g = texture1D(cColorMapA_TEXUNIT2,color.g).g;
-                    LocalMaterialDiffuse.b = texture1D(cColorMapA_TEXUNIT2,color.b).b;
+                    LocalMaterialDiffuse.r = texture1D(cColorMapA,color.r).r;
+                    LocalMaterialDiffuse.g = texture1D(cColorMapA,color.g).g;
+                    LocalMaterialDiffuse.b = texture1D(cColorMapA,color.b).b;
                 }
                 else
                 {
-                    LocalMaterialDiffuse.rgb = texture1D(cColorMapA_TEXUNIT2,color.r).rgb;
+                    LocalMaterialDiffuse.rgb = texture1D(cColorMapA,color.r).rgb;
                 }
             }
             LocalMaterialDiffuse.a = gl_Color.a;
