@@ -5877,7 +5877,7 @@ public class GeneralizedInverse {
             }
             z[4] = z[0] + z[1] + z[2];
             if (z[1] > z[2]*tol2) {
-                t = 0.5 *(z[0] - z[2]) + z[1];
+                t = 0.5 *((z[0] - z[2]) + z[1]);
                 s = z[2] * (z[1]/t);
                 if (s <= t) {
                     s = z[2] * (z[1]/(t*(1.0 + Math.sqrt(1.0 + s/t))));
@@ -5954,7 +5954,7 @@ public class GeneralizedInverse {
         opts = new String("N");
         ieee = ((ilaenv(10, name, opts, 1, 2, 3, 4) == 1) && (ilaenv(11, name, opts, 1, 2, 3, 4) == 1));
         
-        // Rearrange data for locality: a = (q1,qq1,e1,ee1,q2,qq2,e2,ee2,...).
+        // Rearrange data for locality: z = (q1,qq1,e1,ee1,q2,qq2,e2,ee2,...).
         
         for (k = 2*n; k >= 2; k -= 2) {
             z[2*k-1] = 0.0;
@@ -6023,6 +6023,7 @@ public class GeneralizedInverse {
             
             // Now find qmax.
             
+            qmax = z[4*i0-pp[0]-3];
             for (i4 = 4*i0 - pp[0] + 2; i4 <= 4*n0 - pp[0] - 2; i4 += 4) {
                 qmax = Math.max(qmax, z[i4-1]);
             }
@@ -6055,7 +6056,7 @@ public class GeneralizedInverse {
                 // While array unfinished do
                 
                 // e[n0-1] holds the value of sigma when submatrix in i0-1:n0-1
-                // splits form the rest of the array, but is negated.
+                // splits from the rest of the array, but is negated.
                 
                 desig[0] = 0.0;
                 if (n0 == n) {
@@ -6152,7 +6153,7 @@ public class GeneralizedInverse {
                     
                     pp[0] = 1 - pp[0];
                     
-                    // Whem emin is very small check for splits
+                    // When emin is very small check for splits
                     if ((pp[0] == 0) && (n0 - i0 >= 3)) {
                         if ((z[4*n0-1] <= tol2*qmax) || (z[4*n0-2] <= tol2*sigma[0])) {
                             splt = i0 - 1;
