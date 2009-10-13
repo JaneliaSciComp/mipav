@@ -29,9 +29,9 @@ import gov.nih.mipav.view.*;
  * errors from 17 to 21.  dchkgl was implemented to test the dggbal balancing routine of
  * dggev.  All 8 tests showed no signficant error. dchkgk was implemented to test the dggbak backward balancing routine
  * of dggev. All 8 tests showed no significant error. dchkgg_test was implemented to test the dgghrd, dhgeqz, and dtgevc
- * routines of the dggev driver. The following output statements resulted: 15 out of 2156 dchkgg tests failed to pass
- * the threshold. 20 out of 2149 dchkgg tests failed to pass the threshold. 17 out of 2163 dchkgg tests failed to pass
- * the threshold. 20 out of 2142 dchkgg tests failed to pass the threshold. The errors in the nonsymmetric case would
+ * routines of the dggev driver. The following output statements resulted: 15 out of 2121 dchkgg tests failed to pass
+ * the threshold. 10 out of 2156 dchkgg tests failed to pass the threshold. 8 out of 2149 dchkgg tests failed to pass
+ * the threshold. 9 out of 2156 dchkgg tests failed to pass the threshold. The errors in the nonsymmetric case would
  * not occur for matrix sizes of 5 or less. Following one case in parallel in the FORTRAN on the WATCOM compiler and on
  * Java revealed input variables that were identical up to about 9 signficant places yielding an output variable of
  * 7.77E-16 on the FORTRAN and -2.61E-15 on the Java. So apparently the Java failures are due to the Java 64 bit
@@ -17007,8 +17007,8 @@ loop3:                       {
                 }
             } // else if (idist == 3)
 
-            return;
         } // for (iv = 1; iv <= n; iv += lv/2)
+        return;
     } // dlarnv
 
     /**
