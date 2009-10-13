@@ -4834,7 +4834,7 @@ public class GeneralizedInverse {
             tolmul = Math.max(10.0, Math.min(100.0, Math.pow(eps, -0.125)));
             tol = tolmul * eps;
             
-            // Compute azpproximate maximum, minimum singular values
+            // Compute approximate maximum, minimum singular values
             
             smax = 0.0;
             for (i = 1; i <= n; i++) {
@@ -5538,8 +5538,6 @@ public class GeneralizedInverse {
                 d[isub-1] = d[n-i];
                 d[n-i] = smin;
                 if (ncvt > 0) {
-                    w1 = new double[ncvt];
-                    w2 = new double[ncvt];
                     for (k = 0; k < ncvt; k++) {
                         temp = VT[isub-1][k];
                         VT[isub-1][k] = VT[n-i][k];
@@ -5548,8 +5546,6 @@ public class GeneralizedInverse {
                 } // if (ncvt > 0)
                 
                 if (nru > 0) {
-                    w1 = new double[nru];
-                    w2 = new double[nru];
                     for (k = 0; k < nru; k++) {
                         temp = U[k][isub-1];
                         U[k][isub-1] = U[k][n-i];
@@ -5558,8 +5554,6 @@ public class GeneralizedInverse {
                 } // if (nru > 0)
                 
                 if (ncc > 0) {
-                    w1 = new double[ncc];
-                    w2 = new double[ncc];
                     for (k = 0; k < ncc; k++) {
                         temp = C[isub-1][k];
                         C[isub-1][k] = C[n-i][k];
@@ -10089,36 +10083,36 @@ ib = Math.min(nb, k-i+1);
                 }
             }
             
-            // Use unblocked code to reduce the remainder of the matrix
-            row1 = Math.max(1, m-i+1);
-            array1 = new double[row1][n-i+1];
-            for (j = 0; j < row1; j++) {
-                for (k = 0; k < n-i+1; k++) {
-                    array1[j][k] = A[i-1+j][i-1+k];
-                }
-            }
-            dimv = Math.min(m-i+1,n-i+1);
-            v1 = new double[dimv];
-            v2 = new double[dimv-1];
-            v3 = new double[dimv];
-            v4 = new double[dimv];
-            dgebd2(m-i+1, n-i+1, array1, row1, v1, v2, v3, v4, work, iinfo);
-            for (j = 0; j < row1; j++) {
-                for (k = 0; k < n-i+1; k++) {
-                    A[i-1+j][i-1+k] = array1[j][k];
-                }
-            }
-            for (j = 0; j < dimv; j++) {
-                d[i-1+j] = v1[j];
-                tauq[i-1+j] = v3[j];
-                taup[i-1+j] = v4[j];
-            }
-            for (j = 0; j < dimv - 1; j++) {
-                e[i-1+j] = v2[j];
-            }
-            work[0] = ws;
-            return;
         } // for (i = 1; i <= minmn - nx; i += nb)
+        // Use unblocked code to reduce the remainder of the matrix
+        row1 = Math.max(1, m-i+1);
+        array1 = new double[row1][n-i+1];
+        for (j = 0; j < row1; j++) {
+            for (k = 0; k < n-i+1; k++) {
+                array1[j][k] = A[i-1+j][i-1+k];
+            }
+        }
+        dimv = Math.min(m-i+1,n-i+1);
+        v1 = new double[dimv];
+        v2 = new double[dimv-1];
+        v3 = new double[dimv];
+        v4 = new double[dimv];
+        dgebd2(m-i+1, n-i+1, array1, row1, v1, v2, v3, v4, work, iinfo);
+        for (j = 0; j < row1; j++) {
+            for (k = 0; k < n-i+1; k++) {
+                A[i-1+j][i-1+k] = array1[j][k];
+            }
+        }
+        for (j = 0; j < dimv; j++) {
+            d[i-1+j] = v1[j];
+            tauq[i-1+j] = v3[j];
+            taup[i-1+j] = v4[j];
+        }
+        for (j = 0; j < dimv - 1; j++) {
+            e[i-1+j] = v2[j];
+        }
+        work[0] = ws;
+        return;
     } // dgebrd
 
     
@@ -24031,6 +24025,7 @@ ib = Math.min(nb, k-i+1);
                                 dlacpy('F', m, n, COPYA, lda, A, lda);
                                 dlacpy('F', m, nrhs, COPYB, ldb, B, ldb);
                                 srnamt = new String("DGELSS");
+                                
                                 dgelss(m, n, nrhs, A, lda, B, ldb, s, rcond, crank,
                                        work, lwork, info);
                                 if (info[0] != 0) {
@@ -24092,14 +24087,14 @@ ib = Math.min(nb, k-i+1);
                                 result[2] = 0.0;
                                 if (m > crank[0]) {
                                     result[2] = dqrt17('N', 1, m, n, nrhs, COPYA, lda, B, ldb,
-                                                       COPYB, ldb, C);    
+                                                       COPYB, ldb, C); 
                                 } // if (m > crank[0])
                                 
                                 // Test 14: Check if x is in the rowspace of A
                                 result[3] = 0.0;
                                 if (n > crank[0]) {
                                     result[3] = dqrt14('N', m, n, nrhs, COPYA, lda, B, ldb, 
-                                                       work, lwork);    
+                                                       work, lwork);
                                 } // if (n > crank[0])
                                 
                                 for (k = 0; k < ntests; k++) {
@@ -24354,6 +24349,17 @@ ib = Math.min(nb, k-i+1);
                 }
             }
             dgemm('N', 'N', m, nrhs, rank[0], 1.0, A, lda, array1, rank[0], 0.0, B, ldb);
+            boolean nanfound = false;
+            for (p = 0; p < m; p++) {
+                for (q = 0; q < nrhs; q++) {
+                    if (Double.isNaN(B[p][q])) {
+                        nanfound = true;
+                    }
+                }
+            }
+            if (nanfound) {
+                MipavUtil.displayError("m = " + m + " n = " + n + " nrhs = " + nrhs);  
+            }
             
             // work space used <= mn * nrhs
             // generate (unscaled) matrix A
@@ -25228,6 +25234,9 @@ ib = Math.min(nb, k-i+1);
         anrm = dlange('M', m, n, work2, ldwork, rwork);
         if (anrm != 0.0) {
             dlascl('G', 0, 0, anrm, 1.0, m, n, work2, ldwork, info);
+            if (info[0] != 0) {
+                MipavUtil.displayError("In dqrt14 dlascl call #1 gave info[0] = " + info[0]);
+            }
         }
         
         // Copy X or X' into the right place and scale it
@@ -25237,7 +25246,10 @@ ib = Math.min(nb, k-i+1);
             dlacpy('A', m, nrhs, X, ldx, work3, ldwork);
             xnrm = dlange('M', m, nrhs, work3, ldwork, rwork);
             if (xnrm != 0.0) {
-                dlascl('G', 0, 0, xnrm, 1.0, m, nrhs, work3, ldwork, info);    
+                dlascl('G', 0, 0, xnrm, 1.0, m, nrhs, work3, ldwork, info);
+                if (info[0] != 0) {
+                    MipavUtil.displayError("In dqrt14 dlascl call #2 gave info[0] = " + info[0]);
+                }
             } // if (xnrm != 0.0)
             work23 = new double[ldwork][n+nrhs];
             for (q = 0; q < n; q++) {
@@ -25255,6 +25267,9 @@ ib = Math.min(nb, k-i+1);
             work4 = new double[Math.min(m, n+nrhs)];
             work5 = new double[n+nrhs];
             dgeqr2(m, n+nrhs, work23, ldwork, work4, work5, info);
+            if (info[0] != 0) {
+                MipavUtil.displayError("In dqrt14 dgeqr2 gave info[0] = " + info[0]);
+            }
             
             // Compute the largest entry in the upper triangle of
             // work(n+1:m,n+1:n+nrhs)
@@ -25278,6 +25293,9 @@ ib = Math.min(nb, k-i+1);
             for (i = 1; i <= n; i++) {
                 for (j = 1; j <= nrhs; j++) {
                     work[m-1+j+(i-1)*ldwork] = X[i-1][j-1];
+                    //if (Double.isNaN(X[i-1][j-1])) {
+                        //MipavUtil.displayError("X[" + (i-1) + "][" + (j-1) + "] = is NaN");
+                    //}
                 }
             }
             work2 = new double[ldwork][n];
@@ -25289,6 +25307,9 @@ ib = Math.min(nb, k-i+1);
             xnrm = dlange('M', nrhs, n, work2, ldwork, rwork);
             if (xnrm != 0.0) {
                 dlascl('G', 0, 0, xnrm, 1.0, nrhs, n, work2, ldwork, info);
+                //if (info[0] != 0) {
+                    //MipavUtil.displayError("In dqrt14 dlascl call #3 gave info[0] = " + info[0]);
+                //}
             }
             
             // Compute LQ factorization of work
@@ -25305,6 +25326,9 @@ ib = Math.min(nb, k-i+1);
             work4 = new double[Math.min(ldwork, n)];
             work5 = new double[ldwork];
             dgelq2(ldwork, n, work2, ldwork, work4, work5, info);
+            if (info[0] != 0) {
+                MipavUtil.displayError("In dqrt14 dgeql2 had info[0] = " + info[0]);
+            }
             for (q = 0; q < n; q++) {
                 for (p = 0; p < ldwork; p++) {
                     work[p + q*ldwork] = work2[p][q];
