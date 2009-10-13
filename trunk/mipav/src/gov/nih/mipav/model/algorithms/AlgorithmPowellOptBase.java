@@ -7,7 +7,7 @@ import gov.nih.mipav.util.MipavUtil;
 import java.util.Hashtable;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
-import com.mentorgen.tools.profile.runtime.Profile;
+//import com.mentorgen.tools.profile.runtime.Profile;
 
 
 /**

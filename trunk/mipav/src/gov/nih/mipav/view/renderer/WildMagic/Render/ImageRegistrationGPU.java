@@ -34,7 +34,7 @@ import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-import com.mentorgen.tools.profile.runtime.Profile;
+//import com.mentorgen.tools.profile.runtime.Profile;
 
 public class ImageRegistrationGPU extends JavaApplication3D
 //implements GLEventListener, KeyListener
