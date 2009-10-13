@@ -105,6 +105,7 @@ public class SurfaceExtractorCubes extends ExtractSurfaceCubes {
 
             if ( bTransform )
             {
+            /*
             if (dicomMatrix != null) {
 
                 // Change the voxel coordinate into millimeters
@@ -121,11 +122,12 @@ public class SurfaceExtractorCubes extends ExtractSurfaceCubes {
                 tCoord[2] = tCoord[2] + m_afStartLocation[2];
                 akVertex[kInt.intValue()] = new Vector3f(tCoord[0], tCoord[1], tCoord[2]);
             } else {
+            */
                 kV.X = (kV.X * m_fXDelta * m_aiDirection[0]) + m_afStartLocation[0];
                 kV.Y = (kV.Y * m_fYDelta * m_aiDirection[1]) + m_afStartLocation[1];
                 kV.Z = (kV.Z * m_fZDelta * m_aiDirection[2]) + m_afStartLocation[2];
                 akVertex[kInt.intValue()] = new Vector3f(kV);
-            }
+            // }
             }
             else
             {

@@ -287,7 +287,10 @@ public class ViewMenuBar {
                         // null, false),
                         menuBuilder.buildMenuItem("VOI landmark", "VOILandmark", 0, null, false),}),
                 menuBuilder.makeMenu("Segmentation", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("Evaluate VOI segmentation", "evalSeg", 0, null, false),
+                        menuBuilder
+																.buildMenuItem(
+																		"Evaluate VOI segmentation",
+																		"evalSeg", 0, null, false),
 
                         // menuBuilder.buildMenuItem("Extract object surface",
                         // "extractObjectSurface", 0, null, false),
@@ -828,9 +831,12 @@ public class ViewMenuBar {
                                 ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("Cardiology VOI", "Cardio", 0, null, true),
                                 menuBuilder.makeMenu("Prostate VOI", true, new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Merge VOIs", "ProstateMergedVOIs", 0, null, false),
-                                        menuBuilder.buildMenuItem("Surface Reconstruction", "ProstateReconstruct", 0,
-                                                null, false)}),
+                                		menuBuilder.buildMenuItem("Merge VOIs", "ProstateMergedVOIs", 0, null, false),
+                                		menuBuilder.buildMenuItem("Surface Reconstruction", "ProstateReconstruct", 0, null, false),
+                                		menuBuilder.buildMenuItem("Save Features", "ProstateFeaturesSave", 0, null, false),
+                                		menuBuilder.buildMenuItem("Save Test Features", "ProstateFeaturesTest", 0, null, false),
+                                		menuBuilder.buildMenuItem("Extract Surface", "ProstateExtract", 0, null, false)
+                                }),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Open VOI intensity graph", "OpenNewGraph", 0,

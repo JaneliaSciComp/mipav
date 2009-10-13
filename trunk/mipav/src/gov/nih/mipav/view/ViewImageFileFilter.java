@@ -89,6 +89,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     
     public static final int TIFF = 24;
 
+    /** Dicom Matrix info Files (*.dicomMatrix). */
+    public static final int DICOMMATRIX = 25;
+    
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
     private static String[] descriptions = {
@@ -112,7 +115,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files",
             "XML-based Clinical and Experimental Data Exchange Schema(*.bxh)", // XCEDE schema
             "User Defined", "R-table (*.rtb)", "Data provenance (*.xmp)", // NLT
-            "TIFF files (*.tif; *.tiff)"};
+            "TIFF files (*.tif; *.tiff)",
+            "DicomMatrix file (*.dicomMatrix)"};
 
     /** short description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
@@ -134,7 +138,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "Transfer Function Files", // FUNCT
             "VOI Files", // VOI
             "Nonlinear Transformation Files", // NLT
-            "Dynamic", "Plugin", "XCEDE Schema", "User Defined", "R-table", "Data provenance", "TIFF"};
+            "Dynamic", "Plugin", "XCEDE Schema", "User Defined", "R-table", "Data provenance", "TIFF", "DicomMatrix"};
 
     /** array of user defined extensions */
     private static String[] userDefinedExtensions;
@@ -379,6 +383,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         } else if (filterType == RTABLE && extension.equalsIgnoreCase(".rtb")) {
             return true;
         } else if (filterType == DATA_PROVENANCE && extension.equalsIgnoreCase(".xmp")) {
+            return true;
+        } else if (filterType == DICOMMATRIX && extension.equalsIgnoreCase(".dicomMatrix")) {
             return true;
         }
         return false;

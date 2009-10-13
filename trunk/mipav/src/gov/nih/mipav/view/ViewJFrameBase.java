@@ -8,6 +8,8 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
+
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
@@ -2154,6 +2156,17 @@ public abstract class ViewJFrameBase extends JFrame
     	JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(this);
     	mergeVOIsDialog.validate();
     }
+    
+    public void saveProstateFeatures() {
+    	JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(this, imageA);
+    	saveFeaturesDialog.validate();
+    }
+    
+    public void testProstateFeatures() {
+    	JDialogBase saveFeaturesDialog = new JDialogProstateTestFeatures(this, imageA);
+    	saveFeaturesDialog.validate();
+    }
+    
     
     /**
      * Reconstruct the prostate surface from the coarse VOIs cloudy points.  
