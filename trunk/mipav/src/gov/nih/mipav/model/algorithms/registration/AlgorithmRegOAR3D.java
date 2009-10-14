@@ -12,8 +12,7 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.WildMagic.Render.ImageRegistrationGPU;
 
 import java.util.*;
-
-//import com.mentorgen.tools.profile.runtime.Profile;
+import com.mentorgen.tools.profile.runtime.Profile;
 
 
 /**
@@ -1646,8 +1645,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             if (calcCOG) {
                 Vector3f cog = calculateCenterOfMass3D(simpleInput, simpleWeightInput, doColor);
                 Vector3f cogR = calculateCenterOfMass3D(simpleRef, simpleWeightRef, doColor);
-                Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
-                Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
+                Preferences.debug("Center of mass for the subsampled input image:" + cog.ToString() + "\n");
+                Preferences.debug("Center of mass for the subsampled reference image:" + cogR.ToString() + "\n");
 
                 diffX = (cog.X - cogR.X);
                 diffY = (cog.Y - cogR.Y);
@@ -1676,9 +1675,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         }
 
 
-        //Profile.stop();
-        //Profile.setFileName( "profile_out"  );
-       // Profile.shutdown();
 
         answer.matrix.Inverse();
         fireProgressStateChanged(100);
@@ -1696,6 +1692,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             m_kGPUCost.dispose();
             m_kGPUCost = null;
         }
+        //Profile.stop();
+        //Profile.setFileName( "profile_out"  );
+        //Profile.shutdown();
     }
 
     /**
@@ -1804,6 +1803,10 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
             case AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
                 s += "Normalized mutual information smoothed weighted, ";
+                break;
+                
+            case AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU:
+                s += "Normalized mutual information GPU, ";
                 break;
 
             default:
@@ -2120,8 +2123,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         if (calcCOG) {
             cog = calculateCenterOfMass3D(input, simpleWeightInputSub8, doColor);
             cogR = calculateCenterOfMass3D(ref, simpleWeightRefSub8, doColor);
-            Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
-            Preferences.debug("Center of mass for the subsampled reference image:" + cogR + "\n");
+            Preferences.debug("Center of mass for the subsampled input image:" + cog.ToString() + "\n");
+            Preferences.debug("Center of mass for the subsampled reference image:" + cogR.ToString() + "\n");
 
             diffX = (cog.X - cogR.X);
             diffY = (cog.Y - cogR.Y);
@@ -2465,7 +2468,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             cog = calculateCenterOfMass3D(input, simpleWeightInputSub4, doColor);
         }
 
-        Preferences.debug("Center of mass for the subsampled input image:" + cog + "\n");
+        Preferences.debug("Center of mass for the subsampled input image:" + cog.ToString() + "\n");
 
         // Preferences.debug("Center of mass for the subsampled reference image:" + cog + "\n");
         MatrixListItem item = null;

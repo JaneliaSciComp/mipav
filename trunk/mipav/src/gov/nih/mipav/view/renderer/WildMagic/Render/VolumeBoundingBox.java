@@ -64,7 +64,7 @@ public class VolumeBoundingBox extends VolumeObject
      */
     public void Render( Renderer kRenderer, Culler kCuller, boolean bPreRender, boolean bSolid )
     {
-        if ( !m_bDisplay || bPreRender || !bSolid )
+        if ( !m_bDisplay || !bSolid )
         {
             return;
         }

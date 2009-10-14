@@ -140,7 +140,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     
     
 
-    private FrameBuffer m_kFBO;    
+    private OpenGLFrameBuffer m_kFBO;    
     private ShaderEffect m_spkPlaneEffect;
     private TriMesh m_pkPlane;
     private TriMesh m_pkPlanePreRender;
@@ -414,6 +414,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if (m_pkRenderer.BeginScene())
         {
             m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
+            m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
             m_pkRenderer.ClearBuffers();
 
             
@@ -1507,7 +1508,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     public void setBackgroundColor( ColorRGBA kColor )
     {
-        m_kBackgroundColor = kColor;
+        m_kBackgroundColor.Copy(kColor);
         if ( m_kVolumeRayCast != null )
         {
             m_kVolumeRayCast.SetBackgroundColor( kColor );
@@ -2618,6 +2619,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
+    public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
+        super.reshape( arg0, iX, iY, iWidth, iHeight );
+        UpdateRenderTarget(iWidth, iHeight);
+        m_kVolumeRayCast.reshape(iWidth, iHeight);
+    }
     /**
      * Closes the shader parameters window.
      */
@@ -2771,6 +2777,26 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     }
     
 
+    private void UpdateRenderTarget( int iWidth, int iHeight )
+    {        
+        Texture[] akSceneTarget = new Texture[3];
+        for ( int i = 0; i < 3; i++ )
+        {
+            akSceneTarget[i] = m_kFBO.GetTarget(i);
+            akSceneTarget[i].GetImage().SetData((byte[])null, iWidth, iHeight );
+            akSceneTarget[i].Release();
+            m_pkRenderer.LoadTexture( akSceneTarget[i] );
+        }
+        m_kFBO.TerminateBuffer();
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_kFBO.SetTarget(i, akSceneTarget[i]);
+        }
+        m_kFBO.InitializeBuffer();
+        m_kFBO.Enable();
+        m_kFBO.Disable();     
+    }
+    
     protected void UpdateSceneRotation()
     {
         super.UpdateSceneRotation();

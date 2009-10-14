@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Vector;
 
-//import com.mentorgen.tools.profile.runtime.Profile;
+import com.mentorgen.tools.profile.runtime.Profile;
 
 /**
  * This is an automatic registration method based on FLIRT. FLIRT stands for
@@ -2178,6 +2178,10 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             case AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
                 s += "Normalized mutual information smoothed weighted, ";
                 break;
+                
+            case AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU:
+                s += "Normalized mutual information GPU, ";
+                break;
 
             default:
                 s += "Correlation ratio, ";
@@ -2349,8 +2353,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Vector2f cog = calculateCenterOfMass2D(input, simpleWeightInputSub8, doColor);
         Vector2f cogR = calculateCenterOfMass2D(ref, simpleWeightRefSub8, doColor);
 
-        Preferences.debug(" COG input image = " + cog + "\n");
-        Preferences.debug(" COG ref   image = " + cogR + "\n");
+        Preferences.debug(" COG input image = " + cog.ToString() + "\n");
+        Preferences.debug(" COG ref   image = " + cogR.ToString() + "\n");
 
         double diffX = (cog.X - cogR.X);
         double diffY = (cog.Y - cogR.Y);
@@ -2858,8 +2862,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Vector2f cog = calculateCenterOfMass2D(input, simpleWeightInput, doColor);
         Vector2f cogR = calculateCenterOfMass2D(ref, simpleWeightRef, doColor);
 
-        Preferences.debug(" COG input image = " + cog + "\n");
-        Preferences.debug(" COG ref   image = " + cogR + "\n");
+        Preferences.debug(" COG input image = " + cog.ToString() + "\n");
+        Preferences.debug(" COG ref   image = " + cogR.ToString() + "\n");
 
         double diffX = (cog.X - cogR.X);
         double diffY = (cog.Y - cogR.Y);

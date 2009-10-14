@@ -350,7 +350,7 @@ public class VolumeRayCast extends VolumeObject
      * with the ray-cast volume have been pre-rendered. */
     public void PostPreRender( Renderer kRenderer )
     {
-        kRenderer.Resize(m_iWidthSave,m_iHeightSave);
+        //kRenderer.Resize(m_iWidthSave,m_iHeightSave);
         // Disable the PBuffer
         m_pkPBuffer.Disable();
     }
@@ -443,6 +443,12 @@ public class VolumeRayCast extends VolumeObject
         }
     }
 
+    public void reshape( int iWidth, int iHeight )
+    {
+        //m_spkSceneImage.SetData(new byte[iWidth*iHeight*4], iWidth, iHeight);
+        //m_apkSceneTarget[0].Release();
+    }
+    
     /**
      * Enables/Disables self-shadowing in the Surface mode.
      * @param bShadow shadow on/off.
