@@ -45,6 +45,12 @@ public class GeneralizedInverse {
     private double badc1_dlatb4;
     private double badc2_dlatb4;
     
+    private double timesDone = 0;
+    private boolean doneNow = false;
+    private int errorsNow = 0;
+    private double dOrg[];
+    private double dSort[];
+    
     public GeneralizedInverse() {
         
     }
@@ -5704,8 +5710,17 @@ public class GeneralizedInverse {
             work[i-1] = work[i-1] * work[i-1];
         }
         work[2*n-1] = 0.0;
+        dOrg = new double[2*n];
+        dSort = new double[4*n];
+        int p;
+        for (p = 0; p < 2*n; p++) {
+            dOrg[p] = work[p];
+        }
         
         dlasq2(n, work, info);
+        for (p = 0; p < 4*n; p++) {
+            dSort[p] = work[p];
+        }
         
         if (info[0] == 0) {
             for (i = 1; i <= n; i++) {
@@ -6645,7 +6660,19 @@ loop4:
             iter[0] = iter[0] + 1;
             
             // Check status
-            if ((dmin[0] > 0.0) && (dmin1[0] > 0.0)) {
+            if (Double.isNaN(dmin[0])) {
+                // NaN
+                
+                if (tau[0] == 0.0) {
+                    calldlasq6 = true;
+                    break;
+                }
+                else {
+                    tau[0] = 0.0;
+                    continue;
+                }
+            } // else if (Double.isNaN(dmin[0]))
+            else if ((dmin[0] >= 0.0) && (dmin1[0] > 0.0)) {
                 // Success
                 calldlasq6 = false;
                 break;
@@ -6678,18 +6705,6 @@ loop4:
                 }
                 continue;
             } // else if (dmin[0] < 0.0)
-            else if (Double.isNaN(dmin[0])) {
-                // NaN
-                
-                if (tau[0] == 0.0) {
-                    calldlasq6 = true;
-                    break;
-                }
-                else {
-                    tau[0] = 0.0;
-                    continue;
-                }
-            } // else if (Double.isNaN(dmin[0]))
             // Possible underflow.  Play it safe.
             calldlasq6 = true;
             break;
@@ -6875,7 +6890,7 @@ loop4:
                         b2 = z[nn-10]/z[nn-12];
                         np = nn - 13;
                     } // else dmin != dn
-                    // Approximate contribution to norm squared form i < nn - 1.
+                    // Approximate contribution to norm squared from i < nn - 1.
                     a2 = a2 + b2;
                     for (i4 = np; i4 >= 4*i0 - 1 + pp; i4 -= 4) {
                         if (b2 == 0.0) {
@@ -26350,8 +26365,10 @@ ib = Math.min(nb, k-i+1);
                 } // if (mnmin > 1)
                 
                 work2 = new double[4*mnmin];
+                doneNow = true;
                 dbdsqr(uplo, mnmin, 0, 0, 0, s2, work, VT, ldpt, U,
                        ldpt, Z, ldx, work2, iinfo);
+                doneNow = false;
                 
                 // check error code from dbdsqr.
                 if (iinfo[0] != 0) {
@@ -26566,6 +26583,8 @@ ib = Math.min(nb, k-i+1);
             } // for (jtype = 1; jtype <= mtypes; jtype++)
         } // for (jsize = 1; jsize <= nsizes; jsize++)
         
+        Preferences.debug("times done = " + timesDone + "\n");
+        Preferences.debug("errors now = " + errorsNow + "\n");
         if (nfail > 0) {
             Preferences.debug("In dchkbd " + nfail + " out of " + ntest + " failed to pass the threshold\n");
             MipavUtil.displayError("In dchkbd " + nfail + " out of " + ntest + " failed to pass the threshold");
