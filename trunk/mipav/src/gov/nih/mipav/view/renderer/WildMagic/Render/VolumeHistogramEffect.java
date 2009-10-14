@@ -30,6 +30,7 @@ implements StreamInterface
     int[] m_aiExtents = new int[3];
     Matrix4f m_kImageTransform;
     float m_fZSlice = 0.0f;
+    float m_fUseZSlice = 0.0f;
 
     public VolumeHistogramEffect ( Texture kTexA, Texture kTexB, 
             float fMinA, float fMaxA, float fMinB, float fMaxB,
@@ -200,6 +201,10 @@ implements StreamInterface
         {
             m_kImageTransform.GetData(pkCProgram.GetUC("InverseTransform").GetData());
         }
+        if ( pkCProgram != null && pkCProgram.GetUC("UseZSlice") != null ) 
+        {
+            pkCProgram.GetUC("UseZSlice").GetData()[0] = m_fUseZSlice;
+        } 
     }
     
     public void SetImageSize( int iX, int iY, int iZ )
@@ -263,6 +268,17 @@ implements StreamInterface
         if ( pkCProgram != null && pkCProgram.GetUC("ZSlice") != null ) 
         {
             pkCProgram.GetUC("ZSlice").GetData()[0] = m_fZSlice;
+        } 
+        //System.err.println( "ZSlice: " + m_fZSlice + " Step: " + m_fZStep + " " + (m_fZSlice + m_fZStep) );
+    }
+    
+    public void UseZSlice( )
+    {
+        m_fUseZSlice = 1f;
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("UseZSlice") != null ) 
+        {
+            pkCProgram.GetUC("UseZSlice").GetData()[0] = m_fUseZSlice;
         } 
         //System.err.println( "ZSlice: " + m_fZSlice + " Step: " + m_fZStep + " " + (m_fZSlice + m_fZStep) );
     }

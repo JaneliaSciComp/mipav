@@ -17,19 +17,16 @@ import javax.swing.JFrame;
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
+import WildMagic.LibGraphics.Rendering.ResourceIdentifier;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
-import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polypoint;
-import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
 import WildMagic.LibGraphics.Shaders.ImageCatalog;
 import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
-import WildMagic.LibGraphics.Shaders.SamplerInformation;
 import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
@@ -110,6 +107,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
     private boolean m_bCalcLineMin = false;
     
     private float[] m_afBracket = new float[3*4];
+    
+    private int m_iRenderLoops = 1;
     
     public ImageRegistrationGPU( ModelSimpleImage kTarget, ModelSimpleImage kMoving )
     {
@@ -206,7 +205,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
     }
     
     public void display(GLAutoDrawable arg0) {
-        ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        //((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         if ( m_bDispose )
         {
             m_bDispose = false;
@@ -380,9 +379,9 @@ public class ImageRegistrationGPU extends JavaApplication3D
     
     public void initImages( ModelSimpleImage kImageA, ModelSimpleImage kImageB, int iNBins )
     {
-        System.err.println( "initImages" );
-        m_iWidth = kImageA.extents[0];
-        m_iHeight = kImageA.extents[1];
+        //System.err.println( "initImages" );
+        //m_iWidth = kImageA.extents[0];
+        //m_iHeight = kImageA.extents[1];
         
         m_iWidth = iNBins;
         m_iHeight = iNBins;
@@ -687,29 +686,28 @@ public class ImageRegistrationGPU extends JavaApplication3D
     }
     
     
-    protected void CreateImageMesh(int iWidth, int iHeight, int iDepth)
+    protected ResourceIdentifier CreateImageMesh(int iWidth, int iHeight, int iDepth)
     {
         //System.err.println( iWidth + " " + iHeight + " " + iDepth );
         Attributes kAttributes = new Attributes();
-        //kAttributes.SetPChannels(3);
-        kAttributes.SetPChannels(2);
+        kAttributes.SetPChannels(3);
         
-        int iVQuantity = iWidth*iHeight;
+        int iVQuantity = iWidth*iHeight*iDepth;
         VertexBuffer pkVB = new VertexBuffer(kAttributes,iVQuantity);
 
         // generate geometry
         float fInv0 = 1.0f/(iWidth - 1.0f);
         float fInv1 = 1.0f/(iHeight - 1.0f);
-        //float fInv2 = 1.0f/(iDepth);
+        float fInv2 = 1.0f/(iDepth);
         float fU, fV, fW;
         int i0, i1, i2;
 
         float[] afChannels = pkVB.GetData();
         int iIndex = 0;
         
-        //for (i2 = 0; i2 < iDepth; i2++ )
+        for (i2 = 0; i2 < iDepth; i2++ )
         {
-            //fW = i2*fInv2;
+            fW = i2*fInv2;
             for (i1 = 0; i1 < iHeight; i1++)
             {
                 fV = i1*fInv1;
@@ -718,7 +716,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
                     fU = i0*fInv0;
                     afChannels[iIndex++] = ((2.0f*fU-1.0f));
                     afChannels[iIndex++] = ((2.0f*fV-1.0f));
-                    //afChannels[iIndex++] = ((2.0f*fW-1.0f));
+                    afChannels[iIndex++] = ((2.0f*fW-1.0f));
                 }
             }
         }
@@ -731,6 +729,9 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_kImagePointsDual.AttachGlobalState(m_kAlpha);
         m_kImagePointsDual.UpdateGS();
         m_kImagePointsDual.UpdateRS();    
+        
+
+        return m_pkRenderer.LoadVBuffer( pkVB.GetAttributes(), pkVB.GetAttributes(), pkVB );
     }
 
     protected void CreateScene ()
@@ -743,7 +744,12 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_kHistogramOutputB = CreateRenderTarget( "Histogram2DB", iWidth, iHeight  );
         m_kEntropyOut = CreateRenderTarget( "EntropyOut", 1, 1  );
                 
-        CreateImageMesh(m_kImageA.extents[0],m_kImageA.extents[1],iDepth);
+        if ( CreateImageMesh(m_kImageA.extents[0],m_kImageA.extents[1],iDepth) == null )
+        {
+            CreateImageMesh( m_kImageA.extents[0],m_kImageA.extents[1], 1 );
+            m_iRenderLoops = iDepth;
+            System.err.println( "Switching to 2.5D" );
+        }
         m_kImagePointsDual.AttachEffect(m_kImageEffectDual);
         m_kImageEffectDual.SetImageSize( m_kImageA.extents[0],m_kImageA.extents[1],iDepth );
         
@@ -811,10 +817,18 @@ public class ImageRegistrationGPU extends JavaApplication3D
         int iDepth = m_kImageA.nDims == 3 ? m_kImageA.extents[2] : 1;
         float fInv2 = 1.0f/(iDepth);
         float fW;
-        for ( int i = 0; i < iDepth; i++ )
+        for ( int i = 0; i < m_iRenderLoops; i++ )
         {
-            fW = i*fInv2;
-            m_kImageEffectDual.ZSlice(((2.0f*fW-1.0f)));
+            if ( m_iRenderLoops == 1 )
+            {
+                m_kImageEffectDual.ZSlice(0f);
+            }
+            else
+            {
+                fW = i*fInv2;
+                m_kImageEffectDual.ZSlice(((2.0f*fW-1.0f)));
+                m_kImageEffectDual.UseZSlice();
+            }
             m_pkRenderer.Draw(m_kImagePointsDual);
         }
         //writeImage();
@@ -824,8 +838,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_pkRenderer.Resize(m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(0),
                 m_kHistogramOutputB.GetTarget(0).GetImage().GetBound(1));
         m_kHistogramOutputB.Enable();
-        //m_pkRenderer.ClearColorDepth();
-        m_pkRenderer.ClearBuffers();
+        m_pkRenderer.ClearColorDepth();
+        //m_pkRenderer.ClearBuffers();
 
         //m_kHistogramPoints2D.DetachAllEffects();
         //m_kHistogramPoints2D.AttachEffect(m_akCollapse2D);
@@ -1196,12 +1210,6 @@ public class ImageRegistrationGPU extends JavaApplication3D
             {
                 for ( int j = 0; j < kTarget.GetImage().GetBound(0); j++  )
                 {
-                    /*
-                    System.err.println( kTarget.GetImage().GetFloatData()[iIndex] + " " + 
-                            kTarget.GetImage().GetFloatData()[iIndex+1] + " " +
-                            kTarget.GetImage().GetFloatData()[iIndex+2] + " " +
-                            kTarget.GetImage().GetFloatData()[iIndex+3]  );
-                            */
                     dEntropyDual += kTarget.GetImage().GetFloatData()[iIndex];
                     dEntropyY += kTarget.GetImage().GetFloatData()[iIndex+1];
                     dEntropyX += kTarget.GetImage().GetFloatData()[iIndex+2];

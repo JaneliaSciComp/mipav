@@ -10,14 +10,17 @@ uniform vec3 ImageSizeInv;
 
 uniform mat4 InverseTransform;
 uniform float ZSlice;
+uniform float UseZSlice;
 
 void v_VolumeHistogram2DV()
 {
     gl_FrontColor = vec4(1.0,0.0,0.0,1.0);
 
-    vec3 texCoord = vec3(0.0);
-    texCoord.xy = gl_Vertex.xy;
-    texCoord.z = ZSlice;
+    vec3 texCoord = gl_Vertex.xyz;
+    if ( UseZSlice == 1.0 )
+    {
+        texCoord.z = ZSlice;
+    }
     texCoord += 1.0;
     texCoord /= 2.0;
 
