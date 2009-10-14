@@ -1824,7 +1824,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
             try {
                 imgBuf = new float[lengthB];
-                resultBuf = new float[lengthA];
+                resultBuf = new float[sliceSizeA];
             } catch (OutOfMemoryError error) {
                 imgBuf = null;
                 resultBuf = null;
@@ -1861,7 +1861,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 zPos = i * sliceSizeA;
 
                 for (j = 0; j < yDimA; j++) {
-                    yPos = zPos + (j * xDimA);
+                    yPos = (j * xDimA);
 
                     for (k = 0; k < xDimA; k++) {
                         pos = yPos + k;
@@ -1940,6 +1940,16 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                         } // if X in bounds
                     } // for k
                 } // for j
+                try {
+                    resultImage.importData(zPos, resultBuf, false);
+                } catch (IOException error) {
+
+                    MipavUtil.displayError("AlgorithmTPSPline: IOException Error on importData into resultImage" + error);
+                    finalize();
+                    setCompleted(false);
+
+                    return;
+                }
             } // for i
         } // matchImage.isColorImage() == false
         else { // color
@@ -1948,7 +1958,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
             try {
                 imgBuf = new float[lengthB];
-                resultBuf = new float[4 * lengthA];
+                resultBuf = new float[4 * sliceSizeA];
             } catch (OutOfMemoryError error) {
                 imgBuf = null;
                 resultBuf = null;
@@ -1983,7 +1993,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 zPos = i * sliceSizeA;
 
                 for (j = 0; j < yDimA; j++) {
-                    yPos = zPos + (j * xDimA);
+                    yPos = (j * xDimA);
 
                     for (k = 0; k < xDimA; k++) {
                         pos = yPos + k;
@@ -2103,19 +2113,20 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                         } // if X in bounds
                     } // for k
                 } // for j
+                try {
+                    resultImage.importData(4 * zPos, resultBuf, false);
+                } catch (IOException error) {
+
+                    MipavUtil.displayError("AlgorithmTPSPline: IOException Error on importData into resultImage" + error);
+                    finalize();
+                    setCompleted(false);
+
+                    return;
+                }
             } // for i
         } // else color
 
-        try {
-            resultImage.importData(0, resultBuf, true);
-        } catch (IOException error) {
-
-            MipavUtil.displayError("AlgorithmTPSPline: IOException Error on importData into resultImage" + error);
-            finalize();
-            setCompleted(false);
-
-            return;
-        }
+        resultImage.calcMinMax();
 
         setCompleted(true);
 
