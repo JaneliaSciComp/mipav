@@ -278,6 +278,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      */
     private int outOfBoundsIndex = 0;
     
+    private AlgorithmTPSpline spline = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -1075,9 +1077,18 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 			if (!file.exists()) file = new File(fileName);
 			
             RandomAccessFile raFile = new RandomAccessFile(file, "r");
-            matrix.readMatrix(raFile, false);
-            raFile.close();
-            fileTransMatrix = matrix;
+            String extension = FileUtility.getExtension(file.getAbsolutePath()).toLowerCase();
+            if (extension.equals(".tps")) {
+                spline = new AlgorithmTPSpline(image);
+                spline.readMatrix(raFile);
+                raFile.close();
+            }
+            else {
+                spline = null;
+                matrix.readMatrix(raFile, false);
+                raFile.close();
+                fileTransMatrix = matrix;
+            }
 
             // We don't know the coordinate system that the transformation represents. Therefore
             // bring up a dialog where the user can ID the coordinate system changes (i.e.
@@ -1328,6 +1339,23 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         if (doTalairach) {
             callTalAlgorithm();
 
+            return;
+        }
+        
+        if (spline != null) {
+            spline.run();
+            resultImage = spline.getResultImage();
+
+            if (resultImage != null) {
+
+                try {
+
+                    // resultImage.setImageName("Transformed image");
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            }
             return;
         }
         
@@ -3785,14 +3813,14 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         
         // TRANSFORMATION MATRIX INFO
         
-        if (fileMatrix.isSelected()) { // read matrix from file
+        if (fileMatrix.isSelected()  && (spline == null)) { // read matrix from file
 
             // xfrm.Mult(readTransformMatrixFile(matrixFile));
             ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("Matrix loaded from Transform dialog:\n");
             ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(reorientCoordSystem(fileTransMatrix).toString());
             xfrm.Mult(reorientCoordSystem(fileTransMatrix));
         } else if (userDefinedMatrix.isSelected()) { // user matrix
-
+            spline = null;
             // user stuff
             tmpStr = textTx.getText();
 
@@ -3939,6 +3967,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
         } // if (userDefinedMatrix.isSelected())
         else if (storedMatrix.isSelected()) { // use image's stored matrix
+            spline = null;
             Preferences.debug("Image's stored matrix = \n" + image.getMatrix());
 
             if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
@@ -3970,6 +3999,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 xfrm.Mult(xfrm25);
             }
         } else if (noTransform.isSelected()) { // no transform
+            spline = null;
             xfrm.MakeIdentity();
         }
 
