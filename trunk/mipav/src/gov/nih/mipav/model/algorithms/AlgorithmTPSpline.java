@@ -98,6 +98,16 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private double[] zTar;
+    
+    private boolean setupRequired = true;
+    
+    private boolean run2D = true;
+    
+    private int xDimA;
+    
+    private int yDimA;
+    
+    private int zDimA;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -264,6 +274,14 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             return;
         }
     }
+    
+    /**
+     * Constructor used when N, xDimA, yDimA, zDimA, x[], y[], z[], and C[][] are read from a file
+     * @param matchImage
+     */
+    public AlgorithmTPSpline(ModelImage matchImage) {
+        this.matchImage = matchImage;
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -324,15 +342,24 @@ public class AlgorithmTPSpline extends AlgorithmBase {
     public void runAlgorithm() {
 
         try {
-            fireProgressStateChanged(matchImage.getImageName(), "Calculating spline coefficients ...");
 
-
-            if (z == null) {
-                setupTPSpline2D();
-                tpSpline2D();
-            } else {
-                setupTPSpline3D();
-                tpSpline3D();
+            if (setupRequired) {
+                fireProgressStateChanged(matchImage.getImageName(), "Calculating spline coefficients ...");
+                if (z == null) {
+                    setupTPSpline2D();
+                    tpSpline2D();
+                } else {
+                    setupTPSpline3D();
+                    tpSpline3D();
+                }
+            } // if (setupRequired)
+            else {
+                if (run2D) {
+                    tpSpline2D();
+                }
+                else {
+                    tpSpline3D();
+                }
             }
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -1446,7 +1473,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         double dx, dy;
         double fT;
         double U;
-        int xDimA, yDimA, xDimB, yDimB, zDimB;
+        int xDimB, yDimB, zDimB;
         int[] extents;
         int lengthA, lengthB;
         int zNum;
@@ -1468,8 +1495,10 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         fireProgressStateChanged(0);
         fireProgressStateChanged("Performing base to match grid transformation...");
 
-        xDimA = baseImage.getExtents()[0];
-        yDimA = baseImage.getExtents()[1];
+        if (setupRequired) {
+            xDimA = baseImage.getExtents()[0];
+            yDimA = baseImage.getExtents()[1];
+        }
 
         xDimB = matchImage.getExtents()[0];
         yDimB = matchImage.getExtents()[1];
@@ -1491,7 +1520,9 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             }
 
             resultImage = new ModelImage(matchImage.getType(), extents, name);
-            updateFileInfo();
+            if (baseImage != null) {
+                updateFileInfo();
+            }
 
         } catch (OutOfMemoryError error) {
             extents = null;
@@ -1755,11 +1786,9 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         double dx, dy, dz;
         double fT;
         double U;
-        int xDimA, yDimA, zDimA;
         int xDimB, yDimB, zDimB;
         int[] extents;
         int sliceSizeA;
-        int lengthA;
         int sliceSizeB;
         int lengthB;
         int k;
@@ -1781,9 +1810,11 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         fireProgressStateChanged(0);
         fireProgressStateChanged("Performing base to match grid transformation...");
 
-        xDimA = baseImage.getExtents()[0];
-        yDimA = baseImage.getExtents()[1];
-        zDimA = baseImage.getExtents()[2];
+        if (setupRequired) {
+            xDimA = baseImage.getExtents()[0];
+            yDimA = baseImage.getExtents()[1];
+            zDimA = baseImage.getExtents()[2];
+        }
 
         xDimB = matchImage.getExtents()[0];
         yDimB = matchImage.getExtents()[1];
@@ -1810,10 +1841,11 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             return;
         }
 
-        updateFileInfo();
+        if (baseImage != null) {
+            updateFileInfo();
+        }
 
         sliceSizeA = xDimA * yDimA;
-        lengthA = sliceSizeA * zDimA;
 
         fireProgressStateChanged(0);
         fireProgressStateChanged("Performing interpolation into result buffer...");
@@ -2131,6 +2163,206 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         setCompleted(true);
 
         return;
+    }
+    
+    /**
+     * Saves N,rows, columns, and float C[][] matrix to a text file MIPAV format 
+     * @see saveMatrix(RandomAccessFile raFile)
+     * @param  fileName  - file name, including the path
+     */
+    public void saveMatrix(String fileName, String message) {
+        int row;
+        int col;
+        int r;
+        int c;
+        try {
+            File file = new File(fileName);
+            RandomAccessFile raFile = new RandomAccessFile(file, "rw");
+            if (raFile == null) return;
+
+            try {
+                raFile.writeBytes(Integer.toString(N) + "\n"); // write N number of points used
+                xDimA = baseImage.getExtents()[0];
+                yDimA = baseImage.getExtents()[1];
+                if (z == null) {
+                    row = N +3;
+                    col = 2;
+                }
+                else {
+                    row = N + 4;
+                    col = 3;
+                    zDimA = baseImage.getExtents()[2];
+                }
+                raFile.writeBytes(Integer.toString(row) + "\n"); // write number of rows
+                raFile.writeBytes(Integer.toString(col) + "\n"); // write number of columns
+                raFile.writeBytes(Integer.toString(xDimA) + "\n");
+                raFile.writeBytes(Integer.toString(yDimA) + "\n");
+                if (col == 3) {
+                    raFile.writeBytes(Integer.toString(zDimA) + "\n");
+                }
+                for (c = 0; c < N; c++) {
+                    raFile.writeBytes(Double.toString(x[c]) + " ");
+                }
+                raFile.writeBytes("\n");
+                for (c = 0; c < N; c++) {
+                    raFile.writeBytes(Double.toString(y[c]) + " ");
+                }
+                raFile.writeBytes("\n");
+                if (col == 3) {
+                    for (c = 0; c < N; c++) {
+                        raFile.writeBytes(Double.toString(z[c]) + " ");
+                    }
+                    raFile.writeBytes("\n");
+                } // if (col == 3)
+                for (r = 0; r < row; r++) {
+                    for (c = 0; c < col; c++) {
+                        raFile.writeBytes(Float.toString(C[r][c]) + " ");
+                    }
+                        
+                    raFile.writeBytes("\n");
+                }
+                raFile.writeBytes("\n");
+                if (message != null) {
+                    raFile.writeBytes(message);
+                }
+            } catch (IOException error) {
+                MipavUtil.displayError("Matrix save error " + error);
+                
+                return;
+            }
+            raFile.close();
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix save error " + error);
+
+            return;
+        }
+    }
+    
+    public void readMatrix(RandomAccessFile raFile) {
+        int row;
+        int col;
+        int r;
+        String str;
+        int index;
+        int c;
+        int nextIndex;
+        String tmpStr;
+        try {
+            raFile.seek(0);
+            N = Integer.valueOf(raFile.readLine().trim()).intValue();
+            row = Integer.valueOf(raFile.readLine().trim()).intValue();
+            col = Integer.valueOf(raFile.readLine().trim()).intValue();
+            xDimA = Integer.valueOf(raFile.readLine().trim()).intValue();
+            yDimA = Integer.valueOf(raFile.readLine().trim()).intValue();
+            if (col == 3) {
+                zDimA = Integer.valueOf(raFile.readLine().trim()).intValue();
+            }
+            x = new double[N];
+            y = new double[N];
+            if (col == 3) {
+                z = new double[N];
+            }
+            C = new float[row][col];
+            setupRequired = false;
+            if (col == 2) {
+                run2D = true;
+            }
+            else {
+                run2D = false;
+            }
+            str = raFile.readLine().trim();
+            index = 0;
+
+            for (c = 0; c < N; c++) {
+
+                nextIndex = str.indexOf(" ", index);
+
+                if (nextIndex != -1) {
+                    tmpStr = str.substring(index, nextIndex).trim();
+                    index = nextIndex + 1;
+                } else { // spaces trimmed from end
+                    tmpStr = str.substring(index, str.length()).trim();
+                    index = nextIndex;
+                }
+                if (tmpStr.indexOf(".") != -1) {
+                    x[c] = Double.valueOf(tmpStr).doubleValue();
+                } else {
+                    x[c] = Integer.valueOf(tmpStr).doubleValue();
+                }
+            } // for (c = 0; c < N; c++)
+            
+            str = raFile.readLine().trim();
+            index = 0;
+
+            for (c = 0; c < N; c++) {
+
+                nextIndex = str.indexOf(" ", index);
+
+                if (nextIndex != -1) {
+                    tmpStr = str.substring(index, nextIndex).trim();
+                    index = nextIndex + 1;
+                } else { // spaces trimmed from end
+                    tmpStr = str.substring(index, str.length()).trim();
+                    index = nextIndex;
+                }
+                if (tmpStr.indexOf(".") != -1) {
+                    y[c] = Double.valueOf(tmpStr).doubleValue();
+                } else {
+                    y[c] = Integer.valueOf(tmpStr).doubleValue();
+                }
+            } // for (c = 0; c < N; c++)
+            
+            if (col == 3) {
+                str = raFile.readLine().trim();
+                index = 0;
+
+                for (c = 0; c < N; c++) {
+
+                    nextIndex = str.indexOf(" ", index);
+
+                    if (nextIndex != -1) {
+                        tmpStr = str.substring(index, nextIndex).trim();
+                        index = nextIndex + 1;
+                    } else { // spaces trimmed from end
+                        tmpStr = str.substring(index, str.length()).trim();
+                        index = nextIndex;
+                    }
+                    if (tmpStr.indexOf(".") != -1) {
+                        z[c] = Double.valueOf(tmpStr).doubleValue();
+                    } else {
+                        z[c] = Integer.valueOf(tmpStr).doubleValue();
+                    }
+                } // for (c = 0; c < N; c++)    
+            } // if (col == 3)
+            
+            for (r = 0; r < row; r++) {
+                str = raFile.readLine().trim();
+                index = 0;
+
+                for (c = 0; c < col; c++) {
+
+                    nextIndex = str.indexOf(" ", index);
+
+                    if (nextIndex != -1) {
+                        tmpStr = str.substring(index, nextIndex).trim();
+                        index = nextIndex + 1;
+                    } else { // spaces trimmed from end
+                        tmpStr = str.substring(index, str.length()).trim();
+                        index = nextIndex;
+                    }
+                    if (tmpStr.indexOf(".") != -1) {
+                        C[r][c] = Float.valueOf(tmpStr).floatValue();
+                    } else {
+                        C[r][c] = Integer.valueOf(tmpStr).floatValue();
+                    }
+                } // for (c = 0; c < col; c++)
+
+            } // for (r = 0; r < row; r++)
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix save error " + error);
+            
+            return;
+        }
     }
 
 }
