@@ -158,7 +158,8 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         if (algorithm instanceof AlgorithmTPSpline) {
 
             if (spline.isCompleted() == true) {
-
+                spline.saveMatrix(UI.getDefaultDirectory() + matchImage.getImageName() +
+                        "_To_" + baseImage.getImageName() + ".tps", null);
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
