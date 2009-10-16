@@ -2339,9 +2339,21 @@ public class AlgorithmTPSpline extends AlgorithmBase {
     }
     
     /**
-     * Saves N,rows, columns, and float C[][] matrix to a text file MIPAV format 
-     * @see saveMatrix(RandomAccessFile raFile)
+     * Saves:
+     * 1.) N, the number of matching control points in baseImage and matchImage
+     * 2.) Number of rows in C matrix
+     * 3.) Number of columns in C matrix
+     * 4.) xDim of baseImage
+     * 5.) yDim of baseImage
+     * 6.) If noncoplanar 3D thin plate spline is used, saves zDim of baseImage
+     * 7.) x coordinates of baseImage control points
+     * 8.) y coordinates of baseImage control points
+     * 9.) If noncoplanar 3D thin plate spline is used, saves z coordinates of baseImage control points
+     * 10.) If 2D or coplanar 3D, saves n+3 by 2 C[][] float matrix from setupTPSpline2D
+     *      If noncoplanar 3D, saves n+4 by 3 C[][] float matrix from setupTPSpline3D
+     * 11.) Saves optional message.
      * @param  fileName  - file name, including the path
+     * @param  message optionally write a message at the file end
      */
     public void saveMatrix(String fileName, String message) {
         int row;
@@ -2366,8 +2378,8 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                     col = 3;
                     zDimA = baseImage.getExtents()[2];
                 }
-                raFile.writeBytes(Integer.toString(row) + "\n"); // write number of rows
-                raFile.writeBytes(Integer.toString(col) + "\n"); // write number of columns
+                raFile.writeBytes(Integer.toString(row) + "\n"); // write number of rows in C matrix
+                raFile.writeBytes(Integer.toString(col) + "\n"); // write number of columns in C matrix
                 raFile.writeBytes(Integer.toString(xDimA) + "\n");
                 raFile.writeBytes(Integer.toString(yDimA) + "\n");
                 if (col == 3) {
@@ -2411,6 +2423,22 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         }
     }
     
+    /**
+     * Reads:
+     * 1.) N, the number of matching control points in baseImage and matchImage
+     * 2.) Number of rows in C matrix
+     * 3.) Number of columns in C matrix
+     * 4.) xDim of baseImage
+     * 5.) yDim of baseImage
+     * 6.) If noncoplanar 3D thin plate spline is used, reads zDim of baseImage
+     * 7.) x coordinates of baseImage control points
+     * 8.) y coordinates of baseImage control points
+     * 9.) If noncoplanar 3D thin plate spline is used, reads z coordinates of baseImage control points
+     * 10.) If 2D or coplanar 3D, reads n+3 by 2 C[][] float matrix from setupTPSpline2D
+     *      If noncoplanar 3D, reads n+4 by 3 C[][] float matrix from setupTPSpline3D
+     * Does not read optional message at end of file.
+     * @param raFile file to be read
+     */
     public void readMatrix(RandomAccessFile raFile) {
         int row;
         int col;
@@ -2436,6 +2464,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 z = new double[N];
             }
             C = new float[row][col];
+            // Don't run setupTPSpline2D() or setupTPSpline3D()
             setupRequired = false;
             if (col == 2) {
                 run2D = true;
@@ -2443,9 +2472,11 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             else {
                 run2D = false;
             }
+            
+            // Read x[]
             str = raFile.readLine().trim();
             index = 0;
-
+           
             for (c = 0; c < N; c++) {
 
                 nextIndex = str.indexOf(" ", index);
@@ -2464,6 +2495,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 }
             } // for (c = 0; c < N; c++)
             
+            // Read y[]
             str = raFile.readLine().trim();
             index = 0;
 
@@ -2486,6 +2518,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             } // for (c = 0; c < N; c++)
             
             if (col == 3) {
+                // Read z[]
                 str = raFile.readLine().trim();
                 index = 0;
 
@@ -2508,6 +2541,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 } // for (c = 0; c < N; c++)    
             } // if (col == 3)
             
+            // Read C[][]
             for (r = 0; r < row; r++) {
                 str = raFile.readLine().trim();
                 index = 0;
@@ -2532,7 +2566,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
             } // for (r = 0; r < row; r++)
         } catch (IOException error) {
-            MipavUtil.displayError("Matrix save error " + error);
+            MipavUtil.displayError("Matrix read error " + error);
             
             return;
         }
