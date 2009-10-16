@@ -45,9 +45,7 @@ public class GeneralizedInverse {
     private double badc1_dlatb4;
     private double badc2_dlatb4;
     
-    private double timesDone = 0;
-    private boolean doneNow = false;
-    private int errorsNow = 0;
+    private boolean dlasq2Error = false;
     private double dOrg[];
     private double dSort[];
     
@@ -5797,6 +5795,26 @@ public class GeneralizedInverse {
     *                   iterations (in inner while loop)
     *              = 3, termination criterion of outer while loop not met 
     *                   (program created more than N unreduced blocks)
+    *                   
+    Dear LAPACK:
+
+   The introductory comments to DLASQ2 state that if INFO = 2, the algorithm failed because
+   the current block of Z was not diagonalized after 30*N iterations (in inner while loop).
+   The inner while loop is only executed if NBIG > 0.  NBIG = 30 * (N0 -I0 + 1) so the
+   inner while loop is only executed if I0 <= N0.  In order for the inner while loop not to fail
+   I0 must become greater than N0 causing a GO TO 150 to be executed. Inside the inner while loop
+   the call to DLASQ3 only uses I0 and N0 as input arguments leaving them unchanged.  In the
+   IF (PP  .EQ. 0 .AND. N0 - I0 .GE. 3) clause,  SPLT can only be set to I0 - 1 or I4/4.  I4 has
+   a maximum value of 4*(N0-3), so the statement I0 = SPLT +1 either leaves I0 unchanged or increases
+   it up to a maximum value of N0 - 2.  In summary, the inner while loop is entered by values of
+   I0 <= N0, but the execution of the inner while loop can only increase I0 up to a maximum of N0 - 2,
+   so the statement IF (I0 .GT. N0) GO TO 150 needed to prevent an inner loop failure will never be
+   executed.  Therefore, the inner while loop always fails.
+
+                                    Sincerely,
+
+                                 William Gandler
+
     *
     *  Further Details
     *  ===============
@@ -6195,6 +6213,7 @@ public class GeneralizedInverse {
                         } // if ((z[4*n0-1] <= tol2*qmax) || (z[4*n0-2] <= tol2*sigma[0]))
                     } // if ((pp[0] == 0) && (n0 - i0 >= 3))
                 } // for (iwhilb = 1; iwhilb <= nbig; iwhilb++)
+                dlasq2Error = true;
                 info[0] = 2;
                 return;
             } // loop2: for (iwhila = 1; iwhila <= n + 1; iwhila++)
@@ -26365,23 +26384,29 @@ ib = Math.min(nb, k-i+1);
                 } // if (mnmin > 1)
                 
                 work2 = new double[4*mnmin];
-                doneNow = true;
+                dlasq2Error = false;
                 dbdsqr(uplo, mnmin, 0, 0, 0, s2, work, VT, ldpt, U,
                        ldpt, Z, ldx, work2, iinfo);
-                doneNow = false;
                 
                 // check error code from dbdsqr.
                 if (iinfo[0] != 0) {
-                    Preferences.debug("dchkbd dbdsqr(values) returned iinfo[0] = " + iinfo[0] + "\n");
-                    Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
-                    Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
-                    Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                    // Note that because of the 3 zero values, this dbdSqr calls dlasq1.  If dlasq1,
+                    // calls dlasq2 and returns iinfo[0] = 2, this should be ignored because the
+                    // inner while loop of dlsaq2 always fails.
+                    if (!dlasq2Error) {
+                        Preferences.debug("dchkbd dbdsqr(values) returned iinfo[0] = " + iinfo[0] + "\n");
+                        Preferences.debug("m = " + m + " n = " + n + " jtype = " + jtype + "\n");
+                        Preferences.debug("ioldsd[0] = " + ioldsd[0] + " ioldsd[1] = " + ioldsd[1] + "\n");
+                        Preferences.debug("ioldsd[2] = " + ioldsd[2] + " ioldsd[3] = " + ioldsd[3] + "\n");
+                    } // if (!dlasq2Error)
                     if (iinfo[0] < 0) {
                         MipavUtil.displayError("Error exit from dchkbd");
                         return; 
                     }
                     else {
-                        result[8] = ulpinv;
+                        if (!dlasq2Error) {
+                            result[8] = ulpinv;
+                        }
                         for (j = 0; j < 9; j++) {
                             if (result[j] >= thresh) {
                                 if (nfail == 0) {
@@ -26494,6 +26519,18 @@ ib = Math.min(nb, k-i+1);
                     temp1 = 2.0 * temp1;
                 } // for (j = 0; j <= log2ui; j++)
                 result[9] = temp1;
+                if (result[9] >= thresh) {
+                    Preferences.debug("mnmin = " + mnmin + "iinfo[0] = " + iinfo[0] + "\n");
+                    for (j = 0; j < bd.length; j++) {
+                        Preferences.debug("bd[" + j + "] = " + bd[j] + "\n");
+                    }
+                    for (j = 0; j < be.length; j++) {
+                        Preferences.debug("be[" + j + "] = " + be[j] + "\n");
+                    }
+                    for (j = 0; j < s1.length; j++) {
+                        Preferences.debug("s1[" + j + "] = " + s1[j] + "\n");
+                    }
+                }
                 
                 // Use dbdsqr to form the decomposition A := (QU) S (VT PT)
                 // frpom the bidiagonal form A := Q B PT
@@ -26583,8 +26620,6 @@ ib = Math.min(nb, k-i+1);
             } // for (jtype = 1; jtype <= mtypes; jtype++)
         } // for (jsize = 1; jsize <= nsizes; jsize++)
         
-        Preferences.debug("times done = " + timesDone + "\n");
-        Preferences.debug("errors now = " + errorsNow + "\n");
         if (nfail > 0) {
             Preferences.debug("In dchkbd " + nfail + " out of " + ntest + " failed to pass the threshold\n");
             MipavUtil.displayError("In dchkbd " + nfail + " out of " + ntest + " failed to pass the threshold");
@@ -29564,6 +29599,7 @@ ib = Math.min(nb, k-i+1);
             else {
                 num[0] = 2*n;
             }
+            return;
         } // if (mx == 0.0)
         
         // Compute scale factors as in Kahn's report
