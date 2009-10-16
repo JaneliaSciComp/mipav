@@ -1796,6 +1796,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         int mod;
         float[] resultBuf;
         float[] imgBuf;
+        short[]imgBuf_short;
         int pos, yPos, zPos;
         float X, Y, Z;
         float x0, y0, z0;
@@ -1987,175 +1988,347 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         else { // color
             sliceSizeB = xDimB * yDimB;
             lengthB = 4 * sliceSizeB * zDimB;
+            if(matchImage.getType() == ModelStorageBase.ARGB_FLOAT) { //ARGB FLOAT
+            	try {
+                    imgBuf = new float[lengthB];
+                    resultBuf = new float[4 * sliceSizeA];
+                } catch (OutOfMemoryError error) {
+                    imgBuf = null;
+                    resultBuf = null;
+                    System.gc();
+                    MipavUtil.displayError("AlgorithmTPSpline: Out of memory on buffers" + error);
 
-            try {
-                imgBuf = new float[lengthB];
-                resultBuf = new float[4 * sliceSizeA];
-            } catch (OutOfMemoryError error) {
-                imgBuf = null;
-                resultBuf = null;
-                System.gc();
-                MipavUtil.displayError("AlgorithmTPSpline: Out of memory on buffers" + error);
-
-                finalize();
-                setCompleted(false);
-
-                return;
-            }
-
-            try {
-                matchImage.exportData(0, lengthB, imgBuf);
-            } catch (IOException error) {
-
-                MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
-                finalize();
-                setCompleted(false);
-
-                return;
-            }
-
-            mod = Math.max(zDimA / 100, 1);
-
-            for (i = 0; i < zDimA; i++) {
-
-                if ((i % mod) == 0) {
-                    fireProgressStateChanged((i + 1) * 100 / zDimA);
-                }
-
-                zPos = i * sliceSizeA;
-
-                for (j = 0; j < yDimA; j++) {
-                    yPos = (j * xDimA);
-
-                    for (k = 0; k < xDimA; k++) {
-                        pos = yPos + k;
-                        result[0] = C[N][0] + (C[N + 1][0] * k) + (C[N + 2][0] * j) + (C[N + 3][0] * i);
-                        result[1] = C[N][1] + (C[N + 1][1] * k) + (C[N + 2][1] * j) + (C[N + 3][1] * i);
-                        result[2] = C[N][2] + (C[N + 1][2] * k) + (C[N + 2][2] * j) + (C[N + 3][2] * i);
-
-                        for (m = 0; m < N; m++) {
-                            dx = x[m] - k;
-                            dy = y[m] - j;
-                            dz = z[m] - i;
-                            fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
-                            U = kernel(fT);
-                            result[0] += C[m][0] * U;
-                            result[1] += C[m][1] * U;
-                            result[2] += C[m][2] * U;
-                        }
-
-                        resultIndex = 4 * pos;
-                        resultBuf[resultIndex] = 255; // remains 255 always
-                        resultBuf[resultIndex + 1] = 0; // R, G, and B remain zero if
-                        resultBuf[resultIndex + 2] = 0; // transformed out of bounds
-                        resultBuf[resultIndex + 3] = 0;
-                        X = result[0];
-
-                        if ((X >= 0) && (X <= (xDimB - 1))) {
-                            Y = result[1];
-
-                            if ((Y >= 0) && (Y <= (yDimB - 1))) {
-                                Z = result[2];
-
-                                if ((Z >= 0) && (Z <= (zDimB - 1))) {
-
-                                    // Preferences.debug(X+", "+Y+", "+Z);
-                                    // set intensity of i,j,k to new transformed coordinate if
-                                    // x,y,z is w/in dimensions of image
-                                    x0 = X - (int) (X);
-                                    y0 = Y - (int) (Y);
-                                    z0 = Z - (int) (Z);
-                                    x1 = 1 - x0;
-                                    y1 = 1 - y0;
-                                    z1 = 1 - z0;
-                                    X0pos = (int) (X);
-                                    Y0pos = (int) (Y) * xDimB;
-                                    Z0pos = (int) (Z) * sliceSizeB;
-
-                                    if ((X >= 0) && (X < (xDimB - 1))) {
-                                        X1pos = X0pos + 1;
-                                    } else {
-                                        X1pos = X0pos;
-                                    }
-
-                                    if ((Y >= 0) && (Y < (yDimB - 1))) {
-                                        Y1pos = Y0pos + xDimB;
-                                    } else {
-                                        Y1pos = Y0pos;
-                                    }
-
-                                    if ((Z >= 0) && (Z < (zDimB - 1))) {
-                                        Z1pos = Z0pos + sliceSizeB;
-                                    } else {
-                                        Z1pos = Z0pos;
-                                    }
-
-                                    temp4 = y1 * z1;
-                                    temp5 = y0 * z1;
-                                    temp6 = y1 * z0;
-                                    temp7 = y0 * z0;
-
-                                    tmpa1 = x1 * temp4;
-                                    tmpa2 = x0 * temp4;
-                                    tmpa3 = x1 * temp5;
-                                    tmpa4 = x0 * temp5;
-                                    tmpa5 = x1 * temp6;
-                                    tmpa6 = x0 * temp6;
-                                    tmpa7 = x1 * temp7;
-                                    tmpa8 = x0 * temp7;
-
-                                    index000 = 4 * (Z0pos + Y0pos + X0pos);
-                                    index001 = 4 * (Z0pos + Y0pos + X1pos);
-                                    index010 = 4 * (Z0pos + Y1pos + X0pos);
-                                    index011 = 4 * (Z0pos + Y1pos + X1pos);
-                                    index100 = 4 * (Z1pos + Y0pos + X0pos);
-                                    index101 = 4 * (Z1pos + Y0pos + X1pos);
-                                    index110 = 4 * (Z1pos + Y1pos + X0pos);
-                                    index111 = 4 * (Z1pos + Y1pos + X1pos);
-
-
-                                    resultBuf[resultIndex + 1] = (tmpa1 * imgBuf[index000 + 1]) +
-                                                                 (tmpa2 * imgBuf[index001 + 1]) +
-                                                                 (tmpa3 * imgBuf[index010 + 1]) +
-                                                                 (tmpa4 * imgBuf[index011 + 1]) +
-                                                                 (tmpa5 * imgBuf[index100 + 1]) +
-                                                                 (tmpa6 * imgBuf[index101 + 1]) +
-                                                                 (tmpa7 * imgBuf[index110 + 1]) +
-                                                                 (tmpa8 * imgBuf[index111 + 1]);
-
-                                    resultBuf[resultIndex + 2] = (tmpa1 * imgBuf[index000 + 2]) +
-                                                                 (tmpa2 * imgBuf[index001 + 2]) +
-                                                                 (tmpa3 * imgBuf[index010 + 2]) +
-                                                                 (tmpa4 * imgBuf[index011 + 2]) +
-                                                                 (tmpa5 * imgBuf[index100 + 2]) +
-                                                                 (tmpa6 * imgBuf[index101 + 2]) +
-                                                                 (tmpa7 * imgBuf[index110 + 2]) +
-                                                                 (tmpa8 * imgBuf[index111 + 2]);
-
-                                    resultBuf[resultIndex + 3] = (tmpa1 * imgBuf[index000 + 3]) +
-                                                                 (tmpa2 * imgBuf[index001 + 3]) +
-                                                                 (tmpa3 * imgBuf[index010 + 3]) +
-                                                                 (tmpa4 * imgBuf[index011 + 3]) +
-                                                                 (tmpa5 * imgBuf[index100 + 3]) +
-                                                                 (tmpa6 * imgBuf[index101 + 3]) +
-                                                                 (tmpa7 * imgBuf[index110 + 3]) +
-                                                                 (tmpa8 * imgBuf[index111 + 3]);
-                                } // if Z in bounds
-                            } // if Y in bounds
-                        } // if X in bounds
-                    } // for k
-                } // for j
-                try {
-                    resultImage.importData(4 * zPos, resultBuf, false);
-                } catch (IOException error) {
-
-                    MipavUtil.displayError("AlgorithmTPSPline: IOException Error on importData into resultImage" + error);
                     finalize();
                     setCompleted(false);
 
                     return;
                 }
-            } // for i
+
+                try {
+                    matchImage.exportData(0, lengthB, imgBuf);
+                } catch (IOException error) {
+
+                    MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
+                    finalize();
+                    setCompleted(false);
+
+                    return;
+                }
+
+                mod = Math.max(zDimA / 100, 1);
+
+                for (i = 0; i < zDimA; i++) {
+
+                    if ((i % mod) == 0) {
+                        fireProgressStateChanged((i + 1) * 100 / zDimA);
+                    }
+
+                    zPos = i * sliceSizeA;
+
+                    for (j = 0; j < yDimA; j++) {
+                        yPos = (j * xDimA);
+
+                        for (k = 0; k < xDimA; k++) {
+                            pos = yPos + k;
+                            result[0] = C[N][0] + (C[N + 1][0] * k) + (C[N + 2][0] * j) + (C[N + 3][0] * i);
+                            result[1] = C[N][1] + (C[N + 1][1] * k) + (C[N + 2][1] * j) + (C[N + 3][1] * i);
+                            result[2] = C[N][2] + (C[N + 1][2] * k) + (C[N + 2][2] * j) + (C[N + 3][2] * i);
+
+                            for (m = 0; m < N; m++) {
+                                dx = x[m] - k;
+                                dy = y[m] - j;
+                                dz = z[m] - i;
+                                fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
+                                U = kernel(fT);
+                                result[0] += C[m][0] * U;
+                                result[1] += C[m][1] * U;
+                                result[2] += C[m][2] * U;
+                            }
+
+                            resultIndex = 4 * pos;
+                            resultBuf[resultIndex] = 255; // remains 255 always
+                            resultBuf[resultIndex + 1] = 0; // R, G, and B remain zero if
+                            resultBuf[resultIndex + 2] = 0; // transformed out of bounds
+                            resultBuf[resultIndex + 3] = 0;
+                            X = result[0];
+
+                            if ((X >= 0) && (X <= (xDimB - 1))) {
+                                Y = result[1];
+
+                                if ((Y >= 0) && (Y <= (yDimB - 1))) {
+                                    Z = result[2];
+
+                                    if ((Z >= 0) && (Z <= (zDimB - 1))) {
+
+                                        // Preferences.debug(X+", "+Y+", "+Z);
+                                        // set intensity of i,j,k to new transformed coordinate if
+                                        // x,y,z is w/in dimensions of image
+                                        x0 = X - (int) (X);
+                                        y0 = Y - (int) (Y);
+                                        z0 = Z - (int) (Z);
+                                        x1 = 1 - x0;
+                                        y1 = 1 - y0;
+                                        z1 = 1 - z0;
+                                        X0pos = (int) (X);
+                                        Y0pos = (int) (Y) * xDimB;
+                                        Z0pos = (int) (Z) * sliceSizeB;
+
+                                        if ((X >= 0) && (X < (xDimB - 1))) {
+                                            X1pos = X0pos + 1;
+                                        } else {
+                                            X1pos = X0pos;
+                                        }
+
+                                        if ((Y >= 0) && (Y < (yDimB - 1))) {
+                                            Y1pos = Y0pos + xDimB;
+                                        } else {
+                                            Y1pos = Y0pos;
+                                        }
+
+                                        if ((Z >= 0) && (Z < (zDimB - 1))) {
+                                            Z1pos = Z0pos + sliceSizeB;
+                                        } else {
+                                            Z1pos = Z0pos;
+                                        }
+
+                                        temp4 = y1 * z1;
+                                        temp5 = y0 * z1;
+                                        temp6 = y1 * z0;
+                                        temp7 = y0 * z0;
+
+                                        tmpa1 = x1 * temp4;
+                                        tmpa2 = x0 * temp4;
+                                        tmpa3 = x1 * temp5;
+                                        tmpa4 = x0 * temp5;
+                                        tmpa5 = x1 * temp6;
+                                        tmpa6 = x0 * temp6;
+                                        tmpa7 = x1 * temp7;
+                                        tmpa8 = x0 * temp7;
+
+                                        index000 = 4 * (Z0pos + Y0pos + X0pos);
+                                        index001 = 4 * (Z0pos + Y0pos + X1pos);
+                                        index010 = 4 * (Z0pos + Y1pos + X0pos);
+                                        index011 = 4 * (Z0pos + Y1pos + X1pos);
+                                        index100 = 4 * (Z1pos + Y0pos + X0pos);
+                                        index101 = 4 * (Z1pos + Y0pos + X1pos);
+                                        index110 = 4 * (Z1pos + Y1pos + X0pos);
+                                        index111 = 4 * (Z1pos + Y1pos + X1pos);
+
+
+                                        resultBuf[resultIndex + 1] = (tmpa1 * imgBuf[index000 + 1]) +
+                                                                     (tmpa2 * imgBuf[index001 + 1]) +
+                                                                     (tmpa3 * imgBuf[index010 + 1]) +
+                                                                     (tmpa4 * imgBuf[index011 + 1]) +
+                                                                     (tmpa5 * imgBuf[index100 + 1]) +
+                                                                     (tmpa6 * imgBuf[index101 + 1]) +
+                                                                     (tmpa7 * imgBuf[index110 + 1]) +
+                                                                     (tmpa8 * imgBuf[index111 + 1]);
+
+                                        resultBuf[resultIndex + 2] = (tmpa1 * imgBuf[index000 + 2]) +
+                                                                     (tmpa2 * imgBuf[index001 + 2]) +
+                                                                     (tmpa3 * imgBuf[index010 + 2]) +
+                                                                     (tmpa4 * imgBuf[index011 + 2]) +
+                                                                     (tmpa5 * imgBuf[index100 + 2]) +
+                                                                     (tmpa6 * imgBuf[index101 + 2]) +
+                                                                     (tmpa7 * imgBuf[index110 + 2]) +
+                                                                     (tmpa8 * imgBuf[index111 + 2]);
+
+                                        resultBuf[resultIndex + 3] = (tmpa1 * imgBuf[index000 + 3]) +
+                                                                     (tmpa2 * imgBuf[index001 + 3]) +
+                                                                     (tmpa3 * imgBuf[index010 + 3]) +
+                                                                     (tmpa4 * imgBuf[index011 + 3]) +
+                                                                     (tmpa5 * imgBuf[index100 + 3]) +
+                                                                     (tmpa6 * imgBuf[index101 + 3]) +
+                                                                     (tmpa7 * imgBuf[index110 + 3]) +
+                                                                     (tmpa8 * imgBuf[index111 + 3]);
+                                    } // if Z in bounds
+                                } // if Y in bounds
+                            } // if X in bounds
+                        } // for k
+                    } // for j
+                    try {
+                        resultImage.importData(4 * zPos, resultBuf, false);
+                    } catch (IOException error) {
+
+                        MipavUtil.displayError("AlgorithmTPSPline: IOException Error on importData into resultImage" + error);
+                        finalize();
+                        setCompleted(false);
+
+                        return;
+                    }
+                } // for i
+            }else { //ARGB UBYTE OR SHORT
+            	System.out.println("argb ubyte/short");
+            	try {
+                    imgBuf_short = new short[lengthB];
+                    resultBuf = new float[4 * sliceSizeA];
+                } catch (OutOfMemoryError error) {
+                    imgBuf = null;
+                    resultBuf = null;
+                    System.gc();
+                    MipavUtil.displayError("AlgorithmTPSpline: Out of memory on buffers" + error);
+
+                    finalize();
+                    setCompleted(false);
+
+                    return;
+                }
+
+                try {
+                    matchImage.exportData(0, lengthB, imgBuf_short);
+                } catch (IOException error) {
+
+                    MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
+                    finalize();
+                    setCompleted(false);
+
+                    return;
+                }
+
+                mod = Math.max(zDimA / 100, 1);
+
+                for (i = 0; i < zDimA; i++) {
+
+                    if ((i % mod) == 0) {
+                        fireProgressStateChanged((i + 1) * 100 / zDimA);
+                    }
+
+                    zPos = i * sliceSizeA;
+
+                    for (j = 0; j < yDimA; j++) {
+                        yPos = (j * xDimA);
+
+                        for (k = 0; k < xDimA; k++) {
+                            pos = yPos + k;
+                            result[0] = C[N][0] + (C[N + 1][0] * k) + (C[N + 2][0] * j) + (C[N + 3][0] * i);
+                            result[1] = C[N][1] + (C[N + 1][1] * k) + (C[N + 2][1] * j) + (C[N + 3][1] * i);
+                            result[2] = C[N][2] + (C[N + 1][2] * k) + (C[N + 2][2] * j) + (C[N + 3][2] * i);
+
+                            for (m = 0; m < N; m++) {
+                                dx = x[m] - k;
+                                dy = y[m] - j;
+                                dz = z[m] - i;
+                                fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
+                                U = kernel(fT);
+                                result[0] += C[m][0] * U;
+                                result[1] += C[m][1] * U;
+                                result[2] += C[m][2] * U;
+                            }
+
+                            resultIndex = 4 * pos;
+                            resultBuf[resultIndex] = 255; // remains 255 always
+                            resultBuf[resultIndex + 1] = 0; // R, G, and B remain zero if
+                            resultBuf[resultIndex + 2] = 0; // transformed out of bounds
+                            resultBuf[resultIndex + 3] = 0;
+                            X = result[0];
+
+                            if ((X >= 0) && (X <= (xDimB - 1))) {
+                                Y = result[1];
+
+                                if ((Y >= 0) && (Y <= (yDimB - 1))) {
+                                    Z = result[2];
+
+                                    if ((Z >= 0) && (Z <= (zDimB - 1))) {
+
+                                        // Preferences.debug(X+", "+Y+", "+Z);
+                                        // set intensity of i,j,k to new transformed coordinate if
+                                        // x,y,z is w/in dimensions of image
+                                        x0 = X - (int) (X);
+                                        y0 = Y - (int) (Y);
+                                        z0 = Z - (int) (Z);
+                                        x1 = 1 - x0;
+                                        y1 = 1 - y0;
+                                        z1 = 1 - z0;
+                                        X0pos = (int) (X);
+                                        Y0pos = (int) (Y) * xDimB;
+                                        Z0pos = (int) (Z) * sliceSizeB;
+
+                                        if ((X >= 0) && (X < (xDimB - 1))) {
+                                            X1pos = X0pos + 1;
+                                        } else {
+                                            X1pos = X0pos;
+                                        }
+
+                                        if ((Y >= 0) && (Y < (yDimB - 1))) {
+                                            Y1pos = Y0pos + xDimB;
+                                        } else {
+                                            Y1pos = Y0pos;
+                                        }
+
+                                        if ((Z >= 0) && (Z < (zDimB - 1))) {
+                                            Z1pos = Z0pos + sliceSizeB;
+                                        } else {
+                                            Z1pos = Z0pos;
+                                        }
+
+                                        temp4 = y1 * z1;
+                                        temp5 = y0 * z1;
+                                        temp6 = y1 * z0;
+                                        temp7 = y0 * z0;
+
+                                        tmpa1 = x1 * temp4;
+                                        tmpa2 = x0 * temp4;
+                                        tmpa3 = x1 * temp5;
+                                        tmpa4 = x0 * temp5;
+                                        tmpa5 = x1 * temp6;
+                                        tmpa6 = x0 * temp6;
+                                        tmpa7 = x1 * temp7;
+                                        tmpa8 = x0 * temp7;
+
+                                        index000 = 4 * (Z0pos + Y0pos + X0pos);
+                                        index001 = 4 * (Z0pos + Y0pos + X1pos);
+                                        index010 = 4 * (Z0pos + Y1pos + X0pos);
+                                        index011 = 4 * (Z0pos + Y1pos + X1pos);
+                                        index100 = 4 * (Z1pos + Y0pos + X0pos);
+                                        index101 = 4 * (Z1pos + Y0pos + X1pos);
+                                        index110 = 4 * (Z1pos + Y1pos + X0pos);
+                                        index111 = 4 * (Z1pos + Y1pos + X1pos);
+
+
+                                        resultBuf[resultIndex + 1] = (tmpa1 * imgBuf_short[index000 + 1]) +
+                                                                     (tmpa2 * imgBuf_short[index001 + 1]) +
+                                                                     (tmpa3 * imgBuf_short[index010 + 1]) +
+                                                                     (tmpa4 * imgBuf_short[index011 + 1]) +
+                                                                     (tmpa5 * imgBuf_short[index100 + 1]) +
+                                                                     (tmpa6 * imgBuf_short[index101 + 1]) +
+                                                                     (tmpa7 * imgBuf_short[index110 + 1]) +
+                                                                     (tmpa8 * imgBuf_short[index111 + 1]);
+
+                                        resultBuf[resultIndex + 2] = (tmpa1 * imgBuf_short[index000 + 2]) +
+                                                                     (tmpa2 * imgBuf_short[index001 + 2]) +
+                                                                     (tmpa3 * imgBuf_short[index010 + 2]) +
+                                                                     (tmpa4 * imgBuf_short[index011 + 2]) +
+                                                                     (tmpa5 * imgBuf_short[index100 + 2]) +
+                                                                     (tmpa6 * imgBuf_short[index101 + 2]) +
+                                                                     (tmpa7 * imgBuf_short[index110 + 2]) +
+                                                                     (tmpa8 * imgBuf_short[index111 + 2]);
+
+                                        resultBuf[resultIndex + 3] = (tmpa1 * imgBuf_short[index000 + 3]) +
+                                                                     (tmpa2 * imgBuf_short[index001 + 3]) +
+                                                                     (tmpa3 * imgBuf_short[index010 + 3]) +
+                                                                     (tmpa4 * imgBuf_short[index011 + 3]) +
+                                                                     (tmpa5 * imgBuf_short[index100 + 3]) +
+                                                                     (tmpa6 * imgBuf_short[index101 + 3]) +
+                                                                     (tmpa7 * imgBuf_short[index110 + 3]) +
+                                                                     (tmpa8 * imgBuf_short[index111 + 3]);
+                                    } // if Z in bounds
+                                } // if Y in bounds
+                            } // if X in bounds
+                        } // for k
+                    } // for j
+                    try {
+                        resultImage.importData(4 * zPos, resultBuf, false);
+                    } catch (IOException error) {
+
+                        MipavUtil.displayError("AlgorithmTPSPline: IOException Error on importData into resultImage" + error);
+                        finalize();
+                        setCompleted(false);
+
+                        return;
+                    }
+                } // for i
+            }
+            
         } // else color
 
         resultImage.calcMinMax();
