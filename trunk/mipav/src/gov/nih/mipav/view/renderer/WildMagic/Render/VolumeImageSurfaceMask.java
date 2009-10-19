@@ -133,6 +133,22 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
 
     public void dispose(GLAutoDrawable arg0)
     {
+        for (int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            { 
+                boolean bShared = 
+                    m_kDisplayList.get(i).GetMesh().VBuffer.GetShared();
+                m_kDisplayList.get(i).GetMesh().VBuffer.SetShared(false);
+                m_kDisplayList.get(i).GetMesh().VBuffer.Release( m_pkRenderer );
+                m_kDisplayList.get(i).GetMesh().VBuffer.SetShared(bShared);
+                bShared = 
+                    m_kDisplayList.get(i).GetMesh().IBuffer.GetShared();
+                m_kDisplayList.get(i).GetMesh().IBuffer.SetShared(false);
+                m_kDisplayList.get(i).GetMesh().IBuffer.Release( m_pkRenderer );
+                m_kDisplayList.get(i).GetMesh().IBuffer.SetShared(bShared);
+            }
+        }
         m_kSurfaceClip.dispose();
         m_kSurfaceClip = null;
         super.dispose(arg0);
