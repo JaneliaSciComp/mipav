@@ -254,7 +254,9 @@ public class GeneralizedInverse {
         boolean doginvse = false;
         // Test ginv routine. 
         // All 4 Penrose tests passed
-        boolean doginv = true;
+        boolean doginv = false;
+        // Test pinv routine that calls dgelss.
+        boolean dopinv = true;
         double tol = Math.pow(16.0, -5.0);
         
         // The following sequence of tests is used to test error traps in ginvse, ptst, and zielke
@@ -583,6 +585,25 @@ public class GeneralizedInverse {
                     continue;
                 }
             } // if (doginvse)
+            
+            if (dopinv) {
+                NR = m[0];
+                NC = n[0];
+                A = new double[NR][NC];
+                double AIN[][];
+                for (i = 0; i < NR; i++) {
+                    for (j = 0; j < NC; j++) {
+                        A[i][j] = Ag[i][j];
+                    }
+                } 
+                
+                AIN = pinv(); 
+                for (i = 0; i < NC; i++) {
+                    for (j = 0; j < NR; j++) {
+                        X[i][j] = AIN[i][j];
+                    }
+                } 
+            } // if (dopinv)
             
             // Test penrose conditions
             ptst(m, n, Ag, ma, X, ma, C, ma, ta, tm, fail);
@@ -1732,6 +1753,63 @@ public class GeneralizedInverse {
         } // for (i = 0; i < n[0]; i++)
         return;
     } // ginvse
+    
+    /**
+     * This is an interface to the Java port of dgelss.
+     * @return n by m pseudoinverse of m by n matrix A
+     */
+    public double[][] pinv() {
+        int m = A.length;
+        int n = A[0].length;
+        int i;
+        int j;
+        
+        // Output matrix that contains the pseudoinverse or generalized inverse of A.
+        double AIN[][];
+        // leading dimension of B
+        int ldb = Math.max(m, n);
+        // Number of singular values
+        int singularValues = Math.min(m, n);
+        // rcond is used to determine the effective rank of A.
+        // Singular valeues s[i] <= rcond*s[0] are treated as zero.
+        // If rcond < 0, machine precision is used instead.
+        double rcond = 1.0E-6;
+        // Size of workspace
+        int lwork = 30 * m * n;
+        // The number of right hand sides, i.e., the number of columns of the
+        // matrices B and X.
+        int nrhs = m;
+        // The leading dimension of array A
+        int lda = m;
+        double work[] = new double[lwork];
+        // The singular values of A in decreasing order.
+        // The condition number of A in the 2-norm = s[0]/(s[min(m-1,n-1)]).
+        double s[] = new double[singularValues];
+        // The effective rank of A, i.e., the number of singular values
+        // which are greater than rcond*s[0].
+        int rank[] = new int[1];
+        // info[0] = 0: successful exit
+        // info[0] < 0: If info = -i, the i-th argument had an illegal value
+        // info[0] > 0: The algorithm for computing the SVD failed to converge.
+        //              if info[0] = i, i off-diagonal elements of an intermediate
+        //              bidiagonal form did not converge to zero.
+        int info[] = new int[1];
+        
+        double B[][] = new double[ldb][m];
+        for (i = 0; i < m; i++) {
+            B[i][i] = 1.0;
+        }
+        
+        dgelss(m, n, nrhs, A, lda, B, ldb, s, rcond, rank, work, lwork, info);
+        
+        AIN = new double[n][m];
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < m; j++) {
+                AIN[i][j] = B[i][j];
+            }
+        }
+        return AIN;
+    } // pinv
     
     // There are 4 self tests used in testing the port of dgelss.
     // 1.) dchkqr_test() tests dgeqrf, dorgqr, and dormqr.  All 30744 tests run passed the threshold.
