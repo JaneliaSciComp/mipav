@@ -45,11 +45,12 @@ import java.io.*;
  *      with 0 mean and a standard deviation of 1.
  *      
  *      The generalized inverse is what should be used in calculating CD and CN.  Results are:
- *                        Ceyhan             myself inverse        myself generalized inverse           
- *      2 class CD        19.67              19.66                 19.67
- *      2 class CN        13.11              24.59                 19.67
- *      5 class CD       275.64             279.92                275.64
- *      5 class CN       263.10             641.28                275.64
+ *                        Ceyhan             myself inverse        generalized inverse     generalized inverse
+ *                                                                 Rust et al.             LAPACK dgelss
+ *      2 class CD        19.67              19.66                 19.67                   19.67
+ *      2 class CN        13.11              24.59                 19.67                   19.67
+ *      5 class CD       275.64             279.92                275.64                  275.64
+ *      5 class CN       263.10             641.28                275.64                  263.07
  *      So if the generalized inverse is used, CN = CD or Ceyhan's overall test of segregation produces the same
  *      result as Dixon's overall test of segregation.  I have used the simple generalized inverse algorithm of 
  *      B. Rust, W. R. Burrus, and C. Schneeberger.  The generalized inverse algorithm of Shayle Searle in 
@@ -277,8 +278,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
     // segregation tests based on nearest neighbor contingency tables".  In agreement with Ceyhan on specific tests.
     // For Dixon's overall test he calculates 275.64 and I calculate 279.92 for inverse and 275.64 for 
     // generalized inverse.  For Ceyhan's overall test he calculates 263.10 and I calculate 641.28 for inverse
-    // and 275.64 for generalized inverse.  Note with generalized inverse I get the same overall test values for 
-    // Dixon's test and Ceyhan's test.
+    // and 275.64 for generalized inverse of Rust, Burrus, and Schneeberger and 263.07 for the generalized inverse
+    // using the LAPACK dgelss routine.  
     private boolean selfTest2 = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -1876,7 +1877,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         
         ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
-        sigmaInv = ge.ginv();
+        //sigmaInv = ge.ginv();
+        sigmaInv = ge.pinv();
         ge = null;
         sigmaD = new Matrix(sigmaInv);
         CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
@@ -2119,7 +2121,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         success = true;
         ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
-        sigmaInv = ge.ginv();
+        //sigmaInv = ge.ginv();
+        sigmaInv = ge.pinv();
         ge = null;
         sigmaN = new Matrix(sigmaInv);
         CN = ((TpM.times(sigmaN)).times(TM)).getArray();
@@ -2518,7 +2521,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         success = true;
         ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
-        sigmaInv = ge.ginv();
+        //sigmaInv = ge.ginv();
+        sigmaInv = ge.pinv();
         ge = null;
         sigmaD = new Matrix(sigmaInv);
         CD2 = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
@@ -2703,7 +2707,8 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
         success = true;
         ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
-        sigmaInv = ge.ginv();
+        //sigmaInv = ge.ginv();
+        sigmaInv = ge.pinv();
         ge = null;
         sigmaN = new Matrix(sigmaInv);
         CN = ((TpM.times(sigmaN)).times(TM)).getArray();
