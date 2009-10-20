@@ -44,17 +44,29 @@ import java.io.*;
  *      has a value greater than the chi squared cumulative frequency value of 0.95. In Ceyhan's cell-specific
  *      tests ZijN with i = 1,2,3 j = 1,2,3 are calculated from Tij/sqrt(variance Tij).  ZijN has a normal distribution
  *      with 0 mean and a standard deviation of 1.
- *      
+ *
  *      The generalized inverse is what should be used in calculating CD and CN.  Results are:
- *                        Ceyhan             myself inverse        myself generalized inverse           
- *      2 class CD        19.67              19.66                 19.67
- *      2 class CN        13.11              24.59                 19.67
- *      5 class CD       275.64             279.92                275.64
- *      5 class CN       263.10             641.28                275.64
+ *                        Ceyhan             myself inverse        generalized inverse     generalized inverse
+ *                                                                 Rust et al.             LAPACK dgelss  rcond = 1.0E-4
+ *      2 class CD        19.67              19.66                 19.67                   19.67
+ *      2 class CN        13.11              24.59                 19.67                   13.09
+ *      5 class CD       275.64             279.92                275.64                  275.64
+ *      5 class CN       263.10             641.28                275.64                  263.07
+ *      generalized inverse                 generalized inverse
+ *      LAPACK dgelss rcond = 1.0E-6        LAPACK dgelss rcond = 1.0E-7
+ *      19.67                               19.67
+ *      19.67                               19.67
+ *      275.64                              275.64
+ *      263.07                              275.64
+ *      For the pinv routine using the LAPACK dgelss the singular values of the generalized inverse are stored
+ *      in array s in decreasing order.  s[0] has the largest value.  rcond is used to determine the effective
+ *      rank of the generalized inverse.  Singular values s[i] <= rcond * s[0] are treated as zero.
  *      So if the generalized inverse is used, CN = CD or Ceyhan's overall test of segregation produces the same
- *      result as Dixon's overall test of segregation.  I have used the simple generalized inverse algorithm of 
- *      B. Rust, W. R. Burrus, and C. Schneeberger.  The generalized inverse algorithm of Shayle Searle in 
- *      Matrix Algebra Useful for Statistics cited as a reference by Ceyhan is too vague to implement.
+ *      result as Dixon's overall test of segregation if small singular values are not treated as zero.
+ *      I have used the simple generalized inverse algorithm of  B. Rust, W. R. Burrus, and C. Schneeberger and
+ *      the routine pinv to call the LAPACK dgelss routine to generate a generalized inverse.
+ *      The generalized inverse algorithm of Shayle Searle in Matrix Algebra Useful for Statistics cited as a
+ *      reference by Ceyhan is too vague to implement.
  *      
  *      Dear Dr Gandler,
 thanks for bringing this issue up to my attention...
@@ -238,10 +250,6 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
     private double normalizedDiscRadius2;
     
     private double segregation;
-    
-    // Test with NNCT for Pielou's data, shown in Table 3 of "Overall and pairwise segregation tests based on nearest
-    // neighbor contingency tables"
-    private boolean selfTest1 = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -2509,7 +2517,8 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         success = true;
         ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
-        sigmaInv = ge.ginv();
+        //sigmaInv = ge.ginv();
+        sigmaInv = ge.pinv();
         ge = null;
         sigmaD = new Matrix(sigmaInv);
         CD = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
@@ -3056,7 +3065,8 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         success = true;
         ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
-        sigmaInv = ge.ginv();
+        //sigmaInv = ge.ginv();
+        sigmaInv = ge.pinv();
         ge = null;
         sigmaN = new Matrix(sigmaInv);
         CN = ((TpM.times(sigmaN)).times(TM)).getArray();
@@ -3514,7 +3524,8 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         success = true;
         ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
-        sigmaInv = ge.ginv();
+        //sigmaInv = ge.ginv();
+        sigmaInv = ge.pinv();
         ge = null;
         sigmaD = new Matrix(sigmaInv);
         CD = ((NDpM.times(sigmaD)).times(NDM)).getArray()[0][0];
@@ -3699,7 +3710,8 @@ public class AlgorithmThreeClassGeneration extends AlgorithmBase {
         success = true;
         ge = new GeneralizedInverse(sigma, sigma.length, sigma[0].length);
         sigmaInv = null;
-        sigmaInv = ge.ginv();
+        //sigmaInv = ge.ginv();
+        sigmaInv = ge.pinv();
         ge = null;
         sigmaN = new Matrix(sigmaInv);
         CN = ((TpM.times(sigmaN)).times(TM)).getArray();
