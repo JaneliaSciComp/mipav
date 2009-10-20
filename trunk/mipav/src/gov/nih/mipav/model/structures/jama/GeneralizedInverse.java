@@ -1755,6 +1755,7 @@ public class GeneralizedInverse {
     } // ginvse
     
     /**
+     * Slight modification of pinv in dtiFitTensor.c.
      * This is an interface to the Java port of dgelss.
      * @return n by m pseudoinverse of m by n matrix A
      */
