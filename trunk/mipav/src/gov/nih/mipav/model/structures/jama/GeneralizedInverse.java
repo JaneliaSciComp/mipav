@@ -1772,9 +1772,9 @@ public class GeneralizedInverse {
         // Number of singular values
         int singularValues = Math.min(m, n);
         // rcond is used to determine the effective rank of A.
-        // Singular valeues s[i] <= rcond*s[0] are treated as zero.
+        // Singular values s[i] <= rcond*s[0] are treated as zero.
         // If rcond < 0, machine precision is used instead.
-        double rcond = 1.0E-6;
+        double rcond = 1.0E-8;
         // Size of workspace
         int lwork = 30 * m * n;
         // The number of right hand sides, i.e., the number of columns of the
