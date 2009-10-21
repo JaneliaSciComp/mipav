@@ -55,7 +55,7 @@ import java.util.*;
         integral from r = dm to r = infinity of rd(exp(-(4/3)*lambda*PI*(r**3)))
         
         -exp((4/3)*lambda*PI*(dm**3)) *
-        (-dm*exp(-(4/3)*lambda*PI*(dm**3)) - intergal from r = dm to r = infinity of exp(-(4/3)*lambda*PI*(r**3))dr =
+        (-dm*exp(-(4/3)*lambda*PI*(dm**3)) - intergal from r = dm to r = infinity of exp(-(4/3)*lambda*PI*(r**3))dr) =
         
         dm + exp((4/3)*lambda*PI*(dm**3))*integral from r = dm to r = infinity of exp(-(4/3)*lambda*PI*(r**3))dr
         
@@ -67,7 +67,7 @@ import java.util.*;
            
            -exp((4/3)*lambda*PI*(dm**3) *
            (-(dm**2)*exp(-(4/3)*lambda*PI*(dm**3)) 
-           - integral from r = dm to r = infinity of exp(-(4/3)*lambda*PI*(r**3))d(r**2) =
+           - integral from r = dm to r = infinity of exp(-(4/3)*lambda*PI*(r**3))d(r**2)) =
            
            dm**2 + exp((4/3)*lambda*PI*(dm**3)) * 
            integral from r = dm to r = infinity of 2*r*exp(-(4/3)*lambda*PI*(r**3))dr
@@ -211,7 +211,10 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         int sphereXCenter[] = new int[numSpheres];
         int sphereYCenter[] = new int[numSpheres];
         int sphereZCenter[] = new int[numSpheres];
+        int countedBytes;
         double nearestNeighborDistance[];
+        double nearestNeighborDistance2[];
+        double maximumNND;
         double total;
         double mean;
         double variance;
@@ -613,17 +616,33 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        // Remember that nearest neighbor statistics will not hold near a boundary, so to be safe only consider those
        // spheres at least the maximum nearestNeighborDistance aways from the boundary.  Otherswise, the maximum
        // nearest neighbor distance is artificially inflated by boundary effects.
-       Arrays.sort(nearestNeighborDistance);
+        maximumNND = 0.0;
+        for (i = 0; i < spheresDrawn; i++) {
+            if (nearestNeighborDistance[i] > maximumNND) {
+                maximumNND = nearestNeighborDistance[i];
+            }
+        }
        Preferences.debug("Before removing boundary influenced spheres maximum nearest neighbor distance = " + 
-                         nearestNeighborDistance[spheresDrawn - 1] + "\n");
+                         maximumNND + "\n");
        System.out.println("Before removing boundary influenced spheres maximum nearest neighbor distance = " + 
-               nearestNeighborDistance[spheresDrawn - 1]);
-       boundaryDistance = (int)Math.ceil(nearestNeighborDistance[spheresDrawn - 1]);
+               maximumNND);
+       boundaryDistance = (int)Math.ceil(maximumNND);
        spheresLeft = 0;
+       countedBytes = 0;
        for (i = 0; i < spheresDrawn; i++) {
            if ((sphereXCenter[i] >= boundaryDistance) && (sphereXCenter[i] <= xDim - 1 - boundaryDistance) &&
                (sphereYCenter[i] >= boundaryDistance) && (sphereYCenter[i] <= yDim - 1 - boundaryDistance) &&
                (sphereZCenter[i] >= boundaryDistance) && (sphereZCenter[i] <= zDim - 1 - boundaryDistance)) {
+               for (zint = boundaryDistance; zint <= zDim - 1 - boundaryDistance; zint++) {
+                   for (y = boundaryDistance; y <= yDim - 1 - boundaryDistance; y++) {
+                       for (x = boundaryDistance; x <= xDim - 1 - boundaryDistance; x++) {
+                           if (buffer[x + xDim*y + xySize*zint] == (i+1)) {
+                               countedBytes++;
+                           }
+                       }
+                   }
+               }
+               nearestNeighborDistance[spheresLeft] = nearestNeighborDistance[i];
                sphereXCenter[spheresLeft] = sphereXCenter[i];
                sphereYCenter[spheresLeft] = sphereYCenter[i];
                sphereZCenter[spheresLeft++] = sphereZCenter[i];
@@ -633,25 +652,15 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
             " spheres drawn will be analyzed\n");
        System.out.println("To avoid boundary effects only " + spheresLeft + " of the " + spheresDrawn + 
        " spheres drawn will be analyzed\n");
+       nearestNeighborDistance2 = new double[spheresLeft];
+       for (i = 0; i < spheresLeft; i++) {
+           nearestNeighborDistance2[i] = nearestNeighborDistance[i];
+       }
        nearestNeighborDistance = new double[spheresLeft];
        for (i = 0; i < spheresLeft; i++) {
-           lowestDistSquared = Integer.MAX_VALUE;
-           for (j = 0; j < spheresLeft; j++) {
-               if (i != j) {
-                   xDistSquared = sphereXCenter[i] - sphereXCenter[j];
-                   xDistSquared = xDistSquared * xDistSquared;
-                   yDistSquared = sphereYCenter[i] - sphereYCenter[j];
-                   yDistSquared = yDistSquared * yDistSquared;
-                   zDistSquared = sphereZCenter[i] - sphereZCenter[j];
-                   zDistSquared = zDistSquared * zDistSquared;
-                   distSquared = xDistSquared + yDistSquared + zDistSquared;
-                   if (distSquared < lowestDistSquared) {
-                       lowestDistSquared = distSquared;
-                       nearestNeighborDistance[i] = Math.sqrt(distSquared);
-                   }       
-               }
-           }
-       } // for (i = 0; i < spheresLeft; i++)
+           nearestNeighborDistance[i] = nearestNeighborDistance2[i];
+       }
+       nearestNeighborDistance2 = null;
        Arrays.sort(nearestNeighborDistance);
        total = 0.0;
        for (i = 0; i < spheresLeft; i++) {
@@ -731,8 +740,8 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        for (i = 0; i < spheresLeft; i++) {
            nearestNeighborDistanceSumOfSquares += nearestNeighborDistance[i]*nearestNeighborDistance[i];
        }
-       density = (double)spheresLeft/(double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance) *
-                                              (zDim - 2 * boundaryDistance));
+       density = ((double)countedBytes/(double)maskBytesSet)/
+                  (double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance) * (zDim - 2 * boundaryDistance));
        diameter = 2.0 * radius;
        
        // Calculate analytical mean
@@ -782,6 +791,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        analyticalVariance = spheresLeft*(analyticalMeanSquared - analyticalMean*analyticalMean)/(spheresLeft - 1);
        analyticalStandardDeviation = Math.sqrt(analyticalVariance);
        analyticalStandardError = analyticalStandardDeviation/Math.sqrt(spheresLeft);
+       Preferences.debug("analyticalStandardError = " + analyticalStandardError + "\n");
        change = ((analyticalStandardError - standardError)/standardError) * 100.0;
        Preferences.debug("Percentage increase of analytical standard error over observed standard error = " + change + "\n");
        z = (mean - analyticalMean)/analyticalStandardError;
