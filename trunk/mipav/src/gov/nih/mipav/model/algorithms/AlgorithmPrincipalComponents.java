@@ -32,7 +32,7 @@ import javax.swing.border.*;
  * all bands and the noise is uncorrelated between bands the principal component transformation is equivalent to the
  * maximum noise fraction transformation. In the more general case, the MNF transform is equivalent to a transformation
  * of the data to a coordinate system in which the noise covariance matrix is the identity matrix, followed by a
- * principal components transformation. The transform in in this form is the noise-adjusted principal components
+ * principal components transformation. The transform in this form is the noise-adjusted principal components
  * transform. In forward order MNF maximizes the noise content in successive components that are uncorrelated over the
  * dataset or equivalently in reverse order MNF maximizes the signal to noise ratio of each component. Information about
  * the signal to noise ratio improvement is found in "Information Extraction, SNR Improvement, and Data Compression in
