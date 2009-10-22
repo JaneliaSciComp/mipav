@@ -212,8 +212,8 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         int sphereYCenter[] = new int[numSpheres];
         int sphereZCenter[] = new int[numSpheres];
         int countedBytes;
+        double nndDrawn[];
         double nearestNeighborDistance[];
-        double nearestNeighborDistance2[];
         double maximumNND;
         double total;
         double mean;
@@ -593,7 +593,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                 System.out.println(spheresDrawn + " spheres drawn.  " + numSpheres + " spheres requested.");     
         } // if (pattern == CONSTRAINED)
         
-        nearestNeighborDistance = new double[spheresDrawn];
+        nndDrawn = new double[spheresDrawn];
         for (i = 0; i < spheresDrawn; i++) {
             lowestDistSquared = Integer.MAX_VALUE;
             for (j = 0; j < spheresDrawn; j++) {
@@ -607,7 +607,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     distSquared = xDistSquared + yDistSquared + zDistSquared;
                     if (distSquared < lowestDistSquared) {
                         lowestDistSquared = distSquared;
-                        nearestNeighborDistance[i] = Math.sqrt(distSquared);
+                        nndDrawn[i] = Math.sqrt(distSquared);
                     }  
                 }
             }
@@ -618,8 +618,8 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        // nearest neighbor distance is artificially inflated by boundary effects.
         maximumNND = 0.0;
         for (i = 0; i < spheresDrawn; i++) {
-            if (nearestNeighborDistance[i] > maximumNND) {
-                maximumNND = nearestNeighborDistance[i];
+            if (nndDrawn[i] > maximumNND) {
+                maximumNND = nndDrawn[i];
             }
         }
        Preferences.debug("Before removing boundary influenced spheres maximum nearest neighbor distance = " + 
@@ -642,7 +642,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                        }
                    }
                }
-               nearestNeighborDistance[spheresLeft] = nearestNeighborDistance[i];
+               nndDrawn[spheresLeft] = nndDrawn[i];
                sphereXCenter[spheresLeft] = sphereXCenter[i];
                sphereYCenter[spheresLeft] = sphereYCenter[i];
                sphereZCenter[spheresLeft++] = sphereZCenter[i];
@@ -652,15 +652,11 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
             " spheres drawn will be analyzed\n");
        System.out.println("To avoid boundary effects only " + spheresLeft + " of the " + spheresDrawn + 
        " spheres drawn will be analyzed\n");
-       nearestNeighborDistance2 = new double[spheresLeft];
-       for (i = 0; i < spheresLeft; i++) {
-           nearestNeighborDistance2[i] = nearestNeighborDistance[i];
-       }
        nearestNeighborDistance = new double[spheresLeft];
        for (i = 0; i < spheresLeft; i++) {
-           nearestNeighborDistance[i] = nearestNeighborDistance2[i];
+           nearestNeighborDistance[i] = nndDrawn[i];
        }
-       nearestNeighborDistance2 = null;
+       nndDrawn = null;
        Arrays.sort(nearestNeighborDistance);
        total = 0.0;
        for (i = 0; i < spheresLeft; i++) {
