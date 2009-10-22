@@ -215,7 +215,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         int circleYCenter[] = new int[numCircles];
         int countedBytes;
         double nearestNeighborDistance[];
-        double nearestNeighborDistance2[];
+        double nndDrawn[];
         double maximumNND;
         double total;
         double mean;
@@ -366,7 +366,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
             for (i = initialRandomCircles+1; i <= numCircles; i++) {
                 found = false;
                 attempts = 0;
-                    while ((!found) && (attempts <= 1000)) {
+                    while ((!found) && (attempts <= 10000)) {
                         found = true;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
@@ -420,7 +420,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                 found = false;
                 attempts = 0;
                 wloop:
-                    while ((!found) && (attempts <= 1000)) {
+                    while ((!found) && (attempts <= 10000)) {
                         found = true;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
@@ -476,7 +476,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                 attempts = 0;
                 intermediateRejected = false;
                 wl:
-                    while ((!found) && (attempts <= 1000)) {
+                    while ((!found) && (attempts <= 10000)) {
                         found = true;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
@@ -532,7 +532,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                 System.out.println(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.");     
         } // if (pattern == CONSTRAINED)
         
-        nearestNeighborDistance = new double[circlesDrawn];
+        nndDrawn = new double[circlesDrawn];
         for (i = 0; i < circlesDrawn; i++) {
             lowestDistSquared = Integer.MAX_VALUE;
             for (j = 0; j < circlesDrawn; j++) {
@@ -544,7 +544,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                     distSquared = xDistSquared + yDistSquared;
                     if (distSquared < lowestDistSquared) {
                         lowestDistSquared = distSquared;
-                        nearestNeighborDistance[i] = Math.sqrt(distSquared);
+                        nndDrawn[i] = Math.sqrt(distSquared);
                     }  
                 }
             }
@@ -555,8 +555,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        // nearest neighbor distance is artificially inflated by boundary effects.
        maximumNND = 0.0;
        for (i = 0; i < circlesDrawn; i++) {
-           if (nearestNeighborDistance[i] > maximumNND) {
-               maximumNND = nearestNeighborDistance[i];
+           if (nndDrawn[i] > maximumNND) {
+               maximumNND = nndDrawn[i];
            }
        }
        Preferences.debug("Before removing boundary influenced spheres maximum nearest neighbor distance = " + 
@@ -576,7 +576,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                        }
                    }
                }
-               nearestNeighborDistance[circlesLeft] = nearestNeighborDistance[i];
+               nndDrawn[circlesLeft] = nndDrawn[i];
                circleXCenter[circlesLeft] = circleXCenter[i];
                circleYCenter[circlesLeft++] = circleYCenter[i];
            }
@@ -585,15 +585,11 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
             " circles drawn will be analyzed\n");
        System.out.println("To avoid boundary effects only " + circlesLeft + " of the " + circlesDrawn + 
        " circles drawn will be analyzed\n");
-       nearestNeighborDistance2 = new double[circlesLeft];
-       for (i = 0; i < circlesLeft; i++) {
-           nearestNeighborDistance2[i] = nearestNeighborDistance[i];
-       }
        nearestNeighborDistance = new double[circlesLeft];
        for (i = 0; i < circlesLeft; i++) {
-           nearestNeighborDistance[i] = nearestNeighborDistance2[i];
+           nearestNeighborDistance[i] = nndDrawn[i];
        }
-       nearestNeighborDistance2 = null;
+       nndDrawn = null;
        Arrays.sort(nearestNeighborDistance);
        total = 0.0;
        for (i = 0; i < circlesLeft; i++) {
