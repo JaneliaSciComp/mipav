@@ -25,7 +25,7 @@ import javax.swing.border.*;
  * every slice and that the noise is uncorrelated between slices. Principal components maximizes data variance in
  * components; it concentrates the information content of the data in as small a number of components as possible. This
  * algorithm is based on: 1.) Digital Image Processing by Rafael C. Gonzalez and Richard E. Woods, Section 3.6 The
- * Hotelling Transform, pp. 148 - 157, 1992. 2.) "The statistical properites of three noise removal procedures for
+ * Hotelling Transform, pp. 148 - 157, 1992. 2.) "The statistical properties of three noise removal procedures for
  * multichannel remotely sensed data" by M. Berman, CSIRO Division of Mathemetics and Statistics P.O. Box 218,
  * Lindfield, N.S.W., 2070 Consulting Report NSW/85/31/MB9 Note that this algorithm has 4 different names: Hotelling,
  * eigenvector, principal component, and Karhunen-Loeve transform. Also note that when the noise variance is the same in
