@@ -24,20 +24,20 @@ import javax.swing.border.*;
  * green, and blue are treated as separate 2D planes. This implementation assumes that the noise variance is equal in
  * every slice and that the noise is uncorrelated between slices. Principal components maximizes data variance in
  * components; it concentrates the information content of the data in as small a number of components as possible. This
- * algorithm is based on: 1.) Digital Image Processing by Rafael C. Gonzalez and Richard E. Woods, Section 3.6 The
- * Hotelling Transform, pp. 148 - 157, 1992. 2.) "The statistical properties of three noise removal procedures for
- * multichannel remotely sensed data" by M. Berman, CSIRO Division of Mathemetics and Statistics P.O. Box 218,
- * Lindfield, N.S.W., 2070 Consulting Report NSW/85/31/MB9 Note that this algorithm has 4 different names: Hotelling,
- * eigenvector, principal component, and Karhunen-Loeve transform. Also note that when the noise variance is the same in
- * all bands and the noise is uncorrelated between bands the principal component transformation is equivalent to the
- * maximum noise fraction transformation. In the more general case, the MNF transform is equivalent to a transformation
- * of the data to a coordinate system in which the noise covariance matrix is the identity matrix, followed by a
- * principal components transformation. The transform in this form is the noise-adjusted principal components
- * transform. In forward order MNF maximizes the noise content in successive components that are uncorrelated over the
- * dataset or equivalently in reverse order MNF maximizes the signal to noise ratio of each component. Information about
- * the signal to noise ratio improvement is found in "Information Extraction, SNR Improvement, and Data Compression in
- * MultiSpectral Imagery", Patrick J. Ready and Paul A. Wintz, IEEE Transactions on Communications, Vol. COM-21, No. 10,
- * October, 1973, pp. 1123-1130.
+ * algorithm is based on: 1.) Digital Image Processing, Third Edition by Rafael C. Gonzalez and Richard E. Woods,
+ * Section 11.4 Use of Principal Components for Description, pp. 842 - 852, 2008 by Pearson Education, Inc.
+ * 2.) "The statistical properties of three noise removal procedures for multichannel remotely sensed data" by
+ * M. Berman, CSIRO Division of Mathemetics and Statistics P.O. Box 218, Lindfield, N.S.W., 2070 Consulting Report
+ * NSW/85/31/MB9 Note that this algorithm has 4 different names: Hotelling, eigenvector, principal component, and
+ * Karhunen-Loeve transform. Also note that when the noise variance is the same in all bands and the noise is uncorrelated
+ * between bands the principal component transformation is equivalent to the maximum noise fraction transformation.
+ * In the more general case, the MNF transform is equivalent to a transformation of the data to a coordinate system in
+ * which the noise covariance matrix is the identity matrix, followed by a principal components transformation. The
+ * transform in this form is the noise-adjusted principal components transform. In forward order MNF maximizes the noise
+ * content in successive components that are uncorrelated over the dataset or equivalently in reverse order MNF maximizes
+ * the signal to noise ratio of each component. Information about the signal to noise ratio improvement is found in
+ * "Information Extraction, SNR Improvement, and Data Compression in MultiSpectral Imagery", Patrick J. Ready and
+ * Paul A. Wintz, IEEE Transactions on Communications, Vol. COM-21, No. 10, October, 1973, pp. 1123-1130.
  */
 public class AlgorithmPrincipalComponents extends AlgorithmBase implements ActionListener, FocusListener {
 
