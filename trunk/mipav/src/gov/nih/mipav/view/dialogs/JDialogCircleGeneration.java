@@ -33,13 +33,13 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
     private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
-    private int xDim = 512;
+    private int xDim = 2048;
 
     /** DOCUMENT ME! */
     private JTextField xDimText;
 
     /** DOCUMENT ME! */
-    private int yDim = 512;
+    private int yDim = 2048;
     
     private JTextField yDimText;
     
@@ -170,10 +170,10 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 initialCirclesText.setEnabled(false);
                 minimumDistanceLabel.setEnabled(true);
                 minimumDistanceText.setEnabled(true);
-                minimumDistanceText.setText("25.0");
+                minimumDistanceText.setText("120.0");
                 maximumDistanceLabel.setEnabled(true);
                 maximumDistanceText.setEnabled(true);
-                maximumDistanceText.setText("35.0");
+                maximumDistanceText.setText("140.0");
                 lowestForbiddenLabel.setEnabled(false);
                 lowestForbiddenText.setEnabled(false);
                 highestForbiddenLabel.setEnabled(false);
