@@ -166,6 +166,9 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * calculated features.
      */
     private boolean concatenate;
+    
+    /** If true, produce zscore output.  zscore = (value - mean)/(standard deviation) */
+    private boolean zscore;
 
     /** Size of square window used in calculating each glcm matrix - must be an odd number. */
     private int windowSize = 7;
@@ -206,13 +209,14 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * @param              promenance         true if cluster promenance calculated
      * @param              concatenate        If true, only 1 result image formed by concatenating the original 
      *                                        source to each of the calculated features
+     * @param              zscore             If true, produce z score output
      */
     public AlgorithmHaralickTexture(ModelImage[] destImg, ModelImage srcImg, int windowSize, int offsetDistance, int greyLevels,
                                     boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
                                     boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
                                     boolean variance, boolean standardDeviation, boolean correlation,
-                                    boolean shade, boolean promenance, boolean concatenate) {
+                                    boolean shade, boolean promenance, boolean concatenate, boolean zscore) {
         super(null, srcImg);
         destImage = destImg;
         this.windowSize = windowSize;
@@ -238,6 +242,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         this.shade = shade;
         this.promenance = promenance;
         this.concatenate = concatenate;
+        this.zscore = zscore;
     }
     
     /**
@@ -269,14 +274,15 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
      * @param              shade              true if cluster shade calculated
      * @param              promenance         true if cluster promenance calculated 
      * @param              concatenate        If true, only 1 result image formed by concatenating the original 
-     *                                        source to each of the calculated features    
+     *                                        source to each of the calculated features 
+     * @param              zscore             If true, produce z score output   
      */
     public AlgorithmHaralickTexture(ModelImage[] destImg, ModelImage srcImg, int RGBOffset, int windowSize, int offsetDistance, int greyLevels,
                                     boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
                                     boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
                                     boolean variance, boolean standardDeviation, boolean correlation,
-                                    boolean shade, boolean promenance, boolean concatenate) {
+                                    boolean shade, boolean promenance, boolean concatenate, boolean zscore) {
         super(null, srcImg);
         destImage = destImg;
         this.RGBOffset = RGBOffset;
@@ -303,6 +309,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         this.shade = shade;
         this.promenance = promenance;
         this.concatenate = concatenate;
+        this.zscore = zscore;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -381,6 +388,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         int xEnd = xDim - 1 - halfWin;
         int yStart = halfWin;
         int yEnd = yDim - 1 - halfWin;
+        int numValues = (xEnd - xStart + 1) * (yEnd - yStart + 1);
         int x, y;
         int i, j;
         int index;
@@ -399,6 +407,11 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         float sum;
         float product;
         int z;
+        double total;
+        double totalSquared;
+        double value;
+        double zMean;
+        double zStdDev;
         
         if (srcImage.getNDims() == 2) {
             zDim = 1;
@@ -926,6 +939,39 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
                 } // for (iDir = 0; iDir < numDirections; iDir++)
             } // for (x = xStart; x <= xEnd; x++)
         } // for (y = yStart; y <= yEnd && !threadStopped; y++)
+        
+        if (zscore) {
+            for (i = 0; i < resultNumber; i++) {
+                total = 0.0;
+                totalSquared = 0.0;
+                //zStdDev = 0.0;
+                for (y = yStart; y <= yEnd; y++) {
+                    for (x = xStart; x <= xEnd; x++) {
+                        pos = x + (y * xDim);
+                        value = resultBuffer[i][pos];
+                        total += value;
+                        totalSquared += (value * value);
+                    }
+                } // for (y = yStart; y <= yEnd; y++)
+                zMean = total/numValues;
+                //for (y = yStart; y <= yEnd; y++) {
+                    //for (x = xStart; x <= xEnd; x++) {
+                        //pos = x + (y * xDim);
+                        //value = resultBuffer[i][pos];
+                        //zStdDev += ((value - zMean)*(value - zMean));
+                    //}
+                //}
+                //zStdDev = Math.sqrt(zStdDev/(numValues - 1));
+                zStdDev = Math.sqrt((totalSquared - total * total/numValues)/(numValues - 1));
+                for (y = yStart; y <= yEnd; y++) {
+                    for (x = xStart; x <= xEnd; x++) {
+                        pos = x + (y * xDim);
+                        value = resultBuffer[i][pos];
+                        resultBuffer[i][pos] = (float)((value - zMean)/zStdDev);
+                    }
+                } // for (y = yStart; y <= yEnd; y++)
+            } // for (i = 0; i < resultNumber; i++)
+        } // if (zscore)
 
         if (threadStopped) {
             finalize();
