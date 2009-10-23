@@ -72,8 +72,22 @@ import java.util.*;
            dm**2 + exp((4/3)*lambda*PI*(dm**3)) * 
            integral from r = dm to r = infinity of 2*r*exp(-(4/3)*lambda*PI*(r**3))dr
            
- Integration.MIDINF can be too slow for radius = 0.          
-             
+ Integration.MIDINF can be too slow for radius = 0. 
+ The Poisson distribution becomes inaccurate at higher densities because the assumption of the Poission distribution
+ of rare events is violated: the mean number of points per sampling unit is not small relative to the maximum
+ possible number of points per sampling unit.
+ 
+ The formula derived by Asim Tewari and A. M. Gokhale is accurate at both low and high densities.  The reference is
+ "Nearest-neighbor distances between particles of finite size in three-dimensional uniform random microstructures" by
+ Tewari and Gokhale, Materials Science and Engineering A, Volume 385, Issues 1-2, November, 2004, pp. 332-341.
+ <Hn>/<Pn> = 1 + ((2**(-1/6) * (n-1)!)/(([(4/3)*PI]**-1/3) * Gamma[(3*n + 1)/3])) * ((f/f0)**((2*n)/(2*n+1)))
+ where <Hn> is the mean nth nearest-neighbor distance, f is volume fraction, <Pn> is the corresponding mean
+ nearest-neighbor distance for a point process, and fo is the volume fraction for the close-packed structure
+ (1.e. PI/sqrt(18) or about 0.74).
+ <Pn> = ([(4/3)*PI*Nv]**-1/3) * gamma[(3*n + 1)/3] / (n - 1)! = Kn*(Nv)**-1/3
+ where Nv is the number of points per unit volume.
+ <H1>/<P1> = 1 + B1 * ((f/f0)**2/3)
+ where B1 = ((2**-1/6)/K1) - 1             
  */
 public class AlgorithmSphereGeneration extends AlgorithmBase {
     
@@ -230,6 +244,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double totalDeviateFourth;
         double skewness;
         double kurtosis;
+        // Number of spheres per unit volume
         double density;
         double z;
         int boundaryDistance;
@@ -278,6 +293,12 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double absError;
         int neval;
         double change;
+        double volumeFraction;
+        double closePackedVolumeFraction = Math.PI/Math.sqrt(18.0);
+        double K1 = 0.5539602785;
+        double B1 = Math.pow(2.0, -1.0/6.0)/K1 - 1.0;
+        // Mean nearest neighbor distance for a point process
+        double P1;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -736,10 +757,15 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        for (i = 0; i < spheresLeft; i++) {
            nearestNeighborDistanceSumOfSquares += nearestNeighborDistance[i]*nearestNeighborDistance[i];
        }
-       density = ((double)countedBytes/(double)maskBytesSet)/
+       volumeFraction = ((double)countedBytes)/
                   (double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance) * (zDim - 2 * boundaryDistance));
+       density = volumeFraction/(double)maskBytesSet;
+       P1 = K1 * Math.pow(density, -1.0/3.0);
+       Preferences.debug("Analytical mean nearest neighbor distance for a point process = " + P1 + "\n");
        diameter = 2.0 * radius;
        
+       Preferences.debug("Calculations using Poisson model\n");
+       System.out.println("Calculations using Poisson model");
        // Calculate analytical mean
        /*meanModel = new IntModelMean(diameter, 1.0E30, Integration.MIDINF, eps, density);
        meanModel.driver();
@@ -812,6 +838,11 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            Preferences.debug("Measured mean consistent with random distribution\n");
            System.out.println("Measured mean consistent with random distribution");
        }
+       Preferences.debug("\nCalculations using Tewari Gokhale model\n");
+       System.out.println("\nCalculations using Tewari Gokhale model");
+       analyticalMean = (1.0 + B1 * Math.pow(volumeFraction/closePackedVolumeFraction, 2.0/3.0)) * P1;
+       Preferences.debug("Analytical mean = " + analyticalMean + "\n");
+       System.out.println("Analytical mean = " + analyticalMean);
        
        for (i = 0; i < buffer.length; i++) {
            if (buffer[i] > 0) {
