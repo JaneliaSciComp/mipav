@@ -223,6 +223,12 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
      *  calculated features.
      */
     private boolean concatenate = false;
+    
+    private JCheckBox zscoreCheckBox;
+    
+    /** If true, produce z score = (value - mean)/(standard deviation) output of Haralick features
+     */
+    private boolean zscore = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -367,7 +373,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         str += correlation + delim;
         str += shade + delim;
         str += promenance + delim;
-        str += concatenate;
+        str += concatenate + delim;
+        str += zscore;
 
         return str;
     }
@@ -414,6 +421,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                 shadeCheckBox.setSelected(MipavUtil.getBoolean(st));
                 promenanceCheckBox.setSelected(MipavUtil.getBoolean(st));
                 concatenateCheckBox.setSelected(MipavUtil.getBoolean(st));
+                zscoreCheckBox.setSelected(MipavUtil.getBoolean(st));
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -617,6 +625,10 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     
     public void setConcatenate(boolean concatenate) {
         this.concatenate = concatenate;
+    }
+    
+    public void setZscore(boolean zscore) {
+        this.zscore = zscore;
     }
 
     /**
@@ -825,14 +837,14 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                         senw, invariantDir, contrast, dissimilarity, homogeneity,
                         inverseOrder1, asm, energy, maxProbability, entropy, mean,
                         variance, standardDeviation, correlation, shade, promenance,
-                        concatenate);    
+                        concatenate, zscore);    
             }
             else {
                 textureAlgo = new AlgorithmHaralickTexture(resultImage, image, windowSize, offsetDistance, greyLevels, ns, nesw, ew,
                                                            senw, invariantDir, contrast, dissimilarity, homogeneity,
                                                            inverseOrder1, asm, energy, maxProbability, entropy, mean,
                                                            variance, standardDeviation, correlation, shade, promenance,
-                                                           concatenate);
+                                                           concatenate, zscore);
             }
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -922,6 +934,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         setShade(scriptParameters.getParams().getBoolean("do_calc_shade"));
         setPromenance(scriptParameters.getParams().getBoolean("do_calc_promenance"));
         setConcatenate(scriptParameters.getParams().getBoolean("do_concatenate"));
+        setZscore(scriptParameters.getParams().getBoolean("do_zscore"));
 
         if ((windowSize % 2) == 0) {
             throw new ParameterException("window_size", "Window size must not be even");
@@ -978,6 +991,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_shade", shade));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_promenance", promenance));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_concatenate", concatenate));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_zscore", zscore));
     }
 
     /**
@@ -1348,6 +1362,13 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         outputPanel.add(concatenateCheckBox, gbc3);
         concatenateCheckBox.setSelected(false);
         
+        zscoreCheckBox = new JCheckBox("zscore output");
+        zscoreCheckBox.setFont(serif12);
+        gbc3.gridx = 0;
+        gbc3.gridy = 1;
+        outputPanel.add(zscoreCheckBox, gbc3);
+        zscoreCheckBox.setSelected(false);
+        
         gbc.gridx = 0;
         gbc.gridy = ypos++;
         mainPanel.add(outputPanel, gbc);
@@ -1500,6 +1521,8 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         }
         
         concatenate = concatenateCheckBox.isSelected();
+        
+        zscore = zscoreCheckBox.isSelected();
 
         return true;
     }
