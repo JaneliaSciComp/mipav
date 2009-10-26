@@ -297,6 +297,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double closePackedVolumeFraction = Math.PI/Math.sqrt(18.0);
         double K1 = 0.5539602785;
         double B1 = Math.pow(2.0, -1.0/6.0)/K1 - 1.0;
+        double t;
         // Mean nearest neighbor distance for a point process
         double P1;
         if (srcImage == null) {
@@ -843,6 +844,29 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        analyticalMean = (1.0 + B1 * Math.pow(volumeFraction/closePackedVolumeFraction, 2.0/3.0)) * P1;
        Preferences.debug("Analytical mean = " + analyticalMean + "\n");
        System.out.println("Analytical mean = " + analyticalMean);
+       t = (mean - analyticalMean)/standardError;
+       stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                             t, spheresLeft-1, percentile);
+       stat.run();
+       Preferences.debug("Percentile in Students t cumulative distribution function for measured mean around analytical mean = "
+                         + percentile[0]*100.0 + "\n");
+       System.out.println("Percentile in Students t cumulative distribution function for measured mean around analytical mean = " +
+                           percentile[0]*100.0);
+       if (percentile[0] < 0.025) {
+           // Measured mean signficantly less than analytical mean of random distribution
+           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+           System.out.println("Clumping or aggregation found in nearest neighbor distances");
+       }
+       else if (percentile[0] > 0.975) {
+           // Measured mean significantly greater than analytical mean of random distribution
+           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+           System.out.println("Uniform or regular distribution found in nearest neighbor distances");
+       }
+       else {
+         // Measured mean not significantly different from analytical mean of random distribution
+           Preferences.debug("Measured mean consistent with random distribution\n");
+           System.out.println("Measured mean consistent with random distribution");
+       }
        
        for (i = 0; i < buffer.length; i++) {
            if (buffer[i] > 0) {
