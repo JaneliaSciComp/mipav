@@ -86,6 +86,11 @@ public class Statistics {
          double g2[] = new double[1];
          gamm = new Gamma((v + 1.0)/2.0, g1);
          gamm.run();
+         // For large degrees of freedom, the t distribution approaches the normal distribution
+         if (Double.isInfinite(g1[0])) {
+          gaussianProbabilityFunction();
+          return;
+         }
          gamm = new Gamma(v/2.0, g2);
          gamm.run();
          ansR[0] = (g1[0]/(Math.sqrt(v*Math.PI)*g2[0]))*Math.pow(1.0 + x*x/v, -(v+1.0)/2.0);
@@ -100,6 +105,11 @@ public class Statistics {
         double result[] = new double[1];
         gamm = new Gamma((v + 1.0)/2.0, g1);
         gamm.run();
+        // For large degrees of freedom, the t distribution approaches the normal distribution
+        if (Double.isInfinite(g1[0])) {
+         gaussianProbabilityIntegral();
+         return;
+        }
         gamm = new Gamma(v/2.0, g2);
         gamm.run();
         hyper = new Hypergeometric(0.5, (v + 1.0)/2.0, 1.5, -x*x/v, result);
