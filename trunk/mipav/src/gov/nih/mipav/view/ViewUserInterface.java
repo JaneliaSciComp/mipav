@@ -70,6 +70,7 @@ import java.awt.GridBagLayout;
 import java.awt.HeadlessException;
 import java.awt.Insets;
 import java.awt.LayoutManager;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -109,6 +110,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.border.EmptyBorder;
 
 import org.w3c.dom.Document;
 
@@ -3334,6 +3336,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else {
         	btnMultiCore.setIcon(MipavUtil.getIcon("redbox.gif"));
         }
+    	btnMultiCore.setFocusPainted(false);
     }
     
     /**
@@ -3346,6 +3349,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else {
         	btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
         }
+    	btnGpuComp.setFocusPainted(false);
     }
 
     /**
@@ -3572,12 +3576,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final JLabel multiCoreEnabledLabel = new JLabel("Multi-core: ");
         multiCoreEnabledLabel.setFont(MipavUtil.font12);
         
+        ImageIcon backgroundMulti;
         if(Preferences.isMultiThreadingEnabled()) {
-        	ImageIcon bb = MipavUtil.getIcon("greenbox.gif");
-        	btnMultiCore = new JButton(bb);
+        	backgroundMulti = MipavUtil.getIcon("greenbox.gif");
         } else {
-        	btnMultiCore = new JButton(MipavUtil.getIcon("redbox.gif"));
+        	backgroundMulti = MipavUtil.getIcon("redbox.gif");
         }
+        btnMultiCore = new JButton(backgroundMulti);
+        btnMultiCore.setBounds(new Rectangle(17, 17));
+        btnMultiCore.setBorder(new EmptyBorder(2, 2, 2, 2));
+        
         btnMultiCore.setFont(MipavUtil.font12);
         btnMultiCore.setActionCommand("Options");
         btnMultiCore.addActionListener(this);
@@ -3585,11 +3593,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final JLabel gpuCompEnabledLabel = new JLabel("  GPU: ");
         gpuCompEnabledLabel.setFont(MipavUtil.font12);
         
+        ImageIcon backgroundGpu;
         if(Preferences.isGpuCompEnabled()) {
-        	btnGpuComp = new JButton(MipavUtil.getIcon("greenbox.gif"));
+        	backgroundGpu = MipavUtil.getIcon("greenbox.gif");
         } else {
-        	btnGpuComp = new JButton(MipavUtil.getIcon("redbox.gif"));
+        	backgroundGpu = MipavUtil.getIcon("redbox.gif");
         }
+        btnGpuComp = new JButton(backgroundGpu);
+        btnGpuComp.setBounds(new Rectangle(17, 17));
+        btnGpuComp.setBorder(new EmptyBorder(2, 2, 2, 2));
+        
         btnGpuComp.setFont(MipavUtil.font12);
         btnGpuComp.setActionCommand("Options");
         btnGpuComp.addActionListener(this);
