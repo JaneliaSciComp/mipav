@@ -181,7 +181,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
     
     private int RGBOffset = RED_OFFSET;
     
-    private int operationAdditional = 0;
+    private int numberFiltersAdditional = 0;
     
     private boolean gaborFilter;
     
@@ -208,7 +208,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 	
 	private VOIVector VOIs;
 	
-	private int resultImagesNumber = 0;
+	private int haralickImagesNumber = 0;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -250,7 +250,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
                                     boolean variance, boolean standardDeviation, boolean correlation,
                                     boolean shade, boolean promenance, boolean concatenate, 
                                     boolean gaborFilter, float freqU, float freqV, float sigmaU, float sigmaV, float theta,
-                                    int operationAdditional) {
+                                    int numberFiltersAdditional) {
         super(null, srcImg);
         image = srcImage;
         destImage = destImg;
@@ -286,7 +286,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         if ( srcImage.getVOIs() != null ) {
         	this.VOIs = srcImage.getVOIs();
         }
-        this.operationAdditional = operationAdditional;
+        this.numberFiltersAdditional = numberFiltersAdditional;
         
     }
     
@@ -328,7 +328,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
                                     boolean variance, boolean standardDeviation, boolean correlation,
                                     boolean shade, boolean promenance, boolean concatenate, 
                                     boolean gaborFilter, float freqU, float freqV, float sigmaU, float sigmaV, float theta,
-                                    int operationAdditional) {
+                                    int numberFiltersAdditional) {
         super(null, srcImg);
         image = srcImg;
         destImage = destImg;
@@ -365,7 +365,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         if ( srcImage.getVOIs() != null ) {
         	this.VOIs = srcImage.getVOIs();
         }
-        this.operationAdditional = operationAdditional;
+        this.numberFiltersAdditional = numberFiltersAdditional;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -477,7 +477,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         int x, y;
         int i, j;
         int index;
-        int resultNumber;
+        int totalFilters;
         float matrixSum;
         float[][] resultBuffer = null;
         float[][] resultBufferClass = null;
@@ -586,8 +586,8 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
             numOperators++;
         }
 
-        resultNumber = numDirections * numOperators + operationAdditional;
-        System.err.println("resultNumber = " + resultNumber);
+        totalFilters = numDirections * numOperators + numberFiltersAdditional;
+        System.err.println("totalFilters = " + totalFilters);
         if (rescale) {
             matrixSize = greyLevels;
         }
@@ -616,8 +616,8 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         }
 
         glcm = new float[matrixSize][matrixSize];
-        resultBuffer = new float[resultNumber][sliceSize];
-        resultBufferClass = new float[resultNumber][sliceSize];
+        resultBuffer = new float[totalFilters][sliceSize];
+        resultBufferClass = new float[totalFilters][sliceSize];
 
 
         for (z = 0; z < zDim; z++) {
@@ -662,7 +662,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 				sourceBuffer = null;
 			}
 
-			for (i = 0; i < resultNumber; i++) {
+			for (i = 0; i < totalFilters; i++) {
 				for (j = 0; j < sliceSize; j++) {
 					resultBuffer[i][j] = 0;
 					resultBufferClass[i][j] = -1;
@@ -1059,7 +1059,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 				} // for (x = xStart; x <= xEnd; x++)
 			} // for (y = yStart; y <= yEnd && !threadStopped; y++)
 
-			
+			//  adding the additional filter operation. 
 			for (y = yStart; (y <= yEnd) && !threadStopped; y++) {
 
 				for (x = xStart; x <= xEnd; x++) {
@@ -1068,9 +1068,10 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 					if ( gaborFilter ) {
 						resultBuffer[currentResult][pos] = gaborBuffer[pos];
 					} 
-					if ( VOIs.size() > 0 ) {			
-						resultBufferClass[currentResult][pos] = -1;
-					
+					if ( VOIs.size() > 0 ) {
+						if ( gaborFilter ) {
+							resultBufferClass[currentResult][pos] = -1;
+						}
 					    Vector<VOIBase>[] vArray = VOIs.VOIAt(0).getCurves();
 					    
 					    if ( vArray != null ) {
@@ -1082,7 +1083,10 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 											// resultBuffer[q][pos] = 255;
 											resultBufferClass[q][pos] = 1;
 										}
-										resultBufferClass[currentResult][pos] = 1;
+										
+										if ( gaborFilter ) {
+											resultBufferClass[currentResult][pos] = 1;
+										}
 										// resultBuffer[currentResult][pos] = 255;
 										// sourceBuffer[pos] = 3400;
 									}
@@ -1094,9 +1098,12 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 					
 				}
 			}
-			currentResult++;
 			
-			
+		
+			if ( gaborFilter ) {
+				currentResult++;
+			}
+		
 			
 			
 			if (threadStopped) {
@@ -1116,7 +1123,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 
 					return;
 				}
-				for (i = 0; i < resultNumber; i++) {
+				for (i = 0; i < totalFilters; i++) {
 
 					try {
 						destImage[0].importData((i + 1) * zDim * sliceSize + z
@@ -1138,7 +1145,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 				} // for (i = 0; i < resultNumber; i++)
 			} // if (concatenate)
 			else { // !concatenate
-				for (i = 0; i < resultNumber; i++) {
+				for (i = 0; i < totalFilters; i++) {
 
 					try {
 						destImage[i].importData(z * sliceSize, resultBuffer[i],
@@ -1161,13 +1168,13 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 			} // else !concatenate
 		} // for (z = 0; z < zDim; z++)
 
-        resultImagesNumber = currentResult;
-        System.err.println("resultImagesNumber = " + resultImagesNumber);
+        haralickImagesNumber = currentResult;
+       
         
 		if (concatenate) {
 			destImage[0].calcMinMax();
 		} else {
-			for (i = 0; i < resultNumber; i++) {
+			for (i = 0; i < totalFilters; i++) {
 				destImage[i].calcMinMax();
 			}
 		}
@@ -1205,8 +1212,8 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 		
 	}
 
-    public int getResultImagesNumber() {
-    	return resultImagesNumber;
+    public int getHaralickImagesNumber() {
+    	return haralickImagesNumber;
     }
     
 }
