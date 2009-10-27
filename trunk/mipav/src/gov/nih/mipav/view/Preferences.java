@@ -262,6 +262,9 @@ public class Preferences {
 
     /** Constant that indicated if the multi-theading is enabled */
     public static final String PREF_MULTI_THREADING_ENABLED = "multiThreadingEnabled";
+    
+    /** Constant that indicates if computing on the GPU is enabled */
+    public static final String PREF_GPU_COMP_ENABLED = "gpuCompEnabled";
 
     public static final String PREF_NUMBER_OF_THREADS = "numberOfThreads";
 
@@ -619,11 +622,12 @@ public class Preferences {
         defaultProps.setProperty(PREF_SERVER_AUTHENTICATION_SRB, "ENCRYPT1");
         defaultProps.setProperty(PREF_STORAGE_RESOURCE_SRB, "");
 
-        // multi-threading property
+        // performance information properties
         defaultProps.setProperty(PREF_MULTI_THREADING_ENABLED,
                 (gov.nih.mipav.util.MipavUtil.getAvailableCores() > 1) ? "true" : "flase");
         defaultProps.setProperty(PREF_NUMBER_OF_THREADS, String.valueOf(gov.nih.mipav.util.MipavUtil
                 .getAvailableCores()));
+        defaultProps.setProperty(PREF_GPU_COMP_ENABLED, "false");
     }
 
     // ~ Methods
@@ -3240,10 +3244,27 @@ public class Preferences {
         if (mtEnabled == null) {
             mtEnabled = defaultProps.getProperty(PREF_MULTI_THREADING_ENABLED);
         }
-        if ("true".equals(mtEnabled)) {
+        if (Boolean.valueOf(mtEnabled)) {
             return true;
         }
         return false;
+    }
+    
+    public static boolean isGpuCompEnabled() {
+    	if (mipavProps == null) {
+    		read();
+    	}
+    	
+    	String gpuEnabled = mipavProps.getProperty(PREF_GPU_COMP_ENABLED);
+    	if(gpuEnabled == null) {
+    		gpuEnabled = defaultProps.getProperty(PREF_GPU_COMP_ENABLED);
+    	}
+    	
+    	if(Boolean.valueOf(gpuEnabled)) {
+    		return true;
+    	}
+    	
+    	return false;
     }
 
     public static int getNumberOfThreads() {

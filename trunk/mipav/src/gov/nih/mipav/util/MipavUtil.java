@@ -10,6 +10,7 @@ public class MipavUtil {
     
     /**
      * Return the available processors in your machine.
+     * TODO: Add a similar method for GPUs once such a method exists in Java
      */
     public static int getAvailableCores(){
         return Runtime.getRuntime().availableProcessors();
