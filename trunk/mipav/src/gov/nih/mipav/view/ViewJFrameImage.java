@@ -1442,6 +1442,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	saveProstateFeatures();
         } else if (command.equals("ProstateFeaturesTest")) {
         	testProstateFeatures();
+        } else if (command.equals("LoadProstateMask")) {
+        	loadProstateMask();
         } else if (command.equals("SaveVOIIntensities")) {
             saveVOIIntensities();
         } else if (command.equals("Snake")) {

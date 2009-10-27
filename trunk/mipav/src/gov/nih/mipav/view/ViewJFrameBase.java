@@ -2167,6 +2167,11 @@ public abstract class ViewJFrameBase extends JFrame
     	saveFeaturesDialog.validate();
     }
     
+    public void loadProstateMask() {
+    	JDialogBase loadProstateMaskDialog = new JDialogLoadProstateMask(this, imageA);
+    	loadProstateMaskDialog.validate();
+    }
+    
     
     /**
      * Reconstruct the prostate surface from the coarse VOIs cloudy points.  

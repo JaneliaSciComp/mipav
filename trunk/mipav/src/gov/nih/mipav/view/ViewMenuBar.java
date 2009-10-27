@@ -835,6 +835,7 @@ public class ViewMenuBar {
                                 		menuBuilder.buildMenuItem("Surface Reconstruction", "ProstateReconstruct", 0, null, false),
                                 		menuBuilder.buildMenuItem("Save Features", "ProstateFeaturesSave", 0, null, false),
                                 		menuBuilder.buildMenuItem("Save Test Features", "ProstateFeaturesTest", 0, null, false),
+                                		menuBuilder.buildMenuItem("Load Mask", "LoadProstateMask", 0, null, false),
                                 		menuBuilder.buildMenuItem("Extract Surface", "ProstateExtract", 0, null, false)
                                 }),
                                 ViewMenuBar.separator,
