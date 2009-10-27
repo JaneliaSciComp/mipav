@@ -218,7 +218,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 
 	private JPanel savedFilePanel;
 
-	private boolean gaborFilter = true;
+	private boolean gaborFilter = false;
 
 	private JTextField textSavedFileName;
 
@@ -227,7 +227,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 	private String savedFileDirAbs;
 	private String savedFileName;
 
-	private int resultImagesNumber = 0;
+	private int haralickImagesNumber = 0;
 
 	// Gabor filter
 	/** DOCUMENT ME! */
@@ -282,7 +282,9 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 
 	private JPanel gaborPanel;
 
-	private int operationAdditional = 1;
+	private int numberFiltersAdditional = 0;
+	
+	private JCheckBox gaborFilterCheckBox;
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -392,7 +394,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 										"Out of memory: unable to open new resultImage frame",
 										"Error", JOptionPane.ERROR_MESSAGE);
 					}
-					resultImagesNumber = textureAlgo.getResultImagesNumber();
+					haralickImagesNumber = textureAlgo.getHaralickImagesNumber();
 					saveFeatureSpaceValue(resultImage[i]);
 				}
 
@@ -421,82 +423,73 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 
 	}
 
-	
-	
 	public void saveFeatureSpaceValue(ModelImage resultImage) {
-    	int xDim = image.getExtents()[0];
-        int yDim = image.getExtents()[1];
-        int sliceSize = xDim * yDim;
-        int i, z, k;
-        int classify;
-        int index;
-        float value;
-        int zDim;
-        
-        // resultNumber ?????
-        int numImages = resultImagesNumber;
-        System.err.println("resultImagesNumber 2= " + resultImagesNumber);
-        
-        float[] resultBuffer = new float[sliceSize];
-        float[] resultBufferClass = new float[sliceSize];
-        
-        Vector[] features = new Vector[numImages];
-        
-        for ( i = 0; i < numImages; i++ ) {
-        	features[i] = new Vector();
-        }
-        
-        if (image.getNDims() == 2) {
-            zDim = 1;
-        }
-        else {
-            zDim = image.getExtents()[2];
-        }
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int sliceSize = xDim * yDim;
+		int i, z, k;
+		int classify;
+		int index;
+		float value;
+		int zDim;
+		// resultNumber ?????
+		int numImages = 1 + haralickImagesNumber;
+		System.err.println("haralickImagesNumber = " + haralickImagesNumber);
 
-        // boolean test = false;
-        for (i = 0; i < numImages; i++) {
-        	// test = false;
-        	for (z = 0; z < zDim; z++) {
+		float[] resultBuffer = new float[sliceSize];
+		float[] resultBufferClass = new float[sliceSize];
+
+		Vector[] features = new Vector[numImages];
+
+		for (i = 0; i < numImages; i++) {
+			features[i] = new Vector();
+		}
+
+		if (image.getNDims() == 2) {
+			zDim = 1;
+		} else {
+			zDim = image.getExtents()[2];
+		}
+
+		// boolean test = false;
+		for (i = 0; i < numImages; i++) {
+			// test = false;
+			for (z = 0; z < zDim; z++) {
 				try {
 					// import and export ??????????????
 					resultImage.exportData((i) * zDim * sliceSize + z
 							* sliceSize, sliceSize, resultBuffer);
-				    /*
-					resultImage.exportDataClass((i) * zDim * sliceSize + z * sliceSize, sliceSize, resultBufferClass);
-					
-					if ( i == 0 ) {
-						resultImage.exportDataClass((i+1) * zDim * sliceSize + z * sliceSize, sliceSize, resultBufferClass);
+				
+					for (k = 0; k < sliceSize; k++) {
+						classify = 0;
+						value = resultBuffer[k];
+						index = i;
+						// if ( classify == 1 /* && test == false */ ) {
+						// System.err.println("classify = " + classify + " index
+						// = " + index + " value = " + value);
+						features[i].add(new Feature(classify, index, value));
+						// test = true;
+						// }
 					}
-					*/
-				    for ( k = 0; k < sliceSize; k++ ) { 
-				    	classify = 0;
-				    	value = resultBuffer[k];
-				    	index = i;
-				    	// if ( classify == 1  /* && test == false */ ) {
-				        // System.err.println("classify = " + classify + " index = " + index + " value = " + value);
-				    	  features[i].add(new Feature(classify, index, value));
-				    	   //  test = true;
-				    	// }
-				    }
-					
+
 				} catch (IOException error) {
 					MipavUtil
 							.displayError("JDialogProstateSaveFeatures: IOException on destImage["
 									+ i
 									+ "].importData(0,resultBuffer["
-									+ i + "],false)");
-					
-	
+									+ i
+									+ "],false)");
+
 					return;
 				}
 			} // for (i = 0; i < resultNumber; i++)
-    	}
-        
+		}
+
         // Save feature space into a file
         // savedFileDirAbs
         try {
         	savedFileDirAbs = textSavedFileName.getText();
-        	System.err.println("ruida = " + savedFileDirAbs);
+        	
         	File file = new File(savedFileDirAbs);
         	PrintWriter output = new PrintWriter(file);
         	Feature feature, featureTemp;
@@ -527,10 +520,8 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
         } catch (Exception e ) {
         	e.printStackTrace();
         }
-         
-    }
-    
-	
+
+	}
 
 	/**
 	 * Construct a delimited string that contains the parameters to this
@@ -901,21 +892,21 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 
 			if (image.getNDims() == 2) {
 				name[0] = makeImageName(image.getImageName(), "_Haralick");
-				zDim = 1 + numDirections * numOperators + operationAdditional;
+				zDim = 1 + numDirections * numOperators + numberFiltersAdditional;
 				newExtents = new int[3];
 				newExtents[0] = image.getExtents()[0];
 				newExtents[1] = image.getExtents()[1];
 				newExtents[2] = zDim;
 				resultImage[0] = new ModelImage(ModelStorageBase.FLOAT,
 						newExtents, name[0]);
-				tDim = 1 + numDirections * numOperators + operationAdditional;
+				tDim = 1 + numDirections * numOperators + numberFiltersAdditional;
 				// imageNameArray = new String[zDim];
 				imageNameArray = new String[tDim];
 				imageNameArray[0] = name[0];
 			} // if (image.getNDims() == 2)
 			else { // image.getNDims() == 3
 				name[0] = makeImageName(image.getImageName(), "_Haralick");
-				tDim = 1 + numDirections * numOperators + operationAdditional;
+				tDim = 1 + numDirections * numOperators + numberFiltersAdditional;
 				newExtents = new int[4];
 				newExtents[0] = image.getExtents()[0];
 				newExtents[1] = image.getExtents()[1];
@@ -1009,12 +1000,13 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 					} else if (promenance && (!donePromenance)) {
 						opString = "_promenance";
 						donePromenance = true;
-					} else if (gaborFilter && ( !doneGaborFilter )) {
+					} 
+					/*else if (gaborFilter && ( !doneGaborFilter )) {
                         opString = "_Gabor";
                         doneGaborFilter = true;
-                    }
-    
-
+                    } 
+                    */
+                    
 					if (image.getNDims() == 2) {
 						imageNameArray[index + 1] = makeImageName(image
 								.getImageName(), dirString + opString);
@@ -1025,29 +1017,32 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 									dirString + opString);
 						}
 					}
+					
 
 				} // for (j = 0; j < numOperators; j++)
 			} // for (i = 0; i < numDirections; i++)
 
 			// do additional operation
+			
 			doneGaborFilter = false;
-			// index = index + operationAdditional;
+			
 			if (gaborFilter && (!doneGaborFilter)) {
 				opString = "_Gabor";
 				doneGaborFilter = true;
 
 				if (image.getNDims() == 2) {
-					imageNameArray[index + 1] = makeImageName(image
+					// index + 2 for the additional filters. 
+					imageNameArray[index + 2] = makeImageName(image
 							.getImageName(), dirString + opString);
 				} else {
 					for (k = 0; k < image.getExtents()[2]; k++) {
-						imageNameArray[(index + 1) * image.getExtents()[2] + k] = makeImageName(
+						imageNameArray[(index + 2) * image.getExtents()[2] + k] = makeImageName(
 								image.getImageName(), dirString + opString);
 					}
 				}
 
 			}
-
+            
 			resultImage[0].setImageNameArray(imageNameArray);
 
 			if (image.isColorImage()) {
@@ -1058,7 +1053,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 						maxProbability, entropy, mean, variance,
 						standardDeviation, correlation, shade, promenance,
 						true, gaborFilter, freqU, freqV, sigmaU, sigmaV, theta,
-						operationAdditional);
+						numberFiltersAdditional);
 			} else {
 				textureAlgo = new AlgorithmProstateFeatures(resultImage, image,
 						windowSize, offsetDistance, greyLevels, ns, nesw, ew,
@@ -1067,7 +1062,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 						maxProbability, entropy, mean, variance,
 						standardDeviation, correlation, shade, promenance,
 						true, gaborFilter, freqU, freqV, sigmaU, sigmaV, theta,
-						operationAdditional);
+						numberFiltersAdditional);
 			}
 
 			// This is very important. Adding this object as a listener allows
@@ -1361,6 +1356,11 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 		if (promenance) {
 			numOps++;
 		}
+		
+		if ( gaborFilter ) {
+			numberFiltersAdditional++;
+		}
+		
 		return numOps;
 	}
 
@@ -1468,6 +1468,10 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 		textTheta.setFont(serif12);
 		textTheta.setEnabled(true);
 
+		gaborFilterCheckBox = new JCheckBox("Select Gabor Filter");
+		gaborFilterCheckBox.setFont(serif12);
+		gaborFilterCheckBox.setSelected(false);
+		
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 1;
@@ -1496,7 +1500,11 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 		filterPanel.add(labelTheta, gbc);
 		gbc.gridx = 1;
 		filterPanel.add(textTheta, gbc);
-
+		gbc.gridx = 0;
+		gbc.gridy = 5;
+		filterPanel.add(gaborFilterCheckBox, gbc);
+		
+		
 		gaborPanel = new JPanel(new GridBagLayout());
 		gbc.gridx = 0;
 		gbc.gridy = 0;
@@ -1924,6 +1932,8 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 		shade = shadeCheckBox.isSelected();
 
 		promenance = promenanceCheckBox.isSelected();
+		
+		gaborFilter = gaborFilterCheckBox.isSelected();
 
 		numOperators = getNumOperators();
 
@@ -1994,16 +2004,5 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 	}
 
 }
-/*
-class Feature {
-	int classify;
-	int index;
-	float value;
 
-	public Feature(int _classify, int _index, float _value) {
-		classify = _classify;
-		index = _index;
-		value = _value;
-	}
-}
-*/
+
