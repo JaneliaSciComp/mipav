@@ -228,6 +228,8 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 	private String savedFileName;
 
 	private int haralickImagesNumber = 0;
+	
+	private int imageOriginNumber = 1; 
 
 	// Gabor filter
 	/** DOCUMENT ME! */
@@ -285,6 +287,12 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 	private int numberFiltersAdditional = 0;
 	
 	private JCheckBox gaborFilterCheckBox;
+	
+	private JCheckBox imageOriginCheckBox;
+	
+	private JPanel imageOriginPanel;
+	
+	private boolean imageOriginFilter = true;
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -459,7 +467,8 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 					// import and export ??????????????
 					resultImage.exportData((i) * zDim * sliceSize + z
 							* sliceSize, sliceSize, resultBuffer);
-				
+					
+
 					for (k = 0; k < sliceSize; k++) {
 						classify = 0;
 						value = resultBuffer[k];
@@ -485,6 +494,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 			} // for (i = 0; i < resultNumber; i++)
 		}
 
+
         // Save feature space into a file
         // savedFileDirAbs
         try {
@@ -499,7 +509,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
             boolean printClassify = false; 
     		for ( j = 0; j < size; j++ ) {
     		    printClassify = false;
-        	    for ( i = 0; i < features.length; i++ ) {
+        	    for ( i = imageOriginNumber; i < features.length; i++ ) {
         		   feature = (Feature)features[i].get(j);
         		   classify = feature.classify;
         		   value = feature.value;
@@ -520,6 +530,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
         } catch (Exception e ) {
         	e.printStackTrace();
         }
+
 
 	}
 
@@ -1032,7 +1043,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 
 				if (image.getNDims() == 2) {
 					// index + 2 for the additional filters. 
-					imageNameArray[index + 2] = makeImageName(image
+					imageNameArray[index + 1 + numberFiltersAdditional] = makeImageName(image
 							.getImageName(), dirString + opString);
 				} else {
 					for (k = 0; k < image.getExtents()[2]; k++) {
@@ -1361,6 +1372,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 			numberFiltersAdditional++;
 		}
 		
+		
 		return numOps;
 	}
 
@@ -1380,6 +1392,7 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
 		mainPanel.setLayout(new BorderLayout());
 
+		buildImageOriginPanel();
 		buildHaralickPanel();
 		buildGaborPanel();
 		buildSavedFilePanel();
@@ -1389,8 +1402,14 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 
 		otherFeatures.add(gaborPanel, BorderLayout.NORTH);
 		otherFeatures.add(savedFilePanel, BorderLayout.CENTER);
-
-		mainPanel.add(haralickPanel, BorderLayout.WEST);
+		
+		JPanel leftPanel = new JPanel();
+		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+		
+		leftPanel.add(imageOriginPanel);
+		leftPanel.add(haralickPanel);
+		
+		mainPanel.add(leftPanel, BorderLayout.WEST);
 		mainPanel.add(otherFeatures, BorderLayout.CENTER);
 		mainPanel.add(buildButtons(), BorderLayout.SOUTH);
 
@@ -1547,6 +1566,31 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 
 	}
 
+	
+	private void buildImageOriginPanel() {
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridwidth = 3;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.weightx = 1;
+
+		imageOriginPanel = new JPanel(new GridBagLayout());
+		imageOriginPanel
+				.setBorder(buildTitledBorder("Original Image Selection"));
+		
+		imageOriginCheckBox = new JCheckBox("Select Original Image");
+		imageOriginCheckBox.setFont(serif12);
+		imageOriginCheckBox.setSelected(true);
+		
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		gbc.weightx = .5;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		
+		imageOriginPanel.add(imageOriginCheckBox, gbc);
+		
+	}
+	
 	private void buildHaralickPanel() {
 		int ypos = 0;
 
@@ -1934,6 +1978,14 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 		promenance = promenanceCheckBox.isSelected();
 		
 		gaborFilter = gaborFilterCheckBox.isSelected();
+		
+		imageOriginFilter = imageOriginCheckBox.isSelected();
+		
+		if ( imageOriginFilter ) {
+			imageOriginNumber = 0;
+		} else {
+			imageOriginNumber = 1;
+		}
 
 		numOperators = getNumOperators();
 
@@ -2005,4 +2057,14 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 
 }
 
+class Feature {
+	int classify;
+	int index;
+	float value;
 
+	public Feature(int _classify, int _index, float _value) {
+		classify = _classify;
+		index = _index;
+		value = _value;
+	}
+}
