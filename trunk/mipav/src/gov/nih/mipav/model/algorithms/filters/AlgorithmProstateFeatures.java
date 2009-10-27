@@ -9,6 +9,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.io.*;
 import java.util.*;
 
@@ -180,21 +181,28 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
     
     private int RGBOffset = RED_OFFSET;
     
-    private int operationAdditional = 1;
+    private int operationAdditional = 0;
     
-    private boolean edgeDetection;
+    private boolean gaborFilter;
     
-    private AlgorithmEdgeNMSuppression nmSupAlgo;
-    
-    /** false = apply algorithm only to VOI regions. */
-	private boolean image25D; // Flag for applying to every slice
-	
-	private float[] sigmas;
-	
-	private boolean isWholeImage;
+    /** DOCUMENT ME! */
+    private float freqU;
 
+    /** DOCUMENT ME! */
+    private float freqV;
+    /** DOCUMENT ME! */
+    private float sigmaU;
+
+    /** DOCUMENT ME! */
+    private float sigmaV;
+    
+    /** DOCUMENT ME! */
+    private float theta;
+    
+    private AlgorithmFrequencyFilter FrequencyFilterAlgo = null;
+    
 	/** DOCUMENT ME! */
-	private ModelImage edgeImage;
+	private ModelImage gaborImage;
 	
 	private ModelImage image; // source image
 	
@@ -202,7 +210,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 	
 	private int resultImagesNumber = 0;
 
-	
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -241,7 +249,8 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
                                     boolean variance, boolean standardDeviation, boolean correlation,
                                     boolean shade, boolean promenance, boolean concatenate, 
-                                    boolean edgeDetection, float[] sigmas, boolean isWholeImage, boolean image25D) {
+                                    boolean gaborFilter, float freqU, float freqV, float sigmaU, float sigmaV, float theta,
+                                    int operationAdditional) {
         super(null, srcImg);
         image = srcImage;
         destImage = destImg;
@@ -268,13 +277,16 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         this.shade = shade;
         this.promenance = promenance;
         this.concatenate = concatenate;
-        this.edgeDetection = edgeDetection;
-        this.sigmas = sigmas;
-        this.isWholeImage = isWholeImage;
-        this.image25D = image25D;
+        this.gaborFilter = gaborFilter;
+        this.freqU = freqU;
+        this.freqV = freqV;
+        this.sigmaU = sigmaU;
+        this.sigmaV = sigmaV;
+        this.theta = theta;
         if ( srcImage.getVOIs() != null ) {
         	this.VOIs = srcImage.getVOIs();
         }
+        this.operationAdditional = operationAdditional;
         
     }
     
@@ -315,7 +327,8 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
                                     boolean variance, boolean standardDeviation, boolean correlation,
                                     boolean shade, boolean promenance, boolean concatenate, 
-                                    boolean edgeDetection, float[] sigmas, boolean isWholeImage, boolean image25D) {
+                                    boolean gaborFilter, float freqU, float freqV, float sigmaU, float sigmaV, float theta,
+                                    int operationAdditional) {
         super(null, srcImg);
         image = srcImg;
         destImage = destImg;
@@ -343,13 +356,16 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         this.shade = shade;
         this.promenance = promenance;
         this.concatenate = concatenate;
-        this.edgeDetection = edgeDetection;
-        this.sigmas = sigmas;
-        this.isWholeImage = isWholeImage;
-        this.image25D = image25D;
+        this.gaborFilter = gaborFilter;
+        this.freqU = freqU;
+        this.freqV = freqV;
+        this.sigmaU = sigmaU;
+        this.sigmaV = sigmaV;
+        this.theta = theta;
         if ( srcImage.getVOIs() != null ) {
         	this.VOIs = srcImage.getVOIs();
         }
+        this.operationAdditional = operationAdditional;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -385,112 +401,37 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         
 
         fireProgressStateChanged(0, null, "Running Haralick textures ...");
-        calculateNMSuppression();
+        if ( gaborFilter ) {
+        	calculateGaborFilter();
+        }
         calculateHaralick();
     }
 
     
-    private void calculateNMSuppression() {
+    private void calculateGaborFilter() {
 
-		if (image.getNDims() == 2) { // source image is 2D
+    	 try {
+    		 gaborImage = (ModelImage) image.clone();
+             // resultImage.setImageName(name);
+    		 gaborImage.resetVOIs();
+    		 
+             // No need to make new image space because the user has choosen to replace the source image
+             // Make the algorithm class
+             FrequencyFilterAlgo = new AlgorithmFrequencyFilter(gaborImage, image, freqU, freqV, sigmaU, sigmaV, theta,
+                                                                false);
 
-			int[] destExtents = new int[2];
+             // This is very important. Adding this object as a listener allows the algorithm to
+             // notify this object when it has completed or failed. See algorithm performed event.
+             // This is made possible by implementing AlgorithmedPerformed interface
+             FrequencyFilterAlgo.addListener(this);
 
-			destExtents[0] = image.getExtents()[0]; // X dim
-			destExtents[1] = image.getExtents()[1]; // Y dim
+             FrequencyFilterAlgo.run();
+             
+         } catch (OutOfMemoryError x) {
+             MipavUtil.displayError("Dialog GaborFilter: unable to allocate enough memory");
 
-
-			try {
-
-				// Make result image of float type
-				ModelImage resultEMImage = new ModelImage(ModelImage.FLOAT,
-						destExtents, " EdgeNMSup");
-				// resultImage.setImageName(name);
-
-				if ((resultEMImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-					((FileInfoDicom) (resultEMImage.getFileInfo(0))).setSecondaryCaptureTags();
-				}
-
-				// Make algorithm
-				nmSupAlgo = new AlgorithmEdgeNMSuppression(resultEMImage, image,
-						sigmas, isWholeImage, image25D);
-
-				// This is very important. Adding this object as a listener
-				// allows the algorithm to
-				// notify this object when it has completed of failed. See
-				// algorithm performed event.
-				// This is made possible by implementing AlgorithmedPerformed
-				// interface
-				nmSupAlgo.addListener(this);
-				nmSupAlgo.run();
-
-				// Start the thread as a low priority because we wish to still
-				// have user interface work fast.
-				/*
-				if (nmSupAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-					MipavUtil
-							.displayError("A thread is already running on this object");
-				}
-				*/
-			} catch (OutOfMemoryError x) {
-				MipavUtil
-						.displayError("Dialog EdgeNMSup: unable to allocate enough memory");
-
-				if (nmSupAlgo.getZeroXMask() != null) {
-					nmSupAlgo.getZeroXMask().disposeLocal(); // Clean up
-																// memory of
-																// result image
-				}
-
-				return;
-			}
-		} else if (image.getNDims() == 3) {
-			int[] destExtents = new int[3];
-
-			destExtents[0] = image.getExtents()[0];
-			destExtents[1] = image.getExtents()[1];
-			destExtents[2] = image.getExtents()[2];
-
-			try {
-
-				// Make result image of float type
-				ModelImage resultEMImage = new ModelImage(ModelImage.FLOAT,
-						destExtents, "EdgeNMSup");
-				// resultImage.setImageName(name);
-
-				if ((resultEMImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-
-					for (int i = 0; i < resultEMImage.getExtents()[2]; i++) {
-						((FileInfoDicom) (resultEMImage.getFileInfo(i)))
-								.setSecondaryCaptureTags();
-					}
-				}
-
-				// Make algorithm
-				nmSupAlgo = new AlgorithmEdgeNMSuppression(resultEMImage, image,
-						sigmas, isWholeImage, image25D);
-
-				// This is very important. Adding this object as a listener
-				// allows the algorithm to
-				// notify this object when it has completed of failed. See
-				// algorithm performed event.
-				// This is made possible by implementing AlgorithmedPerformed
-				// interface
-				nmSupAlgo.addListener(this);
-				nmSupAlgo.run();
-				
-			} catch (OutOfMemoryError x) {
-				MipavUtil
-						.displayError("Dialog EdgeNMSup: unable to allocate enough memory");
-
-				if (nmSupAlgo.getZeroXMask() != null) {
-					nmSupAlgo.getZeroXMask().disposeLocal(); // Clean up
-																// image memory
-				}
-
-				return;
-			}
-		}
+             return;
+         }
     }
     
     /**
@@ -516,7 +457,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         int numDirections = 0;
         int numOperators = 0;
         double[] sourceBuffer = new double[sliceSize];
-        float[] edgeBuffer = new float[sliceSize];
+        float[] gaborBuffer = new float[sliceSize];
         byte[]  byteBuffer = new byte[sliceSize];
         float[] floatBuffer;
         int[][] nsBuffer = null;
@@ -646,7 +587,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
         }
 
         resultNumber = numDirections * numOperators + operationAdditional;
-
+        System.err.println("resultNumber = " + resultNumber);
         if (rescale) {
             matrixSize = greyLevels;
         }
@@ -691,7 +632,9 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 					floatBuffer = null;
 				} else {
 					srcImage.exportData(z * sliceSize, sliceSize, sourceBuffer);
-					edgeImage.exportData(z * sliceSize, sliceSize, edgeBuffer);
+					if ( gaborFilter ) {
+						gaborImage.exportData(z * sliceSize, sliceSize, gaborBuffer);
+					}
 				}
 			} catch (IOException error) {
 				MipavUtil
@@ -1122,8 +1065,9 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 				for (x = xStart; x <= xEnd; x++) {
 					pos = x + (y * xDim);
 					
-					resultBuffer[currentResult][pos] = edgeBuffer[pos];
-					
+					if ( gaborFilter ) {
+						resultBuffer[currentResult][pos] = gaborBuffer[pos];
+					} 
 					if ( VOIs.size() > 0 ) {			
 						resultBufferClass[currentResult][pos] = -1;
 					
@@ -1133,7 +1077,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 					    	if ( vArray[z] != null && vArray[z].size() > 0 ) {
 								VOIBase v  = vArray[z].get(0);
 								if ( v instanceof VOIContour ) {
-									if ( ((VOIContour)v).isBoundary(x, y, false) ) {
+									if ( ((VOIContour)v).contains(x, y, false) ) {
 										for ( int q = 0; q < currentResult; q++ ) {
 											// resultBuffer[q][pos] = 255;
 											resultBufferClass[q][pos] = 1;
@@ -1150,6 +1094,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 					
 				}
 			}
+			currentResult++;
 			
 			
 			
@@ -1216,7 +1161,7 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
 			} // else !concatenate
 		} // for (z = 0; z < zDim; z++)
 
-        resultImagesNumber = currentResult+2;
+        resultImagesNumber = currentResult;
         System.err.println("resultImagesNumber = " + resultImagesNumber);
         
 		if (concatenate) {
@@ -1235,35 +1180,28 @@ public class AlgorithmProstateFeatures extends AlgorithmBase implements Algorith
     
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-		if (algorithm instanceof AlgorithmEdgeNMSuppression) {
+    	if (algorithm instanceof AlgorithmFrequencyFilter) {
 
-			image.clearMask();
-			
-			edgeImage = nmSupAlgo.getZeroXMask();
+            if ((algorithm.isCompleted() == true) && (gaborImage != null) && ( gaborFilter )) {
+               
+                try {
+                	gaborImage = FrequencyFilterAlgo.getDestImage();
+                 
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (gaborImage != null) {
 
-			if ((nmSupAlgo.isCompleted() == true) && (edgeImage != null)) {
+                // algorithm failed but result image still has garbage
+            	gaborImage.disposeLocal(); // clean up memory
+            	gaborImage = null;
+            }
 
-				try {
+        }
 
-					edgeImage = nmSupAlgo.getZeroXMask();
-
-					// edgeImage.setImageName("Edge");
-					// new ViewJFrameImage(edgeImage, null, new Dimension(610, 200));
-				} catch (OutOfMemoryError error) {
-					MipavUtil
-							.displayError("Out of memory: unable to open new frame");
-				}
-			} else if (edgeImage != null) {
-
-				// algorithm failed but result image still has garbage
-				edgeImage.disposeLocal(); // clean up memory
-				edgeImage = null;
-			}
-		}
-
-		
-		nmSupAlgo.finalize();
-		nmSupAlgo = null;
+        FrequencyFilterAlgo.finalize();
+        FrequencyFilterAlgo = null;
 		
 	}
 
