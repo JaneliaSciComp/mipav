@@ -2057,14 +2057,3 @@ public class JDialogProstateTestFeatures extends JDialogScriptableBase
 
 }
 
-class Feature {
-	int classify;
-	int index;
-	float value;
-
-	public Feature(int _classify, int _index, float _value) {
-		classify = _classify;
-		index = _index;
-		value = _value;
-	}
-}
