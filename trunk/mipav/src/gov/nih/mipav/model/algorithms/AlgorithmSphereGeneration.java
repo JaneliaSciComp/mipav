@@ -87,7 +87,14 @@ import java.util.*;
  <Pn> = ([(4/3)*PI*Nv]**-1/3) * gamma[(3*n + 1)/3] / (n - 1)! = Kn*(Nv)**-1/3
  where Nv is the number of points per unit volume.
  <H1>/<P1> = 1 + B1 * ((f/f0)**2/3)
- where B1 = ((2**-1/6)/K1) - 1             
+ where B1 = ((2**-1/6)/K1) - 1
+ 
+ For spheres of varying radii the formula is modified to
+ <H1>*(Nv**(1/3)) = K1*[ 1 + B1 * (f/f0)**2/3] - (1 - exp(-cv * f))
+ where cv is the coefficient of variation of the sphere size distribution
+ The reference is "Nearest neighbor distances in uniform-random poly-dispersed microstructures" by
+ A. Tewari and A. M. Gokhale, Materials Science and Engineering A 396 (2005), pp. 22-27.
+ The equation for varying radii is good for sphere volume fractions ranging from 0.0 to 0.25. 
  */
 public class AlgorithmSphereGeneration extends AlgorithmBase {
     
@@ -114,17 +121,27 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
     // in the range from the lowestForbiddenNNDistance to the highestRegenerationNNDistnace with a peak of 
     // significance at an NN Distance just above the hgihestForbiddenNNDistance.
     public static final int CONSTRAINED = 4;
+    
+    
+    // All spheres have the same radius
+    public static final int CONSTANT_RADIUS = 1;
+    
+    // The sphere radii are uniformly distributed from minRadius to maxRadius
+    public static final int UNIFORM_RADIUS = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    
-    // Sphere radius
-    private int radius;
     
     // number of sphere to be drawn
     private int numSpheres;
     
     // RANDOM, AGGREGATED, or REGULAR.
     private int pattern;
+    
+    private int minRadius;
+    
+    private int maxRadius;
+    
+    private int radiusDistribution;
     
     // Used in AGGREGATED.  initialRandomSpheres are drawn randomly.  The rest are drawn with nearestNeighborDistance
     // less than or equal to maximumNearestNeighborDistance
@@ -164,13 +181,16 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
      * @param  highestForbiddenNNDistance Used in CONSTRAINED
      * @param  highestRegeneerationNNDistance Used in CONSTRAINED
      */
-    public AlgorithmSphereGeneration(ModelImage srcImage, int radius, int numSpheres, int pattern,
-            int initialRandomSpheres, double minimumNearestNeighborDistance, double maximumNearestNeighborDistance,
-            double lowestForbiddenNNDistance, double highestForbiddenNNDistance, double highestRegenerationNNDistance) {
+    public AlgorithmSphereGeneration(ModelImage srcImage, int minRadius, int maxRadius, int numSpheres, int pattern,
+            int radiusDistribution, int initialRandomSpheres, double minimumNearestNeighborDistance, 
+            double maximumNearestNeighborDistance, double lowestForbiddenNNDistance, double highestForbiddenNNDistance,
+            double highestRegenerationNNDistance) {
         super(null, srcImage);
-        this.radius = radius;
+        this.minRadius = minRadius;
+        this.maxRadius = maxRadius;
         this.numSpheres = numSpheres;
         this.pattern = pattern;
+        this.radiusDistribution = radiusDistribution;
         this.initialRandomSpheres = initialRandomSpheres;
         this.minimumNearestNeighborDistance = minimumNearestNeighborDistance;
         this.maximumNearestNeighborDistance = maximumNearestNeighborDistance;
@@ -196,7 +216,10 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         int yDim;
         int zDim;
         int xySize;
-        byte mask[];
+        int radius = minRadius;
+        int radiusNumber = maxRadius - minRadius + 1;
+        int rNum;
+        byte mask[][] = new byte[radiusNumber][];
         int x;
         int y;
         int zint;
@@ -204,10 +227,10 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         int xDistSquared;
         int zDistSquared;
         int radiusSquared;
-        int xMaskDim;
+        int xMaskDim[] = new int[radiusNumber];
         int yMaskDim;
         int zMaskDim;
-        int xyMask;
+        int xyMask[] = new int[radiusNumber];
         int distSquared;
         int lowestDistSquared;
         int i;
@@ -216,16 +239,17 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         boolean found;
         int buffer[];
         int length;
-        int xCenter = radius;
-        int yCenter = radius;
-        int zCenter = radius;
+        int xCenter = 0;
+        int yCenter = 0;
+        int zCenter = 0;
         /** Reference to the random number generator. */
         RandomNumberGen randomGen;
         int spheresDrawn;
         int sphereXCenter[] = new int[numSpheres];
         int sphereYCenter[] = new int[numSpheres];
         int sphereZCenter[] = new int[numSpheres];
-        int countedBytes;
+        int sphereRadius[] = new int[numSpheres];
+        int countedBytes[] = new int[radiusNumber];
         double nndDrawn[];
         double nearestNeighborDistance[];
         double maximumNND;
@@ -249,7 +273,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double z;
         int boundaryDistance;
         int spheresLeft;
-        int maskBytesSet;
+        int maskBytesSet[] = new int[radiusNumber];
         double nearestNeighborDistanceSumOfSquares;
         Statistics stat;
         double diameter;
@@ -294,10 +318,20 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         int neval;
         double change;
         double volumeFraction;
+        double partialVolumeFraction;
         double closePackedVolumeFraction = Math.PI/Math.sqrt(18.0);
         double K1 = 0.5539602785;
         double B1 = Math.pow(2.0, -1.0/6.0)/K1 - 1.0;
         double t;
+        double sphereVolume;
+        double totalSphereVolume;
+        double meanSphereVolume;
+        double deviateSphereVolume;
+        double deviateVolumeSquared;
+        double totalDeviateVolumeSquared;
+        double sphereVariance;
+        double sphereStdDev;
+        double cv;
         // Mean nearest neighbor distance for a point process
         double P1;
         if (srcImage == null) {
@@ -317,31 +351,34 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         xySize = xDim * yDim;
         length = xySize * zDim;
         buffer = new int[length];
-        // Create a mask for setting spheres
-        radiusSquared = radius * radius;
-        xMaskDim = 2 * radius + 1;
-        yMaskDim = xMaskDim;
-        zMaskDim = xMaskDim;
-        xyMask = xMaskDim * yMaskDim;
-        mask = new byte[xMaskDim * yMaskDim * zMaskDim];
-        maskBytesSet = 0;
-        for (zint = 0; zint <= 2*radius; zint++) {
-            zDistSquared = zint - radius;
-            zDistSquared = zDistSquared * zDistSquared;
-            for (y = 0; y <= 2*radius; y++) {
-                yDistSquared = (y - radius);
-                yDistSquared = yDistSquared * yDistSquared;
-                for (x = 0; x <= 2*radius; x++) {
-                    xDistSquared = (x - radius);
-                    xDistSquared = xDistSquared * xDistSquared;
-                    distSquared = xDistSquared + yDistSquared + zDistSquared;
-                    if (distSquared <= radiusSquared) {
-                        mask[x + y * xMaskDim + zint * xyMask] = 1;
-                        maskBytesSet++;
+        for (rNum = 0 ; rNum < radiusNumber; rNum++) {
+            // Create a mask for setting spheres
+            radius = minRadius + rNum;
+            radiusSquared = radius * radius;
+            xMaskDim[rNum] = 2 * radius + 1;
+            yMaskDim = xMaskDim[rNum];
+            zMaskDim = xMaskDim[rNum];
+            xyMask[rNum] = xMaskDim[rNum] * yMaskDim;
+            mask[rNum] = new byte[xMaskDim[rNum] * yMaskDim * zMaskDim];
+            maskBytesSet[rNum] = 0;
+            for (zint = 0; zint <= 2*radius; zint++) {
+                zDistSquared = zint - radius;
+                zDistSquared = zDistSquared * zDistSquared;
+                for (y = 0; y <= 2*radius; y++) {
+                    yDistSquared = (y - radius);
+                    yDistSquared = yDistSquared * yDistSquared;
+                    for (x = 0; x <= 2*radius; x++) {
+                        xDistSquared = (x - radius);
+                        xDistSquared = xDistSquared * xDistSquared;
+                        distSquared = xDistSquared + yDistSquared + zDistSquared;
+                        if (distSquared <= radiusSquared) {
+                            mask[rNum][x + y * xMaskDim[rNum] + zint * xyMask[rNum]] = 1;
+                            maskBytesSet[rNum]++;
+                        }
                     }
-                }
-            } // for (y = 0; y <= 2*radius; y++)
-        } // for (zint = 0; zint <= 2 * radius; zint++)
+                } // for (y = 0; y <= 2*radius; y++)
+            } // for (zint = 0; zint <= 2 * radius; zint++)
+        } // for (rNum = 0; rNum < radiusNumber; rNum++)
         
         minimumNNDistanceSquared = minimumNearestNeighborDistance * minimumNearestNeighborDistance;
         maximumNNDistanceSquared = maximumNearestNeighborDistance * maximumNearestNeighborDistance;
@@ -369,6 +406,17 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         attempts = 0;
             while ((!found) && (attempts <= 1000)) {
                 found = true;
+                switch(radiusDistribution) {
+                    case CONSTANT_RADIUS:
+                        radius = minRadius;
+                        break;
+                    case UNIFORM_RADIUS:
+                        radius = randomGen.genUniformRandomNum(minRadius, maxRadius);
+                        break;
+                    default:
+                        radius = minRadius;
+                }
+                rNum = radius - minRadius;
                 xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                 yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
                 zCenter = randomGen.genUniformRandomNum(radius, zDim - radius - 1);
@@ -376,7 +424,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                 for (zint = 0; zint <= 2*radius; zint++) {
                     for (y = 0; y <= 2*radius; y++) {
                         for (x = 0; x <= 2*radius; x++) {
-                            if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                            if (mask[rNum][x + y * xMaskDim[rNum] + zint * xyMask[rNum]] == 1) {
                                 if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)
                                            + xySize * (zCenter + zint - radius)] != 0) {
                                     found = false;
@@ -391,13 +439,14 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
             if (!found) {
                 break;
             }
+            sphereRadius[i-1] = radius;
             sphereXCenter[i-1] = xCenter;
             sphereYCenter[i-1] = yCenter;
             sphereZCenter[i-1] = zCenter;
             for (zint = 0; zint <= 2*radius; zint++) {
                 for (y = 0; y <= 2*radius; y++) {
                     for (x = 0; x <= 2*radius; x++) {
-                        if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                        if (mask[rNum][x + y * xMaskDim[rNum] + zint * xyMask[rNum]] == 1) {
                             buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius) +
                                    xySize * (zCenter + zint - radius)] =  i;
                         }
@@ -421,6 +470,17 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                 attempts = 0;
                     while ((!found) && (attempts <= 10000)) {
                         found = true;
+                        switch(radiusDistribution) {
+                            case CONSTANT_RADIUS:
+                                radius = minRadius;
+                                break;
+                            case UNIFORM_RADIUS:
+                                radius = randomGen.genUniformRandomNum(minRadius, maxRadius);
+                                break;
+                            default:
+                                radius = minRadius;
+                        }
+                        rNum = radius - minRadius;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
                         zCenter = randomGen.genUniformRandomNum(radius, zDim - radius - 1);
@@ -429,7 +489,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                             for (zint = 0; zint <= 2*radius; zint++) {
                                 for (y = 0; y <= 2*radius; y++) {
                                     for (x = 0; x <= 2*radius; x++) {
-                                        if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                        if (mask[rNum][x + y * xMaskDim[rNum] + zint * xyMask[rNum]] == 1) {
                                             if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius) +
                                                        xySize * (zCenter + zint - radius)] != 0) {
                                                 found = false;
@@ -459,13 +519,14 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     if (!found) {
                         break;
                     }
+                    sphereRadius[i-1] = radius;
                     sphereXCenter[i-1] = xCenter;
                     sphereYCenter[i-1] = yCenter;
                     sphereZCenter[i-1] = zCenter;
                     for (zint = 0; zint <= 2*radius; zint++) {
                         for (y = 0; y <= 2*radius; y++) {
                             for (x = 0; x <= 2*radius; x++) {
-                                if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                if (mask[rNum][x + y * xMaskDim[rNum] + zint * xyMask[rNum]] == 1) {
                                     buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)+
                                            xySize *(zCenter + zint - radius)] =  i;
                                 }
@@ -485,13 +546,24 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                 wloop:
                     while ((!found) && (attempts <= 10000)) {
                         found = true;
+                        switch(radiusDistribution) {
+                            case CONSTANT_RADIUS:
+                                radius = minRadius;
+                                break;
+                            case UNIFORM_RADIUS:
+                                radius = randomGen.genUniformRandomNum(minRadius, maxRadius);
+                                break;
+                            default:
+                                radius = minRadius;
+                        }
+                        rNum = radius - minRadius;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
                         zCenter = randomGen.genUniformRandomNum(radius, zDim - radius - 1);
                         for (zint = 0; zint <= 2*radius; zint++) {
                             for (y = 0; y <= 2*radius; y++) {
                                 for (x = 0; x <= 2*radius; x++) {
-                                    if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                    if (mask[rNum][x + y * xMaskDim[rNum] + zint * xyMask[rNum]] == 1) {
                                         if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius)+
                                                    xySize * (zCenter + zint - radius)] != 0) {
                                             found = false;
@@ -524,13 +596,14 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     if (!found) {
                         break;
                     }
+                    sphereRadius[i-1] = radius;
                     sphereXCenter[i-1] = xCenter;
                     sphereYCenter[i-1] = yCenter;
                     sphereZCenter[i-1] = zCenter;
                     for (zint = 0; zint <= 2*radius; zint++) {
                         for (y = 0; y <= 2*radius; y++) {
                             for (x = 0; x <= 2*radius; x++) {
-                                if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                if (mask[rNum][x + y * xMaskDim[rNum] + zint * xyMask[rNum]] == 1) {
                                     buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius) +
                                            xySize * (zCenter + zint - radius)] =  i;
                                 }
@@ -551,13 +624,24 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                 wl:
                     while ((!found) && (attempts <= 10000)) {
                         found = true;
+                        switch(radiusDistribution) {
+                            case CONSTANT_RADIUS:
+                                radius = minRadius;
+                                break;
+                            case UNIFORM_RADIUS:
+                                radius = randomGen.genUniformRandomNum(minRadius, maxRadius);
+                                break;
+                            default:
+                                radius = minRadius;
+                        }
+                        rNum = radius - minRadius;
                         xCenter = randomGen.genUniformRandomNum(radius, xDim - radius - 1);
                         yCenter = randomGen.genUniformRandomNum(radius, yDim - radius - 1);
                         zCenter = randomGen.genUniformRandomNum(radius, zDim - radius - 1);
                         for (zint = 0; zint <= 2*radius; zint++) {
                             for (y = 0; y <= 2*radius; y++) {
                                 for (x = 0; x <= 2*radius; x++) {
-                                    if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                    if (mask[rNum][x + y * xMaskDim[rNum] + zint * xyMask[rNum]] == 1) {
                                         if (buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius) +
                                                    xySize * (zCenter + zint - radius)] != 0) {
                                             found = false;
@@ -596,13 +680,14 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     if (!found) {
                         break;
                     }
+                    sphereRadius[i-1] = radius;
                     sphereXCenter[i-1] = xCenter;
                     sphereYCenter[i-1] = yCenter;
                     sphereZCenter[i-1] = zCenter;
                     for (zint = 0; zint <= 2*radius; zint++) {
                         for (y = 0; y <= 2*radius; y++) {
                             for (x = 0; x <= 2*radius; x++) {
-                                if (mask[x + y * xMaskDim + zint * xyMask] == 1) {
+                                if (mask[rNum][x + y * xMaskDim[rNum] + zint * xyMask[rNum]] == 1) {
                                     buffer[(xCenter + x - radius) + xDim*(yCenter + y - radius) +
                                            xySize * (zCenter + zint - radius)] =  i;
                                 }
@@ -650,7 +735,6 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                maximumNND);
        boundaryDistance = (int)Math.ceil(maximumNND);
        spheresLeft = 0;
-       countedBytes = 0;
        for (i = 0; i < spheresDrawn; i++) {
            if ((sphereXCenter[i] >= boundaryDistance) && (sphereXCenter[i] <= xDim - 1 - boundaryDistance) &&
                (sphereYCenter[i] >= boundaryDistance) && (sphereYCenter[i] <= yDim - 1 - boundaryDistance) &&
@@ -659,12 +743,13 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                    for (y = boundaryDistance; y <= yDim - 1 - boundaryDistance; y++) {
                        for (x = boundaryDistance; x <= xDim - 1 - boundaryDistance; x++) {
                            if (buffer[x + xDim*y + xySize*zint] == (i+1)) {
-                               countedBytes++;
+                               countedBytes[sphereRadius[i] - minRadius]++;
                            }
                        }
                    }
                }
                nndDrawn[spheresLeft] = nndDrawn[i];
+               sphereRadius[spheresLeft] = sphereRadius[i];
                sphereXCenter[spheresLeft] = sphereXCenter[i];
                sphereYCenter[spheresLeft] = sphereYCenter[i];
                sphereZCenter[spheresLeft++] = sphereZCenter[i];
@@ -758,90 +843,117 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
        for (i = 0; i < spheresLeft; i++) {
            nearestNeighborDistanceSumOfSquares += nearestNeighborDistance[i]*nearestNeighborDistance[i];
        }
-       volumeFraction = ((double)countedBytes)/
+       volumeFraction = 0;
+       density = 0;
+       for (rNum = 0; rNum < radiusNumber; rNum++) {
+           partialVolumeFraction = ((double)countedBytes[rNum])/
                   (double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance) * (zDim - 2 * boundaryDistance));
-       density = volumeFraction/(double)maskBytesSet;
+           volumeFraction += partialVolumeFraction;
+           density += partialVolumeFraction/(double)maskBytesSet[rNum];
+       }
        P1 = K1 * Math.pow(density, -1.0/3.0);
        Preferences.debug("Analytical mean nearest neighbor distance for a point process = " + P1 + "\n");
-       diameter = 2.0 * radius;
        
-       Preferences.debug("Calculations using Poisson model\n");
-       System.out.println("Calculations using Poisson model");
-       // Calculate analytical mean
-       /*meanModel = new IntModelMean(diameter, 1.0E30, Integration.MIDINF, eps, density);
-       meanModel.driver();
-       steps = meanModel.getStepsUsed();
-       numInt = meanModel.getIntegral();
-       Preferences.debug("In Integration.MIDINF numerical Integral for mean = " + 
-               numInt + " after " + steps + " steps used\n");*/
-       bound = diameter;
-       meanModel2 = new IntModelMean2(bound, routine, inf, epsabs, epsrel, limit, density);
-       meanModel2.driver();
-       numInt2 = meanModel2.getIntegral();
-       errorStatus = meanModel2.getErrorStatus();
-       absError = meanModel2.getAbserr();
-       neval = meanModel2.getNeval();
-       Preferences.debug("In Integration2.DQAGIE numerical Integral for mean = " + numInt2 + " after " + neval +
-                         " integrand evaluations used\n");
-       Preferences.debug("Error status = " + errorStatus +
-                         " with absolute error = " + absError + "\n");
-       analyticalMean = diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt2;
-       Preferences.debug("Analytical mean = " + analyticalMean + "\n");
-       System.out.println("Analytical mean = " + analyticalMean);
-       change = ((analyticalMean - mean)/mean) * 100.0;
-       Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n");  
-       // Calculate analytical mean squared
-       /*meanSquaredModel = new IntModelMeanSquared(diameter, 1.0E30, Integration.MIDINF, eps, density);
-       meanSquaredModel.driver();
-       steps = meanSquaredModel.getStepsUsed();
-       numInt = meanSquaredModel.getIntegral();
-       Preferences.debug("In Integration.MIDINF numerical Integral for mean squared = " + 
-               numInt + " after " + steps + " steps used\n");*/
-       bound = diameter;
-       meanSquaredModel2 = new IntModelMeanSquared2(bound, routine, inf, epsabs, epsrel, limit, density);
-       meanSquaredModel2.driver();
-       numInt2 = meanSquaredModel2.getIntegral();
-       errorStatus = meanSquaredModel2.getErrorStatus();
-       absError = meanSquaredModel2.getAbserr();
-       neval = meanSquaredModel2.getNeval();
-       Preferences.debug("In Integration2.DQAGIE numerical Integral for mean squared = " + numInt2 + " after " + neval +
-                         " integrand evaluations used\n");
-       Preferences.debug("Error status = " + errorStatus +
-                         " with absolute error = " + absError + "\n");
-       analyticalMeanSquared = diameter*diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt2;
-       Preferences.debug("Analytical mean squared = " + analyticalMeanSquared + "\n");
-       System.out.println("Analytical mean squared = " + analyticalMeanSquared);
-       analyticalVariance = spheresLeft*(analyticalMeanSquared - analyticalMean*analyticalMean)/(spheresLeft - 1);
-       analyticalStandardDeviation = Math.sqrt(analyticalVariance);
-       analyticalStandardError = analyticalStandardDeviation/Math.sqrt(spheresLeft);
-       Preferences.debug("analyticalStandardError = " + analyticalStandardError + "\n");
-       change = ((analyticalStandardError - standardError)/standardError) * 100.0;
-       Preferences.debug("Percentage increase of analytical standard error over observed standard error = " + change + "\n");
-       z = (mean - analyticalMean)/analyticalStandardError;
-       stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, spheresLeft-1, percentile);
-       stat.run();
-       Preferences.debug("Percentile in Gaussian probability integral for measured mean around analytical mean = "
-                         + percentile[0]*100.0 + "\n");
-       System.out.println("Percentile in Gaussian probability integral for measured mean around analytical mean = " +
-                           percentile[0]*100.0);
-       if (percentile[0] < 0.025) {
-           // Measured mean signficantly less than analytical mean of random distribution
-           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
-           System.out.println("Clumping or aggregation found in nearest neighbor distances");
-       }
-       else if (percentile[0] > 0.975) {
-           // Measured mean significantly greater than analytical mean of random distribution
-           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
-           System.out.println("Uniform or regular distribution found in nearest neighbor distances");
-       }
-       else {
-         // Measured mean not significantly different from analytical mean of random distribution
-           Preferences.debug("Measured mean consistent with random distribution\n");
-           System.out.println("Measured mean consistent with random distribution");
-       }
+       if ((radiusDistribution == CONSTANT_RADIUS) || (minRadius == maxRadius)) {
+           Preferences.debug("Calculations using Poisson model\n");
+           System.out.println("Calculations using Poisson model");
+           diameter = 2.0 * radius;
+           // Calculate analytical mean
+           /*meanModel = new IntModelMean(diameter, 1.0E30, Integration.MIDINF, eps, density);
+           meanModel.driver();
+           steps = meanModel.getStepsUsed();
+           numInt = meanModel.getIntegral();
+           Preferences.debug("In Integration.MIDINF numerical Integral for mean = " + 
+                   numInt + " after " + steps + " steps used\n");*/
+           bound = diameter;
+           meanModel2 = new IntModelMean2(bound, routine, inf, epsabs, epsrel, limit, density);
+           meanModel2.driver();
+           numInt2 = meanModel2.getIntegral();
+           errorStatus = meanModel2.getErrorStatus();
+           absError = meanModel2.getAbserr();
+           neval = meanModel2.getNeval();
+           Preferences.debug("In Integration2.DQAGIE numerical Integral for mean = " + numInt2 + " after " + neval +
+                             " integrand evaluations used\n");
+           Preferences.debug("Error status = " + errorStatus +
+                             " with absolute error = " + absError + "\n");
+           analyticalMean = diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt2;
+           Preferences.debug("Analytical mean = " + analyticalMean + "\n");
+           System.out.println("Analytical mean = " + analyticalMean);
+           change = ((analyticalMean - mean)/mean) * 100.0;
+           Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n");  
+           // Calculate analytical mean squared
+           /*meanSquaredModel = new IntModelMeanSquared(diameter, 1.0E30, Integration.MIDINF, eps, density);
+           meanSquaredModel.driver();
+           steps = meanSquaredModel.getStepsUsed();
+           numInt = meanSquaredModel.getIntegral();
+           Preferences.debug("In Integration.MIDINF numerical Integral for mean squared = " + 
+                   numInt + " after " + steps + " steps used\n");*/
+           bound = diameter;
+           meanSquaredModel2 = new IntModelMeanSquared2(bound, routine, inf, epsabs, epsrel, limit, density);
+           meanSquaredModel2.driver();
+           numInt2 = meanSquaredModel2.getIntegral();
+           errorStatus = meanSquaredModel2.getErrorStatus();
+           absError = meanSquaredModel2.getAbserr();
+           neval = meanSquaredModel2.getNeval();
+           Preferences.debug("In Integration2.DQAGIE numerical Integral for mean squared = " + numInt2 + " after " + neval +
+                             " integrand evaluations used\n");
+           Preferences.debug("Error status = " + errorStatus +
+                             " with absolute error = " + absError + "\n");
+           analyticalMeanSquared = diameter*diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt2;
+           Preferences.debug("Analytical mean squared = " + analyticalMeanSquared + "\n");
+           System.out.println("Analytical mean squared = " + analyticalMeanSquared);
+           analyticalVariance = spheresLeft*(analyticalMeanSquared - analyticalMean*analyticalMean)/(spheresLeft - 1);
+           analyticalStandardDeviation = Math.sqrt(analyticalVariance);
+           analyticalStandardError = analyticalStandardDeviation/Math.sqrt(spheresLeft);
+           Preferences.debug("analyticalStandardError = " + analyticalStandardError + "\n");
+           change = ((analyticalStandardError - standardError)/standardError) * 100.0;
+           Preferences.debug("Percentage increase of analytical standard error over observed standard error = " + change + "\n");
+           z = (mean - analyticalMean)/analyticalStandardError;
+           stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, spheresLeft-1, percentile);
+           stat.run();
+           Preferences.debug("Percentile in Gaussian probability integral for measured mean around analytical mean = "
+                             + percentile[0]*100.0 + "\n");
+           System.out.println("Percentile in Gaussian probability integral for measured mean around analytical mean = " +
+                               percentile[0]*100.0);
+           if (percentile[0] < 0.025) {
+               // Measured mean signficantly less than analytical mean of random distribution
+               Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+               System.out.println("Clumping or aggregation found in nearest neighbor distances");
+           }
+           else if (percentile[0] > 0.975) {
+               // Measured mean significantly greater than analytical mean of random distribution
+               Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+               System.out.println("Uniform or regular distribution found in nearest neighbor distances");
+           }
+           else {
+             // Measured mean not significantly different from analytical mean of random distribution
+               Preferences.debug("Measured mean consistent with random distribution\n");
+               System.out.println("Measured mean consistent with random distribution");
+           }
+       } // if ((radiusDistribution == CONSTANT_RADIUS) || (minRadius == maxRadius))
+       
+       
        Preferences.debug("\nCalculations using Tewari Gokhale model\n");
        System.out.println("\nCalculations using Tewari Gokhale model");
        analyticalMean = (1.0 + B1 * Math.pow(volumeFraction/closePackedVolumeFraction, 2.0/3.0)) * P1;
+       if ((radiusDistribution != CONSTANT_RADIUS) && (minRadius != maxRadius)) {
+           totalSphereVolume = 0.0;
+           for (i = 0; i < spheresLeft; i++) {
+               sphereVolume = maskBytesSet[sphereRadius[i] - minRadius];
+               totalSphereVolume += sphereVolume;
+           }
+           meanSphereVolume = totalSphereVolume/spheresLeft;
+           totalDeviateVolumeSquared = 0.0;
+           for (i = 0; i < spheresLeft; i++) {
+               deviateSphereVolume = maskBytesSet[sphereRadius[i] - minRadius] - meanSphereVolume;
+               deviateVolumeSquared = deviateSphereVolume * deviateSphereVolume;
+               totalDeviateVolumeSquared += deviateVolumeSquared;
+           }  
+           sphereVariance = totalDeviateVolumeSquared/(spheresLeft - 1);
+           sphereStdDev = Math.sqrt(sphereVariance);
+           cv = sphereStdDev/meanSphereVolume;
+           analyticalMean -= (1.0 - Math.exp(-cv * volumeFraction)) * Math.pow(density, -1.0/3.0);
+       } // if ((radiusDistribution != CONSTANT_RADIUS) && (minRadius != maxRadius))
        Preferences.debug("Analytical mean = " + analyticalMean + "\n");
        System.out.println("Analytical mean = " + analyticalMean);
        t = (mean - analyticalMean)/standardError;
