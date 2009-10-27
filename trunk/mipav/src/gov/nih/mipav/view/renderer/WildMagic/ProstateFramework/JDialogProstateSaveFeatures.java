@@ -218,7 +218,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 
 	private JPanel savedFilePanel;
 
-	private boolean gaborFilter = true;
+	private boolean gaborFilter = false;
 
 	private JTextField textSavedFileName;
 
@@ -227,7 +227,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 	private String savedFileDirAbs;
 	private String savedFileName;
 
-	private int resultImagesNumber = 0;
+	private int haralickImagesNumber = 0;
 
 	// Gabor filter
 	/** DOCUMENT ME! */
@@ -282,7 +282,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 
 	private JPanel gaborPanel;
 
-	private int operationAdditional = 0;
+	private int numberFiltersAdditional = 0;
 	
 	private JCheckBox gaborFilterCheckBox;
 
@@ -394,7 +394,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 										"Out of memory: unable to open new resultImage frame",
 										"Error", JOptionPane.ERROR_MESSAGE);
 					}
-					resultImagesNumber = textureAlgo.getResultImagesNumber();
+					haralickImagesNumber = textureAlgo.getHaralickImagesNumber();
 					saveFeatureSpaceValue(resultImage[i]);
 				}
 
@@ -433,8 +433,8 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		float value;
 		int zDim;
 		// resultNumber ?????
-		int numImages = resultImagesNumber + operationAdditional;
-		System.err.println("resultImagesNumber 2= " + resultImagesNumber);
+		int numImages = 1 + haralickImagesNumber;
+		System.err.println("haralickImagesNumber = " + haralickImagesNumber);
 
 		float[] resultBuffer = new float[sliceSize];
 		float[] resultBufferClass = new float[sliceSize];
@@ -496,7 +496,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		// savedFileDirAbs
 		try {
 			savedFileDirAbs = textSavedFileName.getText();
-			System.err.println("ruida = " + savedFileDirAbs);
+			
 			File file = new File(savedFileDirAbs);
 			PrintWriter output = new PrintWriter(file);
 			Feature feature, featureTemp;
@@ -506,7 +506,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 			boolean printClassify = false;
 			for (j = 0; j < size; j++) {
 				printClassify = false;
-				for (i = 0; i < features.length-1; i++) {
+				for (i = 0; i < features.length; i++) {
 					feature = (Feature) features[i].get(j);
 					classify = feature.classify;
 					value = feature.value;
@@ -903,21 +903,21 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 
 			if (image.getNDims() == 2) {
 				name[0] = makeImageName(image.getImageName(), "_Haralick");
-				zDim = 1 + numDirections * numOperators + operationAdditional;
+				zDim = 1 + numDirections * numOperators + numberFiltersAdditional;
 				newExtents = new int[3];
 				newExtents[0] = image.getExtents()[0];
 				newExtents[1] = image.getExtents()[1];
 				newExtents[2] = zDim;
 				resultImage[0] = new ModelImage(ModelStorageBase.FLOAT,
 						newExtents, name[0]);
-				tDim = 1 + numDirections * numOperators + operationAdditional;
+				tDim = 1 + numDirections * numOperators + numberFiltersAdditional;
 				// imageNameArray = new String[zDim];
 				imageNameArray = new String[tDim];
 				imageNameArray[0] = name[0];
 			} // if (image.getNDims() == 2)
 			else { // image.getNDims() == 3
 				name[0] = makeImageName(image.getImageName(), "_Haralick");
-				tDim = 1 + numDirections * numOperators + operationAdditional;
+				tDim = 1 + numDirections * numOperators + numberFiltersAdditional;
 				newExtents = new int[4];
 				newExtents[0] = image.getExtents()[0];
 				newExtents[1] = image.getExtents()[1];
@@ -1011,12 +1011,13 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 					} else if (promenance && (!donePromenance)) {
 						opString = "_promenance";
 						donePromenance = true;
-					} else if (gaborFilter && ( !doneGaborFilter )) {
+					} 
+					/*else if (gaborFilter && ( !doneGaborFilter )) {
                         opString = "_Gabor";
                         doneGaborFilter = true;
                     } 
-    
-
+                    */
+                    
 					if (image.getNDims() == 2) {
 						imageNameArray[index + 1] = makeImageName(image
 								.getImageName(), dirString + opString);
@@ -1027,30 +1028,32 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 									dirString + opString);
 						}
 					}
+					
 
 				} // for (j = 0; j < numOperators; j++)
 			} // for (i = 0; i < numDirections; i++)
 
 			// do additional operation
-			/*
+			
 			doneGaborFilter = false;
-			// index = index + operationAdditional;
+			
 			if (gaborFilter && (!doneGaborFilter)) {
 				opString = "_Gabor";
 				doneGaborFilter = true;
 
 				if (image.getNDims() == 2) {
-					imageNameArray[index + 1] = makeImageName(image
+					// index + 2 for the additional filters. 
+					imageNameArray[index + 2] = makeImageName(image
 							.getImageName(), dirString + opString);
 				} else {
 					for (k = 0; k < image.getExtents()[2]; k++) {
-						imageNameArray[(index + 1) * image.getExtents()[2] + k] = makeImageName(
+						imageNameArray[(index + 2) * image.getExtents()[2] + k] = makeImageName(
 								image.getImageName(), dirString + opString);
 					}
 				}
 
 			}
-            */
+            
 			resultImage[0].setImageNameArray(imageNameArray);
 
 			if (image.isColorImage()) {
@@ -1061,7 +1064,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 						maxProbability, entropy, mean, variance,
 						standardDeviation, correlation, shade, promenance,
 						true, gaborFilter, freqU, freqV, sigmaU, sigmaV, theta,
-						operationAdditional);
+						numberFiltersAdditional);
 			} else {
 				textureAlgo = new AlgorithmProstateFeatures(resultImage, image,
 						windowSize, offsetDistance, greyLevels, ns, nesw, ew,
@@ -1070,7 +1073,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 						maxProbability, entropy, mean, variance,
 						standardDeviation, correlation, shade, promenance,
 						true, gaborFilter, freqU, freqV, sigmaU, sigmaV, theta,
-						operationAdditional);
+						numberFiltersAdditional);
 			}
 
 			// This is very important. Adding this object as a listener allows
@@ -1366,7 +1369,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		}
 		
 		if ( gaborFilter ) {
-			operationAdditional++;
+			numberFiltersAdditional++;
 		}
 		
 		return numOps;
