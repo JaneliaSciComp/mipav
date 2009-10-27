@@ -92,6 +92,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Vector;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
@@ -229,6 +230,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** The label showing the current memory usage of MIPAV. */
     private JLabel memoryUsageLabel;
+    
+    /** The button indicating that MIPAV is set to run in a threaded environment */
+    private JButton btnMultiCore;
+    
+    /** The button indicating that processing will take place on the GPU when available */
+    private JButton btnGpuComp;
 
     /**
      * The periodic thread which updates the memory usage display once every second.
@@ -866,6 +873,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             imageRegistryMonitoring();
         } else if (command.equals("Options")) {
             options();
+            
+            if(event.getSource().equals(btnGpuComp) || event.getSource().equals(btnMultiCore)) {
+            	optionsDialog.showPane("Other");
+            }
         } else if (command.equals("Shortcuts")) {
             showShortcutEditor(false);
         } else if (command.equals("dccieconvert")) {
@@ -3297,7 +3308,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * thread calls this method every one second.
      */
     public void updateMemoryUsage() {
-        final long memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1048576);
+        //System.out.println(Runtime.getRuntime().totalMemory());
+        //System.out.println(Runtime.getRuntime().freeMemory());
+    	
+    	final long memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1048576);
         final long totalMemory = (Runtime.getRuntime().totalMemory() / 1048576);
 
         if ( ((double) memoryInUse / (double) totalMemory) > 0.8) {
@@ -3308,6 +3322,36 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         memoryUsageLabel.setText("Memory usage: " + memoryInUse + "M / " + totalMemory + "M");
+    }
+    
+    /**
+     * This method updates the "whether multi-core should be used" button when the relevant button has
+     * been pushed in either the preferences pane.
+     */
+    public void updateMultiCoreUsage() {
+    	if(Preferences.isMultiThreadingEnabled()) {
+        	btnMultiCore = new JButton(MipavUtil.getIcon("greenbox.gif"));
+        } else {
+        	btnMultiCore = new JButton(MipavUtil.getIcon("redbox.gif"));
+        }
+        btnMultiCore.setFont(MipavUtil.font12);
+        btnMultiCore.setActionCommand("Options");
+        btnMultiCore.addActionListener(this);
+    }
+    
+    /**
+     * This method updates the "whether algorithms will use the GPU" when the relevant button has
+     * been pushed in either the preferences pane.
+     */
+    public void updateGpuUsage() {
+    	if(Preferences.isGpuCompEnabled()) {
+        	btnGpuComp = new JButton(MipavUtil.getIcon("greenbox.gif"));
+        } else {
+        	btnGpuComp = new JButton(MipavUtil.getIcon("redbox.gif"));
+        }
+        btnGpuComp.setFont(MipavUtil.font12);
+        btnGpuComp.setActionCommand("Options");
+        btnGpuComp.addActionListener(this);
     }
 
     /**
@@ -3521,6 +3565,48 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         return panel;
     }
+    
+    /**
+     * Construct the panel which displays whether the CPU and GPU could be utilized by algorithms
+     * based on the preferences settings by the user.
+     * 
+     * @return the memory usage panel
+     */
+    protected JPanel initCreateMultiCoreGpuIndicatorPanel() {
+        final JPanel panel = new JPanel();
+
+        final JLabel multiCoreEnabledLabel = new JLabel("Multi-core: ");
+        multiCoreEnabledLabel.setFont(MipavUtil.font12);
+        
+        if(Preferences.isMultiThreadingEnabled()) {
+        	ImageIcon bb = MipavUtil.getIcon("greenbox.gif");
+        	btnMultiCore = new JButton(bb);
+        } else {
+        	btnMultiCore = new JButton(MipavUtil.getIcon("redbox.gif"));
+        }
+        btnMultiCore.setFont(MipavUtil.font12);
+        btnMultiCore.setActionCommand("Options");
+        btnMultiCore.addActionListener(this);
+        
+        final JLabel gpuCompEnabledLabel = new JLabel("  GPU: ");
+        gpuCompEnabledLabel.setFont(MipavUtil.font12);
+        
+        if(Preferences.isGpuCompEnabled()) {
+        	btnGpuComp = new JButton(MipavUtil.getIcon("greenbox.gif"));
+        } else {
+        	btnGpuComp = new JButton(MipavUtil.getIcon("redbox.gif"));
+        }
+        btnGpuComp.setFont(MipavUtil.font12);
+        btnGpuComp.setActionCommand("Options");
+        btnGpuComp.addActionListener(this);
+        
+        panel.add(multiCoreEnabledLabel);
+        panel.add(btnMultiCore);
+        panel.add(gpuCompEnabledLabel);
+        panel.add(btnGpuComp);
+
+        return panel;
+    }
 
     /**
      * Create the panel containing components which show the application title initially, and will later be used to show
@@ -3534,7 +3620,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         final JTextField messageFieldPanel = initCreateMessageField(" MIPAV");
         final JPanel memoryUsagePanel = initCreateMemoryUsagePanel();
-
+        final JPanel performancePanel = initCreateMultiCoreGpuIndicatorPanel();
+        
         gbConstraints.weightx = 2;
         gbConstraints.insets = new Insets(0, 4, 0, 0);
         gbConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -3546,9 +3633,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         gbConstraints.gridx = 1;
         gbConstraints.insets = new Insets(0, 0, 0, 0);
         gbConstraints.anchor = GridBagConstraints.EAST;
-
         gbConstraints.fill = GridBagConstraints.REMAINDER;
+        gbLayout.setConstraints(performancePanel, gbConstraints);
+        
+        msgBarPanel.add(performancePanel);
+        
+        gbConstraints.gridx = 2;
         gbLayout.setConstraints(memoryUsagePanel, gbConstraints);
+        
         msgBarPanel.add(memoryUsagePanel);
 
         mainFrame.getContentPane().add(msgBarPanel, "South");

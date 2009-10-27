@@ -94,6 +94,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** Multi-Threading Enabled Check Box */
     private JCheckBox multiThreadingEnabledCheckBox;
     
+    /** GPU computing enabled check box */
+    private JCheckBox gpuCompEnabledCheckBox;
+    
     /** Dicom Receiver check box */
     private JCheckBox dicomReceiverOnStart;
 
@@ -353,6 +356,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.anchor = GridBagConstraints.NORTHWEST;
         makeDicomReceiverOnStartOptions(gbc, gbl);
         makeMultiThreadingEnabledOptions(gbc, gbl);
+        makeGpuCompEnabledOptions(gbc, gbl);
         makeSaveDefaultsOptions(gbc, gbl);
         makeProvenanceOptions(gbc, gbl);
         makeLaxCheckOptions(gbc, gbl);
@@ -514,6 +518,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, String.valueOf(showOutputWindow.isSelected()));
             Preferences.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED, String.valueOf(multiThreadingEnabledCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_GPU_COMP_ENABLED, String.valueOf(gpuCompEnabledCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, String.valueOf(dicomReceiverOnStart.isSelected()));
 
             Preferences.setProperty(Preferences.PREF_SHOW_SPLASH, String.valueOf(displaySplash.isSelected()));
@@ -716,6 +721,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                         img.notifyImageDisplayListeners();
                     }
                 } // end while loop
+            }
+            
+            //set changes which affect GUI display
+            if(userInterface != null) {
+            	userInterface.updateMultiCoreUsage();
+            	userInterface.updateGpuUsage();
             }
 
             // set the cancel button text to 'close' since the changes were accepted
@@ -925,6 +936,20 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      */
     public void keyTyped(KeyEvent e) { }
 
+    /**
+     * Displays the panel with the given name.
+     */
+    public void showPane(String name) {
+    	int selected = 0;
+    	for(int i=0; i<tabbedPane.getTabCount(); i++) {
+    		if(tabbedPane.getTitleAt(i).equals(name)) {
+    			selected = i;
+    		}
+    	}
+    	
+    	tabbedPane.setSelectedIndex(selected);
+    }
+    
     /**
      * makes the active-colour option line in the globalChangesPanel, to allow user to select the colour used to denote
      * the active image. Sets the colour to either the colour in the preferences file or to the MIPAV default.
@@ -1660,6 +1685,21 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices.
         multiThreadingEnabledCheckBox.setSelected(Preferences.isMultiThreadingEnabled());
+    }
+    
+    protected void makeGpuCompEnabledOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+    	gpuCompEnabledCheckBox = new JCheckBox("GPU computing Enabled" ); //TODO: Add status of GPUs once method is implemented in Java
+    	gpuCompEnabledCheckBox.setFont(MipavUtil.font12);
+    	gpuCompEnabledCheckBox.setForeground(Color.black);
+    	gpuCompEnabledCheckBox.addActionListener(this);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(gpuCompEnabledCheckBox, gbc);
+        otherPanel.add(gpuCompEnabledCheckBox);
+
+        // preset the choices.
+        multiThreadingEnabledCheckBox.setSelected(Preferences.isGpuCompEnabled());
     }
 
     /**
