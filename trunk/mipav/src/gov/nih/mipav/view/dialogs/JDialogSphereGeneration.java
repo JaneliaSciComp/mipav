@@ -47,10 +47,26 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
     
     private JTextField zDimText;
     
-    private int radius = 5;
+    private ButtonGroup radiusGroup;
+    
+    private JRadioButton constantButton;
+    
+    private JRadioButton uniformButton;
+    
+    private JLabel radiusLabel;
+    
+    private int minRadius = 5;
 
     /** DOCUMENT ME! */
     private JTextField radiusText;
+    
+    private JLabel maxRadiusLabel;
+    
+    private int maxRadius = 10;
+    
+    private JTextField maxRadiusText;
+    
+    private int radiusDistribution = AlgorithmSphereGeneration.CONSTANT_RADIUS;
     
     private int numSpheres = 200;
     
@@ -200,6 +216,18 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
                 highestRegenerationText.setEnabled(true);   
             }
         }
+        else if ((constantButton.isSelected()) || uniformButton.isSelected()) {
+            if (constantButton.isSelected()) {
+                radiusLabel.setText("Sphere radius ");
+                maxRadiusLabel.setEnabled(false);
+                maxRadiusText.setEnabled(false);
+            }
+            else {
+                radiusLabel.setText("Minimum sphere radius ");
+                maxRadiusLabel.setEnabled(true);
+                maxRadiusText.setEnabled(true);
+            }
+        }
     }
 
 
@@ -288,7 +316,8 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
             resultImage.setImageName(name);
 
             // Make algorithm
-            sAlgo = new AlgorithmSphereGeneration(resultImage, radius, numSpheres, pattern, initialRandomSpheres,
+            sAlgo = new AlgorithmSphereGeneration(resultImage, minRadius, maxRadius, numSpheres, pattern, 
+                        radiusDistribution, initialRandomSpheres,
                         minimumNearestNeighborDistance, maximumNearestNeighborDistance, lowestForbiddenNNDistance,
                         highestForbiddenNNDistance, highestRegenerationNNDistance);
 
@@ -329,7 +358,6 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         JLabel xDimLabel;
         JLabel yDimLabel;
         JLabel zDimLabel;
-        JLabel radiusLabel;
         JLabel numCirclesLabel;
         
         setForeground(Color.black);
@@ -394,27 +422,61 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         gbc6.gridx = 1;
         paramPanel.add(zDimText, gbc6);
         
+        radiusGroup = new ButtonGroup();
+        constantButton = new JRadioButton("Constant radius", true);
+        constantButton.setFont(serif12);
+        constantButton.setForeground(Color.black);
+        constantButton.addActionListener(this);
+        radiusGroup.add(constantButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 3;
+        paramPanel.add(constantButton, gbc6);
+        
+        uniformButton = new JRadioButton("Uniform radius distribution", false);
+        uniformButton.setFont(serif12);
+        uniformButton.setForeground(Color.black);
+        uniformButton.addActionListener(this);
+        radiusGroup.add(uniformButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 4;
+        paramPanel.add(uniformButton, gbc6);
+        
         radiusLabel = new JLabel("Sphere radius ");
         radiusLabel.setForeground(Color.black);
         radiusLabel.setFont(serif12);
         radiusLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 3;
+        gbc6.gridy = 5;
         paramPanel.add(radiusLabel, gbc6);
 
         radiusText = new JTextField(10);
-        radiusText.setText(String.valueOf(radius));
+        radiusText.setText(String.valueOf(minRadius));
         radiusText.setFont(serif12);
         radiusText.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(radiusText, gbc6);
+        
+        maxRadiusLabel = new JLabel("Maximum sphere radius ");
+        maxRadiusLabel.setForeground(Color.black);
+        maxRadiusLabel.setFont(serif12);
+        maxRadiusLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 6;
+        paramPanel.add(maxRadiusLabel, gbc6);
+
+        maxRadiusText = new JTextField(10);
+        maxRadiusText.setText(String.valueOf(maxRadius));
+        maxRadiusText.setFont(serif12);
+        maxRadiusText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(maxRadiusText, gbc6);
         
         numCirclesLabel = new JLabel("Number of spheres ");
         numCirclesLabel.setForeground(Color.black);
         numCirclesLabel.setFont(serif12);
         numCirclesLabel.setEnabled(true);
         gbc6.gridx = 0;
-        gbc6.gridy = 4;
+        gbc6.gridy = 7;
         paramPanel.add(numCirclesLabel, gbc6);
         
         numSpheresText = new JTextField(3);
@@ -431,7 +493,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         randomButton.addActionListener(this);
         patternGroup.add(randomButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 5;
+        gbc6.gridy = 8;
         paramPanel.add(randomButton, gbc6);
         
         aggregatedButton = new JRadioButton("Aggregated pattern", false);
@@ -440,7 +502,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         aggregatedButton.addActionListener(this);
         patternGroup.add(aggregatedButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 6;
+        gbc6.gridy = 9;
         paramPanel.add(aggregatedButton, gbc6);
         
         regularButton = new JRadioButton("Regular pattern", false);
@@ -449,7 +511,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         regularButton.addActionListener(this);
         patternGroup.add(regularButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 7;
+        gbc6.gridy = 10;
         paramPanel.add(regularButton, gbc6);
         
         constrainedButton = new JRadioButton("Constrained pattern", false);
@@ -458,7 +520,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         constrainedButton.addActionListener(this);
         patternGroup.add(constrainedButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 8;
+        gbc6.gridy = 11;
         paramPanel.add(constrainedButton, gbc6);
         
         initialSpheresLabel = new JLabel("Initial spheres randomly generated ");
@@ -466,7 +528,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         initialSpheresLabel.setFont(serif12);
         initialSpheresLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 9;
+        gbc6.gridy = 12;
         paramPanel.add(initialSpheresLabel, gbc6);
         
         initialSpheresText = new JTextField(10);
@@ -481,7 +543,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         minimumDistanceLabel.setFont(serif12);
         minimumDistanceLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 10;
+        gbc6.gridy = 13;
         paramPanel.add(minimumDistanceLabel, gbc6);
         
         minimumDistanceText = new JTextField(10);
@@ -496,7 +558,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         maximumDistanceLabel.setFont(serif12);
         maximumDistanceLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 11;
+        gbc6.gridy = 14;
         paramPanel.add(maximumDistanceLabel, gbc6);
         
         maximumDistanceText = new JTextField(10);
@@ -511,7 +573,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         lowestForbiddenLabel.setFont(serif12);
         lowestForbiddenLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 12;
+        gbc6.gridy = 15;
         paramPanel.add(lowestForbiddenLabel, gbc6);
         
         lowestForbiddenText = new JTextField(10);
@@ -526,7 +588,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         highestForbiddenLabel.setFont(serif12);
         highestForbiddenLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 13;
+        gbc6.gridy = 16;
         paramPanel.add(highestForbiddenLabel, gbc6);
         
         highestForbiddenText = new JTextField(10);
@@ -541,7 +603,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         highestRegenerationLabel.setFont(serif12);
         highestRegenerationLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 14;
+        gbc6.gridy = 17;
         paramPanel.add(highestRegenerationLabel, gbc6);
         
         highestRegenerationText = new JTextField(10);
@@ -592,13 +654,34 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
             zDim = Integer.valueOf(zDimText.getText()).intValue();
         }
         
+        if (constantButton.isSelected()) {
+            radiusDistribution = AlgorithmSphereGeneration.CONSTANT_RADIUS;
+        }
+        else {
+            radiusDistribution = AlgorithmSphereGeneration.UNIFORM_RADIUS;
+        }
+        
         if (!testParameter(radiusText.getText(), 0, 1000000)) {
             radiusText.requestFocus();
             radiusText.selectAll();
 
             return false;
         } else {
-            radius = Integer.valueOf(radiusText.getText()).intValue();
+            minRadius = Integer.valueOf(radiusText.getText()).intValue();
+        }
+        
+        if (radiusDistribution == AlgorithmSphereGeneration.CONSTANT_RADIUS) {
+            maxRadius = minRadius;
+        }
+        else {
+            if (!testParameter(maxRadiusText.getText(), minRadius, 1000000)) {
+                maxRadiusText.requestFocus();
+                maxRadiusText.selectAll();
+
+                return false;
+            } else {
+                maxRadius = Integer.valueOf(maxRadiusText.getText()).intValue();
+            }    
         }
         
         if (!testParameter(numSpheresText.getText(), 1, 100000)) {
@@ -630,7 +713,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
             }
             
             maximumNearestNeighborDistance = Double.valueOf(maximumDistanceText.getText()).doubleValue();
-            if (maximumNearestNeighborDistance < 2.0 * radius) {
+            if (maximumNearestNeighborDistance < 2.0 * minRadius) {
                 MipavUtil.displayError("The maximum nearest neighbor distance must be at least 2.0 * radius");
                 maximumDistanceText.requestFocus();
                 maximumDistanceText.selectAll();
@@ -640,7 +723,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         else if (regularButton.isSelected()){
             pattern = AlgorithmSphereGeneration.REGULAR;
             minimumNearestNeighborDistance = Double.valueOf(minimumDistanceText.getText()).doubleValue();
-            if (minimumNearestNeighborDistance < 2.0 * radius) {
+            if (minimumNearestNeighborDistance < 2.0 * minRadius) {
                 MipavUtil.displayError("The minimum nearest neighbor distance must be at least 2.0 * radius");
                 minimumDistanceText.requestFocus();
                 minimumDistanceText.selectAll();
@@ -659,7 +742,7 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
         else {
             pattern = AlgorithmSphereGeneration.CONSTRAINED;
             lowestForbiddenNNDistance = Double.valueOf(lowestForbiddenText.getText()).doubleValue();
-            if (lowestForbiddenNNDistance <= 2.0 * radius) {
+            if (lowestForbiddenNNDistance <= 2.0 * minRadius) {
                 MipavUtil.displayError(
                 "The lowest forbidden intermediate nearest neighbor distance must be greater than 2.0 * radius");
                 lowestForbiddenText.requestFocus();
