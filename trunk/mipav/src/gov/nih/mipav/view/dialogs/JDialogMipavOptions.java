@@ -1688,7 +1688,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
     
     protected void makeGpuCompEnabledOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-    	gpuCompEnabledCheckBox = new JCheckBox("GPU computing Enabled" ); //TODO: Add status of GPUs once method is implemented in Java
+    	gpuCompEnabledCheckBox = new JCheckBox("GPU Computing Enabled" ); //TODO: Add status of GPUs once method is implemented in Java
     	gpuCompEnabledCheckBox.setFont(MipavUtil.font12);
     	gpuCompEnabledCheckBox.setForeground(Color.black);
     	gpuCompEnabledCheckBox.addActionListener(this);
@@ -1699,7 +1699,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         otherPanel.add(gpuCompEnabledCheckBox);
 
         // preset the choices.
-        multiThreadingEnabledCheckBox.setSelected(Preferences.isGpuCompEnabled());
+        gpuCompEnabledCheckBox.setSelected(Preferences.isGpuCompEnabled());
     }
 
     /**

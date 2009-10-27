@@ -3330,13 +3330,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void updateMultiCoreUsage() {
     	if(Preferences.isMultiThreadingEnabled()) {
-        	btnMultiCore = new JButton(MipavUtil.getIcon("greenbox.gif"));
+        	btnMultiCore.setIcon(MipavUtil.getIcon("greenbox.gif"));
         } else {
-        	btnMultiCore = new JButton(MipavUtil.getIcon("redbox.gif"));
+        	btnMultiCore.setIcon(MipavUtil.getIcon("redbox.gif"));
         }
-        btnMultiCore.setFont(MipavUtil.font12);
-        btnMultiCore.setActionCommand("Options");
-        btnMultiCore.addActionListener(this);
     }
     
     /**
@@ -3345,13 +3342,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void updateGpuUsage() {
     	if(Preferences.isGpuCompEnabled()) {
-        	btnGpuComp = new JButton(MipavUtil.getIcon("greenbox.gif"));
+        	btnGpuComp.setIcon(MipavUtil.getIcon("greenbox.gif"));
         } else {
-        	btnGpuComp = new JButton(MipavUtil.getIcon("redbox.gif"));
+        	btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
         }
-        btnGpuComp.setFont(MipavUtil.font12);
-        btnGpuComp.setActionCommand("Options");
-        btnGpuComp.addActionListener(this);
     }
 
     /**
