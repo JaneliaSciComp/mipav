@@ -798,7 +798,9 @@ public class ModelImage extends ModelStorageBase {
 
         for (int i = 0; i < voiVector.size(); i++) {
             maskImage.clearMask();
-            ((VOI) voiVector.elementAt(i)).createShortImage(maskImage, offset, XOR, onlyActive);
+            if(((VOI) voiVector.elementAt(i)).getCurveType() != VOI.POINT) {
+            	((VOI) voiVector.elementAt(i)).createShortImage(maskImage, offset, XOR, onlyActive);
+            }
         }
 
         maskImage.clearMask();
