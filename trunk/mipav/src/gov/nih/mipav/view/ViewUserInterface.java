@@ -236,8 +236,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** The button indicating that MIPAV is set to run in a threaded environment */
     private JButton btnMultiCore;
     
+    //TODO: Enable once GPU button is standardized
     /** The button indicating that processing will take place on the GPU when available */
-    private JButton btnGpuComp;
+    //private JButton btnGpuComp;
 
     /**
      * The periodic thread which updates the memory usage display once every second.
@@ -875,8 +876,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             imageRegistryMonitoring();
         } else if (command.equals("Options")) {
             options();
-            
-            if(event.getSource().equals(btnGpuComp) || event.getSource().equals(btnMultiCore)) {
+            //TODO: Enable once GPU implementation is standardized
+            if(/*event.getSource().equals(btnGpuComp) || */event.getSource().equals(btnMultiCore)) {
             	optionsDialog.showPane("Other");
             }
         } else if (command.equals("Shortcuts")) {
@@ -3323,7 +3324,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             memoryUsageLabel.setForeground(Color.black);
         }
 
-        memoryUsageLabel.setText("Memory usage: " + memoryInUse + "M / " + totalMemory + "M");
+        memoryUsageLabel.setText("Memory: " + memoryInUse + "M / " + totalMemory + "M");
     }
     
     /**
@@ -3339,18 +3340,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     	btnMultiCore.setFocusPainted(false);
     }
     
+    //TODO: Enable once GPU implementation is standardized
     /**
      * This method updates the "whether algorithms will use the GPU" when the relevant button has
      * been pushed in either the preferences pane.
      */
-    public void updateGpuUsage() {
-    	if(Preferences.isGpuCompEnabled()) {
-        	btnGpuComp.setIcon(MipavUtil.getIcon("greenbox.gif"));
-        } else {
-        	btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
-        }
-    	btnGpuComp.setFocusPainted(false);
-    }
+    //public void updateGpuUsage() {
+    //	if(Preferences.isGpuCompEnabled()) {
+    //    	btnGpuComp.setIcon(MipavUtil.getIcon("greenbox.gif"));
+    //    } else {
+    //    	btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
+    //    }
+    //	btnGpuComp.setFocusPainted(false);
+    //}
 
     /**
      * Do nothing - required by ScriptRecordingListener interface.
@@ -3547,7 +3549,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         btnRecycle.setActionCommand("gc");
         btnRecycle.addActionListener(this);
 
-        memoryUsageLabel = new JLabel("Memory usage: ");
+        memoryUsageLabel = new JLabel("Memory: ");
         memoryUsageLabel.setFont(MipavUtil.font12);
 
         panel.add(memoryUsageLabel);
@@ -3590,27 +3592,28 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         btnMultiCore.setActionCommand("Options");
         btnMultiCore.addActionListener(this);
         
-        final JLabel gpuCompEnabledLabel = new JLabel("  GPU: ");
-        gpuCompEnabledLabel.setFont(MipavUtil.font12);
+        //TODO: Enable once GPU implementation is standardized
+        //final JLabel gpuCompEnabledLabel = new JLabel("  GPU: ");
+        //gpuCompEnabledLabel.setFont(MipavUtil.font12);
         
-        ImageIcon backgroundGpu;
-        if(Preferences.isGpuCompEnabled()) {
-        	backgroundGpu = MipavUtil.getIcon("greenbox.gif");
-        } else {
-        	backgroundGpu = MipavUtil.getIcon("redbox.gif");
-        }
-        btnGpuComp = new JButton(backgroundGpu);
-        btnGpuComp.setBounds(new Rectangle(17, 17));
-        btnGpuComp.setBorder(new EmptyBorder(2, 2, 2, 2));
+        //ImageIcon backgroundGpu;
+        //if(Preferences.isGpuCompEnabled()) {
+        //	backgroundGpu = MipavUtil.getIcon("greenbox.gif");
+        //} else {
+        //	backgroundGpu = MipavUtil.getIcon("redbox.gif");
+        //}
+        //btnGpuComp = new JButton(backgroundGpu);
+        //btnGpuComp.setBounds(new Rectangle(17, 17));
+        //btnGpuComp.setBorder(new EmptyBorder(2, 2, 2, 2));
         
-        btnGpuComp.setFont(MipavUtil.font12);
-        btnGpuComp.setActionCommand("Options");
-        btnGpuComp.addActionListener(this);
+        //btnGpuComp.setFont(MipavUtil.font12);
+        //btnGpuComp.setActionCommand("Options");
+        //btnGpuComp.addActionListener(this);
         
         panel.add(multiCoreEnabledLabel);
         panel.add(btnMultiCore);
-        panel.add(gpuCompEnabledLabel);
-        panel.add(btnGpuComp);
+        //panel.add(gpuCompEnabledLabel);
+        //panel.add(btnGpuComp);
 
         return panel;
     }

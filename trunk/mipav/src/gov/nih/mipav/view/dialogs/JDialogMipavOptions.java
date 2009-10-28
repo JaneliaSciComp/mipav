@@ -726,7 +726,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             //set changes which affect GUI display
             if(userInterface != null) {
             	userInterface.updateMultiCoreUsage();
-            	userInterface.updateGpuUsage();
+            	//TODO: Enable once GPU implementation is standardized
+            	//userInterface.updateGpuUsage();
             }
 
             // set the cancel button text to 'close' since the changes were accepted
