@@ -1652,6 +1652,10 @@ public class AlgorithmTwoClassGeneration extends AlgorithmBase {
             }
         } // for (i = 0; i < offspring2Drawn; i++)
         
+        // For real data use buffer zone correction.  The width of the buffer area should be about the
+        // average nearest neighbor distance.  Larger buffer areas are wasteful with little additional
+        // gain.
+        
         for (i = 0; i < offspring2Drawn; i++) {
             if (NN2Type[i] == DIFFERENT) {
                 N21++;
