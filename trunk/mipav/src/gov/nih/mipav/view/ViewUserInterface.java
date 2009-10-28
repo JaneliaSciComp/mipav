@@ -3337,7 +3337,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else {
         	btnMultiCore.setIcon(MipavUtil.getIcon("redbox.gif"));
         }
-    	btnMultiCore.setFocusPainted(false);
     }
     
     //TODO: Enable once GPU implementation is standardized
@@ -3351,7 +3350,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     //    } else {
     //    	btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
     //    }
-    //	btnGpuComp.setFocusPainted(false);
     //}
 
     /**
@@ -3587,6 +3585,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         btnMultiCore = new JButton(backgroundMulti);
         btnMultiCore.setBounds(new Rectangle(17, 17));
         btnMultiCore.setBorder(new EmptyBorder(2, 2, 2, 2));
+        btnMultiCore.setFocusPainted(false);
         
         btnMultiCore.setFont(MipavUtil.font12);
         btnMultiCore.setActionCommand("Options");
@@ -3605,6 +3604,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         //btnGpuComp = new JButton(backgroundGpu);
         //btnGpuComp.setBounds(new Rectangle(17, 17));
         //btnGpuComp.setBorder(new EmptyBorder(2, 2, 2, 2));
+        //btnGpuComp.setFocusPainted(false);
         
         //btnGpuComp.setFont(MipavUtil.font12);
         //btnGpuComp.setActionCommand("Options");
