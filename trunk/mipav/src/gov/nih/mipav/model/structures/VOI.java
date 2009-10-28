@@ -190,6 +190,8 @@ public class VOI extends ModelSerialCloneable {
     /** DOCUMENT ME! */
     private int zDim;
 
+    /** extension of voi file name of voi was read in through file **/
+    private String extension = "";
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -5652,6 +5654,17 @@ System.err.println("curves size: " );
         return distanceVector;
     }
     
+    
+    public String getExtension() {
+		return extension;
+	}
+
+	public void setExtension(String extension) {
+		this.extension = extension;
+	}
+    
+    
+    
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
@@ -5716,5 +5729,7 @@ System.err.println("curves size: " );
             return this.pt;
         }
     }
+
+	
 
 }

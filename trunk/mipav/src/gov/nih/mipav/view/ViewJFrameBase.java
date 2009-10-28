@@ -3036,6 +3036,7 @@ public abstract class ViewJFrameBase extends JFrame
         int i;
         ViewVOIVector VOIs;
         FileVOI fileVOI;
+        String extension = ".xml";
 
         try {
 
@@ -3057,7 +3058,10 @@ public abstract class ViewJFrameBase extends JFrame
                 }
 
                 if(VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
-	                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", imageA.getFileInfo(0).getFileDirectory(),
+                	if(VOIs.VOIAt(i).getExtension().equals(".voi")) {
+                		extension = ".voi";
+                	}
+	                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + extension, imageA.getFileInfo(0).getFileDirectory(),
 	                                      imageA);
 	                fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
                 } else {
