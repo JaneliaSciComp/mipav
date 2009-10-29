@@ -2266,7 +2266,12 @@ public class FileNIFTI extends FileBase {
             }
             fileInfo.setAxisOrientation(axisOrientation);
             LPSOrigin = fileInfo.getOrigin();
-            LPSOrigin[1] = -LPSOrigin[1];
+            if (LPSOrigin[1] >= 0) {
+                LPSOrigin[1] = LPSOrigin[1] - (fileInfo.getExtents()[1] - 1)*resolutions[1];
+            }
+            else {
+                LPSOrigin[1] = LPSOrigin[1] + (fileInfo.getExtents()[1] - 1)*resolutions[1];
+            }
             fileInfo.setOrigin(LPSOrigin[1], 1);
             
             matrix.Set(0, 1, -matrix.Get(0, 1));
@@ -2482,7 +2487,12 @@ public class FileNIFTI extends FileBase {
                 }
                 fileInfo.setAxisOrientation(axisOrientation);
                 LPSOrigin = fileInfo.getOrigin();
-                LPSOrigin[1] = -LPSOrigin[1];
+                if (LPSOrigin[1] >= 0) {
+                    LPSOrigin[1] = LPSOrigin[1] - (fileInfo.getExtents()[1] - 1)*resolutions[1];
+                }
+                else {
+                    LPSOrigin[1] = LPSOrigin[1] + (fileInfo.getExtents()[1] - 1)*resolutions[1];
+                }
                 fileInfo.setOrigin(LPSOrigin[1], 1);
                 
                 matrix.Set(0, 1, -matrix.Get(0, 1));
