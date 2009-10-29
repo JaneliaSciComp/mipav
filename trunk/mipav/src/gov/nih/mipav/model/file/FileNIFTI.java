@@ -2277,13 +2277,13 @@ public class FileNIFTI extends FileBase {
             matrix.Set(0, 1, -matrix.Get(0, 1));
             matrix.Set(1, 1, -matrix.Get(1, 1));
             matrix.Set(2, 1, -matrix.Get(2, 1)); 
-            matrix.Set(1, 3, -matrix.Get(1, 3)); 
+            matrix.Set(1, 3, LPSOrigin[1]); 
                           
             if (matrix2 != null) {
                 matrix2.Set(0, 1, -matrix2.Get(0, 1));
                 matrix2.Set(1, 1, -matrix2.Get(1, 1));
                 matrix2.Set(2, 1, -matrix2.Get(2, 1)); 
-                matrix2.Set(1, 3, -matrix2.Get(1, 3));  
+                matrix2.Set(1, 3, LPSOrigin[1]);  
             } // if (matrix2 != null)
                     
         } // if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) &&
@@ -2498,13 +2498,13 @@ public class FileNIFTI extends FileBase {
                 matrix.Set(0, 1, -matrix.Get(0, 1));
                 matrix.Set(1, 1, -matrix.Get(1, 1));
                 matrix.Set(2, 1, -matrix.Get(2, 1)); 
-                matrix.Set(1, 3, -matrix.Get(1, 3)); 
+                matrix.Set(1, 3, LPSOrigin[1]); 
                               
                 if (matrix2 != null) {
                     matrix2.Set(0, 1, -matrix2.Get(0, 1));
                     matrix2.Set(1, 1, -matrix2.Get(1, 1));
                     matrix2.Set(2, 1, -matrix2.Get(2, 1)); 
-                    matrix2.Set(1, 3, -matrix2.Get(1, 3));  
+                    matrix2.Set(1, 3, LPSOrigin[1]);  
                 } // if (matrix2 != null)
 
                 flipTopBottom(buffer, fileInfo);        
