@@ -77,6 +77,17 @@ import java.util.*;
  of rare events is violated: the mean number of points per sampling unit is not small relative to the maximum
  possible number of points per sampling unit.
  
+ I have used the formula from "Nearest-neighbor distribution functions in many-body systems" by S. Torquato,
+ B. Lu. and J. Rubinstein, The American Physical Society Physical Review A, Volume 41, Number 4, 
+ February 15, 1990, pp. 2059-2075.
+ vf = volume fraction of spheres
+ e = (1 + vf)/((1 - vf)**3)
+ f = -0.5*vf*(3 + vf)/((1 - vf)**3)
+ g = 0.5*vf*vf/((1 - vf)**3)
+ mean nearest neighbor distance = diameter * (1 + integeral)
+ integral = integral from x = 1 to x = infinity of 
+ exp[-vf[8*e*(x*x*x-1) + 12*f*(x*x - 1) + 24*g*(x - 1)]
+ 
  The formula derived by Asim Tewari and A. M. Gokhale is accurate at both low and high densities.  The reference is
  "Nearest-neighbor distances between particles of finite size in three-dimensional uniform random microstructures" by
  Tewari and Gokhale, Materials Science and Engineering A, Volume 385, Issues 1-2, November, 2004, pp. 332-341.
@@ -332,6 +343,8 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double sphereVariance;
         double sphereStdDev;
         double cv;
+        IntTorquatoModelMean meanTorquatoModel;
+        IntTorquatoModelMean2 meanTorquatoModel2;
         // Mean nearest neighbor distance for a point process
         double P1;
         if (srcImage == null) {
@@ -930,6 +943,53 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                Preferences.debug("Measured mean consistent with random distribution\n");
                System.out.println("Measured mean consistent with random distribution");
            }
+           
+           Preferences.debug("\nCalculations using Torquato, Lu, and Rubinstein model\n");
+           System.out.println("\nCalculations using Torquato, Lu, and Rubinstein model");
+           // Calculate analytical mean
+           meanTorquatoModel = new IntTorquatoModelMean(1.0, 1.0E30, Integration.MIDINF, eps, volumeFraction);
+           meanTorquatoModel.driver();
+           steps = meanTorquatoModel.getStepsUsed();
+           numInt = meanTorquatoModel.getIntegral();
+           Preferences.debug("In Integration.MIDINF numerical Integral for Torquato model = " + 
+                   numInt + " after " + steps + " steps used\n");
+           bound = 1.0;
+           meanTorquatoModel2 = new IntTorquatoModelMean2(bound, routine, inf, epsabs, epsrel, limit, volumeFraction);
+           meanTorquatoModel2.driver();
+           numInt2 = meanTorquatoModel2.getIntegral();
+           errorStatus = meanTorquatoModel2.getErrorStatus();
+           absError = meanTorquatoModel2.getAbserr();
+           neval = meanTorquatoModel2.getNeval();
+           Preferences.debug("In Integration2.DQAGIE numerical Integral for Torquato model = " + numInt2 + " after " + neval +
+                             " integrand evaluations used\n");
+           Preferences.debug("Error status = " + errorStatus +
+                             " with absolute error = " + absError + "\n");
+           analyticalMean = diameter * (1.0 + numInt2);
+           Preferences.debug("Analytical mean from Torquato model = " + analyticalMean + "\n");
+           System.out.println("Analytical mean from Torquato model = " + analyticalMean);
+           t = (mean - analyticalMean)/standardError;
+           stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                                 t, spheresLeft-1, percentile);
+           stat.run();
+           Preferences.debug("Percentile in Students t cumulative distribution function for measured mean around analytical mean = "
+                             + percentile[0]*100.0 + "\n");
+           System.out.println("Percentile in Students t cumulative distribution function for measured mean around analytical mean = " +
+                               percentile[0]*100.0);
+           if (percentile[0] < 0.025) {
+               // Measured mean signficantly less than analytical mean of random distribution
+               Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+               System.out.println("Clumping or aggregation found in nearest neighbor distances");
+           }
+           else if (percentile[0] > 0.975) {
+               // Measured mean significantly greater than analytical mean of random distribution
+               Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+               System.out.println("Uniform or regular distribution found in nearest neighbor distances");
+           }
+           else {
+             // Measured mean not significantly different from analytical mean of random distribution
+               Preferences.debug("Measured mean consistent with random distribution\n");
+               System.out.println("Measured mean consistent with random distribution");
+           }
        } // if ((radiusDistribution == CONSTANT_RADIUS) || (minRadius == maxRadius))
        
        
@@ -1132,6 +1192,93 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         public double intFunc(double x) {
             double function;
             function = 2.0 * x * Math.exp(-density * (4.0/3.0) * Math.PI * x * x * x);
+
+            return function;
+        }
+    }
+    
+    class IntTorquatoModelMean extends Integration {
+        double volumeFraction;
+        /**
+         * Creates a new IntModel object.
+         *
+         * @param  lower    DOCUMENT ME!
+         * @param  upper    DOCUMENT ME!
+         * @param  routine  DOCUMENT ME!
+         * @param  eps      DOCUMENT ME!
+         */
+        public IntTorquatoModelMean(double lower, double upper, int routine, double eps, double volumeFraction) {
+            super(lower, upper, routine, eps);
+            this.volumeFraction = volumeFraction;
+        }
+
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double e;
+            double f;
+            double g;
+            double v3;
+            double function;
+            v3 = 1.0 - volumeFraction;
+            v3 = v3 * v3 * v3;
+            e = (1.0 + volumeFraction)/v3;
+            f = -0.5 * volumeFraction * (3.0 + volumeFraction)/v3;
+            g = 0.5 * volumeFraction * volumeFraction/v3;
+            function = Math.exp(-volumeFraction * ((8.0*e*(x*x*x - 1.0)) + 12.0*f*(x*x - 1.0) + 24.0*g*(x - 1.0)));
+
+            return function;
+        }
+    }
+    
+    class IntTorquatoModelMean2 extends Integration2 {
+        double volumeFraction;
+        public IntTorquatoModelMean2(double bound, int routine, int inf,
+                double epsabs, double epsrel, int limit, double volumeFraction) {
+        super(bound, routine, inf, epsabs, epsrel, limit);
+        this.volumeFraction = volumeFraction;
+        }
+       
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double e;
+            double f;
+            double g;
+            double v3;
+            double function;
+            v3 = 1.0 - volumeFraction;
+            v3 = v3 * v3 * v3;
+            e = (1.0 + volumeFraction)/v3;
+            f = -0.5 * volumeFraction * (3.0 + volumeFraction)/v3;
+            g = 0.5 * volumeFraction * volumeFraction/v3;
+            function = Math.exp(-volumeFraction * ((8.0*e*(x*x*x - 1.0)) + 12.0*f*(x*x - 1.0) + 24.0*g*(x - 1.0)));
 
             return function;
         }
