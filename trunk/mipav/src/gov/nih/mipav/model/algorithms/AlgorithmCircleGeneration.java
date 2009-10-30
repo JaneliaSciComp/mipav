@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmSphereGeneration.IntTorquatoModelMean;
+import gov.nih.mipav.model.algorithms.AlgorithmSphereGeneration.IntTorquatoModelMean2;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -84,6 +86,14 @@ import java.util.*;
   The probability of observing a value of chi square that is larger than a particular value for a random
   sample of N observations with v degrees of freedom is the integral of this probability from chi square = x2
   to chi square = infinity.
+  
+  I have used the formula from "Nearest-neighbor distribution functions in many-body systems" by S. Torquato,
+  B. Lu. and J. Rubinstein, The American Physical Society Physical Review A, Volume 41, Number 4, 
+  February 15, 1990, pp. 2059-2075.
+  Let the area fraction of the circles = af
+  a2 = 4*af/((1 - af)**2)
+  b2 = 4*af*(2 + af)/((1 - af)**2)
+  mean nearest neighbor distance = diameter * (1 + 0.5*sqrt(PI/a2)*exp(b2*b2/(4*a2))*erfc[b2/(2*sqrt(a2))])
  */
 public class AlgorithmCircleGeneration extends AlgorithmBase {
     
@@ -262,6 +272,35 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         double highestRegenerationSquared;
         boolean intermediateRejected;
         double change;
+        erfcModel erfc;
+        int steps;
+        double numInt;
+        double eps = 1.0e-8;
+        erfcModel2 erfc2;
+        /** finite bound of integration range used in dqagie (has no meaning if interval is doubly-infinite). */
+        double bound;
+        /** Integral over (bound, +infinity), (-infinity, bound), or (-infinity, +infinity). */
+        int routine = Integration2.DQAGIE;
+        /**
+         * In dqagie indicates the kind of integration range involved inf = 1 corresponds to (bound, +infinity) inf = -1
+         * corresponds to (-infinity, bound) inf = 2 corresponds to (-infinity, +infinity).
+         */
+        int inf = 1;
+        double epsabs = 0.0;
+        double epsrel = 1.0E-3;
+        /**
+         * Gives an upper bound on the number of subintervals in the partition of lower, upper.
+         */
+        int limit = 100;
+        double numInt2;
+        int errorStatus;
+        double absError;
+        int neval;
+        double areaFraction;
+        double af2;
+        double a2;
+        double b2;
+        double t;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -766,8 +805,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        for (i = 0; i < circlesLeft; i++) {
            nearestNeighborDistanceSumOfSquares += nearestNeighborDistance[i]*nearestNeighborDistance[i];
        }
-       density = ((double)countedBytes/(double)maskBytesSet)/
-                 (double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance));
+       areaFraction = (double)countedBytes/ (double)((xDim - 2 * boundaryDistance) * (yDim - 2 * boundaryDistance));
+       density = areaFraction /(double)maskBytesSet;
        diameter = 2.0 * radius;
        
        // Calculate analytical mean
@@ -832,6 +871,57 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
            System.out.println("chiSquared test does not reject random circle distribution");
        }
        
+       Preferences.debug("\nCalculations using Torquato, Lu, and Rubinstein model\n");
+       System.out.println("\nCalculations using Torquato, Lu, and Rubinstein model");
+       // Calculate analytical mean
+       af2 = 1.0 - areaFraction;
+       af2 = af2 * af2;
+       a2 = 4.0 * areaFraction/af2;
+       b2 = a2 * (2.0 + areaFraction);
+       bound = b2/(2.0 * Math.sqrt(a2));
+       erfc = new erfcModel(bound, 1.0E30, Integration.MIDINF, eps);
+       erfc.driver();
+       steps = erfc.getStepsUsed();
+       numInt = erfc.getIntegral();
+       Preferences.debug("In Integration.MIDINF numerical Integral for erfc = " + 
+               numInt + " after " + steps + " steps used\n");
+       erfc2 = new erfcModel2(bound, routine, inf, epsabs, epsrel, limit);
+       erfc2.driver();
+       numInt2 = erfc2.getIntegral();
+       errorStatus = erfc2.getErrorStatus();
+       absError = erfc2.getAbserr();
+       neval = erfc2.getNeval();
+       Preferences.debug("In Integration2.DQAGIE numerical Integral for erfc = " + numInt2 + " after " + neval +
+                         " integrand evaluations used\n");
+       Preferences.debug("Error status = " + errorStatus +
+                         " with absolute error = " + absError + "\n");
+       analyticalMean = diameter * (1.0 + 0.5*Math.sqrt(Math.PI/a2)*Math.exp(bound*bound)*numInt2);
+       Preferences.debug("Analytical mean from Torquato model = " + analyticalMean + "\n");
+       System.out.println("Analytical mean from Torquato model = " + analyticalMean);
+       t = (mean - analyticalMean)/standardError;
+       stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                             t, circlesLeft-1, percentile);
+       stat.run();
+       Preferences.debug("Percentile in Students t cumulative distribution function for measured mean around analytical mean = "
+                         + percentile[0]*100.0 + "\n");
+       System.out.println("Percentile in Students t cumulative distribution function for measured mean around analytical mean = " +
+                           percentile[0]*100.0);
+       if (percentile[0] < 0.025) {
+           // Measured mean signficantly less than analytical mean of random distribution
+           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+           System.out.println("Clumping or aggregation found in nearest neighbor distances");
+       }
+       else if (percentile[0] > 0.975) {
+           // Measured mean significantly greater than analytical mean of random distribution
+           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+           System.out.println("Uniform or regular distribution found in nearest neighbor distances");
+       }
+       else {
+         // Measured mean not significantly different from analytical mean of random distribution
+           Preferences.debug("Measured mean consistent with random distribution\n");
+           System.out.println("Measured mean consistent with random distribution");
+       }
+       
        for (i = 0; i < buffer.length; i++) {
            if (buffer[i] > 0) {
                buffer[i] = 1;
@@ -848,5 +938,72 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        
        setCompleted(true);
        return;
+    }
+    
+    class erfcModel extends Integration {
+        double scale = 2.0/Math.sqrt(Math.PI);
+        /**
+         * Creates a new IntModel object.
+         *
+         * @param  lower    DOCUMENT ME!
+         * @param  upper    DOCUMENT ME!
+         * @param  routine  DOCUMENT ME!
+         * @param  eps      DOCUMENT ME!
+         */
+        public erfcModel(double lower, double upper, int routine, double eps) {
+            super(lower, upper, routine, eps);
+        }
+
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double function;
+            function = scale * Math.exp(-x*x);
+
+            return function;
+        }
+    }
+    
+    class erfcModel2 extends Integration2 {
+        double scale = 2.0/Math.sqrt(Math.PI);
+        public erfcModel2(double bound, int routine, int inf,
+                double epsabs, double epsrel, int limit) {
+        super(bound, routine, inf, epsabs, epsrel, limit);
+        }
+       
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double function;
+            function = scale * Math.exp(-x*x);
+
+            return function;
+        }
     }
 }
