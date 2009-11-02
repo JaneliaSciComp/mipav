@@ -2145,10 +2145,10 @@ public class FileNIFTI extends FileBase {
                     if (ecode2 == 0) {
                         Preferences.debug("ecode2 = 0 for an unknown private format\n");
                     }
-                    else if (ecode == 2) {
+                    else if (ecode2 == 2) {
                         Preferences.debug("ecode2 = 2 for DICOM format (i.e., attribute tags and values)\n");
                     }
-                    else if (ecode == 4) {
+                    else if (ecode2 == 4) {
                         Preferences.debug("ecode2 = 4 for AFNI group (i.e., ASCII XML-ish elements)\n");
                     }
                     else if (ecode2 == 6) {
