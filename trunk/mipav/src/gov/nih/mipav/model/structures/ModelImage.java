@@ -336,7 +336,7 @@ public class ModelImage extends ModelStorageBase {
      */
     public void calcMinMax() {
 
-        super.calcMinMax();
+        super.calcMinMax(this.getLogMagDisplay());
 
         /*
          * 
