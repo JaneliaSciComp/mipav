@@ -2135,7 +2135,7 @@ public class FileNIFTI extends FileBase {
                 Preferences.debug("ecode = " + ecode + " an unrecognized ecode value\n");
             }
             fileInfo.setEcode(ecode);
-            if (fileLength > 352 + esize) {
+            if ((fileLength > 352 + esize) && ((!oneFile) || (vox_offset > 352 + esize))) {
                 raFile.seek(352 + esize);
                 esize2 = getInt(endianess);
                 Preferences.debug("The size of the second header extension in bytes = " + esize2 + "\n");
@@ -2167,7 +2167,7 @@ public class FileNIFTI extends FileBase {
                         Preferences.debug("ecode2 = " + ecode2 + " an unrecognized ecode2 value\n");
                     }
                     fileInfo.setEcode2(ecode2);
-                    if (fileLength > 352 + esize + esize2) {
+                    if ((fileLength > 352 + esize + esize2) && ((!oneFile) || (vox_offset > 352 + esize + esize2))){
                         esize3 = getInt(endianess);
                         Preferences.debug("The size of the third header extension in bytes = " + esize3 + "\n");
                         if (esize3 > 0) {
