@@ -405,8 +405,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Calculates the min and max values for the image array.
+     *
      */
     public void calcMinMax() {
+        calcMinMax(logMagDisp);
+    }
+    
+    /**
+     * @param  logMagDisplay  if true calculate min and max for log10 of 1 + magnitude
+     * Calculates the min and max values for the image array.
+     */
+    public void calcMinMax(boolean logMagDisplay) {
 
         // before computing the new min, max, save the last values.
         lastMin = min;
@@ -417,8 +426,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         int i;
         double value;
-
-        if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) {
+       
+        if ((bufferType == COMPLEX) || (bufferType == DCOMPLEX)) {
+            calcMinMaxMag(logMagDisplay);
+        }
+        else if ((bufferType != ARGB) && (bufferType != ARGB_USHORT) && (bufferType != ARGB_FLOAT)) {
 
         	/*if (bufferType == SHORT) {  // I thought this would be faster but it is not -- Matt 9/5/2008
         		short minShort;	
