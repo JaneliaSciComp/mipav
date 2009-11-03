@@ -2334,7 +2334,11 @@ public class FileNIFTI extends FileBase {
                     (sourceType != FileInfoNIFTI.NIFTI_TYPE_COMPLEX64) &&
                     (sourceType != FileInfoNIFTI.NIFTI_TYPE_FLOAT64) &&
                     (sourceType != FileInfoNIFTI.NIFTI_TYPE_RGB24)) {
-                image.calcMinMax();
+                if ( (image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
+                    image.calcMinMaxMag(true);
+                } else {
+                    image.calcMinMax();
+                }
                 imageMin = image.getMin();
                 imageMax = image.getMax();
                 newType = image.getType();
@@ -4327,7 +4331,11 @@ public class FileNIFTI extends FileBase {
                 setBufferFloat(bufferByte, 0.0f, 136, endianess);
             }
 
-            image.calcMinMax();
+            if ( (image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
+                image.calcMinMaxMag(true);
+            } else {
+                image.calcMinMax();
+            }
 
             if (image.isColorImage()) {
                 imageMax = (int) Math.max(image.getMaxR(), Math.max(image.getMaxG(), image.getMaxB()));
@@ -4578,7 +4586,11 @@ public class FileNIFTI extends FileBase {
                 setBufferFloat(bufferByte, 0.0f, 136, endianess);
             }
 
-            image.calcMinMax();
+            if ( (image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
+                image.calcMinMaxMag(true);
+            } else {
+                image.calcMinMax();
+            }
 
             if (image.isColorImage()) {
                 imageMax = (int) Math.max(image.getMaxR(), Math.max(image.getMaxG(), image.getMaxB()));
