@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<data_dictionary xmlns:xsi="http://ndar.nih.gov/services/AccessionService">
+    <data_structure name="Image" version="1" shortname="image" type="Imaging">
+        <data_element name="image_subject_id" type="GUID" size="" required="Required" valuerange="NDAR*"/>
+        <data_element name="image_file" type="FILE" size="" required="Required" valuerange=""/>
+        <data_element name="image_thumbnail_file" type="THUMBNAIL" size="" required="Recommended" valuerange=""/>
+        <data_element name="image_description" type="String" size="512" required="Optional" valuerange=""/>
+        <data_element name="image_history" type="String" size="" required="Optional" valuerange=""/>
+        <data_element name="image_num_dimensions" type="Integer" size="" required="Required" valuerange="1 to 5"/>
+        <data_element name="image_extent1" type="Integer" size="" required="Required" valuerange="1+"/>
+        <data_element name="image_extent2" type="Integer" size="" required="Recommended" valuerange="1+"/>
+        <data_element name="image_extent3" type="Integer" size="" required="Recommended" valuerange="1+"/>
+        <data_element name="image_extent4" type="Integer" size="" required="Optional" valuerange="1+"/>
+        <data_element name="image_extent5" type="Integer" size="" required="Optional" valuerange="1+"/>
+        <data_element name="image_unit1" type="String" size="20" required="Recommended" valuerange="Unknown; Inches; Centimeters; Angstroms; Nanometers; Micrometers; Millimeters; Meters; Kilometers; Miles; Nanoseconds; Microseconds; Milliseconds; Seconds; Minutes; Hours; Hertz"/>
+        <data_element name="image_unit2" type="String" size="20" required="Recommended" valuerange="Unknown; Inches; Centimeters; Angstroms; Nanometers; Micrometers; Millimeters; Meters; Kilometers; Miles; Nanoseconds; Microseconds; Milliseconds; Seconds; Minutes; Hours; Hertz"/>
+        <data_element name="image_unit3" type="String" size="20" required="Recommended" valuerange="Unknown; Inches; Centimeters; Angstroms; Nanometers; Micrometers; Millimeters; Meters; Kilometers; Miles; Nanoseconds; Microseconds; Milliseconds; Seconds; Minutes; Hours; Hertz"/>
+        <data_element name="image_unit4" type="String" size="20" required="Recommended" valuerange="Unknown; Inches; Centimeters; Angstroms; Nanometers; Micrometers; Millimeters; Meters; Kilometers; Miles; Nanoseconds; Microseconds; Milliseconds; Seconds; Minutes; Hours; Hertz"/>
+        <data_element name="image_unit5" type="String" size="20" required="Recommended" valuerange="Unknown; Inches; Centimeters; Angstroms; Nanometers; Micrometers; Millimeters; Meters; Kilometers; Miles; Nanoseconds; Microseconds; Milliseconds; Seconds; Minutes; Hours; Hertz"/>
+        <data_element name="image_resolution1" type="Float" size="" required="Recommended" valuerange="0+"/>
+        <data_element name="image_resolution2" type="Float" size="" required="Recommended" valuerange="0+"/>
+        <data_element name="image_resolution3" type="Float" size="" required="Recommended" valuerange="0+"/>
+        <data_element name="image_resolution4" type="Float" size="" required="Recommended" valuerange="0+"/>
+        <data_element name="image_resolution5" type="Float" size="" required="Recommended" valuerange="0+"/>
+        <data_element name="image_slice_thickness" type="Float" size="" required="Recommended" valuerange="0+"/>
+        <data_element name="image_orientation" type="String" size="20" required="Recommended" valuerange="Unknown; Axial; Coronal; Sagittal;"/>
+        <data_element name="image_modality" type="String" size="20" required="Recommended" valuerange="Unknown Modality; Biomagnetic Imaging; Color Flow Doppler; Computed Radiography; Computed Tomography; Duplex Doppler; Diaphanography; Digital Radiography; Endoscopy; External Camera Photography; FA; General Microscopy; Hardcopy; ICG; Intraoral Radiography; Laser Surface Scan; Magnetic Resonance; Magnetic Resonance Angiography; Magnetic Resonance Spectroscopy; Mammography; Nuclear Medicine; Other; Panoramic XRay; Positron Emission Tomography; Radio Fluoroscopy; Radiographic Imaging; Radiotherapy Dose; Radiotherapy Image; Radiotherapy Plan; Radiotherapy Record; Radiotherapy Structure Set; Red Free; Single Photon Emission Computed Tomography; Slide Microscopy; Thermography; Ultrasound; XRay Angiography"/>
+    </data_structure>
+</data_dictionary>
