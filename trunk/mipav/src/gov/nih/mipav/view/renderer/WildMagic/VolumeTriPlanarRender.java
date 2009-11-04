@@ -115,11 +115,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected boolean m_bGeodesicEnabled = false;
 
     /** Stereo on/off. */
-    private boolean m_bStereo = false;
-    /** Stereo left-eye view */
-    private boolean m_bLeft = true;
-    /** Stereo right-eye view */
-    private boolean m_bRight = true;    
+    private int m_iStereo = 0;  
     
     /** BrainSurfaceFlattener pick correspondence enabled on/off. */
     private boolean m_bPickCorrespondence = false;
@@ -410,31 +406,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         Move();
         Pick();
 
-        // Draw the scene to the back buffer/
-        if (m_pkRenderer.BeginScene())
-        {
-            m_pkRenderer.SetBackgroundColor(ColorRGBA.BLACK);
-            m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
-            m_pkRenderer.ClearBuffers();
-
-            
-            if ( m_kVolumeRayCast.GetDisplay() )
-            {
-                RenderVolume();
-            }
-            else
-            {
-                RenderNoVolume();
-            }
-            RenderFrameRate();
-            RenderSculpt();
-            m_pkRenderer.EndScene();
-        }
-        if ( m_bSnapshot )
-        {
-            writeImage();
-        }
-        m_pkRenderer.DisplayBackBuffer();
+        
+        Render();
 
         UpdateFrameCount();
 
@@ -1067,22 +1040,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         case 'o':
             displayOrientationCube( !m_kVolumeCube.GetDisplay() );
             return;
-        case '1':
-            m_bStereo = false;
-            break;
-        case '2':
-            m_bStereo = true;
-            m_bLeft = true;
-            m_bRight = true;
-            break;
-        case 'l':
-            m_bLeft = true;
-            m_bRight = false;
-            break;
-        case 'r':
-            m_bLeft = false;
-            m_bRight = true;
-            break;
         case 'c':
             for ( int i = 0; i < m_kDisplayList.size(); i++ )
             {
@@ -2024,9 +1981,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Enable/disable stereo rendering.
      * @param bEnable
      */
-    public void setStereo( boolean bEnable )
+    public void setStereo( int iWhich )
     {
-        m_bStereo = bEnable;
+        m_iStereo = iWhich;
+        if ( iWhich == 1 ) // Red/Green
+        {
+            m_kVolumeRayCast.SetDisplay(false);
+        }
     }
       
     /**
@@ -2484,35 +2445,110 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Render the display list objects without the raycast volume.
      */
-    private void RenderNoVolume()
+    private void Render()
     {
-        m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
-        m_pkRenderer.ClearBuffers();
 
-        if ( !m_bStereo )
-        {
-            RenderWithTransparency(false);
+        if ( m_iStereo == 0 )
+        { 
+            m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
+            m_pkRenderer.ClearBuffers();
+            if ( !m_bDisplaySecond )
+            {
+                for ( int i = 0; i < m_kDisplayList.size(); i++ )
+                {
+                    m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true, true );
+                }
+            }
+            else
+            {
+                if ( m_kVolumeRayCast.GetDisplay() )
+                {
+                    RenderWithTransparency(true);            
+                }
+                RenderWithTransparency(false);
+                if ( m_kVolumeRayCast.GetDisplay() )
+                {
+                    m_kVolumeRayCast.Render( m_pkRenderer, m_kCuller, false, true );
+                    m_pkRenderer.SetCamera(m_spkCamera);
+                }
+                RenderSculpt();
+                
+                RenderFrameRate();                
+                if ( m_bSnapshot )
+                {
+                    writeImage();
+                }
+                m_pkRenderer.DisplayBackBuffer();
+            }
         }
         else
         {          
+            m_pkRenderer.SetBackgroundColor(m_kBackgroundColor);
             MoveRight();
-            if ( m_bRight )
             {
                 m_kCuller.ComputeVisibleSet(m_spkScene);
-                m_pkRenderer.SetColorMask( false, false, true, true );
+                if ( m_iStereo == 1 ) // red/green:
+                {
+                    m_pkRenderer.ClearBuffers();
+                    m_pkRenderer.SetColorMask( false, false, true, true );
+                }
+                else // shutter:
+                {
+                    m_pkRenderer.DrawRight();
+                    m_pkRenderer.ClearBuffers();
+                }           
+                if ( m_kVolumeRayCast.GetDisplay() )
+                {
+                    RenderWithTransparency(true);            
+                }
                 RenderWithTransparency(false);
+                if ( m_kVolumeRayCast.GetDisplay() )
+                {
+                    m_kVolumeRayCast.Render( m_pkRenderer, m_kCuller, false, true );
+                    m_pkRenderer.SetCamera(m_spkCamera);
+                }
+                if ( m_iStereo == 1 ) // red/green:
+                {
+                    m_pkRenderer.ClearZBuffer();
+                }                
+                else // shutter:
+                {
+                    m_pkRenderer.DisplayBackBuffer();
+                }
             }
-            m_pkRenderer.ClearZBuffer();
             MoveLeft();
             MoveLeft();
-            if ( m_bLeft )
-            {
-                m_kCuller.ComputeVisibleSet(m_spkScene);
+            m_kCuller.ComputeVisibleSet(m_spkScene);  
+            if ( m_iStereo == 1 ) // red/green:
+            {                
                 m_pkRenderer.SetColorMask( true, false, false, true );
-                RenderWithTransparency(false);
             }
+            else
+            {
+                m_pkRenderer.DrawLeft();
+                m_pkRenderer.ClearBuffers();
+            }
+            if ( m_kVolumeRayCast.GetDisplay() )
+            {
+                RenderWithTransparency(true);            
+            }
+            RenderWithTransparency(false);
+            if ( m_kVolumeRayCast.GetDisplay() )
+            {
+                m_kVolumeRayCast.Render( m_pkRenderer, m_kCuller, false, true );
+                m_pkRenderer.SetCamera(m_spkCamera);
+            }
+                        
+            RenderFrameRate();                
+            if ( m_bSnapshot )
+            {
+                writeImage();
+            }
+            m_pkRenderer.DisplayBackBuffer();
+            
             MoveRight();
             m_pkRenderer.SetColorMask( true, true, true, true );
+            m_pkRenderer.DrawDefault();
         }
     }
 
@@ -2600,7 +2636,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * the color corresponding to the texture coordinates. The resulting color image is used to calculate
      * the ray end-points for rendering the ray-cast volume. In the second pass the display list
      * objects are rendered normally and the ray-cast volume is rendered last.
-     */
     private void RenderVolume()
     {
         if ( !m_bDisplaySecond )
@@ -2618,6 +2653,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_pkRenderer.SetCamera(m_spkCamera);
         }
     }
+     */
     
     public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight) {
         super.reshape( arg0, iX, iY, iWidth, iHeight );

@@ -64,9 +64,6 @@ import com.sun.opengl.util.Animator;
 public class PlaneRender_WM extends GPURenderBase
     implements GLEventListener
 {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     private class LocalVolumeVOI
     {
         public Vector<String> Name = new Vector<String>();

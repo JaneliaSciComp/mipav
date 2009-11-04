@@ -62,6 +62,13 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowEvent;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -102,6 +109,8 @@ import com.sun.opengl.util.Animator;
 
 public class VolumeTriPlanarInterface extends ViewJFrameBase {
 
+    private VolumeRenderState m_kSaveState = new VolumeRenderState();
+    
     /**
      * Item to hold tab name and corresponding panel.
      */
@@ -345,8 +354,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
     private JPanel m_kVolume4DPanel;
     private JPanelVolume4D m_kVolume4DGUI;
     private boolean m_b4D = false;
-    
+
     private JToggleButton m_kRecordToggle;
+    private JButton m_kSaveButton;
+    private JButton m_kLoadButton;
     
     
     /**
@@ -455,17 +466,23 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             clipSaveButton.setEnabled(true);
             raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
             raycastRenderWM.setVolumeBlend( rendererGUI.getBlendSliderValue()/100.0f );
-        } else if (command.equals("Stereo")) {
-            if ( (m_kStereoIPD == null) && rendererGUI.getStereoCheck().isSelected() )
+        } else if (command.equals("StereoOFF")) {
+            m_kStereoIPD.close();
+            m_kStereoIPD = null;
+            raycastRenderWM.setStereo( 0 );
+        } else if (command.equals("StereoRED")) {
+            if ( m_kStereoIPD == null )
             {
                 m_kStereoIPD = new JDialogStereoControls( this, .02f );
             }
-            else if ( (m_kStereoIPD != null) && ! rendererGUI.getStereoCheck().isSelected() )
+            raycastRenderWM.setStereo( 1 );
+        
+        } else if (command.equals("StereoSHUTTER")) {
+            if ( m_kStereoIPD == null )
             {
-                m_kStereoIPD.close();
-                m_kStereoIPD = null;
+                m_kStereoIPD = new JDialogStereoControls( this, .02f );
             }
-            raycastRenderWM.setStereo( rendererGUI.getStereoCheck().isSelected() );
+            raycastRenderWM.setStereo( 2 );
         } else if (command.equals("ChangeLight")) {
             insertTab("Light", lightPanel);
         } else if (command.equals("Box")) {
@@ -650,6 +667,10 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
             create3DVOI(false);
         } else if (command.equals("Record")) {
             raycastRenderWM.record(m_kRecordToggle.isSelected());
+        } else if ( command.equals( "SaveState" ) ) {
+            //SaveState();
+        } else if ( command.equals( "LoadState" ) ) {
+            //LoadState();
         }
 
     }
@@ -2071,6 +2092,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      * @param  center  the new slice positions in FileCoordinates
      */
     public void setSliceFromPlane(Vector3f center) {
+        m_kSaveState.X = center.X;
+        m_kSaveState.Y = center.Y;
+        m_kSaveState.Z = center.Z;
         setPositionLabels(center);
        
         for (int i = 0; i < 3; i++) {
@@ -2090,6 +2114,9 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
      * @param  center  the new slice positions in FileCoordinates
      */
     public void setSliceFromSurface(Vector3f center) {
+        m_kSaveState.X = center.X;
+        m_kSaveState.Y = center.Y;
+        m_kSaveState.Z = center.Z;
         setPositionLabels(center);
 
         if (m_akPlaneRender != null)
@@ -2587,6 +2614,11 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
         m_kRecordToggle = toolbarBuilder.buildToggleButton("Record", "Record to Avi", "movie");
         viewToolBar.add(m_kRecordToggle);
         
+        m_kSaveButton = toolbarBuilder.buildButton("SaveState", "Save State", "save");
+        m_kLoadButton = toolbarBuilder.buildButton("LoadState", "Load State", "open");
+        viewToolBar.add(m_kSaveButton);
+        viewToolBar.add(m_kLoadButton);
+        
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.gridx = 35;
@@ -3034,5 +3066,43 @@ public class VolumeTriPlanarInterface extends ViewJFrameBase {
                 }
             }
         }
+    }
+    
+    private void SaveState()
+    {       
+        try {
+            ObjectOutputStream objstream;
+            objstream = new ObjectOutputStream(new FileOutputStream("SaveState"));
+            objstream.writeObject(m_kSaveState);
+            objstream.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.err.println( "Save" );
+    }
+    
+    private void LoadState()
+    {
+        try {
+            ObjectInputStream objstream;
+            objstream = new ObjectInputStream(new FileInputStream("SaveState"));
+            m_kSaveState = (VolumeRenderState) objstream.readObject();
+            if ( m_kSaveState != null )
+            {
+                setSliceFromPlane( new Vector3f( m_kSaveState.X, m_kSaveState.Y, m_kSaveState.Z ));
+            }
+            objstream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.err.println( "Load" );
     }
 }
