@@ -61,7 +61,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	private GridBagConstraints gbc;
 	
 	/** main panel **/
-	private JPanel mainPanel, optionsPanel, processPanel, interpPanel;
+	private JPanel mainPanel, optionsPanel, processPanel, interpPanel, rescalePanel, averagingOptionsPanel;
 	
 	/** images **/
 	private ModelImage imageX, imageY, resultImage;
@@ -85,13 +85,13 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
     private JButton imageXBrowseButton, imageYBrowseButton, transform1BrowseButton, transform2BrowseButton, transform3BrowseButton;
     
     /** boolean indicating average or closest z **/
-	private boolean doAverage = true;
+	//private boolean doAverage = true;
 
 	/** button group **/
-    private ButtonGroup processGroup, interpGroup;
+    private ButtonGroup processGroup, interpGroup, rescaleGroup, ignoreBGGroup;
 
     /** radio buttons **/
-    private JRadioButton doAverageRadio, doClosestZRadio, doTrilinearRadio, doBsplineRadio;
+    private JRadioButton doAverageRadio, doClosestZRadio, doSqRtRadio, doTrilinearRadio, doBsplineRadio, doRescaleRadio, noRescaleRadio, ignoreBGRadio, includeBGRadio;
     
     /** checkbox **/
     private JCheckBox concatMatricesOnly;
@@ -195,12 +195,12 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Retinal Registration v1.0");
+        setTitle("Drosophila Retinal Registration v1.2");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
 
         JLabel imageXLabel = new JLabel("Image H");
-        imageXFilePathTextField = new JTextField(20);
+        imageXFilePathTextField = new JTextField(35);
         imageXFilePathTextField.setEditable(false);
         imageXFilePathTextField.setBackground(Color.white);
         imageXBrowseButton = new JButton("Browse");
@@ -208,7 +208,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         imageXBrowseButton.setActionCommand("imageXBrowse");
 
         JLabel imageYLabel = new JLabel("Image F");
-        imageYFilePathTextField = new JTextField(20);
+        imageYFilePathTextField = new JTextField(35);
         imageYFilePathTextField.setEditable(false);
         imageYFilePathTextField.setBackground(Color.white);
         imageYBrowseButton = new JButton("Browse");
@@ -216,7 +216,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         imageYBrowseButton.setActionCommand("imageYBrowse");
 
         JLabel transform1Label = new JLabel("Transformation 1 - Green");
-        transform1FilePathTextField = new JTextField(20);
+        transform1FilePathTextField = new JTextField(35);
         transform1FilePathTextField.setEditable(false);
         transform1FilePathTextField.setBackground(Color.white);
         transform1BrowseButton = new JButton("Browse");
@@ -224,7 +224,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         transform1BrowseButton.setActionCommand("transform1Browse");
 
         JLabel transform2Label = new JLabel("Transformation 2 - Affine");
-        transform2FilePathTextField = new JTextField(20);
+        transform2FilePathTextField = new JTextField(35);
         transform2FilePathTextField.setEditable(false);
         transform2FilePathTextField.setBackground(Color.white);
         transform2BrowseButton = new JButton("Browse");
@@ -232,7 +232,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         transform2BrowseButton.setActionCommand("transform2Browse");
         
         JLabel transform3Label = new JLabel("Transformation 3 - Nonlinear");
-        transform3FilePathTextField = new JTextField(20);
+        transform3FilePathTextField = new JTextField(35);
         transform3FilePathTextField.setEditable(false);
         transform3FilePathTextField.setBackground(Color.white);
         transform3BrowseButton = new JButton("Browse");
@@ -241,9 +241,17 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         
         processGroup = new ButtonGroup();
         doAverageRadio = new JRadioButton("Average");
+        doAverageRadio.addActionListener(this);
+        doAverageRadio.setActionCommand("average");
+        doSqRtRadio = new JRadioButton("SqrRt(Intensity-H x Intensity-F)");
+        doSqRtRadio.addActionListener(this);
+        doSqRtRadio.setActionCommand("sqrRt");
         doClosestZRadio = new JRadioButton("Closest Z");
+        doClosestZRadio.addActionListener(this);
+        doClosestZRadio.setActionCommand("closestZ");
         doAverageRadio.setSelected(true);
         processGroup.add(doAverageRadio);
+        processGroup.add(doSqRtRadio);
         processGroup.add(doClosestZRadio);
         
         interpGroup = new ButtonGroup();
@@ -253,6 +261,22 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         interpGroup.add(doTrilinearRadio);
         interpGroup.add(doBsplineRadio);
         
+        rescaleGroup = new ButtonGroup();
+        doRescaleRadio = new JRadioButton("Rescale");
+        noRescaleRadio = new JRadioButton("No Rescale");
+        doRescaleRadio.setSelected(true);
+        rescaleGroup.add(doRescaleRadio);
+        rescaleGroup.add(noRescaleRadio);
+        
+        ignoreBGGroup = new ButtonGroup();
+        ignoreBGRadio = new JRadioButton("Ignore background pixels");
+        includeBGRadio = new JRadioButton("Include background pixels");
+        ignoreBGRadio.setSelected(true);
+        ignoreBGGroup.add(ignoreBGRadio);
+        ignoreBGGroup.add(includeBGRadio);
+        
+        
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(15,5,5,15);
@@ -261,20 +285,38 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         
         processPanel = new JPanel(new GridBagLayout());
         interpPanel = new JPanel(new GridBagLayout());
+        rescalePanel = new JPanel(new GridBagLayout());
+        averagingOptionsPanel = new JPanel(new GridBagLayout());
         processPanel.setBorder(new TitledBorder("Process using"));
         interpPanel.setBorder(new TitledBorder("Interpolation"));
+        rescalePanel.setBorder(new TitledBorder("Rescale H to F"));
+        averagingOptionsPanel.setBorder(new TitledBorder("Averaging Options"));
         
+        
+        //gbc.anchor = GridBagConstraints.WEST;
         processPanel.add(doAverageRadio,gbc);
         gbc.gridy = 1;
+        processPanel.add(doSqRtRadio,gbc);
+        gbc.gridy = 2;
         processPanel.add(doClosestZRadio,gbc);
         gbc.gridy = 0;
-        
         interpPanel.add(doTrilinearRadio,gbc);
         gbc.gridy = 1;
         interpPanel.add(doBsplineRadio,gbc);
+        gbc.gridy = 0;
+        rescalePanel.add(doRescaleRadio,gbc);
+        gbc.gridy = 1;
+        rescalePanel.add(noRescaleRadio,gbc);
+        gbc.gridy = 0;
+        averagingOptionsPanel.add(ignoreBGRadio,gbc);
+        gbc.gridy = 1;
+        averagingOptionsPanel.add(includeBGRadio,gbc);
+        
         
         optionsPanel.add(processPanel);
         optionsPanel.add(interpPanel);
+        optionsPanel.add(rescalePanel);
+        optionsPanel.add(averagingOptionsPanel);
 
         concatMatricesOnly = new JCheckBox("concat affine and green matrices only"); //used for debugging purposes only
 
@@ -407,8 +449,16 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	 */
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
-		
-		 if (command.equalsIgnoreCase("imageXBrowse")) { 
+		if (command.equalsIgnoreCase("average")) { 
+			ignoreBGRadio.setEnabled(true);
+			includeBGRadio.setEnabled(true);
+		}else if (command.equalsIgnoreCase("sqrRt")) { 
+			ignoreBGRadio.setEnabled(false);
+			includeBGRadio.setEnabled(false);
+		}else if (command.equalsIgnoreCase("closestZ")) { 
+			ignoreBGRadio.setEnabled(false);
+			includeBGRadio.setEnabled(false);
+		}else if (command.equalsIgnoreCase("imageXBrowse")) { 
 			JFileChooser chooser = new JFileChooser();
 	        if (currDir != null) {
 				chooser.setCurrentDirectory(new File(currDir));
@@ -420,7 +470,9 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	        	currDir = chooser.getSelectedFile().getAbsolutePath();
 	        	FileIO fileIO = new FileIO();
 	            imageX = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
-	            vjfX = new ViewJFrameImage(imageX);
+	            if(doRescaleRadio.isSelected()) {
+	            	vjfX = new ViewJFrameImage(imageX);
+	            }
 	            imageXFilePathTextField.setText(currDir);
 	        }
 		 }else if(command.equalsIgnoreCase("imageYBrowse")) {
@@ -436,7 +488,9 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		        	FileIO fileIO = new FileIO();
 		            imageY = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
 		            destExtents =imageY.getExtents();
-		            vjfY = new ViewJFrameImage(imageY);
+		            if(doRescaleRadio.isSelected()) {
+		            	vjfY = new ViewJFrameImage(imageY);
+		            }
 		            imageYFilePathTextField.setText(currDir);
 		        }
 		 }else if(command.equalsIgnoreCase("transform1Browse")) {
@@ -498,150 +552,155 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		    	 imageY.disposeLocal();
 		    	 imageY = null;
 		     }
-		     vjfX.close();
-		     vjfY.close();
+		     if(vjfX != null) {
+		    	 vjfX.close();
+		     }
+		     if(vjfY != null) {
+		    	 vjfY.close();
+		     }
 			 dispose();
 		 }else if(command.equalsIgnoreCase("ok")) {
 			 setCursor(new Cursor(Cursor.WAIT_CURSOR));
 			 //rescale imageX intensity to imageY based on VOI
-			 VOIVector VOIsX = imageX.getVOIs();
-		     int nVOIX = VOIsX.size();
-			 if(nVOIX != 1) {
-				 MipavUtil.displayError("Both images must contain one VOI");
-				 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	        	 return;
-			 }
-			 VOIVector VOIsY = imageY.getVOIs();
-		     int nVOIY = VOIsY.size();
-			 if(nVOIY != 1) {
-				 MipavUtil.displayError("Both images must contain one VOI");
-				 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	        	 return;
-			 }
-			 VOI VOIX = VOIsX.VOIAt(0);
-			 VOIX.setAllActive(true);
-	         algoVOIProps = new AlgorithmVOIProps(imageX, AlgorithmVOIProps.PROCESS_PER_VOI, JDialogVOIStatistics.NO_RANGE);
-	         algoVOIProps.run();
-	         minR_X = algoVOIProps.getMinIntensityRed();
-	         maxR_X = algoVOIProps.getMaxIntensityRed();
-	            
-	         minG_X = algoVOIProps.getMinIntensityGreen();
-	         maxG_X = algoVOIProps.getMaxIntensityGreen();
-	         
-	         minB_X = algoVOIProps.getMinIntensityBlue();
-	         maxB_X = algoVOIProps.getMaxIntensityBlue();
-	         
-	         System.out.println("imageX VOI values: minR maxR minG maxG minB maxB :" + minR_X + " " + maxR_X + " " + minG_X + " " + maxG_X + " " + minB_X + " " + maxB_X);
-	         
-	         algoVOIProps.finalize();
-	         algoVOIProps = null;
-			 VOI VOIY = VOIsY.VOIAt(0);
-			 VOIY.setAllActive(true);
-	         algoVOIProps = new AlgorithmVOIProps(imageY, AlgorithmVOIProps.PROCESS_PER_VOI, JDialogVOIStatistics.NO_RANGE);
-	         algoVOIProps.run();
-	         minR_Y = algoVOIProps.getMinIntensityRed();
-	         maxR_Y = algoVOIProps.getMaxIntensityRed();
-	            
-	         minG_Y = algoVOIProps.getMinIntensityGreen();
-	         maxG_Y = algoVOIProps.getMaxIntensityGreen();
-	         
-	         minB_Y = algoVOIProps.getMinIntensityBlue();
-	         maxB_Y = algoVOIProps.getMaxIntensityBlue();
-	         
-	         System.out.println("imageY VOI values: minR maxR minG maxG minB maxB :" + minR_Y + " " + maxR_Y + " " + minG_Y + " " + maxG_Y + " " + minB_Y + " " + maxB_Y);
-	         
-	         algoVOIProps.finalize();
-	         algoVOIProps = null;
-	         
-	         vjfX.setVisible(false);
-	         vjfY.setVisible(false);
-	         
-	         VOIsX.clear();
-	         VOIsY.clear();
-	         
-	         //calculate slope and b-intercept for voi-window
-	         slopeR = calculateSlope(minR_Y,minR_X,maxR_Y,maxR_X);
-	         bR = calculateB(minR_Y,minR_X,slopeR);
-	         System.out.println("slopeR = " + slopeR + " , bR = " + bR);
-	         
-	         slopeG = calculateSlope(minG_Y,minG_X,maxG_Y,maxG_X);
-	         bG = calculateB(minG_Y,minG_X,slopeG);
-	         System.out.println("slopeG = " + slopeG + " , bG = " + bG);
-	         
-	         slopeB = calculateSlope(minB_Y,minB_X,maxB_Y,maxB_X);
-	         bB = calculateB(minB_Y,minB_X,slopeB);
-	         System.out.println("slopeB = " + slopeB + " , bB = " + bB);
-	         
-	         //now we go through imageX and rescale
-	         int length = imageX.getExtents()[0] * imageX.getExtents()[1] * imageX.getExtents()[2] * 4;
-	         float[] buffer = new float[length];
-	        
-	         try {
-	        	 imageX.exportData(0, length, buffer);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	             return;
-	         }
-	         float red,green,blue;
-	         float newRed, newGreen, newBlue;
-	         
-	         for(int i=0;i<buffer.length;i=i+4) {
-	        	 red = buffer[i+1];
-	        	 if(slopeR == 0 && bR == 0) {
-	        		 newRed = red;
-	        	 }else {
-		        	 newRed = getNewValue(red,slopeR,bR);
-		        	 if(newRed < 0) {
-		        		 newRed = 0;
-		        	 }else if(newRed > 255) {
-		        		 newRed = 255;
+			 if(doRescaleRadio.isSelected()) {
+				 VOIVector VOIsX = imageX.getVOIs();
+			     int nVOIX = VOIsX.size();
+				 if(nVOIX != 1) {
+					 MipavUtil.displayError("Both images must contain one VOI");
+					 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		        	 return;
+				 }
+				 VOIVector VOIsY = imageY.getVOIs();
+			     int nVOIY = VOIsY.size();
+				 if(nVOIY != 1) {
+					 MipavUtil.displayError("Both images must contain one VOI");
+					 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		        	 return;
+				 }
+				 VOI VOIX = VOIsX.VOIAt(0);
+				 VOIX.setAllActive(true);
+		         algoVOIProps = new AlgorithmVOIProps(imageX, AlgorithmVOIProps.PROCESS_PER_VOI, JDialogVOIStatistics.NO_RANGE);
+		         algoVOIProps.run();
+		         minR_X = algoVOIProps.getMinIntensityRed();
+		         maxR_X = algoVOIProps.getMaxIntensityRed();
+		            
+		         minG_X = algoVOIProps.getMinIntensityGreen();
+		         maxG_X = algoVOIProps.getMaxIntensityGreen();
+		         
+		         minB_X = algoVOIProps.getMinIntensityBlue();
+		         maxB_X = algoVOIProps.getMaxIntensityBlue();
+		         
+		         System.out.println("imageX VOI values: minR maxR minG maxG minB maxB :" + minR_X + " " + maxR_X + " " + minG_X + " " + maxG_X + " " + minB_X + " " + maxB_X);
+		         
+		         algoVOIProps.finalize();
+		         algoVOIProps = null;
+				 VOI VOIY = VOIsY.VOIAt(0);
+				 VOIY.setAllActive(true);
+		         algoVOIProps = new AlgorithmVOIProps(imageY, AlgorithmVOIProps.PROCESS_PER_VOI, JDialogVOIStatistics.NO_RANGE);
+		         algoVOIProps.run();
+		         minR_Y = algoVOIProps.getMinIntensityRed();
+		         maxR_Y = algoVOIProps.getMaxIntensityRed();
+		            
+		         minG_Y = algoVOIProps.getMinIntensityGreen();
+		         maxG_Y = algoVOIProps.getMaxIntensityGreen();
+		         
+		         minB_Y = algoVOIProps.getMinIntensityBlue();
+		         maxB_Y = algoVOIProps.getMaxIntensityBlue();
+		         
+		         System.out.println("imageY VOI values: minR maxR minG maxG minB maxB :" + minR_Y + " " + maxR_Y + " " + minG_Y + " " + maxG_Y + " " + minB_Y + " " + maxB_Y);
+		         
+		         algoVOIProps.finalize();
+		         algoVOIProps = null;
+		         
+		         vjfX.setVisible(false);
+		         vjfY.setVisible(false);
+		         
+		         VOIsX.clear();
+		         VOIsY.clear();
+		         
+		         //calculate slope and b-intercept for voi-window
+		         slopeR = calculateSlope(minR_Y,minR_X,maxR_Y,maxR_X);
+		         bR = calculateB(minR_Y,minR_X,slopeR);
+		         System.out.println("slopeR = " + slopeR + " , bR = " + bR);
+		         
+		         slopeG = calculateSlope(minG_Y,minG_X,maxG_Y,maxG_X);
+		         bG = calculateB(minG_Y,minG_X,slopeG);
+		         System.out.println("slopeG = " + slopeG + " , bG = " + bG);
+		         
+		         slopeB = calculateSlope(minB_Y,minB_X,maxB_Y,maxB_X);
+		         bB = calculateB(minB_Y,minB_X,slopeB);
+		         System.out.println("slopeB = " + slopeB + " , bB = " + bB);
+		         
+		         //now we go through imageX and rescale
+		         int length = imageX.getExtents()[0] * imageX.getExtents()[1] * imageX.getExtents()[2] * 4;
+		         float[] buffer = new float[length];
+		        
+		         try {
+		        	 imageX.exportData(0, length, buffer);
+		         } catch (IOException error) {
+		             System.out.println("IO exception");
+		             setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		             return;
+		         }
+		         float red,green,blue;
+		         float newRed, newGreen, newBlue;
+		         
+		         for(int i=0;i<buffer.length;i=i+4) {
+		        	 red = buffer[i+1];
+		        	 if(slopeR == 0 && bR == 0) {
+		        		 newRed = red;
+		        	 }else {
+			        	 newRed = getNewValue(red,slopeR,bR);
+			        	 if(newRed < 0) {
+			        		 newRed = 0;
+			        	 }else if(newRed > 255) {
+			        		 newRed = 255;
+			        	 }
 		        	 }
-	        	 }
-	        	 buffer[i+1] = newRed;
-	        	 
-	        	 green = buffer[i+2];
-	        	 if(slopeG == 0 && bG == 0) {
-	        		 newGreen = green;
-	        	 }else {
-		        	 newGreen = getNewValue(green,slopeG,bG);
-		        	 if(newGreen < 0) {
-		        		 newGreen = 0;
-		        	 }else if(newGreen > 255) {
-		        		 newGreen = 255;
+		        	 buffer[i+1] = newRed;
+		        	 
+		        	 green = buffer[i+2];
+		        	 if(slopeG == 0 && bG == 0) {
+		        		 newGreen = green;
+		        	 }else {
+			        	 newGreen = getNewValue(green,slopeG,bG);
+			        	 if(newGreen < 0) {
+			        		 newGreen = 0;
+			        	 }else if(newGreen > 255) {
+			        		 newGreen = 255;
+			        	 }
 		        	 }
-	        	 }
-	        	 buffer[i+2] = newGreen;
-	        	 
-	        	 blue = buffer[i+3];
-	        	 if(slopeB == 0 && bB == 0) {
-	        		 newBlue = blue;
-	        	 }else {
-		        	 newBlue = getNewValue(blue,slopeB,bB);
-		        	 if(newBlue < 0) {
-		        		 newBlue = 0;
-		        	 }else if(newBlue > 255) {
-		        		 newBlue = 255;
+		        	 buffer[i+2] = newGreen;
+		        	 
+		        	 blue = buffer[i+3];
+		        	 if(slopeB == 0 && bB == 0) {
+		        		 newBlue = blue;
+		        	 }else {
+			        	 newBlue = getNewValue(blue,slopeB,bB);
+			        	 if(newBlue < 0) {
+			        		 newBlue = 0;
+			        	 }else if(newBlue > 255) {
+			        		 newBlue = 255;
+			        	 }
 		        	 }
-	        	 }
-	        	 buffer[i+3] = newBlue;           
-	         }
-	         
-	         try {
-	             imageX.importData(0, buffer, true);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-	             return;
-	         }
-	         imageX.calcMinMax();
-			 //done rescaling
+		        	 buffer[i+3] = newBlue;           
+		         }
+		         
+		         try {
+		             imageX.importData(0, buffer, true);
+		         } catch (IOException error) {
+		             System.out.println("IO exception");
+		             setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		             return;
+		         }
+		         imageX.calcMinMax();
+			 }//done rescaling
 
-			 if(doAverageRadio.isSelected()) {
-				 doAverage = true;
-			 }else {
-				 doAverage = false;
-			 }
+			 //if(doAverageRadio.isSelected()) {
+				 //doAverage = true;
+			 //}else {
+				 //doAverage = false;
+			 //}
 
 			 TransMatrix intermMatrix1 = new TransMatrix(4);
 			 intermMatrix1.Mult(matrixAffine, matrixGreen); //pretty sure this is correct
@@ -886,7 +945,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 						 }
 						 //Now either do averaging or closest-Z
 						 int floorPointIndex1=0, floorPointIndex2=0;
-						 if(doAverage) {
+						 if(doAverageRadio.isSelected() || doSqRtRadio.isSelected()) {
 							//get linear interpolated values from both transformed points
 							 if(tPt1[0] < 0 || tPt1[1] < 0 || tPt1[2] < 0 || tPt1[0] > imageX.getExtents()[0]-1 || tPt1[1] > imageX.getExtents()[1]-1 || tPt1[2] > imageX.getExtents()[2]-1) {
 								 rgb1_short[0] = 0;
@@ -995,21 +1054,36 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 
 							 byte avgR, avgG, avgB;
 							 
-							 //dont do averaging if other point is all background
-							 if(rgb1_short[0] == 0 && rgb1_short[1] == 0 && rgb1_short[2] == 0) {
-								 avgR = (byte)rgb2_short[0];
-								 avgG = (byte)rgb2_short[1];
-								 avgB = (byte)rgb2_short[2];
-							 }else if (rgb2_short[0] == 0 && rgb2_short[1] == 0 && rgb2_short[2] == 0) {
-								 avgR = (byte)rgb1_short[0];
-								 avgG = (byte)rgb1_short[1];
-								 avgB = (byte)rgb1_short[2];
+							 if(doAverageRadio.isSelected()) {
+								 //dont do averaging if other point is all background
+								 if(ignoreBGRadio.isSelected()) {
+									 if(rgb1_short[0] == 0 && rgb1_short[1] == 0 && rgb1_short[2] == 0) {
+										 avgR = (byte)rgb2_short[0];
+										 avgG = (byte)rgb2_short[1];
+										 avgB = (byte)rgb2_short[2];
+									 }else if (rgb2_short[0] == 0 && rgb2_short[1] == 0 && rgb2_short[2] == 0) {
+										 avgR = (byte)rgb1_short[0];
+										 avgG = (byte)rgb1_short[1];
+										 avgB = (byte)rgb1_short[2];
+									 }else {
+										 //averaging
+										 avgR = (byte)Math.round(((rgb1_short[0] + rgb2_short[0])/2.0f));
+										 avgG = (byte)Math.round(((rgb1_short[1] + rgb2_short[1])/2.0f));
+										 avgB = (byte)Math.round(((rgb1_short[2] + rgb2_short[2])/2.0f));
+									 }
+								 }else {
+									//averaging
+									 avgR = (byte)Math.round(((rgb1_short[0] + rgb2_short[0])/2.0f));
+									 avgG = (byte)Math.round(((rgb1_short[1] + rgb2_short[1])/2.0f));
+									 avgB = (byte)Math.round(((rgb1_short[2] + rgb2_short[2])/2.0f));
+								 }
 							 }else {
-								 //averaging
-								 avgR = (byte)Math.round(((rgb1_short[0] + rgb2_short[0])/2.0f));
-								 avgG = (byte)Math.round(((rgb1_short[1] + rgb2_short[1])/2.0f));
-								 avgB = (byte)Math.round(((rgb1_short[2] + rgb2_short[2])/2.0f));
+								 //doing Sqrt (Intensity X * Intensity Y)
+								 avgR = (byte)Math.sqrt(rgb1_short[0] * rgb2_short[0]);
+								 avgG = (byte)Math.sqrt(rgb1_short[1] * rgb2_short[1]);
+								 avgB = (byte)Math.sqrt(rgb1_short[2] * rgb2_short[2]); 
 							 }
+							 
 
 
 							 //alpha
@@ -1245,8 +1319,12 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		    	 imageY.disposeLocal();
 		    	 imageY = null;
 		     }
-		     vjfX.close();
-		     vjfY.close();
+		     if(vjfX != null) {
+		    	 vjfX.close();
+		     }
+		     if(vjfY != null) {
+		    	 vjfY.close();
+		     }
 		     //new ViewJFrameImage(imageX); //testing
 		     //new ViewJFrameImage(imageY); //testing
 			 dispose();
