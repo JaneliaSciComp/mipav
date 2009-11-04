@@ -51,9 +51,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     
     /** Turn display 3D TriMesh Surface on/off */
     protected JCheckBox m_kDisplaySurfaceCheck;
-    
+
     /** Turn display 3D Stereo on/off */
-    protected JCheckBox m_kStereoCheck;
+    protected JRadioButton m_kStereoOff, m_kStereo_Red_Green, m_kStereo_Shutter;
     
     /** Radio button of the COMPOSITE mode option. */
     protected JRadioButton radioCOMPOSITE;
@@ -148,14 +148,6 @@ public class JPanelRenderMode_WM extends JInterfaceBase
      */
     public JCheckBox getSlicesCheck() {
     	return m_kDisplaySlicesCheck;
-    }
-    
-    /**
-     * Get the stereo checkbox. 
-     * @return  true or false
-     */
-    public JCheckBox getStereoCheck() {
-    	return m_kStereoCheck;
     }
     
     /**
@@ -281,7 +273,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          
          GridBagConstraints gbc = new GridBagConstraints();
 
-         gbc.weightx = 1;
+         //gbc.weightx = 1;
          gbc.anchor = GridBagConstraints.WEST;
          gbc.insets = new Insets(5, 5, 5, 5);
        
@@ -307,15 +299,31 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          m_kDisplaySurfaceCheck.addActionListener(this);
          gbc.gridy = 2;
          componentsPanel.add(m_kDisplaySurfaceCheck, gbc);
-         
-         m_kStereoCheck = new JCheckBox( "Stereo" );
-         m_kStereoCheck.setSelected(false);
-         m_kStereoCheck.setEnabled(true);
-         m_kStereoCheck.setActionCommand( "Stereo");
-         m_kStereoCheck.addActionListener(this);
+
+         gbc.gridx = 0;
+         ButtonGroup group0 = new ButtonGroup();
+         m_kStereoOff = new JRadioButton( "Stereo OFF", true );
+         m_kStereoOff.setActionCommand( "StereoOFF");
+         m_kStereoOff.addActionListener(this);
          gbc.gridy = 3;
-         componentsPanel.add(m_kStereoCheck, gbc);
+         componentsPanel.add(m_kStereoOff, gbc);
+         group0.add(m_kStereoOff);
          
+         m_kStereo_Red_Green = new JRadioButton( "Red/Green Stereo", false );
+         m_kStereo_Red_Green.setActionCommand( "StereoRED");
+         m_kStereo_Red_Green.addActionListener(this);
+         gbc.gridx++;
+         componentsPanel.add(m_kStereo_Red_Green, gbc);
+         group0.add(m_kStereo_Red_Green);
+         
+         m_kStereo_Shutter = new JRadioButton( "Shutter Glasses Stereo", false );
+         m_kStereo_Shutter.setActionCommand( "StereoSHUTTER");
+         m_kStereo_Shutter.addActionListener(this);
+         gbc.gridx++;
+         componentsPanel.add(m_kStereo_Shutter, gbc);
+         group0.add(m_kStereo_Shutter);
+         
+         gbc.gridx = 0;
          kSelfShadow = new JCheckBox("Self Shadow", false);
          kSelfShadow.setFont(MipavUtil.font12);
          kSelfShadow.addItemListener(this);
