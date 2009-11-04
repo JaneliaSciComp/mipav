@@ -76,9 +76,9 @@ public class CustomToolBarBuilder extends ViewToolBarBuilder {
 	public static final ButtonParams PARAM_PAINT_BORDER = new ButtonParams("DisplayBorder", "Display/Hide border around painted areas.", "borderpaint");
 	
 	/** Paint mask ops */
-	public static final ButtonParams PARAM_PAINT_MASK_INSIDE = new ButtonParams("CommitPaint", "<html>" + "Masks the inside of the painted area." +
+	public static final ButtonParams PARAM_PAINT_MASK_INSIDE = new ButtonParams("CommitPaint", "<html>" + "Masks the painted area." +
             "<br>" + "[right-click for options]" + "</html>", "paintinside");
-	public static final ButtonParams PARAM_PAINT_MASK_OUTSIDE = new ButtonParams("CommitPaintExt", "<html>" + "Masks the outside of the painted area." +
+	public static final ButtonParams PARAM_PAINT_MASK_OUTSIDE = new ButtonParams("CommitPaintExt", "<html>" + "Masks outside of the painted area." +
             "<br>" + "[right-click for options]" + "</html>", "paintoutside");
 	
 	public static final ButtonParams PARAM_PAINT_UNDO = new ButtonParams("UndoPaint", "Undo last paint/region grow.", "undopaint");
