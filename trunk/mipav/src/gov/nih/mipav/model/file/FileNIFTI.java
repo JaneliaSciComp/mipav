@@ -3945,8 +3945,24 @@ public class FileNIFTI extends FileBase {
                 qform_code = FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT;
                 if ((axisOrientation != null) && 
                     (axisOrientation[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
-                    (axisOrientation[1] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
-                    (axisOrientation[2] != FileInfoBase.ORI_UNKNOWN_TYPE)) {
+                    (axisOrientation[1] != FileInfoBase.ORI_UNKNOWN_TYPE)) {
+                    if (axisOrientation[2] == FileInfoBase.ORI_UNKNOWN_TYPE) {
+                        if ((axisOrientation[0] != FileInfoBase.ORI_R2L_TYPE) && 
+                                (axisOrientation[0] != FileInfoBase.ORI_L2R_TYPE) &&
+                                (axisOrientation[1] != FileInfoBase.ORI_R2L_TYPE) &&
+                                (axisOrientation[1] != FileInfoBase.ORI_L2R_TYPE)) {
+                                axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
+                            }
+                            else if ((axisOrientation[0] != FileInfoBase.ORI_A2P_TYPE) && 
+                                    (axisOrientation[0] != FileInfoBase.ORI_P2A_TYPE) &&
+                                    (axisOrientation[1] != FileInfoBase.ORI_A2P_TYPE) &&
+                                    (axisOrientation[1] != FileInfoBase.ORI_P2A_TYPE)) {
+                                    axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE; 
+                            }
+                            else {
+                                axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
+                            }    
+                    }
                     r00 = 0.0;
                     r01 = 0.0;
                     r02 = 0.0;
