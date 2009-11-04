@@ -88,9 +88,9 @@ public class CustomUIBuilder {
 	public static final UIParams PARAM_PAINT_BORDER = new UIParams("DisplayBorder", "Display/Hide border around painted areas.", "borderpaint");
 	
 	/** Paint mask ops */
-	public static final UIParams PARAM_PAINT_MASK_INSIDE = new UIParams("CommitPaint", "<html>" + "Masks the inside of the painted area." +
+	public static final UIParams PARAM_PAINT_MASK_INSIDE = new UIParams("CommitPaint", "<html>" + "Masks the painted area." +
             "<br>" + "[right-click for options]" + "</html>", "paintinside");
-	public static final UIParams PARAM_PAINT_MASK_OUTSIDE = new UIParams("CommitPaintExt", "<html>" + "Masks the outside of the painted area." +
+	public static final UIParams PARAM_PAINT_MASK_OUTSIDE = new UIParams("CommitPaintExt", "<html>" + "Masks outside of the painted area." +
             "<br>" + "[right-click for options]" + "</html>", "paintoutside");
 	
 	public static final UIParams PARAM_PAINT_UNDO = new UIParams("UndoPaint", "Undo last paint/region grow.", "undopaint");
