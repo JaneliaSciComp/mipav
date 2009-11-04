@@ -2288,7 +2288,23 @@ public class FileNIFTI extends FileBase {
                     
         } // if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) &&
 
-        updateUnitsOfMeasure(fileInfo, image);
+        extents = fileInfo.getExtents();
+        if (image.getNDims() == 2) {
+            image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
+        } else if (image.getNDims() == 3) { // If there is more than one image
+
+            for (int i = 0; i < extents[2]; i++) {
+                FileInfoNIFTI newFileInfo = (FileInfoNIFTI) fileInfo.clone();
+                newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
+                image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
+            }
+        } else if (image.getNDims() == 4) { // If there is more than one image
+            for (int i = 0; i < (extents[2] * extents[3]); i++) {
+                FileInfoNIFTI newFileInfo = (FileInfoNIFTI) fileInfo.clone();
+                newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
+                image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
+            }
+        }
         updateorigins(image.getFileInfo());
         if (image.getNDims() >= 3) {
             image.setMatrix(matrix);
@@ -3282,44 +3298,7 @@ public class FileNIFTI extends FileBase {
          * image.getExtents()[4];    i++) { fileInfo[i].setorigins(startLocs); startLocs[4] += resolutions[4]; }  }*/
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  fileInfo  -- a NIFTI file Info that has already been read
-     * @param  image     -- a ModelImage that the fileInfo needs to be attached to
-     */
-    private void updateUnitsOfMeasure(FileInfoNIFTI fileInfo, ModelImage image) {
-
-        int[] extents = fileInfo.getExtents();
-
-        if (image.getNDims() == 2) {
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-            image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
-        } else if (image.getNDims() == 3) { // If there is more than one image
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
-
-            for (int i = 0; i < extents[2]; i++) {
-                FileInfoNIFTI newFileInfo = (FileInfoNIFTI) fileInfo.clone();
-                newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
-                image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
-            }
-        } else if (image.getNDims() == 4) { // If there is more than one image
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
-            fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, 3);
-
-            for (int i = 0; i < (extents[2] * extents[3]); i++) {
-                FileInfoNIFTI newFileInfo = (FileInfoNIFTI) fileInfo.clone();
-                newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
-                image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
-            }
-        }
-
-    } // end updateUnitsOfMeasure()
+    
 
     /**
      * Writes a NIFTI header to a separate file.
@@ -3567,7 +3546,6 @@ public class FileNIFTI extends FileBase {
         } // if (firstSpatialDim >= 0)
 
         if (firstTimeDim >= 0) {
-
             switch (firstTimeUnits) {
 
                 case FileInfoBase.NANOSEC:
