@@ -993,16 +993,24 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     				qname = new QName("name");
     				attr = childElement.getAttribute(qname);
     				String n = attr.getAttributeValue();
+    				
+    				qname = new QName("short_name");
+    				attr = childElement.getAttribute(qname);
+    				String s = attr.getAttributeValue();
+    				
+    				qname = new QName("desc");
+    				attr = childElement.getAttribute(qname);
+    				String d = attr.getAttributeValue();
+    				
     				qname = new QName("version");
     				attr = childElement.getAttribute(qname);
     				String v = attr.getAttributeValue();
-    				qname = new QName("shortname");
-    				attr = childElement.getAttribute(qname);
-    				String s = attr.getAttributeValue();
+    				
     				qname = new QName("type");
     				attr = childElement.getAttribute(qname);
     				String t = attr.getAttributeValue();
-    				dataStruct = new DataStruct(n,v,s,t);
+    				
+    				dataStruct = new DataStruct(n,s,d,v,t);
     				parse(childElement, dataStruct);
     				xmlDataStructs.add(dataStruct);
     			}
@@ -1072,25 +1080,33 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 					qname = new QName("name");
     				attr = childElement.getAttribute(qname);
     				String n = attr.getAttributeValue();
-    				//System.out.println(attr.getAttributeValue());
+
+    				qname = new QName("desc");
+    				attr = childElement.getAttribute(qname);
+    				String d = attr.getAttributeValue();
+    				
+    				qname = new QName("short_desc");
+    				attr = childElement.getAttribute(qname);
+    				String sh = attr.getAttributeValue();
+
     				qname = new QName("type");
     				attr = childElement.getAttribute(qname);
     				String t = attr.getAttributeValue();
-    				//System.out.println(attr.getAttributeValue());
+
     				qname = new QName("size");
     				attr = childElement.getAttribute(qname);
     				String s = attr.getAttributeValue();
-    				//System.out.println(attr.getAttributeValue());
+
     				qname = new QName("required");
     				attr = childElement.getAttribute(qname);
     				String r = attr.getAttributeValue();
-    				//System.out.println(attr.getAttributeValue());
-    				qname = new QName("valuerange");
+
+    				qname = new QName("value_range");
     				attr = childElement.getAttribute(qname);
     				String v = attr.getAttributeValue();
-    				//System.out.println(attr.getAttributeValue());
+
     				
-    				DataElement de = new DataElement(n,t,s,r,v);
+    				DataElement de = new DataElement(n,d,sh,t,s,r,v);
     				ds2.add(de);
     				
     				if(!(n.equals("image_file") || n.equals("image_thumbnail_file") || (origImage.is2DImage() && n.equals("image_extent3")) || ((origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_extent4")) || ((origImage.is2DImage() || origImage.is3DImage() || origImage.is4DImage()) && n.equals("image_extent5")) || (origImage.is2DImage() && n.equals("image_resolution3")) || ((origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_resolution4")) || ((origImage.is2DImage() || origImage.is3DImage() || origImage.is4DImage()) && n.equals("image_resolution5")) || (origImage.is2DImage() && n.equals("image_unit3")) || ((origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_unit4")) || ((origImage.is2DImage() || origImage.is3DImage() || origImage.is4DImage()) && n.equals("image_unit5")))) {
@@ -1116,20 +1132,24 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 					qname = new QName("name");
     				attr = childElement.getAttribute(qname);
     				String n = attr.getAttributeValue();
-    				//System.out.println(attr.getAttributeValue());
+    				
+    				qname = new QName("short_name");
+    				attr = childElement.getAttribute(qname);
+    				String s = attr.getAttributeValue();
+    				
+    				qname = new QName("desc");
+    				attr = childElement.getAttribute(qname);
+    				String d = attr.getAttributeValue();
+    				
     				qname = new QName("version");
     				attr = childElement.getAttribute(qname);
     				String v = attr.getAttributeValue();
-    				//System.out.println(attr.getAttributeValue());
-    				qname = new QName("shortname");
-    				attr = childElement.getAttribute(qname);
-    				String s = attr.getAttributeValue();
-    				//System.out.println(attr.getAttributeValue());
+    				
     				qname = new QName("type");
     				attr = childElement.getAttribute(qname);
     				String t = attr.getAttributeValue();
-    				//System.out.println(attr.getAttributeValue());
-    				dataStruct = new DataStruct(n,v,s,t);
+    				
+    				dataStruct = new DataStruct(n,s,d,v,t);
     				parse(childElement, dataStruct);
     				ds2.add(dataStruct);
 				}
@@ -1541,8 +1561,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      */
     public class DataStruct extends Vector {
 		private String name;
-		private String version;
 		private String shortname;
+		private String desc;
+		private String version;
 		private String type;
 		
 		public DataStruct(String name, String version) {
@@ -1551,9 +1572,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 			this.version = version;
 		}
 		
-		public DataStruct(String name, String version, String shortname, String type) {
+		public DataStruct(String name, String shortname, String desc, String version,  String type) {
 			super();
 			this.name = name;
+			this.shortname = shortname;
+			this.desc = desc;
 			this.version = version;
 			this.shortname = shortname;
 			this.type = type;
@@ -1574,6 +1597,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 		public String getType() {
 			return type;
 		}
+
+		public String getDesc() {
+			return desc;
+		}
+		
 		
 	}
     
@@ -1585,13 +1613,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      */
     public class DataElement {
     	private String name;
+    	private String desc;
+    	private String shortDesc;
     	private String type;
     	private String size;
     	private String required;
     	private String valuerange;
     	
-    	public DataElement(String name, String type, String size, String required, String valuerange) {
+    	public DataElement(String name, String desc, String shortDesc, String type, String size, String required, String valuerange) {
     		this.name = name;
+    		this.desc = desc;
+    		this.shortDesc = shortDesc;
     		this.type = type;
     		this.size = size;
     		this.required = required;
@@ -1617,6 +1649,16 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 		public String getValuerange() {
 			return valuerange;
 		}
+
+		public String getDesc() {
+			return desc;
+		}
+
+		public String getShortDesc() {
+			return shortDesc;
+		}
+		
+		
     	
     	
     	
