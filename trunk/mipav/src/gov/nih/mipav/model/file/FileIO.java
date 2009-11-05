@@ -5150,7 +5150,6 @@ public class FileIO {
                     }
 
                     fileInfo[i].setExtents(extents);
-                    fileInfo[i].setOrigin( fileInfo[i].getOriginAtSlice(i));
                     image.setFileInfo(fileInfo[i], i);
                     image.importData( i * length, buffer, false);
                 } // if (fileList[i] != null)
