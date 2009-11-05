@@ -4964,8 +4964,7 @@ public class FileIO {
 
         ModelImage image = null;
         FileGESigna5X imageFile;
-        FileInfoBase myFileInfo;
-        FileInfoBase myFileInfo0 = null;
+        FileInfoGESigna5X fileInfo[] = null;
         String[] fileList;
         float[] buffer;
         int[] extents;
@@ -5020,15 +5019,17 @@ public class FileIO {
             length = width * height;
             buffer = new float[length];
 
-            if ( (fileList.length == 1) || (imageFile.getStartAdjust() > 0)) {
+            if (fileList.length == 1) {
                 extents = new int[2];
                 extents[0] = width;
                 extents[1] = height;
+                fileInfo = new FileInfoGESigna5X[1];
             } else {
                 extents = new int[3];
                 extents[0] = width;
                 extents[1] = height;
                 extents[2] = fileList.length;
+                fileInfo = new FileInfoGESigna5X[extents[2]];
             }
 
             image = new ModelImage(ModelImage.USHORT, extents, "GE");
@@ -5063,11 +5064,12 @@ public class FileIO {
             return null;
         }
 
-        if (imageFile.getStartAdjust() > 0) {
+        /*if (imageFile.getStartAdjust() > 0) {
             nImages = 1;
         } else {
             nImages = fileList.length;
-        }
+        }*/
+        nImages = fileList.length;
 
         // loop through files, place them in image array
         for (i = 0; i < nImages; i++) {
@@ -5081,34 +5083,33 @@ public class FileIO {
                     imageFile.readImageFileData();
                     imageFile.readImage(buffer);
 
-                    myFileInfo = imageFile.getFileInfo(); // Needed to set index
+                    fileInfo[i] = (FileInfoGESigna5X)imageFile.getFileInfo().clone(); // Needed to set index
 
                     if (i == 0) {
-                        myFileInfo0 = imageFile.getFileInfo();
-                        orient = myFileInfo.getAxisOrientation();
+                        orient = fileInfo[0].getAxisOrientation();
 
-                        switch (myFileInfo.getImageOrientation()) {
+                        switch (fileInfo[0].getImageOrientation()) {
 
                             case FileInfoBase.AXIAL:
-                                slice0Pos = ((FileInfoGESigna5X) myFileInfo).imgTLHC_S;
+                                slice0Pos = fileInfo[0].imgTLHC_S;
                                 break;
 
                             case FileInfoBase.CORONAL:
-                                slice0Pos = ((FileInfoGESigna5X) myFileInfo).imgTLHC_A;
+                                slice0Pos = fileInfo[0].imgTLHC_A;
                                 break;
 
                             case FileInfoBase.SAGITTAL:
-                                slice0Pos = ((FileInfoGESigna5X) myFileInfo).imgTLHC_R;
+                                slice0Pos = fileInfo[0].imgTLHC_R;
                                 break;
                         }
                     } // if (i == 0)
                     else if (i == 1) {
-                        orient = myFileInfo.getAxisOrientation();
+                        orient = fileInfo[1].getAxisOrientation();
 
-                        switch (myFileInfo.getImageOrientation()) {
+                        switch (fileInfo[1].getImageOrientation()) {
 
                             case FileInfoBase.AXIAL:
-                                slice1Pos = ((FileInfoGESigna5X) myFileInfo).imgTLHC_S;
+                                slice1Pos = fileInfo[1].imgTLHC_S;
                                 if (slice1Pos > slice0Pos) {
                                     orient[2] = FileInfoBase.ORI_I2S_TYPE;
                                 } else {
@@ -5118,7 +5119,7 @@ public class FileIO {
                                 break;
 
                             case FileInfoBase.CORONAL:
-                                slice1Pos = ((FileInfoGESigna5X) myFileInfo).imgTLHC_A;
+                                slice1Pos = fileInfo[1].imgTLHC_A;
                                 if (slice1Pos > slice0Pos) {
                                     orient[2] = FileInfoBase.ORI_P2A_TYPE;
                                 } else {
@@ -5128,7 +5129,7 @@ public class FileIO {
                                 break;
 
                             case FileInfoBase.SAGITTAL:
-                                slice1Pos = ((FileInfoGESigna5X) myFileInfo).imgTLHC_R;
+                                slice1Pos = fileInfo[1].imgTLHC_R;
                                 if (slice1Pos > slice0Pos) {
                                     orient[2] = FileInfoBase.ORI_L2R_TYPE;
                                 } else {
@@ -5136,23 +5137,22 @@ public class FileIO {
                                 }
 
                                 break;
-                        } // switch (myFileInfo.getImageOrientation())
+                        } // switch (fileInfo[1].getImageOrientation())
 
-                        if (myFileInfo0 != null) {
-                            image.setFileInfo(myFileInfo0, 0);
-                            myFileInfo0.setAxisOrientation(orient);
+                        if (fileInfo[0] != null) {
+                            image.setFileInfo(fileInfo[0], 0);
+                            fileInfo[0].setAxisOrientation(orient);
                         }
                     } // else if (i == 1)
 
                     if (i != 0) {
-                        myFileInfo.setAxisOrientation(orient);
+                        fileInfo[i].setAxisOrientation(orient);
                     }
 
-                    myFileInfo.setExtents(extents);
-                    myFileInfo.setOrigin( ((FileInfoGESigna5X) (myFileInfo)).getOriginAtSlice(imageFile
-                            .getImageNumber() - 1));
-                    image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
-                    image.importData( (imageFile.getImageNumber() - 1) * length, buffer, false);
+                    fileInfo[i].setExtents(extents);
+                    fileInfo[i].setOrigin( fileInfo[i].getOriginAtSlice(i));
+                    image.setFileInfo(fileInfo[i], i);
+                    image.importData( i * length, buffer, false);
                 } // if (fileList[i] != null)
             } // try
             catch (IOException error) {
@@ -5190,6 +5190,7 @@ public class FileIO {
                 return null;
             }
         } // for (i = 0; i < nImages; i++)
+        
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo(), false);
 
