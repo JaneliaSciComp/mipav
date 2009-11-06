@@ -1,9 +1,9 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.provenance.*;
+import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 
 import gov.nih.mipav.view.*;
 
@@ -17,24 +17,27 @@ import java.util.Vector;
  */
 public abstract class JDialogScriptableBase extends JDialogBase implements ScriptableActionInterface {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 1714695069613762132L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Contains parameters used to run or record the dialog action, along with some common helper methods. */
     protected AlgorithmParameters scriptParameters = null;
 
-	protected boolean displayInNewFrame;
+    protected boolean displayInNewFrame;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Passthrough to JDialogBase constructor.
-     *
-     * @see  JDialogBase
+     * 
+     * @see JDialogBase
      */
     public JDialogScriptableBase() {
         super();
@@ -42,80 +45,81 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
 
     /**
      * Passthrough to JDialogBase constructor.
-     *
-     * @param  modal  Whether the dialog is modal.
-     *
-     * @see    JDialogBase
+     * 
+     * @param modal Whether the dialog is modal.
+     * 
+     * @see JDialogBase
      */
-    public JDialogScriptableBase(boolean modal) {
+    public JDialogScriptableBase(final boolean modal) {
         super(modal);
     }
 
     /**
      * Passthrough to JDialogBase constructor.
-     *
-     * @param  parent  The parent frame.
-     * @param  modal   Whether the dialog is modal.
-     *
-     * @see    JDialogBase
+     * 
+     * @param parent The parent frame.
+     * @param modal Whether the dialog is modal.
+     * 
+     * @see JDialogBase
      */
-    public JDialogScriptableBase(Frame parent, boolean modal) {
+    public JDialogScriptableBase(final Frame parent, final boolean modal) {
         super(parent, modal);
     }
 
     /**
      * Passthrough to JDialogBase constructor.
-     *
-     * @param  parent  The parent dialog.
-     * @param  modal   Whether this dialog is modal.
-     *
-     * @see    JDialogBase
+     * 
+     * @param parent The parent dialog.
+     * @param modal Whether this dialog is modal.
+     * 
+     * @see JDialogBase
      */
-    public JDialogScriptableBase(Dialog parent, boolean modal) {
+    public JDialogScriptableBase(final Dialog parent, final boolean modal) {
         super(parent, modal);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Extracts the scripting action string which should be used for a given class.
-     *
-     * @param   dialogClass  The class to get the script action string for (should be prefixed with JDialog).
-     *
-     * @return  The script action string (e.g., 'GaussianBlur' for 'gov.nih.mipav.view.dialogs.JDialogGaussianBlur').
+     * 
+     * @param dialogClass The class to get the script action string for (should be prefixed with JDialog).
+     * 
+     * @return The script action string (e.g., 'GaussianBlur' for 'gov.nih.mipav.view.dialogs.JDialogGaussianBlur').
      */
-    public static final String getDialogActionString(Class dialogClass) {
+    public static final String getDialogActionString(final Class dialogClass) {
         String classPrefix = "JDialog";
-        String name = dialogClass.getName();
+        final String name = dialogClass.getName();
         int index = name.lastIndexOf(classPrefix);
 
         if (index == -1) {
-        	//since the plugin has a non-standard dialog name, the dialogClass name will have
-        	//to be shortened by looking at the ScriptableActionLoader's possible locations
-        	Vector scriptLoc = ScriptableActionLoader.getScriptActionLocations();
-        	int i=0;
-        	while(classPrefix.equals("JDialog") && i < scriptLoc.size()) {
-        		if(name.contains(scriptLoc.get(i).toString())) {
-        			classPrefix = scriptLoc.get(i).toString();
-        			index = name.lastIndexOf(classPrefix);
-        		}
-        		i++;
-        	}
-        	if(!classPrefix.equals("JDialog")) {
-        		Preferences.debug("dialog base: Extracting script action command.  Returning " +
-                        name.substring(index + classPrefix.length()) + "\n", Preferences.DEBUG_SCRIPTING);
-        	
-        		 return name.substring(index + classPrefix.length());
-        	} else {
-	            //Display's the long package name, not a problem unless this script uses MIPAV tools.
-	            Preferences.debug("dialog base: No script " + classPrefix + " prefix found.  Returning " + name + "\n",
-	                              Preferences.DEBUG_SCRIPTING);
-        	
-	            return name;
-        	}
+            // since the plugin has a non-standard dialog name, the dialogClass name will have
+            // to be shortened by looking at the ScriptableActionLoader's possible locations
+            final Vector<String> scriptLoc = ScriptableActionLoader.getScriptActionLocations();
+            int i = 0;
+            while (classPrefix.equals("JDialog") && i < scriptLoc.size()) {
+                if (name.contains(scriptLoc.get(i))) {
+                    classPrefix = scriptLoc.get(i);
+                    index = name.lastIndexOf(classPrefix);
+                }
+                i++;
+            }
+            if ( !classPrefix.equals("JDialog")) {
+                Preferences.debug("dialog base: Extracting script action command.  Returning "
+                        + name.substring(index + classPrefix.length()) + "\n", Preferences.DEBUG_SCRIPTING);
+
+                return name.substring(index + classPrefix.length());
+            } else {
+                // Display's the long package name, not a problem unless this script uses MIPAV tools.
+                Preferences.debug("dialog base: No script " + classPrefix + " prefix found.  Returning " + name + "\n",
+                        Preferences.DEBUG_SCRIPTING);
+
+                return name;
+            }
         } else {
-            Preferences.debug("dialog base: Extracting script action command.  Returning " +
-                              name.substring(index + classPrefix.length()) + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("dialog base: Extracting script action command.  Returning "
+                    + name.substring(index + classPrefix.length()) + "\n", Preferences.DEBUG_SCRIPTING);
 
             return name.substring(index + classPrefix.length());
         }
@@ -126,11 +130,11 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
      */
     public void insertScriptLine() {
 
-    	//if either the scriptrecorder or provenancerecorder is running, add entries
-    	//  must be done doubly as provenance and script image registers are completely different
-    	
+        // if either the scriptrecorder or provenancerecorder is running, add entries
+        // must be done doubly as provenance and script image registers are completely different
+
         if (ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING) {
-            String action = getDialogActionString(getClass());
+            final String action = JDialogScriptableBase.getDialogActionString(getClass());
 
             try {
 
@@ -140,7 +144,7 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
 
                 storeParamsFromGUI();
                 ScriptRecorder.getReference().addLine(action, scriptParameters.getParams());
-            } catch (ParserException pe) {
+            } catch (final ParserException pe) {
                 MipavUtil.displayError("Error encountered recording " + action + " scriptline:\n" + pe);
                 pe.printStackTrace();
 
@@ -153,17 +157,17 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
                 Preferences.debug(message, Preferences.DEBUG_SCRIPTING);
             }
         }
-        
+
         if (ProvenanceRecorder.getReference().getRecorderStatus() == ProvenanceRecorder.RECORDING) {
-        	String action = getDialogActionString(getClass());
+            final String action = JDialogScriptableBase.getDialogActionString(getClass());
 
             try {
-            	//must new AlgorithmParameters regardless to tell it is for provenance
-            	scriptParameters = new DataProvenanceParameters();
+                // must new AlgorithmParameters regardless to tell it is for provenance
+                scriptParameters = new DataProvenanceParameters();
 
                 storeParamsFromGUI();
                 ProvenanceRecorder.getReference().addLine(action, scriptParameters.getParams());
-            } catch (ParserException pe) {
+            } catch (final ParserException pe) {
                 MipavUtil.displayError("Error encountered recording " + action + " scriptline:\n" + pe);
                 pe.printStackTrace();
 
@@ -176,18 +180,17 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
                 Preferences.debug(message, Preferences.DEBUG_SCRIPTING);
             }
         }
-        
-        
+
     }
 
     /**
      * Sets up the action dialog state and then executes it.
-     *
-     * @param   parameters  Table of parameters for the script to use.
-     *
-     * @throws  IllegalArgumentException  If there is a problem with the action arguments.
+     * 
+     * @param parameters Table of parameters for the script to use.
+     * 
+     * @throws IllegalArgumentException If there is a problem with the action arguments.
      */
-    public void scriptRun(ParameterTable parameters) throws IllegalArgumentException {
+    public void scriptRun(final ParameterTable parameters) throws IllegalArgumentException {
         scriptParameters = new AlgorithmParameters(parameters);
 
         setScriptRunning(true);
@@ -211,8 +214,8 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
 
     /**
      * Record the parameters just used to run this algorithm in a script.
-     *
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * 
+     * @throws ParserException If there is a problem creating/recording the new parameters.
      */
     protected abstract void storeParamsFromGUI() throws ParserException;
 
@@ -220,5 +223,5 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
      * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the
      * image table). Defaults to no action, override to actually have it do something.
      */
-    protected void doPostAlgorithmActions() { }
+    protected void doPostAlgorithmActions() {}
 }

@@ -7,64 +7,70 @@ import java.util.Vector;
 
 
 /**
- * Given the name of a script action, this class searches a number of locations for a class to load with that name and returns a new instance of that class.
+ * Given the name of a script action, this class searches a number of locations for a class to load with that name and
+ * returns a new instance of that class.
  */
 public class ScriptableActionLoader {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Try MIPAV dialogs, then special script actions, then plugins (which are in the default package). */
-    private static Vector SCRIPT_ACTION_LOCATIONS = new Vector();
-    
+    private static Vector<String> SCRIPT_ACTION_LOCATIONS = new Vector<String>();
+
     static {
-        addScriptActionLocation("gov.nih.mipav.view.dialogs.JDialog");
-        addScriptActionLocation("gov.nih.mipav.model.scripting.actions.Action");
+        ScriptableActionLoader.addScriptActionLocation("gov.nih.mipav.view.dialogs.JDialog");
+        ScriptableActionLoader.addScriptActionLocation("gov.nih.mipav.model.scripting.actions.Action");
     };
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Returns a new instance of the class associated with a given script action.
-     *
-     * @param   action  The action to search for a class of.
-     *
-     * @return  A new instance of a script action's class.
-     *
-     * @throws  ParserException  If an associated class was not found or could not be loaded.
+     * 
+     * @param action The action to search for a class of.
+     * 
+     * @return A new instance of a script action's class.
+     * 
+     * @throws ParserException If an associated class was not found or could not be loaded.
      */
-    public static final ScriptableActionInterface getScriptableAction(String action) throws ParserException {
+    public static final ScriptableActionInterface getScriptableAction(final String action) throws ParserException {
 
         try {
             return (ScriptableActionInterface) ScriptableActionLoader.loadClass(action).newInstance();
-        } catch (IllegalAccessException err) {
+        } catch (final IllegalAccessException err) {
             throw new ParserException("Access denied -- " + err.getMessage());
-        } catch (InstantiationException err) {
-            throw new ParserException("Unable to instantiate class -- " + err.getMessage() +
-                                      ". An empty constructor is likely needed.");
+        } catch (final InstantiationException err) {
+            throw new ParserException("Unable to instantiate class -- " + err.getMessage()
+                    + ". An empty constructor is likely needed.");
         }
     }
 
     /**
      * Trys to load a action's class, searching in a specific package.
-     *
-     * @param   packageString  The prefix to append to the action before trying to load it (may be a package, a package and a class name prefix, or empty for the default package).
-     * @param   action         The script action to search for.
-     *
-     * @return  The action's corresponding class, from the given package prefix.
-     *
-     * @throws  ParserException  If the action's class could not be found or loaded from the given package prefix.
+     * 
+     * @param packageString The prefix to append to the action before trying to load it (may be a package, a package and
+     *            a class name prefix, or empty for the default package).
+     * @param action The script action to search for.
+     * 
+     * @return The action's corresponding class, from the given package prefix.
+     * 
+     * @throws ParserException If the action's class could not be found or loaded from the given package prefix.
      */
-    protected static Class attemptLoadFromPackage(String packageString, String action) throws ParserException {
+    protected static Class attemptLoadFromPackage(final String packageString, final String action)
+            throws ParserException {
 
         try {
-            Preferences.debug("script action loader:\tTrying action:\t" + action + "\tin\t" + packageString + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("script action loader:\tTrying action:\t" + action + "\tin\t" + packageString + "\n",
+                    Preferences.DEBUG_SCRIPTING);
             return Class.forName(packageString + action);
-        } catch (ClassCastException err) {
+        } catch (final ClassCastException err) {
 
             // plugin does not implement scriptable interface
-            throw new ParserException(packageString + action +
-                                      " does not allow itself to be scripted.  See ScriptableActionInterface.");
-        } catch (Exception err) {
+            throw new ParserException(packageString + action
+                    + " does not allow itself to be scripted.  See ScriptableActionInterface.");
+        } catch (final Exception err) {
 
             // can't load class
             throw new ParserException("Cannot load script action: " + packageString + action);
@@ -72,51 +78,57 @@ public class ScriptableActionLoader {
     }
 
     /**
-     * Trys to find and load an action's corresponding class from a list of package prefixes.  The first place where a suitable class is found is the one returned.
-     *
-     * @param   action  The script action to search for.
-     *
-     * @return  The action's corresponding class, found using one of the package prefixes.
-     *
-     * @throws  ParserException  If the action's class could not be found or loaded from any of the script action locations.
+     * Trys to find and load an action's corresponding class from a list of package prefixes. The first place where a
+     * suitable class is found is the one returned.
+     * 
+     * @param action The script action to search for.
+     * 
+     * @return The action's corresponding class, found using one of the package prefixes.
+     * 
+     * @throws ParserException If the action's class could not be found or loaded from any of the script action
+     *             locations.
      */
-    protected static Class loadClass(String action) throws ParserException {
-        
-        for (int i = 0; i < SCRIPT_ACTION_LOCATIONS.size(); i++) {
+    protected static Class loadClass(final String action) throws ParserException {
+
+        for (int i = 0; i < ScriptableActionLoader.SCRIPT_ACTION_LOCATIONS.size(); i++) {
 
             try {
-                return attemptLoadFromPackage((String) SCRIPT_ACTION_LOCATIONS.get(i), action);
-            } catch (ParserException pe) {
-                Preferences.debug("script action loader:\tAction not found in package:\t" + action + "\tin\t" + SCRIPT_ACTION_LOCATIONS.get(i) + "\n", Preferences.DEBUG_SCRIPTING);
+                return ScriptableActionLoader.attemptLoadFromPackage(ScriptableActionLoader.SCRIPT_ACTION_LOCATIONS
+                        .get(i), action);
+            } catch (final ParserException pe) {
+                Preferences.debug("script action loader:\tAction not found in package:\t" + action + "\tin\t"
+                        + ScriptableActionLoader.SCRIPT_ACTION_LOCATIONS.get(i) + "\n", Preferences.DEBUG_SCRIPTING);
             }
         }
-        
+
         // try the default package
         try {
-            return attemptLoadFromPackage("", action);
-        } catch (ParserException pe) {
-            Preferences.debug("script action loader:\tAction not found in package:\t" + action + "\tin\t" + " <default package> " + "\n", Preferences.DEBUG_SCRIPTING);
-            
+            return ScriptableActionLoader.attemptLoadFromPackage("", action);
+        } catch (final ParserException pe) {
+            Preferences.debug("script action loader:\tAction not found in package:\t" + action + "\tin\t"
+                    + " <default package> " + "\n", Preferences.DEBUG_SCRIPTING);
+
             throw pe;
         }
     }
-    
+
     /**
-     * Adds a new package where we should look for scriptable actions.  To be used to register the package paths used by more complex plugins (probably called from the plugin run() method).
+     * Adds a new package where we should look for scriptable actions. To be used to register the package paths used by
+     * more complex plugins (probably called from the plugin run() method).
      * 
-     * @param  packageString  The java package in which to look for scriptable actions.
+     * @param packageString The java package in which to look for scriptable actions.
      */
-    public static void addScriptActionLocation(String packageString) {
-        if (!SCRIPT_ACTION_LOCATIONS.contains(packageString)) {
-            SCRIPT_ACTION_LOCATIONS.add(packageString);
+    public static void addScriptActionLocation(final String packageString) {
+        if ( !ScriptableActionLoader.SCRIPT_ACTION_LOCATIONS.contains(packageString)) {
+            ScriptableActionLoader.SCRIPT_ACTION_LOCATIONS.add(packageString);
         }
     }
-    
+
     /**
-     * Gets the script action location vector, needed for figuring out the possible
-	 * short name of a non-MIPAV scriptable tool.
+     * Gets the script action location vector, needed for figuring out the possible short name of a non-MIPAV scriptable
+     * tool.
      */
-    public static Vector getScriptActionLocations() {
-    	return SCRIPT_ACTION_LOCATIONS;
+    public static Vector<String> getScriptActionLocations() {
+        return ScriptableActionLoader.SCRIPT_ACTION_LOCATIONS;
     }
 }

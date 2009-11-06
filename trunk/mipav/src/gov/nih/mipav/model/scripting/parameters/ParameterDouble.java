@@ -9,75 +9,93 @@ import gov.nih.mipav.model.scripting.ParserException;
  */
 public class ParameterDouble extends Parameter {
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** The parameter's value. */
     private double value;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new ParameterDouble object without any value.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
+     */
+    public ParameterDouble(final String paramLabel) throws ParserException {
+        super(paramLabel, Parameter.PARAM_DOUBLE);
+    }
 
     /**
      * Creates a new ParameterDouble object.
-     *
-     * @param   paramLabel       The label/name to give to this parameter.
-     * @param   paramTypeString  The type of this parameter, in string form.
-     * @param   paramValue       The new prameter value.
-     *
-     * @throws  ParserException  If there is a problem creating the parameter.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramTypeString The type of this parameter, in string form.
+     * @param paramValue The new parameter value.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
      */
-    public ParameterDouble(String paramLabel, String paramTypeString, double paramValue) throws ParserException {
+    public ParameterDouble(final String paramLabel, final String paramTypeString, final double paramValue)
+            throws ParserException {
         super(paramLabel, paramTypeString);
         setValue(paramValue);
     }
 
     /**
      * Creates a new ParameterDouble object.
-     *
-     * @param   paramLabel        The label/name to give to this parameter.
-     * @param   paramTypeString   The type of this parameter, in string form.
-     * @param   paramValueString  The new prameter value in string form.
-     *
-     * @throws  ParserException  If there is a problem creating the parameter.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramTypeString The type of this parameter, in string form.
+     * @param paramValueString The new parameter value in string form.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
      */
-    public ParameterDouble(String paramLabel, String paramTypeString, String paramValueString) throws ParserException {
+    public ParameterDouble(final String paramLabel, final String paramTypeString, final String paramValueString)
+            throws ParserException {
         super(paramLabel, paramTypeString);
         setValue(paramValueString);
     }
 
     /**
      * Creates a new ParameterDouble object.
-     *
-     * @param   paramLabel  The label/name to give to this parameter.
-     * @param   paramType   The type of this parameter (should be PARAM_DOUBLE).
-     * @param   paramValue  The new prameter value.
-     *
-     * @throws  ParserException  If there is a problem creating the parameter.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramType The type of this parameter (should be PARAM_DOUBLE).
+     * @param paramValue The new parameter value.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
      */
-    public ParameterDouble(String paramLabel, int paramType, double paramValue) throws ParserException {
+    public ParameterDouble(final String paramLabel, final int paramType, final double paramValue)
+            throws ParserException {
         super(paramLabel, paramType);
         setValue(paramValue);
     }
 
     /**
      * Creates a new ParameterDouble object.
-     *
-     * @param   paramLabel        The label/name to give to this parameter.
-     * @param   paramType         The type of this parameter (should be PARAM_DOUBLE).
-     * @param   paramValueString  The new prameter value in string form.
-     *
-     * @throws  ParserException  If there is a problem creating the parameter.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramType The type of this parameter (should be PARAM_DOUBLE).
+     * @param paramValueString The new parameter value in string form.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
      */
-    public ParameterDouble(String paramLabel, int paramType, String paramValueString) throws ParserException {
+    public ParameterDouble(final String paramLabel, final int paramType, final String paramValueString)
+            throws ParserException {
         super(paramLabel, paramType);
         setValue(paramValueString);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Returns the parameter value.
-     *
-     * @return  The parameter value.
+     * 
+     * @return The parameter value.
      */
     public double getValue() {
         return value;
@@ -85,8 +103,8 @@ public class ParameterDouble extends Parameter {
 
     /**
      * Returns the parameter value as a string.
-     *
-     * @return  The parameter value in string form.
+     * 
+     * @return The parameter value in string form.
      */
     public String getValueString() {
         return "" + getValue();
@@ -94,28 +112,28 @@ public class ParameterDouble extends Parameter {
 
     /**
      * Changes the parameter's current value.
-     *
-     * @param   paramValueString  The new parameter value in String form.
-     *
-     * @throws  ParserException  If there is a problem changing the parameter value.
+     * 
+     * @param paramValueString The new parameter value in String form.
+     * 
+     * @throws ParserException If there is a problem changing the parameter value.
      */
-    public void setValue(String paramValueString) throws ParserException {
+    public void setValue(final String paramValueString) throws ParserException {
 
         try {
             setValue(Double.parseDouble(paramValueString));
-        } catch (NumberFormatException nfe) {
+        } catch (final NumberFormatException nfe) {
             throw new ParserException(getLabel() + ": Invalid parameter value: " + nfe.getMessage());
         }
     }
 
     /**
      * Changes the parameter's current value.
-     *
-     * @param   paramValue  The new parameter value.
-     *
-     * @throws  ParserException  If there is a problem changing the parameter value.
+     * 
+     * @param paramValue The new parameter value.
+     * 
+     * @throws ParserException If there is a problem changing the parameter value.
      */
-    public void setValue(double paramValue) throws ParserException {
+    public void setValue(final double paramValue) throws ParserException {
         value = paramValue;
     }
 }

@@ -130,7 +130,9 @@ public class MipavUtil extends JComponent {
     public static Cursor unmagnifyCursor;
 
     /** Custom cursor: quick LUT. */
-    public static Cursor quickLUTcursor = defaultCursor; // be sure to change when there is a decent image available.
+    public static Cursor quickLUTcursor = MipavUtil.defaultCursor; // be sure to change when there is a decent image
+
+    // available.
 
     /** Cursor for doing annotations. */
     public static final Cursor textCursor = new Cursor(Cursor.TEXT_CURSOR);
@@ -161,8 +163,8 @@ public class MipavUtil extends JComponent {
 
     /** DOCUMENT ME! */
     public static int MENU_Y_PADDING = 27;
-    
-    private static boolean forceQuite = false;
+
+    private static boolean forceQuiet = false;
 
     /** DOCUMENT ME! */
     public static final int[] functionKeys = new int[] {0, KeyEvent.VK_F1, KeyEvent.VK_F2, KeyEvent.VK_F3,
@@ -197,61 +199,63 @@ public class MipavUtil extends JComponent {
         try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
 
             // img = Toolkit.getDefaultToolkit().getImage(PlaceHolder.class.getResource("emptycursor.gif"));
-            cursorImage = getIconImage("emptycursor.gif");
-            magRegionCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
+            cursorImage = MipavUtil.getIconImage("emptycursor.gif");
+            MipavUtil.magRegionCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
                     "Magnification");
-            blankCursor = Toolkit.getDefaultToolkit()
-                    .createCustomCursor(cursorImage, new Point(12, 12), "Blank Cursor");
+            MipavUtil.blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
+                    "Blank Cursor");
             // System.err.println("created blank cursor");
-        } catch (FileNotFoundException error) {
+        } catch (final FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
                     + ">.  Check that this file is available.\n");
-            magRegionCursor = crosshairCursor;
-            blankCursor = crosshairCursor;
+            MipavUtil.magRegionCursor = MipavUtil.crosshairCursor;
+            MipavUtil.blankCursor = MipavUtil.crosshairCursor;
         }
 
         // small pointer cursor : TRY to get the image cursor. if you can't (and coders may have EXTRA probs with
         // this!) then notify the user of the prob and get a default. This try must be seperate for all diff cursors
         try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
-            cursorImage = getIconImage("smpointercursor.gif");
-            smallPointerCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(0, 0),
+            cursorImage = MipavUtil.getIconImage("smpointercursor.gif");
+            MipavUtil.smallPointerCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(0, 0),
                     "SmallPointer");
-        } catch (FileNotFoundException error) {
+        } catch (final FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
                     + ">.  Check that this file is available.\n");
-            smallPointerCursor = pointCursor;
+            MipavUtil.smallPointerCursor = MipavUtil.pointCursor;
         }
 
         try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
-            cursorImage = getIconImage("qkwinlevel.gif");
+            cursorImage = MipavUtil.getIconImage("qkwinlevel.gif");
 
-            winLevelCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12), "WinLevel");
-        } catch (FileNotFoundException error) {
+            MipavUtil.winLevelCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
+                    "WinLevel");
+        } catch (final FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
                     + ">.  Check that this file is available.\n");
-            winLevelCursor = crosshairCursor;
+            MipavUtil.winLevelCursor = MipavUtil.crosshairCursor;
         }
 
         try {
-            cursorImage = getIconImage("probepoint.gif");
+            cursorImage = MipavUtil.getIconImage("probepoint.gif");
 
-            probeCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(15, 15), "Probe");
-        } catch (FileNotFoundException error) {
+            MipavUtil.probeCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(15, 15),
+                    "Probe");
+        } catch (final FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
                     + ">.  Check that this file is available.\n");
-            probeCursor = crosshairCursor;
+            MipavUtil.probeCursor = MipavUtil.crosshairCursor;
         }
 
         try {
-            Toolkit toolkit = Toolkit.getDefaultToolkit();
-            magnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomin.gif").getImage(), new Point(10, 10),
-                    "zoomin");
-            unmagnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomout.gif").getImage(),
+            final Toolkit toolkit = Toolkit.getDefaultToolkit();
+            MipavUtil.magnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomin.gif").getImage(), new Point(
+                    10, 10), "zoomin");
+            MipavUtil.unmagnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomout.gif").getImage(),
                     new Point(10, 10), "zoomout");
-        } catch (Exception error) {
+        } catch (final Exception error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage()
                     + ">.  Check that this file is available.\n");
-            magnifyCursor = crosshairCursor;
+            MipavUtil.magnifyCursor = MipavUtil.crosshairCursor;
         }
 
     }
@@ -275,23 +279,23 @@ public class MipavUtil extends JComponent {
             size = Integer.parseInt(Preferences.getProperty(Preferences.PREF_MENU_FONT_SIZE));
         }
 
-        defaultMenuFont = new Font(fontName, Font.BOLD, size);
-        defaultAcceleratorFont = new Font(fontName, Font.PLAIN, size - 3);
+        MipavUtil.defaultMenuFont = new Font(fontName, Font.BOLD, size);
+        MipavUtil.defaultAcceleratorFont = new Font(fontName, Font.PLAIN, size - 3);
 
-        font10 = new Font(fontName, Font.PLAIN, size - 2);
-        font12 = new Font(fontName, Font.PLAIN, size);
-        font12B = new Font(fontName, Font.BOLD, size);
+        MipavUtil.font10 = new Font(fontName, Font.PLAIN, size - 2);
+        MipavUtil.font12 = new Font(fontName, Font.PLAIN, size);
+        MipavUtil.font12B = new Font(fontName, Font.BOLD, size);
 
-        font12I = new Font(fontName, Font.ITALIC, size);
-        font13B = new Font(fontName, Font.BOLD, size + 1);
-        font14 = new Font(fontName, Font.PLAIN, size + 2);
-        font14B = new Font(fontName, Font.BOLD, size + 2);
-        font16B = new Font(fontName, Font.BOLD, size + 4);
-        font18B = new Font(fontName, Font.BOLD, size + 6);
+        MipavUtil.font12I = new Font(fontName, Font.ITALIC, size);
+        MipavUtil.font13B = new Font(fontName, Font.BOLD, size + 1);
+        MipavUtil.font14 = new Font(fontName, Font.PLAIN, size + 2);
+        MipavUtil.font14B = new Font(fontName, Font.BOLD, size + 2);
+        MipavUtil.font16B = new Font(fontName, Font.BOLD, size + 4);
+        MipavUtil.font18B = new Font(fontName, Font.BOLD, size + 6);
 
         // build one "dummy" menu item to get the correct Y padding with the font
-        JMenuItem dummy = ViewMenuBuilder.buildMenuItem("dummy", "dummy", 0, null, "save.gif", true);
-        MENU_Y_PADDING = dummy.getPreferredSize().height;
+        final JMenuItem dummy = ViewMenuBuilder.buildMenuItem("dummy", "dummy", 0, null, "save.gif", true);
+        MipavUtil.MENU_Y_PADDING = dummy.getPreferredSize().height;
     }
 
     /**
@@ -301,8 +305,9 @@ public class MipavUtil extends JComponent {
      * 
      * @return The titled border.
      */
-    public static final TitledBorder buildTitledBorder(String title) {
-        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, font12B, Color.black);
+    public static final TitledBorder buildTitledBorder(final String title) {
+        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
+                Color.black);
     }
 
     /**
@@ -311,14 +316,14 @@ public class MipavUtil extends JComponent {
      * @param parentComponent the parent component.
      * @param dialog the dialog which is to be displayed.
      */
-    public static void centerInComponent(Component parentComponent, JDialog dialog) {
-        Point loc = parentComponent.getLocationOnScreen();
-        Dimension dim = parentComponent.getSize();
+    public static void centerInComponent(final Component parentComponent, final JDialog dialog) {
+        final Point loc = parentComponent.getLocationOnScreen();
+        final Dimension dim = parentComponent.getSize();
 
-        Dimension dim2 = dialog.getSize();
+        final Dimension dim2 = dialog.getSize();
 
-        int x = loc.x + ((int) (dim.getWidth() - dim2.getWidth()) / 2);
-        int y = loc.y + ((int) (dim.getHeight() - dim2.getHeight()) / 2);
+        final int x = loc.x + ((int) (dim.getWidth() - dim2.getWidth()) / 2);
+        final int y = loc.y + ((int) (dim.getHeight() - dim2.getHeight()) / 2);
         dialog.setLocation(x, y);
 
     }
@@ -329,9 +334,9 @@ public class MipavUtil extends JComponent {
      * @param parentWindow the window where the child will be centered on.
      * @param childWindow the window that is to be displayed centered on the parent window
      */
-    public static void centerInWindow(Window parentWindow, Window childWindow) {
-        Point parentTopLeftPoint = parentWindow.getLocationOnScreen();
-        Dimension parentSize = parentWindow.getSize();
+    public static void centerInWindow(final Window parentWindow, final Window childWindow) {
+        final Point parentTopLeftPoint = parentWindow.getLocationOnScreen();
+        final Dimension parentSize = parentWindow.getSize();
 
         childWindow.setLocation( (parentTopLeftPoint.x + (parentSize.width / 2)) - (childWindow.getSize().width / 2),
                 (parentTopLeftPoint.y + (parentSize.height / 2)) - (childWindow.getSize().height / 2));
@@ -342,10 +347,10 @@ public class MipavUtil extends JComponent {
      * 
      * @param window Window that is to be displayed
      */
-    public static void centerOnScreen(Window window) {
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
+    public static void centerOnScreen(final Window window) {
+        final Toolkit toolkit = Toolkit.getDefaultToolkit();
 
-        Dimension screenSize = toolkit.getScreenSize();
+        final Dimension screenSize = toolkit.getScreenSize();
 
         int x_location = 0;
         int y_location = 0;
@@ -370,8 +375,8 @@ public class MipavUtil extends JComponent {
      * 
      * @throws MalformedURLException if there is a problem converting the file name
      */
-    public static final String convertToFileURL(String filename) throws MalformedURLException {
-        String path = new File(filename).toURI().toURL().toString();
+    public static final String convertToFileURL(final String filename) throws MalformedURLException {
+        final String path = new File(filename).toURI().toURL().toString();
 
         return path;
     }
@@ -388,56 +393,54 @@ public class MipavUtil extends JComponent {
      * 
      * @see JOptionPane#showMessageDialog(java.awt.Component, java.lang.Object, java.lang.String, int, javax.swing.Icon)
      */
-    public static void displayError(String error) {
-    	if(!forceQuite){
-	        if ( (ViewUserInterface.getReference() != null)
-	                && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
-	                        .isPlugInFrameVisible())) {
-	
-	            try {
-	                JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-	                JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
-	            } catch (FileNotFoundException ex) {
-	                Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-	                        + ">.  Check that this file is available.\n");
-	                System.err.println("Exception ocurred while getting <" + ex.getMessage()
-	                        + ">.  Check that this file is available.\n");
-	            }
-	        } else {
-	
-	            if (ViewUserInterface.getReference() != null) {
-	
-	                // the user has enabled the -hide option
-	                System.err.println("Error: " + error);
-	
-	                // exit with an abnormal return value to indicate a problem
-	                // (useful when running mipav from the command line and testing
-	                // whether the algorithm completed successfully)
-	                if (ViewUserInterface.getReference().doExitCmdLineOnError()) {
-	                    System.exit(1);
-	                }
-	            } else {
-	
-	                try {
-	
-	                    // an error occurred before the ui could be set up, so assume that the user is not using -hide..
-	                    JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-	                    JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
-	                } catch (FileNotFoundException ex) {
-	                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-	                            + ">.  Check that this file is available.\n");
-	                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
-	                            + ">.  Check that this file is available.\n");
-	                }
-	            }
-	        }
-    	}
-    	else
-    	{
-    		System.err.println("Error: " + error);
-    		System.exit(1);
-    	}
-    		
+    public static void displayError(final String error) {
+        if ( !MipavUtil.forceQuiet) {
+            if ( (ViewUserInterface.getReference() != null)
+                    && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
+                            .isPlugInFrameVisible())) {
+
+                try {
+                    JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+                    JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
+                } catch (final FileNotFoundException ex) {
+                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+                            + ">.  Check that this file is available.\n");
+                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
+                            + ">.  Check that this file is available.\n");
+                }
+            } else {
+
+                if (ViewUserInterface.getReference() != null) {
+
+                    // the user has enabled the -hide option
+                    System.err.println("Error: " + error);
+
+                    // exit with an abnormal return value to indicate a problem
+                    // (useful when running mipav from the command line and testing
+                    // whether the algorithm completed successfully)
+                    if (ViewUserInterface.getReference().doExitCmdLineOnError()) {
+                        System.exit(1);
+                    }
+                } else {
+
+                    try {
+
+                        // an error occurred before the ui could be set up, so assume that the user is not using -hide..
+                        JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+                        JOptionPane.showMessageDialog(null, error, "Error", JOptionPane.ERROR_MESSAGE);
+                    } catch (final FileNotFoundException ex) {
+                        Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+                                + ">.  Check that this file is available.\n");
+                        System.err.println("Exception ocurred while getting <" + ex.getMessage()
+                                + ">.  Check that this file is available.\n");
+                    }
+                }
+            }
+        } else {
+            System.err.println("Error: " + error);
+            System.exit(1);
+        }
+
     }
 
     /**
@@ -450,46 +453,45 @@ public class MipavUtil extends JComponent {
      * 
      * @param info the information string
      */
-    public static void displayInfo(String info) {
-    	if(!forceQuite){
-	        if ( (ViewUserInterface.getReference() != null)
-	                && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
-	                        .isPlugInFrameVisible())) {
-	
-	            try {
-	                JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-	                JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
-	            } catch (FileNotFoundException ex) {
-	                Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-	                        + ">.  Check that this file is available.\n");
-	                System.err.println("Exception ocurred while getting <" + ex.getMessage()
-	                        + ">.  Check that this file is available.\n");
-	            }
-	        } else {
-	
-	            if (ViewUserInterface.getReference() != null) {
-	
-	                // the user has enabled the -hide option
-	                System.err.println("Info: " + info);
-	            } else {
-	
-	                try {
-	
-	                    // an error occurred before the ui could be set up, so assume that the user is not using -hide..
-	                    JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-	                    JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
-	                } catch (FileNotFoundException ex) {
-	                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-	                            + ">.  Check that this file is available.\n");
-	                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
-	                            + ">.  Check that this file is available.\n");
-	                }
-	            }
-	        }
-    	}
-    	else{
-    		System.err.println("Info: " + info);
-    	}
+    public static void displayInfo(final String info) {
+        if ( !MipavUtil.forceQuiet) {
+            if ( (ViewUserInterface.getReference() != null)
+                    && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
+                            .isPlugInFrameVisible())) {
+
+                try {
+                    JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+                    JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
+                } catch (final FileNotFoundException ex) {
+                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+                            + ">.  Check that this file is available.\n");
+                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
+                            + ">.  Check that this file is available.\n");
+                }
+            } else {
+
+                if (ViewUserInterface.getReference() != null) {
+
+                    // the user has enabled the -hide option
+                    System.err.println("Info: " + info);
+                } else {
+
+                    try {
+
+                        // an error occurred before the ui could be set up, so assume that the user is not using -hide..
+                        JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+                        JOptionPane.showMessageDialog(null, info, "Information", JOptionPane.INFORMATION_MESSAGE);
+                    } catch (final FileNotFoundException ex) {
+                        Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+                                + ">.  Check that this file is available.\n");
+                        System.err.println("Exception ocurred while getting <" + ex.getMessage()
+                                + ">.  Check that this file is available.\n");
+                    }
+                }
+            }
+        } else {
+            System.err.println("Info: " + info);
+        }
     }
 
     /**
@@ -502,46 +504,45 @@ public class MipavUtil extends JComponent {
      * 
      * @param warning the message text of the warning.
      */
-    public static void displayWarning(String warning) {
-    	if(!forceQuite){
-	        if ( (ViewUserInterface.getReference() != null)
-	                && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
-	                        .isPlugInFrameVisible())) {
-	
-	            try {
-	                JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-	                JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
-	            } catch (FileNotFoundException ex) {
-	                Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-	                        + ">.  Check that this file is available.\n");
-	                System.err.println("Exception ocurred while getting <" + ex.getMessage()
-	                        + ">.  Check that this file is available.\n");
-	            }
-	        } else {
-	
-	            if (ViewUserInterface.getReference() != null) {
-	
-	                // the user has enabled the -hide option
-	                System.err.println("Warning: " + warning);
-	            } else {
-	
-	                try {
-	
-	                    // an error occurred before the ui could be set up, so assume that the user is not using -hide..
-	                    JOptionPane.getRootFrame().setIconImage(getIconImage(Preferences.getIconName()));
-	                    JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
-	                } catch (FileNotFoundException ex) {
-	                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
-	                            + ">.  Check that this file is available.\n");
-	                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
-	                            + ">.  Check that this file is available.\n");
-	                }
-	            }
-	        }
-    	}
-    	else{
-    		System.err.println("Warning: " + warning);
-    	}
+    public static void displayWarning(final String warning) {
+        if ( !MipavUtil.forceQuiet) {
+            if ( (ViewUserInterface.getReference() != null)
+                    && (ViewUserInterface.getReference().isAppFrameVisible() || ViewUserInterface.getReference()
+                            .isPlugInFrameVisible())) {
+
+                try {
+                    JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+                    JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
+                } catch (final FileNotFoundException ex) {
+                    Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+                            + ">.  Check that this file is available.\n");
+                    System.err.println("Exception ocurred while getting <" + ex.getMessage()
+                            + ">.  Check that this file is available.\n");
+                }
+            } else {
+
+                if (ViewUserInterface.getReference() != null) {
+
+                    // the user has enabled the -hide option
+                    System.err.println("Warning: " + warning);
+                } else {
+
+                    try {
+
+                        // an error occurred before the ui could be set up, so assume that the user is not using -hide..
+                        JOptionPane.getRootFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+                        JOptionPane.showMessageDialog(null, warning, "Warning", JOptionPane.WARNING_MESSAGE);
+                    } catch (final FileNotFoundException ex) {
+                        Preferences.debug("Exception ocurred while getting <" + ex.getMessage()
+                                + ">.  Check that this file is available.\n");
+                        System.err.println("Exception ocurred while getting <" + ex.getMessage()
+                                + ">.  Check that this file is available.\n");
+                    }
+                }
+            }
+        } else {
+            System.err.println("Warning: " + warning);
+        }
     }
 
     /**
@@ -562,8 +563,8 @@ public class MipavUtil extends JComponent {
      * 
      * @param preferencesColorString -- this class pre-arranges the colors to be
      */
-    public static Color extractColor(String preferencesColorString) {
-        int[] RGB = new int[3];
+    public static Color extractColor(final String preferencesColorString) {
+        final int[] RGB = new int[3];
         Color prefColor;
 
         try {
@@ -578,7 +579,7 @@ public class MipavUtil extends JComponent {
                 RGB[2] = Integer.parseInt(String.valueOf(preferencesColorString.toCharArray()[4])
                         + String.valueOf(preferencesColorString.toCharArray()[5]), 16);
             }
-        } catch (Exception npe) {
+        } catch (final Exception npe) {
             Preferences.debug("MipavOptions: Color string was improper.  String was '" + preferencesColorString + "'");
 
             // reset all three values with
@@ -601,8 +602,8 @@ public class MipavUtil extends JComponent {
      * 
      * @return true if the token equals "true" without regard to case
      */
-    public static final boolean getBoolean(StringTokenizer st) throws TokenizerException {
-        String str = st.nextToken();
+    public static final boolean getBoolean(final StringTokenizer st) throws TokenizerException {
+        final String str = st.nextToken();
 
         // should either be a variation of true or false; otherwise we want to know that something is wrong
         if ( !str.equalsIgnoreCase("true") && !str.equalsIgnoreCase("false")) {
@@ -622,16 +623,16 @@ public class MipavUtil extends JComponent {
      * 
      * @return a float value
      */
-    public static final float getFloat(StringTokenizer st) throws TokenizerException {
-        String str = st.nextToken();
+    public static final float getFloat(final StringTokenizer st) throws TokenizerException {
+        final String str = st.nextToken();
 
         try {
             return Float.parseFloat(str);
-        } catch (NumberFormatException nfe) {
+        } catch (final NumberFormatException nfe) {
             throw new TokenizerException("Unable to parse float value: " + str);
         }
     }
-    
+
     /**
      * Get a double value from a string tokenizer.
      * 
@@ -641,12 +642,12 @@ public class MipavUtil extends JComponent {
      * 
      * @return a double value
      */
-    public static final double getDouble(StringTokenizer st) throws TokenizerException {
-        String str = st.nextToken();
+    public static final double getDouble(final StringTokenizer st) throws TokenizerException {
+        final String str = st.nextToken();
 
         try {
             return Double.parseDouble(str);
-        } catch (NumberFormatException nfe) {
+        } catch (final NumberFormatException nfe) {
             throw new TokenizerException("Unable to parse double value: " + str);
         }
     }
@@ -659,7 +660,7 @@ public class MipavUtil extends JComponent {
      * 
      * @return the icon
      */
-    public static ImageIcon getIcon(String name) {
+    public static ImageIcon getIcon(final String name) {
         URL res;
         ImageIcon icon = null;
 
@@ -673,16 +674,15 @@ public class MipavUtil extends JComponent {
 
         return icon;
     }
-    
+
     /**
-     * Finds if forceQuite is true or false
+     * Returns whether all error/warning/info dialogs should be suppressed.
      * 
      * @return true/false
      */
-    public static boolean getForceQuite() {
-    	return forceQuite;
+    public static boolean getForceQuiet() {
+        return MipavUtil.forceQuiet;
     }
-
 
     /**
      * Finds the image of the specified name. Uses the PlaceHolder class, which is in the same directory as the icons
@@ -694,7 +694,7 @@ public class MipavUtil extends JComponent {
      * 
      * @throws FileNotFoundException if we can't find the icon file
      */
-    public static Image getIconImage(String name) throws FileNotFoundException {
+    public static Image getIconImage(final String name) throws FileNotFoundException {
         URL res;
         Image img = null;
 
@@ -720,12 +720,12 @@ public class MipavUtil extends JComponent {
      * 
      * @return a ninteger value
      */
-    public static final int getInt(StringTokenizer st) throws TokenizerException {
-        String str = st.nextToken();
+    public static final int getInt(final StringTokenizer st) throws TokenizerException {
+        final String str = st.nextToken();
 
         try {
             return Integer.parseInt(str);
-        } catch (NumberFormatException nfe) {
+        } catch (final NumberFormatException nfe) {
             throw new TokenizerException("Unable to parse integer value: " + str);
         }
     }
@@ -738,20 +738,20 @@ public class MipavUtil extends JComponent {
     public static String getVersion() {
 
         // if we've already read in the version from about.txt, then don't do it again..
-        if (version != null) {
-            return version;
+        if (MipavUtil.version != null) {
+            return MipavUtil.version;
         }
 
         String verString = new String("");
 
-        String filename = "about.txt";
+        final String filename = "about.txt";
 
         BufferedReader input = null;
 
         try {
 
             // use this long call instead of ClassLoader.getSystemResource() to work properly from a jnlp launch
-            URL fileURL = Thread.currentThread().getContextClassLoader().getResource(filename);
+            final URL fileURL = Thread.currentThread().getContextClassLoader().getResource(filename);
 
             if (fileURL == null) {
                 Preferences.debug("Unable to open " + filename
@@ -773,14 +773,14 @@ public class MipavUtil extends JComponent {
                     // remove "Version:" and the two tabs
                     line = line.substring(10);
                     line.trim();
-                    version = line.substring(0, line.indexOf(" "));
-                    verString = version;
+                    MipavUtil.version = line.substring(0, line.indexOf(" "));
+                    verString = MipavUtil.version;
 
                     break;
                 }
 
             }
-        } catch (Exception ex) {} finally {
+        } catch (final Exception ex) {} finally {
 
             try {
 
@@ -788,7 +788,7 @@ public class MipavUtil extends JComponent {
                     input.close();
                     input = null;
                 }
-            } catch (IOException closee) {}
+            } catch (final IOException closee) {}
         }
 
         return verString;
@@ -802,8 +802,8 @@ public class MipavUtil extends JComponent {
      * 
      * @return hexa-decimal string representing the 8-bit values of an RGB color, in the form of "RRGGBB".
      */
-    public static String makeColorString(Color aColor) {
-        String[] rgbString = new String[3];
+    public static String makeColorString(final Color aColor) {
+        final String[] rgbString = new String[3];
         int n;
 
         rgbString[0] = Integer.toString(aColor.getRed(), 16);
@@ -828,20 +828,20 @@ public class MipavUtil extends JComponent {
      * 
      * @return string representation of the number
      */
-    public static final String makeFloatString(float number, int decPts) {
+    public static final String makeFloatString(final float number, final int decPts) {
         String str = null;
 
         try {
             str = String.valueOf(number);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("MipavUtil.makeString: out of memory");
 
             return null;
         }
 
-        int index = str.indexOf(".");
-        int indexE = str.indexOf("E");
-        int length = str.length();
+        final int index = str.indexOf(".");
+        final int indexE = str.indexOf("E");
+        final int length = str.length();
 
         if ( ( (index + decPts) < length) && (indexE == -1)) {
             str = str.substring(0, index + decPts + 1);
@@ -866,8 +866,8 @@ public class MipavUtil extends JComponent {
      * 
      * @return String
      */
-    public static final String makeHTMLFontString(Color color, String name, int size, int style, boolean doU,
-            String text) {
+    public static final String makeHTMLFontString(final Color color, final String name, final int size,
+            final int style, final boolean doU, final String text) {
 
         String colorStr = "#";
 
@@ -932,8 +932,8 @@ public class MipavUtil extends JComponent {
      * @param allowFloatingPoint <code>true</code> will force the text field to also allow the use of the '.' key to
      *            permit entering floating point numbers.
      */
-    public static void makeNumericsOnly(JTextField txt, boolean allowFloatingPoint) {
-        makeNumericsOnly(txt, allowFloatingPoint, true);
+    public static void makeNumericsOnly(final JTextField txt, final boolean allowFloatingPoint) {
+        MipavUtil.makeNumericsOnly(txt, allowFloatingPoint, true);
     }
 
     /**
@@ -948,14 +948,14 @@ public class MipavUtil extends JComponent {
      * @param allowNegativeNumbers true causes textfield to allow the entry of a single minus sign ('-') in front of the
      *            text. An additional '-' removes minus sign from the field to give it the opposite sign.
      */
-    public static void makeNumericsOnly(JTextField txt, boolean allowFloatingPoint, boolean allowNegativeNumbers) {
+    public static void makeNumericsOnly(final JTextField txt, boolean allowFloatingPoint, boolean allowNegativeNumbers) {
 
         if (allowFloatingPoint && allowNegativeNumbers) {
             txt.addKeyListener(new KeyAdapter() { // make the field
-                        public void keyTyped(KeyEvent evt) { // not accept letters
+                        public void keyTyped(final KeyEvent evt) { // not accept letters
 
-                            JTextField t = (JTextField) evt.getComponent();
-                            char ch = evt.getKeyChar();
+                            final JTextField t = (JTextField) evt.getComponent();
+                            final char ch = evt.getKeyChar();
 
                             if (ch == '.') {
 
@@ -975,13 +975,13 @@ public class MipavUtil extends JComponent {
                                     t.setText("0.");
                                     evt.consume();
                                 } else {
-                                    StringBuffer sb = new StringBuffer(t.getText());
+                                    final StringBuffer sb = new StringBuffer(t.getText());
                                     t.setText(sb.insert(t.getCaretPosition(), ".").toString());
                                     evt.consume();
                                 }
                             } else if (ch == '-') {
                                 String text = t.getText().trim();
-                                int minusPlace = text.indexOf('-');
+                                final int minusPlace = text.indexOf('-');
 
                                 if (minusPlace != -1) { // text does has a '-'
                                     text = text.substring(minusPlace + 1);
@@ -1007,10 +1007,10 @@ public class MipavUtil extends JComponent {
                     });
         } else if (allowFloatingPoint && !allowNegativeNumbers) {
             txt.addKeyListener(new KeyAdapter() { // make the field
-                        public void keyTyped(KeyEvent evt) { // not accept letters
+                        public void keyTyped(final KeyEvent evt) { // not accept letters
 
-                            JTextField t = (JTextField) evt.getComponent();
-                            char ch = evt.getKeyChar();
+                            final JTextField t = (JTextField) evt.getComponent();
+                            final char ch = evt.getKeyChar();
 
                             if (ch == '.') {
 
@@ -1030,7 +1030,7 @@ public class MipavUtil extends JComponent {
                                     t.setText("0.");
                                     evt.consume(); // ignore the rest
                                 } else {
-                                    StringBuffer sb = new StringBuffer(t.getText());
+                                    final StringBuffer sb = new StringBuffer(t.getText());
                                     t.setText(sb.insert(t.getCaretPosition(), ".").toString());
                                     evt.consume(); // ignore the rest
                                 }
@@ -1049,16 +1049,16 @@ public class MipavUtil extends JComponent {
                     });
         } else if ( !allowFloatingPoint && allowNegativeNumbers) {
             txt.addKeyListener(new KeyAdapter() { // make the field
-                        public void keyTyped(KeyEvent evt) { // not accept letters
+                        public void keyTyped(final KeyEvent evt) { // not accept letters
 
-                            JTextField t = (JTextField) evt.getComponent();
-                            char ch = evt.getKeyChar();
+                            final JTextField t = (JTextField) evt.getComponent();
+                            final char ch = evt.getKeyChar();
 
                             /* else if (ch == '.') {..} */
                             // decimal not allowed
                             if (ch == '-') {
                                 String text = t.getText().trim();
-                                int minusPlace = text.indexOf('-');
+                                final int minusPlace = text.indexOf('-');
 
                                 if (minusPlace != -1) { // text does has a '-'
                                     text = text.substring(minusPlace + 1); // only text after '-'...
@@ -1080,9 +1080,9 @@ public class MipavUtil extends JComponent {
                     });
         } else { // if (!allowFloatingPoint && !allowNegativeNumbers) {
             txt.addKeyListener(new KeyAdapter() { // make the field
-                        public void keyTyped(KeyEvent evt) { // not accept letters
+                        public void keyTyped(final KeyEvent evt) { // not accept letters
 
-                            char ch = evt.getKeyChar();
+                            final char ch = evt.getKeyChar();
 
                             /* else if (ch == '.') {...} */
                             // floating point not allowed
@@ -1108,11 +1108,11 @@ public class MipavUtil extends JComponent {
      * @param container DOCUMENT ME!
      * @param enabled DOCUMENT ME!
      */
-    public static final void setComponentsEnabled(Container container, boolean enabled) {
-        Component[] comps = container.getComponents();
+    public static final void setComponentsEnabled(final Container container, final boolean enabled) {
+        final Component[] comps = container.getComponents();
 
-        for (int y = 0; y < comps.length; y++) {
-            comps[y].setEnabled(enabled);
+        for (final Component element : comps) {
+            element.setEnabled(enabled);
         }
     }
 
@@ -1121,27 +1121,28 @@ public class MipavUtil extends JComponent {
      * 
      * @param comp DOCUMENT ME!
      */
-    public static final void setFonts(Component[] comp) {
+    public static final void setFonts(final Component[] comp) {
 
-        for (int x = 0; x < comp.length; x++) {
+        for (final Component element : comp) {
 
-            if (comp[x] instanceof Container) {
-                setFonts( ((Container) comp[x]).getComponents());
+            if (element instanceof Container) {
+                MipavUtil.setFonts( ((Container) element).getComponents());
             }
 
             try {
-                comp[x].setFont(MipavUtil.defaultMenuFont);
-            } catch (Exception e) {} // do nothing
+                element.setFont(MipavUtil.defaultMenuFont);
+            } catch (final Exception e) {} // do nothing
         }
     }
-    
+
     /**
-     * Finds if forceQuite is true or false
-     * @param force Should mipav quite all errors
-     * @return true/false
+     * Sets whether all MIPAV error/warning/info messages should be suppressed (used to skip lax/plist warning on
+     * startup).
+     * 
+     * @param force Should mipav suppress all errors
      */
-    public static final void setForceQuite(boolean force) {
-    	 forceQuite = force;
+    public static final void setForceQuiet(final boolean force) {
+        MipavUtil.forceQuiet = force;
     }
 
     /**
@@ -1149,51 +1150,52 @@ public class MipavUtil extends JComponent {
      * 
      * @param ID The ID of the help topic to open.
      */
-    public static void showHelp(String ID) {
+    public static void showHelp(final String ID) {
 
         try {
-            ClassLoader cloader = help.PlaceHolderHelp.class.getClassLoader();
+            final ClassLoader cloader = help.PlaceHolderHelp.class.getClassLoader();
 
             // the help.jar must be in the classpath !!!!!!!!!!
-            URL hsURL = HelpSet.findHelpSet(cloader, "MIPAV_dialogs.hs");
+            final URL hsURL = HelpSet.findHelpSet(cloader, "MIPAV_dialogs.hs");
 
             // System.out.println(" URL = " + hsURL.toString());
             if (hsURL != null) {
 
-                if ( (hs == null) || (helpBroker == null)) {
-                    hs = new HelpSet(cloader, hsURL);
-                    helpBroker = hs.createHelpBroker();
+                if ( (MipavUtil.hs == null) || (MipavUtil.helpBroker == null)) {
+                    MipavUtil.hs = new HelpSet(cloader, hsURL);
+                    MipavUtil.helpBroker = MipavUtil.hs.createHelpBroker();
                 }
 
                 if (ID != null) {
-                    helpBroker.setCurrentID(ID);
+                    MipavUtil.helpBroker.setCurrentID(ID);
                 }
 
-                helpBroker.setSize(new java.awt.Dimension(1000, 600));
-                helpBroker.setLocation(new java.awt.Point(200, 300));
+                MipavUtil.helpBroker.setSize(new java.awt.Dimension(1000, 600));
+                MipavUtil.helpBroker.setLocation(new java.awt.Point(200, 300));
 
                 // helpBroker.getFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-                helpBroker.setDisplayed(true);
+                MipavUtil.helpBroker.setDisplayed(true);
                 // hs = null;
                 // helpBroker = null;
             } else {
                 Preferences.debug("Help file URL is " + hsURL + "\n");
                 MipavUtil.displayError("Unable to find helpset.");
             }
-        } catch (NullPointerException npe) {
+        } catch (final NullPointerException npe) {
             Preferences.debug("MIPAV Help cannot be found." + "\n", 2);
             MipavUtil.displayError("MIPAV Help cannot be found.");
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory error opening help.");
-        } catch (HelpSetException error) {
+        } catch (final HelpSetException error) {
             Preferences.debug("HelpSet error = " + error);
-        } catch (BadIDException error) {
+        } catch (final BadIDException error) {
             MipavUtil.displayError("HelpSet ID error = " + error);
-            if(ID != null) {
-	            //show default help dialogue
-	            showHelp(null);
+            if (ID != null) {
+                // show default help dialogue
+                MipavUtil.showHelp(null);
             } else {
-            	MipavUtil.displayError("MIPAV cannot display help.  View help at:\nhttp://mipav.cit.nih.gov/documentation.php");
+                MipavUtil
+                        .displayError("MIPAV cannot display help.  View help at:\nhttp://mipav.cit.nih.gov/documentation.php");
             }
         }
     }
@@ -1207,7 +1209,7 @@ public class MipavUtil extends JComponent {
      * 
      * @return boolean result of test
      */
-    public static final boolean testParameter(String str, double minValue, double maxValue) {
+    public static final boolean testParameter(final String str, final double minValue, final double maxValue) {
         double tmp;
 
         try {
@@ -1221,7 +1223,7 @@ public class MipavUtil extends JComponent {
             } else {
                 return true;
             }
-        } catch (NumberFormatException error) {
+        } catch (final NumberFormatException error) {
             MipavUtil.displayError("Must enter numeric value");
 
             return false;

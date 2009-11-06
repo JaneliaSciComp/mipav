@@ -632,7 +632,7 @@ public class FileInfoDicom extends FileInfoBase {
     protected static final int getModalityFromDicomStr(String value) {
 
         if (value.equals("BI")) {
-            return BIOMAGENETIC_IMAGING;
+            return BIOMAGNETIC_IMAGING;
         } else if (value.equals("CD")) {
             return COLOR_FLOW_DOPPLER;
         } else if (value.equals("CR")) {
@@ -650,7 +650,7 @@ public class FileInfoDicom extends FileInfoBase {
         } else if (value.equals("GM")) {
             return GENERAL_MICROSCOPY;
         } else if (value.equals("HC")) {
-            return HARDCODY;
+            return HARDCOPY;
         } else if (value.equals("IO")) {
             return INTRAORAL_RADIOGRAPHY;
         } else if (value.equals("LS")) {
