@@ -5,8 +5,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
@@ -1310,6 +1312,10 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 			 
 			 resultImage.setFileInfo(fileInfoBases);
 		     resultImage.calcMinMax();
+		     
+		     //write out input params to file
+		     writeInputParams();
+		     
 		     new ViewJFrameImage(resultImage);
 		     if(imageX != null) {
 		    	 imageX.disposeLocal();
@@ -1329,6 +1335,56 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		     //new ViewJFrameImage(imageY); //testing
 			 dispose();
 		 }
+	}
+	
+	
+	
+	private void writeInputParams() {
+		String outputFilename = imageX.getImageName() + "to" + imageY.getImageName() + "_params.txt";
+		BufferedWriter bw;
+		FileWriter fw;
+		try {
+	    	File outputFile = new File(parentDir + outputFilename);
+	        fw = new FileWriter(outputFile);
+	        bw = new BufferedWriter(fw);
+	        bw.write("imageH:" + imageXFilePathTextField.getText());
+	        bw.newLine();
+	        bw.write("imageY:" + imageXFilePathTextField.getText());
+	        bw.newLine();
+	        bw.write("transformation1:" + transform1FilePathTextField.getText());
+	        bw.newLine();
+	        bw.write("transformation2:" + transform2FilePathTextField.getText());
+	        bw.newLine();
+	        bw.write("transformation3:" + transform3FilePathTextField.getText());
+	        bw.newLine();
+	        if(doAverageRadio.isSelected()) {
+	        	if(ignoreBGRadio.isSelected()) {
+	        		bw.write("doAverage:ignore");
+	        	}else {
+	        		bw.write("doAverage:include");
+	        	}
+	        }else if(doSqRtRadio.isSelected()) {
+	        	bw.write("doSqrRt");
+	        }else {
+	        	bw.write("closestZ");
+	        }
+	        bw.newLine();
+	        if(doTrilinearRadio.isSelected()) {
+	        	bw.write("trilinear");
+	        }else {
+	        	bw.write("bSpline");
+	        }
+	        bw.newLine();
+	        if(doRescaleRadio.isSelected()) {
+	        	bw.write("rescale");
+	        }else {
+	        	bw.write("noRescale");
+	        }
+
+	        bw.close();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	
