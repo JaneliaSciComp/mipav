@@ -1,32 +1,20 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlurSep;
-import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.DialogDefaultsInterface;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
-import gov.nih.mipav.view.components.JPanelColorChannels;
-import gov.nih.mipav.view.components.JPanelSigmas;
-import gov.nih.mipav.view.components.PanelManager;
-import gov.nih.mipav.view.components.WidgetFactory;
+import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.structures.*;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
+import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
+
+import java.awt.*;
+import java.awt.event.*;
 import java.io.IOException;
-import java.util.StringTokenizer;
-import java.util.Vector;
+import java.util.*;
 
 import javax.swing.JCheckBox;
 
@@ -38,19 +26,22 @@ import javax.swing.JCheckBox;
  * new image or replace the source image. In addition the user can indicate if he/she wishes to have the algorithm
  * applied to whole image or to the VOI regions. It should be noted that the algorithms are executed in their own
  * thread.
- *
- * @version  0.1 Nov 17, 1998
- * @author   Matthew J. McAuliffe, Ph.D.
- * @see      AlgorithmGaussianBlur
+ * 
+ * @version 0.1 Nov 17, 1998
+ * @author Matthew J. McAuliffe, Ph.D.
+ * @see AlgorithmGaussianBlur
  */
-public class JDialogGaussianBlur extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogGaussianBlur extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface,
+        ActionDiscovery {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -5074546334694615886L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private JPanelColorChannels colorChannelPanel;
@@ -90,19 +81,19 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
+
     /**
      * Empty constructor needed for dynamic instantiation.
      */
-    public JDialogGaussianBlur() { }
+    public JDialogGaussianBlur() {}
 
     /**
      * Construct the gaussian blur dialog.
-     *
-     * @param  theParentFrame  Parent frame.
-     * @param  im              Source image.
+     * 
+     * @param theParentFrame Parent frame.
+     * @param im Source image.
      */
-    public JDialogGaussianBlur(Frame theParentFrame, ModelImage im) {
+    public JDialogGaussianBlur(final Frame theParentFrame, final ModelImage im) {
         super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
@@ -111,15 +102,16 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         setVisible(true);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     *
-     * @param  event  Event that triggers function.
+     * 
+     * @param event Event that triggers function.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
         if (command.equals("OK")) {
 
@@ -140,33 +132,33 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
      * has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
-     *
-     * @param  algorithm  Algorithm that caused the event.
+     * 
+     * @param algorithm Algorithm that caused the event.
      */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
+    public void algorithmPerformed(final AlgorithmBase algorithm) {
 
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
-        String name = makeImageName(image.getImageName(), "_gblur");
+        final String name = JDialogBase.makeImageName(image.getImageName(), "_gblur");
 
         if (algorithm instanceof AlgorithmGaussianBlur) {
             Preferences.debug("Gaussian Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
 
-            if ((gaussianBlurAlgo.isCompleted() == true) && (resultImage != null)) {
+            if ( (gaussianBlurAlgo.isCompleted() == true) && (resultImage != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
                 if (resultImage.isColorImage()) {
-                    updateFileInfo(image, resultImage);
+                    JDialogBase.updateFileInfo(image, resultImage);
                 }
 
                 resultImage.clearMask();
 
                 try {
-                	openNewFrame(resultImage);
-                 //   openNewFrame(resultImage);
-                } catch (OutOfMemoryError error) {
+                    openNewFrame(resultImage);
+                    // openNewFrame(resultImage);
+                } catch (final OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -175,13 +167,13 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registered to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
                     ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
-                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                    if ( ((Frame) (imageFrames.elementAt(i))) != parentFrame) {
                         userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
                     }
                 }
@@ -206,110 +198,102 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         } // if (algorithm instanceof AlgorithmGaussianBlur)
 
         if (algorithm instanceof AlgorithmGaussianBlurSep) {
-			Preferences.debug("GaussianSep Elapsed: " + algorithm.getElapsedTime());
-			image.clearMask();
+            Preferences.debug("GaussianSep Elapsed: " + algorithm.getElapsedTime());
+            image.clearMask();
 
-			if (gaussianBlurSepAlgo.isCompleted()) {
-				if (displayInNewFrame) {
-					// Make result image
-					if (image.getType() == ModelImage.ARGB) {
-						resultImage = new ModelImage(ModelImage.ARGB, image
-								.getExtents(), name);
-					} else if (image.getType() == ModelImage.ARGB_USHORT) {
-						resultImage = new ModelImage(ModelImage.ARGB_USHORT,
-								image.getExtents(), name);
-					} else if (image.getType() == ModelImage.ARGB_FLOAT) {
-						resultImage = new ModelImage(ModelImage.ARGB_FLOAT,
-								image.getExtents(), name);
-					} else {
+            if (gaussianBlurSepAlgo.isCompleted()) {
+                if (displayInNewFrame) {
+                    // Make result image
+                    if (image.getType() == ModelStorageBase.ARGB) {
+                        resultImage = new ModelImage(ModelStorageBase.ARGB, image.getExtents(), name);
+                    } else if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+                        resultImage = new ModelImage(ModelStorageBase.ARGB_USHORT, image.getExtents(), name);
+                    } else if (image.getType() == ModelStorageBase.ARGB_FLOAT) {
+                        resultImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), name);
+                    } else {
 
-						// resultImage = new ModelImage(ModelImage.FLOAT,
-						// destExtents, name, userInterface);
-						resultImage = (ModelImage) image.clone();
-						resultImage.setImageName(name);
+                        // resultImage = new ModelImage(ModelImage.FLOAT,
+                        // destExtents, name, userInterface);
+                        resultImage = (ModelImage) image.clone();
+                        resultImage.setImageName(name);
 
-						if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-							
-							//For 2D Dicom set secondary capture tags only for fileinfo(0)
-							if (resultImage.getExtents().length == 2) {
-								((FileInfoDicom) (resultImage.getFileInfo(0)))
-								.setSecondaryCaptureTags();
-							} else {
-								for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-									((FileInfoDicom) (resultImage.getFileInfo(i)))
-											.setSecondaryCaptureTags();
-								}
-							}
-							
-						}
-					}
-					try {
-						resultImage.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);
-					} catch (IOException e) {
-						resultImage.disposeLocal();
-						MipavUtil.displayError("Algorithm Gausssian Blur importData: Image(s) Locked.");
-						return;
-					}
+                        if ( (resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
-					// The algorithm has completed and produced a new image to
-					// be displayed.
-					if (resultImage.isColorImage()) {
-						updateFileInfo(image, resultImage);
-					}
+                            // For 2D Dicom set secondary capture tags only for fileinfo(0)
+                            if (resultImage.getExtents().length == 2) {
+                                ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                            } else {
+                                for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                                    ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
+                                }
+                            }
 
-					resultImage.clearMask();
+                        }
+                    }
+                    try {
+                        resultImage.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);
+                    } catch (final IOException e) {
+                        resultImage.disposeLocal();
+                        MipavUtil.displayError("Algorithm Gausssian Blur importData: Image(s) Locked.");
+                        return;
+                    }
 
-					try {
-						openNewFrame(resultImage);
-					} catch (OutOfMemoryError error) {
-						System.gc();
-						MipavUtil.displayError("Out of memory: unable to open new frame");
-					}
-				} else {
+                    // The algorithm has completed and produced a new image to
+                    // be displayed.
+                    if (resultImage.isColorImage()) {
+                        JDialogBase.updateFileInfo(image, resultImage);
+                    }
 
-					// These next lines set the titles in all frames where the
-					// source image is displayed to
-					// image name so as to indicate that the image is now
-					// unlocked!
-					// The image frames are enabled and then registered to the
-					// userinterface.
-					try {
-						image.importData(0, gaussianBlurSepAlgo
-								.getResultBuffer(), true);
-					} catch (IOException e) {
+                    resultImage.clearMask();
 
-					}
-					Vector imageFrames = image.getImageFrameVector();
+                    try {
+                        openNewFrame(resultImage);
+                    } catch (final OutOfMemoryError error) {
+                        System.gc();
+                        MipavUtil.displayError("Out of memory: unable to open new frame");
+                    }
+                } else {
 
-					for (int i = 0; i < imageFrames.size(); i++) {
-						((Frame) (imageFrames.elementAt(i)))
-								.setTitle(titles[i]);
-						((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+                    // These next lines set the titles in all frames where the
+                    // source image is displayed to
+                    // image name so as to indicate that the image is now
+                    // unlocked!
+                    // The image frames are enabled and then registered to the
+                    // userinterface.
+                    try {
+                        image.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);
+                    } catch (final IOException e) {
 
-						if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-							userInterface.registerFrame((Frame) (imageFrames
-									.elementAt(i)));
-						}
-					}
+                    }
+                    final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
-					if (parentFrame != null) {
-						userInterface.registerFrame(parentFrame);
-					}
-					image.notifyImageDisplayListeners(null, true);
-				}
-			} else if (resultImage != null) {
+                    for (int i = 0; i < imageFrames.size(); i++) {
+                        ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                        ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
-				// algorithm failed but result image still has garbage
-				resultImage.disposeLocal(); // clean up memory
-				resultImage = null;
-				System.gc();
+                        if ( ((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                            userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                        }
+                    }
 
-			}
+                    if (parentFrame != null) {
+                        userInterface.registerFrame(parentFrame);
+                    }
+                    image.notifyImageDisplayListeners(null, true);
+                }
+            } else if (resultImage != null) {
 
-			if (algorithm.isCompleted()) {
-				insertScriptLine();
-			}
-		} // if (algorithm instanceof AlgorithmGaussianBlurSep)
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+                System.gc();
+
+            }
+
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
+        } // if (algorithm instanceof AlgorithmGaussianBlurSep)
 
         if (gaussianBlurAlgo != null) {
             gaussianBlurAlgo.finalize();
@@ -325,10 +309,10 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     }
 
     /**
-	 * Accessor that returns the image.
-	 * 
-	 * @return The result image.
-	 */
+     * Accessor that returns the image.
+     * 
+     * @return The result image.
+     */
     public ModelImage getResultImage() {
         return resultImage;
     }
@@ -339,14 +323,14 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 
     /**
      * Changes labels based on whether or not check box is checked.
-     *
-     * @param  event  event that cause the method to fire
+     * 
+     * @param event event that cause the method to fire
      */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+    public void itemStateChanged(final ItemEvent event) {
+        final Object source = event.getSource();
 
         if (source == image25DCheckbox) {
-            sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
+            sigmaPanel.enable3DComponents( !image25DCheckbox.isSelected());
         }
     }
 
@@ -354,12 +338,12 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
      * Loads the default settings from Preferences to set up the dialog.
      */
     public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+        final String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
-        if ((defaultsString != null) && (outputOptionsPanel != null)) {
+        if ( (defaultsString != null) && (outputOptionsPanel != null)) {
 
             try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+                final StringTokenizer st = new StringTokenizer(defaultsString, ",");
                 outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
                 outputOptionsPanel.setOutputNewImage(MipavUtil.getBoolean(st));
 
@@ -373,7 +357,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                 colorChannelPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
                 colorChannelPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
                 colorChannelPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
                 Preferences.debug("Resetting defaults for dialog: " + getDialogName());
@@ -386,7 +370,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String delim = ",";
+        final String delim = ",";
 
         String defaultsString = outputOptionsPanel.isProcessWholeImageSet() + delim;
         defaultsString += outputOptionsPanel.isOutputNewImageSet() + delim;
@@ -405,19 +389,19 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 
     /**
      * Accessor that sets the slicing flag.
-     *
-     * @param  flag  <code>true</code> indicates slices should be blurred independently.
+     * 
+     * @param flag <code>true</code> indicates slices should be blurred independently.
      */
-    public void setImage25D(boolean flag) {
+    public void setImage25D(final boolean flag) {
         image25D = flag;
     }
 
     /**
      * Accessor that sets whether or not the separable convolution kernel is used.
-     *
-     * @param  separable  Whether or not the separable convolution kernel is used.
+     * 
+     * @param separable Whether or not the separable convolution kernel is used.
      */
-    public void setSeparable(boolean separable) {
+    public void setSeparable(final boolean separable) {
         this.separable = separable;
     }
 
@@ -426,14 +410,14 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        String name = makeImageName(image.getImageName(), "_gblur");
+        final String name = JDialogBase.makeImageName(image.getImageName(), "_gblur");
         displayInNewFrame = outputOptionsPanel.isOutputNewImageSet();
-        if ((image.getNDims() == 2) && separable) { // source image is 2D and
-													// kernel is separable
+        if ( (image.getNDims() == 2) && separable) { // source image is 2D and
+            // kernel is separable
 
-			float[] sigmas = sigmaPanel.getNormalizedSigmas();
-            if(!displayInNewFrame){
-                Vector imageFrames = image.getImageFrameVector();
+            final float[] sigmas = sigmaPanel.getNormalizedSigmas();
+            if ( !displayInNewFrame) {
+                final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 titles = new String[imageFrames.size()];
 
@@ -445,92 +429,82 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                 }
 
             }
-			try {
+            try {
 
-				// Make algorithm
-				gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(image,
-						sigmas, outputOptionsPanel.isProcessWholeImageSet(),
-						false);
+                // Make algorithm
+                gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(image, sigmas, outputOptionsPanel
+                        .isProcessWholeImageSet(), false);
 
-				// This is very important. Adding this object as a listener
-				// allows the algorithm to
-				// notify this object when it has completed of failed. See
-				// algorithm performed event.
-				// This is made possible by implementing AlgorithmedPerformed
-				// interface
-				gaussianBlurSepAlgo.addListener(this);
+                // This is very important. Adding this object as a listener
+                // allows the algorithm to
+                // notify this object when it has completed of failed. See
+                // algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed
+                // interface
+                gaussianBlurSepAlgo.addListener(this);
 
-				createProgressBar(image.getImageName(), gaussianBlurSepAlgo);
+                createProgressBar(image.getImageName(), gaussianBlurSepAlgo);
 
-				gaussianBlurSepAlgo.setRed(colorChannelPanel
-						.isRedProcessingRequested());
-				gaussianBlurSepAlgo.setGreen(colorChannelPanel
-						.isGreenProcessingRequested());
-				gaussianBlurSepAlgo.setBlue(colorChannelPanel
-						.isBlueProcessingRequested());
+                gaussianBlurSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
+                gaussianBlurSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
+                gaussianBlurSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
-				if (!outputOptionsPanel.isProcessWholeImageSet()) {
-					gaussianBlurSepAlgo.setMask(image.generateVOIMask());
-				}
+                if ( !outputOptionsPanel.isProcessWholeImageSet()) {
+                    gaussianBlurSepAlgo.setMask(image.generateVOIMask());
+                }
 
-				// Hide dialog
-				setVisible(false);
+                // Hide dialog
+                setVisible(false);
 
-				if (isRunInSeparateThread()) {
+                if (isRunInSeparateThread()) {
 
-					// Start the thread as a low priority because we wish to
-					// still have user interface work fast.
-					if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-						MipavUtil
-								.displayError("A thread is already running on this object");
-					}
-				} else {
+                    // Start the thread as a low priority because we wish to
+                    // still have user interface work fast.
+                    if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
 
-					gaussianBlurSepAlgo.run();
-				}
+                    gaussianBlurSepAlgo.run();
+                }
 
-				// Make result image
-				if (image.getType() == ModelImage.ARGB) {
-					resultImage = new ModelImage(ModelImage.ARGB, image
-							.getExtents(), name);
-				} else if (image.getType() == ModelImage.ARGB_USHORT) {
-					resultImage = new ModelImage(ModelImage.ARGB_USHORT, image
-							.getExtents(), name);
-				} else if (image.getType() == ModelImage.ARGB_FLOAT) {
-					resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image
-							.getExtents(), name);
-				} else {
+                // Make result image
+                if (image.getType() == ModelStorageBase.ARGB) {
+                    resultImage = new ModelImage(ModelStorageBase.ARGB, image.getExtents(), name);
+                } else if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+                    resultImage = new ModelImage(ModelStorageBase.ARGB_USHORT, image.getExtents(), name);
+                } else if (image.getType() == ModelStorageBase.ARGB_FLOAT) {
+                    resultImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), name);
+                } else {
 
-					// resultImage = new ModelImage(ModelImage.FLOAT,
-					// destExtents, name, userInterface);
-					resultImage = (ModelImage) image.clone();
-					resultImage.setImageName(name);
+                    // resultImage = new ModelImage(ModelImage.FLOAT,
+                    // destExtents, name, userInterface);
+                    resultImage = (ModelImage) image.clone();
+                    resultImage.setImageName(name);
 
-					if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-						((FileInfoDicom) (resultImage.getFileInfo(0)))
-								.setSecondaryCaptureTags();
-					}
-				}
-			} catch (OutOfMemoryError x) {
+                    if ( (resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
+                    }
+                }
+            } catch (final OutOfMemoryError x) {
 
-				if (resultImage != null) {
-					resultImage.disposeLocal(); // Clean up memory of result
-												// image
-					resultImage = null;
-				}
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result
+                    // image
+                    resultImage = null;
+                }
 
-				System.gc();
-				MipavUtil
-						.displayError("Dialog Gaussian blur: unable to allocate enough memory");
+                System.gc();
+                MipavUtil.displayError("Dialog Gaussian blur: unable to allocate enough memory");
 
-				return;
-			}
-		} else if ((image.getNDims() >= 3) && separable) { // kernel is
-															// separable
+                return;
+            }
+        } else if ( (image.getNDims() >= 3) && separable) { // kernel is
+            // separable
 
-			float[] sigmas = sigmaPanel.getNormalizedSigmas();
-			if(!displayInNewFrame){
-                Vector imageFrames = image.getImageFrameVector();
+            final float[] sigmas = sigmaPanel.getNormalizedSigmas();
+            if ( !displayInNewFrame) {
+                final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 titles = new String[imageFrames.size()];
 
@@ -541,91 +515,85 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
 
-			}
-			try {
+            }
+            try {
 
-				// Make algorithm
-				gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(image,
-						sigmas, outputOptionsPanel.isProcessWholeImageSet(),
-						image25D);
+                // Make algorithm
+                gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(image, sigmas, outputOptionsPanel
+                        .isProcessWholeImageSet(), image25D);
 
-				// This is very important. Adding this object as a listener
-				// allows the algorithm to
-				// notify this object when it has completed of failed. See
-				// algorithm performed event.
-				// This is made possible by implementing AlgorithmedPerformed
-				// interface
-				gaussianBlurSepAlgo.addListener(this);
-				gaussianBlurSepAlgo.setRed(colorChannelPanel
-						.isRedProcessingRequested());
-				gaussianBlurSepAlgo.setGreen(colorChannelPanel
-						.isGreenProcessingRequested());
-				gaussianBlurSepAlgo.setBlue(colorChannelPanel
-						.isBlueProcessingRequested());
+                // This is very important. Adding this object as a listener
+                // allows the algorithm to
+                // notify this object when it has completed of failed. See
+                // algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed
+                // interface
+                gaussianBlurSepAlgo.addListener(this);
+                gaussianBlurSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
+                gaussianBlurSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
+                gaussianBlurSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
-				if (!outputOptionsPanel.isProcessWholeImageSet()) {
-					gaussianBlurSepAlgo.setMask(image.generateVOIMask());
-				}
+                if ( !outputOptionsPanel.isProcessWholeImageSet()) {
+                    gaussianBlurSepAlgo.setMask(image.generateVOIMask());
+                }
 
-				// Hide dialog
-				setVisible(false);
+                // Hide dialog
+                setVisible(false);
 
-				createProgressBar(image.getImageName(), gaussianBlurSepAlgo);
+                createProgressBar(image.getImageName(), gaussianBlurSepAlgo);
 
-				if (isRunInSeparateThread()) {
+                if (isRunInSeparateThread()) {
 
-					// Start the thread as a low priority because we wish to
-					// still have user interface work fast.
-					if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-						MipavUtil
-								.displayError("A thread is already running on this object");
-					}
-				} else {
-					gaussianBlurSepAlgo.run();
-				}
-			} catch (OutOfMemoryError x) {
+                    // Start the thread as a low priority because we wish to
+                    // still have user interface work fast.
+                    if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+                    gaussianBlurSepAlgo.run();
+                }
+            } catch (final OutOfMemoryError x) {
 
-				if (resultImage != null) {
-					resultImage.disposeLocal(); // Clean up image memory
-					resultImage = null;
-				}
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up image memory
+                    resultImage = null;
+                }
 
-				System.gc();
-				MipavUtil
-						.displayError("Dialog Gaussian blur: unable to allocate enough memory");
+                System.gc();
+                MipavUtil.displayError("Dialog Gaussian blur: unable to allocate enough memory");
 
-				return;
-			}
-		} else if (image.getNDims() == 2) { // source image is 2D and kernel not
-											// separable
+                return;
+            }
+        } else if (image.getNDims() == 2) { // source image is 2D and kernel not
+            // separable
 
-            float[] sigmas = sigmaPanel.getNormalizedSigmas();
+            final float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
             if (outputOptionsPanel.isOutputNewImageSet()) {
 
                 try {
 
                     // Make result image
-                    if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
+                    if (image.getType() == ModelStorageBase.ARGB) {
+                        resultImage = new ModelImage(ModelStorageBase.ARGB, image.getExtents(), name);
+                    } else if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+                        resultImage = new ModelImage(ModelStorageBase.ARGB_USHORT, image.getExtents(), name);
+                    } else if (image.getType() == ModelStorageBase.ARGB_FLOAT) {
+                        resultImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), name);
                     } else {
 
-                        // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                        // resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
                         resultImage = (ModelImage) image.clone();
                         resultImage.setImageName(name);
 
-                        if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+                        if ( (resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                             ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
                         }
                     }
 
                     // Make algorithm
-                    gaussianBlurAlgo = new AlgorithmGaussianBlur(resultImage, image, sigmas,
-                                                                 outputOptionsPanel.isProcessWholeImageSet(), false);
+                    gaussianBlurAlgo = new AlgorithmGaussianBlur(resultImage, image, sigmas, outputOptionsPanel
+                            .isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -638,7 +606,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
-                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
+                    if ( !outputOptionsPanel.isProcessWholeImageSet()) {
                         gaussianBlurAlgo.setMask(image.generateVOIMask());
                     }
 
@@ -654,7 +622,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     } else {
                         gaussianBlurAlgo.run();
                     }
-                } catch (OutOfMemoryError x) {
+                } catch (final OutOfMemoryError x) {
 
                     if (resultImage != null) {
                         resultImage.disposeLocal(); // Clean up memory of result image
@@ -672,8 +640,8 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    gaussianBlurAlgo = new AlgorithmGaussianBlur(image, sigmas,
-                                                                 outputOptionsPanel.isProcessWholeImageSet(), false);
+                    gaussianBlurAlgo = new AlgorithmGaussianBlur(image, sigmas, outputOptionsPanel
+                            .isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -686,19 +654,18 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
-                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
+                    if ( !outputOptionsPanel.isProcessWholeImageSet()) {
                         gaussianBlurAlgo.setMask(image.generateVOIMask());
                     }
 
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
-
                     // These next lines set the titles in all frames where the source image is displayed to
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
                     // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
+                    final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                     titles = new String[imageFrames.size()];
 
@@ -718,7 +685,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     } else {
                         gaussianBlurAlgo.run();
                     }
-                } catch (OutOfMemoryError x) {
+                } catch (final OutOfMemoryError x) {
                     System.gc();
                     MipavUtil.displayError("Dialog Gaussian blur: unable to allocate enough memory");
 
@@ -727,26 +694,26 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
             }
         } else if (image.getNDims() >= 3) { // kerenl not separable
 
-            float[] sigmas = sigmaPanel.getNormalizedSigmas();
+            final float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
             if (outputOptionsPanel.isOutputNewImageSet()) {
 
                 try {
 
                     // Make result image
-                    if (image.getType() == ModelImage.ARGB) {
-                        resultImage = new ModelImage(ModelImage.ARGB, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_USHORT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_USHORT, image.getExtents(), name);
-                    } else if (image.getType() == ModelImage.ARGB_FLOAT) {
-                        resultImage = new ModelImage(ModelImage.ARGB_FLOAT, image.getExtents(), name);
+                    if (image.getType() == ModelStorageBase.ARGB) {
+                        resultImage = new ModelImage(ModelStorageBase.ARGB, image.getExtents(), name);
+                    } else if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+                        resultImage = new ModelImage(ModelStorageBase.ARGB_USHORT, image.getExtents(), name);
+                    } else if (image.getType() == ModelStorageBase.ARGB_FLOAT) {
+                        resultImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, image.getExtents(), name);
                     } else {
 
-                        // resultImage     = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
+                        // resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
                         resultImage = (ModelImage) image.clone();
                         resultImage.setImageName(name);
 
-                        if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+                        if ( (resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
                                 ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
@@ -755,8 +722,8 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     }
 
                     // Make algorithm
-                    gaussianBlurAlgo = new AlgorithmGaussianBlur(resultImage, image, sigmas,
-                                                                 outputOptionsPanel.isProcessWholeImageSet(), image25D);
+                    gaussianBlurAlgo = new AlgorithmGaussianBlur(resultImage, image, sigmas, outputOptionsPanel
+                            .isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -769,7 +736,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
-                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
+                    if ( !outputOptionsPanel.isProcessWholeImageSet()) {
                         gaussianBlurAlgo.setMask(image.generateVOIMask());
                     }
 
@@ -784,10 +751,10 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                         }
                     } else {
                         gaussianBlurAlgo.run();
-                        
+
                     }
-                } catch (OutOfMemoryError x) {
-                	
+                } catch (final OutOfMemoryError x) {
+
                     if (resultImage != null) {
                         resultImage.disposeLocal(); // Clean up image memory
                         resultImage = null;
@@ -803,8 +770,8 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                 try {
 
                     // Make algorithm
-                    gaussianBlurAlgo = new AlgorithmGaussianBlur(image, sigmas,
-                                                                 outputOptionsPanel.isProcessWholeImageSet(), image25D);
+                    gaussianBlurAlgo = new AlgorithmGaussianBlur(image, sigmas, outputOptionsPanel
+                            .isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -814,7 +781,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
-                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
+                    if ( !outputOptionsPanel.isProcessWholeImageSet()) {
                         gaussianBlurAlgo.setMask(image.generateVOIMask());
                     }
 
@@ -827,7 +794,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
                     // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
+                    final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                     titles = new String[imageFrames.size()];
 
@@ -847,7 +814,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     } else {
                         gaussianBlurAlgo.run();
                     }
-                } catch (OutOfMemoryError x) {
+                } catch (final OutOfMemoryError x) {
                     System.gc();
                     MipavUtil.displayError("Dialog Gaussian blur: unable to allocate enough memory");
 
@@ -888,8 +855,8 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 
     /**
      * Store the parameters from the dialog to record the execution of this algorithm.
-     *
-     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     * 
+     * @throws ParserException If there is a problem creating one of the new parameters.
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
@@ -921,14 +888,14 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
             image25DCheckbox.setSelected(image.getFileInfo()[0].getIs2_5D());
         }
 
-        PanelManager kernelOptionsPanelManager = new PanelManager("Options");
+        final PanelManager kernelOptionsPanelManager = new PanelManager("Options");
         kernelOptionsPanelManager.add(sepCheckbox);
         kernelOptionsPanelManager.addOnNextLine(image25DCheckbox);
 
         colorChannelPanel = new JPanelColorChannels(image);
         outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
 
-        PanelManager paramPanelManager = new PanelManager();
+        final PanelManager paramPanelManager = new PanelManager();
         paramPanelManager.add(sigmaPanel);
         paramPanelManager.addOnNextLine(kernelOptionsPanelManager.getPanel());
         paramPanelManager.addOnNextLine(colorChannelPanel);
@@ -944,8 +911,8 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
-     *
-     * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
 
@@ -955,12 +922,124 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
             image25D = false;
         }
 
-        if (!sigmaPanel.testSigmaValues()) {
+        if ( !sigmaPanel.testSigmaValues()) {
             return false;
         }
 
         separable = sepCheckbox.isSelected();
 
         return true;
+    }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Spatial filters");
+            }
+
+            public String getDescription() {
+                return new String("Applies a simple gaussian blur filter.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a simple gaussian blur filter.");
+            }
+
+            public String getLabel() {
+                return new String("Gaussian Blur");
+            }
+
+            public String getName() {
+                return new String("GaussianBlur");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_SEPARABLE));
+            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+            table.put(new ParameterList(AlgorithmParameters.SIGMAS, Parameter.PARAM_FLOAT));
+            table.put(new ParameterBoolean(AlgorithmParameters.SIGMA_DO_Z_RES_CORRECTION));
+            table.put(new ParameterList(AlgorithmParameters.DO_PROCESS_RGB, Parameter.PARAM_BOOLEAN));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            } else {
+                // algo was done in place
+                return image.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        if (separable && gaussianBlurSepAlgo != null) {
+            return gaussianBlurSepAlgo.isCompleted();
+        } else if (gaussianBlurAlgo != null) {
+            return gaussianBlurAlgo.isCompleted();
+        } else {
+            return false;
+        }
     }
 }

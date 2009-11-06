@@ -3,113 +3,32 @@ package gov.nih.mipav.view;
 
 import edu.sdsc.grid.io.GeneralFile;
 
-import gov.nih.mipav.plugins.PlugInFile;
-import gov.nih.mipav.plugins.PlugInFileTransfer;
-import gov.nih.mipav.plugins.PlugInGeneric;
+import gov.nih.mipav.plugins.*;
 
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
-import gov.nih.mipav.model.file.FileDataProvenance;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileInfoImageXML;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileVOI;
-import gov.nih.mipav.model.file.FileXCEDE;
-import gov.nih.mipav.model.file.RawImageInfo;
-import gov.nih.mipav.model.provenance.ProvenanceHolder;
-import gov.nih.mipav.model.provenance.ProvenanceRecorder;
-import gov.nih.mipav.model.provenance.actions.ActionStartMipav;
-import gov.nih.mipav.model.provenance.actions.ActionStopMipav;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.ScriptRecordingListener;
-import gov.nih.mipav.model.scripting.ScriptRunner;
-import gov.nih.mipav.model.scripting.ScriptableActionLoader;
-import gov.nih.mipav.model.scripting.VariableTable;
-import gov.nih.mipav.model.scripting.actions.ActionCollectGarbage;
-import gov.nih.mipav.model.scripting.actions.ActionCreateBlankImage;
-import gov.nih.mipav.model.scripting.actions.ActionSaveBase;
-import gov.nih.mipav.model.srb.SRBFileTransferer;
-import gov.nih.mipav.model.srb.SRBUtility;
-import gov.nih.mipav.model.structures.CustomHashtable;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.model.structures.ReminderThread;
-import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.provenance.*;
+import gov.nih.mipav.model.provenance.actions.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
+import gov.nih.mipav.model.srb.*;
+import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.util.NDARPipeline;
 
-import gov.nih.mipav.view.dialogs.JDialogAnonymizeDirectory;
-import gov.nih.mipav.view.dialogs.JDialogDCCIEConversion;
-import gov.nih.mipav.view.dialogs.JDialogDTICreateListFile;
-import gov.nih.mipav.view.dialogs.JDialogDTIEstimateTensor;
-import gov.nih.mipav.view.dialogs.JDialogDTIFiberTracking;
-import gov.nih.mipav.view.dialogs.JDialogDataProvenance;
-import gov.nih.mipav.view.dialogs.JDialogDicomDir;
-import gov.nih.mipav.view.dialogs.JDialogFilterChoice;
-import gov.nih.mipav.view.dialogs.JDialogInstallPlugin;
-import gov.nih.mipav.view.dialogs.JDialogLoadLeica;
-import gov.nih.mipav.view.dialogs.JDialogMemoryAllocation;
-import gov.nih.mipav.view.dialogs.JDialogMipavOptions;
-import gov.nih.mipav.view.dialogs.JDialogRawIO;
-import gov.nih.mipav.view.dialogs.JDialogRunScriptController;
-import gov.nih.mipav.view.dialogs.JDialogScriptRecorder;
-import gov.nih.mipav.view.dialogs.JDialogShortcutEditor;
-import gov.nih.mipav.view.dialogs.JDialogText;
-import gov.nih.mipav.view.dialogs.JDialogUninstallPlugin;
+import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.VolumeTriPlanarInterfaceDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 import gov.nih.mipav.view.xcede.JXCEDEExplorer;
 
-
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.HeadlessException;
-import java.awt.Insets;
-import java.awt.LayoutManager;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Vector;
+import java.util.*;
+import java.util.regex.Matcher;
 
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import org.w3c.dom.Document;
@@ -232,14 +151,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** The label showing the current memory usage of MIPAV. */
     private JLabel memoryUsageLabel;
-    
+
     /** The button indicating that MIPAV is set to run in a threaded environment */
     private JButton btnMultiCore;
-    
-    //TODO: Enable once GPU button is standardized
-    /** The button indicating that processing will take place on the GPU when available */
-    //private JButton btnGpuComp;
 
+    // TODO: Enable once GPU button is standardized
+    /** The button indicating that processing will take place on the GPU when available */
+    // private JButton btnGpuComp;
     /**
      * The periodic thread which updates the memory usage display once every second.
      * 
@@ -305,18 +223,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         // toolbars of individual images
         ScriptRecorder.getReference().addScriptRecordingListener(this);
     }
-    
+
     /**
      * Constructs main UI frame. Accesses the .preferences file to set up variables. Sets up DICOM hashtable for reading
      * in DICOM files and starts the catcher, if appropriate. This method cannot be called directly. To use this
      * constructor, you must call createReference. This class is a singleton, which means that only one type of this
      * class is allowed to be instantiated in a single VM.
      * 
-     * @param forceQuite Mipav will not display any error, warning, or info messages. If a error displays MIPAV will exit.
+     * @param forceQuiet Mipav will not display any error, warning, or info messages. If a error displays MIPAV will
+     *            exit.
      */
-    protected ViewUserInterface(boolean forceQuite) {
-    	System.out.println("MIPAV STARTED with forceQuite set as " + forceQuite);
-    	MipavUtil.setForceQuite(forceQuite);
+    protected ViewUserInterface(final boolean forceQuiet) {
+        System.out.println("MIPAV STARTED with forceQuite set as " + forceQuiet);
+        MipavUtil.setForceQuiet(forceQuiet);
         mainFrame = new JFrame();
         imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable<ModelImage>();
@@ -424,8 +343,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * Displays the system data provenance using a simple dialog with table and jtextarea (for current selection).
      * 
-     * <p>
-     * .
+     * <p> .
      * </p>
      */
     public void aboutDataProvenance() {
@@ -753,9 +671,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
         } else if (command.startsWith("PlugInFile")) {
-        	Object thePlugIn = null;
+            Object thePlugIn = null;
             final String plugInName = "PlugIn" + command.substring(10);
-            String plugInNameRecall = plugInName.substring(6); 
+            final String plugInNameRecall = plugInName.substring(6);
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
@@ -764,29 +682,33 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 if (thePlugIn instanceof PlugInFile) {
 
                     if ( ((PlugInFile) thePlugIn).canWriteImages() && ((PlugInFile) thePlugIn).canReadImages()) {
-                    	Object[] options = new String[2];
-                    	String read = "Read image";
-                    	options[0] = read;
-                    	options[1] = "Write image";
-                    	String title = "Select plugin type";
-                    	String message = "This plugin can both read and write images.  "+
-                    						"Which action should the plugin perform?";
-                    	int opt = JOptionPane.showOptionDialog(mainFrame, message, title, JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, 
-                    												null, options, read);
-                    	if(opt == 0) {
-                    		ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"+plugInNameRecall);
-                        	this.actionPerformed(e);
-                    	} else if(opt == 1) {
-                    		ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"+plugInNameRecall);
-                        	this.actionPerformed(e);
-                    	} 
-                    	
+                        final Object[] options = new String[2];
+                        final String read = "Read image";
+                        options[0] = read;
+                        options[1] = "Write image";
+                        final String title = "Select plugin type";
+                        final String message = "This plugin can both read and write images.  "
+                                + "Which action should the plugin perform?";
+                        final int opt = JOptionPane.showOptionDialog(mainFrame, message, title,
+                                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, read);
+                        if (opt == 0) {
+                            final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"
+                                    + plugInNameRecall);
+                            this.actionPerformed(e);
+                        } else if (opt == 1) {
+                            final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"
+                                    + plugInNameRecall);
+                            this.actionPerformed(e);
+                        }
+
                     } else if ( ((PlugInFile) thePlugIn).canReadImages()) {
-                    	ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"+plugInNameRecall);
-                    	this.actionPerformed(e);
+                        final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileRead"
+                                + plugInNameRecall);
+                        this.actionPerformed(e);
                     } else if ( ((PlugInFile) thePlugIn).canWriteImages()) {
-                    	ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"+plugInNameRecall);
-                    	this.actionPerformed(e);
+                        final ActionEvent e = new ActionEvent(event.getSource(), event.getID(), "PlugInFileWrite"
+                                + plugInNameRecall);
+                        this.actionPerformed(e);
                     } else {
                         MipavUtil.displayInfo(plugInName + " is a PlugInFile that neither writes nor reads images.");
                     }
@@ -809,7 +731,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } catch (final IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
-    	} else if (command.startsWith("PlugInGeneric")) {
+        } else if (command.startsWith("PlugInGeneric")) {
             Object thePlugIn = null;
 
             final String plugInName = "PlugIn" + command.substring(13);
@@ -876,9 +798,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             imageRegistryMonitoring();
         } else if (command.equals("Options")) {
             options();
-            //TODO: Enable once GPU implementation is standardized
-            if(/*event.getSource().equals(btnGpuComp) || */event.getSource().equals(btnMultiCore)) {
-            	optionsDialog.showPane("Other");
+            // TODO: Enable once GPU implementation is standardized
+            if (/* event.getSource().equals(btnGpuComp) || */event.getSource().equals(btnMultiCore)) {
+                optionsDialog.showPane("Other");
             }
         } else if (command.equals("Shortcuts")) {
             showShortcutEditor(false);
@@ -915,11 +837,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("createListFile")) {
             new JDialogDTICreateListFile();
         } else if (command.equals("estimateTensor")) {
-        	new JDialogDTIEstimateTensor();
-        } else if(command.equals("fiberTracking")) {
-        	new JDialogDTIFiberTracking();
-        } else if(command.equals("dtiVisualization")) {
-        	invokeDTIframe();
+            new JDialogDTIEstimateTensor();
+        } else if (command.equals("fiberTracking")) {
+            new JDialogDTIFiberTracking();
+        } else if (command.equals("dtiVisualization")) {
+            invokeDTIframe();
         }
 
     }
@@ -928,13 +850,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * Calling the DTI framework with blank image during initialization.
      */
     public void invokeDTIframe() {
-    	
+
         final ModelImage imageA = createEmptyImage(null);
         final VolumeTriPlanarInterfaceDTI kWM = new VolumeTriPlanarInterfaceDTI(imageA);
         kWM.constructRenderers();
         imageA.disposeLocal();
-        
-    	
+
     }
 
     /**
@@ -1144,8 +1065,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 } catch (final Exception e) {
                     pluginName = name;
                 }
-                try {               	
-                	plugin = Class.forName(name);
+                try {
+                    plugin = Class.forName(name);
 
                     // plugin.newInstance();
                     // rather than instantiating to allow loading into SCRIPT_ACTION_LOCATIONS, see below
@@ -1172,9 +1093,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             interName = element.getName().substring(element.getName().indexOf("PlugIn"));
                         }
                     }
-                    
-                    if(interName.length() == 0 && plugin.getSuperclass() != null) {
-                    	interName = getSuperInterfaces(plugin.getSuperclass());
+
+                    if (interName.length() == 0 && plugin.getSuperclass() != null) {
+                        interName = getSuperInterfaces(plugin.getSuperclass());
                     }
 
                     for (final String element : hier) {
@@ -1201,18 +1122,18 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         currentMenu.add(pluginMenuItem);
                     }
 
-                } catch(NoSuchFieldException e) {
-                	//no category, so class is not a valid plugin, class should not be added to GUI
-                } catch(ClassNotFoundException e) {
-                	
-                	//e.printStackTrace();
-            	} catch (final Exception e) {
+                } catch (final NoSuchFieldException e) {
+                    // no category, so class is not a valid plugin, class should not be added to GUI
+                } catch (final ClassNotFoundException e) {
+
+                    // e.printStackTrace();
+                } catch (final Exception e) {
                     // usually this means other files/folders exist in the installed plugins directory besides plugin
                     // files
-                    //e.printStackTrace();
-                } catch(NoClassDefFoundError e) {
-                	//components of some classes may no longer exist in the classpath.
-                	System.out.println("Here: "+name);
+                    // e.printStackTrace();
+                } catch (final NoClassDefFoundError e) {
+                    // components of some classes may no longer exist in the classpath.
+                    System.out.println("Here: " + name);
                 }
             }
         }
@@ -1230,24 +1151,24 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return menu;
     }
 
-    private String getSuperInterfaces(Class plugin) {
-		String interName = new String();
-		final Class[] interList = plugin.getInterfaces();
+    private String getSuperInterfaces(final Class plugin) {
+        String interName = new String();
+        final Class[] interList = plugin.getInterfaces();
         for (final Class element : interList) {
             if (element.getName().contains("PlugIn")) {
                 interName = element.getName().substring(element.getName().indexOf("PlugIn"));
             }
         }
-        
-        if(interName.length() == 0 && plugin.getSuperclass() != null) {
-        	return getSuperInterfaces(plugin.getSuperclass());
-        } else {
-        	return interName;
-        }
-		
-	}
 
-	/**
+        if (interName.length() == 0 && plugin.getSuperclass() != null) {
+            return getSuperInterfaces(plugin.getSuperclass());
+        } else {
+            return interName;
+        }
+
+    }
+
+    /**
      * Recursive deletion algorithm to delete JMenus which contain no JMenuItems exclusive of JMenus in any children.
      * 
      * @param menu The menu to run through deletion
@@ -1881,6 +1802,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public boolean isAppFrameVisible() {
         return isAppFrameVisible;
+    }
+
+    /**
+     * Tells the application to show the MIPAV UI or suppress it (progress bars, image frames, etc).
+     * 
+     * @param isVisible Set to false to hide the MIPAV UI.
+     */
+    public void setAppFrameVisible(final boolean isVisible) {
+        isAppFrameVisible = isVisible;
     }
 
     /**
@@ -3097,8 +3027,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * JDialogText. If the file is not found, or there is a problem opening it, a notation is made in the <code>
      * Preferences.debug</code>
      * window and is otherwise ignored. A warning box is displayed when the license dialog cannot be created (and throws
-     * a <code>NullPointerException</code>). Finally, the main frame does not record this item in its list of windows,
-     * so many instances of this window may be made.
+     * a <code>NullPointerException</code>). Finally, the main frame does not record this item in its list of
+     * windows, so many instances of this window may be made.
      * </p>
      */
     public void showLicense() {
@@ -3113,8 +3043,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * JDialogText. If the file is not found, or there is a problem opening it, a notation is made in the <code>
      * Preferences.debug</code>
      * window and is otherwise ignored. A warning box is displayed when the license dialog cannot be created (and throws
-     * a <code>NullPointerException</code>). Finally, the main frame does not record this item in its list of windows,
-     * so many instances of this window may be made.
+     * a <code>NullPointerException</code>). Finally, the main frame does not record this item in its list of
+     * windows, so many instances of this window may be made.
      * </p>
      * 
      * @param title The title of the frame
@@ -3311,10 +3241,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * thread calls this method every one second.
      */
     public void updateMemoryUsage() {
-        //System.out.println(Runtime.getRuntime().totalMemory());
-        //System.out.println(Runtime.getRuntime().freeMemory());
-    	
-    	final long memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1048576);
+        // System.out.println(Runtime.getRuntime().totalMemory());
+        // System.out.println(Runtime.getRuntime().freeMemory());
+
+        final long memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1048576);
         final long totalMemory = (Runtime.getRuntime().totalMemory() / 1048576);
 
         if ( ((double) memoryInUse / (double) totalMemory) > 0.8) {
@@ -3326,32 +3256,31 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         memoryUsageLabel.setText("Memory: " + memoryInUse + "M / " + totalMemory + "M");
     }
-    
+
     /**
-     * This method updates the "whether multi-core should be used" button when the relevant button has
-     * been pushed in either the preferences pane.
+     * This method updates the "whether multi-core should be used" button when the relevant button has been pushed in
+     * either the preferences pane.
      */
     public void updateMultiCoreUsage() {
-    	if(Preferences.isMultiThreadingEnabled()) {
-        	btnMultiCore.setIcon(MipavUtil.getIcon("greenbox.gif"));
+        if (Preferences.isMultiThreadingEnabled()) {
+            btnMultiCore.setIcon(MipavUtil.getIcon("greenbox.gif"));
         } else {
-        	btnMultiCore.setIcon(MipavUtil.getIcon("redbox.gif"));
+            btnMultiCore.setIcon(MipavUtil.getIcon("redbox.gif"));
         }
     }
-    
-    //TODO: Enable once GPU implementation is standardized
-    /**
-     * This method updates the "whether algorithms will use the GPU" when the relevant button has
-     * been pushed in either the preferences pane.
-     */
-    //public void updateGpuUsage() {
-    //	if(Preferences.isGpuCompEnabled()) {
-    //    	btnGpuComp.setIcon(MipavUtil.getIcon("greenbox.gif"));
-    //    } else {
-    //    	btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
-    //    }
-    //}
 
+    // TODO: Enable once GPU implementation is standardized
+    /**
+     * This method updates the "whether algorithms will use the GPU" when the relevant button has been pushed in either
+     * the preferences pane.
+     */
+    // public void updateGpuUsage() {
+    // if(Preferences.isGpuCompEnabled()) {
+    // btnGpuComp.setIcon(MipavUtil.getIcon("greenbox.gif"));
+    // } else {
+    // btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
+    // }
+    // }
     /**
      * Do nothing - required by ScriptRecordingListener interface.
      * 
@@ -3457,7 +3386,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final Frame[] frames = Frame.getFrames();
 
         for (int j = frames.length - 1; j >= 0; j--) {
-            final Frame frame = (Frame) frames[j];
+            final Frame frame = frames[j];
 
             if (frame instanceof ViewJFrameBase) {
                 frame.setState( ((ViewJFrameBase) frame).getLastState());
@@ -3483,7 +3412,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final Frame[] frames = Frame.getFrames();
 
         for (int j = frames.length - 1; j >= 0; j--) {
-            final Frame frame = (Frame) frames[j];
+            final Frame frame = frames[j];
 
             if (frame instanceof ViewJFrameBase) {
                 ((ViewJFrameBase) frame).setLastState(frame.getState());
@@ -3507,8 +3436,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * Writes Mipav's data provenance to the default location.
      * 
-     * <p>
-     * .
+     * <p> .
      * </p>
      */
     public void writeDataProvenance() {
@@ -3563,10 +3491,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         return panel;
     }
-    
+
     /**
-     * Construct the panel which displays whether the CPU and GPU could be utilized by algorithms
-     * based on the preferences settings by the user.
+     * Construct the panel which displays whether the CPU and GPU could be utilized by algorithms based on the
+     * preferences settings by the user.
      * 
      * @return the memory usage panel
      */
@@ -3575,45 +3503,45 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         final JLabel multiCoreEnabledLabel = new JLabel("Multi-core: ");
         multiCoreEnabledLabel.setFont(MipavUtil.font12);
-        
+
         ImageIcon backgroundMulti;
-        if(Preferences.isMultiThreadingEnabled()) {
-        	backgroundMulti = MipavUtil.getIcon("greenbox.gif");
+        if (Preferences.isMultiThreadingEnabled()) {
+            backgroundMulti = MipavUtil.getIcon("greenbox.gif");
         } else {
-        	backgroundMulti = MipavUtil.getIcon("redbox.gif");
+            backgroundMulti = MipavUtil.getIcon("redbox.gif");
         }
         btnMultiCore = new JButton(backgroundMulti);
         btnMultiCore.setBounds(new Rectangle(17, 17));
         btnMultiCore.setBorder(new EmptyBorder(2, 2, 2, 2));
         btnMultiCore.setFocusPainted(false);
-        
+
         btnMultiCore.setFont(MipavUtil.font12);
         btnMultiCore.setActionCommand("Options");
         btnMultiCore.addActionListener(this);
-        
-        //TODO: Enable once GPU implementation is standardized
-        //final JLabel gpuCompEnabledLabel = new JLabel("  GPU: ");
-        //gpuCompEnabledLabel.setFont(MipavUtil.font12);
-        
-        //ImageIcon backgroundGpu;
-        //if(Preferences.isGpuCompEnabled()) {
-        //	backgroundGpu = MipavUtil.getIcon("greenbox.gif");
-        //} else {
-        //	backgroundGpu = MipavUtil.getIcon("redbox.gif");
-        //}
-        //btnGpuComp = new JButton(backgroundGpu);
-        //btnGpuComp.setBounds(new Rectangle(17, 17));
-        //btnGpuComp.setBorder(new EmptyBorder(2, 2, 2, 2));
-        //btnGpuComp.setFocusPainted(false);
-        
-        //btnGpuComp.setFont(MipavUtil.font12);
-        //btnGpuComp.setActionCommand("Options");
-        //btnGpuComp.addActionListener(this);
-        
+
+        // TODO: Enable once GPU implementation is standardized
+        // final JLabel gpuCompEnabledLabel = new JLabel(" GPU: ");
+        // gpuCompEnabledLabel.setFont(MipavUtil.font12);
+
+        // ImageIcon backgroundGpu;
+        // if(Preferences.isGpuCompEnabled()) {
+        // backgroundGpu = MipavUtil.getIcon("greenbox.gif");
+        // } else {
+        // backgroundGpu = MipavUtil.getIcon("redbox.gif");
+        // }
+        // btnGpuComp = new JButton(backgroundGpu);
+        // btnGpuComp.setBounds(new Rectangle(17, 17));
+        // btnGpuComp.setBorder(new EmptyBorder(2, 2, 2, 2));
+        // btnGpuComp.setFocusPainted(false);
+
+        // btnGpuComp.setFont(MipavUtil.font12);
+        // btnGpuComp.setActionCommand("Options");
+        // btnGpuComp.addActionListener(this);
+
         panel.add(multiCoreEnabledLabel);
         panel.add(btnMultiCore);
-        //panel.add(gpuCompEnabledLabel);
-        //panel.add(btnGpuComp);
+        // panel.add(gpuCompEnabledLabel);
+        // panel.add(btnGpuComp);
 
         return panel;
     }
@@ -3631,7 +3559,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final JTextField messageFieldPanel = initCreateMessageField(" MIPAV");
         final JPanel memoryUsagePanel = initCreateMemoryUsagePanel();
         final JPanel performancePanel = initCreateMultiCoreGpuIndicatorPanel();
-        
+
         gbConstraints.weightx = 2;
         gbConstraints.insets = new Insets(0, 4, 0, 0);
         gbConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -3645,12 +3573,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         gbConstraints.anchor = GridBagConstraints.EAST;
         gbConstraints.fill = GridBagConstraints.REMAINDER;
         gbLayout.setConstraints(performancePanel, gbConstraints);
-        
+
         msgBarPanel.add(performancePanel);
-        
+
         gbConstraints.gridx = 2;
         gbLayout.setConstraints(memoryUsagePanel, gbConstraints);
-        
+
         msgBarPanel.add(memoryUsagePanel);
 
         mainFrame.getContentPane().add(msgBarPanel, "South");
@@ -3884,7 +3812,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     protected void initSetMainFrameDefaults(final LayoutManager prefLayout, final boolean resize) {
         mainFrame.setResizable(resize);
         mainFrame.addWindowListener(this);
-        mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        mainFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         try {
             mainFrame.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
@@ -4057,32 +3985,31 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             if ( !Preferences.getProperty(Preferences.PREF_STARTING_HEAP_SIZE).equals(mems[0])
                     || !Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE).equals(mems[1])) {
-            	if(!MipavUtil.getForceQuite()){
-	                MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n"
-	                        + "those in the Preferences file.\n" + "Memory Allocation will display so you can "
-	                        + "ensure this is correct.");
-	                new JDialogMemoryAllocation(this, true);
-            	}
-            	else{
-	                MipavUtil.displayError("Heap size settings in the " + "environment startup file do not match \n"
-	                        + "those in the Preferences file.\n" + "Memory Allocation will display so you can "
-	                        + "ensure this is correct.");
-            	}
-            	
+                if ( !MipavUtil.getForceQuiet()) {
+                    MipavUtil.displayWarning("Heap size settings in the " + "environment startup file do not match \n"
+                            + "those in the Preferences file.\n" + "Memory Allocation will display so you can "
+                            + "ensure this is correct.");
+                    new JDialogMemoryAllocation(this, true);
+                } else {
+                    MipavUtil.displayError("Heap size settings in the " + "environment startup file do not match \n"
+                            + "those in the Preferences file.\n" + "Memory Allocation will display so you can "
+                            + "ensure this is correct.");
+                }
+
             }
             // else sizes match; there are no problems
         } catch (final NullPointerException npe) { // prefs not found/invalid strings
-        	if(!MipavUtil.getForceQuite()){
-	            MipavUtil.displayWarning("Heap size settings in the " + "environment startup file either do not match \n"
-	                    + "those in the Preferences file, or are non-existant.\n"
-	                    + "Memory Allocation will display so you can " + "ensure this is correct.");
-	            new JDialogMemoryAllocation(this, true);
-        	}
-        	else{
-	            MipavUtil.displayError("Heap size settings in the " + "environment startup file either do not match \n"
-	                    + "those in the Preferences file, or are non-existant.\n"
-	                    + "Memory Allocation will display so you can " + "ensure this is correct.");
-        	}
+            if ( !MipavUtil.getForceQuiet()) {
+                MipavUtil.displayWarning("Heap size settings in the "
+                        + "environment startup file either do not match \n"
+                        + "those in the Preferences file, or are non-existant.\n"
+                        + "Memory Allocation will display so you can " + "ensure this is correct.");
+                new JDialogMemoryAllocation(this, true);
+            } else {
+                MipavUtil.displayError("Heap size settings in the " + "environment startup file either do not match \n"
+                        + "those in the Preferences file, or are non-existant.\n"
+                        + "Memory Allocation will display so you can " + "ensure this is correct.");
+            }
         } catch (final FileNotFoundException fnf) { // LAX not found
             Preferences.debug(fnf.getLocalizedMessage() + "\n");
             MipavUtil.displayWarning(fnf.getLocalizedMessage());
@@ -4242,6 +4169,65 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public boolean isProvidedOutputDir() {
         return providedOutputDir;
+    }
+
+    public static Vector<Class<ActionDiscovery>> getDiscoverableActionList() {
+        final Vector<Class<ActionDiscovery>> actionList = new Vector<Class<ActionDiscovery>>();
+
+        final Vector<String> actionLocations = ScriptableActionLoader.getScriptActionLocations();
+        final Vector<String> actionPackages = new Vector<String>();
+        final Vector<String> actionDirs = new Vector<String>();
+        for (String p : actionLocations) {
+            final int index = p.lastIndexOf(".");
+            p = p.substring(0, index + 1);
+            actionPackages.add(p);
+            actionDirs.add(p.replaceAll("\\.", Matcher.quoteReplacement(File.separator)));
+        }
+
+        String classFileName;
+        Class action;
+        for (int i = 0; i < actionDirs.size(); i++) {
+            final String curDir = actionDirs.elementAt(i);
+            final String curPackage = actionPackages.elementAt(i);
+
+            final File locationDir = new File(curDir);
+            if (locationDir.isDirectory()) {
+
+                final File[] allFiles = locationDir.listFiles(new FileFilter() {
+                    public boolean accept(final File f) {
+                        if (f.getPath().endsWith(".class")) {
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+
+                for (final File file : allFiles) {
+                    classFileName = file.getName();
+
+                    classFileName = classFileName.substring(0, classFileName.indexOf(".class"));
+
+                    action = null;
+                    try {
+                        action = Class.forName(curPackage + classFileName);
+                    } catch (final ClassNotFoundException e) {
+                        Preferences.debug("Class not found: " + e.getMessage() + "\n", Preferences.DEBUG_SCRIPTING);
+                    }
+
+                    if (action != null) {
+                        final Class<?>[] interfaces = action.getInterfaces();
+                        for (final Class<?> interf : interfaces) {
+                            if (interf.equals(ActionDiscovery.class)) {
+                                actionList.add(action);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return actionList;
     }
 
     // ~ Inner Classes

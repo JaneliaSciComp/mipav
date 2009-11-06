@@ -35,37 +35,37 @@ public class JDialogSaveDicom extends JDialogBase {
     private JButton autofillButton;
 
     /** DOCUMENT ME! */
-    private FileInfoDicom dicomFileInfo;
+    private final FileInfoDicom dicomFileInfo;
 
     /** DOCUMENT ME! */
-    private FileInfoBase fileInfo;
+    private final FileInfoBase fileInfo;
 
     /** DOCUMENT ME! */
     private JButton fillButton;
 
     /** DOCUMENT ME! */
-    private GridBagConstraints gbc;
+    private final GridBagConstraints gbc;
 
     /** DOCUMENT ME! */
-    private String[] lateralities = {"Unknown", "Left", "Right"};
+    private final String[] lateralities = {"Unknown", "Left", "Right"};
 
     /** DOCUMENT ME! */
     private JComboBox laterality;
 
     /** DOCUMENT ME! */
-    private GridBagLayout layout;
+    private final GridBagLayout layout;
 
     /** DOCUMENT ME! */
-    private String[] modalities = {"Biomagnetic Imaging", "Color Flow Doppler", "Computed Radiography",
+    private final String[] modalities = {"Biomagnetic Imaging", "Color Flow Doppler", "Computed Radiography",
             "Computed Tomography", "Duplex Doppler", "Diaphanography", "Digital Radiography", "Endoscopy",
-            "General Microscopy", "Hardcody", "Intraoral Radiography", "Laser Surface Scan", "MR Angiography",
+            "General Microscopy", "Hardcopy", "Intraoral Radiography", "Laser Surface Scan", "MR Angiography",
             "Mammography", "Magnetic Resonance", "MR Spectroscopy", "Nuclear Medicine", "Other", "PET",
             "Panoramic XRay", "Radio Fluoroscopy", "Radiographic Imaging", "Radiotherapy Dose", "Radiotherapy Image",
             "Radiotherapy Plan", "Radiotherapy Record", "Radiotherapy Structure", "Slide Microscopy", "SPECT",
             "Thermography", "Ultrasound", "XRay Angiography", "External Photography"};
 
     /** DOCUMENT ME! */
-    private String[] parts = {"Unknown", "Skull", "CSpine", "TSpine", "LSpine", "SSpine", "Coccyx", "Chest",
+    private final String[] parts = {"Unknown", "Skull", "CSpine", "TSpine", "LSpine", "SSpine", "Coccyx", "Chest",
             "Clavicle", "Breast", "Abdomen", "Pelvis", "Hip", "Shoulder", "Elbow", "Knee", "Ankle", "Hand", "Foot",
             "Extremity", "Head", "Heart", "Neck", "Leg", "Arm", "Jaw"};
 
@@ -103,7 +103,7 @@ public class JDialogSaveDicom extends JDialogBase {
     private JComboBox patientSex;
 
     /** DOCUMENT ME! */
-    private String[] positions = {"Unknown", "Head-First Prone", "Head-First Supine", "Feet First-Prone",
+    private final String[] positions = {"Unknown", "Head-First Prone", "Head-First Supine", "Feet First-Prone",
             "Feet First-Supine", "HF-Decubitus Right", "HF-Decubitus Left", "FF-Decubitus Right", "FF-Decubitus Left"};
 
     /** DOCUMENT ME! */
@@ -164,7 +164,7 @@ public class JDialogSaveDicom extends JDialogBase {
     private JTextField seriesUID;
 
     /** DOCUMENT ME! */
-    private String[] sexes = {"Unknown", "Male", "Female", "Other"};
+    private final String[] sexes = {"Unknown", "Male", "Female", "Other"};
 
     /** DOCUMENT ME! */
     private JTextField studyAccNumber;
@@ -215,7 +215,7 @@ public class JDialogSaveDicom extends JDialogBase {
     private JTextField studyWeight;
 
     /** DOCUMENT ME! */
-    private JTabbedPane tabPane;
+    private final JTabbedPane tabPane;
 
     /**
      * DICOM tags extracted from the image we want to save. Example: dicom_0xNNNN el_0xNNNN tags stored in MINC headers.
@@ -226,7 +226,7 @@ public class JDialogSaveDicom extends JDialogBase {
     private Hashtable tagsList, additionalTagsList;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
+    private final ViewUserInterface UI;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -239,8 +239,8 @@ public class JDialogSaveDicom extends JDialogBase {
      * @param dicomInfo Dicom file info object.
      * @param isScriptRunning Whether this dialog is being instantiated as part of the running of a script.
      */
-    public JDialogSaveDicom(Frame theParentFrame, FileInfoBase _fileInfo, FileInfoDicom dicomInfo,
-            boolean isScriptRunning) {
+    public JDialogSaveDicom(final Frame theParentFrame, final FileInfoBase _fileInfo, final FileInfoDicom dicomInfo,
+            final boolean isScriptRunning) {
         super(theParentFrame, true);
 
         UI = ViewUserInterface.getReference();
@@ -271,7 +271,7 @@ public class JDialogSaveDicom extends JDialogBase {
         tabPane.addTab("Study", studyPanel);
         tabPane.addTab("Series", seriesPanel);
 
-        JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new JPanel();
         buildOKButton();
         buildCancelButton();
         buttonPanel.add(OKButton);
@@ -295,7 +295,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
             // remove tags which were used to fill the GUI in fillDataFromTable(). the rest will be blindly imported
             // into the dicom fileinfo later..
-            Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
+            final Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
             String tag;
 
             while (keys.hasMoreElements()) {
@@ -319,7 +319,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
             // remove tags which were used to fill the GUI in fillDataFromTable(). the rest will be blindly imported
             // into the dicom fileinfo later..
-            Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
+            final Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
             String tag;
 
             while (keys.hasMoreElements()) {
@@ -357,7 +357,7 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @param event Event that triggers this function.
      */
-    public void actionPerformed(ActionEvent event) {
+    public void actionPerformed(final ActionEvent event) {
 
         if (event.getActionCommand().equals("OK")) {
 
@@ -384,7 +384,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 // blindly import any tags which were exported from the image we want to save (shouldn't be any gui
                 // tags, though)
                 if (tagsImportedFromNonDicomImage != null) {
-                    Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
+                    final Enumeration<String> keys = tagsImportedFromNonDicomImage.keys();
                     String tag;
                     String value;
                     Object[] valueArray;
@@ -398,12 +398,12 @@ public class JDialogSaveDicom extends JDialogBase {
                         // special case for a US tag with VM 4 (0018,1310) which the minc people convert to a strange
                         // format "0x80, 0, 0, 0, 0, 0, 0x80, 0" -> "128, 0, 0, 128"
                         if (tag.equals("0018,1310")) {
-                            String[] vals = value.split(", ");
+                            final String[] vals = value.split(", ");
                             valueArray = new Short[vals.length / 2];
 
                             try {
                                 valueArray[0] = Short.decode(vals[0]);
-                            } catch (NumberFormatException nfe) {
+                            } catch (final NumberFormatException nfe) {
                                 MipavUtil
                                         .displayError("Error parsing short values from minc-stored dicom tag (0018,1310): "
                                                 + vals[0]);
@@ -415,7 +415,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
                                     try {
                                         valueArray[i / 2] = Short.decode(vals[i]);
-                                    } catch (NumberFormatException nfe) {
+                                    } catch (final NumberFormatException nfe) {
                                         MipavUtil
                                                 .displayError("Error parsing short values from minc-stored dicom tag (0018,1310): "
                                                         + vals[i]);
@@ -427,7 +427,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
                             try {
                                 dicomFileInfo.getTagTable().setValue(tag, valueArray);
-                            } catch (Exception e) {
+                            } catch (final Exception e) {
                                 dicomFileInfo.getTagTable().removeTag(tag);
 
                                 Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
@@ -439,7 +439,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
                             try {
                                 dicomFileInfo.getTagTable().setValue(tag, value);
-                            } catch (Exception e) {
+                            } catch (final Exception e) {
                                 dicomFileInfo.getTagTable().removeTag(tag);
 
                                 Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
@@ -454,14 +454,16 @@ public class JDialogSaveDicom extends JDialogBase {
                 // dicomFileInfo.setVRType(dicomFileInfo.EXPLICIT);
                 dicomFileInfo.getTagTable().setValue("0002,0000", new Integer(152), 4);
 
-                Byte[] version = new Byte[2];
+                final Byte[] version = new Byte[2];
                 version[0] = new Byte((byte) 1);
                 version[1] = new Byte((byte) 0);
                 dicomFileInfo.getTagTable().setValue("0002,0001", version, 2);
                 dicomFileInfo.getTagTable().setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary
                 // Capture SOP
                 // UID
-                dicomFileInfo.getTagTable().setValue("0002,0003", FileInfoDicom.generateNewTag("0002,0003", "1.2.840.999999999999999999"), 26); // bogus SOP
+                dicomFileInfo.getTagTable().setValue("0002,0003",
+                        FileInfoDicom.generateNewTag("0002,0003", "1.2.840.999999999999999999"), 26); // bogus
+                                                                                                                                                // SOP
                 // Instance UID
                 dicomFileInfo.getTagTable().setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian
                 // transfer
@@ -472,7 +474,9 @@ public class JDialogSaveDicom extends JDialogBase {
 
                 dicomFileInfo.getTagTable().setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary
                 // Capture UID
-                dicomFileInfo.getTagTable().setValue("0008,0018", FileInfoDicom.generateNewTag("0008,0018", "1.2.840.999999999999999999"), 26); // bogus SOP
+                dicomFileInfo.getTagTable().setValue("0008,0018",
+                        FileInfoDicom.generateNewTag("0008,0018", "1.2.840.999999999999999999"), 26); // bogus
+                                                                                                                                                // SOP
                 // Instance UID
 
                 // all secondary capture info is installed by FileDicom.writeImage(), under the assumption that all
@@ -531,62 +535,62 @@ public class JDialogSaveDicom extends JDialogBase {
                 if (additionalTagsList != null) {
 
                     if (additionalTagsList.get("(0008,0008)") != null) {
-                        String value = (String) additionalTagsList.get("(0008,0008)");
+                        final String value = (String) additionalTagsList.get("(0008,0008)");
                         dicomFileInfo.getTagTable().setValue("0008,0008", value, value.length());
                     }
 
                     if (additionalTagsList.get("(0008,0032)") != null) {
-                        String value = (String) additionalTagsList.get("(0008,0032)");
+                        final String value = (String) additionalTagsList.get("(0008,0032)");
                         dicomFileInfo.getTagTable().setValue("0008,0032", value, value.length());
                     }
 
                     if (additionalTagsList.get("(0008,0070)") != null) {
-                        String value = (String) additionalTagsList.get("(0008,0070)");
+                        final String value = (String) additionalTagsList.get("(0008,0070)");
                         dicomFileInfo.getTagTable().setValue("0008,0070", value, value.length());
                     }
 
                     if (additionalTagsList.get("(0008,1090)") != null) {
-                        String value = (String) additionalTagsList.get("(0008,1090)");
+                        final String value = (String) additionalTagsList.get("(0008,1090)");
                         dicomFileInfo.getTagTable().setValue("0008,1090", value, value.length());
                     }
 
                     if (additionalTagsList.get("(0018,0080)") != null) {
-                        String value = (String) additionalTagsList.get("(0018,0080)");
+                        final String value = (String) additionalTagsList.get("(0018,0080)");
                         dicomFileInfo.getTagTable().setValue("0018,0080", value, value.length());
                     }
 
                     if (additionalTagsList.get("(0018,0081)") != null) {
-                        String value = (String) additionalTagsList.get("(0018,0081)");
+                        final String value = (String) additionalTagsList.get("(0018,0081)");
                         dicomFileInfo.getTagTable().setValue("0018,0081", value, value.length());
                     }
 
                     if (additionalTagsList.get("(0018,0082)") != null) {
-                        String value = (String) additionalTagsList.get("(0018,0082)");
+                        final String value = (String) additionalTagsList.get("(0018,0082)");
                         dicomFileInfo.getTagTable().setValue("0018,0082", value, value.length());
                     }
 
                     if (additionalTagsList.get("(0018,0087)") != null) {
-                        String value = (String) additionalTagsList.get("(0018,0087)");
+                        final String value = (String) additionalTagsList.get("(0018,0087)");
                         dicomFileInfo.getTagTable().setValue("0018,0087", value, value.length());
                     }
 
                     if (additionalTagsList.get("(0018,1100)") != null) {
-                        String value = (String) additionalTagsList.get("(0018,1100)");
+                        final String value = (String) additionalTagsList.get("(0018,1100)");
                         dicomFileInfo.getTagTable().setValue("0018,1100", value, value.length());
                     }
 
                     if (additionalTagsList.get("(0018,1310)") != null) {
                         boolean test = true;
-                        String value = (String) additionalTagsList.get("(0018,1310)");
+                        final String value = (String) additionalTagsList.get("(0018,1310)");
                         Object[] valueArray;
-                        String[] vals = value.split(", ");
+                        final String[] vals = value.split(", ");
                         valueArray = new Short[vals.length];
 
                         for (int i = 0; i < vals.length; i++) {
 
                             try {
                                 valueArray[i] = Short.decode(vals[i]);
-                            } catch (NumberFormatException nfe) {
+                            } catch (final NumberFormatException nfe) {
                                 test = false;
                                 MipavUtil.displayError("Error parsing short values from dicom tag (0018,1310): "
                                         + vals[i]);
@@ -602,12 +606,12 @@ public class JDialogSaveDicom extends JDialogBase {
                     }
 
                     if (additionalTagsList.get("(0018,1312)") != null) {
-                        String value = (String) additionalTagsList.get("(0018,1312)");
+                        final String value = (String) additionalTagsList.get("(0018,1312)");
                         dicomFileInfo.getTagTable().setValue("0018,1312", value, value.length());
                     }
 
                     if (additionalTagsList.get("(0018,1314)") != null) {
-                        String value = (String) additionalTagsList.get("(0018,1314)");
+                        final String value = (String) additionalTagsList.get("(0018,1314)");
                         dicomFileInfo.getTagTable().setValue("0018,1314", value, value.length());
                     }
                 }
@@ -937,7 +941,7 @@ public class JDialogSaveDicom extends JDialogBase {
                     dicomFileInfo.getTagTable().setValue("0020,0013", "1 ", 2); // Instance number, reset in FileIO
                 }
 
-                Short samples = new Short((short) 1);
+                final Short samples = new Short((short) 1);
 
                 // These next two tags may change with RGB DICOM images !!!!
                 dicomFileInfo.getTagTable().setValue("0028,0002", samples, 2);
@@ -981,14 +985,14 @@ public class JDialogSaveDicom extends JDialogBase {
      * Autofill the dicom required tags to loosely fullfill the dicom standard.
      */
     private void autofillRequiredFields() {
-        String studyPostfix = "0";
-        String seriesPostfix = "1";
+        final String studyPostfix = "0";
+        final String seriesPostfix = "1";
 
         String version = MipavUtil.getVersion();
         version = version.replaceAll("[\\.-]", "");
 
-        long datetime = System.currentTimeMillis();
-        String uidPrefix = "1.2.840.99999.9." + version + "." + datetime;
+        final long datetime = System.currentTimeMillis();
+        final String uidPrefix = "1.2.840.99999.9." + version + "." + datetime;
 
         // (0020,000D) study instance uid
         if ( ((JTextField) (tagsList.get("(0020,000D)"))).getText().equals("")) {
@@ -1017,7 +1021,7 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @return Boolean confirming if the tag checked through or not.
      */
-    private boolean checkTag(String value, String type) {
+    private boolean checkTag(String value, final String type) {
         StringTokenizer tok;
 
         if (value != null) {
@@ -1139,7 +1143,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
             return true;
         } else if (type.equals("TM")) {
-            char[] array = value.toCharArray();
+            final char[] array = value.toCharArray();
 
             if ( (array.length != 0) && (array.length > 16)) {
                 MipavUtil.displayError("Time cannot be more than 16 characters long.");
@@ -1262,7 +1266,7 @@ public class JDialogSaveDicom extends JDialogBase {
             }
 
             if (value.length() > 0) {
-                char[] array = value.toCharArray();
+                final char[] array = value.toCharArray();
 
                 for (int i = 0; i < array.length; i++) {
 
@@ -1309,7 +1313,7 @@ public class JDialogSaveDicom extends JDialogBase {
                     return false;
                 }
 
-                char[] array = value.toCharArray();
+                final char[] array = value.toCharArray();
 
                 for (int i = 0; i < array.length; i++) {
 
@@ -1330,10 +1334,10 @@ public class JDialogSaveDicom extends JDialogBase {
             if (value.length() > 0) {
 
                 try {
-                    short s = Short.parseShort(value);
+                    final short s = Short.parseShort(value);
 
                     return true;
-                } catch (NumberFormatException error) {
+                } catch (final NumberFormatException error) {
                     MipavUtil.displayError(value + " is not a signed short.  It must be in the range "
                             + Short.MIN_VALUE + " to " + Short.MAX_VALUE + ".");
 
@@ -1347,7 +1351,7 @@ public class JDialogSaveDicom extends JDialogBase {
             if (value.length() > 0) {
 
                 try {
-                    short s = Short.parseShort(value);
+                    final short s = Short.parseShort(value);
 
                     if (s < 0) {
                         MipavUtil.displayError(s + " must be greater than 0.");
@@ -1356,10 +1360,10 @@ public class JDialogSaveDicom extends JDialogBase {
                     }
 
                     return true;
-                } catch (NumberFormatException error) {
+                } catch (final NumberFormatException error) {
 
                     try {
-                        int s = Integer.parseInt(value);
+                        final int s = Integer.parseInt(value);
 
                         if (s < 65536) {
                             return true;
@@ -1368,7 +1372,7 @@ public class JDialogSaveDicom extends JDialogBase {
                         MipavUtil.displayError(value + " must be in the range 0 to 65536.");
 
                         return false;
-                    } catch (NumberFormatException error2) {
+                    } catch (final NumberFormatException error2) {
                         MipavUtil.displayError(value
                                 + " is not an unsigned short.  It must be in the range 0 to 65536.");
 
@@ -1383,13 +1387,13 @@ public class JDialogSaveDicom extends JDialogBase {
             if (value.length() > 0) {
 
                 try {
-                    short s = Short.parseShort(value);
+                    final short s = Short.parseShort(value);
 
                     return true;
-                } catch (NumberFormatException error) {
+                } catch (final NumberFormatException error) {
 
                     try {
-                        int s = Integer.parseInt(value);
+                        final int s = Integer.parseInt(value);
 
                         if (s < 65536) {
                             return true;
@@ -1399,7 +1403,7 @@ public class JDialogSaveDicom extends JDialogBase {
                                 + Short.MIN_VALUE + " to " + Short.MAX_VALUE + ".");
 
                         return false;
-                    } catch (NumberFormatException error2) {
+                    } catch (final NumberFormatException error2) {
                         MipavUtil.displayError(value
                                 + " is not an unsigned or signed short.  It must either be in the range 0 to 65536\n"
                                 + "or in the range " + Short.MIN_VALUE + " to " + Short.MAX_VALUE + ".");
@@ -1415,15 +1419,15 @@ public class JDialogSaveDicom extends JDialogBase {
             if (value.length() > 0) {
 
                 try {
-                    String s1 = value.substring(0, value.indexOf("\\"));
-                    String s2 = value.substring(value.indexOf("\\") + 1);
-                    char[] array1 = s1.toCharArray();
-                    char[] array2 = s2.toCharArray();
+                    final String s1 = value.substring(0, value.indexOf("\\"));
+                    final String s2 = value.substring(value.indexOf("\\") + 1);
+                    final char[] array1 = s1.toCharArray();
+                    final char[] array2 = s2.toCharArray();
 
-                    for (int i = 0; i < array1.length; i++) {
+                    for (final char element : array1) {
 
-                        if ( (array1[i] != 'A') && (array1[i] != 'P') && (array1[i] != 'R') && (array1[i] != 'L')
-                                && (array1[i] != 'H') && (array1[i] != 'F')) {
+                        if ( (element != 'A') && (element != 'P') && (element != 'R') && (element != 'L')
+                                && (element != 'H') && (element != 'F')) {
                             MipavUtil
                                     .displayError("The Patient Orientation (0020,0020) relative to the image plane shall be specified by two values that\n"
                                             + "designate the anatomical direction of the positive row axis (left to right) and the positive column axis\n"
@@ -1441,7 +1445,7 @@ public class JDialogSaveDicom extends JDialogBase {
                     }
 
                     return true;
-                } catch (StringIndexOutOfBoundsException error) {
+                } catch (final StringIndexOutOfBoundsException error) {
                     MipavUtil.displayError("There must be two values for Patient Orientation, separated by a '\\'.");
 
                     return false;
@@ -1465,7 +1469,7 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @return The button.
      */
-    private JButton createButton(String title, JButton button) {
+    private JButton createButton(final String title, JButton button) {
         button = new JButton(title);
         button.setActionCommand(title);
         button.addActionListener(this);
@@ -1487,8 +1491,9 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @return DOCUMENT ME!
      */
-    private JComboBox createComboBox(Container panel, String[] choices, int x, int y, int w, int h) {
-        JComboBox combo = new JComboBox(choices);
+    private JComboBox createComboBox(final Container panel, final String[] choices, final int x, final int y,
+            final int w, final int h) {
+        final JComboBox combo = new JComboBox(choices);
         combo.setFont(serif12);
         combo.setForeground(Color.black);
         combo.setPreferredSize(new Dimension(200, 25));
@@ -1562,8 +1567,9 @@ public class JDialogSaveDicom extends JDialogBase {
      * @param w DOCUMENT ME!
      * @param h DOCUMENT ME!
      */
-    private void createLabel(String title, Container panel, int x, int y, int w, int h) {
-        JLabel label = new JLabel(title);
+    private void createLabel(final String title, final Container panel, final int x, final int y, final int w,
+            final int h) {
+        final JLabel label = new JLabel(title);
         label.setFont(serif12);
         label.setForeground(Color.black);
         setGBC(x, y, w, h);
@@ -1580,7 +1586,7 @@ public class JDialogSaveDicom extends JDialogBase {
      * @return the panel created
      */
     private JPanel createPanel() {
-        JPanel panel = new JPanel();
+        final JPanel panel = new JPanel();
         panel.setLayout(layout);
         panel.setForeground(Color.black);
 
@@ -1741,7 +1747,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
         chooser.setDialogTitle("Open tags file.");
 
-        int returnValue = chooser.showSaveDialog(UI.getMainFrame());
+        final int returnValue = chooser.showSaveDialog(UI.getMainFrame());
 
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             fileName = chooser.getSelectedFile().getName();
@@ -1755,7 +1761,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
         try {
             raFile = new RandomAccessFile(file, "rw");
-        } catch (FileNotFoundException error) {
+        } catch (final FileNotFoundException error) {
             Preferences.debug("SaveDicom: File not found.");
             MipavUtil.displayError("SaveDicom: File not found.");
 
@@ -1768,7 +1774,7 @@ public class JDialogSaveDicom extends JDialogBase {
             tempString = raFile.readLine();
 
             while (tempString != null) {
-                StringTokenizer strTok = new StringTokenizer(tempString, "\t");
+                final StringTokenizer strTok = new StringTokenizer(tempString, "\t");
 
                 // This file should be tab delimited and look like
                 // (0002,0000) tab Meta Element Group Length tab tab 190
@@ -1802,7 +1808,7 @@ public class JDialogSaveDicom extends JDialogBase {
 
                     if (value.length() > 0) {
                         String s = "";
-                        StringTokenizer timeToken = new StringTokenizer(value, ":");
+                        final StringTokenizer timeToken = new StringTokenizer(value, ":");
 
                         while (timeToken.hasMoreTokens()) {
                             s += timeToken.nextToken();
@@ -1817,9 +1823,9 @@ public class JDialogSaveDicom extends JDialogBase {
                         || tag.equals("(0010,0030)")) {
 
                     if (value.length() == 10) {
-                        String month = value.substring(0, 2);
-                        String day = value.substring(3, 5);
-                        String year = value.substring(6);
+                        final String month = value.substring(0, 2);
+                        final String day = value.substring(3, 5);
+                        final String year = value.substring(6);
                         ((JTextField) (tagsList.get(tag))).setText(year + month + day);
                         resetSize((JTextField) (tagsList.get(tag)));
                     }
@@ -1857,7 +1863,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 else if (tag.equals("(0020,0020)")) {
 
                     if (value.length() > 0) {
-                        StringTokenizer orientToken = new StringTokenizer(value);
+                        final StringTokenizer orientToken = new StringTokenizer(value);
                         String s = "";
 
                         while (orientToken.hasMoreTokens()) {
@@ -1903,7 +1909,7 @@ public class JDialogSaveDicom extends JDialogBase {
             }
 
             raFile.close();
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("SaveDicom: Error reading file.");
 
             return;
@@ -1917,8 +1923,8 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @param table the table of tag-value pairs
      */
-    private void fillDataFromTable(Hashtable table) {
-        Enumeration keys = table.keys();
+    private void fillDataFromTable(final Hashtable table) {
+        final Enumeration keys = table.keys();
 
         String tag;
         String value;
@@ -1946,21 +1952,20 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @return <code>true</code> if the string is in the default character repertoire.
      */
-    private boolean isDefaultCharacter(String word, boolean control) {
-        char[] array = word.toCharArray();
+    private boolean isDefaultCharacter(final String word, final boolean control) {
+        final char[] array = word.toCharArray();
 
-        for (int i = 0; i < array.length; i++) {
+        for (final char element : array) {
 
             if (control) {
 
-                if ( ( ((int) (array[i]) < 32) && ((int) (array[i]) != 10) && ((int) (array[i]) != 12)
-                        && ((int) (array[i]) != 13) && ((int) (array[i]) != 27))
-                        || ((int) (array[i]) > 126)) {
+                if ( ( ( (element) < 32) && ( (element) != 10) && ( (element) != 12) && ( (element) != 13) && ( (element) != 27))
+                        || ( (element) > 126)) {
                     return false;
                 }
             } else {
 
-                if ( ( ((int) (array[i]) < 32) && ((int) (array[i]) != 27)) || ((int) (array[i]) > 126)) {
+                if ( ( ( (element) < 32) && ( (element) != 27)) || ( (element) > 126)) {
                     return false;
                 }
             }
@@ -1974,7 +1979,7 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @param field Text field to change.
      */
-    private void resetSize(JTextField field) {
+    private void resetSize(final JTextField field) {
         field.setPreferredSize(new Dimension(field.getHorizontalVisibility().getMaximum() + 5,
                 field.getPreferredSize().height));
     }
@@ -1985,7 +1990,7 @@ public class JDialogSaveDicom extends JDialogBase {
      * @param tag the tag (which determines which chooser to set)
      * @param value the value (which determines which index in the chooser is selected)
      */
-    private void setChooserFromTag(String tag, String value) {
+    private void setChooserFromTag(final String tag, final String value) {
 
         if (tag.equals("(0008,0060)")) {
 
@@ -2008,7 +2013,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 seriesMod.setSelectedIndex(7);
             } else if (value.toLowerCase().equals("general_microscopy") || value.trim().equals("GM")) {
                 seriesMod.setSelectedIndex(8);
-            } else if (value.toLowerCase().equals("hardcody") || value.trim().equals("HC")) {
+            } else if (value.toLowerCase().equals("hardcopy") || value.trim().equals("HC")) {
                 seriesMod.setSelectedIndex(9);
             } else if (value.toLowerCase().equals("intraoral_radiography") || value.trim().equals("IO")) {
                 seriesMod.setSelectedIndex(10);
@@ -2163,7 +2168,7 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @see GridBagConstraints
      */
-    private void setGBC(int x, int y, int w, int h) {
+    private void setGBC(final int x, final int y, final int w, final int h) {
         gbc.gridx = x;
         gbc.gridy = y;
         gbc.gridwidth = w;
@@ -2176,7 +2181,7 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @param modality The image modality.
      */
-    private void setModalityChooser(int modality) {
+    private void setModalityChooser(final int modality) {
 
         // avoid unknown modalities and modalities not supported by the chooser
         if ( (modality > 0) && ( (modality - 1) < seriesMod.getItemCount())) {
@@ -2196,8 +2201,9 @@ public class JDialogSaveDicom extends JDialogBase {
      * 
      * @return the text field created
      */
-    private JTextField setTextField(String initial, Container panel, int x, int y, int w, int h) {
-        JTextField field = new JTextField();
+    private JTextField setTextField(final String initial, final Container panel, final int x, final int y, final int w,
+            final int h) {
+        final JTextField field = new JTextField();
 
         // JTextField field = new JTextField(initial, 10);
         field.setPreferredSize(new Dimension(100, 25));

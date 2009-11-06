@@ -55,11 +55,11 @@ public class ScriptRunner {
      */
     public static final synchronized ScriptRunner getReference() {
 
-        if (singletonReference == null) {
-            singletonReference = new ScriptRunner();
+        if (ScriptRunner.singletonReference == null) {
+            ScriptRunner.singletonReference = new ScriptRunner();
         }
 
-        return singletonReference;
+        return ScriptRunner.singletonReference;
     }
 
     /**
@@ -69,7 +69,7 @@ public class ScriptRunner {
      * 
      * @return The image associated with the given image variable.
      */
-    public synchronized ModelImage getImage(String imageVar) {
+    public synchronized ModelImage getImage(final String imageVar) {
         Preferences.debug("script runner:\tRetrieving image:\t" + imageVar + "\n", Preferences.DEBUG_SCRIPTING);
 
         return getImageTable().getImage(imageVar);
@@ -131,7 +131,8 @@ public class ScriptRunner {
      * 
      * @return <code>True</code> if execution of the script was successful, <code>false</code> otherwise.
      */
-    public synchronized boolean runScript(String file, Vector<String> imageNameList, Vector<String> voiPathList) {
+    public synchronized boolean runScript(final String file, final Vector<String> imageNameList,
+            final Vector<String> voiPathList) {
 
         if (isRunning()) {
             MipavUtil.displayError("A script is already being executed.");
@@ -162,7 +163,7 @@ public class ScriptRunner {
                     Preferences.DEBUG_SCRIPTING);
 
             setRunning(false);
-        } catch (ParserException pe) {
+        } catch (final ParserException pe) {
             handleParserException(pe);
 
             return false;
@@ -179,7 +180,7 @@ public class ScriptRunner {
      * @return The image variable placeholder which has been assigned to the image name (may not be a new variable if
      *         the name is already in the table).
      */
-    public synchronized String storeImage(String imageName) {
+    public synchronized String storeImage(final String imageName) {
         Preferences.debug("script runner:\tStoring image:\t" + imageName + "\n", Preferences.DEBUG_SCRIPTING);
 
         return getImageTable().storeImageName(imageName);
@@ -192,8 +193,8 @@ public class ScriptRunner {
      * 
      * @throws ParserException If there is a problem encountered while reading the image variables used in the script.
      */
-    protected synchronized void fillImageTable(Vector<String> imageNameList) throws ParserException {
-        String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
+    protected synchronized void fillImageTable(final Vector<String> imageNameList) throws ParserException {
+        final String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
 
         for (int i = 0; i < imageNameList.size(); i++) {
             imageTable.put(imageVars[i], imageNameList.elementAt(i));
@@ -208,7 +209,7 @@ public class ScriptRunner {
      * 
      * @param pe The parser exception to handle.
      */
-    protected void handleParserException(ParserException pe) {
+    protected void handleParserException(final ParserException pe) {
         Preferences.debug("script runner:\tAborted script execution:\t" + pe.getParsedFileName() + "\n",
                 Preferences.DEBUG_SCRIPTING);
 
@@ -235,8 +236,17 @@ public class ScriptRunner {
      * 
      * @param running Whether we are running a script.
      */
-    protected synchronized void setRunning(boolean running) {
+    public synchronized void setRunning(final boolean running) {
         isRunning = running;
+    }
+
+    /**
+     * Changes the image variable table for the current script execution.
+     * 
+     * @param table A new image variable table.
+     */
+    public synchronized void setImageTable(final ImageVariableTable table) {
+        imageTable = table;
     }
 
     // ~ Inner Classes
@@ -249,14 +259,14 @@ public class ScriptRunner {
     private class ScriptThread extends Thread {
 
         /** The file name of the script to execute in this thread. */
-        private String curScriptFile;
+        private final String curScriptFile;
 
         /**
          * Creates a new ScriptThread object.
          * 
          * @param file The script file to execute in this thread.
          */
-        public ScriptThread(String file) {
+        public ScriptThread(final String file) {
             curScriptFile = file;
         }
 
@@ -272,7 +282,7 @@ public class ScriptRunner {
 
                 Preferences.debug("script runner:\tFinished script execution:\t" + curScriptFile + "\n",
                         Preferences.DEBUG_SCRIPTING);
-            } catch (ParserException pe) {
+            } catch (final ParserException pe) {
                 handleParserException(pe);
             }
 

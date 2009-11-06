@@ -133,7 +133,7 @@
 								<xs:simpleType>
 									<xs:restriction base="xs:string">
 										<xs:enumeration value="Unknown Modality"/>
-										<xs:enumeration value="Biomagenetic Imaging"/>
+										<xs:enumeration value="Biomagnetic Imaging"/>
 										<xs:enumeration value="Color Flow Doppler"/>
 										<xs:enumeration value="Computed Radiography"/>
 										<xs:enumeration value="Computed Tomography"/>
@@ -142,7 +142,7 @@
 										<xs:enumeration value="Digital Radiography"/>
 										<xs:enumeration value="Endoscopy"/>
 										<xs:enumeration value="General Microscopy"/>
-										<xs:enumeration value="Hardcody"/>
+										<xs:enumeration value="Hardcopy"/>
 										<xs:enumeration value="Intraoral Radiography"/>
 										<xs:enumeration value="Laser Surface Scan"/>
 										<xs:enumeration value="Magnetic Resonance Angiography"/>
