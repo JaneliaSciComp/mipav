@@ -129,7 +129,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             pkCProgram.GetUC("DRRA").GetData()[0] = 0;
         }
-        if ( (m_kVolumeImageB != null) && (pkCProgram.GetUC("DRRB") != null) )
+        if ( (m_kVolumeImageB.GetImage() != null) && (pkCProgram.GetUC("DRRB") != null) )
         {
             pkCProgram.GetUC("DRRB").GetData()[0] = 0;
         }
@@ -207,7 +207,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             kCProgram.GetUC("DRRA").GetData()[0] = m_kVolumeImageA.getDRRNorm();
         }
-        if ( (m_kVolumeImageB != null) && (kCProgram.GetUC("DRRB") != null) )
+        if ( (m_kVolumeImageB.GetImage() != null) && (kCProgram.GetUC("DRRB") != null) )
         {
             kCProgram.GetUC("DRRB").GetData()[0] = m_kVolumeImageB.getDRRNorm();
         }
@@ -253,7 +253,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             kCProgram.GetUC("DRRA").GetData()[0] = 0;
         }
-        if ( (m_kVolumeImageB != null) && (kCProgram.GetUC("DRRB") != null) )
+        if ( (m_kVolumeImageB.GetImage() != null) && (kCProgram.GetUC("DRRB") != null) )
         {
             kCProgram.GetUC("DRRB").GetData()[0] = 0;
         }
@@ -297,7 +297,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         SetColorImage(pkCProgram);
         setABBlend(1.0f);
         setRGBTA(null);
-        if ( m_kVolumeImageB != null )
+        if ( m_kVolumeImageB.GetImage() != null )
         {
             setABBlend(0.5f);
             if ( pkCProgram.GetUC("ShowB") != null ) 
@@ -521,7 +521,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             kCProgram.GetUC("DRRA").GetData()[0] = 0;
         }
-        if ( (m_kVolumeImageB != null) && (kCProgram.GetUC("DRRB") != null) )
+        if ( (m_kVolumeImageB.GetImage() != null) && (kCProgram.GetUC("DRRB") != null) )
         {
             kCProgram.GetUC("DRRB").GetData()[0] = 0;
         }
@@ -569,7 +569,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             kCProgram.GetUC("DRRA").GetData()[0] = 0;
         }
-        if ( (m_kVolumeImageB != null) && (kCProgram.GetUC("DRRB") != null) )
+        if ( (m_kVolumeImageB.GetImage() != null) && (kCProgram.GetUC("DRRB") != null) )
         {
             kCProgram.GetUC("DRRB").GetData()[0] = 0;
         }
@@ -700,7 +700,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
          * is implemented in the VolumeShaderVertex.cg file: */        
         m_pkVShader = new VertexShader("VolumeShaderVertex");
 
-        if ( m_kVolumeImageB == null )
+        if ( m_kVolumeImageB.GetImage() == null )
         {
             m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass");
         }
@@ -749,7 +749,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget());
         
         
-        if ( m_kVolumeImageB != null )
+        if ( m_kVolumeImageB.GetImage() != null )
         {
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetVolumeTarget().GetName() );
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
@@ -797,7 +797,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         //kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget());
         
         
-        if ( m_kVolumeImageB != null )
+        if ( m_kVolumeImageB.GetImage() != null )
         {
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetVolumeTarget().GetName() );
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
@@ -826,7 +826,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             pkPProgram.GetUC("IsColorA").GetData()[0] = m_kVolumeImageA.IsColorImage() ? 1 : 0;
         } 
-        if ( (pkPProgram.GetUC("IsColorB") != null) && ((m_kVolumeImageB != null)) ) 
+        if ( (pkPProgram.GetUC("IsColorB") != null) && ((m_kVolumeImageB.GetImage() != null)) ) 
         {
             pkPProgram.GetUC("IsColorB").GetData()[0] = m_kVolumeImageB.IsColorImage() ? 1 : 0;
         } 

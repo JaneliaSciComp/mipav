@@ -23,6 +23,9 @@ import javax.swing.border.TitledBorder;
 public abstract class JInterfaceBase extends JDialog implements ActionListener
 {
 
+    /**  */
+    private static final long serialVersionUID = 1185755612726454935L;
+
     /**
      * Pick up the selected color and call method to change the color.
      */
@@ -100,10 +103,10 @@ public abstract class JInterfaceBase extends JDialog implements ActionListener
     protected JButton OKButton;
     
     /** Raycast based renderer reference, raycast renderer or shear warp renderer. */
-    protected VolumeTriPlanarRender rayBasedRenderWM = null;
+    protected transient VolumeTriPlanarRender rayBasedRenderWM = null;
 
     /** Render base. */
-    protected VolumeTriPlanarInterface m_kVolumeViewer = null;
+    protected transient VolumeTriPlanarInterface m_kVolumeViewer = null;
 
     /**
      * Default constructor.

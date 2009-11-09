@@ -23,6 +23,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.Buffer;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
@@ -30,8 +31,11 @@ import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
 
 
-public class VolumeImage
+public class VolumeImage implements Serializable
 {
+    /**  */
+    private static final long serialVersionUID = -7254697711265907746L;
+
     /** Reference to ModelImage image */
     private ModelImage m_kImage;
 
@@ -93,7 +97,7 @@ public class VolumeImage
     /** Texture object for data: */
     private Texture m_kHistoTarget;
     /** Texture coordinates for displaying histogram in 2D */
-    private Vector2f[] m_akHistoTCoord = new Vector2f[4];
+    private Vector2f[] m_akHistoTCoord = null;
     private float m_fDRRNormalize = 255.0f;
 
     /** Current position in time (4D data) */
@@ -118,33 +122,41 @@ public class VolumeImage
      * @param iFilterType filter type for resampling image
      * @param aiExtents target extents.
      */
+
+    public VolumeImage() {}
+    
     public VolumeImage( ModelImage kImage, String kPostfix, boolean bCompute, String kDir, int iFilterType, int[] aiExtents )
-    {
+    {        
         m_kPostfix = new String(kPostfix);
         m_kDir = new String(kDir);
         String kImageName = ModelImage.makeImageName( kImage.getFileInfo(0).getFileName(), "_" + kPostfix);
         File kFile = new File( kDir + kImageName + ".xml" );
         if ( !bCompute && kFile.exists() )
         {
-            m_kImage = ReadFromDisk( kImageName, kDir );
+            m_kImage = ReadFromDisk( kImageName, m_kDir );
         }
         else
         {
             bCompute = true;
-            ReconfigureImage( kImage, kImageName, kDir, iFilterType, aiExtents );
+            ReconfigureImage( kImage, kImageName, m_kDir, iFilterType, aiExtents );
         }
         m_bCompute = bCompute;
         m_kImage.calcMinMax();
+        init( );
+    }
+    
+    public void init(  )
+    {
         initLUT();
-        initImages( bCompute, kPostfix, kDir );     
+        initImages( m_bCompute, m_kPostfix, m_kDir );     
         
-        if ( !bCompute )
+        if ( !m_bCompute )
         {
             for ( int i = 0; i < m_iTimeSteps; i++ )
             {
-                kImageName = ModelImage.makeImageName( m_kImage.getFileInfo(0).getFileName(), "_Normal_" + i);
+                String kImageName = ModelImage.makeImageName( m_kImage.getFileInfo(0).getFileName(), "_Normal_" + i);
                 System.err.println( kImageName );
-                ModelImage kNormal = ReadFromDisk( kImageName, kDir );
+                ModelImage kNormal = ReadFromDisk( kImageName, m_kDir );
                 m_kNormal[i] = UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal.getImageName(), true );
                 kNormal.disposeLocal();
             }
@@ -417,6 +429,11 @@ public class VolumeImage
      */
     public void dispose()
     {
+        if ( m_kImage == null )
+        {
+            return;
+        }
+        m_kImage.disposeLocal();
         m_kImage = null;
 
         for ( int i = 0; i < m_kVolume.length; i++ )
@@ -1261,6 +1278,7 @@ public class VolumeImage
         m_kHistoTarget.SetWrapType(1,Texture.WrapType.CLAMP_BORDER);
         m_kHistoTarget.SetWrapType(2,Texture.WrapType.CLAMP_BORDER);
         
+        m_akHistoTCoord = new Vector2f[4];
         m_akHistoTCoord[0] = new Vector2f( iTMinX/255.0f, iTMinY/255.0f );
         m_akHistoTCoord[1] = new Vector2f( iTMaxX/255.0f, iTMinY/255.0f );
         m_akHistoTCoord[2] = new Vector2f( iTMaxX/255.0f, iTMaxY/255.0f );
@@ -1695,6 +1713,36 @@ public class VolumeImage
          }
          kOpacityTexture.Reload(true);
          return true;
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out)
+    throws IOException 
+    {
+        if ( m_kImage != null )
+        {
+            out.writeObject( m_kDir );
+            out.writeObject( m_kImage.getImageName() );
+            out.writeObject( m_kPostfix );
+            m_kImage.saveImage( m_kDir, m_kImage.getImageName(), FileUtility.XML, false );
+        }
+        else
+        {
+            out.writeObject( "null" );            
+        }
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+    throws IOException, ClassNotFoundException
+    {
+        m_kDir = (String)in.readObject();
+        if ( !m_kDir.equals( "null" ) )
+        {
+            String kImageName = (String)in.readObject();
+            m_kPostfix = (String)in.readObject();
+            m_kImage = ReadFromDisk( kImageName, m_kDir );
+            m_bCompute = false;
+            init();
+        }
     }
 
 }

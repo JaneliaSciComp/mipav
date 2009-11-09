@@ -14,14 +14,23 @@ public class MipavInitGPU {
     {
         if ( !IsInit )
         {
-            IsInit = true;
-                    
-
+            IsInit = true;                   
             String kExternalDirs = getExternalDirs();        
             ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
             VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
             PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
             CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        }
+    }   
+    public static void RemoveGPU()
+    {
+        if ( IsInit )
+        {     
+            ImageCatalog.GetActive().dispose();      
+            VertexProgramCatalog.GetActive().dispose();      
+            PixelProgramCatalog.GetActive().dispose();      
+            CompiledProgramCatalog.GetActive().dispose();      
+            IsInit = false;                   
         }
     }
 

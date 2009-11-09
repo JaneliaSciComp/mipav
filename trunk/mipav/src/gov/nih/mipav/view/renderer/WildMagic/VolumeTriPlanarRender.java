@@ -33,6 +33,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
 import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
@@ -287,7 +288,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 m_kSculptor.setTextureImageFloatDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetFloatData() );
             }
 
-            if ( m_kVolumeImageB != null )
+            if ( m_kVolumeImageB.GetImage() != null )
             {
                 if ( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() != null )
                 {
@@ -310,7 +311,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( bSculptTrue )
         {
             m_kVolumeImageA.ReleaseVolume();
-            if ( m_kVolumeImageB != null )
+            if ( m_kVolumeImageB.GetImage() != null )
             {
                 m_kVolumeImageB.ReleaseVolume();
             }
@@ -427,9 +428,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kVolumeRayCast.setVolumeSamples( (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f );
             CMPMode();
             m_kAnimator.setRunAsFastAsPossible(true); 
-            if( m_kParent instanceof VolumeTriPlanarInterfaceDTI ) {
-            	((VolumeTriPlanarInterfaceDTI)m_kParent).getParamPanel().processDTI();
-            }
         }
         if ( m_bSurfaceUpdate )
         {
@@ -442,7 +440,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_bCrop = false;
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
             VolumeImageCrop.main(m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect());
-            if ( m_kVolumeImageB != null )
+            if ( m_kVolumeImageB.GetImage() != null )
             {
                 VolumeImageCrop.main(m_kParent, m_kVolumeImageB, m_kVolumeRayCast.GetClipEffect());
             }
@@ -773,7 +771,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_kSculptor == null )
         {
             m_kSculptor = new Sculptor_WM( ((OpenGLRenderer)m_pkRenderer).GetCanvas() );
-            if ( m_kVolumeImageB != null )
+            if ( m_kVolumeImageB.GetImage() != null )
             {
                 m_kSculptor.setImage(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
             }
@@ -2231,7 +2229,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             {
                 m_kSculptor.setTextureImageFloatDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetFloatData() );
             }
-            if ( m_kVolumeImageB != null )
+            if ( m_kVolumeImageB.GetImage() != null )
             {
                 if ( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() != null )
                 {
@@ -2244,7 +2242,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             }
             m_kSculptor.undoSculpt(m_kVolumeImageA.GetTimeSlice());
             m_kVolumeImageA.ReleaseVolume();
-            if ( m_kVolumeImageB != null )
+            if ( m_kVolumeImageB.GetImage() != null )
             {
                 m_kVolumeImageB.ReleaseVolume();
             }

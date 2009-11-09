@@ -2297,7 +2297,7 @@ public class PlaneRenderProstate extends GPURenderBase
                     m_kParent.getLUTDialog().setLUTA((ModelLUT)m_kActiveLookupTable);
                 }
             }
-            else if ( (m_kVolumeImageB != null) && (m_kActiveImage == m_kVolumeImageB.GetImage()) )
+            else if ( (m_kVolumeImageB.GetImage() != null) && (m_kActiveImage == m_kVolumeImageB.GetImage()) )
             {
                 if ( m_kVolumeImageB.GetImage().isColorImage() )
                 {

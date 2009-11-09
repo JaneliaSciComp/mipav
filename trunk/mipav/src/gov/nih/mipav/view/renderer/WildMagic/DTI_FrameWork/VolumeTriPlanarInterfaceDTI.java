@@ -99,8 +99,6 @@ implements ChangeListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        imageA = _imageA;
-        imageOrientation = imageA.getImageOrientation();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -135,10 +133,10 @@ implements ChangeListener {
     	m_kDTIColorImage.setExtents(_m_kDTIColorImage.getExtents());
     	m_kDTIColorImage.calcMinMax();
     	
-    	imageA = _m_kDTIColorImage;
+    	//imageA = _m_kDTIColorImage;
     	
         boolean bDirExists = true;
-        m_kParentDir = imageA.getFileInfo()[0].getFileDirectory();
+        m_kParentDir = _m_kDTIColorImage.getFileInfo()[0].getFileDirectory();
         String kRenderFilesDir = m_kParentDir + File.separator + "RenderFiles" + File.separator;
         File kDir = new File( kRenderFilesDir );
         if ( !kDir.exists() )
@@ -148,13 +146,13 @@ implements ChangeListener {
                 kDir.mkdir();
             } catch (SecurityException e) {}
         }
-        
-        m_kVolumeImageA = new VolumeImage( imageA, "A", !bDirExists, kRenderFilesDir, 0, null );
-        imageA = m_kVolumeImageA.GetImage();
-        RGBTA = m_kVolumeImageA.GetRGB();
-        this.LUTa = m_kVolumeImageA.GetLUT();
+
+        m_kVolumeImageA = new VolumeImage( _m_kDTIColorImage, "A", !bDirExists, kRenderFilesDir, 0, null );
+        m_kVolumeImageB = new VolumeImage();
     	
-    	restoreContext();
+    	constructRenderers();
+        buildDTIParametersPanel();
+        getParamPanel().processDTI();
     }
     
     public String getParentDir() {
@@ -239,221 +237,9 @@ implements ChangeListener {
     	m_kTractPath = _m_kTractPath;
     }
     
-
-    /**
-     * The histogram control panel of the lookup table.
-     */
-    public void buildHistoLUTPanel() {
-        histoLUTPanel = new JPanel();
-
-        if (imageA.isColorImage()) {
-            panelHistoRGB = new JPanelHistoRGB(imageA, imageB, RGBTA, RGBTB, true);
-        } else {
-            panelHistoLUT = new JPanelHistoLUT(imageA, imageB, LUTa, LUTb, true);
-        }
-
-        
-        if (imageA.isColorImage()) {
-            histoLUTPanel.add(panelHistoRGB.getMainPanel());
-        } else {
-            histoLUTPanel.add(panelHistoLUT.getMainPanel());
-        }
-
-        maxPanelWidth = Math.max(histoLUTPanel.getPreferredSize().width, maxPanelWidth);
-    }
-
     public JPanelLights_WM getLightControl() {
     	return m_kLightsPanel;
     }
-
-    /**
-     * Construct the volume rendering methods based on the choices made from the resample dialog. This method is called
-     * by the Resample dialog.
-     */
-    public void constructRenderers() {
-
-        /** Progress bar show up during the volume view frame loading */
-        progressBar = new ViewJProgressBar("Constructing renderers...", "Constructing renderers...", 0, 100, false,
-                                           null, null);
-        progressBar.updateValue(0, true);
-        MipavUtil.centerOnScreen(progressBar);
-        progressBar.setVisible(false);
-        progressBar.updateValueImmed(1);
-
-        try {
-
-            serif12 = MipavUtil.font12;
-            serif12B = MipavUtil.font12B;
-            progressBar.updateValueImmed(5);
-
-            MipavInitGPU.InitGPU();
-            
-            m_kAnimator = new Animator();
-            m_akPlaneRender = new PlaneRender_WM[3];
-            
-            
-            m_akPlaneRender[0] = new PlaneRenderDTI();
-            m_akPlaneRender[1] = new PlaneRenderDTI();
-            m_akPlaneRender[2] = new PlaneRenderDTI();
-            
-            
-            progressBar.setMessage("Constructing gpu renderer...");
-            raycastRenderWM = new VolumeTriPlanerRenderDTI();
-            
-            progressBar.updateValueImmed(80);
-            progressBar.setMessage("Constructing Lookup Table...");
-
-            progressBar.updateValueImmed(100);
-            
-            this.configureFrame();
-            
-            /*
-            ((PlaneRenderDTI)m_akPlaneRender[0]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
-			((PlaneRenderDTI)m_akPlaneRender[1]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL);
-			((PlaneRenderDTI)m_akPlaneRender[2]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL);
-			((VolumeTriPlanerRenderDTI)raycastRenderWM).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
-            */
-            
-            
-        } finally {
-            progressBar.dispose();
-        }
-
-                
-        /*
-        if (imageA.isColorImage()) {
-            setRGBTA(RGBTA);
-
-            if ((imageB != null) && imageB.isColorImage()) {
-                setRGBTB(RGBTB);
-            }
-
-            updateImages(true);
-        }
-        else
-        {
-            updateImages(true);
-        }
-        */
-        // Toolkit.getDefaultToolkit().setDynamicLayout( false );
-    }
-
-    /**
-     * Construct the volume rendering methods based on the choices made from the resample dialog. This method is called
-     * by the Resample dialog.
-     */
-    public void restoreContext() {
-
-        /** Progress bar show up during the volume view frame loading */
-        progressBar = new ViewJProgressBar("Constructing renderers...", "Constructing renderers...", 0, 100, false,
-                                           null, null);
-        progressBar.updateValue(0, true);
-        MipavUtil.centerOnScreen(progressBar);
-        progressBar.setVisible(false);
-        progressBar.updateValueImmed(1);
-
-        try {
-            progressBar.updateValueImmed(5);
-          
-            ((PlaneRenderDTI)m_akPlaneRender[0]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
-			((PlaneRenderDTI)m_akPlaneRender[1]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL);
-			((PlaneRenderDTI)m_akPlaneRender[2]).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL);
-                      
-            progressBar.setMessage("Constructing gpu renderer...");
-            
-            ((VolumeTriPlanerRenderDTI)raycastRenderWM).loadImage(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
-          
-            progressBar.updateValueImmed(80);
-            progressBar.setMessage("Constructing Lookup Table...");
-
-            progressBar.updateValueImmed(100);
-                        
-            tabbedPane.removeAll();
-            buildHistoLUTPanel();
-            buildOpacityPanel();            
-            buildDisplayPanel();            
-            // buildDTIimageLoadPanel();
-            buildDTIParametersPanel();         
-            buildLightPanel();
-            buildClipPanel();
-            buildSlicePanel();
-            buildSurfacePanel();
-            buildGeodesic();
-            buildSculpt();
-            buildSurfaceTexturePanel();
-            buildMultiHistogramPanel();
-            
-            panelAxial = new JPanel(new BorderLayout());
-            panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
-
-            panelSagittal = new JPanel(new BorderLayout());
-            panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
-
-            panelCoronal = new JPanel(new BorderLayout());
-            panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
-            
-            triImagePanel.removeAll();
-            triImagePanel.add(panelAxial);
-            triImagePanel.add(panelSagittal);
-            triImagePanel.add(panelCoronal);
-
-            gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
-            gpuPanel.setVisible(true);
-            raycastRenderWM.setVisible(true);
-            
-            int triImagePanelWidth = (int) (screenWidth * 0.51f);
-            int triImagePanelHeight = (int) (screenHeight * 0.25f);
-
-            triImagePanel.setPreferredSize(new Dimension(triImagePanelWidth, triImagePanelHeight));
-            triImagePanel.setMinimumSize(new Dimension(150, 50));
-            
-            TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
-            m_kVolumeImageA.UpdateImages(kTransfer, 0, null);          
-            if ( imageB != null )
-            {
-                kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
-                m_kVolumeImageB.UpdateImages(kTransfer, 0, null);
-            }
-            progressBar.dispose();
-            
-            // MUST register frame to image models
-            imageA.addImageDisplayListener(this);
-
-            if (imageB != null) {
-                imageB.addImageDisplayListener(this);
-            }
-            
-            
-            // work around to fix the init panel viewing aspect ratio offset problem. 
-            m_kAnimator.start();
-            getLightControl().refreshLighting();
-            
-            // After the whole WM rendering framework built, force updating the color LUT table in order to 
-            // update both the volume viewer and tri-planar viewer.  Otherwise, the render volume turns to be black.
-            if ( panelHistoLUT != null ) 
-                panelHistoLUT.updateComponentLUT();
-            
-        } finally {
-            progressBar.dispose();
-        }
-
-       
-        if (imageA.isColorImage()) {
-            setRGBTA(RGBTA);
-
-            if ((imageB != null) && imageB.isColorImage()) {
-                setRGBTB(RGBTB);
-            }
-
-            updateImages(true);
-        }
-        else
-        {
-            updateImages(true);
-        }
-    }
-    
- 
     
     /**
      * Dispose memory.
@@ -487,29 +273,15 @@ implements ChangeListener {
         if ( DTIimageLoadPanel != null ) {
         	DTIimageLoadPanel.disposeLocal();
         	DTIimageLoadPanel = null;
-        }
-        
+        }        
        
         if ( m_kDTIImage != null )
         {
         	m_kDTIImage.removeImageDisplayListener(this);
             m_kDTIImage.disposeLocal();
             m_kDTIImage = null;
-        }
-       
-        
-        if ( imageA != null ) {
-        	imageA.removeImageDisplayListener(this);
-        	imageA.disposeLocal();
-        	imageA = null;
-        }
-        
-        if ( imageB != null ) {
-        	imageB.removeImageDisplayListener(this);
-        	imageB.disposeLocal();
-        	imageB = null;
-        }
-        
+        }            
+                
         if ( m_kDTIColorImage != null )
         {
         	m_kDTIColorImage.removeImageDisplayListener(this);
@@ -535,22 +307,64 @@ implements ChangeListener {
      * Constructs main frame structures for image canvas.
      */
     protected void configureFrame() {
-        super.configureFrame( false );
+        super.configureFrame( );
         buildDTIimageLoadPanel();
-        //buildDTIFiberTrackPanel();
-        buildDTIParametersPanel();
     }
 
+    /**
+     * Construct the volume rendering methods based on the choices made from
+     * the resample dialog. This method is called by the Resample dialog.
+     */
+    protected void constructRenderers() {
 
+        /** Progress bar show up during the volume view frame loading */
+        ViewJProgressBar progressBar = new ViewJProgressBar("Constructing renderers...", "Constructing renderers...", 0, 100, false,
+                null, null);
+        progressBar.updateValue(0, true);
+        MipavUtil.centerOnScreen(progressBar);
+        progressBar.setVisible(true);
+        progressBar.updateValueImmed(1);
+
+        progressBar.updateValueImmed(5);
+
+        m_kAnimator = new Animator();
+        m_akPlaneRender = new PlaneRender_WM[3];
+        m_akPlaneRender[0] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
+        m_akPlaneRender[1] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL);
+        m_akPlaneRender[2] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL);
+
+        progressBar.setMessage("Constructing gpu renderer...");
+
+        raycastRenderWM = new VolumeTriPlanerRenderDTI( this, m_kAnimator, m_kVolumeImageA,
+                m_kVolumeImageB);
+
+        progressBar.updateValueImmed(80);
+        progressBar.setMessage("Constructing Lookup Table...");
+
+        buildImageDependentComponents();
+
+        progressBar.updateValueImmed(100);
+
+        progressBar.dispose();
+        
+        pack();
+        setVisible(true);
+        raycastRenderWM.GetCanvas().display();
+        m_akPlaneRender[0].GetCanvas().display();
+        m_akPlaneRender[1].GetCanvas().display();
+        m_akPlaneRender[2].GetCanvas().display();
+    }
 
     /**
      * Method that resizes the frame and adjusts the rows, columns as needed.
      */
     protected void resizePanel() {
         int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
-            panelToolbar.getHeight();
-        DTIparamsPanel.resizePanel(maxPanelWidth, height);
-        // DTIimageLoadPanel.resizePanel(maxPanelWidth, height/3);
+            panelToolbar.getHeight();     
+        if ( m_bDependentInterfaceInit )
+        {
+            DTIparamsPanel.resizePanel(maxPanelWidth, height);
+        }
         super.resizePanel();        
         panelToolbar.getHeight();
     }

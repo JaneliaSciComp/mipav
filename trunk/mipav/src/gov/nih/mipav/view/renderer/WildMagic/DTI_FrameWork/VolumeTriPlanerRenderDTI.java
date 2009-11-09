@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
 import com.sun.opengl.util.*;
+
 import java.awt.event.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -25,6 +26,33 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );               
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );  
+    }
+        
+    /**
+     * Construct the Volume/Surface/Tri-Planar renderer.
+     * @param kParent parent user-interface and frame.
+     * @param kAnimator animator used to display the canvas.
+     * @param kVolumeImageA volume data and textures for ModelImage A.
+     * @param kVolumeImageB volume data and textures for ModelImage B.
+     */
+    public VolumeTriPlanerRenderDTI( VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 
+            VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
+    {
+        super();
+        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
+                m_eBuffering, m_eMultisampling,
+                m_iWidth, m_iHeight );
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );       
+
+        m_kAnimator = kAnimator;
+        m_kVolumeImageA = kVolumeImageA;
+        m_kVolumeImageB = kVolumeImageB;
+        m_kParent = kParent;        
+        m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
 
     public void loadImage( VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 

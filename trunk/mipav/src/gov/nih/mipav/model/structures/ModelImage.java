@@ -12,6 +12,7 @@ import gov.nih.mipav.model.provenance.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
 import java.io.*;
 
@@ -2195,6 +2196,16 @@ public class ModelImage extends ModelStorageBase {
                         frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
                 } /* LUT update of a non-ModelImage data strucuture: */
+                else if ((frameList.elementAt(i) instanceof VolumeTriPlanarInterface)) {
+                    ModelImage imgA = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageA();
+                    ModelImage imgB = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageB();
+
+                    if (this == imgA) {
+                        frameList.elementAt(i).updateImages(LUT, null, forceShow, -1);
+                    } else if (this == imgB) {
+                        frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
+                    }
+                } /* LUT update of a non-ModelImage data strucuture: */
                 else if ((frameList.elementAt(i) instanceof
                         gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
                     ModelImage imgA = ((gov.nih.mipav.view.renderer.J3D.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
@@ -2293,6 +2304,17 @@ public class ModelImage extends ModelStorageBase {
                     ((ViewJFrameBase) frameList.elementAt(i)).setRGBTA(RGBT);
                 } else if (this == imgB) {
                     ((ViewJFrameBase) frameList.elementAt(i)).setRGBTB(RGBT);
+                }
+
+                frameList.elementAt(i).updateImages(null, null, forceShow, -1);
+            } else if ((frameList.elementAt(i) instanceof VolumeTriPlanarInterface)) {
+                ModelImage imgA = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageA();
+                ModelImage imgB = ((VolumeTriPlanarInterface) frameList.elementAt(i)).getImageB();
+
+                if (this == imgA) {
+                    ((VolumeTriPlanarInterface) frameList.elementAt(i)).setRGBTA(RGBT);
+                } else if (this == imgB) {
+                    ((VolumeTriPlanarInterface) frameList.elementAt(i)).setRGBTB(RGBT);
                 }
 
                 frameList.elementAt(i).updateImages(null, null, forceShow, -1);
