@@ -146,8 +146,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
         if ( kWorld.GetCanvas().getContext().makeCurrent() != GLContext.CONTEXT_NOT_CURRENT )
         {
             kWorld.display( kWorld.GetCanvas() );
+            kWorld.GetCanvas().getContext().release();
         }
-        kWorld.GetCanvas().getContext().release();
         if ( !kWorld.checkStatus() )
         {
             kWorld.dispose( );

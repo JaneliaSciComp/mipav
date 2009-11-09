@@ -30,6 +30,7 @@ import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCanvas;
+import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -409,7 +410,7 @@ public class PlaneRender_WM extends GPURenderBase
         m_iPlaneOrientation = iPlane;
 
         setOrientation();
-        m_kWinLevel = new WindowLevel();
+        m_kWinLevel = new WindowLevel(); 
     }
 
     /**
@@ -467,6 +468,7 @@ public class PlaneRender_WM extends GPURenderBase
     {
         m_kDisplayList.add(kVolumeSlice);
         m_kTranslate = kVolumeSlice.GetTranslate();
+        SetModified(true);
     }
         
     /**
@@ -2303,7 +2305,7 @@ public class PlaneRender_WM extends GPURenderBase
                     m_kParent.getLUTDialog().setLUTA((ModelLUT)m_kActiveLookupTable);
                 }
             }
-            else if ( (m_kVolumeImageB != null) && (m_kActiveImage == m_kVolumeImageB.GetImage()) )
+            else if ( (m_kVolumeImageB.GetImage() != null) && (m_kActiveImage == m_kVolumeImageB.GetImage()) )
             {
                 if ( m_kVolumeImageB.GetImage().isColorImage() )
                 {

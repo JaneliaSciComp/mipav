@@ -853,7 +853,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         final ModelImage imageA = createEmptyImage(null);
         final VolumeTriPlanarInterfaceDTI kWM = new VolumeTriPlanarInterfaceDTI(imageA);
-        kWM.constructRenderers();
+        //kWM.constructRenderers();
         imageA.disposeLocal();
 
     }

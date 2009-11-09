@@ -112,7 +112,7 @@ implements StreamInterface
                 pkCProgram.GetUC("IsColorA").GetData()[0] = 0.0f;
             }
         }    
-        if ( m_kVolumeImageB != null )
+        if ( m_kVolumeImageB.GetImage() != null )
         {
             if ( pkCProgram.GetUC("IsColorB") != null ) 
             {
@@ -252,7 +252,7 @@ implements StreamInterface
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName() );
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget() );
 
-        if ( m_kVolumeImageB != null )
+        if ( m_kVolumeImageB.GetImage() != null )
         {
             kPShader.SetImageName(iTex,"VolumeImageB");
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );

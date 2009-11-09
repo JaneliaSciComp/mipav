@@ -228,7 +228,6 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
 
         try {
                 VolumeTriPlanarInterface kWM = new VolumeTriPlanarInterface(imageA, imageB, m_iFilter, m_kCompute.isSelected(), m_kParentDir, volExtents );
-                kWM.constructRenderers();
         } catch (NoClassDefFoundError notAvailableError) {
             Preferences.debug("ViewJFrameSurfaceRenderer cannot be called; encountered "
                     + "a NoClassDefFoundError.  \nIt is likely that JOGL is "
