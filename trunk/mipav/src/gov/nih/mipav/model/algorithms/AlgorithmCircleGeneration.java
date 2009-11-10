@@ -109,6 +109,7 @@ import java.util.*;
   a1 = -0.564*af/((1 - af)**2)
   For 0.69 < af < 0.82, random close packing
   gf(1) = (1 - 0.436*0.69)/((1 - 0.69)**2)
+  Professor Torquato confirmed that the phi in the disk gf(1) equation numerator is incorrectly missing a f subscript.
   a0 = 2*gf(1)*(0.82 - 0.69)/(0.82 - af) - 1/(1 - af)
   a1 = -gf(1)*(0.82 - 0.69)/(0.82 - af) + 1/(1 - af)
  */
