@@ -86,7 +86,24 @@ import java.util.*;
  g = 0.5*vf*vf/((1 - vf)**3)
  mean nearest neighbor distance = diameter * (1 + integeral)
  integral = integral from x = 1 to x = infinity of 
- exp[-vf[8*e*(x*x*x-1) + 12*f*(x*x - 1) + 24*g*(x - 1)]
+ exp{-vf[8*e*(x*x*x-1) + 12*f*(x*x - 1) + 24*g*(x - 1)]}
+ 
+ Torquato developed more accurate equations in 1995 superseding the 1990 equations.  In "Nearest-neighbor
+ statistics for packings of hard spheres and disks" by S. Torquato, Physical Review E, Volume 51, Number 4,
+ April, 1995, pp. 3170 - 3182:
+ vf = volume fraction of spheres
+ mean nearest neighbor distance = diameter * (1 + integral)
+ integral = integral from x = 1 to x = infinity of
+ exp{-vf[8*a0*(x*x*x - 1) + 12*a1*(x*x - 1) + 24*a2*(x-1)]}
+ For vf <= 0.49, the freezing packing fraction:
+ a0 = (1 + vf + vf*vf - vf*vf*vf)/((1 - vf)**3)
+ a1 = 0.5*vf*(3*vf* vf - 4*vf - 3)/((1 - vf)**3)
+ a2 = 0.5*vf*vf*(2 - vf)/((1 - vf)**3)
+ For 0.49 < vf < 0.64, random close packing
+ gf(1) = (1 - 0.49/2)/((1 - 0.49)**3)
+ a0 = 1 + 4*vf*gf(1)*(0.64 - 0.49)/(0.64 - vf)
+ a1 = 0.5*(3*vf - 4)/(1 - vf) + 2*(1 - 3*vf)*gf(1)*(0.64 - 0.49)/(0.64 - vf)
+ a2 = 0.5*(2 - vf)/(1 - vf) + (2*vf - 1)*gf(1)*(0.64 - 0.49)/(0.64 - vf)
  
  The formula derived by Asim Tewari and A. M. Gokhale is accurate at both low and high densities.  The reference is
  "Nearest-neighbor distances between particles of finite size in three-dimensional uniform random microstructures" by
@@ -345,6 +362,8 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         double cv;
         IntTorquatoModelMean meanTorquatoModel;
         IntTorquatoModelMean2 meanTorquatoModel2;
+        IntTorquato95ModelMean meanTorquato95Model;
+        IntTorquato95ModelMean2 meanTorquato95Model2;
         // Mean nearest neighbor distance for a point process
         double P1;
         if (srcImage == null) {
@@ -944,14 +963,14 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                System.out.println("Measured mean consistent with random distribution");
            }
            
-           Preferences.debug("\nCalculations using Torquato, Lu, and Rubinstein model\n");
-           System.out.println("\nCalculations using Torquato, Lu, and Rubinstein model");
+           Preferences.debug("\nCalculations using 1990 Torquato, Lu, and Rubinstein model\n");
+           System.out.println("\nCalculations using 1990 Torquato, Lu, and Rubinstein model");
            // Calculate analytical mean
            meanTorquatoModel = new IntTorquatoModelMean(1.0, 1.0E30, Integration.MIDINF, eps, volumeFraction);
            meanTorquatoModel.driver();
            steps = meanTorquatoModel.getStepsUsed();
            numInt = meanTorquatoModel.getIntegral();
-           Preferences.debug("In Integration.MIDINF numerical Integral for Torquato model = " + 
+           Preferences.debug("In Integration.MIDINF numerical Integral for Torquato90 model = " + 
                    numInt + " after " + steps + " steps used\n");
            bound = 1.0;
            meanTorquatoModel2 = new IntTorquatoModelMean2(bound, routine, inf, epsabs, epsrel, limit, volumeFraction);
@@ -960,13 +979,60 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            errorStatus = meanTorquatoModel2.getErrorStatus();
            absError = meanTorquatoModel2.getAbserr();
            neval = meanTorquatoModel2.getNeval();
-           Preferences.debug("In Integration2.DQAGIE numerical Integral for Torquato model = " + numInt2 + " after " + neval +
+           Preferences.debug("In Integration2.DQAGIE numerical Integral for Torquato90 model = " + numInt2 + " after " + neval +
                              " integrand evaluations used\n");
            Preferences.debug("Error status = " + errorStatus +
                              " with absolute error = " + absError + "\n");
            analyticalMean = diameter * (1.0 + numInt2);
-           Preferences.debug("Analytical mean from Torquato model = " + analyticalMean + "\n");
-           System.out.println("Analytical mean from Torquato model = " + analyticalMean);
+           Preferences.debug("Analytical mean from Torquato90 model = " + analyticalMean + "\n");
+           System.out.println("Analytical mean from Torquato90 model = " + analyticalMean);
+           t = (mean - analyticalMean)/standardError;
+           stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                                 t, spheresLeft-1, percentile);
+           stat.run();
+           Preferences.debug("Percentile in Students t cumulative distribution function for measured mean around analytical mean = "
+                             + percentile[0]*100.0 + "\n");
+           System.out.println("Percentile in Students t cumulative distribution function for measured mean around analytical mean = " +
+                               percentile[0]*100.0);
+           if (percentile[0] < 0.025) {
+               // Measured mean signficantly less than analytical mean of random distribution
+               Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+               System.out.println("Clumping or aggregation found in nearest neighbor distances");
+           }
+           else if (percentile[0] > 0.975) {
+               // Measured mean significantly greater than analytical mean of random distribution
+               Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+               System.out.println("Uniform or regular distribution found in nearest neighbor distances");
+           }
+           else {
+             // Measured mean not significantly different from analytical mean of random distribution
+               Preferences.debug("Measured mean consistent with random distribution\n");
+               System.out.println("Measured mean consistent with random distribution");
+           }
+           
+           Preferences.debug("\nCalculations using 1995 Torquato model\n");
+           System.out.println("\nCalculations using 1995 Torquato model");
+           // Calculate analytical mean
+           meanTorquato95Model = new IntTorquato95ModelMean(1.0, 1.0E30, Integration.MIDINF, eps, volumeFraction);
+           meanTorquato95Model.driver();
+           steps = meanTorquato95Model.getStepsUsed();
+           numInt = meanTorquato95Model.getIntegral();
+           Preferences.debug("In Integration.MIDINF numerical Integral for Torquato95 model = " + 
+                   numInt + " after " + steps + " steps used\n");
+           bound = 1.0;
+           meanTorquato95Model2 = new IntTorquato95ModelMean2(bound, routine, inf, epsabs, epsrel, limit, volumeFraction);
+           meanTorquato95Model2.driver();
+           numInt2 = meanTorquato95Model2.getIntegral();
+           errorStatus = meanTorquato95Model2.getErrorStatus();
+           absError = meanTorquato95Model2.getAbserr();
+           neval = meanTorquato95Model2.getNeval();
+           Preferences.debug("In Integration2.DQAGIE numerical Integral for Torquato95 model = " + numInt2 + " after " + neval +
+                             " integrand evaluations used\n");
+           Preferences.debug("Error status = " + errorStatus +
+                             " with absolute error = " + absError + "\n");
+           analyticalMean = diameter * (1.0 + numInt2);
+           Preferences.debug("Analytical mean from Torquato95 model = " + analyticalMean + "\n");
+           System.out.println("Analytical mean from Torquato95 model = " + analyticalMean);
            t = (mean - analyticalMean)/standardError;
            stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
                                  t, spheresLeft-1, percentile);
@@ -1279,6 +1345,123 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
             f = -0.5 * volumeFraction * (3.0 + volumeFraction)/v3;
             g = 0.5 * volumeFraction * volumeFraction/v3;
             function = Math.exp(-volumeFraction * ((8.0*e*(x*x*x - 1.0)) + 12.0*f*(x*x - 1.0) + 24.0*g*(x - 1.0)));
+
+            return function;
+        }
+    }
+    
+    class IntTorquato95ModelMean extends Integration {
+        double volumeFraction;
+        /**
+         * Creates a new IntModel object.
+         *
+         * @param  lower    DOCUMENT ME!
+         * @param  upper    DOCUMENT ME!
+         * @param  routine  DOCUMENT ME!
+         * @param  eps      DOCUMENT ME!
+         */
+        public IntTorquato95ModelMean(double lower, double upper, int routine, double eps, double volumeFraction) {
+            super(lower, upper, routine, eps);
+            this.volumeFraction = volumeFraction;
+        }
+
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double a0;
+            double a1;
+            double a2;
+            double v3;
+            double vf2;
+            double vf3;
+            double gf1;
+            double val;
+            double function;
+            if (volumeFraction <= 0.49) {
+                v3 = 1.0 - volumeFraction;
+                v3 = v3 * v3 * v3;
+                vf2 = volumeFraction * volumeFraction;
+                vf3 = vf2 * volumeFraction;
+                a0 = (1.0 + volumeFraction + vf2 - vf3)/v3;
+                a1 = 0.5 * volumeFraction * (3.0*vf2 - 4*volumeFraction - 3)/v3;
+                a2 = 0.5 * vf2 * (2.0 - volumeFraction)/v3;
+            }
+            else { // good for 0.49 < volumeFraction < 0.64
+                gf1 = (1.0 - 0.49/2.0)/((1 - 0.49)*(1 - 0.49)*(1 - 0.49)); 
+                val = gf1 * (0.64 - 0.49)/(0.64 - volumeFraction);
+                a0 = 1.0 + 4.0 * volumeFraction * val;
+                a1 = 0.5 * (3*volumeFraction - 4.0)/(1.0 - volumeFraction) + 2.0 * (1.0 - 3.0* volumeFraction) * val;
+                a2 = 0.5 * (2.0 - volumeFraction)/(1.0 - volumeFraction) + (2.0* volumeFraction - 1.0) * val;
+            }
+            function = Math.exp(-volumeFraction * ((8.0*a0*(x*x*x - 1.0)) + 12.0*a1*(x*x - 1.0) + 24.0*a2*(x - 1.0)));
+
+            return function;
+        }
+    }
+    
+    class IntTorquato95ModelMean2 extends Integration2 {
+        double volumeFraction;
+        public IntTorquato95ModelMean2(double bound, int routine, int inf,
+                double epsabs, double epsrel, int limit, double volumeFraction) {
+        super(bound, routine, inf, epsabs, epsrel, limit);
+        this.volumeFraction = volumeFraction;
+        }
+       
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double a0;
+            double a1;
+            double a2;
+            double v3;
+            double vf2;
+            double vf3;
+            double gf1;
+            double val;
+            double function;
+            if (volumeFraction <= 0.49) {
+                v3 = 1.0 - volumeFraction;
+                v3 = v3 * v3 * v3;
+                vf2 = volumeFraction * volumeFraction;
+                vf3 = vf2 * volumeFraction;
+                a0 = (1.0 + volumeFraction + vf2 - vf3)/v3;
+                a1 = 0.5 * volumeFraction * (3.0*vf2 - 4*volumeFraction - 3)/v3;
+                a2 = 0.5 * vf2 * (2.0 - volumeFraction)/v3;
+            }
+            else { // good for 0.49 < volumeFraction < 0.64
+                gf1 = (1.0 - 0.49/2.0)/((1 - 0.49)*(1 - 0.49)*(1 - 0.49)); 
+                val = gf1 * (0.64 - 0.49)/(0.64 - volumeFraction);
+                a0 = 1.0 + 4.0 * volumeFraction * val;
+                a1 = 0.5 * (3*volumeFraction - 4.0)/(1.0 - volumeFraction) + 2.0 * (1.0 - 3.0* volumeFraction) * val;
+                a2 = 0.5 * (2.0 - volumeFraction)/(1.0 - volumeFraction) + (2.0* volumeFraction - 1.0) * val;
+            }
+            function = Math.exp(-volumeFraction * ((8.0*a0*(x*x*x - 1.0)) + 12.0*a1*(x*x - 1.0) + 24.0*a2*(x - 1.0)));
 
             return function;
         }
