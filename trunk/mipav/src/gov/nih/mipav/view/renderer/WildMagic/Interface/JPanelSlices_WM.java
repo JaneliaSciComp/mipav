@@ -637,6 +637,126 @@ public class JPanelSlices_WM extends JInterfaceBase
         return center;
     }
 
+    public int getOpacity( int i )
+    {
+        if ( i == 0 )
+        {
+            return opacitySliderX.getValue();
+        }
+        if ( i == 1 )
+        {
+            return opacitySliderY.getValue();
+        }
+        return opacitySliderZ.getValue();
+    }
+
+    public void setOpacity( int i, int value )
+    {
+        if ( i == 0 )
+        {
+            xOpacitySlice = value;
+            opacitySliderX.setValue(value);
+            m_kVolumeViewer.setSliceOpacity( 0, xOpacitySlice/100.0f );
+        }
+        else if ( i == 1 )
+        {
+            yOpacitySlice = value;
+            opacitySliderY.setValue(value);
+            m_kVolumeViewer.setSliceOpacity( 1, yOpacitySlice/100.0f );
+        }
+        else
+        {
+            zOpacitySlice = value;
+            opacitySliderZ.setValue(value);
+            m_kVolumeViewer.setSliceOpacity( 2, zOpacitySlice/100.0f );
+        }
+    }
+
+    public Color getColor( int i )
+    {
+        return colorButton[i].getBackground();
+    }
+    public void setColor( int i, Color value )
+    {
+        colorButton[i].setBackground(value);
+        setButtonColor(colorButton[i], value);
+    }
+    
+    public boolean getShowSlice( int i )
+    {
+        if ( i == 0 )
+        {
+            return boxX.isSelected();
+        }
+        if ( i == 1 )
+        {
+            return boxY.isSelected();
+        }
+        return boxZ.isSelected();
+    }
+    
+    public void setShowSlice( int i, boolean value )
+    {
+        if ( i == 0 )
+        {
+            boxX.setSelected(value);
+            m_kVolumeViewer.showSlice( 0, boxX.isSelected() );
+            if (!boxX.isSelected()) {
+                setXSliderEnabled(false);
+                setOpacitySliderXEnabled(false);
+                sliceVisible[0] = false;
+            } else {
+                setXSliderEnabled(true);
+                setOpacitySliderXEnabled(true);
+                sliceVisible[0] = true;
+            }
+        }
+        else if ( i == 1 )
+        {
+            boxY.setSelected(value);
+            m_kVolumeViewer.showSlice( 1, boxY.isSelected() );
+            if (!boxY.isSelected()) {
+                setYSliderEnabled(false);
+                setOpacitySliderYEnabled(false);
+                sliceVisible[1] = false;
+            } else {
+                setYSliderEnabled(true);
+                setOpacitySliderYEnabled(true);
+                sliceVisible[1] = true;
+            }
+        }
+        else
+        {
+            boxZ.setSelected(value);
+            m_kVolumeViewer.showSlice( 2, boxZ.isSelected() );
+            if (!boxZ.isSelected()) {
+                setZSliderEnabled(false);
+                setOpacitySliderZEnabled(false);
+                sliceVisible[2] = false;
+            } else {
+                setZSliderEnabled(true);
+                setOpacitySliderZEnabled(true);
+                sliceVisible[2] = true;
+            }
+        }
+    }
+    
+    public boolean getShowBound( int i )
+    {
+        return boundingCheck[i].isSelected();
+    }
+    
+    public void setShowBound( int i, boolean value )
+    {
+        boundingCheck[i].setSelected(value);
+        m_kVolumeViewer.showBoundingBox( i, boundingCheck[i].isSelected() );
+        if (boundingCheck[i].isSelected()) {
+            colorButton[i].setEnabled(true);
+        } else {
+            colorButton[i].setEnabled(false);
+        }
+    }
+    
     /**
      * Return the X opacity slider.
      *

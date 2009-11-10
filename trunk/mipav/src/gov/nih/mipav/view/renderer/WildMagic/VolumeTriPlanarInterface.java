@@ -120,9 +120,6 @@ import com.sun.opengl.util.Animator;
 public class VolumeTriPlanarInterface extends JFrame
 implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentListener, ChangeListener
 {
-
-    private VolumeRenderState m_kSaveState = new VolumeRenderState();
-
     /**
      * Item to hold tab name and corresponding panel.
      */
@@ -356,16 +353,12 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         {
             m_kVolumeImageB = new VolumeImage();
         }
-        m_kSaveState.ImageA = m_kVolumeImageA;
-        m_kSaveState.ImageB = m_kVolumeImageB;    
         m_kVolumeImageA.GetImage().setImageOrder(ModelImage.IMAGE_A);
 
         if (m_kVolumeImageB.GetImage() != null) {
             m_kVolumeImageB.GetImage().setImageOrder(ModelImage.IMAGE_B);
         }
-
         constructRenderers();
-
     }
 
 
@@ -598,7 +591,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             boolean showVOI = menuObj.isMenuItemSelected("VOI toolbar");
             m_kVOIToolbar.setVisible(showVOI);
         } else if (command.equals("4DToolbar") && m_b4D) {
-            boolean show4D = menuObj.isMenuItemSelected("4D toolbar");
             insertTab("4D", m_kVolume4DGUI.getMainPanel() );
             resizePanel();
         } else if (command.equals("RectVOI") ) {
@@ -1781,7 +1773,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param  center  the new slice positions in FileCoordinates
      */
     public void setSliceFromPlane(Vector3f center) {
-        m_kSaveState.Center.Copy(center);
         setPositionLabels(center);
 
         for (int i = 0; i < 3; i++) {
@@ -1801,7 +1792,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param  center  the new slice positions in FileCoordinates
      */
     public void setSliceFromSurface(Vector3f center) {
-        m_kSaveState.Center.Copy(center);
         setPositionLabels(center);
 
         if (m_akPlaneRender != null)
@@ -2495,7 +2485,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
         if ( positionsPanel != null )
         {
-            positionsPanel.dispose();
+            positionsPanel.disposeLocal();
             positionsPanel = null;
         }
         if ( clipBox != null )
@@ -2868,8 +2858,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         try {
             ObjectOutputStream objstream;
             objstream = new ObjectOutputStream(new FileOutputStream("SaveState"));
-            SaveTabs();
-            objstream.writeObject(m_kSaveState);
+            VolumeRenderState kState = StoreState();
+            objstream.writeObject(kState);
             objstream.close();
 
         } catch (FileNotFoundException e) {
@@ -2900,9 +2890,33 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             e.printStackTrace();
         }
     }
+    private VolumeRenderState StoreState()
+    {
+        VolumeRenderState kState = new VolumeRenderState();
+        kState.ImageA = m_kVolumeImageA;
+        kState.ImageB = m_kVolumeImageB;
+        kState.View = raycastRenderWM.GetSceneRotation();
+        SaveTabs(kState);
+
+        kState.ShowAxes = menuObj.getMenuItem("Show axes").isSelected();
+        kState.ShowCrossHairs = menuObj.getMenuItem("Show crosshairs").isSelected();
+        kState.ShowVOI = menuObj.getMenuItem("VOI toolbar").isSelected();
+        kState.Show4D = menuObj.getMenuItem("4D toolbar").isSelected();
+        kState.Radiological = m_kVolumeImageA.GetImage().getRadiologicalView();
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            kState.Opacity[i] = sliceGUI.getOpacity(i);
+            kState.SliceColor[i] = sliceGUI.getColor(i);
+            kState.ShowSlice[i] = sliceGUI.getShowSlice(i);
+            kState.ShowSliceBox[i] = sliceGUI.getShowBound(i);
+        }
+        kState.Center = sliceGUI.getCenter();
+        return kState;
+    }
+    
     private void RestoreState( VolumeRenderState kState )
     {
-
         m_kVolumeImageA = kState.ImageA;
         m_kVolumeImageB = kState.ImageB;
 
@@ -2913,19 +2927,49 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         constructRenderers();
         RestoreTabs(kState);
         resizePanel();
-        setSliceFromPlane( kState.Center );
+
+        menuObj.getMenuItem("Show axes").setSelected( kState.ShowAxes );
+        for (int i = 0; i < 3; i++) {
+            m_akPlaneRender[i].showAxes(kState.ShowAxes);
+            m_akPlaneRender[i].SetModified(true);
+        }
+        menuObj.getMenuItem("Show crosshairs").setSelected( kState.ShowCrossHairs );
+        boolean showXHairs = menuObj.isMenuItemSelected("Show crosshairs");
+        for (int i = 0; i < 3; i++) {
+            m_akPlaneRender[i].showXHairs(kState.ShowCrossHairs);
+            m_akPlaneRender[i].SetModified(true);
+        }
+        menuObj.getMenuItem("VOI toolbar").setSelected( kState.ShowVOI );
+        m_kVOIToolbar.setVisible(kState.ShowVOI);
+        menuObj.getMenuItem("4D toolbar").setSelected( kState.Show4D );
+        if ( kState.Show4D )
+        {
+            insertTab("4D", m_kVolume4DGUI.getMainPanel() );
+            resizePanel();
+        }
+        setRadiological( kState.Radiological );
+        positionsPanel.setRadiological( kState.Radiological );
         setModified();
-        m_kSaveState = kState;
+        for ( int i = 0; i < 3; i++ )
+        {
+            sliceGUI.setOpacity(i, kState.Opacity[i]);
+            sliceGUI.setColor(i, kState.SliceColor[i]);
+            sliceGUI.setShowSlice(i, kState.ShowSlice[i]);
+            sliceGUI.setShowBound(i, kState.ShowSliceBox[i]);
+        }
+        setSliceFromPlane(kState.Center);
+        
+        raycastRenderWM.SetSceneRotation(kState.View);
     }
 
-    private void SaveTabs()
+    private void SaveTabs(VolumeRenderState kState)
     {
         for (int i = 0; i < tabbedPane.getTabCount(); i++)
         {
-            m_kSaveState.TabbedList.add(tabbedPane.getTitleAt(i));
+            kState.TabbedList.add(tabbedPane.getTitleAt(i));
         }
         int iSelected = tabbedPane.getSelectedIndex();
-        m_kSaveState.TabbedList.add(tabbedPane.getTitleAt(iSelected));
+        kState.TabbedList.add(tabbedPane.getTitleAt(iSelected));
     }
 
     private void RestoreTabs( VolumeRenderState kState )

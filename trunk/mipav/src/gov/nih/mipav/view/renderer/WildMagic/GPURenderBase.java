@@ -711,4 +711,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDisplayList.get(i).GetScene().UpdateGS();
         }
     }
+    
+    protected Matrix3f GetSceneRotation()
+    {
+        return m_spkScene.Local.GetRotate();
+    }
+    
+    protected void SetSceneRotation(Matrix3f kRotation)
+    {
+        m_spkScene.Local.SetRotate(kRotation);
+        UpdateSceneRotation();
+    }
 }
