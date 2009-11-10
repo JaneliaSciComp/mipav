@@ -88,6 +88,31 @@ public class TransferFunction extends ModelSerialCloneable {
 
         return cloned;
     }
+    
+
+    /**
+     * Copies the object that extends this class.
+     *
+     * @return  An exact copy of this class.
+     */
+    public TransferFunction( TransferFunction kTransfer )
+    {
+        pts = new Vector2f[ kTransfer.pts.length ];
+        for ( int i = 0; i < kTransfer.pts.length; i++ )
+        {
+            if ( kTransfer.pts[i] != null )
+            {
+                pts[i] = new Vector2f( kTransfer.pts[i] );
+            }
+        }
+        slopes = new float[ kTransfer.slopes.length ];
+        for ( int i = 0; i < kTransfer.slopes.length; i++ )
+        {
+            slopes[i] = kTransfer.slopes[i];
+        }
+        capacity = kTransfer.capacity;
+        endPtr = kTransfer.endPtr;
+    }
 
 
     /**
@@ -106,7 +131,6 @@ public class TransferFunction extends ModelSerialCloneable {
         if ((x.length != y.length) || (x.length < size())) {
             return;
         }
-
         for (i = 0; i < size(); i++) {
             x[i] = ((Vector2f) (getPoint(i))).X;
             y[i] = ((Vector2f) (getPoint(i))).Y;
@@ -315,6 +339,19 @@ public class TransferFunction extends ModelSerialCloneable {
      */
     public synchronized int size() {
         return endPtr;
+    }
+    
+    public String toString()
+    {
+        String kString = new String("Transfer " + endPtr + " " );
+        for ( int i = 0; i < pts.length; i++ )
+        {
+            if ( pts[i] != null )
+            {
+                kString = kString.concat( pts[i].ToString() + "   " );
+            }
+        }
+        return kString;
     }
 
     /**

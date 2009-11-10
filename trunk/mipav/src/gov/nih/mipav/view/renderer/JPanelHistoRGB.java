@@ -1067,6 +1067,42 @@ public class JPanelHistoRGB
         RGBTB = RGBT;
     }
 
+    public void setRedOn( boolean bOn, boolean bImageA )
+    {
+        if ( bImageA )
+        {
+            redCheckBoxA.setSelected(bOn);
+        }
+        else
+        {
+            redCheckBoxB.setSelected(bOn);
+        }
+    }
+    
+    public void setGreenOn( boolean bOn, boolean bImageA )
+    {
+        if ( bImageA )
+        {
+            greenCheckBoxA.setSelected(bOn);
+        }
+        else
+        {
+            greenCheckBoxB.setSelected(bOn);
+        }
+    }
+
+    public void setBlueOn( boolean bOn, boolean bImageA )
+    {
+        if ( bImageA )
+        {
+            blueCheckBoxA.setSelected(bOn);
+        }
+        else
+        {
+            blueCheckBoxB.setSelected(bOn);
+        }
+    }
+    
     /**
      * Resets the buttons depending on which tab was selected.
      *

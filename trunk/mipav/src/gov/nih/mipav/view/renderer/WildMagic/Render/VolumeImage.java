@@ -949,6 +949,7 @@ public class VolumeImage implements Serializable
     public void SetRGBT(ModelRGB kRGBT)
     {
         SetRGBT( m_kColorMapTarget, m_kColorMap, kRGBT );
+        m_kRGBT = kRGBT;
     }
 
     public void SetTimeSlice(int iSlice)
