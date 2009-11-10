@@ -82,7 +82,10 @@ public class JPanelPositions extends JInterfaceBase {
     /** Panel containing the position labels:. */
     private JPanel panelLabels = new JPanel();
 
-    private ModelImage imageA, imageB;
+    private JRadioButton radiologicalView;
+    private JRadioButton neurologicalView;
+    
+    private transient ModelImage imageA, imageB;
     
     /**
      * 3D clipping dialog control.
@@ -220,12 +223,12 @@ public class JPanelPositions extends JInterfaceBase {
             modelViewPanel.add(modelViewLabelVals[i], gbc2);
         }
 
-        JRadioButton radiologicalView = new JRadioButton("Radiological View");
+        radiologicalView = new JRadioButton("Radiological View");
         radiologicalView.setSelected(true);
         radiologicalView.addActionListener(this);
         radiologicalView.setActionCommand("RadiologicalView");
 
-        JRadioButton neurologicalView = new JRadioButton("Neurological View");
+        neurologicalView = new JRadioButton("Neurological View");
         neurologicalView.setSelected(false);
         neurologicalView.addActionListener(this);
         neurologicalView.setActionCommand("NeurologicalView");
@@ -269,6 +272,12 @@ public class JPanelPositions extends JInterfaceBase {
     {
         return panelLabels;
     }  
+    
+    public void setRadiological( boolean bOn )
+    {
+        radiologicalView.setSelected(bOn);
+        neurologicalView.setSelected(!bOn);
+    }
     
     /**
      * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
