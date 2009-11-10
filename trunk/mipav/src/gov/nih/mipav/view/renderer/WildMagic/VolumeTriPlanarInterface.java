@@ -2895,15 +2895,49 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         VolumeRenderState kState = new VolumeRenderState();
         kState.ImageA = m_kVolumeImageA;
         kState.ImageB = m_kVolumeImageB;
-        kState.View = raycastRenderWM.GetSceneRotation();
+        // LUT:
+        kState.LUTa = m_kVolumeImageA.GetLUT(); 
+        if ( kState.LUTa != null )
+        {
+            kState.TransferA = new TransferFunction(kState.LUTa.getTransferFunction());
+        }
+        kState.RGBa = m_kVolumeImageA.GetRGB();
+        if ( kState.RGBa != null )
+        {
+            kState.RedA = new TransferFunction(kState.RGBa.getRedFunction());
+            kState.GreenA = new TransferFunction(kState.RGBa.getGreenFunction());
+            kState.BlueA = new TransferFunction(kState.RGBa.getBlueFunction());
+            kState.RedOnA = kState.RGBa.getROn();
+            kState.GreenOnA = kState.RGBa.getGOn();
+            kState.BlueOnA = kState.RGBa.getBOn();
+        }
+        
+        kState.LUTb = m_kVolumeImageB.GetLUT(); 
+        if ( kState.LUTb != null )
+        {
+            kState.TransferB = new TransferFunction(kState.LUTb.getTransferFunction());
+        }
+        kState.RGBb = m_kVolumeImageB.GetRGB();
+        if ( kState.RGBb != null )
+        {
+            kState.RedB = new TransferFunction(kState.RGBb.getRedFunction());
+            kState.GreenB = new TransferFunction(kState.RGBb.getGreenFunction());
+            kState.BlueB = new TransferFunction(kState.RGBb.getBlueFunction());
+            kState.RedOnB = kState.RGBb.getROn();
+            kState.GreenOnB = kState.RGBb.getGOn();
+            kState.BlueOnB = kState.RGBb.getBOn();
+        }
+        
         SaveTabs(kState);
-
+        // Menu state:
         kState.ShowAxes = menuObj.getMenuItem("Show axes").isSelected();
         kState.ShowCrossHairs = menuObj.getMenuItem("Show crosshairs").isSelected();
         kState.ShowVOI = menuObj.getMenuItem("VOI toolbar").isSelected();
         kState.Show4D = menuObj.getMenuItem("4D toolbar").isSelected();
-        kState.Radiological = m_kVolumeImageA.GetImage().getRadiologicalView();
-
+        // Position Panel:
+        kState.Radiological = m_kVolumeImageA.GetImage().getRadiologicalView();        
+        
+        // Slice Panel:
         for ( int i = 0; i < 3; i++ )
         {
             kState.Opacity[i] = sliceGUI.getOpacity(i);
@@ -2912,6 +2946,16 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             kState.ShowSliceBox[i] = sliceGUI.getShowBound(i);
         }
         kState.Center = sliceGUI.getCenter();
+        // Display Panel:
+        kState.BackgroundColor = displayGUI.getBackgroundColor();
+        kState.BoundingBoxColor = displayGUI.getBoundingBoxColor();
+        kState.ShowBoundingBox = displayGUI.getBoundingBox();
+        kState.ShowOrientationCube = displayGUI.getShowOrientationCube();
+        kState.Perspective = displayGUI.getPerspective();
+        kState.Camera = getCameraParameters();
+        kState.CameraLocation.Copy( getCameraLocation() );
+        kState.ObjectLocation = getObjectParameters();
+        kState.ObjectRotation = raycastRenderWM.GetSceneRotation();
         return kState;
     }
     
@@ -2919,15 +2963,20 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     {
         m_kVolumeImageA = kState.ImageA;
         m_kVolumeImageB = kState.ImageB;
+        m_kVolumeImageA.UpdateImages(kState.LUTa);
+        m_kVolumeImageA.SetRGBT(kState.RGBa);
 
         m_kVolumeImageA.GetImage().setImageOrder(ModelImage.IMAGE_A);
         if (m_kVolumeImageB.GetImage() != null) {
             m_kVolumeImageB.GetImage().setImageOrder(ModelImage.IMAGE_B);
-        }
+            m_kVolumeImageB.UpdateImages(kState.LUTb);
+            m_kVolumeImageB.SetRGBT(kState.RGBb);
+        }                
         constructRenderers();
         RestoreTabs(kState);
         resizePanel();
-
+        
+        // Menu:
         menuObj.getMenuItem("Show axes").setSelected( kState.ShowAxes );
         for (int i = 0; i < 3; i++) {
             m_akPlaneRender[i].showAxes(kState.ShowAxes);
@@ -2947,9 +2996,55 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             insertTab("4D", m_kVolume4DGUI.getMainPanel() );
             resizePanel();
         }
+        // Position Panel:
         setRadiological( kState.Radiological );
         positionsPanel.setRadiological( kState.Radiological );
         setModified();
+        
+        //LUT:
+        if ( kState.TransferA != null )
+        {
+            m_kVolumeImageA.GetLUT().setTransferFunction(kState.TransferA);
+            m_kVolumeImageA.UpdateImages(m_kVolumeImageA.GetLUT());
+        }
+        if ( kState.RGBa != null )
+        {
+            m_kVolumeImageA.GetRGB().setRedFunction(kState.RedA);
+            m_kVolumeImageA.GetRGB().setGreenFunction(kState.GreenA);
+            m_kVolumeImageA.GetRGB().setBlueFunction(kState.BlueA);
+            panelHistoRGB.setRedOn( kState.RedOnA, true );
+            panelHistoRGB.setGreenOn( kState.GreenOnA, true );
+            panelHistoRGB.setBlueOn( kState.BlueOnA, true );
+            kState.RGBa.setROn(kState.RedOnA);
+            kState.RGBa.setGOn(kState.GreenOnA);
+            kState.RGBa.setBOn(kState.BlueOnA);
+            m_kVolumeImageA.SetRGBT(m_kVolumeImageA.GetRGB());
+            raycastRenderWM.setRGBTA(m_kVolumeImageA.GetRGB());
+        }
+        if ( m_kVolumeImageB.GetImage() != null )
+        {
+            if ( kState.TransferB != null )
+            {
+                m_kVolumeImageB.GetLUT().setTransferFunction(kState.TransferB);
+                m_kVolumeImageB.UpdateImages(m_kVolumeImageB.GetLUT());
+            }
+            if ( kState.RGBb != null )
+            {
+                m_kVolumeImageB.GetRGB().setRedFunction(kState.RedB);
+                m_kVolumeImageB.GetRGB().setGreenFunction(kState.GreenB);
+                m_kVolumeImageB.GetRGB().setBlueFunction(kState.BlueB);
+                panelHistoRGB.setRedOn( kState.RedOnB, false );
+                panelHistoRGB.setGreenOn( kState.GreenOnB, false );
+                panelHistoRGB.setBlueOn( kState.BlueOnB, false );
+                kState.RGBb.setROn(kState.RedOnB);
+                kState.RGBb.setGOn(kState.GreenOnB);
+                kState.RGBb.setBOn(kState.BlueOnB);
+                m_kVolumeImageB.SetRGBT(m_kVolumeImageB.GetRGB());
+                raycastRenderWM.setRGBTB(m_kVolumeImageB.GetRGB());
+            }
+        }
+        
+        // Slice Panel:
         for ( int i = 0; i < 3; i++ )
         {
             sliceGUI.setOpacity(i, kState.Opacity[i]);
@@ -2959,7 +3054,19 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
         setSliceFromPlane(kState.Center);
         
-        raycastRenderWM.SetSceneRotation(kState.View);
+
+        // Display Panel:
+        displayGUI.setBackgroundColor(kState.BackgroundColor);
+        displayGUI.setBoundingBoxColor(kState.BoundingBoxColor);
+        displayGUI.setBoundingBox(kState.ShowBoundingBox);
+        displayGUI.setShowOrientationCube(kState.ShowOrientationCube);
+        displayGUI.setPerspective(kState.Perspective);
+        raycastRenderWM.setCameraParameters(kState.Camera);
+        raycastRenderWM.setCameraLocation(kState.CameraLocation);
+        raycastRenderWM.SetSceneRotation(kState.ObjectRotation);
+        raycastRenderWM.setObjectParameters( kState.ObjectLocation );        
+        displayGUI.displayCameraParams( kState.Camera );
+        displayGUI.displayObjectParams( kState.ObjectLocation );
     }
 
     private void SaveTabs(VolumeRenderState kState)

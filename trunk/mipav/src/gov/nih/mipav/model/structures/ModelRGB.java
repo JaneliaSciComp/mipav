@@ -149,6 +149,15 @@ public class ModelRGB extends ModelStorageBase {
     }
 
     /**
+     * Accessor that returns the blue transfer function.
+     *
+     * @return  the transfer function that describes how to map the blue values
+     */
+    public void setBlueFunction(TransferFunction fn) {
+        blueLine = fn;
+    }
+
+    /**
      * Returns the boolean indicating if the blue channel should be displayed.
      *
      * @return  BOn = true then display the blue channel (default = true)
@@ -193,12 +202,30 @@ public class ModelRGB extends ModelStorageBase {
     }
 
     /**
+     * Accessor that returns the green transfer function.
+     *
+     * @return  the transfer function that describes how to map the green values
+     */
+    public void setGreenFunction(TransferFunction fn) {
+        greenLine = fn;
+    }
+
+    /**
      * Accessor that returns the red transfer function.
      *
      * @return  the transfer function that describes how to map the red values
      */
     public TransferFunction getRedFunction() {
         return redLine;
+    }
+
+    /**
+     * Accessor that returns the red transfer function.
+     *
+     * @return  the transfer function that describes how to map the red values
+     */
+    public void setRedFunction(TransferFunction fn) {
+        redLine = fn;
     }
 
     /**

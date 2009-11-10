@@ -319,6 +319,61 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         
     }
 
+    public Color getBackgroundColor()
+    {
+        return colorButtonBackground.getBackground();
+    }
+    
+    public void setBackgroundColor( Color c )
+    {
+        setButtonColor( colorButtonBackground, c );
+    }
+    
+    public Color getBoundingBoxColor()
+    {
+        return colorButton.getBackground();
+    }
+    
+    public void setBoundingBoxColor( Color c )
+    {
+        setButtonColor( colorButton, c );
+    }
+    
+    public boolean getBoundingBox()
+    {
+        return boundingCheck.isSelected();
+    }
+    
+    public void setBoundingBox( boolean value )
+    {
+        boundingCheck.setSelected(value);
+        m_kVolumeViewer.setShowBoxFrame(value);
+        colorButton.setEnabled(value);
+    }
+    
+    public boolean getShowOrientationCube()
+    {
+        return cubicCheck.isSelected();
+    }
+    
+    public void setShowOrientationCube( boolean value )
+    {
+        cubicCheck.setSelected(value);
+        m_kVolumeViewer.setShowOrientationCube(value);
+    }
+    
+    public boolean getPerspective()
+    {
+        return radioButtonPerspective.isSelected();
+    }
+    
+    public void setPerspective( boolean value )
+    {
+        radioButtonPerspective.setSelected(value);
+        radioButtonOrthographic.setSelected(!value);
+        m_kVolumeViewer.setRenderPerspective(value);
+    }
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)
      */
@@ -365,7 +420,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         colorButtonBackground.setPreferredSize(new Dimension(25, 25));
         colorButtonBackground.setToolTipText("Change background color");
         colorButtonBackground.addActionListener(this);
-        colorButtonBackground.setBackground(Color.darkGray);
+        colorButtonBackground.setBackground(Color.black);
 
         JLabel backgroundLabel = new JLabel("Background color");
 
