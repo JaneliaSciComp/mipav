@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmSphereGeneration.IntTorquato95ModelMean;
+import gov.nih.mipav.model.algorithms.AlgorithmSphereGeneration.IntTorquato95ModelMean2;
 import gov.nih.mipav.model.algorithms.AlgorithmSphereGeneration.IntTorquatoModelMean;
 import gov.nih.mipav.model.algorithms.AlgorithmSphereGeneration.IntTorquatoModelMean2;
 import gov.nih.mipav.model.structures.*;
@@ -94,6 +96,21 @@ import java.util.*;
   a2 = 4*af/((1 - af)**2)
   b2 = 4*af*(2 + af)/((1 - af)**2)
   mean nearest neighbor distance = diameter * (1 + 0.5*sqrt(PI/a2)*exp(b2*b2/(4*a2))*erfc[b2/(2*sqrt(a2))])
+  
+  Torquato developed more accurate equations in 1995 superseding the 1990 equations.  In "Nearest-neighbor
+  statistics for packings of hard spheres and disks" by S. Torquato, Physical Review E, Volume 51, Number 4,
+  April, 1995, pp. 3170 - 3182:
+  af = area fraction of circles
+  mean nearest neighbor distance = diameter * (1 + integral)
+  integral = integral from x = 1 to x = infinity of
+  exp{-af[4*a0*(x*x - 1) + 8*a1*(x - 1)]}
+  For af <= 0.69, the freezing packing fraction:
+  a0 = (1 + 0.128*af)/((1 - af)**2)
+  a1 = -0.564*af/((1 - af)**2)
+  For 0.69 < af < 0.82, random close packing
+  gf(1) = (1 - 0.436*0.69)/((1 - 0.69)**2)
+  a0 = 2*gf(1)*(0.82 - 0.69)/(0.82 - af) - 1/(1 - af)
+  a1 = -gf(1)*(0.82 - 0.69)/(0.82 - af) + 1/(1 - af)
  */
 public class AlgorithmCircleGeneration extends AlgorithmBase {
     
@@ -301,6 +318,9 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         double a2;
         double b2;
         double t;
+        
+        IntTorquato95ModelMean meanTorquato95Model;
+        IntTorquato95ModelMean2 meanTorquato95Model2;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -871,8 +891,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
            System.out.println("chiSquared test does not reject random circle distribution");
        }
        
-       Preferences.debug("\nCalculations using Torquato, Lu, and Rubinstein model\n");
-       System.out.println("\nCalculations using Torquato, Lu, and Rubinstein model");
+       Preferences.debug("\nCalculations using 1990 Torquato, Lu, and Rubinstein model\n");
+       System.out.println("\nCalculations using 1990 Torquato, Lu, and Rubinstein model");
        // Calculate analytical mean
        af2 = 1.0 - areaFraction;
        af2 = af2 * af2;
@@ -896,8 +916,55 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
        Preferences.debug("Error status = " + errorStatus +
                          " with absolute error = " + absError + "\n");
        analyticalMean = diameter * (1.0 + 0.5*Math.sqrt(Math.PI/a2)*Math.exp(bound*bound)*numInt2);
-       Preferences.debug("Analytical mean from Torquato model = " + analyticalMean + "\n");
-       System.out.println("Analytical mean from Torquato model = " + analyticalMean);
+       Preferences.debug("Analytical mean from 1990 Torquato model = " + analyticalMean + "\n");
+       System.out.println("Analytical mean from 1990 Torquato model = " + analyticalMean);
+       t = (mean - analyticalMean)/standardError;
+       stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
+                             t, circlesLeft-1, percentile);
+       stat.run();
+       Preferences.debug("Percentile in Students t cumulative distribution function for measured mean around analytical mean = "
+                         + percentile[0]*100.0 + "\n");
+       System.out.println("Percentile in Students t cumulative distribution function for measured mean around analytical mean = " +
+                           percentile[0]*100.0);
+       if (percentile[0] < 0.025) {
+           // Measured mean signficantly less than analytical mean of random distribution
+           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+           System.out.println("Clumping or aggregation found in nearest neighbor distances");
+       }
+       else if (percentile[0] > 0.975) {
+           // Measured mean significantly greater than analytical mean of random distribution
+           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+           System.out.println("Uniform or regular distribution found in nearest neighbor distances");
+       }
+       else {
+         // Measured mean not significantly different from analytical mean of random distribution
+           Preferences.debug("Measured mean consistent with random distribution\n");
+           System.out.println("Measured mean consistent with random distribution");
+       }
+       
+       Preferences.debug("\nCalculations using 1995 Torquato model\n");
+       System.out.println("\nCalculations using 1995 Torquato model");
+       // Calculate analytical mean
+       meanTorquato95Model = new IntTorquato95ModelMean(1.0, 1.0E30, Integration.MIDINF, eps, areaFraction);
+       meanTorquato95Model.driver();
+       steps = meanTorquato95Model.getStepsUsed();
+       numInt = meanTorquato95Model.getIntegral();
+       Preferences.debug("In Integration.MIDINF numerical Integral for Torquato95 model = " + 
+               numInt + " after " + steps + " steps used\n");
+       bound = 1.0;
+       meanTorquato95Model2 = new IntTorquato95ModelMean2(bound, routine, inf, epsabs, epsrel, limit, areaFraction);
+       meanTorquato95Model2.driver();
+       numInt2 = meanTorquato95Model2.getIntegral();
+       errorStatus = meanTorquato95Model2.getErrorStatus();
+       absError = meanTorquato95Model2.getAbserr();
+       neval = meanTorquato95Model2.getNeval();
+       Preferences.debug("In Integration2.DQAGIE numerical Integral for Torquato95 model = " + numInt2 + " after " + neval +
+                         " integrand evaluations used\n");
+       Preferences.debug("Error status = " + errorStatus +
+                         " with absolute error = " + absError + "\n");
+       analyticalMean = diameter * (1.0 + numInt2);
+       Preferences.debug("Analytical mean from Torquato95 model = " + analyticalMean + "\n");
+       System.out.println("Analytical mean from Torquato95 model = " + analyticalMean);
        t = (mean - analyticalMean)/standardError;
        stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
                              t, circlesLeft-1, percentile);
@@ -1002,6 +1069,103 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         public double intFunc(double x) {
             double function;
             function = scale * Math.exp(-x*x);
+
+            return function;
+        }
+    }
+    
+    class IntTorquato95ModelMean extends Integration {
+        double areaFraction;
+        /**
+         * Creates a new IntModel object.
+         *
+         * @param  lower    DOCUMENT ME!
+         * @param  upper    DOCUMENT ME!
+         * @param  routine  DOCUMENT ME!
+         * @param  eps      DOCUMENT ME!
+         */
+        public IntTorquato95ModelMean(double lower, double upper, int routine, double eps, double areaFraction) {
+            super(lower, upper, routine, eps);
+            this.areaFraction = areaFraction;
+        }
+
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double a0;
+            double a1;
+            double gf1;
+            double val;
+            double function;
+            if (areaFraction <= 0.69) {
+                a0 = (1.0 + 0.128 * areaFraction)/((1.0 - areaFraction) * (1.0 - areaFraction));
+                a1 = -0.564*areaFraction/((1.0 - areaFraction) * (1.0 - areaFraction));
+            }
+            else { // good for 0.69 < areaFraction < 0.82
+                gf1 = (1.0 - 0.436*0.69)/((1 - 0.69)*(1 - 0.69)); 
+                val = gf1 * (0.82 - 0.69)/(0.82 - areaFraction);
+                a0 = 2.0 * val - 1.0/(1.0 - areaFraction);
+                a1 = -val + 1.0/(1.0 - areaFraction);
+            }
+            function = Math.exp(-areaFraction * (4.0*a0*(x*x - 1.0) + 8.0*a1*(x - 1.0)));
+
+            return function;
+        }
+    }
+    
+    class IntTorquato95ModelMean2 extends Integration2 {
+        double areaFraction;
+        public IntTorquato95ModelMean2(double bound, int routine, int inf,
+                double epsabs, double epsrel, int limit, double areaFraction) {
+        super(bound, routine, inf, epsabs, epsrel, limit);
+        this.areaFraction = areaFraction;
+        }
+       
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double a0;
+            double a1;
+            double gf1;
+            double val;
+            double function;
+            if (areaFraction <= 0.69) {
+                a0 = (1.0 + 0.128 * areaFraction)/((1.0 - areaFraction) * (1.0 - areaFraction));
+                a1 = -0.564*areaFraction/((1.0 - areaFraction) * (1.0 - areaFraction));
+            }
+            else { // good for 0.69 < areaFraction < 0.82
+                gf1 = (1.0 - 0.436*0.69)/((1 - 0.69)*(1 - 0.69)); 
+                val = gf1 * (0.82 - 0.69)/(0.82 - areaFraction);
+                a0 = 2.0 * val - 1.0/(1.0 - areaFraction);
+                a1 = -val + 1.0/(1.0 - areaFraction);
+            }
+            function = Math.exp(-areaFraction * (4.0*a0*(x*x - 1.0) + 8.0*a1*(x - 1.0)));
 
             return function;
         }
