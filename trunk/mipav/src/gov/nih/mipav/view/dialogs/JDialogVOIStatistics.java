@@ -335,8 +335,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         calculator.addListener(this);
 
         // only calculate these if appropriate box is checked for speed.
-
-        // TODO: switch to checkList
         int largestDistanceIndex = -1, largestSliceDistanceIndex = -1;
         for (int i = 0; i < VOIStatisticList.numberOfStatistics; i++) {
             if (VOIStatisticList.statisticDescription[i].equals(VOIStatisticList.largestDistanceDescription)) {
@@ -349,9 +347,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         calculator.setDistanceFlag(checkList[largestDistanceIndex]);
         calculator.setSliceDistanceFlag(checkList[largestSliceDistanceIndex]);
-
-        // calculator.setDistanceFlag(checkBoxPanel.getSelectedList(VOIStatisticList.largestDistanceDescription));
-        // calculator.setSliceDistanceFlag(checkBoxPanel.getSelectedList(VOIStatisticList.largestSliceDistanceDescription));
 
         createProgressBar(image.getImageName(), calculator);
 
@@ -622,8 +617,12 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         logFileText = new StringBuffer(createNewLogfile());
 
         tableDestinationUsage = scriptParameters.getParams().getInt("output_writing_behavior");
-        tableDestination = new File(image.getFileInfo(0).getFileDirectory() + File.separator + image.getImageName()
-                + ".table");
+        if (scriptParameters.getParams().containsParameter("voi_stats_output_file")) {
+            tableDestination = new File(scriptParameters.getParams().getString("voi_stats_output_file"));
+        } else {
+            tableDestination = new File(image.getFileInfo(0).getFileDirectory() + File.separator + image.getImageName()
+                    + ".table");
+        }
 
         processType = scriptParameters.getParams().getInt("processing_level");
         showTotals = scriptParameters.getParams().getBoolean("do_show_totals");
