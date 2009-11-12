@@ -101,6 +101,11 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
         m_kMultiHistogram = null;
         super.dispose();
     }
+    
+    public VolumeImageMultiDimensionalTransfer getHistogram()
+    {
+        return m_kMultiHistogram;
+    }
 
     /**
      * Resizing the control panel with ViewJFrameVolumeView's frame width and height.

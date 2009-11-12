@@ -407,11 +407,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         Move();
         Pick();
 
-        
-        Render();
-
-        UpdateFrameCount();
-
+        if ( !m_bFirstRender )
+        {
+            Render();
+            UpdateFrameCount();
+        }
         if ( m_bFirstRender )
         {
             m_bFirstRender = false;
@@ -1848,6 +1848,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void setIPD( float fIPD )
     {
         m_fTrnSpeed = fIPD;        
+    }
+
+    
+    /**
+     * Sets the inter-pupillary distance for stereo rendering.
+     * @param fIPD the IPD value.
+     */
+    public float getIPD()
+    {
+        return m_fTrnSpeed;        
     }
     
     /**

@@ -40,12 +40,14 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     private Vector2f m_kTMax = new Vector2f(1,1);
     private Vector<ClassificationWidget> m_akLev = new Vector<ClassificationWidget>();
     private int m_iCurrent = -1;
+    private int m_iPicked = -1;
     private boolean m_bPickPending = false;
     private ColorRGBA m_kCurrentColor = new ColorRGBA(ColorRGBA.WHITE);
     private boolean m_bAdded = false;
     private JInterfaceBase m_kInterface = null;
     private String m_kWidgetType = new String( "Square" );
     private boolean m_bFirstAdded = false;
+    private boolean m_bUpdateLev = false;
     
     public VolumeImageMultiDimensionalTransfer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
@@ -87,6 +89,12 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         kWorld.SetFrame(frame);
         animator.start();
     }
+    
+    public void display()
+    {
+        m_bDisplay = true;
+        GetCanvas().display();
+    }
 
     public void display(GLAutoDrawable arg0) {
         if ( !m_bDisplay )
@@ -100,6 +108,11 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
         if ( m_pkRenderer != null )
         {
             ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        }
+        if ( m_bUpdateLev )
+        {
+            m_bUpdateLev = false;
+            updateLev();
         }
         for ( int i = 0; i < m_akLev.size(); i++ )
         {
@@ -330,6 +343,70 @@ public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
     public void setWidget( String kWidgetType )
     {
         m_kWidgetType = new String(kWidgetType);
+    }
+    
+
+    
+    public Vector<ClassificationWidget> getWidgets()
+    {
+        Vector<ClassificationWidget> kWidgetList = new Vector<ClassificationWidget>();
+        for ( int i = 0; i < m_akLev.size(); i++ )
+        {
+            ClassificationWidget kWidget = m_akLev.get(i);
+            if ( kWidget instanceof SquareClassificationWidget )
+            {
+                kWidgetList.add( new SquareClassificationWidget((SquareClassificationWidget)kWidget) );
+            }
+            else if ( kWidget instanceof TriangleClassificationWidget )
+            {
+                kWidgetList.add( new TriangleClassificationWidget((TriangleClassificationWidget)kWidget) );
+            }
+        }
+        return kWidgetList;
+    }
+    
+    public void setWidgets(Vector<ClassificationWidget> kWidgetList)
+    {
+        m_akLev = kWidgetList;
+        m_bUpdateLev = true;        
+    }
+    
+    public int getPicked()
+    {
+        return m_iCurrent;
+    }
+    
+    public void setPicked( int value )
+    {
+        m_iPicked = value;
+    }
+    
+    private void updateLev()
+    {
+        for ( int i = 0; i < m_akLev.size(); i++ )
+        {
+            m_iCurrent++;
+            ClassificationWidget kLev = m_akLev.get(i);
+            m_spkScene.AttachChild( kLev.getWidget() );
+            setColor( m_akLev.get(m_iCurrent).getColor() );
+            m_kInterface.updateColorButton( m_akLev.get(m_iCurrent).getState().Color,
+                    m_akLev.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
+            m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
+            m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
+            m_spkScene.UpdateGS();
+            m_bAdded = true;
+            m_bDisplay = true;
+        }
+        m_iCurrent = m_iPicked;
+        if ( m_bAdded )
+        {
+            setColor( m_akLev.get(m_iCurrent).getColor() );
+            m_kInterface.updateColorButton( m_akLev.get(m_iCurrent).getState().Color,
+                    m_akLev.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
+            m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
+            m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
+            m_spkScene.UpdateGS();
+        }
     }
     
     protected void CreatePlaneNode()

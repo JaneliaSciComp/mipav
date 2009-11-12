@@ -255,7 +255,7 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
             }
         }
     }
-
+    
     /**
      * Add the gradient magnitude hitogram to the opacity control panel.
      */

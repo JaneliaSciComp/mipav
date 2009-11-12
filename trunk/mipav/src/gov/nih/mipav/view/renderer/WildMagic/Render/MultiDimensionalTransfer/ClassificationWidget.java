@@ -2,6 +2,8 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
 import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -11,21 +13,25 @@ import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Spatial;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
-public abstract class ClassificationWidget
+public abstract class ClassificationWidget implements Serializable
 {
-    protected Node m_kWidget = new Node();
-    protected TriMesh m_kBottomOutline = null;
-    protected TriMesh m_kBottomTri;
-    protected ClassificationWidgetEffect m_kBottomTriEffect = null; 
+    /**  */
+    private static final long serialVersionUID = 8150358952544808439L;
+    
     protected float m_fScale = .5f;
     protected Vector2f m_kTMin = new Vector2f(0,0);
     protected Vector2f m_kTMax = new Vector2f(1,1);
+    protected int m_iWidth, m_iHeight;
     protected Spatial m_kPicked = null;
 
+    protected Node m_kWidget = new Node();
+    
+    protected TriMesh m_kBottomOutline = null;
+    protected TriMesh m_kBottomTri;
+    protected ClassificationWidgetEffect m_kBottomTriEffect = null; 
     protected TriMesh m_kUpperSphere;
     protected TriMesh m_kMiddleSphere;
     protected TriMesh m_kLowerSphere;
-    protected int m_iWidth, m_iHeight;
     
     public ClassificationWidget () {}
     
@@ -35,6 +41,15 @@ public abstract class ClassificationWidget
         m_kTMax = kTMax;
         m_iWidth = iWidth;
         m_iHeight = iHeight;
+    }
+    
+    public ClassificationWidget(ClassificationWidget kWidget)
+    {
+        m_kTMin = new Vector2f(kWidget.m_kTMin);
+        m_kTMax = new Vector2f(kWidget.m_kTMax);
+        m_iWidth = kWidget.m_iWidth;
+        m_iHeight = kWidget.m_iHeight;
+        m_fScale = kWidget.m_fScale;
     }
     
     public void clearPicked( boolean bPicked )
@@ -88,6 +103,16 @@ public abstract class ClassificationWidget
     }
 
     
+    public ColorRGBA getColor()
+    {
+        ColorRGBA kColor = null;
+        if ( m_kBottomTriEffect != null )
+        {
+            kColor = m_kBottomTriEffect.GetColor();
+        }
+        return kColor;
+    }
+    
     public void setColor( ColorRGBA kColor )
     {
         if ( m_kBottomTriEffect != null )
@@ -140,5 +165,24 @@ public abstract class ClassificationWidget
     }
 
     public abstract void updateDisplay();
+    
+
+    private void writeObject(java.io.ObjectOutputStream out)
+    throws IOException 
+    {
+        out.writeObject(m_kTMin);
+        out.writeObject(m_kTMax);
+        out.writeInt(m_iWidth);
+        out.writeInt(m_iHeight);
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+    throws IOException, ClassNotFoundException
+    {
+        m_kTMin = (Vector2f)in.readObject();
+        m_kTMax = (Vector2f)in.readObject();
+        m_iWidth = in.readInt();
+        m_iHeight = in.readInt();
+    }
 
 }

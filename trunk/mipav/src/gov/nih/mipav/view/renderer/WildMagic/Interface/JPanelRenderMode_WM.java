@@ -129,10 +129,115 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     public void actionPerformed(ActionEvent event) {
         String levelStr = m_kIntensityTF.getText();
         rayBasedRenderWM.setIntenstityLevel(Integer.valueOf(levelStr).intValue());
-    	m_kVolumeViewer.actionPerformed(event);
-    	
+    	m_kVolumeViewer.actionPerformed(event);    	
     }
     
+    public int getRenderMode()
+    {
+        if ( radioMIP.isSelected() ) { return 0; }
+        if ( radioXRAY.isSelected() ) { return 1; } 
+        if ( radioCOMPOSITE.isSelected() ) { return 2; } 
+        if ( radioSURFACEFAST.isSelected() ) { return 3; }
+        if ( radioSURFACE.isSelected() ) { return 4; }
+        if ( radioCustum.isSelected() ) { return 5; }
+        return 2;
+    }
+
+    public void setRenderMode( int which )
+    {
+        radioMIP.setSelected(false);
+        radioXRAY.setSelected(false);
+        radioCOMPOSITE.setSelected(false);
+        radioSURFACEFAST.setSelected(false);
+        radioSURFACE.setSelected(false);
+        radioCustum.setSelected(false);
+
+        if ( which == 0 ) 
+        { 
+            radioMIP.setSelected(true); 
+            rayBasedRenderWM.MIPMode();
+        }
+        else if ( which == 1 )
+        { 
+            radioXRAY.setSelected(true); 
+            rayBasedRenderWM.DRRMode();
+        }
+        else if ( which == 2 )
+        { 
+            radioCOMPOSITE.setSelected(true);
+            rayBasedRenderWM.CMPMode();
+        }
+        else if ( which == 3 ) 
+        {
+            radioSURFACEFAST.setSelected(true); 
+            rayBasedRenderWM.SURFASTMode();
+            m_kVolumeViewer.refreshLighting();
+        }
+        else if ( which == 4 ) 
+        { 
+            radioSURFACE.setSelected(true); 
+            rayBasedRenderWM.SURMode();
+            m_kVolumeViewer.refreshLighting();
+        }
+        else if ( which == 5 ) 
+        { 
+            radioCustum.setSelected(true); 
+            m_kVolumeViewer.CustumBlendMode();
+        }
+        else
+        { 
+            radioCOMPOSITE.setSelected(true);
+            rayBasedRenderWM.CMPMode();
+        }
+    }
+    
+    public int getStereo()
+    {
+        if ( m_kStereoOff.isSelected() )
+        {
+            return 0;
+        }
+        if ( m_kStereo_Red_Green.isSelected() )
+        {
+            return 1;
+        }
+        return 2;
+    }
+    
+    public void setStereo(int which )
+    {
+        if ( which == 0 )
+        {
+            m_kStereoOff.setSelected(true);
+            m_kStereo_Red_Green.setSelected(false);
+            m_kStereo_Shutter.setSelected(false);
+        }
+        else if ( which == 1 )
+        {
+            m_kStereoOff.setSelected(false);
+            m_kStereo_Red_Green.setSelected(true);
+            m_kStereo_Shutter.setSelected(false);
+        }
+        else
+        {
+            m_kStereoOff.setSelected(false);
+            m_kStereo_Red_Green.setSelected(false);
+            m_kStereo_Shutter.setSelected(true);            
+        }
+    }
+    
+    public int getIntensityLevel()
+    {
+        String levelStr = m_kIntensityTF.getText();
+        return Integer.valueOf(levelStr).intValue();
+    }
+   
+    public void setIntensityLevel(int value)
+    {
+        String levelStr = String.valueOf(value);
+        m_kIntensityTF.setText(levelStr);
+        rayBasedRenderWM.setIntenstityLevel(Integer.valueOf(levelStr).intValue());
+    }
     
     /**
      * Get the blender slider value
@@ -140,6 +245,46 @@ public class JPanelRenderMode_WM extends JInterfaceBase
      */
     public int getBlendSliderValue() {
     	return m_kVolumeBlendSlider.getValue();
+    }
+    
+    /**
+     * Get the blender slider value
+     * @return   slider value.
+     */
+    public void setBlendSliderValue( int value ) {
+        m_kVolumeBlendSlider.setValue(value);
+        rayBasedRenderWM.setVolumeBlend( m_kVolumeBlendSlider.getValue()/100.0f );
+    }
+    
+    
+    public int getReleasedSliderValue() {
+        return m_kVolumeSamplesSliderMouseReleased.getValue();
+    }
+    
+    public void setReleasedSliderValue( int value ) {
+        m_kVolumeSamplesSliderMouseReleased.setValue(value);
+        rayBasedRenderWM.setVolumeSamplesMouseReleased( m_kVolumeSamplesSliderMouseReleased.getValue()/1000.0f );
+    }
+    
+    public int getMovingSliderValue() {
+        return m_kVolumeSamplesSliderMouseDragged.getValue();
+    }
+    
+    public void setMovingSliderValue( int value ) {
+        m_kVolumeSamplesSliderMouseDragged.setValue(value);
+        rayBasedRenderWM.setVolumeSamplesMouseDragged( m_kVolumeSamplesSliderMouseDragged.getValue()/1000.0f );
+    }
+    
+    public boolean getMultiHistoEnabled()
+    {
+        return radioMULTIHISTO.isSelected();
+    }
+    
+    public void setMultiHistoEnabled( boolean value )
+    {
+        radioMULTIHISTO.setSelected(value);
+        rayBasedRenderWM.MULTIHISTOMode(radioMULTIHISTO.isSelected());
+        m_kVolumeViewer.updateMultihistoTab(radioMULTIHISTO.isSelected());
     }
     
     /**

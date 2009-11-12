@@ -2,6 +2,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.Vector;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
@@ -19,14 +20,41 @@ import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 public class TriangleClassificationWidget extends ClassificationWidget
 {
+    /**  */
+    private static final long serialVersionUID = -3903003012355432310L;
     private TriMesh m_kTopOutline;
     private TriMesh m_kTopTri;
+    private String m_kTexName;
 
 
     public TriangleClassificationWidget(float fX, float fY, Vector2f kTMin, Vector2f kTMax, String kTexName, int iWidth, int iHeight)
     {
         super( kTMin, kTMax, iWidth, iHeight );
+        m_kTexName = new String(kTexName);
         CreateTriangle(fX,fY, kTexName);
+    }
+    
+    public TriangleClassificationWidget ( TriangleClassificationWidget kWidget )
+    {
+        super(kWidget);
+        m_kBottomOutline = new TriMesh(new VertexBuffer(kWidget.m_kBottomOutline.VBuffer),
+                new IndexBuffer(kWidget.m_kBottomOutline.IBuffer));
+        m_kBottomTri = new TriMesh(new VertexBuffer(kWidget.m_kBottomTri.VBuffer),
+                new IndexBuffer(kWidget.m_kBottomTri.IBuffer));        
+        m_kBottomTriEffect = new ClassificationWidgetEffect( kWidget.m_kBottomTriEffect );         
+
+        m_kTopOutline = new TriMesh(new VertexBuffer(kWidget.m_kTopOutline.VBuffer),
+                new IndexBuffer(kWidget.m_kTopOutline.IBuffer));
+        m_kTopTri = new TriMesh(new VertexBuffer(kWidget.m_kTopTri.VBuffer),
+                new IndexBuffer(kWidget.m_kTopTri.IBuffer));
+        m_kTexName = new String( kWidget.m_kTexName );
+
+        m_kUpperSphere = new TriMesh(new VertexBuffer(kWidget.m_kUpperSphere.VBuffer),
+                new IndexBuffer(kWidget.m_kUpperSphere.IBuffer));
+        m_kMiddleSphere = new TriMesh(new VertexBuffer(kWidget.m_kMiddleSphere.VBuffer),
+                new IndexBuffer(kWidget.m_kMiddleSphere.IBuffer));
+        m_kLowerSphere = new TriMesh(new VertexBuffer(kWidget.m_kLowerSphere.VBuffer),
+                new IndexBuffer(kWidget.m_kLowerSphere.IBuffer));
     }
 
     public void dispose()
@@ -93,6 +121,97 @@ public class TriangleClassificationWidget extends ClassificationWidget
                     fRightTexX1, fRightTexY1);
         }
     }
+    private void writeObject(java.io.ObjectOutputStream out)
+    throws IOException 
+    {
+        System.err.println( "writeObj" );
+        out.writeObject( m_kBottomOutline.IBuffer );
+        out.writeObject( m_kBottomOutline.VBuffer );
+
+        out.writeObject( m_kBottomTri.IBuffer );
+        out.writeObject( m_kBottomTri.VBuffer );
+        out.writeObject( m_kBottomTriEffect );
+
+        out.writeObject( m_kUpperSphere.IBuffer );
+        out.writeObject( m_kUpperSphere.VBuffer );
+
+        out.writeObject( m_kTopOutline.IBuffer );
+        out.writeObject( m_kTopOutline.VBuffer );
+        
+        out.writeObject( m_kTopTri.IBuffer );
+        out.writeObject( m_kTopTri.VBuffer );
+        out.writeObject( m_kTexName );
+
+        out.writeObject( m_kLowerSphere.IBuffer );
+        out.writeObject( m_kLowerSphere.VBuffer );
+
+        out.writeObject( m_kMiddleSphere.IBuffer );
+        out.writeObject( m_kMiddleSphere.VBuffer );
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+    throws IOException, ClassNotFoundException
+    {
+        m_kWidget = new Node();
+        
+        IndexBuffer kIBuffer = (IndexBuffer)in.readObject();
+        VertexBuffer kVBuffer = (VertexBuffer)in.readObject();
+        m_kBottomOutline = new TriMesh( kVBuffer, kIBuffer );
+        m_kBottomOutline.AttachEffect( new VertexColor3Effect() );
+        m_kBottomOutline.SetName("BottomOutline");
+        m_kWidget.AttachChild(m_kBottomOutline);
+
+        kIBuffer = (IndexBuffer)in.readObject();
+        kVBuffer = (VertexBuffer)in.readObject();
+        m_kBottomTri = new TriMesh( kVBuffer, kIBuffer );
+        m_kBottomTriEffect = (ClassificationWidgetEffect)in.readObject();
+        m_kBottomTri.AttachEffect( m_kBottomTriEffect );
+        m_kBottomTri.SetName("BottomTri");
+        m_kWidget.AttachChild(m_kBottomTri);
+
+        ScaleTriangle( m_kBottomTri, m_kBottomOutline );
+        
+        kIBuffer = (IndexBuffer)in.readObject();
+        kVBuffer = (VertexBuffer)in.readObject();
+        m_kUpperSphere = new TriMesh( kVBuffer, kIBuffer );
+        m_kUpperSphere.AttachEffect( new VertexColor3Effect() );
+        m_kUpperSphere.SetName("UpperSphere");
+        m_kWidget.AttachChild( m_kUpperSphere );
+        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(1));
+    
+
+        kIBuffer = (IndexBuffer)in.readObject();
+        kVBuffer = (VertexBuffer)in.readObject();
+        m_kTopOutline = new TriMesh( kVBuffer, kIBuffer );
+        m_kTopOutline.AttachEffect( new VertexColor3Effect() );
+        m_kTopOutline.SetName("TopOutline");
+
+        kIBuffer = (IndexBuffer)in.readObject();
+        kVBuffer = (VertexBuffer)in.readObject();
+        m_kTopTri = new TriMesh( kVBuffer, kIBuffer );
+        m_kTexName = (String)in.readObject();
+        m_kTopTri.AttachEffect( new TextureEffect( m_kTexName ) );
+        m_kTopTri.SetName("TopTri");
+        
+        kIBuffer = (IndexBuffer)in.readObject();
+        kVBuffer = (VertexBuffer)in.readObject();
+        m_kLowerSphere = new TriMesh( kVBuffer, kIBuffer );
+        m_kLowerSphere.AttachEffect( new VertexColor3Effect() );
+        m_kLowerSphere.SetName("LowerSphere");
+        m_kWidget.AttachChild( m_kLowerSphere );
+        m_kLowerSphere.Local.SetTranslate(m_kTopTri.VBuffer.GetPosition3(0));
+        
+        kIBuffer = (IndexBuffer)in.readObject();
+        kVBuffer = (VertexBuffer)in.readObject();
+        m_kMiddleSphere = new TriMesh( kVBuffer, kIBuffer );
+        m_kMiddleSphere.AttachEffect( new VertexColor3Effect() );
+        m_kMiddleSphere.SetName("MiddleSphere");
+        m_kWidget.AttachChild( m_kMiddleSphere );     
+        m_kMiddleSphere.Local.SetTranslate( m_kTopTri.VBuffer.GetPosition3(1) );
+
+        m_kWidget.UpdateGS();
+    }
+
 
     protected void CreateTriangle(float fX, float fY, String kTexName)
     {
@@ -142,9 +261,6 @@ public class TriangleClassificationWidget extends ClassificationWidget
         m_kUpperSphere.SetName("UpperSphere");
         m_kWidget.AttachChild( m_kUpperSphere );
         m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(1));
-
-
-
 
         Vector3f kPos0 = m_kBottomOutline.VBuffer.GetPosition3(0);
         Vector3f kPos1 = m_kBottomOutline.VBuffer.GetPosition3(1);
