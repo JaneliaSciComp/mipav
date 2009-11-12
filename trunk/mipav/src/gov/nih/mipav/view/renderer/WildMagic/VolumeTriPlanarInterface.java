@@ -2026,12 +2026,14 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             return false;
         }
         if (m_kVolumeImageA != null) {
-            if ( kSelectedComp == m_kVolOpacityPanel.getCompA() )
+            if ( (forceShow && m_kVolOpacityPanel.getCompA() != null) ||
+                 (kSelectedComp == m_kVolOpacityPanel.getCompA()) )
             {
                 TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
                 m_kVolumeImageA.UpdateImages(kTransfer, 0, null);
             }
-            else if ( kSelectedComp == m_kVolOpacityPanel.getCompA_GM() )
+            else if ( (forceShow && m_kVolOpacityPanel.getCompA_GM() != null) ||
+                      (kSelectedComp == m_kVolOpacityPanel.getCompA_GM()) )
             {
                 TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
                 m_kVolumeImageA.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagA());
@@ -2039,12 +2041,14 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
         if ( m_kVolumeImageB != null )
         {
-            if ( kSelectedComp == m_kVolOpacityPanel.getCompB() )
+            if ( (forceShow && m_kVolOpacityPanel.getCompB() != null) ||
+                 (kSelectedComp == m_kVolOpacityPanel.getCompB()) )
             {
                 TransferFunction kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
                 m_kVolumeImageB.UpdateImages(kTransfer, 0, null);
             }
-            else if ( kSelectedComp == m_kVolOpacityPanel.getCompB_GM() )
+            else if ( (forceShow && m_kVolOpacityPanel.getCompB_GM() != null) ||
+                      (kSelectedComp == m_kVolOpacityPanel.getCompB_GM()) )
             {
                 TransferFunction kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
                 m_kVolumeImageB.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagB());
@@ -2112,12 +2116,13 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         if ( flag ) {
             insertTab("MultiHistogram", multiHistogramGUI.getMainPanel());
             multiHistogramGUI.getMainPanel().setVisible(flag);
+            multiHistogramGUI.getHistogram().display();
+            rendererGUI.setDisplayVolumeCheck(true);
+            raycastRenderWM.displayVolumeRaycast( true );
+            raycastRenderWM.setVolumeBlend( rendererGUI.getBlendSliderValue()/100.0f );
         } else {
             removeTab("MultiHistogram");
         }
-        rendererGUI.setDisplayVolumeCheck(true);
-        raycastRenderWM.displayVolumeRaycast( true );
-        raycastRenderWM.setVolumeBlend( rendererGUI.getBlendSliderValue()/100.0f );
 
     }
 
@@ -2910,8 +2915,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             kState.RedOnA = kState.RGBa.getROn();
             kState.GreenOnA = kState.RGBa.getGOn();
             kState.BlueOnA = kState.RGBa.getBOn();
-        }
-        
+        }        
         kState.LUTb = m_kVolumeImageB.GetLUT(); 
         if ( kState.LUTb != null )
         {
@@ -2927,6 +2931,23 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             kState.GreenOnB = kState.RGBb.getGOn();
             kState.BlueOnB = kState.RGBb.getBOn();
         }
+        // Opacity:
+        kState.OpacityA = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
+        kState.OpacityGMOnA = m_kVolOpacityPanel.isGradientMagnitudeOpacityEnabled();
+        if ( m_kVolOpacityPanel.getCompA_GM() != null ) 
+        {
+            kState.OpacityGMA = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
+        }
+        if ( m_kVolOpacityPanel.getCompB() != null )
+        {
+            kState.OpacityB = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
+            kState.OpacityGMOnB = m_kVolOpacityPanel.isGradientMagnitudeOpacityEnabled();
+            if ( m_kVolOpacityPanel.getCompB_GM() != null ) 
+            {
+                kState.OpacityGMB = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
+            }
+        }
+        kState.SelectedTab = m_kVolOpacityPanel.getSelectedTabIndex();
         
         SaveTabs(kState);
         // Menu state:
@@ -2946,6 +2967,39 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             kState.ShowSliceBox[i] = sliceGUI.getShowBound(i);
         }
         kState.Center = sliceGUI.getCenter();
+        
+        // Render Mode Panel:
+        kState.DisplayRayCast = rendererGUI.getVolumeCheck().isSelected();
+        kState.DisplaySlices = rendererGUI.getSlicesCheck().isSelected();
+        kState.DisplaySurface = rendererGUI.getSurfaceCheck().isSelected();
+        kState.StereoType = rendererGUI.getStereo();
+        if ( kState.StereoType != 0 )
+        {
+            if ( m_kStereoIPD == null )
+            {
+                kState.IPD = raycastRenderWM.getIPD();
+            }
+            else
+            {
+                kState.IPD = m_kStereoIPD.getIPD();
+            }            
+        }
+        kState.RenderMode = rendererGUI.getRenderMode();
+        kState.MultiHistogram = rendererGUI.getMultiHistoEnabled();
+        kState.VolumeBlend = rendererGUI.getBlendSliderValue();
+        kState.ReleasedSamples = rendererGUI.getReleasedSliderValue();
+        kState.RotationSamples = rendererGUI.getMovingSliderValue();
+        kState.ExtractionIntensityLevel = rendererGUI.getIntensityLevel();
+        // Custum Blend Panel:
+        kState.Equation = custumBlendGUI.getEquation();
+        kState.SourceBlend = custumBlendGUI.getSource();
+        kState.DestinationBlend = custumBlendGUI.getDestination();
+        kState.BlendColor = custumBlendGUI.getColor();
+        kState.CustumAlpha = custumBlendGUI.getAlpha();
+        // MultiHisto Panel:
+        kState.MultiHistoWidgets = multiHistogramGUI.getHistogram().getWidgets();
+        kState.WidgetSelected = multiHistogramGUI.getHistogram().getPicked();
+        
         // Display Panel:
         kState.BackgroundColor = displayGUI.getBackgroundColor();
         kState.BoundingBoxColor = displayGUI.getBoundingBoxColor();
@@ -3043,6 +3097,26 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                 raycastRenderWM.setRGBTB(m_kVolumeImageB.GetRGB());
             }
         }
+        // Opacity:
+        m_kVolOpacityPanel.getCompA().updateTransFunc(kState.OpacityA);
+        if ( kState.OpacityGMA != null ) 
+        {            
+            m_kVolOpacityPanel.addGM();
+            m_kVolOpacityPanel.getCompA_GM().updateTransFunc(kState.OpacityGMA);
+            m_kVolOpacityPanel.setGradientMagnitudeOpacityEnabled(kState.OpacityGMOnA);
+        }
+        if ( kState.OpacityB != null )
+        {
+            m_kVolOpacityPanel.getCompB().updateTransFunc(kState.OpacityB);
+            if ( kState.OpacityGMB != null ) 
+            {            
+                m_kVolOpacityPanel.addGM();
+                m_kVolOpacityPanel.getCompB_GM().updateTransFunc(kState.OpacityGMB);
+                m_kVolOpacityPanel.setGradientMagnitudeOpacityEnabled(kState.OpacityGMOnB);
+            }
+        }
+        m_kVolOpacityPanel.setSelectedTabIndex(kState.SelectedTab);
+        this.updateImages(true);
         
         // Slice Panel:
         for ( int i = 0; i < 3; i++ )
@@ -3053,7 +3127,45 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             sliceGUI.setShowBound(i, kState.ShowSliceBox[i]);
         }
         setSliceFromPlane(kState.Center);
-        
+
+        // Render Mode Panel:
+        rendererGUI.setDisplayVolumeCheck(kState.DisplayRayCast);
+        raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
+        rendererGUI.setDisplaySlicesCheck(kState.DisplaySlices);
+        raycastRenderWM.displayVolumeSlices( rendererGUI.getSlicesCheck().isSelected() );
+        rendererGUI.setDisplaySurfaceCheck(kState.DisplaySurface);
+        raycastRenderWM.displaySurface( rendererGUI.getSurfaceCheck().isSelected() );
+        rendererGUI.setStereo(kState.StereoType);
+        if ( kState.StereoType != 0 )
+        {
+            if ( m_kStereoIPD == null )
+            {
+                m_kStereoIPD = new JDialogStereoControls( this, kState.IPD );
+            }
+            raycastRenderWM.setStereo( kState.StereoType );
+            m_kStereoIPD.setIPD( kState.IPD );
+        }
+        rendererGUI.setRenderMode(kState.RenderMode);
+        rendererGUI.setBlendSliderValue(kState.VolumeBlend);
+        rendererGUI.setReleasedSliderValue(kState.ReleasedSamples);
+        rendererGUI.setMovingSliderValue(kState.RotationSamples);
+        rendererGUI.setIntensityLevel(kState.ExtractionIntensityLevel);
+        // Custum Blend Panel:
+        custumBlendGUI.setUpdate(kState.RenderMode == 5);
+        custumBlendGUI.setEquation(kState.Equation);
+        custumBlendGUI.setSource(kState.SourceBlend);
+        custumBlendGUI.setDestination(kState.DestinationBlend);
+        custumBlendGUI.setColor(kState.BlendColor);
+        custumBlendGUI.setAlpha(kState.CustumAlpha);
+        custumBlendGUI.setUpdate(true);
+        if ( kState.RenderMode == 5 )
+        {
+            custumBlendGUI.updateVolumeRenderer();
+        }
+        // MultiHisto Panel:
+        multiHistogramGUI.getHistogram().setWidgets(kState.MultiHistoWidgets);
+        multiHistogramGUI.getHistogram().setPicked(kState.WidgetSelected);
+        rendererGUI.setMultiHistoEnabled(kState.MultiHistogram);
 
         // Display Panel:
         displayGUI.setBackgroundColor(kState.BackgroundColor);
@@ -3097,6 +3209,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                     insertTab("LUT", panelHistoLUT.getMainPanel());
                 }
             }
+            else if ( name.equals("Renderer")) {
+                insertTab("Renderer", rendererGUI.getMainPanel() );
+            } 
             else if ( name.equals("Light") )
             {
                 insertTab("Light", m_kLightsPanel.getMainPanel());

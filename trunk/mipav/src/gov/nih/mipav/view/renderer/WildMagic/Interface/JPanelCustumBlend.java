@@ -47,6 +47,7 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
 
     private JComboBox m_kSrcBlend;
     private JComboBox m_kDstBlend;
+    private boolean m_bUpdate = true;
     
     /**
      * Constructor.
@@ -68,17 +69,7 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
         }
         else
         {
-            float fAlpha = alphaSlider.getValue()/100.0f;
-            Color kColor = colorButton.getBackground();
-            ColorRGBA kColorAlpha =  new ColorRGBA( kColor.getRed()/255.0f,
-                                                    kColor.getGreen()/255.0f,
-                                                    kColor.getBlue()/255.0f,
-                                                    fAlpha );
-            
-            m_kVolumeViewer.SetCustumBlend( m_kBlendEquationColor.getSelectedIndex(),
-                                            m_kLogicOp.getSelectedIndex(),
-                                            m_kSrcBlend.getSelectedIndex(),
-                                            m_kDstBlend.getSelectedIndex(), kColorAlpha  );
+            updateVolumeRenderer();
         }
     }
 
@@ -96,19 +87,64 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
         super.dispose();
     }
 
+    public int getEquation()
+    {
+        return m_kBlendEquationColor.getSelectedIndex();
+    }
+    public void setEquation(int i)
+    {
+        m_kBlendEquationColor.setSelectedIndex(i);
+    }
+    
+    public int getSource()
+    {
+        return m_kSrcBlend.getSelectedIndex();
+    }
+    
+    public void setSource(int i)
+    {
+        m_kSrcBlend.setSelectedIndex(i);
+    }
+    
+    public int getDestination()
+    {
+        return m_kDstBlend.getSelectedIndex();
+    }
+    
+    public void setDestination(int i)
+    {
+        m_kDstBlend.setSelectedIndex(i);
+    }
+    
+    public Color getColor()
+    {
+        return colorButton.getBackground();
+    }
+    
+    public void setColor( Color c )
+    {
+        setButtonColor( colorButton, c );
+    }
+    
+    public int getAlpha()
+    {
+        return alphaSlider.getValue();
+    }
+    
+    public void setAlpha( int value )
+    {
+        alphaSlider.setValue(value);
+    }
+    
+    public void setUpdate( boolean value )
+    {
+        m_bUpdate = value;
+    }
+    
     public void setButtonColor(JButton _button, Color _color)
     {
         super.setButtonColor( _button, _color );
-        float fAlpha = alphaSlider.getValue()/100.0f;
-        Color kColor = colorButton.getBackground();
-        ColorRGBA kColorAlpha =  new ColorRGBA( kColor.getRed()/255.0f,
-                                                kColor.getGreen()/255.0f,
-                                                kColor.getBlue()/255.0f,
-                                                fAlpha );
-        m_kVolumeViewer.SetCustumBlend( m_kBlendEquationColor.getSelectedIndex(),
-                                        m_kLogicOp.getSelectedIndex(),
-                                        m_kSrcBlend.getSelectedIndex(),
-                                        m_kDstBlend.getSelectedIndex(), kColorAlpha  );
+        updateVolumeRenderer();
     }
     
 
@@ -116,16 +152,7 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
         Object source = e.getSource();
 
         if (source == alphaSlider) {
-            float fAlpha = alphaSlider.getValue()/100.0f;
-            Color kColor = colorButton.getBackground();
-            ColorRGBA kColorAlpha =  new ColorRGBA( kColor.getRed()/255.0f,
-                                                    kColor.getGreen()/255.0f,
-                                                    kColor.getBlue()/255.0f,
-                                                    fAlpha );
-            m_kVolumeViewer.SetCustumBlend( m_kBlendEquationColor.getSelectedIndex(),
-                                            m_kLogicOp.getSelectedIndex(),
-                                            m_kSrcBlend.getSelectedIndex(),
-                                            m_kDstBlend.getSelectedIndex(), kColorAlpha  );
+            updateVolumeRenderer();
         }
     }
 
@@ -247,4 +274,21 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
         mainPanel.add(scroller, BorderLayout.CENTER);
     }
 
+    public void updateVolumeRenderer()
+    {
+        float fAlpha = alphaSlider.getValue()/100.0f;
+        Color kColor = colorButton.getBackground();
+        ColorRGBA kColorAlpha =  new ColorRGBA( kColor.getRed()/255.0f,
+                                                kColor.getGreen()/255.0f,
+                                                kColor.getBlue()/255.0f,
+                                                fAlpha );
+        if ( m_bUpdate )
+        {
+            m_kVolumeViewer.SetCustumBlend( m_kBlendEquationColor.getSelectedIndex(),
+                    m_kLogicOp.getSelectedIndex(),
+                    m_kSrcBlend.getSelectedIndex(),
+                    m_kDstBlend.getSelectedIndex(), kColorAlpha  );
+        }
+    }
+    
 }

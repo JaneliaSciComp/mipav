@@ -24,7 +24,7 @@ import javax.swing.event.*;
  *
  * @version  0.1 August, 2005
  */
-public class JPanelVolOpacityBase extends JPanelRendererJ3D implements ChangeListener, MouseListener {
+public abstract class JPanelVolOpacityBase extends JPanelRendererJ3D implements ChangeListener, MouseListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -197,6 +197,9 @@ public class JPanelVolOpacityBase extends JPanelRendererJ3D implements ChangeLis
         }
     }
 
+    public abstract void addGM();
+    public abstract void removeGM();
+    
     /**
      * This function returns the value of the blending slider.
      *
@@ -336,6 +339,16 @@ public class JPanelVolOpacityBase extends JPanelRendererJ3D implements ChangeLis
 
         return null;
     }
+    
+    public int getSelectedTabIndex()
+    {
+        return tabbedPane.getSelectedIndex();
+    }
+    
+    public void setSelectedTabIndex(int i)
+    {
+        tabbedPane.setSelectedIndex(i);
+    }
 
     /**
      * Return the active image component.
@@ -379,6 +392,23 @@ public class JPanelVolOpacityBase extends JPanelRendererJ3D implements ChangeLis
             return GMCheckBox.isSelected();
         } 
         return false;
+    }
+    
+    /**
+     * Return whether or not the opacity mapping based on gradient magnitude is enabled.
+     *
+     * @return  boolean True if using gradient magnitude-based opacity mapping.
+     */
+    public void setGradientMagnitudeOpacityEnabled(boolean value) {
+
+        if (null != GMCheckBox) {
+            GMCheckBox.setSelected(value); 
+            if (GMCheckBox.isSelected() == true) {
+                addGM();
+            } else {
+                removeGM();
+            }
+        } 
     }
 
     /**

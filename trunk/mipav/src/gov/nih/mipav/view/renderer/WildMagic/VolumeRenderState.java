@@ -3,6 +3,7 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 
 import java.awt.Color;
 import java.io.Serializable;
@@ -35,6 +36,14 @@ public class VolumeRenderState implements Serializable
     public TransferFunction GreenB;
     public TransferFunction BlueB;
     public boolean RedOnB, GreenOnB, BlueOnB;
+    // Opacity Info:
+    public TransferFunction OpacityA;
+    public TransferFunction OpacityGMA;
+    public boolean OpacityGMOnA;
+    public TransferFunction OpacityB;
+    public TransferFunction OpacityGMB;
+    public boolean OpacityGMOnB;
+    public int SelectedTab = 0;
     
     // Menu:
     public boolean ShowAxes = true;
@@ -50,6 +59,28 @@ public class VolumeRenderState implements Serializable
     public boolean[] ShowSlice = new boolean[3];
     public boolean[] ShowSliceBox = new boolean[3];
     public Vector3f Center = new Vector3f();
+    
+    // Render Mode Panel Info:
+    public boolean DisplayRayCast = false;
+    public boolean DisplaySlices = true;
+    public boolean DisplaySurface = false;
+    public int StereoType = 0;
+    public float IPD = 0;
+    public int RenderMode = 2;
+    public boolean MultiHistogram = false;
+    public int VolumeBlend;
+    public int ReleasedSamples;
+    public int RotationSamples;
+    public int ExtractionIntensityLevel = 50;
+    // Custum Blend Panel Info:
+    public int Equation = 0;
+    public int SourceBlend = 0;
+    public int DestinationBlend = 0;
+    public Color BlendColor;
+    public int CustumAlpha = 50;
+    // MultiHistogram Panel Info:
+    public Vector<ClassificationWidget> MultiHistoWidgets;
+    public int WidgetSelected = -1;
     
     // Display Panel Info
     public Color BoundingBoxColor;

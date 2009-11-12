@@ -36,6 +36,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     private final static int SUR = 3;
     /** View Mode Composite-Surface Constant: */
     private final static int CMP_SUR = 4;
+    private final static int CUSTUM = 5;
 
     private static int ms_MaxLights = 8;
     
@@ -67,6 +68,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
 
     private VertexShader m_pkVShader;
     private boolean m_bMultiHisto = false;
+    private int m_iBlend;
+    private int m_iSrcBlend;
+    private int m_iDstBlend;
+    private ColorRGBA m_kBlendColor = new ColorRGBA();
     
     /** 
      * Creates a new VolumeShaderEffect object.
@@ -396,6 +401,11 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
 
     public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
     {        
+        m_iWhichShader = CUSTUM;
+        m_iBlend = iBlendEquation;
+        m_iSrcBlend = iSrcBlend;
+        m_iDstBlend = iDstBlend;
+        m_kBlendColor.Copy(kColor);
         for (int i = 1; i < (int)m_kAlphaState.size(); i++)
         {
             m_kAlphaState.set(i, new AlphaState());
@@ -404,6 +414,31 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendModeMap.get(iSrcBlend);
             m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendModeMap.get(iDstBlend);
             m_kAlphaState.get(i).ConstantColor.Copy(kColor);
+        }
+        Program kCProgram = GetCProgram(0);    
+        if ( kCProgram.GetUC("MIP") != null )
+        {
+            kCProgram.GetUC("MIP").GetData()[0] = 0;
+        }
+        if ( kCProgram.GetUC("DRRA") != null )
+        {
+            kCProgram.GetUC("DRRA").GetData()[0] = 0;
+        }
+        if ( (m_kVolumeImageB.GetImage() != null) && (kCProgram.GetUC("DRRB") != null) )
+        {
+            kCProgram.GetUC("DRRB").GetData()[0] = 0;
+        }
+        if ( kCProgram.GetUC("Composite") != null )
+        {
+            kCProgram.GetUC("Composite").GetData()[0] = 0;
+        }
+        if ( kCProgram.GetUC("Surface") != null )
+        {
+            kCProgram.GetUC("Surface").GetData()[0] = 0;
+        }
+        if ( kCProgram.GetUC("MULTIHISTO") != null )
+        {
+            kCProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
         }
         //System.err.println( kColor.A );
     }
@@ -858,6 +893,11 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             m_iWhichShader = -1;
             SURMode();
+        }
+        else if ( m_iWhichShader == CUSTUM )
+        {
+            m_iWhichShader = -1;
+            SetCustumBlend( m_iBlend, 0, m_iSrcBlend, m_iDstBlend, m_kBlendColor );
         }
         MULTIHISTOMode(m_bMultiHisto);
     }

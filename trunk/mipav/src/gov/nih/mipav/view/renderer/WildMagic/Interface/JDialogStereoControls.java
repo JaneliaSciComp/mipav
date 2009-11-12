@@ -58,6 +58,24 @@ implements ActionListener, ChangeListener {
         }
     }
     
+    public float getIPD()
+    {
+        System.err.println( m_fIPD );
+        return m_fIPD;
+    }
+    
+    public void setIPD(float value)
+    {
+        m_fIPD = value;
+        System.err.println( m_fIPD );
+        m_kIPDSlider.setValue((int)(m_fIPD*1000));
+        mkCurrent.setText(String.valueOf(m_fIPD));
+        if ( m_kVolumeViewer != null )
+        {
+            m_kVolumeViewer.setIPD( m_fIPD );
+        }
+    }
+    
     /**
      * Sets values based on knob along slider.
      *

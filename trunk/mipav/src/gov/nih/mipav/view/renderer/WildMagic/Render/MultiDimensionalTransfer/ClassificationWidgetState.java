@@ -1,8 +1,12 @@
 
 package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
-public class ClassificationWidgetState
+import java.io.Serializable;
+
+public class ClassificationWidgetState implements Serializable
 {
+    /**  */
+    private static final long serialVersionUID = 711728604033191355L;
     public static ClassificationWidgetState ZERO_STATE = new ClassificationWidgetState();
     public float[] Color = new float[] {1,1,1,1};
     public float[] MidLine = new float[4];
