@@ -3501,7 +3501,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     protected JPanel initCreateMultiCoreGpuIndicatorPanel() {
         final JPanel panel = new JPanel();
 
-        final JLabel multiCoreEnabledLabel = new JLabel("Multi-core: ");
+        final JLabel multiCoreEnabledLabel = new JLabel("Multi-core(" + gov.nih.mipav.util.MipavUtil.getAvailableCores()+ " cores):");
         multiCoreEnabledLabel.setFont(MipavUtil.font12);
 
         ImageIcon backgroundMulti;
