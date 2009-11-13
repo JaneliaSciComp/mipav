@@ -2272,6 +2272,13 @@ public class FileDicom extends FileDicomBase {
 
         ByteArrayInputStream stream = new ByteArrayInputStream(imageFrag);
         BufferedImage img = ImageIO.read(stream);
+        if (img == null) {
+            MipavUtil.displayError("In extractLossyJPEGImage ImageIO.read(stream) no registered ImageReader claims" +
+                                  " to be able to read the stream");
+            Preferences.debug("In extractLossyJPEGImage ImageIO.read(stream) no registered ImageReader claims\n");
+            Preferences.debug("to be able the read the stream\n");
+            throw new IOException();
+        }
 
         w = img.getWidth(null);
         h = img.getHeight(null);
