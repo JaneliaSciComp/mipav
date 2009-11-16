@@ -184,6 +184,8 @@ public class DICOM_Constants {
     public static final String UID_TransferJPEGLOSSLESSPROCFIRSTORDERREDICT = "1.2.840.10008.1.2.4.70";
     
     public static final String UID_TransferJPEG2000LOSSLESS = "1.2.840.10008.1.2.4.90";
+    
+    // Not supported yet public static final String UID_TransferJPEG2000 = "1.2.840.10008.1.2.4.91";
 
     /** DOCUMENT ME! */
     public static final String UID_RLE_Compression = "1.2.840.10008.1.2.5";
