@@ -939,7 +939,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
             public String getCategory() {
-                return new String("Spatial filters");
+                return new String("Algorithms.Filters (spatial)");
             }
 
             public String getDescription() {
@@ -950,12 +950,16 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                 return new String("Applies a simple gaussian blur filter.");
             }
 
+            public String getShortLabel() {
+                return new String("Gaussian");
+            }
+
             public String getLabel() {
-                return new String("Gaussian Blur");
+                return new String("Gaussian blur");
             }
 
             public String getName() {
-                return new String("GaussianBlur");
+                return new String("Gaussian blur");
             }
         };
     }

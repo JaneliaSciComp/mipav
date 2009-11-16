@@ -6,21 +6,21 @@ public interface ActionMetadata {
 
     public String getLabel();
 
+    public String getShortLabel();
+
     public String getDescription();
 
     public String getDescriptionLong();
 
     public String getCategory();
 
-    public String getPackage();
-
-    public String getAffiliation();
-
     public String getWebsite();
 
     public String getVersion();
 
-    public String getAuthors();
+    public String[] getAuthors();
+
+    public String[] getAffiliation();
 
     public String toString();
 }
