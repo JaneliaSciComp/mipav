@@ -107,14 +107,29 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
         }
-        m_pkRenderer.ClearBuffers();
+        //m_pkRenderer.ClearBuffers();
         if (m_pkRenderer.BeginScene()) {
-            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-            DrawFrameRate(8, GetHeight() - 8, ColorRGBA.WHITE);
-            m_pkRenderer.EndScene();
+            MoveRight();
+            m_kCuller.ComputeVisibleSet(m_spkScene);
+            m_pkRenderer.DrawRight();
+            m_pkRenderer.ClearBuffers();          
+            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());            
+            m_pkRenderer.DisplayBackBuffer();
+
+
+            MoveLeft();
+            MoveLeft();
+            m_kCuller.ComputeVisibleSet(m_spkScene);
+            m_pkRenderer.DrawLeft();
+            m_pkRenderer.ClearBuffers();
+            m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());            
+            m_pkRenderer.DisplayBackBuffer();
+            MoveRight();
+            //DrawFrameRate(8, GetHeight() - 8, ColorRGBA.WHITE);
+            //m_pkRenderer.EndScene();
         }
-        m_pkRenderer.DisplayBackBuffer();
-        UpdateFrameCount();
+        //m_pkRenderer.DisplayBackBuffer();
+        //UpdateFrameCount();
         // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 
         if (m_kShaderParamsWindow == null) {
@@ -295,6 +310,12 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
             case 's':
             case 'S':
                 TestStreaming(m_spkScene, "Lattice.wmof");
+                return;
+            case 'i':
+                m_fTrnSpeed += .05;      
+                return;
+            case 'o':
+                m_fTrnSpeed -= .05;        
                 return;
         }
         return;
