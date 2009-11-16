@@ -6,26 +6,30 @@ import gov.nih.mipav.view.MipavUtil;
 
 public abstract class MipavActionMetadata implements ActionMetadata {
 
-    public String getAffiliation() {
-        return new String("National Institutes of Health");
+    public String[] getAuthors() {
+        return new String[] {"Matthew J. McAuliffe"};
     }
 
-    public String getAuthors() {
-        return new String("Matthew J. McAuliffe");
+    public String[] getAffiliation() {
+        return new String[] {"National Institutes of Health"};
     }
 
     public abstract String getCategory();
 
-    public abstract String getDescription();
-
-    public abstract String getDescriptionLong();
+    public String getShortLabel() {
+        return new String();
+    }
 
     public abstract String getLabel();
 
     public abstract String getName();
 
-    public String getPackage() {
-        return new String("gov.nih.mipav.view.dialogs.");
+    public String getDescription() {
+        return new String();
+    }
+
+    public String getDescriptionLong() {
+        return new String();
     }
 
     public String getVersion() {
@@ -40,7 +44,6 @@ public abstract class MipavActionMetadata implements ActionMetadata {
         String str = new String();
 
         str += "Name:\t\t\t" + getName() + "\n";
-        str += "Package:\t\t" + getPackage() + "\n";
         str += "Category:\t\t" + getCategory() + "\n";
         str += "Description:\t\t" + getDescription() + "\n";
         str += "Description Long:\t" + getDescriptionLong() + "\n";
