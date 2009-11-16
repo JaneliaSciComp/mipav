@@ -2,10 +2,12 @@ package gov.nih.mipav.view.renderer.WildMagic;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.TransferFunction;
+import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOIVector;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.io.Serializable;
 import java.util.Vector;
 
@@ -93,6 +95,20 @@ public class VolumeRenderState implements Serializable
     public float[] ObjectLocation;
     public Matrix3f ObjectRotation = new Matrix3f();
     
+    // Clip Panel Info
+    
     // Current Tabs:
     public Vector<String> TabbedList = new Vector<String>();
+    // Window Options:
+    public int MainDividerLocation;
+    public int PlanesDividerLocation;
+    public int DualDividerLocation;
+    public Dimension WindowSize;
+    public int WindowX, WindowY;
+    public int ExtendedState;
+    
+    //PlaneRender Info:
+    public float[] PlaneZoom = new float[3];
+    public LocalVolumeVOIVector[][] VOIList = new LocalVolumeVOIVector[3][];
+    
 }

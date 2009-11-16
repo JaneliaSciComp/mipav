@@ -161,6 +161,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     /** The small bar on the top right corner the volume view frame. */
     protected static JProgressBar rendererProgressBar;
+    private JSplitPane mainPane;
 
     /** Menu items storage. */
     protected ViewMenuBuilder menuObj;
@@ -863,6 +864,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param  event  frame resize event
      */
     public synchronized void componentResized(ComponentEvent event) {
+        System.err.println( "componentResized" );
         resizePanel();
     }
 
@@ -2141,6 +2143,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @see gov.nih.mipav.view.ViewJFrameBase#windowActivated(java.awt.event.WindowEvent)
      */
     public void windowActivated(WindowEvent event) {
+        System.err.println( "windowActivated" );
         setModified();
         //super.windowActivated(event);
         userInterface.setActiveFrame(this);
@@ -2654,7 +2657,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         tabPanel.add(tabbedPane);
         tabPanel.setMinimumSize(new Dimension(maxPanelWidth, 820));
 
-        JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabPanel, rightPane);
+        mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabPanel, rightPane);
 
         mainPane.setOneTouchExpandable(true);
         mainPane.setDividerSize(6);
@@ -2793,12 +2796,12 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             if ( brainsurfaceFlattenerRender != null )
             {
                 brainsurfaceFlattenerRender.resizePanel(maxPanelWidth, height);
-                dualPane.setDividerLocation( 0.5f );
+                //dualPane.setDividerLocation( 0.5f );
             }
             if ( m_kFlyThroughRender != null )
             {
                 flythruControl.resizePanel(maxPanelWidth, height);
-                dualPane.setDividerLocation( 0.5f );
+                //dualPane.setDividerLocation( 0.5f );
             }
             if ( m_kVolume4DGUI != null )
             {
@@ -2809,7 +2812,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         surfaceGUI.resizePanel(maxPanelWidth, height);
         displayGUI.resizePanel(maxPanelWidth, height);
         geodesicGUI.resizePanel(maxPanelWidth, height);
-        rightPane.setDividerLocation( 0.618f ); 
+        //rightPane.setDividerLocation( 0.618f ); 
 
     }
 
@@ -3010,6 +3013,22 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         kState.CameraLocation.Copy( getCameraLocation() );
         kState.ObjectLocation = getObjectParameters();
         kState.ObjectRotation = raycastRenderWM.GetSceneRotation();
+        
+        // Window Options:
+        kState.MainDividerLocation = mainPane.getDividerLocation();
+        kState.PlanesDividerLocation = rightPane.getDividerLocation();
+        kState.DualDividerLocation = dualPane.getDividerLocation();
+        kState.WindowSize = getSize();
+        kState.WindowX = getX();
+        kState.WindowY = getY();
+        kState.ExtendedState = getExtendedState();
+        
+        //PlaneRender Info:
+        for ( int i = 0; i < 3; i++ )
+        {
+            kState.PlaneZoom[i] = m_akPlaneRender[i].getZoom();
+            kState.VOIList[i] = m_akPlaneRender[i].getVOICopy();
+        }
         return kState;
     }
     
@@ -3027,8 +3046,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             m_kVolumeImageB.SetRGBT(kState.RGBb);
         }                
         constructRenderers();
-        RestoreTabs(kState);
-        resizePanel();
         
         // Menu:
         menuObj.getMenuItem("Show axes").setSelected( kState.ShowAxes );
@@ -3053,7 +3070,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         // Position Panel:
         setRadiological( kState.Radiological );
         positionsPanel.setRadiological( kState.Radiological );
-        setModified();
         
         //LUT:
         if ( kState.TransferA != null )
@@ -3129,22 +3145,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         setSliceFromPlane(kState.Center);
 
         // Render Mode Panel:
-        rendererGUI.setDisplayVolumeCheck(kState.DisplayRayCast);
-        raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
-        rendererGUI.setDisplaySlicesCheck(kState.DisplaySlices);
-        raycastRenderWM.displayVolumeSlices( rendererGUI.getSlicesCheck().isSelected() );
-        rendererGUI.setDisplaySurfaceCheck(kState.DisplaySurface);
-        raycastRenderWM.displaySurface( rendererGUI.getSurfaceCheck().isSelected() );
-        rendererGUI.setStereo(kState.StereoType);
-        if ( kState.StereoType != 0 )
-        {
-            if ( m_kStereoIPD == null )
-            {
-                m_kStereoIPD = new JDialogStereoControls( this, kState.IPD );
-            }
-            raycastRenderWM.setStereo( kState.StereoType );
-            m_kStereoIPD.setIPD( kState.IPD );
-        }
         rendererGUI.setRenderMode(kState.RenderMode);
         rendererGUI.setBlendSliderValue(kState.VolumeBlend);
         rendererGUI.setReleasedSliderValue(kState.ReleasedSamples);
@@ -3166,6 +3166,23 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         multiHistogramGUI.getHistogram().setWidgets(kState.MultiHistoWidgets);
         multiHistogramGUI.getHistogram().setPicked(kState.WidgetSelected);
         rendererGUI.setMultiHistoEnabled(kState.MultiHistogram);
+        // Render Mode Panel:
+        rendererGUI.setDisplayVolumeCheck(kState.DisplayRayCast);
+        raycastRenderWM.displayVolumeRaycast( rendererGUI.getVolumeCheck().isSelected() );
+        rendererGUI.setDisplaySlicesCheck(kState.DisplaySlices);
+        raycastRenderWM.displayVolumeSlices( rendererGUI.getSlicesCheck().isSelected() );
+        rendererGUI.setDisplaySurfaceCheck(kState.DisplaySurface);
+        raycastRenderWM.displaySurface( rendererGUI.getSurfaceCheck().isSelected() );
+        rendererGUI.setStereo(kState.StereoType);
+        if ( kState.StereoType != 0 )
+        {
+            if ( m_kStereoIPD == null )
+            {
+                m_kStereoIPD = new JDialogStereoControls( this, kState.IPD );
+            }
+            raycastRenderWM.setStereo( kState.StereoType );
+            m_kStereoIPD.setIPD( kState.IPD );
+        }
 
         // Display Panel:
         displayGUI.setBackgroundColor(kState.BackgroundColor);
@@ -3179,6 +3196,25 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         raycastRenderWM.setObjectParameters( kState.ObjectLocation );        
         displayGUI.displayCameraParams( kState.Camera );
         displayGUI.displayObjectParams( kState.ObjectLocation );
+        
+
+        RestoreTabs(kState);
+        resizePanel();
+
+        mainPane.setDividerLocation(kState.MainDividerLocation);
+        rightPane.setDividerLocation(kState.PlanesDividerLocation);
+        dualPane.setDividerLocation(kState.DualDividerLocation);
+        setSize(kState.WindowSize);
+        setLocation(kState.WindowX, kState.WindowY);
+        setExtendedState(kState.ExtendedState);
+        
+        //PlaneRender Info:
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneRender[i].setZoom(kState.PlaneZoom[i]);
+            m_akPlaneRender[i].setVOICopy(kState.VOIList[i]);
+        }
+        setModified();
     }
 
     private void SaveTabs(VolumeRenderState kState)

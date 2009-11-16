@@ -114,7 +114,7 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
             m_pkRenderer.DrawRight();
             m_pkRenderer.ClearBuffers();          
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());            
-            m_pkRenderer.DisplayBackBuffer();
+            //m_pkRenderer.DisplayBackBuffer();
 
 
             MoveLeft();
@@ -123,12 +123,13 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
             m_pkRenderer.DrawLeft();
             m_pkRenderer.ClearBuffers();
             m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());            
-            m_pkRenderer.DisplayBackBuffer();
+            //m_pkRenderer.DisplayBackBuffer();
             MoveRight();
             //DrawFrameRate(8, GetHeight() - 8, ColorRGBA.WHITE);
             //m_pkRenderer.EndScene();
         }
-        //m_pkRenderer.DisplayBackBuffer();
+        m_pkRenderer.DrawDefault();
+        m_pkRenderer.DisplayBackBuffer();
         //UpdateFrameCount();
         // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
 

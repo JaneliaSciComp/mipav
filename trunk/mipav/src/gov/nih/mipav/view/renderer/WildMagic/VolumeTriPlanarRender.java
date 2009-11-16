@@ -2521,7 +2521,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 }                
                 else // shutter:
                 {
-                    m_pkRenderer.DisplayBackBuffer();
+                    //m_pkRenderer.DisplayBackBuffer();
                 }
             }
             MoveLeft();
@@ -2546,7 +2546,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 m_kVolumeRayCast.Render( m_pkRenderer, m_kCuller, false, true );
                 m_pkRenderer.SetCamera(m_spkCamera);
             }
-                        
+
+            m_pkRenderer.DrawDefault();
             RenderFrameRate();                
             if ( m_bSnapshot )
             {
@@ -2556,7 +2557,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             
             MoveRight();
             m_pkRenderer.SetColorMask( true, true, true, true );
-            m_pkRenderer.DrawDefault();
+            //m_pkRenderer.DrawDefault();
         }
     }
 

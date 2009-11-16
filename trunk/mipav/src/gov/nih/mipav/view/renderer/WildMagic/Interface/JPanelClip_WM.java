@@ -40,15 +40,6 @@ public class JPanelClip_WM extends JInterfaceBase
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3342110506544352170L;
 
-    /** Enable flags for the 6 ( X, Y, Z and inverse ) clipping planes. */
-    boolean[] enables = { false, false, false, false, false, false };
-
-    /** Enable flags for the arbitrary clipping planes. */
-    boolean[] enablesArbi = { false, false, false, false, false, false };
-
-    /** Enable flags for the static clipping planes. */
-    boolean[] enablesStatic = { false, false, false, false, false, false };
-
     /** Which arbitray clipping slice is currently displayed. */
     private int aSlice;
 
@@ -1534,9 +1525,7 @@ public class JPanelClip_WM extends JInterfaceBase
         boundingCheckA = null;
         boundingCheckStatic = null;
         boundingCheckStaticInv = null;
-        enables = null;
-        enablesStatic = null;
-        enablesArbi = null;
+        
         tabbedPane = null;
         panelX = null;
         panelXInv = null;
