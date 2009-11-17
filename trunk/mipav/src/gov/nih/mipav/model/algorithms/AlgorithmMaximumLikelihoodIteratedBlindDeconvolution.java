@@ -843,18 +843,18 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
 
         if (kImage.getNDims() == 3) {
-            AlgorithmFlip flipz = new AlgorithmFlip(m_kMirrorImage, AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
+            AlgorithmFlip flipz = new AlgorithmFlip(m_kMirrorImage, AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE, true);
             flipz.run();
             flipz.finalize();
             flipz = null;
         }
 
-        AlgorithmFlip flipy = new AlgorithmFlip(m_kMirrorImage, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE);
+        AlgorithmFlip flipy = new AlgorithmFlip(m_kMirrorImage, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE, true);
         flipy.run();
         flipy.finalize();
         flipy = null;
 
-        AlgorithmFlip flipx = new AlgorithmFlip(m_kMirrorImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+        AlgorithmFlip flipx = new AlgorithmFlip(m_kMirrorImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE, true);
         flipx.run();
         flipx.finalize();
         flipx = null;
