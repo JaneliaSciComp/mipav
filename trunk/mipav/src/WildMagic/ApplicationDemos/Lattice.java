@@ -47,6 +47,7 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
      */
     public Lattice() {
         super("Lattice", 0, 0, 640, 480, new ColorRGBA(0.5f, 0.0f, 1.0f, 1.0f));
+        m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
         m_pkRenderer = new OpenGLRenderer(m_eFormat, m_eDepth, m_eStencil, m_eBuffering, m_eMultisampling, m_iWidth,
                 m_iHeight);
         ((OpenGLRenderer) m_pkRenderer).GetCanvas().addGLEventListener(this);
@@ -189,11 +190,14 @@ public class Lattice extends JavaApplication3D implements GLEventListener, KeyLi
         }
         // ((OpenGLRenderer)m_pkRenderer).ClearDrawable( );
     }
-
     public GLCanvas GetCanvas() {
         return ((OpenGLRenderer) m_pkRenderer).GetCanvas();
+    } 
+    /*
+    public GLJPanel GetCanvas() {
+        return ((OpenGLRenderer) m_pkRenderer).GetCanvas();
     }
-
+*/
     /**
      * Lattice.CreateScene() creates the scene graph. The root node is m_spkScene. It contains a single TriMesh object,
      * the torus. The TriMesh object is created with a set of rendering Attributes with three channels for point data
