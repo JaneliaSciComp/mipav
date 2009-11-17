@@ -1493,7 +1493,7 @@ public class FileFits extends FileBase {
             image.calcMinMax();
             raFile.close();
 
-            flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+            flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE, true);
             flipAlgo.run();
             flipAlgo.finalize();
             flipAlgo = null;
@@ -1546,7 +1546,7 @@ public class FileFits extends FileBase {
         int count;
         //double array[][];
         
-        flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+        flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE, true);
         flipAlgo.run();
         flipAlgo.finalize();
         flipAlgo = null;
