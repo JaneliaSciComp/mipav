@@ -54,6 +54,13 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     /** When checked, VOIs are flipped when image is flipped. */
     private JCheckBox flipVoiCheckbox;
     
+    /** When checked, change orientation and origin upon flipping.
+     *  When unchecked, orienation and origin remain the same.
+     */
+    private JCheckBox orientationOriginCheckBox;
+    
+    private boolean changeOrientationOrigin = true;
+    
     /** Image is flipped by depth when selected */
     private JRadioButton flipAxisZRadioButton;
     
@@ -62,6 +69,8 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     
     /** Image is flipped vertically when selected */
     private JRadioButton flipAxisXRadioButton;
+    
+    private JPanel optionsPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -88,7 +97,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         this.image =im;
         if(flipObject == AlgorithmFlip.IMAGE || flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
             init();
-            //loadDefaults();
+            loadDefaults();
             setVariables();
         }
         setForeground(Color.black);
@@ -129,6 +138,10 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmFlip) {
+            
+            if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
+                saveDefaults();
+            }
 
             // These next lines set the titles in all frames where the source image is displayed to
             // image name so as to indicate that the image is now unlocked!
@@ -169,7 +182,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             System.gc();
 
             // Make algorithm
-            flipAlgo = new AlgorithmFlip(image, flipAxis, flipObject);
+            flipAlgo = new AlgorithmFlip(image, flipAxis, flipObject, changeOrientationOrigin);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -234,6 +247,25 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         } else if(flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
         	scriptParameters.getParams().put(ParameterFactory.newParameter("flip_object", "image_and_voi"));
         }
+        
+        if (changeOrientationOrigin) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("orientation_origin", "change"));
+        }
+        else {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("orientation_origin", "preserve"));
+        }
+    }
+    
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void saveDefaults() {
+        String delim = ",";
+        String defaultsString = flipAxis + delim;
+        defaultsString += flipObject + delim;
+        defaultsString += changeOrientationOrigin;
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
     
     /**
@@ -265,13 +297,64 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         if(axisn.equals("image_and_voi")) {
         	flipObject = AlgorithmFlip.IMAGE_AND_VOI;
         }
+        
+        axisn = scriptParameters.getParams().getString("orientation_origin");
+        if (axisn != null) {
+            if (axisn.equals("change")) {
+                changeOrientationOrigin = true;
+            }
+            if (axisn.equals("preserve")) {
+                changeOrientationOrigin = false;
+            }
+        }
+    }
+    
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void loadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if ((defaultsString != null) && (optionsPanel != null)) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+                flipAxis = MipavUtil.getInt(st);
+                if(flipAxis == AlgorithmFlip.X_AXIS) {
+                    flipAxisXRadioButton.setSelected(true);
+                }
+                if(flipAxis == AlgorithmFlip.Y_AXIS) {
+                    flipAxisYRadioButton.setSelected(true);
+                }
+                if((image.getNDims() > 2)&&(flipAxis == AlgorithmFlip.Z_AXIS)) {
+                    flipAxisZRadioButton.setSelected(true);
+                }
+                
+                flipObject = MipavUtil.getInt(st);
+                VOIVector vec = image.getVOIs();
+                if((flipObject == AlgorithmFlip.IMAGE_AND_VOI) && (vec.size() > 0)) {
+                    flipVoiCheckbox.setSelected(true);
+                }
+                else {
+                    flipVoiCheckbox.setSelected(false);
+                }
+
+                orientationOriginCheckBox.setSelected(MipavUtil.getBoolean(st));
+                
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+            }
+        }
     }
     
     private void init() {
         setTitle("Flip Image");
         getContentPane().setLayout(new BorderLayout());
 
-        JPanel optionsPanel = new JPanel(new GridLayout(1, 2));
+        optionsPanel = new JPanel(new GridLayout(1, 2));
 
         optionsPanel.setForeground(Color.black);
         optionsPanel.setBorder(buildTitledBorder("Options"));
@@ -285,6 +368,11 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         flipVoiCheckbox.addItemListener(this);
         optionsPanel.add(flipVoiCheckbox);
         
+        orientationOriginCheckBox = new JCheckBox("Change orientation and origin");
+        orientationOriginCheckBox.setFont(serif12);
+        orientationOriginCheckBox.setSelected(changeOrientationOrigin);    
+        optionsPanel.add(orientationOriginCheckBox);
+        
         JPanel flipAxisPanel = new JPanel(new GridBagLayout());
 
         flipAxisPanel.setForeground(Color.black);
@@ -297,25 +385,16 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         
         flipAxisXRadioButton = new JRadioButton("Vertical (X Axis)");
         flipAxisXRadioButton.setFont(serif12);
-        
-        if(flipAxis == AlgorithmFlip.X_AXIS) {
-            flipAxisXRadioButton.setSelected(true);
-        }
+        flipAxisXRadioButton.setSelected(false);
         
         flipAxisYRadioButton = new JRadioButton("Horizontal (Y Axis)");
         flipAxisYRadioButton.setFont(serif12);
-        
-        if(flipAxis == AlgorithmFlip.Y_AXIS) {
-            flipAxisYRadioButton.setSelected(true);
-        }
+        flipAxisYRadioButton.setSelected(true);
         
         if (image.getNDims() >= 3) {
             flipAxisZRadioButton = new JRadioButton("Depth (Z axis)");
             flipAxisZRadioButton.setFont(serif12);
-            
-            if(flipAxis == AlgorithmFlip.Z_AXIS) {
-                flipAxisZRadioButton.setSelected(true);
-            }
+            flipAxisZRadioButton.setSelected(false);
         } // if (image.getNDims() >= 3)
         
         ButtonGroup axisGroup = new ButtonGroup();
@@ -369,6 +448,9 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         else {
             flipObject = AlgorithmFlip.IMAGE;
         }
+        
+        changeOrientationOrigin = orientationOriginCheckBox.isSelected();
+        
         if(flipAxisXRadioButton.isSelected()) {
             flipAxis = AlgorithmFlip.X_AXIS;
         }
