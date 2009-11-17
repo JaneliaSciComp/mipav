@@ -30,6 +30,19 @@ public class ParameterUShort extends Parameter {
     }
 
     /**
+     * Creates a new ParameterUShort with a new value.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramValue The new parameter value.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
+     */
+    public ParameterUShort(final String paramLabel, final short paramValue) throws ParserException {
+        super(paramLabel, Parameter.PARAM_USHORT);
+        setValue(paramValue);
+    }
+
+    /**
      * Creates a new ParameterUShort object.
      * 
      * @param paramLabel The label/name to give to this parameter.

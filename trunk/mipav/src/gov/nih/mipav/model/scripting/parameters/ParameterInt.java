@@ -30,6 +30,19 @@ public class ParameterInt extends Parameter {
     }
 
     /**
+     * Creates a new ParameterInt with a new value.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramValue The new parameter value.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
+     */
+    public ParameterInt(final String paramLabel, final int paramValue) throws ParserException {
+        super(paramLabel, Parameter.PARAM_INT);
+        setValue(paramValue);
+    }
+
+    /**
      * Creates a new ParameterInt object.
      * 
      * @param paramLabel The label/name to give to this parameter.

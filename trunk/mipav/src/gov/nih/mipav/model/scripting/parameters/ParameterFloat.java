@@ -30,6 +30,19 @@ public class ParameterFloat extends Parameter {
     }
 
     /**
+     * Creates a new ParameterFloat with a new value.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramValue The new parameter value.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
+     */
+    public ParameterFloat(final String paramLabel, final float paramValue) throws ParserException {
+        super(paramLabel, Parameter.PARAM_FLOAT);
+        setValue(paramValue);
+    }
+
+    /**
      * Creates a new ParameterFloat object.
      * 
      * @param paramLabel The label/name to give to this parameter.

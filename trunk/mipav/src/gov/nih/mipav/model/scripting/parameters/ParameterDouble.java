@@ -30,6 +30,19 @@ public class ParameterDouble extends Parameter {
     }
 
     /**
+     * Creates a new ParameterDouble with a new value.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramValue The new parameter value.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
+     */
+    public ParameterDouble(final String paramLabel, final double paramValue) throws ParserException {
+        super(paramLabel, Parameter.PARAM_DOUBLE);
+        setValue(paramValue);
+    }
+
+    /**
      * Creates a new ParameterDouble object.
      * 
      * @param paramLabel The label/name to give to this parameter.

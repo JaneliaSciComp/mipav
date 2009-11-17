@@ -41,18 +41,35 @@ public abstract class MipavActionMetadata implements ActionMetadata {
     }
 
     public String toString() {
-        String str = new String();
+        String str = "";
 
         str += "Name:\t\t\t" + getName() + "\n";
         str += "Category:\t\t" + getCategory() + "\n";
         str += "Description:\t\t" + getDescription() + "\n";
         str += "Description Long:\t" + getDescriptionLong() + "\n";
+        str += "Short Label:\t\t" + getShortLabel() + "\n";
         str += "Label:\t\t\t" + getLabel() + "\n";
         str += "Version:\t\t" + getVersion() + "\n";
         str += "Website:\t\t" + getWebsite() + "\n";
-        str += "Authors:\t\t" + getAuthors() + "\n";
-        str += "Affiliation:\t\t" + getAffiliation() + "\n";
+        str += "Authors:\t\t" + getAuthorsString() + "\n";
+        str += "Affiliation:\t\t" + getAffiliationString() + "\n";
 
+        return str;
+    }
+
+    public String getAuthorsString() {
+        String str = getAuthors()[0];
+        for (int i = 1; i < getAuthors().length; i++) {
+            str += ", " + getAuthors()[i];
+        }
+        return str;
+    }
+
+    public String getAffiliationString() {
+        String str = getAffiliation()[0];
+        for (int i = 1; i < getAffiliation().length; i++) {
+            str += ", " + getAffiliation()[i];
+        }
         return str;
     }
 }

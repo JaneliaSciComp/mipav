@@ -30,6 +30,19 @@ public class ParameterBoolean extends Parameter {
     }
 
     /**
+     * Creates a new ParameterBoolean with a new value.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramValue The new parameter value.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
+     */
+    public ParameterBoolean(final String paramLabel, final boolean paramValue) throws ParserException {
+        super(paramLabel, Parameter.PARAM_BOOLEAN);
+        setValue(paramValue);
+    }
+
+    /**
      * Creates a new ParameterBoolean object.
      * 
      * @param paramLabel The label/name to give to this parameter.
