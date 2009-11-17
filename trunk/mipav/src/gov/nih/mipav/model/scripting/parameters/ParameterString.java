@@ -30,6 +30,19 @@ public class ParameterString extends Parameter {
     }
 
     /**
+     * Creates a new ParameterString with a new value.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramValue The new parameter value.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
+     */
+    public ParameterString(final String paramLabel, final String paramValue) throws ParserException {
+        super(paramLabel, Parameter.PARAM_STRING);
+        setValue(paramValue);
+    }
+
+    /**
      * Creates a new ParameterString object without any value.
      * 
      * @param paramLabel The label/name to give to this parameter.

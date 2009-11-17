@@ -69,8 +69,12 @@ public class ActionDiscoveryTest {
                     if (param.getType() != Parameter.PARAM_EXTERNAL_IMAGE && param.getType() != Parameter.PARAM_IMAGE) {
                         val = ActionDiscoveryTest.promptForParameterValue(param);
 
-                        if (val == null) {
+                        if ( (val == null || val.equals("")) && param.getValueString() == null) {
                             System.err.println("No value entered for parameter: " + param.convertToString());
+                        } else if ( (val == null || val.equals("")) && param.getValueString() != null) {
+                            System.err.println("No value entered, using parameter default: " + param.getLabel() + " = "
+                                    + param.getValueString());
+                            // no need to set the value; it's already there.
                         } else {
                             param.setValue(val);
                         }
@@ -129,7 +133,8 @@ public class ActionDiscoveryTest {
     protected static String promptForParameterValue(final Parameter param) {
         String val = null;
 
-        System.out.print("Enter value for parameter: " + param.getLabel() + " (" + param.getTypeString() + ") = ");
+        System.out.print("Enter value for parameter: " + param.getLabel() + " (" + param.getTypeString()
+                + ") = (default: " + param.getValueString() + ") ");
 
         try {
             switch (param.getType()) {

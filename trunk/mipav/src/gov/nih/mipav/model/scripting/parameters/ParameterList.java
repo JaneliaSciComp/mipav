@@ -44,6 +44,22 @@ public class ParameterList extends Parameter {
      * Creates a new ParameterList object.
      * 
      * @param paramLabel The label/name to give to this parameter.
+     * @param listContentsType The type of the parameters contained in this list.
+     * @param paramValueString The list of parameters in string form.
+     * 
+     * @throws ParserException If there is a problem creating the parameter list.
+     */
+    public ParameterList(final String paramLabel, final int listContentsType, final String paramValueString)
+            throws ParserException {
+        super(paramLabel, Parameter.PARAM_LIST);
+        setListType(listContentsType);
+        setValue(paramValueString);
+    }
+
+    /**
+     * Creates a new ParameterList object.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
      * @param paramTypeString The type of this parameter, in string form. The first part should indicate that it is a
      *            list, the second part should indicate the type of the elements in the parameter list.
      * @param paramValueString The list of parameters in string form.

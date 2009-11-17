@@ -30,6 +30,19 @@ public class ParameterLong extends Parameter {
     }
 
     /**
+     * Creates a new ParameterLong with a new value.
+     * 
+     * @param paramLabel The label/name to give to this parameter.
+     * @param paramValue The new parameter value.
+     * 
+     * @throws ParserException If there is a problem creating the parameter.
+     */
+    public ParameterLong(final String paramLabel, final long paramValue) throws ParserException {
+        super(paramLabel, Parameter.PARAM_LONG);
+        setValue(paramValue);
+    }
+
+    /**
      * Creates a new ParameterLong object.
      * 
      * @param paramLabel The label/name to give to this parameter.
