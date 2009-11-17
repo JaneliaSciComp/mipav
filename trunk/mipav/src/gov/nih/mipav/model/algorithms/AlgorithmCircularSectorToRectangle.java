@@ -529,7 +529,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         y[3] = 180.0;
         
         if (testOrientation == testBottom) {
-            flipx = new AlgorithmFlip(srcImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+            flipx = new AlgorithmFlip(srcImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE, true);
             flipx.run();
             flipx.finalize();
             flipx = null;
@@ -694,7 +694,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         y[3] = 180.0;
         
         if (testOrientation == testBottom) {
-            flipx = new AlgorithmFlip(srcImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+            flipx = new AlgorithmFlip(srcImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE, true);
             flipx.run();
             flipx.finalize();
             flipx = null;
@@ -855,7 +855,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         y[3] = 180.0;
         
         if (testOrientation == testBottom) {
-            flipx = new AlgorithmFlip(srcImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+            flipx = new AlgorithmFlip(srcImage, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE, true);
             flipx.run();
             flipx.finalize();
             flipx = null;
