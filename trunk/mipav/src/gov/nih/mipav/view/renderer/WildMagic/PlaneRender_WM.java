@@ -2354,17 +2354,20 @@ public class PlaneRender_WM extends GPURenderBase
         m_kVOIList = new LocalVolumeVOIVector[kList.length];
         for ( int i = 0; i < kList.length; i++ )
         {
-            m_kVOIList[i] = new LocalVolumeVOIVector();
-            for ( int j = 0; j < kList[i].size(); j++ )
+            if ( kList[i] != null )
             {
-                LocalVolumeVOI kVOI = kList[i].get(j);
-                Node kNode = new Node();
-                kNode.AttachChild(kVOI.Volume.get(0) );
-                String kName = new String(kVOI.Name.get(0));
-                kNode.SetName(kName);
-                m_kDisplayList.add(m_kParent.addNode(kNode));
-                m_kParent.translateSurface( kName, m_kTranslate );
-                m_kVOIList[i].add( kVOI );
+                m_kVOIList[i] = new LocalVolumeVOIVector();
+                for ( int j = 0; j < kList[i].size(); j++ )
+                {
+                    LocalVolumeVOI kVOI = kList[i].get(j);
+                    Node kNode = new Node();
+                    kNode.AttachChild(kVOI.Volume.get(0) );
+                    String kName = new String(kVOI.Name.get(0));
+                    kNode.SetName(kName);
+                    m_kDisplayList.add(m_kParent.addNode(kNode));
+                    m_kParent.translateSurface( kName, m_kTranslate );
+                    m_kVOIList[i].add( kVOI );
+                }
             }
         }
     }
