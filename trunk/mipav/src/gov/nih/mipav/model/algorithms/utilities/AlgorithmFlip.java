@@ -57,6 +57,9 @@ public class AlgorithmFlip extends AlgorithmBase {
     /** Whether all VOIs shouold be flipped when the image is flipped. */
 
     private boolean flipVoiWithImage;
+    
+    /** Whether orientation and origin should change with flipping. */
+    private boolean changeOrientationOrigin;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -66,10 +69,12 @@ public class AlgorithmFlip extends AlgorithmBase {
      * @param  srcImg      source image model
      * @param  flipMode    flip about which axis
      * @param  flipObject  DOCUMENT ME!
+     * @param  changeOrientationOrigin
      */
-    public AlgorithmFlip(ModelImage srcImg, int flipMode, int flipObject) {
+    public AlgorithmFlip(ModelImage srcImg, int flipMode, int flipObject, boolean changeOrientationOrigin) {
         super(null, srcImg);
         this.flipObject = flipObject;
+        this.changeOrientationOrigin = changeOrientationOrigin;
 
         if ((flipMode == Y_AXIS) || (flipMode == X_AXIS) || (flipMode == Z_AXIS)) {
             flipAxis = flipMode;
@@ -87,9 +92,10 @@ public class AlgorithmFlip extends AlgorithmBase {
      * @param  flipMode    flip about which axis
      * @param  progress    mode of progress bar (see AlgorithmBase)
      * @param  flipObject  DOCUMENT ME!
+     * @param  chnageOrientationOrigin
      */
-    public AlgorithmFlip(ModelImage srcImg, int flipMode, int progress, int flipObject) {
-        this(srcImg, flipMode, flipObject);
+    public AlgorithmFlip(ModelImage srcImg, int flipMode, int progress, int flipObject, boolean changeOrientationOrigin) {
+        this(srcImg, flipMode, flipObject, changeOrientationOrigin);
         // progressMode = progress;
     }
 
@@ -261,26 +267,28 @@ public class AlgorithmFlip extends AlgorithmBase {
             }
 
             /* Update FileInfo for mapping into DICOM space: */
-            FileInfoBase[] fileInfo = srcImage.getFileInfo();
-            float loc = fileInfo[0].getOrigin(index);
-            int orient = fileInfo[0].getAxisOrientation(index);
-
-            if (loc > 0.0f) {
-                loc = loc - ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
-            } else {
-                loc = loc + ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
-            }
-
-            orient = FileInfoBase.oppositeOrient(orient);
-
-            for (int i = 0; i < fileInfo.length; i++) {
-                fileInfo[i].setAxisOrientation(orient, index);
-                fileInfo[i].setOrigin(loc, index);
-
-                if (index == 2) {
-                    fileInfo[i].setOrigin(loc + (fileInfo[0].getResolutions()[index] * i), index);
+            if (changeOrientationOrigin) {
+                FileInfoBase[] fileInfo = srcImage.getFileInfo();
+                float loc = fileInfo[0].getOrigin(index);
+                int orient = fileInfo[0].getAxisOrientation(index);
+    
+                if (loc > 0.0f) {
+                    loc = loc - ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
+                } else {
+                    loc = loc + ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
                 }
-            }
+    
+                orient = FileInfoBase.oppositeOrient(orient);
+    
+                for (int i = 0; i < fileInfo.length; i++) {
+                    fileInfo[i].setAxisOrientation(orient, index);
+                    fileInfo[i].setOrigin(loc, index);
+    
+                    if (index == 2) {
+                        fileInfo[i].setOrigin(loc + (fileInfo[0].getResolutions()[index] * i), index);
+                    }
+                }
+            } // if (changeOrientationOrigin)
 
             if (flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
                 VOIVector vec = srcImage.getVOIs();
