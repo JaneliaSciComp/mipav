@@ -1031,17 +1031,17 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             switch (flip0 + flip1) {
 
                 case 1:
-                    flipAlgo = new AlgorithmFlip(vol, AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
+                    flipAlgo = new AlgorithmFlip(vol, AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE, true);
                     flipAlgo.run();
                     break;
 
                 case 2:
-                    flipAlgo = new AlgorithmFlip(vol, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE);
+                    flipAlgo = new AlgorithmFlip(vol, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE, true);
                     flipAlgo.run();
                     break;
 
                 case 3:
-                    flipAlgo = new AlgorithmFlip(vol, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+                    flipAlgo = new AlgorithmFlip(vol, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE, true);
                     flipAlgo.run();
                     break;
 
