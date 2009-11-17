@@ -1323,7 +1323,7 @@ public class FileTiff extends FileBase {
             raFile.close();
             
             if (flipHorizontal) {
-                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE_AND_VOI);
+                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
                 flipAlgo.run();
                 flipAlgo.finalize();
                 flipAlgo = null;
@@ -1338,14 +1338,14 @@ public class FileTiff extends FileBase {
                 rotateAlgo = null;
             }
             else if (flipVertical) {
-                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI);
+                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
                 flipAlgo.run();
                 flipAlgo.finalize();
                 flipAlgo = null;    
             }
             else if (interchangeXY) {
                 // Vertical flip followed by +90 degrees rotation
-                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI);
+                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
                 flipAlgo.run();
                 flipAlgo.finalize();
                 flipAlgo = null;
@@ -1375,7 +1375,7 @@ public class FileTiff extends FileBase {
                 image = rotateAlgo.returnImage();
                 rotateAlgo.finalize();
                 rotateAlgo = null; 
-                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI);
+                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
                 flipAlgo.run();
                 flipAlgo.finalize();
                 flipAlgo = null;
