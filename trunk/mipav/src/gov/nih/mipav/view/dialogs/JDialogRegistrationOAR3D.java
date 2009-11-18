@@ -2,9 +2,9 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.registration.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -12,11 +12,8 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
-import java.io.*;
-
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
+import java.io.File;
+import java.text.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -30,19 +27,21 @@ import javax.swing.*;
  * as their respective originals - i.e., the reference weight image must be the same size as the reference image. The
  * user can select to display the registered image. Regardless of whether this is selected, the matrix will be stored in
  * a file in the user's working directory and also in the original image's transformation matrix.
- *
- * @author  Neva Cherniavsky
- * @see     AlgorithmCostFunctions
- * @see     AlgorithmRegOAR3D
+ * 
+ * @author Neva Cherniavsky
+ * @see AlgorithmCostFunctions
+ * @see AlgorithmRegOAR3D
  */
-public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1461819906844299206L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Variables for Advanced Settings dialog. */
     private JDialog advancedDialog;
@@ -232,46 +231,44 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private JRadioButton zRadio;
-    
+
     private JLabel outOfBoundsLabel;
-    
+
     private JComboBox outOfBoundsComboBox;
-    
+
     private JLabel valueLabel;
-    
+
     private JTextField valueText;
-    
+
     private double imageMin;
-    
+
     private double imageMax;
-    
+
     private int dataType;
-    
+
     /**
-     * Tells how to select fill value for out of bounds data
-     * 0 for image minimum
-     * 1 for NaN for float, zero otherwise.
-     * 2 for user defined
-     * 3 for image maximum
+     * Tells how to select fill value for out of bounds data 0 for image minimum 1 for NaN for float, zero otherwise. 2
+     * for user defined 3 for image maximum
      */
     private int outOfBoundsIndex = 0;
-    
+
     private float fillValue = 0.0f;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogRegistrationOAR3D() { }
+    public JDialogRegistrationOAR3D() {}
 
     /**
      * Creates new dialog for user to choose type of linear image registration algorithm to run.
-     *
-     * @param  theParentFrame  Parent frame.
-     * @param  im              Source image.
+     * 
+     * @param theParentFrame Parent frame.
+     * @param im Source image.
      */
-    public JDialogRegistrationOAR3D(Frame theParentFrame, ModelImage im) {
+    public JDialogRegistrationOAR3D(final Frame theParentFrame, final ModelImage im) {
         super(theParentFrame, false);
 
         matchImage = im;
@@ -287,15 +284,16 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Closes dialog box when the OK button is pressed, sets the variables, and calls the algorithm.
-     *
-     * @param  event  Event that triggers function.
+     * 
+     * @param event Event that triggers function.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
         String tmpStr;
 
         if (command.equals("OK")) {
@@ -306,7 +304,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("OAR19076");
+            MipavUtil.showHelp("OAR19076");
         } else if (command.equals("AdvancedSettings")) {
             bracketBound_def = bracketBound;
             maxIterations_def = maxIterations;
@@ -316,10 +314,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             try {
 
-                JFileChooser chooser = new JFileChooser();
+                final JFileChooser chooser = new JFileChooser();
 
                 if (UI.getDefaultDirectory() != null) {
-                    File file = new File(UI.getDefaultDirectory());
+                    final File file = new File(UI.getDefaultDirectory());
 
                     if (file != null) {
                         chooser.setCurrentDirectory(file);
@@ -338,7 +336,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 chooser.setDialogTitle("Open Reference weight file");
                 directoryWRef = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
 
-                int returnValue = chooser.showOpenDialog(UI.getMainFrame());
+                final int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     fileNameWRef = chooser.getSelectedFile().getName();
@@ -353,7 +351,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 if (fileNameWRef != null) {
                     textRef.setText(fileNameWRef);
                 }
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory in JDialogRegistrationOAR3D.");
 
                 return;
@@ -361,10 +359,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         } else if (command.equals("Input")) {
 
             try {
-                JFileChooser chooser = new JFileChooser();
+                final JFileChooser chooser = new JFileChooser();
 
                 if (UI.getDefaultDirectory() != null) {
-                    File file = new File(UI.getDefaultDirectory());
+                    final File file = new File(UI.getDefaultDirectory());
 
                     if (file != null) {
                         chooser.setCurrentDirectory(file);
@@ -383,7 +381,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 chooser.setDialogTitle("Open Input weight file");
                 directoryWInput = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
 
-                int returnValue = chooser.showOpenDialog(UI.getMainFrame());
+                final int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     fileNameWInput = chooser.getSelectedFile().getName();
@@ -398,7 +396,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 if (fileNameWInput != null) {
                     textInput.setText(fileNameWInput);
                 }
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory in JDialogRegistrationOAR3D.");
 
                 return;
@@ -406,7 +404,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         } else if (command.equals("AdvancedOkay")) {
             tmpStr = bracketBoundText.getText();
 
-            if (testParameter(tmpStr, 1, 60)) {
+            if (JDialogBase.testParameter(tmpStr, 1, 60)) {
                 bracketBound = Integer.valueOf(tmpStr).intValue();
             } else {
                 bracketBound = bracketBound_def;
@@ -414,7 +412,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             tmpStr = maxIterationsText.getText();
 
-            if (testParameter(tmpStr, 1, 100)) {
+            if (JDialogBase.testParameter(tmpStr, 1, 100)) {
                 maxIterations = Integer.valueOf(tmpStr).intValue();
             } else {
                 maxIterations = maxIterations_def;
@@ -422,7 +420,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             tmpStr = numMinText.getText();
 
-            if (testParameter(tmpStr, 1, 25)) {
+            if (JDialogBase.testParameter(tmpStr, 1, 25)) {
                 numMinima = Integer.valueOf(tmpStr).intValue();
             } else {
                 numMinima = numMinima_def;
@@ -437,7 +435,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
         } else if (command.equals("AdvancedHelp")) {
-        	MipavUtil.showHelp("OAR19078");
+            MipavUtil.showHelp("OAR19078");
         }
     }
 
@@ -448,12 +446,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to complete.
-     *
-     * @param  algorithm  Algorithm that caused the event.
+     * 
+     * @param algorithm Algorithm that caused the event.
      */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
+    public void algorithmPerformed(final AlgorithmBase algorithm) {
         AlgorithmTransform transform = null;
-        boolean pad = false;
+        final boolean pad = false;
         double xOrig;
         double yOrig;
         double zOrig;
@@ -468,43 +466,46 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         float resZ;
         String comStr;
         DecimalFormat nf;
-        ViewUserInterface UI = ViewUserInterface.getReference();
-        
+        final ViewUserInterface UI = ViewUserInterface.getReference();
+
         nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
         nf.setMinimumFractionDigits(0);
         nf.setGroupingUsed(false);
 
-        DecimalFormatSymbols dfs = nf.getDecimalFormatSymbols();
+        final DecimalFormatSymbols dfs = nf.getDecimalFormatSymbols();
         dfs.setDecimalSeparator('.');
         nf.setDecimalFormatSymbols(dfs);
+
+        // save the completion status for later
+        setComplete(algorithm.isCompleted());
 
         if (algorithm instanceof AlgorithmRegOAR3D) {
 
             if (reg3.isCompleted()) {
-                TransMatrix finalMatrix = reg3.getTransform();
-                System.err.println( finalMatrix.ToString() );
+                final TransMatrix finalMatrix = reg3.getTransform();
+                System.err.println(finalMatrix.ToString());
 
                 if (doLS) {
                     // System.err.println("OAR3D Matrix: " + finalMatrix);
-                    // System.err.println("LS Matrix: "  + lsMatrix);
+                    // System.err.println("LS Matrix: " + lsMatrix);
 
                     finalMatrix.Mult(lsMatrix);
                     // System.err.println("OAR3D x LS: " + finalMatrix);
                 }
 
                 if (displayTransform) {
-                    int xdimA = refImage.getExtents()[0];
-                    int ydimA = refImage.getExtents()[1];
-                    int zdimA = refImage.getExtents()[2];
-                    float xresA = refImage.getFileInfo(0).getResolutions()[0];
-                    float yresA = refImage.getFileInfo(0).getResolutions()[1];
-                    float zresA = refImage.getFileInfo(0).getResolutions()[2];
+                    final int xdimA = refImage.getExtents()[0];
+                    final int ydimA = refImage.getExtents()[1];
+                    final int zdimA = refImage.getExtents()[2];
+                    final float xresA = refImage.getFileInfo(0).getResolutions()[0];
+                    final float yresA = refImage.getFileInfo(0).getResolutions()[1];
+                    final float zresA = refImage.getFileInfo(0).getResolutions()[2];
 
-                    String name = makeImageName(matchImage.getImageName(), "_register");
+                    final String name = JDialogBase.makeImageName(matchImage.getImageName(), "_register");
 
                     transform = new AlgorithmTransform(matchImage, finalMatrix, interp2, xresA, yresA, zresA, xdimA,
-                                                       ydimA, zdimA, true, false, pad);
+                            ydimA, zdimA, true, false, pad);
 
                     transform.setUpdateOriginFlag(true);
                     transform.setFillValue(fillValue);
@@ -519,7 +520,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
                         try {
                             new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                        } catch (OutOfMemoryError error) {
+                        } catch (final OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open new frame");
                         }
                     } else {
@@ -531,10 +532,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                         transform = null;
                     }
                 }
-                
-                xOrig = (matchImage.getExtents()[0] - 1.0)/2.0;
-                yOrig = (matchImage.getExtents()[1] - 1.0)/2.0;
-                zOrig = (matchImage.getExtents()[2] - 1.0)/2.0;
+
+                xOrig = (matchImage.getExtents()[0] - 1.0) / 2.0;
+                yOrig = (matchImage.getExtents()[1] - 1.0) / 2.0;
+                zOrig = (matchImage.getExtents()[2] - 1.0) / 2.0;
                 resX = matchImage.getFileInfo()[0].getResolutions()[0];
                 resY = matchImage.getFileInfo()[0].getResolutions()[1];
                 resZ = matchImage.getFileInfo()[0].getResolutions()[2];
@@ -542,24 +543,26 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 yCen = yOrig * resY;
                 zCen = zOrig * resZ;
                 finalMatrix.Inverse();
-                xCenNew = xCen*finalMatrix.Get(0, 0) + yCen*finalMatrix.Get(0, 1) + zCen*finalMatrix.Get(0, 2) + finalMatrix.Get(0, 3);
-                yCenNew = xCen*finalMatrix.Get(1, 0) + yCen*finalMatrix.Get(1, 1) + zCen*finalMatrix.Get(1, 2) + finalMatrix.Get(1, 3);
-                zCenNew = xCen*finalMatrix.Get(2, 0) + yCen*finalMatrix.Get(2, 1) + zCen*finalMatrix.Get(2, 2) + finalMatrix.Get(2, 3);
-                Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
-                                   + xCen + ", " + yCen + ", " + zCen + ")\n");
+                xCenNew = xCen * finalMatrix.Get(0, 0) + yCen * finalMatrix.Get(0, 1) + zCen * finalMatrix.Get(0, 2)
+                        + finalMatrix.Get(0, 3);
+                yCenNew = xCen * finalMatrix.Get(1, 0) + yCen * finalMatrix.Get(1, 1) + zCen * finalMatrix.Get(1, 2)
+                        + finalMatrix.Get(1, 3);
+                zCenNew = xCen * finalMatrix.Get(2, 0) + yCen * finalMatrix.Get(2, 1) + zCen * finalMatrix.Get(2, 2)
+                        + finalMatrix.Get(2, 3);
+                Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" + xCen + ", " + yCen
+                        + ", " + zCen + ")\n");
                 if (resultImage != null) {
-                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 
-                                 ", " + nf.format(zCenNew) + ") in " + resultImage.getImageName() + ".\n";
-                }
-                else {
-                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + 
-                    ", " + nf.format(zCenNew) + ").\n";    
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ", " + nf.format(zCenNew)
+                            + ") in " + resultImage.getImageName() + ".\n";
+                } else {
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ", " + nf.format(zCenNew)
+                            + ").\n";
                 }
                 Preferences.debug(comStr);
-                
+
                 if (resultImage != null) {
                     resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
-    
+
                     for (int i = 0; i < resultImage.getExtents()[2]; i++) {
                         resultImage.getFileInfo(i).setOrigin(refImage.getFileInfo(i).getOrigin());
                     }
@@ -577,8 +580,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 message += "with a Y coarse rate of " + coarseRateY + " and Y fine rate of " + fineRateY + ".\n";
                 message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
                 message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
-                finalMatrix.saveMatrix(UI.getDefaultDirectory() + File.separator + matchImage.getImageName() + "_To_" +
-                                       refImage.getImageName() + ".mtx", message);
+                finalMatrix.saveMatrix(UI.getDefaultDirectory() + File.separator + matchImage.getImageName() + "_To_"
+                        + refImage.getImageName() + ".mtx", message);
 
                 insertScriptLine();
             }
@@ -608,8 +611,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /**
      * Accessor to get the result image.
-     *
-     * @return  Result image.
+     * 
+     * @return Result image.
      */
     public ModelImage getResultImage() {
         return resultImage;
@@ -617,10 +620,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /**
      * Changes the interpolation box to enabled or disabled depending on if the transform box is checked or not.
-     *
-     * @param  event  Event that triggered this function.
+     * 
+     * @param event Event that triggered this function.
      */
-    public void itemStateChanged(ItemEvent event) {
+    public void itemStateChanged(final ItemEvent event) {
 
         if (event.getSource() == transformCheckbox) {
             comboBoxInterp2.setEnabled(transformCheckbox.isSelected());
@@ -629,24 +632,24 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             // enable or disable search variables
             fastMode = fastModeCheckbox.isSelected();
-            rotateBeginTextX.setEnabled(!fastModeCheckbox.isSelected());
-            rotateEndTextX.setEnabled(!fastModeCheckbox.isSelected());
-            coarseRateTextX.setEnabled(!fastModeCheckbox.isSelected());
-            fineRateTextX.setEnabled(!fastModeCheckbox.isSelected());
-            rotateBeginTextY.setEnabled(!fastModeCheckbox.isSelected());
-            rotateEndTextY.setEnabled(!fastModeCheckbox.isSelected());
-            coarseRateTextY.setEnabled(!fastModeCheckbox.isSelected());
-            fineRateTextY.setEnabled(!fastModeCheckbox.isSelected());
-            rotateBeginTextZ.setEnabled(!fastModeCheckbox.isSelected());
-            rotateEndTextZ.setEnabled(!fastModeCheckbox.isSelected());
-            coarseRateTextZ.setEnabled(!fastModeCheckbox.isSelected());
-            fineRateTextZ.setEnabled(!fastModeCheckbox.isSelected());
+            rotateBeginTextX.setEnabled( !fastModeCheckbox.isSelected());
+            rotateEndTextX.setEnabled( !fastModeCheckbox.isSelected());
+            coarseRateTextX.setEnabled( !fastModeCheckbox.isSelected());
+            fineRateTextX.setEnabled( !fastModeCheckbox.isSelected());
+            rotateBeginTextY.setEnabled( !fastModeCheckbox.isSelected());
+            rotateEndTextY.setEnabled( !fastModeCheckbox.isSelected());
+            coarseRateTextY.setEnabled( !fastModeCheckbox.isSelected());
+            fineRateTextY.setEnabled( !fastModeCheckbox.isSelected());
+            rotateBeginTextZ.setEnabled( !fastModeCheckbox.isSelected());
+            rotateEndTextZ.setEnabled( !fastModeCheckbox.isSelected());
+            coarseRateTextZ.setEnabled( !fastModeCheckbox.isSelected());
+            fineRateTextZ.setEnabled( !fastModeCheckbox.isSelected());
         } else if (event.getSource() == calcCOGCheckbox) {
 
             // enable or disable search variables
             calcCOG = calcCOGCheckbox.isSelected();
-        } else if ((event.getSource() == weightRadio) || (event.getSource() == noneRadio) ||
-                       (event.getSource() == voiRadio)) {
+        } else if ( (event.getSource() == weightRadio) || (event.getSource() == noneRadio)
+                || (event.getSource() == voiRadio)) {
             buttonWeightRef.setEnabled(weightRadio.isSelected());
             buttonWeightInput.setEnabled(weightRadio.isSelected());
 
@@ -701,7 +704,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 zRadio.setEnabled(true);
             }
         } // else if (event.getSource() == universalCheckbox)
-        else if ((event.getSource() == xRadio) || (event.getSource() == yRadio) || (event.getSource() == zRadio)) {
+        else if ( (event.getSource() == xRadio) || (event.getSource() == yRadio) || (event.getSource() == zRadio)) {
 
             if (xRadio.isSelected()) {
 
@@ -812,11 +815,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     valueText.setEnabled(false);
                     break;
                 case 1: // If float NaN, else 0
-                    if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
-                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
-                        valueText.setText(String.valueOf(Float.NaN)); 
-                    }
-                    else {
+                    if ( (dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)
+                            || (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                        valueText.setText(String.valueOf(Float.NaN));
+                    } else {
                         valueText.setText(String.valueOf(0));
                     }
                     valueText.setEnabled(false);
@@ -834,12 +836,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /**
      * Accessor to set the advanced settings.
-     *
-     * @param  bracketBound   DOCUMENT ME!
-     * @param  maxIterations  DOCUMENT ME!
-     * @param  numMinima      DOCUMENT ME!
+     * 
+     * @param bracketBound DOCUMENT ME!
+     * @param maxIterations DOCUMENT ME!
+     * @param numMinima DOCUMENT ME!
      */
-    public void setAdvancedSettings(int bracketBound, int maxIterations, int numMinima) {
+    public void setAdvancedSettings(final int bracketBound, final int maxIterations, final int numMinima) {
         this.bracketBound = bracketBound;
         this.maxIterations = maxIterations;
         this.numMinima = numMinima;
@@ -847,255 +849,254 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /**
      * Accessor to set the whether or not to calculate the center of gravity (mass).
-     *
-     * @param  flag  <code>true</code> then calculate center of gravity (mass).
+     * 
+     * @param flag <code>true</code> then calculate center of gravity (mass).
      */
-    public void setCalcCOG(boolean flag) {
+    public void setCalcCOG(final boolean flag) {
         calcCOG = flag;
     }
 
     /**
      * Accessor to set the coarse sample beginX.
-     *
-     * @param  x  Coarse beginX
+     * 
+     * @param x Coarse beginX
      */
-    public void setCoarseBeginX(float x) {
+    public void setCoarseBeginX(final float x) {
         rotateBeginX = x;
     }
 
     /**
      * Accessor to set the coarse sample beginY.
-     *
-     * @param  y  Coarse beginY
+     * 
+     * @param y Coarse beginY
      */
-    public void setCoarseBeginY(float y) {
+    public void setCoarseBeginY(final float y) {
         rotateBeginY = y;
     }
 
     /**
      * Accessor to set the coarse sample beginZ.
-     *
-     * @param  z  Coarse beginZ
+     * 
+     * @param z Coarse beginZ
      */
-    public void setCoarseBeginZ(float z) {
+    public void setCoarseBeginZ(final float z) {
         rotateBeginZ = z;
     }
 
     /**
      * Accessor to set the coarse sample endX.
-     *
-     * @param  x  Coarse endX
+     * 
+     * @param x Coarse endX
      */
-    public void setCoarseEndX(float x) {
+    public void setCoarseEndX(final float x) {
         rotateEndX = x;
     }
 
     /**
      * Accessor to set the coarse sample endY.
-     *
-     * @param  y  Coarse endY
+     * 
+     * @param y Coarse endY
      */
-    public void setCoarseEndY(float y) {
+    public void setCoarseEndY(final float y) {
         rotateEndY = y;
     }
 
     /**
      * Accessor to set the coarse sample endZ.
-     *
-     * @param  z  Coarse endZ
+     * 
+     * @param z Coarse endZ
      */
-    public void setCoarseEndZ(float z) {
+    public void setCoarseEndZ(final float z) {
         rotateEndZ = z;
     }
 
     /**
      * Accessor to set the coarse sample rateX.
-     *
-     * @param  x  Coarse rateX
+     * 
+     * @param x Coarse rateX
      */
-    public void setCoarseRateX(float x) {
+    public void setCoarseRateX(final float x) {
         coarseRateX = x;
     }
 
     /**
      * Accessor to set the coarse sample rateY.
-     *
-     * @param  y  Coarse rateY
+     * 
+     * @param y Coarse rateY
      */
-    public void setCoarseRateY(float y) {
+    public void setCoarseRateY(final float y) {
         coarseRateY = y;
     }
 
     /**
      * Accessor to set the coarse sample rateZ.
-     *
-     * @param  z  Coarse rateZ
+     * 
+     * @param z Coarse rateZ
      */
-    public void setCoarseRateZ(float z) {
+    public void setCoarseRateZ(final float z) {
         coarseRateZ = z;
     }
 
     /**
      * Accessor to set the choice of cost function.
-     *
-     * @param  x  Cost function.
+     * 
+     * @param x Cost function.
      */
-    public void setCostChoice(int x) {
+    public void setCostChoice(final int x) {
         cost = x;
     }
 
     /**
      * Accessor to set the display transform flag.
-     *
-     * @param  flag  <code>true</code> means display the transformed image.
+     * 
+     * @param flag <code>true</code> means display the transformed image.
      */
-    public void setDisplayTransform(boolean flag) {
+    public void setDisplayTransform(final boolean flag) {
         displayTransform = flag;
     }
 
     /**
      * Accessor to set the degrees of freedom.
-     *
-     * @param  x  Degrees of freedom
+     * 
+     * @param x Degrees of freedom
      */
-    public void setDOF(int x) {
+    public void setDOF(final int x) {
         DOF = x;
     }
 
     /**
      * Accessor to set whether or not to execute the fast mode (skip sub sample and goto last final optimization).
-     *
-     * @param  flag  <code>true</code> then skip to level one (last ) optimization.
+     * 
+     * @param flag <code>true</code> then skip to level one (last ) optimization.
      */
-    public void setFastMode(boolean flag) {
+    public void setFastMode(final boolean flag) {
         fastMode = flag;
     }
 
     /**
      * Accessor to set the fine sample rateX.
-     *
-     * @param  x  Fine rateX
+     * 
+     * @param x Fine rateX
      */
-    public void setFineRateX(float x) {
+    public void setFineRateX(final float x) {
         fineRateX = x;
     }
 
     /**
      * Accessor to set the fine sample rateY.
-     *
-     * @param  y  Fine rateY
+     * 
+     * @param y Fine rateY
      */
-    public void setFineRateY(float y) {
+    public void setFineRateY(final float y) {
         fineRateY = y;
     }
 
     /**
      * Accessor to set the fine sample rateZ.
-     *
-     * @param  z  Fine rateZ
+     * 
+     * @param z Fine rateZ
      */
-    public void setFineRateZ(float z) {
+    public void setFineRateZ(final float z) {
         fineRateZ = z;
     }
 
     /**
      * Accessor to set the input weight image.
-     *
-     * @param  im  Input weight image.
+     * 
+     * @param im Input weight image.
      */
-    public void setInputWeightImage(ModelImage im) {
+    public void setInputWeightImage(final ModelImage im) {
         inputWeightImage = im;
     }
 
     /**
      * Accessor to set the initial interpolation.
-     *
-     * @param  x  Interpolation
+     * 
+     * @param x Interpolation
      */
-    public void setInterp(int x) {
+    public void setInterp(final int x) {
         interp = x;
     }
 
     /**
      * Accessor to set the final interpolation.
-     *
-     * @param  x  Interpolation
+     * 
+     * @param x Interpolation
      */
-    public void setInterp2(int x) {
+    public void setInterp2(final int x) {
         interp2 = x;
     }
 
     /**
      * Accessor to set the maximum resolutions flag.
-     *
-     * @param  flag  <code>true</code> then use the maximum of minimums of the resolutions of the images.
+     * 
+     * @param flag <code>true</code> then use the maximum of minimums of the resolutions of the images.
      */
-    public void setMaxOfMinResol(boolean flag) {
+    public void setMaxOfMinResol(final boolean flag) {
         maxOfMinResol = flag;
     }
 
     /**
      * Accessor to set the reference image.
-     *
-     * @param  im  Reference image.
+     * 
+     * @param im Reference image.
      */
-    public void setReferenceImage(ModelImage im) {
+    public void setReferenceImage(final ModelImage im) {
         refImage = im;
     }
 
     /**
      * Accessor to set the reference weight image.
-     *
-     * @param  im  Reference weight image.
+     * 
+     * @param im Reference weight image.
      */
-    public void setReferenceWeightImage(ModelImage im) {
+    public void setReferenceWeightImage(final ModelImage im) {
         refWeightImage = im;
     }
 
     /**
      * Accessor to set whether or not subsampling occurs.
-     *
-     * @param  doSubsample  DOCUMENT ME!
+     * 
+     * @param doSubsample DOCUMENT ME!
      */
-    public void setSubsample(boolean doSubsample) {
+    public void setSubsample(final boolean doSubsample) {
         this.doSubsample = doSubsample;
     }
 
     /**
      * Accessor to set the VOIs only flag.
-     *
-     * @param  flag  <code>true</code> then only register the parts of the images in the VOIs.
+     * 
+     * @param flag <code>true</code> then only register the parts of the images in the VOIs.
      */
-    public void setVoisOnly(boolean flag) {
+    public void setVoisOnly(final boolean flag) {
         voisOnly = flag;
     }
 
     /**
      * Accessor to set the weighted images flag.
-     *
-     * @param  flag  <code>true</code> means there are weighted images.
+     * 
+     * @param flag <code>true</code> means there are weighted images.
      */
-    public void setWeighted(boolean flag) {
+    public void setWeighted(final boolean flag) {
         weighted = flag;
     }
-    
+
     /**
-     * tells how to select fill value for out of bounds data
-     * 0 for image minimum
-     * 1 for NaN for float, zero otherwise.
-     * 2 for user defined
-     * 3 for image max 
+     * tells how to select fill value for out of bounds data 0 for image minimum 1 for NaN for float, zero otherwise. 2
+     * for user defined 3 for image max
+     * 
      * @param outOfBoundsIndex
      */
-    public void setOutOfBoundsIndex(int outOfBoundsIndex) {
+    public void setOutOfBoundsIndex(final int outOfBoundsIndex) {
         this.outOfBoundsIndex = outOfBoundsIndex;
     }
-    
+
     /**
      * Accessor to set intensity value for out of bounds data
+     * 
      * @param fillValue
      */
-    public void setFillValue(float fillValue) {
+    public void setFillValue(final float fillValue) {
         this.fillValue = fillValue;
     }
 
@@ -1105,11 +1106,11 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     protected void callAlgorithm() {
 
         if (doLS) {
-            JDialogRegistrationLeastSquares lsDialog = new JDialogRegistrationLeastSquares(parentFrame, matchImage,
-                                                                                           refImage);
+            final JDialogRegistrationLeastSquares lsDialog = new JDialogRegistrationLeastSquares(parentFrame,
+                    matchImage, refImage);
             lsCompleted = lsDialog.getLSCompleted();
 
-            if (!lsCompleted) {
+            if ( !lsCompleted) {
                 lsDialog.dispose();
 
                 return;
@@ -1120,18 +1121,11 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             lsDialog.dispose();
         }
 
-
         if (voisOnly && !doLS) {
-            float[] refRes = new float[] {
-                                 refImage.getFileInfo(0).getResolutions()[0],
-                                 refImage.getFileInfo(0).getResolutions()[1],
-                                 refImage.getFileInfo(0).getResolutions()[2]
-                             };
-            float[] matchRes = new float[] {
-                                   matchImage.getFileInfo(0).getResolutions()[0],
-                                   matchImage.getFileInfo(0).getResolutions()[1],
-                                   matchImage.getFileInfo(0).getResolutions()[2]
-                               };
+            final float[] refRes = new float[] {refImage.getFileInfo(0).getResolutions()[0],
+                    refImage.getFileInfo(0).getResolutions()[1], refImage.getFileInfo(0).getResolutions()[2]};
+            final float[] matchRes = new float[] {matchImage.getFileInfo(0).getResolutions()[0],
+                    matchImage.getFileInfo(0).getResolutions()[1], matchImage.getFileInfo(0).getResolutions()[2]};
 
             refWeightImage = new ModelImage(ModelStorageBase.BYTE, refImage.getExtents(), "VOI ref");
             inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match");
@@ -1146,7 +1140,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             for (int i = 0; i < imageSize; i++) {
 
-                if (!mask.get(i)) {
+                if ( !mask.get(i)) {
                     refWeightImage.set(i, 0);
                 } else {
                     refWeightImage.set(i, 1);
@@ -1158,7 +1152,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             for (int i = 0; i < imageSize; i++) {
 
-                if (!mask.get(i)) {
+                if ( !mask.get(i)) {
                     inputWeightImage.set(i, 0);
                 } else {
                     inputWeightImage.set(i, 1);
@@ -1170,40 +1164,37 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
         if (weighted) {
 
-            if (!doLS) {
+            if ( !doLS) {
                 reg3 = new AlgorithmRegOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                                             rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY,
-                                             coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-                                             maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations,
-                                             numMinima);
+                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
+                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
+                        fastMode, bracketBound, maxIterations, numMinima);
             } else {
                 reg3 = new AlgorithmRegOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                                             rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY,
-                                             coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-                                             maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations,
-                                             numMinima);
+                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
+                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
+                        fastMode, bracketBound, maxIterations, numMinima);
             }
         } else {
             // System.out.println("Reference image name is " +refImage.getImageName());
             // System.out.println("Moving image name is " +matchImage.getImageName());
 
-            if (!doLS) {
+            if ( !doLS) {
                 reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
-                                             coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY,
-                                             rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol,
-                                             doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound,
+                        maxIterations, numMinima);
             } else {
                 System.err.println("Sending LS Image to OAR3D algorithm");
                 reg3 = new AlgorithmRegOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
-                                             coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY,
-                                             rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol,
-                                             doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound,
+                        maxIterations, numMinima);
 
             }
         }
 
         reg3.addListener(this);
-
 
         createProgressBar(matchImage.getImageName(), reg3);
 
@@ -1262,10 +1253,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
         setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
 
-        float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
-        float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
-        float[] coarseRates = scriptParameters.getParams().getList("coarse_rate").getAsFloatArray();
-        float[] fineRates = scriptParameters.getParams().getList("fine_rate").getAsFloatArray();
+        final float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
+        final float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
+        final float[] coarseRates = scriptParameters.getParams().getList("coarse_rate").getAsFloatArray();
+        final float[] fineRates = scriptParameters.getParams().getList("fine_rate").getAsFloatArray();
 
         setCoarseBeginX(rotBegin[0]);
         setCoarseEndX(rotEnd[0]);
@@ -1290,16 +1281,15 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
         setCalcCOG(scriptParameters.getParams().getBoolean("do_calc_COG"));
         setOutOfBoundsIndex(scriptParameters.getParams().getInt("out_of_bounds_index"));
-        switch(outOfBoundsIndex) {
-            case 0: 
-                setFillValue((float)imageMin);
+        switch (outOfBoundsIndex) {
+            case 0:
+                setFillValue((float) imageMin);
                 break;
-            case 1: 
-                if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
-                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
+            case 1:
+                if ( (dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)
+                        || (dataType == ModelStorageBase.ARGB_FLOAT)) {
                     setFillValue(Float.NaN);
-                }
-                else {
+                } else {
                     setFillValue(0.0f);
                 }
                 break;
@@ -1307,13 +1297,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 setFillValue(scriptParameters.getParams().getFloat("fill_value"));
                 break;
             case 3:
-                setFillValue((float)imageMax);
+                setFillValue((float) imageMax);
                 break;
         }
 
-        setAdvancedSettings(scriptParameters.getParams().getInt("bracket_bound"),
-                            scriptParameters.getParams().getInt("max_iterations"),
-                            scriptParameters.getParams().getInt("num_minima"));
+        setAdvancedSettings(scriptParameters.getParams().getInt("bracket_bound"), scriptParameters.getParams().getInt(
+                "max_iterations"), scriptParameters.getParams().getInt("num_minima"));
     }
 
     /**
@@ -1338,20 +1327,14 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin",
-                                                                       new float[] {
-                                                                           rotateBeginX, rotateBeginY, rotateBeginZ
-                                                                       }));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end",
-                                                                       new float[] {
-                                                                           rotateEndX, rotateEndY, rotateEndZ
-                                                                       }));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate",
-                                                                       new float[] {
-                                                                           coarseRateX, coarseRateY, coarseRateZ
-                                                                       }));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("fine_rate",
-                                                                       new float[] { fineRateX, fineRateY, fineRateZ }));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("rotate_begin", new float[] {rotateBeginX, rotateBeginY, rotateBeginZ}));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("rotate_end", new float[] {rotateEndX, rotateEndY, rotateEndZ}));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("coarse_rate", new float[] {coarseRateX, coarseRateY, coarseRateZ}));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("fine_rate", new float[] {fineRateX, fineRateY, fineRateZ}));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_max_of_min_resolutions", maxOfMinResol));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
@@ -1366,14 +1349,14 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /**
      * Build advanced settings dialog. Returns JDialog.
-     *
-     * @param   bracketBound  DOCUMENT ME!
-     * @param   maxIter       DOCUMENT ME!
-     * @param   numMinima     DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param bracketBound DOCUMENT ME!
+     * @param maxIter DOCUMENT ME!
+     * @param numMinima DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    private JDialog buildAdvancedDialog(int bracketBound, int maxIter, int numMinima) {
+    private JDialog buildAdvancedDialog(final int bracketBound, final int maxIter, final int numMinima) {
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
 
@@ -1382,44 +1365,45 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         // Changed to non-modal after adding Help button 12/17/07
 
         // Setting panel
-        JPanel settingsPanel = new JPanel();
+        final JPanel settingsPanel = new JPanel();
         settingsPanel.setBorder(BorderFactory.createTitledBorder("Optimization settings"));
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
 
-        JPanel bracketPanel = new JPanel();
+        final JPanel bracketPanel = new JPanel();
         bracketPanel.setLayout(new BorderLayout(1, 3)); // BorderLayout(int hgap, int vgap)
         bracketPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
-        JLabel bracketBoundLabel = new JLabel("Multiple of tolerance to bracket the minimum: ", JLabel.LEFT);
+        final JLabel bracketBoundLabel = new JLabel("Multiple of tolerance to bracket the minimum: ",
+                SwingConstants.LEFT);
         bracketPanel.add(bracketBoundLabel, BorderLayout.WEST);
         bracketPanel.setToolTipText("Used for translation, scale and skew.");
         bracketBoundText = new JTextField(String.valueOf(bracketBound), 5);
         bracketBoundText.addFocusListener(this);
         bracketPanel.add(bracketBoundText, BorderLayout.CENTER);
 
-        JLabel bracketInstruct = new JLabel("Recommended values 10-60.", JLabel.RIGHT);
+        final JLabel bracketInstruct = new JLabel("Recommended values 10-60.", SwingConstants.RIGHT);
         bracketPanel.add(bracketInstruct, BorderLayout.SOUTH);
 
-        JPanel maxIterPanel = new JPanel();
+        final JPanel maxIterPanel = new JPanel();
         maxIterPanel.setLayout(new BorderLayout(1, 3));
         maxIterPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
-        JLabel maxIterationsLabel = new JLabel("Number of iterations: ", JLabel.LEFT);
+        final JLabel maxIterationsLabel = new JLabel("Number of iterations: ", SwingConstants.LEFT);
         maxIterPanel.add(maxIterationsLabel, BorderLayout.WEST);
         maxIterPanel.setToolTipText("Used for levelOne. Other levels are multiples of this #.");
         maxIterationsText = new JTextField(String.valueOf(maxIter), 5);
         maxIterationsText.addFocusListener(this);
-        
+
         maxIterPanel.add(maxIterationsText, BorderLayout.CENTER);
 
-        JLabel maxIterInstruct = new JLabel("Recommended value 1-5.", JLabel.RIGHT);
+        final JLabel maxIterInstruct = new JLabel("Recommended value 1-5.", SwingConstants.RIGHT);
         maxIterPanel.add(maxIterInstruct, BorderLayout.SOUTH);
 
-        JPanel numMinPanel = new JPanel();
+        final JPanel numMinPanel = new JPanel();
         numMinPanel.setLayout(new BorderLayout(1, 3));
         numMinPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
-        JLabel numMinLabel = new JLabel("Number of minima from Level 8 to test at Level 4: ", JLabel.LEFT);
+        final JLabel numMinLabel = new JLabel("Number of minima from Level 8 to test at Level 4: ", SwingConstants.LEFT);
         numMinPanel.add(numMinLabel, BorderLayout.WEST);
         numMinPanel.setToolTipText("Increasing will significantly increase processing time.");
         numMinText = new JTextField(String.valueOf(numMinima), 5);
@@ -1441,68 +1425,66 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         advancedDialog.getContentPane().add(settingsPanel, BorderLayout.NORTH);
 
         // Okay-Cancel Panel
-        JPanel okayCancelPanel = new JPanel(new FlowLayout());
-        JButton advCancelButton = new JButton("Cancel");
+        final JPanel okayCancelPanel = new JPanel(new FlowLayout());
+        final JButton advCancelButton = new JButton("Cancel");
         advCancelButton.setActionCommand("AdvancedCancel");
         advCancelButton.addActionListener(this);
         advCancelButton.setPreferredSize(new Dimension(120, 30));
         advCancelButton.setFont(serif12B);
 
         // okayCancelPanel.add(cancelButton);
-        JButton okayButton = new JButton("OK");
+        final JButton okayButton = new JButton("OK");
         okayButton.setActionCommand("AdvancedOkay");
         okayButton.addActionListener(this);
         okayButton.setPreferredSize(new Dimension(120, 30));
         okayButton.setFont(serif12B);
-        
+
         // Help Button
-        JButton helpButton = new JButton("Help");
+        final JButton helpButton = new JButton("Help");
         helpButton.setActionCommand("AdvancedHelp");
         helpButton.addActionListener(this);
-        helpButton.setPreferredSize(new Dimension(120,30));
+        helpButton.setPreferredSize(new Dimension(120, 30));
         helpButton.setFont(serif12B);
-        
+
         okayCancelPanel.add(okayButton);
         okayCancelPanel.add(advCancelButton);
         okayCancelPanel.add(helpButton);
 
         advancedDialog.getContentPane().add(okayCancelPanel, BorderLayout.SOUTH);
 
-        Rectangle dialogBounds = this.getBounds();
-        advancedDialog.setLocation((int) ((Toolkit.getDefaultToolkit().getScreenSize().width * 0.75) -
-                                          (dialogBounds.width / 2)),
-                                   (Toolkit.getDefaultToolkit().getScreenSize().height / 2) -
-                                   (dialogBounds.height / 2));
+        final Rectangle dialogBounds = this.getBounds();
+        advancedDialog.setLocation(
+                (int) ( (Toolkit.getDefaultToolkit().getScreenSize().width * 0.75) - (dialogBounds.width / 2)),
+                (Toolkit.getDefaultToolkit().getScreenSize().height / 2) - (dialogBounds.height / 2));
 
         advancedDialog.pack();
         advancedDialog.setVisible(true);
-
 
         return advancedDialog;
     }
 
     /**
      * Builds a list of images. Returns combobox.
-     *
-     * @param   image  DOCUMENT ME!
-     *
-     * @return  Newly created combo box.
+     * 
+     * @param image DOCUMENT ME!
+     * 
+     * @return Newly created combo box.
      */
-    private JComboBox buildImgComboBox(ModelImage image) {
-        JComboBox comboBox = new JComboBox();
+    private JComboBox buildImgComboBox(final ModelImage image) {
+        final JComboBox comboBox = new JComboBox();
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        Enumeration names = UI.getRegisteredImageNames();
+        final Enumeration<String> names = UI.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
+            final String name = names.nextElement();
 
-            if (!name.equals(image.getImageName())) {
-                ModelImage img = UI.getRegisteredImageByName(name);
+            if ( !name.equals(image.getImageName())) {
+                final ModelImage img = UI.getRegisteredImageByName(name);
 
-                if ((image.getNDims() == img.getNDims()) && (image.isColorImage() == img.isColorImage()) &&
-                        (UI.getFrameContainingImage(img) != null)) {
+                if ( (image.getNDims() == img.getNDims()) && (image.isColorImage() == img.isColorImage())
+                        && (UI.getFrameContainingImage(img) != null)) {
                     comboBox.addItem(name);
                 }
             }
@@ -1522,19 +1504,19 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         setForeground(Color.black);
         setTitle("Optimized Automatic Image Registration 3D");
 
-        JPanel optPanel = new JPanel();
+        final JPanel optPanel = new JPanel();
         optPanel.setLayout(new GridBagLayout());
         optPanel.setBorder(buildTitledBorder("Input Options"));
 
-        String matchName = matchImage.getImageName();
-        JLabel labelImage = new JLabel("Register [" + matchName + "] to:");
+        final String matchName = matchImage.getImageName();
+        final JLabel labelImage = new JLabel("Register [" + matchName + "] to:");
         labelImage.setForeground(Color.black);
         labelImage.setFont(serif12);
         labelImage.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         comboBoxImage = buildImgComboBox(matchImage);
 
-        JLabel labelDOF = new JLabel("Degrees of freedom:");
+        final JLabel labelDOF = new JLabel("Degrees of freedom:");
         labelDOF.setForeground(Color.black);
         labelDOF.setFont(serif12);
         labelDOF.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1550,7 +1532,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         comboBoxDOF.setSelectedIndex(3);
         comboBoxDOF.addItemListener(this);
 
-        JLabel labelCost = new JLabel("Cost function:");
+        final JLabel labelCost = new JLabel("Cost function:");
         labelCost.setForeground(Color.black);
         labelCost.setFont(serif12);
         labelCost.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1560,7 +1542,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         comboBoxCostFunct.setBackground(Color.white);
         comboBoxCostFunct.setToolTipText("Cost function");
 
-        if (!doColor) {
+        if ( !doColor) {
             comboBoxCostFunct.addItem("Correlation ratio");
         }
 
@@ -1570,21 +1552,21 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         // comboBoxCostFunct.addItem("Least squares smoothed");
         // comboBoxCostFunct.addItem("Mutual information");
         // comboBoxCostFunct.addItem("Mutual information smoothed");
-        if (!doColor) {
+        if ( !doColor) {
             comboBoxCostFunct.addItem("Normalized cross correlation");
         }
 
         // comboBoxCostFunct.addItem("Normalized cross correlation smoothed");
-        if (!doColor) {
+        if ( !doColor) {
             comboBoxCostFunct.addItem("Normalized mutual information");
             comboBoxCostFunct.addItem("Normalized mutual information - GPU");
-            //comboBoxCostFunct.addItem("Normalized mutual information - GPU2");
+            // comboBoxCostFunct.addItem("Normalized mutual information - GPU2");
         }
 
         // comboBoxCostFunct.addItem("Normalized mutual information smoothed");
         comboBoxCostFunct.setSelectedIndex(0);
 
-        JLabel labelInterp = new JLabel("Interpolation:");
+        final JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
         labelInterp.setFont(serif12);
         labelInterp.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1610,7 +1592,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         minMaxCheckbox.addItemListener(this);
 
         // Note the next 3 checkboxes are initialized here, for cases when the user doesn't
-        // choose to edit the Advanced Settings.  They will only be made visible in the
+        // choose to edit the Advanced Settings. They will only be made visible in the
         // Advanced Settings dialog.
         sampleCheckbox = new JCheckBox("Subsample image for speed");
         sampleCheckbox.setFont(serif12);
@@ -1631,7 +1613,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         calcLSBox.setFont(serif12);
         calcLSBox.setForeground(Color.black);
 
-        Insets insets = new Insets(0, 2, 0, 2);
+        final Insets insets = new Insets(0, 2, 0, 2);
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1687,7 +1669,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         gbc.gridwidth = 7;
         optPanel.add(minMaxCheckbox, gbc);
 
-
         gbc.gridx = 0;
         gbc.gridy = 6;
         gbc.weightx = 1;
@@ -1700,7 +1681,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         universalCheckbox.setSelected(true);
         universalCheckbox.addItemListener(this);
 
-        ButtonGroup dimensionGroup = new ButtonGroup();
+        final ButtonGroup dimensionGroup = new ButtonGroup();
 
         xRadio = new JRadioButton("X");
         xRadio.setFont(serif12);
@@ -1727,27 +1708,26 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         zRadio.addItemListener(this);
         dimensionGroup.add(zRadio);
 
-        JPanel xyzPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        final JPanel xyzPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         xyzPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         xyzPanel.add(xRadio);
         xyzPanel.add(yRadio);
         xyzPanel.add(zRadio);
 
-
         // Rotation Range Panel
         rotateRangePanelX = new JPanel(new FlowLayout(FlowLayout.LEFT));
         rotateRangePanelX.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelRotateRangeX = new JLabel("Rotation angle sampling range:");
+        final JLabel labelRotateRangeX = new JLabel("Rotation angle sampling range:");
         labelRotateRangeX.setForeground(Color.black);
         labelRotateRangeX.setFont(serif12);
 
-        JLabel labelRotateRangeToX = new JLabel("to");
+        final JLabel labelRotateRangeToX = new JLabel("to");
         labelRotateRangeToX.setForeground(Color.black);
         labelRotateRangeToX.setFont(serif12);
 
-        JLabel labelRotateDegreesX = new JLabel("degrees");
+        final JLabel labelRotateDegreesX = new JLabel("degrees");
         labelRotateDegreesX.setFont(serif12);
 
         rotateBeginTextX = new JTextField("-30", 3);
@@ -1763,12 +1743,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         coarsePanelX = new JPanel(new FlowLayout(FlowLayout.LEFT));
         coarsePanelX.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelCoarseX = new JLabel("Coarse angle increment: ");
+        final JLabel labelCoarseX = new JLabel("Coarse angle increment: ");
         labelCoarseX.setForeground(Color.black);
         labelCoarseX.setFont(serif12);
         labelCoarseX.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelCoarseDegreesX = new JLabel("degrees");
+        final JLabel labelCoarseDegreesX = new JLabel("degrees");
         labelCoarseDegreesX.setFont(serif12);
         coarseRateTextX = new JTextField("15", 3);
 
@@ -1780,12 +1760,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         // Fine sampling rate panel
         finePanelX = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        JLabel labelFineX = new JLabel("Fine angle increment:");
+        final JLabel labelFineX = new JLabel("Fine angle increment:");
         labelFineX.setForeground(Color.black);
         labelFineX.setFont(serif12);
         labelFineX.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelFineDegreesX = new JLabel("degrees");
+        final JLabel labelFineDegreesX = new JLabel("degrees");
         labelFineDegreesX.setFont(serif12);
         fineRateTextX = new JTextField("6", 3);
 
@@ -1830,15 +1810,15 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         rotateRangePanelY = new JPanel(new FlowLayout(FlowLayout.LEFT));
         rotateRangePanelY.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelRotateRangeY = new JLabel("Rotation angle sampling range:");
+        final JLabel labelRotateRangeY = new JLabel("Rotation angle sampling range:");
         labelRotateRangeY.setForeground(Color.black);
         labelRotateRangeY.setFont(serif12);
 
-        JLabel labelRotateRangeToY = new JLabel("to");
+        final JLabel labelRotateRangeToY = new JLabel("to");
         labelRotateRangeToY.setForeground(Color.black);
         labelRotateRangeToY.setFont(serif12);
 
-        JLabel labelRotateDegreesY = new JLabel("degrees");
+        final JLabel labelRotateDegreesY = new JLabel("degrees");
         labelRotateDegreesY.setFont(serif12);
 
         rotateBeginTextY = new JTextField("-30", 3);
@@ -1854,12 +1834,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         coarsePanelY = new JPanel(new FlowLayout(FlowLayout.LEFT));
         coarsePanelY.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelCoarseY = new JLabel("Coarse angle increment: ");
+        final JLabel labelCoarseY = new JLabel("Coarse angle increment: ");
         labelCoarseY.setForeground(Color.black);
         labelCoarseY.setFont(serif12);
         labelCoarseY.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelCoarseDegreesY = new JLabel("degrees");
+        final JLabel labelCoarseDegreesY = new JLabel("degrees");
         labelCoarseDegreesY.setFont(serif12);
 
         coarseRateTextY = new JTextField("15", 3);
@@ -1872,12 +1852,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         // Fine sampling rate panel
         finePanelY = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        JLabel labelFineY = new JLabel("Fine angle increment:");
+        final JLabel labelFineY = new JLabel("Fine angle increment:");
         labelFineY.setForeground(Color.black);
         labelFineY.setFont(serif12);
         labelFineY.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelFineDegreesY = new JLabel("degrees");
+        final JLabel labelFineDegreesY = new JLabel("degrees");
         labelFineDegreesY.setFont(serif12);
 
         fineRateTextY = new JTextField("6", 3);
@@ -1890,15 +1870,15 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         rotateRangePanelZ = new JPanel(new FlowLayout(FlowLayout.LEFT));
         rotateRangePanelZ.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelRotateRangeZ = new JLabel("Rotation angle sampling range:");
+        final JLabel labelRotateRangeZ = new JLabel("Rotation angle sampling range:");
         labelRotateRangeZ.setForeground(Color.black);
         labelRotateRangeZ.setFont(serif12);
 
-        JLabel labelRotateRangeToZ = new JLabel("to");
+        final JLabel labelRotateRangeToZ = new JLabel("to");
         labelRotateRangeToZ.setForeground(Color.black);
         labelRotateRangeToZ.setFont(serif12);
 
-        JLabel labelRotateDegreesZ = new JLabel("degrees");
+        final JLabel labelRotateDegreesZ = new JLabel("degrees");
         labelRotateDegreesZ.setFont(serif12);
 
         rotateBeginTextZ = new JTextField("-30", 3);
@@ -1914,12 +1894,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         coarsePanelZ = new JPanel(new FlowLayout(FlowLayout.LEFT));
         coarsePanelZ.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelCoarseZ = new JLabel("Coarse angle increment: ");
+        final JLabel labelCoarseZ = new JLabel("Coarse angle increment: ");
         labelCoarseZ.setForeground(Color.black);
         labelCoarseZ.setFont(serif12);
         labelCoarseZ.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelCoarseDegreesZ = new JLabel("degrees");
+        final JLabel labelCoarseDegreesZ = new JLabel("degrees");
         labelCoarseDegreesZ.setFont(serif12);
 
         coarseRateTextZ = new JTextField("15", 3);
@@ -1932,12 +1912,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         // Fine sampling rate panel
         finePanelZ = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        JLabel labelFineZ = new JLabel("Fine angle increment:");
+        final JLabel labelFineZ = new JLabel("Fine angle increment:");
         labelFineZ.setForeground(Color.black);
         labelFineZ.setFont(serif12);
         labelFineZ.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel labelFineDegreesZ = new JLabel("degrees");
+        final JLabel labelFineDegreesZ = new JLabel("degrees");
         labelFineDegreesZ.setFont(serif12);
 
         fineRateTextZ = new JTextField("6", 3);
@@ -1947,7 +1927,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         finePanelZ.add(labelFineDegreesZ);
         finePanelZ.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        ButtonGroup weightGroup = new ButtonGroup();
+        final ButtonGroup weightGroup = new ButtonGroup();
 
         noneRadio = new JRadioButton("No weight");
         noneRadio.setFont(serif12);
@@ -1994,7 +1974,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         textInput.setFont(serif12);
         textInput.setEnabled(false);
 
-        JPanel weightPanel = new JPanel(new GridBagLayout());
+        final JPanel weightPanel = new JPanel(new GridBagLayout());
         weightPanel.setBorder(buildTitledBorder("Weighted images"));
 
         gbc.gridx = 0;
@@ -2034,7 +2014,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         gbc.fill = GridBagConstraints.HORIZONTAL;
         weightPanel.add(textInput, gbc);
 
-        JPanel outPanel = new JPanel();
+        final JPanel outPanel = new JPanel();
         outPanel.setLayout(new GridBagLayout());
         outPanel.setBorder(buildTitledBorder("Output Options"));
 
@@ -2062,29 +2042,29 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         comboBoxInterp2.addItem("Heptic Lagrangian");
         comboBoxInterp2.addItem("Windowed sinc");
         comboBoxInterp2.addItem("Nearest Neighbor");
-        
+
         outOfBoundsLabel = new JLabel("Out of bounds data:");
         outOfBoundsLabel.setForeground(Color.black);
         outOfBoundsLabel.setFont(serif12);
         outOfBoundsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         outOfBoundsComboBox = new JComboBox();
         outOfBoundsComboBox.setFont(serif12);
         outOfBoundsComboBox.setBackground(Color.white);
         outOfBoundsComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         outOfBoundsComboBox.addItem("Image minimum");
         outOfBoundsComboBox.addItem("If float NaN, else 0");
         outOfBoundsComboBox.addItem("User defined");
         outOfBoundsComboBox.addItem("Image maximum");
         outOfBoundsComboBox.setSelectedIndex(0);
         outOfBoundsComboBox.addItemListener(this);
-        
+
         valueLabel = new JLabel("Out of bounds intensity value:");
         valueLabel.setForeground(Color.black);
         valueLabel.setFont(serif12);
         valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         valueText = new JTextField(String.valueOf(imageMin));
         valueText.setFont(serif12);
         valueText.setEnabled(false);
@@ -2126,7 +2106,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(valueText, gbc);
 
-        JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
         buildCancelButton();
@@ -2134,14 +2114,14 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         buildHelpButton();
         buttonPanel.add(helpButton);
 
-        JButton advancedButton = new JButton("Advanced settings");
+        final JButton advancedButton = new JButton("Advanced settings");
         advancedButton.setActionCommand("AdvancedSettings");
         advancedButton.addActionListener(this);
         advancedButton.setPreferredSize(new Dimension(140, 30));
         advancedButton.setFont(serif12B);
         buttonPanel.add(advancedButton);
 
-        JPanel mainPanel = new JPanel();
+        final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         optPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -2161,8 +2141,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /**
      * Sets the variables needed to call the registration algorithm based on the values entered in the dialog.
-     *
-     * @return  <code>true</code> if the variables are properly set, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> if the variables are properly set, <code>false</code> otherwise.
      */
     private boolean setVariables() {
         int i;
@@ -2179,7 +2159,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             fileNameWInput = textInput.getText();
 
             try {
-                FileIO fileIO = new FileIO();
+                final FileIO fileIO = new FileIO();
                 refWeightImage = fileIO.readImage(fileNameWRef, directoryWRef, false, null);
 
                 if (refWeightImage == null) {
@@ -2221,7 +2201,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                         return false;
                     }
                 }
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory in JDialogRegistrationOAR3D");
 
                 return false;
@@ -2230,7 +2210,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
         if (doColor) {
 
-            if ((!weighted) && (!voisOnly)) {
+            if ( ( !weighted) && ( !voisOnly)) {
 
                 switch (comboBoxCostFunct.getSelectedIndex()) {
 
@@ -2252,7 +2232,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         } // if (doColor)
         else { // black and white
 
-            if ((!weighted) && (!voisOnly)) {
+            if ( ( !weighted) && ( !voisOnly)) {
 
                 switch (comboBoxCostFunct.getSelectedIndex()) {
 
@@ -2260,7 +2240,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                         cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
                         costName = "CORRELATION_RATIO_SMOOTHED";
                         break;
-                        // case 0:  cost = AlgorithmCostFunctions.CORRELATION_RATIO;                     break;
+                    // case 0: cost = AlgorithmCostFunctions.CORRELATION_RATIO; break;
 
                     case 1:
                         cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED;
@@ -2269,13 +2249,13 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                         // cost = AlgorithmCostFunctions.LEAST_SQUARES;
                         // costName = "LEAST_SQUARES_SMOOTHED";
                         break;
-                        // case 2:  cost = AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED;           break;
+                    // case 2: cost = AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED; break;
 
                     case 2:
                         cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED;
                         costName = "NORMALIZED_XCORRELATION_SMOOTHED";
                         break;
-                        // case 3:  cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION;         break;
+                    // case 3: cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION; break;
 
                     case 3:
                         cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED;
@@ -2286,7 +2266,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                         cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU;
                         costName = "NORMALIZED_MUTUAL_INFORMATION_GPU";
                         break;
-                        
+
                     case 5:
                         cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_GPU_LM;
                         costName = "NORMALIZED_MUTUAL_INFORMATION_GPU_LM";
@@ -2310,7 +2290,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                         cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_WGT;
                         costName = "LEAST_SQUARES_SMOOTHED_WGT";
                         break;
-                        // case 2:  cost = AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED_WGT;           break;
+                    // case 2: cost = AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED_WGT; break;
 
                     case 2:
                         cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED_WGT;
@@ -2382,13 +2362,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             case 6:
                 interp = AlgorithmTransform.WSINC;
                 break;
-                // case 7:  interp = AlgorithmTransform.NEAREST_NEIGHBOR;  break;
+            // case 7: interp = AlgorithmTransform.NEAREST_NEIGHBOR; break;
 
             default:
                 interp = AlgorithmTransform.TRILINEAR;
                 break;
         }
-
 
         switch (comboBoxInterp2.getSelectedIndex()) {
 
@@ -2432,7 +2411,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         displayTransform = transformCheckbox.isSelected();
         fastMode = fastModeCheckbox.isSelected();
 
-        if (!testParameter(rotateBeginTextX.getText(), -360, 360)) {
+        if ( !JDialogBase.testParameter(rotateBeginTextX.getText(), -360, 360)) {
             showX();
             rotateBeginTextX.requestFocus();
             rotateBeginTextX.selectAll();
@@ -2442,7 +2421,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             rotateBeginX = Float.valueOf(rotateBeginTextX.getText()).floatValue();
         }
 
-        if (!testParameter(rotateEndTextX.getText(), -360, 360)) {
+        if ( !JDialogBase.testParameter(rotateEndTextX.getText(), -360, 360)) {
             showX();
             rotateEndTextX.requestFocus();
             rotateEndTextX.selectAll();
@@ -2452,7 +2431,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             rotateEndX = Float.valueOf(rotateEndTextX.getText()).floatValue();
         }
 
-        if (!testParameter(coarseRateTextX.getText(), 0.01, 360)) {
+        if ( !JDialogBase.testParameter(coarseRateTextX.getText(), 0.01, 360)) {
             showX();
             coarseRateTextX.requestFocus();
             coarseRateTextX.selectAll();
@@ -2471,11 +2450,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             return false;
         }
 
-        if (((rotateEndX - rotateBeginX) / coarseRateX) < 1) {
-            int response = JOptionPane.showConfirmDialog(this,
-                                                         "Warning: with such a large rateX, there will only be 1 sampling.  Continue?",
-                                                         "Sampling warning", JOptionPane.YES_NO_OPTION,
-                                                         JOptionPane.WARNING_MESSAGE);
+        if ( ( (rotateEndX - rotateBeginX) / coarseRateX) < 1) {
+            final int response = JOptionPane.showConfirmDialog(this,
+                    "Warning: with such a large rateX, there will only be 1 sampling.  Continue?", "Sampling warning",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
             if (response == JOptionPane.NO_OPTION) {
                 showX();
@@ -2486,7 +2464,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             }
         }
 
-        if (!testParameter(fineRateTextX.getText(), 0.01, 360)) {
+        if ( !JDialogBase.testParameter(fineRateTextX.getText(), 0.01, 360)) {
             showX();
             fineRateTextX.requestFocus();
             fineRateTextX.selectAll();
@@ -2496,11 +2474,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             fineRateX = Float.valueOf(fineRateTextX.getText()).floatValue();
         }
 
-        if (((rotateEndX - rotateBeginX) / fineRateX) < 1) {
-            int response = JOptionPane.showConfirmDialog(this,
-                                                         "Warning: with such a large rateX, there will only be 1 sampling.  Continue?",
-                                                         "Sampling warning", JOptionPane.YES_NO_OPTION,
-                                                         JOptionPane.WARNING_MESSAGE);
+        if ( ( (rotateEndX - rotateBeginX) / fineRateX) < 1) {
+            final int response = JOptionPane.showConfirmDialog(this,
+                    "Warning: with such a large rateX, there will only be 1 sampling.  Continue?", "Sampling warning",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
             if (response == JOptionPane.NO_OPTION) {
                 showX();
@@ -2522,7 +2499,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             fineRateZ = fineRateX;
         } else { // universalCheckbox not selected
 
-            if (!testParameter(rotateBeginTextY.getText(), -360, 360)) {
+            if ( !JDialogBase.testParameter(rotateBeginTextY.getText(), -360, 360)) {
                 showY();
                 rotateBeginTextY.requestFocus();
                 rotateBeginTextY.selectAll();
@@ -2532,7 +2509,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 rotateBeginY = Float.valueOf(rotateBeginTextY.getText()).floatValue();
             }
 
-            if (!testParameter(rotateEndTextY.getText(), -360, 360)) {
+            if ( !JDialogBase.testParameter(rotateEndTextY.getText(), -360, 360)) {
                 showY();
                 rotateEndTextY.requestFocus();
                 rotateEndTextY.selectAll();
@@ -2542,7 +2519,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 rotateEndY = Float.valueOf(rotateEndTextY.getText()).floatValue();
             }
 
-            if (!testParameter(coarseRateTextY.getText(), 0.01, 360)) {
+            if ( !JDialogBase.testParameter(coarseRateTextY.getText(), 0.01, 360)) {
                 showY();
                 coarseRateTextY.requestFocus();
                 coarseRateTextY.selectAll();
@@ -2561,11 +2538,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 return false;
             }
 
-            if (((rotateEndY - rotateBeginY) / coarseRateY) < 1) {
-                int response = JOptionPane.showConfirmDialog(this,
-                                                             "Warning: with such a large rateY, there will only be 1 sampling.  Continue?",
-                                                             "Sampling warning", JOptionPane.YES_NO_OPTION,
-                                                             JOptionPane.WARNING_MESSAGE);
+            if ( ( (rotateEndY - rotateBeginY) / coarseRateY) < 1) {
+                final int response = JOptionPane.showConfirmDialog(this,
+                        "Warning: with such a large rateY, there will only be 1 sampling.  Continue?",
+                        "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (response == JOptionPane.NO_OPTION) {
                     showY();
@@ -2576,7 +2552,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 }
             }
 
-            if (!testParameter(fineRateTextY.getText(), 0.01, 360)) {
+            if ( !JDialogBase.testParameter(fineRateTextY.getText(), 0.01, 360)) {
                 showY();
                 fineRateTextY.requestFocus();
                 fineRateTextY.selectAll();
@@ -2586,11 +2562,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 fineRateY = Float.valueOf(fineRateTextY.getText()).floatValue();
             }
 
-            if (((rotateEndY - rotateBeginY) / fineRateY) < 1) {
-                int response = JOptionPane.showConfirmDialog(this,
-                                                             "Warning: with such a large rateY, there will only be 1 sampling.  Continue?",
-                                                             "Sampling warning", JOptionPane.YES_NO_OPTION,
-                                                             JOptionPane.WARNING_MESSAGE);
+            if ( ( (rotateEndY - rotateBeginY) / fineRateY) < 1) {
+                final int response = JOptionPane.showConfirmDialog(this,
+                        "Warning: with such a large rateY, there will only be 1 sampling.  Continue?",
+                        "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (response == JOptionPane.NO_OPTION) {
                     showY();
@@ -2601,7 +2576,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 }
             }
 
-            if (!testParameter(rotateBeginTextZ.getText(), -360, 360)) {
+            if ( !JDialogBase.testParameter(rotateBeginTextZ.getText(), -360, 360)) {
                 showZ();
                 rotateBeginTextZ.requestFocus();
                 rotateBeginTextZ.selectAll();
@@ -2611,7 +2586,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 rotateBeginZ = Float.valueOf(rotateBeginTextZ.getText()).floatValue();
             }
 
-            if (!testParameter(rotateEndTextZ.getText(), -360, 360)) {
+            if ( !JDialogBase.testParameter(rotateEndTextZ.getText(), -360, 360)) {
                 showZ();
                 rotateEndTextZ.requestFocus();
                 rotateEndTextZ.selectAll();
@@ -2621,7 +2596,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 rotateEndZ = Float.valueOf(rotateEndTextZ.getText()).floatValue();
             }
 
-            if (!testParameter(coarseRateTextZ.getText(), 0.01, 360)) {
+            if ( !JDialogBase.testParameter(coarseRateTextZ.getText(), 0.01, 360)) {
                 showZ();
                 coarseRateTextZ.requestFocus();
                 coarseRateTextZ.selectAll();
@@ -2640,11 +2615,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 return false;
             }
 
-            if (((rotateEndZ - rotateBeginZ) / coarseRateZ) < 1) {
-                int response = JOptionPane.showConfirmDialog(this,
-                                                             "Warning: with such a large rateZ, there will only be 1 sampling.  Continue?",
-                                                             "Sampling warning", JOptionPane.YES_NO_OPTION,
-                                                             JOptionPane.WARNING_MESSAGE);
+            if ( ( (rotateEndZ - rotateBeginZ) / coarseRateZ) < 1) {
+                final int response = JOptionPane.showConfirmDialog(this,
+                        "Warning: with such a large rateZ, there will only be 1 sampling.  Continue?",
+                        "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (response == JOptionPane.NO_OPTION) {
                     showZ();
@@ -2655,7 +2629,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 }
             }
 
-            if (!testParameter(fineRateTextZ.getText(), 0.01, 360)) {
+            if ( !JDialogBase.testParameter(fineRateTextZ.getText(), 0.01, 360)) {
                 showZ();
                 fineRateTextZ.requestFocus();
                 fineRateTextZ.selectAll();
@@ -2665,11 +2639,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 fineRateZ = Float.valueOf(fineRateTextZ.getText()).floatValue();
             }
 
-            if (((rotateEndZ - rotateBeginZ) / fineRateZ) < 1) {
-                int response = JOptionPane.showConfirmDialog(this,
-                                                             "Warning: with such a large rateZ, there will only be 1 sampling.  Continue?",
-                                                             "Sampling warning", JOptionPane.YES_NO_OPTION,
-                                                             JOptionPane.WARNING_MESSAGE);
+            if ( ( (rotateEndZ - rotateBeginZ) / fineRateZ) < 1) {
+                final int response = JOptionPane.showConfirmDialog(this,
+                        "Warning: with such a large rateZ, there will only be 1 sampling.  Continue?",
+                        "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (response == JOptionPane.NO_OPTION) {
                     showZ();
@@ -2685,35 +2658,35 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             // check that there actually are VOIs there
             // and propagate the VOIs to all slices
-            ViewVOIVector VOIs = (ViewVOIVector) refImage.getVOIs();
+            ViewVOIVector VOIs = refImage.getVOIs();
             int nVOI = VOIs.size();
 
             if (nVOI < 1) {
-                MipavUtil.displayError("There must be at least one VOI in " + refImage.getImageName() +
-                                       " to register.");
+                MipavUtil
+                        .displayError("There must be at least one VOI in " + refImage.getImageName() + " to register.");
 
                 return false;
             }
 
-            VOIs = (ViewVOIVector) matchImage.getVOIs();
+            VOIs = matchImage.getVOIs();
             nVOI = VOIs.size();
 
             if (nVOI < 1) {
-                MipavUtil.displayError("There must be at least one VOI in " + matchImage.getImageName() +
-                                       " to register.");
+                MipavUtil.displayError("There must be at least one VOI in " + matchImage.getImageName()
+                        + " to register.");
 
                 return false;
             }
         } // if (voisOnly)
 
         doSubsample = sampleCheckbox.isSelected();
-        
+
         fillValue = Float.valueOf(valueText.getText()).floatValue();
         outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();
         if (outOfBoundsIndex == 2) {
             // user defined value
             boolean success = testType(dataType, fillValue);
-            if (!success) {
+            if ( !success) {
                 MipavUtil.displayError("User defined value is out of the data type range");
                 valueText.requestFocus();
                 valueText.selectAll();
@@ -2723,106 +2696,105 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
         return true;
     }
-    
+
     /**
-     * Determine if the value is in the image type range and
-     * within the float range since AlgorithmTransform does
-     * not use double buffers.
-     *
-     * @param   type    image type
-     * @param   value   value tested
-     *
-     * @return  true if value is within acceptable range
+     * Determine if the value is in the image type range and within the float range since AlgorithmTransform does not
+     * use double buffers.
+     * 
+     * @param type image type
+     * @param value value tested
+     * 
+     * @return true if value is within acceptable range
      */
-    private boolean testType(int type, float value) {
+    private boolean testType(final int type, final float value) {
 
         if (type == ModelStorageBase.BOOLEAN) {
 
-            if ((value < 0) || (value > 1)) {
+            if ( (value < 0) || (value > 1)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.BYTE) {
 
-            if ((value < -128) || (value > 127)) {
+            if ( (value < -128) || (value > 127)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.UBYTE) {
 
-            if ((value < 0) || (value > 255)) {
+            if ( (value < 0) || (value > 255)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.SHORT) {
 
-            if ((value < -32768) || (value > 32767)) {
+            if ( (value < -32768) || (value > 32767)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.USHORT) {
 
-            if ((value < 0) || (value > 65535)) {
+            if ( (value < 0) || (value > 65535)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.INTEGER) {
 
-            if ((value < Integer.MIN_VALUE) || (value > Integer.MAX_VALUE)) {
+            if ( (value < Integer.MIN_VALUE) || (value > Integer.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.UINTEGER) {
 
-            if ((value < 0) || (value > 4294967295L)) {
+            if ( (value < 0) || (value > 4294967295L)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.LONG) {
 
-            if ((value < Long.MIN_VALUE) || (value > Long.MAX_VALUE)) {
+            if ( (value < Long.MIN_VALUE) || (value > Long.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.FLOAT) {
 
-            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+            if ( (value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.DOUBLE) {
             // Float buffers are used in the AlgorithmTransform routines
-            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+            if ( (value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.ARGB) {
 
-            if ((value < 0) || (value > 255)) {
+            if ( (value < 0) || (value > 255)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.ARGB_USHORT) {
 
-            if ((value < 0) || (value > 65535)) {
+            if ( (value < 0) || (value > 65535)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.ARGB_FLOAT) {
 
-            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+            if ( (value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
@@ -2968,5 +2940,131 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         xRadio.setEnabled(true);
         yRadio.setEnabled(true);
         zRadio.setEnabled(true);
+    }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Registration");
+            }
+
+            public String getDescription() {
+                return new String("Perform a linear registration of one 3D volume to a target 3D volume.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Perform a linear registration of one 3D volume to a target 3D volume.");
+            }
+
+            public String getShortLabel() {
+                return new String("OAR3D");
+            }
+
+            public String getLabel() {
+                return new String("Optimized automatic registration 3D");
+            }
+
+            public String getName() {
+                return new String("Optimized automatic registration 3D");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            // match image
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+
+            table.put(new ParameterExternalImage("reference_image"));
+
+            table.put(new ParameterBoolean("do_use_weight_images", false));
+            table.put(new ParameterExternalImage("input_weight_image"));
+            table.put(new ParameterExternalImage("reference_weight_image"));
+
+            table.put(new ParameterInt("degrees_of_freedom", 12));
+            table.put(new ParameterInt("initial_interpolation_type", 0));
+            table.put(new ParameterInt("final_interpolation_type", 0));
+            table.put(new ParameterInt("cost_function_type", 1));
+            table.put(new ParameterList("rotate_begin", Parameter.PARAM_FLOAT, "-30,-30,-30"));
+            table.put(new ParameterList("rotate_end", Parameter.PARAM_FLOAT, "30,30,30"));
+            table.put(new ParameterList("coarse_rate", Parameter.PARAM_FLOAT, "15,15,15"));
+            table.put(new ParameterList("fine_rate", Parameter.PARAM_FLOAT, "6,6,6"));
+            table.put(new ParameterBoolean("do_display_transform", true));
+            table.put(new ParameterBoolean("do_use_max_of_min_resolutions", true));
+            table.put(new ParameterBoolean("do_subsample", true));
+            table.put(new ParameterBoolean("do_use_fast_mode", true));
+            table.put(new ParameterBoolean("do_calc_COG", true));
+            table.put(new ParameterInt("out_of_bounds_index", 0));
+            table.put(new ParameterFloat("fill_value", 0));
+            table.put(new ParameterInt("bracket_bound", 10));
+            table.put(new ParameterInt("max_iterations", 2));
+            table.put(new ParameterInt("num_minima", 3));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                // algo produced a new result image
+                return getResultImage().getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

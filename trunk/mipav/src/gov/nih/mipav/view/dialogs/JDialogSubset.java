@@ -2,17 +2,16 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.awt.event.*;
-
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.util.Vector;
 
 import javax.swing.*;
 
@@ -21,14 +20,16 @@ import javax.swing.*;
  * Creates the dialog to create a 3D subset image from a 4D image. User selects dimension to be eliminated and the value
  * of that dimension in the 3D subset. Allows only 4D images; 2D or 3D images would not make sense with this operation.
  */
-public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 7757821847126335458L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private int[] destExtents; // length along an axis of the destination image
@@ -81,35 +82,37 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
     /** DOCUMENT ME! */
     private int zSlices;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogSubset() { }
+    public JDialogSubset() {}
 
     /**
      * Creates new dialog for getting subset.
-     *
-     * @param  theParentFrame  Parent frame
-     * @param  im              Source image
+     * 
+     * @param theParentFrame Parent frame
+     * @param im Source image
      */
-    public JDialogSubset(Frame theParentFrame, ModelImage im) {
+    public JDialogSubset(final Frame theParentFrame, final ModelImage im) {
         super(theParentFrame, false);
         image = im; // set the image from the arguments to an image in this class
         userInterface = ViewUserInterface.getReference();
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     *
-     * @param  event  Event that triggers function
+     * 
+     * @param event Event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
         if (command.equals("Extract")) {
 
@@ -121,13 +124,13 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("U4003");
         } else if (command.equals("XAxis")) {
-            labelSlice.setText("Select index from 0 to " + (xSlices-1));
+            labelSlice.setText("Select index from 0 to " + (xSlices - 1));
         } else if (command.equals("YAxis")) {
-            labelSlice.setText("Select index from 0 to " + (ySlices-1));
+            labelSlice.setText("Select index from 0 to " + (ySlices - 1));
         } else if (command.equals("ZAxis")) {
-            labelSlice.setText("Select index from 0 to " + (zSlices-1));
+            labelSlice.setText("Select index from 0 to " + (zSlices - 1));
         } else if (command.equals("TAxis")) {
-            labelSlice.setText("Select index from 0 to " + (tSlices-1));
+            labelSlice.setText("Select index from 0 to " + (tSlices - 1));
         }
     }
 
@@ -138,21 +141,21 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
-     *
-     * @param  algorithm  Algorithm that caused the event.
+     * 
+     * @param algorithm Algorithm that caused the event.
      */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
+    public void algorithmPerformed(final AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmSubset) {
 
-            if ((subsetAlgo.isCompleted() == true) && (resultImage != null)) {
+            if ( (subsetAlgo.isCompleted() == true) && (resultImage != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
 
                     // put the new image into a new frame
                     new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("JDialogSubset reports: out of memory; " + "unable to open a new frame");
                 }
             } else if (resultImage == null) {
@@ -160,13 +163,13 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registed to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
+                final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
                     ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
-                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                    if ( ((Frame) (imageFrames.elementAt(i))) != parentFrame) {
                         userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
                     }
                 }
@@ -190,6 +193,9 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
             insertScriptLine();
         }
 
+        // save the completion status for later
+        setComplete(algorithm.isCompleted());
+
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
         subsetAlgo.finalize();
@@ -199,8 +205,8 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
 
     /**
      * Accessor that returns the image.
-     *
-     * @return  the result image
+     * 
+     * @return the result image
      */
     public ModelImage getResultImage() {
         return resultImage;
@@ -208,19 +214,19 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
 
     /**
      * Accessor that sets the Dimension to remove according to the parameter.
-     *
-     * @param  dim  Which dimension to remove (either REMOVE_X, REMOVE_Y, REMOVE_Z, REMOVE_T)
+     * 
+     * @param dim Which dimension to remove (either REMOVE_X, REMOVE_Y, REMOVE_Z, REMOVE_T)
      */
-    public void setRemoveDim(int dim) {
+    public void setRemoveDim(final int dim) {
         removeDim = dim;
     }
 
     /**
      * Accessor that sets the slice number to be used to the parameter.
-     *
-     * @param  slice  The slice index number to be use
+     * 
+     * @param slice The slice index number to be use
      */
-    public void setSliceNum(int slice) {
+    public void setSliceNum(final int slice) {
         sliceNum = slice;
     }
 
@@ -264,26 +270,26 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
             textSlice.selectAll();
 
             return;
-        } else if ((removeDim == AlgorithmSubset.REMOVE_X) && (sliceNum > (xSlices-1))) {
-            MipavUtil.displayError("X number must not exceed " + (xSlices-1));
+        } else if ( (removeDim == AlgorithmSubset.REMOVE_X) && (sliceNum > (xSlices - 1))) {
+            MipavUtil.displayError("X number must not exceed " + (xSlices - 1));
             textSlice.requestFocus();
             textSlice.selectAll();
 
             return;
-        } else if ((removeDim == AlgorithmSubset.REMOVE_Y) && (sliceNum > (ySlices-1))) {
-            MipavUtil.displayError("Y number must not exceed " + (ySlices-1));
+        } else if ( (removeDim == AlgorithmSubset.REMOVE_Y) && (sliceNum > (ySlices - 1))) {
+            MipavUtil.displayError("Y number must not exceed " + (ySlices - 1));
             textSlice.requestFocus();
             textSlice.selectAll();
 
             return;
-        } else if ((removeDim == AlgorithmSubset.REMOVE_Z) && (sliceNum > (zSlices-1))) {
-            MipavUtil.displayError("Z number must not exceed " + (zSlices-1));
+        } else if ( (removeDim == AlgorithmSubset.REMOVE_Z) && (sliceNum > (zSlices - 1))) {
+            MipavUtil.displayError("Z number must not exceed " + (zSlices - 1));
             textSlice.requestFocus();
             textSlice.selectAll();
 
             return;
-        } else if ((removeDim == AlgorithmSubset.REMOVE_T) && (sliceNum > (tSlices-1))) {
-            MipavUtil.displayError("T number must not exceed " + (tSlices-1));
+        } else if ( (removeDim == AlgorithmSubset.REMOVE_T) && (sliceNum > (tSlices - 1))) {
+            MipavUtil.displayError("T number must not exceed " + (tSlices - 1));
             textSlice.requestFocus();
             textSlice.selectAll();
 
@@ -327,7 +333,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
                 subsetAlgo.run();
             }
 
-        } catch (OutOfMemoryError x) {
+        } catch (final OutOfMemoryError x) {
 
             if (resultImage != null) {
                 resultImage.disposeLocal(); // Clean up image memory
@@ -387,9 +393,9 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         max = (zSlices < max) ? max : zSlices;
         max = (tSlices < max) ? max : tSlices;
 
-        JPanel removePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        final JPanel removePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        ButtonGroup removeGroup = new ButtonGroup();
+        final ButtonGroup removeGroup = new ButtonGroup();
         xButton = new JRadioButton("X", false);
         xButton.setFont(serif12);
         removeGroup.add(xButton);
@@ -417,8 +423,9 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         removePanel.add(tButton);
         tButton.addActionListener(this);
         tButton.setActionCommand("TAxis");
+        tButton.setSelected(true);
 
-        JPanel textPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        final JPanel textPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         textSlice = new JTextField(5);
         textSlice.setText("0");
@@ -427,19 +434,19 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         textSlice.addFocusListener(this);
         textPanel.add(textSlice);
 
-        labelSlice = new JLabel("Select index from 0 to " + (max-1));
+        labelSlice = new JLabel("Select index from 0 to " + (max - 1));
         labelSlice.setForeground(Color.black);
         labelSlice.setFont(serif12);
         labelSlice.setEnabled(true);
         textPanel.add(labelSlice);
 
-        JPanel mainPanel = new JPanel();
+        final JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.add(removePanel);
         mainPanel.add(textPanel);
         mainPanel.setBorder(buildTitledBorder("Select removed dimension"));
 
-        JPanel buttonPanel = new JPanel(new FlowLayout());
+        final JPanel buttonPanel = new JPanel(new FlowLayout());
 
         /*
          * buildOKButton(); OKButton.setText("Remove"); buttonPanel.add(OKButton); buildCancelButton();
@@ -448,22 +455,21 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         buttonPanel.add(buildButtons());
         OKButton.setText("Extract");
 
-
-        JPanel panel = new JPanel(new BorderLayout());
+        final JPanel panel = new JPanel(new BorderLayout());
         panel.add(mainPanel);
         panel.add(buttonPanel, BorderLayout.SOUTH);
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         getContentPane().add(panel);
         pack();
-        labelSlice.setText("Select index from 0 to " + (zSlices-1));
+        labelSlice.setText("Select index from 0 to " + (zSlices - 1));
         setVisible(true);
     }
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
-     *
-     * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
+     * 
+     * @return <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
 
@@ -483,4 +489,104 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         return true;
     }
 
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Utilities.4D tools");
+            }
+
+            public String getDescription() {
+                return new String("Removes one of the dimensions from a 4D dataset to produce a 3D volume.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Removes one of the dimensions from a 4D dataset to produce a 3D volume.");
+            }
+
+            public String getShortLabel() {
+                return new String("Extract3DSubset");
+            }
+
+            public String getLabel() {
+                return new String("Extract 3D subset from 4D volume");
+            }
+
+            public String getName() {
+                return new String("Extract 3D subset from 4D volume");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterInt("remove_dim", AlgorithmSubset.REMOVE_T));
+            table.put(new ParameterInt("slice_num", 0));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                return getResultImage().getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
 }

@@ -31,6 +31,12 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
 
     protected boolean displayInNewFrame;
 
+    /**
+     * Indicates whether the scripted algorithm completed successfully. Used to retain the status after the dialog has
+     * finalized the algorithm handle(s) in algorithmPerformed.
+     */
+    protected boolean isComplete = false;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -224,4 +230,25 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
      * image table). Defaults to no action, override to actually have it do something.
      */
     protected void doPostAlgorithmActions() {}
+
+    /**
+     * Sets the flag to indicate whether the algorithm completed successfully. Used to retain the status after the
+     * dialog has finalized the algorithm handle(s) in algorithmPerformed.
+     * 
+     * @param success True if the algorithm has finished successfully, false if it is not done yet or there was a
+     *            problem.
+     */
+    protected void setComplete(final boolean success) {
+        isComplete = success;
+    }
+
+    /**
+     * Returns whether the algorithm completed successfully. Used to retain the status after the dialog has finalized
+     * the algorithm handle(s) in algorithmPerformed.
+     * 
+     * @return True if the algorithm has finished successfully, false if it is not done yet or there was a problem.
+     */
+    protected boolean isComplete() {
+        return isComplete;
+    }
 }

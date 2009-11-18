@@ -295,6 +295,9 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
             }
         } // if (algorithm instanceof AlgorithmGaussianBlurSep)
 
+        // save the completion status for later
+        setComplete(algorithm.isCompleted());
+
         if (gaussianBlurAlgo != null) {
             gaussianBlurAlgo.finalize();
             gaussianBlurAlgo = null;
@@ -951,7 +954,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
             }
 
             public String getShortLabel() {
-                return new String("Gaussian");
+                return new String("GaussianBlur");
             }
 
             public String getLabel() {
@@ -1038,12 +1041,6 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
      * @return True, if the action is complete. False, if the action failed or is still running.
      */
     public boolean isActionComplete() {
-        if (separable && gaussianBlurSepAlgo != null) {
-            return gaussianBlurSepAlgo.isCompleted();
-        } else if (gaussianBlurAlgo != null) {
-            return gaussianBlurAlgo.isCompleted();
-        } else {
-            return false;
-        }
+        return isComplete();
     }
 }
