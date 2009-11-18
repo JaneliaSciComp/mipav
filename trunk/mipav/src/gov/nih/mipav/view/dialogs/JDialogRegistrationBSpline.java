@@ -1,11 +1,9 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import WildMagic.LibFoundation.Curves.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -13,10 +11,11 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
 
 import javax.swing.*;
+
+import WildMagic.LibFoundation.Curves.BSplineBasisf;
 
 
 /**
@@ -27,14 +26,16 @@ import javax.swing.*;
  * source image for 2.5D. The same dialog is presented for 2D and 3D. The dialog is nearly the same for 2.5D except for
  * how the target slice is selected.
  */
-public class JDialogRegistrationBSpline extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogRegistrationBSpline extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 8193864043052368084L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME.* */
     String kStringDimension;
@@ -140,28 +141,28 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
     /** Used for scripting and to access the currently registered images. */
     private ViewUserInterface m_kUI;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation. Used primarily for the script to store variables and run the
      * algorithm. No actual dialog will appear but the set up info and result image will be stored here.
      */
-    public JDialogRegistrationBSpline() { }
+    public JDialogRegistrationBSpline() {}
 
     /**
      * Creates new registration dialog.
-     *
-     * @param  kParentFrame                   Parent frame
-     * @param  kImageSrc                      Source image
-     * @param  akNamesCompatibleTargetImages  String[] Array containing the names of target images which are compatible
-     *                                        for registering to the input source image. This list must contain at least
-     *                                        one image name and the list must not contain the name of the input source
-     *                                        image. A target image is used for 2D/3D registration. If this reference is
-     *                                        null, then the registration is for 2.5 meaning the target image will be a
-     *                                        selected slice from within the 3D image.
+     * 
+     * @param kParentFrame Parent frame
+     * @param kImageSrc Source image
+     * @param akNamesCompatibleTargetImages String[] Array containing the names of target images which are compatible
+     *            for registering to the input source image. This list must contain at least one image name and the list
+     *            must not contain the name of the input source image. A target image is used for 2D/3D registration. If
+     *            this reference is null, then the registration is for 2.5 meaning the target image will be a selected
+     *            slice from within the 3D image.
      */
-    public JDialogRegistrationBSpline(Frame kParentFrame, ModelImage kImageSrc,
-                                      String[] akNamesCompatibleTargetImages) {
+    public JDialogRegistrationBSpline(final Frame kParentFrame, final ModelImage kImageSrc,
+            final String[] akNamesCompatibleTargetImages) {
         super(kParentFrame, false);
         m_kImageSrc = kImageSrc;
         m_kUI = ViewUserInterface.getReference();
@@ -169,27 +170,28 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         initControls();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Find the frame images that are compatible as targets with the specified source image for the purpose of B-spline
      * registration.
-     *
-     * @param   kImageSrc  ModelImage Reference to the source image.
-     *
-     * @return  String[] Array of names of compatible images.
+     * 
+     * @param kImageSrc ModelImage Reference to the source image.
+     * 
+     * @return String[] Array of names of compatible images.
      */
-    public static String[] getNamesCompatibleTargetImages(ModelImage kImageSrc) {
+    public static String[] getNamesCompatibleTargetImages(final ModelImage kImageSrc) {
 
         // Get the names of all the registered images.
-        Enumeration kRegisteredImageNames = ViewUserInterface.getReference().getRegisteredImageNames();
-        Vector kNamesList = new Vector();
+        final Enumeration kRegisteredImageNames = ViewUserInterface.getReference().getRegisteredImageNames();
+        final Vector kNamesList = new Vector();
 
         // Find framed target images which can be registered to the specified
-        // source image given the type of source image.  Must match in
+        // source image given the type of source image. Must match in
         // number of dimensions and type (i.e., color vs. intensity).
         while (kRegisteredImageNames.hasMoreElements()) {
-            String kName = (String) kRegisteredImageNames.nextElement();
+            final String kName = (String) kRegisteredImageNames.nextElement();
 
             // Skip the source image when it is found.
             if (kName.equals(kImageSrc.getImageName())) {
@@ -197,7 +199,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             }
 
             // Retrieve image by its name.
-            ModelImage kImage = ViewUserInterface.getReference().getRegisteredImageByName(kName);
+            final ModelImage kImage = ViewUserInterface.getReference().getRegisteredImageByName(kName);
 
             // Skip image if it is not in a frame.
             // That must mean it is a temporary image.
@@ -220,7 +222,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             kNamesList.add(kName);
         }
 
-        String[] akNamesCompatibleTargetImages = new String[kNamesList.size()];
+        final String[] akNamesCompatibleTargetImages = new String[kNamesList.size()];
 
         for (int i = 0; i < akNamesCompatibleTargetImages.length; i++) {
             akNamesCompatibleTargetImages[i] = (String) kNamesList.get(i);
@@ -232,11 +234,11 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
     /**
      * Closes dialog box when the OK button is pressed, sets up the variables needed for running the algorithm, and
      * calls the algorithm.
-     *
-     * @param  event  Event that triggers function
+     * 
+     * @param event Event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        Object source = event.getSource();
+    public void actionPerformed(final ActionEvent event) {
+        final Object source = event.getSource();
 
         if (source == OKButton) {
 
@@ -253,8 +255,8 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
                 aiExtentsReg = m_kImageTrg.getExtents();
             }
 
-            if (m_kControlsPass1.getValues(m_kOptionsPass1, aiExtentsReg) &&
-                    (!m_kCheckMultiPass.isSelected() || m_kControlsPass2.getValues(m_kOptionsPass2, aiExtentsReg))) {
+            if (m_kControlsPass1.getValues(m_kOptionsPass1, aiExtentsReg)
+                    && ( !m_kCheckMultiPass.isSelected() || m_kControlsPass2.getValues(m_kOptionsPass2, aiExtentsReg))) {
 
                 setVisible(false);
                 callAlgorithm();
@@ -293,18 +295,18 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
      * has completed or failed to to complete, so that the dialog can display the result image and/or clean up.
-     *
-     * @param  algorithm  Algorithm that caused the event.
+     * 
+     * @param algorithm Algorithm that caused the event.
      */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
+    public void algorithmPerformed(final AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmRegBSpline) {
             m_kImageSrc.clearMask();
 
-            if ((m_kAlgorithmReg.isCompleted() == true) && (m_kImageReg != null)) {
+            if ( (m_kAlgorithmReg.isCompleted() == true) && (m_kImageReg != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
-                updateFileInfo(m_kImageSrc, m_kImageReg);
+                JDialogBase.updateFileInfo(m_kImageSrc, m_kImageReg);
                 m_kImageReg.clearMask();
 
                 try {
@@ -313,24 +315,23 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
                     if (m_kImageDef != null) {
                         new ViewJFrameImage(m_kImageDef, null, new Dimension(610, 240));
                     }
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
-                
-                if (!isRefImageSourceSlice()) {
+
+                if ( !isRefImageSourceSlice()) {
                     m_kImageReg.getMatrixHolder().replaceMatrices(m_kImageTrg.getMatrixHolder().getMatrices());
-                    
+
                     if (m_kImageReg.getNDims() == 3) {
                         for (int i = 0; i < m_kImageReg.getExtents()[2]; i++) {
                             m_kImageReg.getFileInfo(i).setOrigin(m_kImageTrg.getFileInfo(i).getOrigin());
                         }
-                    }
-                    else {
+                    } else {
                         m_kImageReg.getFileInfo(0).setOrigin(m_kImageTrg.getFileInfo(0).getOrigin());
                     }
                 }
-                
+
             }
             // algorithm failed but result image(s) still has garbage
             else {
@@ -356,6 +357,9 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             insertScriptLine();
         }
 
+        // save the completion status for later
+        setComplete(algorithm.isCompleted());
+
         if (m_kAlgorithmReg != null) {
             m_kAlgorithmReg.finalize();
             m_kAlgorithmReg = null;
@@ -366,11 +370,11 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
     /**
      * Implementation of JDialogBase abstract method. Method to handle item events.
-     *
-     * @param  event  Event that caused the method to fire
+     * 
+     * @param event Event that caused the method to fire
      */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+    public void itemStateChanged(final ItemEvent event) {
+        final Object source = event.getSource();
 
         // If the target image is changed reset the defaults on certain
         // other fields in the dialog.
@@ -401,8 +405,8 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
         // If the state of any of the target slice controls for 2.5
         // registration changed.
-        else if ((source == m_kRadioSliceAdjacent) || (source == m_kRadioSliceReference) ||
-                     (source == m_kComboBoxTargetSlice)) {
+        else if ( (source == m_kRadioSliceAdjacent) || (source == m_kRadioSliceReference)
+                || (source == m_kComboBoxTargetSlice)) {
             userSetTargetSlice();
         }
     }
@@ -415,49 +419,49 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         try {
 
             // Note the extents/resolutions of the registered result image.
-            int[] aiImageExtentsReg = m_kImageTrg.getExtents();
-            float[] afImageResolutionsReg = m_kImageTrg.getFileInfo(0).getResolutions();
+            final int[] aiImageExtentsReg = m_kImageTrg.getExtents();
+            final float[] afImageResolutionsReg = m_kImageTrg.getFileInfo(0).getResolutions();
 
             // Create deformation image if option is selected.
             // This is a single channel image with the same dimensions
             // as the target image.
             if (m_bCreateDeformationImage) {
-                m_kImageDef = new ModelImage(ModelStorageBase.FLOAT, aiImageExtentsReg,
-                                             makeImageName(m_kImageSrc.getImageName(), "_deformation"));
+                m_kImageDef = new ModelImage(ModelStorageBase.FLOAT, aiImageExtentsReg, JDialogBase.makeImageName(
+                        m_kImageSrc.getImageName(), "_deformation"));
                 m_kImageDef.getFileInfo(0).setResolutions(afImageResolutionsReg);
             } else {
                 m_kImageDef = null;
             }
 
             // Create registration result image.
-            int iImageTypeReg = m_kImageSrc.isColorImage() ? ModelStorageBase.ARGB_FLOAT : ModelStorageBase.FLOAT;
-            m_kImageReg = new ModelImage(iImageTypeReg, aiImageExtentsReg,
-                                         makeImageName(m_kImageSrc.getImageName(), "_registered"));
+            final int iImageTypeReg = m_kImageSrc.isColorImage() ? ModelStorageBase.ARGB_FLOAT : ModelStorageBase.FLOAT;
+            m_kImageReg = new ModelImage(iImageTypeReg, aiImageExtentsReg, JDialogBase.makeImageName(m_kImageSrc
+                    .getImageName(), "_registered"));
             m_kImageReg.getFileInfo(0).setResolutions(afImageResolutionsReg);
 
             // 2.5D registration
             if (isRefImageSourceSlice()) {
                 m_kAlgorithmReg = new AlgorithmRegBSpline25D(m_kImageReg, m_kImageSrc, m_iTargetSlice, m_kImageDef,
-                                                             m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
+                        m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
             }
 
             // 2D registration
             else if (2 == m_kImageSrc.getNDims()) {
                 m_kAlgorithmReg = new AlgorithmRegBSpline2D(m_kImageReg, m_kImageSrc, m_kImageTrg, m_kImageDef,
-                                                            m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
+                        m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
             }
 
             // 3D registration
             else if (3 == m_kImageSrc.getNDims()) {
                 m_kAlgorithmReg = new AlgorithmRegBSpline3D(m_kImageReg, m_kImageSrc, m_kImageTrg, m_kImageDef,
-                                                            m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
+                        m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
             } else {
                 MipavUtil.displayError("JDialogRegistrationBSpline - unexpected.");
                 dispose();
 
                 return;
             }
-        } catch (OutOfMemoryError x) {
+        } catch (final OutOfMemoryError x) {
             MipavUtil.displayError("Dialog RegistrationNonlinear: unable to allocate enough memory");
 
             if (m_kImageReg != null) {
@@ -510,7 +514,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
         m_kUI = ViewUserInterface.getReference();
         parentFrame = m_kImageSrc.getParentFrame();
-        m_akNamesCompatibleTargetImages = getNamesCompatibleTargetImages(m_kImageSrc);
+        m_akNamesCompatibleTargetImages = JDialogRegistrationBSpline.getNamesCompatibleTargetImages(m_kImageSrc);
 
         if (scriptParameters.getParams().getBoolean("is_ref_img_a_src_img_slice")) {
             m_iTargetSlice = scriptParameters.getParams().getInt("ref_slice_in_src_img");
@@ -520,29 +524,28 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         }
 
         // get cost function
-        String kCostMeasureName = scriptParameters.getParams().getString("cost_measure");
+        final String kCostMeasureName = scriptParameters.getParams().getString("cost_measure");
 
         try {
-            Class kCostMeasureClass = Class.forName(kCostMeasureName);
+            final Class kCostMeasureClass = Class.forName(kCostMeasureName);
             m_kRegMeasure = (RegistrationMeasure) kCostMeasureClass.newInstance();
-        } catch (ClassNotFoundException cnfe) {
+        } catch (final ClassNotFoundException cnfe) {
             throw new ParameterException("cost_measure", "Unable to find cost measure class: " + kCostMeasureName);
-        } catch (InstantiationException ie) {
+        } catch (final InstantiationException ie) {
+            throw new ParameterException("cost_measure", "Unable to instantiate cost measure class: "
+                    + kCostMeasureName);
+        } catch (final IllegalAccessException iae) {
             throw new ParameterException("cost_measure",
-                                         "Unable to instantiate cost measure class: " + kCostMeasureName);
-        } catch (IllegalAccessException iae) {
-            throw new ParameterException("cost_measure",
-                                         "Access denied while trying to instantiate cost measure class: " +
-                                         kCostMeasureName);
+                    "Access denied while trying to instantiate cost measure class: " + kCostMeasureName);
         }
 
         // get the options for each pass
-        int iNumPasses = scriptParameters.getParams().getInt("num_passes");
+        final int iNumPasses = scriptParameters.getParams().getInt("num_passes");
         m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
 
         try {
             m_kOptionsPass1.setFromString(scriptParameters.getParams().getString("pass_options_1"), " ");
-        } catch (TokenizerException te) {
+        } catch (final TokenizerException te) {
             throw new ParameterException("pass_options_1", "There is a problem with the options for the first pass.");
         }
 
@@ -551,9 +554,9 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
             try {
                 m_kOptionsPass2.setFromString(scriptParameters.getParams().getString("pass_options_2"), " ");
-            } catch (TokenizerException te) {
+            } catch (final TokenizerException te) {
                 throw new ParameterException("pass_options_2",
-                                             "There is a problem with the options for the second pass.");
+                        "There is a problem with the options for the second pass.");
             }
         } else {
             m_kOptionsPass2 = null;
@@ -570,8 +573,8 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         scriptParameters.storeInputImage(m_kImageSrc);
         scriptParameters.storeImage(m_kImageTrg, "reference_image");
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("is_ref_img_a_src_img_slice",
-                                                                       isRefImageSourceSlice()));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("is_ref_img_a_src_img_slice", isRefImageSourceSlice()));
 
         if (isRefImageSourceSlice()) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("ref_slice_in_src_img", m_iTargetSlice));
@@ -579,20 +582,20 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             scriptParameters.storeImageInRecorder(m_kImageReg);
         }
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_measure",
-                                                                       m_kRegMeasure.getClass().getName()));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_passes",
-                                                                       (m_kOptionsPass2 == null) ? 1 : 2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("pass_options_1",
-                                                                       m_kOptionsPass1.toString(" ")));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("cost_measure", m_kRegMeasure.getClass().getName()));
+        scriptParameters.getParams()
+                .put(ParameterFactory.newParameter("num_passes", (m_kOptionsPass2 == null) ? 1 : 2));
+        scriptParameters.getParams()
+                .put(ParameterFactory.newParameter("pass_options_1", m_kOptionsPass1.toString(" ")));
 
         if (m_kOptionsPass2 != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("pass_options_2",
-                                                                           m_kOptionsPass2.toString(" ")));
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter("pass_options_2", m_kOptionsPass2.toString(" ")));
         }
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_deformation_image",
-                                                                       m_bCreateDeformationImage));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("do_create_deformation_image", m_bCreateDeformationImage));
     }
 
     /**
@@ -604,8 +607,8 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         kStringDimension = isRefImageSourceSlice() ? "2.5" : String.valueOf(m_kImageSrc.getNDims());
 
         setForeground(Color.black);
-        setTitle("B-Spline Automatic Registration - " + kStringDimension + "D " +
-                 (m_kImageSrc.isColorImage() ? "Color" : "Intensity"));
+        setTitle("B-Spline Automatic Registration - " + kStringDimension + "D "
+                + (m_kImageSrc.isColorImage() ? "Color" : "Intensity"));
 
         // Create controls for Pass 1.
         m_kControlsPass1 = new Controls(this);
@@ -631,8 +634,8 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         m_kLabelIterationsPass2.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // label to select target (reference image)
-        JLabel labelImage = new JLabel("Register [" + m_kImageSrc.getImageName() + "] " +
-                                       (isRefImageSourceSlice() ? "slices " : "") + "to:");
+        final JLabel labelImage = new JLabel("Register [" + m_kImageSrc.getImageName() + "] "
+                + (isRefImageSourceSlice() ? "slices " : "") + "to:");
         labelImage.setForeground(Color.black);
         labelImage.setBounds(10, 20, 230, 25);
         labelImage.setFont(serif12);
@@ -653,7 +656,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
             // Create a button group so that only one radio button
             // can be selected at a time.
-            ButtonGroup kButtonGroup = new ButtonGroup();
+            final ButtonGroup kButtonGroup = new ButtonGroup();
             kButtonGroup.add(m_kRadioSliceAdjacent);
             kButtonGroup.add(m_kRadioSliceReference);
 
@@ -674,15 +677,15 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             m_kComboBoxTargetImage.setFont(serif12);
             m_kComboBoxTargetImage.setBackground(Color.white);
 
-            for (int i = 0; i < m_akNamesCompatibleTargetImages.length; i++) {
-                m_kComboBoxTargetImage.addItem(m_akNamesCompatibleTargetImages[i]);
+            for (final String element : m_akNamesCompatibleTargetImages) {
+                m_kComboBoxTargetImage.addItem(element);
             }
 
             m_kComboBoxTargetImage.addItemListener(this);
         }
 
         // Combo box to select cost function.
-        JLabel labelCostFunction = new JLabel("Cost function:");
+        final JLabel labelCostFunction = new JLabel("Cost function:");
         labelCostFunction.setForeground(Color.black);
         labelCostFunction.setBounds(10, 20, 230, 25);
         labelCostFunction.setFont(serif12);
@@ -717,51 +720,52 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         m_kCheckCreateDeformationImage.addItemListener(this);
 
         // check box to subsample image for speed
-        JLabel kLabelSubsampleImage = new JLabel("Subsample image for speed");
+        final JLabel kLabelSubsampleImage = new JLabel("Subsample image for speed");
         kLabelSubsampleImage.setForeground(Color.black);
         kLabelSubsampleImage.setFont(serif12);
         kLabelSubsampleImage.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // combo box to select degree+1 for B-Spline
-        JLabel kLabelBSplineDegree = new JLabel("B-Spline Degree (same for all axes):");
+        final JLabel kLabelBSplineDegree = new JLabel("B-Spline Degree (same for all axes):");
         kLabelBSplineDegree.setForeground(Color.black);
         kLabelBSplineDegree.setFont(serif12);
         kLabelBSplineDegree.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // text box to enter number of B-Spline control points
-        JLabel kLabelBSplineNumControlPoints = new JLabel("B-Spline Control Points (same for all axes):");
+        final JLabel kLabelBSplineNumControlPoints = new JLabel("B-Spline Control Points (same for all axes):");
         kLabelBSplineNumControlPoints.setForeground(Color.black);
         kLabelBSplineNumControlPoints.setFont(serif12);
 
         // text box to enter the gradient descent minimize step size
-        JLabel kLabelGradientDescentMinimizeStepSize = new JLabel("Gradient Descent Minimize Step Size (sample units):");
+        final JLabel kLabelGradientDescentMinimizeStepSize = new JLabel(
+                "Gradient Descent Minimize Step Size (sample units):");
         kLabelGradientDescentMinimizeStepSize.setForeground(Color.black);
         kLabelGradientDescentMinimizeStepSize.setFont(serif12);
 
         // text box to enter the gradient descent minimize maximum number of steps
-        JLabel kLabelGradientDescentMinimizeMaxSteps = new JLabel("Gradient Descent Minimize Max Search Steps:");
+        final JLabel kLabelGradientDescentMinimizeMaxSteps = new JLabel("Gradient Descent Minimize Max Search Steps:");
         kLabelGradientDescentMinimizeMaxSteps.setForeground(Color.black);
         kLabelGradientDescentMinimizeMaxSteps.setFont(serif12);
 
         // text box for convergence limit
-        JLabel kLabelConvergenceLimit = new JLabel("Convergence limit (min change rate for one iteration):");
+        final JLabel kLabelConvergenceLimit = new JLabel("Convergence limit (min change rate for one iteration):");
         kLabelConvergenceLimit.setForeground(Color.black);
         kLabelConvergenceLimit.setFont(serif12);
 
         // text box for maximum number of iterations
-        JLabel kLabelMaxIterations = new JLabel("Maximum Number of Iterations:");
+        final JLabel kLabelMaxIterations = new JLabel("Maximum Number of Iterations:");
         kLabelMaxIterations.setForeground(Color.black);
         kLabelMaxIterations.setFont(serif12);
 
         // Default constraints for a GridBagLayout
-        GridBagConstraints kGBC = new GridBagConstraints();
+        final GridBagConstraints kGBC = new GridBagConstraints();
         kGBC.insets = new Insets(0, 2, 0, 2);
         kGBC.gridwidth = 1;
         kGBC.gridheight = 1;
         kGBC.anchor = GridBagConstraints.WEST;
 
         // Build the general sub 2-column panel.
-        JPanel kPanelGeneralSub = new JPanel(new GridBagLayout());
+        final JPanel kPanelGeneralSub = new JPanel(new GridBagLayout());
 
         kGBC.gridy = 0;
         kGBC.gridx = 0;
@@ -775,7 +779,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         if (isRefImageSourceSlice()) {
 
             // Build the sub panel to select the target slice.
-            JPanel kPanelTargetSlice = new JPanel(new GridBagLayout());
+            final JPanel kPanelTargetSlice = new JPanel(new GridBagLayout());
             kPanelGeneralSub.add(kPanelTargetSlice, kGBC);
 
             kGBC.gridy = 0;
@@ -806,7 +810,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         kPanelGeneralSub.add(m_kComboBoxCostFunction, kGBC);
 
         // Build the general panel
-        JPanel kPanelGeneral = new JPanel(new GridBagLayout());
+        final JPanel kPanelGeneral = new JPanel(new GridBagLayout());
         kPanelGeneral.setBorder(buildTitledBorder("General"));
 
         kGBC.gridy = 0;
@@ -821,7 +825,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         kPanelGeneral.add(m_kCheckMultiPass, kGBC);
 
         // Build the options panel.
-        JPanel kPanelOptions = new JPanel();
+        final JPanel kPanelOptions = new JPanel();
         kPanelOptions.setLayout(new GridBagLayout());
         kPanelOptions.setBorder(buildTitledBorder("Transformation Options"));
 
@@ -900,9 +904,10 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         kPanelOptions.add(m_kControlsPass2.kTextGradientDescentMinimizeMaxSteps, kGBC);
 
         // Build the iterations panel.
-        JPanel kPanelIterations = new JPanel();
+        final JPanel kPanelIterations = new JPanel();
         kPanelIterations.setLayout(new GridBagLayout());
-        kPanelIterations.setBorder(buildTitledBorder("Iteration Options (one iteration = move each control point once)"));
+        kPanelIterations
+                .setBorder(buildTitledBorder("Iteration Options (one iteration = move each control point once)"));
 
         kGBC.gridy = 0;
         kGBC.fill = GridBagConstraints.HORIZONTAL;
@@ -941,7 +946,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         kPanelIterations.add(m_kControlsPass2.kTextMaxIterations, kGBC);
 
         // Build the results panel
-        JPanel kPanelResults = new JPanel(new GridBagLayout());
+        final JPanel kPanelResults = new JPanel(new GridBagLayout());
         kPanelResults.setBorder(buildTitledBorder("Results"));
 
         kGBC.gridy = 0;
@@ -950,7 +955,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         kGBC.fill = GridBagConstraints.NONE;
         kPanelResults.add(m_kCheckCreateDeformationImage, kGBC);
 
-        JPanel kPanelButton = new JPanel();
+        final JPanel kPanelButton = new JPanel();
         buildOKButton();
         buildCancelButton();
         buildHelpButton();
@@ -980,7 +985,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
             // select reference slice to be middle slice
             m_kRadioSliceReference.setSelected(true);
-            m_kComboBoxTargetSlice.setSelectedIndex((m_kComboBoxTargetSlice.getItemCount() / 2) - 1);
+            m_kComboBoxTargetSlice.setSelectedIndex( (m_kComboBoxTargetSlice.getItemCount() / 2) - 1);
             userSetTargetSlice();
         }
         // In 2D/3D registration, the target image is the currently
@@ -1002,8 +1007,8 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
     /**
      * Convenience method to determine if this is a 2.5D registration where the reference (target) image is once of the
      * slices in the source image.
-     *
-     * @return  boolean
+     * 
+     * @return boolean
      */
     private boolean isRefImageSourceSlice() {
         return null == m_akNamesCompatibleTargetImages;
@@ -1016,7 +1021,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
     private void userSetCostFunction() {
 
         // What is the text that appears in the combo box?
-        String kStrDescription = (String) m_kComboBoxCostFunction.getSelectedItem();
+        final String kStrDescription = (String) m_kComboBoxCostFunction.getSelectedItem();
 
         // Match that text to the known cost functions.
         if (RegistrationMeasureLeastSquares.getStaticName() == kStrDescription) {
@@ -1085,10 +1090,10 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
     /**
      * Accessor to set the target image.
-     *
-     * @param  image  The target image.
+     * 
+     * @param image The target image.
      */
-    private void userSetRefImage(ModelImage image) {
+    private void userSetRefImage(final ModelImage image) {
         m_kImageTrg = image;
     }
 
@@ -1110,7 +1115,124 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         }
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Registration");
+            }
+
+            public String getDescription() {
+                return new String(
+                        "Performs a non-linear B-Spline Automatic Registration of one image to a reference image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String(
+                        "Performs a non-linear B-Spline Automatic Registration of one image to a reference image.");
+            }
+
+            public String getShortLabel() {
+                return new String("RegBSpline");
+            }
+
+            public String getLabel() {
+                return new String("B-Spline registration");
+            }
+
+            public String getName() {
+                return new String("B-Spline registration");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterExternalImage("reference_image"));
+
+            table.put(new ParameterBoolean("is_ref_img_a_src_img_slice"));
+            table.put(new ParameterInt("ref_slice_in_src_img"));
+
+            table.put(new ParameterString("cost_measure"));
+            table.put(new ParameterInt("num_passes"));
+            table.put(new ParameterString("pass_options_1"));
+            table.put(new ParameterString("pass_options_2"));
+            table.put(new ParameterBoolean("do_create_deformation_image"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+            table.put(new ParameterImage("deformation_image"));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (m_kImageReg != null) {
+                return m_kImageReg.getImageName();
+            }
+        } else if (imageParamName.equals("deformation_image")) {
+            if (m_kImageDef != null) {
+                return m_kImageDef.getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
+    }
+
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * Private class which holds dialog controls associated with the values in the AlgorithmRegBSpline.Options class for
@@ -1119,7 +1241,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
     private static class Controls {
 
         /** DOCUMENT ME! */
-        private static final int[] ms_aiBSplineDegreeOptions = { 1, 2, 3, 4 };
+        private static final int[] ms_aiBSplineDegreeOptions = {1, 2, 3, 4};
 
         /** DOCUMENT ME! */
         public final JCheckBox kCheckSubsample = new JCheckBox();
@@ -1147,10 +1269,10 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
         /**
          * Constructor which creates the controls.
-         *
-         * @param  kDialog  JDialogBase Dialog class from which the controls inherit certain properties (e.g., font).
+         * 
+         * @param kDialog JDialogBase Dialog class from which the controls inherit certain properties (e.g., font).
          */
-        public Controls(JDialogBase kDialog) {
+        public Controls(final JDialogBase kDialog) {
 
             m_kDialog = kDialog;
 
@@ -1158,8 +1280,8 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             kComboBoxBSplineDegree.setFont(MipavUtil.font12);
             kComboBoxBSplineDegree.setBackground(Color.white);
 
-            for (int i = 0; i < ms_aiBSplineDegreeOptions.length; i++) {
-                kComboBoxBSplineDegree.addItem(Integer.toString(ms_aiBSplineDegreeOptions[i]));
+            for (final int element : Controls.ms_aiBSplineDegreeOptions) {
+                kComboBoxBSplineDegree.addItem(Integer.toString(element));
             }
 
             // text box to enter number of B-Spline control points
@@ -1190,15 +1312,14 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         /**
          * Extract the values from the specified set of controls and store them into the options structure used by the
          * algorithm.
-         *
-         * @param   kOptions      AlgorithmRegBSpline.Options Structure for storing the values extracted from those
-         *                        controls.
-         * @param   aiExtentsReg  int[] Dimensions of the reference image to be used for registration which is used to
-         *                        compute certain limits on the input values.
-         *
-         * @return  boolean True if the input values in the controls are acceptable.
+         * 
+         * @param kOptions AlgorithmRegBSpline.Options Structure for storing the values extracted from those controls.
+         * @param aiExtentsReg int[] Dimensions of the reference image to be used for registration which is used to
+         *            compute certain limits on the input values.
+         * 
+         * @return boolean True if the input values in the controls are acceptable.
          */
-        public boolean getValues(AlgorithmRegBSpline.Options kOptions, int[] aiExtentsReg) {
+        public boolean getValues(final AlgorithmRegBSpline.Options kOptions, final int[] aiExtentsReg) {
 
             // Get the dimensions of the target image.
             int iExtentMin, iExtentMax;
@@ -1215,16 +1336,16 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             }
 
             // BSpline degree
-            kOptions.iBSplineDegree = ms_aiBSplineDegreeOptions[kComboBoxBSplineDegree.getSelectedIndex()];
+            kOptions.iBSplineDegree = Controls.ms_aiBSplineDegreeOptions[kComboBoxBSplineDegree.getSelectedIndex()];
 
             String tmpStr;
 
             // Number of control points.
-            int iNumControlPointsMin = BSplineBasisf.GetMinNumControlPoints(kOptions.iBSplineDegree);
-            int iNumControlPointsMax = iExtentMin / 2;
+            final int iNumControlPointsMin = BSplineBasisf.GetMinNumControlPoints(kOptions.iBSplineDegree);
+            final int iNumControlPointsMax = iExtentMin / 2;
             tmpStr = kTextBSplineNumControlPoints.getText();
 
-            if (m_kDialog.testParameter(tmpStr, iNumControlPointsMin, iNumControlPointsMax)) {
+            if (JDialogBase.testParameter(tmpStr, iNumControlPointsMin, iNumControlPointsMax)) {
                 kOptions.iBSplineNumControlPoints = (Integer.valueOf(tmpStr).intValue());
             } else {
                 kTextBSplineNumControlPoints.requestFocus();
@@ -1234,11 +1355,11 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             }
 
             // Gradient descent minimize step size.
-            float fStepSizeMin = 0.1f;
-            float fStepSizeMax = 5.0f;
+            final float fStepSizeMin = 0.1f;
+            final float fStepSizeMax = 5.0f;
             tmpStr = kTextGradientDescentMinimizeStepSize.getText();
 
-            if (m_kDialog.testParameter(tmpStr, fStepSizeMin, fStepSizeMax)) {
+            if (JDialogBase.testParameter(tmpStr, fStepSizeMin, fStepSizeMax)) {
                 kOptions.fGradientDescentMinimizeStepSize = (Float.valueOf(tmpStr).floatValue() / iExtentMax);
             } else {
                 kTextGradientDescentMinimizeStepSize.requestFocus();
@@ -1250,7 +1371,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             // Gradient descent minimize maximum number of steps
             tmpStr = kTextGradientDescentMinimizeMaxSteps.getText();
 
-            if (m_kDialog.testParameter(tmpStr, 1, 100)) {
+            if (JDialogBase.testParameter(tmpStr, 1, 100)) {
                 kOptions.iGradientDescentMinimizeMaxSteps = (Integer.valueOf(tmpStr).intValue());
             } else {
                 kTextGradientDescentMinimizeMaxSteps.requestFocus();
@@ -1262,7 +1383,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             // Iteration convergence limit.
             tmpStr = kTextConvergenceLimit.getText();
 
-            if (m_kDialog.testParameter(tmpStr, 0.001, 0.5)) {
+            if (JDialogBase.testParameter(tmpStr, 0.001, 0.5)) {
                 kOptions.fConvergenceLimit = (Float.valueOf(tmpStr).floatValue());
             } else {
                 kTextConvergenceLimit.requestFocus();
@@ -1274,7 +1395,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             // Max iterations.
             tmpStr = kTextMaxIterations.getText();
 
-            if (m_kDialog.testParameter(tmpStr, 1, 100)) {
+            if (JDialogBase.testParameter(tmpStr, 1, 100)) {
                 kOptions.iMaxIterations = (Integer.valueOf(tmpStr).intValue());
             } else {
                 kTextMaxIterations.requestFocus();
@@ -1291,16 +1412,16 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
         /**
          * Set the state of the controls based on the specified values.
-         *
-         * @param  kOptions  Options Structure which contains the values to use to set the state of the controls.
+         * 
+         * @param kOptions Options Structure which contains the values to use to set the state of the controls.
          */
-        public void setValues(AlgorithmRegBSpline.Options kOptions) {
+        public void setValues(final AlgorithmRegBSpline.Options kOptions) {
 
             kComboBoxBSplineDegree.setSelectedIndex(0);
 
-            for (int i = 0; i < ms_aiBSplineDegreeOptions.length; i++) {
+            for (int i = 0; i < Controls.ms_aiBSplineDegreeOptions.length; i++) {
 
-                if (kOptions.iBSplineDegree == ms_aiBSplineDegreeOptions[i]) {
+                if (kOptions.iBSplineDegree == Controls.ms_aiBSplineDegreeOptions[i]) {
                     kComboBoxBSplineDegree.setSelectedIndex(i);
 
                     break;
@@ -1317,10 +1438,10 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
         /**
          * Makes the controls visible or invisible.
-         *
-         * @param  bEnable  boolean True to make the controls visible.
+         * 
+         * @param bEnable boolean True to make the controls visible.
          */
-        public void setVisible(boolean bEnable) {
+        public void setVisible(final boolean bEnable) {
 
             kComboBoxBSplineDegree.setVisible(bEnable);
             kTextBSplineNumControlPoints.setVisible(bEnable);
