@@ -13,7 +13,7 @@ public class ParameterString extends Parameter {
     // ------------------------------------------------------------------------------------------------
 
     /** The parameter's value. */
-    private String value;
+    protected String value;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------

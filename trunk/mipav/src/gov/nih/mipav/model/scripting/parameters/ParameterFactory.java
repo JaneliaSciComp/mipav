@@ -45,6 +45,20 @@ public class ParameterFactory {
     }
 
     /**
+     * Creates a new file parameter with a given label and value.
+     * 
+     * @param label The label/name of the new parameter.
+     * @param value The value to assign to the new parameter.
+     * 
+     * @return A new file parameter.
+     * 
+     * @throws ParserException If there is a problem creating the new parameter.
+     */
+    public static final ParameterFile newFile(final String label, final String value) throws ParserException {
+        return new ParameterFile(label, Parameter.PARAM_FILE, value);
+    }
+
+    /**
      * Creates a new floating point parameter with a given label and value.
      * 
      * @param label The label/name of the new parameter.
@@ -143,6 +157,10 @@ public class ParameterFactory {
 
             case Parameter.PARAM_EXTERNAL_IMAGE:
                 param = new ParameterExternalImage(label, type, value);
+                break;
+
+            case Parameter.PARAM_FILE:
+                param = new ParameterFile(label, type, value);
                 break;
 
             case Parameter.PARAM_FLOAT:

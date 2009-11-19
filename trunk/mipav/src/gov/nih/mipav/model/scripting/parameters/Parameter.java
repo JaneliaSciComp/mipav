@@ -93,9 +93,16 @@ public abstract class Parameter {
      */
     public static final int PARAM_EXTERNAL_IMAGE = 10;
 
+    /**
+     * Parameter data type indicating a file variable string value.
+     * 
+     * @see ParameterFile
+     */
+    public static final int PARAM_FILE = 11;
+
     /** String values for all of the parameter value data types (the strings written out to the script). */
     private static final String[] PARAM_STRINGS_TABLE = {"boolean", "int", "long", "short", "ushort", "float",
-            "double", "string", "list_", "image", "ext_image"};
+            "double", "string", "list_", "image", "ext_image", "file"};
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -105,6 +112,16 @@ public abstract class Parameter {
 
     /** The parameter value data type. */
     private final int type;
+
+    /**
+     * A reference to another Parameter who this parameter relies on. The parent parameter's value can be tested against
+     * a parentCondition field (specified by individual Parameter subclasses) to see whether this Parameter needs to be
+     * assigned a value. Basically, this provides for a primitive conditional Parameter dependency tree.
+     */
+    private Parameter parent = null;
+
+    /** The value to check the parent Parameter against before enabling this Parameter, in string format. */
+    protected String parentValueString = null;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -233,5 +250,64 @@ public abstract class Parameter {
      */
     public String getTypeString() {
         return Parameter.getTypeString(type);
+    }
+
+    /**
+     * Sets the reference to another Parameter who this parameter relies on. The parent parameter's value can be tested
+     * against a parentCondition field (specified by individual Parameter subclasses) to see whether this Parameter
+     * needs to be assigned a value.
+     * 
+     * @param p The parent Parameter of this Parameter.
+     */
+    public void setParent(final Parameter p) {
+        parent = p;
+    }
+
+    /**
+     * Returns a reference to another Parameter upon which this Parameter depends.
+     * 
+     * @return The parent Parameter.
+     */
+    public Parameter getParent() {
+        return parent;
+    }
+
+    /**
+     * Tests whether the value of the parent parameter is the same as the parent value that this Parameter requires.
+     * Both the parent and the parent value string need to be set.
+     * 
+     * @return True if this Parameter should be displayed, false if the conditions for this parameter have not been met.
+     */
+    public boolean isParentConditionValueMet() {
+        if (getParent() != null && getParentConditionValueString() != null) {
+            return getParent().getValueString().equals(getParentConditionValueString());
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the parent Parameter condition value to test against when deciding whether to ask for a value for this
+     * Parameter when using the ActionDiscovery interface.
+     * 
+     * @return The value to check the parent Parameter against before enabling this Parameter, in string format.
+     */
+    public String getParentConditionValueString() {
+        return parentValueString;
+    }
+
+    /**
+     * Changes the parent Parameter condition value to test against when deciding whether to ask for a value for this
+     * Parameter when using the ActionDiscovery interface.
+     * 
+     * @param s The value to check the parent Parameter against before enabling this Parameter, in string format.
+     * 
+     * @throws ParserException If there the new value is invalid for this type of Parameter.
+     */
+    public void setParentConditionValue(final String s) throws ParserException {
+        // create a dummy parameter to see if it generates a ParserException
+        ParameterFactory.parseParameter("test_param", getParent().getTypeString(), s);
+
+        parentValueString = s;
     }
 }
