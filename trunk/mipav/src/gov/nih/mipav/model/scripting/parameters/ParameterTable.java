@@ -132,6 +132,28 @@ public class ParameterTable {
     }
 
     /**
+     * Return the file value of one of the parameters from the table.
+     * 
+     * @param paramLabel The label/name of the double parameter to retrieve.
+     * 
+     * @return The requested parameter's value.
+     * 
+     * @throws ParameterException DOCUMENT ME!
+     */
+    public String getFile(final String paramLabel) {
+
+        try {
+            final Parameter param = getWithOverride(paramLabel, Parameter.PARAM_FILE);
+
+            return ((ParameterFile) param).getValue();
+        } catch (final NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (final ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
+    }
+
+    /**
      * Return the float value of one of the parameters from the table.
      * 
      * @param paramLabel The label/name of the float parameter to retrieve.
