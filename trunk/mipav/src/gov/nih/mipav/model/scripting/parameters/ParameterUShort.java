@@ -169,5 +169,7 @@ public class ParameterUShort extends Parameter {
         if ( !isValueValid(value)) {
             value = 0;
         }
+
+        setValueAssigned(true);
     }
 }

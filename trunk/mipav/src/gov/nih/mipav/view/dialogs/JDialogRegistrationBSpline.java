@@ -1247,46 +1247,47 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterExternalImage("reference_image"));
 
-            table.put(new ParameterBoolean("is_ref_img_a_src_img_slice"));
-            table.put(new ParameterInt("ref_slice_in_src_img"));
+            table.put(new ParameterBoolean("is_ref_img_a_src_img_slice", false));
+            table.put(new ParameterInt("ref_slice_in_src_img", 0));
 
-            table.put(new ParameterString("cost_measure"));
-            table.put(new ParameterInt("num_passes"));
+            table.put(new ParameterString("cost_measure",
+                    "gov.nih.mipav.model.algorithms.registration.RegistrationMeasureLeastSquares"));
+            table.put(new ParameterInt("num_passes", 1));
 
             String paramPrefix = "pass_1_";
-            table.put(new ParameterBoolean(paramPrefix + "do_subsample"));
-            table.put(new ParameterInt(paramPrefix + "bspline_degree"));
-            table.put(new ParameterInt(paramPrefix + "num_control_points"));
-            table.put(new ParameterFloat(paramPrefix + "gradient_descent_minimize_step_size"));
-            table.put(new ParameterInt(paramPrefix + "gradient_descent_minimize_max_steps"));
-            table.put(new ParameterFloat(paramPrefix + "convergence_limit"));
-            table.put(new ParameterInt(paramPrefix + "max_iterations"));
+            table.put(new ParameterBoolean(paramPrefix + "do_subsample", true));
+            table.put(new ParameterInt(paramPrefix + "bspline_degree", 1));
+            table.put(new ParameterInt(paramPrefix + "num_control_points", 8));
+            table.put(new ParameterFloat(paramPrefix + "gradient_descent_minimize_step_size", 1.0f));
+            table.put(new ParameterInt(paramPrefix + "gradient_descent_minimize_max_steps", 10));
+            table.put(new ParameterFloat(paramPrefix + "convergence_limit", 0.1f));
+            table.put(new ParameterInt(paramPrefix + "max_iterations", 10));
 
             final Parameter numPassesParam = table.getParameter("num_passes");
             paramPrefix = "pass_2_";
-            Parameter tempParam = new ParameterBoolean("do_subsample");
+            Parameter tempParam = new ParameterBoolean("do_subsample", true);
             tempParam.setParentCondition(numPassesParam, "2");
             table.put(tempParam);
-            tempParam = new ParameterInt(paramPrefix + "bspline_degree");
+            tempParam = new ParameterInt(paramPrefix + "bspline_degree", 2);
             tempParam.setParentCondition(numPassesParam, "2");
             table.put(tempParam);
-            tempParam = new ParameterInt(paramPrefix + "num_control_points");
+            tempParam = new ParameterInt(paramPrefix + "num_control_points", 16);
             tempParam.setParentCondition(numPassesParam, "2");
             table.put(tempParam);
-            tempParam = new ParameterFloat(paramPrefix + "gradient_descent_minimize_step_size");
+            tempParam = new ParameterFloat(paramPrefix + "gradient_descent_minimize_step_size", 0.5f);
             tempParam.setParentCondition(numPassesParam, "2");
             table.put(tempParam);
-            tempParam = new ParameterInt(paramPrefix + "gradient_descent_minimize_max_steps");
+            tempParam = new ParameterInt(paramPrefix + "gradient_descent_minimize_max_steps", 10);
             tempParam.setParentCondition(numPassesParam, "2");
             table.put(tempParam);
-            tempParam = new ParameterFloat(paramPrefix + "convergence_limit");
+            tempParam = new ParameterFloat(paramPrefix + "convergence_limit", 0.01f);
             tempParam.setParentCondition(numPassesParam, "2");
             table.put(tempParam);
-            tempParam = new ParameterInt(paramPrefix + "max_iterations");
+            tempParam = new ParameterInt(paramPrefix + "max_iterations", 10);
             tempParam.setParentCondition(numPassesParam, "2");
             table.put(tempParam);
 
-            table.put(new ParameterBoolean("do_create_deformation_image"));
+            table.put(new ParameterBoolean("do_create_deformation_image", false));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();

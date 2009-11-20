@@ -114,5 +114,6 @@ public class ParameterString extends Parameter {
      */
     public void setValue(final String paramValueString) throws ParserException {
         value = paramValueString;
+        setValueAssigned(true);
     }
 }

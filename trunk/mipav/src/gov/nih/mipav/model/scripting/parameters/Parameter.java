@@ -128,6 +128,13 @@ public abstract class Parameter {
      */
     private boolean isOptional = false;
 
+    /**
+     * Whether a value has been set for this parameter. Should be set to true at the first call to any constructor or
+     * method that gives the parameter a value. Used to distinguish from the default value some primitives have when
+     * they are created.
+     */
+    private boolean isValueAssigned = false;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -353,5 +360,27 @@ public abstract class Parameter {
      */
     public boolean isOptional() {
         return isOptional;
+    }
+
+    /**
+     * Sets whether a value has been set for this parameter. Should be set to true at the first call to any constructor
+     * or method that gives the parameter a value. Used to distinguish from the default value some primitives have when
+     * they are created.
+     * 
+     * @param flag Whether a value has been set for this parameter.
+     */
+    protected void setValueAssigned(final boolean flag) {
+        isValueAssigned = flag;
+    }
+
+    /**
+     * Returns whether a value has been set for this parameter. Should be set to true at the first call to any
+     * constructor or method that gives the parameter a value. Used to distinguish from the default value some
+     * primitives have when they are created.
+     * 
+     * @return Whether a value has been set for this parameter.
+     */
+    public boolean isValueAssigned() {
+        return isValueAssigned;
     }
 }

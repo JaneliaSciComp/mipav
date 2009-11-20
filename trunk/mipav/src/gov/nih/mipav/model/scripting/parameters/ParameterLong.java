@@ -147,5 +147,6 @@ public class ParameterLong extends Parameter {
      */
     public void setValue(final long paramValue) throws ParserException {
         value = paramValue;
+        setValueAssigned(true);
     }
 }

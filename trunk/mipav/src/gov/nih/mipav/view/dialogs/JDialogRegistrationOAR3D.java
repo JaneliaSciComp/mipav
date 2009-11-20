@@ -2972,6 +2972,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             public String getName() {
                 return new String("Optimized automatic registration 3D");
             }
+
+            public Set<ImageRequirements> getInputImageRequirements() {
+                return EnumSet.of(ImageRequirements.NDIM_3);
+            }
         };
     }
 

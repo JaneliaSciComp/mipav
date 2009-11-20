@@ -147,5 +147,6 @@ public class ParameterInt extends Parameter {
      */
     public void setValue(final int paramValue) throws ParserException {
         value = paramValue;
+        setValueAssigned(true);
     }
 }

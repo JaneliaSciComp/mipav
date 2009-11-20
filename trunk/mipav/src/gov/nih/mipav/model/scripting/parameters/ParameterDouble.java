@@ -148,5 +148,6 @@ public class ParameterDouble extends Parameter {
      */
     public void setValue(final double paramValue) throws ParserException {
         value = paramValue;
+        setValueAssigned(true);
     }
 }

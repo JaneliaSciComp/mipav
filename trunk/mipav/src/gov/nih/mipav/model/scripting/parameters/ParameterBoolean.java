@@ -143,5 +143,6 @@ public class ParameterBoolean extends Parameter {
      */
     public void setValue(final boolean paramValue) throws ParserException {
         value = paramValue;
+        setValueAssigned(true);
     }
 }

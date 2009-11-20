@@ -147,5 +147,6 @@ public class ParameterShort extends Parameter {
      */
     public void setValue(final short paramValue) throws ParserException {
         value = paramValue;
+        setValueAssigned(true);
     }
 }
