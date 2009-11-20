@@ -162,6 +162,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
     {
         super();
+        m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
