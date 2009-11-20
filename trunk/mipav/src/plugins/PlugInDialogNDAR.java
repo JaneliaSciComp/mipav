@@ -61,12 +61,18 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private JScrollPane listPane;
     
     private JTable sourceTable;
+    
+    private JLabel outputDirLabel;
 
-    private JButton addSourceButton, finishButton, removeSourceButton, completeDataElementsButton;
+    private JButton addSourceButton, finishButton, removeSourceButton, completeDataElementsButton, outputDirButton;
+    
+    private JPanel outputDirPanel;
+    
+    private JTextField outputDirTextField;
     
     private ViewTableModel sourceTableModel;
 
-    private static final String outputDirBase = System.getProperty("user.home") + File.separator + "mipav"
+    private String outputDirBase = System.getProperty("user.home") + File.separator + "mipav"
             + File.separator + "NDAR_Imaging_Submission" + File.separator;
 
     /** Length of the NDAR GUID */
@@ -259,6 +265,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             	worker.start();
             	removeSourceButton.setEnabled(false);
             	finishButton.setEnabled(false);
+            	outputDirButton.setEnabled(false);
             	addSourceButton.setEnabled(false);
             	completeDataElementsButton.setEnabled(false);
             	
@@ -272,7 +279,20 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     		}else {
     			new InfoDialog(this, f, true);
     		}
-        }
+        }else if(command.equalsIgnoreCase("outputDirBrowse")) {
+			JFileChooser chooser = new JFileChooser();
+
+			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+	        chooser.setDialogTitle("Choose output directory");
+	        int returnValue = chooser.showOpenDialog(this);
+	        if (returnValue == JFileChooser.APPROVE_OPTION) {
+	        	outputDirTextField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
+
+	        	outputDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
+	        	
+	        	System.out.println(outputDirBase);
+	        }
+		}
     }
 
     public void stateChanged(ChangeEvent e) {
@@ -297,8 +317,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         getContentPane().add(buildButtonPanel(), BorderLayout.SOUTH);
         pack();
         validate();
-        this.setMinimumSize(new Dimension(610, 437));
-        this.setSize(new Dimension(610, 437));
+        this.setMinimumSize(new Dimension(610, 537));
+        this.setSize(new Dimension(610, 537));
     }
 
     
@@ -309,10 +329,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         JPanel destPanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc2.anchor = GridBagConstraints.NORTHWEST;
-        gbc2.fill = GridBagConstraints.BOTH;
-        gbc2.weightx = 1;
-        gbc2.weighty = 1;
+        gbc2.anchor = GridBagConstraints.CENTER;
+        
         gbc2.gridy = 0;
         gbc2.gridx = 0;
 
@@ -320,7 +338,32 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         logOutputArea.setBorder(buildTitledBorder("Output log"));
         logOutputArea.getTextArea().setEditable(false);
 
+        
+        outputDirPanel = new JPanel();
+        outputDirLabel = new JLabel("Output Directory ");
+        outputDirTextField = new JTextField(30);
+        outputDirTextField.setEditable(false);
+        outputDirTextField.setToolTipText(outputDirBase);
+        outputDirTextField.setText(outputDirBase);
+        outputDirButton = WidgetFactory.buildTextButton("Browse", "Choose Output Directory", "outputDirBrowse", this);
+        outputDirButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        outputDirPanel.add(outputDirLabel);
+        outputDirPanel.add(outputDirTextField);
+        outputDirPanel.add(outputDirButton);
+        
+        
+        destPanel.add(outputDirPanel, gbc2);
+        
+        gbc2.gridy = 1;
+        gbc2.fill = GridBagConstraints.BOTH;
+        gbc2.weightx = 1;
+        gbc2.weighty = 1;
+        gbc2.anchor = GridBagConstraints.NORTHWEST;
         destPanel.add(logOutputArea, gbc2);
+        
+        
+        
+        
 
         return destPanel;
     }
@@ -415,8 +458,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * Create the ZIP(s) containing the original image files and the XML meta-data for each image dataset.
      */
     private void createSubmissionFiles() {
-        if ( !new File(outputDirBase).exists()) {
-            new File(outputDirBase).mkdirs();
+
+    	File outputDirFile = new File(outputDirBase);
+        if ( !outputDirFile.exists()) {
+        	outputDirFile.mkdirs();
+
         }
         int numImages = sourceTableModel.getRowCount();
         for (int i = 0; i < numImages; i++) {
@@ -1095,6 +1141,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     	private JPanel mainPanel;
     	private GridBagConstraints gbc;
     	private JScrollPane scrollPane, tabScrollPane;
+    	private JPanel topPanel;
     	private LinkedHashMap<String,String> infoMap;
     	private String guid = "";
     	private FileInputStream inputStream;
@@ -1102,6 +1149,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     	private FileIO fileIO;
     	private int gridYCounter = 0;
     	private boolean launchedFromCompletedState = false;
+    	private JLabel requiredLabel;
 
     	
     	public InfoDialog(Dialog owner, File file, boolean launchedFromCompletedState) {
@@ -1212,7 +1260,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     	    	populateFields();
     	    }
 
-    		getContentPane().add(scrollPane, BorderLayout.NORTH);
+    	    topPanel = new JPanel(new BorderLayout());
+    	    requiredLabel = new JLabel("* Required Data Elements are in red");
+    	    topPanel.add(requiredLabel, BorderLayout.NORTH);
+    	    topPanel.add(scrollPane, BorderLayout.CENTER);
+    	    
+    	    
+    		getContentPane().add(topPanel, BorderLayout.NORTH);
     		if(tabbedPane.getTabCount() > 0) {
     			getContentPane().add(tabbedPane, BorderLayout.CENTER);
     		}
