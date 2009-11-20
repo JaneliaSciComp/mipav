@@ -38,7 +38,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
     // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME.* */
-    String kStringDimension;
+    private String kStringDimension;
 
     /**
      * Contains names of compatible target images that can be registered to the input source image for 2D/3D
@@ -184,14 +184,14 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
     public static String[] getNamesCompatibleTargetImages(final ModelImage kImageSrc) {
 
         // Get the names of all the registered images.
-        final Enumeration kRegisteredImageNames = ViewUserInterface.getReference().getRegisteredImageNames();
-        final Vector kNamesList = new Vector();
+        final Enumeration<String> kRegisteredImageNames = ViewUserInterface.getReference().getRegisteredImageNames();
+        final Vector<String> kNamesList = new Vector<String>();
 
         // Find framed target images which can be registered to the specified
         // source image given the type of source image. Must match in
         // number of dimensions and type (i.e., color vs. intensity).
         while (kRegisteredImageNames.hasMoreElements()) {
-            final String kName = (String) kRegisteredImageNames.nextElement();
+            final String kName = kRegisteredImageNames.nextElement();
 
             // Skip the source image when it is found.
             if (kName.equals(kImageSrc.getImageName())) {
@@ -225,7 +225,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         final String[] akNamesCompatibleTargetImages = new String[kNamesList.size()];
 
         for (int i = 0; i < akNamesCompatibleTargetImages.length; i++) {
-            akNamesCompatibleTargetImages[i] = (String) kNamesList.get(i);
+            akNamesCompatibleTargetImages[i] = kNamesList.get(i);
         }
 
         return akNamesCompatibleTargetImages;
@@ -527,8 +527,9 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         final String kCostMeasureName = scriptParameters.getParams().getString("cost_measure");
 
         try {
-            final Class kCostMeasureClass = Class.forName(kCostMeasureName);
-            m_kRegMeasure = (RegistrationMeasure) kCostMeasureClass.newInstance();
+            final Class<RegistrationMeasure> kCostMeasureClass = (Class<RegistrationMeasure>) Class
+                    .forName(kCostMeasureName);
+            m_kRegMeasure = kCostMeasureClass.newInstance();
         } catch (final ClassNotFoundException cnfe) {
             throw new ParameterException("cost_measure", "Unable to find cost measure class: " + kCostMeasureName);
         } catch (final InstantiationException ie) {
@@ -543,23 +544,61 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         final int iNumPasses = scriptParameters.getParams().getInt("num_passes");
         m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
 
-        try {
-            m_kOptionsPass1.setFromString(scriptParameters.getParams().getString("pass_options_1"), " ");
-        } catch (final TokenizerException te) {
-            throw new ParameterException("pass_options_1", "There is a problem with the options for the first pass.");
-        }
-
-        if (2 == iNumPasses) {
-            m_kOptionsPass2 = new AlgorithmRegBSpline.Options();
-
+        // old versions of the scripting kept all the pass options in one string
+        if (scriptParameters.getParams().containsParameter("pass_options_1")) {
             try {
-                m_kOptionsPass2.setFromString(scriptParameters.getParams().getString("pass_options_2"), " ");
+                m_kOptionsPass1.setFromString(scriptParameters.getParams().getString("pass_options_1"), " ");
             } catch (final TokenizerException te) {
-                throw new ParameterException("pass_options_2",
-                        "There is a problem with the options for the second pass.");
+                throw new ParameterException("pass_options_1",
+                        "There is a problem with the options for the first pass.");
+            }
+
+            // assume that if the pass_options_1 parameter was used, the pass_options_2 parameter will also be used
+            if (2 == iNumPasses) {
+                m_kOptionsPass2 = new AlgorithmRegBSpline.Options();
+
+                try {
+                    m_kOptionsPass2.setFromString(scriptParameters.getParams().getString("pass_options_2"), " ");
+                } catch (final TokenizerException te) {
+                    throw new ParameterException("pass_options_2",
+                            "There is a problem with the options for the second pass.");
+                }
+            } else {
+                m_kOptionsPass2 = null;
             }
         } else {
-            m_kOptionsPass2 = null;
+            // new version of the script parameters with the pass options broken out into separate params
+            String paramPrefix = "pass_1_";
+            m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
+            m_kOptionsPass1.bSubsample = scriptParameters.getParams().getBoolean(paramPrefix + "do_subsample");
+            m_kOptionsPass1.iBSplineDegree = scriptParameters.getParams().getInt(paramPrefix + "bspline_degree");
+            m_kOptionsPass1.iBSplineNumControlPoints = scriptParameters.getParams().getInt(
+                    paramPrefix + "num_control_points");
+            m_kOptionsPass1.fGradientDescentMinimizeStepSize = scriptParameters.getParams().getFloat(
+                    paramPrefix + "gradient_descent_minimize_step_size");
+            m_kOptionsPass1.iGradientDescentMinimizeMaxSteps = scriptParameters.getParams().getInt(
+                    paramPrefix + "gradient_descent_minimize_max_steps");
+            m_kOptionsPass1.fConvergenceLimit = scriptParameters.getParams()
+                    .getFloat(paramPrefix + "convergence_limit");
+            m_kOptionsPass1.iMaxIterations = scriptParameters.getParams().getInt(paramPrefix + "max_iterations");
+
+            if (2 == iNumPasses) {
+                paramPrefix = "pass_2_";
+                m_kOptionsPass2 = new AlgorithmRegBSpline.Options();
+                m_kOptionsPass2.bSubsample = scriptParameters.getParams().getBoolean(paramPrefix + "do_subsample");
+                m_kOptionsPass2.iBSplineDegree = scriptParameters.getParams().getInt(paramPrefix + "bspline_degree");
+                m_kOptionsPass2.iBSplineNumControlPoints = scriptParameters.getParams().getInt(
+                        paramPrefix + "num_control_points");
+                m_kOptionsPass2.fGradientDescentMinimizeStepSize = scriptParameters.getParams().getFloat(
+                        paramPrefix + "gradient_descent_minimize_step_size");
+                m_kOptionsPass2.iGradientDescentMinimizeMaxSteps = scriptParameters.getParams().getInt(
+                        paramPrefix + "gradient_descent_minimize_max_steps");
+                m_kOptionsPass2.fConvergenceLimit = scriptParameters.getParams().getFloat(
+                        paramPrefix + "convergence_limit");
+                m_kOptionsPass2.iMaxIterations = scriptParameters.getParams().getInt(paramPrefix + "max_iterations");
+            } else {
+                m_kOptionsPass2 = null;
+            }
         }
 
         // get whether or not to create the deformation image
@@ -586,12 +625,57 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
                 ParameterFactory.newParameter("cost_measure", m_kRegMeasure.getClass().getName()));
         scriptParameters.getParams()
                 .put(ParameterFactory.newParameter("num_passes", (m_kOptionsPass2 == null) ? 1 : 2));
-        scriptParameters.getParams()
-                .put(ParameterFactory.newParameter("pass_options_1", m_kOptionsPass1.toString(" ")));
+
+        // old scripting params that are no longer used because they were opaque
+        /*
+         * scriptParameters.getParams() .put(ParameterFactory.newParameter("pass_options_1", m_kOptionsPass1.toString("
+         * ")));
+         * 
+         * if (m_kOptionsPass2 != null) { scriptParameters.getParams().put(
+         * ParameterFactory.newParameter("pass_options_2", m_kOptionsPass2.toString(" "))); }
+         */
+
+        // broke out individual pass parameters
+        String paramPrefix = "pass_1_";
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter(paramPrefix + "do_subsample", m_kOptionsPass1.bSubsample));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter(paramPrefix + "bspline_degree", m_kOptionsPass1.iBSplineDegree));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter(paramPrefix + "num_control_points",
+                        m_kOptionsPass1.iBSplineNumControlPoints));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter(paramPrefix + "gradient_descent_minimize_step_size",
+                        m_kOptionsPass1.fGradientDescentMinimizeStepSize));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter(paramPrefix + "gradient_descent_minimize_max_steps",
+                        m_kOptionsPass1.iGradientDescentMinimizeMaxSteps));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter(paramPrefix + "convergence_limit", m_kOptionsPass1.fConvergenceLimit));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter(paramPrefix + "max_iterations", m_kOptionsPass1.iMaxIterations));
 
         if (m_kOptionsPass2 != null) {
+            paramPrefix = "pass_2_";
             scriptParameters.getParams().put(
-                    ParameterFactory.newParameter("pass_options_2", m_kOptionsPass2.toString(" ")));
+                    ParameterFactory.newParameter(paramPrefix + "do_subsample", m_kOptionsPass2.bSubsample));
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter(paramPrefix + "bspline_degree", m_kOptionsPass2.iBSplineDegree));
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter(paramPrefix + "num_control_points",
+                            m_kOptionsPass2.iBSplineNumControlPoints));
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter(paramPrefix + "gradient_descent_minimize_step_size",
+                            m_kOptionsPass2.fGradientDescentMinimizeStepSize));
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter(paramPrefix + "gradient_descent_minimize_max_steps",
+                            m_kOptionsPass2.iGradientDescentMinimizeMaxSteps));
+            scriptParameters.getParams()
+                    .put(
+                            ParameterFactory.newParameter(paramPrefix + "convergence_limit",
+                                    m_kOptionsPass2.fConvergenceLimit));
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter(paramPrefix + "max_iterations", m_kOptionsPass2.iMaxIterations));
         }
 
         scriptParameters.getParams().put(
@@ -1168,8 +1252,40 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
             table.put(new ParameterString("cost_measure"));
             table.put(new ParameterInt("num_passes"));
-            table.put(new ParameterString("pass_options_1"));
-            table.put(new ParameterString("pass_options_2"));
+
+            String paramPrefix = "pass_1_";
+            table.put(new ParameterBoolean(paramPrefix + "do_subsample"));
+            table.put(new ParameterInt(paramPrefix + "bspline_degree"));
+            table.put(new ParameterInt(paramPrefix + "num_control_points"));
+            table.put(new ParameterFloat(paramPrefix + "gradient_descent_minimize_step_size"));
+            table.put(new ParameterInt(paramPrefix + "gradient_descent_minimize_max_steps"));
+            table.put(new ParameterFloat(paramPrefix + "convergence_limit"));
+            table.put(new ParameterInt(paramPrefix + "max_iterations"));
+
+            final Parameter numPassesParam = table.getParameter("num_passes");
+            paramPrefix = "pass_2_";
+            Parameter tempParam = new ParameterBoolean("do_subsample");
+            tempParam.setParentCondition(numPassesParam, "2");
+            table.put(tempParam);
+            tempParam = new ParameterInt(paramPrefix + "bspline_degree");
+            tempParam.setParentCondition(numPassesParam, "2");
+            table.put(tempParam);
+            tempParam = new ParameterInt(paramPrefix + "num_control_points");
+            tempParam.setParentCondition(numPassesParam, "2");
+            table.put(tempParam);
+            tempParam = new ParameterFloat(paramPrefix + "gradient_descent_minimize_step_size");
+            tempParam.setParentCondition(numPassesParam, "2");
+            table.put(tempParam);
+            tempParam = new ParameterInt(paramPrefix + "gradient_descent_minimize_max_steps");
+            tempParam.setParentCondition(numPassesParam, "2");
+            table.put(tempParam);
+            tempParam = new ParameterFloat(paramPrefix + "convergence_limit");
+            tempParam.setParentCondition(numPassesParam, "2");
+            table.put(tempParam);
+            tempParam = new ParameterInt(paramPrefix + "max_iterations");
+            tempParam.setParentCondition(numPassesParam, "2");
+            table.put(tempParam);
+
             table.put(new ParameterBoolean("do_create_deformation_image"));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
