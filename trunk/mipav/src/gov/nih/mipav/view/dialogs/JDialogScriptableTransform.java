@@ -1,75 +1,67 @@
 package gov.nih.mipav.view.dialogs;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
+
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
+import Jama.Matrix;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 /**
- * Dialog to get user input, then call algorithmTransform. User may select
- * resample or transform. User may input matrix or use image's associated
- * transformation matrix. User may input desired resolutions and dims. User
- * may select interpolation method. Creates new volume.
+ * Dialog to get user input, then call algorithmTransform. User may select resample or transform. User may input matrix
+ * or use image's associated transformation matrix. User may input desired resolutions and dims. User may select
+ * interpolation method. Creates new volume.
  * 
- * You can choose either of 2 goals in bilinear or trilinear interpolation,
- *    but you cannot choose both.
- * You can choose to:
-
- * 1.) Match the start row, column, and slice in the original image with the
- * start row, column, and slice in the transformed image with no duplication
- * of start values and match the end row, column, and slice in the original
- * image with the end row column, and slice in the transformed image with no
- * duplication of end values with a smooth interpolation occurring between the
- * beginning and end.  For a smooth bilinear or trilinear interpolation you
- * must map from 0 to n1t - 1 in the transformed image to 0 to n1 - 1 in the
- * original image.  Mapping from n1t - 1 to n1t in the transformed image to n1
- * - 1 to n1 in the source image would lead to multiple identical transformed
- * copies for source image values between n1 - 1 and n1 - 0.5 and identical or
- * out of bounds transformed values for source values from n1 - 0.5 to
- * n1. This necessitates using equations of the form (dim - 1) * res =
- * (transformedDim - 1) * transformedRes.
-
+ * You can choose either of 2 goals in bilinear or trilinear interpolation, but you cannot choose both. You can choose
+ * to:
+ * 
+ * 1.) Match the start row, column, and slice in the original image with the start row, column, and slice in the
+ * transformed image with no duplication of start values and match the end row, column, and slice in the original image
+ * with the end row column, and slice in the transformed image with no duplication of end values with a smooth
+ * interpolation occurring between the beginning and end. For a smooth bilinear or trilinear interpolation you must map
+ * from 0 to n1t - 1 in the transformed image to 0 to n1 - 1 in the original image. Mapping from n1t - 1 to n1t in the
+ * transformed image to n1 - 1 to n1 in the source image would lead to multiple identical transformed copies for source
+ * image values between n1 - 1 and n1 - 0.5 and identical or out of bounds transformed values for source values from n1 -
+ * 0.5 to n1. This necessitates using equations of the form (dim - 1) * res = (transformedDim - 1) * transformedRes.
+ * 
  * Since the field of view = dim * res, this does not preserve field of view.
-
- * If a user wishes to reslice an image and have the beginning and end slices
- * match without duplication, then this would be the method to select
-
- * 2.) If a user simply wishes to magnify the field of view and is not worried
- * about duplicate beginning and end values, then preserve the field of view =
- * dim * res = transformedDim * transformedRes.
  * 
- * If the interpolation is not bilinear or trilinear, then the purpose of
- * interpolation is always to preserve the FOV.
-
- * For either interpolation purpose, note that if the user selects the new
- * dimension, then the floating point resolution can be perfectly adjusted,
- * but if the user selects the new resolution, since dimensions are integers,
- * the new dimension value may not be perfectly adjusted.
- *
- * @version  0.1 Nov. 19, 1999
- * @author   Delia McGarry
- * @author   Neva Cherniavsky
- * @author   Zohara Cohen
+ * If a user wishes to reslice an image and have the beginning and end slices match without duplication, then this would
+ * be the method to select
+ * 
+ * 2.) If a user simply wishes to magnify the field of view and is not worried about duplicate beginning and end values,
+ * then preserve the field of view = dim * res = transformedDim * transformedRes.
+ * 
+ * If the interpolation is not bilinear or trilinear, then the purpose of interpolation is always to preserve the FOV.
+ * 
+ * For either interpolation purpose, note that if the user selects the new dimension, then the floating point resolution
+ * can be perfectly adjusted, but if the user selects the new resolution, since dimensions are integers, the new
+ * dimension value may not be perfectly adjusted.
+ * 
+ * @version 0.1 Nov. 19, 1999
+ * @author Delia McGarry
+ * @author Neva Cherniavsky
+ * @author Zohara Cohen
  */
-public class JDialogScriptableTransform extends JDialogScriptableBase implements AlgorithmInterface, ChangeListener {
+public class JDialogScriptableTransform extends JDialogScriptableBase implements AlgorithmInterface, ChangeListener,
+        ActionDiscovery {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -7786904359172693422L;
@@ -92,7 +84,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     /** DOCUMENT ME! */
     private static final int ACPC_TO_ORIG = 5;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private AlgorithmTalairachTransform algoTal = null;
@@ -123,7 +116,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private boolean doTalairach = false;
-        
+
     /** DOCUMENT ME! */
     private boolean doVOI, doClip, doPad, setPix, doUpdateOrigin, doInvMat;
 
@@ -138,9 +131,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private int interp = 0;
-    
+
     private float fillValue = 0.0f;
-    
+
     private JLabel labelOrigin;
 
     /** DOCUMENT ME! */
@@ -148,7 +141,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private JLabel labelTx, labelTy, labelTz, labelRx, labelRy, labelRz, labelSx, labelSy, labelSz, labelSKx, labelSKy,
-                   labelSKz;
+            labelSKz;
 
     /** If true change matrix to the left-hand coordinate system. */
     private boolean leftHandSystem = false;
@@ -177,7 +170,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     /** DOCUMENT ME! */
     private float oXres, oYres, oZres, cXres, cYres, cZres;
 
-    private int [] units;
+    private int[] units;
 
     /** DOCUMENT ME! */
     private ButtonGroup resampleGroup;
@@ -198,13 +191,13 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     private JRadioButton storedMatrix, noTransform, userDefinedMatrix, fileMatrix;
 
     private JComboBox storedMatrixBox;
-    
+
     /** DOCUMENT ME! */
     private JTextField textResX, textResY, textResZ, textDimX, textDimY, textDimZ;
 
     /** DOCUMENT ME! */
     private JTextField textTx, textTy, textTz, textRx, textRy, textRz, textSx, textSy, textSz, textSKx, textSKy,
-                       textSKz;
+            textSKz;
 
     /** DOCUMENT ME! */
     private TalairachTransformInfo tInfo = null;
@@ -231,69 +224,68 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     private JCheckBox useSACenterBox;
 
     private boolean useSACenter = false;
-    
-    /** Tabbed pane*/
+
+    /** Tabbed pane */
     private JTabbedPane tabbedPane = null;
-    
-    /** is this a scanner anatomical transform (->AXIAL)*/
+
+    /** is this a scanner anatomical transform (->AXIAL) */
     private boolean isSATransform = false;
-    
+
     private boolean enableSATransform = false;
-    
+
     /** We use the constant to preserve the FOV. Either 1 or 0; */
     private int constantFOV = 1;
-    
+
     /** Button group for interpolation type, contant FOV or start, end matching. */
     private ButtonGroup interpFOVgroup;
-    
+
     /** Radio button for constant FOV interpolation. */
     private JRadioButton constantFOVradio;
-    
+
     /** Radio button for slice start & end matching interpolation. */
     private JRadioButton endMatchFOVradio;
-    
+
     private float[] dims;
+
     private float[] resols;
-    
+
     private JLabel outOfBoundsLabel;
-    
+
     private JComboBox outOfBoundsComboBox;
-    
+
     private JLabel valueLabel;
-    
+
     private JTextField valueText;
-    
+
     private double imageMin;
-    
+
     private double imageMax;
-    
+
     private int dataType;
-    
+
     /**
-     * Tells how to select fill value for out of bounds data
-     * 0 for image minimum
-     * 1 for NaN for float, zero otherwise.
-     * 2 for user defined
-     * 3 for image maximum
+     * Tells how to select fill value for out of bounds data 0 for image minimum 1 for NaN for float, zero otherwise. 2
+     * for user defined 3 for image maximum
      */
     private int outOfBoundsIndex = 0;
-    
+
     private AlgorithmTPSpline spline = null;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogScriptableTransform() { }
+    public JDialogScriptableTransform() {}
 
     /**
      * Constructs new transform dialog and sets up GUI components.
-     *
-     * @param  theParentFrame  Parent frame.
-     * @param  im              Source image.
+     * 
+     * @param theParentFrame Parent frame.
+     * @param im Source image.
      */
-    public JDialogScriptableTransform(Frame theParentFrame, ModelImage im) {
+    public JDialogScriptableTransform(final Frame theParentFrame, final ModelImage im) {
         super(theParentFrame, false);
 
         image = im;
@@ -310,7 +302,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         if (image.getNDims() > 2) {
             dims[2] = image.getFileInfo()[0].getExtents()[2];
         }
-        
+
         resols[0] = image.getFileInfo()[0].getResolutions()[0];
         resols[1] = image.getFileInfo()[0].getResolutions()[1];
         if (image.getNDims() > 2) {
@@ -319,15 +311,16 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Closes dialog box when the OK button is pressed, sets the variables, and calls the algorithm.
-     *
-     * @param  event  Event that triggers function.
+     * 
+     * @param event Event that triggers function.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
         if (command.equals("OK")) {
 
@@ -336,8 +329,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
         } else if (command.equals("Cancel")) {
             dispose();
-        }
-        else if (command.equals("Help")) {
+        } else if (command.equals("Help")) {
             MipavUtil.showHelp("Transform010");
         }
     }
@@ -349,21 +341,21 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
-     *
-     * @param  algorithm  Algorithm that caused the event.
+     * 
+     * @param algorithm Algorithm that caused the event.
      */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
+    public void algorithmPerformed(final AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmTransform) {
             resultImage = algoTrans.getTransformedImage();
 
-            if ((algoTrans.isCompleted() == true) && (resultImage != null)) {
+            if ( (algoTrans.isCompleted() == true) && (resultImage != null)) {
                 resultImage.calcMinMax();
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
             } else if (resultImage != null) {
@@ -375,13 +367,13 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         } // if (algorithm instanceof AlgorithmTransform)
         else if (algorithm instanceof AlgorithmTalairachTransform) {
 
-            if ((algoTal.isCompleted() == true) && (resultImage != null)) {
+            if ( (algoTal.isCompleted() == true) && (resultImage != null)) {
                 resultImage.calcMinMax();
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
             } // if ((algoTal.isCompleted == true) && (resultImage != null))
@@ -418,53 +410,53 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * When the user clicks the mouse out of a text field, resets the necessary variables.
-     *
-     * @param  event  event that triggers this function
+     * 
+     * @param event event that triggers this function
      */
-    public void focusLost(FocusEvent event) {
-        Object source = event.getSource();
+    public void focusLost(final FocusEvent event) {
+        final Object source = event.getSource();
         JTextField tempTextField;
         String userText;
         float userValue;
         float factor, fov;
-        
+
         factor = 1.f;
-        
+
         tempTextField = (JTextField) source;
         userText = tempTextField.getText();
         userValue = Float.valueOf(userText).floatValue();
 
         if (source == textDimX) {
-            factor = (userValue-constantFOV) / (float) (cXdim-constantFOV);
+            factor = (userValue - constantFOV) / (cXdim - constantFOV);
             dims[0] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cXdim-constantFOV) * cXres;
-                resols[0] = fov / (dims[0]-constantFOV);
+                fov = (cXdim - constantFOV) * cXres;
+                resols[0] = fov / (dims[0] - constantFOV);
             }
         } else if (source == textDimY) {
-            factor = (userValue-constantFOV) / (float) (cYdim-constantFOV);
+            factor = (userValue - constantFOV) / (cYdim - constantFOV);
             dims[1] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cYdim-constantFOV) * cYres;
-                resols[1] = fov / (dims[1]-constantFOV);
+                fov = (cYdim - constantFOV) * cYres;
+                resols[1] = fov / (dims[1] - constantFOV);
             }
         } else if (source == textDimZ) {
-            factor = (userValue-constantFOV) / (float) (cZdim-constantFOV);
+            factor = (userValue - constantFOV) / (cZdim - constantFOV);
             dims[2] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution in z
-                fov = (cZdim-constantFOV) * cZres;
-                resols[2] = fov / (dims[2]-constantFOV);
+                fov = (cZdim - constantFOV) * cZres;
+                resols[2] = fov / (dims[2] - constantFOV);
             }
-           
+
         } else if (source == textResX) {
             factor = cXres / userValue;
             resols[0] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cXdim-constantFOV) * cXres;
+                fov = (cXdim - constantFOV) * cXres;
                 dims[0] = fov / resols[0] + constantFOV;
             }
         } else if (source == textResY) {
@@ -472,25 +464,25 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             resols[1] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cYdim-constantFOV) * cYres;
+                fov = (cYdim - constantFOV) * cYres;
                 dims[1] = fov / resols[1] + constantFOV;
             }
         } else if (source == textResZ) {
             factor = cZres / userValue;
             resols[2] = userValue;
-          
+
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-            	fov = (cZdim-constantFOV) * cZres;
+                fov = (cZdim - constantFOV) * cZres;
                 dims[2] = fov / resols[2] + constantFOV;
-                // System.err.println(" cZres = " + cZres + "  cZdim = " + cZdim);
+                // System.err.println(" cZres = " + cZres + " cZdim = " + cZdim);
             }
         }
 
-        if ((source == textResX) || (source == textDimX)) {
+        if ( (source == textResX) || (source == textDimX)) {
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update y values
-                if ((source == textDimX) || (fieldOfView.isSelected())) {
-                    dims[1] = (dims[1]-constantFOV) * factor + constantFOV;
+                if ( (source == textDimX) || (fieldOfView.isSelected())) {
+                    dims[1] = (dims[1] - constantFOV) * factor + constantFOV;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -499,19 +491,19 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
 
             if (xyzAspectRatio.isSelected()) { // update z values
-                if ((source == textDimX) || (fieldOfView.isSelected())) {
-                    dims[2] = (dims[2]-constantFOV) * factor + constantFOV;
+                if ( (source == textDimX) || (fieldOfView.isSelected())) {
+                    dims[2] = (dims[2] - constantFOV) * factor + constantFOV;
                 }
 
                 if (fieldOfView.isSelected()) {
                     resols[2] = resols[2] / factor;
                 }
             }
-        } else if ((source == textResY) || (source == textDimY)) {
+        } else if ( (source == textResY) || (source == textDimY)) {
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update x
-                if ((source == textDimY) || (fieldOfView.isSelected())) {
-                    dims[0] = (dims[0]-constantFOV) * factor + constantFOV;
+                if ( (source == textDimY) || (fieldOfView.isSelected())) {
+                    dims[0] = (dims[0] - constantFOV) * factor + constantFOV;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -520,22 +512,22 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
 
             if (xyzAspectRatio.isSelected()) { // update z
-                if ((source == textDimY) || (fieldOfView.isSelected())) {
-                    dims[2] = (dims[2]-constantFOV) * factor + constantFOV;
+                if ( (source == textDimY) || (fieldOfView.isSelected())) {
+                    dims[2] = (dims[2] - constantFOV) * factor + constantFOV;
                 }
 
                 if (fieldOfView.isSelected()) {
                     resols[2] = resols[2] / factor;
                 }
             }
-        } else if ((source == textResZ) || (source == textDimZ)) {
+        } else if ( (source == textResZ) || (source == textDimZ)) {
 
-            if (xyAspectRatio.isSelected()) { } // do nothing, x and y not affected by z
+            if (xyAspectRatio.isSelected()) {} // do nothing, x and y not affected by z
 
             if (xyzAspectRatio.isSelected()) { // update x and y accordingly
-                if ((source == textDimZ) || (fieldOfView.isSelected())) {
-                    dims[0] = (dims[0]-constantFOV) * factor + constantFOV;
-                    dims[1] = (dims[1]-constantFOV) * factor + constantFOV;
+                if ( (source == textDimZ) || (fieldOfView.isSelected())) {
+                    dims[0] = (dims[0] - constantFOV) * factor + constantFOV;
+                    dims[1] = (dims[1] - constantFOV) * factor + constantFOV;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -550,8 +542,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * Accessor that returns the image.
-     *
-     * @return  The result image
+     * 
+     * @return The result image
      */
     public ModelImage getResultImage() {
         return resultImage;
@@ -559,11 +551,11 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * Method to handle item events.
-     *
-     * @param  event  event that cause the method to fire
+     * 
+     * @param event event that cause the method to fire
      */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+    public void itemStateChanged(final ItemEvent event) {
+        final Object source = event.getSource();
 
         if (source == image25DCheckbox) {
 
@@ -609,7 +601,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 do25D = false;
                 comboBoxInterp.removeItemAt(1);
                 comboBoxInterp.insertItemAt("Trilinear", 1);
-                comboBoxInterp.setSelectedIndex(1); ///trilinear
+                comboBoxInterp.setSelectedIndex(1); // /trilinear
 
                 if (userDefinedMatrix.isSelected()) {
                     labelTz.setEnabled(true);
@@ -644,15 +636,14 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             } else {
                 clipCheckbox.setEnabled(true);
             }
-            
+
             if (comboBoxInterp.getSelectedIndex() == 1) {
                 // bilinear or trilinear interpolation
                 constantFOVradio.setEnabled(true);
                 endMatchFOVradio.setEnabled(true);
-            }
-            else {
+            } else {
                 constantFOVradio.setEnabled(false);
-                endMatchFOVradio.setEnabled(false);   
+                endMatchFOVradio.setEnabled(false);
                 constantFOVradio.setSelected(true);
                 endMatchFOVradio.setSelected(false);
                 setPixels.setText("Set pixels to preserve FOV.");
@@ -669,7 +660,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 textSKx.setEnabled(true);
                 textSKy.setEnabled(true);
 
-                if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
+                if ( (image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
                     labelSz.setEnabled(true);
                     labelSKz.setEnabled(true);
                     textSz.setEnabled(true);
@@ -715,7 +706,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 rotCenter.setEnabled(false);
                 rotOrigin.setEnabled(false);
                 useSACenterBox.setEnabled(false);
-                
+
                 constantFOVradio.setEnabled(false);
                 endMatchFOVradio.setEnabled(false);
 
@@ -772,7 +763,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 textSKx.setEnabled(true);
                 textSKy.setEnabled(true);
 
-                if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
+                if ( (image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
                     labelTz.setEnabled(true);
                     labelRx.setEnabled(true);
                     labelRy.setEnabled(true);
@@ -817,22 +808,19 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 invertCheckbox.setEnabled(true);
                 matrixFile = matrixFileMenu();
 
-                if ((matrixFile == null) && (storedMatrixBox.getItemCount() > 0)){
+                if ( (matrixFile == null) && (storedMatrixBox.getItemCount() > 0)) {
                     storedMatrix.setSelected(true);
                     storedMatrixBox.setEnabled(true);
-                }
-                else if (matrixFile == null){
+                } else if (matrixFile == null) {
                     noTransform.setSelected(true);
-                }
-                else {
+                } else {
                     rotOrigin.setSelected(true);
                     rotCenter.setEnabled(false);
                     rotOrigin.setEnabled(false);
                 }
-            }
-            else {
+            } else {
                 rotCenter.setEnabled(true);
-                rotOrigin.setEnabled(true);        
+                rotOrigin.setEnabled(true);
             }
         } else if (source == storedMatrix) {
             matrixFName.setText(" ");
@@ -842,10 +830,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 storedMatrixBox.setEnabled(true);
             }
         } else if (source == noTransform) {
-        	
+
             matrixFName.setText(" ");
             storedMatrixBox.setEnabled(false);
-            //tabbedPane.setEnabledAt(1, noTransform.isSelected());
+            // tabbedPane.setEnabledAt(1, noTransform.isSelected());
             if (noTransform.isSelected()) {
                 invertCheckbox.setSelected(false);
                 invertCheckbox.setEnabled(false);
@@ -862,28 +850,27 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 useSACenterBox.setEnabled(true && enableSATransform);
                 padRadio.setEnabled(true);
                 cropRadio.setEnabled(true);
-                int boxIndex = comboBoxInterp.getSelectedIndex();
-                if ( boxIndex == 1 ) {
-                	constantFOVradio.setEnabled(true);
+                final int boxIndex = comboBoxInterp.getSelectedIndex();
+                if (boxIndex == 1) {
+                    constantFOVradio.setEnabled(true);
                     endMatchFOVradio.setEnabled(true);
                 } else {
-                	constantFOVradio.setEnabled(false);
+                    constantFOVradio.setEnabled(false);
                     endMatchFOVradio.setEnabled(false);
                 }
             }
-        } else if (( source == constantFOVradio ) || (source == endMatchFOVradio)) {
-        	
+        } else if ( (source == constantFOVradio) || (source == endMatchFOVradio)) {
+
             if (constantFOVradio.isSelected()) {
-        	    constantFOV = 0;
+                constantFOV = 0;
                 if (setPixels != null) {
                     setPixels.setText("Set pixels to preserve FOV.");
                 }
                 if (fieldOfView != null) {
                     fieldOfView.setText("Preserve FOV.");
                 }
-            }
-            else { 
-        	    constantFOV = 1;
+            } else {
+                constantFOV = 1;
                 if (setPixels != null) {
                     setPixels.setText("Set pixels to preserve unrepeated begin & end matching.");
                 }
@@ -895,7 +882,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if (resampletoUser.isSelected()) {
                 xyAspectRatio.setEnabled(true);
-                if ((image.getNDims() > 2) && (!image25DCheckbox.isSelected())) {
+                if ( (image.getNDims() > 2) && ( !image25DCheckbox.isSelected())) {
                     xyzAspectRatio.setEnabled(true);
                 }
                 fieldOfView.setEnabled(true);
@@ -919,7 +906,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             if (xyAspectRatio.isSelected()) {
                 enableYSettings(false);
                 xyzAspectRatio.setSelected(false);
-            } else if (!xyzAspectRatio.isSelected()) {
+            } else if ( !xyzAspectRatio.isSelected()) {
                 enableYSettings(true);
             }
         } else if (source == xyzAspectRatio) {
@@ -927,7 +914,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             if (xyzAspectRatio.isSelected()) {
                 enableYSettings(false);
                 xyAspectRatio.setSelected(false);
-            } else if (!xyAspectRatio.isSelected()) {
+            } else if ( !xyAspectRatio.isSelected()) {
                 enableYSettings(true);
             }
         } else if (source == resampletoImage) {
@@ -968,7 +955,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
         } else if (source == comboBoxImage) {
 
-            String selectName = (String) (comboBoxImage.getSelectedItem());
+            final String selectName = (String) (comboBoxImage.getSelectedItem());
             resampleImage = ViewUserInterface.getReference().getRegisteredImageByName(selectName);
 
             if (textResX != null) {
@@ -977,15 +964,15 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 textDimX.setText(String.valueOf(Math.round(resampleImage.getExtents()[0])));
                 textDimY.setText(String.valueOf(Math.round(resampleImage.getExtents()[1])));
 
-                if ((image.getNDims() > 2) && (!image25DCheckbox.isSelected()) && (resampleImage.getNDims() > 2)) {
+                if ( (image.getNDims() > 2) && ( !image25DCheckbox.isSelected()) && (resampleImage.getNDims() > 2)) {
                     textResZ.setText(String.valueOf(resampleImage.getFileInfo(0).getResolutions()[2]));
                     textDimZ.setText(String.valueOf(Math.round(resampleImage.getExtents()[2])));
                 }
             }
         } else if (source == rotCenter) {
-        	useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
+            useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
         } else if (source == rotOrigin) {
-        	useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
+            useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
         } else if (source == outOfBoundsComboBox) {
             switch (outOfBoundsComboBox.getSelectedIndex()) {
                 case 0: // image minimum
@@ -993,11 +980,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     valueText.setEnabled(false);
                     break;
                 case 1: // If float NaN, else 0
-                    if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
-                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
-                        valueText.setText(String.valueOf(Float.NaN)); 
-                    }
-                    else {
+                    if ( (dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)
+                            || (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                        valueText.setText(String.valueOf(Float.NaN));
+                    } else {
                         valueText.setText(String.valueOf(0));
                     }
                     valueText.setEnabled(false);
@@ -1015,8 +1001,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * Allows the user to select matrix file.
-     *
-     * @return  fileName
+     * 
+     * @return fileName
      */
     public String matrixFileMenu() {
         String fileName, directory;
@@ -1035,7 +1021,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MATRIX));
 
-            int returnVal = chooser.showOpenDialog(ViewUserInterface.getReference().getMainFrame());
+            final int returnVal = chooser.showOpenDialog(ViewUserInterface.getReference().getMainFrame());
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
@@ -1045,7 +1031,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             } else {
                 return null;
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: JDialogScriptableTransform.displayMatrixFileMenu");
 
             return null;
@@ -1058,11 +1044,11 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * Reads a matrix from a file.
-     *
-     * @param  fileName  name of the matrix file.
+     * 
+     * @param fileName name of the matrix file.
      */
-    public void readTransformMatrixFile(String fileName) {
-        TransMatrix matrix = new TransMatrix(image.getNDims() + 1);
+    public void readTransformMatrixFile(final String fileName) {
+        final TransMatrix matrix = new TransMatrix(image.getNDims() + 1);
         matrix.MakeIdentity();
 
         if (fileName == null) {
@@ -1070,20 +1056,23 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         try {
-			// search for file name relative to image first, then relative to MIPAV default, then absolute path
+            // search for file name relative to image first, then relative to MIPAV default, then absolute path
             File file;
-			file = new File(image.getImageDirectory() + fileName);
-			if (!file.exists()) file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
-			if (!file.exists()) file = new File(fileName);
-			
-            RandomAccessFile raFile = new RandomAccessFile(file, "r");
-            String extension = FileUtility.getExtension(file.getAbsolutePath()).toLowerCase();
+            file = new File(image.getImageDirectory() + fileName);
+            if ( !file.exists()) {
+                file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
+            }
+            if ( !file.exists()) {
+                file = new File(fileName);
+            }
+
+            final RandomAccessFile raFile = new RandomAccessFile(file, "r");
+            final String extension = FileUtility.getExtension(file.getAbsolutePath()).toLowerCase();
             if (extension.equals(".tps")) {
                 spline = new AlgorithmTPSpline(image);
                 spline.readMatrix(raFile);
                 raFile.close();
-            }
-            else {
+            } else {
                 spline = null;
                 matrix.readMatrix(raFile, false);
                 raFile.close();
@@ -1093,8 +1082,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // We don't know the coordinate system that the transformation represents. Therefore
             // bring up a dialog where the user can ID the coordinate system changes (i.e.
             // world coordinate and/or the "left-hand" coordinate system!
-            //new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
-        } catch (IOException error) {
+            // new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
+        } catch (final IOException error) {
             MipavUtil.displayError("Matrix read error");
             fileTransMatrix.MakeIdentity();
         }
@@ -1102,36 +1091,35 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * Accessor that sets value for the setPixels checkbox.
-     *
-     * @param  flag  <code>true</code> indicates that the number of pixels should be set
-     *               so as to preserve the field of view.  This could either increase or
-     *               decrease the number of pixels.
+     * 
+     * @param flag <code>true</code> indicates that the number of pixels should be set so as to preserve the field of
+     *            view. This could either increase or decrease the number of pixels.
      */
-    public void setsetPix(boolean flag) {
+    public void setsetPix(final boolean flag) {
         setPix = flag;
     }
 
     /**
      * Accessor that sets the clip flag.
-     *
-     * @param  flag  <code>true</code> indicates clip image, <code>false</code> otherwise.
+     * 
+     * @param flag <code>true</code> indicates clip image, <code>false</code> otherwise.
      */
-    public void setClipFlag(boolean flag) {
+    public void setClipFlag(final boolean flag) {
         doClip = flag;
     }
-    
+
     /**
      * Accessor that sets the boolean for invert matrix.
-     *
-     * @param  flag  <code>true</code> indicates invert matrix, <code>false</code> otherwise.
+     * 
+     * @param flag <code>true</code> indicates invert matrix, <code>false</code> otherwise.
      */
-    public void setDoInvMat(boolean flag) {
+    public void setDoInvMat(final boolean flag) {
         doInvMat = flag;
     }
 
     /**
      * Resets the dimension and resolution fields for resampling panel. Called by focusLost.
-     *
+     * 
      */
     public void setDimAndResXYZ() {
         int[] iDims;
@@ -1159,148 +1147,148 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             textResZ.setText(String.valueOf(resols[2]));
         }
 
-        cXdim = (int) Math.round(dims[0]);
+        cXdim = Math.round(dims[0]);
         cXres = resols[0];
-        cYdim = (int) Math.round(dims[1]);
+        cYdim = Math.round(dims[1]);
         cYres = resols[1];
-        cZdim = (int) Math.round(dims[2]);
+        cZdim = Math.round(dims[2]);
         cZres = resols[2];
     }
 
     /**
      * Accessor that sets the boolean for doing a Talairach type transformation.
-     *
-     * @param  doTalairach  boolean
+     * 
+     * @param doTalairach boolean
      */
-    public void setDoTalairach(boolean doTalairach) {
+    public void setDoTalairach(final boolean doTalairach) {
         this.doTalairach = doTalairach;
     }
 
     /**
      * Accessor that sets the slicing flag.
-     *
-     * @param  flag  <code>true</code> indicates slices should be blurred independently.
+     * 
+     * @param flag <code>true</code> indicates slices should be blurred independently.
      */
-    public void setImage25D(boolean flag) {
+    public void setImage25D(final boolean flag) {
         do25D = flag;
     }
 
     /**
      * Accessor that sets the interpolation method.
-     *
-     * @param  interp  DOCUMENT ME!
+     * 
+     * @param interp DOCUMENT ME!
      */
-    public void setInterp(int interp) {
+    public void setInterp(final int interp) {
         this.interp = interp;
     }
 
     /**
      * Sets the left-hand coordinate flag. If true, change matrix to the left-hand coordinate system.
-     *
-     * @param  leftHandSys  DOCUMENT ME!
+     * 
+     * @param leftHandSys DOCUMENT ME!
      */
-    public void setLeftHandSystem(boolean leftHandSys) {
+    public void setLeftHandSystem(final boolean leftHandSys) {
         leftHandSystem = leftHandSys;
     }
 
     /**
      * Accessor that sets the transformation matrix.
-     *
-     * @param  matrix  The transformation matrix.
+     * 
+     * @param matrix The transformation matrix.
      */
-    public void setMatrix(TransMatrix matrix) {
+    public void setMatrix(final TransMatrix matrix) {
         xfrm = matrix;
     }
 
     /**
      * Accessor to set the output image's dimensions.
-     *
-     * @param  outDim  Array of the dimensions.
+     * 
+     * @param outDim Array of the dimensions.
      */
-    public void setOutDimensions(int[] outDim) {
+    public void setOutDimensions(final int[] outDim) {
         oXdim = outDim[0];
         oYdim = outDim[1];
 
-        if ((image.getNDims() >= 3) && !do25D) {
+        if ( (image.getNDims() >= 3) && !do25D) {
             oZdim = outDim[2];
         }
     }
 
     /**
      * Accessor to set the output image's resolutions.
-     *
-     * @param  outRes  Array of the resolutions.
+     * 
+     * @param outRes Array of the resolutions.
      */
-    public void setOutResolutions(float[] outRes) {
+    public void setOutResolutions(final float[] outRes) {
         oXres = outRes[0];
         oYres = outRes[1];
 
-        if ((image.getNDims() >= 3) && !do25D) {
+        if ( (image.getNDims() >= 3) && !do25D) {
             oZres = outRes[2];
         }
     }
 
     /**
      * Accessor that sets the padding flag.
-     *
-     * @param  flag  <code>true</code> indicates slices should be blurred independently.
+     * 
+     * @param flag <code>true</code> indicates slices should be blurred independently.
      */
-    public void setPadFlag(boolean flag) {
+    public void setPadFlag(final boolean flag) {
         doPad = flag;
     }
 
     /**
      * Accessor that sets the fillValue.
-     *
-     * @param  fillValue  DOCUMENT ME!
+     * 
+     * @param fillValue DOCUMENT ME!
      */
-    public void setFillValue(float fillValue) {
+    public void setFillValue(final float fillValue) {
         this.fillValue = fillValue;
     }
 
     /**
      * Accessor that sets the type of Talairach transformation.
-     *
-     * @param  transformType  int
+     * 
+     * @param transformType int
      */
-    public void setTransformType(int transformType) {
+    public void setTransformType(final int transformType) {
         this.transformType = transformType;
     }
 
     /**
      * Accessor that sets the update origin flag.
-     *
-     * @param  flag  <code>true</code> indicates to update the image origin using the transformation matrix.
+     * 
+     * @param flag <code>true</code> indicates to update the image origin using the transformation matrix.
      */
-    public void setUpdateOrigin(boolean flag) {
+    public void setUpdateOrigin(final boolean flag) {
         doUpdateOrigin = flag;
     }
 
     /**
      * Accessor that sets the voi flag.
-     *
-     * @param  flag  <code>true</code> indicates transform VOI, <code>false</code> otherwise.
+     * 
+     * @param flag <code>true</code> indicates transform VOI, <code>false</code> otherwise.
      */
-    public void setVOIFlag(boolean flag) {
+    public void setVOIFlag(final boolean flag) {
         doVOI = flag;
     }
 
     /**
      * Sets the world coordinate flag. If true, change matrix to the world coordinate system.
-     *
-     * @param  wcSys  DOCUMENT ME!
+     * 
+     * @param wcSys DOCUMENT ME!
      */
-    public void setWCSystem(boolean wcSys) {
+    public void setWCSystem(final boolean wcSys) {
         wcSystem = wcSys;
     }
 
     /**
      * Sets values based on knob along slider.
-     *
-     * @param  event  ChangeEvent event that triggered this function
+     * 
+     * @param event ChangeEvent event that triggered this function
      */
-    public void stateChanged(ChangeEvent event) {
-        Object source = event.getSource();
+    public void stateChanged(final ChangeEvent event) {
+        final Object source = event.getSource();
         float factor;
 
         if (source == magSlider) {
@@ -1311,7 +1299,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             textDimY.setText(String.valueOf(Math.round(factor * resampleImage.getExtents()[1])));
             textResX.setText(String.valueOf(resampleImage.getFileInfo(0).getResolutions()[0] / factor));
 
-            if ((image.getNDims() >= 3) && (!image25DCheckbox.isSelected())) {
+            if ( (image.getNDims() >= 3) && ( !image25DCheckbox.isSelected())) {
                 textResZ.setText(String.valueOf(resampleImage.getFileInfo(0).getResolutions()[2] / factor));
                 textDimZ.setText(String.valueOf(Math.round(factor * resampleImage.getExtents()[2])));
             }
@@ -1325,15 +1313,15 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         Vector3f center = null;
 
         if (doInvMat) {
-        	xfrm.Inverse();
+            xfrm.Inverse();
         }
-        //if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
-        //    xfrm.invert();
-        //}
+        // if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
+        // xfrm.invert();
+        // }
 
-      //  System.err.println("matrix: " + xfrm);
-      //  System.err.println("matrix inverse: " + xfrm.inverse());
-        
+        // System.err.println("matrix: " + xfrm);
+        // System.err.println("matrix inverse: " + xfrm.inverse());
+
         // Hide dialog
         setVisible(false);
         if (doTalairach) {
@@ -1341,7 +1329,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             return;
         }
-        
+
         if (spline != null) {
             spline.run();
             resultImage = spline.getResultImage();
@@ -1352,30 +1340,31 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                     // resultImage.setImageName("Transformed image");
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
             }
             return;
         }
-        
+
         if (doRotateCenter) {
             center = resampleImage.getImageCentermm(useSACenter);
         }
 
-        if ((image.getNDims() == 2) || (do25D)) {
+        if ( (image.getNDims() == 2) || (do25D)) {
             Preferences.debug("oXres, oYres = " + oXres + ", " + oYres);
             Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n");
             Preferences.debug("xfrm = " + xfrm);
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip, doPad, doRotateCenter, center);
+            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
+                    doPad, doRotateCenter, center);
             algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
         } else { // ((image.getNDims() >= 3) && (!do25D))
             Preferences.debug("oXres, oYres, oZres = " + oXres + ", " + oYres + ", " + oZres);
             Preferences.debug(" oXdim, oYdim, oZdim = " + oXdim + ", " + oYdim + ", " + oZdim + "\n");
             Preferences.debug("xfrm = " + xfrm);
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, 
-            	units, doVOI, doClip, doPad, doRotateCenter, center);
+            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
+                    doVOI, doClip, doPad, doRotateCenter, center);
             algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
             algoTrans.setUseScannerAnatomical(isSATransform);
@@ -1431,7 +1420,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         useSACenter = scriptParameters.getParams().getBoolean("use_scanner_center");
         isSATransform = scriptParameters.getParams().getBoolean("is_scanner_transform");
         doInvMat = scriptParameters.getParams().getBoolean("do_invert_matrix");
-        
+
         if (doTalairach) {
             tInfo = new TalairachTransformInfo();
             tInfo.isAcpc(true);
@@ -1439,25 +1428,25 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             transformType = scriptParameters.getParams().getInt("transform_type");
 
             float[] tempArray = scriptParameters.getParams().getList("acpc_PC").getAsFloatArray();
-            Vector3f acpcPC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
+            final Vector3f acpcPC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
             tInfo.setAcpcPC(acpcPC);
 
             tInfo.setAcpcRes(scriptParameters.getParams().getFloat("acpc_res"));
 
             tempArray = scriptParameters.getParams().getList("orig_AC").getAsFloatArray();
 
-            Vector3f origAC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
+            final Vector3f origAC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
             tInfo.setOrigAC(origAC);
 
             tempArray = scriptParameters.getParams().getList("orig_PC").getAsFloatArray();
 
-            Vector3f origPC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
+            final Vector3f origPC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
             tInfo.setOrigPC(origPC);
 
             tInfo.setOrigRes(scriptParameters.getParams().getList("orig_res").getAsFloatArray());
             tInfo.setOrigDim(scriptParameters.getParams().getList("orig_dim").getAsIntArray());
 
-            float[][] origOrient = new float[3][3];
+            final float[][] origOrient = new float[3][3];
 
             for (int i = 0; i < 3; i++) {
                 origOrient[i] = scriptParameters.getParams().getList("orig_orient_" + i).getAsFloatArray();
@@ -1465,16 +1454,18 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             tInfo.setOrigOrient(origOrient);
 
-            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
-                    (transformType == TLRC_TO_ACPC)) {
+            if ( (transformType == JDialogScriptableTransform.ORIG_TO_TLRC)
+                    || (transformType == JDialogScriptableTransform.ACPC_TO_TLRC)
+                    || (transformType == JDialogScriptableTransform.TLRC_TO_ORIG)
+                    || (transformType == JDialogScriptableTransform.TLRC_TO_ACPC)) {
                 tempArray = scriptParameters.getParams().getList("acpc_min").getAsFloatArray();
 
-                Vector3f acpcMin = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
+                final Vector3f acpcMin = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
                 tInfo.setAcpcMin(acpcMin);
 
                 tempArray = scriptParameters.getParams().getList("acpc_max").getAsFloatArray();
 
-                Vector3f acpcMax = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
+                final Vector3f acpcMax = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
                 tInfo.setAcpcMax(acpcMax);
 
                 tInfo.setTlrcRes(scriptParameters.getParams().getList("tlrc_res").getAsFloatArray());
@@ -1488,16 +1479,15 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             doUpdateOrigin = scriptParameters.getParams().getBoolean("do_update_origin");
             doPad = scriptParameters.getParams().getBoolean("do_pad");
             outOfBoundsIndex = scriptParameters.getParams().getInt("out_of_bounds_index");
-            switch(outOfBoundsIndex) {
-                case 0: 
-                    fillValue = (float)imageMin;
+            switch (outOfBoundsIndex) {
+                case 0:
+                    fillValue = (float) imageMin;
                     break;
-                case 1: 
-                    if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
-                            (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                case 1:
+                    if ( (dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)
+                            || (dataType == ModelStorageBase.ARGB_FLOAT)) {
                         fillValue = Float.NaN;
-                    }
-                    else {
+                    } else {
                         fillValue = 0.0f;
                     }
                     break;
@@ -1505,162 +1495,161 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     fillValue = scriptParameters.getParams().getFloat("fill_value");
                     break;
                 case 3:
-                    fillValue = (float)imageMax;
+                    fillValue = (float) imageMax;
                     break;
             }
 
-            //boolean useImageMatrix = scriptParameters.getParams().getBoolean("use_image_matrix");
+            // boolean useImageMatrix = scriptParameters.getParams().getBoolean("use_image_matrix");
             boolean useImageMatrix = false;
-			
-            double[] xCol = new double[image.getNDims()+1];
-            
-            if ((image.getNDims() == 2) || do25D) {
+
+            double[] xCol = new double[image.getNDims() + 1];
+
+            if ( (image.getNDims() == 2) || do25D) {
                 transMat = new TransMatrix(3);
 
-                float[] outputRes = scriptParameters.getParams().getList("output_res").getAsFloatArray();
+                final float[] outputRes = scriptParameters.getParams().getList("output_res").getAsFloatArray();
                 oXres = outputRes[0];
                 oYres = outputRes[1];
 
-                int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
+                final int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
                 oXdim = outputDim[0];
                 oYdim = outputDim[1];
 
-                if (!useImageMatrix) {
-                	xCol = new double[3];
+                if ( !useImageMatrix) {
+                    xCol = new double[3];
 
-                	for (int i = 0; i < 3; i++) {
-                		xCol = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
-                	}
+                    for (int i = 0; i < 3; i++) {
+                        xCol = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                    }
                 }
             } else {
                 transMat = new TransMatrix(4);
 
-				// get the resampling information
-				String resampleType = scriptParameters.getParams().getString("resample_type");
-				if (resampleType.equals("none")) {
-					oXres = image.getFileInfo()[0].getResolutions()[0];
-					oYres = image.getFileInfo()[0].getResolutions()[1];
-        	
-					oXdim = image.getExtents()[0];
-					oYdim = image.getExtents()[1];
-        	
-					if (image.getNDims() > 2) {
-						oZres = image.getFileInfo()[0].getResolutions()[2];
-						oZdim = image.getExtents()[2];
-					}
-				} else if (resampleType.equals("to_image")) {
-					ModelImage selectedImg = scriptParameters.retrieveInputImage(2);
-					
-					// assign output resolutions and dims to those of image selected in comboBox
-					oXres = selectedImg.getFileInfo(0).getResolutions()[0];
-					oYres = selectedImg.getFileInfo(0).getResolutions()[1];
-					
-					/*
-					//get the units now
-					units[0] = selectedImg.getUnitsOfMeasure(0);
-					units[1] = selectedImg.getUnitsOfMeasure(1);
-					
-					System.err.println("units of original image: " + image.getUnitsOfMeasure(0));
-					System.err.println("setting units: " + units[0]);
-					*/
-					
-					setPix = scriptParameters.getParams().getBoolean("set_pixels");
-					
-					float iXres = image.getFileInfo(0).getResolutions()[0];
-					float iYres = image.getFileInfo(0).getResolutions()[1];
-					int iXdim = image.getExtents()[0];
-					int iYdim = image.getExtents()[1];
-			
-					int iZdim = 1;
-					float iZres = 1.f;
-					if (image.getNDims() >= 3) {
-						iZdim = image.getExtents()[2];
-						iZres = image.getFileInfo(0).getResolutions()[2];
-					}
+                // get the resampling information
+                final String resampleType = scriptParameters.getParams().getString("resample_type");
+                if (resampleType.equals("none")) {
+                    oXres = image.getFileInfo()[0].getResolutions()[0];
+                    oYres = image.getFileInfo()[0].getResolutions()[1];
 
-					if (setPix) {		
-						float fovX = iXres * (iXdim-constantFOV);
-						float fovY = iYres * (iYdim-constantFOV);
-						oXdim = (int)Math.round(fovX / oXres) + constantFOV;
-						oYdim = (int)Math.round(fovY / oYres) + constantFOV;
-					} else {
-						oXdim = selectedImg.getExtents()[0];
-						oYdim = selectedImg.getExtents()[1];
-					}
-		
-					if ((image.getNDims() >= 3) && (!do25D)) {
-						oZres = selectedImg.getFileInfo(0).getResolutions()[2];
-						//units[2] = selectedImg.getUnitsOfMeasure(2);
-						if (setPix) {
-							float fovZ = iZres * (iZdim-constantFOV);
-							oZdim = (int)Math.round(fovZ / oZres) + constantFOV;
-							
-						} else {
-							oZdim = selectedImg.getExtents()[2];
-						}
-					} else if ((image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
-						oZres = image.getFileInfo(0).getResolutions()[2];
-						oZdim = image.getExtents()[2];
-					}
-				} else if (resampleType.equals("to_user")) {
-				   float[] outputRes = scriptParameters.getParams().getList("output_res").getAsFloatArray();
-					oXres = outputRes[0];
-					oYres = outputRes[1];
-					oZres = outputRes[2];
-	
-					int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
-					oXdim = outputDim[0];
-					oYdim = outputDim[1];
-					oZdim = outputDim[2];
-				} else if (resampleType.equals("to_factor")) {
-					float factor = scriptParameters.getParams().getFloat("resample_factor");
-					oXdim = Math.round(image.getExtents()[0] * factor);
-					oYdim = Math.round(image.getExtents()[1] * factor);
-					oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]-1) / (float) (oXdim-1);
-					oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]-1) / (float) (oYdim-1);
-		
-					if ((image.getNDims() >= 3) && (!do25D)) {
-						oZdim = Math.round(image.getExtents()[2] * factor);
-						oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]-1) / (float) (oZdim-1);
-					} else if ((image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
-						oZdim = image.getExtents()[2];
-						oZres = image.getFileInfo(0).getResolutions()[2];
-					}						
-				}
-				// set the transform information
-				String transformSource = scriptParameters.getParams().getString("transform_source");
-				if (transformSource.equals("file")) {
-					String matrixFile = scriptParameters.getParams().getString("transform_file");
-					readTransformMatrixFile(matrixFile);
-					transMat.MakeIdentity();
-					transMat.Mult(fileTransMatrix);
-					xfrm = transMat;
-				} else if (transformSource.equals("user")) {
-                	double[][] xMat = new double[4][4];
+                    oXdim = image.getExtents()[0];
+                    oYdim = image.getExtents()[1];
 
-                	for (int i = 0; i < 4; i++) {
-                		xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
-                	}
-					transMat.copyMatrix(xMat);
-					xfrm = transMat;
-				} else if (transformSource.equals("self")) {
-					transMat.MakeIdentity();
-					xfrm = transMat;
-					if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-						isSATransform = true;
-					}
-            
-					TransMatrix imageMatrix = image.getMatrix();
-					
-					xfrm.Mult(imageMatrix);
-				} else if (transformSource.equals("none")) {
-					transMat.MakeIdentity();
-					xfrm = transMat;
-				}
-					
+                    if (image.getNDims() > 2) {
+                        oZres = image.getFileInfo()[0].getResolutions()[2];
+                        oZdim = image.getExtents()[2];
+                    }
+                } else if (resampleType.equals("to_image")) {
+                    final ModelImage selectedImg = scriptParameters.retrieveInputImage(2);
+
+                    // assign output resolutions and dims to those of image selected in comboBox
+                    oXres = selectedImg.getFileInfo(0).getResolutions()[0];
+                    oYres = selectedImg.getFileInfo(0).getResolutions()[1];
+
+                    /*
+                     * //get the units now units[0] = selectedImg.getUnitsOfMeasure(0); units[1] =
+                     * selectedImg.getUnitsOfMeasure(1);
+                     * 
+                     * System.err.println("units of original image: " + image.getUnitsOfMeasure(0));
+                     * System.err.println("setting units: " + units[0]);
+                     */
+
+                    setPix = scriptParameters.getParams().getBoolean("set_pixels");
+
+                    final float iXres = image.getFileInfo(0).getResolutions()[0];
+                    final float iYres = image.getFileInfo(0).getResolutions()[1];
+                    final int iXdim = image.getExtents()[0];
+                    final int iYdim = image.getExtents()[1];
+
+                    int iZdim = 1;
+                    float iZres = 1.f;
+                    if (image.getNDims() >= 3) {
+                        iZdim = image.getExtents()[2];
+                        iZres = image.getFileInfo(0).getResolutions()[2];
+                    }
+
+                    if (setPix) {
+                        final float fovX = iXres * (iXdim - constantFOV);
+                        final float fovY = iYres * (iYdim - constantFOV);
+                        oXdim = Math.round(fovX / oXres) + constantFOV;
+                        oYdim = Math.round(fovY / oYres) + constantFOV;
+                    } else {
+                        oXdim = selectedImg.getExtents()[0];
+                        oYdim = selectedImg.getExtents()[1];
+                    }
+
+                    if ( (image.getNDims() >= 3) && ( !do25D)) {
+                        oZres = selectedImg.getFileInfo(0).getResolutions()[2];
+                        // units[2] = selectedImg.getUnitsOfMeasure(2);
+                        if (setPix) {
+                            final float fovZ = iZres * (iZdim - constantFOV);
+                            oZdim = Math.round(fovZ / oZres) + constantFOV;
+
+                        } else {
+                            oZdim = selectedImg.getExtents()[2];
+                        }
+                    } else if ( (image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
+                        oZres = image.getFileInfo(0).getResolutions()[2];
+                        oZdim = image.getExtents()[2];
+                    }
+                } else if (resampleType.equals("to_user")) {
+                    final float[] outputRes = scriptParameters.getParams().getList("output_res").getAsFloatArray();
+                    oXres = outputRes[0];
+                    oYres = outputRes[1];
+                    oZres = outputRes[2];
+
+                    final int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
+                    oXdim = outputDim[0];
+                    oYdim = outputDim[1];
+                    oZdim = outputDim[2];
+                } else if (resampleType.equals("to_factor")) {
+                    final float factor = scriptParameters.getParams().getFloat("resample_factor");
+                    oXdim = Math.round(image.getExtents()[0] * factor);
+                    oYdim = Math.round(image.getExtents()[1] * factor);
+                    oXres = image.getFileInfo(0).getResolutions()[0] * (image.getExtents()[0] - 1) / (oXdim - 1);
+                    oYres = image.getFileInfo(0).getResolutions()[1] * (image.getExtents()[1] - 1) / (oYdim - 1);
+
+                    if ( (image.getNDims() >= 3) && ( !do25D)) {
+                        oZdim = Math.round(image.getExtents()[2] * factor);
+                        oZres = image.getFileInfo(0).getResolutions()[2] * (image.getExtents()[2] - 1) / (oZdim - 1);
+                    } else if ( (image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
+                        oZdim = image.getExtents()[2];
+                        oZres = image.getFileInfo(0).getResolutions()[2];
+                    }
+                }
+                // set the transform information
+                final String transformSource = scriptParameters.getParams().getString("transform_source");
+                if (transformSource.equals("file")) {
+                    final String matrixFile = scriptParameters.getParams().getString("transform_file");
+                    readTransformMatrixFile(matrixFile);
+                    transMat.MakeIdentity();
+                    transMat.Mult(fileTransMatrix);
+                    xfrm = transMat;
+                } else if (transformSource.equals("user")) {
+                    final double[][] xMat = new double[4][4];
+
+                    for (int i = 0; i < 4; i++) {
+                        xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                    }
+                    transMat.copyMatrix(xMat);
+                    xfrm = transMat;
+                } else if (transformSource.equals("self")) {
+                    transMat.MakeIdentity();
+                    xfrm = transMat;
+                    if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+                        isSATransform = true;
+                    }
+
+                    final TransMatrix imageMatrix = image.getMatrix();
+
+                    xfrm.Mult(imageMatrix);
+                } else if (transformSource.equals("none")) {
+                    transMat.MakeIdentity();
+                    xfrm = transMat;
+                }
+
             }
-       } // else not Talairach
-        
+        } // else not Talairach
+
     }
 
     /**
@@ -1679,46 +1668,44 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         scriptParameters.getParams().put(ParameterFactory.newParameter("use_scanner_center", this.useSACenter));
         scriptParameters.getParams().put(ParameterFactory.newParameter("is_scanner_transform", this.isSATransform));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_invert_matrix", doInvMat));
-        
+
         if (doTalairach) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("transform_type", transformType));
 
-            Vector3f acpcPC = tInfo.getAcpcPC();
-            scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_PC",
-                                                                           new float[] { acpcPC.X, acpcPC.Y, acpcPC.Z }));
+            final Vector3f acpcPC = tInfo.getAcpcPC();
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter("acpc_PC", new float[] {acpcPC.X, acpcPC.Y, acpcPC.Z}));
             scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_res", tInfo.getAcpcRes()));
 
-            Vector3f origAC = tInfo.getOrigAC();
-            scriptParameters.getParams().put(ParameterFactory.newParameter("orig_AC",
-                                                                           new float[] { origAC.X, origAC.Y, origAC.Z }));
+            final Vector3f origAC = tInfo.getOrigAC();
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter("orig_AC", new float[] {origAC.X, origAC.Y, origAC.Z}));
 
-            Vector3f origPC = tInfo.getOrigPC();
-            scriptParameters.getParams().put(ParameterFactory.newParameter("orig_PC",
-                                                                           new float[] { origPC.X, origPC.Y, origPC.Z }));
+            final Vector3f origPC = tInfo.getOrigPC();
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter("orig_PC", new float[] {origPC.X, origPC.Y, origPC.Z}));
 
             scriptParameters.getParams().put(ParameterFactory.newParameter("orig_res", tInfo.getOrigRes()));
             scriptParameters.getParams().put(ParameterFactory.newParameter("orig_dim", tInfo.getOrigDim()));
 
-            float[][] origOrient = tInfo.getOrigOrient();
+            final float[][] origOrient = tInfo.getOrigOrient();
 
             for (int i = 0; i < 3; i++) {
                 scriptParameters.getParams().put(ParameterFactory.newParameter("orig_orient_" + i, origOrient[i]));
             }
 
-            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
-                    (transformType == TLRC_TO_ACPC)) {
-                Vector3f acpcMin = tInfo.getAcpcMin();
+            if ( (transformType == JDialogScriptableTransform.ORIG_TO_TLRC)
+                    || (transformType == JDialogScriptableTransform.ACPC_TO_TLRC)
+                    || (transformType == JDialogScriptableTransform.TLRC_TO_ORIG)
+                    || (transformType == JDialogScriptableTransform.TLRC_TO_ACPC)) {
+                final Vector3f acpcMin = tInfo.getAcpcMin();
 
-                scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_min",
-                                                                               new float[] {
-                                                                                   acpcMin.X, acpcMin.Y, acpcMin.Z
-                                                                               }));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("acpc_min", new float[] {acpcMin.X, acpcMin.Y, acpcMin.Z}));
 
-                Vector3f acpcMax = tInfo.getAcpcMax();
-                scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_max",
-                                                                               new float[] {
-                                                                                   acpcMax.X, acpcMax.Y, acpcMax.Z
-                                                                               }));
+                final Vector3f acpcMax = tInfo.getAcpcMax();
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("acpc_max", new float[] {acpcMax.X, acpcMax.Y, acpcMax.Z}));
 
                 scriptParameters.getParams().put(ParameterFactory.newParameter("tlrc_res", tInfo.getTlrcRes()));
 
@@ -1732,13 +1719,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
             scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
 
-            if ((image.getNDims() == 2) || do25D) {
-                scriptParameters.getParams().put(ParameterFactory.newParameter("output_res",
-                                                                               new float[] { oXres, oYres }));
-                scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
-                                                                               new int[] { oXdim, oYdim }));
+            if ( (image.getNDims() == 2) || do25D) {
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("output_res", new float[] {oXres, oYres}));
+                scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim", new int[] {oXdim, oYdim}));
 
-                double[] xCol = new double[3];
+                final double[] xCol = new double[3];
 
                 for (int i = 0; i < 3; i++) {
                     xfrm.getColumn(i, xCol);
@@ -1746,84 +1732,77 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 }
 
             } else {
-				/*
-                scriptParameters.getParams().put(ParameterFactory.newParameter("output_res",
-                                                                               new float[] { oXres, oYres, oZres }));
-                scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
-                                                                               new int[] { oXdim, oYdim, oZdim }));
-
-                //if this is set to use image's associated matrices, then do not store matrix
-                
-                scriptParameters.getParams().put(ParameterFactory.newParameter("use_image_matrix", storedMatrix.isSelected()));
-                
-                if (!storedMatrix.isSelected()) {
-                	for (int i = 0; i < 4; i++) {
-                		scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xMat[i]));
-                	}
+                /*
+                 * scriptParameters.getParams().put(ParameterFactory.newParameter("output_res", new float[] { oXres,
+                 * oYres, oZres })); scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim", new
+                 * int[] { oXdim, oYdim, oZdim }));
+                 * 
+                 * //if this is set to use image's associated matrices, then do not store matrix
+                 * 
+                 * scriptParameters.getParams().put(ParameterFactory.newParameter("use_image_matrix",
+                 * storedMatrix.isSelected()));
+                 * 
+                 * if (!storedMatrix.isSelected()) { for (int i = 0; i < 4; i++) {
+                 * scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xMat[i])); } }
+                 */
+                // different possibilities for the transform source
+                String transformSource;
+                if (fileMatrix.isSelected()) {
+                    transformSource = "file";
+                    scriptParameters.getParams()
+                            .put(ParameterFactory.newParameter("transform_source", transformSource));
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("transform_file", matrixFile));
+                } else if (userDefinedMatrix.isSelected()) {
+                    transformSource = "user";
+                    scriptParameters.getParams()
+                            .put(ParameterFactory.newParameter("transform_source", transformSource));
+                    final double[] xCol = new double[4];
+                    for (int i = 0; i < 4; i++) {
+                        xfrm.getColumn(i, xCol);
+                        scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xCol));
+                    }
+                } else if (storedMatrix.isSelected()) {
+                    transformSource = "self";
+                    scriptParameters.getParams()
+                            .put(ParameterFactory.newParameter("transform_source", transformSource));
+                } else {
+                    transformSource = "none";
+                    scriptParameters.getParams()
+                            .put(ParameterFactory.newParameter("transform_source", transformSource));
                 }
-				*/
-								// different possibilities for the transform source
-				String transformSource;
-				if (fileMatrix.isSelected()) {
-					transformSource = "file";
-					scriptParameters.getParams().put(ParameterFactory.newParameter("transform_source", transformSource));
-					scriptParameters.getParams().put(ParameterFactory.newParameter("transform_file", matrixFile));
-				} else if (userDefinedMatrix.isSelected()) {
-					transformSource = "user";
-					scriptParameters.getParams().put(ParameterFactory.newParameter("transform_source", transformSource));
-                                        double[] xCol = new double[4];
-					for (int i = 0; i < 4; i++) {
-                                            xfrm.getColumn(i, xCol);
-                                            scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xCol));
-					}
-				} else if (storedMatrix.isSelected()) {
-					transformSource = "self";
-					scriptParameters.getParams().put(ParameterFactory.newParameter("transform_source", transformSource));
-				} else {
-					transformSource = "none";
-					scriptParameters.getParams().put(ParameterFactory.newParameter("transform_source", transformSource));
-				}					
-				
-				boolean invert;
-				if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
-					invert=true;
-				} else {
-					invert=false;
-				}
-				scriptParameters.getParams().put(ParameterFactory.newParameter("transform_invert", invert));
-				
-				// different possibilities for the resampling parameters
-				String resampleType;
-				if (resampletoImage.isSelected()) {
-					resampleType = "to_image";
-					scriptParameters.getParams().put(ParameterFactory.newParameter("resample_type", resampleType));
-					
-					String selectName = (String) (comboBoxImage.getSelectedItem());
-					ModelImage selectedImg = userInterface.getRegisteredImageByName(selectName);
-					
-					scriptParameters.storeInputImage(selectedImg);
-					
-					scriptParameters.getParams().put(ParameterFactory.newParameter("set_pixels", setPix));
-					
-				} else if (resampletoUser.isSelected()) {
-					resampleType = "to_user";
-					scriptParameters.getParams().put(ParameterFactory.newParameter("resample_type", resampleType));
-					
-					scriptParameters.getParams().put(ParameterFactory.newParameter("output_res",
-                                                                               new float[] { oXres, oYres, oZres }));
-					scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
-                                                                               new int[] { oXdim, oYdim, oZdim }));
-				} else if (resampleSlider.isSelected()) {
-					resampleType = "to_factor";
-					scriptParameters.getParams().put(ParameterFactory.newParameter("resample_type", resampleType));
-					
-					float factor = magSlider.getValue() / (float) 100;
-					scriptParameters.getParams().put(ParameterFactory.newParameter("resample_factor", factor));
-				} else {
-					// default: keep image dimensions,resolutions
-					resampleType = "none";
-					scriptParameters.getParams().put(ParameterFactory.newParameter("resample_type", resampleType));
-				}
+
+                // different possibilities for the resampling parameters
+                String resampleType;
+                if (resampletoImage.isSelected()) {
+                    resampleType = "to_image";
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("resample_type", resampleType));
+
+                    final String selectName = (String) (comboBoxImage.getSelectedItem());
+                    final ModelImage selectedImg = userInterface.getRegisteredImageByName(selectName);
+
+                    scriptParameters.storeInputImage(selectedImg);
+
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("set_pixels", setPix));
+
+                } else if (resampletoUser.isSelected()) {
+                    resampleType = "to_user";
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("resample_type", resampleType));
+
+                    scriptParameters.getParams().put(
+                            ParameterFactory.newParameter("output_res", new float[] {oXres, oYres, oZres}));
+                    scriptParameters.getParams().put(
+                            ParameterFactory.newParameter("output_dim", new int[] {oXdim, oYdim, oZdim}));
+                } else if (resampleSlider.isSelected()) {
+                    resampleType = "to_factor";
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("resample_type", resampleType));
+
+                    final float factor = magSlider.getValue() / (float) 100;
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("resample_factor", factor));
+                } else {
+                    // default: keep image dimensions,resolutions
+                    resampleType = "none";
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("resample_type", resampleType));
+                }
 
             }
         } // else not Talairach
@@ -1839,18 +1818,18 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         comboBoxImage.setBackground(Color.white);
         comboBoxImage.addItemListener(this);
 
-        if ((image.getNDims() == 2) || (image.getNDims() >= 3)) {
+        if ( (image.getNDims() == 2) || (image.getNDims() >= 3)) {
             comboBoxImage.addItem(image.getImageName()); // add its own name first.
 
-            Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
+            final Enumeration<String> names = ViewUserInterface.getReference().getRegisteredImageNames();
 
             while (names.hasMoreElements()) {
-                String name = (String) names.nextElement();
+                final String name = names.nextElement();
                 img = ViewUserInterface.getReference().getRegisteredImageByName(name);
 
                 if (ViewUserInterface.getReference().getFrameContainingImage(img) != null) {
 
-                    if (!image.getImageName().equals(name)) {
+                    if ( !image.getImageName().equals(name)) {
                         comboBoxImage.addItem(name);
                     }
                 }
@@ -1860,12 +1839,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * Builds the matrixPanel.
-     *
-     * @return  The matrix panel.
+     * 
+     * @return The matrix panel.
      */
     private JPanel buildMatrixPanel() {
 
-        JPanel matrixPanel = new JPanel();
+        final JPanel matrixPanel = new JPanel();
         matrixPanel.setBorder(buildTitledBorder("Transform"));
         matrixPanel.setLayout(new BoxLayout(matrixPanel, BoxLayout.Y_AXIS));
         matrixPanel.setForeground(Color.black);
@@ -1882,8 +1861,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         tInfo = image.getTalairachTransformInfo();
 
         if (tInfo != null) {
-            JPanel talPanel = new JPanel(new GridBagLayout());
-            GridBagConstraints gbc = new GridBagConstraints();
+            final JPanel talPanel = new JPanel(new GridBagLayout());
+            final GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridwidth = 1;
             gbc.gridheight = 1;
             gbc.anchor = GridBagConstraints.WEST;
@@ -1919,9 +1898,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             talPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         } // if (tInfo != null)
 
-        JPanel imageMatrixPanel = new JPanel(new BorderLayout());        
+        final JPanel imageMatrixPanel = new JPanel(new BorderLayout());
         imageMatrixPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         storedMatrix = new JRadioButton("Use image's associated matrix", false);
         storedMatrix.setFont(serif12);
         storedMatrix.setEnabled(true);
@@ -1934,30 +1913,29 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         storedMatrixBox.setFont(MipavUtil.font12);
         storedMatrixBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         storedMatrixBox.setEnabled(false);
-        MatrixHolder mHolder = image.getMatrixHolder();
-    	Set matrixKeys = mHolder.getMatrixMap().keySet();
-    	Iterator iter = matrixKeys.iterator();
-    	
-    	//storedMatrixBox.addItem("Composite");
-    	
-    	enableSATransform = image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
-    	
-    	while(iter.hasNext()) {
-    		storedMatrixBox.addItem(iter.next());
-    	}  	
-    	
-    	if (storedMatrixBox.getItemCount() > 1) {
-    		storedMatrixBox.insertItemAt("Composite", 0);
-    	}
+        final MatrixHolder mHolder = image.getMatrixHolder();
+        final Set<String> matrixKeys = mHolder.getMatrixMap().keySet();
+        final Iterator<String> iter = matrixKeys.iterator();
+
+        // storedMatrixBox.addItem("Composite");
+
+        enableSATransform = image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
+
+        while (iter.hasNext()) {
+            storedMatrixBox.addItem(iter.next());
+        }
+
+        if (storedMatrixBox.getItemCount() > 1) {
+            storedMatrixBox.insertItemAt("Composite", 0);
+        }
         if (storedMatrixBox.getItemCount() == 0) {
             storedMatrix.setEnabled(false);
         }
-    	
+
         imageMatrixPanel.add(storedMatrixBox);
         matrixPanel.add(imageMatrixPanel);
-        
-        
-        JPanel filePanel = new JPanel(new BorderLayout());
+
+        final JPanel filePanel = new JPanel(new BorderLayout());
         filePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         fileMatrix = new JRadioButton("Read matrix from file", false);
@@ -1975,10 +1953,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         filePanel.add(matrixFName);
 
         matrixPanel.add(filePanel);
-        
-        String orientText = "<html>Image origin is in the upper left hand corner (first slice)." + "<P>" +
-        "Righthand coordinate system.</html>";
-        JLabel orientIconLabel = new JLabel(orientText, MipavUtil.getIcon("orient.gif"), JLabel.LEFT);
+
+        final String orientText = "<html>Image origin is in the upper left hand corner (first slice)." + "<P>"
+                + "Righthand coordinate system.</html>";
+        final JLabel orientIconLabel = new JLabel(orientText, MipavUtil.getIcon("orient.gif"), SwingConstants.LEFT);
         orientIconLabel.setFont(serif12);
         orientIconLabel.setForeground(Color.black);
         matrixPanel.add(orientIconLabel);
@@ -1992,7 +1970,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         matrixPanel.add(userDefinedMatrix);
         userDefinedMatrix.addItemListener(this);
 
-        JPanel translationPanel = new JPanel();
+        final JPanel translationPanel = new JPanel();
         translationPanel.setLayout(new GridBagLayout());
         translationPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -2133,7 +2111,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         textSKz.setFont(serif12);
         textSKz.addFocusListener(this);
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
@@ -2234,17 +2212,17 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * Builds the OptionPanel.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     private JPanel buildOptionPanel() {
 
-        JPanel optionPanel = new JPanel();
+        final JPanel optionPanel = new JPanel();
         optionPanel.setForeground(Color.black);
         optionPanel.setBorder(buildTitledBorder("Options"));
 
         // *******INTERPOLATION****************
-        JLabel labelInterp = new JLabel("Interpolation:");
+        final JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
         labelInterp.setFont(serif12);
         labelInterp.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -2268,12 +2246,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         comboBoxInterp.addItem("Heptic Lagrangian");
         comboBoxInterp.addItem("Windowed sinc");
         comboBoxInterp.addItemListener(this);
-        
-        JLabel labelInterpFor = new JLabel("Interpolate For :");
+
+        final JLabel labelInterpFor = new JLabel("Interpolate For :");
         labelInterpFor.setForeground(Color.black);
         labelInterpFor.setFont(serif12);
         labelInterpFor.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         interpFOVgroup = new ButtonGroup();
         constantFOVradio = new JRadioButton("Constant FOV", true);
         constantFOVradio.setFont(serif12);
@@ -2282,7 +2260,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         constantFOVradio.setSelected(false);
         constantFOVradio.addItemListener(this);
         constantFOVradio.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         endMatchFOVradio = new JRadioButton("Unrepeated Begin & End Matching", true);
         endMatchFOVradio.setFont(serif12);
         endMatchFOVradio.setEnabled(true);
@@ -2290,7 +2268,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         endMatchFOVradio.setSelected(true);
         endMatchFOVradio.addItemListener(this);
         endMatchFOVradio.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         cropOrPad = new ButtonGroup();
         cropRadio = new JRadioButton("Retain original image size", true);
         cropRadio.setFont(serif12);
@@ -2306,29 +2284,29 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         cropOrPad.add(padRadio);
         padRadio.addItemListener(this);
         padRadio.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         outOfBoundsLabel = new JLabel("Out of bounds data:");
         outOfBoundsLabel.setForeground(Color.black);
         outOfBoundsLabel.setFont(serif12);
         outOfBoundsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         outOfBoundsComboBox = new JComboBox();
         outOfBoundsComboBox.setFont(serif12);
         outOfBoundsComboBox.setBackground(Color.white);
         outOfBoundsComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         outOfBoundsComboBox.addItem("Image minimum");
         outOfBoundsComboBox.addItem("If float NaN, else 0");
         outOfBoundsComboBox.addItem("User defined");
         outOfBoundsComboBox.addItem("Image maximum");
         outOfBoundsComboBox.setSelectedIndex(0);
         outOfBoundsComboBox.addItemListener(this);
-        
+
         valueLabel = new JLabel("Out of bounds intensity value:");
         valueLabel.setForeground(Color.black);
         valueLabel.setFont(serif12);
         valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         valueText = new JTextField(String.valueOf(imageMin));
         valueText.setFont(serif12);
         valueText.setEnabled(false);
@@ -2375,7 +2353,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         voiCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Should be transform VOI also
-        if ((image.getVOIs() == null) || (image.getVOIs().isEmpty() == true)) {
+        if ( (image.getVOIs() == null) || (image.getVOIs().isEmpty() == true)) {
             voiCheckbox.setEnabled(false);
         }
 
@@ -2385,17 +2363,16 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         optionPanel.add(labelOrigin);
         // labelOrigin.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel rotateOptionPanel = new JPanel();
-        
-        
+        final JPanel rotateOptionPanel = new JPanel();
+
         rotationAxisGroup = new ButtonGroup();
         rotOrigin = new JRadioButton("Origin", false);
         rotOrigin.setFont(serif12);
         rotOrigin.setEnabled(false);
         rotationAxisGroup.add(rotOrigin);
-        
+
         rotateOptionPanel.add(rotOrigin);
-        //optionPanel.add(rotOrigin);
+        // optionPanel.add(rotOrigin);
         rotOrigin.addItemListener(this);
         // rotOrigin.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -2406,15 +2383,15 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         rotCenter.addItemListener(this);
         // rotCenter.setAlignmentX(Component.LEFT_ALIGNMENT);
         rotateOptionPanel.add(rotCenter);
-        
+
         useSACenterBox = new JCheckBox("Use scanner center", false);
         useSACenterBox.setFont(serif12);
         useSACenterBox.setSelected(false);
         useSACenterBox.setEnabled(false);
-        
+
         optionPanel.setLayout(new GridBagLayout());
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
@@ -2436,7 +2413,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         optionPanel.add(constantFOVradio, gbc);
         gbc.gridx = 3;
         optionPanel.add(endMatchFOVradio, gbc);
-        
+
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
@@ -2445,10 +2422,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         optionPanel.add(rotateOptionPanel, gbc);
         gbc.gridx = 3;
         optionPanel.add(useSACenterBox, gbc);
-      //  optionPanel.add(rotCenter, gbc);
+        // optionPanel.add(rotCenter, gbc);
 
-        
-        
         gbc.gridx = 2;
         gbc.gridy = 3;
         optionPanel.add(cropRadio, gbc);
@@ -2494,12 +2469,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * Builds the resample panel.
-     *
-     * @return  The resample panel.
+     * 
+     * @return The resample panel.
      */
     private JPanel buildResamplePanel() {
 
-        JPanel resamplePanel = new JPanel(new GridBagLayout());
+        final JPanel resamplePanel = new JPanel(new GridBagLayout());
         resamplePanel.setBorder(buildTitledBorder("Resample"));
 
         resampleGroup = new ButtonGroup();
@@ -2629,10 +2604,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         max = 400;
         min = 25;
 
-        int initialVal = 100;
-        magSlider = new JSlider(JSlider.HORIZONTAL, min, max, initialVal);
+        final int initialVal = 100;
+        magSlider = new JSlider(SwingConstants.HORIZONTAL, min, max, initialVal);
 
-        magSlider.setMajorTickSpacing((max - min) / 5);
+        magSlider.setMajorTickSpacing( (max - min) / 5);
         magSlider.setPaintTicks(true);
         magSlider.setEnabled(false);
 
@@ -2666,7 +2641,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         minimum.setEnabled(false);
         current.setEnabled(false);
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 2, 2, 2);
@@ -2767,8 +2742,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         gbc.gridwidth = 2;
         resamplePanel.add(resampleSlider, gbc);
 
-        JPanel sliderPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc2 = new GridBagConstraints();
+        final JPanel sliderPanel = new JPanel(new GridBagLayout());
+        final GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.gridx = 0;
         gbc2.gridy = 0;
         gbc2.gridwidth = 3;
@@ -2815,36 +2790,37 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         FileInfoBase[] fileInfo;
         int i;
 
-        if (transformType == ACPC_TO_ORIG) {
+        if (transformType == JDialogScriptableTransform.ACPC_TO_ORIG) {
             dims = tInfo.getOrigDim();
-        } else if (transformType == TLRC_TO_ORIG) {
+        } else if (transformType == JDialogScriptableTransform.TLRC_TO_ORIG) {
             dims = tInfo.getOrigDim();
-        } else if (transformType == ORIG_TO_ACPC) {
+        } else if (transformType == JDialogScriptableTransform.ORIG_TO_ACPC) {
             dims = tInfo.getAcpcDim();
-        } else if (transformType == TLRC_TO_ACPC) {
+        } else if (transformType == JDialogScriptableTransform.TLRC_TO_ACPC) {
             dims = tInfo.getAcpcDim();
-        } else if (transformType == ORIG_TO_TLRC) {
+        } else if (transformType == JDialogScriptableTransform.ORIG_TO_TLRC) {
             dims = tInfo.getTlrcDim();
-        } else if (transformType == ACPC_TO_TLRC) {
+        } else if (transformType == JDialogScriptableTransform.ACPC_TO_TLRC) {
             dims = tInfo.getTlrcDim();
         }
 
         try {
-            resultImage = new ModelImage(ModelImage.FLOAT, dims, makeImageName(image.getImageName(), "_TT"));
+            resultImage = new ModelImage(ModelStorageBase.FLOAT, dims, JDialogBase.makeImageName(image.getImageName(),
+                    "_TT"));
             fileInfo = resultImage.getFileInfo();
 
-            if ((transformType == ACPC_TO_ORIG) || (transformType == TLRC_TO_ORIG)) {
+            if ( (transformType == JDialogScriptableTransform.ACPC_TO_ORIG)
+                    || (transformType == JDialogScriptableTransform.TLRC_TO_ORIG)) {
                 axisOrientation = getAxisOrientation(tInfo.getOrigOrient());
                 zAxisOrientation = axisOrientation[2];
 
-                if ((zAxisOrientation == FileInfoBase.ORI_R2L_TYPE) ||
-                        (zAxisOrientation == FileInfoBase.ORI_L2R_TYPE)) {
+                if ( (zAxisOrientation == FileInfoBase.ORI_R2L_TYPE) || (zAxisOrientation == FileInfoBase.ORI_L2R_TYPE)) {
                     imageOrientation = FileInfoBase.SAGITTAL;
-                } else if ((zAxisOrientation == FileInfoBase.ORI_A2P_TYPE) ||
-                               (zAxisOrientation == FileInfoBase.ORI_P2A_TYPE)) {
+                } else if ( (zAxisOrientation == FileInfoBase.ORI_A2P_TYPE)
+                        || (zAxisOrientation == FileInfoBase.ORI_P2A_TYPE)) {
                     imageOrientation = FileInfoBase.CORONAL;
-                } else if ((zAxisOrientation == FileInfoBase.ORI_I2S_TYPE) ||
-                               (zAxisOrientation == FileInfoBase.ORI_S2I_TYPE)) {
+                } else if ( (zAxisOrientation == FileInfoBase.ORI_I2S_TYPE)
+                        || (zAxisOrientation == FileInfoBase.ORI_S2I_TYPE)) {
                     imageOrientation = FileInfoBase.AXIAL;
                 } else {
                     imageOrientation = FileInfoBase.ORI_UNKNOWN_TYPE;
@@ -2853,7 +2829,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 resultImage.setImageOrientation(imageOrientation);
 
                 for (i = 0; i < fileInfo.length; i++) {
-                    int[] units = new int[3];
+                    final int[] units = new int[3];
                     units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
                     fileInfo[i].setUnitsOfMeasure(units);
                     fileInfo[i].setResolutions(tInfo.getOrigRes());
@@ -2865,10 +2841,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             else { // not transformed to ORIG
                 resultImage.setImageOrientation(FileInfoBase.AXIAL);
 
-                int[] units = new int[3];
+                final int[] units = new int[3];
                 units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
 
-                float[] resol = new float[3];
+                final float[] resol = new float[3];
                 resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes();
                 axisOrientation = new int[3];
                 axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
@@ -2884,13 +2860,13 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 } // for (i = 0; i < fileInfo.length; i++)
             } // else not transformed to ORIG
 
-            if ((transformType == AlgorithmTalairachTransform.ACPC_TO_ORIG) ||
-                    (transformType == AlgorithmTalairachTransform.TLRC_TO_ORIG)) {
+            if ( (transformType == AlgorithmTalairachTransform.ACPC_TO_ORIG)
+                    || (transformType == AlgorithmTalairachTransform.TLRC_TO_ORIG)) {
 
                 resultImage.setImageOrientation(tInfo.getOrigImageOrientLabel());
 
                 // new image in original space (only difference: units forced to millimeters)
-                int[] units = new int[3];
+                final int[] units = new int[3];
                 units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
 
                 for (i = 0; i < fileInfo.length; i++) {
@@ -2899,27 +2875,27 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     fileInfo[i].setExtents(tInfo.getOrigDim());
                     fileInfo[i].setAxisOrientation(tInfo.getOrigOrientLabels());
                     fileInfo[i].setImageOrientation(tInfo.getOrigImageOrientLabel());
-                    
-                    //BEN
-                   // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
+
+                    // BEN
+                    // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
                 }
 
                 resultImage.setFileInfo(fileInfo);
                 resultImage.setTalairachTransformInfo(tInfo);
 
-            } else if ((transformType == AlgorithmTalairachTransform.ORIG_TO_ACPC) ||
-                           (transformType == AlgorithmTalairachTransform.TLRC_TO_ACPC)) {
+            } else if ( (transformType == AlgorithmTalairachTransform.ORIG_TO_ACPC)
+                    || (transformType == AlgorithmTalairachTransform.TLRC_TO_ACPC)) {
 
                 // new image in AC-PC space: everything is standard
                 resultImage.setImageOrientation(FileInfoBase.AXIAL);
 
-                int[] units = new int[3];
+                final int[] units = new int[3];
                 units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
 
-                float[] resol = new float[3];
+                final float[] resol = new float[3];
                 resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes();
 
-                int[] orient = new int[3];
+                final int[] orient = new int[3];
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
                 orient[1] = FileInfoBase.ORI_A2P_TYPE;
                 orient[2] = FileInfoBase.ORI_I2S_TYPE;
@@ -2930,9 +2906,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     fileInfo[i].setExtents(tInfo.getAcpcDim());
                     fileInfo[i].setAxisOrientation(orient);
                     fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
-                    
-                    //BEN
-                   // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
+
+                    // BEN
+                    // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
                 }
 
                 resultImage.setFileInfo(fileInfo);
@@ -2943,13 +2919,13 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 // new image in Talairach space: also standard, only the extents are changed
                 resultImage.setImageOrientation(FileInfoBase.AXIAL);
 
-                int[] units = new int[3];
+                final int[] units = new int[3];
                 units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
 
-                float[] resol = new float[3];
+                final float[] resol = new float[3];
                 resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes();
 
-                int[] orient = new int[3];
+                final int[] orient = new int[3];
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
                 orient[1] = FileInfoBase.ORI_A2P_TYPE;
                 orient[2] = FileInfoBase.ORI_I2S_TYPE;
@@ -2960,9 +2936,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     fileInfo[i].setExtents(tInfo.getTlrcDim());
                     fileInfo[i].setAxisOrientation(orient);
                     fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
-                    
-                    //BEN
-                   // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
+
+                    // BEN
+                    // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
                 }
 
                 resultImage.setFileInfo(fileInfo);
@@ -2989,7 +2965,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 algoTal.run();
             }
         } // try
-        catch (OutOfMemoryError x) {
+        catch (final OutOfMemoryError x) {
 
             if (resultImage != null) {
                 resultImage.disposeLocal();
@@ -3005,16 +2981,16 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  state  DOCUMENT ME!
+     * 
+     * @param state DOCUMENT ME!
      */
-    private void enableDims(boolean state) {
+    private void enableDims(final boolean state) {
         labelDimX.setEnabled(state);
         labelDimY.setEnabled(state);
         textDimX.setEnabled(state);
         textDimY.setEnabled(state);
 
-        if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
+        if ( (image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
             labelDimZ.setEnabled(state);
             textDimZ.setEnabled(state);
         }
@@ -3022,16 +2998,16 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  state  DOCUMENT ME!
+     * 
+     * @param state DOCUMENT ME!
      */
-    private void enableResols(boolean state) {
+    private void enableResols(final boolean state) {
         labelResX.setEnabled(state);
         labelResY.setEnabled(state);
         textResX.setEnabled(state);
         textResY.setEnabled(state);
 
-        if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
+        if ( (image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
             labelResZ.setEnabled(state);
             textResZ.setEnabled(state);
         }
@@ -3039,10 +3015,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  state  DOCUMENT ME!
+     * 
+     * @param state DOCUMENT ME!
      */
-    private void enableYSettings(boolean state) {
+    private void enableYSettings(final boolean state) {
         labelDimY.setEnabled(state);
         textDimY.setEnabled(state);
         labelResY.setEnabled(state);
@@ -3052,16 +3028,16 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     /**
      * Return the 3 axis orientation codes that correspond to the closest standard anatomical orientation of the (i,j,k)
      * axes.
-     *
-     * @param   array  4x4 matrix that transforms (i,j,k) indexes to x,y,z coordinates where +x =Left, +y = Posterior,
-     *                 +z = Superior Only the upper-left 3x3 corner of the matrix is used This routine finds the
-     *                 permutation of (x,y,z) which has the smallest angle to the (i,j,k) axes directions, which are
-     *                 columns of the input matrix
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param array 4x4 matrix that transforms (i,j,k) indexes to x,y,z coordinates where +x =Left, +y = Posterior, +z =
+     *            Superior Only the upper-left 3x3 corner of the matrix is used This routine finds the permutation of
+     *            (x,y,z) which has the smallest angle to the (i,j,k) axes directions, which are columns of the input
+     *            matrix
+     * 
+     * @return DOCUMENT ME!
      */
-    private int[] getAxisOrientation(float[][] array) {
-        int[] axisOrientation = new int[3];
+    private int[] getAxisOrientation(final float[][] array) {
+        final int[] axisOrientation = new int[3];
         double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
         Matrix Q;
         double detQ;
@@ -3084,7 +3060,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         // Normalize column vectors to get unit vectors along each ijk-axis
 
         // Normalize i axis
-        val = Math.sqrt((xi * xi) + (yi * yi) + (zi * zi));
+        val = Math.sqrt( (xi * xi) + (yi * yi) + (zi * zi));
 
         if (val == 0.0) {
             MipavUtil.displayError("xi = yi = zi = 0 in getAxisOrientation");
@@ -3097,7 +3073,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         zi /= val;
 
         // Normalize j axis
-        val = Math.sqrt((xj * xj) + (yj * yj) + (zj * zj));
+        val = Math.sqrt( (xj * xj) + (yj * yj) + (zj * zj));
 
         if (val == 0.0) {
             MipavUtil.displayError("xj = yj = zj = 0 in getAxisOrientation");
@@ -3116,7 +3092,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             xj -= val * xi;
             yj -= val * yi;
             zj -= val * zi;
-            val = Math.sqrt((xj * xj) + (yj * yj) + (zj * zj)); // Must renormalize
+            val = Math.sqrt( (xj * xj) + (yj * yj) + (zj * zj)); // Must renormalize
 
             if (val == 0.0) {
                 MipavUtil.displayError("j was parallel to i in getAxisOrientation");
@@ -3130,7 +3106,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         // Normalize k axis; if it is zero, make it the cross product i x j
-        val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
+        val = Math.sqrt( (xk * xk) + (yk * yk) + (zk * zk));
 
         if (val == 0.0) {
             xk = (yi * zj) - (zi * yj);
@@ -3149,7 +3125,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             xk -= val * xi;
             yk -= val * yi;
             zk -= val * zi;
-            val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
+            val = Math.sqrt( (xk * xk) + (yk * yk) + (zk * zk));
 
             if (val == 0.0) {
                 MipavUtil.displayError("val == 0 when orthogonalizing k to i");
@@ -3169,7 +3145,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             xk -= val * xj;
             yk -= val * yj;
             zk -= val * zj;
-            val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
+            val = Math.sqrt( (xk * xk) + (yk * yk) + (zk * zk));
 
             if (val == 0.0) {
                 MipavUtil.displayError("val == 0 when orthogonalizing k to j");
@@ -3182,7 +3158,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             zk /= val;
         }
 
-        double[][] darray = new double[3][3];
+        final double[][] darray = new double[3][3];
         darray[0][0] = xi;
         darray[0][1] = xj;
         darray[0][2] = xk;
@@ -3227,7 +3203,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 for (k = 1; k <= 3; k++) { // k = column number to use for row #3
 
-                    if ((i == k) || (j == k)) {
+                    if ( (i == k) || (j == k)) {
                         continue;
                     }
 
@@ -3253,7 +3229,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                                 detP = P.det();
 
                                 // sign of permutation doesn't match sign of Q
-                                if ((detP * detQ) <= 0.0) {
+                                if ( (detP * detQ) <= 0.0) {
                                     continue;
                                 }
 
@@ -3287,11 +3263,11 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
         // For example, the first row of P (which contains pbest in column ibest)
         // determines the way the i axis points relative to the anatomical
-        // (x,y,z) axes.  If ibest is 2, then the i axis is along the yaxis,
+        // (x,y,z) axes. If ibest is 2, then the i axis is along the yaxis,
         // which is direction P2A (if pbest < 0) or A2P (if pbest > 0).
 
         // So, using ibest and pbest, we can assign the output code for
-        // the i axis.  The same also applies for the j and k axes.
+        // the i axis. The same also applies for the j and k axes.
 
         switch (ibest * pbest) {
 
@@ -3388,11 +3364,11 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         setForeground(Color.black);
         setTitle("Transform/Resample Image");
 
-        JPanel matrixPanel = buildMatrixPanel();
-        JPanel optionPanel = buildOptionPanel();
-        JPanel resamplePanel = buildResamplePanel();
+        final JPanel matrixPanel = buildMatrixPanel();
+        final JPanel optionPanel = buildOptionPanel();
+        final JPanel resamplePanel = buildResamplePanel();
 
-        JPanel leftPanel = new JPanel();
+        final JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BorderLayout());
         leftPanel.add(matrixPanel);
         leftPanel.add(optionPanel, BorderLayout.SOUTH);
@@ -3400,18 +3376,18 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(MipavUtil.font12B);
         tabbedPane.addTab("Transform", leftPanel);
-        
+
         tabbedPane.addTab("Resample", resamplePanel);
-        
+
         tabbedPane.addChangeListener(this);
-        
-        GridBagConstraints gbc = new GridBagConstraints();
+
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-                
-        JPanel buttonPanel = new JPanel();
+
+        final JPanel buttonPanel = new JPanel();
         buttonPanel.add(buildButtons());
 
         getContentPane().add(tabbedPane);
@@ -3425,39 +3401,37 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     }
 
     /**
-     * Re-orient the matrix to world and left-hand coordinate systems if required. 
+     * Re-orient the matrix to world and left-hand coordinate systems if required.
+     * 
      * @see reorientCoordSystem
-     * @param   rkMatrix  the matrix to be converted
+     * @param rkMatrix the matrix to be converted
      * @return result
      */
-    private TransMatrix reorientCoordSystem(TransMatrix rkMatrix)
-    {
-    	return JDialogScriptableTransform.reorientCoordSystem(rkMatrix, image, resampleImage, wcSystem, leftHandSystem);
-    	
+    private TransMatrix reorientCoordSystem(final TransMatrix rkMatrix) {
+        return JDialogScriptableTransform.reorientCoordSystem(rkMatrix, image, resampleImage, wcSystem, leftHandSystem);
+
     }
-    
+
     /**
-     * Re-orient the matrix to world and left-hand coordinate systems if
-     * required. Note at the moment the voxel resolutions are handled in the
-     * transformation algorithm. At some future point we should adjust for
-     * voxel resolutions in the transformation matrix - its faster.
-     *
-     * @param rkMatrix  the matrix to be converted
+     * Re-orient the matrix to world and left-hand coordinate systems if required. Note at the moment the voxel
+     * resolutions are handled in the transformation algorithm. At some future point we should adjust for voxel
+     * resolutions in the transformation matrix - its faster.
+     * 
+     * @param rkMatrix the matrix to be converted
      * @param rkImage main image
      * @param rkResampleImage resampled image
      * @param bWcSystem true if world coord system
      * @param bLeftHandSystem true if left-handed system.
      * @return result
      */
-    public static TransMatrix reorientCoordSystem(TransMatrix rkMatrix, 
-    		ModelImage rkImage, ModelImage rkResampleImage, 
-    		boolean bWcSystem, boolean bLeftHandSystem) {
+    public static TransMatrix reorientCoordSystem(final TransMatrix rkMatrix, final ModelImage rkImage,
+            final ModelImage rkResampleImage, final boolean bWcSystem, final boolean bLeftHandSystem) {
 
         try {
-            TransMatrix mat = new TransMatrix(4);
-            TransMatrix wcMatrix = new TransMatrix(4);
-            TransMatrix rh_lhMatrix = new TransMatrix(4);
-            //double[][] dMat;
+            final TransMatrix mat = new TransMatrix(4);
+            final TransMatrix wcMatrix = new TransMatrix(4);
+            final TransMatrix rh_lhMatrix = new TransMatrix(4);
+            // double[][] dMat;
 
             // right handed to left handed or left handed to right handed
             // coordinate systems
@@ -3465,38 +3439,38 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             // p.223 Foley, Van Dam ...
             // Flipping only z axis
-            // 1  0  0  0
-            // 0  1  0  0
-            // 0  0 -1  0
-            // 0  0  0  1
+            // 1 0 0 0
+            // 0 1 0 0
+            // 0 0 -1 0
+            // 0 0 0 1
 
             wcMatrix.Set(1, 1, -1);
             wcMatrix.Set(2, 2, -1);
 
             // Flipping y and z axes
             // Left handed cooordinates will remain left handed and right handed will remain right handed
-            // 1  0  0  0
-            // 0 -1  0  0
-            // 0  0 -1  0
-            // 0  0  0  1
+            // 1 0 0 0
+            // 0 -1 0 0
+            // 0 0 -1 0
+            // 0 0 0 1
 
-            Vector3f cPt = rkImage.getImageCentermm(false);
-            Vector3f cPtRS = rkResampleImage.getImageCentermm(false);
+            final Vector3f cPt = rkImage.getImageCentermm(false);
+            final Vector3f cPtRS = rkResampleImage.getImageCentermm(false);
 
-            if ((bWcSystem == true) && (bLeftHandSystem == true)) {
+            if ( (bWcSystem == true) && (bLeftHandSystem == true)) {
 
                 // change from both the "left-hand" and world coordinate system.
                 mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
                 mat.Mult(rh_lhMatrix);
                 mat.Mult(wcMatrix);
-                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
+                mat.setTranslate( -cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
                 mat.Mult(rkMatrix);
 
                 mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
                 mat.Mult(wcMatrix);
                 mat.Mult(rh_lhMatrix);
-                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
+                mat.setTranslate( -cPt.X, -cPt.Y, -cPt.Z);
 
                 // mat.print();
                 return mat;
@@ -3504,32 +3478,32 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
                 mat.Mult(wcMatrix);
-                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
+                mat.setTranslate( -cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
                 mat.Mult(rkMatrix);
 
                 mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
                 mat.Mult(wcMatrix);
-                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
+                mat.setTranslate( -cPt.X, -cPt.Y, -cPt.Z);
 
                 return mat;
             } else if (bLeftHandSystem == true) { // Change just from the "left-hand" system
 
                 mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
                 mat.Mult(rh_lhMatrix);
-                mat.setTranslate(-cPtRS.X, -cPtRS.Y, -cPtRS.Z);
+                mat.setTranslate( -cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
                 mat.Mult(rkMatrix);
 
                 mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
                 mat.Mult(rh_lhMatrix);
-                mat.setTranslate(-cPt.X, -cPt.Y, -cPt.Z);
+                mat.setTranslate( -cPt.X, -cPt.Y, -cPt.Z);
 
                 return mat;
             } else {
                 return rkMatrix;
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: Orient matrix.");
 
             return rkMatrix;
@@ -3547,8 +3521,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /**
      * Sets the variables needed to run the algorithm.
-     *
-     * @return  Flag indicating successful set of the variables.
+     * 
+     * @return Flag indicating successful set of the variables.
      */
     private boolean setVariables() {
         String tmpStr;
@@ -3558,16 +3532,16 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         double Tx = 0, Ty = 0, Tz = 0, Rx, Ry, Rz, Sx, Sy, Sz, SKx, SKy, SKz;
         float fovX = 0.f, fovY = 0.f, fovZ = 0.f;
 
-        int boxIndex = comboBoxInterp.getSelectedIndex();
+        final int boxIndex = comboBoxInterp.getSelectedIndex();
 
-        if ( boxIndex != 1 ) {
-        	constantFOVradio.setEnabled(false);
+        if (boxIndex != 1) {
+            constantFOVradio.setEnabled(false);
             endMatchFOVradio.setEnabled(false);
             constantFOVradio.setSelected(true);
             endMatchFOVradio.setSelected(false);
             constantFOV = 0;
         }
-        
+
         if (boxIndex == 0) {
             interp = AlgorithmTransform.NEAREST_NEIGHBOR;
         } else if (boxIndex == 1) {
@@ -3579,10 +3553,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
             constantFOVradio.setEnabled(true);
             endMatchFOVradio.setEnabled(true);
-            if ( constantFOVradio.isSelected() ) {
-            	constantFOV = 0;
+            if (constantFOVradio.isSelected()) {
+                constantFOV = 0;
             } else {
-            	constantFOV = 1;
+                constantFOV = 1;
             }
         } // else if (boxIndex == 1)
         else if (boxIndex == 2) {
@@ -3602,26 +3576,28 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         doVOI = voiCheckbox.isSelected();
         doClip = clipCheckbox.isSelected();
         doInvMat = invertCheckbox.isSelected();
-        
-        //set the units.  will be reset if image is being resampled to another image's size
+
+        // set the units. will be reset if image is being resampled to another image's size
         units = new int[image.getUnitsOfMeasure().length];
         for (int i = 0; i < units.length; i++) {
-        	units[i] = image.getUnitsOfMeasure(i);
+            units[i] = image.getUnitsOfMeasure(i);
         }
-        
-        if ((computeTImage != null) && computeTImage.isSelected()) {
+
+        if ( (computeTImage != null) && computeTImage.isSelected()) {
             transformType = comboBoxTalTransform.getSelectedIndex();
 
-            if (!tInfo.isAcpc()) {
+            if ( !tInfo.isAcpc()) {
                 MipavUtil.displayError("The ACPC transformation is not set");
 
                 return false;
             } // if (!tInfo.isAcpc())
 
-            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
-                    (transformType == TLRC_TO_ACPC)) {
+            if ( (transformType == JDialogScriptableTransform.ORIG_TO_TLRC)
+                    || (transformType == JDialogScriptableTransform.ACPC_TO_TLRC)
+                    || (transformType == JDialogScriptableTransform.TLRC_TO_ORIG)
+                    || (transformType == JDialogScriptableTransform.TLRC_TO_ACPC)) {
 
-                if (!tInfo.isTlrc()) {
+                if ( !tInfo.isTlrc()) {
                     MipavUtil.displayError("The Talairach transformation is not set");
 
                     return false;
@@ -3636,7 +3612,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         doPad = padRadio.isSelected();
         doUpdateOrigin = updateOriginCheckbox.isSelected();
 
-        if ((do25D) || (image.getNDims() == 2)) {
+        if ( (do25D) || (image.getNDims() == 2)) {
             xfrm = new TransMatrix(3);
         } else { // (image.getNDims() >= 3) && (!do25D)
             xfrm = new TransMatrix(4);
@@ -3659,60 +3635,58 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
         oXres = oYres = oZres = oXdim = oYdim = oZdim = 1; // initialize
 
-        //if a transform matrix is to be used (NOT resampling)
-        //  must adjust the result extents and resolutions
-        if (!noTransform.isSelected()) {
-        	
-        	oXres = image.getFileInfo()[0].getResolutions()[0];
-        	oYres = image.getFileInfo()[0].getResolutions()[1];
-        	
-        	oXdim = image.getExtents()[0];
-        	oYdim = image.getExtents()[1];
-        	
-        	if (image.getNDims() > 2) {
-        		oZres = image.getFileInfo()[0].getResolutions()[2];
-            	oZdim = image.getExtents()[2];
-        	} 
+        // if a transform matrix is to be used (NOT resampling)
+        // must adjust the result extents and resolutions
+        if ( !noTransform.isSelected()) {
+
+            oXres = image.getFileInfo()[0].getResolutions()[0];
+            oYres = image.getFileInfo()[0].getResolutions()[1];
+
+            oXdim = image.getExtents()[0];
+            oYdim = image.getExtents()[1];
+
+            if (image.getNDims() > 2) {
+                oZres = image.getFileInfo()[0].getResolutions()[2];
+                oZdim = image.getExtents()[2];
+            }
         }
-        
-        
-   //     if (noTransform.isSelected()) {
-        
+
+        // if (noTransform.isSelected()) {
+
         // RESAMPLE INFO
         if (resampletoImage.isSelected()) {
-            String selectName = (String) (comboBoxImage.getSelectedItem());
+            final String selectName = (String) (comboBoxImage.getSelectedItem());
 
             // get the selected image
-            ModelImage selectedImg = userInterface.getRegisteredImageByName(selectName);
+            final ModelImage selectedImg = userInterface.getRegisteredImageByName(selectName);
 
             // assign output resolutions and dims to those of image selected in comboBox
             oXres = selectedImg.getFileInfo(0).getResolutions()[0];
             oYres = selectedImg.getFileInfo(0).getResolutions()[1];
-            
-            //get the units now
+
+            // get the units now
             units[0] = selectedImg.getUnitsOfMeasure(0);
             units[1] = selectedImg.getUnitsOfMeasure(1);
-            
+
             System.err.println("units of original image: " + image.getUnitsOfMeasure(0));
             System.err.println("setting units: " + units[0]);
-            
-            
+
             if (setPix) {
-                fovX = iXres * (iXdim-constantFOV);
-                fovY = iYres * (iYdim-constantFOV);
-                oXdim = (int)Math.round(fovX / oXres) + constantFOV;
-                oYdim = (int)Math.round(fovY / oYres) + constantFOV;
+                fovX = iXres * (iXdim - constantFOV);
+                fovY = iYres * (iYdim - constantFOV);
+                oXdim = Math.round(fovX / oXres) + constantFOV;
+                oYdim = Math.round(fovY / oYres) + constantFOV;
             } else {
                 oXdim = selectedImg.getExtents()[0];
                 oYdim = selectedImg.getExtents()[1];
             }
 
-            if ((image.getNDims() >= 3) && (!do25D) && (selectedImg.getNDims() >= 3)) {
+            if ( (image.getNDims() >= 3) && ( !do25D) && (selectedImg.getNDims() >= 3)) {
                 oZres = selectedImg.getFileInfo(0).getResolutions()[2];
                 units[2] = selectedImg.getUnitsOfMeasure(2);
                 if (setPix) {
-                    fovZ = iZres * (iZdim-constantFOV);
-                    oZdim = (int)Math.round(fovZ / oZres) + constantFOV;
+                    fovZ = iZres * (iZdim - constantFOV);
+                    oZdim = Math.round(fovZ / oZres) + constantFOV;
                 } else {
                     oZdim = selectedImg.getExtents()[2];
                 }
@@ -3724,7 +3698,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // Read X, Y and Z resolutions
             tmpStr = textResX.getText();
 
-            if (testParameter(tmpStr, 0, 1000000000)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 1000000000)) {
                 oXres = Float.valueOf(tmpStr).floatValue();
             } else {
                 textResX.requestFocus();
@@ -3735,7 +3709,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             tmpStr = textResY.getText();
 
-            if (testParameter(tmpStr, 0, 1000000000)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 1000000000)) {
                 oYres = Float.valueOf(tmpStr).floatValue();
             } else {
                 textResY.requestFocus();
@@ -3747,7 +3721,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             if (image.getNDims() >= 3) {
                 tmpStr = textResZ.getText();
 
-                if (testParameter(tmpStr, 0, 1000000000)) {
+                if (JDialogBase.testParameter(tmpStr, 0, 1000000000)) {
                     oZres = Float.valueOf(tmpStr).floatValue();
                 } else {
                     textResZ.requestFocus();
@@ -3760,7 +3734,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // Read X, Y and Z dimensions
             tmpStr = textDimX.getText();
 
-            if (testParameter(tmpStr, 0, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 2048)) {
                 oXdim = Integer.valueOf(tmpStr).intValue();
             } else {
                 textDimX.requestFocus();
@@ -3771,7 +3745,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             tmpStr = textDimY.getText();
 
-            if (testParameter(tmpStr, 0, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 2048)) {
                 oYdim = Integer.valueOf(tmpStr).intValue();
             } else {
                 textDimY.requestFocus();
@@ -3783,7 +3757,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             if (image.getNDims() >= 3) {
                 tmpStr = textDimZ.getText();
 
-                if (testParameter(tmpStr, 0, 2048)) {
+                if (JDialogBase.testParameter(tmpStr, 0, 2048)) {
                     oZdim = Integer.valueOf(tmpStr).intValue();
                 } else {
                     textDimZ.requestFocus();
@@ -3796,35 +3770,38 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             factor = magSlider.getValue() / (float) 100;
             oXdim = Math.round(image.getExtents()[0] * factor);
             oYdim = Math.round(image.getExtents()[1] * factor);
-            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]-constantFOV) / (float) (oXdim-constantFOV);
-            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]-constantFOV) / (float) (oYdim-constantFOV);
+            oXres = image.getFileInfo(0).getResolutions()[0] * (image.getExtents()[0] - constantFOV)
+                    / (oXdim - constantFOV);
+            oYres = image.getFileInfo(0).getResolutions()[1] * (image.getExtents()[1] - constantFOV)
+                    / (oYdim - constantFOV);
 
-            if ((image.getNDims() >= 3) && (!do25D)) {
+            if ( (image.getNDims() >= 3) && ( !do25D)) {
                 oZdim = Math.round(image.getExtents()[2] * factor);
-                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]-constantFOV) / (float) (oZdim-constantFOV);
-            } else if ((image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
+                oZres = image.getFileInfo(0).getResolutions()[2] * (image.getExtents()[2] - constantFOV)
+                        / (oZdim - constantFOV);
+            } else if ( (image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
                 oZdim = image.getExtents()[2];
                 oZres = image.getFileInfo(0).getResolutions()[2];
             }
         }
-     //   } //end if (noTransform.isSelected())
-      
-        
-        
+        // } //end if (noTransform.isSelected())
+
         // TRANSFORMATION MATRIX INFO
-        
-        if (fileMatrix.isSelected()  && (spline == null)) { // read matrix from file
+
+        if (fileMatrix.isSelected() && (spline == null)) { // read matrix from file
 
             // xfrm.Mult(readTransformMatrixFile(matrixFile));
-            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("Matrix loaded from Transform dialog:\n");
-            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(reorientCoordSystem(fileTransMatrix).toString());
+            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(
+                    "Matrix loaded from Transform dialog:\n");
+            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(
+                    reorientCoordSystem(fileTransMatrix).toString());
             xfrm.Mult(reorientCoordSystem(fileTransMatrix));
         } else if (userDefinedMatrix.isSelected()) { // user matrix
             spline = null;
             // user stuff
             tmpStr = textTx.getText();
 
-            if (testParameter(tmpStr, -2048, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                 Tx = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textTx.requestFocus();
@@ -3835,7 +3812,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             tmpStr = textTy.getText();
 
-            if (testParameter(tmpStr, -2048, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                 Ty = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textTy.requestFocus();
@@ -3846,7 +3823,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             tmpStr = textRz.getText();
 
-            if (testParameter(tmpStr, -360, 360)) {
+            if (JDialogBase.testParameter(tmpStr, -360, 360)) {
                 Rz = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textRz.requestFocus();
@@ -3857,7 +3834,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             tmpStr = textSx.getText();
 
-            if (testParameter(tmpStr, 0, 300)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 300)) {
                 Sx = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textSx.requestFocus();
@@ -3868,7 +3845,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             tmpStr = textSy.getText();
 
-            if (testParameter(tmpStr, 0, 300)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 300)) {
                 Sy = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textSy.requestFocus();
@@ -3879,7 +3856,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             tmpStr = textSKx.getText();
 
-            if (testParameter(tmpStr, -2048, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                 SKx = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textSKx.requestFocus();
@@ -3890,7 +3867,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             tmpStr = textSKy.getText();
 
-            if (testParameter(tmpStr, -2048, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                 SKy = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textSKy.requestFocus();
@@ -3899,10 +3876,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 return false;
             }
 
-            if ((image.getNDims() >= 3) && (!do25D)) {
+            if ( (image.getNDims() >= 3) && ( !do25D)) {
                 tmpStr = textTz.getText();
 
-                if (testParameter(tmpStr, -2048, 2048)) {
+                if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                     Tz = Double.valueOf(tmpStr).doubleValue();
                 } else {
                     textTz.requestFocus();
@@ -3913,7 +3890,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 tmpStr = textRx.getText();
 
-                if (testParameter(tmpStr, -360, 360)) {
+                if (JDialogBase.testParameter(tmpStr, -360, 360)) {
                     Rx = Double.valueOf(tmpStr).doubleValue();
                 } else {
                     textRx.requestFocus();
@@ -3924,7 +3901,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 tmpStr = textRy.getText();
 
-                if (testParameter(tmpStr, -360, 360)) {
+                if (JDialogBase.testParameter(tmpStr, -360, 360)) {
                     Ry = Double.valueOf(tmpStr).doubleValue();
                 } else {
                     textRy.requestFocus();
@@ -3935,7 +3912,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 tmpStr = textSz.getText();
 
-                if (testParameter(tmpStr, -2048, 2048)) {
+                if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                     Sz = Double.valueOf(tmpStr).doubleValue();
                 } else {
                     textSz.requestFocus();
@@ -3946,7 +3923,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 tmpStr = textSKz.getText();
 
-                if (testParameter(tmpStr, -2048, 2048)) {
+                if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                     SKz = Double.valueOf(tmpStr).doubleValue();
                 } else {
                     textSKz.requestFocus();
@@ -3971,21 +3948,21 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             Preferences.debug("Image's stored matrix = \n" + image.getMatrix());
 
             if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-            	isSATransform = true;
+                isSATransform = true;
             }
-            
+
             TransMatrix imageMatrix = null;
-          
+
             if (storedMatrixBox.getSelectedItem().equals("Composite")) {
-            	imageMatrix = image.getMatrix();
+                imageMatrix = image.getMatrix();
             } else {
-            	imageMatrix = (TransMatrix)image.getMatrixHolder().getMatrixMap().get(storedMatrixBox.getSelectedItem());
+                imageMatrix = image.getMatrixHolder().getMatrixMap().get(storedMatrixBox.getSelectedItem());
             }
-                                    
-            if (!do25D) {
+
+            if ( !do25D) {
                 xfrm.Mult(imageMatrix);
             } else {
-                TransMatrix xfrm25 = new TransMatrix(3);
+                final TransMatrix xfrm25 = new TransMatrix(3);
                 xfrm25.Set(0, 0, imageMatrix.Get(0, 0));
                 xfrm25.Set(0, 1, imageMatrix.Get(0, 1));
                 xfrm25.Set(0, 2, imageMatrix.Get(0, 3));
@@ -4003,32 +3980,30 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             xfrm.MakeIdentity();
         }
 
-       
-        
         // if ((no transformation) OR (user input transformation))
         // AND (total image size !=), then scale
         if (noTransform.isSelected() || userDefinedMatrix.isSelected()) {
 
-            if ((image.getNDims() >= 3) && (!do25D)) {
-                if (((iXres * (float) (iXdim-constantFOV)) != (oXres * (float) (oXdim-constantFOV))) ||
-                        ((iYres * (float) (iYdim-constantFOV)) != (oYres * (float) (oYdim-constantFOV))) ||
-                        ((iZres * (float) (iZdim-constantFOV)) != ((float) (oZdim-constantFOV) * oZres))) {
-                    Sx = ((float) (oXdim-constantFOV) * oXres) / ((float) (iXdim-constantFOV) * iXres);
-                    Sy = ((float) (oYdim-constantFOV) * oYres) / ((float) (iYdim-constantFOV) * iYres);
-                    Sz = ((float) (oZdim-constantFOV) * oZres) / ((float) (iZdim-constantFOV) * iZres);
+            if ( (image.getNDims() >= 3) && ( !do25D)) {
+                if ( ( (iXres * (iXdim - constantFOV)) != (oXres * (oXdim - constantFOV)))
+                        || ( (iYres * (iYdim - constantFOV)) != (oYres * (oYdim - constantFOV)))
+                        || ( (iZres * (iZdim - constantFOV)) != ( (oZdim - constantFOV) * oZres))) {
+                    Sx = ( (oXdim - constantFOV) * oXres) / ( (iXdim - constantFOV) * iXres);
+                    Sy = ( (oYdim - constantFOV) * oYres) / ( (iYdim - constantFOV) * iYres);
+                    Sz = ( (oZdim - constantFOV) * oZres) / ( (iZdim - constantFOV) * iZres);
                     xfrm.setZoom(Sx, Sy, Sz);
                 }
             } else { // ((image.getNDims() == 2) || (do25D))
-                if (((iXres * (float) (iXdim-constantFOV)) != (oXres * (float) (oXdim-constantFOV))) ||
-                        ((iYres * (float) (iYdim-constantFOV)) != (oYres * (float) (oYdim-constantFOV)))) {
-                    Sx = ((float) (oXdim-constantFOV) * oXres) / ((float) (iXdim-constantFOV) * iXres);
-                    Sy = ((float) (oYdim-constantFOV) * oYres) / ((float) (iYdim-constantFOV) * iYres);
+                if ( ( (iXres * (iXdim - constantFOV)) != (oXres * (oXdim - constantFOV)))
+                        || ( (iYres * (iYdim - constantFOV)) != (oYres * (oYdim - constantFOV)))) {
+                    Sx = ( (oXdim - constantFOV) * oXres) / ( (iXdim - constantFOV) * iXres);
+                    Sy = ( (oYdim - constantFOV) * oYres) / ( (iYdim - constantFOV) * iYres);
                     xfrm.setZoom(Sx, Sy);
                 }
-            
+
             }
         }
-        
+
         if (Preferences.debugLevel(Preferences.DEBUG_MINOR) && (image.getNDims() == 3)) {
             Preferences.debug("oDim = " + oXdim + ", " + oYdim + ", " + oZdim);
             Preferences.debug("oRes = " + oXres + ", " + oYres + ", " + oZres);
@@ -4036,133 +4011,132 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
         Preferences.debug(xfrm + "\n");
 
-        //if (!userDefinedMatrix.isSelected()) { 
-         //   doRotateCenter = false;
-        //}
-        //else {
+        // if (!userDefinedMatrix.isSelected()) {
+        // doRotateCenter = false;
+        // }
+        // else {
         // doRotateCenter is checked if it is selected everytime,
-        //does not depend on userDefinedMatrix is selected or not. Changed 11/16 by Mayur  
-            doRotateCenter = rotCenter.isSelected();
-        //}
+        // does not depend on userDefinedMatrix is selected or not. Changed 11/16 by Mayur
+        doRotateCenter = rotCenter.isSelected();
+        // }
         if (doRotateCenter) {
-        	useSACenter = useSACenterBox.isSelected();
+            useSACenter = useSACenterBox.isSelected();
         }
-        
+
         fillValue = Float.valueOf(valueText.getText()).floatValue();
         outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();
         if (outOfBoundsIndex == 2) {
             // user defined value
             boolean success = testType(dataType, fillValue);
-            if (!success) {
+            if ( !success) {
                 MipavUtil.displayError("User defined value is out of the data type range");
                 valueText.requestFocus();
                 valueText.selectAll();
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
-     * Determine if the value is in the image type range and
-     * within the float range since AlgorithmTransform does
-     * not use double buffers.
-     *
-     * @param   type    image type
-     * @param   value   value tested
-     *
-     * @return  true if value is within acceptable range
+     * Determine if the value is in the image type range and within the float range since AlgorithmTransform does not
+     * use double buffers.
+     * 
+     * @param type image type
+     * @param value value tested
+     * 
+     * @return true if value is within acceptable range
      */
-    private boolean testType(int type, float value) {
+    private boolean testType(final int type, final float value) {
 
         if (type == ModelStorageBase.BOOLEAN) {
 
-            if ((value < 0) || (value > 1)) {
+            if ( (value < 0) || (value > 1)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.BYTE) {
 
-            if ((value < -128) || (value > 127)) {
+            if ( (value < -128) || (value > 127)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.UBYTE) {
 
-            if ((value < 0) || (value > 255)) {
+            if ( (value < 0) || (value > 255)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.SHORT) {
 
-            if ((value < -32768) || (value > 32767)) {
+            if ( (value < -32768) || (value > 32767)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.USHORT) {
 
-            if ((value < 0) || (value > 65535)) {
+            if ( (value < 0) || (value > 65535)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.INTEGER) {
 
-            if ((value < Integer.MIN_VALUE) || (value > Integer.MAX_VALUE)) {
+            if ( (value < Integer.MIN_VALUE) || (value > Integer.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.UINTEGER) {
 
-            if ((value < 0) || (value > 4294967295L)) {
+            if ( (value < 0) || (value > 4294967295L)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.LONG) {
 
-            if ((value < Long.MIN_VALUE) || (value > Long.MAX_VALUE)) {
+            if ( (value < Long.MIN_VALUE) || (value > Long.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.FLOAT) {
 
-            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+            if ( (value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.DOUBLE) {
             // Float buffers are used in the AlgorithmTransform routines
-            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+            if ( (value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.ARGB) {
 
-            if ((value < 0) || (value > 255)) {
+            if ( (value < 0) || (value > 255)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.ARGB_USHORT) {
 
-            if ((value < 0) || (value > 65535)) {
+            if ( (value < 0) || (value > 65535)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.ARGB_FLOAT) {
 
-            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+            if ( (value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
@@ -4170,5 +4144,224 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         } else {
             return false;
         }
+    }
+
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
+    public ActionMetadata getActionMetadata() {
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Transformation tools");
+            }
+
+            public String getDescription() {
+                return new String("Applies a linear transformation and/or rescaling to an image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Applies a linear transformation and/or rescaling to an image.");
+            }
+
+            public String getShortLabel() {
+                return new String("Transform");
+            }
+
+            public String getLabel() {
+                return new String("Transform");
+            }
+
+            public String getName() {
+                return new String("Transform");
+            }
+        };
+    }
+
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+
+            table.put(new ParameterInt("interpolation_type"));
+            table.put(new ParameterInt("constant_fov"));
+            table.put(new ParameterBoolean("do_transform_VOIs"));
+            table.put(new ParameterBoolean("do_clip_output"));
+            table.put(new ParameterBoolean("do_rotate_about_center"));
+            table.put(new ParameterBoolean("use_scanner_center"));
+            table.put(new ParameterBoolean("is_scanner_transform"));
+            table.put(new ParameterBoolean("do_invert_matrix"));
+
+            final Parameter talParam = new ParameterBoolean("do_talairach_transform");
+            table.put(talParam);
+
+            // --- talairach-dependent section ---
+            Parameter tempParam = new ParameterInt("transform_type");
+            tempParam.setParentCondition(talParam, "true");
+            table.put(tempParam);
+            tempParam = new ParameterList("acpc_PC", Parameter.PARAM_FLOAT);
+            tempParam.setParentCondition(talParam, "true");
+            table.put(tempParam);
+            tempParam = new ParameterFloat("acpc_res");
+            tempParam.setParentCondition(talParam, "true");
+            table.put(tempParam);
+            tempParam = new ParameterList("orig_AC", Parameter.PARAM_FLOAT);
+            tempParam.setParentCondition(talParam, "true");
+            table.put(tempParam);
+            tempParam = new ParameterList("orig_PC", Parameter.PARAM_FLOAT);
+            tempParam.setParentCondition(talParam, "true");
+            table.put(tempParam);
+            tempParam = new ParameterList("orig_res", Parameter.PARAM_FLOAT);
+            tempParam.setParentCondition(talParam, "true");
+            table.put(tempParam);
+            tempParam = new ParameterList("orig_dim", Parameter.PARAM_INT);
+            tempParam.setParentCondition(talParam, "true");
+            table.put(tempParam);
+            for (int i = 0; i < 3; i++) {
+                tempParam = new ParameterList("orig_orient_" + i, Parameter.PARAM_FLOAT);
+                tempParam.setParentCondition(talParam, "true");
+                table.put(tempParam);
+            }
+            // TODO: these params are also dependent on the transform_type param: ORIG_TO_TLRC, ACPC_TO_TLRC,
+            // TLRC_TO_ORIG, TLRC_TO_ACPC
+            tempParam = new ParameterList("acpc_min", Parameter.PARAM_FLOAT);
+            tempParam.setParentCondition(talParam, "true");
+            table.put(tempParam);
+            tempParam = new ParameterList("acpc_max", Parameter.PARAM_FLOAT);
+            tempParam.setParentCondition(talParam, "true");
+            table.put(tempParam);
+            tempParam = new ParameterList("tlrc_res", Parameter.PARAM_FLOAT);
+            tempParam.setParentCondition(talParam, "true");
+            table.put(tempParam);
+
+            // --- non-talairach-dependent section ---
+            tempParam = new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D);
+            tempParam.setParentCondition(talParam, "false");
+            table.put(tempParam);
+            tempParam = new ParameterBoolean("do_update_origin");
+            tempParam.setParentCondition(talParam, "false");
+            table.put(tempParam);
+            tempParam = new ParameterBoolean("do_pad");
+            tempParam.setParentCondition(talParam, "false");
+            table.put(tempParam);
+            tempParam = new ParameterInt("out_of_bounds_index");
+            tempParam.setParentCondition(talParam, "false");
+            table.put(tempParam);
+            tempParam = new ParameterFloat("fill_value");
+            tempParam.setParentCondition(table.getParameter("out_of_bounds_index"), "2");
+            table.put(tempParam);
+
+            // used for 2D/2.5D transforms and 3D+ resampling to user res/dim
+            tempParam = new ParameterList("output_res", Parameter.PARAM_FLOAT);
+            tempParam.setParentCondition(talParam, "false");
+            table.put(tempParam);
+            // used for 2D/2.5D transforms and 3D+ transform to user matrix
+            for (int i = 0; i < 4; i++) {
+                tempParam = new ParameterList("x_mat" + i, Parameter.PARAM_DOUBLE);
+                tempParam.setParentCondition(talParam, "false");
+                table.put(tempParam);
+            }
+
+            Parameter sourceParam = new ParameterString("transform_source");
+            sourceParam.setParentCondition(talParam, "false");
+            table.put(sourceParam);
+
+            // file transform
+            // TODO: switch to ParameterFile
+            tempParam = new ParameterString("transform_file");
+            tempParam.setParentCondition(sourceParam, "file");
+            table.put(tempParam);
+
+            // user transform - no other params needed, uses x_mat
+
+            // self transform - no other params needed
+
+            // none transform - no other params needed
+
+            // type of resampling
+            sourceParam = new ParameterString("resample_type");
+            sourceParam.setParentCondition(talParam, "false");
+            table.put(sourceParam);
+
+            // reample to_image
+            tempParam = new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2));
+            tempParam.setParentCondition(sourceParam, "to_image");
+            table.put(tempParam);
+            tempParam = new ParameterBoolean("set_pixels");
+            tempParam.setParentCondition(sourceParam, "to_image");
+            table.put(tempParam);
+
+            // resample to_user - also uses output_res from above
+            tempParam = new ParameterList("output_dim", Parameter.PARAM_INT);
+            tempParam.setParentCondition(sourceParam, "to_user");
+            table.put(tempParam);
+
+            // resample to_factor
+            tempParam = new ParameterFloat("resample_factor");
+            tempParam.setParentCondition(sourceParam, "to_factor");
+            table.put(tempParam);
+
+            // resample none - no other params needed
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
+    public ParameterTable createOutputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            if (getResultImage() != null) {
+                return getResultImage().getImageName();
+            }
+        }
+
+        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
+
+        return null;
+    }
+
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
+    public boolean isActionComplete() {
+        return isComplete();
     }
 }

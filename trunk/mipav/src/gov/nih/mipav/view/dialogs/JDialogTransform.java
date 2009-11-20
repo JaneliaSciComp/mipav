@@ -1,65 +1,57 @@
 package gov.nih.mipav.view.dialogs;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
-import Jama.*;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
 
+import Jama.Matrix;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 /**
- * Dialog to get user input, then call algorithmTransform. User may select
- * resample or transform. User may input matrix or use image's associated
- * transformation matrix. User may input desired resolutions and dims. User
- * may select interpolation method. Creates new volume.
+ * Dialog to get user input, then call algorithmTransform. User may select resample or transform. User may input matrix
+ * or use image's associated transformation matrix. User may input desired resolutions and dims. User may select
+ * interpolation method. Creates new volume.
  * 
- * You can choose either of 2 goals in interpolation, but you can choose both.
- * You can choose to:
-
- * 1.) Match the start row, column, and slice in the original image with the
- * start row, column, and slice in the transformed image and match the end
- * row, column, and slice in the original image with the end row column, and
- * slice in the transformed image with a smooth interpolation occurring
- * between the beginning and end.  This ensures that no duplicates of the end
- * row, column, and slice values occur with the default bilinear or trilinear
- * interpolation.  For a smooth bilinear or trilinear interpolation you must
- * map from 0 to n1t - 1 in the transformed image to 0 to n1 - 1 in the
- * original image.  Mapping from n1t - 1 to n1t in the transformed image to n1
- * - 1 to n1 in the source image would lead to multiple identical transformed
- * copies for source image values between n1 - 1 and n1 - 0.5 and identical or
- * out of bounds transformed values for source values from n1 - 0.5 to n1.
- * This necessitates using equations of the form (dim - 1) * res =
- * (transformedDim - 1) * transformedRes.
-
+ * You can choose either of 2 goals in interpolation, but you can choose both. You can choose to:
+ * 
+ * 1.) Match the start row, column, and slice in the original image with the start row, column, and slice in the
+ * transformed image and match the end row, column, and slice in the original image with the end row column, and slice
+ * in the transformed image with a smooth interpolation occurring between the beginning and end. This ensures that no
+ * duplicates of the end row, column, and slice values occur with the default bilinear or trilinear interpolation. For a
+ * smooth bilinear or trilinear interpolation you must map from 0 to n1t - 1 in the transformed image to 0 to n1 - 1 in
+ * the original image. Mapping from n1t - 1 to n1t in the transformed image to n1 - 1 to n1 in the source image would
+ * lead to multiple identical transformed copies for source image values between n1 - 1 and n1 - 0.5 and identical or
+ * out of bounds transformed values for source values from n1 - 0.5 to n1. This necessitates using equations of the form
+ * (dim - 1) * res = (transformedDim - 1) * transformedRes.
+ * 
  * Since the field of view = dim * res, this does not preserve field of view.
-
- * 2.) If a user simply wishes to magnify the field of view and is not worried
- * about duplicate beginning and end values, then preserve the field of view =
- * dim * res = transformedDim * transformedRes.
- *
- * @version  0.1 Nov. 19, 1999
- * @author   Delia McGarry
- * @author   Neva Cherniavsky
- * @author   Zohara Cohen
+ * 
+ * 2.) If a user simply wishes to magnify the field of view and is not worried about duplicate beginning and end values,
+ * then preserve the field of view = dim * res = transformedDim * transformedRes.
+ * 
+ * @version 0.1 Nov. 19, 1999
+ * @author Delia McGarry
+ * @author Neva Cherniavsky
+ * @author Zohara Cohen
  */
 public class JDialogTransform extends JDialogScriptableBase implements AlgorithmInterface, ChangeListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -7786904359172693422L;
@@ -82,7 +74,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private static final int ACPC_TO_ORIG = 5;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private AlgorithmTalairachTransform algoTal = null;
@@ -113,7 +106,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private boolean doTalairach = false;
-        
+
     /** DOCUMENT ME! */
     private boolean doVOI, doClip, doPad, setPix, doUpdateOrigin, doInvMat;
 
@@ -128,7 +121,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private int interp = 0;
-    
+
     private float fillValue = 0.0f;
 
     /** DOCUMENT ME! */
@@ -139,7 +132,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private JLabel labelTx, labelTy, labelTz, labelRx, labelRy, labelRz, labelSx, labelSy, labelSz, labelSKx, labelSKy,
-                   labelSKz;
+            labelSKz;
 
     /** If true change matrix to the left-hand coordinate system. */
     private boolean leftHandSystem = false;
@@ -168,8 +161,8 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private float oXres, oYres, oZres, cXres, cYres, cZres;
 
-    private int [] units;
-    
+    private int[] units;
+
     /** DOCUMENT ME! */
     private JTextField padValTxt;
 
@@ -192,13 +185,13 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     private JRadioButton storedMatrix, noTransform, userDefinedMatrix, fileMatrix;
 
     private JComboBox storedMatrixBox;
-    
+
     /** DOCUMENT ME! */
     private JTextField textResX, textResY, textResZ, textDimX, textDimY, textDimZ;
 
     /** DOCUMENT ME! */
     private JTextField textTx, textTy, textTz, textRx, textRy, textRz, textSx, textSy, textSz, textSKx, textSKy,
-                       textSKz;
+            textSKz;
 
     /** DOCUMENT ME! */
     private TalairachTransformInfo tInfo = null;
@@ -225,52 +218,50 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     private JCheckBox useSACenterBox;
 
     private boolean useSACenter = false;
-    
-    /** Tabbed pane*/
+
+    /** Tabbed pane */
     private JTabbedPane tabbedPane = null;
-    
-    /** is this a scanner anatomical transform (->AXIAL)*/
+
+    /** is this a scanner anatomical transform (->AXIAL) */
     private boolean isSATransform = false;
-    
+
     private boolean enableSATransform = false;
-    
-private JLabel outOfBoundsLabel;
-    
+
+    private JLabel outOfBoundsLabel;
+
     private JComboBox outOfBoundsComboBox;
-    
+
     private JLabel valueLabel;
-    
+
     private JTextField valueText;
-    
+
     private double imageMin;
-    
+
     private double imageMax;
-    
+
     private int dataType;
-    
+
     /**
-     * Tells how to select fill value for out of bounds data
-     * 0 for image minimum
-     * 1 for NaN for float, zero otherwise.
-     * 2 for user defined
-     * 3 for image maximum
+     * Tells how to select fill value for out of bounds data 0 for image minimum 1 for NaN for float, zero otherwise. 2
+     * for user defined 3 for image maximum
      */
     private int outOfBoundsIndex = 0;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogTransform() { }
+    public JDialogTransform() {}
 
     /**
      * Constructs new transform dialog and sets up GUI components.
-     *
-     * @param  theParentFrame  Parent frame.
-     * @param  im              Source image.
+     * 
+     * @param theParentFrame Parent frame.
+     * @param im Source image.
      */
-    public JDialogTransform(Frame theParentFrame, ModelImage im) {
+    public JDialogTransform(final Frame theParentFrame, final ModelImage im) {
         super(theParentFrame, false);
 
         image = im;
@@ -282,15 +273,16 @@ private JLabel outOfBoundsLabel;
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Closes dialog box when the OK button is pressed, sets the variables, and calls the algorithm.
-     *
-     * @param  event  Event that triggers function.
+     * 
+     * @param event Event that triggers function.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
         if (command.equals("OK")) {
             if (setVariables()) {
@@ -299,8 +291,8 @@ private JLabel outOfBoundsLabel;
         } else if (command.equals("Cancel")) {
             dispose();
         }
-        //else if (command.equals("Help")) {
-            //MipavUtil.showHelp("Transform010");
+        // else if (command.equals("Help")) {
+        // MipavUtil.showHelp("Transform010");
     }
 
     // ************************************************************************
@@ -310,21 +302,21 @@ private JLabel outOfBoundsLabel;
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
-     *
-     * @param  algorithm  Algorithm that caused the event.
+     * 
+     * @param algorithm Algorithm that caused the event.
      */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
+    public void algorithmPerformed(final AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmTransform) {
             resultImage = algoTrans.getTransformedImage();
 
-            if ((algoTrans.isCompleted() == true) && (resultImage != null)) {
+            if ( (algoTrans.isCompleted() == true) && (resultImage != null)) {
                 resultImage.calcMinMax();
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
             } else if (resultImage != null) {
@@ -336,13 +328,13 @@ private JLabel outOfBoundsLabel;
         } // if (algorithm instanceof AlgorithmTransform)
         else if (algorithm instanceof AlgorithmTalairachTransform) {
 
-            if ((algoTal.isCompleted() == true) && (resultImage != null)) {
+            if ( (algoTal.isCompleted() == true) && (resultImage != null)) {
                 resultImage.calcMinMax();
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
             } // if ((algoTal.isCompleted == true) && (resultImage != null))
@@ -379,11 +371,11 @@ private JLabel outOfBoundsLabel;
 
     /**
      * When the user clicks the mouse out of a text field, resets the neccessary variables.
-     *
-     * @param  event  event that triggers this function
+     * 
+     * @param event event that triggers this function
      */
-    public void focusLost(FocusEvent event) {
-        Object source = event.getSource();
+    public void focusLost(final FocusEvent event) {
+        final Object source = event.getSource();
         JTextField tempTextField;
         String userText;
         float userValue;
@@ -407,35 +399,35 @@ private JLabel outOfBoundsLabel;
         userValue = Float.valueOf(userText).floatValue();
 
         if (source == textDimX) {
-            factor = (userValue-1) / (float) (cXdim-1);
+            factor = (userValue - 1) / (cXdim - 1);
             dims[0] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cXdim-1) * cXres;
-                resols[0] = fov / (dims[0]-1);
+                fov = (cXdim - 1) * cXres;
+                resols[0] = fov / (dims[0] - 1);
             }
         } else if (source == textDimY) {
-            factor = (userValue-1) / (float) (cYdim-1);
+            factor = (userValue - 1) / (cYdim - 1);
             dims[1] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cYdim-1) * cYres;
-                resols[1] = fov / (dims[1]-1);
+                fov = (cYdim - 1) * cYres;
+                resols[1] = fov / (dims[1] - 1);
             }
         } else if (source == textDimZ) {
-            factor = (userValue-1) / (float) (cZdim-1);
+            factor = (userValue - 1) / (cZdim - 1);
             dims[2] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution in z
-                fov = (cZdim-1) * cZres;
-                resols[2] = fov / (dims[2]-1);
+                fov = (cZdim - 1) * cZres;
+                resols[2] = fov / (dims[2] - 1);
             }
         } else if (source == textResX) {
             factor = cXres / userValue;
             resols[0] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cXdim-1) * cXres;
+                fov = (cXdim - 1) * cXres;
                 dims[0] = fov / resols[0] + 1;
             }
         } else if (source == textResY) {
@@ -443,7 +435,7 @@ private JLabel outOfBoundsLabel;
             resols[1] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cYdim-1) * cYres;
+                fov = (cYdim - 1) * cYres;
                 dims[1] = fov / resols[1] + 1;
             }
         } else if (source == textResZ) {
@@ -451,16 +443,16 @@ private JLabel outOfBoundsLabel;
             resols[2] = userValue;
 
             if (fieldOfView.isSelected()) { // update resolution (user set dimensions and FOV is selected)
-                fov = (cZdim-1) * cZres;
+                fov = (cZdim - 1) * cZres;
                 dims[2] = fov / resols[2] + 1;
             }
         }
 
-        if ((source == textResX) || (source == textDimX)) {
+        if ( (source == textResX) || (source == textDimX)) {
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update y values
-                if ((source == textDimX) || (fieldOfView.isSelected())) {
-                    dims[1] = (dims[1]-1) * factor + 1;
+                if ( (source == textDimX) || (fieldOfView.isSelected())) {
+                    dims[1] = (dims[1] - 1) * factor + 1;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -469,19 +461,19 @@ private JLabel outOfBoundsLabel;
             }
 
             if (xyzAspectRatio.isSelected()) { // update z values
-                if ((source == textDimX) || (fieldOfView.isSelected())) {
-                    dims[2] = (dims[2]-1) * factor + 1;
+                if ( (source == textDimX) || (fieldOfView.isSelected())) {
+                    dims[2] = (dims[2] - 1) * factor + 1;
                 }
 
                 if (fieldOfView.isSelected()) {
                     resols[2] = resols[2] / factor;
                 }
             }
-        } else if ((source == textResY) || (source == textDimY)) {
+        } else if ( (source == textResY) || (source == textDimY)) {
 
             if (xyAspectRatio.isSelected() || xyzAspectRatio.isSelected()) { // update x
-                if ((source == textDimY) || (fieldOfView.isSelected())) {
-                    dims[0] = (dims[0]-1) * factor + 1;
+                if ( (source == textDimY) || (fieldOfView.isSelected())) {
+                    dims[0] = (dims[0] - 1) * factor + 1;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -490,22 +482,22 @@ private JLabel outOfBoundsLabel;
             }
 
             if (xyzAspectRatio.isSelected()) { // update z
-                if ((source == textDimY) || (fieldOfView.isSelected())) {
-                    dims[2] = (dims[2]-1) * factor + 1;
+                if ( (source == textDimY) || (fieldOfView.isSelected())) {
+                    dims[2] = (dims[2] - 1) * factor + 1;
                 }
 
                 if (fieldOfView.isSelected()) {
                     resols[2] = resols[2] / factor;
                 }
             }
-        } else if ((source == textResZ) || (source == textDimZ)) {
+        } else if ( (source == textResZ) || (source == textDimZ)) {
 
-            if (xyAspectRatio.isSelected()) { } // do nothing, x and y not affected by z
+            if (xyAspectRatio.isSelected()) {} // do nothing, x and y not affected by z
 
             if (xyzAspectRatio.isSelected()) { // update x and y accordingly
-                if ((source == textDimZ) || (fieldOfView.isSelected())) {
-                    dims[0] = (dims[0]-1) * factor + 1;
-                    dims[1] = (dims[1]-1) * factor + 1;
+                if ( (source == textDimZ) || (fieldOfView.isSelected())) {
+                    dims[0] = (dims[0] - 1) * factor + 1;
+                    dims[1] = (dims[1] - 1) * factor + 1;
                 }
 
                 if (fieldOfView.isSelected()) {
@@ -520,8 +512,8 @@ private JLabel outOfBoundsLabel;
 
     /**
      * Accessor that returns the image.
-     *
-     * @return  The result image
+     * 
+     * @return The result image
      */
     public ModelImage getResultImage() {
         return resultImage;
@@ -529,11 +521,11 @@ private JLabel outOfBoundsLabel;
 
     /**
      * Method to handle item events.
-     *
-     * @param  event  event that cause the method to fire
+     * 
+     * @param event event that cause the method to fire
      */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
+    public void itemStateChanged(final ItemEvent event) {
+        final Object source = event.getSource();
 
         if (source == image25DCheckbox) {
 
@@ -579,7 +571,7 @@ private JLabel outOfBoundsLabel;
                 do25D = false;
                 comboBoxInterp.removeItemAt(1);
                 comboBoxInterp.insertItemAt("Trilinear", 1);
-                comboBoxInterp.setSelectedIndex(1); ///trilinear
+                comboBoxInterp.setSelectedIndex(1); // /trilinear
 
                 if (userDefinedMatrix.isSelected()) {
                     labelTz.setEnabled(true);
@@ -625,7 +617,7 @@ private JLabel outOfBoundsLabel;
                 textSKx.setEnabled(true);
                 textSKy.setEnabled(true);
 
-                if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
+                if ( (image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
                     labelSz.setEnabled(true);
                     labelSKz.setEnabled(true);
                     textSz.setEnabled(true);
@@ -671,7 +663,7 @@ private JLabel outOfBoundsLabel;
                 rotCenter.setEnabled(false);
                 rotOrigin.setEnabled(false);
                 useSACenterBox.setEnabled(false);
-                
+
                 padValTxt.setEnabled(false);
                 padLabel.setEnabled(false);
 
@@ -728,7 +720,7 @@ private JLabel outOfBoundsLabel;
                 textSKx.setEnabled(true);
                 textSKy.setEnabled(true);
 
-                if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
+                if ( (image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
                     labelTz.setEnabled(true);
                     labelRx.setEnabled(true);
                     labelRy.setEnabled(true);
@@ -773,11 +765,10 @@ private JLabel outOfBoundsLabel;
                 invertCheckbox.setEnabled(true);
                 matrixFile = matrixFileMenu();
 
-                if ((matrixFile == null) && (storedMatrixBox.getItemCount() > 0)){
+                if ( (matrixFile == null) && (storedMatrixBox.getItemCount() > 0)) {
                     storedMatrix.setSelected(true);
                     storedMatrixBox.setEnabled(true);
-                }
-                else if (matrixFile == null){
+                } else if (matrixFile == null) {
                     noTransform.setSelected(true);
                 }
             }
@@ -789,10 +780,10 @@ private JLabel outOfBoundsLabel;
                 storedMatrixBox.setEnabled(true);
             }
         } else if (source == noTransform) {
-        	
+
             matrixFName.setText(" ");
             storedMatrixBox.setEnabled(false);
-            //tabbedPane.setEnabledAt(1, noTransform.isSelected());
+            // tabbedPane.setEnabledAt(1, noTransform.isSelected());
             if (noTransform.isSelected()) {
                 invertCheckbox.setSelected(false);
                 invertCheckbox.setEnabled(false);
@@ -843,7 +834,7 @@ private JLabel outOfBoundsLabel;
             if (xyAspectRatio.isSelected()) {
                 enableYSettings(false);
                 xyzAspectRatio.setSelected(false);
-            } else if (!xyzAspectRatio.isSelected()) {
+            } else if ( !xyzAspectRatio.isSelected()) {
                 enableYSettings(true);
             }
         } else if (source == xyzAspectRatio) {
@@ -851,7 +842,7 @@ private JLabel outOfBoundsLabel;
             if (xyzAspectRatio.isSelected()) {
                 enableYSettings(false);
                 xyAspectRatio.setSelected(false);
-            } else if (!xyAspectRatio.isSelected()) {
+            } else if ( !xyAspectRatio.isSelected()) {
                 enableYSettings(true);
             }
         } else if (source == resampletoImage) {
@@ -892,7 +883,7 @@ private JLabel outOfBoundsLabel;
             }
         } else if (source == comboBoxImage) {
 
-            String selectName = (String) (comboBoxImage.getSelectedItem());
+            final String selectName = (String) (comboBoxImage.getSelectedItem());
             resampleImage = ViewUserInterface.getReference().getRegisteredImageByName(selectName);
 
             if (textResX != null) {
@@ -907,9 +898,9 @@ private JLabel outOfBoundsLabel;
                 }
             }
         } else if (source == rotCenter) {
-        	useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
+            useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
         } else if (source == rotOrigin) {
-        	useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
+            useSACenterBox.setEnabled(rotCenter.isSelected() && enableSATransform);
         } else if (source == outOfBoundsComboBox) {
             switch (outOfBoundsComboBox.getSelectedIndex()) {
                 case 0: // image minimum
@@ -917,11 +908,10 @@ private JLabel outOfBoundsLabel;
                     valueText.setEnabled(false);
                     break;
                 case 1: // If float NaN, else 0
-                    if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
-                        (dataType == ModelStorageBase.ARGB_FLOAT)) {
-                        valueText.setText(String.valueOf(Float.NaN)); 
-                    }
-                    else {
+                    if ( (dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)
+                            || (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                        valueText.setText(String.valueOf(Float.NaN));
+                    } else {
                         valueText.setText(String.valueOf(0));
                     }
                     valueText.setEnabled(false);
@@ -939,8 +929,8 @@ private JLabel outOfBoundsLabel;
 
     /**
      * Allows the user to select matrix file.
-     *
-     * @return  fileName
+     * 
+     * @return fileName
      */
     public String matrixFileMenu() {
         String fileName, directory;
@@ -959,7 +949,7 @@ private JLabel outOfBoundsLabel;
 
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MATRIX));
 
-            int returnVal = chooser.showOpenDialog(ViewUserInterface.getReference().getMainFrame());
+            final int returnVal = chooser.showOpenDialog(ViewUserInterface.getReference().getMainFrame());
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
@@ -969,7 +959,7 @@ private JLabel outOfBoundsLabel;
             } else {
                 return null;
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: JDialogTransform.displayMatrixFileMenu");
 
             return null;
@@ -982,11 +972,11 @@ private JLabel outOfBoundsLabel;
 
     /**
      * Reads a matrix from a file.
-     *
-     * @param  fileName  name of the matrix file.
+     * 
+     * @param fileName name of the matrix file.
      */
-    public void readTransformMatrixFile(String fileName) {
-        TransMatrix matrix = new TransMatrix(image.getNDims() + 1);
+    public void readTransformMatrixFile(final String fileName) {
+        final TransMatrix matrix = new TransMatrix(image.getNDims() + 1);
         matrix.MakeIdentity();
 
         if (fileName == null) {
@@ -994,8 +984,8 @@ private JLabel outOfBoundsLabel;
         }
 
         try {
-            File file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
-            RandomAccessFile raFile = new RandomAccessFile(file, "r");
+            final File file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
+            final RandomAccessFile raFile = new RandomAccessFile(file, "r");
             matrix.readMatrix(raFile, false);
             raFile.close();
             fileTransMatrix = matrix;
@@ -1003,8 +993,8 @@ private JLabel outOfBoundsLabel;
             // We don't know the coordinate system that the transformation represents. Therefore
             // bring up a dialog where the user can ID the coordinate system changes (i.e.
             // world coordinate and/or the "left-hand" coordinate system!
-            new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
-        } catch (IOException error) {
+            new JDialogOrientMatrix(parentFrame, this);
+        } catch (final IOException error) {
             MipavUtil.displayError("Matrix read error");
             fileTransMatrix.MakeIdentity();
         }
@@ -1012,40 +1002,39 @@ private JLabel outOfBoundsLabel;
 
     /**
      * Accessor that sets value for the setPixels checkbox.
-     *
-     * @param  flag  <code>true</code> indicates that the number of pixels should be set
-     *               so as to preserve the field of view.  This could either increase or
-     *               decrease the number of pixels.
+     * 
+     * @param flag <code>true</code> indicates that the number of pixels should be set so as to preserve the field of
+     *            view. This could either increase or decrease the number of pixels.
      */
-    public void setsetPix(boolean flag) {
+    public void setsetPix(final boolean flag) {
         setPix = flag;
     }
 
     /**
      * Accessor that sets the clip flag.
-     *
-     * @param  flag  <code>true</code> indicates clip image, <code>false</code> otherwise.
+     * 
+     * @param flag <code>true</code> indicates clip image, <code>false</code> otherwise.
      */
-    public void setClipFlag(boolean flag) {
+    public void setClipFlag(final boolean flag) {
         doClip = flag;
     }
-    
+
     /**
      * Accessor that sets the boolean for invert matrix.
-     *
-     * @param  flag  <code>true</code> indicates invert matrix, <code>false</code> otherwise.
+     * 
+     * @param flag <code>true</code> indicates invert matrix, <code>false</code> otherwise.
      */
-    public void setDoInvMat(boolean flag) {
+    public void setDoInvMat(final boolean flag) {
         doInvMat = flag;
     }
 
     /**
      * Resets the dimension and resolution fields for resampling panel. Called by focusLost.
-     *
-     * @param  dims    integer array of x,y and z dimensions
-     * @param  resols  float array of x,y and z resolutions
+     * 
+     * @param dims integer array of x,y and z dimensions
+     * @param resols float array of x,y and z resolutions
      */
-    public void setDimAndResXYZ(float[] dims, float[] resols) {
+    public void setDimAndResXYZ(final float[] dims, final float[] resols) {
         int[] iDims;
         int ndim;
 
@@ -1071,148 +1060,148 @@ private JLabel outOfBoundsLabel;
             textResZ.setText(String.valueOf(resols[2]));
         }
 
-        cXdim = (int) Math.round(dims[0]);
+        cXdim = Math.round(dims[0]);
         cXres = resols[0];
-        cYdim = (int) Math.round(dims[1]);
+        cYdim = Math.round(dims[1]);
         cYres = resols[1];
-        cZdim = (int) Math.round(dims[2]);
+        cZdim = Math.round(dims[2]);
         cZres = resols[2];
     }
 
     /**
      * Accessor that sets the boolean for doing a Talairach type transformation.
-     *
-     * @param  doTalairach  boolean
+     * 
+     * @param doTalairach boolean
      */
-    public void setDoTalairach(boolean doTalairach) {
+    public void setDoTalairach(final boolean doTalairach) {
         this.doTalairach = doTalairach;
     }
 
     /**
      * Accessor that sets the slicing flag.
-     *
-     * @param  flag  <code>true</code> indicates slices should be blurred independently.
+     * 
+     * @param flag <code>true</code> indicates slices should be blurred independently.
      */
-    public void setImage25D(boolean flag) {
+    public void setImage25D(final boolean flag) {
         do25D = flag;
     }
 
     /**
      * Accessor that sets the interpolation method.
-     *
-     * @param  interp  DOCUMENT ME!
+     * 
+     * @param interp DOCUMENT ME!
      */
-    public void setInterp(int interp) {
+    public void setInterp(final int interp) {
         this.interp = interp;
     }
 
     /**
      * Sets the left-hand coordinate flag. If true, change matrix to the left-hand coordinate system.
-     *
-     * @param  leftHandSys  DOCUMENT ME!
+     * 
+     * @param leftHandSys DOCUMENT ME!
      */
-    public void setLeftHandSystem(boolean leftHandSys) {
+    public void setLeftHandSystem(final boolean leftHandSys) {
         leftHandSystem = leftHandSys;
     }
 
     /**
      * Accessor that sets the transformation matrix.
-     *
-     * @param  matrix  The transformation matrix.
+     * 
+     * @param matrix The transformation matrix.
      */
-    public void setMatrix(TransMatrix matrix) {
+    public void setMatrix(final TransMatrix matrix) {
         xfrm = matrix;
     }
 
     /**
      * Accessor to set the output image's dimensions.
-     *
-     * @param  outDim  Array of the dimensions.
+     * 
+     * @param outDim Array of the dimensions.
      */
-    public void setOutDimensions(int[] outDim) {
+    public void setOutDimensions(final int[] outDim) {
         oXdim = outDim[0];
         oYdim = outDim[1];
 
-        if ((image.getNDims() >= 3) && !do25D) {
+        if ( (image.getNDims() >= 3) && !do25D) {
             oZdim = outDim[2];
         }
     }
 
     /**
      * Accessor to set the output image's resolutions.
-     *
-     * @param  outRes  Array of the resolutions.
+     * 
+     * @param outRes Array of the resolutions.
      */
-    public void setOutResolutions(float[] outRes) {
+    public void setOutResolutions(final float[] outRes) {
         oXres = outRes[0];
         oYres = outRes[1];
 
-        if ((image.getNDims() >= 3) && !do25D) {
+        if ( (image.getNDims() >= 3) && !do25D) {
             oZres = outRes[2];
         }
     }
 
     /**
      * Accessor that sets the padding flag.
-     *
-     * @param  flag  <code>true</code> indicates slices should be blurred independently.
+     * 
+     * @param flag <code>true</code> indicates slices should be blurred independently.
      */
-    public void setPadFlag(boolean flag) {
+    public void setPadFlag(final boolean flag) {
         doPad = flag;
     }
 
     /**
      * Accessor that sets the fillValue.
-     *
-     * @param  fillValue  DOCUMENT ME!
+     * 
+     * @param fillValue DOCUMENT ME!
      */
-    public void setFillValue(float fillValue) {
+    public void setFillValue(final float fillValue) {
         this.fillValue = fillValue;
     }
 
     /**
      * Accessor that sets the type of Talairach transformation.
-     *
-     * @param  transformType  int
+     * 
+     * @param transformType int
      */
-    public void setTransformType(int transformType) {
+    public void setTransformType(final int transformType) {
         this.transformType = transformType;
     }
 
     /**
      * Accessor that sets the update origin flag.
-     *
-     * @param  flag  <code>true</code> indicates to update the image origin using the transformation matrix.
+     * 
+     * @param flag <code>true</code> indicates to update the image origin using the transformation matrix.
      */
-    public void setUpdateOrigin(boolean flag) {
+    public void setUpdateOrigin(final boolean flag) {
         doUpdateOrigin = flag;
     }
 
     /**
      * Accessor that sets the voi flag.
-     *
-     * @param  flag  <code>true</code> indicates transform VOI, <code>false</code> otherwise.
+     * 
+     * @param flag <code>true</code> indicates transform VOI, <code>false</code> otherwise.
      */
-    public void setVOIFlag(boolean flag) {
+    public void setVOIFlag(final boolean flag) {
         doVOI = flag;
     }
 
     /**
      * Sets the world coordinate flag. If true, change matrix to the world coordinate system.
-     *
-     * @param  wcSys  DOCUMENT ME!
+     * 
+     * @param wcSys DOCUMENT ME!
      */
-    public void setWCSystem(boolean wcSys) {
+    public void setWCSystem(final boolean wcSys) {
         wcSystem = wcSys;
     }
 
     /**
      * Sets values based on knob along slider.
-     *
-     * @param  event  ChangeEvent event that triggered this function
+     * 
+     * @param event ChangeEvent event that triggered this function
      */
-    public void stateChanged(ChangeEvent event) {
-        Object source = event.getSource();
+    public void stateChanged(final ChangeEvent event) {
+        final Object source = event.getSource();
         float factor;
 
         if (source == magSlider) {
@@ -1237,15 +1226,15 @@ private JLabel outOfBoundsLabel;
         Vector3f center = null;
 
         if (doInvMat) {
-        	xfrm.Inverse();
+            xfrm.Inverse();
         }
-        //if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
-        //    xfrm.invert();
-        //}
+        // if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
+        // xfrm.invert();
+        // }
 
-      //  System.err.println("matrix: " + xfrm);
-      //  System.err.println("matrix inverse: " + xfrm.inverse());
-        
+        // System.err.println("matrix: " + xfrm);
+        // System.err.println("matrix inverse: " + xfrm.inverse());
+
         // Hide dialog
         setVisible(false);
         if (doTalairach) {
@@ -1253,23 +1242,24 @@ private JLabel outOfBoundsLabel;
 
             return;
         }
-        
+
         if (doRotateCenter) {
             center = resampleImage.getImageCentermm(useSACenter);
         }
 
-        if ((image.getNDims() == 2) || (do25D)) {
+        if ( (image.getNDims() == 2) || (do25D)) {
             Preferences.debug("oXres, oYres = " + oXres + ", " + oYres);
             Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n");
             System.out.println(xfrm);
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip, doPad, doRotateCenter, center);
+            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
+                    doPad, doRotateCenter, center);
             algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
         } else { // ((image.getNDims() >= 3) && (!do25D))
             Preferences.debug("oXres, oYres, oZres = " + oXres + ", " + oYres + ", " + oZres);
             Preferences.debug(" oXdim, oYdim, oZdim = " + oXdim + ", " + oYdim + ", " + oZdim + "\n");
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, 
-            	units, doVOI, doClip, doPad, doRotateCenter, center);
+            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
+                    doVOI, doClip, doPad, doRotateCenter, center);
             algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
             algoTrans.setUseScannerAnatomical(isSATransform);
@@ -1319,7 +1309,7 @@ private JLabel outOfBoundsLabel;
         useSACenter = scriptParameters.getParams().getBoolean("use_scanner_center");
         isSATransform = scriptParameters.getParams().getBoolean("is_scanner_transform");
         doInvMat = scriptParameters.getParams().getBoolean("do_invert_matrix");
-        
+
         if (doTalairach) {
             tInfo = new TalairachTransformInfo();
             tInfo.isAcpc(true);
@@ -1327,25 +1317,25 @@ private JLabel outOfBoundsLabel;
             transformType = scriptParameters.getParams().getInt("transform_type");
 
             float[] tempArray = scriptParameters.getParams().getList("acpc_PC").getAsFloatArray();
-            Vector3f acpcPC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
+            final Vector3f acpcPC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
             tInfo.setAcpcPC(acpcPC);
 
             tInfo.setAcpcRes(scriptParameters.getParams().getFloat("acpc_res"));
 
             tempArray = scriptParameters.getParams().getList("orig_AC").getAsFloatArray();
 
-            Vector3f origAC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
+            final Vector3f origAC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
             tInfo.setOrigAC(origAC);
 
             tempArray = scriptParameters.getParams().getList("orig_PC").getAsFloatArray();
 
-            Vector3f origPC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
+            final Vector3f origPC = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
             tInfo.setOrigPC(origPC);
 
             tInfo.setOrigRes(scriptParameters.getParams().getList("orig_res").getAsFloatArray());
             tInfo.setOrigDim(scriptParameters.getParams().getList("orig_dim").getAsIntArray());
 
-            float[][] origOrient = new float[3][3];
+            final float[][] origOrient = new float[3][3];
 
             for (int i = 0; i < 3; i++) {
                 origOrient[i] = scriptParameters.getParams().getList("orig_orient_" + i).getAsFloatArray();
@@ -1353,16 +1343,17 @@ private JLabel outOfBoundsLabel;
 
             tInfo.setOrigOrient(origOrient);
 
-            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
-                    (transformType == TLRC_TO_ACPC)) {
+            if ( (transformType == JDialogTransform.ORIG_TO_TLRC) || (transformType == JDialogTransform.ACPC_TO_TLRC)
+                    || (transformType == JDialogTransform.TLRC_TO_ORIG)
+                    || (transformType == JDialogTransform.TLRC_TO_ACPC)) {
                 tempArray = scriptParameters.getParams().getList("acpc_min").getAsFloatArray();
 
-                Vector3f acpcMin = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
+                final Vector3f acpcMin = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
                 tInfo.setAcpcMin(acpcMin);
 
                 tempArray = scriptParameters.getParams().getList("acpc_max").getAsFloatArray();
 
-                Vector3f acpcMax = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
+                final Vector3f acpcMax = new Vector3f(tempArray[0], tempArray[1], tempArray[2]);
                 tInfo.setAcpcMax(acpcMax);
 
                 tInfo.setTlrcRes(scriptParameters.getParams().getList("tlrc_res").getAsFloatArray());
@@ -1376,16 +1367,15 @@ private JLabel outOfBoundsLabel;
             doUpdateOrigin = scriptParameters.getParams().getBoolean("do_update_origin");
             doPad = scriptParameters.getParams().getBoolean("do_pad");
             outOfBoundsIndex = scriptParameters.getParams().getInt("out_of_bounds_index");
-            switch(outOfBoundsIndex) {
-                case 0: 
-                    fillValue = (float)imageMin;
+            switch (outOfBoundsIndex) {
+                case 0:
+                    fillValue = (float) imageMin;
                     break;
-                case 1: 
-                    if ((dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE) ||
-                            (dataType == ModelStorageBase.ARGB_FLOAT)) {
+                case 1:
+                    if ( (dataType == ModelStorageBase.FLOAT) || (dataType == ModelStorageBase.DOUBLE)
+                            || (dataType == ModelStorageBase.ARGB_FLOAT)) {
                         fillValue = Float.NaN;
-                    }
-                    else {
+                    } else {
                         fillValue = 0.0f;
                     }
                     break;
@@ -1393,63 +1383,63 @@ private JLabel outOfBoundsLabel;
                     fillValue = scriptParameters.getParams().getFloat("fill_value");
                     break;
                 case 3:
-                    fillValue = (float)imageMax;
+                    fillValue = (float) imageMax;
                     break;
             }
 
             boolean useImageMatrix = scriptParameters.getParams().getBoolean("use_image_matrix");
-            
+
             double[][] xMat = null;
 
-            xMat = new double[image.getNDims()+1][image.getNDims()+1];
-            
-            if ((image.getNDims() == 2) || do25D) {
+            xMat = new double[image.getNDims() + 1][image.getNDims() + 1];
+
+            if ( (image.getNDims() == 2) || do25D) {
                 transMat = new TransMatrix(3);
 
-                float[] outputRes = scriptParameters.getParams().getList("output_res").getAsFloatArray();
+                final float[] outputRes = scriptParameters.getParams().getList("output_res").getAsFloatArray();
                 oXres = outputRes[0];
                 oYres = outputRes[1];
 
-                int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
+                final int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
                 oXdim = outputDim[0];
                 oYdim = outputDim[1];
 
-                if (!useImageMatrix) {
-                	xMat = new double[3][3];
+                if ( !useImageMatrix) {
+                    xMat = new double[3][3];
 
-                	for (int i = 0; i < 3; i++) {
-                		xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
-                	}
+                    for (int i = 0; i < 3; i++) {
+                        xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                    }
                 }
             } else {
                 transMat = new TransMatrix(4);
 
-                float[] outputRes = scriptParameters.getParams().getList("output_res").getAsFloatArray();
+                final float[] outputRes = scriptParameters.getParams().getList("output_res").getAsFloatArray();
                 oXres = outputRes[0];
                 oYres = outputRes[1];
                 oZres = outputRes[2];
 
-                int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
+                final int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
                 oXdim = outputDim[0];
                 oYdim = outputDim[1];
                 oZdim = outputDim[2];
 
-                if (!useImageMatrix) {
-                	xMat = new double[4][4];
+                if ( !useImageMatrix) {
+                    xMat = new double[4][4];
 
-                	for (int i = 0; i < 4; i++) {
-                		xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
-                	}
+                    for (int i = 0; i < 4; i++) {
+                        xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                    }
                 }
             }
-            if (!useImageMatrix) {
-            	transMat.copyMatrix(xMat);
-            	xfrm = transMat;
+            if ( !useImageMatrix) {
+                transMat.copyMatrix(xMat);
+                xfrm = transMat;
             } else {
-            	xfrm = image.getMatrix();
+                xfrm = image.getMatrix();
             }
         } // else not Talairach
-        
+
     }
 
     /**
@@ -1467,46 +1457,43 @@ private JLabel outOfBoundsLabel;
         scriptParameters.getParams().put(ParameterFactory.newParameter("use_scanner_center", this.useSACenter));
         scriptParameters.getParams().put(ParameterFactory.newParameter("is_scanner_transform", this.isSATransform));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_invert_matrix", doInvMat));
-        
+
         if (doTalairach) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("transform_type", transformType));
 
-            Vector3f acpcPC = tInfo.getAcpcPC();
-            scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_PC",
-                                                                           new float[] { acpcPC.X, acpcPC.Y, acpcPC.Z }));
+            final Vector3f acpcPC = tInfo.getAcpcPC();
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter("acpc_PC", new float[] {acpcPC.X, acpcPC.Y, acpcPC.Z}));
             scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_res", tInfo.getAcpcRes()));
 
-            Vector3f origAC = tInfo.getOrigAC();
-            scriptParameters.getParams().put(ParameterFactory.newParameter("orig_AC",
-                                                                           new float[] { origAC.X, origAC.Y, origAC.Z }));
+            final Vector3f origAC = tInfo.getOrigAC();
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter("orig_AC", new float[] {origAC.X, origAC.Y, origAC.Z}));
 
-            Vector3f origPC = tInfo.getOrigPC();
-            scriptParameters.getParams().put(ParameterFactory.newParameter("orig_PC",
-                                                                           new float[] { origPC.X, origPC.Y, origPC.Z }));
+            final Vector3f origPC = tInfo.getOrigPC();
+            scriptParameters.getParams().put(
+                    ParameterFactory.newParameter("orig_PC", new float[] {origPC.X, origPC.Y, origPC.Z}));
 
             scriptParameters.getParams().put(ParameterFactory.newParameter("orig_res", tInfo.getOrigRes()));
             scriptParameters.getParams().put(ParameterFactory.newParameter("orig_dim", tInfo.getOrigDim()));
 
-            float[][] origOrient = tInfo.getOrigOrient();
+            final float[][] origOrient = tInfo.getOrigOrient();
 
             for (int i = 0; i < 3; i++) {
                 scriptParameters.getParams().put(ParameterFactory.newParameter("orig_orient_" + i, origOrient[i]));
             }
 
-            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
-                    (transformType == TLRC_TO_ACPC)) {
-                Vector3f acpcMin = tInfo.getAcpcMin();
+            if ( (transformType == JDialogTransform.ORIG_TO_TLRC) || (transformType == JDialogTransform.ACPC_TO_TLRC)
+                    || (transformType == JDialogTransform.TLRC_TO_ORIG)
+                    || (transformType == JDialogTransform.TLRC_TO_ACPC)) {
+                final Vector3f acpcMin = tInfo.getAcpcMin();
 
-                scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_min",
-                                                                               new float[] {
-                                                                                   acpcMin.X, acpcMin.Y, acpcMin.Z
-                                                                               }));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("acpc_min", new float[] {acpcMin.X, acpcMin.Y, acpcMin.Z}));
 
-                Vector3f acpcMax = tInfo.getAcpcMax();
-                scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_max",
-                                                                               new float[] {
-                                                                                   acpcMax.X, acpcMax.Y, acpcMax.Z
-                                                                               }));
+                final Vector3f acpcMax = tInfo.getAcpcMax();
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("acpc_max", new float[] {acpcMax.X, acpcMax.Y, acpcMax.Z}));
 
                 scriptParameters.getParams().put(ParameterFactory.newParameter("tlrc_res", tInfo.getTlrcRes()));
 
@@ -1520,29 +1507,29 @@ private JLabel outOfBoundsLabel;
             scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
             scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
 
-            if ((image.getNDims() == 2) || do25D) {
-                scriptParameters.getParams().put(ParameterFactory.newParameter("output_res",
-                                                                               new float[] { oXres, oYres }));
-                scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
-                                                                               new int[] { oXdim, oYdim }));
-                double[] xCol = new double[3];
+            if ( (image.getNDims() == 2) || do25D) {
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("output_res", new float[] {oXres, oYres}));
+                scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim", new int[] {oXdim, oYdim}));
+                final double[] xCol = new double[3];
                 for (int i = 0; i < 3; i++) {
                     xfrm.getColumn(i, xCol);
                     scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xCol));
                 }
 
             } else {
-                scriptParameters.getParams().put(ParameterFactory.newParameter("output_res",
-                                                                               new float[] { oXres, oYres, oZres }));
-                scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
-                                                                               new int[] { oXdim, oYdim, oZdim }));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("output_res", new float[] {oXres, oYres, oZres}));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("output_dim", new int[] {oXdim, oYdim, oZdim}));
 
-                //if this is set to use image's associated matrices, then do not store matrix
-                
-                scriptParameters.getParams().put(ParameterFactory.newParameter("use_image_matrix", storedMatrix.isSelected()));
-                
-                if (!storedMatrix.isSelected()) {
-                    double[] xCol = new double[4];
+                // if this is set to use image's associated matrices, then do not store matrix
+
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("use_image_matrix", storedMatrix.isSelected()));
+
+                if ( !storedMatrix.isSelected()) {
+                    final double[] xCol = new double[4];
                     for (int i = 0; i < 4; i++) {
                         xfrm.getColumn(i, xCol);
 
@@ -1563,18 +1550,18 @@ private JLabel outOfBoundsLabel;
         comboBoxImage.setBackground(Color.white);
         comboBoxImage.addItemListener(this);
 
-        if ((image.getNDims() == 2) || (image.getNDims() >= 3)) {
+        if ( (image.getNDims() == 2) || (image.getNDims() >= 3)) {
             comboBoxImage.addItem(image.getImageName()); // add its own name first.
 
-            Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
+            final Enumeration<String> names = ViewUserInterface.getReference().getRegisteredImageNames();
 
             while (names.hasMoreElements()) {
-                String name = (String) names.nextElement();
+                final String name = names.nextElement();
                 img = ViewUserInterface.getReference().getRegisteredImageByName(name);
 
                 if (ViewUserInterface.getReference().getFrameContainingImage(img) != null) {
 
-                    if (!image.getImageName().equals(name)) {
+                    if ( !image.getImageName().equals(name)) {
                         comboBoxImage.addItem(name);
                     }
                 }
@@ -1584,12 +1571,12 @@ private JLabel outOfBoundsLabel;
 
     /**
      * Builds the matrixPanel.
-     *
-     * @return  The matrix panel.
+     * 
+     * @return The matrix panel.
      */
     private JPanel buildMatrixPanel() {
 
-        JPanel matrixPanel = new JPanel();
+        final JPanel matrixPanel = new JPanel();
         matrixPanel.setBorder(buildTitledBorder("Transform"));
         matrixPanel.setLayout(new BoxLayout(matrixPanel, BoxLayout.Y_AXIS));
         matrixPanel.setForeground(Color.black);
@@ -1606,8 +1593,8 @@ private JLabel outOfBoundsLabel;
         tInfo = image.getTalairachTransformInfo();
 
         if (tInfo != null) {
-            JPanel talPanel = new JPanel(new GridBagLayout());
-            GridBagConstraints gbc = new GridBagConstraints();
+            final JPanel talPanel = new JPanel(new GridBagLayout());
+            final GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridwidth = 1;
             gbc.gridheight = 1;
             gbc.anchor = GridBagConstraints.WEST;
@@ -1643,9 +1630,9 @@ private JLabel outOfBoundsLabel;
             talPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         } // if (tInfo != null)
 
-        JPanel imageMatrixPanel = new JPanel(new BorderLayout());        
+        final JPanel imageMatrixPanel = new JPanel(new BorderLayout());
         imageMatrixPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         storedMatrix = new JRadioButton("Use image's associated matrix", false);
         storedMatrix.setFont(serif12);
         storedMatrix.setEnabled(true);
@@ -1658,30 +1645,29 @@ private JLabel outOfBoundsLabel;
         storedMatrixBox.setFont(MipavUtil.font12);
         storedMatrixBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         storedMatrixBox.setEnabled(false);
-        MatrixHolder mHolder = image.getMatrixHolder();
-    	Set matrixKeys = mHolder.getMatrixMap().keySet();
-    	Iterator iter = matrixKeys.iterator();
-    	
-    	//storedMatrixBox.addItem("Composite");
-    	
-    	enableSATransform = image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
-    	
-    	while(iter.hasNext()) {
-    		storedMatrixBox.addItem(iter.next());
-    	}  	
-    	
-    	if (storedMatrixBox.getItemCount() > 1) {
-    		storedMatrixBox.insertItemAt("Composite", 0);
-    	}
+        final MatrixHolder mHolder = image.getMatrixHolder();
+        final Set<String> matrixKeys = mHolder.getMatrixMap().keySet();
+        final Iterator<String> iter = matrixKeys.iterator();
+
+        // storedMatrixBox.addItem("Composite");
+
+        enableSATransform = image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);
+
+        while (iter.hasNext()) {
+            storedMatrixBox.addItem(iter.next());
+        }
+
+        if (storedMatrixBox.getItemCount() > 1) {
+            storedMatrixBox.insertItemAt("Composite", 0);
+        }
         if (storedMatrixBox.getItemCount() == 0) {
             storedMatrix.setEnabled(false);
         }
-    	
+
         imageMatrixPanel.add(storedMatrixBox);
         matrixPanel.add(imageMatrixPanel);
-        
-        
-        JPanel filePanel = new JPanel(new BorderLayout());
+
+        final JPanel filePanel = new JPanel(new BorderLayout());
         filePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         fileMatrix = new JRadioButton("Read matrix from file", false);
@@ -1699,10 +1685,10 @@ private JLabel outOfBoundsLabel;
         filePanel.add(matrixFName);
 
         matrixPanel.add(filePanel);
-        
-        String orientText = "<html>Image origin is in the upper left hand corner (first slice)." + "<P>" +
-        "Righthand coordinate system.</html>";
-        JLabel orientIconLabel = new JLabel(orientText, MipavUtil.getIcon("orient.gif"), JLabel.LEFT);
+
+        final String orientText = "<html>Image origin is in the upper left hand corner (first slice)." + "<P>"
+                + "Righthand coordinate system.</html>";
+        final JLabel orientIconLabel = new JLabel(orientText, MipavUtil.getIcon("orient.gif"), SwingConstants.LEFT);
         orientIconLabel.setFont(serif12);
         orientIconLabel.setForeground(Color.black);
         matrixPanel.add(orientIconLabel);
@@ -1716,7 +1702,7 @@ private JLabel outOfBoundsLabel;
         matrixPanel.add(userDefinedMatrix);
         userDefinedMatrix.addItemListener(this);
 
-        JPanel translationPanel = new JPanel();
+        final JPanel translationPanel = new JPanel();
         translationPanel.setLayout(new GridBagLayout());
         translationPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -1857,7 +1843,7 @@ private JLabel outOfBoundsLabel;
         textSKz.setFont(serif12);
         textSKz.addFocusListener(this);
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
@@ -1958,17 +1944,17 @@ private JLabel outOfBoundsLabel;
 
     /**
      * Builds the OptionPanel.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     private JPanel buildOptionPanel() {
 
-        JPanel optionPanel = new JPanel();
+        final JPanel optionPanel = new JPanel();
         optionPanel.setForeground(Color.black);
         optionPanel.setBorder(buildTitledBorder("Options"));
 
         // *******INTERPOLATION****************
-        JLabel labelInterp = new JLabel("Interpolation:");
+        final JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
         labelInterp.setFont(serif12);
         labelInterp.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -2008,29 +1994,29 @@ private JLabel outOfBoundsLabel;
         cropOrPad.add(padRadio);
         padRadio.addItemListener(this);
         padRadio.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         outOfBoundsLabel = new JLabel("Out of bounds data:");
         outOfBoundsLabel.setForeground(Color.black);
         outOfBoundsLabel.setFont(serif12);
         outOfBoundsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         outOfBoundsComboBox = new JComboBox();
         outOfBoundsComboBox.setFont(serif12);
         outOfBoundsComboBox.setBackground(Color.white);
         outOfBoundsComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         outOfBoundsComboBox.addItem("Image minimum");
         outOfBoundsComboBox.addItem("If float NaN, else 0");
         outOfBoundsComboBox.addItem("User defined");
         outOfBoundsComboBox.addItem("Image maximum");
         outOfBoundsComboBox.setSelectedIndex(0);
         outOfBoundsComboBox.addItemListener(this);
-        
+
         valueLabel = new JLabel("Out of bounds intensity value:");
         valueLabel.setForeground(Color.black);
         valueLabel.setFont(serif12);
         valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         valueText = new JTextField(String.valueOf(imageMin));
         valueText.setFont(serif12);
         valueText.setEnabled(false);
@@ -2077,7 +2063,7 @@ private JLabel outOfBoundsLabel;
         voiCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Should be transform VOI also
-        if ((image.getVOIs() == null) || (image.getVOIs().isEmpty() == true)) {
+        if ( (image.getVOIs() == null) || (image.getVOIs().isEmpty() == true)) {
             voiCheckbox.setEnabled(false);
         }
 
@@ -2087,17 +2073,16 @@ private JLabel outOfBoundsLabel;
         optionPanel.add(labelOrigin);
         // labelOrigin.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel rotateOptionPanel = new JPanel();
-        
-        
+        final JPanel rotateOptionPanel = new JPanel();
+
         rotationAxisGroup = new ButtonGroup();
         rotOrigin = new JRadioButton("Origin", false);
         rotOrigin.setFont(serif12);
         rotOrigin.setEnabled(false);
         rotationAxisGroup.add(rotOrigin);
-        
+
         rotateOptionPanel.add(rotOrigin);
-        //optionPanel.add(rotOrigin);
+        // optionPanel.add(rotOrigin);
         rotOrigin.addItemListener(this);
         // rotOrigin.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -2108,15 +2093,15 @@ private JLabel outOfBoundsLabel;
         rotCenter.addItemListener(this);
         // rotCenter.setAlignmentX(Component.LEFT_ALIGNMENT);
         rotateOptionPanel.add(rotCenter);
-        
+
         useSACenterBox = new JCheckBox("Use scanner center", false);
         useSACenterBox.setFont(serif12);
         useSACenterBox.setSelected(false);
         useSACenterBox.setEnabled(false);
-        
+
         optionPanel.setLayout(new GridBagLayout());
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
@@ -2139,16 +2124,14 @@ private JLabel outOfBoundsLabel;
         optionPanel.add(rotateOptionPanel, gbc);
         gbc.gridx = 3;
         optionPanel.add(useSACenterBox, gbc);
-      //  optionPanel.add(rotCenter, gbc);
+        // optionPanel.add(rotCenter, gbc);
 
-        
-        
         gbc.gridx = 2;
         gbc.gridy = 2;
         optionPanel.add(cropRadio, gbc);
         gbc.gridx = 3;
         optionPanel.add(padRadio, gbc);
-        
+
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
@@ -2189,12 +2172,12 @@ private JLabel outOfBoundsLabel;
 
     /**
      * Builds the resample panel.
-     *
-     * @return  The resample panel.
+     * 
+     * @return The resample panel.
      */
     private JPanel buildResamplePanel() {
 
-        JPanel resamplePanel = new JPanel(new GridBagLayout());
+        final JPanel resamplePanel = new JPanel(new GridBagLayout());
         resamplePanel.setBorder(buildTitledBorder("Resample"));
 
         resampleGroup = new ButtonGroup();
@@ -2324,10 +2307,10 @@ private JLabel outOfBoundsLabel;
         max = 400;
         min = 25;
 
-        int initialVal = 100;
-        magSlider = new JSlider(JSlider.HORIZONTAL, min, max, initialVal);
+        final int initialVal = 100;
+        magSlider = new JSlider(SwingConstants.HORIZONTAL, min, max, initialVal);
 
-        magSlider.setMajorTickSpacing((max - min) / 5);
+        magSlider.setMajorTickSpacing( (max - min) / 5);
         magSlider.setPaintTicks(true);
         magSlider.setEnabled(false);
 
@@ -2361,7 +2344,7 @@ private JLabel outOfBoundsLabel;
         minimum.setEnabled(false);
         current.setEnabled(false);
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 2, 2, 2);
@@ -2462,8 +2445,8 @@ private JLabel outOfBoundsLabel;
         gbc.gridwidth = 2;
         resamplePanel.add(resampleSlider, gbc);
 
-        JPanel sliderPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc2 = new GridBagConstraints();
+        final JPanel sliderPanel = new JPanel(new GridBagLayout());
+        final GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.gridx = 0;
         gbc2.gridy = 0;
         gbc2.gridwidth = 3;
@@ -2510,36 +2493,36 @@ private JLabel outOfBoundsLabel;
         FileInfoBase[] fileInfo;
         int i;
 
-        if (transformType == ACPC_TO_ORIG) {
+        if (transformType == JDialogTransform.ACPC_TO_ORIG) {
             dims = tInfo.getOrigDim();
-        } else if (transformType == TLRC_TO_ORIG) {
+        } else if (transformType == JDialogTransform.TLRC_TO_ORIG) {
             dims = tInfo.getOrigDim();
-        } else if (transformType == ORIG_TO_ACPC) {
+        } else if (transformType == JDialogTransform.ORIG_TO_ACPC) {
             dims = tInfo.getAcpcDim();
-        } else if (transformType == TLRC_TO_ACPC) {
+        } else if (transformType == JDialogTransform.TLRC_TO_ACPC) {
             dims = tInfo.getAcpcDim();
-        } else if (transformType == ORIG_TO_TLRC) {
+        } else if (transformType == JDialogTransform.ORIG_TO_TLRC) {
             dims = tInfo.getTlrcDim();
-        } else if (transformType == ACPC_TO_TLRC) {
+        } else if (transformType == JDialogTransform.ACPC_TO_TLRC) {
             dims = tInfo.getTlrcDim();
         }
 
         try {
-            resultImage = new ModelImage(ModelImage.FLOAT, dims, makeImageName(image.getImageName(), "_TT"));
+            resultImage = new ModelImage(ModelStorageBase.FLOAT, dims, JDialogBase.makeImageName(image.getImageName(),
+                    "_TT"));
             fileInfo = resultImage.getFileInfo();
 
-            if ((transformType == ACPC_TO_ORIG) || (transformType == TLRC_TO_ORIG)) {
+            if ( (transformType == JDialogTransform.ACPC_TO_ORIG) || (transformType == JDialogTransform.TLRC_TO_ORIG)) {
                 axisOrientation = getAxisOrientation(tInfo.getOrigOrient());
                 zAxisOrientation = axisOrientation[2];
 
-                if ((zAxisOrientation == FileInfoBase.ORI_R2L_TYPE) ||
-                        (zAxisOrientation == FileInfoBase.ORI_L2R_TYPE)) {
+                if ( (zAxisOrientation == FileInfoBase.ORI_R2L_TYPE) || (zAxisOrientation == FileInfoBase.ORI_L2R_TYPE)) {
                     imageOrientation = FileInfoBase.SAGITTAL;
-                } else if ((zAxisOrientation == FileInfoBase.ORI_A2P_TYPE) ||
-                               (zAxisOrientation == FileInfoBase.ORI_P2A_TYPE)) {
+                } else if ( (zAxisOrientation == FileInfoBase.ORI_A2P_TYPE)
+                        || (zAxisOrientation == FileInfoBase.ORI_P2A_TYPE)) {
                     imageOrientation = FileInfoBase.CORONAL;
-                } else if ((zAxisOrientation == FileInfoBase.ORI_I2S_TYPE) ||
-                               (zAxisOrientation == FileInfoBase.ORI_S2I_TYPE)) {
+                } else if ( (zAxisOrientation == FileInfoBase.ORI_I2S_TYPE)
+                        || (zAxisOrientation == FileInfoBase.ORI_S2I_TYPE)) {
                     imageOrientation = FileInfoBase.AXIAL;
                 } else {
                     imageOrientation = FileInfoBase.ORI_UNKNOWN_TYPE;
@@ -2548,7 +2531,7 @@ private JLabel outOfBoundsLabel;
                 resultImage.setImageOrientation(imageOrientation);
 
                 for (i = 0; i < fileInfo.length; i++) {
-                    int[] units = new int[3];
+                    final int[] units = new int[3];
                     units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
                     fileInfo[i].setUnitsOfMeasure(units);
                     fileInfo[i].setResolutions(tInfo.getOrigRes());
@@ -2560,10 +2543,10 @@ private JLabel outOfBoundsLabel;
             else { // not transformed to ORIG
                 resultImage.setImageOrientation(FileInfoBase.AXIAL);
 
-                int[] units = new int[3];
+                final int[] units = new int[3];
                 units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
 
-                float[] resol = new float[3];
+                final float[] resol = new float[3];
                 resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes();
                 axisOrientation = new int[3];
                 axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
@@ -2579,13 +2562,13 @@ private JLabel outOfBoundsLabel;
                 } // for (i = 0; i < fileInfo.length; i++)
             } // else not transformed to ORIG
 
-            if ((transformType == AlgorithmTalairachTransform.ACPC_TO_ORIG) ||
-                    (transformType == AlgorithmTalairachTransform.TLRC_TO_ORIG)) {
+            if ( (transformType == AlgorithmTalairachTransform.ACPC_TO_ORIG)
+                    || (transformType == AlgorithmTalairachTransform.TLRC_TO_ORIG)) {
 
                 resultImage.setImageOrientation(tInfo.getOrigImageOrientLabel());
 
                 // new image in original space (only difference: units forced to millimeters)
-                int[] units = new int[3];
+                final int[] units = new int[3];
                 units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
 
                 for (i = 0; i < fileInfo.length; i++) {
@@ -2594,27 +2577,27 @@ private JLabel outOfBoundsLabel;
                     fileInfo[i].setExtents(tInfo.getOrigDim());
                     fileInfo[i].setAxisOrientation(tInfo.getOrigOrientLabels());
                     fileInfo[i].setImageOrientation(tInfo.getOrigImageOrientLabel());
-                    
-                    //BEN
-                   // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
+
+                    // BEN
+                    // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
                 }
 
                 resultImage.setFileInfo(fileInfo);
                 resultImage.setTalairachTransformInfo(tInfo);
 
-            } else if ((transformType == AlgorithmTalairachTransform.ORIG_TO_ACPC) ||
-                           (transformType == AlgorithmTalairachTransform.TLRC_TO_ACPC)) {
+            } else if ( (transformType == AlgorithmTalairachTransform.ORIG_TO_ACPC)
+                    || (transformType == AlgorithmTalairachTransform.TLRC_TO_ACPC)) {
 
                 // new image in AC-PC space: everything is standard
                 resultImage.setImageOrientation(FileInfoBase.AXIAL);
 
-                int[] units = new int[3];
+                final int[] units = new int[3];
                 units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
 
-                float[] resol = new float[3];
+                final float[] resol = new float[3];
                 resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes();
 
-                int[] orient = new int[3];
+                final int[] orient = new int[3];
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
                 orient[1] = FileInfoBase.ORI_A2P_TYPE;
                 orient[2] = FileInfoBase.ORI_I2S_TYPE;
@@ -2625,9 +2608,9 @@ private JLabel outOfBoundsLabel;
                     fileInfo[i].setExtents(tInfo.getAcpcDim());
                     fileInfo[i].setAxisOrientation(orient);
                     fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
-                    
-                    //BEN
-                   // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
+
+                    // BEN
+                    // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
                 }
 
                 resultImage.setFileInfo(fileInfo);
@@ -2638,13 +2621,13 @@ private JLabel outOfBoundsLabel;
                 // new image in Talairach space: also standard, only the extents are changed
                 resultImage.setImageOrientation(FileInfoBase.AXIAL);
 
-                int[] units = new int[3];
+                final int[] units = new int[3];
                 units[0] = units[1] = units[2] = FileInfoBase.MILLIMETERS;
 
-                float[] resol = new float[3];
+                final float[] resol = new float[3];
                 resol[0] = resol[1] = resol[2] = tInfo.getAcpcRes();
 
-                int[] orient = new int[3];
+                final int[] orient = new int[3];
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
                 orient[1] = FileInfoBase.ORI_A2P_TYPE;
                 orient[2] = FileInfoBase.ORI_I2S_TYPE;
@@ -2655,9 +2638,9 @@ private JLabel outOfBoundsLabel;
                     fileInfo[i].setExtents(tInfo.getTlrcDim());
                     fileInfo[i].setAxisOrientation(orient);
                     fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
-                    
-                    //BEN
-                   // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
+
+                    // BEN
+                    // fileInfo[i].setTransformID(FileInfoBase.TRANSFORM_TALAIRACH_TOURNOUX);
                 }
 
                 resultImage.setFileInfo(fileInfo);
@@ -2684,7 +2667,7 @@ private JLabel outOfBoundsLabel;
                 algoTal.run();
             }
         } // try
-        catch (OutOfMemoryError x) {
+        catch (final OutOfMemoryError x) {
 
             if (resultImage != null) {
                 resultImage.disposeLocal();
@@ -2700,16 +2683,16 @@ private JLabel outOfBoundsLabel;
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  state  DOCUMENT ME!
+     * 
+     * @param state DOCUMENT ME!
      */
-    private void enableDims(boolean state) {
+    private void enableDims(final boolean state) {
         labelDimX.setEnabled(state);
         labelDimY.setEnabled(state);
         textDimX.setEnabled(state);
         textDimY.setEnabled(state);
 
-        if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
+        if ( (image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
             labelDimZ.setEnabled(state);
             textDimZ.setEnabled(state);
         }
@@ -2717,16 +2700,16 @@ private JLabel outOfBoundsLabel;
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  state  DOCUMENT ME!
+     * 
+     * @param state DOCUMENT ME!
      */
-    private void enableResols(boolean state) {
+    private void enableResols(final boolean state) {
         labelResX.setEnabled(state);
         labelResY.setEnabled(state);
         textResX.setEnabled(state);
         textResY.setEnabled(state);
 
-        if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
+        if ( (image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
             labelResZ.setEnabled(state);
             textResZ.setEnabled(state);
         }
@@ -2734,10 +2717,10 @@ private JLabel outOfBoundsLabel;
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  state  DOCUMENT ME!
+     * 
+     * @param state DOCUMENT ME!
      */
-    private void enableYSettings(boolean state) {
+    private void enableYSettings(final boolean state) {
         labelDimY.setEnabled(state);
         textDimY.setEnabled(state);
         labelResY.setEnabled(state);
@@ -2747,16 +2730,16 @@ private JLabel outOfBoundsLabel;
     /**
      * Return the 3 axis orientation codes that correspond to the closest standard anatomical orientation of the (i,j,k)
      * axes.
-     *
-     * @param   array  4x4 matrix that transforms (i,j,k) indexes to x,y,z coordinates where +x =Left, +y = Posterior,
-     *                 +z = Superior Only the upper-left 3x3 corner of the matrix is used This routine finds the
-     *                 permutation of (x,y,z) which has the smallest angle to the (i,j,k) axes directions, which are
-     *                 columns of the input matrix
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param array 4x4 matrix that transforms (i,j,k) indexes to x,y,z coordinates where +x =Left, +y = Posterior, +z =
+     *            Superior Only the upper-left 3x3 corner of the matrix is used This routine finds the permutation of
+     *            (x,y,z) which has the smallest angle to the (i,j,k) axes directions, which are columns of the input
+     *            matrix
+     * 
+     * @return DOCUMENT ME!
      */
-    private int[] getAxisOrientation(float[][] array) {
-        int[] axisOrientation = new int[3];
+    private int[] getAxisOrientation(final float[][] array) {
+        final int[] axisOrientation = new int[3];
         double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
         Matrix Q;
         double detQ;
@@ -2779,7 +2762,7 @@ private JLabel outOfBoundsLabel;
         // Normalize column vectors to get unit vectors along each ijk-axis
 
         // Normalize i axis
-        val = Math.sqrt((xi * xi) + (yi * yi) + (zi * zi));
+        val = Math.sqrt( (xi * xi) + (yi * yi) + (zi * zi));
 
         if (val == 0.0) {
             MipavUtil.displayError("xi = yi = zi = 0 in getAxisOrientation");
@@ -2792,7 +2775,7 @@ private JLabel outOfBoundsLabel;
         zi /= val;
 
         // Normalize j axis
-        val = Math.sqrt((xj * xj) + (yj * yj) + (zj * zj));
+        val = Math.sqrt( (xj * xj) + (yj * yj) + (zj * zj));
 
         if (val == 0.0) {
             MipavUtil.displayError("xj = yj = zj = 0 in getAxisOrientation");
@@ -2811,7 +2794,7 @@ private JLabel outOfBoundsLabel;
             xj -= val * xi;
             yj -= val * yi;
             zj -= val * zi;
-            val = Math.sqrt((xj * xj) + (yj * yj) + (zj * zj)); // Must renormalize
+            val = Math.sqrt( (xj * xj) + (yj * yj) + (zj * zj)); // Must renormalize
 
             if (val == 0.0) {
                 MipavUtil.displayError("j was parallel to i in getAxisOrientation");
@@ -2825,7 +2808,7 @@ private JLabel outOfBoundsLabel;
         }
 
         // Normalize k axis; if it is zero, make it the cross product i x j
-        val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
+        val = Math.sqrt( (xk * xk) + (yk * yk) + (zk * zk));
 
         if (val == 0.0) {
             xk = (yi * zj) - (zi * yj);
@@ -2844,7 +2827,7 @@ private JLabel outOfBoundsLabel;
             xk -= val * xi;
             yk -= val * yi;
             zk -= val * zi;
-            val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
+            val = Math.sqrt( (xk * xk) + (yk * yk) + (zk * zk));
 
             if (val == 0.0) {
                 MipavUtil.displayError("val == 0 when orthogonalizing k to i");
@@ -2864,7 +2847,7 @@ private JLabel outOfBoundsLabel;
             xk -= val * xj;
             yk -= val * yj;
             zk -= val * zj;
-            val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
+            val = Math.sqrt( (xk * xk) + (yk * yk) + (zk * zk));
 
             if (val == 0.0) {
                 MipavUtil.displayError("val == 0 when orthogonalizing k to j");
@@ -2877,7 +2860,7 @@ private JLabel outOfBoundsLabel;
             zk /= val;
         }
 
-        double[][] darray = new double[3][3];
+        final double[][] darray = new double[3][3];
         darray[0][0] = xi;
         darray[0][1] = xj;
         darray[0][2] = xk;
@@ -2922,7 +2905,7 @@ private JLabel outOfBoundsLabel;
 
                 for (k = 1; k <= 3; k++) { // k = column number to use for row #3
 
-                    if ((i == k) || (j == k)) {
+                    if ( (i == k) || (j == k)) {
                         continue;
                     }
 
@@ -2948,7 +2931,7 @@ private JLabel outOfBoundsLabel;
                                 detP = P.det();
 
                                 // sign of permutation doesn't match sign of Q
-                                if ((detP * detQ) <= 0.0) {
+                                if ( (detP * detQ) <= 0.0) {
                                     continue;
                                 }
 
@@ -2982,11 +2965,11 @@ private JLabel outOfBoundsLabel;
 
         // For example, the first row of P (which contains pbest in column ibest)
         // determines the way the i axis points relative to the anatomical
-        // (x,y,z) axes.  If ibest is 2, then the i axis is along the yaxis,
+        // (x,y,z) axes. If ibest is 2, then the i axis is along the yaxis,
         // which is direction P2A (if pbest < 0) or A2P (if pbest > 0).
 
         // So, using ibest and pbest, we can assign the output code for
-        // the i axis.  The same also applies for the j and k axes.
+        // the i axis. The same also applies for the j and k axes.
 
         switch (ibest * pbest) {
 
@@ -3083,11 +3066,11 @@ private JLabel outOfBoundsLabel;
         setForeground(Color.black);
         setTitle("Transform/Resample Image");
 
-        JPanel matrixPanel = buildMatrixPanel();
-        JPanel optionPanel = buildOptionPanel();
-        JPanel resamplePanel = buildResamplePanel();
+        final JPanel matrixPanel = buildMatrixPanel();
+        final JPanel optionPanel = buildOptionPanel();
+        final JPanel resamplePanel = buildResamplePanel();
 
-        JPanel leftPanel = new JPanel();
+        final JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BorderLayout());
         leftPanel.add(matrixPanel);
         leftPanel.add(optionPanel, BorderLayout.SOUTH);
@@ -3095,18 +3078,18 @@ private JLabel outOfBoundsLabel;
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(MipavUtil.font12B);
         tabbedPane.addTab("Transform", leftPanel);
-        
+
         tabbedPane.addTab("Resample", resamplePanel);
-        
+
         tabbedPane.addChangeListener(this);
-        
-        GridBagConstraints gbc = new GridBagConstraints();
+
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-                
-        JPanel buttonPanel = new JPanel();
+
+        final JPanel buttonPanel = new JPanel();
         buttonPanel.add(buildButtons());
 
         getContentPane().add(tabbedPane);
@@ -3120,15 +3103,15 @@ private JLabel outOfBoundsLabel;
     }
 
     /**
-     * Re-orient the matrix to world and left-hand coordinate systems if required. 
+     * Re-orient the matrix to world and left-hand coordinate systems if required.
+     * 
      * @see reorientCoordSystem
-     * @param   rkMatrix  the matrix to be converted
+     * @param rkMatrix the matrix to be converted
      * @return result
      */
-    private TransMatrix reorientCoordSystem(TransMatrix rkMatrix)
-    {
-    	return JDialogScriptableTransform.reorientCoordSystem(rkMatrix, image, resampleImage, wcSystem, leftHandSystem);
-    	
+    private TransMatrix reorientCoordSystem(final TransMatrix rkMatrix) {
+        return JDialogScriptableTransform.reorientCoordSystem(rkMatrix, image, resampleImage, wcSystem, leftHandSystem);
+
     }
 
     /**
@@ -3142,8 +3125,8 @@ private JLabel outOfBoundsLabel;
 
     /**
      * Sets the variables needed to run the algorithm.
-     *
-     * @return  Flag indicating successful set of the variables.
+     * 
+     * @return Flag indicating successful set of the variables.
      */
     private boolean setVariables() {
         String tmpStr;
@@ -3153,7 +3136,7 @@ private JLabel outOfBoundsLabel;
         double Tx = 0, Ty = 0, Tz = 0, Rx, Ry, Rz, Sx, Sy, Sz, SKx, SKy, SKz;
         float fovX = 0.f, fovY = 0.f, fovZ = 0.f;
 
-        int boxIndex = comboBoxInterp.getSelectedIndex();
+        final int boxIndex = comboBoxInterp.getSelectedIndex();
 
         if (boxIndex == 0) {
             interp = AlgorithmTransform.NEAREST_NEIGHBOR;
@@ -3183,26 +3166,26 @@ private JLabel outOfBoundsLabel;
         doClip = clipCheckbox.isSelected();
         doInvMat = invertCheckbox.isSelected();
 
-        
-        //set the units.  will be reset if image is being resampled to another image's size
+        // set the units. will be reset if image is being resampled to another image's size
         units = new int[image.getUnitsOfMeasure().length];
         for (int i = 0; i < units.length; i++) {
-        	units[i] = image.getUnitsOfMeasure(i);
+            units[i] = image.getUnitsOfMeasure(i);
         }
-        
-        if ((computeTImage != null) && computeTImage.isSelected()) {
+
+        if ( (computeTImage != null) && computeTImage.isSelected()) {
             transformType = comboBoxTalTransform.getSelectedIndex();
 
-            if (!tInfo.isAcpc()) {
+            if ( !tInfo.isAcpc()) {
                 MipavUtil.displayError("The ACPC transformation is not set");
 
                 return false;
             } // if (!tInfo.isAcpc())
 
-            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
-                    (transformType == TLRC_TO_ACPC)) {
+            if ( (transformType == JDialogTransform.ORIG_TO_TLRC) || (transformType == JDialogTransform.ACPC_TO_TLRC)
+                    || (transformType == JDialogTransform.TLRC_TO_ORIG)
+                    || (transformType == JDialogTransform.TLRC_TO_ACPC)) {
 
-                if (!tInfo.isTlrc()) {
+                if ( !tInfo.isTlrc()) {
                     MipavUtil.displayError("The Talairach transformation is not set");
 
                     return false;
@@ -3217,7 +3200,7 @@ private JLabel outOfBoundsLabel;
         doPad = padRadio.isSelected();
         doUpdateOrigin = updateOriginCheckbox.isSelected();
 
-        if ((do25D) || (image.getNDims() == 2)) {
+        if ( (do25D) || (image.getNDims() == 2)) {
             xfrm = new TransMatrix(3);
         } else { // (image.getNDims() >= 3) && (!do25D)
             xfrm = new TransMatrix(4);
@@ -3240,47 +3223,45 @@ private JLabel outOfBoundsLabel;
 
         oXres = oYres = oZres = oXdim = oYdim = oZdim = 1; // initialize
 
-        //if a transform matrix is to be used (NOT resampling)
-        //  must adjust the result extents and resolutions
-        if (!noTransform.isSelected()) {
-        	
-        	oXres = image.getFileInfo()[0].getResolutions()[0];
-        	oYres = image.getFileInfo()[0].getResolutions()[1];
-        	
-        	oXdim = image.getExtents()[0];
-        	oYdim = image.getExtents()[1];
-        	
-        	if (image.getNDims() > 2) {
-        		oZres = image.getFileInfo()[0].getResolutions()[2];
-            	oZdim = image.getExtents()[2];
-        	} 
+        // if a transform matrix is to be used (NOT resampling)
+        // must adjust the result extents and resolutions
+        if ( !noTransform.isSelected()) {
+
+            oXres = image.getFileInfo()[0].getResolutions()[0];
+            oYres = image.getFileInfo()[0].getResolutions()[1];
+
+            oXdim = image.getExtents()[0];
+            oYdim = image.getExtents()[1];
+
+            if (image.getNDims() > 2) {
+                oZres = image.getFileInfo()[0].getResolutions()[2];
+                oZdim = image.getExtents()[2];
+            }
         }
-        
-        
-   //     if (noTransform.isSelected()) {
-        
+
+        // if (noTransform.isSelected()) {
+
         // RESAMPLE INFO
         if (resampletoImage.isSelected()) {
-            String selectName = (String) (comboBoxImage.getSelectedItem());
+            final String selectName = (String) (comboBoxImage.getSelectedItem());
 
             // get the selected image
-            ModelImage selectedImg = userInterface.getRegisteredImageByName(selectName);
+            final ModelImage selectedImg = userInterface.getRegisteredImageByName(selectName);
 
             // assign output resolutions and dims to those of image selected in comboBox
             oXres = selectedImg.getFileInfo(0).getResolutions()[0];
             oYres = selectedImg.getFileInfo(0).getResolutions()[1];
-            
-            //get the units now
+
+            // get the units now
             units[0] = selectedImg.getUnitsOfMeasure(0);
             units[1] = selectedImg.getUnitsOfMeasure(1);
-            
+
             System.err.println("units of original image: " + image.getUnitsOfMeasure(0));
             System.err.println("setting units: " + units[0]);
-            
-            
+
             if (setPix) {
-                fovX = iXres * (iXdim-1);
-                fovY = iYres * (iYdim-1);
+                fovX = iXres * (iXdim - 1);
+                fovY = iYres * (iYdim - 1);
                 oXdim = (int) (fovX / oXres) + 1;
                 oYdim = (int) (fovY / oYres) + 1;
             } else {
@@ -3288,16 +3269,16 @@ private JLabel outOfBoundsLabel;
                 oYdim = selectedImg.getExtents()[1];
             }
 
-            if ((image.getNDims() >= 3) && (!do25D)) {
+            if ( (image.getNDims() >= 3) && ( !do25D)) {
                 oZres = selectedImg.getFileInfo(0).getResolutions()[2];
                 units[2] = selectedImg.getUnitsOfMeasure(2);
                 if (setPix) {
-                    fovZ = iZres * (iZdim-1);
+                    fovZ = iZres * (iZdim - 1);
                     oZdim = (int) (fovZ / oZres) + 1;
                 } else {
                     oZdim = selectedImg.getExtents()[2];
                 }
-            } else if ((image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
+            } else if ( (image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
                 oZres = image.getFileInfo(0).getResolutions()[2];
                 oZdim = image.getExtents()[2];
             }
@@ -3305,7 +3286,7 @@ private JLabel outOfBoundsLabel;
             // Read X, Y and Z resolutions
             tmpStr = textResX.getText();
 
-            if (testParameter(tmpStr, 0, 1000000000)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 1000000000)) {
                 oXres = Float.valueOf(tmpStr).floatValue();
             } else {
                 textResX.requestFocus();
@@ -3316,7 +3297,7 @@ private JLabel outOfBoundsLabel;
 
             tmpStr = textResY.getText();
 
-            if (testParameter(tmpStr, 0, 1000000000)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 1000000000)) {
                 oYres = Float.valueOf(tmpStr).floatValue();
             } else {
                 textResY.requestFocus();
@@ -3328,7 +3309,7 @@ private JLabel outOfBoundsLabel;
             if (image.getNDims() >= 3) {
                 tmpStr = textResZ.getText();
 
-                if (testParameter(tmpStr, 0, 1000000000)) {
+                if (JDialogBase.testParameter(tmpStr, 0, 1000000000)) {
                     oZres = Float.valueOf(tmpStr).floatValue();
                 } else {
                     textResZ.requestFocus();
@@ -3341,7 +3322,7 @@ private JLabel outOfBoundsLabel;
             // Read X, Y and Z dimensions
             tmpStr = textDimX.getText();
 
-            if (testParameter(tmpStr, 0, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 2048)) {
                 oXdim = Integer.valueOf(tmpStr).intValue();
             } else {
                 textDimX.requestFocus();
@@ -3352,7 +3333,7 @@ private JLabel outOfBoundsLabel;
 
             tmpStr = textDimY.getText();
 
-            if (testParameter(tmpStr, 0, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 2048)) {
                 oYdim = Integer.valueOf(tmpStr).intValue();
             } else {
                 textDimY.requestFocus();
@@ -3364,7 +3345,7 @@ private JLabel outOfBoundsLabel;
             if (image.getNDims() >= 3) {
                 tmpStr = textDimZ.getText();
 
-                if (testParameter(tmpStr, 0, 2048)) {
+                if (JDialogBase.testParameter(tmpStr, 0, 2048)) {
                     oZdim = Integer.valueOf(tmpStr).intValue();
                 } else {
                     textDimZ.requestFocus();
@@ -3377,35 +3358,35 @@ private JLabel outOfBoundsLabel;
             factor = magSlider.getValue() / (float) 100;
             oXdim = Math.round(image.getExtents()[0] * factor);
             oYdim = Math.round(image.getExtents()[1] * factor);
-            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]-1) / (float) (oXdim-1);
-            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]-1) / (float) (oYdim-1);
+            oXres = image.getFileInfo(0).getResolutions()[0] * (image.getExtents()[0] - 1) / (oXdim - 1);
+            oYres = image.getFileInfo(0).getResolutions()[1] * (image.getExtents()[1] - 1) / (oYdim - 1);
 
-            if ((image.getNDims() >= 3) && (!do25D)) {
+            if ( (image.getNDims() >= 3) && ( !do25D)) {
                 oZdim = Math.round(image.getExtents()[2] * factor);
-                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]-1) / (float) (oZdim-1);
-            } else if ((image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
+                oZres = image.getFileInfo(0).getResolutions()[2] * (image.getExtents()[2] - 1) / (oZdim - 1);
+            } else if ( (image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
                 oZdim = image.getExtents()[2];
                 oZres = image.getFileInfo(0).getResolutions()[2];
             }
         }
-     //   } //end if (noTransform.isSelected())
-      
-        
-        
+        // } //end if (noTransform.isSelected())
+
         // TRANSFORMATION MATRIX INFO
-        
+
         if (fileMatrix.isSelected()) { // read matrix from file
 
             // xfrm.Mult(readTransformMatrixFile(matrixFile));
-            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText("Matrix loaded from Transform dialog:\n");
-            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(reorientCoordSystem(fileTransMatrix).toString());
+            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(
+                    "Matrix loaded from Transform dialog:\n");
+            ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(
+                    reorientCoordSystem(fileTransMatrix).toString());
             xfrm.Mult(reorientCoordSystem(fileTransMatrix));
         } else if (userDefinedMatrix.isSelected()) { // user matrix
 
             // user stuff
             tmpStr = textTx.getText();
 
-            if (testParameter(tmpStr, -2048, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                 Tx = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textTx.requestFocus();
@@ -3416,7 +3397,7 @@ private JLabel outOfBoundsLabel;
 
             tmpStr = textTy.getText();
 
-            if (testParameter(tmpStr, -2048, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                 Ty = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textTy.requestFocus();
@@ -3427,7 +3408,7 @@ private JLabel outOfBoundsLabel;
 
             tmpStr = textRz.getText();
 
-            if (testParameter(tmpStr, -360, 360)) {
+            if (JDialogBase.testParameter(tmpStr, -360, 360)) {
                 Rz = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textRz.requestFocus();
@@ -3438,7 +3419,7 @@ private JLabel outOfBoundsLabel;
 
             tmpStr = textSx.getText();
 
-            if (testParameter(tmpStr, 0, 300)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 300)) {
                 Sx = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textSx.requestFocus();
@@ -3449,7 +3430,7 @@ private JLabel outOfBoundsLabel;
 
             tmpStr = textSy.getText();
 
-            if (testParameter(tmpStr, 0, 300)) {
+            if (JDialogBase.testParameter(tmpStr, 0, 300)) {
                 Sy = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textSy.requestFocus();
@@ -3460,7 +3441,7 @@ private JLabel outOfBoundsLabel;
 
             tmpStr = textSKx.getText();
 
-            if (testParameter(tmpStr, -2048, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                 SKx = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textSKx.requestFocus();
@@ -3471,7 +3452,7 @@ private JLabel outOfBoundsLabel;
 
             tmpStr = textSKy.getText();
 
-            if (testParameter(tmpStr, -2048, 2048)) {
+            if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                 SKy = Double.valueOf(tmpStr).doubleValue();
             } else {
                 textSKy.requestFocus();
@@ -3480,10 +3461,10 @@ private JLabel outOfBoundsLabel;
                 return false;
             }
 
-            if ((image.getNDims() >= 3) && (!do25D)) {
+            if ( (image.getNDims() >= 3) && ( !do25D)) {
                 tmpStr = textTz.getText();
 
-                if (testParameter(tmpStr, -2048, 2048)) {
+                if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                     Tz = Double.valueOf(tmpStr).doubleValue();
                 } else {
                     textTz.requestFocus();
@@ -3494,7 +3475,7 @@ private JLabel outOfBoundsLabel;
 
                 tmpStr = textRx.getText();
 
-                if (testParameter(tmpStr, -360, 360)) {
+                if (JDialogBase.testParameter(tmpStr, -360, 360)) {
                     Rx = Double.valueOf(tmpStr).doubleValue();
                 } else {
                     textRx.requestFocus();
@@ -3505,7 +3486,7 @@ private JLabel outOfBoundsLabel;
 
                 tmpStr = textRy.getText();
 
-                if (testParameter(tmpStr, -360, 360)) {
+                if (JDialogBase.testParameter(tmpStr, -360, 360)) {
                     Ry = Double.valueOf(tmpStr).doubleValue();
                 } else {
                     textRy.requestFocus();
@@ -3516,7 +3497,7 @@ private JLabel outOfBoundsLabel;
 
                 tmpStr = textSz.getText();
 
-                if (testParameter(tmpStr, -2048, 2048)) {
+                if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                     Sz = Double.valueOf(tmpStr).doubleValue();
                 } else {
                     textSz.requestFocus();
@@ -3527,7 +3508,7 @@ private JLabel outOfBoundsLabel;
 
                 tmpStr = textSKz.getText();
 
-                if (testParameter(tmpStr, -2048, 2048)) {
+                if (JDialogBase.testParameter(tmpStr, -2048, 2048)) {
                     SKz = Double.valueOf(tmpStr).doubleValue();
                 } else {
                     textSKz.requestFocus();
@@ -3551,21 +3532,21 @@ private JLabel outOfBoundsLabel;
             Preferences.debug("Image's stored matrix = \n" + image.getMatrix());
 
             if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
-            	isSATransform = true;
+                isSATransform = true;
             }
-            
+
             TransMatrix imageMatrix = null;
-          
+
             if (storedMatrixBox.getSelectedItem().equals("Composite")) {
-            	imageMatrix = image.getMatrix();
+                imageMatrix = image.getMatrix();
             } else {
-            	imageMatrix = (TransMatrix)image.getMatrixHolder().getMatrixMap().get(storedMatrixBox.getSelectedItem());
+                imageMatrix = image.getMatrixHolder().getMatrixMap().get(storedMatrixBox.getSelectedItem());
             }
-                                    
-            if (!do25D) {
+
+            if ( !do25D) {
                 xfrm.Mult(imageMatrix);
             } else {
-                TransMatrix xfrm25 = new TransMatrix(3);
+                final TransMatrix xfrm25 = new TransMatrix(3);
                 xfrm25.Set(0, 0, imageMatrix.Get(0, 0));
                 xfrm25.Set(0, 1, imageMatrix.Get(0, 1));
                 xfrm25.Set(0, 2, imageMatrix.Get(0, 3));
@@ -3582,33 +3563,31 @@ private JLabel outOfBoundsLabel;
             xfrm.MakeIdentity();
         }
 
-       
-        
         // if ((no transformation) OR (user input transformation))
         // AND (total image size !=), then scale
         if (noTransform.isSelected() || userDefinedMatrix.isSelected()) {
 
-            if ((image.getNDims() >= 3) && (!do25D)) {
+            if ( (image.getNDims() >= 3) && ( !do25D)) {
 
-                if (((iXres * (float) (iXdim-1)) != (oXres * (float) (oXdim-1))) ||
-                        ((iYres * (float) (iYdim-1)) != (oYres * (float) (oYdim-1))) ||
-                        ((iZres * (float) (iZdim-1)) != ((float) (oZdim-1) * oZres))) {
-                    Sx = ((float) (oXdim-1) * oXres) / ((float) (iXdim-1) * iXres);
-                    Sy = ((float) (oYdim-1) * oYres) / ((float) (iYdim-1) * iYres);
-                    Sz = ((float) (oZdim-1) * oZres) / ((float) (iZdim-1) * iZres);
+                if ( ( (iXres * (iXdim - 1)) != (oXres * (oXdim - 1)))
+                        || ( (iYres * (iYdim - 1)) != (oYres * (oYdim - 1)))
+                        || ( (iZres * (iZdim - 1)) != ( (oZdim - 1) * oZres))) {
+                    Sx = ( (oXdim - 1) * oXres) / ( (iXdim - 1) * iXres);
+                    Sy = ( (oYdim - 1) * oYres) / ( (iYdim - 1) * iYres);
+                    Sz = ( (oZdim - 1) * oZres) / ( (iZdim - 1) * iZres);
                     xfrm.setZoom(Sx, Sy, Sz);
                 }
             } else { // ((image.getNDims() == 2) || (do25D))
 
-                if (((iXres * (float) (iXdim-1)) != (oXres * (float) (oXdim-1))) ||
-                        ((iYres * (float) (iYdim-1)) != (oYres * (float) (oYdim-1)))) {
-                    Sx = ((float) (oXdim-1) * oXres) / ((float) (iXdim-1) * iXres);
-                    Sy = ((float) (oYdim-1) * oYres) / ((float) (iYdim-1) * iYres);
+                if ( ( (iXres * (iXdim - 1)) != (oXres * (oXdim - 1)))
+                        || ( (iYres * (iYdim - 1)) != (oYres * (oYdim - 1)))) {
+                    Sx = ( (oXdim - 1) * oXres) / ( (iXdim - 1) * iXres);
+                    Sy = ( (oYdim - 1) * oYres) / ( (iYdim - 1) * iYres);
                     xfrm.setZoom(Sx, Sy);
                 }
             }
         }
-        
+
         if (Preferences.debugLevel(Preferences.DEBUG_MINOR) && (image.getNDims() == 3)) {
             Preferences.debug("oDim = " + oXdim + ", " + oYdim + ", " + oZdim);
             Preferences.debug("oRes = " + oXres + ", " + oYres + ", " + oZres);
@@ -3616,133 +3595,132 @@ private JLabel outOfBoundsLabel;
 
         Preferences.debug(xfrm + "\n");
 
-        //if (!userDefinedMatrix.isSelected()) { 
-         //   doRotateCenter = false;
-        //}
-        //else {
+        // if (!userDefinedMatrix.isSelected()) {
+        // doRotateCenter = false;
+        // }
+        // else {
         // doRotateCenter is checked if it is selected everytime,
-        //does not depend on userDefinedMatrix is selected or not. Changed 11/16 by Mayur  
-            doRotateCenter = rotCenter.isSelected();
-        //}
+        // does not depend on userDefinedMatrix is selected or not. Changed 11/16 by Mayur
+        doRotateCenter = rotCenter.isSelected();
+        // }
         if (doRotateCenter) {
-        	useSACenter = useSACenterBox.isSelected();
+            useSACenter = useSACenterBox.isSelected();
         }
-        
+
         fillValue = Float.valueOf(valueText.getText()).floatValue();
         outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();
         if (outOfBoundsIndex == 2) {
             // user defined value
             boolean success = testType(dataType, fillValue);
-            if (!success) {
+            if ( !success) {
                 MipavUtil.displayError("User defined value is out of the data type range");
                 valueText.requestFocus();
                 valueText.selectAll();
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
-     * Determine if the value is in the image type range and
-     * within the float range since AlgorithmTransform does
-     * not use double buffers.
-     *
-     * @param   type    image type
-     * @param   value   value tested
-     *
-     * @return  true if value is within acceptable range
+     * Determine if the value is in the image type range and within the float range since AlgorithmTransform does not
+     * use double buffers.
+     * 
+     * @param type image type
+     * @param value value tested
+     * 
+     * @return true if value is within acceptable range
      */
-    private boolean testType(int type, float value) {
+    private boolean testType(final int type, final float value) {
 
         if (type == ModelStorageBase.BOOLEAN) {
 
-            if ((value < 0) || (value > 1)) {
+            if ( (value < 0) || (value > 1)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.BYTE) {
 
-            if ((value < -128) || (value > 127)) {
+            if ( (value < -128) || (value > 127)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.UBYTE) {
 
-            if ((value < 0) || (value > 255)) {
+            if ( (value < 0) || (value > 255)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.SHORT) {
 
-            if ((value < -32768) || (value > 32767)) {
+            if ( (value < -32768) || (value > 32767)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.USHORT) {
 
-            if ((value < 0) || (value > 65535)) {
+            if ( (value < 0) || (value > 65535)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.INTEGER) {
 
-            if ((value < Integer.MIN_VALUE) || (value > Integer.MAX_VALUE)) {
+            if ( (value < Integer.MIN_VALUE) || (value > Integer.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.UINTEGER) {
 
-            if ((value < 0) || (value > 4294967295L)) {
+            if ( (value < 0) || (value > 4294967295L)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.LONG) {
 
-            if ((value < Long.MIN_VALUE) || (value > Long.MAX_VALUE)) {
+            if ( (value < Long.MIN_VALUE) || (value > Long.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.FLOAT) {
 
-            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+            if ( (value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.DOUBLE) {
             // Float buffers are used in the AlgorithmTransform routines
-            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+            if ( (value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.ARGB) {
 
-            if ((value < 0) || (value > 255)) {
+            if ( (value < 0) || (value > 255)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.ARGB_USHORT) {
 
-            if ((value < 0) || (value > 65535)) {
+            if ( (value < 0) || (value > 65535)) {
                 return false;
             } else {
                 return true;
             }
         } else if (type == ModelStorageBase.ARGB_FLOAT) {
 
-            if ((value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
+            if ( (value < -Float.MAX_VALUE) || (value > Float.MAX_VALUE)) {
                 return false;
             } else {
                 return true;
