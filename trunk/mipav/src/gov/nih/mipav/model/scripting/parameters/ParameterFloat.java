@@ -147,5 +147,6 @@ public class ParameterFloat extends Parameter {
      */
     public void setValue(final float paramValue) throws ParserException {
         value = paramValue;
+        setValueAssigned(true);
     }
 }

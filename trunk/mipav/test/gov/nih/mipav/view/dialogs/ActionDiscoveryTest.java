@@ -15,7 +15,9 @@ public class ActionDiscoveryTest {
 
     protected static ViewUserInterface ui;
 
-    protected static final String inputImageFileName = "C:\\Users\\mccreedy\\Desktop\\images\\anon\\xml\\genormcorp2_cor_256x256x32.xml";
+    protected static final String inputImage3DFileName = "C:\\Users\\mccreedy\\Desktop\\images\\anon\\xml\\genormcorp2_cor_256x256x32.xml";
+
+    protected static final String inputImage4DFileName = "C:\\Users\\mccreedy\\Desktop\\images\\anon\\xml\\genormcorp2_cor_256x256x32_4D.xml";
 
     public static void main(final String[] args) {
         // need to create the mipav VUI, which is required to do virtually anything else using mipav
@@ -56,6 +58,8 @@ public class ActionDiscoveryTest {
     }
 
     protected static boolean executeAction(final Class<ActionDiscovery> c) {
+        String inputImageFileName = ActionDiscoveryTest.inputImage3DFileName;
+
         ActionDiscovery dialog = null;
         try {
             dialog = c.newInstance();
@@ -77,8 +81,8 @@ public class ActionDiscoveryTest {
 
         final Set<ActionMetadata.ImageRequirements> reqs = dialog.getActionMetadata().getInputImageRequirements();
         if (reqs.contains(ActionMetadata.ImageRequirements.NDIM_4)) {
-            System.err.println("The action you selected requires a 4D image.  This is not currently supported.");
-            return false;
+            System.out.println("*** The action you selected requires a 4D image.  Switching from default input image.");
+            inputImageFileName = ActionDiscoveryTest.inputImage4DFileName;
         }
 
         // get the input and output parameters of the dialog (which are not filled with any values)
@@ -102,17 +106,19 @@ public class ActionDiscoveryTest {
             int curImageNum = 1;
             for (final Parameter param : inputParams.getParameters()) {
                 if ( !param.isParentConditionValueMet()) {
-                    System.err.println("Parent condition not met for parameter: " + param.convertToString());
+                    System.out.println("*** Parent condition not met for parameter: " + param.convertToString());
                     continue;
                 }
 
                 if (param.getType() != Parameter.PARAM_EXTERNAL_IMAGE && param.getType() != Parameter.PARAM_IMAGE) {
                     val = ActionDiscoveryTest.promptForParameterValue(param);
 
-                    if ( (val == null || val.equals("")) && param.getValueString() == null) {
-                        System.err.println("No value entered for parameter: " + param.convertToString());
+                    if ( (val == null || val.equals(""))
+                            && (param.getValueString() == null || (param.getValueString() != null && !param
+                                    .isValueAssigned()))) {
+                        System.out.println("*** No value entered for parameter: " + param.convertToString());
                     } else if ( (val == null || val.equals("")) && param.getValueString() != null) {
-                        System.err.println("No value entered, using parameter default: " + param.getLabel() + " = "
+                        System.out.println("*** No value entered, using parameter default: " + param.getLabel() + " = "
                                 + param.getValueString());
                         // no need to set the value; it's already there.
                     } else {
@@ -126,10 +132,10 @@ public class ActionDiscoveryTest {
                     // frame)
                     final ViewOpenFileUI openFile = new ViewOpenFileUI(false);
                     openFile.setPutInFrame(false);
-                    final String inputImageName = openFile.open(ActionDiscoveryTest.inputImageFileName, false, null);
+                    final String inputImageName = openFile.open(inputImageFileName, false, null);
 
                     if (inputImageName == null) {
-                        System.err.println("Could not open input image: " + ActionDiscoveryTest.inputImageFileName);
+                        System.err.println("Could not open input image: " + inputImageFileName);
                         System.exit(1);
                     }
 
@@ -179,8 +185,13 @@ public class ActionDiscoveryTest {
     protected static String promptForParameterValue(final Parameter param) {
         String val = null;
 
-        System.out.print("Enter value for parameter: " + param.getLabel() + " (" + param.getTypeString()
-                + ") = (default: " + param.getValueString() + ") ");
+        String defaultInfo = "";
+        if (param.isValueAssigned()) {
+            defaultInfo = " (default: " + param.getValueString() + ")";
+        }
+
+        System.out.print("Enter value for parameter: " + param.getLabel() + " (" + param.getTypeString() + ")"
+                + defaultInfo + " = ");
 
         try {
             switch (param.getType()) {

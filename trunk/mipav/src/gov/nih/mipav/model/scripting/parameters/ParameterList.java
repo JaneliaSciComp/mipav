@@ -84,6 +84,7 @@ public class ParameterList extends Parameter {
     public void addToList(final Parameter elem) {
         if (elem.getType() == listType) {
             list.add(elem);
+            setValueAssigned(true);
         } else {
             MipavUtil.displayError("Error encountered:\n Attempted to add a " + Parameter.getTypeString(elem.getType())
                     + " parameter to a " + Parameter.getTypeString(listType) + " list.");
@@ -236,6 +237,7 @@ public class ParameterList extends Parameter {
      */
     public void removeAllFromList() {
         list.removeAllElements();
+        setValueAssigned(false);
     }
 
     /**
@@ -255,7 +257,7 @@ public class ParameterList extends Parameter {
      * @throws ParserException If there is a problem encountered parsing the list element values.
      */
     public void setValue(final String paramValueString) throws ParserException {
-        setValue(parseList(paramValueString, listType));
+        setValue(ParameterList.parseList(paramValueString, listType));
     }
 
     /**
@@ -265,6 +267,7 @@ public class ParameterList extends Parameter {
      */
     public void setValue(final Vector<Parameter> paramValue) {
         list = paramValue;
+        setValueAssigned(true);
     }
 
     /**
@@ -320,7 +323,8 @@ public class ParameterList extends Parameter {
      * 
      * @throws ParserException If there is a problem encountered parsing the list element values.
      */
-    private Vector<Parameter> parseList(final String listString, final int listContentsType) throws ParserException {
+    private static final Vector<Parameter> parseList(final String listString, final int listContentsType)
+            throws ParserException {
         final Vector<String> strList = new Vector<String>();
 
         int lastCommaIndex = -1;
