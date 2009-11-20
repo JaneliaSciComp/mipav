@@ -2991,8 +2991,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             table.put(new ParameterExternalImage("reference_image"));
 
             table.put(new ParameterBoolean("do_use_weight_images", false));
-            table.put(new ParameterExternalImage("input_weight_image"));
-            table.put(new ParameterExternalImage("reference_weight_image"));
+            Parameter p = new ParameterExternalImage("input_weight_image");
+            p.setParentCondition(table.getParameter("do_use_weight_images"), "true");
+            table.put(p);
+            p = new ParameterExternalImage("reference_weight_image");
+            p.setParentCondition(table.getParameter("do_use_weight_images"), "true");
+            table.put(p);
 
             table.put(new ParameterInt("degrees_of_freedom", 12));
             table.put(new ParameterInt("initial_interpolation_type", 0));
@@ -3007,8 +3011,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             table.put(new ParameterBoolean("do_subsample", true));
             table.put(new ParameterBoolean("do_use_fast_mode", true));
             table.put(new ParameterBoolean("do_calc_COG", true));
+
             table.put(new ParameterInt("out_of_bounds_index", 0));
-            table.put(new ParameterFloat("fill_value", 0));
+            p = new ParameterFloat("fill_value", 0);
+            p.setParentCondition(table.getParameter("out_of_bounds_index"), "2");
+            table.put(p);
+
             table.put(new ParameterInt("bracket_bound", 10));
             table.put(new ParameterInt("max_iterations", 2));
             table.put(new ParameterInt("num_minima", 3));

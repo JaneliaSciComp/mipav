@@ -121,7 +121,12 @@ public abstract class Parameter {
     private Parameter parent = null;
 
     /** The value to check the parent Parameter against before enabling this Parameter, in string format. */
-    protected String parentValueString = null;
+    private String parentValueString = null;
+
+    /**
+     * Whether the parameter needs to be given a value by the user in the ActionDiscovery system.
+     */
+    private boolean isOptional = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -259,7 +264,7 @@ public abstract class Parameter {
      * 
      * @param p The parent Parameter of this Parameter.
      */
-    public void setParent(final Parameter p) {
+    protected void setParent(final Parameter p) {
         parent = p;
     }
 
@@ -268,7 +273,7 @@ public abstract class Parameter {
      * 
      * @return The parent Parameter.
      */
-    public Parameter getParent() {
+    protected Parameter getParent() {
         return parent;
     }
 
@@ -279,10 +284,17 @@ public abstract class Parameter {
      * @return True if this Parameter should be displayed, false if the conditions for this parameter have not been met.
      */
     public boolean isParentConditionValueMet() {
+        // if no parent and no parent value are set, there are no conditions, so go ahead
+        if (getParent() == null && getParentConditionValueString() == null) {
+            return true;
+        }
+
+        // if both of the parent variables are set, check the value
         if (getParent() != null && getParentConditionValueString() != null) {
             return getParent().getValueString().equals(getParentConditionValueString());
         }
 
+        // either the parent or the parent value are not set
         return false;
     }
 
@@ -292,7 +304,7 @@ public abstract class Parameter {
      * 
      * @return The value to check the parent Parameter against before enabling this Parameter, in string format.
      */
-    public String getParentConditionValueString() {
+    protected String getParentConditionValueString() {
         return parentValueString;
     }
 
@@ -304,10 +316,42 @@ public abstract class Parameter {
      * 
      * @throws ParserException If there the new value is invalid for this type of Parameter.
      */
-    public void setParentConditionValue(final String s) throws ParserException {
+    protected void setParentConditionValue(final String s) throws ParserException {
         // create a dummy parameter to see if it generates a ParserException
         ParameterFactory.parseParameter("test_param", getParent().getTypeString(), s);
 
         parentValueString = s;
+    }
+
+    /**
+     * Changes the parent Parameter and parent Parameter condition value to test against when deciding whether to ask
+     * for a value for this Parameter when using the ActionDiscovery interface.
+     * 
+     * @param p The parent Parameter of this Parameter.
+     * @param s The value to check the parent Parameter against before enabling this Parameter, in string format.
+     * 
+     * @throws ParserException If there the new value is invalid for this type of Parameter.
+     */
+    public void setParentCondition(final Parameter p, final String s) throws ParserException {
+        setParent(p);
+        setParentConditionValue(s);
+    }
+
+    /**
+     * Sets whether this parameter needs to be set by the user when using the ActionDiscovery system.
+     * 
+     * @param flag True if the parameter is optional.
+     */
+    public void setOptional(final boolean flag) {
+        isOptional = flag;
+    }
+
+    /**
+     * Returns whether this parameter needs to be set by the user when using the ActionDiscovery system.
+     * 
+     * @return True if the parameter is optional.
+     */
+    public boolean isOptional() {
+        return isOptional;
     }
 }

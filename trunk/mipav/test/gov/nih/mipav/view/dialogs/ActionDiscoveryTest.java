@@ -7,13 +7,15 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
-import java.util.Vector;
+import java.util.*;
 
 
 public class ActionDiscoveryTest {
     protected static BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
     protected static ViewUserInterface ui;
+
+    protected static final String inputImageFileName = "C:\\Users\\mccreedy\\Desktop\\images\\anon\\xml\\genormcorp2_cor_256x256x32.xml";
 
     public static void main(final String[] args) {
         // need to create the mipav VUI, which is required to do virtually anything else using mipav
@@ -44,7 +46,7 @@ public class ActionDiscoveryTest {
             System.exit(0);
         }
 
-        final boolean success = ActionDiscoveryTest.executeAction(classes.elementAt(actionChoice - 1));
+        ActionDiscoveryTest.executeAction(classes.elementAt(actionChoice - 1));
 
         // for (final Class<ActionDiscovery> c : classes) {
         // final boolean success = ActionDiscoveryTest.executeAction(c);
@@ -73,6 +75,12 @@ public class ActionDiscoveryTest {
         System.out.println("####################################################");
         System.out.println(dialog.getActionMetadata());
 
+        final Set<ActionMetadata.ImageRequirements> reqs = dialog.getActionMetadata().getInputImageRequirements();
+        if (reqs.contains(ActionMetadata.ImageRequirements.NDIM_4)) {
+            System.err.println("The action you selected requires a 4D image.  This is not currently supported.");
+            return false;
+        }
+
         // get the input and output parameters of the dialog (which are not filled with any values)
         final ParameterTable inputParams = dialog.createInputParameters();
         final ParameterTable outputParams = dialog.createOutputParameters();
@@ -93,6 +101,11 @@ public class ActionDiscoveryTest {
             String val = null;
             int curImageNum = 1;
             for (final Parameter param : inputParams.getParameters()) {
+                if ( !param.isParentConditionValueMet()) {
+                    System.err.println("Parent condition not met for parameter: " + param.convertToString());
+                    continue;
+                }
+
                 if (param.getType() != Parameter.PARAM_EXTERNAL_IMAGE && param.getType() != Parameter.PARAM_IMAGE) {
                     val = ActionDiscoveryTest.promptForParameterValue(param);
 
@@ -111,13 +124,12 @@ public class ActionDiscoveryTest {
 
                     // open a pre-determined image from disk (do not open the file chooser or put the image into a
                     // frame)
-                    final String inputImageFileName = "C:\\Users\\mccreedy\\Desktop\\images\\anon\\xml\\genormcorp2_cor_256x256x32.xml";
                     final ViewOpenFileUI openFile = new ViewOpenFileUI(false);
                     openFile.setPutInFrame(false);
-                    final String inputImageName = openFile.open(inputImageFileName, false, null);
+                    final String inputImageName = openFile.open(ActionDiscoveryTest.inputImageFileName, false, null);
 
                     if (inputImageName == null) {
-                        System.err.println("Could not open input image: " + inputImageFileName);
+                        System.err.println("Could not open input image: " + ActionDiscoveryTest.inputImageFileName);
                         System.exit(1);
                     }
 
@@ -153,8 +165,10 @@ public class ActionDiscoveryTest {
             System.out.println("Post-exectuion Output image name:");
             System.out.println(outputImageName);
 
-            // show the result image
-            new ViewJFrameImage(ActionDiscoveryTest.ui.getRegisteredImageByName(outputImageName));
+            // show the result image if the dialog hasn't already
+            if (ActionDiscoveryTest.ui.getRegisteredImageByName(outputImageName).getParentFrame() == null) {
+                new ViewJFrameImage(ActionDiscoveryTest.ui.getRegisteredImageByName(outputImageName));
+            }
 
             return true;
         }
@@ -172,6 +186,7 @@ public class ActionDiscoveryTest {
             switch (param.getType()) {
                 case Parameter.PARAM_BOOLEAN:
                 case Parameter.PARAM_DOUBLE:
+                case Parameter.PARAM_FILE:
                 case Parameter.PARAM_FLOAT:
                 case Parameter.PARAM_INT:
                 case Parameter.PARAM_LONG:

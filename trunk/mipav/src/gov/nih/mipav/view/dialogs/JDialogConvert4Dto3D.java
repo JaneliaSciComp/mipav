@@ -11,7 +11,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
-import java.util.Vector;
+import java.util.*;
 
 
 /**
@@ -222,6 +222,10 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
 
             public String getName() {
                 return new String("Convert 4D to 3D");
+            }
+
+            public Set<ImageRequirements> getInputImageRequirements() {
+                return EnumSet.of(ImageRequirements.NDIM_4);
             }
         };
     }

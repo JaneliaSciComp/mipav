@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.view.MipavUtil;
 
+import java.util.*;
+
 
 public abstract class MipavActionMetadata implements ActionMetadata {
 
@@ -40,6 +42,10 @@ public abstract class MipavActionMetadata implements ActionMetadata {
         return "http://mipav.cit.nih.gov/";
     }
 
+    public Set<ImageRequirements> getInputImageRequirements() {
+        return EnumSet.noneOf(ImageRequirements.class);
+    }
+
     public String toString() {
         String str = "";
 
@@ -53,6 +59,7 @@ public abstract class MipavActionMetadata implements ActionMetadata {
         str += "Website:\t\t" + getWebsite() + "\n";
         str += "Authors:\t\t" + getAuthorsString() + "\n";
         str += "Affiliation:\t\t" + getAffiliationString() + "\n";
+        str += "Input Image Reqs:\t" + getInputImageRequirementsString() + "\n";
 
         return str;
     }
@@ -69,6 +76,19 @@ public abstract class MipavActionMetadata implements ActionMetadata {
         String str = getAffiliation()[0];
         for (int i = 1; i < getAffiliation().length; i++) {
             str += ", " + getAffiliation()[i];
+        }
+        return str;
+    }
+
+    public String getInputImageRequirementsString() {
+        String str = "";
+        final Set<ImageRequirements> reqs = getInputImageRequirements();
+        for (final ImageRequirements r : reqs) {
+            if (str.equals("")) {
+                str += r.description;
+            } else {
+                str += ", " + r.description;
+            }
         }
         return str;
     }

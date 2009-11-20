@@ -11,7 +11,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Vector;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -518,6 +518,10 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
 
             public String getName() {
                 return new String("Extract 3D subset from 4D volume");
+            }
+
+            public Set<ImageRequirements> getInputImageRequirements() {
+                return EnumSet.of(ImageRequirements.NDIM_4);
             }
         };
     }
