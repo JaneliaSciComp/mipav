@@ -172,7 +172,8 @@ public class ActionDiscoveryTest {
             System.out.println(outputImageName);
 
             // show the result image if the dialog hasn't already
-            if (ActionDiscoveryTest.ui.getRegisteredImageByName(outputImageName).getParentFrame() == null) {
+            if (outputImageName != null
+                    && ActionDiscoveryTest.ui.getRegisteredImageByName(outputImageName).getParentFrame() == null) {
                 new ViewJFrameImage(ActionDiscoveryTest.ui.getRegisteredImageByName(outputImageName));
             }
 
