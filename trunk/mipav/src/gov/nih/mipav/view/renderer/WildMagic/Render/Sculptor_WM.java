@@ -15,6 +15,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
 
 import javax.media.opengl.GLCanvas;
 import javax.swing.JFileChooser;
@@ -359,6 +361,11 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         return m_aucSculptImage;
     }
 
+    public void setSculptImage(byte[] abImage)
+    {
+        m_aucSculptImage = abImage;
+    }
+
     /**
      * Initialize the Mouse listener. Note - this function should be called once per instance only, as it sets up the
      * MouseMotionListener and MouseListener.
@@ -411,6 +418,12 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
     public boolean IsSculptDrawn()
     {
         return m_bSculptDrawn;
+    }
+
+
+    public void setSculptDrawn(boolean value)
+    {
+        m_bSculptDrawn = value;
     }
 
     /* (non-Javadoc)
@@ -1635,7 +1648,5 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
             }
         }
         m_bSculptDrawn = true;
-    }
-
-
+    }    
 }

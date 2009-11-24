@@ -401,6 +401,29 @@ public class JPanelSculptor_WM extends JInterfaceBase
         {
             rayBasedRenderWM.setDrawingShape(shape);
         }
+        if ( shape == Sculptor_WM.LINES )
+        {
+            lineButton.setSelected(true);
+            lineButton.setBorderPainted(true);
+            rectButton.setSelected(false);
+            rectButton.setBorderPainted(false);
+        }
+        else
+        {
+            rectButton.setSelected(true);
+            rectButton.setBorderPainted(true);
+            lineButton.setSelected(false);
+            lineButton.setBorderPainted(false);
+        }
+    }
+    
+    public int getSculptShape()
+    {
+        if ( lineButton.isSelected() )
+        {
+            return Sculptor_WM.LINES;
+        }
+        return Sculptor_WM.RECTANGLE;
     }
 
     /**

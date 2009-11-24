@@ -9,6 +9,17 @@ import WildMagic.LibGraphics.Shaders.Program;
  */
 public abstract class VolumeClipEffect extends ShaderEffect
 {
+    public static final int CLIP_X = 0;
+    public static final int CLIP_X_INV = 1;
+    public static final int CLIP_Y = 2;
+    public static final int CLIP_Y_INV = 3;
+    public static final int CLIP_Z = 4;
+    public static final int CLIP_Z_INV = 5;
+    public static final int CLIP_EYE = 6;
+    public static final int CLIP_EYE_INV = 7;
+    public static final int CLIP_A = 8;
+    public static final int MAX_CLIP_PLANES = 9;
+    
     /** Axis-aligned clip plane shader parameter names: */
     private final static String[] m_akClip =
         new String[]{ "clipXInv", "clipX", "clipYInv", "clipY", "clipZInv", "clipZ" };
@@ -19,23 +30,18 @@ public abstract class VolumeClipEffect extends ShaderEffect
     /** Turn clipping on/off per-axis aligned clip plane, eye-clip planes and arbitrary plane. */
     protected boolean[] m_afClipAll = { false, false, false, false, false, false, false, false, false };
     
-    /** stores the axis-aligned clip plane information: */
+    /** stores t=clip plane information: */
     protected float[][] m_aafClipData =  { { 0, 0, 0, 0 },
                                                           { 1, 1, 0, 0 },
                                                           { 0, 0, 0, 0 },
                                                           { 1, 1, 0, 0 },
                                                           { 0, 0, 0, 0 },
-                                                          { 1, 1, 0, 0 } };
+                                                          { 1, 1, 0, 0 },
+                                                          { 0, 0, 0, 0 },
+                                                          { 0, 0, 0, 0 },
+                                                          { 0, 0, 0, 0 }
+                                                          };
 
-    /** stores the eye clip plane information: */
-    protected float[] m_afClipEyeData = {0f,0f,0f,0f};
-
-
-    /** stores the inverse-eye clip plane information: */
-    protected float[] m_afClipEyeInvData = {0f,0f,0f,0f};
-    
-    /** stores the arbitrary clip plane information: */
-    protected float[] m_afClipArbData = {0f,0f,0f,0f};
 
 
     /* (non-Javadoc)
@@ -56,15 +62,15 @@ public abstract class VolumeClipEffect extends ShaderEffect
         }       
         if ( pkCProgram.GetUC("clipArb") != null ) 
         {
-            pkCProgram.GetUC("clipArb").SetDataSource(m_afClipArbData);
+            pkCProgram.GetUC("clipArb").SetDataSource(m_aafClipData[CLIP_A]);
         }
         if ( pkCProgram.GetUC("clipEye") != null ) 
         {
-            pkCProgram.GetUC("clipEye").SetDataSource(m_afClipEyeData);
+            pkCProgram.GetUC("clipEye").SetDataSource(m_aafClipData[CLIP_EYE]);
         }
         if ( pkCProgram.GetUC("clipEyeInv") != null ) 
         {
-            pkCProgram.GetUC("clipEyeInv").SetDataSource(m_afClipEyeInvData);
+            pkCProgram.GetUC("clipEyeInv").SetDataSource(m_aafClipData[CLIP_EYE_INV]);
         }
         super.OnLoadPrograms( iPass, pkVProgram, pkPProgram, pkCProgram );
     }
@@ -78,9 +84,6 @@ public abstract class VolumeClipEffect extends ShaderEffect
         m_afDoClip = null;
         m_afClipAll = null;
         m_aafClipData = null;
-        m_afClipEyeData = null;
-        m_afClipEyeInvData = null;
-        m_afClipArbData = null;
         super.dispose();
     }
 
@@ -97,17 +100,17 @@ public abstract class VolumeClipEffect extends ShaderEffect
                 SetClip( i, m_aafClipData[i][0], m_afClipAll[i] );
             }
         }
-        if ( m_afClipEyeData != null )
+        if ( m_aafClipData[CLIP_EYE] != null )
         {
-            SetClipEye(m_afClipEyeData, m_afClipAll[6]);
+            SetClipEye(m_aafClipData[CLIP_EYE], m_afClipAll[6]);
         }
-        if ( m_afClipEyeInvData != null )
+        if ( m_aafClipData[CLIP_EYE_INV] != null )
         {
-            SetClipEyeInv(m_afClipEyeInvData, m_afClipAll[7]);
+            SetClipEyeInv(m_aafClipData[CLIP_EYE_INV], m_afClipAll[7]);
         }
-        if ( m_afClipArbData != null )
+        if ( m_aafClipData[CLIP_A] != null )
         {
-            SetClipArb(m_afClipArbData, m_afClipAll[8]);
+            SetClipArb(m_aafClipData[CLIP_A], m_afClipAll[8]);
         }
     }
     /**
@@ -130,7 +133,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
         m_afClipAll[8] = bEnable;
         for ( int i = 0; i < 4; i++ )
         {
-            m_afClipArbData[i] = afEquation[i];
+            m_aafClipData[CLIP_A][i] = afEquation[i];
         }
         EnableClip();
     }
@@ -143,7 +146,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
         m_afClipAll[6] = bEnable;
         for ( int i = 0; i < 4; i++ )
         {
-            m_afClipEyeData[i] = afEquation[i];
+            m_aafClipData[CLIP_EYE][i] = afEquation[i];
         }
         EnableClip();
     }
@@ -156,7 +159,7 @@ public abstract class VolumeClipEffect extends ShaderEffect
         m_afClipAll[7] = bEnable;
         for ( int i = 0; i < 4; i++ )
         {
-            m_afClipEyeInvData[i] = afEquation[i];
+            m_aafClipData[CLIP_EYE_INV][i] = afEquation[i];
         }
         EnableClip();
     }

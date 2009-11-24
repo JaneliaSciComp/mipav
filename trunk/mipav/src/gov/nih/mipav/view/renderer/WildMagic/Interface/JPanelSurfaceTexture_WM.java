@@ -216,15 +216,6 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
     }
 
     /**
-     * Returns whether the TriMesh is to be displayed with the ModelImage data as a texture or not.
-     *
-     * @return  true when the TriMesh is texture-mapped, false otherwise.
-     */
-    public boolean getEnabled() {
-        return false;//(mTextureStatus == TEXTURE);
-    }
-
-    /**
      * Returns The SurfaceRender ModelImage imageA for linking to the LUT.
      * @return  mImageALink, for identifying the ModelLUT associated with mImageA.
      */
@@ -266,6 +257,41 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
         return mRGBSeparate;
     }
 
+    public ModelLUT getSeparateLUT()
+    {
+        return mLUTSeparate;
+    }
+
+    public void setSeparateLUT(ModelLUT kLUT)
+    {
+        if ( kLUT != null )
+        {
+            mLUTSeparate = kLUT;
+            initLUT();
+            m_kSurfacePanel.SetLUTNew( mLUTSeparate, mRGBSeparate );
+            m_kSurfacePanel.ImageAsTexture(mImageAsTextureCheck.isSelected(),
+                    mNewImageRadioButton.isSelected(),
+                    mNewLUTRadioButton.isSelected() );
+        }
+    }
+    public ModelRGB getSeparateRGBT()
+    {
+        return mRGBSeparate;
+    }
+
+    public void setSeparateRGBT(ModelRGB kRGBT)
+    {
+        if ( kRGBT != null )
+        {
+            mRGBSeparate = kRGBT;
+            initLUT();
+            m_kSurfacePanel.SetLUTNew( mLUTSeparate, mRGBSeparate );
+            m_kSurfacePanel.ImageAsTexture(mImageAsTextureCheck.isSelected(),
+                    mNewImageRadioButton.isSelected(),
+                    mNewLUTRadioButton.isSelected() );
+        }
+    }
+    
     /**
      * Returns The ModelImage that is the data source for the Texture3D.
      * @return  mImageA, the ModelImage used to generate the Texture3D
@@ -273,7 +299,76 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
     public ModelImage getTextureImage() {
         return mImageA;
     }
+    
+    public String getImageFileName()
+    {
+        if ( mImageFileName == null )
+        {
+            return null;
+        }
+        return new String(mImageFileName);
+    }
+    
+    public String getImageDir()
+    {
+        if ( mImageDirName == null )
+        {
+            return null;
+        }
+        return new String(mImageDirName);
+    }
 
+    public void setTextureImage(String kDir, String kFileName ) {
+        if ( kDir != null && kFileName != null )
+        {
+            mImageFileName = kFileName;
+            mImageDirName = kDir;
+            mImageFileNameLabel.setText(mImageFileName);
+            loadingImage();
+        }
+    }
+
+    
+    public boolean getTextureImageOn() {
+        return mNewImageRadioButton.isSelected();
+    }
+    
+    public void setTextureImageOn(boolean bOn) {
+        mNewImageRadioButton.setSelected(bOn);
+        m_kSurfacePanel.ImageAsTexture(mImageAsTextureCheck.isSelected(),
+                mNewImageRadioButton.isSelected(),
+                mNewLUTRadioButton.isSelected() );
+    }
+    
+    public boolean getTextureLUTOn() {
+        return mNewLUTRadioButton.isSelected();
+    }
+    
+    public void setTextureLUTOn(boolean bOn) {
+        mNewLUTRadioButton.setSelected(bOn);
+        m_kSurfacePanel.ImageAsTexture(mImageAsTextureCheck.isSelected(),
+                mNewImageRadioButton.isSelected(),
+                mNewLUTRadioButton.isSelected() );
+    }
+
+    public boolean getTextureOn()
+    {
+        return mImageAsTextureCheck.isSelected();
+    }
+
+    public void setTextureOn(boolean bOn)
+    {
+        mImageAsTextureCheck.setSelected(bOn);
+        m_kSurfacePanel.ImageAsTexture(mImageAsTextureCheck.isSelected(),
+                mNewImageRadioButton.isSelected(),
+                mNewLUTRadioButton.isSelected() );
+    }
+
+    public boolean getEnabled()
+    {
+        return mImageAsTextureCheck.isEnabled();
+    }
+    
     /**
      * Enables or disables the interface. Called when a surface is added/removed from the JPanelSurface class.
      * @param  flag  when true enable the interface, when false disable the interface.
@@ -382,7 +477,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
         mImageFileNameLabel = new JLabel();
         mImageFileNameLabel.setPreferredSize(new Dimension(130, 21));
         mImageFileNameLabel.setBorder(BorderFactory.createLoweredBevelBorder());
-        mImageFileName = mImageA.getImageName();
+        mImageFileName = mImageA.getImageFileName();
         mImageFileNameLabel.setText(mImageFileName);
         imagePanel.add(mImageFileNameLabel, gbc);
         
@@ -484,9 +579,11 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
 
             /* Create LUT */
             int[] dimExtentsLUT = { 4, 256 };
-            mLUTSeparate = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-            mLUTSeparate.resetTransferLine(fMin, fMin, fMax, fMax);
-
+            if ( mLUTSeparate == null )
+            {
+                mLUTSeparate = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+                mLUTSeparate.resetTransferLine(fMin, fMin, fMax, fMax);
+            }
             /* Remove old LUT if it exists: */
             if (mHistoLUT != null) {
                 mainPanel.remove(mHistoLUT.getMainPanel());
@@ -528,7 +625,10 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
 
             /* Create LUT */
             int[] dimExtentsLUT = { 4, 256 };
-            mRGBSeparate = new ModelRGB(dimExtentsLUT);
+            if ( mRGBSeparate == null )
+            {
+                mRGBSeparate = new ModelRGB(dimExtentsLUT);
+            }
 
             /* Remove old lut if it exists: */
             if (mHistoRGB != null) {
@@ -571,7 +671,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
             fileIO.setQuiet(true);
 
             mImageA = fileIO.readImage(mImageFileName, mImageDirName, false, null);
-            mImageFileName = mImageA.getImageName();
+            mImageFileName = mImageA.getImageFileName();
             mImageFileNameLabel.setText(mImageFileName);
             initLUT();
             mainPanel.updateUI();

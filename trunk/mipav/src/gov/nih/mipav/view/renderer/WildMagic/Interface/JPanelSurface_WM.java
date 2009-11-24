@@ -9,6 +9,7 @@ import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.dialogs.JDialogSmoothMesh;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.Decimate.Mesh;
 import gov.nih.mipav.view.renderer.WildMagic.Decimate.TriangleMesh;
 
 import java.awt.BorderLayout;
@@ -159,9 +160,6 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** Displays the volume of triangle. */
     private JTextField volumeText;
 
-    /** List of TriMeshes */
-    private Vector<TriMesh> m_kMeshes = new Vector<TriMesh>();
-
     /** Polyline counter list <index, groupID> */
     private DefaultListModel polylineCounterList = new DefaultListModel();
     
@@ -173,6 +171,9 @@ public class JPanelSurface_WM extends JInterfaceBase
     
     /** triangle mesh for decimation. */
     private TriangleMesh[] tmesh;
+    
+    private Vector<SurfaceState> m_akSurfaceStates = new Vector<SurfaceState>();
+    
     
     /**
      * Constructor.
@@ -297,21 +298,43 @@ public class JPanelSurface_WM extends JInterfaceBase
         }
         
     }
-     
+
+    public Vector<SurfaceState> getSurfaceStates()
+    {
+        return m_akSurfaceStates;
+    }
+
+    public void setSurfaceStates(Vector<SurfaceState> kSurfaces)
+    {
+        DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+        int iSize = kList.getSize();
+        m_akSurfaceStates = kSurfaces;
+        for ( int i = 0; i < kSurfaces.size(); i++ )
+        {            
+            kList.add( iSize + i, m_akSurfaceStates.get(i).Name );
+            m_kVolumeViewer.addSurface( m_akSurfaceStates.get(i) );
+            updateSelected(i);
+        }
+        surfaceList.setSelectedIndex(kSurfaces.size());
+        setElementsEnabled(true);
+    }
+    
+    
     /**
      * Add surfaces to the Volume Tri-Planar renderer.
      * @param akSurfaces new surfaces.
      */
     public void addSurfaces( TriMesh[] akSurfaces )
     {
-        m_kVolumeViewer.addSurface(akSurfaces);
-
         DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
         int iSize = kList.getSize();
         for ( int i = 0; i < akSurfaces.length; i++ )
         {
             kList.add( iSize + i, akSurfaces[i].GetName() );
-            m_kMeshes.add(akSurfaces[i]);
+            
+            SurfaceState kSurface = new SurfaceState( akSurfaces[i], akSurfaces[i].GetName() );
+            m_akSurfaceStates.add( kSurface );        
+            m_kVolumeViewer.addSurface( kSurface );
         }
         surfaceList.setSelectedIndex(iSize);
         setElementsEnabled(true);
@@ -330,6 +353,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         {
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
+                m_akSurfaceStates.get( aiSelected[i] ).Fill = mode;
                 m_kVolumeViewer.setPolygonMode( (String)kList.elementAt(aiSelected[i]), mode);
             }
         }
@@ -348,13 +372,13 @@ public class JPanelSurface_WM extends JInterfaceBase
     		}
     		tmesh = null;
     	}
-    	
+    	/*
     	if (  m_kMeshes != null ) {
     		for ( i = 0; i < m_kMeshes.size(); i++ ) {
     			m_kMeshes.set(i, null);
     		}
     		m_kMeshes = null;
-    	}
+    	} */
     	
     	if ( m_kSurfacePaint != null ) {
     		m_kSurfacePaint.dispose();
@@ -362,8 +386,6 @@ public class JPanelSurface_WM extends JInterfaceBase
     	}
     	
     }
-
-
 
     /**
      * Enables/Disables the SurfacePaint per-vertex functions.
@@ -466,10 +488,13 @@ public class JPanelSurface_WM extends JInterfaceBase
             int[] aiSelected = surfaceList.getSelectedIndices();
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
+                ColorRGB kColor = new ColorRGB( _color.getRed()/255.0f, 
+                        _color.getGreen()/255.0f,
+                        _color.getBlue()/255.0f );
+                m_akSurfaceStates.get(aiSelected[i]).SurfaceColor = 
+                    new Color( _color.getRed(), _color.getGreen(), _color.getBlue() );
                 m_kVolumeViewer.setColor( (String)kList.elementAt(aiSelected[i]),
-                        new ColorRGB( _color.getRed()/255.0f, 
-                                _color.getGreen()/255.0f,
-                                _color.getBlue()/255.0f ));
+                        kColor, true );
             }
         }
     }
@@ -533,7 +558,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         if ( m_kVolumeViewer != null )
         {
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-            m_kVolumeViewer.setMaterial( (String)kList.elementAt(iIndex), kMaterial);
+            m_akSurfaceStates.get(iIndex).Material = kMaterial;
+            m_kVolumeViewer.setMaterial( (String)kList.elementAt(iIndex), kMaterial, true);
         }
     }
 
@@ -567,16 +593,15 @@ public class JPanelSurface_WM extends JInterfaceBase
             int numTriangles = 0;
             // construct the lists of items whose LODs need to be changed
             int[] aiSelected = surfaceList.getSelectedIndices();
-            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             boolean found = false;
             if ( aiSelected.length == 0) return;
             
             for (int i = 0; i < aiSelected.length; i++) {
 
-                if ( m_kMeshes.get(aiSelected[i]) instanceof ClodMesh )
+                if ( m_akSurfaceStates.get(aiSelected[i]).Surface instanceof ClodMesh )
                 {
-                    ClodMesh kCMesh = (ClodMesh)m_kMeshes.get(aiSelected[i]);
+                    ClodMesh kCMesh = (ClodMesh)m_akSurfaceStates.get(aiSelected[i]).Surface;
                     int iValue = (int)(fValue * kCMesh.GetMaximumLOD());
                     kCMesh.TargetRecord( iValue );
                     kCMesh.SelectLevelOfDetail();
@@ -585,7 +610,7 @@ public class JPanelSurface_WM extends JInterfaceBase
                 }
                 else 
                 {
-                    TriMesh kMesh = m_kMeshes.get(aiSelected[i]);
+                    TriMesh kMesh = m_akSurfaceStates.get(aiSelected[i]).Surface;
                     
                     try {
                     	 for ( int j = 0; j < tmesh.length; j++ ) {
@@ -602,12 +627,13 @@ public class JPanelSurface_WM extends JInterfaceBase
 			                   	 kMaterial.Specular = new ColorRGB(ColorRGB.WHITE);
 			                     kMaterial.Shininess = 32f;
 			            		 mesh.AttachGlobalState(kMaterial);
-			                     akSurfaces[i] = mesh;
-			                     akSurfaces[i].UpdateMS();
+			            		 mesh.UpdateMS();
+			            		 SurfaceState kState = new SurfaceState( mesh, mesh.GetName() );
 			
 			                     m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
+			                     m_kVolumeViewer.addSurface(kState);
 			
-			                     m_kMeshes.set(aiSelected[i], mesh);
+			                     m_akSurfaceStates.get(aiSelected[i]).Surface = mesh;
 			                     
 			                     numTriangles = tmesh[j].getDecimatedIBuffer().GetIndexQuantity();
 		                     } 
@@ -623,7 +649,6 @@ public class JPanelSurface_WM extends JInterfaceBase
             if ( found ) {
 	            numTriangles /= 3;
 	            triangleText.setText("" + numTriangles);
-	            m_kVolumeViewer.addSurface(akSurfaces);
 	            // keep the current selected mesh type: fill, points, or lines. 
 	            changePolyMode(polygonIndexToMode(polygonModeCB.getSelectedIndex()));
             }
@@ -665,37 +690,85 @@ public class JPanelSurface_WM extends JInterfaceBase
      */
     public void valueChanged(ListSelectionEvent kEvent)
     {
-    	MaterialState kMaterial;
-    	float opacityValue;
         if ( m_kVolumeViewer != null )
         {
             int[] aiSelected = surfaceList.getSelectedIndices();
             if ( aiSelected.length == 1 )
             {
-                DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-                
-                triangleText.setText(String.valueOf( m_kMeshes.get(aiSelected[0]).GetTriangleQuantity() ) );
-                volumeText.setText(String.valueOf( m_kVolumeViewer.getVolume( (String)kList.elementAt(aiSelected[0]) ) ) );
-                areaText.setText(String.valueOf( m_kVolumeViewer.getSurfaceArea( (String)kList.elementAt(aiSelected[0]) ) ) );              
-                kMaterial = m_kVolumeViewer.getMaterial( (String)kList.elementAt(aiSelected[0]));
-                colorButton.setBackground( new Color(kMaterial.Diffuse.R, kMaterial.Diffuse.G, kMaterial.Diffuse.B) );
-                opacityValue = m_kVolumeViewer.getOpacity( (String)kList.elementAt(aiSelected[0]));
-                opacitySlider.setValue((int)(opacityValue * 100));
-                
-                if ( m_kMeshes.get(aiSelected[0]) instanceof ClodMesh )
-                {
-                    decimateButton.setEnabled(false);
-                    detailSlider.setEnabled(true);
-                    detailLabel.setEnabled(true);
-                }
-                else
-                {
-                    decimateButton.setEnabled(true);
-                    detailSlider.setEnabled(false);
-                    detailLabel.setEnabled(false);                    
-                }
+                setSelected( aiSelected[0] );
             }
         }
+    }
+    
+    public int getSelected()
+    {
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        if ( aiSelected.length > 0 )
+        {
+            return aiSelected[0];
+        }
+        return 0;
+    }
+    
+    public void setSelected( int i )
+    {
+        if ( m_akSurfaceStates.size() <= i )
+        {
+            return;
+        }
+        surfaceList.setSelectedIndex(i);
+        SurfaceState kState = m_akSurfaceStates.get(i);
+        triangleText.setText(String.valueOf( kState.Surface.GetTriangleQuantity() ) );
+        volumeText.setText(String.valueOf( m_kVolumeViewer.getVolume( kState.Name ) ) );
+        areaText.setText(String.valueOf( m_kVolumeViewer.getSurfaceArea( kState.Name ) ) );  
+
+        colorButton.setBackground( kState.SurfaceColor );
+        
+        opacitySlider.setValue((int)(kState.Opacity * 100));
+        surfaceTransparencyCB.setSelected( kState.TransparencyOn );
+        
+        polygonModeCB.setSelectedIndex( fillModeToPolygonIndex( kState.Fill ) );
+        
+        surfacePickableCB.setSelected( kState.Pickable );
+        
+        surfaceClipCB.setSelected( kState.Clip );
+        
+        surfaceBackFaceCB.setSelected( kState.BackfaceCull );
+
+        if ( kState.Surface instanceof ClodMesh )
+        {
+            decimateButton.setEnabled(false);
+            detailSlider.setEnabled(true);
+            detailLabel.setEnabled(true);
+        }
+        else
+        {
+            decimateButton.setEnabled(true);
+            detailSlider.setEnabled(false);
+            detailLabel.setEnabled(false);                    
+        }
+    }
+    
+    private void updateSelected( int i )
+    {
+        SurfaceState kState = m_akSurfaceStates.get(i); 
+
+        colorButton.setBackground( kState.SurfaceColor );
+        m_kVolumeViewer.setColor( kState.Name, 
+                new ColorRGB( kState.SurfaceColor.getRed()/255.0f,
+                        kState.SurfaceColor.getGreen()/255.0f,
+                        kState.SurfaceColor.getBlue()/255.0f ), false );
+        m_kVolumeViewer.setMaterial( kState.Name, kState.Material, false );
+        
+        m_kVolumeViewer.setTransparency( kState.Name, kState.Opacity );
+        
+        m_kVolumeViewer.setPolygonMode( kState.Name, kState.Fill );
+        
+        m_kVolumeViewer.setPickable( kState.Name, kState.Pickable );
+        
+        m_kVolumeViewer.setClipping( kState.Name, kState.Clip );
+        
+        m_kVolumeViewer.setBackface( kState.Name, kState.BackfaceCull );
     }
 
     /** 
@@ -828,35 +901,9 @@ public class JPanelSurface_WM extends JInterfaceBase
             tmesh = new TriangleMesh[ aiSelected.length ];
             for (int i = 0; i < aiSelected.length; i++) {
             	
-                TriMesh kMesh = m_kMeshes.get(aiSelected[i]);
+                TriMesh kMesh = m_akSurfaceStates.get(aiSelected[0]).Surface;
                 VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
                 IndexBuffer kIBuffer = new IndexBuffer( kMesh.IBuffer);
-                
-                
-                /*
-                ClodCreator decimator = new ClodCreator(kVBuffer, kIBuffer);
-               
-                vertices = decimator.getVertices();
-                indices = decimator.getIndices();
-                record = decimator.getRecords();
-               
-        		int iVQuantity = kVBuffer.GetVertexQuantity();
-                
-                int m_iTQuantity = kIBuffer.GetIndexQuantity()/3;
-                int[] m_aiConnect = kIBuffer.GetData();
-                indices.get(m_aiConnect);
-                kIBuffer = new IndexBuffer(m_aiConnect.length, m_aiConnect);
-                
-                WildMagic.LibGraphics.SceneGraph.lod.CollapseRecordArray records = new WildMagic.LibGraphics.SceneGraph.lod.CollapseRecordArray(record.length, record);
-                WildMagic.LibGraphics.SceneGraph.lod.ClodMesh kClod = new WildMagic.LibGraphics.SceneGraph.lod.ClodMesh(kVBuffer, kIBuffer, records);
-                
-                */
-                
-                // CreateClodMesh kDecimator = new CreateClodMesh(kVBuffer, kIBuffer);
-
-                // kDecimator.decimate();
-                // ClodMesh kClod = new ClodMesh(kVBuffer, kIBuffer, kDecimator.getRecords());
-                // kClod.SetName( kMesh.GetName() );
                 tmesh[i] = new TriangleMesh(kVBuffer, kIBuffer);
                 TriMesh mesh = new TriMesh(kVBuffer, kIBuffer);
                 mesh.SetName( kMesh.GetName() );
@@ -865,11 +912,11 @@ public class JPanelSurface_WM extends JInterfaceBase
 
                 m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
 
-                m_kMeshes.set(aiSelected[i], mesh);
+                m_akSurfaceStates.get(aiSelected[0]).Surface = mesh;
+                m_kVolumeViewer.addSurface(m_akSurfaceStates.get(aiSelected[0]));
             }
 
 
-            m_kVolumeViewer.addSurface(akSurfaces);
 
 
             decimateButton.setEnabled(false);
@@ -1277,6 +1324,18 @@ public class JPanelSurface_WM extends JInterfaceBase
                 return WireframeState.FillMode.FM_FILL;
         }
     }
+    
+    private int fillModeToPolygonIndex(WireframeState.FillMode mode) {
+        switch (mode) {
+            case FM_LINE:
+                return 1;
+            case FM_POINT:
+                return 2;
+            case FM_FILL:
+            default:
+                return 0;
+        }
+    }
 
     /**
      * Remove polyline from the render
@@ -1314,7 +1373,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         }
         for (int i = 0; i < aiSelected.length; i++) {
             kList.remove(aiSelected[i]);
-            m_kMeshes.remove(aiSelected[i]);
+            m_akSurfaceStates.remove(aiSelected[i]);
         }
     }
     
@@ -1335,7 +1394,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         {
             TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
             for (int i = 0; i < aiSelected.length; i++) {
-                akSurfaces[i] = m_kMeshes.get(aiSelected[i]);
+                akSurfaces[i] = m_akSurfaceStates.get(aiSelected[i]).Surface;
             }
             FileSurface_WM.saveSurfaces(m_kVolumeViewer.getImageA(), akSurfaces, kCommand );
         }
@@ -1350,6 +1409,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         {
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
+                m_akSurfaceStates.get( aiSelected[i] ).BackfaceCull = surfaceBackFaceCB.isSelected();
                 m_kVolumeViewer.setBackface( (String)kList.elementAt(aiSelected[i]),
                         surfaceBackFaceCB.isSelected());
             }
@@ -1366,6 +1426,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         {
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
+                m_akSurfaceStates.get( aiSelected[i] ).Clip = surfaceClipCB.isSelected();
                 m_kVolumeViewer.setClipping( (String)kList.elementAt(aiSelected[i]),
                                              surfaceClipCB.isSelected());
             }
@@ -1426,6 +1487,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         {
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
+                m_akSurfaceStates.get( aiSelected[i] ).Pickable = surfacePickableCB.isSelected();
                 m_kVolumeViewer.setPickable( (String)kList.elementAt(aiSelected[i]),
                         surfacePickableCB.isSelected());
             }
@@ -1440,11 +1502,14 @@ public class JPanelSurface_WM extends JInterfaceBase
 
         if ( m_kVolumeViewer != null )
         {
-            if ( surfaceTransparencyCB.isSelected() )
-            {
-                float opacity = opacitySlider.getValue() / 100.0f;
-                DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
-                for (int i = 0; i < aiSelected.length; i++) {
+            float opacity = opacitySlider.getValue() / 100.0f;
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            for (int i = 0; i < aiSelected.length; i++) {
+                m_akSurfaceStates.get( aiSelected[i] ).Opacity = opacity;
+
+                m_akSurfaceStates.get( aiSelected[i] ).TransparencyOn = surfaceTransparencyCB.isSelected();
+                if ( surfaceTransparencyCB.isSelected() )
+                {
                     m_kVolumeViewer.setTransparency( (String)kList.elementAt(aiSelected[i]), opacity);
                 }
             }
@@ -1483,7 +1548,7 @@ public class JPanelSurface_WM extends JInterfaceBase
             
             for (int i = 0; i < aiSelected.length; i++) {
 
-                TriMesh kMesh = m_kMeshes.get(aiSelected[i]);
+                TriMesh kMesh = m_akSurfaceStates.get(aiSelected[i]).Surface;
                 int iTarget = 0;
                 if (kMesh instanceof ClodMesh) {
                     iTarget = ((ClodMesh)kMesh).TargetRecord();

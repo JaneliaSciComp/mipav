@@ -43,6 +43,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurfaceTexture_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelVolume4D;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
@@ -114,6 +115,7 @@ import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 import com.sun.opengl.util.Animator;
 
@@ -177,7 +179,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     /** Flythough Move panel: */
     protected JPanelFlythruMove flythruMoveControl;
     /** Clipping user-interface panel: */
-    protected JPanelClip_WM clipBox;
+    protected JPanelClip_WM clipGUI;
     protected JPanelPositions positionsPanel;
     /** 3D Slice-view user-interface panel: */
     protected JPanelSlices_WM sliceGUI;
@@ -402,17 +404,17 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             insertTab("Sculpt", sculptGUI.getMainPanel());
             sculptGUI.getMainPanel().setVisible(true);
         } else if (command.equals("Clipping")) {
-            clipBox.getMainPanel().setVisible(true);
-            insertTab("Clip", clipBox.getMainPanel());
+            clipGUI.getMainPanel().setVisible(true);
+            insertTab("Clip", clipGUI.getMainPanel());
 
             setSize(getSize().width, getSize().height - 1);
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
             panelToolbar.getHeight();
-            clipBox.resizePanel(maxPanelWidth, height);
+            clipGUI.resizePanel(maxPanelWidth, height);
         } else if (command.equals("OpacityHistogram")) {
             insertTab("Opacity", m_kVolOpacityPanel.getMainPanel());
         } else if (command.equals("Opacity")) {
-            clipBox.getMainPanel().setVisible(true);
+            clipGUI.getMainPanel().setVisible(true);
             clipButton.setEnabled(true);
             clipPlaneButton.setEnabled(true);
             clipDisableButton.setEnabled(true);
@@ -426,7 +428,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             raycastRenderWM.displayVolumeSlices( rendererGUI.getSlicesCheck().isSelected() );
             raycastRenderWM.setVolumeBlend( rendererGUI.getBlendSliderValue()/100.0f );
         } else if ( command.equals( "VolumeRayCast") ) {
-            clipBox.getMainPanel().setVisible(true);
+            clipGUI.getMainPanel().setVisible(true);
             clipButton.setEnabled(true);
             clipPlaneButton.setEnabled(true);
             clipDisableButton.setEnabled(true);
@@ -457,20 +459,20 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         } else if (command.equals("Box")) {
             insertTab("Display", displayGUI.getMainPanel());
         } else if (command.equals("InvokeClipping")) {
-            clipBox.getMainPanel().setVisible(true);
-            clipBox.invokeClippingPlanes();
-            insertTab("Clip", clipBox.getMainPanel());
+            clipGUI.getMainPanel().setVisible(true);
+            clipGUI.invokeClippingPlanes();
+            insertTab("Clip", clipGUI.getMainPanel());
 
             setSize(getSize().width, getSize().height - 1);
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
             panelToolbar.getHeight();
-            clipBox.resizePanel(maxPanelWidth, height);
+            clipGUI.resizePanel(maxPanelWidth, height);
 
-            insertTab("Clip", clipBox.getMainPanel());
+            insertTab("Clip", clipGUI.getMainPanel());
         } else if (command.equals("DisableClipping")) {
-            clipBox.getMainPanel().setVisible(true);
-            clipBox.disable6Planes();
-            insertTab("Clip", clipBox.getMainPanel());
+            clipGUI.getMainPanel().setVisible(true);
+            clipGUI.disable6Planes();
+            insertTab("Clip", clipGUI.getMainPanel());
         } else if (command.equals("CropClipVolume")) {
             raycastRenderWM.cropClipVolume();
             setModified();
@@ -688,9 +690,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * Add TriMesh surfaces to the Volume Renderer.
      * @param akSurfaces new surfaces.
      */
-    public void addSurface(TriMesh[] akSurfaces)
+    public void addSurface( SurfaceState kSurface )
     {
-        raycastRenderWM.addSurface(akSurfaces);  
+        raycastRenderWM.addSurface( kSurface );  
         insertTab("Light", m_kLightsPanel.getMainPanel());
         m_kLightsPanel.enableLight(0, true);
         insertTab("Surface", surfaceGUI.getMainPanel());
@@ -721,8 +723,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * Build the clipping control panel for the surface render.
      */
     public void buildClipPanel() {
-        clipBox = new JPanelClip_WM(this);
-        maxPanelWidth = Math.max(clipBox.getPreferredSize().width, maxPanelWidth);
+        clipGUI = new JPanelClip_WM(this);
+        maxPanelWidth = Math.max(clipGUI.getPreferredSize().width, maxPanelWidth);
     }
 
     public void buildCustumBlendPanel() {
@@ -864,7 +866,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param  event  frame resize event
      */
     public synchronized void componentResized(ComponentEvent event) {
-        System.err.println( "componentResized" );
         resizePanel();
     }
 
@@ -976,7 +977,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param bDropper when true do dropper mode.
      * @param bPaintCan when true do paint can mode.
      * @param bErase when true erase.
-     */
+     * */
     public void enablePaint( ColorRGBA kPaintColor, int iBrushSize,
             boolean bEnabled, boolean bPaint,
             boolean bDropper, boolean bPaintCan, boolean bErase )
@@ -984,7 +985,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         raycastRenderWM.enablePaint(kPaintColor, iBrushSize,
                 bEnabled, bPaint, bDropper, bPaintCan, bErase);
     }
-
 
     /**
      * Erase all surface paint.
@@ -1485,9 +1485,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param kSurfaceName the surface to modify.
      * @param kColor the new color.
      */
-    public void setColor(String kSurfaceName, ColorRGB kColor)
+    public void setColor(String kSurfaceName, ColorRGB kColor, boolean bUpdate)
     {
-        raycastRenderWM.setColor(kSurfaceName, kColor);
+        raycastRenderWM.setColor(kSurfaceName, kColor, bUpdate);
     }
 
     /* (non-Javadoc)
@@ -1612,9 +1612,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param kSurfaceName the surface to update.
      * @param kMaterial the new material.
      */
-    public void setMaterial(String kSurfaceName, MaterialState kMaterial)
+    public void setMaterial(String kSurfaceName, MaterialState kMaterial, boolean bUpdate)
     {
-        raycastRenderWM.setMaterial(kSurfaceName, kMaterial);
+        raycastRenderWM.setMaterial(kSurfaceName, kMaterial, bUpdate);
     }
 
     /**
@@ -2143,7 +2143,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @see gov.nih.mipav.view.ViewJFrameBase#windowActivated(java.awt.event.WindowEvent)
      */
     public void windowActivated(WindowEvent event) {
-        System.err.println( "windowActivated" );
         setModified();
         //super.windowActivated(event);
         userInterface.setActiveFrame(this);
@@ -2342,7 +2341,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     private void buildImageIndependentComponents() 
     {
         buildDisplayPanel();
-        buildSurfacePanel();
         buildGeodesic();
         buildCustumBlendPanel();               
     }
@@ -2413,6 +2411,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
         gpuPanel.setVisible(true);
 
+        buildSurfacePanel();
         buildLightPanel();
         buildSculpt();
         buildMultiHistogramPanel();
@@ -2466,6 +2465,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         panelCoronal.remove(m_akPlaneRender[2].GetCanvas());
         gpuPanel.remove(raycastRenderWM.GetCanvas());
 
+        if ( surfaceGUI != null )
+        {
+            surfaceGUI.dispose();
+            surfaceGUI = null;
+        }
         if (m_kVolume4DGUI != null )
         {
             m_kVolume4DGUI.dispose();
@@ -2496,10 +2500,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             positionsPanel.disposeLocal();
             positionsPanel = null;
         }
-        if ( clipBox != null )
+        if ( clipGUI != null )
         {
-            clipBox.dispose();
-            clipBox = null;
+            clipGUI.dispose();
+            clipGUI = null;
         }
         if ( sliceGUI != null )
         {
@@ -2784,10 +2788,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             if (panelHistoRGB != null) {
                 panelHistoRGB.resizePanel(maxPanelWidth, height);
             }
+            surfaceGUI.resizePanel(maxPanelWidth, height);
             m_kLightsPanel.resizePanel(maxPanelWidth, height);
             positionsPanel.resizePanel(maxPanelWidth, height);
             sliceGUI.resizePanel(maxPanelWidth, height);
-            clipBox.resizePanel(maxPanelWidth, height);
+            clipGUI.resizePanel(maxPanelWidth, height);
             rendererGUI.resizePanel(maxPanelWidth, height);
             if ( multiHistogramGUI != null )
             {
@@ -2809,11 +2814,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             }    
         }
 
-        surfaceGUI.resizePanel(maxPanelWidth, height);
         displayGUI.resizePanel(maxPanelWidth, height);
         geodesicGUI.resizePanel(maxPanelWidth, height);
         //rightPane.setDividerLocation( 0.618f ); 
-
+        //updatePlanes();
     }
 
     private void deleteVOISurface( String kVOIName )
@@ -3014,6 +3018,47 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         kState.ObjectLocation = getObjectParameters();
         kState.ObjectRotation = raycastRenderWM.GetSceneRotation();
         
+        // Surface Panel:
+        kState.SurfaceList = surfaceGUI.getSurfaceStates();
+        kState.SelectedSurface = surfaceGUI.getSelected();
+        
+        // SurfaceTexture Info:
+        kState.TextureEnabled = surfaceTextureGUI.getEnabled();
+        kState.TextureOn = surfaceTextureGUI.getTextureOn();
+        kState.OtherImageName = surfaceTextureGUI.getImageFileName();
+        kState.OtherImageDirectory = surfaceTextureGUI.getImageDir();
+        kState.UseOtherImage = surfaceTextureGUI.getTextureImageOn();
+        kState.OtherLUT = surfaceTextureGUI.getSeparateLUT();
+        if ( kState.OtherLUT != null )
+        {
+            kState.OtherTransfer = kState.OtherLUT.getTransferFunction();
+        }
+        kState.OtherRGB = surfaceTextureGUI.getSeparateRGBT();
+        if ( kState.OtherRGB != null )
+        {
+            kState.OtherRed = kState.OtherRGB.getRedFunction();
+            kState.OtherGreen = kState.OtherRGB.getGreenFunction();
+            kState.OtherBlue = kState.OtherRGB.getBlueFunction();
+        }
+        kState.UseOtherLUT = surfaceTextureGUI.getTextureLUTOn();
+        
+        // Sculpt Panel:
+        kState.SculptShape = sculptGUI.getSculptShape();
+        kState.SculptDrawn = raycastRenderWM.getSculpt().IsSculptDrawn();
+        kState.SculptImage = raycastRenderWM.getSculpt().getSculptImage();
+        
+        // Clip Panel:
+        kState.ClipEnabled = clipGUI.getClipEnabled();
+        kState.ClipDisplayed = clipGUI.getClipDisplayed();
+        kState.ClipValues = clipGUI.getClipValues();
+        kState.ClipColors = clipGUI.getClipColors();
+        kState.ArbitratyEquation = raycastRenderWM.getArbitratyClip();
+        
+
+        // Lights Panel Info:
+        kState.Lights = m_kLightsPanel.copyAllLights();
+        kState.LightSelected = m_kLightsPanel.getSelected();
+        
         // Window Options:
         kState.MainDividerLocation = mainPane.getDividerLocation();
         kState.PlanesDividerLocation = rightPane.getDividerLocation();
@@ -3028,6 +3073,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         {
             kState.PlaneZoom[i] = m_akPlaneRender[i].getZoom();
             kState.VOIList[i] = m_akPlaneRender[i].getVOICopy();
+            kState.CurrentVOI[i] = m_akPlaneRender[i].getCurrentVOI();
         }
         return kState;
     }
@@ -3196,8 +3242,45 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         raycastRenderWM.setObjectParameters( kState.ObjectLocation );        
         displayGUI.displayCameraParams( kState.Camera );
         displayGUI.displayObjectParams( kState.ObjectLocation );
+
+        // Surface Panel:
+        surfaceGUI.setSurfaceStates(kState.SurfaceList);
+        surfaceGUI.setSelected(kState.SelectedSurface);
+
+        // SurfaceTexture Info:
+        surfaceTextureGUI.setSurfacePanel(surfaceGUI);
+        surfaceTextureGUI.setEnabled(kState.TextureEnabled);
+        surfaceTextureGUI.setTextureOn(kState.TextureOn);
+        surfaceTextureGUI.setTextureImage(kState.OtherImageDirectory, kState.OtherImageName);
+        surfaceTextureGUI.setTextureImageOn(kState.UseOtherImage);
+        surfaceTextureGUI.setSeparateLUT(kState.OtherLUT);
+        if ( kState.OtherLUT != null )
+        {
+            kState.OtherLUT.setTransferFunction( kState.OtherTransfer );
+        }
+        surfaceTextureGUI.setSeparateRGBT(kState.OtherRGB);
+        if ( kState.OtherRGB != null )
+        {
+            kState.OtherRGB.setRedFunction(kState.OtherRed);
+            kState.OtherRGB.setGreenFunction(kState.OtherGreen);
+            kState.OtherRGB.setBlueFunction(kState.OtherBlue);
+        }
+        surfaceTextureGUI.setTextureLUTOn( kState.UseOtherLUT);
         
 
+        // Clip Panel:
+        clipGUI.setClipEnabled(kState.ClipEnabled);
+        clipGUI.setClipDisplayed(kState.ClipDisplayed);
+        clipGUI.setClipValues(kState.ClipValues);
+        clipGUI.setClipColors(kState.ClipColors);
+        raycastRenderWM.setArbitratyClip(kState.ArbitratyEquation);
+        
+        // Lights Panel Info:
+        m_kLightsPanel.setAllLights(kState.Lights);
+        m_kLightsPanel.setSelectedIndex(kState.LightSelected);
+        refreshLighting();
+        
+        // Window Size Info:
         RestoreTabs(kState);
         resizePanel();
 
@@ -3213,8 +3296,19 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         {
             m_akPlaneRender[i].setZoom(kState.PlaneZoom[i]);
             m_akPlaneRender[i].setVOICopy(kState.VOIList[i]);
+            m_akPlaneRender[i].setCurrentVOI(kState.CurrentVOI[i]);
         }
         setModified();
+        
+
+        // Sculpt Panel last:
+        if ( kState.SculptDrawn )
+        {
+            sculptGUI.setSculptShape(kState.SculptShape);
+            sculptGUI.drawSculptRegion();
+            raycastRenderWM.getSculpt().setSculptDrawn(kState.SculptDrawn);
+            raycastRenderWM.getSculpt().setSculptImage(kState.SculptImage);
+        }
     }
 
     private void SaveTabs(VolumeRenderState kState)
@@ -3266,7 +3360,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             }
             else if ( name.equals("Clip") )
             {
-                insertTab("Clip", clipBox.getMainPanel());
+                insertTab("Clip", clipGUI.getMainPanel());
             }
             else if ( name.equals("Opacity") )
             {

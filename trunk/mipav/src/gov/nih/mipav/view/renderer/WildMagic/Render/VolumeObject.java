@@ -284,7 +284,7 @@ public abstract class VolumeObject
      * Set the object color.
      * @param kColor new color.
      */
-    public void SetColor( @SuppressWarnings("unused") ColorRGB kColor ){}
+    public void SetColor( @SuppressWarnings("unused") ColorRGB kColor, @SuppressWarnings("unused") boolean bUpdate ){}
     
     /**
      * Set the object display to on/off.

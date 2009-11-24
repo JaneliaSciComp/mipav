@@ -411,7 +411,7 @@ public class PlaneRender_WM extends GPURenderBase
                         //System.err.print( m_iPlaneOrientation + "       " + kPos.Z + " " + m_kCenter.Z );
                         if ( Math.abs( kPos.Z - m_kCenter.Z) < Mathf.ZERO_TOLERANCE )
                         {
-                            kNode.Render( m_pkRenderer, m_kCuller, false, false );
+                            kNode.Render( m_pkRenderer, m_kCuller, false, true );
                             //System.err.print("                Draw VOI" );
                         }
                         //System.err.println( "" );
@@ -766,6 +766,8 @@ public class PlaneRender_WM extends GPURenderBase
                     {
                         fillVolume( i, m_kVOIList[i].get(j).getLocal(0), kVolume, bIntersection, iValue );
                         m_kDisplayList.remove(m_kParent.removeNode( m_kVOIList[i].get(j).Name.get(0) ));
+                        LocalVolumeVOI kVOI = m_kVOIList[i].remove(j);
+                        kVOI.dispose();
                     }
                     m_kVOIList[i].clear();
                     m_kVOIList[i] = null;
@@ -774,6 +776,12 @@ public class PlaneRender_WM extends GPURenderBase
         }
         m_kCopyVOI = null;
         m_kCurrentVOI = null;
+        
+        m_kZState = new ZBufferState();
+        m_kZState.Compare = ZBufferState.CompareMode.CF_ALWAYS;
+        m_kVOIAttr = new Attributes();
+        m_kVOIAttr.SetPChannels(3);
+        m_kVOIAttr.SetCChannels(0,3);
     }
 
     /* (non-Javadoc)
@@ -1478,7 +1486,7 @@ public class PlaneRender_WM extends GPURenderBase
         {
             return;
         }
-        m_kCopyVOI = new LocalVolumeVOI ( this, createPolyline( m_kCurrentVOI.getLocal(0).VBuffer, m_iSlice  ), "VOI" + m_iVOICount++ );
+        m_kCopyVOI = new LocalVolumeVOI ( this, createPolyline( m_kCurrentVOI.getLocal(0).VBuffer, m_iSlice  ), "VOI_" + m_iPlaneOrientation + "_" + m_iVOICount++ );
     }
     
     /**
@@ -1671,8 +1679,6 @@ public class PlaneRender_WM extends GPURenderBase
         float fYStart = m_iHeight - m_fMouseY;
         float fY = m_iHeight - iY;
 
-
-
         if ( m_bDrawRect )
         {
             if ( m_kCurrentVOI == null )
@@ -1705,10 +1711,6 @@ public class PlaneRender_WM extends GPURenderBase
                 m_kCurrentVOI.SetPosition( this, 2, iX, fY, m_iSlice);
                 m_kCurrentVOI.SetPosition( this, 3, m_fMouseX, fY, m_iSlice);       
                 VertexBuffer kVBuffer = m_kCurrentVOI.getLocal(0).VBuffer;   
-                for ( int i = 0; i < 4; i++ )
-                {
-                    System.err.println( kVBuffer.GetPosition3(i).ToString());
-                }
                 m_kCurrentVOI.Release();
             }
             m_kCurrentVOI.Update();
@@ -2065,7 +2067,7 @@ public class PlaneRender_WM extends GPURenderBase
         {
             return;
         }
-        m_kCurrentVOI = new LocalVolumeVOI( this, createPolyline( m_kCopyVOI.getLocal(0).VBuffer, iSlice  ), "VOI" + m_iVOICount++  );     
+        m_kCurrentVOI = new LocalVolumeVOI( this, createPolyline( m_kCopyVOI.getLocal(0).VBuffer, iSlice  ), "VOI_" + m_iPlaneOrientation + "_" + m_iVOICount++  );     
         m_bUpdateVOI = true;
         saveVOI( 0, 0, iSlice );
     }
@@ -2324,6 +2326,17 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
 
+    public LocalVolumeVOI getCurrentVOI()
+    {
+        return m_kCurrentVOI;
+    }
+    
+    public void setCurrentVOI( LocalVolumeVOI kCurrentVOI )
+    {
+        m_kCurrentVOI = kCurrentVOI;
+        doVOI("");
+    }
+    
     public LocalVolumeVOIVector[] getVOICopy()
     {
         if ( m_kVOIList == null )
@@ -2338,7 +2351,7 @@ public class PlaneRender_WM extends GPURenderBase
                 kReturn[i] = new LocalVolumeVOIVector();
                 for ( int j = 0; j < m_kVOIList[i].size(); j++ )
                 {
-                    kReturn[i].add( new LocalVolumeVOI(this, m_kVOIList[i].get(j)) );
+                    kReturn[i].add( new LocalVolumeVOI(m_kVOIList[i].get(j)) );
                 }
             }
         }
@@ -2359,17 +2372,12 @@ public class PlaneRender_WM extends GPURenderBase
                 m_kVOIList[i] = new LocalVolumeVOIVector();
                 for ( int j = 0; j < kList[i].size(); j++ )
                 {
-                    LocalVolumeVOI kVOI = kList[i].get(j);
-                    Node kNode = new Node();
-                    kNode.AttachChild(kVOI.Volume.get(0) );
-                    String kName = new String(kVOI.Name.get(0));
-                    kNode.SetName(kName);
-                    m_kDisplayList.add(m_kParent.addNode(kNode));
-                    m_kParent.translateSurface( kName, m_kTranslate );
-                    m_kVOIList[i].add( kVOI );
+                    m_kCurrentVOI = kList[i].get(j);
+                    saveVOI( 0, 0, i );
                 }
             }
         }
+        doVOI("");
     }
     
     private void showSelectedVOI( int iX, int iY )
