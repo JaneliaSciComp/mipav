@@ -419,11 +419,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kSlices.SetDisplay(true);   
             m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
             m_kVolumeImageA.GenerateNormalFiles( );
-            //VolumeImageNormalGM.main(m_kParent, m_kVolumeImageA);
-            //if ( m_kVolumeImageB != null )
-            //{
-            //    VolumeImageNormalGM.main(m_kParent, m_kVolumeImageB);
-            //}
+            if ( m_kVolumeImageB.GetImage() != null )
+            {
+                m_kVolumeImageB.GenerateNormalFiles( );
+            }
             m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             m_kVolumeRayCast.setVolumeSamples( (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f );
             CMPMode();

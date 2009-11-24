@@ -28,6 +28,7 @@ public class VolumeRenderState implements Serializable
     // Images:
     public VolumeImage ImageA;
     public VolumeImage ImageB;
+    public int Blend = 0;
     // LUT Info:
     public ModelLUT LUTa;
     public TransferFunction TransferA;
