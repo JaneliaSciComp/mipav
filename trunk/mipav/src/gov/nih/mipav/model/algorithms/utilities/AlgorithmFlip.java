@@ -297,6 +297,14 @@ public class AlgorithmFlip extends AlgorithmBase {
     
                 
                 for (i = 0; i <= 2; i++) {
+                    if (Math.abs(matrix.get(i, i)) != fileInfo[0].getResolutions()[i]) {
+                        if (matrix.get(i, i) < 0.0) {
+                            matrix.Set(i, i, -fileInfo[0].getResolutions()[i]);
+                        }
+                        else {
+                            matrix.Set(i, i, fileInfo[0].getResolutions()[i]);
+                        }
+                    }
                     origin[i] = matrix.get(i, index)*(fileInfo[0].getExtents()[index] - 1) + origin[i];
                 }
     
