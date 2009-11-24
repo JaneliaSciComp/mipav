@@ -2229,6 +2229,7 @@ public class FileNIFTI extends FileBase {
         AlgorithmChangeType changeTypeAlgo;
         fileInfo = new FileInfoNIFTI(fileName, fileDir, FileUtility.NIFTI);
         boolean flip = false;
+        int i;
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" NIFTI header file error"));
@@ -2241,7 +2242,7 @@ public class FileNIFTI extends FileBase {
             if (one) {
                 extents = new int[fileInfo.getExtents().length];
 
-                for (int i = 0; i < extents.length; i++) {
+                for (i = 0; i < extents.length; i++) {
                     extents[i] = fileInfo.getExtents()[i];
                 }
 
@@ -2257,6 +2258,26 @@ public class FileNIFTI extends FileBase {
         axisOrientation = fileInfo.getAxisOrientation();
         if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) &&
            ((axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_I2S_TYPE))) {
+            /**
+             * xp = a00*x + a01*yold + a02*z + xoldorigin
+             * xp = a00*x - a01*ynew + a02*z + xneworigin
+             * ynew = ydim - 1 - yold
+             * xneworigin - a01*ynew = xoldorigin + a01*yold
+             * xneworigin = a01*(yold + ynew) + xoldorigin
+             * xneworigin = a01*(ydim - 1) + xoldorigin
+             * 
+             * yp = a10*x + a11*yold + a12*z + yoldorigin
+             * yp = a10*x - a11*ynew + a12*z + yneworigin
+             * yneworigin - a11*ynew = yoldorigin + a11*yold
+             * yneworigin = a11*(yold + ynew) + yoldorigin
+             * yneworigin = a11*(ydim - 1) + yoldorigin
+             * 
+             * zp = a20*x + a21*yold + a22*z + zoldorigin
+             * zp = a20*x - a21*ynew + z22*z + zneworigin
+             * zneworigin - a21*ynew = zoldorigin + a21*yold
+             * zneworigin = a21*(yold + ynew) + zoldorigin
+             * zneworigin = a21*(ydim - 1) + zoldorigin
+             */
             flip = true;
             if (axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) {
                 axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
@@ -2266,24 +2287,25 @@ public class FileNIFTI extends FileBase {
             }
             fileInfo.setAxisOrientation(axisOrientation);
             LPSOrigin = fileInfo.getOrigin();
-            if (LPSOrigin[1] >= 0) {
-                LPSOrigin[1] = LPSOrigin[1] - (fileInfo.getExtents()[1] - 1)*resolutions[1];
+            for (i = 0; i <= 2; i++) {
+                LPSOrigin[i] = matrix.get(i, 1)*(fileInfo.getExtents()[1] - 1) + LPSOrigin[i];
             }
-            else {
-                LPSOrigin[1] = LPSOrigin[1] + (fileInfo.getExtents()[1] - 1)*resolutions[1];
-            }
-            fileInfo.setOrigin(LPSOrigin[1], 1);
+            fileInfo.setOrigin(LPSOrigin);
             
             matrix.Set(0, 1, -matrix.Get(0, 1));
             matrix.Set(1, 1, -matrix.Get(1, 1));
             matrix.Set(2, 1, -matrix.Get(2, 1)); 
-            matrix.Set(1, 3, LPSOrigin[1]); 
+            matrix.set(0, 3, LPSOrigin[0]);
+            matrix.Set(1, 3, LPSOrigin[1]);
+            matrix.set(2, 3, LPSOrigin[2]);
                           
             if (matrix2 != null) {
                 matrix2.Set(0, 1, -matrix2.Get(0, 1));
                 matrix2.Set(1, 1, -matrix2.Get(1, 1));
                 matrix2.Set(2, 1, -matrix2.Get(2, 1)); 
-                matrix2.Set(1, 3, LPSOrigin[1]);  
+                matrix2.set(0, 3, LPSOrigin[0]);
+                matrix2.Set(1, 3, LPSOrigin[1]); 
+                matrix2.set(2, 3, LPSOrigin[2]);
             } // if (matrix2 != null)
                     
         } // if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) &&
@@ -2293,13 +2315,13 @@ public class FileNIFTI extends FileBase {
             image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
         } else if (image.getNDims() == 3) { // If there is more than one image
 
-            for (int i = 0; i < extents[2]; i++) {
+            for (i = 0; i < extents[2]; i++) {
                 FileInfoNIFTI newFileInfo = (FileInfoNIFTI) fileInfo.clone();
                 newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
                 image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
             }
         } else if (image.getNDims() == 4) { // If there is more than one image
-            for (int i = 0; i < (extents[2] * extents[3]); i++) {
+            for (i = 0; i < (extents[2] * extents[3]); i++) {
                 FileInfoNIFTI newFileInfo = (FileInfoNIFTI) fileInfo.clone();
                 newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
                 image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
@@ -2499,6 +2521,26 @@ public class FileNIFTI extends FileBase {
             axisOrientation = fileInfo.getAxisOrientation();
             if ((Preferences.is(Preferences.PREF_FLIP_NIFTI_READ)) &&
                ((axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) || (axisOrientation[1] == FileInfoBase.ORI_I2S_TYPE))) {
+                /**
+                 * xp = a00*x + a01*yold + a02*z + xoldorigin
+                 * xp = a00*x - a01*ynew + a02*z + xneworigin
+                 * ynew = ydim - 1 - yold
+                 * xneworigin - a01*ynew = xoldorigin + a01*yold
+                 * xneworigin = a01*(yold + ynew) + xoldorigin
+                 * xneworigin = a01*(ydim - 1) + xoldorigin
+                 * 
+                 * yp = a10*x + a11*yold + a12*z + yoldorigin
+                 * yp = a10*x - a11*ynew + a12*z + yneworigin
+                 * yneworigin - a11*ynew = yoldorigin + a11*yold
+                 * yneworigin = a11*(yold + ynew) + yoldorigin
+                 * yneworigin = a11*(ydim - 1) + yoldorigin
+                 * 
+                 * zp = a20*x + a21*yold + a22*z + zoldorigin
+                 * zp = a20*x - a21*ynew + z22*z + zneworigin
+                 * zneworigin - a21*ynew = zoldorigin + a21*yold
+                 * zneworigin = a21*(yold + ynew) + zoldorigin
+                 * zneworigin = a21*(ydim - 1) + zoldorigin
+                 */
                 if (axisOrientation[1] == FileInfoBase.ORI_P2A_TYPE) {
                     axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
                 }
@@ -2507,24 +2549,25 @@ public class FileNIFTI extends FileBase {
                 }
                 fileInfo.setAxisOrientation(axisOrientation);
                 LPSOrigin = fileInfo.getOrigin();
-                if (LPSOrigin[1] >= 0) {
-                    LPSOrigin[1] = LPSOrigin[1] - (fileInfo.getExtents()[1] - 1)*resolutions[1];
+                for (i = 0; i <= 2; i++) {
+                    LPSOrigin[i] = matrix.get(i, 1)*(fileInfo.getExtents()[1] - 1) + LPSOrigin[i];
                 }
-                else {
-                    LPSOrigin[1] = LPSOrigin[1] + (fileInfo.getExtents()[1] - 1)*resolutions[1];
-                }
-                fileInfo.setOrigin(LPSOrigin[1], 1);
+                fileInfo.setOrigin(LPSOrigin);
                 
                 matrix.Set(0, 1, -matrix.Get(0, 1));
                 matrix.Set(1, 1, -matrix.Get(1, 1));
                 matrix.Set(2, 1, -matrix.Get(2, 1)); 
-                matrix.Set(1, 3, LPSOrigin[1]); 
+                matrix.set(0, 3, LPSOrigin[0]);
+                matrix.Set(1, 3, LPSOrigin[1]);
+                matrix.set(2, 3, LPSOrigin[2]);
                               
                 if (matrix2 != null) {
                     matrix2.Set(0, 1, -matrix2.Get(0, 1));
                     matrix2.Set(1, 1, -matrix2.Get(1, 1));
                     matrix2.Set(2, 1, -matrix2.Get(2, 1)); 
-                    matrix2.Set(1, 3, LPSOrigin[1]);  
+                    matrix2.set(0, 3, LPSOrigin[0]);
+                    matrix2.Set(1, 3, LPSOrigin[1]); 
+                    matrix2.set(2, 3, LPSOrigin[2]);
                 } // if (matrix2 != null)
 
                 flipTopBottom(buffer, fileInfo);        
