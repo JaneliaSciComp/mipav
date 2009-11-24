@@ -144,7 +144,6 @@ public class AlgorithmFlip extends AlgorithmBase {
         int buffFactor;
         boolean logMagDisplay = false;
         boolean evenNumberZSlices = true;
-        int i;
 
         try {
 
@@ -269,55 +268,24 @@ public class AlgorithmFlip extends AlgorithmBase {
 
             /* Update FileInfo for mapping into DICOM space: */
             if (changeOrientationOrigin) {
-                /**
-                 * For y axis flipping:
-                 * xp = a00*x + a01*yold + a02*z + xoldorigin
-                 * xp = a00*x - a01*ynew + a02*z + xneworigin
-                 * ynew = ydim - 1 - yold
-                 * xneworigin - a01*ynew = xoldorigin + a01*yold
-                 * xneworigin = a01*(yold + ynew) + xoldorigin
-                 * xneworigin = a01*(ydim - 1) + xoldorigin
-                 * 
-                 * yp = a10*x + a11*yold + a12*z + yoldorigin
-                 * yp = a10*x - a11*ynew + a12*z + yneworigin
-                 * yneworigin - a11*ynew = yoldorigin + a11*yold
-                 * yneworigin = a11*(yold + ynew) + yoldorigin
-                 * yneworigin = a11*(ydim - 1) + yoldorigin
-                 * 
-                 * zp = a20*x + a21*yold + a22*z + zoldorigin
-                 * zp = a20*x - a21*ynew + z22*z + zneworigin
-                 * zneworigin - a21*ynew = zoldorigin + a21*yold
-                 * zneworigin = a21*(yold + ynew) + zoldorigin
-                 * zneworigin = a21*(ydim - 1) + zoldorigin
-                 */
                 FileInfoBase[] fileInfo = srcImage.getFileInfo();
-                float origin[] = fileInfo[0].getOrigin();
+                float loc = fileInfo[0].getOrigin(index);
                 int orient = fileInfo[0].getAxisOrientation(index);
-                TransMatrix matrix = srcImage.getMatrix();
     
-                
-                for (i = 0; i <= 2; i++) {
-                    if (Math.abs(matrix.get(i, i)) != fileInfo[0].getResolutions()[i]) {
-                        if (origin[i] > 0.0) {
-                            matrix.Set(i, i, -fileInfo[0].getResolutions()[i]);
-                        }
-                        else {
-                            matrix.Set(i, i, fileInfo[0].getResolutions()[i]);
-                        }
-                    }
-                    origin[i] = matrix.get(i, index)*(fileInfo[0].getExtents()[index] - 1) + origin[i];
+                if (loc > 0.0f) {
+                    loc = loc - ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
+                } else {
+                    loc = loc + ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
                 }
     
                 orient = FileInfoBase.oppositeOrient(orient);
     
-                for (i = 0; i < fileInfo.length; i++) {
+                for (int i = 0; i < fileInfo.length; i++) {
                     fileInfo[i].setAxisOrientation(orient, index);
-                    fileInfo[i].setOrigin(origin);
+                    fileInfo[i].setOrigin(loc, index);
     
                     if (index == 2) {
-                        fileInfo[i].setOrigin(origin[0] + (matrix.get(0, 2) * i), 0);
-                        fileInfo[i].setOrigin(origin[1] + (matrix.get(1, 2) * i), 1);
-                        fileInfo[i].setOrigin(origin[2] + (matrix.get(2, 2) * i), 2);
+                        fileInfo[i].setOrigin(loc + (fileInfo[0].getResolutions()[index] * i), index);
                     }
                 }
             } // if (changeOrientationOrigin)
@@ -331,7 +299,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                     while (vecIter.hasNext()) {
                         VOI nextVoi = (VOI) vecIter.next();
 
-                        for (i = 0; i < zDim; i++) {
+                        for (int i = 0; i < zDim; i++) {
                             Polygon[] polyList = nextVoi.exportPolygons(i);
                             nextVoi.removeCurves(i);
 
@@ -354,7 +322,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                     while (vecIter.hasNext()) {
                         VOI nextVoi = (VOI) vecIter.next();
 
-                        for (i = 0; i < zDim; i++) {
+                        for (int i = 0; i < zDim; i++) {
                             Polygon[] polyList = nextVoi.exportPolygons(i);
                             nextVoi.removeCurves(i);
 
@@ -469,7 +437,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                     if (nextVoi.isActive()) {
                         activeVoi = true;
 
-                        for (i = 0; i < zDim; i++) {
+                        for (int i = 0; i < zDim; i++) {
                             VOIBase base = nextVoi.getActiveContour(i);
 
                             if (base != null) {
@@ -493,7 +461,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                     if (nextVoi.isActive()) {
                         activeVoi = true;
 
-                        for (i = 0; i < zDim; i++) {
+                        for (int i = 0; i < zDim; i++) {
                             VOIBase base = nextVoi.getActiveContour(i);
 
                             if (base != null) {
@@ -540,7 +508,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                         int[] xpoints = new int[base.size()];
                         int[] ypoints = new int[base.size()];
 
-                        for (i = 0; i < xpoints.length; i++) {
+                        for (int i = 0; i < xpoints.length; i++) {
                             Vector3f tempPoint = (Vector3f) base.get(i);
                             xpoints[i] = (int) tempPoint.X;
                             ypoints[i] = (int) tempPoint.Y;
