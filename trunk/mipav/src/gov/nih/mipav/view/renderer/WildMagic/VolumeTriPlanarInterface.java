@@ -12,6 +12,7 @@ import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
+import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
 import gov.nih.mipav.view.ViewJComponentBase;
 import gov.nih.mipav.view.ViewJComponentEditImage;
@@ -71,6 +72,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -85,6 +87,7 @@ import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuBar;
@@ -100,6 +103,7 @@ import javax.swing.JToolBar;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -2865,11 +2869,42 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
     }
 
+    private String getVolumeRenderStateFile()
+    {           
+        JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(false);
+        FileNameExtensionFilter kFileFilter = new FileNameExtensionFilter( "VolumeRenderStateFiles", "vrs"  );
+        chooser.addChoosableFileFilter(kFileFilter);
+
+        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        } else {
+            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+        }
+
+        if (JFileChooser.APPROVE_OPTION != chooser.showOpenDialog(null)) {
+            return null;
+        }
+        String kFile = chooser.getSelectedFile().getName();
+        String kDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+        chooser.setVisible(false);
+        if ( !kFile.endsWith(".vrs" ) )
+        {
+            kFile = kFile.concat(".vrs" );
+        }
+        return new String( kDir + kFile );
+    }
+
     private void SaveState()
-    {       
+    {  
+        String kFile = getVolumeRenderStateFile();
+        if ( kFile == null )
+        {
+            return;
+        }
         try {
             ObjectOutputStream objstream;
-            objstream = new ObjectOutputStream(new FileOutputStream("SaveState"));
+            objstream = new ObjectOutputStream(new FileOutputStream(kFile));
             VolumeRenderState kState = StoreState();
             objstream.writeObject(kState);
             objstream.close();
@@ -2883,11 +2918,16 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     private void LoadState()
     {
+        String kFile = getVolumeRenderStateFile();
+        if ( kFile == null )
+        {
+            return;
+        }
         disposeImageDependentComponents();       
         disposeRenderers();
         try {            
             ObjectInputStream objstream;
-            objstream = new ObjectInputStream(new FileInputStream("SaveState"));
+            objstream = new ObjectInputStream(new FileInputStream(kFile));
             VolumeRenderState kState = (VolumeRenderState) objstream.readObject();
             objstream.close();
             if ( kState != null )

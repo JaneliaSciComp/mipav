@@ -88,10 +88,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
     
     /** Scroll panel that holding the all the control components. */
     private DrawingPanel scrollPanel;
-    
-    /** Save and Load camera and object parameters buttons. */
-    private JButton saveButton, loadButton;
-    
+        
     /** Camera move parameter labels */
     private JLabel cameraXLabel, cameraYLabel, cameraZLabel;
     
@@ -139,11 +136,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
 
-        if ( source == saveButton ) {
-        	saveParameters();
-        } else if ( source == loadButton ) {
-        	loadParameters();
-        } else if (source instanceof JButton) {
+        if (source instanceof JButton) {
             colorChooser = new ViewJColorChooser(new Frame(), "Pick color", new OkColorListener((JButton) source),
                                                  new CancelListener());
         } else if (source == boundingCheck) {
@@ -466,19 +459,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         gbc.insets = new Insets(5, 5, 5, 5);
         cubePanel.add(cubicCheck, gbc);
         cubePanel.setBorder(buildTitledBorder("Orientation"));
-
-        ViewToolBarBuilder toolbarBuilder = new ViewToolBarBuilder(this);
-
-        JToolBar toolBar = new JToolBar();
-        toolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        toolBar.setFloatable(false);
-        
-        saveButton = toolbarBuilder.buildButton("SaveParameters", "Save camera and object viewing parameters", "save");
-        loadButton = toolbarBuilder.buildButton("LoadParameters", "Load camera and object viewing parameters", "open");
-        
-        toolBar.add(loadButton);
-        toolBar.add(saveButton);
-        
+                
         Box cameraParametersBox = new Box(BoxLayout.Y_AXIS);
         
         cameraParametersBox.setBorder(buildTitledBorder("Camera"));
@@ -613,7 +594,6 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         JPanel viewPanel = new JPanel(new BorderLayout());
         viewPanel.setBorder(buildTitledBorder("View"));
         
-        viewPanel.add(toolBar, BorderLayout.NORTH);
         viewPanel.add(cameraParametersBox, BorderLayout.CENTER);
         viewPanel.add(objectParametersPanel, BorderLayout.SOUTH);
 
