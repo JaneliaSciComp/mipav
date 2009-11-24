@@ -678,11 +678,11 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                     newRow.addElement(SortingTableModel.EMPTY_CELL); // if data is not present, add
                                     // empty cell
                                 } else {
-                                    String type = dicomTag.getType();
+                                    String vr = dicomTag.getValueRepresentation();
                                     String value = (String) dicomTag.getValue(true);
 
-                                    if (type.equals("SL") || type.equals("UL") || type.equals("SS")
-                                            || type.equals("US")) {
+                                    if (vr.equals("SL") || vr.equals("UL") || vr.equals("SS")
+                                            || vr.equals("US") || vr.equals("IS")) {
 
                                         /*
                                          * Try to create a Number object out of the data. This is important because the
@@ -703,7 +703,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                             // sorting
                                             newRow.addElement(value);
                                         }
-                                    } else if (type.equals("FD") || type.equals("FL")) {
+                                    } else if (vr.equals("FD") || vr.equals("FL") || vr.equals("DS")) {
 
                                         try {
                                             Double doubleObj = new Double(Double.parseDouble(value));
