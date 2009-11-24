@@ -437,7 +437,30 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
     public Light[] getAllLights() {
         return m_akLights;
     }
+    
+    public Light[] copyAllLights() {
+        Light[] akLights = new Light[ m_akLights.length ];
+        for ( int i = 0; i < m_akLights.length; i++ )
+        {
+            akLights[i] = new Light( m_akLights[i] );
+        }
+        return akLights;
+    }
+    
+    public void setAllLights(Light[] akLights)
+    {
+        m_akLights = akLights;
+        for ( int i = 0; i < m_akLights.length; i++ )
+        {
+            setSelectedIndex(i);
+        }
+    }
 
+    public int getSelected()
+    {
+        return iSelect;
+    }
+    
     /**
      * The the general light with the given index.
      * @param   iIndex  light index

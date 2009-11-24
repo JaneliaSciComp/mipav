@@ -90,9 +90,6 @@ public class VolumeCalcEffect extends VolumeClipEffect
         this.m_afClipAll = kClip.m_afClipAll;
         this.m_afDoClip = kClip.m_afDoClip;
         this.m_aafClipData  = kClip.m_aafClipData;
-        this.m_afClipEyeData  = kClip.m_afClipEyeData;
-        this.m_afClipEyeInvData  = kClip.m_afClipEyeInvData;
-        this.m_afClipArbData  = kClip.m_afClipArbData;
         m_afMinMax[0] = (float)kVolumeImage.GetImage().getMin();
         m_afMinMax[1] = (float)kVolumeImage.GetImage().getMax();
     }
@@ -123,9 +120,6 @@ public class VolumeCalcEffect extends VolumeClipEffect
         this.m_afClipAll = kClip.m_afClipAll;
         this.m_afDoClip = kClip.m_afDoClip;
         this.m_aafClipData  = kClip.m_aafClipData;
-        this.m_afClipEyeData  = kClip.m_afClipEyeData;
-        this.m_afClipEyeInvData  = kClip.m_afClipEyeInvData;
-        this.m_afClipArbData  = kClip.m_afClipArbData;
         m_afMinMax[0] = (float)kVolumeImage.GetImage().getMin();
         m_afMinMax[1] = (float)kVolumeImage.GetImage().getMax();
     }

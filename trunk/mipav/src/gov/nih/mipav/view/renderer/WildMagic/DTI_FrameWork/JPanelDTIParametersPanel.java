@@ -331,7 +331,7 @@ implements ListSelectionListener, ChangeListener {
 							.isSelected();
 					m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected();
 					parentFrame.setColor(m_kVOIParamsList.get(iVOI).Name,
-							m_kCInclude);
+							m_kCInclude, true);
 				}
 			} else if (command.equals("Exclude")) {
 				int iVOI = m_kVOIList.getSelectedIndex();
@@ -342,7 +342,7 @@ implements ListSelectionListener, ChangeListener {
 							.isSelected();
 					m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected();
 					parentFrame.setColor(m_kVOIParamsList.get(iVOI).Name,
-							m_kCExclude);
+							m_kCExclude, true);
 				}
 			} else if (command.equals("Ignore")) {
 				int iVOI = m_kVOIList.getSelectedIndex();
@@ -353,7 +353,7 @@ implements ListSelectionListener, ChangeListener {
 							.isSelected();
 					m_kVOIParamsList.get(iVOI).Ignore = m_kIgnore.isSelected();
 					parentFrame.setColor(m_kVOIParamsList.get(iVOI).Name,
-							m_kCIgnore);
+							m_kCIgnore, true);
 				}
 			}
 	        else if ( command.equals( "FAMINChanged" ) )
@@ -434,7 +434,7 @@ implements ListSelectionListener, ChangeListener {
         kParams.Exclude = m_kExclude.isSelected();
         kParams.Ignore = m_kIgnore.isSelected();
         m_kVOIParamsList.add( kParams );
-        parentFrame.setColor( kVOIName, m_kCInclude );
+        parentFrame.setColor( kVOIName, m_kCInclude, true );
     }
     
     public void remove3DVOI( String kVOIName )

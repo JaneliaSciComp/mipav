@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
@@ -66,6 +67,7 @@ public class VolumeSurface extends VolumeObject
     private int m_iCurrentGeodesic = 0;
     private float m_fBlend = 1.0f;
     private Vector<Spatial> m_kDisplayObjs = new Vector<Spatial>();
+    private SurfaceState m_kSurfaceState = null;
 
     /** Create a new VolumeSurface with the VolumeImage parameter.
      * @param kImageA the VolumeImage containing shared data and textures for
@@ -76,13 +78,14 @@ public class VolumeSurface extends VolumeObject
      * @param fY the size of the volume in the y-dimension (extent * resolutions)
      * @param fZ the size of the volume in the z-dimension (extent * resolutions)
      */
-    public VolumeSurface ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, float fX, float fY, float fZ, TriMesh kMesh )
+    public VolumeSurface ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, 
+            float fX, float fY, float fZ, SurfaceState kSurface )
     {
         super(kImageA,kImageB,kTranslate,fX,fY,fZ);
-
+        m_kSurfaceState = kSurface;
         CreateScene();
-        m_kMesh = kMesh;
-        m_kMesh.SetName( new String( kMesh.GetName() ) );
+        m_kMesh = kSurface.Surface;
+        m_kMesh.SetName( new String( kSurface.Name ) );
         
         boolean bHasMaterial = true;
         m_kMaterial = (MaterialState)m_kMesh.GetGlobalState( GlobalState.StateType.MATERIAL );
@@ -96,6 +99,7 @@ public class VolumeSurface extends VolumeObject
             m_kMaterial.Specular = new ColorRGB(ColorRGB.WHITE);
             m_kMaterial.Shininess = 32f;
         }
+        m_kSurfaceState.Material = m_kMaterial;
         m_akBackupColor = new ColorRGBA[m_kMesh.VBuffer.GetVertexQuantity()];
 
         for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
@@ -913,19 +917,21 @@ public class VolumeSurface extends VolumeObject
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#SetColor(WildMagic.LibFoundation.Mathematics.ColorRGB)
      */
-    public void SetColor( ColorRGB kColor )
+    public void SetColor( ColorRGB kColor, boolean bUpdate )
     {
-        for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
-        {
-            m_kMesh.VBuffer.SetColor3( 0, i, kColor );
-        }
-        m_kMesh.VBuffer.Release();
         m_kMaterial.Diffuse.Copy(kColor);
-        m_kMaterial.Ambient.Copy( ColorRGB.BLACK );
-        m_kMaterial.Specular.Set( 0.5f,0.5f,0.5f );
-        m_kMaterial.Emissive.Copy( ColorRGB.BLACK );
-        m_kMaterial.Shininess = 5f;
-        
+        //m_kMaterial.Ambient.Copy( ColorRGB.BLACK );
+        //m_kMaterial.Specular.Set( 0.5f,0.5f,0.5f );
+        //m_kMaterial.Emissive.Copy( ColorRGB.BLACK );
+        //m_kMaterial.Shininess = 5f;
+        if ( bUpdate )
+        {
+            for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+            {
+                m_kMesh.VBuffer.SetColor3( 0, i, kColor );
+            }
+            m_kMesh.VBuffer.Release();
+        }
     }
 
     /**
@@ -965,19 +971,22 @@ public class VolumeSurface extends VolumeObject
      * Set the surface material properties
      * @param kMaterial surface material properties.
      */
-    public void SetMaterial( MaterialState kMaterial)
+    public void SetMaterial( MaterialState kMaterial, boolean bUpdate)
     {
-        for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
-        {
-            m_kMesh.VBuffer.SetColor3( 0, i, kMaterial.Diffuse );
-        }
-        m_kMesh.VBuffer.Release();
         m_kMaterial.Ambient.Copy( kMaterial.Ambient );
         m_kMaterial.Diffuse.Copy( kMaterial.Diffuse );
         m_kMaterial.Specular.Copy( kMaterial.Specular );
         m_kMaterial.Emissive.Copy( kMaterial.Emissive );
         m_kMaterial.Shininess = kMaterial.Shininess;
-        m_kScene.UpdateGS();
+        if ( bUpdate )
+        {
+            for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+            {
+                m_kMesh.VBuffer.SetColor3( 0, i, kMaterial.Diffuse );
+            }
+            m_kMesh.VBuffer.Release();
+            m_kScene.UpdateGS();
+        }
     }
 
     /**

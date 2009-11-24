@@ -2,6 +2,8 @@ package gov.nih.mipav.view.renderer.WildMagic;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.TransferFunction;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
+import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.LocalVolumeVOIVector;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
@@ -15,6 +17,9 @@ import javax.vecmath.Matrix4f;
 
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 public class VolumeRenderState implements Serializable
 {
@@ -95,7 +100,39 @@ public class VolumeRenderState implements Serializable
     public float[] ObjectLocation;
     public Matrix3f ObjectRotation = new Matrix3f();
     
+    // Surface Panel Info:
+    public Vector<SurfaceState> SurfaceList;
+    public int SelectedSurface = 0;
+    
+    // SurfaceTexture Info:
+    public boolean TextureEnabled;
+    public boolean TextureOn;
+    public String OtherImageDirectory;
+    public String OtherImageName;
+    public boolean UseOtherImage;
+    public ModelLUT OtherLUT;
+    public TransferFunction OtherTransfer;
+    public ModelRGB OtherRGB;
+    public TransferFunction OtherRed;
+    public TransferFunction OtherGreen;
+    public TransferFunction OtherBlue;
+    public boolean UseOtherLUT;
+    
+    // Sculpt Panel Info:
+    public int SculptShape;
+    public boolean SculptDrawn;
+    public byte[] SculptImage;
+    
     // Clip Panel Info
+    public boolean[] ClipEnabled;
+    public boolean[] ClipDisplayed;
+    public int[] ClipValues;
+    public Color[] ClipColors;
+    public Matrix3f ArbitratyEquation;
+    
+    // Lights Panel Info:
+    public Light[] Lights;
+    public int LightSelected;
     
     // Current Tabs:
     public Vector<String> TabbedList = new Vector<String>();
@@ -110,5 +147,6 @@ public class VolumeRenderState implements Serializable
     //PlaneRender Info:
     public float[] PlaneZoom = new float[3];
     public LocalVolumeVOIVector[][] VOIList = new LocalVolumeVOIVector[3][];
+    public LocalVolumeVOI[] CurrentVOI = new LocalVolumeVOI[3];
     
 }

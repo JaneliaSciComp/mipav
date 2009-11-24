@@ -42,6 +42,7 @@ public class SquareClassificationWidget extends ClassificationWidget
                 new IndexBuffer(kWidget.m_kUpperSphere.IBuffer));
         m_kMiddleSphere = new TriMesh(new VertexBuffer(kWidget.m_kMiddleSphere.VBuffer),
                 new IndexBuffer(kWidget.m_kMiddleSphere.IBuffer));
+        m_kMiddleSphere.Local.SetTranslate( new Vector3f( kWidget.m_kMiddleSphere.Local.GetTranslate()) );
         m_kLowerSphere = new TriMesh(new VertexBuffer(kWidget.m_kLowerSphere.VBuffer),
                 new IndexBuffer(kWidget.m_kLowerSphere.IBuffer));
     }
@@ -223,6 +224,7 @@ public class SquareClassificationWidget extends ClassificationWidget
 
         out.writeObject( m_kMiddleSphere.IBuffer );
         out.writeObject( m_kMiddleSphere.VBuffer );
+        out.writeObject( m_kMiddleSphere.Local.GetTranslate() );
     }
     
     private void readObject(java.io.ObjectInputStream in)
@@ -270,11 +272,9 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kMiddleSphere.AttachEffect( new VertexColor3Effect() );
         m_kMiddleSphere.SetName("MiddleSphere");
         m_kWidget.AttachChild( m_kMiddleSphere );     
-        
-        float fXPos = (m_kBottomTri.VBuffer.GetPosition3fX(0) + m_kBottomTri.VBuffer.GetPosition3fX(1))/2.0f;
-        float fYPos = (m_kBottomTri.VBuffer.GetPosition3fY(0) + m_kBottomTri.VBuffer.GetPosition3fY(2))/2.0f;
-        float fZPos = m_kBottomTri.VBuffer.GetPosition3fZ(0);
-        m_kMiddleSphere.Local.SetTranslate( fXPos, fYPos, fZPos );
+
+        Vector3f kTranslate = (Vector3f)in.readObject();
+        m_kMiddleSphere.Local.SetTranslate( kTranslate );
     }
     
     protected void ShiftSquare(float fX, float fY)

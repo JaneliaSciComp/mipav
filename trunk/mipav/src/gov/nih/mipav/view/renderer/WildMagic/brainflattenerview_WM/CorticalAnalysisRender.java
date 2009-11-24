@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MipavLightingEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
@@ -158,10 +159,11 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
      */
     public VolumeSurface addSurface(TriMesh kSurfaces)
     {
+        SurfaceState kState = new SurfaceState( kSurfaces, kSurfaces.GetName() );
         VolumeSurface kSurface = new VolumeSurface( m_kVolumeImageA, m_kVolumeImageB,
                 m_kTranslate,
                 m_fX, m_fY, m_fZ,
-                kSurfaces );
+                kState );
         kSurface.SetPickable(true);
         kSurface.SetDisplay(true);
         //kSurface.SetPolygonMode( true, WireframeState.FillMode.FM_LINE );

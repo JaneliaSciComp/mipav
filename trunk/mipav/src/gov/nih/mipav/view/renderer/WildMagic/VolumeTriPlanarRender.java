@@ -24,6 +24,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.*;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
@@ -177,6 +178,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kVolumeImageB = kVolumeImageB;
         m_kParent = kParent;        
         m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+        enableSculpt(false);
     }
     
     
@@ -219,17 +221,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Add surfaces to the display list.
      * @param akSurfaces
      */
-    public void addSurface(TriMesh[] akSurfaces)
+    public void addSurface( SurfaceState kSurface )
     {
-        for ( int i = 0; i < akSurfaces.length; i++ )
-        {
-            VolumeSurface kVolumeSurfaces = new VolumeSurface( m_kVolumeImageA, m_kVolumeImageB,
-                    m_kTranslate,
-                    m_fX, m_fY, m_fZ,
-                    akSurfaces[i] );
-            kVolumeSurfaces.SetPerPixelLighting( m_pkRenderer, true );
-            m_kDisplayList.add( kVolumeSurfaces );
-        }
+        VolumeSurface kVolumeSurfaces = new VolumeSurface( m_kVolumeImageA, m_kVolumeImageB,
+                m_kTranslate,
+                m_fX, m_fY, m_fZ,
+                kSurface );
+        kVolumeSurfaces.SetPerPixelLighting( m_pkRenderer, true );
+        m_kDisplayList.add( kVolumeSurfaces );
         UpdateSceneRotation();
         m_bSurfaceUpdate = true;
     }
@@ -705,7 +704,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         if ( m_kVolumeClip != null )
         {
-            m_kVolumeClip.setEyeColor(kColor);
+            m_kVolumeClip.setClipPlaneColor( VolumeClip.CLIP_EYE, kColor);
             m_kVolumeClip.DisplayEye(bDisplay);
         }
         if ( !bEnable )
@@ -724,7 +723,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         if ( m_kVolumeClip != null )
         {
-            m_kVolumeClip.setEyeInvColor(kColor);
+            m_kVolumeClip.setClipPlaneColor( VolumeClip.CLIP_EYE_INV, kColor);
             m_kVolumeClip.DisplayEyeInv(bDisplay);
         }
         if ( !bEnable )
@@ -858,6 +857,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         return null;
     }
 
+    public Sculptor_WM getSculpt()
+    {
+        return m_kSculptor;
+    }
+    
     /**
      * Returns true when sculpting is enabled.
      * @return true when sculpting is enabled, false otherwise.
@@ -1598,7 +1602,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * Sets blending between imageA and imageB.
      * @param fValue the blend value (0-1)
      */
-    public void setColor( String kSurfaceName, ColorRGB kColor )
+    public void setColor( String kSurfaceName, ColorRGB kColor, boolean bUpdate )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -1606,7 +1610,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             {
                 if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
                 {
-                    m_kDisplayList.get(i).SetColor( kColor );
+                    m_kDisplayList.get(i).SetColor( kColor, bUpdate );
                 }
             }
         }
@@ -1752,7 +1756,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         kColor.B = (float)(kColor.B/255.0);
         if ( m_kVolumeClip != null )
         {
-            m_kVolumeClip.setEyeColor(kColor);
+            m_kVolumeClip.setClipPlaneColor( VolumeClip.CLIP_EYE, kColor);
         }
     }
 
@@ -1796,7 +1800,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         kColor.B = (float)(kColor.B/255.0);
         if ( m_kVolumeClip != null )
         {
-            m_kVolumeClip.setEyeInvColor(kColor);
+            m_kVolumeClip.setClipPlaneColor( VolumeClip.CLIP_EYE_INV, kColor);
         }
     }    
     
@@ -1886,7 +1890,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      * @param kSurfaceName the surface to update.
      * @param kMaterial the new material.
      */
-    public void setMaterial( String kSurfaceName, MaterialState kMaterial )
+    public void setMaterial( String kSurfaceName, MaterialState kMaterial, boolean bUpdate )
     {
         for ( int i = 0; i < m_kDisplayList.size(); i++ )
         {
@@ -1894,7 +1898,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             {
                 if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
                 {
-                    ((VolumeSurface)(m_kDisplayList.get(i))).SetMaterial(kMaterial);
+                    ((VolumeSurface)(m_kDisplayList.get(i))).SetMaterial(kMaterial, bUpdate);
                 }
             }
         }
@@ -2451,6 +2455,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
     
+    public Matrix3f getArbitratyClip()
+    {
+        return new Matrix3f(m_kVolumeClip.ArbRotate().Local.GetRotate());
+    }
+    
+    public void setArbitratyClip(Matrix3f kRotate)
+    {
+        m_kVolumeClip.ArbRotate().Local.SetRotate(kRotate);
+        doClip(m_bArbClipOn);
+    }
+    
     /**
      * Render the display list objects without the raycast volume.
      */
@@ -2479,6 +2494,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 {
                     m_kVolumeRayCast.Render( m_pkRenderer, m_kCuller, false, true );
                     m_pkRenderer.SetCamera(m_spkCamera);
+                }
+                for ( int i = 0; i < m_kDisplayList.size(); i++ )
+                {
+                    m_kDisplayList.get(i).PostRender( m_pkRenderer, m_kCuller );
                 }
                 RenderSculpt();
                 
@@ -2519,11 +2538,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
                 if ( m_iStereo == 1 ) // red/green:
                 {
                     m_pkRenderer.ClearZBuffer();
-                }                
-                else // shutter:
-                {
-                    //m_pkRenderer.DisplayBackBuffer();
-                }
+                }    
             }
             MoveLeft();
             MoveLeft();
@@ -2669,6 +2684,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         super.reshape( arg0, iX, iY, iWidth, iHeight );
         UpdateRenderTarget(iWidth, iHeight);
         m_kVolumeRayCast.reshape(iWidth, iHeight);
+        if ( m_kSculptor != null )
+        {
+            m_kSculptor.enableSculpt(m_kSculptor.getEnable());
+        }
     }
     /**
      * Closes the shader parameters window.
