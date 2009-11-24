@@ -434,11 +434,11 @@ public class TableSorter extends AbstractTableModel {
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets an appropriate comparator for sorting the particular column
      *
-     * @param   column  DOCUMENT ME!
+     * @param   column  The column to sort by from <code>tableModel</code>
      *
-     * @return  DOCUMENT ME!
+     * @return  A comparator for a given column
      */
     protected Comparator getComparator(int column) {
         Class columnType = tableModel.getColumnClass(column);
