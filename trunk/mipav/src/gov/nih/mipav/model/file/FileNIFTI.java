@@ -3297,7 +3297,6 @@ public class FileNIFTI extends FileBase {
      * @param  fileInfo  DOCUMENT ME!
      */
     private void updateorigins(FileInfoBase[] fileInfo) {
-        int axisOrient;
 
         float[] origin = (float[]) (fileInfo[0].getOrigin().clone());
         float[] resolutions = fileInfo[0].getResolutions();
@@ -3305,35 +3304,21 @@ public class FileNIFTI extends FileBase {
         if (image.getNDims() == 3) {
 
             for (int i = 0; i < image.getExtents()[2]; i++) {
-                fileInfo[i].setOrigin(origin);
-                axisOrient = fileInfo[i].getAxisOrientation(2);
-
-                if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_P2A_TYPE) ||
-                        (axisOrient == FileInfoBase.ORI_I2S_TYPE)) {
-                    origin[2] += resolutions[2];
-                } else { // ORI_L2R_TYPE, ORI_A2P_TYPE, ORI_S2I_TYPE
-                    origin[2] -= resolutions[2];
-                }
+                fileInfo[i].setOrigin(origin[0] + (matrix.get(0, 2) * i), 0);
+                fileInfo[i].setOrigin(origin[1] + (matrix.get(1, 2) * i), 1);
+                fileInfo[i].setOrigin(origin[2] + (matrix.get(2, 2) * i), 2);
             }
         } else if (image.getNDims() == 4) {
-            float tmp = origin[2];
 
             for (int i = 0; i < image.getExtents()[3]; i++) {
 
                 for (int j = 0; j < image.getExtents()[2]; j++) {
-                    fileInfo[(i * image.getExtents()[2]) + j].setOrigin(origin);
-                    axisOrient = fileInfo[i].getAxisOrientation(2);
-
-                    if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_P2A_TYPE) ||
-                            (axisOrient == FileInfoBase.ORI_I2S_TYPE)) {
-                        origin[2] += resolutions[2];
-                    } else { // ORI_L2R_TYPE, ORI_A2P_TYPE, ORI_S2I_TYPE
-                        origin[2] -= resolutions[2];
-                    }
+                    fileInfo[i * image.getExtents()[2] + j].setOrigin(origin[0] + (matrix.get(0, 2) * j), 0);
+                    fileInfo[i * image.getExtents()[2] + j].setOrigin(origin[1] + (matrix.get(1, 2) * j), 1);
+                    fileInfo[i * image.getExtents()[2] + j].setOrigin(origin[2] + (matrix.get(2, 2) * j), 2);
+                    fileInfo[(i * image.getExtents()[2]) + j].setOrigin(origin[3] + i * resolutions[3], 3);
+                    
                 }
-
-                origin[3] += resolutions[3];
-                origin[2] = tmp;
             }
         }
         /*else if (image.getNDims() == 5) {
