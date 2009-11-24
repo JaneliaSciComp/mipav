@@ -1036,6 +1036,14 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         JPanelVolOpacityBase opacityPanel = m_kVolOpacityPanel;
         return opacityPanel.getAlphaBlendSliderValue();
     }
+    
+    /**
+     * Sets the blend value between images A and B.
+     * @param iValue
+     */
+    public void setBlendValue(int iValue) {
+        m_kVolOpacityPanel.setAlphaBlendSliderValue(iValue);
+    }
 
     /**
      * Get the camera current location 
@@ -2080,7 +2088,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             m_kVolumeImageA.UpdateImages(LUTa);    
             setModified();
         }
-        if (m_kVolumeImageB != null) {
+        if (m_kVolumeImageB.GetImage() != null) {
             m_kVolumeImageB.UpdateImages(LUTb);    
             setModified();
         }
@@ -2947,6 +2955,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         VolumeRenderState kState = new VolumeRenderState();
         kState.ImageA = m_kVolumeImageA;
         kState.ImageB = m_kVolumeImageB;
+        kState.Blend = getBlendValue();
         // LUT:
         kState.LUTa = m_kVolumeImageA.GetLUT(); 
         if ( kState.LUTa != null )
@@ -3132,6 +3141,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             m_kVolumeImageB.SetRGBT(kState.RGBb);
         }                
         constructRenderers();
+        setBlendValue(kState.Blend);
         
         // Menu:
         menuObj.getMenuItem("Show axes").setSelected( kState.ShowAxes );

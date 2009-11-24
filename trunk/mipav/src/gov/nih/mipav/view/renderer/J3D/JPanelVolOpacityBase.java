@@ -216,6 +216,17 @@ public abstract class JPanelVolOpacityBase extends JPanelRendererJ3D implements 
 
         return blendSlider.getValue();
     }
+
+    /**
+     * Sets the blendSlider value.
+     * @param iValue new slider value.
+     */
+    public void setAlphaBlendSliderValue(int iValue) {
+
+        if (blendSlider != null) {
+            blendSlider.setValue(iValue);
+        }
+    }
     
     /**
      * Return the opacity histrogram component of the imageA.

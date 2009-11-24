@@ -1004,8 +1004,8 @@ public class VolumeImage implements Serializable
         if ( kLUT != null )
         {
             this.UpdateImages( m_kColorMapTarget, m_kColorMap, kLUT );
+            m_kLUT = kLUT;
         }
-        m_kLUT = kLUT;
     }
     
 
