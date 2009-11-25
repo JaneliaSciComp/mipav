@@ -2273,7 +2273,7 @@ public class FileNIFTI extends FileBase {
              * yneworigin = a11*(ydim - 1) + yoldorigin
              * 
              * zp = a20*x + a21*yold + a22*z + zoldorigin
-             * zp = a20*x - a21*ynew + z22*z + zneworigin
+             * zp = a20*x - a21*ynew + a22*z + zneworigin
              * zneworigin - a21*ynew = zoldorigin + a21*yold
              * zneworigin = a21*(yold + ynew) + zoldorigin
              * zneworigin = a21*(ydim - 1) + zoldorigin
@@ -2536,7 +2536,7 @@ public class FileNIFTI extends FileBase {
                  * yneworigin = a11*(ydim - 1) + yoldorigin
                  * 
                  * zp = a20*x + a21*yold + a22*z + zoldorigin
-                 * zp = a20*x - a21*ynew + z22*z + zneworigin
+                 * zp = a20*x - a21*ynew + a22*z + zneworigin
                  * zneworigin - a21*ynew = zoldorigin + a21*yold
                  * zneworigin = a21*(yold + ynew) + zoldorigin
                  * zneworigin = a21*(ydim - 1) + zoldorigin
