@@ -54,6 +54,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -64,6 +65,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.WindowConstants;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -334,6 +336,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         }
 
         init(addTitle);
+        
+        this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
