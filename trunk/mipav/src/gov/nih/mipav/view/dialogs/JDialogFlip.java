@@ -71,6 +71,8 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     private JRadioButton flipAxisXRadioButton;
     
     private JPanel optionsPanel;
+    
+    private boolean loadAxisDefaults = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -97,6 +99,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         this.image =im;
         if(flipObject == AlgorithmFlip.IMAGE || flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
             init();
+            loadAxisDefaults = false;
             loadDefaults();
             setVariables();
         }
@@ -320,15 +323,17 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
                 flipAxis = MipavUtil.getInt(st);
-                if(flipAxis == AlgorithmFlip.X_AXIS) {
-                    flipAxisXRadioButton.setSelected(true);
-                }
-                if(flipAxis == AlgorithmFlip.Y_AXIS) {
-                    flipAxisYRadioButton.setSelected(true);
-                }
-                if((image.getNDims() > 2)&&(flipAxis == AlgorithmFlip.Z_AXIS)) {
-                    flipAxisZRadioButton.setSelected(true);
-                }
+                if (loadAxisDefaults) {
+                    if (flipAxis == AlgorithmFlip.X_AXIS) {
+                        flipAxisXRadioButton.setSelected(true);
+                    }  
+                    else if (flipAxis == AlgorithmFlip.Y_AXIS) {
+                        flipAxisYRadioButton.setSelected(true);
+                    }
+                    else if((image.getNDims() > 2)&&(flipAxis == AlgorithmFlip.Z_AXIS)) {
+                        flipAxisZRadioButton.setSelected(true);
+                    }
+                } // if (loadAxisDefaults)
                 
                 flipObject = MipavUtil.getInt(st);
                 VOIVector vec = image.getVOIs();
@@ -385,16 +390,31 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         
         flipAxisXRadioButton = new JRadioButton("Vertical (X Axis)");
         flipAxisXRadioButton.setFont(serif12);
-        flipAxisXRadioButton.setSelected(false);
+        if (flipAxis == AlgorithmFlip.X_AXIS) {
+            flipAxisXRadioButton.setSelected(true);
+        }
+        else {
+            flipAxisXRadioButton.setSelected(false);
+        }
         
         flipAxisYRadioButton = new JRadioButton("Horizontal (Y Axis)");
         flipAxisYRadioButton.setFont(serif12);
-        flipAxisYRadioButton.setSelected(true);
+        if (flipAxis == AlgorithmFlip.Y_AXIS) {
+            flipAxisYRadioButton.setSelected(true);
+        }
+        else {
+            flipAxisYRadioButton.setSelected(false);
+        }
         
         if (image.getNDims() >= 3) {
             flipAxisZRadioButton = new JRadioButton("Depth (Z axis)");
             flipAxisZRadioButton.setFont(serif12);
-            flipAxisZRadioButton.setSelected(false);
+            if (flipAxis == AlgorithmFlip.Z_AXIS) {
+                flipAxisZRadioButton.setSelected(true);    
+            }
+            else {
+                flipAxisZRadioButton.setSelected(false);
+            }
         } // if (image.getNDims() >= 3)
         
         ButtonGroup axisGroup = new ButtonGroup();
