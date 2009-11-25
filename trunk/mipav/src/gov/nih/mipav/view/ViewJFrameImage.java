@@ -5135,10 +5135,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     protected JDialogImageInfo getActiveImageInfoDialog() {
 
         if (getActiveImage() == imageA) {
-
-            if (infoDialogA == null) {
+                infoDialogA = null;
                 infoDialogA = new JDialogImageInfo(this, imageA, componentImage.getSlice(), componentImage.getTimeSlice());
-            }
 
             return infoDialogA;
         } else if (imageB == null) // should never happen, but just in case...
@@ -5147,9 +5145,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else // image B is active
         {
 
-            if (infoDialogB == null) {
-                infoDialogB = new JDialogImageInfo(this, imageB, componentImage.getSlice(), componentImage.getTimeSlice());
-            }
+            infoDialogB = null;
+            infoDialogB = new JDialogImageInfo(this, imageB, componentImage.getSlice(), componentImage.getTimeSlice());
 
             return infoDialogB;
         }
