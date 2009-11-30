@@ -1343,8 +1343,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             String frameRefTimeString = null;
             int frameReferenceTime = 0;
        
-            if ((compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM) &&
-                (!Preferences.is(Preferences.PREF_ALWAYS_GRAPH_TIME_AS_0123))) {
+            if (compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM) {
                 boolean frameRefTimeFound = false;
                 fileInfo = (FileInfoDicom) (compImage.getActiveImage().getFileInfo(0)); 
                 frameRefTimeString = ((String) fileInfo.getTagTable().getValue("0054,1300")).trim();
@@ -1359,28 +1358,16 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     }
                     
                     if (frameRefTimeFound) {
-                        if (Preferences.is(Preferences.PREF_ALWAYS_GRAPH_FRAME_REFERENCE_TIME)) {
-                            useFrameRefTime = true;
-                        }
-                        else {
-                            JDialogDicomTimeAxisChoice choice = 
-                                new JDialogDicomTimeAxisChoice(ViewUserInterface.getReference().getMainFrame());
-
-                            if ( !choice.okayPressed()) {
-                                useFrameRefTime = false;
-                            } else {
-                                int axisType = choice.axisType();
-                                if (axisType == 1) {
-                                    useFrameRefTime = false;
-                                }
-                                else {
-                                    useFrameRefTime = true;
-                                }
-                            }    
+                        int response = JOptionPane.showConfirmDialog(UI.getMainFrame(),
+                                                                     new String("Do you wish to use the Frame Reference Time for the graph x axis"),
+                                                                     "Frame Reference Time?",
+                                                                     JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE); 
+                        if (response == JOptionPane.YES_OPTION) {
+                            useFrameRefTime = true;    
                         }
                     } // if (frameRefTimeFound)
                 } // if (frameRefTimeString != null)
-            } // if ((compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM) &&
+            } // if (compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM)
 
             try {
                 position = new float[compImage.getActiveImage().getExtents()[3]];
@@ -1575,8 +1562,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             String frameRefTimeString = null;
             int frameReferenceTime = 0;
        
-            if ((compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM) &&
-                (!Preferences.is(Preferences.PREF_ALWAYS_GRAPH_TIME_AS_0123))) {
+            if (compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM) {
                 boolean frameRefTimeFound = false;
                 fileInfo = (FileInfoDicom) (compImage.getActiveImage().getFileInfo(0)); 
                 frameRefTimeString = ((String) fileInfo.getTagTable().getValue("0054,1300")).trim();
@@ -1591,29 +1577,17 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     }
                     
                     if (frameRefTimeFound) {
-                        if (Preferences.is(Preferences.PREF_ALWAYS_GRAPH_FRAME_REFERENCE_TIME)) {
-                            useFrameRefTime = true;
-                        }
-                        else {
-                            JDialogDicomTimeAxisChoice choice = 
-                                new JDialogDicomTimeAxisChoice(ViewUserInterface.getReference().getMainFrame());
-
-                            if ( !choice.okayPressed()) {
-                                useFrameRefTime = false;
-                            } else {
-                                int axisType = choice.axisType();
-                                if (axisType == 1) {
-                                    useFrameRefTime = false;
-                                }
-                                else {
-                                    useFrameRefTime = true;
-                                }
-                            }    
+                        int response = JOptionPane.showConfirmDialog(UI.getMainFrame(),
+                                                                     new String("Do you wish to use the Frame Reference Time for the graph x axis"),
+                                                                     "Frame Reference Time?",
+                                                                     JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE); 
+                        if (response == JOptionPane.YES_OPTION) {
+                            useFrameRefTime = true;    
                         }
                     } // if (frameRefTimeFound)
                 } // if (frameRefTimeString != null)
-            } // if ((compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM) &&
-            
+            } // if (compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM)
+
             try {
                 ptPosition = new float[compImage.getActiveImage().getExtents()[3]];
                 ptIntensity = new float[compImage.getActiveImage().getExtents()[3]];
