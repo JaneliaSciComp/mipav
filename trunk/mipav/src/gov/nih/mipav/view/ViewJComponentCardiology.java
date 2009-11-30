@@ -740,7 +740,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                     voiHandler.graphPointVOI(newPtVOI,
                                              ((VOIPoint)
-                                              (VOIs.VOIAt(voiHandler.getVOI_ID()).getCurves()[slice].elementAt(0))), 0);
+                                              (VOIs.VOIAt(voiHandler.getVOI_ID()).getCurves()[slice].elementAt(0))), 0, false);
 
                     if (mouseEvent.isShiftDown() != true) {
                         setCursorMode(DEFAULT);
@@ -803,7 +803,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                     if (!((VOIs.VOIAt(i).getContourGraph() != null) && (imageActive.isColorImage() == true))) {
                         voiHandler.graphPointVOI(VOIs.VOIAt(i),
                                                  ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))),
-                                                 index - 1);
+                                                 index - 1, false);
                     }
 
                     if (mouseEvent.isShiftDown() != true) {
