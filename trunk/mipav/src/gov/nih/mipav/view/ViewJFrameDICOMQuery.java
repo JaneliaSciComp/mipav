@@ -2,23 +2,20 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.model.dicomcomm.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.FileUtility;
 
-import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.dialogs.JDialogServer;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
 import java.net.*;
-
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
-import javax.swing.table.*;
+import javax.swing.table.TableColumn;
 
 
 /**
@@ -30,18 +27,18 @@ import javax.swing.table.*;
  * user can select the item to move on and click the "Move Image" button. At the images level, double clicking on an
  * image will move that image. When a move request is sent, it is put in a separate thread. That thread updates the
  * message table as to the progress of the move request.
- *
- * @version  1.0
- * @author   Neva Cherniavsky
- * @author   Matthew McAuliffe, Ph.D.
- * @see      DICOM_Query
- * @see      DICOM_Move
+ * 
+ * @version 1.0
+ * @author Neva Cherniavsky
+ * @author Matthew McAuliffe, Ph.D.
+ * @see DICOM_Query
+ * @see DICOM_Move
  */
-public class ViewJFrameDICOMQuery extends JFrame
-        implements ActionListener, ListSelectionListener, MouseListener, ChangeListener, ComponentListener,
-                   WindowListener, FocusListener {
+public class ViewJFrameDICOMQuery extends JFrame implements ActionListener, ListSelectionListener, MouseListener,
+        ChangeListener, ComponentListener, WindowListener, FocusListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 3899062842723888728L;
@@ -64,7 +61,8 @@ public class ViewJFrameDICOMQuery extends JFrame
     /** DOCUMENT ME! */
     private static final Dimension MINIMUM_SIZE = new Dimension(550, 500);
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private JButton browseButton;
@@ -79,13 +77,10 @@ public class ViewJFrameDICOMQuery extends JFrame
     private JComboBox endYearBox, endMonthBox, endDayBox;
 
     /** DOCUMENT ME! */
-    private Font font12 = MipavUtil.font12;
+    private static final Font font12 = MipavUtil.font12;
 
     /** DOCUMENT ME! */
-    private Font font12B = MipavUtil.font12B;
-
-    /** DOCUMENT ME! */
-    private Font font18B = MipavUtil.font18B;
+    private static final Font font12B = MipavUtil.font12B;
 
     /** DOCUMENT ME! */
     private JPanel listPanel;
@@ -94,12 +89,11 @@ public class ViewJFrameDICOMQuery extends JFrame
     private DICOMDisplayer messageTable;
 
     /** DOCUMENT ME! */
-    private String[] monthString = {
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    };
+    private static final String[] monthString = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+            "Nov", "Dec"};
 
     /** DOCUMENT ME! */
-    private Hashtable moveRequestHash;
+    private Hashtable<String, MoveRequestInfo> moveRequestHash;
 
     /** DOCUMENT ME! */
     private JTextField ptNameText, ptIDText, studyNOText, physText;
@@ -108,13 +102,12 @@ public class ViewJFrameDICOMQuery extends JFrame
     private JLabel queryLev;
 
     /** DOCUMENT ME! */
-    private int queryLevel = PATIENT_LEVEL;
+    private int queryLevel = ViewJFrameDICOMQuery.PATIENT_LEVEL;
 
     /** DOCUMENT ME! */
     private int queryMsgID;
 
-    /** DOCUMENT ME! */
-    private JPanel queryPanel, hostsPanel, setupPanel, aboutPanel, sendPanel;
+    private JPanel aboutPanel;
 
     /** DOCUMENT ME! */
     private DICOM_PDUService queryPDU;
@@ -162,7 +155,8 @@ public class ViewJFrameDICOMQuery extends JFrame
     private JTable serverTable;
 
     /** Buttons used for the host tab */
-    private JButton set, activateStore, createStore, editStore, deleteStore, setStore, cancel, help1, help2, help3, help4;
+    private JButton set, activateStore, createStore, editStore, deleteStore, setStore, cancel, help1, help2, help3,
+            help4;
 
     /** DOCUMENT ME! */
     private String SOPInstanceUID = "";
@@ -206,10 +200,12 @@ public class ViewJFrameDICOMQuery extends JFrame
     /** DOCUMENT ME! */
     private JButton upDirButton;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
+    private final JPanel sendPanel;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    private static final ViewUserInterface userInterface = ViewUserInterface.getReference();
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructs three tabbed panels - DICOM Query, Host and Help panels.
@@ -230,18 +226,16 @@ public class ViewJFrameDICOMQuery extends JFrame
             aboutPanel = new JPanel();
             textArea = new JTextArea();
             insets = new Insets(5, 5, 5, 5);
-            moveRequestHash = new Hashtable();
-        } catch (OutOfMemoryError error) {
+            moveRequestHash = new Hashtable<String, MoveRequestInfo>();
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery constructor");
-
+            sendPanel = null;
             return;
         }
 
-        userInterface = ViewUserInterface.getReference();
-
         try {
             IPAddress = InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException error) { }
+        } catch (final UnknownHostException error) {}
 
         setTitle("DICOM Communication Panel - IP address = " + IPAddress);
         setSize(600, 650);
@@ -252,23 +246,23 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         try {
             setIconImage(MipavUtil.getIconImage("connect.gif")); // add this
-                                                                 // line to
-                                                                 // change
-                                                                 // icon for
-                                                                 // frame!!!!!
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage() +
-                               ">.  Check that this file is available.\n");
+            // line to
+            // change
+            // icon for
+            // frame!!!!!
+        } catch (final FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
         }
 
-        tabbedPane.setFont(font12B);
+        tabbedPane.setFont(ViewJFrameDICOMQuery.font12B);
         tabbedPane.addChangeListener(this);
-        queryPanel = buildQueryPanel();
+        final JPanel queryPanel = buildQueryPanel();
         tabbedPane.addTab("QR Client", null, queryPanel);
 
-        hostsPanel = buildHostPanel();
+        final JPanel hostsPanel = buildHostPanel();
         sendPanel = buildSendPanel();
 
         tabbedPane.addTab("Send", null, sendPanel);
@@ -279,14 +273,14 @@ public class ViewJFrameDICOMQuery extends JFrame
         aboutPanel.setLayout(grid);
         textArea.setBackground(Color.lightGray);
         textArea.setEditable(false);
-        textArea.setFont(font12);
+        textArea.setFont(ViewJFrameDICOMQuery.font12);
         textArea.setMargin(insets);
         buildHelpText();
 
         try {
-            scrollPane = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        } catch (OutOfMemoryError error) {
+            scrollPane = new JScrollPane(textArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery constructor");
 
             return;
@@ -302,12 +296,13 @@ public class ViewJFrameDICOMQuery extends JFrame
         addComponentListener(this);
 
         addWindowListener(this);
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setVisible(true);
 
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     // ************************************************************************
     // **************************** Action Events *****************************
@@ -315,15 +310,15 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Calls various methods depending on the action.
-     *
-     * @param  event  event that triggered function
+     * 
+     * @param event event that triggered function
      */
-    public void actionPerformed(ActionEvent event) {
+    public void actionPerformed(final ActionEvent event) {
 
         // Object source = event.getSource();
         String s;
-        String command = event.getActionCommand();
-        Object source = event.getSource();
+        final String command = event.getActionCommand();
+        final Object source = event.getSource();
 
         s = "";
 
@@ -345,17 +340,13 @@ public class ViewJFrameDICOMQuery extends JFrame
             getStartCalendar();
             getEndCalendar();
 
-            if (((String) (getPtName())).equals("") && ((String) (getPtID())).equals("") &&
-                    ((String) (getStudyNo())).equals("") && ((String) (getPhysName())).equals("")) {
-                int option = JOptionPane.showConfirmDialog(this,
-                                                           "Query on all studies on all patients from " +
-                                                           startMonthBox.getSelectedItem() + "-" +
-                                                           startDayBox.getSelectedItem() + "-" +
-                                                           startYearBox.getSelectedItem() + "\nto " +
-                                                           endMonthBox.getSelectedItem() + "-" +
-                                                           endDayBox.getSelectedItem() + "-" +
-                                                           endYearBox.getSelectedItem() + "?", "Confirm query",
-                                                           JOptionPane.YES_NO_OPTION);
+            if ( ( (getPtName())).equals("") && ( (getPtID())).equals("") && ( (getStudyNo())).equals("")
+                    && ( (getPhysName())).equals("")) {
+                final int option = JOptionPane.showConfirmDialog(this, "Query on all studies on all patients from "
+                        + startMonthBox.getSelectedItem() + "-" + startDayBox.getSelectedItem() + "-"
+                        + startYearBox.getSelectedItem() + "\nto " + endMonthBox.getSelectedItem() + "-"
+                        + endDayBox.getSelectedItem() + "-" + endYearBox.getSelectedItem() + "?", "Confirm query",
+                        JOptionPane.YES_NO_OPTION);
 
                 if (option == JOptionPane.NO_OPTION) {
                     send.setEnabled(true);
@@ -366,25 +357,27 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             }
 
-            if (((String) (getPtID())).equals("")) {
-                sendQuery(PATIENT_LEVEL);
+            if ( ( (getPtID())).equals("")) {
+                sendQuery(ViewJFrameDICOMQuery.PATIENT_LEVEL);
             } else if (studyInstanceUID.equals("")) {
-                sendQuery(STUDY_LEVEL);
+                sendQuery(ViewJFrameDICOMQuery.STUDY_LEVEL);
             } else if (seriesInstanceUID.equals("")) {
-                sendQuery(SERIES_LEVEL);
+                sendQuery(ViewJFrameDICOMQuery.SERIES_LEVEL);
             } else if (SOPInstanceUID.equals("")) {
-                sendQuery(IMAGE_LEVEL);
+                sendQuery(ViewJFrameDICOMQuery.IMAGE_LEVEL);
             }
 
             // this.setCursor(Cursor.DEFAULT_CURSOR);
             // cancelQ.setEnabled(false);
             // tabbedPane.paintAll(tabbedPane.getGraphics());
         } else if (command.equals("Move")) {
-            int begin = queryResultTable.getSelectionModel().getMinSelectionIndex();
-            int end = queryResultTable.getSelectionModel().getMaxSelectionIndex() + 1;
-            int option = JOptionPane.showConfirmDialog(this,
-                                                       "Moving images may take some time, especially\nif you are moving at the patient, study,\nor series level.  Proceed anyway?",
-                                                       "Confirm move", JOptionPane.YES_NO_OPTION);
+            final int begin = queryResultTable.getSelectionModel().getMinSelectionIndex();
+            final int end = queryResultTable.getSelectionModel().getMaxSelectionIndex() + 1;
+            final int option = JOptionPane
+                    .showConfirmDialog(
+                            this,
+                            "Moving images may take some time, especially\nif you are moving at the patient, study,\nor series level.  Proceed anyway?",
+                            "Confirm move", JOptionPane.YES_NO_OPTION);
 
             if (option == JOptionPane.YES_OPTION) {
 
@@ -395,25 +388,25 @@ public class ViewJFrameDICOMQuery extends JFrame
                     sendMoveRequest(queryLevel);
                 }
 
-                if (messageTable.getSucceeded()) {
+                if (DICOMDisplayer.getSucceeded()) {
                     JOptionPane.showMessageDialog(this, "Move request successful", "Success",
-                                                  JOptionPane.INFORMATION_MESSAGE);
+                            JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         } else if (command.equals("ResultUp")) {
 
-            if (queryLevel == STUDY_LEVEL) {
+            if (queryLevel == ViewJFrameDICOMQuery.STUDY_LEVEL) {
                 ptNameText.setText(lastName(ptNameText.getText()));
                 studyInstanceUID = "";
                 seriesInstanceUID = "";
-                sendQuery(PATIENT_LEVEL);
-            } else if (queryLevel == SERIES_LEVEL) {
+                sendQuery(ViewJFrameDICOMQuery.PATIENT_LEVEL);
+            } else if (queryLevel == ViewJFrameDICOMQuery.SERIES_LEVEL) {
                 studyInstanceUID = "";
                 seriesInstanceUID = "";
-                sendQuery(STUDY_LEVEL);
-            } else if (queryLevel == IMAGE_LEVEL) {
+                sendQuery(ViewJFrameDICOMQuery.STUDY_LEVEL);
+            } else if (queryLevel == ViewJFrameDICOMQuery.IMAGE_LEVEL) {
                 seriesInstanceUID = "";
-                sendQuery(SERIES_LEVEL);
+                sendQuery(ViewJFrameDICOMQuery.SERIES_LEVEL);
             }
         } else if (command.equals("TodayRButton")) {
             startCalendar = assignCalendar(todayCalendar, startCalendar);
@@ -460,7 +453,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
                 try {
                     createDialog = new JDialogServer(this, "Create Server", true);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.actionPerformed");
 
                     return;
@@ -472,7 +465,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
                 try {
                     createDialog = new JDialogServer(this, "Create Storage Destination", false);
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.actionPerformed");
 
                     return;
@@ -482,13 +475,13 @@ public class ViewJFrameDICOMQuery extends JFrame
                 model = storageModel;
             }
 
-            if (!createDialog.isCancelled()) {
+            if ( !createDialog.isCancelled()) {
                 values = createDialog.getValues();
 
                 // add code here
                 if (Preferences.getIP(values[0]) == null) {
-                    String value = makeString(values);
-                    Object[] rowData = { Boolean.FALSE, values[0], values[1], values[2], values[3] };
+                    final String value = makeString(values);
+                    final Object[] rowData = {Boolean.FALSE, values[0], values[1], values[2], values[3]};
                     model.addRow(rowData);
                     Preferences.setProperty(key, value);
                     Preferences.save();
@@ -515,10 +508,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             row = table.getSelectedRow();
 
-            String[] values = {
-                (String) model.getValueAt(row, 1), (String) model.getValueAt(row, 2), (String) model.getValueAt(row, 3),
-                (String) model.getValueAt(row, 4)
-            };
+            String[] values = {(String) model.getValueAt(row, 1), (String) model.getValueAt(row, 2),
+                    (String) model.getValueAt(row, 3), (String) model.getValueAt(row, 4)};
 
             try {
 
@@ -527,13 +518,13 @@ public class ViewJFrameDICOMQuery extends JFrame
                 } else {
                     editDialog = new JDialogServer(this, "Edit Storage Destination", values, false);
                 }
-            } catch (OutOfMemoryError error) {
+            } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.actionPerformed");
 
                 return;
             }
 
-            if (!editDialog.isCancelled()) {
+            if ( !editDialog.isCancelled()) {
 
                 // editDialog.setVisible(false);
                 values = editDialog.getValues();
@@ -541,13 +532,13 @@ public class ViewJFrameDICOMQuery extends JFrame
                 String value = makeString(values);
                 key = key + (row + 1);
 
-                if (((Boolean) model.getValueAt(row, 0)).booleanValue()) {
+                if ( ((Boolean) model.getValueAt(row, 0)).booleanValue()) {
                     value = value + "DEFAULT;";
                 }
 
                 Preferences.setProperty(key, value);
 
-                Object[] rowData = { model.getValueAt(row, 0), values[0], values[1], values[2], values[3] };
+                final Object[] rowData = {model.getValueAt(row, 0), values[0], values[1], values[2], values[3]};
                 model.removeRow(row);
                 model.insertRow(row, rowData);
 
@@ -570,12 +561,12 @@ public class ViewJFrameDICOMQuery extends JFrame
             if (event.getSource().equals(delete)) {
                 row = serverTable.getSelectedRow();
                 option = JOptionPane.showConfirmDialog(this, "Are you sure you wish to delete\nthis server?",
-                                                       "Confirm delete", JOptionPane.YES_NO_OPTION);
+                        "Confirm delete", JOptionPane.YES_NO_OPTION);
             } else {
                 row = storageTable.getSelectedRow();
                 option = JOptionPane.showConfirmDialog(this,
-                                                       "Are you sure you wish to delete\nthis storage destination?",
-                                                       "Confirm delete", JOptionPane.YES_NO_OPTION);
+                        "Are you sure you wish to delete\nthis storage destination?", "Confirm delete",
+                        JOptionPane.YES_NO_OPTION);
             }
 
             if (option == JOptionPane.YES_OPTION) {
@@ -644,7 +635,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             try {
                 tok = new StringTokenizer(value, ";");
-            } catch (OutOfMemoryError error) {
+            } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.actionPerformed");
 
                 return;
@@ -675,9 +666,9 @@ public class ViewJFrameDICOMQuery extends JFrame
             serverTable.repaint();
         } else if (command.equals("ClearTable")) {
 
-            for (Enumeration e = moveRequestHash.elements(); e.hasMoreElements();) {
+            for (final Enumeration<MoveRequestInfo> e = moveRequestHash.elements(); e.hasMoreElements();) {
 
-                if (((MoveRequestInfo) e.nextElement()).getThread().isAlive()) {
+                if (e.nextElement().getThread().isAlive()) {
                     MipavUtil.displayError("Can't clear table if a request is not yet completed.");
 
                     return;
@@ -695,7 +686,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                 chooser = new JFileChooser();
 
                 if (sourceTextF.getText() != null) {
-                    File file = new File(sourceTextF.getText());
+                    final File file = new File(sourceTextF.getText());
 
                     if (file != null) {
                         chooser.setCurrentDirectory(file);
@@ -708,19 +699,19 @@ public class ViewJFrameDICOMQuery extends JFrame
 
                 chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-                int returnValue = chooser.showOpenDialog(this);
+                final int returnValue = chooser.showOpenDialog(this);
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     fileName = chooser.getSelectedFile().getName();
                     directory = String.valueOf(chooser.getSelectedFile()); // +
-                                                                           // File.separatorChar;
+                    // File.separatorChar;
                 } else {
                     return;
                 }
 
                 sourceTextF.setText(directory);
 
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory!");
 
                 return;
@@ -733,15 +724,15 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         } else if (command.equals("Cancel")) {
             DICOM_Move dm;
-            int row = messageTable.getSelectedRow();
-            Object messageID = messageTable.getValueAt(row, 5);
-            MoveRequestInfo info = ((MoveRequestInfo) moveRequestHash.get(messageID));
+            final int row = messageTable.getSelectedRow();
+            final Object messageID = messageTable.getValueAt(row, 5);
+            final MoveRequestInfo info = moveRequestHash.get(messageID);
 
             if (info.getThread().isAlive()) {
 
                 try {
                     dm = new DICOM_Move();
-                } catch (OutOfMemoryError e) {
+                } catch (final OutOfMemoryError e) {
                     MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.actionPerformed");
 
                     return;
@@ -750,8 +741,8 @@ public class ViewJFrameDICOMQuery extends JFrame
                 dm.sendCancelRQ(Integer.valueOf((String) messageID).intValue(), info.getPDU());
             }
 
-            userInterface.getDICOMCatcher().setCancelled(true);
-            messageTable.setMessageType(row, messageTable.STATUS);
+            ViewJFrameDICOMQuery.userInterface.getDICOMCatcher().setCancelled(true);
+            DICOMDisplayer.setMessageType(row, DICOMDisplayer.STATUS);
             messageTable.showMessage("Cancelled");
             info.getThread().stop();
             messageTable.repaint();
@@ -760,7 +751,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             String str = null;
             str = sourceTextF.getText();
 
-            int index = str.lastIndexOf(File.separatorChar);
+            final int index = str.lastIndexOf(File.separatorChar);
 
             if (index <= 0) {
                 return;
@@ -785,31 +776,29 @@ public class ViewJFrameDICOMQuery extends JFrame
             sendPanel.repaint();
         } else if (command.equals("SendImages")) {
 
-            int[] rows = sendTable.getSelectedRows();
+            final int[] rows = sendTable.getSelectedRows();
 
             if (rows.length == 0) { // no row selected
                 MipavUtil.displayError("Select a directory or image.");
 
                 return;
             }
-            String fileList[] = getFiles(rows);
-            
-            for (int i = 0; i < fileList.length; i++) {
+            final String fileList[] = getFiles(rows);
 
+            for (final String element : fileList) {
 
-                DICOM_Store dcmStore = new DICOM_Store(fileList[i], (String) sendDestCBox.getSelectedItem(),
-                                                       this);
+                final DICOM_Store dcmStore = new DICOM_Store(element, (String) sendDestCBox.getSelectedItem(), this);
 
-                Thread runner = new Thread(dcmStore);
+                final Thread runner = new Thread(dcmStore);
                 runner.start();
 
-                sendStatusTArea.append("Sending -- " + fileList[i] + " to " +
-                                       (String) sendDestCBox.getSelectedItem() + "\n");
+                sendStatusTArea.append("Sending -- " + element + " to " + (String) sendDestCBox.getSelectedItem()
+                        + "\n");
             }
         } else if (command.equals("SendClear")) {
             sendStatusTArea.setText(" ");
         } else if (command.equals("TestConnection")) {
-            DICOM_Verification verify = new DICOM_Verification((String) sendDestCBox.getSelectedItem(), this);
+            final DICOM_Verification verify = new DICOM_Verification((String) sendDestCBox.getSelectedItem(), this);
             verify.verify();
         } else if (command.equals("Help1")) {
             MipavUtil.showHelp("10308");
@@ -818,131 +807,119 @@ public class ViewJFrameDICOMQuery extends JFrame
         } else if (command.equals("Help3")) {
             MipavUtil.showHelp("10305");
         } else if (command.equals("Help4")) {
-            MipavUtil.showHelp("10304");  
+            MipavUtil.showHelp("10304");
         } else if (command.equals("Activate")) {
-        	int selected = storageTable.getSelectedRow();
-        	DICOM_Receiver rec;
-        	if (userInterface.getDICOMCatcher() != null) {
-        		userInterface.getDICOMCatcher().setStop();
+            final int selected = storageTable.getSelectedRow();
+            DICOM_Receiver rec;
+            if (ViewJFrameDICOMQuery.userInterface.getDICOMCatcher() != null) {
+                ViewJFrameDICOMQuery.userInterface.getDICOMCatcher().setStop();
             }
-        	if(selected == -1) {
-        		userInterface.setDICOMCatcher(rec = new DICOM_Receiver());
-        	} else {
-        		String storageKey = new String();
-        		//should not store default property
-        		for(int i=1; i<storageModel.getColumnCount(); i++) { 
-        			storageKey += storageModel.getValueAt(selected, i) +";";
-        		}
-        		userInterface.setDICOMCatcher(rec = new DICOM_Receiver(storageKey));
-        	}
-        	userInterface.getMenuBuilder().setMenuItemSelected("Activate DICOM receiver", rec.isAlive());
-        	if(rec.isAlive()) {
-        		((JButton)source).setText("Deactivate");
-        		((JButton)source).setActionCommand("Deactivate");
-        		
-        	}
+            if (selected == -1) {
+                ViewJFrameDICOMQuery.userInterface.setDICOMCatcher(rec = new DICOM_Receiver());
+            } else {
+                String storageKey = new String();
+                // should not store default property
+                for (int i = 1; i < storageModel.getColumnCount(); i++) {
+                    storageKey += storageModel.getValueAt(selected, i) + ";";
+                }
+                ViewJFrameDICOMQuery.userInterface.setDICOMCatcher(rec = new DICOM_Receiver(storageKey));
+            }
+            ViewJFrameDICOMQuery.userInterface.getMenuBuilder().setMenuItemSelected("Activate DICOM receiver",
+                    rec.isAlive());
+            if (rec.isAlive()) {
+                ((JButton) source).setText("Deactivate");
+                ((JButton) source).setActionCommand("Deactivate");
+
+            }
         } else if (command.equals("Deactivate")) {
-        	if (userInterface.getDICOMCatcher() != null) {
-        		userInterface.getDICOMCatcher().setStop();
-        	}
+            if (ViewJFrameDICOMQuery.userInterface.getDICOMCatcher() != null) {
+                ViewJFrameDICOMQuery.userInterface.getDICOMCatcher().setStop();
+            }
 
-            // Also need to disable the auto upload to srb function.
-            userInterface.getMenuBuilder().setMenuItemSelected("Enable auto SRB upload", false);
-
-            if (userInterface.getNDARPipeline() != null) {
-            	userInterface.getNDARPipeline().uninstall();
-            } 
-
-        	userInterface.getMenuBuilder().setMenuItemSelected("Activate DICOM receiver", false);
-            ((JButton)source).setText("Activate");
-    		((JButton)source).setActionCommand("Activate");
+            ViewJFrameDICOMQuery.userInterface.getMenuBuilder().setMenuItemSelected("Activate DICOM receiver", false);
+            ((JButton) source).setText("Activate");
+            ((JButton) source).setActionCommand("Activate");
         }
-        
+
     }
 
-    private String[] getFiles(int[] rows) {
-    	Vector <String> list = new Vector<String>();
-    	
-    	for (int i = 0; i < rows.length; i++) {
-    		String fileDir = sourceTextF.getText() + File.separatorChar;
-    		String fileName = (String) sendTable.getValueAt(rows[i], 0);
+    private String[] getFiles(final int[] rows) {
+        final Vector<String> list = new Vector<String>();
 
-    		String suffix = FileUtility.getExtension(fileName);
-    		File current = new File(fileDir + fileName);
-    		
-    		if (!current.isDirectory()) {
+        for (final int element : rows) {
+            final String fileDir = sourceTextF.getText() + File.separatorChar;
+            final String fileName = (String) sendTable.getValueAt(element, 0);
 
-    			try {
+            final String suffix = FileUtility.getExtension(fileName);
+            final File current = new File(fileDir + fileName);
 
-    				if (FileUtility.isDicom(fileName, fileDir, true) != FileUtility.DICOM) {
-    					sendStatusTArea.append("Skipping -- " + fileDir + fileName + " -- not a DICOM file.\n");
+            if ( !current.isDirectory()) {
 
-    					continue;
-              	 }
-    				else{
-    					list.add(current.getAbsolutePath());
-    				}
-    			} catch (IOException ioe) {
-    				sendStatusTArea.append("Skipping -- " + fileDir + fileName +
-    					" -- I/O error encountered reading file.\n");
-    				ioe.printStackTrace();
+                try {
 
-    				continue;
-    			}
-    			
-    			
-    		}
-    		
-    		else{
-    			addFiles(current, list);
-    		}
-    		
-    		
-    		
-    	}
-    	String output[] = new String[list.size()];
-    	for(int i = 0; i < list.size(); i++){
-    		output[i] = list.get(i);
-    	}
-		return output;
-	}
+                    if (FileUtility.isDicom(fileName, fileDir, true) != FileUtility.DICOM) {
+                        sendStatusTArea.append("Skipping -- " + fileDir + fileName + " -- not a DICOM file.\n");
 
-	private void addFiles(File current, Vector<String> list) {
-		
-		File files[] = current.listFiles();
-		
-		for(int i = 0; i < files.length; i++){
-			if(files[i].isFile()){
-				try {
-					if(FileUtility.isDicom(files[i].getName(), files[i].getParent()+File.separator, true) == FileUtility.DICOM){
-						list.add(files[i].getAbsolutePath());
-					}
-					else{
-						sendStatusTArea.append("Skipping -- " + files[i].getParent()+File.separator+files[i].getName()+ " -- not a DICOM file.\n");
-					}
-				} catch (IOException e) {
-				}
-			}
-			else{
-				addFiles(files[i], list);
-			}
-		}
-		
-	}
+                        continue;
+                    } else {
+                        list.add(current.getAbsolutePath());
+                    }
+                } catch (final IOException ioe) {
+                    sendStatusTArea.append("Skipping -- " + fileDir + fileName
+                            + " -- I/O error encountered reading file.\n");
+                    ioe.printStackTrace();
 
-	/**
+                    continue;
+                }
+
+            }
+
+            else {
+                addFiles(current, list);
+            }
+
+        }
+        final String output[] = new String[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            output[i] = list.get(i);
+        }
+        return output;
+    }
+
+    private void addFiles(final File current, final Vector<String> list) {
+
+        final File files[] = current.listFiles();
+
+        for (final File element : files) {
+            if (element.isFile()) {
+                try {
+                    if (FileUtility.isDicom(element.getName(), element.getParent() + File.separator, true) == FileUtility.DICOM) {
+                        list.add(element.getAbsolutePath());
+                    } else {
+                        sendStatusTArea.append("Skipping -- " + element.getParent() + File.separator
+                                + element.getName() + " -- not a DICOM file.\n");
+                    }
+                } catch (final IOException e) {}
+            } else {
+                addFiles(element, list);
+            }
+        }
+
+    }
+
+    /**
      * Appends the text area with the message.
-     *
-     * @param  appMessage  the message
+     * 
+     * @param appMessage the message
      */
-    public void appendSendMessage(String appMessage) {
+    public void appendSendMessage(final String appMessage) {
         sendStatusTArea.append(appMessage);
     }
 
     /**
      * Cancels pending moves.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public boolean cancelPendingMoves() {
         int i, nRows;
@@ -955,7 +932,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         try {
             dm = new DICOM_Move();
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             System.gc();
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.actionPerformed");
 
@@ -967,13 +944,13 @@ public class ViewJFrameDICOMQuery extends JFrame
         for (i = 0; i < nRows; i++) {
             pending = (String) messageTable.getValueAt(i, 0);
 
-            if ((pending != null) &&
-                    (pending.trim().equals("Saving images") || pending.trim().equals("Sending request"))) {
+            if ( (pending != null)
+                    && (pending.trim().equals("Saving images") || pending.trim().equals("Sending request"))) {
                 messageID = messageTable.getValueAt(i, 5);
 
                 if (cancel == -99) { // first time through
                     reply = JOptionPane.showConfirmDialog(this, "Cancel move request(s)?", "DICOM - Exit",
-                                                          JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
                     if (reply == JOptionPane.YES_OPTION) {
                         cancel = 1;
@@ -982,10 +959,10 @@ public class ViewJFrameDICOMQuery extends JFrame
                     }
                 }
 
-                if ((messageID != null) && (cancel == 1)) {
-                    info = ((MoveRequestInfo) moveRequestHash.get(messageID));
+                if ( (messageID != null) && (cancel == 1)) {
+                    info = (moveRequestHash.get(messageID));
 
-                    if ((info != null) && info.getThread().isAlive()) {
+                    if ( (info != null) && info.getThread().isAlive()) {
                         dm.sendCancelRQ(Integer.valueOf((String) messageID).intValue(), info.getPDU());
                     }
 
@@ -999,15 +976,15 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Cancels pending query.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public boolean cancelPendingQuery() {
         int reply;
 
         if (cancelQ.isEnabled() && (dicomQuery != null)) {
             reply = JOptionPane.showConfirmDialog(this, "Cancel query request?", "DICOM - Exit",
-                                                  JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
             if (reply == JOptionPane.YES_OPTION) {
                 dicomQuery.sendFindCancelRQ(queryMsgID, queryPDU);
@@ -1023,17 +1000,17 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void componentHidden(ComponentEvent event) { }
+    public void componentHidden(final ComponentEvent event) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void componentMoved(ComponentEvent event) { }
+    public void componentMoved(final ComponentEvent event) {}
 
     // ************************************************************************
     // **************************** Component Events **************************
@@ -1041,33 +1018,34 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Does not allow component to be smaller than MINIMUM_SIZE.
-     *
-     * @param  event  event that triggered this method
+     * 
+     * @param event event that triggered this method
      */
-    public void componentResized(ComponentEvent event) {
+    public void componentResized(final ComponentEvent event) {
 
-        if ((getBounds().width < MINIMUM_SIZE.width) && (getBounds().height < MINIMUM_SIZE.height)) {
-            setSize(MINIMUM_SIZE);
-        } else if (getBounds().height < MINIMUM_SIZE.height) {
-            setSize(getBounds().width, MINIMUM_SIZE.height);
-        } else if (getBounds().width < MINIMUM_SIZE.width) {
-            setSize(MINIMUM_SIZE.width, getBounds().height);
+        if ( (getBounds().width < ViewJFrameDICOMQuery.MINIMUM_SIZE.width)
+                && (getBounds().height < ViewJFrameDICOMQuery.MINIMUM_SIZE.height)) {
+            setSize(ViewJFrameDICOMQuery.MINIMUM_SIZE);
+        } else if (getBounds().height < ViewJFrameDICOMQuery.MINIMUM_SIZE.height) {
+            setSize(getBounds().width, ViewJFrameDICOMQuery.MINIMUM_SIZE.height);
+        } else if (getBounds().width < ViewJFrameDICOMQuery.MINIMUM_SIZE.width) {
+            setSize(ViewJFrameDICOMQuery.MINIMUM_SIZE.width, getBounds().height);
         }
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void componentShown(ComponentEvent event) { }
+    public void componentShown(final ComponentEvent event) {}
 
     /**
      * Displays the query results.
-     *
-     * @param  type  indicates the query level
+     * 
+     * @param type indicates the query level
      */
-    public void displayQueryResults(int type) {
+    public void displayQueryResults(final int type) {
 
         DICOM_Object results;
         Object[] rawData;
@@ -1075,7 +1053,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         queryResultTable.getSelectionModel().removeListSelectionListener(this);
         queryResultTable.getSelectionModel().clearSelection();
 
-        int end = queryTableModel.getRowCount();
+        final int end = queryTableModel.getRowCount();
 
         for (int i = 0; i < end; i++) {
 
@@ -1094,7 +1072,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                 queryLev.setText("Query level: Patient");
                 try {
                     rawData = new Object[3];
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.displayQueryResults");
 
                     return;
@@ -1104,7 +1082,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                     queryTableModel.addColumn("");
                 }
 
-                String[] columnName = { "Pat. Name", "Pat. ID", "Referring Physician" };
+                final String[] columnName = {"Pat. Name", "Pat. ID", "Referring Physician"};
                 queryTableModel.setColumnIdentifiers(columnName);
 
                 for (int i = 0; i < queryPDU.findResults.size(); i++) {
@@ -1123,7 +1101,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
                     for (int j = 1; j < queryTableModel.getRowCount(); j++) {
 
-                        if ((j != i) && (queryTableModel.getValueAt(i, 1)).equals(queryTableModel.getValueAt(j, 1))) {
+                        if ( (j != i) && (queryTableModel.getValueAt(i, 1)).equals(queryTableModel.getValueAt(j, 1))) {
                             queryTableModel.removeRow(j--);
                         }
                     }
@@ -1136,7 +1114,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                 try {
                     rawData = new Object[4];
                     uids = new DICOM_UID[queryPDU.findResults.size()];
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendQuery");
 
                     return;
@@ -1146,7 +1124,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                     queryTableModel.addColumn("");
                 }
 
-                String[] columnName2 = { "Study ID", "Date", "Time", "Description" };
+                final String[] columnName2 = {"Study ID", "Date", "Time", "Description"};
 
                 queryTableModel.setColumnIdentifiers(columnName2);
                 for (int i = 0; i < queryPDU.findResults.size(); i++) {
@@ -1157,8 +1135,8 @@ public class ViewJFrameDICOMQuery extends JFrame
                     rawData[3] = results.getStr(DICOM_RTC.DD_StudyDescription);
 
                     try {
-                        uids[i] = new DICOM_UID((String) results.getStr(DICOM_RTC.DD_StudyInstanceUID));
-                    } catch (OutOfMemoryError error) {
+                        uids[i] = new DICOM_UID(results.getStr(DICOM_RTC.DD_StudyInstanceUID));
+                    } catch (final OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendQuery");
 
                         return;
@@ -1178,7 +1156,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                 try {
                     rawData = new Object[5];
                     uids = new DICOM_UID[queryPDU.findResults.size()];
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendQuery");
 
                     return;
@@ -1188,7 +1166,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                     queryTableModel.addColumn("");
                 }
 
-                String[] columnName3 = { "#", "Date", "Time", "Mod", "Description" };
+                final String[] columnName3 = {"#", "Date", "Time", "Mod", "Description"};
 
                 queryTableModel.setColumnIdentifiers(columnName3);
                 for (int i = 0; i < queryPDU.findResults.size(); i++) {
@@ -1205,9 +1183,9 @@ public class ViewJFrameDICOMQuery extends JFrame
                     rawData[4] = results.getStr(DICOM_RTC.DD_SeriesDescription);
 
                     try {
-                        uids[i] = new DICOM_UID((String) results.getStr(DICOM_RTC.DD_SeriesInstanceUID),
-                                                (String) results.getStr(DICOM_RTC.DD_StudyInstanceUID));
-                    } catch (OutOfMemoryError error) {
+                        uids[i] = new DICOM_UID(results.getStr(DICOM_RTC.DD_SeriesInstanceUID), results
+                                .getStr(DICOM_RTC.DD_StudyInstanceUID));
+                    } catch (final OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendQuery");
 
                         return;
@@ -1223,7 +1201,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                 try {
                     rawData = new Object[5];
                     uids = new DICOM_UID[queryPDU.findResults.size()];
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendQuery");
 
                     return;
@@ -1233,7 +1211,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                     queryTableModel.addColumn("");
                 }
 
-                String[] columnName4 = { "#", "Date", "Time", "Acq. Date", "Acc. #" };
+                final String[] columnName4 = {"#", "Date", "Time", "Acq. Date", "Acc. #"};
 
                 queryTableModel.setColumnIdentifiers(columnName4);
                 for (int i = 0; i < queryPDU.findResults.size(); i++) {
@@ -1245,10 +1223,9 @@ public class ViewJFrameDICOMQuery extends JFrame
                     rawData[4] = results.getStr(DICOM_RTC.DD_AccessionNumber);
 
                     try {
-                        uids[i] = new DICOM_UID((String) results.getStr(DICOM_RTC.DD_SeriesInstanceUID),
-                                                (String) results.getStr(DICOM_RTC.DD_SOPInstanceUID),
-                                                (String) results.getStr(DICOM_RTC.DD_StudyInstanceUID));
-                    } catch (OutOfMemoryError error) {
+                        uids[i] = new DICOM_UID(results.getStr(DICOM_RTC.DD_SeriesInstanceUID), results
+                                .getStr(DICOM_RTC.DD_SOPInstanceUID), results.getStr(DICOM_RTC.DD_StudyInstanceUID));
+                    } catch (final OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendQuery");
 
                         return;
@@ -1282,18 +1259,18 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void focusGained(FocusEvent event) { }
+    public void focusGained(final FocusEvent event) {}
 
     /**
      * When the user clicks the mouse out of a text field, resets the neccessary variables.
-     *
-     * @param  event  event that triggers this function
+     * 
+     * @param event event that triggers this function
      */
-    public void focusLost(FocusEvent event) {
-        Object source = event.getSource();
+    public void focusLost(final FocusEvent event) {
+        final Object source = event.getSource();
         JTextField field;
         String text;
 
@@ -1312,13 +1289,13 @@ public class ViewJFrameDICOMQuery extends JFrame
     /**
      * When the user double clicks on a selection, sends a query at the next query level; when the user clicks on a
      * header, sorts the column.
-     *
-     * @param  e  event that triggered this method
+     * 
+     * @param e event that triggered this method
      */
 
-    public void mouseClicked(MouseEvent e) {
-        Object source = e.getSource();
-        Point p = e.getPoint();
+    public void mouseClicked(final MouseEvent e) {
+        final Object source = e.getSource();
+        final Point p = e.getPoint();
         int col;
 
         if (source.equals(queryResultTable.getTableHeader())) {
@@ -1358,7 +1335,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             try {
                 ev = new ActionEvent(set, ActionEvent.ACTION_PERFORMED, "SetAs");
-            } catch (OutOfMemoryError error) {
+            } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.actionPerformed");
 
                 return;
@@ -1372,7 +1349,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             try {
                 ev = new ActionEvent(setStore, ActionEvent.ACTION_PERFORMED, "SetAs");
-            } catch (OutOfMemoryError error) {
+            } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.actionPerformed");
 
                 return;
@@ -1385,24 +1362,24 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             if (queryResultTable.getSelectionModel().isSelectionEmpty()) {
                 return;
-            } else if (queryLevel == PATIENT_LEVEL) {
-                sendQuery(STUDY_LEVEL);
-            } else if (queryLevel == STUDY_LEVEL) {
-                sendQuery(SERIES_LEVEL);
-            } else if (queryLevel == SERIES_LEVEL) {
-                sendQuery(IMAGE_LEVEL);
-            } else if (queryLevel == IMAGE_LEVEL) {
-                sendMoveRequest(IMAGE_LEVEL);
+            } else if (queryLevel == ViewJFrameDICOMQuery.PATIENT_LEVEL) {
+                sendQuery(ViewJFrameDICOMQuery.STUDY_LEVEL);
+            } else if (queryLevel == ViewJFrameDICOMQuery.STUDY_LEVEL) {
+                sendQuery(ViewJFrameDICOMQuery.SERIES_LEVEL);
+            } else if (queryLevel == ViewJFrameDICOMQuery.SERIES_LEVEL) {
+                sendQuery(ViewJFrameDICOMQuery.IMAGE_LEVEL);
+            } else if (queryLevel == ViewJFrameDICOMQuery.IMAGE_LEVEL) {
+                sendMoveRequest(ViewJFrameDICOMQuery.IMAGE_LEVEL);
 
-                if (messageTable.getSucceeded()) {
+                if (DICOMDisplayer.getSucceeded()) {
                     JOptionPane.showMessageDialog(this, "Move request successful", "Success",
-                                                  JOptionPane.INFORMATION_MESSAGE);
+                            JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         } else if (source.equals(sendTable) && (e.getClickCount() == 2)) {
             String str = null;
             String dir = null;
-            str = (String) sendModel.getValueAt(((JTable) source).getSelectedRow(), 0);
+            str = (String) sendModel.getValueAt( ((JTable) source).getSelectedRow(), 0);
 
             // try string to determine if it is a directory - if not return.
             dir = sourceTextF.getText();
@@ -1423,40 +1400,40 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  e  DOCUMENT ME!
+     * 
+     * @param e DOCUMENT ME!
      */
-    public void mouseEntered(MouseEvent e) { }
+    public void mouseEntered(final MouseEvent e) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  e  DOCUMENT ME!
+     * 
+     * @param e DOCUMENT ME!
      */
-    public void mouseExited(MouseEvent e) { }
+    public void mouseExited(final MouseEvent e) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  e  DOCUMENT ME!
+     * 
+     * @param e DOCUMENT ME!
      */
-    public void mousePressed(MouseEvent e) { }
+    public void mousePressed(final MouseEvent e) {}
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  e  DOCUMENT ME!
+     * 
+     * @param e DOCUMENT ME!
      */
-    public void mouseReleased(MouseEvent e) { }
+    public void mouseReleased(final MouseEvent e) {}
 
     /**
      * ChangeListener************************************************************************* /** Sets values based on
      * knob along slider.
-     *
-     * @param  e  DOCUMENT ME! event that triggered this function
+     * 
+     * @param e DOCUMENT ME! event that triggered this function
      */
-    public void stateChanged(ChangeEvent e) {
-        Object source = e.getSource();
+    public void stateChanged(final ChangeEvent e) {
+        final Object source = e.getSource();
 
         if (source == tabbedPane) {
 
@@ -1473,38 +1450,38 @@ public class ViewJFrameDICOMQuery extends JFrame
      * A List Selection Listener event for changes in the tables. If this is the query table, it will enable the down
      * and move images buttons and set up the UIDs for querying. If this is the server or storage table, it will enable
      * the edit, delete, and set as default buttons.
-     *
-     * @param  e  event that triggered this method.
+     * 
+     * @param e event that triggered this method.
      */
-    public void valueChanged(ListSelectionEvent e) {
-        Object source = e.getSource();
+    public void valueChanged(final ListSelectionEvent e) {
+        final Object source = e.getSource();
 
         if (e.getValueIsAdjusting()) {
             return;
         }
 
-        if (source.equals(queryResultTable.getSelectionModel())&&queryTableModel.getRowCount()!=0) {
+        if (source.equals(queryResultTable.getSelectionModel()) && queryTableModel.getRowCount() != 0) {
             setEnabled(down, true);
             setEnabled(move, true);
 
-            int queryRow = queryResultTable.getSelectedRow();
+            final int queryRow = queryResultTable.getSelectedRow();
 
-            if (queryLevel == PATIENT_LEVEL) {
+            if (queryLevel == ViewJFrameDICOMQuery.PATIENT_LEVEL) {
                 ptIDText.setText((String) queryTableModel.getValueAt(queryRow, 1));
                 ptNameText.setText((String) queryTableModel.getValueAt(queryRow, 0));
-            } else if (queryLevel == STUDY_LEVEL) {
+            } else if (queryLevel == ViewJFrameDICOMQuery.STUDY_LEVEL) {
                 studyNOText.setText((String) queryTableModel.getValueAt(queryRow, 0));
                 studyInstanceUID = uids[queryRow].getStudyInstanceUID();
-            } else if (queryLevel == SERIES_LEVEL) {
+            } else if (queryLevel == ViewJFrameDICOMQuery.SERIES_LEVEL) {
                 seriesInstanceUID = uids[queryRow].getSeriesInstanceUID();
-            } else if (queryLevel == IMAGE_LEVEL) {
+            } else if (queryLevel == ViewJFrameDICOMQuery.IMAGE_LEVEL) {
                 SOPInstanceUID = uids[queryRow].getSOPInstanceUID();
             }
         } else if (source.equals(serverTable.getSelectionModel())) {
             serverTable.repaint();
 
-            if (serverTable.getSelectionModel().getMinSelectionIndex() !=
-                    serverTable.getSelectionModel().getMaxSelectionIndex()) {
+            if (serverTable.getSelectionModel().getMinSelectionIndex() != serverTable.getSelectionModel()
+                    .getMaxSelectionIndex()) {
                 setEnabled(edit, false);
                 setEnabled(delete, false);
                 setEnabled(set, false);
@@ -1516,8 +1493,8 @@ public class ViewJFrameDICOMQuery extends JFrame
         } else if (source.equals(storageTable.getSelectionModel())) {
             storageTable.repaint();
 
-            if (storageTable.getSelectionModel().getMinSelectionIndex() !=
-                    storageTable.getSelectionModel().getMaxSelectionIndex()) {
+            if (storageTable.getSelectionModel().getMinSelectionIndex() != storageTable.getSelectionModel()
+                    .getMaxSelectionIndex()) {
                 setEnabled(editStore, false);
                 setEnabled(deleteStore, false);
                 setEnabled(setStore, false);
@@ -1535,24 +1512,24 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowActivated(WindowEvent event) { }
+    public void windowActivated(final WindowEvent event) {}
 
     /**
      * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowClosed(WindowEvent event) { }
+    public void windowClosed(final WindowEvent event) {}
 
     /**
      * Closes frame is requested. The user is notified if there are any pending image move requests. The user is able to
-     *
-     * @param  event  event that triggered this function
+     * 
+     * @param event event that triggered this function
      */
-    public void windowClosing(WindowEvent event) {
+    public void windowClosing(final WindowEvent event) {
 
         if (messageTable.getRowCount() != 0) {
 
@@ -1570,35 +1547,35 @@ public class ViewJFrameDICOMQuery extends JFrame
             // dicomQuery.sendFindCancelRQ(queryMsgID, queryPDU);
             // }
             setVisible(false);
-            userInterface.setDICOMQueryFrame(null);
+            ViewJFrameDICOMQuery.userInterface.setDICOMQueryFrame(null);
             dispose();
         } else {
             setVisible(false);
-            userInterface.setDICOMQueryFrame(null);
+            ViewJFrameDICOMQuery.userInterface.setDICOMQueryFrame(null);
             dispose();
         }
     }
 
     /**
      * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowDeactivated(WindowEvent event) { }
+    public void windowDeactivated(final WindowEvent event) {}
 
     /**
      * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowDeiconified(WindowEvent event) { }
+    public void windowDeiconified(final WindowEvent event) {}
 
     /**
      * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowIconified(WindowEvent event) { }
+    public void windowIconified(final WindowEvent event) {}
 
     // ************************************************************************
     // **************************** Window Events *****************************
@@ -1606,23 +1583,23 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
+     * 
+     * @param event DOCUMENT ME!
      */
-    public void windowOpened(WindowEvent event) { }
+    public void windowOpened(final WindowEvent event) {}
 
     /**
      * Assign source Calendar to target calendar.
-     *
-     * @param   sourceC  The source calendar
-     * @param   targetC  The target calendar that will copy the values of the source Calendar.
-     *
-     * @return  The target calendar.
+     * 
+     * @param sourceC The source calendar
+     * @param targetC The target calendar that will copy the values of the source Calendar.
+     * 
+     * @return The target calendar.
      */
-    private Calendar assignCalendar(Calendar sourceC, Calendar targetC) {
-        int year = sourceC.get(Calendar.YEAR);
-        int month = sourceC.get(Calendar.MONTH);
-        int day = sourceC.get(Calendar.DATE);
+    private Calendar assignCalendar(final Calendar sourceC, final Calendar targetC) {
+        final int year = sourceC.get(Calendar.YEAR);
+        final int month = sourceC.get(Calendar.MONTH);
+        final int day = sourceC.get(Calendar.DATE);
 
         targetC.set(year, month, day);
 
@@ -1632,8 +1609,8 @@ public class ViewJFrameDICOMQuery extends JFrame
     /**
      * Builds the panel that designed for inputing study duration information. It contains a panel of radiobuttons, and
      * two rows of pull down boxes to facilitate the input of information.
-     *
-     * @return  The constructed panel.
+     * 
+     * @return The constructed panel.
      */
     private JPanel buildDatePanel() {
         JPanel rootPanel, datePanel, blockPanel;
@@ -1658,7 +1635,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             endDayBox = new JComboBox();
             endYearBox = new JComboBox();
             insets = new Insets(0, 0, 0, 0);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildDatePanel");
 
             return null;
@@ -1667,38 +1644,38 @@ public class ViewJFrameDICOMQuery extends JFrame
         todayCalendar = Calendar.getInstance();
         rootPanel.setForeground(Color.black);
 
-        TitledBorder border = buildTitledBorder("Query Duration");
+        final TitledBorder border = buildTitledBorder("Query Duration");
         border.setTitleColor(Color.blue);
         rootPanel.setBorder(border);
 
         blockPanel.setForeground(Color.black);
 
-        JRadioButton b1 = buildRadioButton("Today", true);
+        final JRadioButton b1 = buildRadioButton("Today", true);
         g1.add(b1);
         b1.setToolTipText("Same date study ");
         blockPanel.add(b1);
 
-        JRadioButton b2 = buildRadioButton("One Week", false);
+        final JRadioButton b2 = buildRadioButton("One Week", false);
         g1.add(b2);
         b2.setToolTipText("Studies up to one week ago from today ");
         blockPanel.add(b2);
 
-        JRadioButton b3 = buildRadioButton("One Month", false);
+        final JRadioButton b3 = buildRadioButton("One Month", false);
         g1.add(b3);
         b3.setToolTipText("Studies up to one month ago from today ");
         blockPanel.add(b3);
 
-        JRadioButton b4 = buildRadioButton("Three Month", false);
+        final JRadioButton b4 = buildRadioButton("Three Month", false);
         g1.add(b4);
         b4.setToolTipText("Studies up to three months ago ");
         blockPanel.add(b4);
 
-        JRadioButton b5 = buildRadioButton("Six Month", false);
+        final JRadioButton b5 = buildRadioButton("Six Month", false);
         g1.add(b5);
         b5.setToolTipText("Studies up to half year ago ");
         blockPanel.add(b5);
 
-        JRadioButton b6 = buildRadioButton("One Year", false);
+        final JRadioButton b6 = buildRadioButton("One Year", false);
         g1.add(b6);
         b6.setToolTipText("Studies up to one year ago ");
         blockPanel.add(b6);
@@ -1709,10 +1686,10 @@ public class ViewJFrameDICOMQuery extends JFrame
         datePanel.add(buildLabel("Start Date:   "), setupLabelLayout());
 
         for (int i = 0; i < 12; i++) {
-            startMonthBox.addItem(monthString[i]);
+            startMonthBox.addItem(ViewJFrameDICOMQuery.monthString[i]);
         }
 
-        startMonthBox.setFont(font12);
+        startMonthBox.setFont(ViewJFrameDICOMQuery.font12);
         startMonthBox.addActionListener(this);
         startMonthBox.setActionCommand("StartMonth");
         datePanel.add(startMonthBox, setupComboBoxLayout());
@@ -1721,16 +1698,16 @@ public class ViewJFrameDICOMQuery extends JFrame
             startDayBox.addItem(Integer.toString(i));
         }
 
-        startDayBox.setFont(font12);
+        startDayBox.setFont(ViewJFrameDICOMQuery.font12);
         startDayBox.addActionListener(this);
         startDayBox.setActionCommand("StartDay");
         datePanel.add(startDayBox, setupComboBoxLayout());
 
-        for (int i = DEFAULT_MIN_YEAR; i < (todayCalendar.get(Calendar.YEAR) + 1); i++) {
+        for (int i = ViewJFrameDICOMQuery.DEFAULT_MIN_YEAR; i < (todayCalendar.get(Calendar.YEAR) + 1); i++) {
             startYearBox.addItem(Integer.toString(i));
         }
 
-        startYearBox.setFont(font12);
+        startYearBox.setFont(ViewJFrameDICOMQuery.font12);
         startYearBox.addActionListener(this);
         startYearBox.setActionCommand("StartYear");
         gbc = setupComboBoxLayout();
@@ -1745,10 +1722,10 @@ public class ViewJFrameDICOMQuery extends JFrame
         datePanel.add(buildLabel("End Date:   "), setupLabelLayout());
 
         for (int i = 0; i < 12; i++) {
-            endMonthBox.addItem(monthString[i]);
+            endMonthBox.addItem(ViewJFrameDICOMQuery.monthString[i]);
         }
 
-        endMonthBox.setFont(font12);
+        endMonthBox.setFont(ViewJFrameDICOMQuery.font12);
         endMonthBox.setSelectedIndex(todayCalendar.get(Calendar.MONTH));
         endMonthBox.addActionListener(this);
         endMonthBox.setActionCommand("EndMonth");
@@ -1758,17 +1735,17 @@ public class ViewJFrameDICOMQuery extends JFrame
             endDayBox.addItem(Integer.toString(i));
         }
 
-        endDayBox.setFont(font12);
+        endDayBox.setFont(ViewJFrameDICOMQuery.font12);
         endDayBox.setSelectedIndex(todayCalendar.get(Calendar.DATE) - 1);
         endDayBox.addActionListener(this);
         endDayBox.setActionCommand("EndDay");
         datePanel.add(endDayBox, setupComboBoxLayout());
 
-        for (int i = (todayCalendar.get(Calendar.YEAR)); i >= DEFAULT_MIN_YEAR; i--) {
+        for (int i = (todayCalendar.get(Calendar.YEAR)); i >= ViewJFrameDICOMQuery.DEFAULT_MIN_YEAR; i--) {
             endYearBox.addItem(Integer.toString(i));
         }
 
-        endYearBox.setFont(font12);
+        endYearBox.setFont(ViewJFrameDICOMQuery.font12);
         gbc = setupComboBoxLayout();
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         endYearBox.addActionListener(this);
@@ -1787,19 +1764,19 @@ public class ViewJFrameDICOMQuery extends JFrame
         rootPanel.add(blockPanel, gbc);
         rootPanel.add(datePanel, gbc);
 
-        label = "Today's Date: " + (monthString[(int) todayCalendar.get(Calendar.MONTH)]) + "-" +
-                todayCalendar.get(Calendar.DATE) + "-" + todayCalendar.get(Calendar.YEAR);
+        label = "Today's Date: " + (ViewJFrameDICOMQuery.monthString[todayCalendar.get(Calendar.MONTH)]) + "-"
+                + todayCalendar.get(Calendar.DATE) + "-" + todayCalendar.get(Calendar.YEAR);
 
         try {
             currentDateL = new JLabel(label);
             currentDateL.setPreferredSize(new Dimension(170, 40));
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildDatePanel");
 
             return null;
         }
 
-        currentDateL.setFont(font12);
+        currentDateL.setFont(ViewJFrameDICOMQuery.font12);
         currentDateL.setForeground(Color.blue);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.CENTER;
@@ -1816,11 +1793,11 @@ public class ViewJFrameDICOMQuery extends JFrame
      */
     private void buildHelpText() {
         BufferedReader buffReader = null;
-        textArea.setFont(font12B);
+        textArea.setFont(ViewJFrameDICOMQuery.font12B);
         textArea.setText(" Instructions for DICOM Server Access for MIPAV \n\n");
 
         try {
-            URL fileURL = getClass().getClassLoader().getResource("DICOMhelp.txt");
+            final URL fileURL = getClass().getClassLoader().getResource("DICOMhelp.txt");
 
             if (fileURL == null) {
                 MipavUtil.displayError("The help file DICOMhelp.txt was not found, so\nthe help tab is empty.");
@@ -1829,9 +1806,9 @@ public class ViewJFrameDICOMQuery extends JFrame
                 return;
             }
 
-            Reader reader = new InputStreamReader(fileURL.openStream());
+            final Reader reader = new InputStreamReader(fileURL.openStream());
             buffReader = new BufferedReader(reader);
-        } catch (IOException ioe) {
+        } catch (final IOException ioe) {
             MipavUtil.displayError("The help file DICOMhelp.txt was not found, so\nthe help tab is empty.");
             textArea.setText("");
 
@@ -1840,10 +1817,10 @@ public class ViewJFrameDICOMQuery extends JFrame
                 if (buffReader != null) {
                     buffReader.close();
                 }
-            } catch (IOException closee) { }
+            } catch (final IOException closee) {}
 
             return;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildHelpText");
 
             try {
@@ -1851,7 +1828,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                 if (buffReader != null) {
                     buffReader.close();
                 }
-            } catch (IOException closee) { }
+            } catch (final IOException closee) {}
 
             return;
         }
@@ -1864,7 +1841,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                 textArea.append(s + "\n");
                 s = buffReader.readLine();
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             MipavUtil.displayError("Error " + e);
         } finally {
 
@@ -1873,14 +1850,14 @@ public class ViewJFrameDICOMQuery extends JFrame
                 if (buffReader != null) {
                     buffReader.close();
                 }
-            } catch (IOException closee) { }
+            } catch (final IOException closee) {}
         }
     }
 
     /**
      * Builds the host panel by calling methods to build the server and storage panels.
-     *
-     * @return  the panel containing the hosts
+     * 
+     * @return the panel containing the hosts
      */
     private JPanel buildHostPanel() {
         JPanel serverPanel, storagePanel, rootPanel;
@@ -1890,7 +1867,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             gbc = new GridBagConstraints();
             rootPanel = new JPanel();
             rootPanel.setLayout(new GridBagLayout());
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildHostPanel");
 
             return null;
@@ -1920,23 +1897,23 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Builds the label for the textField, try to standardize the label appearance in the GUI.
-     *
-     * @param   s  a string which encode the name of the label
-     *
-     * @return  the constructed label.
+     * 
+     * @param s a string which encode the name of the label
+     * 
+     * @return the constructed label.
      */
-    private JLabel buildLabel(String s) {
+    private JLabel buildLabel(final String s) {
         JLabel label;
 
         try {
             label = new JLabel(s);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildLabel");
 
             return null;
         }
 
-        label.setFont(font12);
+        label.setFont(ViewJFrameDICOMQuery.font12);
         label.setForeground(Color.black);
         label.setHorizontalTextPosition(SwingConstants.LEFT);
 
@@ -1945,15 +1922,15 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Builds the listing panel.
-     *
-     * @return  the server panel
+     * 
+     * @return the server panel
      */
     private JPanel buildListingPanel() {
 
         Object[] rowData;
         GridBagConstraints gbc;
         JScrollPane scrollPane;
-        String[] columnNames = { "Listing" };
+        final String[] columnNames = {"Listing"};
         JLabel destLabel = null;
         JLabel sourceLabel = null;
         JPanel basePanel;
@@ -1983,7 +1960,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             sendStatusTArea = new JTextArea();
             sendStatusClearButton = new JButton("Clear");
             help2 = new JButton("Help");
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildSendPanel");
 
             return null;
@@ -2000,11 +1977,11 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             // sendTable.setToolTipText("Double click on a item to send
             // image(s). ");
-            scrollPane = new JScrollPane(sendTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane = new JScrollPane(sendTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setPreferredSize(new Dimension(450, 200));
             scrollPane.setMinimumSize(new Dimension(150, 100));
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildSendPanel");
 
             return null;
@@ -2020,7 +1997,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.fill = GridBagConstraints.BOTH;
         listPanel.add(scrollPane, gbc);
 
-        sourceLabel.setFont(font12B);
+        sourceLabel.setFont(ViewJFrameDICOMQuery.font12B);
         sourceLabel.setForeground(Color.black);
         gbc = setGBC(0, 0, 1, 1);
 
@@ -2030,7 +2007,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.anchor = GridBagConstraints.CENTER;
         listPanel.add(sourceLabel, gbc);
 
-        sourceTextF.setFont(font12B);
+        sourceTextF.setFont(ViewJFrameDICOMQuery.font12B);
 
         // sourceTextF.setBackground(Color.gray.brighter());
         sourceTextF.setEnabled(true);
@@ -2055,9 +2032,9 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         sourceTextF.setText(str);
 
-        browseButton.setFont(font12B);
+        browseButton.setFont(ViewJFrameDICOMQuery.font12B);
         browseButton.setActionCommand("Browse");
-        //browseButton.setBackground(Color.gray.brighter());
+        // browseButton.setBackground(Color.gray.brighter());
         browseButton.addActionListener(this);
         gbc = setGBC(2, 0, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2065,9 +2042,9 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 1.0;
         listPanel.add(browseButton, gbc);
 
-        upDirButton.setFont(font12B);
+        upDirButton.setFont(ViewJFrameDICOMQuery.font12B);
         upDirButton.setActionCommand("UpDir");
-        //upDirButton.setBackground(Color.gray.brighter());
+        // upDirButton.setBackground(Color.gray.brighter());
         upDirButton.addActionListener(this);
         gbc = setGBC(3, 0, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2075,9 +2052,9 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 1.0;
         listPanel.add(upDirButton, gbc);
 
-        refreshButton.setFont(font12B);
+        refreshButton.setFont(ViewJFrameDICOMQuery.font12B);
         refreshButton.setActionCommand("RefreshDir");
-        //refreshButton.setBackground(Color.gray.brighter());
+        // refreshButton.setBackground(Color.gray.brighter());
         refreshButton.addActionListener(this);
         gbc = setGBC(4, 0, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2085,7 +2062,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 1.0;
         listPanel.add(refreshButton, gbc);
 
-        destLabel.setFont(font12B);
+        destLabel.setFont(ViewJFrameDICOMQuery.font12B);
         destLabel.setForeground(Color.black);
         gbc = setGBC(0, 4, 1, 1);
 
@@ -2095,7 +2072,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.anchor = GridBagConstraints.CENTER;
         listPanel.add(destLabel, gbc);
 
-        sendDestCBox.setFont(font12B);
+        sendDestCBox.setFont(ViewJFrameDICOMQuery.font12B);
         sendDestCBox.addActionListener(this);
         gbc = setGBC(1, 4, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2120,22 +2097,22 @@ public class ViewJFrameDICOMQuery extends JFrame
         }
 
         if (defaultChoice != -1) {
-            sendDestCBox.addItem((String) serverTable.getValueAt(defaultChoice, 1));
+            sendDestCBox.addItem(serverTable.getValueAt(defaultChoice, 1));
         }
 
         for (int r = 0; r < serverTable.getRowCount(); r++) {
 
             if (r != defaultChoice) {
-                sendDestCBox.addItem((String) serverTable.getValueAt(r, 1));
+                sendDestCBox.addItem(serverTable.getValueAt(r, 1));
                 // sendDestCBox.addItem(strs[r]);
             }
         }
 
         listPanel.add(sendDestCBox, gbc);
 
-        sendButton.setFont(font12B);
+        sendButton.setFont(ViewJFrameDICOMQuery.font12B);
         sendButton.setActionCommand("SendImages");
-        //sendButton.setBackground(Color.gray.brighter());
+        // sendButton.setBackground(Color.gray.brighter());
         sendButton.addActionListener(this);
         gbc = setGBC(2, 4, 2, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2143,9 +2120,9 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 1.0;
         listPanel.add(sendButton, gbc);
 
-        testButton.setFont(font12B);
+        testButton.setFont(ViewJFrameDICOMQuery.font12B);
         testButton.setActionCommand("TestConnection");
-        //testButton.setBackground(Color.gray.brighter());
+        // testButton.setBackground(Color.gray.brighter());
         testButton.addActionListener(this);
         gbc = setGBC(4, 4, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2156,13 +2133,13 @@ public class ViewJFrameDICOMQuery extends JFrame
         try {
             sendStatusTArea.setBackground(Color.lightGray);
             sendStatusTArea.setEditable(false);
-            sendStatusTArea.setFont(font12);
+            sendStatusTArea.setFont(ViewJFrameDICOMQuery.font12);
             sendStatusTArea.setMargin(new Insets(3, 3, 3, 3));
-            sendStatusSPane = new JScrollPane(sendStatusTArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                              JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            sendStatusSPane = new JScrollPane(sendStatusTArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             sendStatusSPane.setPreferredSize(new Dimension(450, 200));
             sendStatusSPane.setMinimumSize(new Dimension(150, 100));
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildSendPanel");
 
             return null;
@@ -2186,7 +2163,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 0;
         gbc.anchor = GridBagConstraints.CENTER;
         sendStatusPanel.add(sendStatusClearButton, gbc);
-        
+
         help2.setActionCommand("Help2");
         help2.addActionListener(this);
         gbc = setGBC(1, 5, 1, 1);
@@ -2195,7 +2172,6 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 0;
         gbc.anchor = GridBagConstraints.CENTER;
         sendStatusPanel.add(help2, gbc);
-       
 
         gbc = setGBC(0, 0, 1, 4);
         gbc.fill = GridBagConstraints.BOTH;
@@ -2216,8 +2192,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Construct the Query retrieval message panel. It contains a table for displaying the information.
-     *
-     * @return  The constructed panel.
+     * 
+     * @return The constructed panel.
      */
     private JPanel buildMessagePanel() {
         JPanel messagePanel;
@@ -2235,14 +2211,14 @@ public class ViewJFrameDICOMQuery extends JFrame
             messageTable.setPreferredScrollableViewportSize(new Dimension(450, 200));
             messageTable.setMinimumSize(new Dimension(450, 200));
             messageTable.getSelectionModel().addListSelectionListener(this);
-            scrollPane = new JScrollPane(messageTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane = new JScrollPane(messageTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setPreferredSize(new Dimension(450, 100));
             scrollPane.setMinimumSize(new Dimension(150, 50));
             clearText = new JButton("Clear Table");
             cancel = new JButton("Cancel");
             help1 = new JButton("Help");
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildMessagePanel");
 
             return null;
@@ -2257,7 +2233,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         messagePanel.add(scrollPane, gbc);
 
-        clearText.setFont(font12B);
+        clearText.setFont(ViewJFrameDICOMQuery.font12B);
         clearText.setActionCommand("ClearTable");
         clearText.addActionListener(this);
         gbc = setGBC(0, 2, 1, 1);
@@ -2266,7 +2242,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.fill = GridBagConstraints.HORIZONTAL;
         messagePanel.add(clearText, gbc);
 
-        cancel.setFont(font12B);
+        cancel.setFont(ViewJFrameDICOMQuery.font12B);
         cancel.setActionCommand("Cancel");
         cancel.setEnabled(false);
         cancel.addActionListener(this);
@@ -2276,8 +2252,8 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         messagePanel.add(cancel, gbc);
-        
-        help1.setFont(font12B);
+
+        help1.setFont(ViewJFrameDICOMQuery.font12B);
         help1.setActionCommand("Help1");
         help1.setEnabled(true);
         help1.addActionListener(this);
@@ -2294,8 +2270,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Constructs the patient information input panel.
-     *
-     * @return  the constructed panel.
+     * 
+     * @return the constructed panel.
      */
     private JPanel buildPtInfoPanel() {
         JPanel rootPanel;
@@ -2311,7 +2287,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             studyNOText = new JTextField("", 10);
             physText = new JTextField("", 10);
             button = new JButton("Clear");
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildPtInfoPanel");
 
             return null;
@@ -2321,34 +2297,34 @@ public class ViewJFrameDICOMQuery extends JFrame
         rootPanel.setBorder(buildTitledBorder("Patient Query Information"));
 
         rootPanel.add(buildLabel("Patient Name:   "), setupLabelLayout());
-        ptNameText.setFont(font12);
+        ptNameText.setFont(ViewJFrameDICOMQuery.font12);
         ptNameText.setToolTipText("Enter the patient's last name ");
         ptNameText.addActionListener(this);
         ptNameText.setActionCommand("SendQuery");
         rootPanel.add(ptNameText, setupTextFieldLayout());
 
         rootPanel.add(buildLabel("Patient ID:   "), setupLabelLayout());
-        ptIDText.setFont(font12);
+        ptIDText.setFont(ViewJFrameDICOMQuery.font12);
         ptIDText.addActionListener(this);
         ptIDText.setActionCommand("SendQuery");
         ptIDText.setToolTipText("Enter the patient's medical recorder number ");
         rootPanel.add(ptIDText, setupTextFieldLayout());
 
         rootPanel.add(buildLabel("Study Number:   "), setupLabelLayout());
-        studyNOText.setFont(font12);
+        studyNOText.setFont(ViewJFrameDICOMQuery.font12);
         studyNOText.addActionListener(this);
         studyNOText.setActionCommand("SendQuery");
         studyNOText.setToolTipText("Enter the study number ");
         rootPanel.add(studyNOText, setupTextFieldLayout());
 
         rootPanel.add(buildLabel("Physician:   "), setupLabelLayout());
-        physText.setFont(font12);
+        physText.setFont(ViewJFrameDICOMQuery.font12);
         physText.addActionListener(this);
         physText.setActionCommand("SendQuery");
         physText.setToolTipText("Enter the physician's name ");
         rootPanel.add(physText, setupTextFieldLayout());
 
-        button.setFont(font12B);
+        button.setFont(ViewJFrameDICOMQuery.font12B);
         button.setActionCommand("ClearPtInfo");
         button.addActionListener(this);
         button.setToolTipText("Clear the information in the fields ");
@@ -2363,8 +2339,8 @@ public class ViewJFrameDICOMQuery extends JFrame
      * Builds the DICOM Query panel, one of the three tabbed Panels in the DICOMQuery GUI. Inside, there are three
      * different elements: The patient information panel - patient name, ID, study dates ... The Query result panel -
      * display the result of the query The message area - display the status of the query
-     *
-     * @return  the DICOM Query Panel which contains the patient info and query result
+     * 
+     * @return the DICOM Query Panel which contains the patient info and query result
      */
     private JPanel buildQueryPanel() {
         JPanel containPanel; // , rootPanel;
@@ -2379,7 +2355,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             insets = new Insets(0, 0, 0, 0);
             send = new JButton("Send Query");
             move = new JButton("Retrieve Image");
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildQueryPanel");
 
             return null;
@@ -2400,9 +2376,9 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 1.0;
         containPanel.add(buildDatePanel(), gbc);
 
-        send.setFont(font12B);
+        send.setFont(ViewJFrameDICOMQuery.font12B);
         send.setActionCommand("SendQuery");
-        //send.setBackground(Color.gray.brighter());
+        // send.setBackground(Color.gray.brighter());
         send.addActionListener(this);
 
         gbc = setGBC(0, 1, 1, GridBagConstraints.REMAINDER);
@@ -2413,9 +2389,9 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 1.0;
         containPanel.add(send, gbc);
 
-        move.setFont(font12B);
+        move.setFont(ViewJFrameDICOMQuery.font12B);
         move.setActionCommand("Move");
-        //move.setBackground(Color.gray.brighter());
+        // move.setBackground(Color.gray.brighter());
         move.addActionListener(this);
 
         gbc = setGBC(1, 1, 1, GridBagConstraints.REMAINDER);
@@ -2459,24 +2435,24 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Constructs the radio button for fast input of study date range.
-     *
-     * @param   s     The name of the radio button: today, one week, one month ...
-     * @param   flag  Whether the radio button is active by default or not.
-     *
-     * @return  The constructed radio button with appropriated attributes attached.
+     * 
+     * @param s The name of the radio button: today, one week, one month ...
+     * @param flag Whether the radio button is active by default or not.
+     * 
+     * @return The constructed radio button with appropriated attributes attached.
      */
-    private JRadioButton buildRadioButton(String s, boolean flag) {
+    private JRadioButton buildRadioButton(String s, final boolean flag) {
         JRadioButton r1;
 
         try {
             r1 = new JRadioButton(s, flag);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildRadioButton");
 
             return null;
         }
 
-        r1.setFont(font12);
+        r1.setFont(ViewJFrameDICOMQuery.font12);
         s = s + "RButton";
         r1.setActionCommand(s);
         r1.addActionListener(this);
@@ -2486,20 +2462,11 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Builds the host panel by calling methods to build the server and storage panels.
-     *
-     * @return  the panel containing
+     * 
+     * @return the panel containing
      */
-    private JPanel buildSendPanel() {
+    private final JPanel buildSendPanel() {
         JPanel sendListingPanel;
-        GridBagConstraints gbc;
-
-        try {
-            gbc = new GridBagConstraints();
-        } catch (OutOfMemoryError error) {
-            MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildHostPanel");
-
-            return null;
-        }
 
         sendListingPanel = buildListingPanel();
 
@@ -2512,8 +2479,8 @@ public class ViewJFrameDICOMQuery extends JFrame
      * which edits the currently selected server; "Delete", which deletes the currently selected server; and "Set As
      * Default", which sets the current server as default. To get the data in the table, the table model reads the
      * .preferences file and parses the data. When changes are made, they are saved to the .preferences file.
-     *
-     * @return  the server panel
+     * 
+     * @return the server panel
      */
     private JPanel buildServerPanel() {
 
@@ -2523,7 +2490,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         Object[] rowData;
         GridBagConstraints gbc;
         JScrollPane scrollPane;
-        String[] columnNames = { "Default", "AE Title", "Alias", "IP Address", "Port" };
+        final String[] columnNames = {"Default", "AE Title", "Alias", "IP Address", "Port"};
 
         try {
             serverPanel = new JPanel();
@@ -2537,7 +2504,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             delete = new JButton("Delete");
             set = new JButton("Set As Default");
             help3 = new JButton("Help");
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildServerPanel");
 
             return null;
@@ -2576,7 +2543,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             try {
                 tok = new StringTokenizer(Preferences.getProperty(key), ";");
-            } catch (OutOfMemoryError error) {
+            } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildServerPanel");
 
                 return null;
@@ -2596,7 +2563,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
                 serverModel.addRow(rowData);
                 key = key.substring(0, 6) + (Integer.valueOf(key.substring(6)).intValue() + 1);
-            } catch (Exception error) {
+            } catch (final Exception error) {
                 MipavUtil.displayError("ViewJFrameDICOMQuery.buildServerPanel:" + error.getMessage());
                 // return null;
             }
@@ -2606,11 +2573,11 @@ public class ViewJFrameDICOMQuery extends JFrame
             serverTable.setPreferredScrollableViewportSize(new Dimension(450, 200));
             serverTable.setMinimumSize(new Dimension(450, 100));
             serverTable.setToolTipText("Double click on a server to set as default. ");
-            scrollPane = new JScrollPane(serverTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane = new JScrollPane(serverTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setPreferredSize(new Dimension(450, 200));
             scrollPane.setMinimumSize(new Dimension(150, 100));
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildServerPanel");
 
             return null;
@@ -2628,9 +2595,9 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         serverPanel.add(scrollPane, gbc);
 
-        create.setFont(font12B);
+        create.setFont(ViewJFrameDICOMQuery.font12B);
         create.setActionCommand("Create");
-        //create.setBackground(Color.gray.brighter());
+        // create.setBackground(Color.gray.brighter());
         create.addActionListener(this);
         gbc = setGBC(0, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2639,9 +2606,9 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         serverPanel.add(create, gbc);
 
-        edit.setFont(font12B);
+        edit.setFont(ViewJFrameDICOMQuery.font12B);
         edit.setActionCommand("Edit");
-        //edit.setBackground(Color.gray.brighter());
+        // edit.setBackground(Color.gray.brighter());
         edit.addActionListener(this);
         edit.setEnabled(false);
         gbc = setGBC(1, 3, 1, 1);
@@ -2651,9 +2618,9 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         serverPanel.add(edit, gbc);
 
-        delete.setFont(font12B);
+        delete.setFont(ViewJFrameDICOMQuery.font12B);
         delete.setActionCommand("Delete");
-        //delete.setBackground(Color.gray.brighter());
+        // delete.setBackground(Color.gray.brighter());
         delete.addActionListener(this);
         delete.setEnabled(false);
         gbc = setGBC(2, 3, 1, 1);
@@ -2663,9 +2630,9 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         serverPanel.add(delete, gbc);
 
-        set.setFont(font12B);
+        set.setFont(ViewJFrameDICOMQuery.font12B);
         set.setActionCommand("SetAs");
-        //set.setBackground(Color.gray.brighter());
+        // set.setBackground(Color.gray.brighter());
         set.addActionListener(this);
         set.setEnabled(false);
         gbc = setGBC(3, 3, 1, 1);
@@ -2673,20 +2640,16 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         serverPanel.add(set, gbc);
-        
-        
-        
-        help3.setFont(font12B);
+
+        help3.setFont(ViewJFrameDICOMQuery.font12B);
         help3.setActionCommand("Help3");
-        //set.setBackground(Color.gray.brighter());
+        // set.setBackground(Color.gray.brighter());
         help3.addActionListener(this);
         gbc = setGBC(4, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         serverPanel.add(help3, gbc);
-        
-        
 
         return serverPanel;
     }
@@ -2698,8 +2661,8 @@ public class ViewJFrameDICOMQuery extends JFrame
      * destination; and "Set As Default", which sets the current destination as default. To get the data in the table,
      * the table model reads the .preferences file and parses the data. When changes are made, they are saved to the
      * .preferences file.
-     *
-     * @return  the storage panel
+     * 
+     * @return the storage panel
      */
     private JPanel buildStoragePanel() {
 
@@ -2709,7 +2672,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         Object[] rowData;
         GridBagConstraints gbc;
         JScrollPane scrollPane;
-        String[] columnNames = { "Default", "AE Title", "Alias", "Directory", "Port" };
+        final String[] columnNames = {"Default", "AE Title", "Alias", "Directory", "Port"};
 
         try {
             storagePanel = new JPanel();
@@ -2718,24 +2681,24 @@ public class ViewJFrameDICOMQuery extends JFrame
             rowData = new Object[5];
             storageModel = new ViewTableModel();
             storageTable = new JTable(storageModel);
-            if(userInterface.getDICOMCatcher() != null) {
-            	if(userInterface.getDICOMCatcher().isAlive()) {
-            		activateStore = new JButton("Deactivate");
-            		activateStore.setActionCommand("Deactivate");
-            	} else {
-            		activateStore = new JButton("Activate");
-            		activateStore.setActionCommand("Activate");
-            	}
+            if (ViewJFrameDICOMQuery.userInterface.getDICOMCatcher() != null) {
+                if (ViewJFrameDICOMQuery.userInterface.getDICOMCatcher().isAlive()) {
+                    activateStore = new JButton("Deactivate");
+                    activateStore.setActionCommand("Deactivate");
+                } else {
+                    activateStore = new JButton("Activate");
+                    activateStore.setActionCommand("Activate");
+                }
             } else {
-            	activateStore = new JButton("Activate");
-            	activateStore.setActionCommand("Activate");
+                activateStore = new JButton("Activate");
+                activateStore.setActionCommand("Activate");
             }
             createStore = new JButton("Create");
             editStore = new JButton("Edit");
             deleteStore = new JButton("Delete");
             setStore = new JButton("Set As Default");
             help4 = new JButton("Help");
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildStoragePanel");
 
             return null;
@@ -2764,7 +2727,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             try {
                 tok = new StringTokenizer(Preferences.getProperty(key), ";");
-            } catch (OutOfMemoryError error) {
+            } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildStoragePanel");
 
                 return null;
@@ -2789,11 +2752,11 @@ public class ViewJFrameDICOMQuery extends JFrame
             storageTable.setPreferredScrollableViewportSize(new Dimension(450, 200));
             storageTable.setMinimumSize(new Dimension(450, 100));
             storageTable.setToolTipText("Double click on a destination to set as default. ");
-            scrollPane = new JScrollPane(storageTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane = new JScrollPane(storageTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setPreferredSize(new Dimension(450, 200));
             scrollPane.setMinimumSize(new Dimension(150, 100));
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildStoragePanel");
 
             return null;
@@ -2811,18 +2774,18 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         storagePanel.add(scrollPane, gbc);
 
-        activateStore.setFont(font12B);
+        activateStore.setFont(ViewJFrameDICOMQuery.font12B);
         activateStore.addActionListener(this);
         gbc = setGBC(0, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-        
+
         storagePanel.add(activateStore, gbc);
-        
-        createStore.setFont(font12B);
+
+        createStore.setFont(ViewJFrameDICOMQuery.font12B);
         createStore.setActionCommand("Create");
-        //createStore.setBackground(Color.gray.brighter());
+        // createStore.setBackground(Color.gray.brighter());
         createStore.addActionListener(this);
         gbc = setGBC(1, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2831,9 +2794,9 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         storagePanel.add(createStore, gbc);
 
-        editStore.setFont(font12B);
+        editStore.setFont(ViewJFrameDICOMQuery.font12B);
         editStore.setActionCommand("Edit");
-        //editStore.setBackground(Color.gray.brighter());
+        // editStore.setBackground(Color.gray.brighter());
         editStore.addActionListener(this);
         editStore.setEnabled(false);
         gbc = setGBC(2, 3, 1, 1);
@@ -2843,9 +2806,9 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         storagePanel.add(editStore, gbc);
 
-        deleteStore.setFont(font12B);
+        deleteStore.setFont(ViewJFrameDICOMQuery.font12B);
         deleteStore.setActionCommand("Delete");
-        //deleteStore.setBackground(Color.gray.brighter());
+        // deleteStore.setBackground(Color.gray.brighter());
         deleteStore.addActionListener(this);
         deleteStore.setEnabled(false);
         gbc = setGBC(3, 3, 1, 1);
@@ -2855,9 +2818,9 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         storagePanel.add(deleteStore, gbc);
 
-        setStore.setFont(font12B);
+        setStore.setFont(ViewJFrameDICOMQuery.font12B);
         setStore.setActionCommand("SetAs");
-        //setStore.setBackground(Color.gray.brighter());
+        // setStore.setBackground(Color.gray.brighter());
         setStore.addActionListener(this);
         setStore.setEnabled(false);
         gbc = setGBC(4, 3, 1, 1);
@@ -2865,12 +2828,10 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         storagePanel.add(setStore, gbc);
-        
-        
-        
-        help4.setFont(font12B);
+
+        help4.setFont(ViewJFrameDICOMQuery.font12B);
         help4.setActionCommand("Help4");
-        //set.setBackground(Color.gray.brighter());
+        // set.setBackground(Color.gray.brighter());
         help4.addActionListener(this);
         gbc = setGBC(5, 3, 1, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -2878,9 +2839,6 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 1.0;
         storagePanel.add(help4, gbc);
 
-        
-        
-       
         return storagePanel;
     }
 
@@ -2888,8 +2846,8 @@ public class ViewJFrameDICOMQuery extends JFrame
      * Constructs the panel that contains the query result table. There are four action-attached buttons to facilitate
      * different levels of query: up, down, send query, and move images. Up moves the query up a level; down moves it
      * down a level; send query sends a query; and move images moves an image or a set of images at that level.
-     *
-     * @return  The constructed panel.
+     * 
+     * @return The constructed panel.
      */
     private JPanel buildTextPanel() {
         JPanel buttonPanel, rootPanel;
@@ -2917,7 +2875,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             gbc.insets = new Insets(0, 0, 0, 0);
             queryTableModel = new ViewTableModel();
             queryResultTable = new JTable(queryTableModel);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildTextPanel");
 
             return null;
@@ -2927,30 +2885,30 @@ public class ViewJFrameDICOMQuery extends JFrame
         rootPanel.setForeground(Color.black);
 
         rootBorder.setTitleColor(Color.black);
-        rootBorder.setTitleFont(font12B);
+        rootBorder.setTitleFont(ViewJFrameDICOMQuery.font12B);
         rootBorder.setBorder(border);
         rootPanel.setBorder(rootBorder);
 
         // buttonPanel.setForeground(Color.black);
 
-        queryLev.setFont(font12B);
+        queryLev.setFont(ViewJFrameDICOMQuery.font12B);
         buttonPanel.add(queryLev);
 
-        up.setFont(font12B);
+        up.setFont(ViewJFrameDICOMQuery.font12B);
         up.setActionCommand("ResultUp");
         up.addActionListener(this);
         up.setEnabled(false);
         up.setToolTipText("Move the query up one level ");
         buttonPanel.add(up);
 
-        down.setFont(font12B);
+        down.setFont(ViewJFrameDICOMQuery.font12B);
         down.setActionCommand("SendQuery");
         down.addActionListener(this);
         down.setEnabled(false);
         down.setToolTipText("Move the query down one level ");
         buttonPanel.add(down);
 
-        cancelQ.setFont(font12B);
+        cancelQ.setFont(ViewJFrameDICOMQuery.font12B);
         cancelQ.setActionCommand("CancelQuery");
         cancelQ.addActionListener(this);
         cancelQ.setEnabled(false);
@@ -2968,7 +2926,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         rootPanel.add(buttonPanel, gbc);
 
         // if (queryLevel == PATIENT_LEVEL) {
-        String[] columnName = { "Pat. Name", "Pat. ID", "Referring Physician" };
+        final String[] columnName = {"Pat. Name", "Pat. ID", "Referring Physician"};
 
         for (int i = 0; i < 3; i++) {
             queryTableModel.addColumn(columnName[i]);
@@ -2982,11 +2940,11 @@ public class ViewJFrameDICOMQuery extends JFrame
         try {
             queryResultTable.setPreferredScrollableViewportSize(new Dimension(450, 200));
             queryResultTable.setMinimumSize(new Dimension(450, 200));
-            scrollPane = new JScrollPane(queryResultTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane = new JScrollPane(queryResultTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setPreferredSize(new Dimension(450, 200));
             scrollPane.setMinimumSize(new Dimension(150, 100));
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildTextPanel");
 
             return null;
@@ -3012,43 +2970,43 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Constructs the titled border for the panel.
-     *
-     * @param   s  a string carried the name of the border
-     *
-     * @return  the constructed titled border
+     * 
+     * @param s a string carried the name of the border
+     * 
+     * @return the constructed titled border
      */
-    private TitledBorder buildTitledBorder(String s) {
+    private TitledBorder buildTitledBorder(final String s) {
         TitledBorder titledBorder;
 
         try {
             titledBorder = new TitledBorder(s);
             titledBorder.setBorder(new EtchedBorder());
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildTitledBorder");
 
             return null;
         }
 
         titledBorder.setTitleColor(Color.black);
-        titledBorder.setTitleFont(font12B);
+        titledBorder.setTitleFont(ViewJFrameDICOMQuery.font12B);
 
         return titledBorder;
     }
 
     /**
      * To check if the date is a valid date in the calendar.
-     *
-     * @param   date  The date to be checked.
-     *
-     * @return  The new calendar class with correctd date.
+     * 
+     * @param date The date to be checked.
+     * 
+     * @return The new calendar class with correctd date.
      */
-    private Calendar checkCalendar(Calendar date) {
-        int day = date.get(Calendar.DATE);
-        int endOfMonth = endOfMonth(date);
+    private Calendar checkCalendar(final Calendar date) {
+        final int day = date.get(Calendar.DATE);
+        final int endOfMonth = endOfMonth(date);
 
         if (day > endOfMonth) {
-            int year = date.get(Calendar.YEAR);
-            int month = date.get(Calendar.MONTH);
+            final int year = date.get(Calendar.YEAR);
+            final int month = date.get(Calendar.MONTH);
             date.set(year, month, endOfMonth);
         }
 
@@ -3057,28 +3015,28 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Checks the date to be sure the user didn't enter the start after the end.
-     *
-     * @param   year   year of the date to check
-     * @param   month  month of the date to check
-     * @param   day    day of the date to check
-     * @param   start  flag that says if this is the start date or end date
-     *
-     * @return  boolean that tells if the date checked out
+     * 
+     * @param year year of the date to check
+     * @param month month of the date to check
+     * @param day day of the date to check
+     * @param start flag that says if this is the start date or end date
+     * 
+     * @return boolean that tells if the date checked out
      */
-    private boolean checkDate(int year, int month, int day, boolean start) {
+    private boolean checkDate(final int year, final int month, final int day, final boolean start) {
 
         if (start) {
 
-            if ((year > getEndYear()) || ((year == getEndYear()) && (month > getEndMonth())) ||
-                    ((year == getEndYear()) && (month == getEndMonth()) && (day > getEndDay()))) {
+            if ( (year > getEndYear()) || ( (year == getEndYear()) && (month > getEndMonth()))
+                    || ( (year == getEndYear()) && (month == getEndMonth()) && (day > getEndDay()))) {
                 MipavUtil.displayError("Start date must be before end date");
 
                 return false;
             }
         } else {
 
-            if ((year < getStartYear()) || ((year == getStartYear()) && (month < getStartMonth())) ||
-                    ((year == getStartYear()) && (month == getStartMonth()) && (day < getStartDay()))) {
+            if ( (year < getStartYear()) || ( (year == getStartYear()) && (month < getStartMonth()))
+                    || ( (year == getStartYear()) && (month == getStartMonth()) && (day < getStartDay()))) {
                 MipavUtil.displayError("End date must be after start date");
 
                 return false;
@@ -3091,16 +3049,16 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Constructs and new class and copy the year, month, day paramenters.
-     *
-     * @param   date  The source Calendar class which will be copied from.
-     *
-     * @return  The newly constructed calendar class with the same info as source.
+     * 
+     * @param date The source Calendar class which will be copied from.
+     * 
+     * @return The newly constructed calendar class with the same info as source.
      */
-    private Calendar copyOfCalendar(Calendar date) {
-        Calendar tmp = Calendar.getInstance();
-        int year = date.get(Calendar.YEAR);
-        int month = date.get(Calendar.MONTH);
-        int day = date.get(Calendar.DATE);
+    private Calendar copyOfCalendar(final Calendar date) {
+        final Calendar tmp = Calendar.getInstance();
+        final int year = date.get(Calendar.YEAR);
+        final int month = date.get(Calendar.MONTH);
+        final int day = date.get(Calendar.DATE);
 
         tmp.set(year, month, day);
 
@@ -3109,15 +3067,15 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Calculates the last date of the month.
-     *
-     * @param   tmp  The calendar to be calculated.
-     *
-     * @return  the last date of the month.
+     * 
+     * @param tmp The calendar to be calculated.
+     * 
+     * @return the last date of the month.
      */
-    private int endOfMonth(Calendar tmp) {
-        Calendar date = copyOfCalendar(tmp);
-        int year = date.get(Calendar.YEAR);
-        int month = date.get(Calendar.MONTH);
+    private int endOfMonth(final Calendar tmp) {
+        final Calendar date = copyOfCalendar(tmp);
+        final int year = date.get(Calendar.YEAR);
+        final int month = date.get(Calendar.MONTH);
 
         date.set(year, month, 27);
 
@@ -3134,13 +3092,13 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Returns the new date of num days before date.
-     *
-     * @param   date  the date to get the days before of
-     * @param   num   the number of days before
-     *
-     * @return  the calendar with the right number of years before
+     * 
+     * @param date the date to get the days before of
+     * @param num the number of days before
+     * 
+     * @return the calendar with the right number of years before
      */
-    private Calendar getDaysBefore(Calendar date, int num) {
+    private Calendar getDaysBefore(Calendar date, final int num) {
         int day;
 
         for (int i = 0; i < num; i++) {
@@ -3157,8 +3115,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets all the ending date of the patient's study from the all three comboboxes.
-     *
-     * @return  a Calendar type stores the ending date information
+     * 
+     * @return a Calendar type stores the ending date information
      */
     private Calendar getEndCalendar() {
         endCalendar.set(getEndYear(), getEndMonth(), getEndDay());
@@ -3175,8 +3133,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets the ending day of the study in the endDayBox combobox.
-     *
-     * @return  integer: the ending day of the study
+     * 
+     * @return integer: the ending day of the study
      */
     private int getEndDay() {
         return itemToInteger(endDayBox.getSelectedItem());
@@ -3184,8 +3142,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets the ending month of the study in the endMonthBox combobox.
-     *
-     * @return  integer: the ending month of the study
+     * 
+     * @return integer: the ending month of the study
      */
     private int getEndMonth() {
         return itemToInteger(endMonthBox.getSelectedItem());
@@ -3193,8 +3151,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets the ending year of the study in the endYearBox combobox.
-     *
-     * @return  integer: the ending year of the study
+     * 
+     * @return integer: the ending year of the study
      */
     private int getEndYear() {
         return itemToInteger(endYearBox.getSelectedItem());
@@ -3202,13 +3160,13 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Returns the new date of num months before date.
-     *
-     * @param   tmp  the date to get the months before of
-     * @param   num  the number of months before
-     *
-     * @return  the calendar with the right number of months before
+     * 
+     * @param tmp the date to get the months before of
+     * @param num the number of months before
+     * 
+     * @return the calendar with the right number of months before
      */
-    private Calendar getMonthsBefore(Calendar tmp, int num) {
+    private Calendar getMonthsBefore(final Calendar tmp, final int num) {
         int month;
         Calendar date = tmp;
 
@@ -3226,8 +3184,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets the physician's name from the physText field.
-     *
-     * @return  The string that stores the physician's name.
+     * 
+     * @return The string that stores the physician's name.
      */
     private String getPhysName() {
         return physText.getText();
@@ -3235,8 +3193,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets the Patient's ID from the ptIDText field.
-     *
-     * @return  The string that stores the patient ID.
+     * 
+     * @return The string that stores the patient ID.
      */
     private String getPtID() {
         return ptIDText.getText();
@@ -3244,8 +3202,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets the Patient name from the ptNameText field.
-     *
-     * @return  The string that contained the patient's name.
+     * 
+     * @return The string that contained the patient's name.
      */
     private String getPtName() {
         return ptNameText.getText().trim();
@@ -3253,8 +3211,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets all the starting date of the patient's study from the all three comboboxes.
-     *
-     * @return  a Calendar type stores the starting date information
+     * 
+     * @return a Calendar type stores the starting date information
      */
     private Calendar getStartCalendar() {
         startCalendar.set(getStartYear(), getStartMonth(), getStartDay());
@@ -3271,8 +3229,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets the starting day of the study in the startDayBox combobox.
-     *
-     * @return  integer: the starting day of the study
+     * 
+     * @return integer: the starting day of the study
      */
     private int getStartDay() {
         return itemToInteger(startDayBox.getSelectedItem());
@@ -3280,8 +3238,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets the starting Month of the study in the startMonthBox combobox.
-     *
-     * @return  integer: the starting month of the study
+     * 
+     * @return integer: the starting month of the study
      */
     private int getStartMonth() {
         return itemToInteger(startMonthBox.getSelectedItem());
@@ -3289,8 +3247,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets the starting year of the study in the startYearBox combobox.
-     *
-     * @return  integer: the starting year of the study
+     * 
+     * @return integer: the starting year of the study
      */
     private int getStartYear() {
         return itemToInteger(startYearBox.getSelectedItem());
@@ -3298,8 +3256,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Gets the study id from the studyNOText field.
-     *
-     * @return  The string that stores the study number.
+     * 
+     * @return The string that stores the study number.
      */
     private String getStudyNo() {
         return studyNOText.getText();
@@ -3307,19 +3265,19 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Returns the new date of num years before date.
-     *
-     * @param   tmp  the date to get the years before of
-     * @param   num  the number of years before
-     *
-     * @return  the calendar with the right number of years before
+     * 
+     * @param tmp the date to get the years before of
+     * @param num the number of years before
+     * 
+     * @return the calendar with the right number of years before
      */
-    private Calendar getYearsBefore(Calendar tmp, int num) {
-        Calendar date = tmp;
+    private Calendar getYearsBefore(final Calendar tmp, final int num) {
+        final Calendar date = tmp;
 
         for (int i = 0; i < num; i++) {
 
-            if (date.get(Calendar.YEAR) <= DEFAULT_MIN_YEAR) {
-                date.set(DEFAULT_MIN_YEAR, 0, 1);
+            if (date.get(Calendar.YEAR) <= ViewJFrameDICOMQuery.DEFAULT_MIN_YEAR) {
+                date.set(ViewJFrameDICOMQuery.DEFAULT_MIN_YEAR, 0, 1);
 
                 break;
             }
@@ -3331,27 +3289,27 @@ public class ViewJFrameDICOMQuery extends JFrame
     }
 
     /**
-     * Converts the combo box item to its corresponding integer. Year and date - are numbers as they represented. Month
-     * - will be converted to integer, starting with 0 = January,
-     *
-     * @param   item  DOCUMENT ME!
-     *
-     * @return  The appropriated integer number.
+     * Converts the combo box item to its corresponding integer. Year and date - are numbers as they represented. Month -
+     * will be converted to integer, starting with 0 = January,
+     * 
+     * @param item DOCUMENT ME!
+     * 
+     * @return The appropriated integer number.
      */
-    private int itemToInteger(Object item) {
-        String s = item.toString();
+    private int itemToInteger(final Object item) {
+        final String s = item.toString();
         int tmp = 0;
 
         // try - if the item is Year or Day
         // catch if the item is Month
         try {
             tmp = (new Integer(s).intValue());
-        } catch (NumberFormatException error) { // month item
+        } catch (final NumberFormatException error) { // month item
 
-            for (tmp = 0; ((tmp < 12) && (s.compareTo(monthString[tmp]) != 0)); tmp++) {
+            for (tmp = 0; ( (tmp < 12) && (s.compareTo(ViewJFrameDICOMQuery.monthString[tmp]) != 0)); tmp++) {
                 ;
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.itemToInteger");
 
             return -1;
@@ -3362,12 +3320,12 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Finds the last name of the current patient.
-     *
-     * @param   name  patient's name
-     *
-     * @return  the last name
+     * 
+     * @param name patient's name
+     * 
+     * @return the last name
      */
-    private String lastName(String name) {
+    private String lastName(final String name) {
         int count = 0;
 
         for (int i = 0; i < (name.length() - 1); i++) {
@@ -3382,16 +3340,16 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Makes the .preferences string out of the array.
-     *
-     * @param   stuff  array to make the string from
-     *
-     * @return  the string with the array items separated by semicolons
+     * 
+     * @param stuff array to make the string from
+     * 
+     * @return the string with the array items separated by semicolons
      */
-    private String makeString(String[] stuff) {
+    private String makeString(final String[] stuff) {
         String newString = "";
 
-        for (int i = 0; i < stuff.length; i++) {
-            newString = newString + stuff[i].trim() + ";";
+        for (final String element : stuff) {
+            newString = newString + element.trim() + ";";
         }
 
         return newString;
@@ -3399,12 +3357,12 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Transforms the name from the usual form to the DICOM form.
-     *
-     * @param   name  the usual name
-     *
-     * @return  the DICOM version of the name
+     * 
+     * @param name the usual name
+     * 
+     * @return the DICOM version of the name
      */
-    private String originalName(String name) {
+    private String originalName(final String name) {
         String lastname = "", firstname = "", middlename = "";
         int count1 = -1, count2 = -1;
 
@@ -3420,7 +3378,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             }
         }
 
-        if ((count1 != -1) && (count2 != -1)) {
+        if ( (count1 != -1) && (count2 != -1)) {
             lastname = name.substring(0, count1 - 1);
             firstname = name.substring(count1 + 1, count2);
             middlename = name.substring(count2 + 1);
@@ -3433,12 +3391,12 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Transforms the name from the DICOM form to a more usual form.
-     *
-     * @param   name  the original name
-     *
-     * @return  the more usual version of the name
+     * 
+     * @param name the original name
+     * 
+     * @return the more usual version of the name
      */
-    private String parseName(String name) {
+    private String parseName(final String name) {
         String lastname = "", firstname = "", middlename = "";
         int count1 = -1, count2 = -1, count3 = -1;
 
@@ -3456,7 +3414,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             }
         }
 
-        if ((count1 != -1) && (count2 != -1) && (count3 != -1)) {
+        if ( (count1 != -1) && (count2 != -1) && (count3 != -1)) {
             lastname = name.substring(0, count1);
             firstname = name.substring(count1 + 1, count2);
             middlename = name.substring(count2 + 1, count3);
@@ -3470,12 +3428,12 @@ public class ViewJFrameDICOMQuery extends JFrame
     /**
      * Sends a move request at the current level, setting up the data objects appropriately. It runs the move request in
      * its own thread.
-     *
-     * @param  type  type of move request: PATIENT, STUDY, SERIES, or IMAGE.
+     * 
+     * @param type type of move request: PATIENT, STUDY, SERIES, or IMAGE.
      */
-    private void sendMoveRequest(int type) {
+    private void sendMoveRequest(final int type) {
         DICOM_PDUService pdu;
-        DICOM_Move move = new DICOM_Move();
+        final DICOM_Move move = new DICOM_Move();
         DICOM_Object dataObject;
         Thread moveRequestThread;
 
@@ -3501,7 +3459,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             case IMAGE_LEVEL:
                 dataObject = move.setMoveImageData(getPtID().trim(), studyInstanceUID, seriesInstanceUID,
-                                                   SOPInstanceUID);
+                        SOPInstanceUID);
                 messageTable.updateRow();
                 break;
 
@@ -3513,29 +3471,33 @@ public class ViewJFrameDICOMQuery extends JFrame
                 return;
         }
 
-        pdu = move.connectToServer(DICOM_PDUService.parseServerInfo(Preferences.getProperty(Preferences.getDefaultServerKey()))[0]); //
+        pdu = move.connectToServer(DICOM_PDUService.parseServerInfo(Preferences.getProperty(Preferences
+                .getDefaultServerKey()))[0]); //
 
         if (pdu == null) {
-            MipavUtil.displayError("Connection to DICOM database is closed.\nCheck that you properly obtained a ticket\nand specified a valid host.");
+            MipavUtil
+                    .displayError("Connection to DICOM database is closed.\nCheck that you properly obtained a ticket\nand specified a valid host.");
 
             return;
         }
 
-        String[] serverInfo = DICOM_PDUService.parseServerInfo(Preferences.getProperty(Preferences.getDefaultServerKey()));
-        String[] storageInfo = DICOM_PDUService.parseServerInfo(Preferences.getProperty(Preferences.getDefaultStorageKey()));
+        final String[] serverInfo = DICOM_PDUService.parseServerInfo(Preferences.getProperty(Preferences
+                .getDefaultServerKey()));
+        final String[] storageInfo = DICOM_PDUService.parseServerInfo(Preferences.getProperty(Preferences
+                .getDefaultStorageKey()));
 
         try {
 
-            if (userInterface.getDICOMCatcher() == null) {
-                userInterface.setDICOMCatcher(new DICOM_Receiver()); // //////
+            if (ViewJFrameDICOMQuery.userInterface.getDICOMCatcher() == null) {
+                ViewJFrameDICOMQuery.userInterface.setDICOMCatcher(new DICOM_Receiver()); // //////
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendMoveRequest");
 
             return;
         }
 
-        if (userInterface.getDICOMCatcher().isAlive() == false) {
+        if (ViewJFrameDICOMQuery.userInterface.getDICOMCatcher().isAlive() == false) {
             Preferences.debug(" ***** Receiver not alive. !!!!!!!!!!!! \n");
             // Should we display an error message.
             // Should we return; ?????? 12/15/99
@@ -3543,18 +3505,18 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         pdu.setDICOMMessageDisplayer(messageTable); // ////////////////////
 
-        int row = messageTable.updateRow();
-        userInterface.getDICOMCatcher().setDICOMMessageDisplayer(messageTable); // /////////
-        messageTable.setMessageType(row, DICOMDisplayer.SOURCE);
+        final int row = messageTable.updateRow();
+        ViewJFrameDICOMQuery.userInterface.getDICOMCatcher().setDICOMMessageDisplayer(messageTable); // /////////
+        DICOMDisplayer.setMessageType(row, DICOMDisplayer.SOURCE);
         messageTable.showMessage(serverInfo[0]);
 
-        String title = storageInfo[0];
+        final String title = storageInfo[0];
         byte[] localAppTitle;
 
         try {
             localAppTitle = new byte[16];
             moveRequestThread = new Thread(move);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendMoveRequest");
 
             return;
@@ -3566,10 +3528,10 @@ public class ViewJFrameDICOMQuery extends JFrame
             localAppTitle[i] = (byte) title.charAt(i);
         }
 
-        int id = move.setMsgID();
-        messageTable.setMessageType(row, DICOMDisplayer.STATUS);
+        final int id = move.setMsgID();
+        DICOMDisplayer.setMessageType(row, DICOMDisplayer.STATUS);
         messageTable.showMessage("Sending request");
-        messageTable.setMessageType(row, DICOMDisplayer.ID);
+        DICOMDisplayer.setMessageType(row, DICOMDisplayer.ID);
         messageTable.showMessage(String.valueOf(id));
         messageTable.repaint();
         messageTable.setSucceeded(false);
@@ -3578,7 +3540,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         moveRequestThread.setPriority(Thread.NORM_PRIORITY);
         moveRequestThread.start();
 
-        MoveRequestInfo mr = new MoveRequestInfo(pdu, moveRequestThread);
+        final MoveRequestInfo mr = new MoveRequestInfo(pdu, moveRequestThread);
         moveRequestHash.put(String.valueOf(id), mr);
     }
 
@@ -3586,29 +3548,29 @@ public class ViewJFrameDICOMQuery extends JFrame
      * This method sets up the information for the DICOM query depending on the type, sends the query, and parses the
      * information that the server sends back. On a study query, it filters out studies before the start date or after
      * the end date.
-     *
-     * @param  type  type of query: PATIENT, STUDY, SERIES, or IMAGE.
+     * 
+     * @param type type of query: PATIENT, STUDY, SERIES, or IMAGE.
      */
-    private void sendQuery(int type) {
+    private void sendQuery(final int type) {
         DICOM_Object dataObject;
         String month;
         String day;
 
-        if ((getStartMonth() + 1) < 10) {
+        if ( (getStartMonth() + 1) < 10) {
             month = "0" + (getStartMonth() + 1);
         } else {
             month = String.valueOf(getStartMonth() + 1);
         }
 
-        if ((getStartDay()) < 10) {
+        if ( (getStartDay()) < 10) {
             day = "0" + (getStartDay());
         } else {
             day = String.valueOf(getStartDay());
         }
 
-        String start = "" + getStartYear() + month + day;
+        final String start = "" + getStartYear() + month + day;
 
-        if ((getEndMonth() + 1) < 10) {
+        if ( (getEndMonth() + 1) < 10) {
             month = "0" + (getEndMonth() + 1);
         } else {
             month = String.valueOf(getEndMonth() + 1);
@@ -3620,7 +3582,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             day = String.valueOf(getEndDay());
         }
 
-        String end = "" + getEndYear() + month + day;
+        final String end = "" + getEndYear() + month + day;
 
         setEnabled(down, false);
         setEnabled(move, false);
@@ -3632,7 +3594,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             }
 
             dicomQuery = new DICOM_Query(this, type);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendQuery");
 
             return;
@@ -3642,9 +3604,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
             case PATIENT_LEVEL:
                 setEnabled(up, false);
-                dataObject = dicomQuery.setQueryStudyData(originalName(getPtName().trim()).concat("*"),
-                                                          getPtID().trim(), getStudyNo().trim(), start + "-" + end,
-                                                          getPhysName().trim());
+                dataObject = dicomQuery.setQueryStudyData(originalName(getPtName().trim()).concat("*"), getPtID()
+                        .trim(), getStudyNo().trim(), start + "-" + end, getPhysName().trim());
 
                 // dataObject =
                 // dicomQuery.setQueryPatientData(getPtName().trim().concat("*"),
@@ -3663,7 +3624,7 @@ public class ViewJFrameDICOMQuery extends JFrame
                 // seems to cause agfa server to choke.
                 // Works with just last name. We may want to add just the last name.
                 dataObject = dicomQuery.setQueryStudyData("", getPtID().trim(), getStudyNo().trim(), start + "-" + end,
-                                                          getPhysName().trim());
+                        getPhysName().trim());
                 break;
 
             case SERIES_LEVEL:
@@ -3686,11 +3647,13 @@ public class ViewJFrameDICOMQuery extends JFrame
         }
 
         Preferences.debug("ViewJFrameDICOMQuery.sendQuery. \n");
-        queryPDU = dicomQuery.connectToServer(DICOM_PDUService.parseServerInfo(Preferences.getProperty(Preferences.getDefaultServerKey()))[0]);
+        queryPDU = dicomQuery.connectToServer(DICOM_PDUService.parseServerInfo(Preferences.getProperty(Preferences
+                .getDefaultServerKey()))[0]);
         dicomQuery.setParameters(queryPDU, dataObject);
 
         if (queryPDU == null) {
-            MipavUtil.displayError("Connection to DICOM database is closed.\nCheck that you properly connected\nand specified a valid host.");
+            MipavUtil
+                    .displayError("Connection to DICOM database is closed.\nCheck that you properly connected\nand specified a valid host.");
             send.setEnabled(true);
             cancelQ.setEnabled(false);
 
@@ -3707,7 +3670,7 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         try {
             sendQueryThread = new Thread(dicomQuery);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendQuery");
         }
 
@@ -3724,7 +3687,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         TableColumn tableColumn;
         queryResultTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        if (queryLevel == PATIENT_LEVEL) {
+        if (queryLevel == ViewJFrameDICOMQuery.PATIENT_LEVEL) {
 
             tableColumn = queryResultTable.getColumn(queryTableModel.getColumnName(0));
             tableColumn.setMaxWidth(500);
@@ -3740,7 +3703,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             tableColumn.setMaxWidth(1000);
             tableColumn.setMinWidth(300);
             tableColumn.setPreferredWidth(300);
-        } else if (queryLevel == STUDY_LEVEL) {
+        } else if (queryLevel == ViewJFrameDICOMQuery.STUDY_LEVEL) {
 
             tableColumn = queryResultTable.getColumn(queryTableModel.getColumnName(0));
             tableColumn.setMaxWidth(300);
@@ -3761,7 +3724,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             tableColumn.setMaxWidth(1000);
             tableColumn.setMinWidth(350);
             tableColumn.setPreferredWidth(400);
-        } else if (queryLevel == SERIES_LEVEL) {
+        } else if (queryLevel == ViewJFrameDICOMQuery.SERIES_LEVEL) {
 
             tableColumn = queryResultTable.getColumn(queryTableModel.getColumnName(0));
             tableColumn.setMaxWidth(30);
@@ -3789,7 +3752,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             tableColumn.setPreferredWidth(300);
             // tableColumn.sizeWidthToFit();
             // tableColumn.sizeWidthToFit()
-        } else if (queryLevel == IMAGE_LEVEL) {
+        } else if (queryLevel == ViewJFrameDICOMQuery.IMAGE_LEVEL) {
 
             tableColumn = queryResultTable.getColumn(queryTableModel.getColumnName(0));
             tableColumn.setMaxWidth(30);
@@ -3821,20 +3784,20 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Sets the specified button to enabled or disabled, depending on the boolean parameter.
-     *
-     * @param  button   button to set
-     * @param  enabled  true is enabled, false if disabled
+     * 
+     * @param button button to set
+     * @param enabled true is enabled, false if disabled
      */
-    private void setEnabled(JButton button, boolean enabled) {
+    private void setEnabled(final JButton button, final boolean enabled) {
         button.setEnabled(enabled);
     }
 
     /**
      * Set the end calendar.
-     *
-     * @param  date  date to set it to
+     * 
+     * @param date date to set it to
      */
-    private void setEndCalendar(Calendar date) {
+    private void setEndCalendar(final Calendar date) {
         setEndYear(date.get(Calendar.YEAR));
         setEndMonth(date.get(Calendar.MONTH));
         setEndDay(date.get(Calendar.DATE));
@@ -3842,12 +3805,12 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Sets the end day.
-     *
-     * @param  day  day to set it to
+     * 
+     * @param day day to set it to
      */
-    private void setEndDay(int day) {
+    private void setEndDay(final int day) {
 
-        if (!checkDate(getEndYear(), getEndMonth(), day, false)) {
+        if ( !checkDate(getEndYear(), getEndMonth(), day, false)) {
             return;
         }
 
@@ -3856,12 +3819,12 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Sets the end month.
-     *
-     * @param  month  month to set it to
+     * 
+     * @param month month to set it to
      */
-    private void setEndMonth(int month) {
+    private void setEndMonth(final int month) {
 
-        if (!checkDate(getEndYear(), month, getEndDay(), false)) {
+        if ( !checkDate(getEndYear(), month, getEndDay(), false)) {
             return;
         }
 
@@ -3870,13 +3833,13 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Sets the end year.
-     *
-     * @param  year  year to set it to
+     * 
+     * @param year year to set it to
      */
-    private void setEndYear(int year) {
-        int thisYear = todayCalendar.get(Calendar.YEAR);
+    private void setEndYear(final int year) {
+        final int thisYear = todayCalendar.get(Calendar.YEAR);
 
-        if (!checkDate(year, getEndMonth(), getEndDay(), false)) {
+        if ( !checkDate(year, getEndMonth(), getEndDay(), false)) {
             return;
         }
 
@@ -3890,22 +3853,22 @@ public class ViewJFrameDICOMQuery extends JFrame
     /**
      * A helper method for adding a component using GridBagLayout, so we don't have to set up the x, y, width, and
      * height over and over again.
-     *
-     * @param   x  GridBagConstraints.gridx
-     * @param   y  GridBagConstraints.gridy
-     * @param   w  GridBagContraints.gridwidth
-     * @param   h  GridBagConstraints.gridheight
-     *
-     * @return  the grid bag constraints
-     *
-     * @see     GridBagConstraints
+     * 
+     * @param x GridBagConstraints.gridx
+     * @param y GridBagConstraints.gridy
+     * @param w GridBagContraints.gridwidth
+     * @param h GridBagConstraints.gridheight
+     * 
+     * @return the grid bag constraints
+     * 
+     * @see GridBagConstraints
      */
-    private GridBagConstraints setGBC(int x, int y, int w, int h) {
+    private GridBagConstraints setGBC(final int x, final int y, final int w, final int h) {
         GridBagConstraints gbc;
 
         try {
             gbc = new GridBagConstraints();
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.setGBC");
 
             return null;
@@ -3921,10 +3884,10 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Sets the start calender to the calendar given.
-     *
-     * @param  date  calendar to set it to
+     * 
+     * @param date calendar to set it to
      */
-    private void setStartCalendar(Calendar date) {
+    private void setStartCalendar(final Calendar date) {
         setStartYear(date.get(Calendar.YEAR));
         setStartMonth(date.get(Calendar.MONTH));
         setStartDay(date.get(Calendar.DATE));
@@ -3932,12 +3895,12 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Displays the starting day in the startDayBox combobox.
-     *
-     * @param  day  an integer of the starting date: day
+     * 
+     * @param day an integer of the starting date: day
      */
-    private void setStartDay(int day) {
+    private void setStartDay(final int day) {
 
-        if (!checkDate(getStartYear(), getStartMonth(), day, true)) {
+        if ( !checkDate(getStartYear(), getStartMonth(), day, true)) {
             return;
         }
 
@@ -3946,12 +3909,12 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Displays the starting month in the startMonthBox combobox.
-     *
-     * @param  month  an integer of the starting date: month
+     * 
+     * @param month an integer of the starting date: month
      */
-    private void setStartMonth(int month) {
+    private void setStartMonth(final int month) {
 
-        if (!checkDate(getStartYear(), month, getStartDay(), true)) {
+        if ( !checkDate(getStartYear(), month, getStartDay(), true)) {
             return;
         }
 
@@ -3960,17 +3923,17 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Displays the starting year in the startYearBox combobox.
-     *
-     * @param  year  an integer of the starting date: year
+     * 
+     * @param year an integer of the starting date: year
      */
-    private void setStartYear(int year) {
-        int smallestYear = DEFAULT_MIN_YEAR;
+    private void setStartYear(final int year) {
+        final int smallestYear = ViewJFrameDICOMQuery.DEFAULT_MIN_YEAR;
 
         if (smallestYear > year) {
             return;
         }
 
-        if (!checkDate(year, getStartMonth(), getStartDay(), true)) {
+        if ( !checkDate(year, getStartMonth(), getStartDay(), true)) {
             return;
         }
 
@@ -3979,15 +3942,15 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Sets up the gridbag layout of the combo boxes.
-     *
-     * @return  The gbc for the combo boxes
+     * 
+     * @return The gbc for the combo boxes
      */
     private GridBagConstraints setupComboBoxLayout() {
         GridBagConstraints gbc;
 
         try {
             gbc = new GridBagConstraints();
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.setupComboBoxLayout");
 
             return null;
@@ -4005,8 +3968,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Sets up the gridBagLayout of the textField label.
-     *
-     * @return  the gbc layout for label
+     * 
+     * @return the gbc layout for label
      */
     private GridBagConstraints setupLabelLayout() {
         GridBagConstraints gbc;
@@ -4015,7 +3978,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         try {
             gbc = new GridBagConstraints();
             insets = new Insets(0, 0, 0, 0);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.setupLabelLayout");
 
             return null;
@@ -4033,19 +3996,19 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Sets ups the send file listing.
-     *
-     * @param   dir  the directory from which to build the listing
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param dir the directory from which to build the listing
+     * 
+     * @return DOCUMENT ME!
      */
-    private boolean setupSendFileListing(String dir) {
+    private boolean setupSendFileListing(final String dir) {
         File fileDir = null;
         String[] fileList;
-        Object[] fileObj = new Object[1];
+        final Object[] fileObj = new Object[1];
 
         try {
             fileDir = new File(dir); // + File.separatorChar);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
             // System.gc();
             // MipavUtil.displayError("FileIO: " + error);
@@ -4066,12 +4029,12 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         if (fileList != null) {
 
-            for (int i = 0; i < sendModel.getRowCount();) {
+            for (final int i = 0; i < sendModel.getRowCount();) {
                 sendModel.removeRow(0);
             }
 
-            for (int i = 0; i < fileList.length; i++) {
-                fileObj[0] = fileList[i];
+            for (final String element : fileList) {
+                fileObj[0] = element;
                 sendModel.addRow(fileObj);
             }
         } else {
@@ -4101,8 +4064,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         /*
          * String strs[] = new String[serverTable.getRowCount()]; for (int r = 0; r < serverTable.getRowCount(); r++) {
          * test = (Boolean)serverTable.getValueAt(r, 0); str = (String)serverTable.getValueAt(r,1); if
-         * (test.booleanValue() == true) { strs[0] = str; } else if (r == 0) { strs[1] = str; } else { strs[r] = str; }
-         * }
+         * (test.booleanValue() == true) { strs[0] = str; } else if (r == 0) { strs[1] = str; } else { strs[r] = str; } }
          */
         sendDestCBox.removeAllItems();
 
@@ -4118,13 +4080,13 @@ public class ViewJFrameDICOMQuery extends JFrame
         }
 
         if (defaultChoice != -1) {
-            sendDestCBox.addItem((String) serverTable.getValueAt(defaultChoice, 1));
+            sendDestCBox.addItem(serverTable.getValueAt(defaultChoice, 1));
         }
 
         for (int r = 0; r < serverTable.getRowCount(); r++) {
 
             if (r != defaultChoice) {
-                sendDestCBox.addItem((String) serverTable.getValueAt(r, 1));
+                sendDestCBox.addItem(serverTable.getValueAt(r, 1));
             }
         }
 
@@ -4134,15 +4096,15 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Sets up the gridbaglayout of the textField.
-     *
-     * @return  The gbc layout for the text field.
+     * 
+     * @return The gbc layout for the text field.
      */
     private GridBagConstraints setupTextFieldLayout() {
         GridBagConstraints gbc;
 
         try {
             gbc = new GridBagConstraints();
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.buildTitledBorder");
 
             return null;
@@ -4160,28 +4122,28 @@ public class ViewJFrameDICOMQuery extends JFrame
 
     /**
      * Sorts the column of the table model. If reverse is true, sorts in reverse order.
-     *
-     * @param  model    table model to sort on
-     * @param  col      column to sort on
-     * @param  reverse  whether or not to sort in reverse order.
+     * 
+     * @param model table model to sort on
+     * @param col column to sort on
+     * @param reverse whether or not to sort in reverse order.
      */
-    private void sort(ViewTableModel model, int col, boolean reverse) {
+    private void sort(final ViewTableModel model, final int col, final boolean reverse) {
 
-        Vector tmpUIDs;
+        Vector<DICOM_UID> tmpUIDs;
         DICOM_UID tmpUID;
 
         if (model.getColumnName(col).equals("Study ID") || model.getColumnName(col).equals("#")) {
 
             try {
-                tmpUIDs = new Vector();
-            } catch (OutOfMemoryError error) {
+                tmpUIDs = new Vector<DICOM_UID>();
+            } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sort");
 
                 return;
             }
 
-            for (int i = 0; i < uids.length; i++) {
-                tmpUIDs.addElement(uids[i]);
+            for (final DICOM_UID element : uids) {
+                tmpUIDs.addElement(element);
             }
 
             for (int p = 1; p < model.getRowCount(); p++) {
@@ -4192,9 +4154,9 @@ public class ViewJFrameDICOMQuery extends JFrame
 
                         if (reverse) {
 
-                            if (Integer.valueOf((String) model.getValueAt(p, col)).intValue() >
-                                    Integer.valueOf((String) model.getValueAt(j, col)).intValue()) {
-                                tmpUID = (DICOM_UID) (tmpUIDs.elementAt(p));
+                            if (Integer.valueOf((String) model.getValueAt(p, col)).intValue() > Integer.valueOf(
+                                    (String) model.getValueAt(j, col)).intValue()) {
+                                tmpUID = (tmpUIDs.elementAt(p));
                                 tmpUIDs.removeElementAt(p);
                                 tmpUIDs.insertElementAt(tmpUID, j);
                                 model.moveRow(p, p, j);
@@ -4203,9 +4165,9 @@ public class ViewJFrameDICOMQuery extends JFrame
                             }
                         } else {
 
-                            if (Integer.valueOf((String) model.getValueAt(p, col)).intValue() <
-                                    Integer.valueOf((String) model.getValueAt(j, col)).intValue()) {
-                                tmpUID = (DICOM_UID) (tmpUIDs.elementAt(p));
+                            if (Integer.valueOf((String) model.getValueAt(p, col)).intValue() < Integer.valueOf(
+                                    (String) model.getValueAt(j, col)).intValue()) {
+                                tmpUID = (tmpUIDs.elementAt(p));
                                 tmpUIDs.removeElementAt(p);
                                 tmpUIDs.insertElementAt(tmpUID, j);
                                 model.moveRow(p, p, j);
@@ -4218,7 +4180,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             }
 
             for (int i = 0; i < uids.length; i++) {
-                uids[i] = (DICOM_UID) (tmpUIDs.elementAt(i));
+                uids[i] = (tmpUIDs.elementAt(i));
             }
         } else {
 
@@ -4230,14 +4192,14 @@ public class ViewJFrameDICOMQuery extends JFrame
 
                         if (reverse) {
 
-                            if (((String) model.getValueAt(p, col)).compareTo((String) model.getValueAt(j, col)) > 0) {
+                            if ( ((String) model.getValueAt(p, col)).compareTo((String) model.getValueAt(j, col)) > 0) {
                                 model.moveRow(p, p, j);
 
                                 break;
                             }
                         } else {
 
-                            if (((String) model.getValueAt(p, col)).compareTo((String) model.getValueAt(j, col)) < 0) {
+                            if ( ((String) model.getValueAt(p, col)).compareTo((String) model.getValueAt(j, col)) < 0) {
                                 model.moveRow(p, p, j);
 
                                 break;
@@ -4249,7 +4211,8 @@ public class ViewJFrameDICOMQuery extends JFrame
         }
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    // ~ Inner Classes
+    // --------------------------------------------------------------------------------------------------
 
     /**
      * Simple class to support move requests.
@@ -4264,19 +4227,19 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         /**
          * Creates a new MoveRequestInfo object.
-         *
-         * @param  pdu         DOCUMENT ME!
-         * @param  moveThread  DOCUMENT ME!
+         * 
+         * @param pdu DOCUMENT ME!
+         * @param moveThread DOCUMENT ME!
          */
-        public MoveRequestInfo(DICOM_PDUService pdu, Thread moveThread) {
+        public MoveRequestInfo(final DICOM_PDUService pdu, final Thread moveThread) {
             this.pdu = pdu;
             this.moveThread = moveThread;
         }
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public DICOM_PDUService getPDU() {
             return pdu;
@@ -4284,8 +4247,8 @@ public class ViewJFrameDICOMQuery extends JFrame
 
         /**
          * DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
          */
         public Thread getThread() {
             return moveThread;

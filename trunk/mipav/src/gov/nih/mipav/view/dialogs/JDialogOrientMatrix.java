@@ -1,10 +1,11 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
+import gov.nih.mipav.model.structures.TransMatrix;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
 
 import javax.swing.*;
 
@@ -12,57 +13,57 @@ import javax.swing.*;
 /**
  * Dialog used to determine how the transformation matrix should be adjusted to account for different coordinate
  * systems. Two check boxes are available to modify the data so that the
- *
- * @version  , 2001
- * @author   Matthew J. McAuliffe, Ph.D.
- * @see      AlgorithmMask
+ * 
+ * @version , 2001
+ * @author Matthew J. McAuliffe, Ph.D.
+ * @see AlgorithmMask
  */
 public class JDialogOrientMatrix extends JDialogBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -5386555201530113228L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private ModelImage image;
-
-    /** DOCUMENT ME! */
-    private JCheckBox leftHandRuleCheckbox;
+    private final JCheckBox leftHandRuleCheckbox;
 
     /** DOCUMENT ME! */
     private TransMatrix matrix;
 
     /** DOCUMENT ME! */
-    private JPanel panelAxisMode;
+    private final JPanel panelAxisMode;
 
     /** DOCUMENT ME! */
     private JDialogBase pFrame;
 
     /** DOCUMENT ME! */
-    private JCheckBox worldCoordCheckbox;
+    private final JCheckBox worldCoordCheckbox;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructor.
-     *
-     * @param  theParentFrame  parent frame
-     * @param  _pFrame         source image
+     * 
+     * @param theParentFrame parent frame
+     * @param _pFrame source image
      */
-    public JDialogOrientMatrix(Frame theParentFrame, JDialogBase _pFrame) {
+    public JDialogOrientMatrix(final Frame theParentFrame, final JDialogBase _pFrame) {
         super(theParentFrame, false);
 
         setForeground(Color.black);
         getContentPane().setLayout(new BorderLayout());
 
         // this.pFrame = _pFrame;
-        if (_pFrame instanceof JDialogTransform) {
-            this.pFrame = (JDialogTransform) _pFrame;
+        if (_pFrame instanceof JDialogScriptableTransform) {
+            this.pFrame = _pFrame;
         } else if (_pFrame instanceof JDialogImageInfo) {
-            this.pFrame = (JDialogImageInfo) _pFrame;
+            this.pFrame = _pFrame;
         }
 
         setTitle("Adjust matrix axis");
@@ -82,7 +83,7 @@ public class JDialogOrientMatrix extends JDialogBase {
         leftHandRuleCheckbox.addItemListener(this);
         panelAxisMode.add(leftHandRuleCheckbox, BorderLayout.SOUTH);
 
-        JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
         buildCancelButton();
@@ -95,15 +96,16 @@ public class JDialogOrientMatrix extends JDialogBase {
         setResizable(false);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * actionPerformed - Closes dialog box when the OK button is pressed and calls the algorithm.
-     *
-     * @param  event  event that triggers function
+     * 
+     * @param event event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        Object source = event.getSource();
+    public void actionPerformed(final ActionEvent event) {
+        final Object source = event.getSource();
 
         if (source == OKButton) {
 
@@ -133,8 +135,8 @@ public class JDialogOrientMatrix extends JDialogBase {
 
     /**
      * Returns the matrix.
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public TransMatrix getMatrix() {
         return matrix;

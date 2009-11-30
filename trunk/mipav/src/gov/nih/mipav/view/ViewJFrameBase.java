@@ -1,39 +1,39 @@
 package gov.nih.mipav.view;
 
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
-import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
-
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.filechooser.FileFilter;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
  * This is an abstract class used to display images in a 2D planar format.
- *
- * @version  0.1 Oct 1, 1998
- * @author   Matthew J. McAuliffe, Ph.D.
- * @see      ViewJComponentEditImage
+ * 
+ * @version 0.1 Oct 1, 1998
+ * @author Matthew J. McAuliffe, Ph.D.
+ * @see ViewJComponentEditImage
  */
-public abstract class ViewJFrameBase extends JFrame
-        implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentListener, ChangeListener {
+public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateInterface, ActionListener,
+        WindowListener, ComponentListener, ChangeListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3040123414501128141L;
@@ -49,8 +49,9 @@ public abstract class ViewJFrameBase extends JFrame
 
     /** DOCUMENT ME! */
     protected int zoomMode = ViewJComponentEditImage.LINEAR_ZOOM;
-    
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** Labels for the current absolute position:. */
     protected JLabel absoluteLabel = null;
@@ -65,7 +66,7 @@ public abstract class ViewJFrameBase extends JFrame
     protected float alphaBlend = 0.5f;
 
     /** Indicates which image is to be acted upon when two images are displayed. */
-    protected int displayMode = IMAGE_A;
+    protected int displayMode = ViewJFrameBase.IMAGE_A;
 
     /** Reference to the image A of this frame. */
     protected ModelImage imageA = null;
@@ -124,25 +125,25 @@ public abstract class ViewJFrameBase extends JFrame
     /** Red channel value of the paint color. */
     private int red;
 
-
     /** DOCUMENT ME! */
     private String voiSavedFileName = null;
 
     /** Variable indicating if images of like dimensions should be scrolled simult. */
     protected boolean linkedScrolling = false;
-    
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Makes an image frame.
-     *
-     * @param  _imageA  model image A
-     * @param  _imageB  model image B
+     * 
+     * @param _imageA model image A
+     * @param _imageB model image B
      */
-    public ViewJFrameBase(ModelImage _imageA, ModelImage _imageB) {
+    public ViewJFrameBase(final ModelImage _imageA, final ModelImage _imageB) {
         imageA = _imageA;
         imageB = _imageB;
-        displayMode = IMAGE_A;
+        displayMode = ViewJFrameBase.IMAGE_A;
 
         userInterface = ViewUserInterface.getReference();
         getContentPane().setLayout(new BorderLayout());
@@ -150,15 +151,16 @@ public abstract class ViewJFrameBase extends JFrame
 
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage() +
-                               ">.  Check that this file is available.\n");
+        } catch (final FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage()
+                    + ">.  Check that this file is available.\n");
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     // ************************************************************************
     // **************************** Action Events *****************************
@@ -166,29 +168,29 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * Method to handle action events generated by the main UI when the current frame is selected. Implemented by
      * specific frame classes.
-     *
-     * @param  event  the event from the UI
+     * 
+     * @param event the event from the UI
      */
     public abstract void actionPerformed(ActionEvent event);
 
     /**
      * Gets the control widgets for the frame.
-     *
-     * @return  the frame's image controls
+     * 
+     * @return the frame's image controls
      */
     public abstract ViewControlsImage getControls();
 
     /**
      * Accessor that returns the imageA.
-     *
-     * @return  imageA
+     * 
+     * @return imageA
      */
     public abstract ModelImage getImageA();
 
     /**
      * Accessor that returns the imageB.
-     *
-     * @return  imageB
+     * 
+     * @return imageB
      */
     public abstract ModelImage getImageB();
 
@@ -200,16 +202,16 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Sets the active image (image that should be processed for drawing VOIs and applying algorithms.
-     *
-     * @param  active  IMAGE_A or IMAGE_B
+     * 
+     * @param active IMAGE_A or IMAGE_B
      */
     public abstract void setActiveImage(int active);
 
     /**
      * Sets the alpha blending parameter for two image display.
-     *
-     * @param  value  amount [0,100] that is the percentage of Image A to be displayed and (1-percentage) of Image B to
-     *                be displayed
+     * 
+     * @param value amount [0,100] that is the percentage of Image A to be displayed and (1-percentage) of Image B to be
+     *            displayed
      */
     public abstract void setAlphaBlend(int value);
 
@@ -221,36 +223,36 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Controls whether or not the images/VOIs of the frame can be modified.
-     *
-     * @param  flag  if true the image/VOIs can be modified; if false image/VOIs can NOT be modified
+     * 
+     * @param flag if true the image/VOIs can be modified; if false image/VOIs can NOT be modified
      */
     public abstract void setEnabled(boolean flag);
 
     /**
      * Accessor that sets the imageB.
-     *
-     * @param  imageB  The image to make image-B in this frame.
+     * 
+     * @param imageB The image to make image-B in this frame.
      */
     public abstract void setImageB(ModelImage imageB);
 
     /**
      * If true do not getMask on a setActiveImage command so as to keep the mask from the old active image.
-     *
-     * @param  flag  if true do not getMask on a setActiveImage command
+     * 
+     * @param flag if true do not getMask on a setActiveImage command
      */
     public abstract void setPaintBitmapSwitch(boolean flag);
 
     /**
      * Set the RGB table for image A.
-     *
-     * @param  RGBT  the RGB table to use for image A
+     * 
+     * @param RGBT the RGB table to use for image A
      */
     public abstract void setRGBTA(ModelRGB RGBT);
 
     /**
      * Set the RGB table for image B.
-     *
-     * @param  RGBT  the RGB table to use for image B
+     * 
+     * @param RGBT the RGB table to use for image B
      */
     public abstract void setRGBTB(ModelRGB RGBT);
 
@@ -266,28 +268,28 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * The extents on this image have changed, so the extents need to be read in again and menus, panes and slide bars
      * adjusted accordingly.
-     *
-     * @return  true if the update was successful, false otherwise
-     *
-     * @see     ViewImageUpdateInterface
+     * 
+     * @return true if the update was successful, false otherwise
+     * 
+     * @see ViewImageUpdateInterface
      */
     public abstract boolean updateImageExtents();
 
     /**
      * Makes an aboutDialog box that displays information about the image slice.
-     *
-     * @param  zSlice  index to slice in z-Plane about the specific image slice
-     * @param  tSlice  index to slice in time about the specific image slice
+     * 
+     * @param zSlice index to slice in z-Plane about the specific image slice
+     * @param tSlice index to slice in time about the specific image slice
      */
-    public void about(int zSlice, int tSlice) {
+    public void about(final int zSlice, final int tSlice) {
         boolean geSigna = false;
         boolean geSigna4x = false;
         boolean dicom = false;
 
         // DICOM images are special--handle separately
-        boolean analyze = false; // currently displaying analyze differentl;y.  update soon
+        boolean analyze = false; // currently displaying analyze differentl;y. update soon
 
-        // does NOT NOT NOT NOT NOT  handle ANALYZE_MULTIFILE files.
+        // does NOT NOT NOT NOT NOT handle ANALYZE_MULTIFILE files.
         boolean mgh = false;
         boolean nifti = false;
         boolean nrrd = false;
@@ -295,84 +297,107 @@ public abstract class ViewJFrameBase extends JFrame
         boolean xml = false; // special handling for XML files
         boolean minc = false;
         boolean mincHDF = false;
-        
+
         if (imageA.getFileInfo()[0] != null) {
 
-            if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) && (displayMode == IMAGE_A)) {
+            if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 dicom = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.XML) && (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.XML)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 xml = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.RAW) && (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.RAW)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 xml = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.JIMI) && (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.JIMI)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 xml = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.ANALYZE) && (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.ANALYZE)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 analyze = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MGH) && (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MGH)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 mgh = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.NIFTI) && (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.NIFTI)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 nifti = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.NRRD) && (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.NRRD)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 nrrd = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.SPM) && (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.SPM)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 spm = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.GE_GENESIS) &&
-                           (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.GE_GENESIS)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 geSigna = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.GE_SIGNA4X) &&
-                           (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.GE_SIGNA4X)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 geSigna4x = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MINC) && (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MINC)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 minc = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MINC_HDF) && (displayMode == IMAGE_A)) {
+            } else if ( ( (imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MINC_HDF)
+                    && (displayMode == ViewJFrameBase.IMAGE_A)) {
                 mincHDF = true;
-            } else if ((imageB != null) && (imageB.getFileInfo()[0] != null)) {
+            } else if ( (imageB != null) && (imageB.getFileInfo()[0] != null)) {
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     dicom = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.XML) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.XML)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     xml = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.RAW) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.RAW)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     xml = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.JIMI) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.JIMI)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     xml = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.ANALYZE) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.ANALYZE)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     analyze = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.MGH) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.MGH)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     mgh = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.NIFTI) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.NIFTI)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     nifti = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.NRRD) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.NRRD)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     nrrd = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.SPM) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.SPM)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     spm = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.GE_GENESIS) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.GE_GENESIS)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     geSigna = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.GE_SIGNA4X) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.GE_SIGNA4X)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     geSigna4x = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.MINC) && (displayMode == IMAGE_B)) {
+                if ( ( (imageB.getFileInfo()[0]).getFileFormat() == FileUtility.MINC)
+                        && (displayMode == ViewJFrameBase.IMAGE_B)) {
                     minc = true;
                 }
             }
@@ -388,49 +413,49 @@ public abstract class ViewJFrameBase extends JFrame
 
             if (analyze) {
 
-                if (displayMode == IMAGE_A) {
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
                 } else {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
                 }
             } else if (mgh) {
 
-                if (displayMode == IMAGE_A) {
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
                 } else {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
                 }
             } else if (nifti) {
 
-                if (displayMode == IMAGE_A) {
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
                 } else {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
                 }
             } else if (nrrd) {
 
-                if (displayMode == IMAGE_A) {
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
                 } else {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
                 }
             } else if (spm) {
 
-                if (displayMode == IMAGE_A) {
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
                 } else {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
                 }
             } else if (geSigna) {
 
-                if (displayMode == IMAGE_A) {
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
                     aboutDialog = new JDialogTextGE(this, "Image Information", imageA, zSlice);
                 } else {
                     aboutDialog = new JDialogTextGE(this, "Image Information", imageB, zSlice);
                 }
             } else if (geSigna4x) {
 
-                if (displayMode == IMAGE_A) {
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
                     aboutDialog = new JDialogTextGE4X(this, "Image Information", imageA, zSlice);
                 } else {
                     aboutDialog = new JDialogTextGE4X(this, "Image Information", imageB, zSlice);
@@ -444,7 +469,7 @@ public abstract class ViewJFrameBase extends JFrame
             }
         }
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
             aboutDialog.setTitle("Info: " + imageA.getImageName());
             imageA.displayAboutInfo(aboutDialog, zSlice, tSlice, dicom, xml);
         } else {
@@ -457,11 +482,11 @@ public abstract class ViewJFrameBase extends JFrame
             aboutDialog.setVisible(true);
         }
 
-        if (!dicom) {
+        if ( !dicom) {
 
             try {
                 ((JDialogText) aboutDialog).setScrollPaneTop();
-            } catch (ClassCastException cce) {
+            } catch (final ClassCastException cce) {
                 Preferences.debug("ClassCastException in ViewJFrameBase.about\n", 5);
             }
 
@@ -508,7 +533,7 @@ public abstract class ViewJFrameBase extends JFrame
         absoluteLabelVals[3].setForeground(Color.black);
         absoluteLabelVals[3].setFont(MipavUtil.font12B);
 
-        GridBagConstraints gbc2 = new GridBagConstraints();
+        final GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.WEST;
 
         gbc2.gridx = 0;
@@ -535,8 +560,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Returns whether or not the close image B option should appear after loading.
-     *
-     * @return  whether the &quot;Close image B&quot; option should appear after image B is loaded
+     * 
+     * @return whether the &quot;Close image B&quot; option should appear after image B is loaded
      */
     public boolean canCloseImageBAfterLoad() {
         return enableCloseImageB;
@@ -572,7 +597,7 @@ public abstract class ViewJFrameBase extends JFrame
         if (imageB != null) {
             imageB.removeImageDisplayListener(this);
 
-            if ((imageB.getImageFrameVector() != null) && imageB.getImageFrameVector().isEmpty()) {
+            if ( (imageB.getImageFrameVector() != null) && imageB.getImageFrameVector().isEmpty()) {
                 imageB.disposeLocal();
                 userInterface.unRegisterImage(imageB);
             }
@@ -580,7 +605,7 @@ public abstract class ViewJFrameBase extends JFrame
             imageB = null;
 
             if (linkTriFrame != null) {
-                linkTriFrame.setActiveImage(IMAGE_A);
+                linkTriFrame.setActiveImage(ViewJFrameBase.IMAGE_A);
                 linkTriFrame.closeImageB();
             }
         }
@@ -590,17 +615,17 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Does nothing.
-     *
-     * @param  event  the component event
+     * 
+     * @param event the component event
      */
-    public void componentHidden(ComponentEvent event) { }
+    public void componentHidden(final ComponentEvent event) {}
 
     /**
      * Does nothing.
-     *
-     * @param  event  the component event
+     * 
+     * @param event the component event
      */
-    public void componentMoved(ComponentEvent event) { }
+    public void componentMoved(final ComponentEvent event) {}
 
     // ************************************************************************
     // ************************* Component Events *****************************
@@ -608,22 +633,22 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Does nothing.
-     *
-     * @param  event  the component event
+     * 
+     * @param event the component event
      */
-    public synchronized void componentResized(ComponentEvent event) { }
+    public synchronized void componentResized(final ComponentEvent event) {}
 
     /**
      * Does nothing.
-     *
-     * @param  event  the component event
+     * 
+     * @param event the component event
      */
-    public void componentShown(ComponentEvent event) { }
+    public void componentShown(final ComponentEvent event) {}
 
     /**
      * Returns a default alphaBlend value for blending of two images.
-     *
-     * @return  a default alphaBlend value
+     * 
+     * @return a default alphaBlend value
      */
     public float getAlphaBlend() {
         return 0.5f;
@@ -631,8 +656,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Accessor that returns displayMode.
-     *
-     * @return  displayMode
+     * 
+     * @return displayMode
      */
     public int getDisplayMode() {
         return displayMode;
@@ -640,8 +665,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Accessor that returns the title of image A.
-     *
-     * @return  frame title for Image A
+     * 
+     * @return frame title for Image A
      */
     public String getImageNameA() {
         return imageA.getImageName();
@@ -649,8 +674,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Accessor that returns the title of image B.
-     *
-     * @return  frame title for Image B
+     * 
+     * @return frame title for Image B
      */
     public String getImageNameB() {
         return imageB.getImageName();
@@ -658,8 +683,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * getLastState.
-     *
-     * @return  lastState Should be either Frame.NORMAL or Frame.ICONIFIED
+     * 
+     * @return lastState Should be either Frame.NORMAL or Frame.ICONIFIED
      */
     public int getLastState() {
         return lastState;
@@ -667,8 +692,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Accessor that returns LUTa.
-     *
-     * @return  LUTa
+     * 
+     * @return LUTa
      */
     public ModelLUT getLUTa() {
         return LUTa;
@@ -676,8 +701,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Accessor that returns LUTb.
-     *
-     * @return  LUTb
+     * 
+     * @return LUTb
      */
     public ModelLUT getLUTb() {
         return LUTb;
@@ -685,8 +710,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Get the RGB table for image A.
-     *
-     * @return  null (may be overridden by inheriting classes)
+     * 
+     * @return null (may be overridden by inheriting classes)
      */
     public ModelRGB getRGBTA() {
         return null;
@@ -694,8 +719,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Get the RGB table for image B.
-     *
-     * @return  null (may be overridden by inheriting classes)
+     * 
+     * @return null (may be overridden by inheriting classes)
      */
     public ModelRGB getRGBTB() {
         return null;
@@ -703,8 +728,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Get the ViewJFrameTriImage reference.
-     *
-     * @return  linkTriFrame ViewJFrameTriImage.
+     * 
+     * @return linkTriFrame ViewJFrameTriImage.
      */
     public ViewJFrameTriImage getTriImg() {
         return linkTriFrame;
@@ -712,8 +737,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Accessor that returns the user interface.
-     *
-     * @return  the user interface
+     * 
+     * @return the user interface
      */
     public ViewUserInterface getUserInterface() {
         return userInterface;
@@ -721,8 +746,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * This method loads all VOIs to the active image from the default VOI directory for that image.
-     *
-     * @param  quietMode  if true indicates that warnings should not be displayed.
+     * 
+     * @param quietMode if true indicates that warnings should not be displayed.
      */
     public void loadAllVOIs(boolean quietMode) {
 
@@ -731,13 +756,13 @@ public abstract class ViewJFrameBase extends JFrame
         String voiDir;
         ModelImage img;
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
             img = this.getImageA();
-        } else if (displayMode == IMAGE_B) {
+        } else if (displayMode == ViewJFrameBase.IMAGE_B) {
             img = this.getImageB();
         } else {
 
-            if (!quietMode) {
+            if ( !quietMode) {
                 MipavUtil.displayError(" Cannot open VOIs when viewing both images");
             }
 
@@ -751,7 +776,7 @@ public abstract class ViewJFrameBase extends JFrame
         if (img.isDicomImage()) {
             imageName = img.getFileInfo(0).getFileName();
 
-            int index = imageName.lastIndexOf(".");
+            final int index = imageName.lastIndexOf(".");
 
             if (index > 0) {
                 imageName = imageName.substring(0, index);
@@ -763,7 +788,7 @@ public abstract class ViewJFrameBase extends JFrame
             int newIndex = imageName.length();
 
             for (int i = imageName.length() - 1; i >= 0; i--) {
-                char myChar = imageName.charAt(i);
+                final char myChar = imageName.charAt(i);
 
                 if (Character.isDigit(myChar)) {
                     newIndex = i;
@@ -795,11 +820,11 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * This method loads all VOIs to the active image from a given directory.
-     *
-     * @param  voiDir     the directory to load voi's from
-     * @param  quietMode  if true indicates that warnings should not be displayed.
+     * 
+     * @param voiDir the directory to load voi's from
+     * @param quietMode if true indicates that warnings should not be displayed.
      */
-    public void loadAllVOIsFrom(String voiDir, boolean quietMode) {
+    public void loadAllVOIsFrom(final String voiDir, boolean quietMode) {
 
         int i, j;
         VOI[] VOIs;
@@ -808,13 +833,13 @@ public abstract class ViewJFrameBase extends JFrame
 
         try {
 
-            if (displayMode == IMAGE_A) {
+            if (displayMode == ViewJFrameBase.IMAGE_A) {
                 currentImage = imageA;
-            } else if (displayMode == IMAGE_B) {
+            } else if (displayMode == ViewJFrameBase.IMAGE_B) {
                 currentImage = imageB;
             } else {
 
-                if (!quietMode) {
+                if ( !quietMode) {
                     MipavUtil.displayError(" Cannot open VOIs when viewing both images");
                 }
 
@@ -823,28 +848,28 @@ public abstract class ViewJFrameBase extends JFrame
 
             // if voiDir does not exist, then return
             // if voiDir exists, then get list of voi's from directory (*.voi)
-            File voiFileDir = new File(voiDir);
-            Vector<String> filenames = new Vector<String>();
-            Vector<Boolean> isLabel = new Vector<Boolean>();
+            final File voiFileDir = new File(voiDir);
+            final Vector<String> filenames = new Vector<String>();
+            final Vector<Boolean> isLabel = new Vector<Boolean>();
 
             if (voiFileDir.exists() && voiFileDir.isDirectory()) {
 
                 // get list of files
-                File[] files = voiFileDir.listFiles();
+                final File[] files = voiFileDir.listFiles();
 
-                for (int k = 0; k < files.length; k++) {
+                for (final File element : files) {
 
-                    if (files[k].getName().endsWith(".voi") || files[k].getName().endsWith(".xml")) {
-                        filenames.add(files[k].getName());
+                    if (element.getName().endsWith(".voi") || element.getName().endsWith(".xml")) {
+                        filenames.add(element.getName());
                         isLabel.add(false);
-                    } else if (files[k].getName().endsWith(".lbl")) {
-                    	filenames.add(files[k].getName());
-                    	isLabel.add(true);
+                    } else if (element.getName().endsWith(".lbl")) {
+                        filenames.add(element.getName());
+                        isLabel.add(true);
                     }
                 }
             } else { // voiFileDir either doesn't exist, or isn't a directory
 
-                if (!quietMode) {
+                if ( !quietMode) {
                     MipavUtil.displayError("No VOIs are found in directory: " + voiDir);
                 }
 
@@ -854,7 +879,7 @@ public abstract class ViewJFrameBase extends JFrame
             // open each voi array, then register voi array to this image
             for (i = 0; i < filenames.size(); i++) {
 
-                fileVOI = new FileVOI((String) (filenames.elementAt(i)), voiDir, currentImage);
+                fileVOI = new FileVOI( (filenames.elementAt(i)), voiDir, currentImage);
 
                 VOIs = fileVOI.readVOI(isLabel.get(i));
 
@@ -866,9 +891,9 @@ public abstract class ViewJFrameBase extends JFrame
             // when everything's done, notify the image listeners
             currentImage.notifyImageDisplayListeners();
 
-        } catch (Exception error) {
+        } catch (final Exception error) {
 
-            if (!quietMode) {
+            if ( !quietMode) {
                 MipavUtil.displayError("Error loading all VOIs from " + voiDir + ": " + error);
             }
         }
@@ -878,21 +903,21 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * Loads an image into imageB slot of frame. Matches the imageB resolutions and dimensions to imageA, and can
      * optionally match the images' origins and orientations.
-     *
-     * @param   obj        an object which is either a ModelImage to be loaded into the modelimage (as say, imageB,
-     *                     imported from another frame) or a File to be read in via FileIO.readImage(...)
-     * @param   compImage  image component where image is set so that it can be displayed.
-     * @param   stackFlag  flag indicating multi file
-     * @param   doOrigins  when calling MatchImages to match resolutions and dimensions, should origins be matched too?
-     * @param   doOrients  when calling MatchImages to match resolutions and dimensions, should orientations be matched
-     *                     too?
-     *
-     * @return  true if the load was successful, false otherwise
-     *
-     * @see     JDialogLoadImage
+     * 
+     * @param obj an object which is either a ModelImage to be loaded into the modelimage (as say, imageB, imported from
+     *            another frame) or a File to be read in via FileIO.readImage(...)
+     * @param compImage image component where image is set so that it can be displayed.
+     * @param stackFlag flag indicating multi file
+     * @param doOrigins when calling MatchImages to match resolutions and dimensions, should origins be matched too?
+     * @param doOrients when calling MatchImages to match resolutions and dimensions, should orientations be matched
+     *            too?
+     * 
+     * @return true if the load was successful, false otherwise
+     * 
+     * @see JDialogLoadImage
      */
-    public boolean loadImage(Object obj, ViewJComponentEditImage compImage, boolean stackFlag, boolean doOrigins,
-                             boolean doOrients) {
+    public boolean loadImage(final Object obj, final ViewJComponentEditImage compImage, final boolean stackFlag,
+            final boolean doOrigins, final boolean doOrients) {
         boolean resample = false;
         int[] axisA;
         int[] axisB;
@@ -909,11 +934,12 @@ public abstract class ViewJFrameBase extends JFrame
             }
 
             if (obj instanceof File) {
-                FileIO fileIO = new FileIO();
-                File file = (File) obj;
+                final FileIO fileIO = new FileIO();
+                final File file = (File) obj;
                 userInterface.setDefaultDirectory(file.getParent());
                 userInterface.setLoad(true);
-                imageB = fileIO.readImage(file.getName(), file.getParent() + File.separator, stackFlag, null, true); // read image!
+                imageB = fileIO.readImage(file.getName(), file.getParent() + File.separator, stackFlag, null, true); // read
+                // image!
             } else if (obj instanceof ModelImage) {
                 imageB = (ModelImage) obj;
             }
@@ -923,18 +949,19 @@ public abstract class ViewJFrameBase extends JFrame
             }
 
             if (imageB.isColorImage() && (getRGBTB() == null)) {
-                int[] RGBExtents = new int[2];
+                final int[] RGBExtents = new int[2];
                 RGBExtents[0] = 4;
                 RGBExtents[1] = 256;
 
-                ModelRGB rgb = new ModelRGB(RGBExtents);
+                final ModelRGB rgb = new ModelRGB(RGBExtents);
 
                 this.setRGBTB(rgb);
             }
 
-            if ((((imageA.isColorImage() == true) && (imageB.isColorImage() == false)) ||
-                     ((imageA.isColorImage() == false) && (imageB.isColorImage() == true)))) {
-                MipavUtil.displayError("Image loading failed because the color space is different. Both images must be grayscale or both RGB.");
+            if ( ( ( (imageA.isColorImage() == true) && (imageB.isColorImage() == false)) || ( (imageA.isColorImage() == false) && (imageB
+                    .isColorImage() == true)))) {
+                MipavUtil
+                        .displayError("Image loading failed because the color space is different. Both images must be grayscale or both RGB.");
 
                 return false;
             }
@@ -945,9 +972,9 @@ public abstract class ViewJFrameBase extends JFrame
             // If axis orientation information is available for each of the 3 axes of
             // image A and image B and the orientations are not identical, then reorder image B
             // to have the same orientation as image A
-            if ((imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI) && (imageB.getNDims() > 2) &&
-                    (axisA[0] != FileInfoBase.ORI_UNKNOWN_TYPE) && (axisB[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
-                    ((axisA[0] != axisB[0]) || (axisA[1] != axisB[1]) || (axisA[2] != axisB[2]))) {
+            if ( (imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI) && (imageB.getNDims() > 2)
+                    && (axisA[0] != FileInfoBase.ORI_UNKNOWN_TYPE) && (axisB[0] != FileInfoBase.ORI_UNKNOWN_TYPE)
+                    && ( (axisA[0] != axisB[0]) || (axisA[1] != axisB[1]) || (axisA[2] != axisB[2]))) {
 
                 if (reorderAfni(imageB, axisA, axisB) == false) {
                     return false;
@@ -958,9 +985,9 @@ public abstract class ViewJFrameBase extends JFrame
                 resample = isResampleNeeded(imageB);
             }
 
-            if ((resample == true) && (imageA.getFileInfo(0).getFileFormat() == FileUtility.AFNI) &&
-                    (imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI)) {
-                int result = setImageBAfni(imageA, imageB);
+            if ( (resample == true) && (imageA.getFileInfo(0).getFileFormat() == FileUtility.AFNI)
+                    && (imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI)) {
+                final int result = setImageBAfni(imageA, imageB);
 
                 if (result == -1) {
                     return false;
@@ -969,10 +996,10 @@ public abstract class ViewJFrameBase extends JFrame
                 }
             }
 
-            if (((imageA.getNDims() == 3) && (imageB.getNDims() == 3)) ||
-                    ((imageA.getNDims() == 2) && (imageB.getNDims() == 2))) {
+            if ( ( (imageA.getNDims() == 3) && (imageB.getNDims() == 3))
+                    || ( (imageA.getNDims() == 2) && (imageB.getNDims() == 2))) {
 
-                if (!matchImages(imageB, doOrigins, doOrients)) {
+                if ( !matchImages(imageB, doOrigins, doOrients)) {
                     return false;
                 }
             } else if (resample) {
@@ -984,21 +1011,21 @@ public abstract class ViewJFrameBase extends JFrame
             if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
 
                 // load any luts
-                displayMode = IMAGE_B; // tell loadLUT to load LUT for image B
+                displayMode = ViewJFrameBase.IMAGE_B; // tell loadLUT to load LUT for image B
                 this.loadLUT(true, true);
 
                 // load any vois
                 this.loadAllVOIs(true);
-                displayMode = IMAGE_A; // Reset to default.
+                displayMode = ViewJFrameBase.IMAGE_A; // Reset to default.
             }
 
             success = true;
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
             t.printStackTrace();
             success = false;
         } finally {
 
-            if (!success && (imageB != null)) {
+            if ( !success && (imageB != null)) {
                 imageB.disposeLocal();
                 imageB = null;
             }
@@ -1010,16 +1037,16 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * This method loads the LUT for the active image. If the image is not a color image then both the functions and the
      * LUT data are loaded. If this is a color image, then only the functions are loaded.
-     *
-     * @param  loadAll    boolean indicating that both lut and transfer functions should be loaded. If false, then only
-     *                    transfer functions are loaded.
-     * @param  quietMode  if true indicates that warnings should not be displayed.
+     * 
+     * @param loadAll boolean indicating that both lut and transfer functions should be loaded. If false, then only
+     *            transfer functions are loaded.
+     * @param quietMode if true indicates that warnings should not be displayed.
      */
-    public void loadLUT(boolean loadAll, boolean quietMode) {
+    public void loadLUT(final boolean loadAll, final boolean quietMode) {
 
         ModelImage img;
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
             img = this.getImageA();
         } else {
             img = this.getImageB();
@@ -1033,7 +1060,7 @@ public abstract class ViewJFrameBase extends JFrame
         if (img.isDicomImage()) {
             imageName = img.getFileInfo(0).getFileName();
 
-            int index = imageName.lastIndexOf(".");
+            final int index = imageName.lastIndexOf(".");
 
             if (index > 0) {
                 imageName = imageName.substring(0, index);
@@ -1045,7 +1072,7 @@ public abstract class ViewJFrameBase extends JFrame
             int newIndex = imageName.length();
 
             for (int i = imageName.length() - 1; i >= 0; i--) {
-                char myChar = imageName.charAt(i);
+                final char myChar = imageName.charAt(i);
 
                 if (Character.isDigit(myChar)) {
                     newIndex = i;
@@ -1069,8 +1096,8 @@ public abstract class ViewJFrameBase extends JFrame
         imageName = imageName.replace('^', '_');
         imageName = imageName.replace(',', '_');
 
-        String filename = new String(imageName + ".lut");
-        String dirName = img.getFileInfo(0).getFileDirectory();
+        final String filename = new String(imageName + ".lut");
+        final String dirName = img.getFileInfo(0).getFileDirectory();
 
         loadLUTandTransferFunctionFrom(loadAll, filename, dirName, quietMode);
 
@@ -1079,12 +1106,12 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * This method loads the LUT for the active image. If the image is not a color image then both the functions and the
      * LUT data are loaded. If this is a color image, then only the functions are loaded.
-     *
-     * @param  loadAll    boolean indicating that both lut and transfer functions should be loaded. If false, then only
-     *                    transfer functions are loaded.
-     * @param  filename   filename to save LUT as
-     * @param  dirName    directory to save LUT to
-     * @param  quietMode  if true indicates that warnings should not be displayed.
+     * 
+     * @param loadAll boolean indicating that both lut and transfer functions should be loaded. If false, then only
+     *            transfer functions are loaded.
+     * @param filename filename to save LUT as
+     * @param dirName directory to save LUT to
+     * @param quietMode if true indicates that warnings should not be displayed.
      */
     public void loadLUTandTransferFunctionFrom(boolean loadAll, String filename, String dirName, boolean quietMode) {
 
@@ -1094,7 +1121,7 @@ public abstract class ViewJFrameBase extends JFrame
         FileHistoLUT fileHistoLUT;
         boolean useLUT = false;
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
             img = this.getImageA();
 
             if (img.isColorImage()) {
@@ -1123,18 +1150,18 @@ public abstract class ViewJFrameBase extends JFrame
         // if not using a lut (i.e. rgb only), then you
         // can't loadAll.... there are only functions, so
         // reset the loadAll variable
-        if (!useLUT) {
+        if ( !useLUT) {
             loadAll = false;
         }
 
-        if ((filename == null) || (dirName == null)) {
+        if ( (filename == null) || (dirName == null)) {
             dirName = img.getFileInfo(0).getFileDirectory();
 
             if (dirName == null) {
                 dirName = System.getProperties().getProperty("user.dir");
             }
 
-            JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new JFileChooser();
 
             chooser.setCurrentDirectory(new File(dirName));
 
@@ -1144,7 +1171,7 @@ public abstract class ViewJFrameBase extends JFrame
                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.FUNCT));
             }
 
-            int returnVal = chooser.showOpenDialog(this);
+            final int returnVal = chooser.showOpenDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 filename = chooser.getSelectedFile().getName();
@@ -1167,7 +1194,7 @@ public abstract class ViewJFrameBase extends JFrame
                     fileHistoLUT.readFunctions();
                 }
 
-                if (displayMode == IMAGE_A) {
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
                     this.setLUTa(lut);
                 } else {
                     this.setLUTb(lut);
@@ -1181,7 +1208,7 @@ public abstract class ViewJFrameBase extends JFrame
                     fileHistoLUT.readFunctions();
                 }
 
-                if (displayMode == IMAGE_A) {
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
                     this.setRGBTA(rgb);
                 } else {
                     this.setRGBTB(rgb);
@@ -1190,50 +1217,49 @@ public abstract class ViewJFrameBase extends JFrame
 
             img.notifyImageDisplayListeners(lut, true);
 
-        } catch (IOException error) {
+        } catch (final IOException error) {
 
-            if (!quietMode) {
+            if ( !quietMode) {
                 MipavUtil.displayError("Error reading LUT: \n" + error.getMessage());
             }
         }
     } // end loadLUTFrom()
 
-   
     /**
      * This method opens an existing VOI.
-     *
-     * @param   quietMode  if true indicates that warnings should not be displayed.
-     * @param   doLabels   DOCUMENT ME!
-     *
-     * @return  whether a VOI was successfully opened (ie - the dialog wasn't cancelled)
+     * 
+     * @param quietMode if true indicates that warnings should not be displayed.
+     * @param doLabels DOCUMENT ME!
+     * 
+     * @return whether a VOI was successfully opened (ie - the dialog wasn't cancelled)
      */
-    public boolean openVOI(boolean quietMode, boolean doLabels) {
+    public boolean openVOI(boolean quietMode, final boolean doLabels) {
         ViewOpenVOIUI openVOI = null;
 
         try {
             openVOI = new ViewOpenVOIUI();
 
-            if (displayMode == IMAGE_A) {
+            if (displayMode == ViewJFrameBase.IMAGE_A) {
 
                 if (openVOI.open(imageA, doLabels) == null) {
                     return false;
                 }
-            } else if (displayMode == IMAGE_B) {
+            } else if (displayMode == ViewJFrameBase.IMAGE_B) {
 
                 if (openVOI.open(imageB, doLabels) == null) {
                     return false;
                 }
             } else {
 
-                if (!quietMode) {
+                if ( !quietMode) {
                     MipavUtil.displayError(" Cannot open VOI when viewing both images");
                 }
 
                 return false;
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
-            if (!quietMode) {
+            if ( !quietMode) {
                 MipavUtil.displayError("Out of memory: ViewJFrameBase.openVOI");
             }
 
@@ -1245,22 +1271,22 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * This method opens an existing VOI.
-     *
-     * @param   image      image where VOI(s) are to registered
-     * @param   quietMode  if true indicates that warnings should not be displayed.
-     *
-     * @return  the VOI(s)
+     * 
+     * @param image image where VOI(s) are to registered
+     * @param quietMode if true indicates that warnings should not be displayed.
+     * 
+     * @return the VOI(s)
      */
-    public VOI[] openVOI(ModelImage image, boolean quietMode) {
+    public VOI[] openVOI(final ModelImage image, boolean quietMode) {
         ViewOpenVOIUI openVOI = null;
         VOI[] voi = null;
 
         try {
             openVOI = new ViewOpenVOIUI();
             voi = openVOI.open(image, false);
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
 
-            if (!quietMode) {
+            if ( !quietMode) {
                 MipavUtil.displayError("Out of memory: ViewJFrameBase.openVOI");
             }
 
@@ -1272,8 +1298,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Brings up a FileChooser to pick a file.
-     *
-     * @return  File the File the chooser picks.
+     * 
+     * @return File the File the chooser picks.
      */
     public File pickImageFile() {
 
@@ -1284,19 +1310,19 @@ public abstract class ViewJFrameBase extends JFrame
 
         try {
             filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
-        } catch (NumberFormatException nfe) {
+        } catch (final NumberFormatException nfe) {
 
             // an invalid value was set in preferences -- so don't use it!
             filter = -1;
         }
 
         try {
-            ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+            final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
             fileChooser.setMulti(userInterface.getLastStackFlag());
 
-            JFileChooser chooser = fileChooser.getFileChooser();
+            final JFileChooser chooser = fileChooser.getFileChooser();
 
-            if (!fileChooser.useAWT()) {
+            if ( !fileChooser.useAWT()) {
 
                 if (userInterface.getDefaultDirectory() != null) {
                     chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
@@ -1317,7 +1343,7 @@ public abstract class ViewJFrameBase extends JFrame
 
                     // if filter is something we already added, then remove it before
                     // setting it..... (kludgy, kludgy....)
-                    javax.swing.filechooser.FileFilter found = findFilter(chooser, filter);
+                    final javax.swing.filechooser.FileFilter found = findFilter(chooser, filter);
 
                     if (found != null) {
                         chooser.removeChoosableFileFilter(found);
@@ -1327,7 +1353,7 @@ public abstract class ViewJFrameBase extends JFrame
                     chooser.setFileFilter(new ViewImageFileFilter(filter));
                 }
 
-                int returnVal = chooser.showOpenDialog(this);
+                final int returnVal = chooser.showOpenDialog(this);
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     userInterface.setLastStackFlag(fileChooser.isMulti());
@@ -1336,7 +1362,7 @@ public abstract class ViewJFrameBase extends JFrame
                     return null;
                 }
             } else {
-                String name = fileChooser.getFileName();
+                final String name = fileChooser.getFileName();
                 userInterface.setLastStackFlag(fileChooser.isMulti());
 
                 if (name == null) {
@@ -1345,7 +1371,7 @@ public abstract class ViewJFrameBase extends JFrame
                     f = fileChooser.getOpenedFile();
                 }
             }
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameBase.loadImage");
 
             return null;
@@ -1358,11 +1384,11 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Creates save dialog so that the image can be saved // This should be moved to imageModel.save();
-     *
-     * @param  options     File-write options.
-     * @param  filterType  only used if >= 0
+     * 
+     * @param options File-write options.
+     * @param filterType only used if >= 0
      */
-    public void save(FileWriteOptions options, int filterType) {
+    public void save(final FileWriteOptions options, final int filterType) {
         String fileName = null;
         String extension = null;
         String directory = null;
@@ -1372,9 +1398,9 @@ public abstract class ViewJFrameBase extends JFrame
         ViewImageFileFilter vFilter = null;
         int i;
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
             img = imageA;
-        } else if (displayMode == IMAGE_B) {
+        } else if (displayMode == ViewJFrameBase.IMAGE_B) {
             img = imageB;
         } else {
             MipavUtil.displayError(" Cannot save images when viewing both images.");
@@ -1394,24 +1420,23 @@ public abstract class ViewJFrameBase extends JFrame
             } else {
 
                 try {
-                    ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, true);
+                    final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, true);
 
                     try {
 
                         // try to prefill the "save as" text area
                         if (img.getFileInfo(0).getFileDirectory() != null) {
-                            fileChooser.getFileChooser().setSelectedFile(new File(img.getFileInfo(0).getFileDirectory() +
-                                                                              img.getImageFileName()));
+                            fileChooser.getFileChooser().setSelectedFile(
+                                    new File(img.getFileInfo(0).getFileDirectory() + img.getImageFileName()));
+                        } else {
+                            fileChooser.getFileChooser().setSelectedFile(new File(img.getImageFileName()));
                         }
-                        else {
-                            fileChooser.getFileChooser().setSelectedFile(new File(img.getImageFileName()));    
-                        }
-                    } catch (Throwable t) {
+                    } catch (final Throwable t) {
                         // if prefill fails, do nothing
                     }
 
-                    if (!fileChooser.useAWT()) {
-                        JFileChooser chooser = fileChooser.getFileChooser();
+                    if ( !fileChooser.useAWT()) {
+                        final JFileChooser chooser = fileChooser.getFileChooser();
 
                         // chooser.setName("Save image as");
                         if (userInterface.getDefaultDirectory() != null) {
@@ -1427,7 +1452,7 @@ public abstract class ViewJFrameBase extends JFrame
                             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
                         }
 
-                        int returnVal = chooser.showSaveDialog(this);
+                        final int returnVal = chooser.showSaveDialog(this);
 
                         if (returnVal == JFileChooser.APPROVE_OPTION) {
                             fileName = chooser.getSelectedFile().getName();
@@ -1435,11 +1460,11 @@ public abstract class ViewJFrameBase extends JFrame
                             if (filterType >= 0) {
                                 i = fileName.lastIndexOf('.');
 
-                                if ((i > 0) && (i < (fileName.length() - 1))) {
+                                if ( (i > 0) && (i < (fileName.length() - 1))) {
                                     extension = fileName.substring(i + 1).toLowerCase();
                                     vFilter = new ViewImageFileFilter(filterType);
 
-                                    if (!vFilter.accept(extension)) {
+                                    if ( !vFilter.accept(extension)) {
                                         MipavUtil.displayError("Extension does not match filter type");
 
                                         return;
@@ -1497,11 +1522,11 @@ public abstract class ViewJFrameBase extends JFrame
                         fileName = fileChooser.getFileName();
                         directory = fileChooser.getDirectory();
 
-                        if ((fileName == null) || (directory == null)) {
+                        if ( (fileName == null) || (directory == null)) {
                             return;
                         }
                     }
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: ViewJFrameBase.save");
                     Preferences.debug("Out of memory: ViewJFrameBase.save\n", 3);
 
@@ -1514,10 +1539,10 @@ public abstract class ViewJFrameBase extends JFrame
             directory = img.getFileInfo(0).getFileDirectory();
         }
 
-        if (!options.isScript() && Preferences.is(Preferences.PREF_SAVE_PROMPT_OVERWRITE) &&
-                new File(directory + File.separator + fileName).exists()) {
-            int response = JOptionPane.showConfirmDialog(this, directory + fileName + " exists.  Overwrite?",
-                                                         "File exists", JOptionPane.YES_NO_OPTION);
+        if ( !options.isScript() && Preferences.is(Preferences.PREF_SAVE_PROMPT_OVERWRITE)
+                && new File(directory + File.separator + fileName).exists()) {
+            final int response = JOptionPane.showConfirmDialog(this, directory + fileName + " exists.  Overwrite?",
+                    "File exists", JOptionPane.YES_NO_OPTION);
 
             if (response == JOptionPane.NO_OPTION) {
                 options.setSaveAs(true);
@@ -1534,11 +1559,10 @@ public abstract class ViewJFrameBase extends JFrame
         // if (options.isSaveAs()) {
         // img.setImageName(fileName.substring(0, fileName.length()-4));
         // }
-
         options.setFileName(fileName);
         options.setFileDirectory(directory);
 
-        if (!options.isSaveAs()) {
+        if ( !options.isSaveAs()) {
 
             if (img.getNDims() == 3) {
                 options.setBeginSlice(0);
@@ -1551,23 +1575,22 @@ public abstract class ViewJFrameBase extends JFrame
             }
         }
 
-        if ((fileName != null) &&
-                ((fileName.endsWith(".avi")) || (fileName.endsWith(".AVI")) || (fileName.endsWith(".mov")) ||
-                     (fileName.endsWith(".MOV")))) {
+        if ( (fileName != null)
+                && ( (fileName.endsWith(".avi")) || (fileName.endsWith(".AVI")) || (fileName.endsWith(".mov")) || (fileName
+                        .endsWith(".MOV")))) {
 
             ModelImage imageAvi = imageA;
             boolean converted = false;
 
             // must convert to ARGB if ARGB float or ARGB ushort
-            if ((imageA.getType() == ModelStorageBase.ARGB_FLOAT) ||
-                    (imageA.getType() == ModelStorageBase.ARGB_USHORT)) {
+            if ( (imageA.getType() == ModelStorageBase.ARGB_FLOAT)
+                    || (imageA.getType() == ModelStorageBase.ARGB_USHORT)) {
                 int response = JOptionPane.NO_OPTION;
 
-                if (!options.isScript()) {
-                    response = JOptionPane.showConfirmDialog(userInterface.getMainFrame(),
-                                                             new String("Image must be converted to ARGB to save as .avi"),
-                                                             "Convert?", JOptionPane.YES_NO_OPTION,
-                                                             JOptionPane.QUESTION_MESSAGE);
+                if ( !options.isScript()) {
+                    response = JOptionPane.showConfirmDialog(userInterface.getMainFrame(), new String(
+                            "Image must be converted to ARGB to save as .avi"), "Convert?", JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE);
                 } else {
                     response = JOptionPane.YES_OPTION;
                 }
@@ -1579,7 +1602,7 @@ public abstract class ViewJFrameBase extends JFrame
                 imageAvi = new ModelImage(ModelStorageBase.ARGB, imageA.getExtents(), fileName + "ARGB");
 
                 AlgorithmChangeType algoChange = new AlgorithmChangeType(imageAvi, imageA, (float) imageA.getMin(),
-                                                                         (float) imageA.getMax(), 0, 255, false);
+                        (float) imageA.getMax(), 0, 255, false);
 
                 algoChange.setRunningInSeparateThread(false);
                 algoChange.run();
@@ -1604,8 +1627,8 @@ public abstract class ViewJFrameBase extends JFrame
 
                 aviFile.setIsScript(options.isScript());
 
-                if (!aviFile.writeImage(imageAvi, imageB, LUTa, LUTb, getRGBTA(), getRGBTB(), red, green, blue, opacity,
-                                        alphaBlend, paintBitmap, options.getAVICompression())) {
+                if ( !aviFile.writeImage(imageAvi, imageB, LUTa, LUTb, getRGBTA(), getRGBTB(), red, green, blue,
+                        opacity, alphaBlend, paintBitmap, options.getAVICompression())) {
 
                     System.err.println("AVI image write cancelled");
                 }
@@ -1615,7 +1638,7 @@ public abstract class ViewJFrameBase extends JFrame
                 }
 
                 imageAvi = null;
-            } catch (IOException error) {
+            } catch (final IOException error) {
 
                 if (converted && (imageAvi != null)) {
                     imageAvi.disposeLocal();
@@ -1624,7 +1647,7 @@ public abstract class ViewJFrameBase extends JFrame
                 MipavUtil.displayError("ViewJFrameBase: " + error);
 
                 return;
-            } catch (OutOfMemoryError error) {
+            } catch (final OutOfMemoryError error) {
 
                 if (converted && (imageAvi != null)) {
                     imageAvi.disposeLocal();
@@ -1637,9 +1660,9 @@ public abstract class ViewJFrameBase extends JFrame
         } else {
 
             if (fileName != null) {
-                FileIO fileIO = new FileIO();
+                final FileIO fileIO = new FileIO();
 
-                if (displayMode == IMAGE_A) {
+                if (displayMode == ViewJFrameBase.IMAGE_A) {
                     fileIO.setModelLUT(this.getLUTa());
                 } else {
                     fileIO.setModelLUT(this.getLUTb());
@@ -1647,7 +1670,7 @@ public abstract class ViewJFrameBase extends JFrame
 
                 if (img.isColorImage()) {
 
-                    if (displayMode == IMAGE_A) {
+                    if (displayMode == ViewJFrameBase.IMAGE_A) {
                         options.setRGBTa(this.getRGBTA());
                     } else {
                         options.setRGBTa(this.getRGBTB());
@@ -1665,10 +1688,10 @@ public abstract class ViewJFrameBase extends JFrame
             // Since the options may have changed the filename
             // and the directory --- get new fileName and directory
             // from options
-            String fName = options.getFileName(); // if you use the name from img, then DICOM has funny names
-            String dirName = img.getFileInfo(0).getFileDirectory();
+            final String fName = options.getFileName(); // if you use the name from img, then DICOM has funny names
+            final String dirName = img.getFileInfo(0).getFileDirectory();
             String filebase;
-            int ind = fName.lastIndexOf(".");
+            final int ind = fName.lastIndexOf(".");
 
             if (ind > 0) {
                 filebase = fName.substring(0, fName.lastIndexOf("."));
@@ -1680,7 +1703,7 @@ public abstract class ViewJFrameBase extends JFrame
                 int newIndex = filebase.length();
 
                 for (i = filebase.length() - 1; i >= 0; i--) {
-                    char myChar = filebase.charAt(i);
+                    final char myChar = filebase.charAt(i);
 
                     if (Character.isDigit(myChar)) {
                         newIndex = i;
@@ -1695,13 +1718,13 @@ public abstract class ViewJFrameBase extends JFrame
             }
 
             // save any luts
-            String lutName = new String(filebase + ".lut");
+            final String lutName = new String(filebase + ".lut");
 
             saveLUTAs(true, lutName, dirName);
 
             // save any vois
-            String voiName = filebase.replace('^', '_');
-            String voiDir = new String(dirName + File.separator + "defaultVOIs_" + voiName + File.separator);
+            final String voiName = filebase.replace('^', '_');
+            final String voiDir = new String(dirName + File.separator + "defaultVOIs_" + voiName + File.separator);
 
             saveAllVOIsTo(voiDir);
         }
@@ -1709,7 +1732,7 @@ public abstract class ViewJFrameBase extends JFrame
         // set the new fileName and directory in the fileInfo for the img -- so that it's
         // updated correctly in memory as well -- don't move this before the saveAllOnSave loop --
         // that needs to look at the former settings!
-        FileInfoBase[] fileInfo = img.getFileInfo();
+        final FileInfoBase[] fileInfo = img.getFileInfo();
 
         if (suffix == null) {
             suffix = FileUtility.getExtension(fileName);
@@ -1728,7 +1751,7 @@ public abstract class ViewJFrameBase extends JFrame
         String baseName = new String(fileName);
 
         if (fileType == FileUtility.DICOM) {
-            int index = fileName.lastIndexOf(".");
+            final int index = fileName.lastIndexOf(".");
 
             if (index > 0) {
                 baseName = fileName.substring(0, index);
@@ -1737,7 +1760,7 @@ public abstract class ViewJFrameBase extends JFrame
             int newIndex = baseName.length();
 
             for (i = baseName.length() - 1; i >= 0; i--) {
-                char myChar = baseName.charAt(i);
+                final char myChar = baseName.charAt(i);
 
                 if (Character.isDigit(myChar)) {
                     newIndex = i;
@@ -1752,7 +1775,7 @@ public abstract class ViewJFrameBase extends JFrame
 
             fileName = new String(baseName + ".dcm");
 
-            if (!directory.endsWith(baseName)) {
+            if ( !directory.endsWith(baseName)) {
                 directory = new String(directory + baseName + File.separator);
             }
         }
@@ -1774,25 +1797,24 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Creates save dialog so that the image can be saved // This should be moved to imageModel.save();
-     *
-     * @param  img         DOCUMENT ME!
-     * @param  options     DOCUMENT ME!
-     * @param  filterType  only used if value >= 0
+     * 
+     * @param img DOCUMENT ME!
+     * @param options DOCUMENT ME!
+     * @param filterType only used if value >= 0
      */
-    public void save(ModelImage img, FileWriteOptions options, int filterType) {
+    public void save(final ModelImage img, final FileWriteOptions options, final int filterType) {
         this.save(img, options, filterType, false);
     }
 
-
     /**
      * Creates save dialog so that the image can be saved // This should be moved to imageModel.save();
-     *
-     * @param  img           DOCUMENT ME!
-     * @param  options       DOCUMENT ME!
-     * @param  filterType    only used if value >= 0
-     * @param  operateQuiet  informs the FileIO to not notify user of errors or interrogate for more information.
+     * 
+     * @param img DOCUMENT ME!
+     * @param options DOCUMENT ME!
+     * @param filterType only used if value >= 0
+     * @param operateQuiet informs the FileIO to not notify user of errors or interrogate for more information.
      */
-    public void save(ModelImage img, FileWriteOptions options, int filterType, boolean operateQuiet) {
+    public void save(final ModelImage img, final FileWriteOptions options, final int filterType, boolean operateQuiet) {
         String fileName = null;
         String extension = null;
         String directory = null;
@@ -1815,7 +1837,7 @@ public abstract class ViewJFrameBase extends JFrame
             } else {
 
                 try {
-                    JFileChooser chooser = new JFileChooser();
+                    final JFileChooser chooser = new JFileChooser();
 
                     if (userInterface.getDefaultDirectory() != null) {
                         chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
@@ -1831,7 +1853,7 @@ public abstract class ViewJFrameBase extends JFrame
                         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
                     }
 
-                    int returnVal = chooser.showSaveDialog(this);
+                    final int returnVal = chooser.showSaveDialog(this);
 
                     if (returnVal == JFileChooser.APPROVE_OPTION) {
                         fileName = chooser.getSelectedFile().getName();
@@ -1839,7 +1861,7 @@ public abstract class ViewJFrameBase extends JFrame
                         if (options.isAVI()) {
 
                             // force the name to be .avi
-                            if (!fileName.endsWith("avi") && !fileName.endsWith("AVI")) {
+                            if ( !fileName.endsWith("avi") && !fileName.endsWith("AVI")) {
                                 fileName += ".avi";
                             }
                         }
@@ -1847,11 +1869,11 @@ public abstract class ViewJFrameBase extends JFrame
                         if (filterType >= 0) {
                             i = fileName.lastIndexOf('.');
 
-                            if ((i > 0) && (i < (fileName.length() - 1))) {
+                            if ( (i > 0) && (i < (fileName.length() - 1))) {
                                 extension = fileName.substring(i + 1).toLowerCase();
                                 vFilter = new ViewImageFileFilter(filterType);
 
-                                if (!vFilter.accept(extension)) {
+                                if ( !vFilter.accept(extension)) {
                                     MipavUtil.displayError("Extension does not match filter type");
 
                                     return;
@@ -1905,9 +1927,9 @@ public abstract class ViewJFrameBase extends JFrame
                     } else {
                         return;
                     }
-                } catch (OutOfMemoryError error) {
+                } catch (final OutOfMemoryError error) {
 
-                    if (!operateQuiet) {
+                    if ( !operateQuiet) {
                         MipavUtil.displayError("Out of memory: ViewJFrameBase.save");
                     }
 
@@ -1924,7 +1946,7 @@ public abstract class ViewJFrameBase extends JFrame
         options.setFileName(fileName);
         options.setFileDirectory(directory);
 
-        if (!options.isSaveAs()) {
+        if ( !options.isSaveAs()) {
 
             if (img.getNDims() == 3) {
                 options.setBeginSlice(0);
@@ -1939,8 +1961,8 @@ public abstract class ViewJFrameBase extends JFrame
 
         if (fileName != null) {
 
-            if (((fileName.endsWith(".avi")) || (fileName.endsWith(".AVI")) || (fileName.endsWith(".mov")) ||
-                     (fileName.endsWith(".MOV")))) {
+            if ( ( (fileName.endsWith(".avi")) || (fileName.endsWith(".AVI")) || (fileName.endsWith(".mov")) || (fileName
+                    .endsWith(".MOV")))) {
                 // if ( (imageA.getType() != ModelStorageBase.ARGB) && (imageA.getType() != ModelStorageBase.UBYTE)) {
                 // System.err.println("TYPE: " + imageA.getType()); MipavUtil.displayError("Must convert image to ARGB
                 // or UBYTE for AVI"); return; }
@@ -1958,11 +1980,11 @@ public abstract class ViewJFrameBase extends JFrame
                 options.setImageB(imageB);
             }
 
-            FileIO fileIO = new FileIO();
+            final FileIO fileIO = new FileIO();
 
             fileIO.setQuiet(operateQuiet);
 
-            if (displayMode == IMAGE_A) {
+            if (displayMode == ViewJFrameBase.IMAGE_A) {
                 fileIO.setModelLUT(this.getLUTa());
             } else {
                 fileIO.setModelLUT(this.getLUTb());
@@ -1978,10 +2000,10 @@ public abstract class ViewJFrameBase extends JFrame
             // Since the options may have changed the filename
             // and the directory --- get new fileName and directory
             // from options
-            String fName = options.getFileName(); // if you use the name from img, then DICOM has funny names
-            String dirName = img.getFileInfo(0).getFileDirectory();
+            final String fName = options.getFileName(); // if you use the name from img, then DICOM has funny names
+            final String dirName = img.getFileInfo(0).getFileDirectory();
             String filebase;
-            int ind = fName.lastIndexOf(".");
+            final int ind = fName.lastIndexOf(".");
 
             if (ind > 0) {
                 filebase = fName.substring(0, fName.lastIndexOf("."));
@@ -1993,7 +2015,7 @@ public abstract class ViewJFrameBase extends JFrame
                 int newIndex = filebase.length();
 
                 for (i = filebase.length() - 1; i >= 0; i--) {
-                    char myChar = filebase.charAt(i);
+                    final char myChar = filebase.charAt(i);
 
                     if (Character.isDigit(myChar)) {
                         newIndex = i;
@@ -2008,13 +2030,13 @@ public abstract class ViewJFrameBase extends JFrame
             }
 
             // save any luts
-            String lutName = new String(filebase + ".lut");
+            final String lutName = new String(filebase + ".lut");
 
             saveLUTAs(true, lutName, dirName);
 
             // save any vois
-            String voiName = filebase.replace('^', '_');
-            String voiDir = new String(dirName + File.separator + "defaultVOIs_" + voiName + File.separator);
+            final String voiName = filebase.replace('^', '_');
+            final String voiDir = new String(dirName + File.separator + "defaultVOIs_" + voiName + File.separator);
 
             saveAllVOIsTo(voiDir);
         }
@@ -2022,7 +2044,7 @@ public abstract class ViewJFrameBase extends JFrame
         // set the new fileName and directory in the fileInfo for the img -- so that it's
         // updated correctly in memory as well -- don't move this before the saveAllOnSave loop --
         // that needs to look at the former settings!
-        FileInfoBase[] fileInfo = img.getFileInfo();
+        final FileInfoBase[] fileInfo = img.getFileInfo();
 
         if (suffix == null) {
             suffix = FileUtility.getExtension(fileName);
@@ -2035,7 +2057,7 @@ public abstract class ViewJFrameBase extends JFrame
         String baseName = new String(fileName);
 
         if (fileType == FileUtility.DICOM) {
-            int index = fileName.lastIndexOf(".");
+            final int index = fileName.lastIndexOf(".");
 
             if (index > 0) {
                 baseName = fileName.substring(0, index);
@@ -2044,7 +2066,7 @@ public abstract class ViewJFrameBase extends JFrame
             int newIndex = baseName.length();
 
             for (i = baseName.length() - 1; i >= 0; i--) {
-                char myChar = baseName.charAt(i);
+                final char myChar = baseName.charAt(i);
 
                 if (Character.isDigit(myChar)) {
                     newIndex = i;
@@ -2059,7 +2081,7 @@ public abstract class ViewJFrameBase extends JFrame
 
             fileName = new String(baseName + ".dcm");
 
-            if (!directory.endsWith(baseName)) {
+            if ( !directory.endsWith(baseName)) {
                 directory = new String(directory + baseName + File.separator);
             }
         }
@@ -2088,9 +2110,9 @@ public abstract class ViewJFrameBase extends JFrame
         String voiDir;
         ModelImage img;
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
             img = this.getImageA();
-        } else if (displayMode == IMAGE_B) {
+        } else if (displayMode == ViewJFrameBase.IMAGE_B) {
             img = this.getImageB();
         } else {
             MipavUtil.displayError(" Cannot save VOIs when viewing both images");
@@ -2105,7 +2127,7 @@ public abstract class ViewJFrameBase extends JFrame
         if (img.isDicomImage()) {
             tmpImageName = img.getFileInfo(0).getFileName();
 
-            int index = tmpImageName.lastIndexOf(".");
+            final int index = tmpImageName.lastIndexOf(".");
 
             if (index > 0) {
                 tmpImageName = tmpImageName.substring(0, index);
@@ -2117,7 +2139,7 @@ public abstract class ViewJFrameBase extends JFrame
             int newIndex = tmpImageName.length();
 
             for (int i = tmpImageName.length() - 1; i >= 0; i--) {
-                char myChar = tmpImageName.charAt(i);
+                final char myChar = tmpImageName.charAt(i);
 
                 if (Character.isDigit(myChar)) {
                     newIndex = i;
@@ -2147,53 +2169,49 @@ public abstract class ViewJFrameBase extends JFrame
 
     } // end saveAllVOIs()
 
-    
     /**
-     * This method merges the 3 axial, sagittal, coronal VOIs and save them into one cloudy points file. 
-     * This function is used by the prostate surface reconstruction analysis.  
+     * This method merges the 3 axial, sagittal, coronal VOIs and save them into one cloudy points file. This function
+     * is used by the prostate surface reconstruction analysis.
      */
     public void saveMergedVOIs() {
-    	JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(this);
-    	mergeVOIsDialog.validate();
+        final JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(this);
+        mergeVOIsDialog.validate();
     }
-    
+
     public void saveProstateFeatures() {
-    	JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(this, imageA);
-    	saveFeaturesDialog.validate();
+        final JDialogBase saveFeaturesDialog = new JDialogProstateSaveFeatures(this, imageA);
+        saveFeaturesDialog.validate();
     }
-    
+
     public void testProstateFeatures() {
-    	JDialogBase saveFeaturesDialog = new JDialogProstateTestFeatures(this, imageA);
-    	saveFeaturesDialog.validate();
+        final JDialogBase saveFeaturesDialog = new JDialogProstateTestFeatures(this, imageA);
+        saveFeaturesDialog.validate();
     }
-    
+
     public void loadProstateMask() {
-    	JDialogBase loadProstateMaskDialog = new JDialogLoadProstateMask(this, imageA);
-    	loadProstateMaskDialog.validate();
+        final JDialogBase loadProstateMaskDialog = new JDialogLoadProstateMask(this, imageA);
+        loadProstateMaskDialog.validate();
     }
-    
-    
+
     /**
-     * Reconstruct the prostate surface from the coarse VOIs cloudy points.  
+     * Reconstruct the prostate surface from the coarse VOIs cloudy points.
      */
     public void reconstructSurfaceFromVOIs() {
-    	JDialogBase reconstructSurfaceDialog = new JDialogSurfaceReconstruction(this);
-    	reconstructSurfaceDialog.validate();
+        final JDialogBase reconstructSurfaceDialog = new JDialogSurfaceReconstruction(this);
+        reconstructSurfaceDialog.validate();
     }
-    
+
     /*
-    public void extractSurfaceFromVOIs() {
-    	JDialogBase extractSurfaceDialog = new JDialogExtractSurfaceVOIs(this);
-    	extractSurfaceDialog.validate();
-    }
-    */
-    
+     * public void extractSurfaceFromVOIs() { JDialogBase extractSurfaceDialog = new JDialogExtractSurfaceVOIs(this);
+     * extractSurfaceDialog.validate(); }
+     */
+
     /**
      * This method saves all VOIs for the active image to a given directory.
-     *
-     * @param  voiDir  directory that contains VOIs for this image.
+     * 
+     * @param voiDir directory that contains VOIs for this image.
      */
-    public void saveAllVOIsTo(String voiDir) {
+    public void saveAllVOIsTo(final String voiDir) {
 
         int nVOI;
         int i;
@@ -2203,10 +2221,10 @@ public abstract class ViewJFrameBase extends JFrame
 
         try {
 
-            if (displayMode == IMAGE_A) {
+            if (displayMode == ViewJFrameBase.IMAGE_A) {
                 currentImage = imageA;
                 VOIs = imageA.getVOIs();
-            } else if (displayMode == IMAGE_B) {
+            } else if (displayMode == ViewJFrameBase.IMAGE_B) {
                 currentImage = imageB;
                 VOIs = imageB.getVOIs();
             } else {
@@ -2215,9 +2233,9 @@ public abstract class ViewJFrameBase extends JFrame
                 return;
             }
 
-            File voiFileDir = new File(voiDir);
+            final File voiFileDir = new File(voiDir);
 
-            if (voiFileDir.exists() && voiFileDir.isDirectory()) { //do nothing
+            if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
             } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
             } else { // voiFileDir does not exist
                 voiFileDir.mkdir();
@@ -2228,16 +2246,16 @@ public abstract class ViewJFrameBase extends JFrame
             System.err.println("Number of VOIs: " + nVOI);
 
             for (i = 0; i < nVOI; i++) {
-            	if(VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
-                    fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir,currentImage);
+                if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
+                    fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
                     fileVOI.writeVOI(VOIs.VOIAt(i), true);
                 } else {
-                	fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir,currentImage);
-                	fileVOI.writeAnnotationInVoiAsXML(false, true);
+                    fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir, currentImage);
+                    fileVOI.writeAnnotationInVoiAsXML(false, true);
                 }
             }
 
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("Error writing all VOIs to " + voiDir + ": " + error);
         }
 
@@ -2245,10 +2263,10 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  saveAll  DOCUMENT ME!
+     * 
+     * @param saveAll DOCUMENT ME!
      */
-    public void saveLabels(boolean saveAll) {
+    public void saveLabels(final boolean saveAll) {
         String fileName;
         String directory;
         JFileChooser chooser;
@@ -2258,19 +2276,19 @@ public abstract class ViewJFrameBase extends JFrame
         ViewVOIVector VOIs;
         boolean foundLabel = false;
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
 
-            VOIs = (ViewVOIVector) imageA.getVOIs();
+            VOIs = imageA.getVOIs();
             nVOI = VOIs.size();
 
             for (i = 0; i < nVOI; i++) {
 
-                if ((VOIs.VOIAt(i).isActive() || saveAll) && (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
+                if ( (VOIs.VOIAt(i).isActive() || saveAll) && (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
                     foundLabel = true;
                 }
             }
 
-            if (!foundLabel) {
+            if ( !foundLabel) {
                 MipavUtil.displayWarning("There are no labels on the image.");
 
                 return;
@@ -2280,7 +2298,7 @@ public abstract class ViewJFrameBase extends JFrame
             chooser.setDialogTitle("Save label(s) as");
 
             if (userInterface.getDefaultDirectory() != null) {
-                File file = new File(userInterface.getDefaultDirectory());
+                final File file = new File(userInterface.getDefaultDirectory());
 
                 if (file != null) {
                     chooser.setCurrentDirectory(file);
@@ -2291,20 +2309,19 @@ public abstract class ViewJFrameBase extends JFrame
                 chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             }
 
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".lbl" }));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".lbl"}));
 
-            int returnVal = chooser.showSaveDialog(this);
+            final int returnVal = chooser.showSaveDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
-                if(!fileName.endsWith(".lbl")) {
-            		fileName += ".lbl";
-            	}
+                if ( !fileName.endsWith(".lbl")) {
+                    fileName += ".lbl";
+                }
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
 
                 this.voiSavedFileName = directory + fileName;
-
 
             } else {
                 return;
@@ -2312,22 +2329,22 @@ public abstract class ViewJFrameBase extends JFrame
 
             try {
 
-                FileVOI fileVOI = new FileVOI(fileName, directory, imageA);
+                final FileVOI fileVOI = new FileVOI(fileName, directory, imageA);
 
                 fileVOI.writeAnnotationXML(saveAll);
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 MipavUtil.displayError("Error writing labels");
             }
 
-        } else if (displayMode == IMAGE_B) {
+        } else if (displayMode == ViewJFrameBase.IMAGE_B) {
 
-            VOIs = (ViewVOIVector) imageB.getVOIs();
+            VOIs = imageB.getVOIs();
             nVOI = VOIs.size();
 
             for (i = 0; i < nVOI; i++) {
 
-                if ((VOIs.VOIAt(i).isActive() || saveAll) && (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
+                if ( (VOIs.VOIAt(i).isActive() || saveAll) && (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
                     foundLabel = true;
                 }
             }
@@ -2338,7 +2355,7 @@ public abstract class ViewJFrameBase extends JFrame
                 return;
             }
 
-            if (!foundLabel) {
+            if ( !foundLabel) {
                 MipavUtil.displayWarning("There are no labels on the image.");
 
                 return;
@@ -2348,7 +2365,7 @@ public abstract class ViewJFrameBase extends JFrame
             chooser.setDialogTitle("Save label(s) as");
 
             if (userInterface.getDefaultDirectory() != null) {
-                File file = new File(userInterface.getDefaultDirectory());
+                final File file = new File(userInterface.getDefaultDirectory());
 
                 if (file != null) {
                     chooser.setCurrentDirectory(file);
@@ -2359,15 +2376,15 @@ public abstract class ViewJFrameBase extends JFrame
                 chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             }
 
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {"lbl"}));
 
-            int returnVal = chooser.showSaveDialog(this);
+            final int returnVal = chooser.showSaveDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
-                if(!fileName.endsWith(".lbl")) {
-            		fileName += ".lbl";
-            	}
+                if ( !fileName.endsWith(".lbl")) {
+                    fileName += ".lbl";
+                }
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
             } else {
@@ -2376,10 +2393,10 @@ public abstract class ViewJFrameBase extends JFrame
 
             try {
 
-                FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
+                final FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
                 fileVOI.writeAnnotationXML(true);
 
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 MipavUtil.displayError("Error writing label(s)");
             }
         } else {
@@ -2390,17 +2407,17 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * This method saves the LUT for the active image. If the image is not a color image then both the functions and the
      * LUT data are saved. If this is a color image, then only the functions are saved.
-     *
-     * @param  saveAll  - boolean indicating that both lut and transfer functions should be saved. If false, then only
-     *                  transfer functions are saved.
+     * 
+     * @param saveAll - boolean indicating that both lut and transfer functions should be saved. If false, then only
+     *            transfer functions are saved.
      */
-    public void saveLUT(boolean saveAll) {
+    public void saveLUT(final boolean saveAll) {
 
         ModelImage img;
         String imageName;
         String tmpImageName;
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
             img = this.getImageA();
         } else {
             img = this.getImageB();
@@ -2412,7 +2429,7 @@ public abstract class ViewJFrameBase extends JFrame
         if (img.isDicomImage()) {
             tmpImageName = img.getFileInfo(0).getFileName();
 
-            int index = tmpImageName.lastIndexOf(".");
+            final int index = tmpImageName.lastIndexOf(".");
 
             if (index > 0) {
                 tmpImageName = tmpImageName.substring(0, index);
@@ -2424,7 +2441,7 @@ public abstract class ViewJFrameBase extends JFrame
             int newIndex = tmpImageName.length();
 
             for (int i = tmpImageName.length() - 1; i >= 0; i--) {
-                char myChar = tmpImageName.charAt(i);
+                final char myChar = tmpImageName.charAt(i);
 
                 if (Character.isDigit(myChar)) {
                     newIndex = i;
@@ -2448,8 +2465,8 @@ public abstract class ViewJFrameBase extends JFrame
         imageName = tmpImageName.replace('^', '_');
         imageName = imageName.replace(',', '_');
 
-        String filename = new String(imageName + ".lut");
-        String dirName = img.getFileInfo(0).getFileDirectory();
+        final String filename = new String(imageName + ".lut");
+        final String dirName = img.getFileInfo(0).getFileDirectory();
 
         saveLUTAs(saveAll, filename, dirName);
 
@@ -2458,13 +2475,15 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * This method saves the LUT for the active image. If the image is not a color image then both the functions and the
      * LUT data are saved. If this is a color image, then only the functions are saved.
-     *
-     * @param  saveAll   boolean indicating that both lut and transfer functions should be saved. If false, then only
-     *                   transfer functions are saved.
-     *
-     *                   <p>If either filename or directory is null, then the user will be prompted for a filename.</p>
-     * @param  filename  filename to save LUT as
-     * @param  dirName   directory to save LUT to
+     * 
+     * @param saveAll boolean indicating that both lut and transfer functions should be saved. If false, then only
+     *            transfer functions are saved.
+     * 
+     * <p>
+     * If either filename or directory is null, then the user will be prompted for a filename.
+     * </p>
+     * @param filename filename to save LUT as
+     * @param dirName directory to save LUT to
      */
     public void saveLUTAs(boolean saveAll, String filename, String dirName) {
 
@@ -2474,7 +2493,7 @@ public abstract class ViewJFrameBase extends JFrame
         FileHistoLUT fileHistoLUT;
         boolean useLUT = false;
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
             img = this.getImageA();
 
             if (img.isColorImage()) {
@@ -2503,19 +2522,19 @@ public abstract class ViewJFrameBase extends JFrame
         // if not using a lut (i.e. rgb only), then you
         // can't saveAll.... there are only functions, so
         // reset the saveAll variable
-        if (!useLUT) {
+        if ( !useLUT) {
             saveAll = false;
         }
 
         // if filename and/or dirName is null, then get it from user
-        if ((filename == null) || (dirName == null)) {
+        if ( (filename == null) || (dirName == null)) {
             dirName = img.getFileInfo(0).getFileDirectory();
 
             if (dirName == null) {
                 dirName = System.getProperties().getProperty("user.dir");
             }
 
-            JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new JFileChooser();
 
             chooser.setCurrentDirectory(new File(dirName));
 
@@ -2525,7 +2544,7 @@ public abstract class ViewJFrameBase extends JFrame
                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.FUNCT));
             }
 
-            int returnVal = chooser.showSaveDialog(this);
+            final int returnVal = chooser.showSaveDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 filename = chooser.getSelectedFile().getName();
@@ -2552,7 +2571,7 @@ public abstract class ViewJFrameBase extends JFrame
                 fileHistoLUT.writeFunctions();
             }
 
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
         }
 
@@ -2561,11 +2580,11 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * This method saves the LUT for the active image. If the image is not a color image then both the functions and the
      * LUT data are saved. If this is a color image, then only the functions are saved.
-     *
-     * @param  filename  filename to save LUT as
-     * @param  dirName   directory to save LUT to
+     * 
+     * @param filename filename to save LUT as
+     * @param dirName directory to save LUT to
      */
-    public void saveLUTandTransferFunction(String filename, String dirName) {
+    public void saveLUTandTransferFunction(final String filename, final String dirName) {
 
         ModelRGB rgb;
         ModelLUT lut;
@@ -2573,7 +2592,7 @@ public abstract class ViewJFrameBase extends JFrame
         FileHistoLUT fileHistoLUT;
         boolean useLUT = false;
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
             img = this.getImageA();
 
             if (img.isColorImage()) {
@@ -2609,428 +2628,18 @@ public abstract class ViewJFrameBase extends JFrame
 
             fileHistoLUT.writeLUTandTransferFunction();
 
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
         }
 
     } // end saveLUTAs()
 
     /**
-     * Exactly same as the save(FileWriteOptions options, int filterType) except changing the saveInSubdirectories
-     * parameter of the FileWriteOptions.
-     *
-     * @param  options     DOCUMENT ME!
-     * @param  filterType  DOCUMENT ME!
-     */
-    public void saveSRB(FileWriteOptions options, int filterType) {
-        String fileName = null;
-        String extension = null;
-        String directory = null;
-        String suffix = null;
-        int fileType = FileUtility.UNDEFINED;
-        ModelImage img = null;
-        ViewImageFileFilter vFilter = null;
-        int i;
-
-        if (displayMode == IMAGE_A) {
-            img = imageA;
-        } else if (displayMode == IMAGE_B) {
-            img = imageB;
-        } else {
-            MipavUtil.displayError(" Cannot save images when viewing both images.");
-
-            return;
-        }
-
-        if (options.isSaveAs()) {
-            // save into its own subdirectory when on SaveAs.
-            // (preferrably used in multi-file formats., ie DICOM)
-
-            /**
-             * Changing the pass-in parameters in the function is not good, and i removed it.   Hailong Wang 04/13/2006
-             */
-            // options.setSaveInSubdirectory(true);
-            if (options.isSet()) {
-                fileName = options.getFileName();
-                directory = options.getFileDirectory();
-            } else {
-
-                try {
-                    ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, true);
-
-                    try {
-
-                        // try to prefill the "save as" text area
-                        fileChooser.getFileChooser().setSelectedFile(new File(img.getFileInfo(0).getFileDirectory() +
-                                                                              img.getImageFileName()));
-                    } catch (Throwable t) {
-                        // if prefill fails, do nothing
-                    }
-
-                    if (!fileChooser.useAWT()) {
-                        JFileChooser chooser = fileChooser.getFileChooser();
-
-                        // chooser.setName("Save image as");
-                        if (userInterface.getDefaultDirectory() != null) {
-                            chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
-                        } else {
-                            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-                        }
-
-                        if (filterType >= 0) {
-                            chooser.addChoosableFileFilter(new ViewImageFileFilter(filterType));
-                        } else {
-                            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.ALL));
-                            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
-                            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-                        }
-
-                        int returnVal = chooser.showSaveDialog(this);
-
-                        if (returnVal == JFileChooser.APPROVE_OPTION) {
-                            fileName = chooser.getSelectedFile().getName();
-
-                            if (filterType >= 0) {
-                                i = fileName.lastIndexOf('.');
-
-                                if ((i > 0) && (i < (fileName.length() - 1))) {
-                                    extension = fileName.substring(i + 1).toLowerCase();
-                                    vFilter = new ViewImageFileFilter(filterType);
-
-                                    if (!vFilter.accept(extension)) {
-                                        MipavUtil.displayError("Extension does not match filter type");
-
-                                        return;
-                                    }
-                                } // if ( i > 0 && i < fileName.length() - 1 )
-                                else if (i < 0) {
-
-                                    switch (filterType) {
-
-                                        case ViewImageFileFilter.AVI:
-                                            fileName = fileName + ".avi";
-                                            break;
-
-                                        case ViewImageFileFilter.VOI:
-                                            fileName = fileName + ".voi";
-                                            break;
-
-                                        case ViewImageFileFilter.FUNCT:
-                                            fileName = fileName + ".fun";
-                                            break;
-
-                                        case ViewImageFileFilter.LUT:
-                                            fileName = fileName + ".lut";
-                                            break;
-
-                                        case ViewImageFileFilter.PLOT:
-                                            fileName = fileName + ".plt";
-                                            break;
-
-                                        case ViewImageFileFilter.CLASS:
-                                            fileName = fileName + ".class";
-                                            break;
-
-                                        case ViewImageFileFilter.SCRIPT:
-                                            fileName = fileName + ".sct";
-                                            break;
-
-                                        case ViewImageFileFilter.SURFACE:
-                                            fileName = fileName + ".sur";
-                                            break;
-
-                                        case ViewImageFileFilter.FREESURFER:
-                                            fileName = fileName + ".asc";
-                                            break;
-                                    }
-                                } // else if (i < 0)
-                            } // if (filterType >= 0)
-
-                            directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                            userInterface.setDefaultDirectory(directory);
-                        } else {
-                            return;
-                        }
-                    } else {
-                        fileName = fileChooser.getFileName();
-                        directory = fileChooser.getDirectory();
-
-                        if ((fileName == null) || (directory == null)) {
-                            return;
-                        }
-                    }
-                } catch (OutOfMemoryError error) {
-                    MipavUtil.displayError("Out of memory: ViewJFrameBase.save");
-                    Preferences.debug("Out of memory: ViewJFrameBase.save\n", 3);
-
-                    return;
-                }
-            }
-
-        } else {
-            fileName = img.getFileInfo(0).getFileName();
-            directory = img.getFileInfo(0).getFileDirectory();
-        }
-
-        if (!options.isScript() && Preferences.is(Preferences.PREF_SAVE_PROMPT_OVERWRITE) &&
-                new File(directory + File.separator + fileName).exists()) {
-            int response = JOptionPane.showConfirmDialog(this, directory + fileName + " exists.  Overwrite?",
-                                                         "File exists", JOptionPane.YES_NO_OPTION);
-
-            if (response == JOptionPane.NO_OPTION) {
-                options.setSaveAs(true);
-                userInterface.setDefaultDirectory(directory);
-                this.save(options, filterType);
-
-                return;
-            }
-        }
-
-        /*
-         * I'm not sure why this wasn't done before.... if we do a save-as we should also update the name of the file
-         */
-        // if (options.isSaveAs()) {
-        // img.setImageName(fileName.substring(0, fileName.length()-4));
-        // }
-
-        options.setFileName(fileName);
-        options.setFileDirectory(directory);
-
-        if (!options.isSaveAs()) {
-
-            if (img.getNDims() == 3) {
-                options.setBeginSlice(0);
-                options.setEndSlice(img.getExtents()[2] - 1);
-            } else if (img.getNDims() == 4) {
-                options.setBeginSlice(0);
-                options.setEndSlice(img.getExtents()[2] - 1);
-                options.setBeginTime(0);
-                options.setEndTime(img.getExtents()[3] - 1);
-            }
-        }
-
-        if ((fileName != null) &&
-                ((fileName.endsWith(".avi")) || (fileName.endsWith(".AVI")) || (fileName.endsWith(".mov")) ||
-                     (fileName.endsWith(".MOV")))) {
-
-            ModelImage imageAvi = imageA;
-            boolean converted = false;
-
-            // must convert to ARGB if ARGB float or ARGB ushort
-            if ((imageA.getType() == ModelStorageBase.ARGB_FLOAT) ||
-                    (imageA.getType() == ModelStorageBase.ARGB_USHORT)) {
-                int response = JOptionPane.NO_OPTION;
-
-                if (!options.isScript()) {
-                    response = JOptionPane.showConfirmDialog(userInterface.getMainFrame(),
-                                                             new String("Image must be converted to ARGB to save as .avi"),
-                                                             "Convert?", JOptionPane.YES_NO_OPTION,
-                                                             JOptionPane.QUESTION_MESSAGE);
-                } else {
-                    response = JOptionPane.YES_OPTION;
-                }
-
-                if (response == JOptionPane.NO_OPTION) {
-                    return;
-                }
-
-                imageAvi = new ModelImage(ModelStorageBase.ARGB, imageA.getExtents(), fileName + "ARGB");
-
-                AlgorithmChangeType algoChange = new AlgorithmChangeType(imageAvi, imageA, (float) imageA.getMin(),
-                                                                         (float) imageA.getMax(), 0, 255, false);
-
-                algoChange.setRunningInSeparateThread(false);
-                algoChange.run();
-
-                algoChange.finalize();
-                algoChange = null;
-                converted = true;
-            }
-
-            try {
-                suffix = new String(".avi");
-                fileType = FileUtility.AVI;
-
-                FileAvi aviFile;
-
-                aviFile = new FileAvi(fileName, directory);
-
-                if (fileName.endsWith(".mov") || fileName.endsWith(".MOV")) {
-                    aviFile.setWriteQT(true);
-
-                }
-
-                aviFile.setIsScript(options.isScript());
-
-                if (!aviFile.writeImage(imageAvi, imageB, LUTa, LUTb, getRGBTA(), getRGBTB(), red, green, blue, opacity,
-                                        alphaBlend, paintBitmap, options.getAVICompression())) {
-
-                    System.err.println("AVI image write cancelled");
-                }
-
-                if (converted && (imageAvi != null)) {
-                    imageAvi.disposeLocal();
-                }
-
-                imageAvi = null;
-            } catch (IOException error) {
-
-                if (converted && (imageAvi != null)) {
-                    imageAvi.disposeLocal();
-                }
-
-                MipavUtil.displayError("ViewJFrameBase: " + error);
-
-                return;
-            } catch (OutOfMemoryError error) {
-
-                if (converted && (imageAvi != null)) {
-                    imageAvi.disposeLocal();
-                }
-
-                MipavUtil.displayError("ViewJFrameBase: " + error);
-
-                return;
-            }
-        } else {
-
-            if (fileName != null) {
-                FileIO fileIO = new FileIO();
-
-                if (displayMode == IMAGE_A) {
-                    fileIO.setModelLUT(this.getLUTa());
-                } else {
-                    fileIO.setModelLUT(this.getLUTb());
-                }
-
-                if (img.isColorImage()) {
-
-                    if (displayMode == IMAGE_A) {
-                        options.setRGBTa(this.getRGBTA());
-                    } else {
-                        options.setRGBTa(this.getRGBTB());
-                    }
-                }
-
-                // fileIO.setQuiet(true);
-                fileIO.writeImage(img, options);
-            }
-        }
-
-        // if the SaveAllOnSave preference flag is set, then
-        // save all the files associated with this image (VOIs, LUTs, etc.)
-        if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
-
-            // Since the options may have changed the filename
-            // and the directory --- get new fileName and directory
-            // from options
-            String fName = options.getFileName(); // if you use the name from img, then DICOM has funny names
-            String dirName = img.getFileInfo(0).getFileDirectory();
-            String filebase;
-            int ind = fName.lastIndexOf(".");
-
-            if (ind > 0) {
-                filebase = fName.substring(0, fName.lastIndexOf("."));
-            } else {
-                filebase = new String(fName);
-            }
-
-            if (options.getFileType() == FileUtility.DICOM) {
-                int newIndex = filebase.length();
-
-                for (i = filebase.length() - 1; i >= 0; i--) {
-                    char myChar = filebase.charAt(i);
-
-                    if (Character.isDigit(myChar)) {
-                        newIndex = i;
-                    } else {
-                        break;
-                    } // as soon as something is NOT a digit, leave loop
-                }
-
-                if (newIndex > 0) {
-                    filebase = filebase.substring(0, newIndex);
-                }
-            }
-
-            // save any luts
-            String lutName = new String(filebase + ".lut");
-
-            saveLUTAs(true, lutName, dirName);
-
-            // save any vois
-            String voiName = filebase.replace('^', '_');
-            String voiDir = new String(dirName + File.separator + "defaultVOIs_" + voiName + File.separator);
-
-            saveAllVOIsTo(voiDir);
-        }
-
-        // set the new fileName and directory in the fileInfo for the img -- so that it's
-        // updated correctly in memory as well -- don't move this before the saveAllOnSave loop --
-        // that needs to look at the former settings!
-        FileInfoBase[] fileInfo = img.getFileInfo();
-
-        if (suffix == null) {
-            suffix = FileUtility.getExtension(fileName);
-            fileType = FileUtility.getFileType(fileName, directory, false, false);
-        }
-
-        // now, get rid of any numbers at the end of the name (these
-        // are part of the dicom file name, but we only want the 'base'
-        // part of the name
-        String baseName = new String(fileName);
-
-        if (fileType == FileUtility.DICOM) {
-            int index = fileName.lastIndexOf(".");
-
-            if (index > 0) {
-                baseName = fileName.substring(0, index);
-            }
-
-            int newIndex = baseName.length();
-
-            for (i = baseName.length() - 1; i >= 0; i--) {
-                char myChar = baseName.charAt(i);
-
-                if (Character.isDigit(myChar)) {
-                    newIndex = i;
-                } else {
-                    break;
-                } // as soon as something is NOT a digit, leave loop
-            }
-
-            if (newIndex > 0) {
-                baseName = baseName.substring(0, newIndex);
-            }
-
-            fileName = new String(baseName + ".dcm");
-
-            if (!directory.endsWith(baseName)) {
-                directory = new String(directory + baseName + File.separator);
-            }
-        }
-
-        for (i = 0; i < fileInfo.length; i++) {
-            fileInfo[i].setFileDirectory(directory);
-
-            if (fileType == FileUtility.DICOM) {
-                fileInfo[i].setFileName(baseName + (i + 1) + ".dcm");
-            } else {
-                fileInfo[i].setFileName(fileName);
-            }
-
-            fileInfo[i].setFileSuffix(suffix);
-            // fileInfo[i].setFileFormat (fileType);
-        }
-
-    }   
-    
-    /**
      * This method saves a selected VOI - should this be in VOI structure ??!!!
-     *
-     * @param  saveAllContours  if true all contours are saved
+     * 
+     * @param saveAllContours if true all contours are saved
      */
-    public void saveVOI(boolean saveAllContours) {
+    public void saveVOI(final boolean saveAllContours) {
 
         int nVOI;
         int i;
@@ -3040,7 +2649,7 @@ public abstract class ViewJFrameBase extends JFrame
 
         try {
 
-            if (displayMode == IMAGE_A) {
+            if (displayMode == ViewJFrameBase.IMAGE_A) {
                 VOIs = imageA.getVOIs();
                 nVOI = VOIs.size();
 
@@ -3057,19 +2666,18 @@ public abstract class ViewJFrameBase extends JFrame
                     return;
                 }
 
-                if(VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
-                	if(VOIs.VOIAt(i).getExtension().equals(".voi")) {
-                		extension = ".voi";
-                	}
-	                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + extension, imageA.getFileInfo(0).getFileDirectory(),
-	                                      imageA);
-	                fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
+                if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
+                    if (VOIs.VOIAt(i).getExtension().equals(".voi")) {
+                        extension = ".voi";
+                    }
+                    fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + extension,
+                            imageA.getFileInfo(0).getFileDirectory(), imageA);
+                    fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
                 } else {
-                	fileVOI = new FileVOI(VOIs.VOIAt(i) + ".lbl", imageA.getFileInfo(0).getFileDirectory(),
-                            imageA);
-                	fileVOI.writeAnnotationInVoiAsXML(false, false);
+                    fileVOI = new FileVOI(VOIs.VOIAt(i) + ".lbl", imageA.getFileInfo(0).getFileDirectory(), imageA);
+                    fileVOI.writeAnnotationInVoiAsXML(false, false);
                 }
-            } else if (displayMode == IMAGE_B) {
+            } else if (displayMode == ViewJFrameBase.IMAGE_B) {
                 VOIs = imageB.getVOIs();
                 nVOI = VOIs.size();
 
@@ -3086,27 +2694,27 @@ public abstract class ViewJFrameBase extends JFrame
                     return;
                 }
 
-                if(VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
-	                fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", imageA.getFileInfo(0).getFileDirectory(),
-	                                      imageB);
-	                fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
-                } else {
-                	fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", imageA.getFileInfo(0).getFileDirectory(),
+                if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
+                    fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", imageA.getFileInfo(0).getFileDirectory(),
                             imageB);
-                	fileVOI.writeAnnotationInVoiAsXML(false, false);
+                    fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
+                } else {
+                    fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", imageA.getFileInfo(0).getFileDirectory(),
+                            imageB);
+                    fileVOI.writeAnnotationInVoiAsXML(false, false);
                 }
             } else {
                 MipavUtil.displayError(" Cannot open VOI when viewing both images");
             }
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("Error writing VOI" + error);
         }
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     public String saveVOIAs() {
         saveVOIAs(true);
@@ -3116,10 +2724,10 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * This method allows the user to choose how to save the VOI.
-     *
-     * @param  saveAllContours  if true all contours are saved
+     * 
+     * @param saveAllContours if true all contours are saved
      */
-    public void saveVOIAs(boolean saveAllContours) {
+    public void saveVOIAs(final boolean saveAllContours) {
         String fileName;
         String directory;
         JFileChooser chooser;
@@ -3129,9 +2737,9 @@ public abstract class ViewJFrameBase extends JFrame
         ViewVOIVector VOIs;
         boolean doPoint = false, doAnnotation = false;
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
 
-            VOIs = (ViewVOIVector) imageA.getVOIs();
+            VOIs = imageA.getVOIs();
             nVOI = VOIs.size();
 
             for (i = 0; i < nVOI; i++) {
@@ -3151,7 +2759,7 @@ public abstract class ViewJFrameBase extends JFrame
             chooser.setDialogTitle("Save VOI as");
 
             if (userInterface.getDefaultDirectory() != null) {
-                File file = new File(userInterface.getDefaultDirectory());
+                final File file = new File(userInterface.getDefaultDirectory());
 
                 if (file != null) {
                     chooser.setCurrentDirectory(file);
@@ -3162,9 +2770,9 @@ public abstract class ViewJFrameBase extends JFrame
                 chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             }
 
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[]{".xml", ".voi"}));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml", ".voi"}));
 
-            int returnVal = chooser.showSaveDialog(this);
+            final int returnVal = chooser.showSaveDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
@@ -3173,27 +2781,26 @@ public abstract class ViewJFrameBase extends JFrame
 
                 this.voiSavedFileName = directory + fileName;
 
-
             } else {
                 return;
             }
 
             try {
 
-            	if (fileName.endsWith(".voi") && (VOIs.VOIAt(i).getCurveType() == VOI.POINT)) {
+                if (fileName.endsWith(".voi") && (VOIs.VOIAt(i).getCurveType() == VOI.POINT)) {
                     doPoint = true;
-                } else if(fileName.endsWith(".lbl") || VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
-                	doAnnotation = true;
-                	if(VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION && !fileName.endsWith(".lbl")) {
-                		fileName += ".lbl";
-                	}
-                } else if(!fileName.endsWith(".voi") && !fileName.endsWith(".xml")) {
-                	fileName += ".xml";
+                } else if (fileName.endsWith(".lbl") || VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
+                    doAnnotation = true;
+                    if (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION && !fileName.endsWith(".lbl")) {
+                        fileName += ".lbl";
+                    }
+                } else if ( !fileName.endsWith(".voi") && !fileName.endsWith(".xml")) {
+                    fileName += ".xml";
                 }
 
-                FileVOI fileVOI = new FileVOI(fileName, directory, imageA);
+                final FileVOI fileVOI = new FileVOI(fileName, directory, imageA);
 
-                if (!doPoint && !doAnnotation) {
+                if ( !doPoint && !doAnnotation) {
 
                     // use the MIPAV VOI format (not Nauges) since we
                     // need to save the curveType in order to correctly
@@ -3201,16 +2808,16 @@ public abstract class ViewJFrameBase extends JFrame
                     fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
                 } else if (doPoint) {
                     fileVOI.writePointVOI(VOIs.VOIAt(i));
-                } else if(doAnnotation) {
-                	fileVOI.writeAnnotationInVoiAsXML(true, false);
+                } else if (doAnnotation) {
+                    fileVOI.writeAnnotationInVoiAsXML(true, false);
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 MipavUtil.displayError("Error writing VOI");
             }
 
-        } else if (displayMode == IMAGE_B) {
+        } else if (displayMode == ViewJFrameBase.IMAGE_B) {
 
-            VOIs = (ViewVOIVector) imageB.getVOIs();
+            VOIs = imageB.getVOIs();
             nVOI = VOIs.size();
 
             for (i = 0; i < nVOI; i++) {
@@ -3230,7 +2837,7 @@ public abstract class ViewJFrameBase extends JFrame
             chooser.setDialogTitle("Save VOI as");
 
             if (userInterface.getDefaultDirectory() != null) {
-                File file = new File(userInterface.getDefaultDirectory());
+                final File file = new File(userInterface.getDefaultDirectory());
 
                 if (file != null) {
                     chooser.setCurrentDirectory(file);
@@ -3241,9 +2848,9 @@ public abstract class ViewJFrameBase extends JFrame
                 chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             }
 
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".xml", ".voi" }));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml", ".voi"}));
 
-            int returnVal = chooser.showSaveDialog(this);
+            final int returnVal = chooser.showSaveDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
@@ -3255,20 +2862,20 @@ public abstract class ViewJFrameBase extends JFrame
 
             try {
 
-            	if (fileName.endsWith(".voi") && (VOIs.VOIAt(i).getCurveType() == VOI.POINT)) {
+                if (fileName.endsWith(".voi") && (VOIs.VOIAt(i).getCurveType() == VOI.POINT)) {
                     doPoint = true;
-                } else if(fileName.endsWith(".lbl") || VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
-                	doAnnotation = true;
-                	if(VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION && !fileName.endsWith(".lbl")) {
-                		fileName += ".lbl";
-                	}
-                } else if(!fileName.endsWith(".voi") && !fileName.endsWith(".xml")) {
-                	fileName += ".xml";
+                } else if (fileName.endsWith(".lbl") || VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
+                    doAnnotation = true;
+                    if (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION && !fileName.endsWith(".lbl")) {
+                        fileName += ".lbl";
+                    }
+                } else if ( !fileName.endsWith(".voi") && !fileName.endsWith(".xml")) {
+                    fileName += ".xml";
                 }
 
-                FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
+                final FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
 
-                if (!doPoint && !doAnnotation) {
+                if ( !doPoint && !doAnnotation) {
 
                     // use the MIPAV VOI format (not Nauges) since we
                     // need to save the curveType in order to correctly
@@ -3276,21 +2883,21 @@ public abstract class ViewJFrameBase extends JFrame
                     fileVOI.writeVOI(VOIs.VOIAt(i), saveAllContours);
                 } else if (doPoint) {
                     fileVOI.writePointVOI(VOIs.VOIAt(i));
-                } else if(doAnnotation) {
-                	fileVOI.writeAnnotationInVoiAsXML(false, false);
+                } else if (doAnnotation) {
+                    fileVOI.writeAnnotationInVoiAsXML(false, false);
                 }
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 MipavUtil.displayError("Error writing VOI");
             }
         } else {
             MipavUtil.displayError(" Cannot save images when viewing both images.");
         }
     }
-    
+
     /**
-     * Save intensities in VOI to a text file of format x,y,z,intensity on each line if not color or complex.
-     * If color use format x,y,z,a,r,g,b on each line and if complex use format x,y,z,real,imaginary on each line.
-     *
+     * Save intensities in VOI to a text file of format x,y,z,intensity on each line if not color or complex. If color
+     * use format x,y,z,a,r,g,b on each line and if complex use format x,y,z,real,imaginary on each line.
+     * 
      */
     public void saveVOIIntensities() {
         String fileName;
@@ -3316,17 +2923,15 @@ public abstract class ViewJFrameBase extends JFrame
         double buffer[];
         byte entryBytes[];
 
-        if (displayMode == IMAGE_A) {
+        if (displayMode == ViewJFrameBase.IMAGE_A) {
             selectedImage = imageA;
-        }
-        else if (displayMode == IMAGE_B) {
+        } else if (displayMode == ViewJFrameBase.IMAGE_B) {
             selectedImage = imageB;
-        }
-        else {
+        } else {
             MipavUtil.displayError("Cannot save VOI intensities when viewing both images");
             return;
         }
-        VOIs = (ViewVOIVector) selectedImage.getVOIs();
+        VOIs = selectedImage.getVOIs();
         nVOI = VOIs.size();
 
         for (i = 0; i < nVOI; i++) {
@@ -3341,7 +2946,7 @@ public abstract class ViewJFrameBase extends JFrame
 
             return;
         }
-        
+
         nDims = selectedImage.getNDims();
         xDim = selectedImage.getExtents()[0];
         yDim = selectedImage.getExtents()[1];
@@ -3350,26 +2955,22 @@ public abstract class ViewJFrameBase extends JFrame
         if (nDims > 2) {
             zDim = selectedImage.getExtents()[2];
             imageSize *= zDim;
-        }
-        else {
+        } else {
             zDim = 1;
         }
         mask = new BitSet(imageSize);
         VOIs.VOIAt(i).createBinaryMask(mask, xDim, yDim, selectedImage.getParentFrame().useXOR(), false);
         if (selectedImage.isColorImage()) {
             buffer = new double[4 * imageSize];
-        }
-        else if (selectedImage.isComplexImage()) {
+        } else if (selectedImage.isComplexImage()) {
             buffer = new double[2 * imageSize];
-        }
-        else {
+        } else {
             buffer = new double[imageSize];
         }
-        
+
         try {
             selectedImage.exportData(0, buffer.length, buffer);
-        }
-        catch(IOException e) {
+        } catch (final IOException e) {
             MipavUtil.displayError("IOException on selectedImage.exportData");
             return;
         }
@@ -3378,7 +2979,7 @@ public abstract class ViewJFrameBase extends JFrame
         chooser.setDialogTitle("Save intensities in VOI as");
 
         if (userInterface.getDefaultDirectory() != null) {
-            File file = new File(userInterface.getDefaultDirectory());
+            final File file = new File(userInterface.getDefaultDirectory());
 
             if (file != null) {
                 chooser.setCurrentDirectory(file);
@@ -3389,9 +2990,9 @@ public abstract class ViewJFrameBase extends JFrame
             chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
 
-        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[]{".txt"}));
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".txt"}));
 
-        int returnVal = chooser.showSaveDialog(this);
+        final int returnVal = chooser.showSaveDialog(this);
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             fileName = chooser.getSelectedFile().getName();
@@ -3400,20 +3001,18 @@ public abstract class ViewJFrameBase extends JFrame
 
             this.voiSavedFileName = directory + fileName;
 
-
         } else {
             return;
         }
-        
-        if(!fileName.endsWith(".txt")) {
+
+        if ( !fileName.endsWith(".txt")) {
             fileName += ".txt";
         }
-        
+
         textFile = new File(directory + fileName);
         try {
             raFile = new RandomAccessFile(textFile, "rw");
-        }
-        catch (IOException e) {
+        } catch (final IOException e) {
             MipavUtil.displayError("IOException on raFile = new RandomAccessFile");
             return;
         }
@@ -3421,29 +3020,25 @@ public abstract class ViewJFrameBase extends JFrame
         // junk at the end
         try {
             raFile.setLength(0);
-        }
-        catch (IOException e) {
+        } catch (final IOException e) {
             MipavUtil.displayError("IOException on raFile.setLength(0)");
             return;
         }
-        
+
         if (selectedImage.isColorImage()) {
             entryBytes = new String("x,y,z,a,red,green,blue\n").getBytes();
-        }
-        else if (selectedImage.isComplexImage()) {
+        } else if (selectedImage.isComplexImage()) {
             entryBytes = new String("x,y,z,real,imaginary\n").getBytes();
-        }
-        else {
+        } else {
             entryBytes = new String("x,y,z,intensity\n").getBytes();
         }
         try {
             raFile.write(entryBytes);
-        }
-        catch(IOException e) {
+        } catch (final IOException e) {
             MipavUtil.displayError("IOException on raFile.write(entryBytes) for header line");
             return;
         }
-        
+
         for (z = 0; z < zDim; z++) {
             k = z * sliceSize;
             for (y = 0; y < yDim; y++) {
@@ -3452,34 +3047,21 @@ public abstract class ViewJFrameBase extends JFrame
                     i = j + x;
                     if (mask.get(i)) {
                         if (selectedImage.isColorImage()) {
-                            entryBytes = new String(Integer.toString(x) + "," + 
-                                                    Integer.toString(y) + "," +
-                                                    Integer.toString(z) + "," +
-                                                    Double.toString(buffer[4*i]) + "," +
-                                                    Double.toString(buffer[4*i + 1]) + "," +
-                                                    Double.toString(buffer[4*i + 2]) + "," +
-                                                    Double.toString(buffer[4*i + 3]) +
-                                                    "\n").getBytes();
-                        }
-                        else if (selectedImage.isComplexImage()) {
-                            entryBytes = new String(Integer.toString(x) + "," + 
-                                    Integer.toString(y) + "," +
-                                    Integer.toString(z) + "," +
-                                    Double.toString(buffer[2*i]) + "," +
-                                    Double.toString(buffer[2*i + 1]) +
-                                    "\n").getBytes();    
-                        }
-                        else {
-                            entryBytes = new String(Integer.toString(x) + "," + 
-                                    Integer.toString(y) + "," +
-                                    Integer.toString(z) + "," +
-                                    Double.toString(buffer[i]) +
-                                    "\n").getBytes();        
+                            entryBytes = new String(Integer.toString(x) + "," + Integer.toString(y) + ","
+                                    + Integer.toString(z) + "," + Double.toString(buffer[4 * i]) + ","
+                                    + Double.toString(buffer[4 * i + 1]) + "," + Double.toString(buffer[4 * i + 2])
+                                    + "," + Double.toString(buffer[4 * i + 3]) + "\n").getBytes();
+                        } else if (selectedImage.isComplexImage()) {
+                            entryBytes = new String(Integer.toString(x) + "," + Integer.toString(y) + ","
+                                    + Integer.toString(z) + "," + Double.toString(buffer[2 * i]) + ","
+                                    + Double.toString(buffer[2 * i + 1]) + "\n").getBytes();
+                        } else {
+                            entryBytes = new String(Integer.toString(x) + "," + Integer.toString(y) + ","
+                                    + Integer.toString(z) + "," + Double.toString(buffer[i]) + "\n").getBytes();
                         }
                         try {
                             raFile.write(entryBytes);
-                        }
-                        catch(IOException e) {
+                        } catch (final IOException e) {
                             MipavUtil.displayError("IOException on raFile.write(entryBytes");
                             return;
                         }
@@ -3489,109 +3071,108 @@ public abstract class ViewJFrameBase extends JFrame
         }
         try {
             raFile.close();
-        }
-        catch(IOException e) {
+        } catch (final IOException e) {
             MipavUtil.displayError("IOException on raFile.close()");
         }
-    
+
     }
 
     /**
      * Sets whether the close image B option should appear after loading.
-     *
-     * @param  enable  whether the &quot;Close image B&quot; option should appear after image B is loaded
+     * 
+     * @param enable whether the &quot;Close image B&quot; option should appear after image B is loaded
      */
-    public void setEnableCloseImageBAfterLoad(boolean enable) {
+    public void setEnableCloseImageBAfterLoad(final boolean enable) {
         this.enableCloseImageB = enable;
     }
 
     /**
      * Accessor that sets the imageA.
-     *
-     * @param  image  The image to make image-A in this frame.
+     * 
+     * @param image The image to make image-A in this frame.
      */
-    public void setImageA(ModelImage image) {
+    public void setImageA(final ModelImage image) {
         imageA = image;
     }
 
     /**
      * setLastState.
-     *
-     * @param  state  Should be either Frame.NORMAL or Frame.ICONIFIED
+     * 
+     * @param state Should be either Frame.NORMAL or Frame.ICONIFIED
      */
-    public void setLastState(int state) {
+    public void setLastState(final int state) {
         lastState = state;
     }
 
     /**
      * Accessor that sets the link Frame.
-     *
-     * @param  linkFrame  set frame to link to.
+     * 
+     * @param linkFrame set frame to link to.
      */
-    public void setLinkedFrame(ViewJFrameImage linkFrame) {
+    public void setLinkedFrame(final ViewJFrameImage linkFrame) {
         this.linkFrame = linkFrame;
     }
 
     /**
      * Accessor that sets the link Frame.
-     *
-     * @param  linkTriFrame  set frame to link to.
+     * 
+     * @param linkTriFrame set frame to link to.
      */
-    public void setLinkedTriFrame(ViewJFrameTriImage linkTriFrame) {
+    public void setLinkedTriFrame(final ViewJFrameTriImage linkTriFrame) {
         this.linkTriFrame = linkTriFrame;
     }
 
     /**
      * Accessor that sets LUTa.
-     *
-     * @param  lut  DOCUMENT ME!
+     * 
+     * @param lut DOCUMENT ME!
      */
-    public void setLUTa(ModelLUT lut) {
+    public void setLUTa(final ModelLUT lut) {
         LUTa = lut;
     }
 
     /**
      * Accessor that sets LUTb.
-     *
-     * @param  lut  DOCUMENT ME!
+     * 
+     * @param lut DOCUMENT ME!
      */
-    public void setLUTb(ModelLUT lut) {
+    public void setLUTb(final ModelLUT lut) {
         LUTb = lut;
     }
 
     /**
      * Sets LUTa and LUTb.
-     *
-     * @param  _LUTa  DOCUMENT ME!
-     * @param  _LUTb  DOCUMENT ME!
+     * 
+     * @param _LUTa DOCUMENT ME!
+     * @param _LUTb DOCUMENT ME!
      */
-    public void setLUTs(ModelLUT _LUTa, ModelLUT _LUTb) {
+    public void setLUTs(final ModelLUT _LUTa, final ModelLUT _LUTb) {
         LUTa = _LUTa;
         LUTb = _LUTb;
     }
 
     /**
      * Accessor to set the text of the main frame's text field.
-     *
-     * @param  str  string to be display in the main frame's text field
+     * 
+     * @param str string to be display in the main frame's text field
      */
-    public final void setMessageText(String str) {
+    public final void setMessageText(final String str) {
         userInterface.setMessageText(str);
     }
 
     /**
      * Sets RGB Information.
-     *
-     * @param  _OPACITY     DOCUMENT ME!
-     * @param  _alphaBlend  DOCUMENT ME!
+     * 
+     * @param _OPACITY DOCUMENT ME!
+     * @param _alphaBlend DOCUMENT ME!
      */
-    public void setOpacityInfo(float _OPACITY, float _alphaBlend) {
+    public void setOpacityInfo(final float _OPACITY, final float _alphaBlend) {
 
         try {
             red = getControls().getTools().getPaintColor().getRed();
             green = getControls().getTools().getPaintColor().getGreen();
             blue = getControls().getTools().getPaintColor().getBlue();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
         }
 
@@ -3601,26 +3182,26 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Sets the paint Bitmap.
-     *
-     * @param  _paintBitmap  DOCUMENT ME!
+     * 
+     * @param _paintBitmap DOCUMENT ME!
      */
-    public void setpaintBitmap(BitSet _paintBitmap) {
+    public void setpaintBitmap(final BitSet _paintBitmap) {
         paintBitmap = _paintBitmap;
     }
 
     /**
      * Does nothing.
-     *
-     * @param  event  the change event
+     * 
+     * @param event the change event
      */
-    public void stateChanged(ChangeEvent event) { }
+    public void stateChanged(final ChangeEvent event) {}
 
     /**
      * Tells the UI that this frame is the currently active one.
-     *
-     * @param  event  the window event
+     * 
+     * @param event the window event
      */
-    public void windowActivated(WindowEvent event) {
+    public void windowActivated(final WindowEvent event) {
 
         // userInterface.getMainFrame().toFront();
         // userInterface.getMessageFrame().toFront();
@@ -3629,40 +3210,40 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Does nothing.
-     *
-     * @param  event  the window event
+     * 
+     * @param event the window event
      */
-    public void windowClosed(WindowEvent event) { }
+    public void windowClosed(final WindowEvent event) {}
 
     /**
      * Cleans up the frame before closing.
-     *
-     * @param  event  the window event that triggered this method
+     * 
+     * @param event the window event that triggered this method
      */
-    public void windowClosing(WindowEvent event) {
+    public void windowClosing(final WindowEvent event) {
         close();
     }
 
     /**
      * Does nothing.
-     *
-     * @param  event  the window event
+     * 
+     * @param event the window event
      */
-    public void windowDeactivated(WindowEvent event) { }
+    public void windowDeactivated(final WindowEvent event) {}
 
     /**
      * Does nothing.
-     *
-     * @param  event  the window event
+     * 
+     * @param event the window event
      */
-    public void windowDeiconified(WindowEvent event) { }
+    public void windowDeiconified(final WindowEvent event) {}
 
     /**
      * Does nothing.
-     *
-     * @param  event  the window event
+     * 
+     * @param event the window event
      */
-    public void windowIconified(WindowEvent event) { }
+    public void windowIconified(final WindowEvent event) {}
 
     // ************************************************************************
     // **************************** Window Events *****************************
@@ -3670,19 +3251,19 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Does nothing.
-     *
-     * @param  event  the window event
+     * 
+     * @param event the window event
      */
-    public void windowOpened(WindowEvent event) { }
+    public void windowOpened(final WindowEvent event) {}
 
     /**
      * Cleans memory.
-     *
-     * @throws  Throwable  the <code>Exception</code> raised by this method
+     * 
+     * @throws Throwable the <code>Exception</code> raised by this method
      */
     protected void finalize() throws Throwable {
 
-        if ((imageA != null) && (imageA.getImageFrameVector() != null)) {
+        if ( (imageA != null) && (imageA.getImageFrameVector() != null)) {
 
             if (imageA.getImageFrameVector().isEmpty()) {
                 imageA.disposeLocal();
@@ -3692,7 +3273,7 @@ public abstract class ViewJFrameBase extends JFrame
             }
         }
 
-        if ((imageB != null) && (imageB.getImageFrameVector() != null)) {
+        if ( (imageB != null) && (imageB.getImageFrameVector() != null)) {
 
             if (imageB.getImageFrameVector().isEmpty()) {
                 imageB.disposeLocal();
@@ -3707,29 +3288,29 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Makes a string of a float with a specific number of decimal points.
-     *
-     * @param   number  number to be converted to a string
-     * @param   decPts  the number of decimal points
-     *
-     * @return  string representation of the number
+     * 
+     * @param number number to be converted to a string
+     * @param decPts the number of decimal points
+     * 
+     * @return string representation of the number
      */
-    protected String makeString(float number, int decPts) {
+    protected String makeString(final float number, final int decPts) {
         String subStr = null;
         String str = null;
 
         try {
             subStr = new String();
             str = new String(String.valueOf(number));
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("FrameBase.makeString: out of memory");
 
             return null;
         }
 
-        int index = str.indexOf(".");
-        int length = str.length();
+        final int index = str.indexOf(".");
+        final int length = str.length();
 
-        if ((index + decPts) < length) {
+        if ( (index + decPts) < length) {
             subStr = str.substring(0, index + decPts + 1);
         } else {
             subStr = str;
@@ -3740,10 +3321,10 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Sets the Absolute position label.
-     *
-     * @param  position  DOCUMENT ME!
+     * 
+     * @param position DOCUMENT ME!
      */
-    protected void setAbsPositionLabels(Vector3f position) {
+    protected void setAbsPositionLabels(final Vector3f position) {
 
         if (absoluteLabelVals == null) {
             return;
@@ -3753,12 +3334,11 @@ public abstract class ViewJFrameBase extends JFrame
         absoluteLabelVals[1].setText("Y: " + (int) position.Y);
         absoluteLabelVals[2].setText("Z: " + (int) position.Z);
 
-        int[] dimExtents = imageA.getExtents();
-        int index = (int) ((position.Z * dimExtents[0] * dimExtents[1]) + (position.Y * dimExtents[0]) + position.X);
+        final int[] dimExtents = imageA.getExtents();
+        final int index = (int) ( (position.Z * dimExtents[0] * dimExtents[1]) + (position.Y * dimExtents[0]) + position.X);
 
-        int iBuffFactor = imageA.isColorImage() ? 4 : 1;
-        if ( (index*iBuffFactor > imageA.getSize()) || (index < 0) )
-        {
+        final int iBuffFactor = imageA.isColorImage() ? 4 : 1;
+        if ( (index * iBuffFactor > imageA.getSize()) || (index < 0)) {
             return;
         }
         absoluteLabelVals[3].setText("1D index: " + index + " = " + imageA.getFloat(index * iBuffFactor));
@@ -3766,16 +3346,16 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Sets the Scanner position label.
-     *
-     * @param  position  DOCUMENT ME!
+     * 
+     * @param position DOCUMENT ME!
      */
-    protected void setScannerPosition(Vector3f position) {
+    protected void setScannerPosition(final Vector3f position) {
 
         if (scannerLabelVals == null) {
             return;
         }
 
-        String[] labelContents = ViewJComponentEditImage.getScannerPositionLabels(imageA, position);
+        final String[] labelContents = ViewJComponentEditImage.getScannerPositionLabels(imageA, position);
 
         for (int i = 0; i < labelContents.length; i++) {
             scannerLabelVals[i].setText(labelContents[i]);
@@ -3784,42 +3364,40 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  component  DOCUMENT ME!
-     * @param  event      DOCUMENT ME!
+     * 
+     * @param component DOCUMENT ME!
+     * @param event DOCUMENT ME!
      */
-    protected void handleZoomPopupMenu(Component component, MouseEvent event) {
-        JPopupMenu popupMenu = new JPopupMenu();
+    protected void handleZoomPopupMenu(final Component component, final MouseEvent event) {
+        final JPopupMenu popupMenu = new JPopupMenu();
 
         JMenuItem menuItem = new JMenuItem("Use linear zoom increment");
-        menuItem.addActionListener(
-        		new MipavUtil.ActionAdapter() {
-                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_ZOOM_LINEAR, "true");
-                    }
-            }  
-        );
-        
+        menuItem.addActionListener(new MipavUtil.ActionAdapter() {
+            public void actionPerformed(final ActionEvent e) {
+                Preferences.setProperty(Preferences.PREF_ZOOM_LINEAR, "true");
+            }
+        });
+
         boolean doLinear = Preferences.is(Preferences.PREF_ZOOM_LINEAR);
-        
+
         if (doLinear) {
-        	menuItem.setFont(MipavUtil.font12B);
+            menuItem.setFont(MipavUtil.font12B);
         } else {
-        	menuItem.setFont(MipavUtil.font12);
+            menuItem.setFont(MipavUtil.font12);
         }
         popupMenu.add(menuItem);
 
         menuItem = new JMenuItem("Use exponential zoom increment");
-        
-        menuItem.addActionListener(
-        		new MipavUtil.ActionAdapter() {
-                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_ZOOM_LINEAR, "false");
-                    }
-            }  
-        );
-        if (!doLinear) {
-        	menuItem.setFont(MipavUtil.font12B);
+
+        menuItem.addActionListener(new MipavUtil.ActionAdapter() {
+            public void actionPerformed(final ActionEvent e) {
+                Preferences.setProperty(Preferences.PREF_ZOOM_LINEAR, "false");
+            }
+        });
+        if ( !doLinear) {
+            menuItem.setFont(MipavUtil.font12B);
         } else {
-        	menuItem.setFont(MipavUtil.font12);
+            menuItem.setFont(MipavUtil.font12);
         }
         popupMenu.add(menuItem);
 
@@ -3828,108 +3406,100 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Handles the popup menu for the Quick Mask buttons
-     *
-     * @param  component  DOCUMENT ME!
-     * @param  event      DOCUMENT ME!
+     * 
+     * @param component DOCUMENT ME!
+     * @param event DOCUMENT ME!
      */
-    protected void handleMaskPopupMenu(Component component, MouseEvent event) {
-        JPopupMenu popupMenu = new JPopupMenu();
+    protected void handleMaskPopupMenu(final Component component, final MouseEvent event) {
+        final JPopupMenu popupMenu = new JPopupMenu();
 
         boolean currentState = Preferences.is(Preferences.PREF_QUICK_MASK_NEW);
-        
+
         JMenuItem menuItem = new JMenuItem("Perform mask in place");
-        
-        menuItem.addActionListener(
-        		new MipavUtil.ActionAdapter() {
-                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_QUICK_MASK_NEW, "false");
-                    }
-            }  
-        );
-        
+
+        menuItem.addActionListener(new MipavUtil.ActionAdapter() {
+            public void actionPerformed(final ActionEvent e) {
+                Preferences.setProperty(Preferences.PREF_QUICK_MASK_NEW, "false");
+            }
+        });
+
         if (currentState) {
-        	menuItem.setFont(MipavUtil.font12);
+            menuItem.setFont(MipavUtil.font12);
         } else {
-        	menuItem.setFont(MipavUtil.font12B);
+            menuItem.setFont(MipavUtil.font12B);
         }
-        
-        
-        
+
         popupMenu.add(menuItem);
 
         menuItem = new JMenuItem("Perform mask into new image");
 
-        menuItem.addActionListener(
-        		new MipavUtil.ActionAdapter() {
-                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_QUICK_MASK_NEW, "true");
-                    }
-            }  
-        );
-        
-        if (!currentState) {
-        	menuItem.setFont(MipavUtil.font12);
+        menuItem.addActionListener(new MipavUtil.ActionAdapter() {
+            public void actionPerformed(final ActionEvent e) {
+                Preferences.setProperty(Preferences.PREF_QUICK_MASK_NEW, "true");
+            }
+        });
+
+        if ( !currentState) {
+            menuItem.setFont(MipavUtil.font12);
         } else {
-        	menuItem.setFont(MipavUtil.font12B);
+            menuItem.setFont(MipavUtil.font12B);
         }
         popupMenu.add(menuItem);
 
         popupMenu.show(component, event.getX(), event.getY());
     }
-    
+
     /**
      * Handles the pop-up menu for Paint to Mask buttons (inside/outside)
-     *
-     * @param  component  DOCUMENT ME!
-     * @param  event      DOCUMENT ME!
+     * 
+     * @param component DOCUMENT ME!
+     * @param event DOCUMENT ME!
      */
-    protected void handlePaintToMaskPopupMenu(Component component, MouseEvent event) {
-        JPopupMenu popupMenu = new JPopupMenu();
+    protected void handlePaintToMaskPopupMenu(final Component component, final MouseEvent event) {
+        final JPopupMenu popupMenu = new JPopupMenu();
 
         boolean currentState = Preferences.is(Preferences.PREF_PAINT_TO_MASK_NEW);
-        
+
         JMenuItem menuItem = new JMenuItem("Perform paint to mask in place");
-        menuItem.addActionListener(
-        		new MipavUtil.ActionAdapter() {
-                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "false");
-                    }
-            }  
-        );
-        
+        menuItem.addActionListener(new MipavUtil.ActionAdapter() {
+            public void actionPerformed(final ActionEvent e) {
+                Preferences.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "false");
+            }
+        });
+
         if (currentState) {
-        	menuItem.setFont(MipavUtil.font12);
+            menuItem.setFont(MipavUtil.font12);
         } else {
-        	menuItem.setFont(MipavUtil.font12B);
+            menuItem.setFont(MipavUtil.font12B);
         }
-        
+
         popupMenu.add(menuItem);
 
         menuItem = new JMenuItem("Perform paint to mask into new image");
 
-        menuItem.addActionListener(
-        		new MipavUtil.ActionAdapter() {
-                    public void actionPerformed(ActionEvent e) {  Preferences.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "true");
-                    }
-            }  
-        );
-        if (!currentState) {
-        	menuItem.setFont(MipavUtil.font12);
+        menuItem.addActionListener(new MipavUtil.ActionAdapter() {
+            public void actionPerformed(final ActionEvent e) {
+                Preferences.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "true");
+            }
+        });
+        if ( !currentState) {
+            menuItem.setFont(MipavUtil.font12);
         } else {
-        	menuItem.setFont(MipavUtil.font12B);
+            menuItem.setFont(MipavUtil.font12B);
         }
         popupMenu.add(menuItem);
 
         popupMenu.show(component, event.getX(), event.getY());
     }
-    
-    
-    
+
     /**
      * Get the extents of an image. (don't know why this is really needed...)
-     *
-     * @param   img  the image
-     *
-     * @return  the image's extents
+     * 
+     * @param img the image
+     * 
+     * @return the image's extents
      */
-    protected static int[] initExtents(ModelImage img) {
+    protected static int[] initExtents(final ModelImage img) {
         int[] extents = null;
 
         if (img.getNDims() == 2) {
@@ -3954,13 +3524,13 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Create the intensity buffer for an image.
-     *
-     * @param   extents  the extents of the image
-     * @param   isColor  whether the image is in color
-     *
-     * @return  a buffer which is big enough to contain the image intensity data
+     * 
+     * @param extents the extents of the image
+     * @param isColor whether the image is in color
+     * 
+     * @return a buffer which is big enough to contain the image intensity data
      */
-    protected static float[] initImageBuffer(int[] extents, boolean isColor) {
+    protected static float[] initImageBuffer(final int[] extents, final boolean isColor) {
         int bufferFactor = 1;
 
         if (isColor) {
@@ -3972,14 +3542,14 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Get the total number of time slices and volume slices.
-     *
-     * @param   img  the image to get the slices of
-     *
-     * @return  an array containing the number of volume slices (in the first element) and the number of time slices in
-     *          the image (in the second element)
+     * 
+     * @param img the image to get the slices of
+     * 
+     * @return an array containing the number of volume slices (in the first element) and the number of time slices in
+     *         the image (in the second element)
      */
-    protected static int[] initNumSlices(ModelImage img) {
-        int[] numImages = new int[2];
+    protected static int[] initNumSlices(final ModelImage img) {
+        final int[] numImages = new int[2];
 
         if (img.getNDims() == 4) {
             numImages[0] = img.getExtents()[2];
@@ -3997,33 +3567,33 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Create the pixel buffer for an image.
-     *
-     * @param   extents  the extents of the image
-     *
-     * @return  a buffer which is big enough to contain the image pixel data
+     * 
+     * @param extents the extents of the image
+     * 
+     * @return a buffer which is big enough to contain the image pixel data
      */
-    protected static int[] initPixelBuffer(int[] extents) {
+    protected static int[] initPixelBuffer(final int[] extents) {
         return new int[extents[0] * extents[1]];
     }
 
     /**
      * Get the resolution correction needed for non-isotropic images.
-     *
-     * @param   imgResols  the image resolution
-     * @param   imgUnits   the image units of measure
-     *
-     * @return  the resolution correction factor in the x (the first element) and y (the second element) dimensions
+     * 
+     * @param imgResols the image resolution
+     * @param imgUnits the image units of measure
+     * 
+     * @return the resolution correction factor in the x (the first element) and y (the second element) dimensions
      */
-    protected static float[] initResFactor(float[] imgResols, int[] imgUnits) {
-        float[] resFactor = new float[2];
+    protected static float[] initResFactor(final float[] imgResols, final int[] imgUnits) {
+        final float[] resFactor = new float[2];
 
         resFactor[0] = 1.0f;
         resFactor[1] = 1.0f;
 
-        if ((imgResols[1] >= imgResols[0]) && (imgResols[1] < (20.0f * imgResols[0])) && (imgUnits[0] == imgUnits[1])) {
+        if ( (imgResols[1] >= imgResols[0]) && (imgResols[1] < (20.0f * imgResols[0])) && (imgUnits[0] == imgUnits[1])) {
             resFactor[1] = imgResols[1] / imgResols[0];
-        } else if ((imgResols[0] > imgResols[1]) && (imgResols[0] < (20.0f * imgResols[1])) &&
-                       (imgUnits[0] == imgUnits[1])) {
+        } else if ( (imgResols[0] > imgResols[1]) && (imgResols[0] < (20.0f * imgResols[1]))
+                && (imgUnits[0] == imgUnits[1])) {
             resFactor[0] = imgResols[0] / imgResols[1];
         }
 
@@ -4032,13 +3602,13 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   img  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param img DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    protected static float[] initResolutions(ModelImage img) {
-        float[] res = img.getFileInfo(0).getResolutions();
+    protected static float[] initResolutions(final ModelImage img) {
+        final float[] res = img.getFileInfo(0).getResolutions();
 
         for (int r = 0; r < img.getNDims(); r++) {
 
@@ -4054,14 +3624,14 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Get the initial time and volume slice positions.
-     *
-     * @param   img  the image to get the slice positions of
-     *
-     * @return  an array containing the slice in the volume (in the first element) and the time slice (in the second
-     *          element)
+     * 
+     * @param img the image to get the slice positions of
+     * 
+     * @return an array containing the slice in the volume (in the first element) and the time slice (in the second
+     *         element)
      */
-    protected static int[] initSlicePositions(ModelImage img) {
-        int[] slices = new int[2];
+    protected static int[] initSlicePositions(final ModelImage img) {
+        final int[] slices = new int[2];
 
         if (img.getNDims() == 4) {
             slices[0] = (img.getExtents()[2] - 1) / 2;
@@ -4079,30 +3649,30 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   img  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param img DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    protected static int[] initUnits(ModelImage img) {
+    protected static int[] initUnits(final ModelImage img) {
         return img.getFileInfo(0).getUnitsOfMeasure();
     }
-    
+
     /**
      * Creates and initializes the LUT for an image.
-     *
-     * @param   img  the image to create a LUT for
-     *
-     * @return  a LUT for the image <code>img</code> (null if a color image)
-     *
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
+     * 
+     * @param img the image to create a LUT for
+     * 
+     * @return a LUT for the image <code>img</code> (null if a color image)
+     * 
+     * @throws OutOfMemoryError if enough memory cannot be allocated for this method
      */
-    public static ModelLUT initLUT(ModelImage img) throws OutOfMemoryError {
+    public static ModelLUT initLUT(final ModelImage img) throws OutOfMemoryError {
         ModelLUT newLUT = null;
 
         // only make a lut for non color images
         if (img.isColorImage() == false) {
-            int[] dimExtentsLUT = new int[2];
+            final int[] dimExtentsLUT = new int[2];
 
             dimExtentsLUT[0] = 4;
             dimExtentsLUT[1] = 256;
@@ -4122,77 +3692,78 @@ public abstract class ViewJFrameBase extends JFrame
                 max = (float) img.getMax();
             }
 
-            float imgMin = (float) img.getMin();
-            float imgMax = (float) img.getMax();
+            final float imgMin = (float) img.getMin();
+            final float imgMax = (float) img.getMax();
 
             newLUT.resetTransferLine(min, imgMin, max, imgMax);
         }
 
         return newLUT;
     }
-    
+
     /**
      * Creates and initializes the ModelRGB for an image.
-     *
-     * @param   img  the image to create a ModelRGB for
-     *
-     * @return  a ModelRGB for the image <code>img</code> (null if NOT a color image)
-     *
-     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
+     * 
+     * @param img the image to create a ModelRGB for
+     * 
+     * @return a ModelRGB for the image <code>img</code> (null if NOT a color image)
+     * 
+     * @throws OutOfMemoryError if enough memory cannot be allocated for this method
      */
-    public static ModelRGB initRGB(ModelImage img) throws OutOfMemoryError {
+    public static ModelRGB initRGB(final ModelImage img) throws OutOfMemoryError {
         ModelRGB newRGB = null;
 
         if (img.isColorImage()) {
-            float[] x = new float[4];
-            float[] y = new float[4];
-            Dimension dim = new Dimension(256, 256);
+            final float[] x = new float[4];
+            final float[] y = new float[4];
+            final Dimension dim = new Dimension(256, 256);
 
             // Set ModelRGB min max values;
             x[0] = 0;
             y[0] = dim.height - 1;
 
             x[1] = 255 * 0.333f;
-            y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
+            y[1] = (dim.height - 1) - ( (dim.height - 1) / 3.0f);
 
             x[2] = 255 * 0.667f;
-            y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
+            y[2] = (dim.height - 1) - ( (dim.height - 1) * 0.67f);
 
             x[3] = 255;
             y[3] = 0;
 
-            int[] RGBExtents = new int[2];
+            final int[] RGBExtents = new int[2];
             RGBExtents[0] = 4;
             RGBExtents[1] = 256;
             newRGB = new ModelRGB(RGBExtents);
             newRGB.getRedFunction().importArrays(x, y, 4);
             newRGB.getGreenFunction().importArrays(x, y, 4);
             newRGB.getBlueFunction().importArrays(x, y, 4);
-            newRGB.makeRGB(-1);
+            newRGB.makeRGB( -1);
         }
 
         return newRGB;
     }
-    
+
     /**
      * Initializes the zoom variables for an image.
-     *
-     * @param   img         the image to use to initialize the zoom
-     * @param   xResFactor  correction factor in the x direction for images that are do not have isotropic voxels
-     * @param   yResFactor  correction factor in the x direction for images that are do not have isotropic voxels
-     *
-     * @return  the initial zoom to use for this image
+     * 
+     * @param img the image to use to initialize the zoom
+     * @param xResFactor correction factor in the x direction for images that are do not have isotropic voxels
+     * @param yResFactor correction factor in the x direction for images that are do not have isotropic voxels
+     * 
+     * @return the initial zoom to use for this image
      */
-    protected static float initZoom(ModelImage img, float xResFactor, float yResFactor, int screenX, int screenY) {
+    protected static float initZoom(final ModelImage img, final float xResFactor, final float yResFactor,
+            final int screenX, final int screenY) {
 
         float imgZoom;
         float zoomX = 1, zoomY = 1;
 
-        if ((img.getExtents()[0] * xResFactor) > (screenX - 300)) {
+        if ( (img.getExtents()[0] * xResFactor) > (screenX - 300)) {
             zoomX = (screenX - 300.0f) / (img.getExtents()[0] * xResFactor);
         }
 
-        if ((img.getExtents()[1] * yResFactor) > (screenY - 300)) {
+        if ( (img.getExtents()[1] * yResFactor) > (screenY - 300)) {
             zoomY = (screenY - 300.0f) / (img.getExtents()[1] * yResFactor);
         }
 
@@ -4218,24 +3789,24 @@ public abstract class ViewJFrameBase extends JFrame
         return imgZoom;
 
     } // end initZoom()
-    
+
     /**
      * Finds the FileFilter that matches the file type.
-     *
-     * @param   chooser     JFileChooser
-     * @param   filterType  int the file filter type
-     *
-     * @return  FileFilter the filter that matches the filter type.
+     * 
+     * @param chooser JFileChooser
+     * @param filterType int the file filter type
+     * 
+     * @return FileFilter the filter that matches the filter type.
      */
-    private javax.swing.filechooser.FileFilter findFilter(JFileChooser chooser, int filterType) {
+    private javax.swing.filechooser.FileFilter findFilter(final JFileChooser chooser, final int filterType) {
 
         // get the list of file filters held in chooser
-        javax.swing.filechooser.FileFilter[] filters = chooser.getChoosableFileFilters();
+        final javax.swing.filechooser.FileFilter[] filters = chooser.getChoosableFileFilters();
 
-        for (int i = 0; i < filters.length; i++) {
+        for (final FileFilter element : filters) {
 
-            if (ViewImageFileFilter.matches(filters[i], filterType)) {
-                return filters[i];
+            if (ViewImageFileFilter.matches(element, filterType)) {
+                return element;
             }
         }
 
@@ -4245,25 +3816,25 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Returns whether an image can be resampled to match imageA for loading into the imageB slot of the frame.
-     *
-     * @param   image  the image to check
-     *
-     * @return  true if the image is either 3D or 4D (but not if the 4th dim differs)
+     * 
+     * @param image the image to check
+     * 
+     * @return true if the image is either 3D or 4D (but not if the 4th dim differs)
      */
-    private boolean isImageResampleable(ModelImage image) {
-        int minDims = Math.min(imageB.getNDims(), imageA.getNDims());
+    private boolean isImageResampleable(final ModelImage image) {
+        final int minDims = Math.min(imageB.getNDims(), imageA.getNDims());
 
-        if ((imageB.getNDims() == imageA.getNDims()) ||
-                (((imageB.getNDims() == 3) || (imageB.getNDims() == 4)) &&
-                     ((imageA.getNDims() == 3) && (imageA.getNDims() == 4)))) {
+        if ( (imageB.getNDims() == imageA.getNDims())
+                || ( ( (imageB.getNDims() == 3) || (imageB.getNDims() == 4)) && ( (imageA.getNDims() == 3) && (imageA
+                        .getNDims() == 4)))) {
 
             if (minDims == 4) {
 
                 // Resampling will work for two 3D images or one 3D and one 4D image.
                 // However, AlgorithmTransform is not currently equipped to deal with
                 // differences in the fourth dimension between two 4D images
-                if ((imageB.getExtents()[3] != imageA.getExtents()[3]) ||
-                        (imageB.getFileInfo(0).getResolutions()[3] != imageA.getFileInfo(0).getResolutions()[3])) {
+                if ( (imageB.getExtents()[3] != imageA.getExtents()[3])
+                        || (imageB.getFileInfo(0).getResolutions()[3] != imageA.getFileInfo(0).getResolutions()[3])) {
                     MipavUtil.displayError("Images of unequal fourth dimensions");
 
                     return false;
@@ -4278,16 +3849,15 @@ public abstract class ViewJFrameBase extends JFrame
         }
     }
 
-
     /**
      * Returns whether a image should be resampled to match the extents and resolutions of imageA.
-     *
-     * @param   image  the image to check against imageA
-     *
-     * @return  true if a resampling of the image is required
+     * 
+     * @param image the image to check against imageA
+     * 
+     * @return true if a resampling of the image is required
      */
-    private boolean isResampleNeeded(ModelImage image) {
-        int minDims = Math.min(image.getNDims(), imageA.getNDims());
+    private boolean isResampleNeeded(final ModelImage image) {
+        final int minDims = Math.min(image.getNDims(), imageA.getNDims());
         Preferences.debug("minDims = " + minDims, Preferences.DEBUG_MINOR);
 
         if (image.getExtents() == null) {
@@ -4301,8 +3871,8 @@ public abstract class ViewJFrameBase extends JFrame
         } else if (image.getFileInfo(0).getResolutions() == null) {
             Preferences.debug("image.getFileInfo(0).getResolutions() == null", Preferences.DEBUG_MINOR);
         } else {
-            Preferences.debug("image.getFileInfo(0).getResolutions().length = " +
-                              image.getFileInfo(0).getResolutions().length, Preferences.DEBUG_MINOR);
+            Preferences.debug("image.getFileInfo(0).getResolutions().length = "
+                    + image.getFileInfo(0).getResolutions().length, Preferences.DEBUG_MINOR);
         }
 
         if (imageA.getExtents() == null) {
@@ -4316,14 +3886,14 @@ public abstract class ViewJFrameBase extends JFrame
         } else if (imageA.getFileInfo(0).getResolutions() == null) {
             Preferences.debug("imageA.getFileInfo(0).getResolutions() == null", Preferences.DEBUG_MINOR);
         } else {
-            Preferences.debug("imageA.getFileInfo(0).getResolutions().length = " +
-                              imageA.getFileInfo(0).getResolutions().length, Preferences.DEBUG_MINOR);
+            Preferences.debug("imageA.getFileInfo(0).getResolutions().length = "
+                    + imageA.getFileInfo(0).getResolutions().length, Preferences.DEBUG_MINOR);
         }
 
         for (int f = 0; f < minDims; f++) {
 
-            if ((image.getExtents()[f] != imageA.getExtents()[f]) ||
-                    (image.getFileInfo(0).getResolutions()[f] != imageA.getFileInfo(0).getResolutions()[f])) {
+            if ( (image.getExtents()[f] != imageA.getExtents()[f])
+                    || (image.getFileInfo(0).getResolutions()[f] != imageA.getFileInfo(0).getResolutions()[f])) {
                 return true; // one or more dim or res != A's
             }
         }
@@ -4333,16 +3903,16 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Resamples an image and loads it into the imageB slot. This image should already be matched against imageA.
-     *
-     * @param  image  the image to resample and load as imageB
+     * 
+     * @param image the image to resample and load as imageB
      */
     private void loadResampledImage(ModelImage image) {
 
-        if ((image.getNDims() == 3) || (image.getNDims() == 4)) {
+        if ( (image.getNDims() == 3) || (image.getNDims() == 4)) {
             Preferences.debug("Resampling.", Preferences.DEBUG_FILEIO);
 
             // imageLocation == IMAGE_B ; resample into first 3 dimensions of A's grid
-            TransMatrix xfrm = image.getMatrix();
+            final TransMatrix xfrm = image.getMatrix();
             float oXres, oYres, oZres;
             int oXdim, oYdim, oZdim;
 
@@ -4354,13 +3924,12 @@ public abstract class ViewJFrameBase extends JFrame
             oZdim = imageA.getExtents()[2];
 
             AlgorithmTransform transformVol = new AlgorithmTransform(image, xfrm, AlgorithmTransform.TRILINEAR, oXres,
-                                                                     oYres, oZres, oXdim, oYdim, oZdim, false, true,
-                                                                     false);
+                    oYres, oZres, oXdim, oYdim, oZdim, false, true, false);
 
             // transformVol.setActiveImage(false);
             transformVol.run();
 
-            ModelImage resampledImage = transformVol.getTransformedImage();
+            final ModelImage resampledImage = transformVol.getTransformedImage();
 
             if (transformVol != null) {
                 transformVol.disposeLocal();
@@ -4375,7 +3944,7 @@ public abstract class ViewJFrameBase extends JFrame
             setImageB(resampledImage);
         } else if (image.getNDims() == 2) { // imageLocation == IMAGE_B ; resample into A's grid
 
-            TransMatrix xfrm = image.getMatrix();
+            final TransMatrix xfrm = image.getMatrix();
             float oXres, oYres;
             int oXdim, oYdim;
 
@@ -4385,12 +3954,12 @@ public abstract class ViewJFrameBase extends JFrame
             oYdim = imageA.getExtents()[1];
 
             AlgorithmTransform transformVol = new AlgorithmTransform(image, xfrm, AlgorithmTransform.BILINEAR, oXres,
-                                                                     oYres, oXdim, oYdim, false, true, false);
+                    oYres, oXdim, oYdim, false, true, false);
 
             transformVol.setRunningInSeparateThread(false);
             transformVol.run();
 
-            ModelImage resampledImage = transformVol.getTransformedImage();
+            final ModelImage resampledImage = transformVol.getTransformedImage();
 
             if (transformVol != null) {
                 transformVol.disposeLocal();
@@ -4400,14 +3969,14 @@ public abstract class ViewJFrameBase extends JFrame
             resampledImage.calcMinMax();
 
             // System.out.println(image.getMatrix());
-            if (!image.isColorImage()) {
-                Preferences.debug("Done resampling image: min = " + resampledImage.getMin() + "max = " +
-                                  resampledImage.getMax() + "\n");
+            if ( !image.isColorImage()) {
+                Preferences.debug("Done resampling image: min = " + resampledImage.getMin() + "max = "
+                        + resampledImage.getMax() + "\n");
             } else {
-                Preferences.debug("Done resampling image: minR = " + resampledImage.getMinR() + "minG = " +
-                                  resampledImage.getMinG() + "minB = " + resampledImage.getMinB() + "maxR = " +
-                                  resampledImage.getMaxR() + "maxG = " + resampledImage.getMaxG() + "maxB = " +
-                                  resampledImage.getMaxB() + "\n");
+                Preferences.debug("Done resampling image: minR = " + resampledImage.getMinR() + "minG = "
+                        + resampledImage.getMinG() + "minB = " + resampledImage.getMinB() + "maxR = "
+                        + resampledImage.getMaxR() + "maxG = " + resampledImage.getMaxG() + "maxB = "
+                        + resampledImage.getMaxB() + "\n");
             }
 
             setImageB(resampledImage);
@@ -4417,28 +3986,27 @@ public abstract class ViewJFrameBase extends JFrame
         }
     }
 
-
     /**
      * Match an image against imageA. Resolutions and extents are always matched. Orientations and origins are optional.
-     *
-     * @param   image      the image to match
-     * @param   doOrigins  whether to match the image origins
-     * @param   doOrients  whether to match the image orienations
-     *
-     * @return  true if the matching was successful, false otherwise
+     * 
+     * @param image the image to match
+     * @param doOrigins whether to match the image origins
+     * @param doOrients whether to match the image orienations
+     * 
+     * @return true if the matching was successful, false otherwise
      */
-    private boolean matchImages(ModelImage image, boolean doOrigins, boolean doOrients) {
+    private boolean matchImages(ModelImage image, final boolean doOrigins, final boolean doOrients) {
         AlgorithmMatchImages algoMatch = null;
 
         try {
 
             // will use algorithm MatchImages to align images to image A resolution and both image's field of view
-            if (((image.getNDims() == 3) && (imageA.getNDims() == 3)) ||
-                    ((image.getNDims() == 2) && (imageA.getNDims() == 2))) {
+            if ( ( (image.getNDims() == 3) && (imageA.getNDims() == 3))
+                    || ( (image.getNDims() == 2) && (imageA.getNDims() == 2))) {
 
                 ModelImage imgA = imageA;
                 boolean isNewA = false, isNewB = false;
-                boolean doDimensions = true, resByRef = true;
+                final boolean doDimensions = true, resByRef = true;
 
                 // doOrigins and doOrients are passed to loadImage
                 algoMatch = new AlgorithmMatchImages(imageA, image, doOrigins, doDimensions, resByRef);
@@ -4446,7 +4014,7 @@ public abstract class ViewJFrameBase extends JFrame
                 algoMatch.setRunningInSeparateThread(false);
                 algoMatch.run();
 
-                if (!algoMatch.isCompleted()) {
+                if ( !algoMatch.isCompleted()) {
                     return false;
                 }
 
@@ -4458,7 +4026,7 @@ public abstract class ViewJFrameBase extends JFrame
                     // Create new frame with imageA
                     imgA = algoMatch.getResultA();
 
-                    ViewJFrameImage newFrame = new ViewJFrameImage(imgA, null, null, false);
+                    final ViewJFrameImage newFrame = new ViewJFrameImage(imgA, null, null, false);
 
                     if (isNewB) { // Get imageB, if it's new
                         image.disposeLocal();
@@ -4499,14 +4067,14 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * Reorders the AFNI image based on the axis orientations. B0 to A1 indicates changing x to y; B0 to A2 indicates a
      * change from x to z.
-     *
-     * @param   image  Image to reorder.
-     * @param   axisA  axis indices orientation of reordered image
-     * @param   axisB  axis indices orientation of original image
-     *
-     * @return  true if the reordering of the Afni file is successful, false otherwise
+     * 
+     * @param image Image to reorder.
+     * @param axisA axis indices orientation of reordered image
+     * @param axisB axis indices orientation of original image
+     * 
+     * @return true if the reordering of the Afni file is successful, false otherwise
      */
-    private boolean reorderAfni(ModelImage image, int[] axisA, int[] axisB) {
+    private boolean reorderAfni(ModelImage image, final int[] axisA, final int[] axisB) {
         int[] resUnit = null;
         int[] newResUnit = null;
         int[] newExtents = null;
@@ -4541,9 +4109,9 @@ public abstract class ViewJFrameBase extends JFrame
         int planeGap = -1;
         int[] gapArray = null;
         boolean unfoundGap;
-        int xDimB = image.getExtents()[0];
-        int yDimB = image.getExtents()[1];
-        int zDimB = image.getExtents()[2];
+        final int xDimB = image.getExtents()[0];
+        final int yDimB = image.getExtents()[1];
+        final int zDimB = image.getExtents()[2];
         int tDimB;
         float lowXmmB = 0, lowYmmB = 0, lowZmmB = 0, highXmmB = 0, highYmmB = 0, highZmmB = 0;
         float newLowXmmB = 0, newLowYmmB = 0, newLowZmmB = 0;
@@ -4641,7 +4209,7 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[0] = resUnit[1];
             newXDim = yDimB;
 
-            if ((planeGap == 1) && (unfoundGap)) {
+            if ( (planeGap == 1) && (unfoundGap)) {
                 planeGap = 0;
                 unfoundGap = false;
 
@@ -4661,7 +4229,7 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[0] = resUnit[2];
             newXDim = zDimB;
 
-            if ((planeGap == 2) && (unfoundGap)) {
+            if ( (planeGap == 2) && (unfoundGap)) {
                 planeGap = 0;
                 unfoundGap = false;
 
@@ -4681,7 +4249,7 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[0] = resUnit[0];
             newXDim = xDimB;
 
-            if ((planeGap == 0) && (unfoundGap)) {
+            if ( (planeGap == 0) && (unfoundGap)) {
                 unfoundGap = false;
 
                 if (xInvert) {
@@ -4701,7 +4269,7 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[1] = resUnit[0];
             newYDim = xDimB;
 
-            if ((planeGap == 0) && (unfoundGap)) {
+            if ( (planeGap == 0) && (unfoundGap)) {
                 planeGap = 1;
                 unfoundGap = false;
 
@@ -4721,7 +4289,7 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[1] = resUnit[2];
             newYDim = zDimB;
 
-            if ((planeGap == 2) && (unfoundGap)) {
+            if ( (planeGap == 2) && (unfoundGap)) {
                 planeGap = 1;
                 unfoundGap = false;
 
@@ -4741,7 +4309,7 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[1] = resUnit[1];
             newYDim = yDimB;
 
-            if ((planeGap == 1) && (unfoundGap)) {
+            if ( (planeGap == 1) && (unfoundGap)) {
                 unfoundGap = false;
 
                 if (yInvert) {
@@ -4761,7 +4329,7 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[2] = resUnit[0];
             newZDim = xDimB;
 
-            if ((planeGap == 0) && (unfoundGap)) {
+            if ( (planeGap == 0) && (unfoundGap)) {
                 planeGap = 2;
                 unfoundGap = false;
 
@@ -4781,7 +4349,7 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[2] = resUnit[1];
             newZDim = yDimB;
 
-            if ((planeGap == 1) && (unfoundGap)) {
+            if ( (planeGap == 1) && (unfoundGap)) {
                 planeGap = 2;
                 unfoundGap = false;
 
@@ -4801,7 +4369,7 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[2] = resUnit[2];
             newZDim = zDimB;
 
-            if ((planeGap == 2) && (unfoundGap)) {
+            if ( (planeGap == 2) && (unfoundGap)) {
                 unfoundGap = false;
 
                 if (zInvert) {
@@ -4825,10 +4393,10 @@ public abstract class ViewJFrameBase extends JFrame
         maximum = image.getMax();
 
         progressBar = new ViewJProgressBar(image.getFileInfo()[0].getFileName(), "Reordering imageB to imageA ...", 0,
-                                           100, false, null, null);
+                100, false, null, null);
 
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = 100; // Toolkit.getDefaultToolkit().getScreenSize().height;
+        final int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
+        final int yScreen = 100; // Toolkit.getDefaultToolkit().getScreenSize().height;
 
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
@@ -4839,7 +4407,7 @@ public abstract class ViewJFrameBase extends JFrame
 
         try {
             image.exportData(0, xyztSize, imgBuffer);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             MipavUtil.displayError("Error on image.exportData(0,xyztSize,imgBuffer)");
             progressBar.dispose();
 
@@ -4864,7 +4432,7 @@ public abstract class ViewJFrameBase extends JFrame
 
         try {
             image.changeExtents(newExtents);
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             System.gc();
             MipavUtil.displayError("ViewJFrameBase: Out of memory on image.changeExtents(newExtents)");
             progressBar.dispose();
@@ -4894,20 +4462,20 @@ public abstract class ViewJFrameBase extends JFrame
             newFileInfo[i].setMin(minimum);
             newFileInfo[i].setPixelPadValue(fileInfo.getPixelPadValue());
             newFileInfo[i].setPhotometric(fileInfo.getPhotometric());
-            ((FileInfoAfni) newFileInfo[i]).setAFNIViewType(((FileInfoAfni) fileInfo).getAFNIViewType());
-            ((FileInfoAfni) newFileInfo[i]).setAFNITypeString(((FileInfoAfni) fileInfo).getAFNITypeString());
-            ((FileInfoAfni) newFileInfo[i]).setPlaneGap(planeGap);
+            (newFileInfo[i]).setAFNIViewType( ((FileInfoAfni) fileInfo).getAFNIViewType());
+            (newFileInfo[i]).setAFNITypeString( ((FileInfoAfni) fileInfo).getAFNITypeString());
+            (newFileInfo[i]).setPlaneGap(planeGap);
 
             if (planeGap != -1) {
-                ((FileInfoAfni) newFileInfo[i]).setGapArray(gapArray);
+                (newFileInfo[i]).setGapArray(gapArray);
             }
 
-            ((FileInfoAfni) newFileInfo[i]).setLowXmm(newLowXmmB);
-            ((FileInfoAfni) newFileInfo[i]).setLowYmm(newLowYmmB);
-            ((FileInfoAfni) newFileInfo[i]).setLowZmm(newLowZmmB);
-            ((FileInfoAfni) newFileInfo[i]).setHighXmm(newHighXmmB);
-            ((FileInfoAfni) newFileInfo[i]).setHighYmm(newHighYmmB);
-            ((FileInfoAfni) newFileInfo[i]).setHighZmm(newHighZmmB);
+            (newFileInfo[i]).setLowXmm(newLowXmmB);
+            (newFileInfo[i]).setLowYmm(newLowYmmB);
+            (newFileInfo[i]).setLowZmm(newLowZmmB);
+            (newFileInfo[i]).setHighXmm(newHighXmmB);
+            (newFileInfo[i]).setHighYmm(newHighYmmB);
+            (newFileInfo[i]).setHighZmm(newHighZmmB);
         }
 
         image.setFileInfo(newFileInfo);
@@ -4917,8 +4485,8 @@ public abstract class ViewJFrameBase extends JFrame
         for (t = 0; t < tDimB; t++) {
 
             for (x = 0; x < xDimB; x++) {
-                progressBar.updateValue(Math.round(100 * (x + (t * xDimB)) / (((tDimB - 1) * xDimB) + xDimB - 1)),
-                                        true);
+                progressBar.updateValue(Math.round(100 * (x + (t * xDimB)) / ( ( (tDimB - 1) * xDimB) + xDimB - 1)),
+                        true);
 
                 if (xtoy) {
                     newY = x;
@@ -4966,13 +4534,8 @@ public abstract class ViewJFrameBase extends JFrame
                             newZ = z;
                         }
 
-                        imgBuffer2[newX + (newXDim * newY) + (newSliceSize * newZ) + (newVolSize * t)] = imgBuffer[x +
-                                                                                                                   (xDimB *
-                                                                                                                        y) +
-                                                                                                                   (sliceSize *
-                                                                                                                        z) +
-                                                                                                                   (volSize *
-                                                                                                                        t)];
+                        imgBuffer2[newX + (newXDim * newY) + (newSliceSize * newZ) + (newVolSize * t)] = imgBuffer[x
+                                + (xDimB * y) + (sliceSize * z) + (volSize * t)];
                     } // for (z = 0; z < zDimB; z++)
                 } // for (y = 0; y < yDimB; y++)
             } // for (x = 0; x < xDimB; x++)
@@ -4983,7 +4546,7 @@ public abstract class ViewJFrameBase extends JFrame
 
         try {
             image.importData(0, imgBuffer2, true);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             MipavUtil.displayError("Error on image.importData(0,imgBuffer2,true)");
             progressBar.dispose();
 
@@ -5004,21 +4567,21 @@ public abstract class ViewJFrameBase extends JFrame
 
     /**
      * Sets image B to an AFNI image, performing the appropriate transformations.
-     *
-     * @param   imageA  Image A.
-     * @param   image   AFNI image to set to image A.
-     *
-     * @return  -1 if failure; 0 if no tranformation needed; and 1 if transformation and set successful.
+     * 
+     * @param imageA Image A.
+     * @param image AFNI image to set to image A.
+     * 
+     * @return -1 if failure; 0 if no tranformation needed; and 1 if transformation and set successful.
      */
-    private int setImageBAfni(ModelImage imageA, ModelImage image) {
-        FileInfoAfni imageAInfo = (FileInfoAfni) imageA.getFileInfo(0);
-        FileInfoAfni imageBInfo = (FileInfoAfni) image.getFileInfo(0);
-        int AFNIViewTypeA = imageAInfo.getAFNIViewType();
-        int AFNIViewTypeB = imageBInfo.getAFNIViewType();
-        int AFNITypeStringA = imageAInfo.getAFNITypeString();
-        int AFNITypeStringB = imageBInfo.getAFNITypeString();
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = 100; // Toolkit.getDefaultToolkit().getScreenSize().height;
+    private int setImageBAfni(final ModelImage imageA, ModelImage image) {
+        final FileInfoAfni imageAInfo = (FileInfoAfni) imageA.getFileInfo(0);
+        final FileInfoAfni imageBInfo = (FileInfoAfni) image.getFileInfo(0);
+        final int AFNIViewTypeA = imageAInfo.getAFNIViewType();
+        final int AFNIViewTypeB = imageBInfo.getAFNIViewType();
+        final int AFNITypeStringA = imageAInfo.getAFNITypeString();
+        final int AFNITypeStringB = imageBInfo.getAFNITypeString();
+        final int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
+        final int yScreen = 100; // Toolkit.getDefaultToolkit().getScreenSize().height;
         ViewJProgressBar afniProgressBar = null;
         FileInfoAfni[] newAfniInfo;
         int xDimA, yDimA, zDimA, xDimB, yDimB, zDimB, tDimB;
@@ -5046,39 +4609,26 @@ public abstract class ViewJFrameBase extends JFrame
         double maximum = 0;
         int viewType = AFNIViewTypeA;
 
-        if ((AFNIViewTypeA == FileInfoAfni.AFNI_ORIG) && (imageA.getNDims() == 3) &&
-                (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG) &&
-                (((AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) &&
-                      ((AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) ||
-                           ((AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image.getNDims() == 4)))) ||
-                     ((AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) &&
-                          ((AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) ||
-                               ((AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image.getNDims() == 4)))))) {
+        if ( (AFNIViewTypeA == FileInfoAfni.AFNI_ORIG)
+                && (imageA.getNDims() == 3)
+                && (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG)
+                && ( ( (AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image
+                        .getNDims() == 4)))) || ( (AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image
+                        .getNDims() == 4)))))) {
             xDimA = imageAInfo.getExtents()[0];
             yDimA = imageAInfo.getExtents()[1];
             zDimA = imageAInfo.getExtents()[2];
             xResA = imageAInfo.getResolutions()[0];
             yResA = imageAInfo.getResolutions()[1];
             zResA = imageAInfo.getResolutions()[2];
-        } else if (((AFNIViewTypeA == FileInfoAfni.AFNI_ACPC) && (imageA.getNDims() == 3) &&
-                        (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG) &&
-                        (((AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) &&
-                              ((AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) ||
-                                   ((AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image.getNDims() == 4)))) ||
-                             ((AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) &&
-                                  ((AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) ||
-                                       ((AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image.getNDims() ==
-                                                                                                4)))))) ||
-                       ((AFNIViewTypeA == FileInfoAfni.AFNI_TLRC) && (imageA.getNDims() == 3) &&
-                            (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG) &&
-                            (((AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) &&
-                                  ((AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) ||
-                                       ((AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) &&
-                                            (image.getNDims() == 4)))) ||
-                                 ((AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) &&
-                                      ((AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) ||
-                                           ((AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) &&
-                                                (image.getNDims() == 4))))))) {
+        } else if ( ( (AFNIViewTypeA == FileInfoAfni.AFNI_ACPC) && (imageA.getNDims() == 3)
+                && (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG) && ( ( (AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image
+                .getNDims() == 4)))) || ( (AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image
+                .getNDims() == 4))))))
+                || ( (AFNIViewTypeA == FileInfoAfni.AFNI_TLRC) && (imageA.getNDims() == 3)
+                        && (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG) && ( ( (AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image
+                        .getNDims() == 4)))) || ( (AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image
+                        .getNDims() == 4))))))) {
             xDimA = imageAInfo.getAFNIOrigExtents()[0];
             yDimA = imageAInfo.getAFNIOrigExtents()[1];
             zDimA = imageAInfo.getAFNIOrigExtents()[2];
@@ -5114,7 +4664,7 @@ public abstract class ViewJFrameBase extends JFrame
         Preferences.debug("lowXmmB = " + lowXmmB + " lowYmmB = " + lowYmmB + " lowZmmB = " + lowZmmB + "\n");
         Preferences.debug("highXmmB = " + highXmmB + " highYmmB = " + highYmmB + " highZmmB = " + highZmmB + "\n");
 
-        if ((AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) || (AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE)) {
+        if ( (AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) || (AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE)) {
             doNN = true;
         } else {
             doNN = false;
@@ -5143,12 +4693,12 @@ public abstract class ViewJFrameBase extends JFrame
         try {
             imgBuffer = new float[bufferSize];
             image.exportData(0, bufferSize, imgBuffer);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             MipavUtil.displayError("ViewJFrameBase: IOException error on exportData");
             afniProgressBar.dispose();
 
             return -1;
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("ViewJFrameBase: Out of memory on new image buffer.");
             afniProgressBar.dispose();
@@ -5168,7 +4718,7 @@ public abstract class ViewJFrameBase extends JFrame
         newResUnit[1] = imageAInfo.getUnitsOfMeasure()[1];
         newResUnit[2] = imageAInfo.getUnitsOfMeasure()[2];
 
-        int imageType = image.getType();
+        final int imageType = image.getType();
         userInterface = ViewUserInterface.getReference();
 
         image.disposeLocal();
@@ -5177,7 +4727,7 @@ public abstract class ViewJFrameBase extends JFrame
 
         try {
             image = new ModelImage(imageType, newExtents, imageBInfo.getFileName());
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             System.gc();
             MipavUtil.displayError("ViewJFrameBase: Out of memory on new ModelImage");
             afniProgressBar.dispose();
@@ -5185,21 +4735,18 @@ public abstract class ViewJFrameBase extends JFrame
             return -1;
         }
 
-        if ((AFNIViewTypeA == FileInfoAfni.AFNI_ORIG) && (imageA.getNDims() == 3) &&
-                (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG) &&
-                (((AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) &&
-                      ((AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) ||
-                           ((AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image.getNDims() == 4)))) ||
-                     ((AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) &&
-                          ((AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) ||
-                               ((AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image.getNDims() == 4)))))) {
+        if ( (AFNIViewTypeA == FileInfoAfni.AFNI_ORIG)
+                && (imageA.getNDims() == 3)
+                && (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG)
+                && ( ( (AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image
+                        .getNDims() == 4)))) || ( (AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image
+                        .getNDims() == 4)))))) {
 
             // convert IMAGEB from FileInfoAfni.AFNI_ORIG to rescaled FileInfoAfni.AFNI_ORIG
             // I am skipping the transform() section of AlgorithmTransform which has the line
             // xfrm = matrixtoInverseArray(transMatrix);
             afniProgressBar = new ViewJProgressBar(image.getFileInfo()[0].getFileName(),
-                                                   "Transforming to match AFNI anatomical image ...", 0, 100, false,
-                                                   null, null);
+                    "Transforming to match AFNI anatomical image ...", 0, 100, false, null, null);
             afniProgressBar.setLocation(xScreen / 2, yScreen / 2);
             afniProgressBar.setVisible(true);
             afniProgressBar.updateValue(0, true);
@@ -5211,8 +4758,8 @@ public abstract class ViewJFrameBase extends JFrame
             image.setImageOrientation(imageA.getImageOrientation());
 
             transformAFNI(image, imgBuffer, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB, lowXmmB, lowYmmB, lowZmmB,
-                          highXmmB, highYmmB, highZmmB, planeGap, gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA,
-                          zDimA, lowXmmA, lowYmmA, lowZmmA, highXmmA, highYmmA, highZmmA);
+                    highXmmB, highYmmB, highZmmB, planeGap, gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA, zDimA,
+                    lowXmmA, lowYmmA, lowZmmA, highXmmA, highYmmA, highZmmA);
             image.calcMinMax();
             minimum = image.getMin();
             maximum = image.getMax();
@@ -5224,13 +4771,13 @@ public abstract class ViewJFrameBase extends JFrame
                 tmpArray = new int[xDimA];
                 scaleX = xResA / xResB;
 
-                boolean[] found = new boolean[xDimA];
+                final boolean[] found = new boolean[xDimA];
 
-                for (int i = 0; i < gapArray.length; i++) {
+                for (final int element : gapArray) {
 
                     for (int x = 0; x < xDimA; x++) {
 
-                        if (((x * scaleX) >= gapArray[i]) && ((x * scaleX) < (gapArray[i] + 1)) && (!found[x])) {
+                        if ( ( (x * scaleX) >= element) && ( (x * scaleX) < (element + 1)) && ( !found[x])) {
                             tmpArray[gapNumber++] = x;
                             found[x] = true;
                         }
@@ -5250,13 +4797,13 @@ public abstract class ViewJFrameBase extends JFrame
                 tmpArray = new int[yDimA];
                 scaleY = yResA / yResB;
 
-                boolean[] found = new boolean[yDimA];
+                final boolean[] found = new boolean[yDimA];
 
-                for (int i = 0; i < gapArray.length; i++) {
+                for (final int element : gapArray) {
 
                     for (int y = 0; y < yDimA; y++) {
 
-                        if (((y * scaleY) >= gapArray[i]) && ((y * scaleY) < (gapArray[i] + 1)) && (!found[y])) {
+                        if ( ( (y * scaleY) >= element) && ( (y * scaleY) < (element + 1)) && ( !found[y])) {
                             tmpArray[gapNumber++] = y;
                             found[y] = true;
                         }
@@ -5276,13 +4823,13 @@ public abstract class ViewJFrameBase extends JFrame
                 tmpArray = new int[zDimA];
                 scaleZ = zResA / zResB;
 
-                boolean[] found = new boolean[zDimA];
+                final boolean[] found = new boolean[zDimA];
 
-                for (int i = 0; i < gapArray.length; i++) {
+                for (final int element : gapArray) {
 
                     for (int z = 0; z < zDimA; z++) {
 
-                        if (((z * scaleZ) >= gapArray[i]) && ((z * scaleZ) < (gapArray[i] + 1)) && (!found[z])) {
+                        if ( ( (z * scaleZ) >= element) && ( (z * scaleZ) < (element + 1)) && ( !found[z])) {
                             tmpArray[gapNumber++] = z;
                             found[z] = true;
                         }
@@ -5300,30 +4847,27 @@ public abstract class ViewJFrameBase extends JFrame
 
             viewType = FileInfoAfni.AFNI_ORIG;
         } // end of convert IMAGEB from FileInfoAfni.AFNI_ORIG to rescaled FileInfoAfni.AFNI_ORIG
-        else if ((AFNIViewTypeA == FileInfoAfni.AFNI_ACPC) && (imageA.getNDims() == 3) &&
-                     (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG) &&
-                     (((AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) &&
-                           ((AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) ||
-                                ((AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image.getNDims() == 4)))) ||
-                          ((AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) &&
-                               ((AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) ||
-                                    ((AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image.getNDims() == 4)))))) {
+        else if ( (AFNIViewTypeA == FileInfoAfni.AFNI_ACPC)
+                && (imageA.getNDims() == 3)
+                && (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG)
+                && ( ( (AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image
+                        .getNDims() == 4)))) || ( (AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image
+                        .getNDims() == 4)))))) {
 
             // convert IMAGEB from FileInfoAfni.AFNI_ORIG to FileInfoAfni.AFNI_ACPC
             // I am skipping the transform() section of AlgorithmTransform which has the line
             // xfrm = matrixtoInverseArray(transMatrix);
             afniProgressBar = new ViewJProgressBar(image.getFileInfo()[0].getFileName(),
-                                                   "Transforming to match original anatomical image ...", 0, 100, false,
-                                                   null, null);
+                    "Transforming to match original anatomical image ...", 0, 100, false, null, null);
             afniProgressBar.setLocation(xScreen / 2, yScreen / 2);
             afniProgressBar.setVisible(true);
             afniProgressBar.updateValue(0, true);
 
-            Vector3f alpha = imageAInfo.getAlpha();
-            Vector3f beta = imageAInfo.getBeta();
-            Vector3f gamma = imageAInfo.getGamma();
-            Vector3f TalairachCenter = imageAInfo.getTalairachCenter();
-            Vector3f rr = imageAInfo.getrr();
+            final Vector3f alpha = imageAInfo.getAlpha();
+            final Vector3f beta = imageAInfo.getBeta();
+            final Vector3f gamma = imageAInfo.getGamma();
+            final Vector3f TalairachCenter = imageAInfo.getTalairachCenter();
+            final Vector3f rr = imageAInfo.getrr();
 
             // Change rr into mm distance
             rr.X = rr.X * xResA;
@@ -5331,8 +4875,8 @@ public abstract class ViewJFrameBase extends JFrame
             rr.Z = rr.Z * zResA;
 
             transformAFNI(image, imgBuffer, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB, lowXmmB, lowYmmB, lowZmmB,
-                          highXmmB, highYmmB, highZmmB, planeGap, gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA,
-                          zDimA, lowXmmA, lowYmmA, lowZmmA, highXmmA, highYmmA, highZmmA);
+                    highXmmB, highYmmB, highZmmB, planeGap, gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA, zDimA,
+                    lowXmmA, lowYmmA, lowZmmA, highXmmA, highYmmA, highZmmA);
             image.calcMinMax();
 
             // Determine the new gapArray if slices of uncollected data represented by zeroes
@@ -5342,13 +4886,13 @@ public abstract class ViewJFrameBase extends JFrame
                 tmpArray = new int[xDimA];
                 scaleX = xResA / xResB;
 
-                boolean[] found = new boolean[xDimA];
+                final boolean[] found = new boolean[xDimA];
 
-                for (int i = 0; i < gapArray.length; i++) {
+                for (final int element : gapArray) {
 
                     for (int x = 0; x < xDimA; x++) {
 
-                        if (((x * scaleX) >= gapArray[i]) && ((x * scaleX) < (gapArray[i] + 1)) && (!found[x])) {
+                        if ( ( (x * scaleX) >= element) && ( (x * scaleX) < (element + 1)) && ( !found[x])) {
                             tmpArray[gapNumber++] = x;
                             found[x] = true;
                         }
@@ -5368,13 +4912,13 @@ public abstract class ViewJFrameBase extends JFrame
                 tmpArray = new int[yDimA];
                 scaleY = yResA / yResB;
 
-                boolean[] found = new boolean[yDimA];
+                final boolean[] found = new boolean[yDimA];
 
-                for (int i = 0; i < gapArray.length; i++) {
+                for (final int element : gapArray) {
 
                     for (int y = 0; y < yDimA; y++) {
 
-                        if (((y * scaleY) >= gapArray[i]) && ((y * scaleY) < (gapArray[i] + 1)) && (!found[y])) {
+                        if ( ( (y * scaleY) >= element) && ( (y * scaleY) < (element + 1)) && ( !found[y])) {
                             tmpArray[gapNumber++] = y;
                             found[y] = true;
                         }
@@ -5394,13 +4938,13 @@ public abstract class ViewJFrameBase extends JFrame
                 tmpArray = new int[zDimA];
                 scaleZ = zResA / zResB;
 
-                boolean[] found = new boolean[zDimA];
+                final boolean[] found = new boolean[zDimA];
 
-                for (int i = 0; i < gapArray.length; i++) {
+                for (final int element : gapArray) {
 
                     for (int z = 0; z < zDimA; z++) {
 
-                        if (((z * scaleZ) >= gapArray[i]) && ((z * scaleZ) < (gapArray[i] + 1)) && (!found[z])) {
+                        if ( ( (z * scaleZ) >= element) && ( (z * scaleZ) < (element + 1)) && ( !found[z])) {
                             tmpArray[gapNumber++] = z;
                             found[z] = true;
                         }
@@ -5445,14 +4989,14 @@ public abstract class ViewJFrameBase extends JFrame
             TalairachCenter.Y = TalairachCenter.Y * yResA;
             TalairachCenter.Z = TalairachCenter.Z * zResA;
 
-            Vector3f center = image.getImageCentermm(false);
+            final Vector3f center = image.getImageCentermm(false);
 
             bufferSize = xDimB * yDimB * zDimB * tDimB;
             imgBuffer = new float[bufferSize];
 
             try {
                 image.exportData(0, bufferSize, imgBuffer);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 MipavUtil.displayError("ViewJFrameBase: IOException error on exportData");
             }
 
@@ -5463,7 +5007,7 @@ public abstract class ViewJFrameBase extends JFrame
 
             try {
                 image = new ModelImage(imageType, newExtents, imageBInfo.getFileName());
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 System.gc();
                 MipavUtil.displayError("ViewJFrameBase: Out of memory on new ModelImage for ACPC rotation");
                 afniProgressBar.dispose();
@@ -5471,29 +5015,30 @@ public abstract class ViewJFrameBase extends JFrame
                 return -1;
             }
 
-            TransMatrix xfrm = new TransMatrix(4);
+            final TransMatrix xfrm = new TransMatrix(4);
 
             xfrm.setTranslate(center.X, center.Y, center.Z);
 
             xfrm.setRotate(alpha, beta, gamma);
 
-            //double[][] M = xfrm.getMatrix();
+            // double[][] M = xfrm.getMatrix();
 
             // Remember this is an output to input mapping so find the translation needed
             // to map the transformed Talairach center to the original dicom ordered functional
             // image rr
-            double Tr03 = rr.X - (TalairachCenter.X * xfrm.Get(0, 0)) - (TalairachCenter.Y * xfrm.Get(0, 1)) -
-                          (TalairachCenter.Z * xfrm.Get(0, 2));
-            double Tr13 = rr.Y - (TalairachCenter.X * xfrm.Get(1, 0)) - (TalairachCenter.Y * xfrm.Get(1, 1)) -
-                          (TalairachCenter.Z * xfrm.Get(1, 2));
-            double Tr23 = rr.Z - (TalairachCenter.X * xfrm.Get(2, 0)) - (TalairachCenter.Y * xfrm.Get(2, 1)) -
-                          (TalairachCenter.Z * xfrm.Get(2, 2));
+            final double Tr03 = rr.X - (TalairachCenter.X * xfrm.Get(0, 0)) - (TalairachCenter.Y * xfrm.Get(0, 1))
+                    - (TalairachCenter.Z * xfrm.Get(0, 2));
+            final double Tr13 = rr.Y - (TalairachCenter.X * xfrm.Get(1, 0)) - (TalairachCenter.Y * xfrm.Get(1, 1))
+                    - (TalairachCenter.Z * xfrm.Get(1, 2));
+            final double Tr23 = rr.Z - (TalairachCenter.X * xfrm.Get(2, 0)) - (TalairachCenter.Y * xfrm.Get(2, 1))
+                    - (TalairachCenter.Z * xfrm.Get(2, 2));
 
             /*
-             * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 = xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1) * Ty + xfrm.Get(1, 2)
-             * Tz + xfrm.Get(1, 3) Tr23 = xfrm.Get(2, 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
+             * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 =
+             * xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1) * Ty + xfrm.Get(1, 2) Tz + xfrm.Get(1, 3) Tr23 = xfrm.Get(2, 2) * Tx +
+             * xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
              */
-            JamaMatrix A = new JamaMatrix(3, 3);
+            final JamaMatrix A = new JamaMatrix(3, 3);
 
             A.set(0, 0, xfrm.Get(0, 0));
             A.set(0, 1, xfrm.Get(0, 1));
@@ -5505,62 +5050,59 @@ public abstract class ViewJFrameBase extends JFrame
             A.set(2, 1, xfrm.Get(2, 1));
             A.set(2, 2, xfrm.Get(2, 2));
 
-            JamaMatrix b = new JamaMatrix(3, 1);
+            final JamaMatrix b = new JamaMatrix(3, 1);
 
             b.set(0, 0, Tr03 - xfrm.Get(0, 3));
             b.set(1, 0, Tr13 - xfrm.Get(1, 3));
             b.set(2, 0, Tr23 - xfrm.Get(2, 3));
 
-            JamaMatrix X = A.solve(b);
-            double Tx = X.get(0, 0);
-            double Ty = X.get(1, 0);
-            double Tz = X.get(2, 0);
+            final JamaMatrix X = A.solve(b);
+            final double Tx = X.get(0, 0);
+            final double Ty = X.get(1, 0);
+            final double Tz = X.get(2, 0);
 
             xfrm.setTranslate(Tx, Ty, Tz);
 
-            transformACPC(image, imgBuffer, xfrm, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB, planeGap,
-                          gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA, zDimA);
+            transformACPC(image, imgBuffer, xfrm, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB, planeGap, gapArray,
+                    doNN, xResA, yResA, zResA, xDimA, yDimA, zDimA);
             image.calcMinMax();
             minimum = image.getMin();
             maximum = image.getMax();
 
             // After AFNI rotation to form ACPC image can no longer use gap information based on a
-            // single x,y, or z location.  Could mark individual pixels, but this would be very tedious
+            // single x,y, or z location. Could mark individual pixels, but this would be very tedious
             // Simply stop using the gap information in further interpolation for now
             planeGap = -1;
             viewType = FileInfoAfni.AFNI_ACPC;
         } // end of convert IMAGEB from FileInfoAfni.AFNI_ORIG to FileInfoAfni.AFNI_ACPC
-        else if ((AFNIViewTypeA == FileInfoAfni.AFNI_TLRC) && (imageA.getNDims() == 3) &&
-                     (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG) &&
-                     (((AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) &&
-                           ((AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) ||
-                                ((AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image.getNDims() == 4)))) ||
-                          ((AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) &&
-                               ((AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) ||
-                                    ((AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image.getNDims() == 4)))))) {
+        else if ( (AFNIViewTypeA == FileInfoAfni.AFNI_TLRC)
+                && (imageA.getNDims() == 3)
+                && (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG)
+                && ( ( (AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.HEAD_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image
+                        .getNDims() == 4)))) || ( (AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) && ( (AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) || ( (AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image
+                        .getNDims() == 4)))))) {
 
             // convert IMAGEB from FileInfoAfni.AFNI_ORIG to FileInfoAfni.AFNI_TLRC
             // I am skipping the transform() section of AlgorithmTransform which has the line
             // xfrm = matrixtoInverseArray(transMatrix);
             afniProgressBar = new ViewJProgressBar(image.getFileInfo()[0].getFileName(),
-                                                   "Transforming to match original anatomical image ...", 0, 100, false,
-                                                   null, null);
+                    "Transforming to match original anatomical image ...", 0, 100, false, null, null);
 
             afniProgressBar.setLocation(xScreen / 2, yScreen / 2);
             afniProgressBar.setVisible(true);
             afniProgressBar.updateValue(0, true);
 
-            Vector3f[] alphaArray = imageAInfo.getAlphaArray();
-            Vector3f[] betaArray = imageAInfo.getBetaArray();
-            Vector3f[] gammaArray = imageAInfo.getGammaArray();
-            Vector3f[] rrArray = imageAInfo.getrrArray();
-            Vector3f TalairachCenter = imageAInfo.getTalairachCenter();
-            int[] botX = imageAInfo.getBotX();
-            int[] botY = imageAInfo.getBotY();
-            int[] botZ = imageAInfo.getBotZ();
-            int[] topX = imageAInfo.getTopX();
-            int[] topY = imageAInfo.getTopY();
-            int[] topZ = imageAInfo.getTopZ();
+            final Vector3f[] alphaArray = imageAInfo.getAlphaArray();
+            final Vector3f[] betaArray = imageAInfo.getBetaArray();
+            final Vector3f[] gammaArray = imageAInfo.getGammaArray();
+            final Vector3f[] rrArray = imageAInfo.getrrArray();
+            final Vector3f TalairachCenter = imageAInfo.getTalairachCenter();
+            final int[] botX = imageAInfo.getBotX();
+            final int[] botY = imageAInfo.getBotY();
+            final int[] botZ = imageAInfo.getBotZ();
+            final int[] topX = imageAInfo.getTopX();
+            final int[] topY = imageAInfo.getTopY();
+            final int[] topZ = imageAInfo.getTopZ();
 
             // Change rr into mm distance
             for (int i = 0; i < 12; i++) {
@@ -5570,8 +5112,8 @@ public abstract class ViewJFrameBase extends JFrame
             }
 
             transformAFNI(image, imgBuffer, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB, lowXmmB, lowYmmB, lowZmmB,
-                          highXmmB, highYmmB, highZmmB, planeGap, gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA,
-                          zDimA, lowXmmA, lowYmmA, lowZmmA, highXmmA, highYmmA, highZmmA);
+                    highXmmB, highYmmB, highZmmB, planeGap, gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA, zDimA,
+                    lowXmmA, lowYmmA, lowZmmA, highXmmA, highYmmA, highZmmA);
             image.calcMinMax();
 
             // Determine the new gapArray if slices of uncollected data represented by zeroes
@@ -5581,13 +5123,13 @@ public abstract class ViewJFrameBase extends JFrame
                 tmpArray = new int[xDimA];
                 scaleX = xResA / xResB;
 
-                boolean[] found = new boolean[xDimA];
+                final boolean[] found = new boolean[xDimA];
 
-                for (int i = 0; i < gapArray.length; i++) {
+                for (final int element : gapArray) {
 
                     for (int x = 0; x < xDimA; x++) {
 
-                        if (((x * scaleX) >= gapArray[i]) && ((x * scaleX) < (gapArray[i] + 1)) && (!found[x])) {
+                        if ( ( (x * scaleX) >= element) && ( (x * scaleX) < (element + 1)) && ( !found[x])) {
                             tmpArray[gapNumber++] = x;
                             found[x] = true;
                         }
@@ -5607,13 +5149,13 @@ public abstract class ViewJFrameBase extends JFrame
                 tmpArray = new int[yDimA];
                 scaleY = yResA / yResB;
 
-                boolean[] found = new boolean[yDimA];
+                final boolean[] found = new boolean[yDimA];
 
-                for (int i = 0; i < gapArray.length; i++) {
+                for (final int element : gapArray) {
 
                     for (int y = 0; y < yDimA; y++) {
 
-                        if (((y * scaleY) >= gapArray[i]) && ((y * scaleY) < (gapArray[i] + 1)) && (!found[y])) {
+                        if ( ( (y * scaleY) >= element) && ( (y * scaleY) < (element + 1)) && ( !found[y])) {
                             tmpArray[gapNumber++] = y;
                             found[y] = true;
                         }
@@ -5633,13 +5175,13 @@ public abstract class ViewJFrameBase extends JFrame
                 tmpArray = new int[zDimA];
                 scaleZ = zResA / zResB;
 
-                boolean[] found = new boolean[zDimA];
+                final boolean[] found = new boolean[zDimA];
 
-                for (int i = 0; i < gapArray.length; i++) {
+                for (final int element : gapArray) {
 
                     for (int z = 0; z < zDimA; z++) {
 
-                        if (((z * scaleZ) >= gapArray[i]) && ((z * scaleZ) < (gapArray[i] + 1)) && (!found[z])) {
+                        if ( ( (z * scaleZ) >= element) && ( (z * scaleZ) < (element + 1)) && ( !found[z])) {
                             tmpArray[gapNumber++] = z;
                             found[z] = true;
                         }
@@ -5688,21 +5230,21 @@ public abstract class ViewJFrameBase extends JFrame
             newResUnit[1] = imageAInfo.getUnitsOfMeasure()[1];
             newResUnit[2] = imageAInfo.getUnitsOfMeasure()[2];
 
-            Vector3f center = image.getImageCentermm(false);
+            final Vector3f center = image.getImageCentermm(false);
 
             bufferSize = xDimB * yDimB * zDimB * tDimB;
             imgBuffer = new float[bufferSize];
 
             try {
                 image.exportData(0, bufferSize, imgBuffer);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 MipavUtil.displayError("ViewJFrameBase: IOException error on exportData");
             }
 
             try {
                 image.disposeLocal();
                 image = new ModelImage(imageType, newExtents, imageBInfo.getFileName());
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 System.gc();
                 MipavUtil.displayError("ViewJFrameBase: Out of memory on new ModelImage for Talairach conversion");
                 afniProgressBar.dispose();
@@ -5710,10 +5252,10 @@ public abstract class ViewJFrameBase extends JFrame
                 return -1;
             }
 
-            TransMatrix xfrm = new TransMatrix(4);
+            final TransMatrix xfrm = new TransMatrix(4);
 
             for (int i = 0; i < 12; i++) {
-                int j = i + 1;
+                final int j = i + 1;
 
                 afniProgressBar.setMessage("Talairach transformation pass #" + j);
 
@@ -5721,19 +5263,19 @@ public abstract class ViewJFrameBase extends JFrame
                 xfrm.setTranslate(center.X, center.Y, center.Z);
                 xfrm.setRotate(alphaArray[i], betaArray[i], gammaArray[i]);
 
-                
-                double Tr03 = rrArray[i].X - (TalairachCenter.X * xfrm.Get(0, 0)) - (TalairachCenter.Y * xfrm.Get(0, 1)) -
-                              (TalairachCenter.Z * xfrm.Get(0, 2));
-                double Tr13 = rrArray[i].Y - (TalairachCenter.X * xfrm.Get(1, 0)) - (TalairachCenter.Y * xfrm.Get(1, 1)) -
-                              (TalairachCenter.Z * xfrm.Get(1, 2));
-                double Tr23 = rrArray[i].Z - (TalairachCenter.X * xfrm.Get(2, 0)) - (TalairachCenter.Y * xfrm.Get(2, 1)) -
-                              (TalairachCenter.Z * xfrm.Get(2, 2));
+                final double Tr03 = rrArray[i].X - (TalairachCenter.X * xfrm.Get(0, 0))
+                        - (TalairachCenter.Y * xfrm.Get(0, 1)) - (TalairachCenter.Z * xfrm.Get(0, 2));
+                final double Tr13 = rrArray[i].Y - (TalairachCenter.X * xfrm.Get(1, 0))
+                        - (TalairachCenter.Y * xfrm.Get(1, 1)) - (TalairachCenter.Z * xfrm.Get(1, 2));
+                final double Tr23 = rrArray[i].Z - (TalairachCenter.X * xfrm.Get(2, 0))
+                        - (TalairachCenter.Y * xfrm.Get(2, 1)) - (TalairachCenter.Z * xfrm.Get(2, 2));
 
                 /*
-                 * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 = xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1) * Ty +
-                 * xfrm.Get(1, 2) * Tz + xfrm.Get(1, 3) Tr23 = xfrm.Get(2, 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
+                 * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 =
+                 * xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1) * Ty + xfrm.Get(1, 2) * Tz + xfrm.Get(1, 3) Tr23 = xfrm.Get(2,
+                 * 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
                  */
-                JamaMatrix A = new JamaMatrix(3, 3);
+                final JamaMatrix A = new JamaMatrix(3, 3);
 
                 A.set(0, 0, xfrm.Get(0, 0));
                 A.set(0, 1, xfrm.Get(0, 1));
@@ -5745,21 +5287,21 @@ public abstract class ViewJFrameBase extends JFrame
                 A.set(2, 1, xfrm.Get(2, 1));
                 A.set(2, 2, xfrm.Get(2, 2));
 
-                JamaMatrix b = new JamaMatrix(3, 1);
+                final JamaMatrix b = new JamaMatrix(3, 1);
 
                 b.set(0, 0, Tr03 - xfrm.Get(0, 3));
                 b.set(1, 0, Tr13 - xfrm.Get(1, 3));
                 b.set(2, 0, Tr23 - xfrm.Get(2, 3));
 
-                JamaMatrix X = A.solve(b);
-                double Tx = X.get(0, 0);
-                double Ty = X.get(1, 0);
-                double Tz = X.get(2, 0);
+                final JamaMatrix X = A.solve(b);
+                final double Tx = X.get(0, 0);
+                final double Ty = X.get(1, 0);
+                final double Tz = X.get(2, 0);
 
                 xfrm.setTranslate(Tx, Ty, Tz);
-                transformTalairach(image, imgBuffer, xfrm, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB,
-                                   planeGap, gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA, zDimA, botX[i], botY[i],
-                                   botZ[i], topX[i], topY[i], topZ[i]);
+                transformTalairach(image, imgBuffer, xfrm, xResB, yResB, zResB, xDimB, yDimB, zDimB, tDimB, planeGap,
+                        gapArray, doNN, xResA, yResA, zResA, xDimA, yDimA, zDimA, botX[i], botY[i], botZ[i], topX[i],
+                        topY[i], topZ[i]);
             } // for (i = 0; i < 12; i++)
 
             image.calcMinMax();
@@ -5767,7 +5309,7 @@ public abstract class ViewJFrameBase extends JFrame
             maximum = image.getMax();
 
             // After AFNI transformation to form Talairach image can no longer use gap information based on a
-            // single x,y, or z location.  Could mark individual pixels, but this would be very tedious
+            // single x,y, or z location. Could mark individual pixels, but this would be very tedious
             // Simply stop using the gap information in further interpolation for now
             planeGap = -1;
             viewType = FileInfoAfni.AFNI_TLRC;
@@ -5801,10 +5343,12 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * This routine is designed to transform AFNI functional images which have already been transformed to match AFNI
      * original images to match AFNI +acpc images.
-     *
-     * <p>AFNI:Software for Analysis and Visualization of Functional Magnetic Resonance Neuroimages by Robert W. Cox
-     * states:</p>
-     *
+     * 
+     * <p>
+     * AFNI:Software for Analysis and Visualization of Functional Magnetic Resonance Neuroimages by Robert W. Cox
+     * states:
+     * </p>
+     * 
      * <blockquote>"In some applications, gaps are present between the functional slices. For example, some
      * investigators using sagittal functional images do not collect data that spans the longitudinal fissure, but
      * instead leave a 3-5 mm gap there. The auxiliary program abut can provide zero-filled images to fill in the gaps,
@@ -5813,61 +5357,66 @@ public abstract class ViewJFrameBase extends JFrame
      * nearest- neighbor, linear, or cubic interpolation, at the user's discretion. Interpolation is not done across the
      * boundaries between the gap-filling zero images and the nonzero user-supplied images; that is, interpolation is
      * only done inside spatially contiguous blocks of actual input data."</blockquote>
-     *
-     * <p>A second special consideration exists in the interpolation of functional data. The MCW AFNI - User Manual
-     * states: "In this version of AFNI, the threshold data (e.g., correlation coefficient) is always resampled using
-     * the nearest neighbor method. This is because thresholding with an interpolated nonlinear statistic is a somewhat
+     * 
+     * <p>
+     * A second special consideration exists in the interpolation of functional data. The MCW AFNI - User Manual states:
+     * "In this version of AFNI, the threshold data (e.g., correlation coefficient) is always resampled using the
+     * nearest neighbor method. This is because thresholding with an interpolated nonlinear statistic is a somewhat
      * dubious procedure." At another point the manual states: "Threshold data in functional datasets is always
      * resampled using the nearest neighbor mode. This is becasue it is somewhat unreasonable to interpolate a nonlinear
      * statistic (such as correlation coefficient) between voxels, and then to interpret this statistic using
-     * probabilistic models that assume independence."</p>
-     *
-     * <p>Thus, the intensity data is interpolated with trilinear interpolation and the threshold data is interpolated
-     * with nearest neighbor interpolation.</p>
-     *
-     * @param  image      image being created
-     * @param  imgBuffer  source image array
-     * @param  xfrm       transformation matrix to be applied
-     * @param  iXres      input x resolution
-     * @param  iYres      input y resolution
-     * @param  iZres      input z resolution
-     * @param  iXdim      input x dimesnion
-     * @param  iYdim      input y dimension
-     * @param  iZdim      input z dimension
-     * @param  iTdim      input t dimension
-     * @param  planeGap   -1 if no zero filled gaps, 0 for x axis gaps, 1 for y axis, 2 for z axis
-     * @param  gapArray   array of coordinates at which the zero filled planes occur
-     * @param  doNN       true if functional, false if anatomical
-     * @param  oXres      output x resolution
-     * @param  oYres      output y resolution
-     * @param  oZres      output z resolution
-     * @param  oXdim      output x dimension
-     * @param  oYdim      output y dimension
-     * @param  oZdim      output z dimension
+     * probabilistic models that assume independence."
+     * </p>
+     * 
+     * <p>
+     * Thus, the intensity data is interpolated with trilinear interpolation and the threshold data is interpolated with
+     * nearest neighbor interpolation.
+     * </p>
+     * 
+     * @param image image being created
+     * @param imgBuffer source image array
+     * @param xfrm transformation matrix to be applied
+     * @param iXres input x resolution
+     * @param iYres input y resolution
+     * @param iZres input z resolution
+     * @param iXdim input x dimesnion
+     * @param iYdim input y dimension
+     * @param iZdim input z dimension
+     * @param iTdim input t dimension
+     * @param planeGap -1 if no zero filled gaps, 0 for x axis gaps, 1 for y axis, 2 for z axis
+     * @param gapArray array of coordinates at which the zero filled planes occur
+     * @param doNN true if functional, false if anatomical
+     * @param oXres output x resolution
+     * @param oYres output y resolution
+     * @param oZres output z resolution
+     * @param oXdim output x dimension
+     * @param oYdim output y dimension
+     * @param oZdim output z dimension
      */
-    private void transformACPC(ModelImage image, float[] imgBuffer, TransMatrix xfrm, float iXres, float iYres,
-                               float iZres, int iXdim, int iYdim, int iZdim, int iTdim, int planeGap, int[] gapArray,
-                               boolean doNN, float oXres, float oYres, float oZres, int oXdim, int oYdim, int oZdim) {
+    private void transformACPC(final ModelImage image, final float[] imgBuffer, final TransMatrix xfrm,
+            final float iXres, final float iYres, final float iZres, final int iXdim, final int iYdim, final int iZdim,
+            final int iTdim, final int planeGap, final int[] gapArray, boolean doNN, final float oXres,
+            final float oYres, final float oZres, final int oXdim, final int oYdim, final int oZdim) {
         // This routine is designed to transform AFNI functional images which have already been
         // transformed to match AFNI original images to match AFNI +acpc images.
 
         // AFNI:Software for Analysis and Visualization of Functional Magnetic Resonance Neuroimages by
         // Robert W. Cox states: "In some applications, gaps are present between the functional slices.
         // For example, some investigators using sagittal functional images do not collect data that spans
-        // the longitudinal fissure, but instead leave a 3-5 mm gap there.  The auxiliary program abut can
+        // the longitudinal fissure, but instead leave a 3-5 mm gap there. The auxiliary program abut can
         // provide zero-filled images to fill in the gaps, and can resample the nonzero slices to a finer
-        // mesh if needed(e.g., to fill a 2 mm gap in a series of 4 mm functional slices).  Resampling
+        // mesh if needed(e.g., to fill a 2 mm gap in a series of 4 mm functional slices). Resampling
         // in the slice select direction between contiguous input slices can be done using nearest-
-        // neighbor, linear, or cubic interpolation, at the user's discretion.  Interpolation is not done
+        // neighbor, linear, or cubic interpolation, at the user's discretion. Interpolation is not done
         // across the boundaries between the gap-filling zero images and the nonzero user-supplied images;
         // that is, interpolation is only done inside spatially contiguous blocks of actual input data."
 
-        // A second special consideration exists in the interpolation of functional data.  The MCW AFNI -
+        // A second special consideration exists in the interpolation of functional data. The MCW AFNI -
         // User Manual states: "In this version of AFNI, the threshold data (e.g., correlation coefficient)
-        // is always resampled using the nearest neighbor method.  This is because thresholding with an
-        // interpolated nonlinear statistic is a somewhat dubious procedure."  At another point the manual
+        // is always resampled using the nearest neighbor method. This is because thresholding with an
+        // interpolated nonlinear statistic is a somewhat dubious procedure." At another point the manual
         // states: "Threshold data in functional datasets is always resampled using the nearest neighbor
-        // mode.  This is becasue it is somewhat unreasonable to interpolate a nonlinear statistic (such
+        // mode. This is becasue it is somewhat unreasonable to interpolate a nonlinear statistic (such
         // as correlation coefficient) between voxels, and then to interpret this statistic using
         // probabilistic models that assume independence."
         // Thus, the intensity data is interpolated with trilinear interpolation and the threshold data is
@@ -5895,7 +5444,7 @@ public abstract class ViewJFrameBase extends JFrame
         boolean interp;
         int xOffset, yOffset, zOffset;
 
-        int mod = oXdim / 50;
+        final int mod = oXdim / 50;
         int tLast;
 
         T00 = xfrm.Get(0, 0);
@@ -5917,25 +5466,27 @@ public abstract class ViewJFrameBase extends JFrame
 
         tLast = Math.max(1, iTdim);
 
-        if (!doNN) {
+        if ( !doNN) {
 
             for (t = 0; t < tLast; t++) {
                 tOffset = t * volSize;
 
                 for (i = 0; i < oXdim; i++) {
 
-                    if ((i % mod) == 0) {
-                        progressBar.updateValue((int) ((((float) ((t * oXdim) + i) /
-                                                             (((iTdim - 1) * oXdim) + (oXdim - 1))) * 100) + .5), true);
+                    if ( (i % mod) == 0) {
+                        progressBar
+                                .updateValue(
+                                        (int) ( ( ((float) ( (t * oXdim) + i) / ( ( (iTdim - 1) * oXdim) + (oXdim - 1))) * 100) + .5),
+                                        true);
                     }
 
-                    imm = (float) i * oXres;
+                    imm = i * oXres;
                     i1 = (imm * T00) + T03;
                     i2 = (imm * T10) + T13;
                     i3 = (imm * T20) + T23;
 
                     for (j = 0; j < oYdim; j++) {
-                        jmm = (float) j * oYres;
+                        jmm = j * oYres;
                         j1 = jmm * T01;
                         j2 = jmm * T11;
                         j3 = jmm * T21;
@@ -5947,22 +5498,22 @@ public abstract class ViewJFrameBase extends JFrame
 
                             // transform i,j,k
                             value = 0; // remains zero if voxel is transformed out of bounds
-                            kmm = (float) k * oZres;
+                            kmm = k * oZres;
                             X = (temp3 + (kmm * T02)) / iXres;
                             roundX = (int) (X + 0.5f);
 
-                            if ((X >= 0) && (roundX < iXdim)) {
+                            if ( (X >= 0) && (roundX < iXdim)) {
                                 Y = (temp2 + (kmm * T12)) / iYres;
                                 roundY = (int) (Y + 0.5f);
 
-                                if ((Y >= 0) && (roundY < iYdim)) {
+                                if ( (Y >= 0) && (roundY < iYdim)) {
                                     Z = (temp1 + (kmm * T22)) / iZres;
                                     roundZ = (int) (Z + 0.5f);
 
-                                    if ((Z >= 0) && (roundZ < iZdim)) {
+                                    if ( (Z >= 0) && (roundZ < iZdim)) {
 
-                                        if (((int) X < (iXdim - 1)) && ((int) Y < (iYdim - 1)) &&
-                                                ((int) Z < (iZdim - 1))) {
+                                        if ( ((int) X < (iXdim - 1)) && ((int) Y < (iYdim - 1))
+                                                && ((int) Z < (iZdim - 1))) {
 
                                             // set intensity of i,j,k to new transformed coordinate if
                                             // x,y,z is w/in dimensions of image
@@ -5989,8 +5540,8 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == X0pos) ||
-                                                                ((gapArray[g] == X1pos) && (x0 != 0.0f))) {
+                                                        if ( (gapArray[g] == X0pos)
+                                                                || ( (gapArray[g] == X1pos) && (x0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
@@ -5999,18 +5550,18 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Y) ||
-                                                                ((gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Y)
+                                                                || ( (gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
                                                     }
-                                                } else { // else if (planeGap == 1),  planeGap == 2
+                                                } else { // else if (planeGap == 1), planeGap == 2
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Z) ||
-                                                                ((gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Z)
+                                                                || ( (gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
@@ -6023,14 +5574,14 @@ public abstract class ViewJFrameBase extends JFrame
                                                 temp5 = y0 * z1;
                                                 temp6 = y1 * z0;
                                                 temp7 = y0 * z0;
-                                                value = (x1 * temp4 * imgBuffer[Z0pos + Y0pos + X0pos + tOffset]) +
-                                                        (x0 * temp4 * imgBuffer[Z0pos + Y0pos + X1pos + tOffset]) +
-                                                        (x1 * temp5 * imgBuffer[Z0pos + Y1pos + X0pos + tOffset]) +
-                                                        (x0 * temp5 * imgBuffer[Z0pos + Y1pos + X1pos + tOffset]) +
-                                                        (x1 * temp6 * imgBuffer[Z1pos + Y0pos + X0pos + tOffset]) +
-                                                        (x0 * temp6 * imgBuffer[Z1pos + Y0pos + X1pos + tOffset]) +
-                                                        (x1 * temp7 * imgBuffer[Z1pos + Y1pos + X0pos + tOffset]) +
-                                                        (x0 * temp7 * imgBuffer[Z1pos + Y1pos + X1pos + tOffset]);
+                                                value = (x1 * temp4 * imgBuffer[Z0pos + Y0pos + X0pos + tOffset])
+                                                        + (x0 * temp4 * imgBuffer[Z0pos + Y0pos + X1pos + tOffset])
+                                                        + (x1 * temp5 * imgBuffer[Z0pos + Y1pos + X0pos + tOffset])
+                                                        + (x0 * temp5 * imgBuffer[Z0pos + Y1pos + X1pos + tOffset])
+                                                        + (x1 * temp6 * imgBuffer[Z1pos + Y0pos + X0pos + tOffset])
+                                                        + (x0 * temp6 * imgBuffer[Z1pos + Y0pos + X1pos + tOffset])
+                                                        + (x1 * temp7 * imgBuffer[Z1pos + Y1pos + X0pos + tOffset])
+                                                        + (x0 * temp7 * imgBuffer[Z1pos + Y1pos + X1pos + tOffset]);
                                             } // if (interp)
                                         } else {
 
@@ -6048,8 +5599,8 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) X) ||
-                                                                ((gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) X)
+                                                                || ( (gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
@@ -6058,18 +5609,18 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Y) ||
-                                                                ((gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Y)
+                                                                || ( (gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
                                                     }
-                                                } else { // else if (planeGap == 1),  planeGap == 2
+                                                } else { // else if (planeGap == 1), planeGap == 2
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Z) ||
-                                                                ((gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Z)
+                                                                || ( (gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
@@ -6105,21 +5656,23 @@ public abstract class ViewJFrameBase extends JFrame
 
                 for (i = 0; i < oXdim; i++) {
 
-                    if ((i % mod) == 0) {
-                        progressBar.updateValue((int) ((((float) ((t * oXdim) + i) /
-                                                             (((iTdim - 1) * oXdim) + (oXdim - 1))) * 100) + .5), true);
+                    if ( (i % mod) == 0) {
+                        progressBar
+                                .updateValue(
+                                        (int) ( ( ((float) ( (t * oXdim) + i) / ( ( (iTdim - 1) * oXdim) + (oXdim - 1))) * 100) + .5),
+                                        true);
                     }
 
-                    imm = (float) i * oXres;
+                    imm = i * oXres;
 
                     for (j = 0; j < oYdim; j++) {
-                        jmm = (float) j * oYres;
+                        jmm = j * oYres;
 
                         for (k = 0; k < oZdim; k++) {
                             value = 0.0f; // remains zero if voxel is transformed out of bounds
 
                             // transform i,j,k
-                            kmm = (float) k * oZres;
+                            kmm = k * oZres;
 
                             X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
                             Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
@@ -6135,9 +5688,8 @@ public abstract class ViewJFrameBase extends JFrame
                             roundY = (int) (Y + 0.5f);
                             roundZ = (int) (Z + 0.5f);
 
-                            if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1)) ||
-                                    (roundZ < 0) || (roundZ > (iZdim - 1))) { }
-                            else {
+                            if ( (roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1))
+                                    || (roundZ < 0) || (roundZ > (iZdim - 1))) {} else {
                                 interp = true;
 
                                 // If values have not been collected in the original functional image
@@ -6152,8 +5704,8 @@ public abstract class ViewJFrameBase extends JFrame
 
                                         for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                            if ((gapArray[g] == (int) X) ||
-                                                    ((gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
+                                            if ( (gapArray[g] == (int) X)
+                                                    || ( (gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
                                                 interp = false;
                                             }
                                         }
@@ -6161,17 +5713,17 @@ public abstract class ViewJFrameBase extends JFrame
 
                                         for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                            if ((gapArray[g] == (int) Y) ||
-                                                    ((gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
+                                            if ( (gapArray[g] == (int) Y)
+                                                    || ( (gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
                                                 interp = false;
                                             }
                                         }
-                                    } else { // else if (planeGap == 1),  planeGap == 2
+                                    } else { // else if (planeGap == 1), planeGap == 2
 
                                         for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                            if ((gapArray[g] == (int) Z) ||
-                                                    ((gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
+                                            if ( (gapArray[g] == (int) Z)
+                                                    || ( (gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
                                                 interp = false;
                                             }
                                         }
@@ -6202,10 +5754,12 @@ public abstract class ViewJFrameBase extends JFrame
      * This routine is designed to transform AFNI functional images and AFNI 3D + time anatomical images to match AFNI
      * original 3D anatomical images. Here the 3 axes of the 2 images are parallel and the spatial orientation of the 2
      * sets of axes are identical.
-     *
-     * <p>AFNI:Software for Analysis and Visualization of Functional Magnetic Resonance Neuroimages by Robert W. Cox
-     * states:</p>
-     *
+     * 
+     * <p>
+     * AFNI:Software for Analysis and Visualization of Functional Magnetic Resonance Neuroimages by Robert W. Cox
+     * states:
+     * </p>
+     * 
      * <blockquote>&quot;In some applications, gaps are present between the functional slices. For example, some
      * investigators using sagittal functional images do not collect data that spans the longitudinal fissure, but
      * instead leave a 3-5 mm gap there. The auxiliary program abut can provide zero-filled images to fill in the gaps,
@@ -6214,78 +5768,84 @@ public abstract class ViewJFrameBase extends JFrame
      * nearest- neighbor, linear, or cubic interpolation, at the user's discretion. Interpolation is not done across the
      * boundaries between the gap-filling zero images and the nonzero user-supplied images; that is, interpolation is
      * only done inside spatially contiguous blocks of actual input data.&quot;</blockquote>
-     *
-     * <p>A second special consideration exists in the interpolation of functional data. The MCW AFNI - User Manual
-     * states: &quot;In this version of AFNI, the threshold data (e.g., correlation coefficient) is always resampled
-     * using the nearest neighbor method. This is because thresholding with an interpolated nonlinear statistic is a
-     * somewhat dubious procedure.&quot;</p>
-     *
-     * <p>At another point the manual states: &quot;Threshold data in functional datasets is always resampled using the
+     * 
+     * <p>
+     * A second special consideration exists in the interpolation of functional data. The MCW AFNI - User Manual states:
+     * &quot;In this version of AFNI, the threshold data (e.g., correlation coefficient) is always resampled using the
+     * nearest neighbor method. This is because thresholding with an interpolated nonlinear statistic is a somewhat
+     * dubious procedure.&quot;
+     * </p>
+     * 
+     * <p>
+     * At another point the manual states: &quot;Threshold data in functional datasets is always resampled using the
      * nearest neighbor mode. This is becasue it is somewhat unreasonable to interpolate a nonlinear statistic (such as
      * correlation coefficient) between voxels, and then to interpret this statistic using probabilistic models that
-     * assume independence.&quot;</p>
-     *
-     * <p>Thus, the intensity data is interpolated with trilinear interpolation and the threshold data is interpolated
-     * with nearest neighbor interpolation.</p>
-     *
-     * @param  image      image being created
-     * @param  imgBuffer  source image array
-     * @param  iXres      input x resolution
-     * @param  iYres      input y resolution
-     * @param  iZres      input z resolution
-     * @param  iXdim      input x dimesnion
-     * @param  iYdim      input y dimension
-     * @param  iZdim      input z dimension
-     * @param  iTdim      input t dimension
-     * @param  ilowXmm    lowest valid input x location in space in millimeters
-     * @param  ilowYmm    lowest valid input y location in space in millimeters
-     * @param  ilowZmm    lowest valid input z location in space in millimeters
-     * @param  ihighXmm   highest valid input x location in space in millimeters
-     * @param  ihighYmm   highest valid input y location in space in millimeters
-     * @param  ihighZmm   highest valid input z location in space in millimeters
-     * @param  planeGap   -1 if no zero filled gaps, 0 for x axis gaps, 1 for y axis, 2 for z axis
-     * @param  gapArray   array of coordinates at which the zero filled planes occur
-     * @param  doNN       true if functional, false if anatomical
-     * @param  oXres      output x resolution
-     * @param  oYres      output y resolution
-     * @param  oZres      output z resolution
-     * @param  oXdim      output x dimension
-     * @param  oYdim      output y dimension
-     * @param  oZdim      output z dimension
-     * @param  olowXmm    lowest valid output x location in space in millimeters
-     * @param  olowYmm    lowest valid output y location in space in millimeters
-     * @param  olowZmm    lowest valid output z location in space in millimeters
-     * @param  ohighXmm   highest valid output x location in space in millimeters
-     * @param  ohighYmm   highest valid output y location in space in millimeters
-     * @param  ohighZmm   highest valid output z location in space in millimeters
+     * assume independence.&quot;
+     * </p>
+     * 
+     * <p>
+     * Thus, the intensity data is interpolated with trilinear interpolation and the threshold data is interpolated with
+     * nearest neighbor interpolation.
+     * </p>
+     * 
+     * @param image image being created
+     * @param imgBuffer source image array
+     * @param iXres input x resolution
+     * @param iYres input y resolution
+     * @param iZres input z resolution
+     * @param iXdim input x dimesnion
+     * @param iYdim input y dimension
+     * @param iZdim input z dimension
+     * @param iTdim input t dimension
+     * @param ilowXmm lowest valid input x location in space in millimeters
+     * @param ilowYmm lowest valid input y location in space in millimeters
+     * @param ilowZmm lowest valid input z location in space in millimeters
+     * @param ihighXmm highest valid input x location in space in millimeters
+     * @param ihighYmm highest valid input y location in space in millimeters
+     * @param ihighZmm highest valid input z location in space in millimeters
+     * @param planeGap -1 if no zero filled gaps, 0 for x axis gaps, 1 for y axis, 2 for z axis
+     * @param gapArray array of coordinates at which the zero filled planes occur
+     * @param doNN true if functional, false if anatomical
+     * @param oXres output x resolution
+     * @param oYres output y resolution
+     * @param oZres output z resolution
+     * @param oXdim output x dimension
+     * @param oYdim output y dimension
+     * @param oZdim output z dimension
+     * @param olowXmm lowest valid output x location in space in millimeters
+     * @param olowYmm lowest valid output y location in space in millimeters
+     * @param olowZmm lowest valid output z location in space in millimeters
+     * @param ohighXmm highest valid output x location in space in millimeters
+     * @param ohighYmm highest valid output y location in space in millimeters
+     * @param ohighZmm highest valid output z location in space in millimeters
      */
-    private void transformAFNI(ModelImage image, float[] imgBuffer, float iXres, float iYres, float iZres, int iXdim,
-                               int iYdim, int iZdim, int iTdim, float ilowXmm, float ilowYmm, float ilowZmm,
-                               float ihighXmm, float ihighYmm, float ihighZmm, int planeGap, int[] gapArray,
-                               boolean doNN, float oXres, float oYres, float oZres, int oXdim, int oYdim, int oZdim,
-                               float olowXmm, float olowYmm, float olowZmm, float ohighXmm, float ohighYmm,
-                               float ohighZmm) {
+    private void transformAFNI(final ModelImage image, final float[] imgBuffer, final float iXres, final float iYres,
+            final float iZres, final int iXdim, final int iYdim, final int iZdim, final int iTdim, final float ilowXmm,
+            final float ilowYmm, final float ilowZmm, final float ihighXmm, final float ihighYmm, final float ihighZmm,
+            final int planeGap, final int[] gapArray, boolean doNN, final float oXres, final float oYres,
+            final float oZres, final int oXdim, final int oYdim, final int oZdim, final float olowXmm,
+            final float olowYmm, final float olowZmm, final float ohighXmm, final float ohighYmm, final float ohighZmm) {
         // This routine is designed to transform AFNI functional images and AFNI 3D + time anatomical images to match
-        // AFNI original 3D anatomical images.  Here the 3 axes of the 2 images are parallel and the spatial orientation
+        // AFNI original 3D anatomical images. Here the 3 axes of the 2 images are parallel and the spatial orientation
         // of the 2 sets of axes are identical.
 
         // AFNI:Software for Analysis and Visualization of Functional Magnetic Resonance Neuroimages by
         // Robert W. Cox states: "In some applications, gaps are present between the functional slices.
         // For example, some investigators using sagittal functional images do not collect data that spans
-        // the longitudinal fissure, but instead leave a 3-5 mm gap there.  The auxiliary program abut can
+        // the longitudinal fissure, but instead leave a 3-5 mm gap there. The auxiliary program abut can
         // provide zero-filled images to fill in the gaps, and can resample the nonzero slices to a finer
-        // mesh if needed(e.g., to fill a 2 mm gap in a series of 4 mm functional slices).  Resampling
+        // mesh if needed(e.g., to fill a 2 mm gap in a series of 4 mm functional slices). Resampling
         // in the slice select direction between contiguous input slices can be done using nearest-
-        // neighbor, linear, or cubic interpolation, at the user's discretion.  Interpolation is not done
+        // neighbor, linear, or cubic interpolation, at the user's discretion. Interpolation is not done
         // across the boundaries between the gap-filling zero images and the nonzero user-supplied images;
         // that is, interpolation is only done inside spatially contiguous blocks of actual input data."
 
-        // A second special consideration exists in the interpolation of functional data.  The MCW AFNI -
+        // A second special consideration exists in the interpolation of functional data. The MCW AFNI -
         // User Manual states: "In this version of AFNI, the threshold data (e.g., correlation coefficient)
-        // is always resampled using the nearest neighbor method.  This is because thresholding with an
-        // interpolated nonlinear statistic is a somewhat dubious procedure."  At another point the manual
+        // is always resampled using the nearest neighbor method. This is because thresholding with an
+        // interpolated nonlinear statistic is a somewhat dubious procedure." At another point the manual
         // states: "Threshold data in functional datasets is always resampled using the nearest neighbor
-        // mode.  This is becasue it is somewhat unreasonable to interpolate a nonlinear statistic (such
+        // mode. This is becasue it is somewhat unreasonable to interpolate a nonlinear statistic (such
         // as correlation coefficient) between voxels, and then to interpret this statistic using
         // probabilistic models that assume independence."
         // Thus, the intensity data is interpolated with trilinear interpolation and the threshold data is
@@ -6318,34 +5878,36 @@ public abstract class ViewJFrameBase extends JFrame
         float xloc1, yloc1, zloc1;
         int tLast;
 
-        int mod = oXdim / 50;
+        final int mod = oXdim / 50;
 
         tLast = Math.max(1, iTdim);
 
-        if (!doNN) {
+        if ( !doNN) {
 
             for (t = 0; t < tLast; t++) {
                 tOffset = t * volSize;
 
                 for (i = 0; i < oXdim; i++) {
 
-                    if ((i % mod) == 0) {
-                        progressBar.updateValue((int) ((((float) ((t * oXdim) + i) /
-                                                             (((iTdim - 1) * oXdim) + (oXdim - 1))) * 100) + .5), true);
+                    if ( (i % mod) == 0) {
+                        progressBar
+                                .updateValue(
+                                        (int) ( ( ((float) ( (t * oXdim) + i) / ( ( (iTdim - 1) * oXdim) + (oXdim - 1))) * 100) + .5),
+                                        true);
                     }
 
-                    imm = (float) i * oXres;
+                    imm = i * oXres;
                     iloc = olowXmm + imm;
 
                     for (j = 0; j < oYdim; j++) {
-                        jmm = (float) j * oYres;
+                        jmm = j * oYres;
                         jloc = olowYmm + jmm;
 
                         for (k = 0; k < oZdim; k++) {
 
                             // transform i,j,k
                             value = 0; // remains zero if voxel is transformed out of bounds
-                            kmm = (float) k * oZres;
+                            kmm = k * oZres;
                             kloc = olowZmm + kmm;
                             X = (iloc - ilowXmm) / iXres;
                             roundX = (int) (X + 0.5f);
@@ -6353,26 +5915,26 @@ public abstract class ViewJFrameBase extends JFrame
                             xloc0 = (X * iXres) + ilowXmm;
                             xloc1 = xloc0 + iXres;
 
-                            if ((X >= 0) && (roundX < iXdim)) {
+                            if ( (X >= 0) && (roundX < iXdim)) {
                                 Y = (jloc - ilowYmm) / iYres;
                                 roundY = (int) (Y + 0.5f);
                                 yloc = (roundY * iYres) + ilowYmm;
                                 yloc0 = (Y * iYres) + ilowYmm;
                                 yloc1 = yloc0 + iYres;
 
-                                if ((Y >= 0) && (roundY < iYdim)) {
+                                if ( (Y >= 0) && (roundY < iYdim)) {
                                     Z = (kloc - ilowZmm) / iZres;
                                     roundZ = (int) (Z + 0.5f);
                                     zloc = (roundZ * iZres) + ilowZmm;
                                     zloc0 = (Z * iZres) + ilowZmm;
                                     zloc1 = zloc0 + iZres;
 
-                                    if ((Z >= 0) && (roundZ < iZdim)) {
+                                    if ( (Z >= 0) && (roundZ < iZdim)) {
 
-                                        if (((int) X < (iXdim - 1)) && ((int) Y < (iYdim - 1)) &&
-                                                ((int) Z < (iZdim - 1)) && (xloc0 >= olowXmm) && (xloc1 <= ohighXmm) &&
-                                                (yloc0 >= olowYmm) && (yloc1 <= ohighYmm) && (zloc0 >= olowZmm) &&
-                                                (zloc1 <= ohighZmm)) {
+                                        if ( ((int) X < (iXdim - 1)) && ((int) Y < (iYdim - 1))
+                                                && ((int) Z < (iZdim - 1)) && (xloc0 >= olowXmm) && (xloc1 <= ohighXmm)
+                                                && (yloc0 >= olowYmm) && (yloc1 <= ohighYmm) && (zloc0 >= olowZmm)
+                                                && (zloc1 <= ohighZmm)) {
 
                                             // set intensity of i,j,k to new transformed coordinate if
                                             // x,y,z is w/in dimensions of image
@@ -6399,8 +5961,8 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == X0pos) ||
-                                                                ((gapArray[g] == X1pos) && (x0 != 0.0f))) {
+                                                        if ( (gapArray[g] == X0pos)
+                                                                || ( (gapArray[g] == X1pos) && (x0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
@@ -6409,18 +5971,18 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Y) ||
-                                                                ((gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Y)
+                                                                || ( (gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
                                                     }
-                                                } else { // else if (planeGap == 1),  planeGap == 2
+                                                } else { // else if (planeGap == 1), planeGap == 2
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Z) ||
-                                                                ((gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Z)
+                                                                || ( (gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
@@ -6433,20 +5995,18 @@ public abstract class ViewJFrameBase extends JFrame
                                                 temp5 = y0 * z1;
                                                 temp6 = y1 * z0;
                                                 temp7 = y0 * z0;
-                                                value = (x1 * temp4 * imgBuffer[Z0pos + Y0pos + X0pos + tOffset]) +
-                                                        (x0 * temp4 * imgBuffer[Z0pos + Y0pos + X1pos + tOffset]) +
-                                                        (x1 * temp5 * imgBuffer[Z0pos + Y1pos + X0pos + tOffset]) +
-                                                        (x0 * temp5 * imgBuffer[Z0pos + Y1pos + X1pos + tOffset]) +
-                                                        (x1 * temp6 * imgBuffer[Z1pos + Y0pos + X0pos + tOffset]) +
-                                                        (x0 * temp6 * imgBuffer[Z1pos + Y0pos + X1pos + tOffset]) +
-                                                        (x1 * temp7 * imgBuffer[Z1pos + Y1pos + X0pos + tOffset]) +
-                                                        (x0 * temp7 * imgBuffer[Z1pos + Y1pos + X1pos + tOffset]);
+                                                value = (x1 * temp4 * imgBuffer[Z0pos + Y0pos + X0pos + tOffset])
+                                                        + (x0 * temp4 * imgBuffer[Z0pos + Y0pos + X1pos + tOffset])
+                                                        + (x1 * temp5 * imgBuffer[Z0pos + Y1pos + X0pos + tOffset])
+                                                        + (x0 * temp5 * imgBuffer[Z0pos + Y1pos + X1pos + tOffset])
+                                                        + (x1 * temp6 * imgBuffer[Z1pos + Y0pos + X0pos + tOffset])
+                                                        + (x0 * temp6 * imgBuffer[Z1pos + Y0pos + X1pos + tOffset])
+                                                        + (x1 * temp7 * imgBuffer[Z1pos + Y1pos + X0pos + tOffset])
+                                                        + (x0 * temp7 * imgBuffer[Z1pos + Y1pos + X1pos + tOffset]);
                                             } // if (interp)
-                                        } else if (((roundX == (iXdim - 1)) || (roundY == (iYdim - 1)) ||
-                                                        (roundZ == (iZdim - 1))) &&
-                                                       ((xloc >= olowXmm) && (xloc <= ohighXmm) && (yloc >= olowYmm) &&
-                                                            (yloc <= olowYmm) && (zloc >= olowYmm) &&
-                                                            (zloc <= ohighZmm))) {
+                                        } else if ( ( (roundX == (iXdim - 1)) || (roundY == (iYdim - 1)) || (roundZ == (iZdim - 1)))
+                                                && ( (xloc >= olowXmm) && (xloc <= ohighXmm) && (yloc >= olowYmm)
+                                                        && (yloc <= olowYmm) && (zloc >= olowYmm) && (zloc <= ohighZmm))) {
 
                                             // If values have not been collected in the original functional image
                                             // and the gaps are filled in with zeroes, then set the value equal
@@ -6462,8 +6022,8 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) X) ||
-                                                                ((gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) X)
+                                                                || ( (gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
@@ -6472,18 +6032,18 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Y) ||
-                                                                ((gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Y)
+                                                                || ( (gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
                                                     }
-                                                } else { // else if (planeGap == 1),  planeGap == 2
+                                                } else { // else if (planeGap == 1), planeGap == 2
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Z) ||
-                                                                ((gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Z)
+                                                                || ( (gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                         }
@@ -6519,23 +6079,25 @@ public abstract class ViewJFrameBase extends JFrame
 
                 for (i = 0; i < oXdim; i++) {
 
-                    if ((i % mod) == 0) {
-                        progressBar.updateValue((int) ((((float) ((t * oXdim) + i) /
-                                                             (((iTdim - 1) * oXdim) + (oXdim - 1))) * 100) + .5), true);
+                    if ( (i % mod) == 0) {
+                        progressBar
+                                .updateValue(
+                                        (int) ( ( ((float) ( (t * oXdim) + i) / ( ( (iTdim - 1) * oXdim) + (oXdim - 1))) * 100) + .5),
+                                        true);
                     }
 
-                    imm = (float) i * oXres;
+                    imm = i * oXres;
                     iloc = imm + olowXmm;
 
                     for (j = 0; j < oYdim; j++) {
-                        jmm = (float) j * oYres;
+                        jmm = j * oYres;
                         jloc = jmm + olowYmm;
 
                         for (k = 0; k < oZdim; k++) {
                             value = 0.0f; // remains zero if voxel is transformed out of bounds
 
                             // transform i,j,k
-                            kmm = (float) k * oZres;
+                            kmm = k * oZres;
                             kloc = kmm + olowZmm;
 
                             // set intensity of i,j,k to new transformed coordinate if
@@ -6551,10 +6113,9 @@ public abstract class ViewJFrameBase extends JFrame
                             yloc = (roundY * iYres) + ilowYmm;
                             zloc = (roundZ * iZres) + ilowZmm;
 
-                            if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1)) ||
-                                    (roundZ < 0) || (roundZ > (iZdim - 1)) || (xloc < olowXmm) || (xloc > ohighXmm) ||
-                                    (yloc < olowYmm) || (yloc > ohighYmm) || (zloc < olowZmm) || (zloc > ohighZmm)) { }
-                            else {
+                            if ( (roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1))
+                                    || (roundZ < 0) || (roundZ > (iZdim - 1)) || (xloc < olowXmm) || (xloc > ohighXmm)
+                                    || (yloc < olowYmm) || (yloc > ohighYmm) || (zloc < olowZmm) || (zloc > ohighZmm)) {} else {
                                 interp = true;
 
                                 // If values have not been collected in the original functional image
@@ -6569,8 +6130,8 @@ public abstract class ViewJFrameBase extends JFrame
 
                                         for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                            if ((gapArray[g] == (int) X) ||
-                                                    ((gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
+                                            if ( (gapArray[g] == (int) X)
+                                                    || ( (gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
                                                 interp = false;
                                             }
                                         }
@@ -6578,17 +6139,17 @@ public abstract class ViewJFrameBase extends JFrame
 
                                         for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                            if ((gapArray[g] == (int) Y) ||
-                                                    ((gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
+                                            if ( (gapArray[g] == (int) Y)
+                                                    || ( (gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
                                                 interp = false;
                                             }
                                         }
-                                    } else { // else if (planeGap == 1),  planeGap == 2
+                                    } else { // else if (planeGap == 1), planeGap == 2
 
                                         for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                            if ((gapArray[g] == (int) Z) ||
-                                                    ((gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
+                                            if ( (gapArray[g] == (int) Z)
+                                                    || ( (gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
                                                 interp = false;
                                             }
                                         }
@@ -6618,10 +6179,12 @@ public abstract class ViewJFrameBase extends JFrame
     /**
      * This routine is designed to transform AFNI functional images which have already been transformed to match AFNI
      * original images to match AFNI +tlrc images.
-     *
-     * <p>AFNI:Software for Analysis and Visualization of Functional Magnetic Resonance Neuroimages by Robert W. Cox
-     * states:</p>
-     *
+     * 
+     * <p>
+     * AFNI:Software for Analysis and Visualization of Functional Magnetic Resonance Neuroimages by Robert W. Cox
+     * states:
+     * </p>
+     * 
      * <blockquote>"In some applications, gaps are present between the functional slices. For example, some
      * investigators using sagittal functional images do not collect data that spans the longitudinal fissure, but
      * instead leave a 3-5 mm gap there. The auxiliary program abut can provide zero-filled images to fill in the gaps,
@@ -6630,68 +6193,73 @@ public abstract class ViewJFrameBase extends JFrame
      * nearest- neighbor, linear, or cubic interpolation, at the user's discretion. Interpolation is not done across the
      * boundaries between the gap-filling zero images and the nonzero user-supplied images; that is, interpolation is
      * only done inside spatially contiguous blocks of actual input data."</blockquote>
-     *
-     * <p>A second special consideration exists in the interpolation of functional data. The MCW AFNI - User Manual
-     * states: "In this version of AFNI, the threshold data (e.g., correlation coefficient) is always resampled using
-     * the nearest neighbor method. This is because thresholding with an interpolated nonlinear statistic is a somewhat
+     * 
+     * <p>
+     * A second special consideration exists in the interpolation of functional data. The MCW AFNI - User Manual states:
+     * "In this version of AFNI, the threshold data (e.g., correlation coefficient) is always resampled using the
+     * nearest neighbor method. This is because thresholding with an interpolated nonlinear statistic is a somewhat
      * dubious procedure." At another point the manual states: "Threshold data in functional datasets is always
      * resampled using the nearest neighbor mode. This is becasue it is somewhat unreasonable to interpolate a nonlinear
      * statistic (such as correlation coefficient) between voxels, and then to interpret this statistic using
-     * probabilistic models that assume independence."</p>
-     *
-     * <P>Thus, the intensity data is interpolated with trilinear interpolation and the threshold data is interpolated
-     * with nearest neighbor interpolation.</P>
-     *
-     * @param  image      image being created
-     * @param  imgBuffer  source image array
-     * @param  xfrm       transformation matrix to be applied
-     * @param  iXres      input x resolution
-     * @param  iYres      input y resolution
-     * @param  iZres      input z resolution
-     * @param  iXdim      input x dimesnion
-     * @param  iYdim      input y dimension
-     * @param  iZdim      input z dimension
-     * @param  iTdim      input t dimension
-     * @param  planeGap   -1 if no zero filled gaps, 0 for x axis gaps, 1 for y axis, 2 for z axis
-     * @param  gapArray   array of coordinates at which the zero filled planes occur
-     * @param  doNN       true if functional, false if anatomical
-     * @param  oXres      output x resolution
-     * @param  oYres      output y resolution
-     * @param  oZres      output z resolution
-     * @param  oXdim      output x dimension
-     * @param  oYdim      output y dimension
-     * @param  oZdim      output z dimension
-     * @param  botX       lowest x output value in this 1 of the 12 Talairach regions
-     * @param  botY       lowest y output value in this 1 of the 12 Talairach regions
-     * @param  botZ       lowest z output value in this 1 of the 12 Talairach regions
-     * @param  topX       highest x output value in this 1 of the 12 Talairach regions
-     * @param  topY       highest y output value in this 1 of the 12 Talairach regions
-     * @param  topZ       highest z output value in this 1 of the 12 Talairach regions
+     * probabilistic models that assume independence."
+     * </p>
+     * 
+     * <P>
+     * Thus, the intensity data is interpolated with trilinear interpolation and the threshold data is interpolated with
+     * nearest neighbor interpolation.
+     * </P>
+     * 
+     * @param image image being created
+     * @param imgBuffer source image array
+     * @param xfrm transformation matrix to be applied
+     * @param iXres input x resolution
+     * @param iYres input y resolution
+     * @param iZres input z resolution
+     * @param iXdim input x dimesnion
+     * @param iYdim input y dimension
+     * @param iZdim input z dimension
+     * @param iTdim input t dimension
+     * @param planeGap -1 if no zero filled gaps, 0 for x axis gaps, 1 for y axis, 2 for z axis
+     * @param gapArray array of coordinates at which the zero filled planes occur
+     * @param doNN true if functional, false if anatomical
+     * @param oXres output x resolution
+     * @param oYres output y resolution
+     * @param oZres output z resolution
+     * @param oXdim output x dimension
+     * @param oYdim output y dimension
+     * @param oZdim output z dimension
+     * @param botX lowest x output value in this 1 of the 12 Talairach regions
+     * @param botY lowest y output value in this 1 of the 12 Talairach regions
+     * @param botZ lowest z output value in this 1 of the 12 Talairach regions
+     * @param topX highest x output value in this 1 of the 12 Talairach regions
+     * @param topY highest y output value in this 1 of the 12 Talairach regions
+     * @param topZ highest z output value in this 1 of the 12 Talairach regions
      */
-    private void transformTalairach(ModelImage image, float[] imgBuffer, TransMatrix xfrm, float iXres, float iYres,
-                                    float iZres, int iXdim, int iYdim, int iZdim, int iTdim, int planeGap,
-                                    int[] gapArray, boolean doNN, float oXres, float oYres, float oZres, int oXdim,
-                                    int oYdim, int oZdim, int botX, int botY, int botZ, int topX, int topY, int topZ) {
+    private void transformTalairach(final ModelImage image, final float[] imgBuffer, final TransMatrix xfrm,
+            final float iXres, final float iYres, final float iZres, final int iXdim, final int iYdim, final int iZdim,
+            final int iTdim, final int planeGap, final int[] gapArray, boolean doNN, final float oXres,
+            final float oYres, final float oZres, final int oXdim, final int oYdim, final int oZdim, final int botX,
+            final int botY, final int botZ, final int topX, final int topY, final int topZ) {
         // This routine is designed to transform AFNI functional images which have already been
         // transformed to match AFNI original images to match AFNI +tlrc images.
 
         // AFNI:Software for Analysis and Visualization of Functional Magnetic Resonance Neuroimages by
         // Robert W. Cox states: "In some applications, gaps are present between the functional slices.
         // For example, some investigators using sagittal functional images do not collect data that spans
-        // the longitudinal fissure, but instead leave a 3-5 mm gap there.  The auxiliary program abut can
+        // the longitudinal fissure, but instead leave a 3-5 mm gap there. The auxiliary program abut can
         // provide zero-filled images to fill in the gaps, and can resample the nonzero slices to a finer
-        // mesh if needed(e.g., to fill a 2 mm gap in a series of 4 mm functional slices).  Resampling
+        // mesh if needed(e.g., to fill a 2 mm gap in a series of 4 mm functional slices). Resampling
         // in the slice select direction between contiguous input slices can be done using nearest-
-        // neighbor, linear, or cubic interpolation, at the user's discretion.  Interpolation is not done
+        // neighbor, linear, or cubic interpolation, at the user's discretion. Interpolation is not done
         // across the boundaries between the gap-filling zero images and the nonzero user-supplied images;
         // that is, interpolation is only done inside spatially contiguous blocks of actual input data."
 
-        // A second special consideration exists in the interpolation of functional data.  The MCW AFNI -
+        // A second special consideration exists in the interpolation of functional data. The MCW AFNI -
         // User Manual states: "In this version of AFNI, the threshold data (e.g., correlation coefficient)
-        // is always resampled using the nearest neighbor method.  This is because thresholding with an
-        // interpolated nonlinear statistic is a somewhat dubious procedure."  At another point the manual
+        // is always resampled using the nearest neighbor method. This is because thresholding with an
+        // interpolated nonlinear statistic is a somewhat dubious procedure." At another point the manual
         // states: "Threshold data in functional datasets is always resampled using the nearest neighbor
-        // mode.  This is becasue it is somewhat unreasonable to interpolate a nonlinear statistic (such
+        // mode. This is becasue it is somewhat unreasonable to interpolate a nonlinear statistic (such
         // as correlation coefficient) between voxels, and then to interpret this statistic using
         // probabilistic models that assume independence."
         // Thus, the intensity data is interpolated with trilinear interpolation and the threshold data is
@@ -6719,7 +6287,7 @@ public abstract class ViewJFrameBase extends JFrame
         boolean interp;
         int xOffset, yOffset, zOffset;
 
-        int mod = oXdim / 50;
+        final int mod = oXdim / 50;
         int tLast;
 
         T00 = xfrm.Get(0, 0);
@@ -6741,26 +6309,25 @@ public abstract class ViewJFrameBase extends JFrame
 
         tLast = Math.max(1, iTdim);
 
-        if (!doNN) {
+        if ( !doNN) {
 
             for (t = 0; t < tLast; t++) {
                 tOffset = t * volSize;
 
                 for (i = botX; i <= topX; i++) {
 
-                    if ((i % mod) == 0) {
-                        progressBar.updateValue((int) (((float) ((t * (topX - botX + 1)) + (i - botX)) /
-                                                            (((iTdim - 1) * (topX - botX + 1)) + (topX - botX)) * 100) +
-                                                       .5), true);
+                    if ( (i % mod) == 0) {
+                        progressBar.updateValue((int) ( ((float) ( (t * (topX - botX + 1)) + (i - botX))
+                                / ( ( (iTdim - 1) * (topX - botX + 1)) + (topX - botX)) * 100) + .5), true);
                     }
 
-                    imm = (float) i * oXres;
+                    imm = i * oXres;
                     i1 = (imm * T00) + T03;
                     i2 = (imm * T10) + T13;
                     i3 = (imm * T20) + T23;
 
                     for (j = botY; j <= topY; j++) {
-                        jmm = (float) j * oYres;
+                        jmm = j * oYres;
                         j1 = jmm * T01;
                         j2 = jmm * T11;
                         j3 = jmm * T21;
@@ -6773,22 +6340,22 @@ public abstract class ViewJFrameBase extends JFrame
                             // transform i,j,k
                             value = 0; // remains zero if voxel is transformed out of bounds
                             doTransform = false;
-                            kmm = (float) k * oZres;
+                            kmm = k * oZres;
                             X = (temp3 + (kmm * T02)) / iXres;
                             roundX = (int) (X + 0.5f);
 
-                            if ((X >= 0) && (roundX < iXdim)) {
+                            if ( (X >= 0) && (roundX < iXdim)) {
                                 Y = (temp2 + (kmm * T12)) / iYres;
                                 roundY = (int) (Y + 0.5f);
 
-                                if ((Y >= 0) && (roundY < iYdim)) {
+                                if ( (Y >= 0) && (roundY < iYdim)) {
                                     Z = (temp1 + (kmm * T22)) / iZres;
                                     roundZ = (int) (Z + 0.5f);
 
-                                    if ((Z >= 0) && (roundZ < iZdim)) {
+                                    if ( (Z >= 0) && (roundZ < iZdim)) {
 
-                                        if (((int) X < (iXdim - 1)) && ((int) Y < (iYdim - 1)) &&
-                                                ((int) Z < (iZdim - 1))) {
+                                        if ( ((int) X < (iXdim - 1)) && ((int) Y < (iYdim - 1))
+                                                && ((int) Z < (iZdim - 1))) {
 
                                             // set intensity of i,j,k to new transformed coordinate if
                                             // x,y,z is w/in dimensions of image
@@ -6815,8 +6382,8 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == X0pos) ||
-                                                                ((gapArray[g] == X1pos) && (x0 != 0.0f))) {
+                                                        if ( (gapArray[g] == X0pos)
+                                                                || ( (gapArray[g] == X1pos) && (x0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                             doTransform = true;
@@ -6826,19 +6393,19 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Y) ||
-                                                                ((gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Y)
+                                                                || ( (gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                             doTransform = true;
                                                         }
                                                     }
-                                                } else { // else if (planeGap == 1),  planeGap == 2
+                                                } else { // else if (planeGap == 1), planeGap == 2
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Z) ||
-                                                                ((gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Z)
+                                                                || ( (gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                             doTransform = true;
@@ -6852,14 +6419,14 @@ public abstract class ViewJFrameBase extends JFrame
                                                 temp5 = y0 * z1;
                                                 temp6 = y1 * z0;
                                                 temp7 = y0 * z0;
-                                                value = (x1 * temp4 * imgBuffer[Z0pos + Y0pos + X0pos + tOffset]) +
-                                                        (x0 * temp4 * imgBuffer[Z0pos + Y0pos + X1pos + tOffset]) +
-                                                        (x1 * temp5 * imgBuffer[Z0pos + Y1pos + X0pos + tOffset]) +
-                                                        (x0 * temp5 * imgBuffer[Z0pos + Y1pos + X1pos + tOffset]) +
-                                                        (x1 * temp6 * imgBuffer[Z1pos + Y0pos + X0pos + tOffset]) +
-                                                        (x0 * temp6 * imgBuffer[Z1pos + Y0pos + X1pos + tOffset]) +
-                                                        (x1 * temp7 * imgBuffer[Z1pos + Y1pos + X0pos + tOffset]) +
-                                                        (x0 * temp7 * imgBuffer[Z1pos + Y1pos + X1pos + tOffset]);
+                                                value = (x1 * temp4 * imgBuffer[Z0pos + Y0pos + X0pos + tOffset])
+                                                        + (x0 * temp4 * imgBuffer[Z0pos + Y0pos + X1pos + tOffset])
+                                                        + (x1 * temp5 * imgBuffer[Z0pos + Y1pos + X0pos + tOffset])
+                                                        + (x0 * temp5 * imgBuffer[Z0pos + Y1pos + X1pos + tOffset])
+                                                        + (x1 * temp6 * imgBuffer[Z1pos + Y0pos + X0pos + tOffset])
+                                                        + (x0 * temp6 * imgBuffer[Z1pos + Y0pos + X1pos + tOffset])
+                                                        + (x1 * temp7 * imgBuffer[Z1pos + Y1pos + X0pos + tOffset])
+                                                        + (x0 * temp7 * imgBuffer[Z1pos + Y1pos + X1pos + tOffset]);
                                                 doTransform = true;
                                             } // if (interp)
                                         } else {
@@ -6878,8 +6445,8 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) X) ||
-                                                                ((gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) X)
+                                                                || ( (gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                             doTransform = true;
@@ -6889,19 +6456,19 @@ public abstract class ViewJFrameBase extends JFrame
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Y) ||
-                                                                ((gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Y)
+                                                                || ( (gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                             doTransform = true;
                                                         }
                                                     }
-                                                } else { // else if (planeGap == 1),  planeGap == 2
+                                                } else { // else if (planeGap == 1), planeGap == 2
 
                                                     for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                                        if ((gapArray[g] == (int) Z) ||
-                                                                ((gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
+                                                        if ( (gapArray[g] == (int) Z)
+                                                                || ( (gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
                                                             interp = false;
                                                             value = 0.0f;
                                                             doTransform = true;
@@ -6942,23 +6509,22 @@ public abstract class ViewJFrameBase extends JFrame
 
                 for (i = botX; i <= topX; i++) {
 
-                    if ((i % mod) == 0) {
-                        progressBar.updateValue((int) (((float) ((t * (topX - botX + 1)) + (i - botX)) /
-                                                            (((iTdim - 1) * (topX - botX + 1)) + (topX - botX)) * 100) +
-                                                       .5), true);
+                    if ( (i % mod) == 0) {
+                        progressBar.updateValue((int) ( ((float) ( (t * (topX - botX + 1)) + (i - botX))
+                                / ( ( (iTdim - 1) * (topX - botX + 1)) + (topX - botX)) * 100) + .5), true);
                     }
 
-                    imm = (float) i * oXres;
+                    imm = i * oXres;
 
                     for (j = botY; j <= topY; j++) {
-                        jmm = (float) j * oYres;
+                        jmm = j * oYres;
 
                         for (k = botZ; k <= topZ; k++) {
                             value = 0.0f; // remains zero if voxel is transformed out of bounds
                             doTransform = false;
 
                             // transform i,j,k
-                            kmm = (float) k * oZres;
+                            kmm = k * oZres;
 
                             X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
                             Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
@@ -6974,9 +6540,8 @@ public abstract class ViewJFrameBase extends JFrame
                             roundY = (int) (Y + 0.5f);
                             roundZ = (int) (Z + 0.5f);
 
-                            if ((roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1)) ||
-                                    (roundZ < 0) || (roundZ > (iZdim - 1))) { }
-                            else {
+                            if ( (roundX < 0) || (roundX > (iXdim - 1)) || (roundY < 0) || (roundY > (iYdim - 1))
+                                    || (roundZ < 0) || (roundZ > (iZdim - 1))) {} else {
                                 interp = true;
 
                                 // If values have not been collected in the original functional image
@@ -6991,8 +6556,8 @@ public abstract class ViewJFrameBase extends JFrame
 
                                         for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                            if ((gapArray[g] == (int) X) ||
-                                                    ((gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
+                                            if ( (gapArray[g] == (int) X)
+                                                    || ( (gapArray[g] == (int) (X + 1)) && (x0 != 0.0f))) {
                                                 interp = false;
                                                 doTransform = true;
                                             }
@@ -7001,18 +6566,18 @@ public abstract class ViewJFrameBase extends JFrame
 
                                         for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                            if ((gapArray[g] == (int) Y) ||
-                                                    ((gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
+                                            if ( (gapArray[g] == (int) Y)
+                                                    || ( (gapArray[g] == (int) (Y + 1)) && (y0 != 0.0f))) {
                                                 interp = false;
                                                 doTransform = true;
                                             }
                                         }
-                                    } else { // else if (planeGap == 1),  planeGap == 2
+                                    } else { // else if (planeGap == 1), planeGap == 2
 
                                         for (g = 0; (g < gapArray.length) && interp; g++) {
 
-                                            if ((gapArray[g] == (int) Z) ||
-                                                    ((gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
+                                            if ( (gapArray[g] == (int) Z)
+                                                    || ( (gapArray[g] == (int) (Z + 1)) && (z0 != 0.0f))) {
                                                 interp = false;
                                                 doTransform = true;
                                             }
@@ -7043,6 +6608,5 @@ public abstract class ViewJFrameBase extends JFrame
             } // for (t = 0; t < tLast; t++)
         } // else doNN
     }
-  
-    
+
 }

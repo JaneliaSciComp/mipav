@@ -84,9 +84,9 @@ public class Preferences {
 
     /** Constant that indicates the saving of the xml thumbnail during a save. */
     public static final String PREF_SAVE_XML_THUMBNAIL = "SaveXMLThumbnail";
-    
+
     public static final String PREF_FLIP_NIFTI_READ = "FlipNIFTIRead";
-    
+
     /** Constant that indicates the file temp directory. */
     public static final String PREF_FILE_TEMP_DIR = "fileTempDir";
 
@@ -230,39 +230,12 @@ public class Preferences {
     /** Constant that indicates whether to use VOI XOR'ing. */
     public static final String PREF_USE_VOI_XOR = "UseVOIXOR";
 
-    /** Constants that indicate the SRB server login properties. */
-    public static final String PREF_USERNAME_SRB = "userNameSRB";
-
-    /** Constant that indicates the SRB server host. */
-    public static final String PREF_SERVER_HOST_SRB = "serverHostSRB";
-
-    /** Constant that indicates the SRB server domain. */
-    public static final String PREF_SERVER_DOMAIN_SRB = "serverDomainSRB";
-
-    /** Constant that indicates the SRB. */
-    public static final String PREF_SERVER_PORT_SRB = "serverPortSRB";
-
-    /** Constant that indicates the SRB server authentication size. */
-    public static final String PREF_SERVER_AUTHENTICATION_SRB = "serverAuthenticationSRB";
-
-    /** Constant that indicates the default SRB storage resource. */
-    public static final String PREF_STORAGE_RESOURCE_SRB = "defaultStorageResource";
-
-    /** Constant that indicates the SRB version. */
-    public static final String PREF_SRB_VERSION = "srbVersion";
-
-    /** Constant that indicates the SRB transfer mode. */
-    public static final String PREF_SRB_TRANSFER_MODE = "srbTransferMode";
-
-    /** Constant that indicates the SRB temp directory. */
-    public static final String PREF_SRB_TEMP_DIR = "srbTempDir";
-
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
     public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";
 
     /** Constant that indicated if the multi-theading is enabled */
     public static final String PREF_MULTI_THREADING_ENABLED = "multiThreadingEnabled";
-    
+
     /** Constant that indicates if computing on the GPU is enabled */
     public static final String PREF_GPU_COMP_ENABLED = "gpuCompEnabled";
 
@@ -288,7 +261,7 @@ public class Preferences {
 
     /** Constant that indicates the current image directory. */
     public static final String PREF_IMAGE_DIR = "ImageDirectory";
-    
+
     /** Constant that indicates the current directory where plugins can be installed from. */
     public static final String PREF_PLUGIN_INSTALL_DIR = "PluginInstallDirectory";
 
@@ -303,7 +276,7 @@ public class Preferences {
 
     /** Constant that indicates whether to enable the dicom receiver on startup. */
     public static final String PREF_AUTOSTART_DICOM_RECEIVER = "EnableDICOMReceiver";
-    
+
     /** Constant that indicates whether to ask about starting dicom receiver on startup. */
     public static final String PREF_ASK_DICOM_RECEIVER = "AskToEnableDICOMReceiver";
 
@@ -315,9 +288,6 @@ public class Preferences {
 
     /** constant for the names of the last X number of images used to be shown in quicklist. */
     public static final String PREF_LAST_X_IMAGES = "LastXImages";
-
-    /** constant for the names of the last X number of projects used. */
-    public static final String PREF_LAST_X_PROJECTS = "LastXProjects";
 
     /** constant for warning the user when audio will be discarded from opened AVIs. */
     public static final String PREF_WARN_AUDIO_AVI = "WarnAudioAVI";
@@ -378,16 +348,14 @@ public class Preferences {
      * whether to save as minc1 or minc2).
      */
     public static final String PREF_ALWAYS_SAVE_MNC_AS_MINC2 = "AlwaysSaveMncAsMinc2";
-    
+
     /**
-     * Constant that indicates whether 4D dicom files should always have the time axis
-     * graphed as 0, 1, 2, ...
+     * Constant that indicates whether 4D dicom files should always have the time axis graphed as 0, 1, 2, ...
      */
     public static final String PREF_ALWAYS_GRAPH_TIME_AS_0123 = "AlwaysGraphTimeAs0123";
-    
+
     /**
-     * Constant the indicates whether 4D dicom files should always have the time axis
-     * graphed as frame reference times.
+     * Constant the indicates whether 4D dicom files should always have the time axis graphed as frame reference times.
      */
     public static final String PREF_ALWAYS_GRAPH_FRAME_REFERENCE_TIME = "AlwaysGraphFrameReferenceTime";
 
@@ -435,7 +403,7 @@ public class Preferences {
 
     /** Constant that indicates the LightBox grid size variable. */
     public static final String PREF_LB_GRID_SIZE = "LightBoxGridSize";
-    
+
     /** Constant that indicates the increment between displayed lightbox slices */
     public static final String PREF_LB_INCREMENT = "LightBoxIncrement";
 
@@ -462,7 +430,7 @@ public class Preferences {
 
     /** Constant that indicates the LightBox individual t-slice variable. */
     public static final String PREF_LB_TSLICE = "LightBoxIndividualTSlice";
-    
+
     /** Constant that indicates continuous update of LightBox */
     public static final String PREF_LB_CUPDATE = "LightBoxContinuousUpdate";
 
@@ -483,13 +451,13 @@ public class Preferences {
 
     /** plugin of view type. */
     public static final String PREF_PLUGIN_VIEW = "PlugInView";
-    
+
     /** ? */
     public static final String PREF_NINDS_ANON_PLUGIN_INPUTDIR = "NINDSAnonymizationPlugin_inputDir";
-    
+
     /** ? */
     public static final String PREF_NINDS_ANON_PLUGIN_OUTPUTDIR = "NINDSAnonymizationPlugin_outputDir";
-    
+
     /** ? */
     public static final String PREF_NINDS_ANON_PLUGIN_CSVDIR = "NINDSAnonymizationPlugin_CSVDir";
 
@@ -548,13 +516,14 @@ public class Preferences {
     private static String preferencesDir = System.getProperty("user.home") + File.separator + "mipav";
 
     /** The MIPAV preferences file path and name. */
-    private static String preferencesFile = preferencesDir + File.separator + preferencesFileName;
+    private static String preferencesFile = Preferences.preferencesDir + File.separator
+            + Preferences.preferencesFileName;
 
     /** Hashtable that holds all user-defined shortcuts */
-    private static Hashtable userShortcutTable;
+    private static Hashtable<String, KeyStroke> userShortcutTable;
 
     /** Hashtable that holds the default shortcuts */
-    private static Hashtable<String, KeyStroke> defaultShortcutTable = buildDefaultShortcuts();
+    private static Hashtable<String, KeyStroke> defaultShortcutTable = Preferences.buildDefaultShortcuts();
 
     /** The current shortcut */
     private static KeyStroke currentShortcut;
@@ -563,83 +532,75 @@ public class Preferences {
      * Static properties structure to store default MIPAV preferences.
      */
     static {
-        defaultProps = new Properties();
+        Preferences.defaultProps = new Properties();
 
-        defaultProps.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
-        defaultProps.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, "true");
-        defaultProps.setProperty(Preferences.PREF_TRIM, "0.3");
-        defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false");
-        defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, System.getProperty("user.dir") + File.separator
-                + "mipav.log");
-        defaultProps.setProperty(Preferences.PREF_RAW_EXTENTS, "256,256,0,0,0");
-        defaultProps.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, "true");
-        defaultProps.setProperty(Preferences.PREF_RAW_RESOLUTIONS, "1.0,1.0,1.0,1.0,1.0");
-        defaultProps.setProperty(Preferences.PREF_RAW_UNITS, "6,6,6,6"); // 6 = millimeters
-        defaultProps.setProperty(Preferences.PREF_RAW_TYPE, "3"); // 3 = ModelStorageBase.SHORT
-        defaultProps.setProperty(Preferences.PREF_RAW_DATA_OFFSET, "0");
-        defaultProps.setProperty(Preferences.PREF_APP_TITLE, "MIPAV: ");
-        defaultProps.setProperty(Preferences.PREF_APP_ICON, "divinci.gif");
-        defaultProps.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, "ff0000"); // red
-        defaultProps.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, "default");
-        defaultProps.setProperty(Preferences.PREF_TRIM_FLAG, "true");
-        defaultProps.setProperty(Preferences.PREF_SHOW_SPLASH, "true");
-        defaultProps.setProperty(Preferences.PREF_SCRIPTING_TOOLBAR_ON, "false");
-        defaultProps.setProperty(Preferences.PREF_PAINT_TOOLBAR_ON, "false");
-        defaultProps.setProperty(Preferences.PREF_SHOW_OVERLAYS, "false");
-        defaultProps.setProperty(Preferences.PREF_VOI_LPS_SAVE, "true");
-        defaultProps.setProperty(Preferences.PREF_QUICK_MASK_NEW, "false");
-        defaultProps.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "false");
-        defaultProps.setProperty(Preferences.PREF_ZOOM_LINEAR, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_TRIM, "0.3");
+        Preferences.defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, System.getProperty("user.dir")
+                + File.separator + "mipav.log");
+        Preferences.defaultProps.setProperty(Preferences.PREF_RAW_EXTENTS, "256,256,0,0,0");
+        Preferences.defaultProps.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_RAW_RESOLUTIONS, "1.0,1.0,1.0,1.0,1.0");
+        Preferences.defaultProps.setProperty(Preferences.PREF_RAW_UNITS, "6,6,6,6"); // 6 = millimeters
+        Preferences.defaultProps.setProperty(Preferences.PREF_RAW_TYPE, "3"); // 3 = ModelStorageBase.SHORT
+        Preferences.defaultProps.setProperty(Preferences.PREF_RAW_DATA_OFFSET, "0");
+        Preferences.defaultProps.setProperty(Preferences.PREF_APP_TITLE, "MIPAV: ");
+        Preferences.defaultProps.setProperty(Preferences.PREF_APP_ICON, "divinci.gif");
+        Preferences.defaultProps.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, "ff0000"); // red
+        Preferences.defaultProps.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, "default");
+        Preferences.defaultProps.setProperty(Preferences.PREF_TRIM_FLAG, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_SPLASH, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_SCRIPTING_TOOLBAR_ON, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_PAINT_TOOLBAR_ON, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_OVERLAYS, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_VOI_LPS_SAVE, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_QUICK_MASK_NEW, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_PAINT_TO_MASK_NEW, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_ZOOM_LINEAR, "true");
 
         /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head) */
-        defaultProps.setProperty(Preferences.PREF_FILENAME_FILTER, "8"); // 8 = ViewImageFileFilter.TECH
-        defaultProps.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, "false");
-        defaultProps.setProperty(Preferences.PREF_FLIP_NIFTI_READ, "true");
-        defaultProps.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, "false");
-        defaultProps.setProperty(Preferences.PREF_OVERWRITE_STATISTICS, "false");
-        defaultProps.setProperty(Preferences.PREF_LAST_X_IMAGES, "");
-        defaultProps.setProperty(Preferences.PREF_QUICKLIST_NUMBER, "4");
-        defaultProps.setProperty(Preferences.PREF_LAST_X_PROJECTS, "");
-        defaultProps.setProperty(Preferences.PREF_WARN_AUDIO_AVI, "true");
-        defaultProps.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, "false");
-        defaultProps.setProperty(Preferences.PREF_SHOW_PRIVATE_TAGS, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_FILENAME_FILTER, "8"); // 8 = ViewImageFileFilter.TECH
+        Preferences.defaultProps.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_FLIP_NIFTI_READ, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_OVERWRITE_STATISTICS, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LAST_X_IMAGES, "");
+        Preferences.defaultProps.setProperty(Preferences.PREF_QUICKLIST_NUMBER, "4");
+        Preferences.defaultProps.setProperty(Preferences.PREF_WARN_AUDIO_AVI, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_PAINT_BORDER, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_PRIVATE_TAGS, "false");
 
         // lightbox properties
-        defaultProps.setProperty(Preferences.PREF_LB_ROW_DEPENDENT, "true"); // display by columns
-        defaultProps.setProperty(Preferences.PREF_LB_GRID_ROW, "0"); // compute 'best fit' num rows
-        defaultProps.setProperty(Preferences.PREF_LB_GRID_COL, "2"); // use 2 columns
-        defaultProps.setProperty(Preferences.PREF_LB_GRID_SIZE, "5");
-        defaultProps.setProperty(Preferences.PREF_LB_INCREMENT, "1"); // Display every light box frame
-        defaultProps.setProperty(Preferences.PREF_LB_GRID_COLOR, "000000");
-        defaultProps.setProperty(Preferences.PREF_LB_BORDER_SIZE, "3");
-        defaultProps.setProperty(Preferences.PREF_LB_BORDER_COLOR, "960000");
-        defaultProps.setProperty(Preferences.PREF_LB_SELECTED_BORDER_SIZE, "2");
-        defaultProps.setProperty(Preferences.PREF_LB_SELECTED_BORDER_COLOR, "ffff00");
-        defaultProps.setProperty(Preferences.PREF_LB_MAG, "45.0");
-        defaultProps.setProperty(Preferences.PREF_LB_LOCATION, "-10,-10"); // use incorrect value to compute 'best'
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_ROW_DEPENDENT, "true"); // display by columns
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_GRID_ROW, "0"); // compute 'best fit' num rows
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_GRID_COL, "2"); // use 2 columns
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_GRID_SIZE, "5");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_INCREMENT, "1"); // Display every light box frame
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_GRID_COLOR, "000000");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_BORDER_SIZE, "3");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_BORDER_COLOR, "960000");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_SELECTED_BORDER_SIZE, "2");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_SELECTED_BORDER_COLOR, "ffff00");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_MAG, "45.0");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LB_LOCATION, "-10,-10"); // use incorrect value to
+                                                                                        // compute 'best'
         // location
 
         // look and feel properties
-        defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");
-        defaultProps.setProperty(Preferences.PREF_MENU_FONT_SIZE, "12");
+        Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");
+        Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT_SIZE, "12");
 
-        defaultProps.setProperty(Preferences.PREF_MENU_FONT_COLOR, "BLACK");
-        defaultProps.setProperty(Preferences.PREF_SHOW_OUTPUT, "true");
-
-        // username and srb server properties
-        defaultProps.setProperty(PREF_USERNAME_SRB, "");
-        defaultProps.setProperty(PREF_SERVER_HOST_SRB, "");
-        defaultProps.setProperty(PREF_SERVER_DOMAIN_SRB, "");
-        defaultProps.setProperty(PREF_SERVER_PORT_SRB, "5544");
-        defaultProps.setProperty(PREF_SERVER_AUTHENTICATION_SRB, "ENCRYPT1");
-        defaultProps.setProperty(PREF_STORAGE_RESOURCE_SRB, "");
+        Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT_COLOR, "BLACK");
+        Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_OUTPUT, "true");
 
         // performance information properties
-        defaultProps.setProperty(PREF_MULTI_THREADING_ENABLED,
-                (gov.nih.mipav.util.MipavUtil.getAvailableCores() > 1) ? "true" : "flase");
-        defaultProps.setProperty(PREF_NUMBER_OF_THREADS, String.valueOf(gov.nih.mipav.util.MipavUtil
-                .getAvailableCores()));
-        defaultProps.setProperty(PREF_GPU_COMP_ENABLED, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED, (gov.nih.mipav.util.MipavUtil
+                .getAvailableCores() > 1) ? "true" : "flase");
+        Preferences.defaultProps.setProperty(Preferences.PREF_NUMBER_OF_THREADS, String
+                .valueOf(gov.nih.mipav.util.MipavUtil.getAvailableCores()));
+        Preferences.defaultProps.setProperty(Preferences.PREF_GPU_COMP_ENABLED, "false");
     }
 
     // ~ Methods
@@ -654,39 +615,39 @@ public class Preferences {
      * 
      * @return DOCUMENT ME!
      */
-    public static boolean addShortcut(String command) {
+    public static boolean addShortcut(final String command) {
 
-        if ( (command != null) && (currentShortcut != null)) {
+        if ( (command != null) && (Preferences.currentShortcut != null)) {
 
-            if (isDefaultCommand(command)) {
+            if (Preferences.isDefaultCommand(command)) {
                 MipavUtil.displayWarning("This is a default function: shortcut can not be remapped");
 
                 return false;
             }
 
-            if (userShortcutTable.containsKey(command)) {
-                userShortcutTable.remove(command);
+            if (Preferences.userShortcutTable.containsKey(command)) {
+                Preferences.userShortcutTable.remove(command);
             }
 
-            if (userShortcutTable.containsValue(currentShortcut)) {
-                Enumeration e = userShortcutTable.keys();
+            if (Preferences.userShortcutTable.containsValue(Preferences.currentShortcut)) {
+                final Enumeration<String> e = Preferences.userShortcutTable.keys();
 
                 while (e.hasMoreElements()) {
-                    String key = (String) e.nextElement();
+                    final String key = e.nextElement();
 
-                    if (currentShortcut.equals(userShortcutTable.get(key))) {
-                        userShortcutTable.remove(key);
+                    if (Preferences.currentShortcut.equals(Preferences.userShortcutTable.get(key))) {
+                        Preferences.userShortcutTable.remove(key);
                     }
                 }
             }
 
-            userShortcutTable.put(command, currentShortcut);
+            Preferences.userShortcutTable.put(command, Preferences.currentShortcut);
 
-            MipavUtil.displayInfo("Shortcut captured: " + currentShortcut.toString().replaceAll("pressed", "").trim()
-                    + " : " + command);
+            MipavUtil.displayInfo("Shortcut captured: "
+                    + Preferences.currentShortcut.toString().replaceAll("pressed", "").trim() + " : " + command);
 
-            saveShortcuts();
-            currentShortcut = null;
+            Preferences.saveShortcuts();
+            Preferences.currentShortcut = null;
 
             return true;
         }
@@ -703,40 +664,40 @@ public class Preferences {
      * 
      * @return DOCUMENT ME!
      */
-    public static boolean addShortcut(String command, KeyStroke shortcut) {
+    public static boolean addShortcut(final String command, KeyStroke shortcut) {
 
         if ( (command != null) && (shortcut != null)) {
 
             System.out.println("shortcut: " + command + ": " + shortcut.toString());
-            if (isDefaultCommand(command)) {
+            if (Preferences.isDefaultCommand(command)) {
                 MipavUtil.displayWarning("This is a default function: shortcut can not be remapped");
 
                 return false;
             }
 
-            if (userShortcutTable.containsKey(command)) {
-                userShortcutTable.remove(command);
+            if (Preferences.userShortcutTable.containsKey(command)) {
+                Preferences.userShortcutTable.remove(command);
             }
 
-            if (userShortcutTable.containsValue(shortcut)) {
-                Enumeration e = userShortcutTable.keys();
+            if (Preferences.userShortcutTable.containsValue(shortcut)) {
+                final Enumeration<String> e = Preferences.userShortcutTable.keys();
 
                 while (e.hasMoreElements()) {
-                    String key = (String) e.nextElement();
+                    final String key = e.nextElement();
 
-                    if (shortcut.equals(userShortcutTable.get(key))) {
-                        userShortcutTable.remove(key);
+                    if (shortcut.equals(Preferences.userShortcutTable.get(key))) {
+                        Preferences.userShortcutTable.remove(key);
                     }
                 }
             }
 
-            userShortcutTable.put(command, shortcut);
+            Preferences.userShortcutTable.put(command, shortcut);
 
             /*
              * MipavUtil.displayInfo("Shortcut captured: " + shortcut.toString().replaceAll("pressed", "").trim() + " : " +
              * command);
              */
-            saveShortcuts();
+            Preferences.saveShortcuts();
             shortcut = null;
 
             return true;
@@ -749,9 +710,9 @@ public class Preferences {
      * Builds a hashtable of actioncommands (keys) with associated keystrokes from the Preferences file.
      */
     public static final void buildShortcutTable() {
-        userShortcutTable = new Hashtable();
+        Preferences.userShortcutTable = new Hashtable<String, KeyStroke>();
 
-        String str = getProperty(Preferences.PREF_SHORTCUTS);
+        final String str = Preferences.getProperty(Preferences.PREF_SHORTCUTS);
 
         // System.err.println(str);
         String keyStr = null;
@@ -775,7 +736,7 @@ public class Preferences {
                     // System.err.println("token is: " + token);
                     shortcutStr = token.substring(0, token.indexOf(","));
 
-                    if ( !defaultShortcutTable.containsKey(shortcutStr)) {
+                    if ( !Preferences.defaultShortcutTable.containsKey(shortcutStr)) {
 
                         keyStr = token.substring(token.indexOf(",") + 1, token.length()).trim();
                         modifiers = 0;
@@ -800,17 +761,17 @@ public class Preferences {
                         if ( (keyStr.length() == 2) || (keyStr.length() == 3)) {
                             fIndex = Integer.parseInt(keyStr.substring(1));
 
-                            userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(MipavUtil.functionKeys[fIndex],
-                                    0, false));
+                            Preferences.userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(
+                                    MipavUtil.functionKeys[fIndex], 0, false));
                         } else {
 
                             if (modifiers != 0) {
 
-                                userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(keyStr
+                                Preferences.userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(keyStr
                                         .charAt(keyStr.length() - 1), modifiers, false));
                             } else {
-                                userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(keyStr.charAt(0), modifiers,
-                                        false));
+                                Preferences.userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(keyStr.charAt(0),
+                                        modifiers, false));
                             }
                         }
                     }
@@ -821,7 +782,7 @@ public class Preferences {
             } else {
                 success = false;
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             e.printStackTrace();
             MipavUtil.displayWarning("Error reading shortcut preferences:  default shortcuts restored");
             success = false;
@@ -835,31 +796,30 @@ public class Preferences {
      * 
      * @param string String string to be output
      */
-    public static final void debug(String string) {
+    public static final void debug(final String string) {
 
-        if (messageFrame == null) {
+        if (Preferences.messageFrame == null) {
             System.err.println("Message frame is null");
         } else {
-            boolean[] levels = getDebugLevels();
+            final boolean[] levels = Preferences.getDebugLevels();
 
             if (levels[0] || levels[1] || levels[2] || levels[3] || levels[4]) {
-                messageFrame.append(string, ViewJFrameMessage.DEBUG);
+                Preferences.messageFrame.append(string, ViewJFrameMessage.DEBUG);
             }
         }
     }
-    
 
     /**
      * Prints to data tab
      * 
      * @param string String string to be output
      */
-    public static final void data(String string) {
+    public static final void data(final String string) {
 
-        if (messageFrame == null) {
+        if (Preferences.messageFrame == null) {
             System.err.println("Message frame is null");
         } else {
-        	messageFrame.append(string, ViewJFrameMessage.DATA);   
+            Preferences.messageFrame.append(string, ViewJFrameMessage.DATA);
         }
     }
 
@@ -869,10 +829,10 @@ public class Preferences {
      * @param string String String to be output
      * @param level int level of debug to check
      */
-    public static final void debug(String string, int level) {
-        boolean[] debugLevels = getDebugLevels();
+    public static final void debug(final String string, final int level) {
+        final boolean[] debugLevels = Preferences.getDebugLevels();
 
-        if (messageFrame == null) {
+        if (Preferences.messageFrame == null) {
             System.err.println("Warning: Message frame is null");
             System.out.println(string);
         } else {
@@ -880,9 +840,9 @@ public class Preferences {
             try {
 
                 if (debugLevels[level]) {
-                    messageFrame.append(string, ViewJFrameMessage.DEBUG);
+                    Preferences.messageFrame.append(string, ViewJFrameMessage.DEBUG);
                 }
-            } catch (Exception e) {}
+            } catch (final Exception e) {}
         }
     }
 
@@ -893,16 +853,16 @@ public class Preferences {
      * 
      * @return true if the given debugging level is activated
      */
-    public static final boolean debugLevel(int level) {
+    public static final boolean debugLevel(final int level) {
 
-        String str = getProperty(Preferences.PREF_DEBUG);
+        final String str = Preferences.getProperty(Preferences.PREF_DEBUG);
 
         if (str == null) {
             return false;
         } else {
 
             // parse out the booleans
-            StringTokenizer st = new StringTokenizer(str, ",");
+            final StringTokenizer st = new StringTokenizer(str, ",");
             int index = 0;
             String token = null;
 
@@ -920,7 +880,7 @@ public class Preferences {
                             return false;
                         }
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     System.err.println("error parsing debug levels");
 
                     return false;
@@ -939,10 +899,10 @@ public class Preferences {
      * @return boolean[] debug levels
      */
     public static final boolean[] getDebugLevels() {
-        boolean[] levels = new boolean[5];
+        final boolean[] levels = new boolean[5];
 
-        String str = Preferences.getProperty(Preferences.PREF_DEBUG);
-        StringTokenizer st = new StringTokenizer(str, ",");
+        final String str = Preferences.getProperty(Preferences.PREF_DEBUG);
+        final StringTokenizer st = new StringTokenizer(str, ",");
         int index = 0;
 
         while (st.hasMoreTokens()) {
@@ -950,7 +910,7 @@ public class Preferences {
             try {
                 levels[index] = Boolean.valueOf(st.nextToken()).booleanValue();
                 index++;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 System.err.println("exception: " + e);
             }
         }
@@ -964,17 +924,17 @@ public class Preferences {
      * @return the default frame rate as a floating point number.
      */
     public static float getDefaultFrameRate() {
-        String str = getProperty(Preferences.PREF_DEFAULT_FRAME_RATE);
+        final String str = Preferences.getProperty(Preferences.PREF_DEFAULT_FRAME_RATE);
 
         if (str != null) {
 
             try {
                 return Float.parseFloat(str);
-            } catch (Exception ex) {
-                setProperty(Preferences.PREF_DEFAULT_FRAME_RATE, "10.0");
+            } catch (final Exception ex) {
+                Preferences.setProperty(Preferences.PREF_DEFAULT_FRAME_RATE, "10.0");
             }
         } else {
-            setProperty(Preferences.PREF_DEFAULT_FRAME_RATE, "10.0");
+            Preferences.setProperty(Preferences.PREF_DEFAULT_FRAME_RATE, "10.0");
         }
 
         return 10.0f;
@@ -990,12 +950,12 @@ public class Preferences {
         String defaultKey = key;
         StringTokenizer tok;
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        while (getProperty(key) != null) {
-            tok = new StringTokenizer(getProperty(key), ";");
+        while (Preferences.getProperty(key) != null) {
+            tok = new StringTokenizer(Preferences.getProperty(key), ";");
 
             if (tok.countTokens() == 5) {
                 defaultKey = key;
@@ -1017,12 +977,12 @@ public class Preferences {
         String defaultKey = key;
         StringTokenizer tok;
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        while (getProperty(key) != null) {
-            tok = new StringTokenizer(getProperty(key), ";");
+        while (Preferences.getProperty(key) != null) {
+            tok = new StringTokenizer(Preferences.getProperty(key), ";");
 
             if (tok.countTokens() == 5) {
                 defaultKey = key;
@@ -1039,8 +999,8 @@ public class Preferences {
      * 
      * @return Hashtable the shortcut hashtable
      */
-    public static Hashtable getDefaultShortcutTable() {
-        return defaultShortcutTable;
+    public static Hashtable<String, KeyStroke> getDefaultShortcutTable() {
+        return Preferences.defaultShortcutTable;
     }
 
     /**
@@ -1053,12 +1013,12 @@ public class Preferences {
         String defaultKey = key;
         StringTokenizer tok;
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        while (getProperty(key) != null) {
-            tok = new StringTokenizer(getProperty(key), ";");
+        while (Preferences.getProperty(key) != null) {
+            tok = new StringTokenizer(Preferences.getProperty(key), ";");
 
             if (tok.countTokens() == 5) {
                 defaultKey = key;
@@ -1077,10 +1037,10 @@ public class Preferences {
      * 
      * @return String space separated default parameters for dialog
      */
-    public static final String getDialogDefaults(String dialogName) {
+    public static final String getDialogDefaults(final String dialogName) {
 
-        if (is(Preferences.PREF_SAVE_DEFAULTS)) {
-            return getProperty(dialogName);
+        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS)) {
+            return Preferences.getProperty(dialogName);
         }
 
         return null;
@@ -1091,24 +1051,24 @@ public class Preferences {
      * 
      * @return Vector List of strings that identify the columns.
      */
-    public static Vector getDICOMBrowserTableConfiguration() {
+    public static Vector<String> getDICOMBrowserTableConfiguration() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        String configStr = getProperty(PREF_DICOM_BROWSER_CONFIG);
+        final String configStr = Preferences.getProperty(Preferences.PREF_DICOM_BROWSER_CONFIG);
 
         if (configStr == null) {
             return null;
         }
 
-        StringTokenizer tokenizer = new StringTokenizer(configStr, "|");
+        final StringTokenizer tokenizer = new StringTokenizer(configStr, "|");
 
-        Vector configVector = new Vector();
+        final Vector<String> configVector = new Vector<String>();
 
         while (tokenizer.hasMoreElements()) {
-            configVector.addElement(tokenizer.nextElement());
+            configVector.addElement(tokenizer.nextToken());
         }
 
         return configVector;
@@ -1120,12 +1080,12 @@ public class Preferences {
      * @return String The full path of the dictionary in which a subset of the DICOM tags are stored.
      */
     public static final String getDICOMSaveDictionary() {
-        String key = getProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY);
-        String defaultKey = System.getProperties().getProperty("user.home") + File.separator + "mipav" + File.separator
-                + "dicomsave.dictionary";
+        final String key = Preferences.getProperty(Preferences.PREF_DICOM_SAVE_DICTIONARY);
+        final String defaultKey = System.getProperties().getProperty("user.home") + File.separator + "mipav"
+                + File.separator + "dicomsave.dictionary";
 
         if (key != null) {
-            File file = new File(key);
+            final File file = new File(key);
 
             if (file.isFile() && file.canWrite() && !file.isDirectory()) {
                 return key;
@@ -1143,13 +1103,13 @@ public class Preferences {
      */
     public static int getFileFilter() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        return Integer.parseInt(getProperty(Preferences.PREF_FILENAME_FILTER));
+        return Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
     }
-    
+
     /**
      * Returns the temporary directory which is used to store files to be deleted.
      * 
@@ -1157,11 +1117,11 @@ public class Preferences {
      */
     public static String getFileTempDir() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        return getProperty(PREF_FILE_TEMP_DIR);
+        return Preferences.getProperty(Preferences.PREF_FILE_TEMP_DIR);
 
     }
 
@@ -1172,17 +1132,17 @@ public class Preferences {
      * 
      * @return IP address of asssociated Name
      */
-    public static String getHostIP(String AETitle) {
+    public static String getHostIP(final String AETitle) {
         String key = "Host1";
         StringTokenizer tok = null;
         String str = null;
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        while (getProperty(key) != null) {
-            tok = new StringTokenizer(getProperty(key), ";");
+        while (Preferences.getProperty(key) != null) {
+            tok = new StringTokenizer(Preferences.getProperty(key), ";");
             str = tok.nextToken();
 
             if (AETitle.trim().equals(str.trim())) {
@@ -1203,7 +1163,7 @@ public class Preferences {
      * @return string containing the name of the system icon
      */
     public static final String getIconName() {
-        String str = getProperty("ApplicationIcon");
+        final String str = Preferences.getProperty("ApplicationIcon");
 
         if (str != null) {
             return str;
@@ -1221,7 +1181,7 @@ public class Preferences {
      */
     public static String getImageDirectory() {
 
-        String str = Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
+        final String str = Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
 
         if (str != null) {
             return str;
@@ -1237,17 +1197,17 @@ public class Preferences {
      * 
      * @return IP address of asssociated AETitle
      */
-    public static String getIP(String AETitle) {
+    public static String getIP(final String AETitle) {
         String key = "Server1";
         StringTokenizer tok = null;
         String str = null;
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        while (getProperty(key) != null) {
-            tok = new StringTokenizer(getProperty(key), ";");
+        while (Preferences.getProperty(key) != null) {
+            tok = new StringTokenizer(Preferences.getProperty(key), ";");
             str = tok.nextToken();
 
             if (AETitle.trim().equals(str.trim())) {
@@ -1269,14 +1229,14 @@ public class Preferences {
      * 
      * @return Name of image at index.
      */
-    public static final String getLastImageAt(int index) {
-        String str = getProperty(Preferences.PREF_LAST_X_IMAGES);
+    public static final String getLastImageAt(final int index) {
+        final String str = Preferences.getProperty(Preferences.PREF_LAST_X_IMAGES);
         String[] images = null;
 
         if (str != null) {
 
             try {
-                StringTokenizer tok = new StringTokenizer(str, ";");
+                final StringTokenizer tok = new StringTokenizer(str, ";");
 
                 if ( (tok != null) && (tok.countTokens() > 0)) {
                     images = new String[tok.countTokens()];
@@ -1288,7 +1248,7 @@ public class Preferences {
                         }
                     }
                 }
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 return null;
             }
 
@@ -1309,11 +1269,11 @@ public class Preferences {
      */
     public static final String getLastOpenSequenceChannels() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        return getProperty("OpenSequenceChannels");
+        return Preferences.getProperty("OpenSequenceChannels");
     }
 
     /**
@@ -1324,11 +1284,11 @@ public class Preferences {
      */
     public static final String getLastOpenSequenceOrdering() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        return getProperty("OpenSequenceOrdering");
+        return Preferences.getProperty("OpenSequenceOrdering");
     }
 
     /**
@@ -1338,11 +1298,11 @@ public class Preferences {
      */
     public static final String getLastOpenSequencePath() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        return getProperty("OpenSequencePath");
+        return Preferences.getProperty("OpenSequencePath");
     }
 
     /**
@@ -1353,11 +1313,11 @@ public class Preferences {
      */
     public static final String getLastOpenSequenceSlices() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        return getProperty("OpenSequenceSlices");
+        return Preferences.getProperty("OpenSequenceSlices");
     }
 
     /**
@@ -1368,56 +1328,11 @@ public class Preferences {
      */
     public static final String getLastOpenSequenceTimePoints() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        return getProperty("OpenSequenceTimePoints");
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @deprecated Returns the project of "last four projects" at the given index. Index should be between 0 and 3.
-     * 
-     * @param index Index of project.
-     * 
-     * @return Name of project at index.
-     */
-    public static final String getLastProjectAt(int index) {
-        String str = getProperty(Preferences.PREF_LAST_X_PROJECTS);
-        StringTokenizer tok;
-        String[] projects = null;
-
-        if (str != null) {
-
-            try {
-                tok = new StringTokenizer(str, ";");
-
-                if ( (tok != null) && (tok.countTokens() > 0)) {
-                    projects = new String[tok.countTokens()];
-
-                    if (projects != null) {
-
-                        for (int i = 0; i < projects.length; i++) {
-                            projects[i] = tok.nextToken();
-                        }
-                    } else {
-                        return null;
-                    }
-                } else {
-                    return null;
-                }
-            } catch (Exception ex) {
-                return null;
-            }
-        }
-
-        if (projects != null) {
-            return projects[index];
-        } else {
-            return null;
-        }
+        return Preferences.getProperty("OpenSequenceTimePoints");
     }
 
     /**
@@ -1427,13 +1342,13 @@ public class Preferences {
      * @return Array of strings representing the last images that were loaded
      */
     public static final String[] getLastXImages() {
-        String str = getProperty(Preferences.PREF_LAST_X_IMAGES);
-        String quickStr = getProperty(Preferences.PREF_QUICKLIST_NUMBER);
+        final String str = Preferences.getProperty(Preferences.PREF_LAST_X_IMAGES);
+        final String quickStr = Preferences.getProperty(Preferences.PREF_QUICKLIST_NUMBER);
         StringTokenizer tok;
         String[] images = null;
         String testStr = null;
         String shortName = null;
-        Vector tempVec = new Vector();
+        Vector<String> tempVec = new Vector<String>();
 
         boolean someRemoved = false;
         int numList = 0;
@@ -1441,7 +1356,7 @@ public class Preferences {
 
         try {
             maxList = Integer.parseInt(quickStr);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             maxList = 4;
         }
 
@@ -1452,7 +1367,7 @@ public class Preferences {
 
                 if ( (tok != null) && (tok.countTokens() > 0)) {
 
-                    int numTokens = tok.countTokens();
+                    final int numTokens = tok.countTokens();
 
                     for (int i = 0; i < numTokens; i++) {
                         testStr = tok.nextToken();
@@ -1473,7 +1388,7 @@ public class Preferences {
                 if (someRemoved || (tempVec.size() < maxList)) {
 
                     if (tempVec.size() < 1) {
-                        setProperty(Preferences.PREF_LAST_X_IMAGES, "");
+                        Preferences.setProperty(Preferences.PREF_LAST_X_IMAGES, "");
 
                         return new String[0];
                     }
@@ -1481,18 +1396,18 @@ public class Preferences {
                     String newStr = "";
 
                     for (int i = 0; i < tempVec.size(); i++) {
-                        newStr += (String) tempVec.elementAt(i) + ";";
+                        newStr += tempVec.elementAt(i) + ";";
                     }
 
                     // chop off the last ";"
                     newStr = newStr.substring(0, newStr.length() - 1);
-                    setProperty(Preferences.PREF_LAST_X_IMAGES, newStr);
+                    Preferences.setProperty(Preferences.PREF_LAST_X_IMAGES, newStr);
                 }
 
                 images = new String[tempVec.size()];
 
                 for (int i = 0; i < images.length; i++) {
-                    images[i] = (String) tempVec.elementAt(i);
+                    images[i] = tempVec.elementAt(i);
                 }
 
                 tempVec.removeAllElements();
@@ -1511,7 +1426,7 @@ public class Preferences {
 
                         // separate fileName and directory
                         int index = images[i].lastIndexOf(File.separatorChar);
-                        int index2 = images[i].indexOf(File.separatorChar);
+                        final int index2 = images[i].indexOf(File.separatorChar);
                         String temp = images[i].substring(0, index2 + 1) + "..." + images[i].substring(index);
                         String temp2 = images[i].substring(0, index);
 
@@ -1532,122 +1447,10 @@ public class Preferences {
                         images[i] = name + descriptors;
                     }
                 }
-            } catch (Exception ex) {}
+            } catch (final Exception ex) {}
         }
 
         return images;
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @deprecated Gets the last four projects that were loaded from the Preferences file. Shortens the names so the
-     *             menu isn't too wide.
-     * 
-     * @return Array of strings representing the last projects that were loaded, max of four.
-     */
-    public static final String[] getLastXProjects() {
-        String str = getProperty(Preferences.PREF_LAST_X_PROJECTS);
-        StringTokenizer tok;
-        String[] projects = null;
-        String testStr = null;
-        Vector tempVec = new Vector();
-        int numList = 0;
-        boolean someRemoved = false;
-        int maxList;
-
-        try {
-            maxList = Integer.parseInt(getProperty(Preferences.PREF_QUICKLIST_NUMBER));
-        } catch (Exception e) {
-            maxList = 4;
-        }
-
-        if (str != null) {
-
-            try {
-                tok = new StringTokenizer(str, ";");
-
-                if ( (tok != null) && (tok.countTokens() > 0)) {
-
-                    int numTokens = tok.countTokens();
-
-                    for (int i = 0; i < numTokens; i++) {
-                        testStr = tok.nextToken();
-
-                        if (new File(testStr).exists() && (numList < maxList)) {
-                            numList++;
-                            tempVec.add(new String(testStr));
-                        } else {
-                            someRemoved = true;
-                        }
-                    }
-                } else {
-                    return null;
-                }
-
-                // if some images should not be there (dont exist or more than the max allowed... rebuild the string
-                if (someRemoved || (tempVec.size() < maxList)) {
-
-                    if (tempVec.size() < 1) {
-                        setProperty(Preferences.PREF_LAST_X_PROJECTS, "");
-
-                        return new String[0];
-                    }
-
-                    String newStr = "";
-
-                    for (int i = 0; i < tempVec.size(); i++) {
-                        newStr += (String) tempVec.elementAt(i) + ";";
-                    }
-
-                    // chop off the last ";"
-                    newStr = newStr.substring(0, newStr.length() - 1);
-                    setProperty(Preferences.PREF_LAST_X_PROJECTS, newStr);
-                }
-
-                projects = new String[tempVec.size()];
-
-                for (int i = 0; i < projects.length; i++) {
-                    projects[i] = (String) tempVec.elementAt(i);
-                }
-
-                tempVec.removeAllElements();
-                tempVec = null;
-
-                int j = 0;
-
-                for (int i = 0; i < projects.length; i++) {
-
-                    if (projects[i].length() > 25) {
-
-                        // separate fileName and directory
-                        int index = projects[i].lastIndexOf(File.separatorChar);
-                        int index2 = projects[i].indexOf(File.separatorChar);
-                        String temp = projects[i].substring(0, index2 + 1) + "..." + projects[i].substring(index);
-                        String temp2 = projects[i].substring(0, index);
-                        String name = temp;
-
-                        while (temp.length() < 25) {
-                            name = temp;
-                            index = temp2.lastIndexOf(File.separatorChar);
-                            temp = projects[i].substring(0, index2 + 1) + "..." + projects[i].substring(index);
-                            temp2 = projects[i].substring(0, index);
-                            j++;
-
-                            if (j > 10) {
-                                break;
-                            }
-                        }
-
-                        projects[i] = name;
-                    }
-                }
-            } catch (Exception ex) {
-                return projects;
-            }
-        }
-
-        return projects;
     }
 
     /**
@@ -1658,11 +1461,11 @@ public class Preferences {
     public static String getNextHostKey() {
         String key = "Host1";
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        while (getProperty(key) != null) {
+        while (Preferences.getProperty(key) != null) {
             key = key.substring(0, 4) + (Integer.valueOf(key.substring(4)).intValue() + 1);
         }
 
@@ -1677,11 +1480,11 @@ public class Preferences {
     public static String getNextServerKey() {
         String key = "Server1";
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        while (getProperty(key) != null) {
+        while (Preferences.getProperty(key) != null) {
             key = key.substring(0, 6) + (Integer.valueOf(key.substring(6)).intValue() + 1);
         }
 
@@ -1696,11 +1499,11 @@ public class Preferences {
     public static String getNextStorageKey() {
         String key = Preferences.PREF_DICOM_STORAGE_DIR;
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        while (getProperty(key) != null) {
+        while (Preferences.getProperty(key) != null) {
             key = key.substring(0, 7) + (Integer.valueOf(key.substring(7)).intValue() + 1);
         }
 
@@ -1714,14 +1517,14 @@ public class Preferences {
      */
     public static final int getOS() {
 
-        String os = System.getProperty("os.name");
+        final String os = System.getProperty("os.name");
 
         if (os.startsWith("Windows")) {
-            return OS_WINDOWS;
+            return Preferences.OS_WINDOWS;
         } else if (os.startsWith("Mac")) {
-            return OS_MAC;
+            return Preferences.OS_MAC;
         } else {
-            return OS_UNIX;
+            return Preferences.OS_UNIX;
         }
     }
 
@@ -1731,32 +1534,32 @@ public class Preferences {
      * @return the architecture
      */
     public static final int getArch() {
-        String arch = System.getProperty("os.arch");
+        final String arch = System.getProperty("os.arch");
 
         if (arch.equalsIgnoreCase("i386") || arch.equalsIgnoreCase("i486") || arch.equalsIgnoreCase("i586")
                 || arch.equalsIgnoreCase("i686") || arch.equalsIgnoreCase("x86")) {
-            return ARCH_X86;
+            return Preferences.ARCH_X86;
         } else if (arch.equalsIgnoreCase("amd64") || arch.equalsIgnoreCase("x86_64")) {
-            return ARCH_AMD64;
+            return Preferences.ARCH_AMD64;
         } else if (arch.equalsIgnoreCase("ppc") || arch.equalsIgnoreCase("PowerPC")) {
-            return ARCH_PPC;
+            return Preferences.ARCH_PPC;
         } else if (arch.equalsIgnoreCase("pcc64")) {
-            return ARCH_PPC64;
+            return Preferences.ARCH_PPC64;
         } else if (arch.equalsIgnoreCase("mips") || arch.equalsIgnoreCase("MIPS4000")) {
-            return ARCH_MIPS;
+            return Preferences.ARCH_MIPS;
         } else if (arch.equalsIgnoreCase("alpha")) {
-            return ARCH_ALPHA;
+            return Preferences.ARCH_ALPHA;
         } else if (arch.equalsIgnoreCase("ia64") || arch.equalsIgnoreCase("IA64N")) {
-            return ARCH_IA64;
+            return Preferences.ARCH_IA64;
         } else if (arch.equalsIgnoreCase("arm") || arch.equalsIgnoreCase("armv41")) {
-            return ARCH_ARM;
+            return Preferences.ARCH_ARM;
         } else if (arch.equalsIgnoreCase("sparc")) {
-            return ARCH_SPARC;
+            return Preferences.ARCH_SPARC;
         } else if (arch.equalsIgnoreCase("PA-RISC") || arch.equalsIgnoreCase("PA_RISC")
                 || arch.equalsIgnoreCase("PA_RISC2.0")) {
-            return ARCH_PA_RISC;
+            return Preferences.ARCH_PA_RISC;
         } else {
-            return ARCH_UNKNOWN;
+            return Preferences.ARCH_UNKNOWN;
         }
     }
 
@@ -1767,22 +1570,22 @@ public class Preferences {
      * 
      * @return String[] array of strings for overlay labeling
      */
-    public static final String[] getOverlayNames(boolean isDicom) {
-        String[] overlays = new String[16];
+    public static final String[] getOverlayNames(final boolean isDicom) {
+        final String[] overlays = new String[16];
 
         String longStr = null;
 
         if (isDicom) {
-            longStr = getProperty("DICOMOverlayNames");
+            longStr = Preferences.getProperty("DICOMOverlayNames");
         } else {
-            longStr = getProperty("ImageOverlayNames");
+            longStr = Preferences.getProperty("ImageOverlayNames");
         }
 
         if (longStr == null) {
             return overlays;
         }
 
-        StringTokenizer tok = new StringTokenizer(longStr, ";");
+        final StringTokenizer tok = new StringTokenizer(longStr, ";");
         String token = null;
         int counter = 0;
 
@@ -1809,22 +1612,22 @@ public class Preferences {
      * 
      * @return the overlay codes that identifies what should be displayed.
      */
-    public static final String[] getOverlays(boolean isDicom) {
-        String[] overlays = new String[16];
+    public static final String[] getOverlays(final boolean isDicom) {
+        final String[] overlays = new String[16];
 
         String longStr = null;
 
         if (isDicom) {
-            longStr = getProperty("DICOMOverlays");
+            longStr = Preferences.getProperty("DICOMOverlays");
         } else {
-            longStr = getProperty("ImageOverlays");
+            longStr = Preferences.getProperty("ImageOverlays");
         }
 
         if (longStr == null) {
             return overlays;
         }
 
-        StringTokenizer tok = new StringTokenizer(longStr, ";");
+        final StringTokenizer tok = new StringTokenizer(longStr, ";");
         String token = null;
         int counter = 0;
 
@@ -1845,15 +1648,14 @@ public class Preferences {
      *         PluginUserDir is not set.
      */
     public static final String getPluginUserDir() {
-        String str = getProperty("PluginUserDir");
+        final String str = Preferences.getProperty("PluginUserDir");
 
         if (str == null) {
-            return getProperty(Preferences.PREF_IMAGE_DIR);
+            return Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
         }
 
         return str;
     }
-    
 
     /**
      * Returns the directory last used for installing plugins.
@@ -1862,7 +1664,7 @@ public class Preferences {
      */
     public static String getPluginInstallDirectory() {
 
-        String str = Preferences.getProperty(Preferences.PREF_PLUGIN_INSTALL_DIR);
+        final String str = Preferences.getProperty(Preferences.PREF_PLUGIN_INSTALL_DIR);
 
         if (str != null) {
             return str;
@@ -1878,16 +1680,16 @@ public class Preferences {
      * 
      * @return port address of asssociated AETitle
      */
-    public static int getPort(String AETitle) {
+    public static int getPort(final String AETitle) {
         String key = "Server1";
         StringTokenizer tok = null;
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        while (getProperty(key) != null) {
-            tok = new StringTokenizer(getProperty(key), ";");
+        while (Preferences.getProperty(key) != null) {
+            tok = new StringTokenizer(Preferences.getProperty(key), ";");
 
             if (AETitle.trim().equals(tok.nextToken().trim())) {
                 tok.nextToken(); // Skip alias
@@ -1909,7 +1711,7 @@ public class Preferences {
      * @return the place to put user-specific files
      */
     public static final String getPreferencesDir() {
-        return preferencesDir;
+        return Preferences.preferencesDir;
     }
 
     /**
@@ -1919,13 +1721,13 @@ public class Preferences {
      * 
      * @return the mipav property. The method returns null if the property is not found.
      */
-    public static final String getProperty(String key) {
+    public static final String getProperty(final String key) {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        return mipavProps.getProperty(key);
+        return Preferences.mipavProps.getProperty(key);
     }
 
     /**
@@ -1934,7 +1736,7 @@ public class Preferences {
      * @return DOCUMENT ME!
      */
     public static final String getScriptFile() {
-        String s = getProperty("ScriptFile");
+        String s = Preferences.getProperty("ScriptFile");
 
         if (s == null) {
             s = "";
@@ -1949,84 +1751,16 @@ public class Preferences {
      * @return script dir
      */
     public static final String getScriptsDirectory() {
-        String str = getProperty(Preferences.PREF_SCRIPT_DIR);
+        String str = Preferences.getProperty(Preferences.PREF_SCRIPT_DIR);
 
         if (str == null) {
 
             // set the default
             str = System.getProperty("user.dir") + File.separator + "scripts";
-            setProperty(Preferences.PREF_SCRIPT_DIR, str);
+            Preferences.setProperty(Preferences.PREF_SCRIPT_DIR, str);
         }
 
         return str;
-    }
-
-    /**
-     * Retrieves the SRB server authentication scheme.
-     * 
-     * @return the srb server's authentication scheme.
-     */
-    public static String getServerAuthSRB() {
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_SERVER_AUTHENTICATION_SRB);
-    }
-
-    /**
-     * Retrieves the domain information of the SRB server.
-     * 
-     * @return DOCUMENT ME!
-     */
-    public static String getServerDomainSRB() {
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_SERVER_DOMAIN_SRB);
-    }
-
-    /**
-     * Retrieves the ip address or DNS name of the machine which hosts the SRB server.
-     * 
-     * @return DOCUMENT ME!
-     */
-    public static String getServerHostSRB() {
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_SERVER_HOST_SRB);
-    }
-
-    /**
-     * Retrieves the SRB server port.
-     * 
-     * @return DOCUMENT ME!
-     */
-    public static int getServerPortSRB() {
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        int port = -1;
-
-        try {
-            String strPort = getProperty(PREF_SERVER_PORT_SRB);
-
-            if (strPort != null) {
-                port = Integer.parseInt(strPort);
-            }
-        } catch (NumberFormatException e) {
-            debug("Cannot retrieve previous SRB server port.", DEBUG_MINOR);
-        }
-
-        return port;
     }
 
     /**
@@ -2036,14 +1770,14 @@ public class Preferences {
      * 
      * @return KeyStroke the shortcut's keystroke
      */
-    public static KeyStroke getShortcut(String command) {
+    public static KeyStroke getShortcut(final String command) {
         KeyStroke ks = null;
 
         if (command != null) {
-            ks = (KeyStroke) defaultShortcutTable.get(command);
+            ks = Preferences.defaultShortcutTable.get(command);
 
             if (ks == null) {
-                ks = (KeyStroke) userShortcutTable.get(command);
+                ks = Preferences.userShortcutTable.get(command);
             }
         }
 
@@ -2057,16 +1791,16 @@ public class Preferences {
      * 
      * @return String the command associated (or null if none)
      */
-    public static String getShortcutCommand(KeyStroke ks) {
+    public static String getShortcutCommand(final KeyStroke ks) {
         KeyStroke shortcut = null;
         String command = null;
 
         // first check defaults
-        Enumeration en = defaultShortcutTable.keys();
+        Enumeration<String> en = Preferences.defaultShortcutTable.keys();
 
         while (en.hasMoreElements()) {
-            command = (String) en.nextElement();
-            shortcut = (KeyStroke) defaultShortcutTable.get(command);
+            command = en.nextElement();
+            shortcut = Preferences.defaultShortcutTable.get(command);
 
             if (shortcut.equals(ks)) {
                 return command;
@@ -2074,11 +1808,11 @@ public class Preferences {
         }
 
         // next check user shortcuts
-        en = userShortcutTable.keys();
+        en = Preferences.userShortcutTable.keys();
 
         while (en.hasMoreElements()) {
-            command = (String) en.nextElement();
-            shortcut = (KeyStroke) userShortcutTable.get(command);
+            command = en.nextElement();
+            shortcut = Preferences.userShortcutTable.get(command);
 
             if (shortcut.equals(ks)) {
                 return command;
@@ -2089,64 +1823,6 @@ public class Preferences {
     }
 
     /**
-     * Returns the temporary directory which is used during file transfer.
-     * 
-     * @return the temporary directory which is used during file transfer.
-     */
-    public static String getSRBTempDir() {
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_SRB_TEMP_DIR);
-
-    }
-
-    /**
-     * Returns the transfer mode of srb server.
-     * 
-     * @return the transfer mode of srb server.
-     */
-    public static String getSRBTransferMode() {
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_SRB_TRANSFER_MODE);
-    }
-
-    /**
-     * Returns the srb server version which Jargon need to be adapted to.
-     * 
-     * @return the srb server version which Jargon need to be adapted to.
-     */
-    public static String getSRBVersion() {
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_SRB_VERSION);
-
-    }
-
-    /**
-     * Retrieves the default storage resource for the user.
-     * 
-     * @return DOCUMENT ME!
-     */
-    public static String getStorageResourceSRB() {
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_STORAGE_RESOURCE_SRB);
-    }
-
-    /**
      * Used by ViewOpenImageSequence to get the subsample dimensions that were saved in the preferences file.
      * 
      * @return Dimension - the dimension that was last used to subsample an image while using the ViewOpenImageSequence
@@ -2154,19 +1830,19 @@ public class Preferences {
      */
     public static final Dimension getSubsampleDimensions() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
         Dimension subsampleDimension = null;
 
         try {
-            String subsampleWidth = getProperty("subsampleWidth");
-            String subsampleHeight = getProperty("subsampleHeight");
+            final String subsampleWidth = Preferences.getProperty("subsampleWidth");
+            final String subsampleHeight = Preferences.getProperty("subsampleHeight");
 
             subsampleDimension = new Dimension(Integer.parseInt(subsampleWidth), Integer.parseInt(subsampleHeight));
-        } catch (NumberFormatException nfe) {
-            debug("Cannot retrieve previous subsample dimension.", DEBUG_MINOR);
+        } catch (final NumberFormatException nfe) {
+            Preferences.debug("Cannot retrieve previous subsample dimension.", Preferences.DEBUG_MINOR);
             subsampleDimension = null;
         }
 
@@ -2181,11 +1857,11 @@ public class Preferences {
      */
     public static final float getTrim() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        String str = getProperty(Preferences.PREF_TRIM);
+        final String str = Preferences.getProperty(Preferences.PREF_TRIM);
 
         if (str != null) {
             return (Float.valueOf(str).floatValue());
@@ -2201,11 +1877,11 @@ public class Preferences {
      */
     public static boolean getTrimAdjacient() {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        String str = getProperty(Preferences.PREF_TRIM_FLAG);
+        final String str = Preferences.getProperty(Preferences.PREF_TRIM_FLAG);
 
         if (str != null) {
             return (Boolean.valueOf(str).booleanValue());
@@ -2215,26 +1891,12 @@ public class Preferences {
     }
 
     /**
-     * Retrieves the user name to login the SRB server.
-     * 
-     * @return DOCUMENT ME!
-     */
-    public static String getUserNameSRB() {
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_USERNAME_SRB);
-    }
-
-    /**
      * Gets the User defined Hashtable used to store the shortcut keystrokes and commands.
      * 
      * @return Hashtable the shortcut hashtable
      */
-    public static Hashtable getUserShortcutTable() {
-        return userShortcutTable;
+    public static Hashtable<String, KeyStroke> getUserShortcutTable() {
+        return Preferences.userShortcutTable;
     }
 
     /**
@@ -2245,13 +1907,13 @@ public class Preferences {
     public static int getVOIColorIncrement() {
         int increment = 0;
 
-        String str = getProperty(Preferences.PREF_VOI_START_COLOR);
+        final String str = Preferences.getProperty(Preferences.PREF_VOI_START_COLOR);
 
         if (str != null) {
 
             try {
                 increment = Integer.parseInt(str);
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 // do nothing.. colorIncrement still is 0
             }
         }
@@ -2266,14 +1928,14 @@ public class Preferences {
      */
     public static Color getVOIDrawColor() {
 
-        String str = getProperty(Preferences.PREF_VOI_DRAW_COLOR);
+        final String str = Preferences.getProperty(Preferences.PREF_VOI_DRAW_COLOR);
         Color drawColor = Color.yellow;
 
         if (str != null) {
 
             try {
                 drawColor = MipavUtil.extractColor(str);
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 // do nothing.. drawColor still is yellow
             }
         }
@@ -2288,17 +1950,17 @@ public class Preferences {
      */
     public static int getVOIThickness() {
         int thickness = 1;
-        String str = getProperty(Preferences.PREF_VOI_THICKNESS);
+        final String str = Preferences.getProperty(Preferences.PREF_VOI_THICKNESS);
 
         if (str != null) {
 
             try {
                 thickness = Integer.parseInt(str);
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 // do nothing.. thickness still 1
             }
         } else {
-            setProperty(Preferences.PREF_VOI_THICKNESS, "1");
+            Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, "1");
         }
 
         return thickness;
@@ -2318,8 +1980,8 @@ public class Preferences {
      * 
      * @param propertyName Name of a property in preferences to check.
      */
-    public static final boolean is(String propertyName) {
-        return isPreference(propertyName);
+    public static final boolean is(final String propertyName) {
+        return Preferences.isPreference(propertyName);
     }
 
     /**
@@ -2334,7 +1996,7 @@ public class Preferences {
      *         false or level is zero.
      */
     public static final boolean isDebug() {
-        String str = getProperty("DEBUG");
+        final String str = Preferences.getProperty("DEBUG");
 
         if (str == null) {
 
@@ -2347,13 +2009,13 @@ public class Preferences {
                 if (Integer.parseInt(str) > 0) { // debug level > 0
                     return true;
                 }
-            } catch (NumberFormatException nfe) { // older version debug
+            } catch (final NumberFormatException nfe) { // older version debug
 
                 if (str.equalsIgnoreCase("true") || str.equalsIgnoreCase("on") || str.equalsIgnoreCase("yes")) { // debug
                     // YES
                     return true;
                 }
-            } catch (NullPointerException npe) { // property does not exist
+            } catch (final NullPointerException npe) { // property does not exist
                 return false; // no property present? default to not debug mode
             }
         }
@@ -2368,8 +2030,8 @@ public class Preferences {
      * 
      * @return DOCUMENT ME!
      */
-    public static boolean isDefaultCommand(String command) {
-        return defaultShortcutTable.contains(command);
+    public static boolean isDefaultCommand(final String command) {
+        return Preferences.defaultShortcutTable.contains(command);
     }
 
     /**
@@ -2379,18 +2041,18 @@ public class Preferences {
      * 
      * @return DOCUMENT ME!
      */
-    public static boolean isDefaultKeyStroke(KeyStroke ks) {
+    public static boolean isDefaultKeyStroke(final KeyStroke ks) {
 
         if (ks == null) {
             return false;
         }
 
-        Enumeration keys = defaultShortcutTable.keys();
+        final Enumeration<String> keys = Preferences.defaultShortcutTable.keys();
 
         KeyStroke defaultKey = null;
 
         while (keys.hasMoreElements()) {
-            defaultKey = (KeyStroke) defaultShortcutTable.get(keys.nextElement());
+            defaultKey = Preferences.defaultShortcutTable.get(keys.nextElement());
 
             if (defaultKey.equals(ks)) {
                 return true;
@@ -2413,15 +2075,15 @@ public class Preferences {
      * 
      * @param propertyName Name of a property in preferences to check.
      */
-    public static final boolean isPreference(String propertyName) {
+    public static final boolean isPreference(final String propertyName) {
 
         if (propertyName == null) {
-            debug("Property name: null.", Preferences.DEBUG_MINOR);
+            Preferences.debug("Property name: null.", Preferences.DEBUG_MINOR);
 
             return false;
         }
 
-        String str = getProperty(propertyName);
+        final String str = Preferences.getProperty(propertyName);
 
         if (str != null) {
 
@@ -2443,22 +2105,22 @@ public class Preferences {
      * 
      * @return <code>true</code> if there is some preference set for the given property name
      */
-    public static final boolean isPreferenceSet(String propertyName) {
+    public static final boolean isPreferenceSet(final String propertyName) {
 
         if (propertyName == null) {
-            debug("Property name: null.", Preferences.DEBUG_MINOR);
+            Preferences.debug("Property name: null.", Preferences.DEBUG_MINOR);
 
             return false;
         }
 
-        return getProperty(propertyName) != null;
+        return Preferences.getProperty(propertyName) != null;
     }
 
     /**
      * Prints mipav.preferences to System.out.
      */
     public static void print() {
-        mipavProps.list(System.out);
+        Preferences.mipavProps.list(System.out);
     }
 
     /**
@@ -2467,17 +2129,17 @@ public class Preferences {
      * @return true if found else false
      */
     public static boolean read() {
-        mipavProps = null;
+        Preferences.mipavProps = null;
 
         BufferedInputStream bFile = null;
 
         // initialze the properties to the default properties
-        mipavProps = new Properties(defaultProps);
+        Preferences.mipavProps = new Properties(Preferences.defaultProps);
 
-        if ( !new File(preferencesFile).exists()) {
+        if ( !new File(Preferences.preferencesFile).exists()) {
 
             // nothing user-specific to override the defaults, so just save what there is.
-            save();
+            Preferences.save();
         }
 
         // / TODO: maybe find pref files in other locations and delete them..
@@ -2485,9 +2147,9 @@ public class Preferences {
         try {
             // this will override any defaults if the user specified something different
 
-            bFile = new BufferedInputStream(new FileInputStream(preferencesFile));
-            mipavProps.load(bFile);
-        } catch (IOException error) {
+            bFile = new BufferedInputStream(new FileInputStream(Preferences.preferencesFile));
+            Preferences.mipavProps.load(bFile);
+        } catch (final IOException error) {
             MipavUtil.displayError("Error Reading preferences");
 
             return false;
@@ -2498,10 +2160,10 @@ public class Preferences {
                 if (bFile != null) {
                     bFile.close();
                 }
-            } catch (IOException ioe) {}
+            } catch (final IOException ioe) {}
         }
 
-        buildShortcutTable();
+        Preferences.buildShortcutTable();
 
         return true;
     }
@@ -2511,13 +2173,13 @@ public class Preferences {
      * 
      * @param key the property key.
      */
-    public static final void removeProperty(String key) {
+    public static final void removeProperty(final String key) {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        mipavProps.remove(key);
+        Preferences.mipavProps.remove(key);
     }
 
     /**
@@ -2525,9 +2187,9 @@ public class Preferences {
      * 
      * @param commandToRemove String
      */
-    public static void removeShortcut(String commandToRemove) {
-        userShortcutTable.remove(commandToRemove);
-        saveShortcuts();
+    public static void removeShortcut(final String commandToRemove) {
+        Preferences.userShortcutTable.remove(commandToRemove);
+        Preferences.saveShortcuts();
     }
 
     /**
@@ -2539,17 +2201,17 @@ public class Preferences {
         BufferedOutputStream bFile = null;
 
         try {
-            File dFile = new File(preferencesDir);
+            final File dFile = new File(Preferences.preferencesDir);
 
             if ( !dFile.exists() && !dFile.mkdirs()) {
-                MipavUtil.displayError("Unable to create preferences directory: " + preferencesDir);
+                MipavUtil.displayError("Unable to create preferences directory: " + Preferences.preferencesDir);
 
                 return false;
             }
 
-            bFile = new BufferedOutputStream(new FileOutputStream(preferencesFile));
-            mipavProps.store(bFile, " MIPAV preference file");
-        } catch (IOException error) {
+            bFile = new BufferedOutputStream(new FileOutputStream(Preferences.preferencesFile));
+            Preferences.mipavProps.store(bFile, " MIPAV preference file");
+        } catch (final IOException error) {
             MipavUtil.displayError("Unable to save preference file " + error.toString());
 
             return false;
@@ -2560,7 +2222,7 @@ public class Preferences {
                 if (bFile != null) {
                     bFile.close();
                 }
-            } catch (IOException ioe) {}
+            } catch (final IOException ioe) {}
         }
 
         return true;
@@ -2572,8 +2234,8 @@ public class Preferences {
      * @param dialogName String the name of the dialog
      * @param defaultsString String the String to save for this dialog
      */
-    public static final void saveDialogDefaults(String dialogName, String defaultsString) {
-        setProperty(dialogName, defaultsString);
+    public static final void saveDialogDefaults(final String dialogName, final String defaultsString) {
+        Preferences.setProperty(dialogName, defaultsString);
     }
 
     /**
@@ -2584,7 +2246,7 @@ public class Preferences {
         // Hashtable userShortcutTable = ViewUserInterface.getReference().getShortcutTable();
         String command = null;
         KeyStroke ks = null;
-        Enumeration e = userShortcutTable.keys();
+        final Enumeration<String> e = Preferences.userShortcutTable.keys();
 
         String longStr = new String();
 
@@ -2595,8 +2257,8 @@ public class Preferences {
         try {
 
             while (e.hasMoreElements()) {
-                command = (String) e.nextElement();
-                ks = (KeyStroke) userShortcutTable.get(command);
+                command = e.nextElement();
+                ks = Preferences.userShortcutTable.get(command);
                 m = ks.getModifiers();
 
                 singleChar = ks.toString().trim();
@@ -2625,8 +2287,8 @@ public class Preferences {
 
             }
 
-            setProperty(Preferences.PREF_SHORTCUTS, longStr);
-        } catch (Exception ex) {
+            Preferences.setProperty(Preferences.PREF_SHORTCUTS, longStr);
+        } catch (final Exception ex) {
             System.err.println("error setting shortcuts in prefs");
         }
     }
@@ -2637,14 +2299,14 @@ public class Preferences {
      * 
      * @param subsampleDimension Dimension - the subsample dimension to save
      */
-    public static final void saveSubsampleDimensions(Dimension subsampleDimension) {
+    public static final void saveSubsampleDimensions(final Dimension subsampleDimension) {
 
         if (subsampleDimension == null) {
             return;
         }
 
-        setProperty("subsampleWidth", String.valueOf(subsampleDimension.width));
-        setProperty("subsampleHeight", String.valueOf(subsampleDimension.height));
+        Preferences.setProperty("subsampleWidth", String.valueOf(subsampleDimension.width));
+        Preferences.setProperty("subsampleHeight", String.valueOf(subsampleDimension.height));
     }
 
     /**
@@ -2653,8 +2315,8 @@ public class Preferences {
      * 
      * @param doSaveAnalyze whether to always save .hdr/.img files as analyze format files
      */
-    public static final void setAlwaysSaveImgAsAnalyze(boolean doSaveAnalyze) {
-        setProperty(PREF_ALWAYS_SAVE_IMG_AS_ANALYZE, Boolean.toString(doSaveAnalyze));
+    public static final void setAlwaysSaveImgAsAnalyze(final boolean doSaveAnalyze) {
+        Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE, Boolean.toString(doSaveAnalyze));
     }
 
     /**
@@ -2663,8 +2325,8 @@ public class Preferences {
      * 
      * @param doSaveInterfile whether to always save .hdr/.img files as interfile format files
      */
-    public static final void setAlwaysSaveImgAsInterfile(boolean doSaveInterfile) {
-        setProperty(PREF_ALWAYS_SAVE_IMG_AS_INTERFILE, Boolean.toString(doSaveInterfile));
+    public static final void setAlwaysSaveImgAsInterfile(final boolean doSaveInterfile) {
+        Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_INTERFILE, Boolean.toString(doSaveInterfile));
     }
 
     /**
@@ -2673,8 +2335,8 @@ public class Preferences {
      * 
      * @param doSaveNifti whether to always save .hdr/.img files as nifti format files
      */
-    public static final void setAlwaysSaveImgAsNifti(boolean doSaveNifti) {
-        setProperty(PREF_ALWAYS_SAVE_IMG_AS_NIFTI, Boolean.toString(doSaveNifti));
+    public static final void setAlwaysSaveImgAsNifti(final boolean doSaveNifti) {
+        Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_NIFTI, Boolean.toString(doSaveNifti));
     }
 
     /**
@@ -2682,8 +2344,8 @@ public class Preferences {
      * 
      * @param doSaveMinc1 whether to always save .mnc files as minc1 cdf format files
      */
-    public static final void setAlwaysSaveMncAsMinc1(boolean doSaveMinc1) {
-        setProperty(PREF_ALWAYS_SAVE_MNC_AS_MINC1, Boolean.toString(doSaveMinc1));
+    public static final void setAlwaysSaveMncAsMinc1(final boolean doSaveMinc1) {
+        Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC1, Boolean.toString(doSaveMinc1));
     }
 
     /**
@@ -2692,29 +2354,29 @@ public class Preferences {
      * 
      * @param doSaveMinc2 whether to always save .mnc files as minc2 hdf5 format files
      */
-    public static final void setAlwaysSaveMncAsMinc2(boolean doSaveMinc2) {
-        setProperty(PREF_ALWAYS_SAVE_MNC_AS_MINC2, Boolean.toString(doSaveMinc2));
+    public static final void setAlwaysSaveMncAsMinc2(final boolean doSaveMinc2) {
+        Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2, Boolean.toString(doSaveMinc2));
     }
-    
+
     /**
-     * Sets whether all 4D dicom files should have the time axis graphed as 0, 1, 2, ...
-     * (i.e., don't ask about whether to graph as 0, 1, 2, ... or frame reference time
+     * Sets whether all 4D dicom files should have the time axis graphed as 0, 1, 2, ... (i.e., don't ask about whether
+     * to graph as 0, 1, 2, ... or frame reference time
      * 
      * @param doGraph0123 whether to always graph 4D dicom time axis as 0, 1, 2, ...
      */
-    public static final void setAlwaysGraphTimeAs0123(boolean doGraph0123) {
-        setProperty(PREF_ALWAYS_GRAPH_TIME_AS_0123, Boolean.toString(doGraph0123));
+    public static final void setAlwaysGraphTimeAs0123(final boolean doGraph0123) {
+        Preferences.setProperty(Preferences.PREF_ALWAYS_GRAPH_TIME_AS_0123, Boolean.toString(doGraph0123));
     }
-    
+
     /**
-     * Sets whether all 4D docm files should have the time axis graphed as
-     * frame reference times (1.e., don't ask about whether to graph as 0, 1, 2, ... or
-     * frame reference time
+     * Sets whether all 4D docm files should have the time axis graphed as frame reference times (1.e., don't ask about
+     * whether to graph as 0, 1, 2, ... or frame reference time
      * 
      * @param doGraphFrameReferenceTime whether to always graph 4D dicom time axis with frame reference times
      */
-    public static final void setAlwaysGraphFrameReferenceTime(boolean doGraphFrameReferenceTime) {
-        setProperty(PREF_ALWAYS_GRAPH_FRAME_REFERENCE_TIME, Boolean.toString(doGraphFrameReferenceTime));
+    public static final void setAlwaysGraphFrameReferenceTime(final boolean doGraphFrameReferenceTime) {
+        Preferences.setProperty(Preferences.PREF_ALWAYS_GRAPH_FRAME_REFERENCE_TIME, Boolean
+                .toString(doGraphFrameReferenceTime));
     }
 
     /**
@@ -2722,8 +2384,8 @@ public class Preferences {
      * 
      * @param ks KeyStroke the shortcut keystroke
      */
-    public static void setCurrentShortcut(KeyStroke ks) {
-        currentShortcut = ks;
+    public static void setCurrentShortcut(final KeyStroke ks) {
+        Preferences.currentShortcut = ks;
     }
 
     /**
@@ -2732,7 +2394,7 @@ public class Preferences {
      * 
      * @param levels boolean[] true/false for each level of debug
      */
-    public static final void setDebugLevels(boolean[] levels) {
+    public static final void setDebugLevels(final boolean[] levels) {
         String str = new String();
 
         if (levels != null) {
@@ -2745,7 +2407,7 @@ public class Preferences {
                 }
             }
 
-            setProperty(Preferences.PREF_DEBUG, str);
+            Preferences.setProperty(Preferences.PREF_DEBUG, str);
         }
     }
 
@@ -2756,7 +2418,7 @@ public class Preferences {
      * 
      * @return boolean Success or failure of the setting the columns.
      */
-    public static boolean setDICOMBrowserTableConfiguration(Vector newConfiguration) {
+    public static boolean setDICOMBrowserTableConfiguration(final Vector<String> newConfiguration) {
 
         if (newConfiguration == null) {
             MipavUtil.displayInfo("Unable to save configuration to preferences file.");
@@ -2767,10 +2429,10 @@ public class Preferences {
         String configStr = "";
 
         for (int i = 0; i < newConfiguration.size(); i++) {
-            configStr += (String) newConfiguration.elementAt(i) + "|";
+            configStr += newConfiguration.elementAt(i) + "|";
         }
 
-        return setProperty(PREF_DICOM_BROWSER_CONFIG, configStr);
+        return Preferences.setProperty(Preferences.PREF_DICOM_BROWSER_CONFIG, configStr);
     }
 
     /**
@@ -2778,22 +2440,22 @@ public class Preferences {
      * 
      * @param fileFilterIndex the index of the current used file filter.
      */
-    public static void setFileFilter(int fileFilterIndex) {
-        setProperty(Preferences.PREF_FILENAME_FILTER, new Integer(fileFilterIndex));
+    public static void setFileFilter(final int fileFilterIndex) {
+        Preferences.setProperty(Preferences.PREF_FILENAME_FILTER, new Integer(fileFilterIndex));
     }
-    
+
     /**
      * Sets the temporary directory which is used for files which will be deleted.
      * 
      * @param tempDir the temporary directory.
      */
-    public static void setFileTempDir(String tempDir) {
+    public static void setFileTempDir(final String tempDir) {
 
         if (tempDir == null) {
             return;
         }
 
-        setProperty(PREF_FILE_TEMP_DIR, tempDir);
+        Preferences.setProperty(Preferences.PREF_FILE_TEMP_DIR, tempDir);
     }
 
     /**
@@ -2801,16 +2463,16 @@ public class Preferences {
      * 
      * @param imageDirectory the current used image directory.
      */
-    public static void setImageDirectory(File imageDirectory) {
+    public static void setImageDirectory(final File imageDirectory) {
 
         if (imageDirectory == null) {
             return;
         }
 
         if (imageDirectory.isDirectory()) {
-            setProperty(Preferences.PREF_IMAGE_DIR, imageDirectory.getAbsolutePath());
+            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, imageDirectory.getAbsolutePath());
         } else {
-            setProperty(Preferences.PREF_IMAGE_DIR, imageDirectory.getParent());
+            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, imageDirectory.getParent());
         }
     }
 
@@ -2821,7 +2483,7 @@ public class Preferences {
      * @param multiFile true if the last image was a multi-file image, false otherwise
      * @param numDims DOCUMENT ME!
      */
-    public static final void setLastImage(String name, boolean multiFile, int numDims) {
+    public static final void setLastImage(final String name, boolean multiFile, int numDims) {
 
         if (name == null) {
             return;
@@ -2829,15 +2491,15 @@ public class Preferences {
 
         String newName;
         String newProp;
-        String str = getProperty(Preferences.PREF_LAST_X_IMAGES);
-        String quickStr = getProperty(Preferences.PREF_QUICKLIST_NUMBER);
+        final String str = Preferences.getProperty(Preferences.PREF_LAST_X_IMAGES);
+        final String quickStr = Preferences.getProperty(Preferences.PREF_QUICKLIST_NUMBER);
         StringTokenizer tok;
 
         int quickListNumber;
 
         try {
             quickListNumber = Integer.parseInt(quickStr);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             quickListNumber = 4;
         }
 
@@ -2850,7 +2512,6 @@ public class Preferences {
         }
 
         newProp = new String(newName);
-
 
         String added = null;
 
@@ -2890,14 +2551,14 @@ public class Preferences {
                         }
                     }
                 }
-            } catch (Exception ex) {
-            	ex.printStackTrace();
+            } catch (final Exception ex) {
+                ex.printStackTrace();
             }
         }
 
         // System.err.println("New quicklist string is: " + newProp);
 
-        setProperty(Preferences.PREF_LAST_X_IMAGES, newProp);
+        Preferences.setProperty(Preferences.PREF_LAST_X_IMAGES, newProp);
     }
 
     /**
@@ -2909,12 +2570,12 @@ public class Preferences {
      * @param timePoints String - number of time points in the time points text box of the ViewOpenImageSequence frame
      * @param ordering String - ordering sequence used in the radio button panel of the ViewOpenImageSequence frame
      */
-    public static final void setLastOpenSequenceParams(String slices, String channels, String timePoints,
-            String ordering) {
-        setProperty("OpenSequenceSlices", slices);
-        setProperty("OpenSequenceChannels", channels);
-        setProperty("OpenSequenceTimePoints", timePoints);
-        setProperty("OpenSequenceOrdering", ordering);
+    public static final void setLastOpenSequenceParams(final String slices, final String channels,
+            final String timePoints, final String ordering) {
+        Preferences.setProperty("OpenSequenceSlices", slices);
+        Preferences.setProperty("OpenSequenceChannels", channels);
+        Preferences.setProperty("OpenSequenceTimePoints", timePoints);
+        Preferences.setProperty("OpenSequenceOrdering", ordering);
     }
 
     /**
@@ -2922,61 +2583,13 @@ public class Preferences {
      * 
      * @param path DOCUMENT ME!
      */
-    public static final void setLastOpenSequencePath(String path) {
+    public static final void setLastOpenSequencePath(final String path) {
 
         if (path == null) {
             return;
         }
 
-        setProperty("OpenSequencePath", path);
-    }
-
-    /**
-     * Sets the last project loaded in the Preferences file. If it is a duplicate, moves it up on the list.
-     * 
-     * @param name Full pathname of last project loaded.
-     */
-    public static final void setLastProject(String name) {
-
-        if (name == null) {
-            return;
-        }
-
-        String str = getProperty(Preferences.PREF_LAST_X_PROJECTS);
-        StringTokenizer tok;
-
-        int quickListNumber;
-
-        try {
-            quickListNumber = Integer.parseInt(getProperty(Preferences.PREF_QUICKLIST_NUMBER));
-        } catch (Exception e) {
-            quickListNumber = 4;
-        }
-
-        String newProp = name;
-
-        if (str != null) {
-
-            try {
-                tok = new StringTokenizer(str, ";");
-
-                int i = 1;
-
-                if (tok != null) {
-
-                    while ( (i < quickListNumber) && tok.hasMoreTokens()) {
-                        String added = tok.nextToken();
-
-                        if ( !added.equals(name) && new File(added).exists()) {
-                            newProp += ";" + added;
-                            i++;
-                        }
-                    }
-                }
-            } catch (Exception ex) {}
-        }
-
-        setProperty(Preferences.PREF_LAST_X_PROJECTS, newProp);
+        Preferences.setProperty("OpenSequencePath", path);
     }
 
     /**
@@ -2984,8 +2597,8 @@ public class Preferences {
      * 
      * @param mFrame Message frame to set.
      */
-    public static final void setMessageFrame(ViewJFrameMessage mFrame) {
-        messageFrame = mFrame;
+    public static final void setMessageFrame(final ViewJFrameMessage mFrame) {
+        Preferences.messageFrame = mFrame;
     }
 
     /**
@@ -2995,7 +2608,7 @@ public class Preferences {
      * @param isDicom boolean is the image DICOM
      * @param overlays String[] array of strings (16) for each of the overlay positions
      */
-    public static final void setOverlayNames(boolean isDicom, String[] overlays) {
+    public static final void setOverlayNames(final boolean isDicom, final String[] overlays) {
         String str = "";
 
         for (int i = 0; i < 16; i++) {
@@ -3008,9 +2621,9 @@ public class Preferences {
         }
 
         if (isDicom) {
-            setProperty("DICOMOverlayNames", str);
+            Preferences.setProperty("DICOMOverlayNames", str);
         } else {
-            setProperty("ImageOverlayNames", str);
+            Preferences.setProperty("ImageOverlayNames", str);
         }
     }
 
@@ -3021,7 +2634,7 @@ public class Preferences {
      *            (i.e., it is not a DICOM image)
      * @param overlays an array of 16 strings (4 for each corner) that identifies what is to be displayed in the image.
      */
-    public static final void setOverlays(boolean isDicom, String[] overlays) {
+    public static final void setOverlays(final boolean isDicom, final String[] overlays) {
         String str = "";
 
         for (int i = 0; i < 16; i++) {
@@ -3034,36 +2647,35 @@ public class Preferences {
         }
 
         if (isDicom) {
-            setProperty("DICOMOverlays", str);
+            Preferences.setProperty("DICOMOverlays", str);
         } else {
-            setProperty("ImageOverlays", str);
+            Preferences.setProperty("ImageOverlays", str);
         }
     }
 
-    
     /**
      * Sets the plugin install directory.
      */
-    public static void setPluginInstallDirectory(File pluginInstallDirectory) {
-    	if(pluginInstallDirectory == null) {
-    		return;
-    	}
-    	
-    	if(pluginInstallDirectory.isDirectory()) {
-    		setProperty(Preferences.PREF_PLUGIN_INSTALL_DIR, pluginInstallDirectory.getAbsolutePath());
-    	} else {
-    		setProperty(Preferences.PREF_PLUGIN_INSTALL_DIR, pluginInstallDirectory.getParent());
-    	}
+    public static void setPluginInstallDirectory(final File pluginInstallDirectory) {
+        if (pluginInstallDirectory == null) {
+            return;
+        }
+
+        if (pluginInstallDirectory.isDirectory()) {
+            Preferences.setProperty(Preferences.PREF_PLUGIN_INSTALL_DIR, pluginInstallDirectory.getAbsolutePath());
+        } else {
+            Preferences.setProperty(Preferences.PREF_PLUGIN_INSTALL_DIR, pluginInstallDirectory.getParent());
+        }
     }
-    
+
     /**
      * Change the file name of the preferences file we should use (without any path).
      * 
      * @param fileName the file name (eg mipav.preferences), which should be in $HOME/mipav/
      */
-    public static final void setPreferencesFileName(String fileName) {
-        preferencesFileName = fileName;
-        preferencesFile = preferencesDir + File.separator + preferencesFileName;
+    public static final void setPreferencesFileName(final String fileName) {
+        Preferences.preferencesFileName = fileName;
+        Preferences.preferencesFile = Preferences.preferencesDir + File.separator + Preferences.preferencesFileName;
     }
 
     /**
@@ -3074,15 +2686,15 @@ public class Preferences {
      * 
      * @return true if the property was set and saved successfully, false otherwise
      */
-    public static final boolean setProperty(String key, Object value) {
+    public static final boolean setProperty(final String key, final Object value) {
 
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
 
-        mipavProps.put(key, value);
+        Preferences.mipavProps.put(key, value);
 
-        return save();
+        return Preferences.save();
     }
 
     /**
@@ -3090,10 +2702,10 @@ public class Preferences {
      * 
      * @param scriptFile DOCUMENT ME!
      */
-    public static final void setScriptFile(String scriptFile) {
+    public static final void setScriptFile(final String scriptFile) {
 
         if (scriptFile != null) {
-            setProperty("ScriptFile", scriptFile);
+            Preferences.setProperty("ScriptFile", scriptFile);
         }
     }
 
@@ -3102,57 +2714,11 @@ public class Preferences {
      * 
      * @param scriptsDirectory the new scripts directory
      */
-    public static final void setScriptsDirectory(String scriptsDirectory) {
+    public static final void setScriptsDirectory(final String scriptsDirectory) {
 
         if (scriptsDirectory != null) {
-            setProperty(Preferences.PREF_SCRIPT_DIR, scriptsDirectory);
+            Preferences.setProperty(Preferences.PREF_SCRIPT_DIR, scriptsDirectory);
         }
-    }
-
-    /**
-     * Sets the server authentication schema which the SRB server is using.
-     * 
-     * @param serverAuthSRB the new SRB server authentication schema
-     */
-    public static void setServerAuthSRB(String serverAuthSRB) {
-        setProperty(PREF_SERVER_AUTHENTICATION_SRB, serverAuthSRB);
-    }
-
-    /**
-     * Sets the domain information of the SRB server.
-     * 
-     * @param serverDomainSRB DOCUMENT ME!
-     */
-    public static void setServerDomainSRB(String serverDomainSRB) {
-
-        if (serverDomainSRB == null) {
-            return;
-        }
-
-        setProperty(PREF_SERVER_DOMAIN_SRB, serverDomainSRB);
-    }
-
-    /**
-     * Sets the ip address or DNS name of the machine which hosts the SRB server.
-     * 
-     * @param serverHostSRB DOCUMENT ME!
-     */
-    public static void setServerHostSRB(String serverHostSRB) {
-
-        if (serverHostSRB == null) {
-            return;
-        }
-
-        setProperty(PREF_SERVER_HOST_SRB, serverHostSRB);
-    }
-
-    /**
-     * Sets the server port where the SRB server is listening.
-     * 
-     * @param serverPortSRB the new SRB server port
-     */
-    public static void setServerPortSRB(int serverPortSRB) {
-        setProperty(PREF_SERVER_PORT_SRB, Integer.toString(serverPortSRB));
     }
 
     /**
@@ -3160,8 +2726,8 @@ public class Preferences {
      * 
      * @param doShow boolean true means show DICOM overlays
      */
-    public static final void setShowDICOMOverlays(boolean doShow) {
-        setProperty("ShowDICOMOverlays", Boolean.toString(doShow));
+    public static final void setShowDICOMOverlays(final boolean doShow) {
+        Preferences.setProperty("ShowDICOMOverlays", Boolean.toString(doShow));
     }
 
     /**
@@ -3169,73 +2735,8 @@ public class Preferences {
      * 
      * @param doShow boolean true means show image overlays
      */
-    public static final void setShowImageOverlays(boolean doShow) {
-        setProperty("ShowImageOverlays", Boolean.toString(doShow));
-    }
-
-    /**
-     * Sets the temporary directory which is used during file transfer to the new temporary directory.
-     * 
-     * @param tempDir the temporary directory.
-     */
-    public static void setSRBTempDir(String tempDir) {
-
-        if (tempDir == null) {
-            return;
-        }
-
-        setProperty(PREF_SRB_TEMP_DIR, tempDir);
-    }
-
-    /**
-     * Sets the transfer mode of srb server to the new transfer mode.
-     * 
-     * @param transferMode the new transfer mode.
-     */
-    public static void setSRBTransferMode(String transferMode) {
-
-        if (transferMode == null) {
-            return;
-        }
-
-        setProperty(PREF_SRB_TRANSFER_MODE, transferMode);
-    }
-
-    /**
-     * Sets the srb server version which Jargon need to be adapted to.
-     * 
-     * @param srbVersion the new srb server version.
-     */
-    public static void setSRBVersion(String srbVersion) {
-
-        if (srbVersion == null) {
-            return;
-        }
-
-        setProperty(PREF_SRB_VERSION, srbVersion);
-    }
-
-    /**
-     * Sets the default storage resource for the user.
-     * 
-     * @param storageResource the new storage resource.
-     */
-    public static void setStorageResourceSRB(String storageResource) {
-        setProperty(PREF_STORAGE_RESOURCE_SRB, storageResource);
-    }
-
-    /**
-     * Sets the user name to login the SRB server.
-     * 
-     * @param userNameSRB the user name of the srb server.
-     */
-    public static void setUserNameSRB(String userNameSRB) {
-
-        if (userNameSRB == null) {
-            return;
-        }
-
-        setProperty(PREF_USERNAME_SRB, userNameSRB);
+    public static final void setShowImageOverlays(final boolean doShow) {
+        Preferences.setProperty("ShowImageOverlays", Boolean.toString(doShow));
     }
 
     /**
@@ -3243,70 +2744,71 @@ public class Preferences {
      * 
      * @return default shortcut hashtable
      */
-    private static Hashtable buildDefaultShortcuts() {
+    private static Hashtable<String, KeyStroke> buildDefaultShortcuts() {
 
-        defaultShortcutTable = new Hashtable<String, KeyStroke>();
-        defaultShortcutTable.put("OpenNewImage", KeyStroke.getKeyStroke('F', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("SaveImage", KeyStroke.getKeyStroke('S', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("SaveImageAs", KeyStroke.getKeyStroke('S', Event.SHIFT_MASK + Event.CTRL_MASK, false));
-        defaultShortcutTable.put("undoVOI", KeyStroke.getKeyStroke('Z', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("cutVOI", KeyStroke.getKeyStroke('X', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("copyVOI", KeyStroke.getKeyStroke('C', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("pasteVOI", KeyStroke.getKeyStroke('V', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("selectAllVOIs", KeyStroke.getKeyStroke('A', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("Tri-planar", KeyStroke.getKeyStroke('T', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("AboutImage", KeyStroke.getKeyStroke('H', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("EditImageInfo", KeyStroke.getKeyStroke('E', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("MemoryUsage", KeyStroke.getKeyStroke('M', Event.CTRL_MASK, false));
-        defaultShortcutTable.put("ToggleImageIntensities", KeyStroke.getKeyStroke('T', 0, false));
-        defaultShortcutTable.put("quickLUT", KeyStroke.getKeyStroke('Q', 0, false));
+        Preferences.defaultShortcutTable = new Hashtable<String, KeyStroke>();
+        Preferences.defaultShortcutTable.put("OpenNewImage", KeyStroke.getKeyStroke('F', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("SaveImage", KeyStroke.getKeyStroke('S', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("SaveImageAs", KeyStroke.getKeyStroke('S', Event.SHIFT_MASK
+                + Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("undoVOI", KeyStroke.getKeyStroke('Z', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("cutVOI", KeyStroke.getKeyStroke('X', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("copyVOI", KeyStroke.getKeyStroke('C', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("pasteVOI", KeyStroke.getKeyStroke('V', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("selectAllVOIs", KeyStroke.getKeyStroke('A', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("Tri-planar", KeyStroke.getKeyStroke('T', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("AboutImage", KeyStroke.getKeyStroke('H', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("EditImageInfo", KeyStroke.getKeyStroke('E', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("MemoryUsage", KeyStroke.getKeyStroke('M', Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("ToggleImageIntensities", KeyStroke.getKeyStroke('T', 0, false));
+        Preferences.defaultShortcutTable.put("quickLUT", KeyStroke.getKeyStroke('Q', 0, false));
 
         for (int i = 0; i < 9; i++) {
-            defaultShortcutTable.put("LastImage " + i, KeyStroke.getKeyStroke(Integer.toString(i + 1).charAt(0),
-                    Event.CTRL_MASK, false));
+            Preferences.defaultShortcutTable.put("LastImage " + i, KeyStroke.getKeyStroke(Integer.toString(i + 1)
+                    .charAt(0), Event.CTRL_MASK, false));
         }
 
-        return defaultShortcutTable;
+        return Preferences.defaultShortcutTable;
     }
 
     public static boolean isMultiThreadingEnabled() {
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
-        String mtEnabled = mipavProps.getProperty(PREF_MULTI_THREADING_ENABLED);
+        String mtEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_MULTI_THREADING_ENABLED);
         if (mtEnabled == null) {
-            mtEnabled = defaultProps.getProperty(PREF_MULTI_THREADING_ENABLED);
+            mtEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_MULTI_THREADING_ENABLED);
         }
         if (Boolean.valueOf(mtEnabled)) {
             return true;
         }
         return false;
     }
-    
+
     public static boolean isGpuCompEnabled() {
-    	if (mipavProps == null) {
-    		read();
-    	}
-    	
-    	String gpuEnabled = mipavProps.getProperty(PREF_GPU_COMP_ENABLED);
-    	if(gpuEnabled == null) {
-    		gpuEnabled = defaultProps.getProperty(PREF_GPU_COMP_ENABLED);
-    	}
-    	
-    	if(Boolean.valueOf(gpuEnabled)) {
-    		return true;
-    	}
-    	
-    	return false;
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+
+        String gpuEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_GPU_COMP_ENABLED);
+        if (gpuEnabled == null) {
+            gpuEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_GPU_COMP_ENABLED);
+        }
+
+        if (Boolean.valueOf(gpuEnabled)) {
+            return true;
+        }
+
+        return false;
     }
 
     public static int getNumberOfThreads() {
-        if (mipavProps == null) {
-            read();
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
         }
-        String numberOfThreads = mipavProps.getProperty(PREF_NUMBER_OF_THREADS);
+        String numberOfThreads = Preferences.mipavProps.getProperty(Preferences.PREF_NUMBER_OF_THREADS);
         if (numberOfThreads == null) {
-            numberOfThreads = defaultProps.getProperty(PREF_NUMBER_OF_THREADS);
+            numberOfThreads = Preferences.defaultProps.getProperty(Preferences.PREF_NUMBER_OF_THREADS);
         }
         return Integer.parseInt(numberOfThreads);
     }
