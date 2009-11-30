@@ -349,16 +349,6 @@ public class Preferences {
      */
     public static final String PREF_ALWAYS_SAVE_MNC_AS_MINC2 = "AlwaysSaveMncAsMinc2";
 
-    /**
-     * Constant that indicates whether 4D dicom files should always have the time axis graphed as 0, 1, 2, ...
-     */
-    public static final String PREF_ALWAYS_GRAPH_TIME_AS_0123 = "AlwaysGraphTimeAs0123";
-
-    /**
-     * Constant the indicates whether 4D dicom files should always have the time axis graphed as frame reference times.
-     */
-    public static final String PREF_ALWAYS_GRAPH_FRAME_REFERENCE_TIME = "AlwaysGraphFrameReferenceTime";
-
     /** Constant that indicates the script directory. */
     public static final String PREF_SCRIPT_DIR = "ScriptDirectory";
 
@@ -2356,27 +2346,6 @@ public class Preferences {
      */
     public static final void setAlwaysSaveMncAsMinc2(final boolean doSaveMinc2) {
         Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_MNC_AS_MINC2, Boolean.toString(doSaveMinc2));
-    }
-
-    /**
-     * Sets whether all 4D dicom files should have the time axis graphed as 0, 1, 2, ... (i.e., don't ask about whether
-     * to graph as 0, 1, 2, ... or frame reference time
-     * 
-     * @param doGraph0123 whether to always graph 4D dicom time axis as 0, 1, 2, ...
-     */
-    public static final void setAlwaysGraphTimeAs0123(final boolean doGraph0123) {
-        Preferences.setProperty(Preferences.PREF_ALWAYS_GRAPH_TIME_AS_0123, Boolean.toString(doGraph0123));
-    }
-
-    /**
-     * Sets whether all 4D docm files should have the time axis graphed as frame reference times (1.e., don't ask about
-     * whether to graph as 0, 1, 2, ... or frame reference time
-     * 
-     * @param doGraphFrameReferenceTime whether to always graph 4D dicom time axis with frame reference times
-     */
-    public static final void setAlwaysGraphFrameReferenceTime(final boolean doGraphFrameReferenceTime) {
-        Preferences.setProperty(Preferences.PREF_ALWAYS_GRAPH_FRAME_REFERENCE_TIME, Boolean
-                .toString(doGraphFrameReferenceTime));
     }
 
     /**
