@@ -1359,7 +1359,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     
                     if (frameRefTimeFound) {
                         int response = JOptionPane.showConfirmDialog(UI.getMainFrame(),
-                                                                     new String("Do you wish to use the Frame Reference Time for the graph x axis"),
+                                                                     new String("Do you wish to use the frame reference time for the graph x axis?"),
                                                                      "Frame Reference Time?",
                                                                      JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE); 
                         if (response == JOptionPane.YES_OPTION) {
@@ -4992,7 +4992,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 
                 if (frameRefTimeFound) {
                     int response = JOptionPane.showConfirmDialog(UI.getMainFrame(),
-                                                                 new String("Do you wish to use the Frame Reference Time for the graph x axis"),
+                                                                 new String("Do you wish to use the frame reference time for the graph x axis?"),
                                                                  "Frame Reference Time?",
                                                                  JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE); 
                     if (response == JOptionPane.YES_OPTION) {
