@@ -1471,11 +1471,14 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param  v      The VOI that the point is from
      * @param  voiPt  The VOIPoint which the graph is to be of
      * @param  j      The number of the point
+     * @param  useFrameRefTime
      */
-    public void graphPointVOI(VOI v, VOIPoint voiPt, int j) {
+    public void graphPointVOI(VOI v, VOIPoint voiPt, int j, boolean useFrameRefTime) {
         int t, s;
         Vector3f pt;
-        ViewUserInterface UI = ViewUserInterface.getReference();
+        FileInfoDicom fileInfo;
+        String frameRefTimeString;
+        int frameReferenceTime;
 
         if ((compImage.getActiveImage().getNDims() != 3) && (compImage.getActiveImage().getNDims() != 4)) {
             return;
@@ -1557,36 +1560,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             int xDim = compImage.getActiveImage().getExtents()[0];
             int yDim = compImage.getActiveImage().getExtents()[1];
             int zDim = compImage.getActiveImage().getExtents()[2];
-            boolean useFrameRefTime = false;
-            FileInfoDicom fileInfo = null;
-            String frameRefTimeString = null;
-            int frameReferenceTime = 0;
-       
-            if (compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM) {
-                boolean frameRefTimeFound = false;
-                fileInfo = (FileInfoDicom) (compImage.getActiveImage().getFileInfo(0)); 
-                frameRefTimeString = ((String) fileInfo.getTagTable().getValue("0054,1300")).trim();
-                if (frameRefTimeString != null) {
-                    try {
-                        frameReferenceTime = new Integer(frameRefTimeString).intValue();
-                        frameRefTimeFound = true;
-                        Preferences.debug("Frame reference time = " + frameReferenceTime + "\n");
-                    } catch (NumberFormatException e) {
-                        Preferences.debug("Number format excepton from frame Reference Time String = " +
-                                          frameRefTimeString + "\n");
-                    }
-                    
-                    if (frameRefTimeFound) {
-                        int response = JOptionPane.showConfirmDialog(UI.getMainFrame(),
-                                                                     new String("Do you wish to use the Frame Reference Time for the graph x axis"),
-                                                                     "Frame Reference Time?",
-                                                                     JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE); 
-                        if (response == JOptionPane.YES_OPTION) {
-                            useFrameRefTime = true;    
-                        }
-                    } // if (frameRefTimeFound)
-                } // if (frameRefTimeString != null)
-            } // if (compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM)
+            
 
             try {
                 ptPosition = new float[compImage.getActiveImage().getExtents()[3]];
@@ -1622,13 +1596,19 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                                                                                 pt.X));
                 }
 
+              
                 if (v.getContourGraph() == null) {
                     ViewJFrameGraph contourGraph = new ViewJFrameGraph(ptPosition, ptIntensity, "Intensity Graph", v,
                                                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(3)));
                     contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                     contourGraph.setVisible(false);
                     v.setContourGraph(contourGraph);
-                } else {
+                } 
+                else if (useFrameRefTime) {
+                    v.getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(3)));
+                    v.getContourGraph().replaceFunction(ptPosition, ptIntensity, v, j); 
+                }
+                else {
                     v.getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(3)));
                     v.getContourGraph().saveNewFunction(ptPosition, ptIntensity, j);
                 }
@@ -3360,7 +3340,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     compImage.getActiveImage().notifyImageDisplayListeners();
 
                     graphPointVOI(newPtVOI,
-                                  ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[compImage.getSlice()].elementAt(0))), 0);
+                                  ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[compImage.getSlice()].elementAt(0))), 0, false);
 
                     if (!((mouseEvent.isShiftDown() == true) ||
                               Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
@@ -3424,7 +3404,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         graphPointVOI(VOIs.VOIAt(i),
                                       ((VOIPoint)
                                        (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(index - 1))),
-                                      index - 1);
+                                      index - 1, false);
                     }
 
                     if (!((mouseEvent.isShiftDown() == true) ||
@@ -4851,7 +4831,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                             // VOIs.VOIAt(i).getContourGraph().update(ptRGBPositions, ptRGBIntensities, j);
                             graphPointVOI(VOIs.VOIAt(i),
-                                          (VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)), j);
+                                          (VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)), j, false);
                         } else {
 
                             for (int s = 0; s < compImage.getActiveImage().getExtents()[2]; s++) {
@@ -4868,7 +4848,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                             // VOIs.VOIAt(i).getContourGraph().update(ptPosition, ptIntensity, j);
                             graphPointVOI(VOIs.VOIAt(i),
-                                          (VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)), j);
+                                          (VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)), j, false);
                         }
                     } else if (compImage.getActiveImage().getNDims() == 4) {
 
@@ -4883,7 +4863,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                         // VOIs.VOIAt(i).getContourGraph().update(ptPosition, ptIntensity, j);
                         graphPointVOI(VOIs.VOIAt(i),
-                                      (VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)), j);
+                                      (VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)), j, false);
                     }
                 }
             }
@@ -4985,25 +4965,63 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
     public void setGraphVisible() {
         int nVOI;
         ViewVOIVector VOIs;
+        ViewUserInterface UI = ViewUserInterface.getReference();
 
         VOIs = compImage.getActiveImage().getVOIs();
         nVOI = VOIs.size();
+        
+        boolean useFrameRefTime = false;
+        FileInfoDicom fileInfo = null;
+        String frameRefTimeString = null;
+        int frameReferenceTime = 0;
+   
+        if ((compImage.getActiveImage().getNDims() == 4)&& 
+            (compImage.getActiveImage().getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
+            boolean frameRefTimeFound = false;
+            fileInfo = (FileInfoDicom) (compImage.getActiveImage().getFileInfo(0)); 
+            frameRefTimeString = ((String) fileInfo.getTagTable().getValue("0054,1300")).trim();
+            if (frameRefTimeString != null) {
+                try {
+                    frameReferenceTime = new Integer(frameRefTimeString).intValue();
+                    frameRefTimeFound = true;
+                    Preferences.debug("Frame reference time = " + frameReferenceTime + "\n");
+                } catch (NumberFormatException e) {
+                    Preferences.debug("Number format excepton from frame Reference Time String = " +
+                                      frameRefTimeString + "\n");
+                }
+                
+                if (frameRefTimeFound) {
+                    int response = JOptionPane.showConfirmDialog(UI.getMainFrame(),
+                                                                 new String("Do you wish to use the Frame Reference Time for the graph x axis"),
+                                                                 "Frame Reference Time?",
+                                                                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE); 
+                    if (response == JOptionPane.YES_OPTION) {
+                        useFrameRefTime = true;    
+                    }
+                } // if (frameRefTimeFound)
+            } // if (frameRefTimeString != null)
+        } // if if ((compImage.getActiveImage().getNDims() == 4)
 
         for (int i = 0; i < nVOI; i++) {
 
             if (VOIs.VOIAt(i).isActive() && (VOIs.VOIAt(i).isVisible() == true)) {
 
                 if ((VOIs.VOIAt(i).getCurveType() == VOI.POINT) && (VOIs.VOIAt(i).getContourGraph() != null)) {
-                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
+                    if (compImage.getActiveImage().getNDims() == 4) {
+                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(3)));
+                    }
+                    else {
+                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
+                    }
 
-                    if (compImage.getActiveImage().isColorImage() == true) {
+                    if (useFrameRefTime || (compImage.getActiveImage().isColorImage() == true)) {
 
                         for (int j = 0; j < VOIs.VOIAt(i).getCurves()[compImage.getSlice()].size(); j++) {
 
                             if (((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j))).isActive()) {
                                 graphPointVOI(VOIs.VOIAt(i),
                                               (VOIPoint)
-                                              (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)), j);
+                                              (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)), j, useFrameRefTime);
                             }
                         }
                     }
@@ -5013,7 +5031,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                     for (int j = 0; j < VOIs.VOIAt(i).getCurves()[compImage.getSlice()].size(); j++) {
                         graphPointVOI(VOIs.VOIAt(i),
-                                      (VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)), j);
+                                      (VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)), j, useFrameRefTime);
                     }
 
                     VOIs.VOIAt(i).getContourGraph().setVisible(true);
