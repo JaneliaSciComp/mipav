@@ -12,13 +12,11 @@ import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.util.NDARPipeline;
 
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.JDialogVolViewResample;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotterView;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarDialog;
-import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.VolumeTriPlanarInterfaceDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 
 import java.awt.*;
@@ -168,7 +166,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** reference to the JDialogMultiPaint for shortcuts */
     protected JDialogMultiPaint multipaintDialog = null;
 
-
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -204,8 +201,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     /**
-     * Makes a frame and puts an image component into it, does not display the frame through
-     * ViewJFrameImage's init() method.
+     * Makes a frame and puts an image component into it, does not display the frame through ViewJFrameImage's init()
+     * method.
      * 
      * @param _imageA First image to display
      * @param _imageB Second image to display
@@ -222,7 +219,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param loc location where image should be initially placed
      * @param logMagDisplay Display log magnitude of image
      */
-    public ViewJFrameImage(final ModelImage _imageA, final ModelLUT LUTa, final Dimension loc, final boolean logMagDisplay) {
+    public ViewJFrameImage(final ModelImage _imageA, final ModelLUT LUTa, final Dimension loc,
+            final boolean logMagDisplay) {
         super(_imageA, null);
 
         // if we don't have an image, then we're done
@@ -243,20 +241,17 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
     }
-    
-    
+
     /**
      * Constructs a ModelSimpleImage VJF
+     * 
      * @param simpleImage
      * @param name
      */
-    public ViewJFrameImage(ModelSimpleImage simpleImage, String name) {
-    	this(new ModelImage(simpleImage,name));
-    	
+    public ViewJFrameImage(final ModelSimpleImage simpleImage, final String name) {
+        this(new ModelImage(simpleImage, name));
+
     }
-    
-    
-  
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
@@ -287,8 +282,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.showShortcutEditor(true);
 
             return;
-        }
-        else if (command.equals("ScrollLink")) {
+        } else if (command.equals("ScrollLink")) {
             linkedScrolling = !linkedScrolling;
         } else if (command.equals("QuantifyMasks")) {
             new JDialogQuantifyMask(this, this.getActiveImage());
@@ -333,14 +327,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             updateImages(true);
             getActiveImage().notifyImageDisplayListeners();
-        } else if (command.equals("OpenXCEDESchema")) {
-            userInterface.openXCEDESchema();
-        } else if (command.equals("SaveXCEDESchema")) {
-            userInterface.saveXCEDESchema();
         } else if (command.equals("Dicom")) {
-        	if(Preferences.is(Preferences.PREF_ASK_DICOM_RECEIVER)) {
-        		new DicomQueryListener().queryForDicomAutostart();
-        	}
+            if (Preferences.is(Preferences.PREF_ASK_DICOM_RECEIVER)) {
+                new DicomQueryListener().queryForDicomAutostart();
+            }
 
             if ( ((JCheckBoxMenuItem) source).isSelected()) {
 
@@ -359,20 +349,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (userInterface.getDICOMCatcher() != null) {
                     userInterface.getDICOMCatcher().setStop();
                 }
-
-                /**
-                 * Also need to disable the auto upload to srb function.
-                 */
-                final JCheckBoxMenuItem menuItemAutoUpload = (JCheckBoxMenuItem) menuBuilder
-                        .getMenuItem("Auto Upload on|off");
-
-                if (menuItemAutoUpload.isSelected()) {
-                    menuItemAutoUpload.setSelected(false);
-                }
-
-                if (userInterface.getNDARPipeline() != null) {
-                    userInterface.getNDARPipeline().uninstall();
-                }
             }
         } else if (command.startsWith("LastImage")) {
             final int number = Integer.valueOf(command.substring(10)).intValue();
@@ -387,38 +363,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.buildDICOMFrame();
         } else if (command.equals("BrowseDICOMDIR")) {
             userInterface.buildDICOMDIRFrame();
-        } else if (command.equals("OpenSRBFile")) {
-            userInterface.openSRBFile();
-        } else if (command.equals("SaveSRBFile")) {
-            userInterface.saveSRBFile();
-        } else if (command.equals("TransferSRBFiles")) {
-            userInterface.transferSRBFiles();
-        } else if (command.equals("AutoUploadToSRB")) {
-            NDARPipeline pipeline = userInterface.getNDARPipeline();
-
-            if (pipeline == null) {
-                pipeline = new NDARPipeline();
-                userInterface.setNDARPipeline(pipeline);
-            }
-
-            if ( ((JCheckBoxMenuItem) source).isSelected()) {
-                final JCheckBoxMenuItem itemDicom = (JCheckBoxMenuItem) menuBuilder.getMenuItem("Activate DICOM receiver");
-
-                if ( !itemDicom.isSelected()) {
-
-                    if (userInterface.getDICOMCatcher() != null) {
-                        userInterface.getDICOMCatcher().setStop();
-                    }
-
-                    itemDicom.setSelected(true);
-                    userInterface.setDICOMCatcher(new DICOM_Receiver());
-                }
-
-                pipeline.install(userInterface.getDICOMCatcher());
-            } else {
-                pipeline.uninstall();
-                pipeline = null;
-            }
         } else if (command.equals("OpenNewGraph")) {
             new ViewJFrameGraph("Graph", true);
         } else if (command.equals("QueryDatabase")) {
@@ -490,7 +434,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     menuBuilder = new ViewMenuBuilder(this);
                     componentImage.setTimeSlice(0);
                     nTImage = imageB.getExtents()[3];
-                    componentImage.setSlice((imageB.getExtents()[2] - 1) / 2);
+                    componentImage.setSlice( (imageB.getExtents()[2] - 1) / 2);
                     nImage = imageB.getExtents()[2];
                     menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
                     controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
@@ -528,8 +472,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 try {
                     final ModelImage destImage = new ModelImage(imageA.getType(), imageA.getExtents(), "maskImage");
 
-                    final AlgorithmImageCalculator algImageCalc = new AlgorithmImageCalculator(destImage, imageA, imageB,
-                            AlgorithmImageCalculator.AND, AlgorithmImageMath.CLIP, true, null);
+                    final AlgorithmImageCalculator algImageCalc = new AlgorithmImageCalculator(destImage, imageA,
+                            imageB, AlgorithmImageCalculator.AND, AlgorithmImageMath.CLIP, true, null);
 
                     algImageCalc.setRunningInSeparateThread(false);
                     algImageCalc.run();
@@ -669,7 +613,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     menuBuilder = new ViewMenuBuilder(this);
                     componentImage.setTimeSlice(0);
                     nTImage = 0;
-                    componentImage.setSlice((imageA.getExtents()[2] - 1) / 2);
+                    componentImage.setSlice( (imageA.getExtents()[2] - 1) / 2);
                     nImage = imageA.getExtents()[2];
                     menuBar = menuBarMaker.getMenuBar(this, 3, imageA.getType(), imageA.isDicomImage());
                     controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), menuBuilder
@@ -799,10 +743,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("XOR")) {
             userInterface.setUseVOIXOR(menuBuilder.isMenuItemSelected("Allow VOI holes (XOR)"));
         } else if (command.equals("PaintMask")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             getActiveImage().setMask(getActiveImage().generateVOIMask(useXOR, true));
             componentImage.setPaintMask(getActiveImage().getMask());
             updateImages(true);
@@ -902,7 +846,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // if (getActiveImage().getVOIs().size() > 0)
             // System.err.println(" NEW ID: " + (((VOI)(getActiveImage().getVOIs().lastElement())).getID() + 1));
 
-            final int id = (getActiveImage().getVOIs().size() > 0) ? ( ((getActiveImage().getVOIs().lastElement()))
+            final int id = (getActiveImage().getVOIs().size() > 0) ? ( ( (getActiveImage().getVOIs().lastElement()))
                     .getID() + 1) : -1;
 
             /*
@@ -934,10 +878,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("pasteVOI")) {
             componentImage.getVOIHandler().pasteVOI();
         } else if (command.equals("selectAllVOIs")) {
-        	if(componentImage.getActiveImage().getVOIs().size() == 0) {
-        		MipavUtil.displayWarning("There are no VOIs in this image");
-        		return;
-        	}
+            if (componentImage.getActiveImage().getVOIs().size() == 0) {
+                MipavUtil.displayWarning("There are no VOIs in this image");
+                return;
+            }
             componentImage.getVOIHandler().selectAllVOIs(true);
         } else if (event.getActionCommand().equals("voiSelectNone")) {
             componentImage.getVOIHandler().selectAllVOIs(false);
@@ -952,46 +896,46 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("SendContourToBack")) {
             componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.BACK);
         } else if (command.equals("PropVOIUp")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             // It appears JButtons don't pass key modifiers
             // if((event.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {}
             if (componentImage.getVOIHandler().propVOI(1, false) == true) {
                 incSlice();
             }
         } else if (command.equals("PropVOIDown")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             if (componentImage.getVOIHandler().propVOI( -1, false) == true) {
                 decSlice();
             }
         } else if (command.equals("PropVOIActiveUp")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             // It appears JButtons don't pass key modifiers
             // if((event.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {}
             if (componentImage.getVOIHandler().propVOI(1, true) == true) {
                 incSlice();
             }
         } else if (command.equals("PropVOIActiveDown")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             if (componentImage.getVOIHandler().propVOI( -1, true) == true) {
                 decSlice();
             }
         } else if (command.equals("PropVOIAll")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             componentImage.getVOIHandler().propVOIAll();
         } else if (command.equals("BringForward")) {
             componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.FORWARD);
@@ -1022,10 +966,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("avgIntensityThreshold")) {
             new JDialogIntensityThreshold(this, componentImage, true);
         } else if (command.equals("GroupVOIs")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select VOIs!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select VOIs!");
+                return;
+            }
             if (displayMode == ViewJFrameBase.IMAGE_A) {
                 imageA.groupVOIs();
             } else {
@@ -1045,10 +989,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Cardio")) {
             new JDialogCardiology(this, imageA);
         } else if (command.equals("BinaryMask")) {
-        	if(componentImage.getActiveImage().getVOIs().size() == 0) {
-        		MipavUtil.displayWarning("There are no VOIs in this image");
-        		return;
-        	}
+            if (componentImage.getActiveImage().getVOIs().size() == 0) {
+                MipavUtil.displayWarning("There are no VOIs in this image");
+                return;
+            }
             ModelImage maskImage = null;
 
             try {
@@ -1082,10 +1026,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ProvenanceRecorder.getReference().addLine(
                     new ActionVOIToMask(getActiveImage(), maskImage, ActionVOIToMask.MASK_BINARY));
         } else if (command.equals("ShortMask")) {
-        	if(componentImage.getActiveImage().getVOIs().size() == 0) {
-        		MipavUtil.displayWarning("There are no VOIs in this image");
-        		return;
-        	}
+            if (componentImage.getActiveImage().getVOIs().size() == 0) {
+                MipavUtil.displayWarning("There are no VOIs in this image");
+                return;
+            }
             ModelImage shortImage = null;
 
             try {
@@ -1119,10 +1063,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ProvenanceRecorder.getReference().addLine(
                     new ActionVOIToMask(getActiveImage(), shortImage, ActionVOIToMask.MASK_SHORT));
         } else if (command.equals("UnsignedByteMask")) {
-        	if(componentImage.getActiveImage().getVOIs().size() == 0) {
-        		MipavUtil.displayWarning("There are no VOIs in this image");
-        		return;
-        	}
+            if (componentImage.getActiveImage().getVOIs().size() == 0) {
+                MipavUtil.displayWarning("There are no VOIs in this image");
+                return;
+            }
             ModelImage uByteImage = null;
 
             try {
@@ -1156,18 +1100,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ProvenanceRecorder.getReference().addLine(
                     new ActionVOIToMask(getActiveImage(), uByteImage, ActionVOIToMask.MASK_UBYTE));
         } else if (command.equals("BinaryMaskSelected")) {
-        	
-        	
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select at least 1 VOI!");
-        		return;
-        	}
-        	
+
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select at least 1 VOI!");
+                return;
+            }
+
             ModelImage maskImage = null;
 
             try {
-
-                
 
                 maskImage = getActiveImage().generateBinaryImage(useXOR, true);
 
@@ -1194,18 +1135,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ProvenanceRecorder.getReference().addLine(
                     new ActionVOIToMask(getActiveImage(), maskImage, ActionVOIToMask.MASK_BINARY));
         } else if (command.equals("ShortMaskSelected")) {
-        	
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select at least 1 VOI!");
-        		return;
-        	}
-        	
-        	
+
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select at least 1 VOI!");
+                return;
+            }
+
             ModelImage shortImage = null;
 
             try {
-
-                
 
                 shortImage = getActiveImage().generateShortImage(1, useXOR, true);
 
@@ -1232,16 +1170,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ProvenanceRecorder.getReference().addLine(
                     new ActionVOIToMask(getActiveImage(), shortImage, ActionVOIToMask.MASK_SHORT));
         } else if (command.equals("UnsignedByteMaskSelected")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select at least 1 VOI!");
-        		return;
-        	}
-        	
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select at least 1 VOI!");
+                return;
+            }
+
             ModelImage uByteImage = null;
 
             try {
-
-                
 
                 uByteImage = getActiveImage().generateUnsignedByteImage(1, useXOR, true);
 
@@ -1267,7 +1203,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     new ActionVOIToMask(getActiveImage(), uByteImage, ActionVOIToMask.MASK_UBYTE));
             ProvenanceRecorder.getReference().addLine(
                     new ActionVOIToMask(getActiveImage(), uByteImage, ActionVOIToMask.MASK_UBYTE));
-        }else if (command.equals("MaskToVOI")) {
+        } else if (command.equals("MaskToVOI")) {
             final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
 
             progressBar = new ViewJProgressBar(getActiveImage().getImageName(), "Extracting VOI ...", 0, 100, true);
@@ -1435,47 +1371,47 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ProstateMergedVOIs")) {
             saveMergedVOIs();
         } else if (command.equals("ProstateReconstruct")) {
-        	reconstructSurfaceFromVOIs();
-        } else if ( command.equals("ProstateExtract")) {
-        	// extractSurfaceFromVOIs();
+            reconstructSurfaceFromVOIs();
+        } else if (command.equals("ProstateExtract")) {
+            // extractSurfaceFromVOIs();
         } else if (command.equals("ProstateFeaturesSave")) {
-        	saveProstateFeatures();
+            saveProstateFeatures();
         } else if (command.equals("ProstateFeaturesTest")) {
-        	testProstateFeatures();
+            testProstateFeatures();
         } else if (command.equals("LoadProstateMask")) {
-        	loadProstateMask();
+            loadProstateMask();
         } else if (command.equals("SaveVOIIntensities")) {
             saveVOIIntensities();
         } else if (command.equals("Snake")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             new JDialogSnake(this, getActiveImage());
         } else if (command.equals("AGVF")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             new JDialogAGVF(this, getActiveImage());
         } else if (command.equals("GVF")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             new JDialogGVF(this, getActiveImage());
-            
+
         } else if (command.equals("BSnake")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             new JDialogBSnake(this, getActiveImage());
         } else if (command.equals("SmoothVOI")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
             new JDialogBSmooth(this, getActiveImage(), componentImage.getSlice());
         } // Paint
         else if (command.equals("colorPaint")) { // new colour dialog only when null
@@ -1493,12 +1429,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             final boolean outputNew = Preferences.is(Preferences.PREF_PAINT_TO_MASK_NEW);
             final boolean polarity = command.equals("CommitPaint");
             boolean saveMasksAs4D = false;
-            if(getActiveImage().getNDims() == 4) {
-            	final JDialogMask3D4D dialogMask3D4D = new JDialogMask3D4D(this);
-            	if (dialogMask3D4D.isCancelled()) {
+            if (getActiveImage().getNDims() == 4) {
+                final JDialogMask3D4D dialogMask3D4D = new JDialogMask3D4D(this);
+                if (dialogMask3D4D.isCancelled()) {
                     return;
                 } else {
-                	saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
+                    saveMasksAs4D = dialogMask3D4D.isSaveMasksAs4D();
                 }
             }
             System.out.println("aaa saveMasksAs4D is " + saveMasksAs4D);
@@ -1508,9 +1444,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 newFrame.getComponentImage().intensityDropper = getComponentImage().intensityDropper;
 
                 if (getActiveImage() == imageA) {
-                    newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null, saveMasksAs4D);
+                    newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_A, true, polarity, null,
+                            saveMasksAs4D);
                 } else {
-                    newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null, saveMasksAs4D);
+                    newFrame.getComponentImage().commitMask(ViewJComponentBase.IMAGE_B, true, polarity, null,
+                            saveMasksAs4D);
                 }
                 // reset to default
                 newFrame.getComponentImage().intensityDropper = 1f;
@@ -1605,33 +1543,36 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ImageFlipZ")) {
             new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
         } else if (command.equals("VOIFlipY")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
-        	
-            final JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI_TYPE);
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
+
+            final JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS,
+                    AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
         } else if (command.equals("VOIFlipX")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
-            final JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS, AlgorithmFlip.VOI_TYPE);
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
+            final JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS,
+                    AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
         } else if (command.equals("VOIFlipZ")) {
-        	if(!checkForActiveVOIs()) {
-        		MipavUtil.displayWarning("Please select a VOI!");
-        		return;
-        	}
-            final JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI_TYPE);
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
+            final JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS,
+                    AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
-        } else if(command.equals("interpolateVOIs")) {
-        	//dialog that is not visible...calls the algorithm immediately
-        	final JDialogVOIShapeInterpolation dialogVOIShapeInterp = new JDialogVOIShapeInterpolation(getActiveImage());
+        } else if (command.equals("interpolateVOIs")) {
+            // dialog that is not visible...calls the algorithm immediately
+            final JDialogVOIShapeInterpolation dialogVOIShapeInterp = new JDialogVOIShapeInterpolation(getActiveImage());
         } else if (command.equals("RotateX180")) {
             final JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.X_AXIS_180);
 
@@ -1816,7 +1757,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogColocalizationRegression(this, getActiveImage());
         } else if (command.equals("Laplacian")) {
 
-            final JDialogLaplacian lap =new JDialogLaplacian(this, getActiveImage());
+            final JDialogLaplacian lap = new JDialogLaplacian(this, getActiveImage());
             lap.setVisible(true);
         } else if (command.equals("Zero X laplacian")) {
 
@@ -1953,8 +1894,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogDistanceMap(this, getActiveImage());
         } else if (command.equals("BG distance map")) {
             new JDialogBGDistanceMap(this, getActiveImage());
-        } else if(command.equals("BG + FG distance map")) {
-        	new JDialogBGAndFGDistanceMap(this, getActiveImage());
+        } else if (command.equals("BG + FG distance map")) {
+            new JDialogBGAndFGDistanceMap(this, getActiveImage());
         } else if (command.equals("Delete objects")) {
             new JDialogDeleteObjects(this, getActiveImage());
         } else if (command.equals("Particle analysis")) {
@@ -2007,7 +1948,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     || ( (getActiveImage().getNDims() == 3) && (getActiveImage().getExtents()[2] == 2))) {
                 new JDialogFRET(this, getActiveImage());
             } else {
-            	MipavUtil.displayError("Image does not have proper dimensions and extents");
+                MipavUtil.displayError("Image does not have proper dimensions and extents");
             }
         } else if (command.equals("doFRETBleed")) {
             new JDialogFRETBleedThrough(this, getActiveImage());
@@ -2202,7 +2143,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 } else { // nDims == 3
 
                     try {
-                        final ViewJFrameRegistration registrationFrame = new ViewJFrameRegistration(getActiveImage(), null);
+                        final ViewJFrameRegistration registrationFrame = new ViewJFrameRegistration(getActiveImage(),
+                                null);
 
                         registrationFrame.componentResized(null);
                         // getActiveImage().registerRegistrationFrame(registrationFrame);
@@ -2308,7 +2250,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             final int iYBound = 216;
             final int iQuantity = iXBound * iYBound;
             final int[] aiExtents = {iXBound, iYBound};
-            final ModelImage kModelImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, aiExtents, "Mrislice_w180_h216.im");
+            final ModelImage kModelImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, aiExtents,
+                    "Mrislice_w180_h216.im");
 
             /* load the 2D demo file into imageA: */
             try {
@@ -2348,7 +2291,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             final int iZBound = 128;
             final int iQuantity = iXBound * iYBound * iZBound;
             final int[] aiExtents = {iXBound, iYBound, iZBound};
-            final ModelImage kModelImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, aiExtents, "Helix_w128_h128_s128.im");
+            final ModelImage kModelImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, aiExtents,
+                    "Helix_w128_h128_s128.im");
 
             /* load the 3D demo file into imageA: */
             try {
@@ -2404,7 +2348,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // decSlice();
         } else if (command.equals("MagImage")) {
             componentImage.setCursorMode(ViewJComponentBase.ZOOMING_IN);
-        }else if (command.equals("MagCustom")) {
+        } else if (command.equals("MagCustom")) {
             componentImage.setCursorMode(ViewJComponentBase.DEFAULT);
             if (zoomDialog == null) {
 
@@ -2416,8 +2360,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 zoomDialog.setVisible(true);
             }
-        }  
-        else if (command.equals("UnMagImage")) {
+        } else if (command.equals("UnMagImage")) {
             componentImage.setCursorMode(ViewJComponentBase.ZOOMING_OUT);
         } else if (command.equals("LinkFrame")) {
 
@@ -2630,9 +2573,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.paintComponent(componentImage.getGraphics());
 
         } else if (command.equals("writeGrid")) {
-        	new JDialogGenerateGrid(this,componentImage);
+            new JDialogGenerateGrid(this, componentImage);
         }
-        
+
         else if (command.equals("GridOptions")) {
 
             if (gridOptions != null) {
@@ -2662,9 +2605,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Open functions")) {
             loadLUT(false, false);
         } else if (command.equals("Open LUT from...")) {
-        	loadLUTandTransferFunctionFrom(true, null, null, false);
+            loadLUTandTransferFunctionFrom(true, null, null, false);
         } else if (command.equals("Open functions from...")) {
-        	loadLUTandTransferFunctionFrom(false, null, null, false);
+            loadLUTandTransferFunctionFrom(false, null, null, false);
         } else if (command.equals("Save LUT")) {
             saveLUT(true);
         } else if (command.equals("Save functions")) {
@@ -3027,10 +2970,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.getMainFrame().pack();
 
         } else if (command.equals("UninstallPlugin")) {
-        	final JDialogUninstallPlugin uninstPlugin = new JDialogUninstallPlugin(this);
-        	uninstPlugin.setVisible(true);
-        	
-        	final int index = menuBar.getComponentIndex(menuBarMaker.getPlugInMenu());
+            final JDialogUninstallPlugin uninstPlugin = new JDialogUninstallPlugin(this);
+            uninstPlugin.setVisible(true);
+
+            final int index = menuBar.getComponentIndex(menuBarMaker.getPlugInMenu());
 
             menuBar.remove(index);
             menuBarMaker.setPlugInMenu(userInterface.buildPlugInsMenu(this));
@@ -3038,7 +2981,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.getMainFrame().setJMenuBar(menuBar);
             userInterface.getMainFrame().pack();
 
-    	} else if (command.equals("CaptureTiff")) {
+        } else if (command.equals("CaptureTiff")) {
             final JDialogCaptureScreen screenCapture = new JDialogCaptureScreen(this);
 
             screenCapture.setVisible(true);
@@ -3059,25 +3002,24 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.invokeDTIframe();
         } else if (command.equals("createListFile")) {
             new JDialogDTICreateListFile();
-        }else if (command.equals("estimateTensor")) {
-        	new JDialogDTIEstimateTensor();
-        }else if(command.equals("fiberTracking")) {
-        	new JDialogDTIFiberTracking();
-        } else if(command.equals("dtiVisualization")) {
-        	userInterface.invokeDTIframe();
+        } else if (command.equals("estimateTensor")) {
+            new JDialogDTIEstimateTensor();
+        } else if (command.equals("fiberTracking")) {
+            new JDialogDTIFiberTracking();
+        } else if (command.equals("dtiVisualization")) {
+            userInterface.invokeDTIframe();
         }
 
     }
 
-    
     /**
      * Closes window and disposes of frame and component.
      */
     public void close() {
 
         if (Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK)) {
-            final int reply = JOptionPane.showConfirmDialog(this, "Do you really want to close this frame?", "Close Frame",
-                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            final int reply = JOptionPane.showConfirmDialog(this, "Do you really want to close this frame?",
+                    "Close Frame", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
             if (reply == JOptionPane.NO_OPTION) {
                 return;
@@ -3236,7 +3178,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public synchronized void componentResized(final ComponentEvent event) {
         int width, height;
         float bigger;
-        final int minFrameWidth = 123; // /minimum frame width... function of java or windows? need to check w\ linux build
+        final int minFrameWidth = 123; // /minimum frame width... function of java or windows? need to check w\ linux
+        // build
 
         boolean imageSizeSmall = false;
         // check to see if the image width is SMALLER than the minimum frame width
@@ -3249,7 +3192,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // if the window size is greater than the display window size - 20 (in either direction)
         // do nothing
-        if ( (getSize().width >= (ViewJFrameImage.xScreen - 20)) || (getSize().height >= (ViewJFrameImage.yScreen - 20))) {
+        if ( (getSize().width >= (ViewJFrameImage.xScreen - 20))
+                || (getSize().height >= (ViewJFrameImage.yScreen - 20))) {
             return;
         }
 
@@ -3674,7 +3618,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 // check if it is a framed image...and if its not the active image...also make sure its just imageA
                 if ( (image.getParentFrame() != null) && ( !image.getImageName().equals(activeImage.getImageName()))
-                        && ( ((image.getParentFrame())).getImageA() == image)) {
+                        && ( ( (image.getParentFrame())).getImageA() == image)) {
 
                     // now check the dimensionality to see if it matches with the active image
                     final int regFramedNumDims = image.getNDims();
@@ -4426,7 +4370,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 menuBuilder = new ViewMenuBuilder(this);
                 componentImage.setTimeSlice(0);
                 nTImage = imageB.getExtents()[3];
-                componentImage.setSlice((imageB.getExtents()[2] - 1) / 2);
+                componentImage.setSlice( (imageB.getExtents()[2] - 1) / 2);
                 nImage = imageB.getExtents()[2];
                 menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
                 controls
@@ -5011,7 +4955,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @return boolean confirming successful update
      */
-    public synchronized boolean updateImages(final ModelLUT LUTa, final ModelLUT LUTb, final boolean forceShow, final int interpMode) {
+    public synchronized boolean updateImages(final ModelLUT LUTa, final ModelLUT LUTb, final boolean forceShow,
+            final int interpMode) {
 
         if (componentImage == null) {
             return false;
@@ -5020,7 +4965,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // redraw the paintBrushCursor (quick)
         componentImage.updatePaintBrushCursor();
 
-        if (componentImage.show(componentImage.getTimeSlice(), componentImage.getSlice(), LUTa, LUTb, forceShow, interpMode) == false) {
+        if (componentImage.show(componentImage.getTimeSlice(), componentImage.getSlice(), LUTa, LUTb, forceShow,
+                interpMode) == false) {
             return false;
         }
 
@@ -5047,15 +4993,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void updateMenubar() {
         menuBuilder.updateQuickList();
-        
-        //update plugins menu
+
+        // update plugins menu
         final int index = menuBar.getComponentIndex(menuBarMaker.getPlugInMenu());
         menuBar.remove(index);
         menuBarMaker.setPlugInMenu(userInterface.buildPlugInsMenu(this));
         menuBar.add(menuBarMaker.getPlugInMenu(), index);
         userInterface.getMainFrame().setJMenuBar(menuBar);
         userInterface.getMainFrame().pack();
-        
+
     }
 
     /**
@@ -5125,7 +5071,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     } // end createBuffers()
 
-
     /**
      * Returns a reference to the image info dialog for the active image. Image A and image B have references to their
      * individual dialogs.
@@ -5135,8 +5080,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     protected JDialogImageInfo getActiveImageInfoDialog() {
 
         if (getActiveImage() == imageA) {
-                infoDialogA = null;
-                infoDialogA = new JDialogImageInfo(this, imageA, componentImage.getSlice(), componentImage.getTimeSlice());
+            infoDialogA = null;
+            infoDialogA = new JDialogImageInfo(this, imageA, componentImage.getSlice(), componentImage.getTimeSlice());
 
             return infoDialogA;
         } else if (imageB == null) // should never happen, but just in case...
@@ -5162,7 +5107,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (imageB != null) {
 
             if (infoDialogB == null) {
-                infoDialogB = new JDialogImageInfo(this, imageB, componentImage.getSlice(), componentImage.getTimeSlice());
+                infoDialogB = new JDialogImageInfo(this, imageB, componentImage.getSlice(), componentImage
+                        .getTimeSlice());
             }
 
             return infoDialogB;
@@ -5227,7 +5173,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * Initializes the zoom variables for the first image (imageA).
      */
     protected void initZoom() {
-        zoom = ViewJFrameBase.initZoom(imageA, widthResFactor, heightResFactor, ViewJFrameImage.xScreen, ViewJFrameImage.yScreen);
+        zoom = ViewJFrameBase.initZoom(imageA, widthResFactor, heightResFactor, ViewJFrameImage.xScreen,
+                ViewJFrameImage.yScreen);
     } // end initZoom()
 
     /**
@@ -5244,24 +5191,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             if (imageA.getNDims() == 4) { // Setup the title for 4D image
                 if (imageNameArray != null) {
-                str = imageNameArray[componentImage.getSlice() + nImage*componentImage.getTimeSlice()] +
-                        "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z  "
-                        + String.valueOf(componentImage.getTimeSlice()) + "/" + String.valueOf(nTImage - 1) + "t M:"
-                        + makeString(componentImage.getZoomX(), 2);
-                }
-                else {
-                    str = imageA.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z  "
-                    + String.valueOf(componentImage.getTimeSlice()) + "/" + String.valueOf(nTImage - 1) + "t M:"
-                    + makeString(componentImage.getZoomX(), 2);    
+                    str = imageNameArray[componentImage.getSlice() + nImage * componentImage.getTimeSlice()] + "  "
+                            + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z  "
+                            + String.valueOf(componentImage.getTimeSlice()) + "/" + String.valueOf(nTImage - 1)
+                            + "t M:" + makeString(componentImage.getZoomX(), 2);
+                } else {
+                    str = imageA.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/"
+                            + String.valueOf(nImage - 1) + "z  " + String.valueOf(componentImage.getTimeSlice()) + "/"
+                            + String.valueOf(nTImage - 1) + "t M:" + makeString(componentImage.getZoomX(), 2);
                 }
             } else if (imageA.getNDims() == 3) { // Setup the title for 3D image
                 if (imageNameArray != null) {
-                    str = imageNameArray[componentImage.getSlice()] + "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + " M:"
-                    + makeString(componentImage.getZoomX(), 2);    
-                }
-                else {
-                str = imageA.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + " M:"
-                        + makeString(componentImage.getZoomX(), 2);
+                    str = imageNameArray[componentImage.getSlice()] + "  " + String.valueOf(componentImage.getSlice())
+                            + "/" + String.valueOf(nImage - 1) + " M:" + makeString(componentImage.getZoomX(), 2);
+                } else {
+                    str = imageA.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/"
+                            + String.valueOf(nImage - 1) + " M:" + makeString(componentImage.getZoomX(), 2);
                 }
             } else {
                 str = imageA.getImageName() + "  M:" + makeString(componentImage.getZoomX(), 2);
@@ -5270,24 +5215,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             imageNameArray = imageB.getImageNameArray();
             if (imageB.getNDims() == 4) { // Setup the title for 4D image of image B
                 if (imageNameArray != null) {
-                    str = imageNameArray[componentImage.getSlice() + nImage*componentImage.getTimeSlice()] +
-                    "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z  "
-                    + String.valueOf(componentImage.getTimeSlice()) + "/" + String.valueOf(nTImage - 1) + "t M:"
-                    + makeString(componentImage.getZoomX(), 2);    
-                }
-                else {
-                str = imageB.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z  "
-                        + String.valueOf(componentImage.getTimeSlice()) + "/" + String.valueOf(nTImage - 1) + "t M:"
-                        + makeString(componentImage.getZoomX(), 2);
+                    str = imageNameArray[componentImage.getSlice() + nImage * componentImage.getTimeSlice()] + "  "
+                            + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + "z  "
+                            + String.valueOf(componentImage.getTimeSlice()) + "/" + String.valueOf(nTImage - 1)
+                            + "t M:" + makeString(componentImage.getZoomX(), 2);
+                } else {
+                    str = imageB.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/"
+                            + String.valueOf(nImage - 1) + "z  " + String.valueOf(componentImage.getTimeSlice()) + "/"
+                            + String.valueOf(nTImage - 1) + "t M:" + makeString(componentImage.getZoomX(), 2);
                 }
             } else if (imageB.getNDims() == 3) { // Setup the title
                 if (imageNameArray != null) {
-                    str = imageNameArray[componentImage.getSlice()] + "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + " M:"
-                    + makeString(componentImage.getZoomX(), 2);    
-                }
-                else {
-                str = imageB.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/" + String.valueOf(nImage - 1) + " M:"
-                        + makeString(componentImage.getZoomX(), 2);
+                    str = imageNameArray[componentImage.getSlice()] + "  " + String.valueOf(componentImage.getSlice())
+                            + "/" + String.valueOf(nImage - 1) + " M:" + makeString(componentImage.getZoomX(), 2);
+                } else {
+                    str = imageB.getImageName() + "  " + String.valueOf(componentImage.getSlice()) + "/"
+                            + String.valueOf(nImage - 1) + " M:" + makeString(componentImage.getZoomX(), 2);
                 }
             } else {
                 str = imageB.getImageName() + "  M:" + makeString(componentImage.getZoomX(), 2);
@@ -5560,12 +5503,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // User interface will have list of frames
         userInterface.registerFrame(this);
 
-
         this.updateImages();
         addComponentListener(this);
 
         if (userInterface.isAppFrameVisible()) {
-        	setVisible(true);  
+            setVisible(true);
         } else {
             setVisible(false);
         }
@@ -5727,7 +5669,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     private void propagatePaintToNextSlice() {
 
-        if ( (componentImage.getImageA().getNDims() > 2) && (componentImage.getSlice() < componentImage.imageExtents[2])) {
+        if ( (componentImage.getImageA().getNDims() > 2)
+                && (componentImage.getSlice() < componentImage.imageExtents[2])) {
             final BitSet bitSet = componentImage.getPaintBitmap();
 
             final int oneSlicePixels = componentImage.imageExtents[0] * componentImage.imageExtents[1];
@@ -5763,80 +5706,76 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             decSlice();
         }
     }
-    
-    
-    
+
     private boolean checkForActiveVOIs() {
-    	boolean foundActive = false;
-    	ViewVOIVector VOIs;
-    	int nVOI;
-    	 
-    	VOIs = componentImage.getActiveImage().getVOIs();
+        boolean foundActive = false;
+        ViewVOIVector VOIs;
+        int nVOI;
+
+        VOIs = componentImage.getActiveImage().getVOIs();
         nVOI = VOIs.size();
-        
+
         for (int i = 0; i < nVOI; i++) {
 
             if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
-            	
-            	 foundActive = true;
-            	 break;
+
+                foundActive = true;
+                break;
             }
         }
-    	
-    	
-    	return foundActive;
+
+        return foundActive;
     }
-    
+
     private class DicomQueryListener implements ActionListener {
-        
-    	private JCheckBox checkBox;
-    	
-    	private JDialog dialog;
-    	
-	    /**
-	     * Ask user whether the dicom receiver should be enabled on startup.
-	     */
-	    private void queryForDicomAutostart() {
-	    	
-	    	final String message = "Would you like to have the DICOM receiver begin when MIPAV starts?";
-	    	dialog = new JDialog();
-	    	dialog.setLayout(new BorderLayout());
-	    	dialog.setTitle("Auto-start option");
-	    	final JPanel messagePanel = new JPanel();
-	    	messagePanel.add(new JLabel(message));
-	    	dialog.add(messagePanel, BorderLayout.NORTH);
-	    	final JPanel checkBoxPanel = new JPanel();
-	    	checkBox = new JCheckBox("Click here to stop this message from displaying.");
-	    	checkBoxPanel.add(checkBox);
-	    	dialog.add(checkBoxPanel, BorderLayout.CENTER);
-	    	final JPanel yesNoPanel = new JPanel();
-	    	final JButton yes = new JButton("Yes");
-	    	yes.addActionListener(this);
-	    	final JButton no = new JButton("No");
-	    	no.addActionListener(this);
-	    	yesNoPanel.add(yes);
-	    	yesNoPanel.add(no);
-	    	dialog.add(yesNoPanel, BorderLayout.SOUTH);
-	    	dialog.setLocationRelativeTo(null);
-	    	dialog.pack();
-	    	dialog.setVisible(true);
-	    	
-	    }
 
-		public void actionPerformed(final ActionEvent e) {
-			if(e.getActionCommand().equals("Yes")) {
-				Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
-			} else if(e.getActionCommand().equals("No")) {
-				Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
-			}
-			Preferences.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, Boolean.valueOf(!checkBox.isSelected()).toString());
-			
-			dialog.dispose();
-		}
+        private JCheckBox checkBox;
+
+        private JDialog dialog;
+
+        /**
+         * Ask user whether the dicom receiver should be enabled on startup.
+         */
+        private void queryForDicomAutostart() {
+
+            final String message = "Would you like to have the DICOM receiver begin when MIPAV starts?";
+            dialog = new JDialog();
+            dialog.setLayout(new BorderLayout());
+            dialog.setTitle("Auto-start option");
+            final JPanel messagePanel = new JPanel();
+            messagePanel.add(new JLabel(message));
+            dialog.add(messagePanel, BorderLayout.NORTH);
+            final JPanel checkBoxPanel = new JPanel();
+            checkBox = new JCheckBox("Click here to stop this message from displaying.");
+            checkBoxPanel.add(checkBox);
+            dialog.add(checkBoxPanel, BorderLayout.CENTER);
+            final JPanel yesNoPanel = new JPanel();
+            final JButton yes = new JButton("Yes");
+            yes.addActionListener(this);
+            final JButton no = new JButton("No");
+            no.addActionListener(this);
+            yesNoPanel.add(yes);
+            yesNoPanel.add(no);
+            dialog.add(yesNoPanel, BorderLayout.SOUTH);
+            dialog.setLocationRelativeTo(null);
+            dialog.pack();
+            dialog.setVisible(true);
+
+        }
+
+        public void actionPerformed(final ActionEvent e) {
+            if (e.getActionCommand().equals("Yes")) {
+                Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
+            } else if (e.getActionCommand().equals("No")) {
+                Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
+            }
+            Preferences.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, Boolean.valueOf( !checkBox.isSelected())
+                    .toString());
+
+            dialog.dispose();
+        }
     }
 
-    
-    
     // ~ Inner Classes
     // --------------------------------------------------------------------------------------------------
 

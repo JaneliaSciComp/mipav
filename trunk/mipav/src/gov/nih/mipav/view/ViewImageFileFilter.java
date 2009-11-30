@@ -76,23 +76,20 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** All plugin related files (.class, .jar, .zip, .tar, .tar.gz). */
     public static final int PLUGIN = 19;
 
-    /** XCEDE schema file. */
-    public static final int XCEDE = 20;
-
     /** User defined */
-    public static final int UDEF = 21;
+    public static final int UDEF = 20;
 
     /** R-table (*.rtb) */
-    public static final int RTABLE = 22;
+    public static final int RTABLE = 21;
 
     /** mipav data provenance (*.xmp) files */
-    public static final int DATA_PROVENANCE = 23;
-    
-    public static final int TIFF = 24;
+    public static final int DATA_PROVENANCE = 22;
+
+    public static final int TIFF = 23;
 
     /** Dicom Matrix info Files (*.dicomMatrix). */
-    public static final int DICOMMATRIX = 25;
-    
+    public static final int DICOMMATRIX = 24;
+
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
     private static String[] descriptions = {
@@ -113,11 +110,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "Surface Files (*.sur; *.wrl; *.xml; *.vtk; *.vtp; *.stla; *.stlb; *.ply; *.gii)", // SURFACE
             "Transfer Function Files (*.fun)", // FUNCT
             "VOI Files (*.voi)", // VOI
-            "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files",
-            "XML-based Clinical and Experimental Data Exchange Schema(*.bxh)", // XCEDE schema
-            "User Defined", "R-table (*.rtb)", "Data provenance (*.xmp)", // NLT
-            "TIFF files (*.tif; *.tiff)",
-            "DicomMatrix file (*.dicomMatrix)"};
+            "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files", "User Defined", "R-table (*.rtb)",
+            "Data provenance (*.xmp)", // NLT
+            "TIFF files (*.tif; *.tiff)", "DicomMatrix file (*.dicomMatrix)"};
 
     /** short description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
@@ -139,7 +134,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "Transfer Function Files", // FUNCT
             "VOI Files", // VOI
             "Nonlinear Transformation Files", // NLT
-            "Dynamic", "Plugin", "XCEDE Schema", "User Defined", "R-table", "Data provenance", "TIFF", "DicomMatrix"};
+            "Dynamic", "Plugin", "User Defined", "R-table", "Data provenance", "TIFF", "DicomMatrix"};
 
     /** array of user defined extensions */
     private static String[] userDefinedExtensions;
@@ -156,7 +151,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     private String[] dynamicExts = null;
 
     /** Filter type of this filter. */
-    private int filterType;
+    private final int filterType;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -165,7 +160,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @param filterType Type of filter (GEN, TECH, etc.)
      */
-    public ViewImageFileFilter(int filterType) {
+    public ViewImageFileFilter(final int filterType) {
         this.filterType = filterType;
     }
 
@@ -174,8 +169,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @param exts Extensions to accept for dynamic filter.
      */
-    public ViewImageFileFilter(String[] exts) {
-        this(DYNAMIC);
+    public ViewImageFileFilter(final String[] exts) {
+        this(ViewImageFileFilter.DYNAMIC);
         dynamicExts = exts;
         dynamicDescription = "Specific files (";
         for (int i = 0; i < exts.length; i++) {
@@ -187,7 +182,6 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             }
         }
     }
-    
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
@@ -198,12 +192,12 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @return Description of filter.
      */
-    public static String getDescription(int filter) {
+    public static String getDescription(final int filter) {
         // make sure filter type is valid
-        if ( (filter < 0) || (filter >= descriptions.length)) {
+        if ( (filter < 0) || (filter >= ViewImageFileFilter.descriptions.length)) {
             return " ";
         }
-        return descriptions[filter];
+        return ViewImageFileFilter.descriptions[filter];
     }
 
     /**
@@ -212,8 +206,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * @return The list of descriptions.
      */
     public static String[] getDescriptions() {
-    	setUserDefinedExtensions();
-        return descriptions;
+        ViewImageFileFilter.setUserDefinedExtensions();
+        return ViewImageFileFilter.descriptions;
     }
 
     /**
@@ -223,9 +217,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @return DOCUMENT ME!
      */
-    public static int getFilterIndex(String filter) {
-        for (int i = 0; i < descriptions.length; i++) {
-            if (filter.equalsIgnoreCase(descriptions[i])) {
+    public static int getFilterIndex(final String filter) {
+        for (int i = 0; i < ViewImageFileFilter.descriptions.length; i++) {
+            if (filter.equalsIgnoreCase(ViewImageFileFilter.descriptions[i])) {
                 return i;
             }
         }
@@ -239,12 +233,12 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @return Short description of filter.
      */
-    public static String getShortDescription(int filter) {
+    public static String getShortDescription(final int filter) {
         // make sure filter type is valid
-        if ( (filter < 0) || (filter >= shortDescriptions.length)) {
+        if ( (filter < 0) || (filter >= ViewImageFileFilter.shortDescriptions.length)) {
             return " ";
         }
-        return shortDescriptions[filter];
+        return ViewImageFileFilter.shortDescriptions[filter];
     }
 
     /**
@@ -255,18 +249,18 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @return <code>true</code> if and only if the filter's description matches the filterType description.
      */
-    public static boolean matches(javax.swing.filechooser.FileFilter filter, int filterType) {
-        String desc = filter.getDescription();
+    public static boolean matches(final javax.swing.filechooser.FileFilter filter, final int filterType) {
+        final String desc = filter.getDescription();
         // if desc is null, then it can't match
         if (desc == null) {
             return false;
         }
         // make sure that filterType is valid
-        if ( (filterType < 0) || (filterType >= descriptions.length)) {
+        if ( (filterType < 0) || (filterType >= ViewImageFileFilter.descriptions.length)) {
             return false;
         }
         // if descriptions match then return true
-        if (desc.equalsIgnoreCase(descriptions[filterType])) {
+        if (desc.equalsIgnoreCase(ViewImageFileFilter.descriptions[filterType])) {
             return true;
         }
         // otherwise, no match
@@ -282,12 +276,12 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @return <code>true</code> if and only if the file has an appropriate extension.
      */
-    public boolean accept(File f) {
+    public boolean accept(final File f) {
         if (f.isDirectory()) {
             return true;
         }
 
-        String extension = FileUtility.getExtension(f.getAbsolutePath()).toLowerCase();
+        final String extension = FileUtility.getExtension(f.getAbsolutePath()).toLowerCase();
         return accept(extension);
     }
 
@@ -299,94 +293,94 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @return <code>true</code> if extension is in file filter.
      */
-    public boolean accept(String extension) {
-        if (filterType == ALL) {
+    public boolean accept(final String extension) {
+        if (filterType == ViewImageFileFilter.ALL) {
             return true;
         }
-        if ( (filterType == MISC)
+        if ( (filterType == ViewImageFileFilter.MISC)
                 && ( (extension.equals(".bmp")) || (extension.equals(".pcx")) || (extension.equals(".png"))
                         || (extension.equals(".tga")) || (extension.equals(".xbm")) || (extension.equals(".xpm")) || (extension
                         .equals(".avi")))) {
             return true;
-        } else if ( (filterType == GEN)
+        } else if ( (filterType == ViewImageFileFilter.GEN)
                 && ( (extension.equals(".gif")) || (extension.equals(".jpeg")) || (extension.equals(".jpg"))
                         || (extension.equals(".pict")) || (extension.equals(".psd")) || (extension.equals(".tif")) || (extension
                         .equals(".tiff")))) {
             return true;
-        } else if ( (filterType == TIFF) 
-                && ((extension.equals(".tif")) || (extension.equals(".tiff")))) {
+        } else if ( (filterType == ViewImageFileFilter.TIFF)
+                && ( (extension.equals(".tif")) || (extension.equals(".tiff")))) {
             return true;
-        } else if ( (filterType == TECH)
+        } else if ( (filterType == ViewImageFileFilter.TECH)
                 && ( (extension.equals(".img")) || (extension.equals(".ima")) || (extension.equals(".dcm"))
                         || (extension.equals(".mnc")) || (extension.equals(".sig")) || (extension.equals(".xml"))
                         || (extension.equals(".head")) || (extension.equals(".nii")) || (extension.equals(".rec"))
-                        || (extension.equals(".frec")) || (extension.equals(".nrrd"))|| (extension.equals(".gz"))|| (extension.equals(".bz2")))) {
+                        || (extension.equals(".frec")) || (extension.equals(".nrrd")) || (extension.equals(".gz")) || (extension
+                        .equals(".bz2")))) {
             return true;
-        } else if ( (filterType == VOI) && ( (extension.equals(".voi")) || (extension.equals(".oly")))) {
+        } else if ( (filterType == ViewImageFileFilter.VOI)
+                && ( (extension.equals(".voi")) || (extension.equals(".oly")))) {
             return true;
-        } else if ( (filterType == FUNCT) && (extension.equals(".fun"))) {
+        } else if ( (filterType == ViewImageFileFilter.FUNCT) && (extension.equals(".fun"))) {
             return true;
-        } else if ( (filterType == LUT) && (extension.equals(".lut"))) {
+        } else if ( (filterType == ViewImageFileFilter.LUT) && (extension.equals(".lut"))) {
             return true;
-        } else if ( (filterType == PLOT) && (extension.equals(".plt"))) {
+        } else if ( (filterType == ViewImageFileFilter.PLOT) && (extension.equals(".plt"))) {
             return true;
-        } else if ( (filterType == MATRIX)
-                && ( (extension.equals(".mtx")) || (extension.equals(".mat")) || (extension.equals(".xfm")) ||
-                     (extension.equals(".tps")))) {
+        } else if ( (filterType == ViewImageFileFilter.MATRIX)
+                && ( (extension.equals(".mtx")) || (extension.equals(".mat")) || (extension.equals(".xfm")) || (extension
+                        .equals(".tps")))) {
             return true;
-        } else if ( (filterType == CLASS) && (extension.equals(".class"))) {
+        } else if ( (filterType == ViewImageFileFilter.CLASS) && (extension.equals(".class"))) {
             return true;
-        } else if ( (filterType == SCRIPT) && (extension.equals(".sct"))) {
+        } else if ( (filterType == ViewImageFileFilter.SCRIPT) && (extension.equals(".sct"))) {
             return true;
-        } else if ( (filterType == SURFACE)
+        } else if ( (filterType == ViewImageFileFilter.SURFACE)
                 && (extension.equals(".sur") || extension.equals(".wrl") || extension.equals(".xml")
                         || extension.equals(".vtk") || extension.equals(".vtp") || extension.equals(".stla")
                         || extension.equals(".stlb") || extension.equals(".ply") || extension.equals(".gii"))) {
             return true;
-        } else if ( (filterType == OPTICAL)
+        } else if ( (filterType == ViewImageFileFilter.OPTICAL)
                 && ( (extension.equals(".avi")) || (extension.equals(".xml")) || (extension.equals(".bmp"))
                         || (extension.equals(".img")) || (extension.equals(".jpeg")) || (extension.equals(".jpg"))
                         || (extension.equals(".pict")) || (extension.equals(".psd")) || (extension.equals(".tif")) || (extension
                         .equals(".tiff")))) {
             return true;
-        } else if ( (filterType == FREESURFER) && (extension.equals(".asc"))) {
+        } else if ( (filterType == ViewImageFileFilter.FREESURFER) && (extension.equals(".asc"))) {
             return true;
-        } else if ( (filterType == AVI) && (extension.equals(".avi"))) {
+        } else if ( (filterType == ViewImageFileFilter.AVI) && (extension.equals(".avi"))) {
             return true;
-        } else if ( (filterType == PROJECT) && (extension.equals(".xml"))) {
+        } else if ( (filterType == ViewImageFileFilter.PROJECT) && (extension.equals(".xml"))) {
             return true;
-        } else if ( (filterType == MICROSCOPY)
+        } else if ( (filterType == ViewImageFileFilter.MICROSCOPY)
                 && ( (extension.equals(".avi")) || (extension.equals(".ics")) || (extension.equals(".liff"))
                         || (extension.equals(".lsm")) || (extension.equals(".pic")) || (extension.equals(".stk"))
                         || (extension.equals(".tif")) || (extension.equals(".tiff")) || (extension.equals(".xml")))) {
             return true;
-        } else if ( (filterType == NLT) && (extension.equals(".nlt"))) {
+        } else if ( (filterType == ViewImageFileFilter.NLT) && (extension.equals(".nlt"))) {
             return true;
-        } else if ( (filterType == PLUGIN)
+        } else if ( (filterType == ViewImageFileFilter.PLUGIN)
                 && ( (extension.equals(".class")) || (extension.equals(".jar")) || (extension.equals(".zip"))
                         || (extension.equals(".tar")) || (extension.equals(".gz")))) {
             return true;
-        } else if (filterType == DYNAMIC) {
-            for (int i = 0; i < dynamicExts.length; i++) {
-                if (extension.equals(dynamicExts[i])) {
+        } else if (filterType == ViewImageFileFilter.DYNAMIC) {
+            for (final String element : dynamicExts) {
+                if (extension.equals(element)) {
                     return true;
                 }
             }
-        } else if (filterType == XCEDE && extension.equalsIgnoreCase(".bxh")) {
-            return true;
-        } else if (filterType == UDEF) {
-            if (userDefinedExtensions != null) {
-                for (int i = 0; i < userDefinedExtensions.length; i++) {
-                    if (extension.equals("." + userDefinedExtensions[i].split("\\.")[1])) {
+        } else if (filterType == ViewImageFileFilter.UDEF) {
+            if (ViewImageFileFilter.userDefinedExtensions != null) {
+                for (final String element : ViewImageFileFilter.userDefinedExtensions) {
+                    if (extension.equals("." + element.split("\\.")[1])) {
                         return true;
                     }
                 }
             }
-        } else if (filterType == RTABLE && extension.equalsIgnoreCase(".rtb")) {
+        } else if (filterType == ViewImageFileFilter.RTABLE && extension.equalsIgnoreCase(".rtb")) {
             return true;
-        } else if (filterType == DATA_PROVENANCE && extension.equalsIgnoreCase(".xmp")) {
+        } else if (filterType == ViewImageFileFilter.DATA_PROVENANCE && extension.equalsIgnoreCase(".xmp")) {
             return true;
-        } else if (filterType == DICOMMATRIX && extension.equalsIgnoreCase(".dicomMatrix")) {
+        } else if (filterType == ViewImageFileFilter.DICOMMATRIX && extension.equalsIgnoreCase(".dicomMatrix")) {
             return true;
         }
         return false;
@@ -399,7 +393,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @return <code>true</code> if and only if the filter is the same type as this filter.
      */
-    public boolean equals(javax.swing.filechooser.FileFilter filter) {
+    public boolean equals(final javax.swing.filechooser.FileFilter filter) {
         // if filter is not a ViewImageFileFilter, then it doesn't match
         if ( ! (filter instanceof ViewImageFileFilter)) {
             return false;
@@ -418,14 +412,14 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      */
     public String getDescription() {
         // if dynamic, return dynamic description
-        if (filterType == DYNAMIC) {
+        if (filterType == ViewImageFileFilter.DYNAMIC) {
             return dynamicDescription;
         }
         // make sure filter type is valid
-        if ( (filterType < 0) || (filterType >= descriptions.length)) {
+        if ( (filterType < 0) || (filterType >= ViewImageFileFilter.descriptions.length)) {
             return " ";
         }
-        return descriptions[filterType];
+        return ViewImageFileFilter.descriptions[filterType];
     }
 
     /**
@@ -435,15 +429,15 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @return List of files in directory that satisfy file filter.
      */
-    public String[] listFiles(File file) {
-        File[] allFiles = file.listFiles();
+    public String[] listFiles(final File file) {
+        final File[] allFiles = file.listFiles();
         int count = 0;
         for (int i = 0; i < allFiles.length; i++) {
             if ( !allFiles[i].isDirectory() && accept(allFiles[i])) {
                 count++;
             }
         }
-        String[] files = new String[count];
+        final String[] files = new String[count];
         count = 0;
         for (int i = 0; i < allFiles.length; i++) {
             if ( !allFiles[i].isDirectory() && accept(allFiles[i])) {
@@ -459,21 +453,21 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
      * 
      * @param desc Description String
      */
-    public static void setUdefDescription(String desc) {
-        descriptions[21] = desc;
+    public static void setUdefDescription(final String desc) {
+        ViewImageFileFilter.descriptions[21] = desc;
     }
 
     /** This sets the user defined Exts String as well as the Arraay of exts from the Preferences */
     public static void setUserDefinedExtensions() {
-        udefExtsString = Preferences.getProperty(Preferences.PREF_USER_FILETYPES);
-        if (udefExtsString != null && ( ! (udefExtsString.trim().equals("")))) {
-            String desc = "User Defined (" + udefExtsString + ")";
-            setUdefDescription(desc);
-            userDefinedExtensions = udefExtsString.split(";");
+        ViewImageFileFilter.udefExtsString = Preferences.getProperty(Preferences.PREF_USER_FILETYPES);
+        if (ViewImageFileFilter.udefExtsString != null && ( ! (ViewImageFileFilter.udefExtsString.trim().equals("")))) {
+            final String desc = "User Defined (" + ViewImageFileFilter.udefExtsString + ")";
+            ViewImageFileFilter.setUdefDescription(desc);
+            ViewImageFileFilter.userDefinedExtensions = ViewImageFileFilter.udefExtsString.split(";");
         } else {
-            String desc = "User Defined";
-            setUdefDescription(desc);
-            userDefinedExtensions = null;
+            final String desc = "User Defined";
+            ViewImageFileFilter.setUdefDescription(desc);
+            ViewImageFileFilter.userDefinedExtensions = null;
         }
     }
 }

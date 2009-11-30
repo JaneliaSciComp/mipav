@@ -1,8 +1,6 @@
 package gov.nih.mipav.view;
 
 
-import edu.sdsc.grid.io.GeneralFile;
-
 import gov.nih.mipav.plugins.*;
 
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
@@ -11,14 +9,11 @@ import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.model.provenance.actions.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
-import gov.nih.mipav.model.srb.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.util.NDARPipeline;
 
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.VolumeTriPlanarInterfaceDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
-import gov.nih.mipav.view.xcede.JXCEDEExplorer;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -30,8 +25,6 @@ import java.util.regex.Matcher;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-
-import org.w3c.dom.Document;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -171,9 +164,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     private JDialogMipavOptions optionsDialog = null;
 
-    /** DOCUMENT ME! */
-    private NDARPipeline pipeline = null;
-
     /** Stores the plugins menu so that it can be removed/updated when plugins are installed. */
     private JMenu pluginsMenu = null;
 
@@ -185,9 +175,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** System DP holder (separate from images data provenance...this has everything). */
     private ProvenanceHolder systemDPHolder;
-
-    /** DOCUMENT ME! */
-    private JXCEDEExplorer xcedeExplorer;
 
     /** boolean to force the algorithm to replace the image rather than opening a new frame */
     private boolean forceAlgorithmInPlace = false;
@@ -437,14 +424,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
                     }
-
-                    // Also need to disable the auto upload to srb function.
-                    menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
-
-                    if (pipeline != null) {
-                        pipeline.uninstall();
-                        pipeline = null;
-                    }
                 }
 
             } else {
@@ -464,14 +443,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         DICOMcatcher.setStop();
                     }
                     menuBuilder.setMenuItemSelected("Activate DICOM receiver", false);
-
-                    // Also need to disable the auto upload to srb function.
-                    menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
-
-                    if (pipeline != null) {
-                        pipeline.uninstall();
-                        pipeline = null;
-                    }
                 }
 
             }
@@ -479,63 +450,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             windowClosing(null);
         } else if (command.equals("OpenNewImage")) {
             openImageFrame();
-        } else if (command.equals("OpenXCEDESchema")) {
-            openXCEDESchema();
-        } else if (command.equals("SaveXCEDESchema")) {
-            saveXCEDESchema();
         } else if (command.equals("BrowseImages")) {
             buildTreeDialog();
         } else if (command.equals("BrowseDICOM")) {
             buildDICOMFrame();
         } else if (command.equals("BrowseDICOMDIR")) {
             buildDICOMDIRFrame();
-        } else if (command.equals("OpenSRBFile")) {
-            openSRBFile();
-        } else if (command.equals("SaveSRBFile")) {
-            saveSRBFile();
-        } else if (command.equals("TransferSRBFiles")) {
-            transferSRBFiles();
-        } else if (command.equals("AutoUploadToSRB")) {
-
-            if (menuBuilder.isMenuItemSelected("Enable auto SRB upload")) {
-
-                if (pipeline != null) {
-                    pipeline = null;
-                }
-
-                pipeline = new NDARPipeline();
-
-                if (pipeline.setup()) {
-
-                    if ( !menuBuilder.isMenuItemSelected("Activate DICOM receiver")) {
-
-                        if (DICOMcatcher != null) {
-                            DICOMcatcher.setStop();
-                        }
-
-                        DICOMcatcher = new DICOM_Receiver();
-                        menuBuilder.setMenuItemSelected("Activate DICOM receiver", DICOMcatcher.isAlive());
-
-                        pipeline.install(DICOMcatcher);
-                        // note: activating the auto srb upload does not imply
-                        // wanting the pacs to always start. the user
-                        // must still explictly enable its auto-start
-
-                        // Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "true");
-                    }
-
-                    return;
-                }
-
-                pipeline = null;
-                menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
-            } else {
-
-                if (pipeline != null) {
-                    pipeline.uninstall();
-                    pipeline = null;
-                }
-            }
         } else if (command.equals("RecordScript") || command.equals("ToolbarScriptRecord")) {
 
             if (ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.STOPPED) {
@@ -853,7 +773,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         final ModelImage imageA = createEmptyImage(null);
         final VolumeTriPlanarInterfaceDTI kWM = new VolumeTriPlanarInterfaceDTI(imageA);
-        //kWM.constructRenderers();
+        // kWM.constructRenderers();
         imageA.disposeLocal();
 
     }
@@ -1051,7 +971,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             String name, pluginName;
             Field catField = null, scriptField = null;
-            Class plugin;
+            Class<?> plugin;
             final String catName = "CATEGORY";
             final String scriptName = "SCRIPT_PREFIX";
 
@@ -1086,9 +1006,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                     catField = plugin.getField(catName);
                     final String[] hier = (String[]) catField.get(plugin);
-                    final Class[] interList = plugin.getInterfaces();
+                    final Class<?>[] interList = plugin.getInterfaces();
                     String interName = new String();
-                    for (final Class element : interList) {
+                    for (final Class<?> element : interList) {
                         if (element.getName().contains("PlugIn")) {
                             interName = element.getName().substring(element.getName().indexOf("PlugIn"));
                         }
@@ -1151,10 +1071,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return menu;
     }
 
-    private String getSuperInterfaces(final Class plugin) {
+    private String getSuperInterfaces(final Class<?> plugin) {
         String interName = new String();
-        final Class[] interList = plugin.getInterfaces();
-        for (final Class element : interList) {
+        final Class<?>[] interList = plugin.getInterfaces();
+        for (final Class<?> element : interList) {
             if (element.getName().contains("PlugIn")) {
                 interName = element.getName().substring(element.getName().indexOf("PlugIn"));
             }
@@ -1552,15 +1472,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Returns the pipeline.
-     * 
-     * @return the pipeline.
-     */
-    public NDARPipeline getNDARPipeline() {
-        return pipeline;
-    }
-
-    /**
      * Changes location of image when first displayed.
      * 
      * @return The new location.
@@ -1697,15 +1608,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return imageHashtable.size();
 
     } // end getRegisteredImagesNum()
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
-     */
-    public JXCEDEExplorer getXCEDEExplorer() {
-        return xcedeExplorer;
-    }
 
     /**
      * Display image registry frame.
@@ -2155,83 +2057,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         }
 
-    }
-
-    /**
-     * Opens the srb file and display the images.
-     */
-    public void openSRBFile() {
-        final SRBFileTransferer transferer = new SRBFileTransferer();
-        GeneralFile[] sourceFiles = transferer.selectSourceFiles(SRBFileTransferer.SCHEMAS[1]);
-
-        if (sourceFiles == null) {
-            return;
-        }
-
-        sourceFiles = SRBUtility.createCompleteFileList(sourceFiles);
-        transferer.setSourceFiles(sourceFiles);
-
-        // Creates an random subdirectory under the temporary directory.
-        transferer.createTempDir();
-
-        final GeneralFile tempDir = SRBUtility.createLocalFile(transferer.getTempDir().getAbsolutePath());
-
-        if (tempDir == null) {
-            MipavUtil.displayError("The local temporary directory has to be specified");
-
-            return;
-        }
-
-        final GeneralFile[] targetFiles = SRBUtility.createTargetFiles(tempDir, sourceFiles[0].getParentFile(),
-                sourceFiles);
-
-        if (targetFiles == null) {
-            return;
-        }
-
-        /**
-         * Deletes the temporary files when mipav exits.
-         */
-        for (final GeneralFile targetFile : targetFiles) {
-            targetFile.deleteOnExit();
-        }
-
-        transferer.setTargetFiles(targetFiles);
-        transferer.setThreadSeperated(false);
-        transferer.transfer(sourceFiles, targetFiles);
-
-        final boolean multiFile = (targetFiles.length > 1) ? true : false;
-
-        final GeneralFile[] primaryFiles = SRBUtility.getPrimaryFiles(targetFiles);
-
-        if (primaryFiles != null) {
-
-            for (final GeneralFile primaryFile : primaryFiles) {
-                ViewUserInterface.getReference().openImageFrame(primaryFile.getPath(), multiFile);
-            }
-        }
-    }
-
-    /**
-     * Used to parse the XCEDE schema and creates the JXCEDEExplorer to show the hierarchical structure of the XCEDE
-     * Schema.
-     */
-    public void openXCEDESchema() {
-        final FileXCEDE fileXCEDE = new FileXCEDE();
-        final Document document = fileXCEDE.open();
-
-        if (document == null) {
-            return;
-        }
-
-        /**
-         * Creates the JXCEDEExplorer to display the hierarchical structure of the XCEDE schema.
-         */
-        if (xcedeExplorer == null) {
-            xcedeExplorer = new JXCEDEExplorer(document);
-        } else {
-            xcedeExplorer.setDocument(document);
-        }
     }
 
     /**
@@ -2703,37 +2528,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * DOCUMENT ME!
-     */
-    public void saveSRBFile() {
-
-        // Gets the active ViewJFrameImage instance.
-        final ViewJFrameImage currentImageFrame = getActiveImageFrame();
-
-        // Gets the current image file opened inside the active ViewJFrameImage.
-        if (currentImageFrame == null) {
-            return;
-        }
-
-        final ModelImage currentImage = currentImageFrame.getActiveImage();
-
-        if (currentImage == null) {
-            return;
-        }
-
-        final SRBFileTransferer transferer = new SRBFileTransferer();
-        transferer.saveToSRB(currentImage);
-    }
-
-    /**
-     * DOCUMENT ME!
-     */
-    public void saveXCEDESchema() {
-        final FileXCEDE xcedeFile = new FileXCEDE();
-        xcedeFile.save();
-    }
-
-    /**
      * Method sets the parameter frame to top and active.
      * 
      * @param frame Frame to be set active (i.e. to the top of the list).
@@ -2924,15 +2718,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * DOCUMENT ME!
-     * 
-     * @param pipeline DOCUMENT ME!
-     */
-    public void setNDARPipeline(final NDARPipeline pipeline) {
-        this.pipeline = pipeline;
-    }
-
-    /**
      * Sets the UI to either be/not be recording action command.
      * 
      * @param doRecord boolean true = is recording, false = not
@@ -3008,15 +2793,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         mainFrame.setVisible(visible);
         messageFrame.setVisible(visible && Preferences.is(Preferences.PREF_SHOW_OUTPUT));
         mainFrame.setVisible(visible);
-    }
-
-    /**
-     * DOCUMENT ME!
-     * 
-     * @param xcedeExplorer DOCUMENT ME!
-     */
-    public void setXCEDEExplorer(final JXCEDEExplorer xcedeExplorer) {
-        this.xcedeExplorer = xcedeExplorer;
     }
 
     /**
@@ -3137,14 +2913,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
             }
         }
-    }
-
-    /**
-     * Transfers the files between local machine/SRB server and local machine/SRB server.
-     */
-    public void transferSRBFiles() {
-        final SRBFileTransferer transferer = new SRBFileTransferer();
-        transferer.transferFiles();
     }
 
     /**
@@ -3501,7 +3269,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     protected JPanel initCreateMultiCoreGpuIndicatorPanel() {
         final JPanel panel = new JPanel();
 
-        final JLabel multiCoreEnabledLabel = new JLabel("Multi-core(" + gov.nih.mipav.util.MipavUtil.getAvailableCores()+ " cores):");
+        final JLabel multiCoreEnabledLabel = new JLabel("Multi-core("
+                + gov.nih.mipav.util.MipavUtil.getAvailableCores() + " cores):");
         multiCoreEnabledLabel.setFont(MipavUtil.font12);
 
         ImageIcon backgroundMulti;

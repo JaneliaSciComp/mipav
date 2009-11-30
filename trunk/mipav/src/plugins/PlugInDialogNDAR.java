@@ -1,19 +1,12 @@
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 
-import gov.nih.mipav.model.algorithms.AlgorithmTransform;
-import gov.nih.mipav.model.algorithms.LightboxGenerator;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.file.FileXML.XMLAttributes;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
-import gov.nih.mipav.view.srb.JDialogLoginSRB;
-
-
 
 import java.awt.*;
 import java.awt.event.*;
@@ -25,118 +18,120 @@ import java.util.List;
 import java.util.zip.*;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.event.*;
-import javax.swing.table.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.axiom.om.OMAttribute;
-import org.apache.axiom.om.OMElement;
+import org.apache.axiom.om.*;
 import org.apache.axiom.om.impl.builder.StAXOMBuilder;
-import org.jdom.Document;
-import org.jdom.input.SAXBuilder;
-import org.jdom.Attribute;
-import org.jdom.Element;
 
-import WildMagic.LibFoundation.Mathematics.ColorRGB;
-import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.*;
 
-import com.sun.jimi.core.Jimi;
-import com.sun.jimi.core.JimiException;
+import com.sun.jimi.core.*;
 
 
-
-
-public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener, TreeSelectionListener, MouseListener {
+public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener,
+        TreeSelectionListener, MouseListener {
 
     /** Scrolling text area for log output */
     private WidgetFactory.ScrollTextArea logOutputArea;
 
     private JScrollPane listPane;
-    
+
     private JTable sourceTable;
-    
+
     private JLabel outputDirLabel;
 
     private JButton addSourceButton, finishButton, removeSourceButton, completeDataElementsButton, outputDirButton;
-    
+
     private JPanel outputDirPanel;
-    
+
     private JTextField outputDirTextField;
-    
+
     private ViewTableModel sourceTableModel;
 
-    private String outputDirBase = System.getProperty("user.home") + File.separator + "mipav"
-            + File.separator + "NDAR_Imaging_Submission" + File.separator;
+    private String outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator
+            + "NDAR_Imaging_Submission" + File.separator;
 
     /** Length of the NDAR GUID */
     private static final int GUID_LENGTH = 12;
 
     private Hashtable<File, Boolean> multiFileTable = null;
-    
-    private Hashtable<File, LinkedHashMap<String,String>> infoTable = null;
-    
+
+    private Hashtable<File, LinkedHashMap<String, String>> infoTable = null;
+
     private Hashtable<File, String> outputFileNameBaseTable = null;
-    
+
     private DataStruct imageDataStruct;
-    
+
     /** tab level counter for writing xml header. */
     protected int tabLevel = 0;
 
-    /** Buffered writer for writing to XML file*/
+    /** Buffered writer for writing to XML file */
     protected BufferedWriter bw;
-    
+
     protected FileWriter fw;
-    
+
     protected static final String TAB = "\t";
-    
+
     /** XML encoding string. */
     protected static final String XML_ENCODING = "UTF-8";
 
-    
-    
+    /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
+    public static final String NDAR_PRIVACY_NOTICE = "MIPAV is a collaborative environment with privacy rules that pertain to the collection\n"
+            + "and display of imaging data. Before accessing and using MIPAV, please ensure that you\n"
+            + "familiarize yourself with our privacy rules, available through the NDAR Rules of Behavior\n"
+            + "document and supporting documentation.\n"
+            + "\n"
+            + "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n"
+            + "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research\n"
+            + "around autism and autism treatment. This information may be disclosed to researchers for\n"
+            + "research purposes, and to system administrators for evaluation and data normalization.\n"
+            + "\n"
+            + "Rules governing submission of this information are based on the data sharing rules defined\n"
+            + "in the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing\n"
+            + "requirements, data submission is voluntary.  Data entered into NDAR will be used solely for\n"
+            + "scientific and research purposes and is designed to further the understanding of autism and\n"
+            + "autism treatments.  Modification of NDAR information may be addressed by contacting your NDAR\n"
+            + "system administrator at ndarhelp@nih.gov. Significant system update information may be posted\n"
+            + "on the NDAR site as required.";
+
     public PlugInDialogNDAR() {
         super(false);
         Icon icon = null;
         try {
-        	icon = new ImageIcon(MipavUtil.getIconImage(Preferences.getIconName()));
-        }catch(Exception e) {
-        	
+            icon = new ImageIcon(MipavUtil.getIconImage(Preferences.getIconName()));
+        } catch (final Exception e) {
+
         }
-        int response = JOptionPane.showConfirmDialog(this, JDialogLoginSRB.NDAR_PRIVACY_NOTICE,
+        final int response = JOptionPane.showConfirmDialog(this, PlugInDialogNDAR.NDAR_PRIVACY_NOTICE,
                 "NDAR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (response == JOptionPane.YES_OPTION) {
-        	init();
+            init();
             setVisible(true);
             validate();
-        }else {
-        	return;
+        } else {
+            return;
         }
-        
+
     }
 
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(final ActionEvent e) {
 
         /*
          * @todo Implement this java.awt.event.ActionListener abstract method
          */
 
-        String command = e.getActionCommand();
+        final String command = e.getActionCommand();
 
         // System.err.println("size : " + this.getSize());
 
-       if (command.equals("AddSource")) {
-            ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+        if (command.equals("AddSource")) {
+            final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
             fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
 
-            JFileChooser chooser = fileChooser.getFileChooser();
+            final JFileChooser chooser = fileChooser.getFileChooser();
             chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
 
             // default to TECH filter
@@ -144,7 +139,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             try {
                 filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
-            } catch (NumberFormatException nfe) {
+            } catch (final NumberFormatException nfe) {
 
                 // an invalid value was set in preferences -- so don't use it!
                 filter = -1;
@@ -161,7 +156,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                 // if filter is something we already added, then remove it before
                 // setting it..... (kludgy, kludgy....)
-                javax.swing.filechooser.FileFilter found = ViewOpenFileUI.findFilter(chooser, filter);
+                final javax.swing.filechooser.FileFilter found = ViewOpenFileUI.findFilter(chooser, filter);
 
                 if (found != null) {
                     chooser.removeChoosableFileFilter(found);
@@ -171,24 +166,25 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 chooser.setFileFilter(new ViewImageFileFilter(filter));
             }
 
-            int returnVal = chooser.showOpenDialog(this);
+            final int returnVal = chooser.showOpenDialog(this);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                boolean isMultiFile = fileChooser.isMulti();
+                final boolean isMultiFile = fileChooser.isMulti();
 
-                File[] files = chooser.getSelectedFiles();
+                final File[] files = chooser.getSelectedFiles();
                 ViewUserInterface.getReference().setDefaultDirectory(files[0].getParent());
                 for (int i = 0; i < files.length; i++) {
-                	
-                    //if ( !sourceModel.contains(files[i])) {
+
+                    // if ( !sourceModel.contains(files[i])) {
                     if ( !contains(files[i])) {
-                    	Vector rowData = new Vector();
+                        final Vector rowData = new Vector();
                         rowData.add(files[i]);
                         rowData.add("No");
                         sourceTableModel.addRow(rowData);
-                    	sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount() - 1, sourceTableModel.getRowCount() - 1);
+                        sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount() - 1, sourceTableModel
+                                .getRowCount() - 1);
                         multiFileTable.put(files[i], new Boolean(isMultiFile));
-                        new InfoDialog(this,files[i], false);
+                        new InfoDialog(this, files[i], false);
                     }
                 }
             }
@@ -197,9 +193,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " image(s) "));
 
         } else if (command.equals("RemoveSource")) {
-            int[] selected = sourceTable.getSelectedRows();
+            final int[] selected = sourceTable.getSelectedRows();
             for (int i = selected.length - 1; i >= 0; i--) {
-            	File f = (File)sourceTableModel.getValueAt(selected[i], 0);
+                final File f = (File) sourceTableModel.getValueAt(selected[i], 0);
                 sourceTableModel.removeRow(selected[i]);
                 multiFileTable.remove(f);
                 infoTable.remove(f);
@@ -208,111 +204,107 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             removeSourceButton.setEnabled(sourceTableModel.getRowCount() > 0);
             completeDataElementsButton.setEnabled(sourceTableModel.getRowCount() > 0);
-            if(sourceTableModel.getRowCount() > 0) {
-            	enableDisableFinishButton();
-            }else {
-            	finishButton.setEnabled(false);
+            if (sourceTableModel.getRowCount() > 0) {
+                enableDisableFinishButton();
+            } else {
+                finishButton.setEnabled(false);
             }
             listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " image(s) "));
-        }else if (command.equals("Help")) {
-          
-        	//MipavUtil.showHelp("ISPImages01");
+        } else if (command.equals("Help")) {
 
-        }else if(command.equals("Finish")) {
-        	final gov.nih.mipav.SwingWorker worker = new gov.nih.mipav.SwingWorker() {
+            // MipavUtil.showHelp("ISPImages01");
+
+        } else if (command.equals("Finish")) {
+            final gov.nih.mipav.SwingWorker worker = new gov.nih.mipav.SwingWorker() {
                 public Object construct() {
                     createSubmissionFiles();
 
                     return null;
                 }
             };
-            int response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?",
+            final int response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?",
                     "Done adding image datasets?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
-            
-            ArrayList<String> incolmpleteFileNames = new ArrayList<String>();
-            for(int i=0;i<sourceTableModel.getRowCount();i++) {
-            	File f1 = (File)sourceTableModel.getValueAt(i, 0);
-            	//see if there is 
-            	Set keySet = infoTable.keySet();
-            	Iterator iter = keySet.iterator();
-            	boolean found = false;
-            	while(iter.hasNext()) {
-            		File f2 = (File)iter.next();
-            		
-            		if(f1.getName().equals(f2.getName())) {
-            			found = true;
-            			break;
-            		}
-            	}
-            	if(!found) {
-            		incolmpleteFileNames.add(f1.getName());
-            	}
+            final ArrayList<String> incolmpleteFileNames = new ArrayList<String>();
+            for (int i = 0; i < sourceTableModel.getRowCount(); i++) {
+                final File f1 = (File) sourceTableModel.getValueAt(i, 0);
+                // see if there is
+                final Set keySet = infoTable.keySet();
+                final Iterator iter = keySet.iterator();
+                boolean found = false;
+                while (iter.hasNext()) {
+                    final File f2 = (File) iter.next();
+
+                    if (f1.getName().equals(f2.getName())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if ( !found) {
+                    incolmpleteFileNames.add(f1.getName());
+                }
             }
-            if(incolmpleteFileNames.size() > 0) {
-            	StringBuffer names = new StringBuffer();
-            	for(int i=0;i<incolmpleteFileNames.size();i++) {
-            		names.append(" - " + incolmpleteFileNames.get(i) + "\n");
-				}
-            	MipavUtil.displayError("Please complete required fields for the following images: \n" + names.toString());
-            	return;
+            if (incolmpleteFileNames.size() > 0) {
+                final StringBuffer names = new StringBuffer();
+                for (int i = 0; i < incolmpleteFileNames.size(); i++) {
+                    names.append(" - " + incolmpleteFileNames.get(i) + "\n");
+                }
+                MipavUtil.displayError("Please complete required fields for the following images: \n"
+                        + names.toString());
+                return;
             }
-            
-            
-            
-            
+
             if (response == JOptionPane.YES_OPTION) {
-            	worker.start();
-            	removeSourceButton.setEnabled(false);
-            	finishButton.setEnabled(false);
-            	outputDirButton.setEnabled(false);
-            	addSourceButton.setEnabled(false);
-            	completeDataElementsButton.setEnabled(false);
-            	
+                worker.start();
+                removeSourceButton.setEnabled(false);
+                finishButton.setEnabled(false);
+                outputDirButton.setEnabled(false);
+                addSourceButton.setEnabled(false);
+                completeDataElementsButton.setEnabled(false);
+
             }
-            
-        }else if(command.equals("completeDataElements")) {
-        	File f = (File)sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
-        	String completed = (String)sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 1);
-    		if(completed.equals("No")) {
-    			new InfoDialog(this, f, false);
-    		}else {
-    			new InfoDialog(this, f, true);
-    		}
-        }else if(command.equalsIgnoreCase("outputDirBrowse")) {
-			JFileChooser chooser = new JFileChooser();
 
-			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-	        chooser.setDialogTitle("Choose output directory");
-	        int returnValue = chooser.showOpenDialog(this);
-	        if (returnValue == JFileChooser.APPROVE_OPTION) {
-	        	outputDirTextField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
+        } else if (command.equals("completeDataElements")) {
+            final File f = (File) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
+            final String completed = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 1);
+            if (completed.equals("No")) {
+                new InfoDialog(this, f, false);
+            } else {
+                new InfoDialog(this, f, true);
+            }
+        } else if (command.equalsIgnoreCase("outputDirBrowse")) {
+            final JFileChooser chooser = new JFileChooser();
 
-	        	outputDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
-	        	
-	        	System.out.println(outputDirBase);
-	        }
-		}
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setDialogTitle("Choose output directory");
+            final int returnValue = chooser.showOpenDialog(this);
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+                outputDirTextField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
+
+                outputDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
+
+                System.out.println(outputDirBase);
+            }
+        }
     }
 
-    public void stateChanged(ChangeEvent e) {
-       
+    public void stateChanged(final ChangeEvent e) {
+
     }
 
-    public void itemStateChanged(ItemEvent e) {
-   
-    }
+    public void itemStateChanged(final ItemEvent e) {
 
+    }
 
     private void init() {
         setTitle("NDAR Image Submission Package Creation Tool");
 
         multiFileTable = new Hashtable<File, Boolean>();
-        infoTable = new Hashtable<File, LinkedHashMap<String,String>>();
+        infoTable = new Hashtable<File, LinkedHashMap<String, String>>();
         outputFileNameBaseTable = new Hashtable<File, String>();
 
         getContentPane().add(buildSourcePanel(), BorderLayout.NORTH);
-        
+
         getContentPane().add(buildLogPanel(), BorderLayout.CENTER);
         getContentPane().add(buildButtonPanel(), BorderLayout.SOUTH);
         pack();
@@ -321,16 +313,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         this.setSize(new Dimension(610, 537));
     }
 
-    
     /**
      * Build a panel for the zip and metadata file creation log.
      */
     private JPanel buildLogPanel() {
-        JPanel destPanel = new JPanel(new GridBagLayout());
+        final JPanel destPanel = new JPanel(new GridBagLayout());
 
-        GridBagConstraints gbc2 = new GridBagConstraints();
+        final GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.CENTER;
-        
+
         gbc2.gridy = 0;
         gbc2.gridx = 0;
 
@@ -338,7 +329,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         logOutputArea.setBorder(buildTitledBorder("Output log"));
         logOutputArea.getTextArea().setEditable(false);
 
-        
         outputDirPanel = new JPanel();
         outputDirLabel = new JLabel("Output Directory ");
         outputDirTextField = new JTextField(30);
@@ -350,31 +340,25 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         outputDirPanel.add(outputDirLabel);
         outputDirPanel.add(outputDirTextField);
         outputDirPanel.add(outputDirButton);
-        
-        
+
         destPanel.add(outputDirPanel, gbc2);
-        
+
         gbc2.gridy = 1;
         gbc2.fill = GridBagConstraints.BOTH;
         gbc2.weightx = 1;
         gbc2.weighty = 1;
         gbc2.anchor = GridBagConstraints.NORTHWEST;
         destPanel.add(logOutputArea, gbc2);
-        
-        
-        
-        
 
         return destPanel;
     }
-    
 
-    public void valueChanged(TreeSelectionEvent e) {
+    public void valueChanged(final TreeSelectionEvent e) {
 
-	}
+    }
 
-	private JScrollPane buildSourcePanel() {
-        GridBagConstraints gbc = new GridBagConstraints();
+    private JScrollPane buildSourcePanel() {
+        final GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.weightx = 1;
@@ -384,17 +368,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         sourceTableModel = new ViewTableModel();
         sourceTableModel.addColumn("Image Name");
         sourceTableModel.addColumn("Completed?");
-        
+
         sourceTable = new JTable(sourceTableModel);
         sourceTable.addMouseListener(this);
         sourceTable.setPreferredScrollableViewportSize(new Dimension(610, 200));
         sourceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
+
         sourceTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         sourceTable.getColumn("Completed?").setMinWidth(100);
         sourceTable.getColumn("Completed?").setMaxWidth(100);
-        
-        
 
         sourceTable.getColumn("Completed?").setCellRenderer(new MyRightCellRenderer());
 
@@ -404,16 +386,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         return listPane;
     }
 
-
-
     /**
      * Checks to see if the given string is a valid NDAR GUID
      * 
      * @param checkString the string to check
      * @return whether this is a valid guid
      */
-    private boolean isValidGUID(String checkString) {
-        if (checkString.length() != GUID_LENGTH) {
+    private boolean isValidGUID(final String checkString) {
+        if (checkString.length() != PlugInDialogNDAR.GUID_LENGTH) {
             return false;
         }
 
@@ -433,7 +413,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * @param checkChar char to check
      * @return whether is a number
      */
-    private boolean isNumChar(char checkChar) {
+    private boolean isNumChar(final char checkChar) {
         return (checkChar >= '0' && checkChar <= '9');
     }
 
@@ -443,7 +423,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * @param checkChar char to check
      * @return is the char valid
      */
-    private boolean isValidChar(char checkChar) {
+    private boolean isValidChar(final char checkChar) {
         if ( (checkChar >= 'a' && checkChar <= 'z') || (checkChar >= 'A' && checkChar <= 'Z')) {
             if (checkChar != 'i' && checkChar != 'I' && checkChar != 'o' && checkChar != 'O' && checkChar != 'q'
                     && checkChar != 'Q' && checkChar != 's' && checkChar != 'S') {
@@ -459,141 +439,146 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      */
     private void createSubmissionFiles() {
 
-    	File outputDirFile = new File(outputDirBase);
+        final File outputDirFile = new File(outputDirBase);
         if ( !outputDirFile.exists()) {
-        	outputDirFile.mkdirs();
+            outputDirFile.mkdirs();
 
         }
-        int numImages = sourceTableModel.getRowCount();
+        final int numImages = sourceTableModel.getRowCount();
         for (int i = 0; i < numImages; i++) {
-            File imageFile = (File)sourceTableModel.getValueAt(i, 0);
-            String guid = outputFileNameBaseTable.get(imageFile);
+            final File imageFile = (File) sourceTableModel.getValueAt(i, 0);
+            final String guid = outputFileNameBaseTable.get(imageFile);
             printlnToLog("Opening: " + imageFile + ", multifile: " + multiFileTable.get(imageFile));
 
-            FileIO fileIO = new FileIO();
+            final FileIO fileIO = new FileIO();
             fileIO.setQuiet(true);
-            ModelImage origImage = fileIO.readImage(imageFile.getName(), imageFile.getParent() + File.separator,
+            final ModelImage origImage = fileIO.readImage(imageFile.getName(), imageFile.getParent() + File.separator,
                     multiFileTable.get(imageFile), null);
 
-            List<String> origFiles = FileUtility.getFileNameList(origImage);
-            
-            
-            //create a thumbnail image...4 colums, 2 rows
-            //grab the middle 8 slices from the image for the thumbnail
-            //need to determine by what percentage...so...need to figure out by what percebtahe the xdim will go down to 128
-            //startSLice will be 3 less than middle slice 
-            //endSlice will be 4 more than middle slixe
-            int xDim = origImage.getExtents()[0];
+            final List<String> origFiles = FileUtility.getFileNameList(origImage);
+
+            // create a thumbnail image...4 colums, 2 rows
+            // grab the middle 8 slices from the image for the thumbnail
+            // need to determine by what percentage...so...need to figure out by what percebtahe the xdim will go down
+            // to 128
+            // startSLice will be 3 less than middle slice
+            // endSlice will be 4 more than middle slixe
+            final int xDim = origImage.getExtents()[0];
             int percentage = 100;
-            if(xDim > 128) {
-            	float perc = 128f/xDim * 100;
-            	percentage = (int)Math.floor(perc);
+            if (xDim > 128) {
+                final float perc = 128f / xDim * 100;
+                percentage = (int) Math.floor(perc);
             }
-            int columns = 4;
-            int rows = 2;
-            int rBorderVal = 255;
-            int gBorderVal = 0;
-            int bBorderVal = 0;
-            int borderThick = 1;
+            final int columns = 4;
+            final int rows = 2;
+            final int rBorderVal = 255;
+            final int gBorderVal = 0;
+            final int bBorderVal = 0;
+            final int borderThick = 1;
             int startSlice = 0;
             int endSlice = 0;
             int numSlices = 0;
             int middleSlice = 0;
             LightboxGenerator lightGen;
             ModelImage thumbnailImage = null;
-            if(origImage.is2DImage()) {
-            	//Creating a blank TransMatrix for resampling
-        		TransMatrix percentSizer = new TransMatrix(4);
-        		percentSizer.Set((float)1, (float)0, (float)0, (float)0, (float)0,
-        				(float)1, (float)0, (float)0, (float)0, (float)0, (float)1, (float)0, 
-        				(float)0, (float)0, (float)0, (float)1);
-            	
-        		//Resample image size based on percent inputted
-            	AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1, (float)(origImage.getResolutions(0)[0]/(percentage*.01)),
-            			(float)(origImage.getResolutions(0)[1]/(percentage*.01)), (int)(origImage.getExtents()[0] * percentage*.01),
-            			(int)(origImage.getExtents()[1]*percentage*.01), origImage.getUnitsOfMeasure(), false, true, false, true, origImage.getImageCentermm(false) );
-            	transformer.runAlgorithm();
-            	thumbnailImage = transformer.getTransformedImage();
-            	thumbnailImage.calcMinMax();
-            	//convert this image to color image if it is not
-        		if(!thumbnailImage.isColorImage()) {
-        			ModelImage newRGB = new ModelImage(ModelImage.ARGB, thumbnailImage.getExtents(), thumbnailImage.getImageName());
-    		    	AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage, thumbnailImage, newRGB, true, true, 255.0f, true);
-    		    	mathAlgo.run();
-    		    	thumbnailImage.disposeLocal();
-    		    	thumbnailImage = null;
-    		    	thumbnailImage = newRGB;
-        		}
-            }else if(origImage.is3DImage()) {
-            	numSlices = origImage.getExtents()[2];
-            	numSlices = numSlices - 1;  //its 0 based
-            	middleSlice = numSlices/2;
-            	startSlice = middleSlice - 3;
-            	if(startSlice < 0) {
-            		startSlice = 0;
-            	}
-            	endSlice = middleSlice + 4;
-            	if(endSlice > numSlices - 1) {
-            		endSlice = numSlices - 1;
-            	}
-            	
-            	try {
+            if (origImage.is2DImage()) {
+                // Creating a blank TransMatrix for resampling
+                final TransMatrix percentSizer = new TransMatrix(4);
+                percentSizer.Set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+                // Resample image size based on percent inputted
+                final AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1,
+                        (float) (origImage.getResolutions(0)[0] / (percentage * .01)), (float) (origImage
+                                .getResolutions(0)[1] / (percentage * .01)), (int) (origImage.getExtents()[0]
+                                * percentage * .01), (int) (origImage.getExtents()[1] * percentage * .01), origImage
+                                .getUnitsOfMeasure(), false, true, false, true, origImage.getImageCentermm(false));
+                transformer.runAlgorithm();
+                thumbnailImage = transformer.getTransformedImage();
+                thumbnailImage.calcMinMax();
+                // convert this image to color image if it is not
+                if ( !thumbnailImage.isColorImage()) {
+                    final ModelImage newRGB = new ModelImage(ModelStorageBase.ARGB, thumbnailImage.getExtents(),
+                            thumbnailImage.getImageName());
+                    final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage,
+                            thumbnailImage, newRGB, true, true, 255.0f, true);
+                    mathAlgo.run();
+                    thumbnailImage.disposeLocal();
+                    thumbnailImage = null;
+                    thumbnailImage = newRGB;
+                }
+            } else if (origImage.is3DImage()) {
+                numSlices = origImage.getExtents()[2];
+                numSlices = numSlices - 1; // its 0 based
+                middleSlice = numSlices / 2;
+                startSlice = middleSlice - 3;
+                if (startSlice < 0) {
+                    startSlice = 0;
+                }
+                endSlice = middleSlice + 4;
+                if (endSlice > numSlices - 1) {
+                    endSlice = numSlices - 1;
+                }
+
+                try {
                     // Make algorithm
-            		lightGen = new LightboxGenerator(origImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false, borderThick);
-            		lightGen.run();
-            		thumbnailImage = lightGen.getImage();
-            		thumbnailImage.calcMinMax();
-            	}catch(Exception e) {
-            		e.printStackTrace();
-            	}	
-            }else if(origImage.is4DImage()) {
-            	//get middle time volume
-            	int[] destExtents = new int[3]; 
-                int xSlices = origImage.getExtents()[0];
-                int ySlices = origImage.getExtents()[1];
-                int zSlices = origImage.getExtents()[2];
+                    lightGen = new LightboxGenerator(origImage, startSlice, endSlice, percentage, rows, columns,
+                            rBorderVal, gBorderVal, bBorderVal, false, borderThick);
+                    lightGen.run();
+                    thumbnailImage = lightGen.getImage();
+                    thumbnailImage.calcMinMax();
+                } catch (final Exception e) {
+                    e.printStackTrace();
+                }
+            } else if (origImage.is4DImage()) {
+                // get middle time volume
+                final int[] destExtents = new int[3];
+                final int xSlices = origImage.getExtents()[0];
+                final int ySlices = origImage.getExtents()[1];
+                final int zSlices = origImage.getExtents()[2];
                 destExtents[0] = xSlices;
                 destExtents[1] = ySlices;
                 destExtents[2] = zSlices;
-                
+
                 ModelImage timeImage = new ModelImage(origImage.getType(), destExtents, "");
 
-                int tSlices =  origImage.getExtents()[3];
-                int middleVol = (int)Math.floor(tSlices/2);
-                if(middleVol > 0) {
-                	middleVol = middleVol - 1;  // 0 based
+                final int tSlices = origImage.getExtents()[3];
+                int middleVol = (int) Math.floor(tSlices / 2);
+                if (middleVol > 0) {
+                    middleVol = middleVol - 1; // 0 based
                 }
-                AlgorithmSubset subsetAlgo = new AlgorithmSubset(origImage, timeImage, AlgorithmSubset.REMOVE_T, middleVol);
+                final AlgorithmSubset subsetAlgo = new AlgorithmSubset(origImage, timeImage, AlgorithmSubset.REMOVE_T,
+                        middleVol);
                 subsetAlgo.run();
-                
+
                 numSlices = timeImage.getExtents()[2];
-            	numSlices = numSlices - 1;  //its 0 based
-            	middleSlice = numSlices/2;
-            	startSlice = middleSlice - 3;
-            	if(startSlice < 0) {
-            		startSlice = 0;
-            	}
-            	endSlice = middleSlice + 4;
-            	if(endSlice > numSlices - 1) {
-            		endSlice = numSlices - 1;
-            	}
-            	try {
+                numSlices = numSlices - 1; // its 0 based
+                middleSlice = numSlices / 2;
+                startSlice = middleSlice - 3;
+                if (startSlice < 0) {
+                    startSlice = 0;
+                }
+                endSlice = middleSlice + 4;
+                if (endSlice > numSlices - 1) {
+                    endSlice = numSlices - 1;
+                }
+                try {
                     // Make algorithm
-            		lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns, rBorderVal, gBorderVal, bBorderVal, false, borderThick);
-            		lightGen.run();
-            		thumbnailImage = lightGen.getImage();
-            		thumbnailImage.calcMinMax();
-            		if(timeImage != null) {
-            			timeImage.disposeLocal();
-            			timeImage = null;
-            		}	
-            	}catch(Exception e) {
-            		
-            	}	
+                    lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns,
+                            rBorderVal, gBorderVal, bBorderVal, false, borderThick);
+                    lightGen.run();
+                    thumbnailImage = lightGen.getImage();
+                    thumbnailImage.calcMinMax();
+                    if (timeImage != null) {
+                        timeImage.disposeLocal();
+                        timeImage = null;
+                    }
+                } catch (final Exception e) {
+
+                }
             }
 
-            int modality = origImage.getFileInfo(0).getModality();
-            String modalityString = FileInfoBase.getModalityStr(modality).replaceAll("\\s+", "");
+            final int modality = origImage.getFileInfo(0).getModality();
+            final String modalityString = FileInfoBase.getModalityStr(modality).replaceAll("\\s+", "");
 
             String outputFileNameBase;
             if (modality == FileInfoBase.UNKNOWN_MODALITY) {
@@ -602,32 +587,31 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 outputFileNameBase = guid + "_" + modalityString + "_" + System.currentTimeMillis();
             }
 
-            String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
-            
-            //write out thumbnail image
-            FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
+            final String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
+
+            // write out thumbnail image
+            final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
             writeThumbnailJIMI(thumbnailImage, opts);
-            if(thumbnailImage != null) {
-            	thumbnailImage.disposeLocal();
-            	thumbnailImage = null;
+            if (thumbnailImage != null) {
+                thumbnailImage.disposeLocal();
+                thumbnailImage = null;
             }
             printlnToLog("Creating thumbnail image:\t" + outputDirBase + outputFileNameBase + ".jpg");
             try {
                 printlnToLog("Creating ZIP file:\t" + zipFilePath);
-                for (String file : origFiles) {
+                for (final String file : origFiles) {
                     printlnToLog("Adding file to ZIP:\t" + file);
                 }
 
                 makeZipFile(zipFilePath, origFiles);
-            } catch (IOException ioe) {
+            } catch (final IOException ioe) {
                 ioe.printStackTrace();
                 MipavUtil.displayError("Unable to write original image dataset files to ZIP package:\n"
                         + ioe.getMessage());
                 continue;
             }
 
-
-            //now we need to write out the xml...nish
+            // now we need to write out the xml...nish
             writeXMLFile(outputDirBase, outputFileNameBase, imageFile, origImage);
 
             origImage.disposeLocal();
@@ -641,117 +625,114 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
     /**
      * writes out xml file
+     * 
      * @param outputDirBase
      * @param outputFileNameBase
      * @param imageFile
      * @param origImage
      */
-    private void writeXMLFile(String outputDirBase, String outputFileNameBase, File imageFile, ModelImage origImage) {
-    	String xmlFileName = outputFileNameBase + ".xml";
-    	String xmlHeader = "<?xml version=\"1.0\" ?>";
-    	String xmlSchema = "http://www.w3.org/2001/XMLSchema-instance";
-    	String xsd = "schema.xsd";
+    private void writeXMLFile(final String outputDirBase, final String outputFileNameBase, final File imageFile,
+            final ModelImage origImage) {
+        final String xmlFileName = outputFileNameBase + ".xml";
+        final String xmlHeader = "<?xml version=\"1.0\" ?>";
+        final String xmlSchema = "http://www.w3.org/2001/XMLSchema-instance";
+        final String xsd = "schema.xsd";
 
-    	
-    	try {
-	    	File xmlFile = new File(outputDirBase + xmlFileName);
-	        fw = new FileWriter(xmlFile);
-	        bw = new BufferedWriter(fw);
-	        bw.write(xmlHeader);
-	        bw.newLine();
-	        openTag("data_set xmlns:xsi=\"" + xmlSchema + "\" xsi:noNamespaceSchemaLocation=\"" + xsd + "\"", true);
-	        String n = imageDataStruct.getName();
-	        String v = imageDataStruct.getVersion();
-	        openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
-	        parse(imageDataStruct,imageFile, outputFileNameBase);
-	        openTag("data_structure", false);
-	        openTag("data_set", false);
-	        bw.close();
-    	}catch(Exception e) {
-    		e.printStackTrace();
-    	} 
+        try {
+            final File xmlFile = new File(outputDirBase + xmlFileName);
+            fw = new FileWriter(xmlFile);
+            bw = new BufferedWriter(fw);
+            bw.write(xmlHeader);
+            bw.newLine();
+            openTag("data_set xmlns:xsi=\"" + xmlSchema + "\" xsi:noNamespaceSchemaLocation=\"" + xsd + "\"", true);
+            final String n = imageDataStruct.getName();
+            final String v = imageDataStruct.getVersion();
+            openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
+            parse(imageDataStruct, imageFile, outputFileNameBase);
+            openTag("data_structure", false);
+            openTag("data_set", false);
+            bw.close();
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
     }
-    
-    
-    
+
     /**
-	 * 
-	 * @param ds
-	 */
-	private void parse(DataStruct ds2,File imageFile, String outputFileNameBase) {
-		Vector<XMLAttributes> attr;
-		XMLAttributes xmlAttributes;
-		LinkedHashMap<String,String> infoMap;
-		
-		for(int k=0;k<ds2.size();k++) {
-			
-			Object o1 = ds2.get(k);
-			if(o1 instanceof DataElement) {
-				//data element
-				DataElement de = (DataElement)o1;
-				String name = de.getName();
-				String value = "";
-				String v;
-				if(name.equals("image_file")) {
-        			value = outputFileNameBase + ".zip";
-        		}else if (name.equals("image_thumbnail_file")) {
-        			value = outputFileNameBase + ".jpg";
-        		}else {
-					//need to get appropriat value
-					infoMap = infoTable.get(imageFile);
-					Set keySet = infoMap.keySet();
-					Iterator iter = keySet.iterator();
-					String key;
-					 while (iter.hasNext()) {
-				        	key = (String)iter.next();
-				        	if(key.equals(name)) {
-				        		v = infoMap.get(key);
-				        		value = v;
-				        		break;
-				        	}
-					}
-        		}
-				if(!value.trim().equals("")) {
-					attr = new Vector<XMLAttributes>();
-					xmlAttributes = new XMLAttributes("name",name);
-					attr.add(xmlAttributes);
-					xmlAttributes = new XMLAttributes("value",value);
-					attr.add(xmlAttributes);
-					closedTag("data_element", attr);
-				}
-			}else {
-				DataStruct ds3 = (DataStruct)o1;
-				String n = ds3.getName();
-				String v = ds3.getVersion();
-				openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
-				parse(ds3, imageFile, outputFileNameBase);
-				openTag("data_structure", false);
-			}
-			
-			
-		}
-	}
-    
-    
+     * 
+     * @param ds
+     */
+    private void parse(final DataStruct ds2, final File imageFile, final String outputFileNameBase) {
+        Vector<XMLAttributes> attr;
+        XMLAttributes xmlAttributes;
+        LinkedHashMap<String, String> infoMap;
+
+        for (int k = 0; k < ds2.size(); k++) {
+
+            final Object o1 = ds2.get(k);
+            if (o1 instanceof DataElement) {
+                // data element
+                final DataElement de = (DataElement) o1;
+                final String name = de.getName();
+                String value = "";
+                String v;
+                if (name.equals("image_file")) {
+                    value = outputFileNameBase + ".zip";
+                } else if (name.equals("image_thumbnail_file")) {
+                    value = outputFileNameBase + ".jpg";
+                } else {
+                    // need to get appropriat value
+                    infoMap = infoTable.get(imageFile);
+                    final Set keySet = infoMap.keySet();
+                    final Iterator iter = keySet.iterator();
+                    String key;
+                    while (iter.hasNext()) {
+                        key = (String) iter.next();
+                        if (key.equals(name)) {
+                            v = infoMap.get(key);
+                            value = v;
+                            break;
+                        }
+                    }
+                }
+                if ( !value.trim().equals("")) {
+                    attr = new Vector<XMLAttributes>();
+                    xmlAttributes = new XMLAttributes("name", name);
+                    attr.add(xmlAttributes);
+                    xmlAttributes = new XMLAttributes("value", value);
+                    attr.add(xmlAttributes);
+                    closedTag("data_element", attr);
+                }
+            } else {
+                final DataStruct ds3 = (DataStruct) o1;
+                final String n = ds3.getName();
+                final String v = ds3.getVersion();
+                openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
+                parse(ds3, imageFile, outputFileNameBase);
+                openTag("data_structure", false);
+            }
+
+        }
+    }
+
     /**
      * Simple function to write an xml formatted open ended tag (value not included).
-     *
-     * @param  bw     writer to use
-     * @param  tag    tag name
-     * @param  start  is this a start or end tag
+     * 
+     * @param bw writer to use
+     * @param tag tag name
+     * @param start is this a start or end tag
      */
-    public final void openTag(String tag, boolean start) {
+    public final void openTag(final String tag, boolean start) {
 
         try {
 
-            if (!start) {
+            if ( !start) {
 
                 // done with this container
                 tabLevel--;
             }
 
             for (int i = 0; i < tabLevel; i++) {
-                bw.write(TAB);
+                bw.write(PlugInDialogNDAR.TAB);
             }
 
             if (start) {
@@ -764,23 +745,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             }
 
             bw.newLine();
-        } catch (IOException ex) { }
+        } catch (final IOException ex) {}
     }
-    
-    
+
     /**
      * Simple function to write an xml formatted closed tag including the tag value.
-     *
-     * @param  bw   write to use
-     * @param  tag  tag name
-     * @param  val  tag value
+     * 
+     * @param bw write to use
+     * @param tag tag name
+     * @param val tag value
      */
-    protected final void closedTag(String tag, String val) {
+    protected final void closedTag(final String tag, final String val) {
 
         try {
 
             for (int i = 0; i < tabLevel; i++) {
-                bw.write(TAB);
+                bw.write(PlugInDialogNDAR.TAB);
             }
 
             // entity-ize some xml-unfriendly characters and convert to the XML charset
@@ -788,47 +768,45 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             writeVal = writeVal.trim().replaceAll("\"", "&quot;");
             writeVal = writeVal.trim().replaceAll("<", "&lt;");
             writeVal = writeVal.trim().replaceAll(">", "&gt;");
-            writeVal = new String(writeVal.getBytes(XML_ENCODING));
+            writeVal = new String(writeVal.getBytes(PlugInDialogNDAR.XML_ENCODING));
 
             bw.write("<" + tag + ">" + writeVal + "</" + tag + ">");
             bw.newLine();
-        } catch (IOException ex) { }
+        } catch (final IOException ex) {}
     }
-    
-    
+
     /**
-	 * Writes a closed tag where no value is specified, only attributes.
-	 */
-	public final void closedTag(String tag, Vector<XMLAttributes> attr) {
-    	
-		try {
+     * Writes a closed tag where no value is specified, only attributes.
+     */
+    public final void closedTag(final String tag, final Vector<XMLAttributes> attr) {
+
+        try {
 
             for (int i = 0; i < tabLevel; i++) {
-                bw.write(TAB);
+                bw.write(PlugInDialogNDAR.TAB);
             }
 
             bw.write("<" + tag);
-            
+
             String attrStr;
             for (int i = 0; i < attr.size(); i++) {
-            	
-            	attrStr = attr.elementAt(i).getValue().trim().replaceAll("&", "&amp;");
-            	attrStr = attrStr.trim().replaceAll("\"", "&quot;");
-            	attrStr = attrStr.trim().replaceAll("<", "&lt;");
-            	attrStr = attrStr.trim().replaceAll(">", "&gt;");
-            	attrStr = new String(attrStr.getBytes(XML_ENCODING));
-            	
-            	bw.write(" " + attr.elementAt(i).getName() + "=\"" + attrStr + "\"");
+
+                attrStr = attr.elementAt(i).getValue().trim().replaceAll("&", "&amp;");
+                attrStr = attrStr.trim().replaceAll("\"", "&quot;");
+                attrStr = attrStr.trim().replaceAll("<", "&lt;");
+                attrStr = attrStr.trim().replaceAll(">", "&gt;");
+                attrStr = new String(attrStr.getBytes(PlugInDialogNDAR.XML_ENCODING));
+
+                bw.write(" " + attr.elementAt(i).getName() + "=\"" + attrStr + "\"");
             }
-            
+
             bw.write("/>");
 
             bw.newLine();
-        } catch (IOException ex) { }
-		
-		attr.clear();
+        } catch (final IOException ex) {}
+
+        attr.clear();
     }
-	
 
     /**
      * Adds a set of files to a ZIP archive.
@@ -837,16 +815,16 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * @param srcFiles A list of files (full paths) to include in the ZIP archive.
      * @throws IOException If there is a problem reading the srcFiles or writing to the ZIP file.
      */
-    private void makeZipFile(String destZipFile, List<String> srcFiles) throws IOException {
+    private void makeZipFile(final String destZipFile, final List<String> srcFiles) throws IOException {
         // Create a buffer for reading the files
-        byte[] buf = new byte[1024];
+        final byte[] buf = new byte[1024];
 
         // Create the ZIP file
-        ZipOutputStream out = new ZipOutputStream(new FileOutputStream(destZipFile));
+        final ZipOutputStream out = new ZipOutputStream(new FileOutputStream(destZipFile));
 
         // Compress the files
-        for (String file : srcFiles) {
-            FileInputStream in = new FileInputStream(file);
+        for (final String file : srcFiles) {
+            final FileInputStream in = new FileInputStream(file);
 
             // Add ZIP entry to output stream.
             out.putNextEntry(new ZipEntry(FileUtility.getFileName(file)));
@@ -871,15 +849,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * 
      * @param line The line to append (do not include the trailing newline).
      */
-    private void printlnToLog(String line) {
+    private void printlnToLog(final String line) {
         logOutputArea.getTextArea().append(line + "\n");
     }
 
     private JPanel buildButtonPanel() {
-    	
-        JPanel buttonPanel1 = new JPanel(new GridBagLayout());
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        final JPanel buttonPanel1 = new JPanel(new GridBagLayout());
+
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.gridx = 0;
@@ -887,17 +865,18 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         gbc.fill = GridBagConstraints.BOTH;
 
         addSourceButton = WidgetFactory.buildTextButton("Add images", "Add image datasets", "AddSource", this);
-        removeSourceButton = WidgetFactory.buildTextButton("Remove image", "Remove the selected image dataset", "RemoveSource", this);
+        removeSourceButton = WidgetFactory.buildTextButton("Remove image", "Remove the selected image dataset",
+                "RemoveSource", this);
         finishButton = WidgetFactory.buildTextButton("Finish", "Finish", "Finish", this);
-        completeDataElementsButton = WidgetFactory.buildTextButton("Edit Data Elements", "Edit data elements for selected image dataset", "completeDataElements", this);
-        //helpButton = WidgetFactory.buildTextButton("Help", "Show MIPAV help", "Help", this);
+        completeDataElementsButton = WidgetFactory.buildTextButton("Edit Data Elements",
+                "Edit data elements for selected image dataset", "completeDataElements", this);
+        // helpButton = WidgetFactory.buildTextButton("Help", "Show MIPAV help", "Help", this);
 
         addSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
         removeSourceButton.setPreferredSize(MipavUtil.defaultButtonSize);
         finishButton.setPreferredSize(MipavUtil.defaultButtonSize);
         completeDataElementsButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        //helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
-
+        // helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
         addSourceButton.setEnabled(true);
         removeSourceButton.setEnabled(false);
@@ -905,21 +884,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         finishButton.setEnabled(false);
 
         gbc.gridx = 0;
-        buttonPanel1.add(addSourceButton,gbc);
+        buttonPanel1.add(addSourceButton, gbc);
         gbc.gridx = 1;
-        buttonPanel1.add(removeSourceButton,gbc);
+        buttonPanel1.add(removeSourceButton, gbc);
         gbc.gridx = 2;
-        buttonPanel1.add(completeDataElementsButton,gbc);
+        buttonPanel1.add(completeDataElementsButton, gbc);
         gbc.gridx = 3;
-        buttonPanel1.add(finishButton,gbc);
-
-
+        buttonPanel1.add(finishButton, gbc);
 
         return buttonPanel1;
     }
-    
-    
-    
+
     /**
      * Writes a JIMI file to store the image.
      * 
@@ -928,81 +903,81 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * 
      * @return Flag indicating that this was a successful write.
      */
-    private boolean writeThumbnailJIMI(ModelImage image, FileWriteOptions options) {
-    	int imageSize = image.getExtents()[0] * image.getExtents()[1];
-        int[] paintBuffer = new int[imageSize];
-        ColorRGBA colorMappedA = new ColorRGBA();
-        float[] imageBufferA = new float[image.getExtents()[0] * image.getExtents()[1] * 4];
-        int length = imageBufferA.length;
-        ColorRGB[] m_akOffset = { new ColorRGB(0.0f, 0.0f, 0.0f), new ColorRGB(0.0f, 0.0f, 0.0f) };
+    private boolean writeThumbnailJIMI(final ModelImage image, final FileWriteOptions options) {
+        final int imageSize = image.getExtents()[0] * image.getExtents()[1];
+        final int[] paintBuffer = new int[imageSize];
+        final ColorRGBA colorMappedA = new ColorRGBA();
+        final float[] imageBufferA = new float[image.getExtents()[0] * image.getExtents()[1] * 4];
+        final int length = imageBufferA.length;
+        final ColorRGB[] m_akOffset = {new ColorRGB(0.0f, 0.0f, 0.0f), new ColorRGB(0.0f, 0.0f, 0.0f)};
         float fMaxColor = 255;
-        float[] m_afNormColor = { 1, 1 };
-        
-        
+        final float[] m_afNormColor = {1, 1};
+
         if (image.getMinR() < 0.0) {
             fMaxColor = (float) (image.getMaxR() - image.getMinR());
-            m_akOffset[0].R = (float) (-image.getMinR());
+            m_akOffset[0].R = (float) ( -image.getMinR());
         } else {
             fMaxColor = (float) image.getMaxR();
         }
 
         if (image.getMinG() < 0.0) {
             fMaxColor = Math.max((float) (image.getMaxG() - image.getMinG()), fMaxColor);
-            m_akOffset[0].G = (float) (-image.getMinG());
+            m_akOffset[0].G = (float) ( -image.getMinG());
         } else {
             fMaxColor = Math.max((float) image.getMaxG(), fMaxColor);
         }
 
         if (image.getMinB() < 0.0) {
             fMaxColor = Math.max((float) (image.getMaxB() - image.getMinB()), fMaxColor);
-            m_akOffset[0].B = (float) (-image.getMinB());
+            m_akOffset[0].B = (float) ( -image.getMinB());
         } else {
             fMaxColor = Math.max((float) image.getMaxB(), fMaxColor);
         }
         m_afNormColor[0] = 255 / fMaxColor;
-        
+
         try {
-        	image.exportData(0, length, imageBufferA);
-        }catch(Exception e) {
-        	
+            image.exportData(0, length, imageBufferA);
+        } catch (final Exception e) {
+
         }
         for (int j = 0; j < image.getExtents()[1]; j++) {
 
             for (int i = 0; i < image.getExtents()[0]; i++) {
-                int ind4 = (j * image.getExtents()[0]) + i;
-                int index = 4 * ind4;
+                final int ind4 = (j * image.getExtents()[0]) + i;
+                final int index = 4 * ind4;
                 int pixValue;
-                
+
                 colorMappedA.R = 0;
                 colorMappedA.G = 0;
                 colorMappedA.B = 0;
                 colorMappedA.A = imageBufferA[index];
-                
+
                 colorMappedA.R = (imageBufferA[index + 1] + m_akOffset[0].R) * m_afNormColor[0];
                 colorMappedA.G = (imageBufferA[index + 2] + m_akOffset[0].G) * m_afNormColor[0];
                 colorMappedA.B = (imageBufferA[index + 3] + m_akOffset[0].B) * m_afNormColor[0];
-                
-                pixValue = 0xff000000 | ((int) (colorMappedA.R) << 16) | ((int) (colorMappedA.G) << 8) | ((int) (colorMappedA.B));
-                
-                paintBuffer[ind4] = pixValue;
-            } 
-        }
-        
-        MemoryImageSource memImageA = new MemoryImageSource(image.getExtents()[0], image.getExtents()[1], paintBuffer, 0, image.getExtents()[0]);
 
-        int extIndex = options.getFileName().indexOf(".");
-        String prefix = options.getFileName().substring(0, extIndex); // Used for setting file name
-        String fileSuffix = options.getFileName().substring(extIndex);
+                pixValue = 0xff000000 | ((int) (colorMappedA.R) << 16) | ((int) (colorMappedA.G) << 8)
+                        | ((int) (colorMappedA.B));
+
+                paintBuffer[ind4] = pixValue;
+            }
+        }
+
+        final MemoryImageSource memImageA = new MemoryImageSource(image.getExtents()[0], image.getExtents()[1],
+                paintBuffer, 0, image.getExtents()[0]);
+
+        final int extIndex = options.getFileName().indexOf(".");
+        final String prefix = options.getFileName().substring(0, extIndex); // Used for setting file name
+        final String fileSuffix = options.getFileName().substring(extIndex);
         String name;
 
-        Image img = createImage(memImageA);
+        final Image img = createImage(memImageA);
 
         name = options.getFileDirectory() + prefix + fileSuffix;
 
-
         try {
             Jimi.putImage(img, name);
-        } catch (JimiException jimiException) {
+        } catch (final JimiException jimiException) {
             Preferences.debug("JIMI write error: " + jimiException + "\n", Preferences.DEBUG_FILEIO);
 
             jimiException.printStackTrace();
@@ -1010,986 +985,997 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             return false;
         }
 
-
-
         return true;
     }
-    
-    
-    
-    
-    
 
-  
-    public void mouseClicked(MouseEvent e) {
-    	Component c = e.getComponent();
-		if(c instanceof JTable) {
-	    	File f = (File)sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
+    public void mouseClicked(final MouseEvent e) {
+        final Component c = e.getComponent();
+        if (c instanceof JTable) {
+            final File f = (File) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
 
-	    	if(e.getClickCount() == 2) {
-	    		String completed = (String)sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 1);
-	    		if(completed.equals("No")) {
-	    			new InfoDialog(this, f, false);
-	    		}else {
-	    			new InfoDialog(this, f, true);
-	    		}
-	    	}
-		}
-	}
+            if (e.getClickCount() == 2) {
+                final String completed = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 1);
+                if (completed.equals("No")) {
+                    new InfoDialog(this, f, false);
+                } else {
+                    new InfoDialog(this, f, true);
+                }
+            }
+        }
+    }
 
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void mouseEntered(final MouseEvent e) {
+    // TODO Auto-generated method stub
 
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    }
 
-	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void mouseExited(final MouseEvent e) {
+    // TODO Auto-generated method stub
 
-	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	public boolean contains(File f) {
-		boolean contains = false;
-		
-		 for(int i=0;i<sourceTableModel.getRowCount();i++) {
-         	File f1 = (File)sourceTableModel.getValueAt(i, 0);
-         	if(f1.getAbsolutePath().equals(f.getAbsolutePath())) {
-         		contains = true;
-         		break;
-         	}
-		 }
-		return contains;
-	}
+    }
 
-	
-	
-	public void enableDisableFinishButton() {
-		boolean allCompleted = true;
-		
-		 for(int i=0;i<sourceTableModel.getRowCount();i++) {
-        	String completed = (String)sourceTableModel.getValueAt(i, 1);
-        	if(completed.equals("No")) {
-        		allCompleted = false;
-        		break;
-        	}
-		 }
-		 
-		 if(allCompleted) {
-			 finishButton.setEnabled(true);
-		 }else {
-			 finishButton.setEnabled(false);
-		 }
+    public void mousePressed(final MouseEvent e) {
+    // TODO Auto-generated method stub
 
-	}
-	
-	
-	
-	
-	/**
-	 * 
-	 * Inner class
-     * Right Renderer
+    }
+
+    public void mouseReleased(final MouseEvent e) {
+    // TODO Auto-generated method stub
+
+    }
+
+    public boolean contains(final File f) {
+        boolean contains = false;
+
+        for (int i = 0; i < sourceTableModel.getRowCount(); i++) {
+            final File f1 = (File) sourceTableModel.getValueAt(i, 0);
+            if (f1.getAbsolutePath().equals(f.getAbsolutePath())) {
+                contains = true;
+                break;
+            }
+        }
+        return contains;
+    }
+
+    public void enableDisableFinishButton() {
+        boolean allCompleted = true;
+
+        for (int i = 0; i < sourceTableModel.getRowCount(); i++) {
+            final String completed = (String) sourceTableModel.getValueAt(i, 1);
+            if (completed.equals("No")) {
+                allCompleted = false;
+                break;
+            }
+        }
+
+        if (allCompleted) {
+            finishButton.setEnabled(true);
+        } else {
+            finishButton.setEnabled(false);
+        }
+
+    }
+
+    /**
+     * 
+     * Inner class Right Renderer
+     * 
      * @author pandyan
-     *
+     * 
      */
-	private class MyRightCellRenderer extends DefaultTableCellRenderer {
-		
-			
+    private class MyRightCellRenderer extends DefaultTableCellRenderer {
 
-			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-				Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-				setHorizontalAlignment( CENTER );
+        public Component getTableCellRendererComponent(final JTable table, final Object value,
+                final boolean isSelected, final boolean hasFocus, final int row, final int column) {
+            final Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setHorizontalAlignment(SwingConstants.CENTER);
 
-				if(column == 1 && value.equals("No")) {
-		  			setForeground(Color.red);
-		  		}else {
-		  			setForeground(Color.black);
-		  		}
-				
-				return comp;
-			}
-			
-			
-	}
+            if (column == 1 && value.equals("No")) {
+                setForeground(Color.red);
+            } else {
+                setForeground(Color.black);
+            }
 
+            return comp;
+        }
 
+    }
 
-
-
-
-	/**
+    /**
      * launches the dialog to add info
+     * 
      * @author pandyan
-     *
+     * 
      */
-    private class InfoDialog extends JDialog implements ActionListener, WindowListener{
-    	private Dialog owner;
-    	private File file;
-    	private ArrayList<JComponent> components = new ArrayList<JComponent>();
-    	private ArrayList<JLabel> labels = new ArrayList<JLabel>();
-    	private JTabbedPane tabbedPane = new JTabbedPane();
-    	private String imageXMLFilePath;
-    	private JPanel mainPanel;
-    	private GridBagConstraints gbc;
-    	private JScrollPane scrollPane, tabScrollPane;
-    	private JPanel topPanel;
-    	private LinkedHashMap<String,String> infoMap;
-    	private String guid = "";
-    	private FileInputStream inputStream;
-    	private ModelImage origImage;
-    	private FileIO fileIO;
-    	private int gridYCounter = 0;
-    	private boolean launchedFromCompletedState = false;
-    	private JLabel requiredLabel;
+    private class InfoDialog extends JDialog implements ActionListener, WindowListener {
+        private final Dialog owner;
 
-    	
-    	public InfoDialog(Dialog owner, File file, boolean launchedFromCompletedState) {
-    		
-    		super(owner,true);
-    		
-    		URL xmlURL = getClass().getClassLoader().getResource("image_dictionary.xml");
-    		 if (xmlURL == null) {
-                 MipavUtil.displayError("Unable to find XML : " + "image_dictionary.xml");
-                 this.dispose();
-                 owner.dispose();
-                 return;
-             }
-    		imageXMLFilePath = xmlURL.getPath();
-    		//in future....retrieve OMElement from web service
-    		
-    		this.owner = owner;
-    		this.file = file;
-    		this.launchedFromCompletedState = launchedFromCompletedState;
-    		this.infoMap = new LinkedHashMap<String,String>();
+        private final File file;
 
-    		fileIO = new FileIO();
+        private final ArrayList<JComponent> components = new ArrayList<JComponent>();
+
+        private final ArrayList<JLabel> labels = new ArrayList<JLabel>();
+
+        private final JTabbedPane tabbedPane = new JTabbedPane();
+
+        private final String imageXMLFilePath;
+
+        private JPanel mainPanel;
+
+        private GridBagConstraints gbc;
+
+        private JScrollPane scrollPane, tabScrollPane;
+
+        private JPanel topPanel;
+
+        private final LinkedHashMap<String, String> infoMap;
+
+        private String guid = "";
+
+        private FileInputStream inputStream;
+
+        private ModelImage origImage;
+
+        private final FileIO fileIO;
+
+        private int gridYCounter = 0;
+
+        private boolean launchedFromCompletedState = false;
+
+        private JLabel requiredLabel;
+
+        public InfoDialog(final Dialog owner, final File file, final boolean launchedFromCompletedState) {
+
+            super(owner, true);
+
+            this.owner = owner;
+            this.file = file;
+            this.launchedFromCompletedState = launchedFromCompletedState;
+            this.infoMap = new LinkedHashMap<String, String>();
+
+            fileIO = new FileIO();
             fileIO.setQuiet(true);
-            origImage = fileIO.readImage(file.getName(), file.getParent() + File.separator,multiFileTable.get(file), null);
-    		init();
-    		if(origImage != null) {
-    			origImage.disposeLocal();
-    			origImage = null;
-    		}
-    	}
-    	
-    	/**
-    	 * init
-    	 */
-    	private void init() {
-    		setTitle("Edit Data Elements for " + file.getName());
-    		addWindowListener(this);
-    		mainPanel = new JPanel(new GridBagLayout());
-    		scrollPane = new JScrollPane(mainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    		scrollPane.setPreferredSize(new Dimension(600,300));
+            origImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, multiFileTable.get(file),
+                    null);
+            init();
+            if (origImage != null) {
+                origImage.disposeLocal();
+                origImage = null;
+            }
+
+            final URL xmlURL = getClass().getClassLoader().getResource("image_dictionary.xml");
+            if (xmlURL == null) {
+                MipavUtil.displayError("Unable to find XML : " + "image_dictionary.xml");
+                this.dispose();
+                owner.dispose();
+                imageXMLFilePath = null;
+                return;
+            }
+            imageXMLFilePath = xmlURL.getPath();
+            // in future....retrieve OMElement from web service
+        }
+
+        /**
+         * init
+         */
+        private void init() {
+            setTitle("Edit Data Elements for " + file.getName());
+            addWindowListener(this);
+            mainPanel = new JPanel(new GridBagLayout());
+            scrollPane = new JScrollPane(mainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            scrollPane.setPreferredSize(new Dimension(600, 300));
 
             gbc = new GridBagConstraints();
-    		
-    		try {
-    			this.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
 
-    			inputStream = new FileInputStream(new File(imageXMLFilePath));
-    			StAXOMBuilder stAXOMBuilder = new StAXOMBuilder(inputStream);
-    			OMElement documentElement = stAXOMBuilder.getDocumentElement();
-    			Iterator iter = documentElement.getChildElements();
+            try {
+                this.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
 
-    			OMElement childElement;
-    			OMAttribute attr;
-    			QName qname;
+                inputStream = new FileInputStream(new File(imageXMLFilePath));
+                final StAXOMBuilder stAXOMBuilder = new StAXOMBuilder(inputStream);
+                final OMElement documentElement = stAXOMBuilder.getDocumentElement();
+                final Iterator<OMElement> iter = documentElement.getChildElements();
 
-    			//should only be 1 top level Data_Structure tag
-				childElement = (OMElement)iter.next();
-				qname = new QName("name");
-				attr = childElement.getAttribute(qname);
-				String n = attr.getAttributeValue();
-				
-				qname = new QName("short_name");
-				attr = childElement.getAttribute(qname);
-				String s = attr.getAttributeValue();
-				
-				qname = new QName("desc");
-				attr = childElement.getAttribute(qname);
-				String d = attr.getAttributeValue();
-				
-				qname = new QName("version");
-				attr = childElement.getAttribute(qname);
-				String v = attr.getAttributeValue();
-				
-				qname = new QName("type");
-				attr = childElement.getAttribute(qname);
-				String t = attr.getAttributeValue();
-				
-				imageDataStruct = new DataStruct(n,s,d,v,t);
-				parse(childElement, imageDataStruct);
+                OMElement childElement;
+                OMAttribute attr;
+                QName qname;
 
+                // should only be 1 top level Data_Structure tag
+                childElement = iter.next();
+                qname = new QName("name");
+                attr = childElement.getAttribute(qname);
+                final String n = attr.getAttributeValue();
 
-    		}catch(Exception e) {
-    			e.printStackTrace();
-    		}
+                qname = new QName("short_name");
+                attr = childElement.getAttribute(qname);
+                final String s = attr.getAttributeValue();
 
-    		gbc.gridx = 0;
+                qname = new QName("desc");
+                attr = childElement.getAttribute(qname);
+                final String d = attr.getAttributeValue();
+
+                qname = new QName("version");
+                attr = childElement.getAttribute(qname);
+                final String v = attr.getAttributeValue();
+
+                qname = new QName("type");
+                attr = childElement.getAttribute(qname);
+                final String t = attr.getAttributeValue();
+
+                imageDataStruct = new DataStruct(n, s, d, v, t);
+                parse(childElement, imageDataStruct);
+
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+
+            gbc.gridx = 0;
             gbc.gridy = 0;
-            gbc.insets = new Insets(10,5,10,25);
+            gbc.insets = new Insets(10, 5, 10, 25);
             gbc.gridwidth = 1;
 
             initLabelsAndComponents();
-            
-    		JPanel OKPanel = new JPanel();
-    	    buildOKButton();
-    	    buildCancelButton();
-    	    OKButton.setText("Save");
-    	    OKButton.setActionCommand("ok3");
+
+            final JPanel OKPanel = new JPanel();
+            buildOKButton();
+            buildCancelButton();
+            OKButton.setText("Save");
+            OKButton.setActionCommand("ok3");
             OKButton.addActionListener(this);
             cancelButton.setActionCommand("cancel3");
             cancelButton.addActionListener(this);
-    	    OKPanel.add(OKButton);
-    	    OKPanel.add(cancelButton);
+            OKPanel.add(OKButton);
+            OKPanel.add(cancelButton);
 
-    	    
-    	    if(launchedFromCompletedState) {
-    	    	populateFieldsFromCompletedState();
-    	    }else {
-    	    	populateFields();
-    	    }
+            if (launchedFromCompletedState) {
+                populateFieldsFromCompletedState();
+            } else {
+                populateFields();
+            }
 
-    	    topPanel = new JPanel(new BorderLayout());
-    	    requiredLabel = new JLabel("* Required Data Elements are in red");
-    	    topPanel.add(requiredLabel, BorderLayout.NORTH);
-    	    topPanel.add(scrollPane, BorderLayout.CENTER);
-    	    
-    	    
-    		getContentPane().add(topPanel, BorderLayout.NORTH);
-    		if(tabbedPane.getTabCount() > 0) {
-    			getContentPane().add(tabbedPane, BorderLayout.CENTER);
-    		}
-    		getContentPane().add(OKPanel, BorderLayout.SOUTH);
-    		pack();
+            topPanel = new JPanel(new BorderLayout());
+            requiredLabel = new JLabel("* Required Data Elements are in red");
+            topPanel.add(requiredLabel, BorderLayout.NORTH);
+            topPanel.add(scrollPane, BorderLayout.CENTER);
+
+            getContentPane().add(topPanel, BorderLayout.NORTH);
+            if (tabbedPane.getTabCount() > 0) {
+                getContentPane().add(tabbedPane, BorderLayout.CENTER);
+            }
+            getContentPane().add(OKPanel, BorderLayout.SOUTH);
+            pack();
             MipavUtil.centerInWindow(owner, this);
             this.setMinimumSize(this.getSize());
             setVisible(true);
-    	}
-    	
-    	/**
-    	 * displays labels and components
-    	 */
-    	private void initLabelsAndComponents() {
-    		parseForInitLabelsAndComponents(imageDataStruct);
-    	}
-    	
-    	
-    	/***
-    	 * displays the labels and components
-    	 * @param ds2
-    	 */
-    	private void parseForInitLabelsAndComponents(DataStruct ds2) {
-    		JPanel panel;
-    		JScrollPane sp;
-    		for(int k=0;k<ds2.size();k++) {
-    			Object o1 = ds2.get(k);
-    			if(o1 instanceof DataElement) {
-    				String parentDataStruct = ((DataElement)o1).getParentDataStruct();
-    				if(parentDataStruct.equals("Image")) {
-    					for(int b=0;b<labels.size();b++) {
-    		    			JLabel l = labels.get(b);
-    		    			if(l.getName().equals(((DataElement)o1).getName())) {
-    		    				JComponent t = components.get(b);
-    		    				gbc.fill = GridBagConstraints.HORIZONTAL;
-    		    				gbc.anchor = GridBagConstraints.EAST;
-    		    				gbc.weightx = 0;
-    		        			mainPanel.add(l,gbc);
-    		        			gbc.weightx = 1;
-    		        			gbc.gridx = 1;
-    		        			gbc.anchor = GridBagConstraints.WEST;
-    		        			mainPanel.add(t,gbc);
-    		        			gridYCounter = gridYCounter + 1;
-    		        			gbc.gridy = gridYCounter;
-    		        			gbc.gridx = 0;
-    		        			break;
-    		    				
-    		    			}
-    					}
-    				}else {
-    					for(int i=0;i<tabbedPane.getTabCount();i++) {
-    						String title = tabbedPane.getTitleAt(i);
-    						if(parentDataStruct.equals(title)) {
-    							sp = (JScrollPane)(tabbedPane.getComponentAt(i));
-    							panel = (JPanel)(sp.getViewport().getComponent(0));
-    							for(int b=0;b<labels.size();b++) {
-    	    		    			JLabel l = labels.get(b);
-    	    		    			if(l.getName().equals(((DataElement)o1).getName())) {
-    	    		    				JComponent t = components.get(b);
-    	    		    				gbc.fill = GridBagConstraints.HORIZONTAL;
-    	    		    				gbc.anchor = GridBagConstraints.EAST;
-    	    		    				gbc.weightx = 0;
-    	    		        			panel.add(l,gbc);
-    	    		        			gbc.weightx = 1;
-    	    		        			gbc.gridx = 1;
-    	    		        			gbc.anchor = GridBagConstraints.WEST;
-    	    		        			panel.add(t,gbc);
-    	    		        			gridYCounter = gridYCounter + 1;
-    	    		        			gbc.gridy = gridYCounter;
-    	    		        			gbc.gridx = 0;
-    	    		    				break;
-    	    		    			}
-    	    					}
-    						}
-    					}
-    				}
-    			}else {
-    				parseForInitLabelsAndComponents((DataStruct)o1);
-    			}
-    			
-    		}
-    	}
-    	
-    
-    	
-    	
-		
-		/**
-    	 * parses the OMElement
-    	 * @param ds
-    	 */
-		private void parse(OMElement omElement, DataStruct ds2) {
-			Iterator iter = omElement.getChildElements();
-			OMElement childElement;
-			OMAttribute attr;
-			QName qname;
-			String childElementName;
-			while(iter.hasNext()) {
-				childElement = (OMElement)iter.next();
-				childElementName = childElement.getLocalName();
-				if(childElementName.equals("data_element")) {
-					qname = new QName("name");
-    				attr = childElement.getAttribute(qname);
-    				String n = attr.getAttributeValue();
+        }
 
-    				qname = new QName("desc");
-    				attr = childElement.getAttribute(qname);
-    				String d = attr.getAttributeValue();
-    				
-    				qname = new QName("short_desc");
-    				attr = childElement.getAttribute(qname);
-    				String sh = attr.getAttributeValue();
+        /**
+         * displays labels and components
+         */
+        private void initLabelsAndComponents() {
+            parseForInitLabelsAndComponents(imageDataStruct);
+        }
 
-    				qname = new QName("type");
-    				attr = childElement.getAttribute(qname);
-    				String t = attr.getAttributeValue();
+        /***************************************************************************************************************
+         * displays the labels and components
+         * 
+         * @param ds2
+         */
+        private void parseForInitLabelsAndComponents(final DataStruct ds2) {
+            JPanel panel;
+            JScrollPane sp;
+            for (int k = 0; k < ds2.size(); k++) {
+                final Object o1 = ds2.get(k);
+                if (o1 instanceof DataElement) {
+                    final String parentDataStruct = ((DataElement) o1).getParentDataStruct();
+                    if (parentDataStruct.equals("Image")) {
+                        for (int b = 0; b < labels.size(); b++) {
+                            final JLabel l = labels.get(b);
+                            if (l.getName().equals( ((DataElement) o1).getName())) {
+                                final JComponent t = components.get(b);
+                                gbc.fill = GridBagConstraints.HORIZONTAL;
+                                gbc.anchor = GridBagConstraints.EAST;
+                                gbc.weightx = 0;
+                                mainPanel.add(l, gbc);
+                                gbc.weightx = 1;
+                                gbc.gridx = 1;
+                                gbc.anchor = GridBagConstraints.WEST;
+                                mainPanel.add(t, gbc);
+                                gridYCounter = gridYCounter + 1;
+                                gbc.gridy = gridYCounter;
+                                gbc.gridx = 0;
+                                break;
 
-    				qname = new QName("size");
-    				attr = childElement.getAttribute(qname);
-    				String s = attr.getAttributeValue();
+                            }
+                        }
+                    } else {
+                        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                            final String title = tabbedPane.getTitleAt(i);
+                            if (parentDataStruct.equals(title)) {
+                                sp = (JScrollPane) (tabbedPane.getComponentAt(i));
+                                panel = (JPanel) (sp.getViewport().getComponent(0));
+                                for (int b = 0; b < labels.size(); b++) {
+                                    final JLabel l = labels.get(b);
+                                    if (l.getName().equals( ((DataElement) o1).getName())) {
+                                        final JComponent t = components.get(b);
+                                        gbc.fill = GridBagConstraints.HORIZONTAL;
+                                        gbc.anchor = GridBagConstraints.EAST;
+                                        gbc.weightx = 0;
+                                        panel.add(l, gbc);
+                                        gbc.weightx = 1;
+                                        gbc.gridx = 1;
+                                        gbc.anchor = GridBagConstraints.WEST;
+                                        panel.add(t, gbc);
+                                        gridYCounter = gridYCounter + 1;
+                                        gbc.gridy = gridYCounter;
+                                        gbc.gridx = 0;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    parseForInitLabelsAndComponents((DataStruct) o1);
+                }
 
-    				qname = new QName("required");
-    				attr = childElement.getAttribute(qname);
-    				String r = attr.getAttributeValue();
+            }
+        }
 
-    				qname = new QName("value_range");
-    				attr = childElement.getAttribute(qname);
-    				String v = attr.getAttributeValue();
+        /**
+         * parses the OMElement
+         * 
+         * @param ds
+         */
+        private void parse(final OMElement omElement, final DataStruct ds2) {
+            final Iterator iter = omElement.getChildElements();
+            OMElement childElement;
+            OMAttribute attr;
+            QName qname;
+            String childElementName;
+            while (iter.hasNext()) {
+                childElement = (OMElement) iter.next();
+                childElementName = childElement.getLocalName();
+                if (childElementName.equals("data_element")) {
+                    qname = new QName("name");
+                    attr = childElement.getAttribute(qname);
+                    final String n = attr.getAttributeValue();
 
-    				String parentDataStruct = ds2.getName();
-    				DataElement de = new DataElement(n,d,sh,t,s,r,v,parentDataStruct);
-    				ds2.add(de);
-    				
-    				if(!(n.equals("image_file") || n.equals("image_thumbnail_file") || (origImage.is2DImage() && n.equals("image_extent3")) || ((origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_extent4")) || ((origImage.is2DImage() || origImage.is3DImage() || origImage.is4DImage()) && n.equals("image_extent5")) || (origImage.is2DImage() && n.equals("image_resolution3")) || ((origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_resolution4")) || ((origImage.is2DImage() || origImage.is3DImage() || origImage.is4DImage()) && n.equals("image_resolution5")) || (origImage.is2DImage() && n.equals("image_unit3")) || ((origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_unit4")) || ((origImage.is2DImage() || origImage.is3DImage() || origImage.is4DImage()) && n.equals("image_unit5")))) {
-						JLabel l = new JLabel(sh);
-						l.setName(n);
-						//if valuerange is enumeration, create a combo box...otherwise create a textfield
-						if(v.contains(";")) {
-							JComboBox cb = new JComboBox();
-							cb.setName(n);
-							String[] items = v.split(";");
-							for(int i=0;i<items.length;i++) {
-								String item = items[i].trim();
-								 cb.addItem(item);
-							}
-							components.add(cb);
-						}else {
-							JTextField tf = new JTextField(30);
-							tf.setName(n);
-							if(n.equals("image_num_dimensions")) {
-		        				tf.setEnabled(false);
-							}else if(n.equals("image_extent1")) {
-								tf.setEnabled(false);
-							}else if(n.equals("image_extent2")) {
-								tf.setEnabled(false);
-							}else if(n.equals("image_extent3")) {
-								tf.setEnabled(false);
-							}else if(n.equals("image_extent4")) {
-								tf.setEnabled(false);
-							}else if(n.equals("image_extent5")) {
-								tf.setEnabled(false);
-							}
-							components.add(tf);
-						}
-						if(r.equals("Required")) {
-							l.setForeground(Color.red);
-						}
-						labels.add(l);
-					}
-				}else if(childElementName.equals("data_structure")) {
-					qname = new QName("name");
-    				attr = childElement.getAttribute(qname);
-    				String n = attr.getAttributeValue();
-    				
-    				qname = new QName("short_name");
-    				attr = childElement.getAttribute(qname);
-    				String s = attr.getAttributeValue();
-    				
-    				qname = new QName("desc");
-    				attr = childElement.getAttribute(qname);
-    				String d = attr.getAttributeValue();
-    				
-    				qname = new QName("version");
-    				attr = childElement.getAttribute(qname);
-    				String v = attr.getAttributeValue();
-    				
-    				qname = new QName("type");
-    				attr = childElement.getAttribute(qname);
-    				String t = attr.getAttributeValue();
-    				
-    				DataStruct struct = new DataStruct(n,s,d,v,t);
-    				JPanel panel = new JPanel(new GridBagLayout());
-    	    		tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    	    		tabScrollPane.setPreferredSize(new Dimension(600,200));
-    				tabbedPane.addTab(n, tabScrollPane);
-    				
-    				parse(childElement, struct);
-    				ds2.add(struct);
-				}
-			}
-    	}
-    	
-		/**
-		 * 
-		 */
-		public void populateFieldsFromCompletedState() {
-			LinkedHashMap<String,String> infoMap2 = infoTable.get(file);
-			Set keySet = infoMap2.keySet();
-			Iterator iter = keySet.iterator();
-			String key;
-			String value;
-			 while (iter.hasNext()) {
-		        key = (String)iter.next();
-		        value = infoMap2.get(key);
-		        
-		        
-		        for(int i=0;i<components.size();i++) {
-					String name = components.get(i).getName();
-					if(name.equals(key)) {
-						if(components.get(i) instanceof JTextField) {
-							JTextField t = (JTextField)components.get(i);
-							t.setText(value);
-							
-						}else if(components.get(i) instanceof JComboBox) {
-							JComboBox c = (JComboBox)components.get(i);
-							
-							for(int k=0;k<c.getItemCount();k++) {
-	        					String item = (String)c.getItemAt(k);
-	        					if(value.equals(item)) {
-	        						c.setSelectedIndex(k);
-	        					}
-	        				}
-						}
-						break;						
-					}										
-		        }	        
-			}			 
-		}
-		
-		
-		
-    	/**
-    	 * prepopulates some of the fields with info from image header
-    	 */
-    	public void populateFields() {
-            float[] res = origImage.getResolutions(0);
-            int[] units = origImage.getUnitsOfMeasure();
-            int exts[] = origImage.getExtents();
-            int nDims = origImage.getNDims();
-            int modality = origImage.getFileInfo(0).getModality();
-            String modalityString = FileInfoBase.getModalityStr(modality);
-            float sliceThickness = origImage.getFileInfo(0).getSliceThickness();
-            int orient = origImage.getFileInfo(0).getImageOrientation();
-            String orientation = FileInfoBase.getImageOrientationStr(orient);
-        	//get index for extents
-        	for(int i=0;i<labels.size();i++) {
-        		String l = labels.get(i).getName();
-        		if(l.equals("image_num_dimensions")) {
-        				((JTextField)components.get(i)).setText(String.valueOf(nDims));
-        		}else if(l.equals("image_extent1")) {
-        				((JTextField)components.get(i)).setText(String.valueOf(exts[0]));
-        		}else if(l.equals("image_extent2")) {
-        				((JTextField)components.get(i)).setText(String.valueOf(exts[1]));
-        		}else if(l.equals("image_extent3")) {
-            			((JTextField)components.get(i)).setText(String.valueOf(exts[2]));
-        		}else if(l.equals("image_extent4")) {
-            			((JTextField)components.get(i)).setText(String.valueOf(exts[3]));
-        		}else if(l.equals("image_extent5")) {
-        			//for now...nothing
-        		}else if(l.equals("image_unit1")) {
-    				JComboBox jc = (JComboBox)components.get(i);
-    				for(int k=0;k<jc.getItemCount();k++) {
-    					String item = (String)jc.getItemAt(k);
-    					if(FileInfoBase.getUnitsOfMeasureStr(units[0]).equals(item)) {
-    						jc.setSelectedIndex(k);
-    					}
-    				}
-        		}else if(l.equals("image_unit2")) {
-    				JComboBox jc = (JComboBox)components.get(i);
-    				for(int k=0;k<jc.getItemCount();k++) {
-    					String item = (String)jc.getItemAt(k);
-    					if(FileInfoBase.getUnitsOfMeasureStr(units[1]).equals(item)) {
-    						jc.setSelectedIndex(k);
-    					}
-    				}
-        		}else if(l.equals("image_unit3")) {
-    				JComboBox jc = (JComboBox)components.get(i);
-    				for(int k=0;k<jc.getItemCount();k++) {
-    					String item = (String)jc.getItemAt(k);
-    					if(FileInfoBase.getUnitsOfMeasureStr(units[2]).equals(item)) {
-    						jc.setSelectedIndex(k);
-    					}
-    				}
-        		}else if(l.equals("image_unit4")) {
-    				JComboBox jc = (JComboBox)components.get(i);
-    				for(int k=0;k<jc.getItemCount();k++) {
-    					String item = (String)jc.getItemAt(k);
-    					if(FileInfoBase.getUnitsOfMeasureStr(units[3]).equals(item)) {
-    						jc.setSelectedIndex(k);
-    					}
-    				}
-        		}else if(l.equals("image_unit5")) {
-        			//for now...nothing
-        		}else if(l.equals("image_resolution1")) {
-        			((JTextField)components.get(i)).setText(String.valueOf(res[0]));
-        		}else if(l.equals("image_resolution2")) {
-        			((JTextField)components.get(i)).setText(String.valueOf(res[1]));
-        		}else if(l.equals("image_resolution3")) {
-            		((JTextField)components.get(i)).setText(String.valueOf(res[2]));
-        		}else if(l.equals("image_resolution4")) {
-            		((JTextField)components.get(i)).setText(String.valueOf(res[3]));
-        		}else if(l.equals("image_resolution5")) {
-        				//for now...nothing
-        		}else if(l.equals("image_modality")) {
-        				JComboBox jc = (JComboBox)components.get(i);
-        				for(int k=0;k<jc.getItemCount();k++) {
-        					String item = (String)jc.getItemAt(k);
-        					if(modalityString.equals(item)) {
-        						jc.setSelectedIndex(k);
-        					}
-        				}
-        		}else if(l.equals("image_slice_thickness")) {
-        				if(sliceThickness == 0) {
-        					((JTextField)components.get(i)).setText("");
-        				}else {
-        					((JTextField)components.get(i)).setText(String.valueOf(sliceThickness));
-        				}
-        		}else if(l.equals("image_orientation")) {
-        				JComboBox jc = (JComboBox)components.get(i);
-        				for(int k=0;k<jc.getItemCount();k++) {
-        					String item = (String)jc.getItemAt(k);
-        					if(orientation.equals(item)) {
-        						jc.setSelectedIndex(k);
-        					}
-        				}
-        		}
-        	}
-    	}
-    	
-    	
-    	/**
-    	 *  action performed
-    	 */
-    	public void actionPerformed(ActionEvent e) {
-			String command = e.getActionCommand();
-			ArrayList<String> errs;
-			StringBuffer errors = new StringBuffer();;
-			if(command.equals("ok3")) {
-				errs = validateFields();
-				if(errs.size() == 0) {
-					complete();
-					enableDisableFinishButton();
-					dispose();
-				}else {
-					for(int i=0;i<errs.size();i++) {
-						errors.append(" - " + errs.get(i) + "\n");
-					}
-					MipavUtil.displayError("Please correct the following errors: \n" + errors.toString());
-				}
-			}else if(command.equals("cancel3")) {
-				//enableDisableCompleteDataElementsButton();
-				enableDisableFinishButton();
-				dispose();
-			}
-			
-		}
-    	
-    	/**
-    	 * validates fields
-    	 * @return
-    	 */
-    	public ArrayList<String> validateFields() {
-    		ArrayList<String> errs = new ArrayList<String>();
-    		parseDataStructForValidation(imageDataStruct,file,errs);
+                    qname = new QName("desc");
+                    attr = childElement.getAttribute(qname);
+                    final String d = attr.getAttributeValue();
 
-    		return errs;
-    		
-    	}
-    	
-    	/**
-    	 * validates fields
-    	 * @param ds2
-    	 * @param imageFile
-    	 * @param errs
-    	 */
-    	public void parseDataStructForValidation(DataStruct ds2,File imageFile, ArrayList<String> errs) {
-    		String value = "";
-    		String key = "";
-    		String labelText = "";
-    		String required = "";
-    		String valuerange = "";
-    		String type = "";
-    		String size = "";
-    		boolean found = false;
-    		for(int k=0;k<ds2.size();k++) {
-    			Object o1 = ds2.get(k);
-    			if(o1 instanceof DataElement) {
-    				//data element
-    				DataElement de = (DataElement)o1;
-    				String name = de.getName();
+                    qname = new QName("short_desc");
+                    attr = childElement.getAttribute(qname);
+                    final String sh = attr.getAttributeValue();
 
-    				//need to get appropriat value
-    				for(int i=0;i<labels.size();i++) {
-    	    			key = labels.get(i).getName();
-    	    			labelText = labels.get(i).getText();
-    					if(components.get(i) instanceof JTextField) {
-    						value = ((JTextField)components.get(i)).getText().trim();
-    					}else if(components.get(i) instanceof JComboBox) {
-    						value = (String)(((JComboBox)components.get(i)).getSelectedItem());
-    					}
-    					if(key.equals(name)) {
-    						found = true;
-    						break;
-    					}
-    	    		}
-    				
-    				if(found) {
-	    				//now we need to validate
-	    				required = de.getRequired();
-	    				type = de.getType();
-	    				size = de.getSize();
-	    				valuerange = de.getValuerange();
-	    				if(required.equals("Required")) {
-	    					if(value.trim().equals("")) {
-	    						errs.add(labelText + " is a required field");
-	    					}else {
-	    						if(key.equals("image_subject_id")) {
-	    							if(!value.trim().startsWith("NDAR")) {
-	    								errs.add(labelText + " must begin with NDAR");
-	    							}
-	    						}
-	    					}
-	    				}
-	    				if(type.equals("Integer")) {
-	    					if(!value.trim().equals("")) {
-	    						try{
-	    							int intValue = Integer.valueOf(value.trim()).intValue();
-	    							if(valuerange.contains("+")) {
-	    								//test int if its in valuerange
-	    								int min = Integer.valueOf(valuerange.substring(0, valuerange.indexOf("+")).trim()).intValue();
-	    								if(min == 0) {
-	    									if(intValue <= min) {
-	    										errs.add(labelText + " must be greater than 0");
-	    									}
-	    								}else {
-	    									if(intValue < min) {
-	    										errs.add(labelText + " must be greater than " + min);
-	    									}
-	    								}
-	    								
-	    							}else if(valuerange.contains(" to ")) {
-	    								int min = Integer.valueOf(valuerange.substring(0, valuerange.indexOf(" to ")).trim()).intValue();
-	    								int max = Integer.valueOf(valuerange.substring(valuerange.indexOf(" to ") + 4, valuerange.length()).trim()).intValue();
-	    								if(intValue < min  || intValue > max) {
-	    									errs.add(labelText + " must be in the range of " + min + " to " + max);
-	    								}
-	    							}
-	    						}catch(NumberFormatException e) {
-	    							errs.add(labelText + " must be an Integer");
-	    						}
-	    					}
-	    				}
-	    				if(type.equals("Float")) {
-	    					if(!value.trim().equals("")) {
-	    						try{
-	    							float floatValue = Float.valueOf(value.trim()).floatValue();
-	    							if(valuerange.contains("+")) {
-	    								//test int if its in valuerange
-	    								float min = Float.valueOf(valuerange.substring(0, valuerange.indexOf("+")).trim()).floatValue();
-	    								if(min == 0) {
-	    									if(floatValue <= min) {
-	    										errs.add(labelText + " must be greater than 0");
-	    									}
-	    								}else {
-	    									if(floatValue < min) {
-	    										errs.add(labelText + " must be greater than " + min);
-	    									}
-	    								}
-	    							}else if(valuerange.contains(" to ")) {
-	    								float min = Float.valueOf(valuerange.substring(0, valuerange.indexOf(" to ")).trim()).floatValue();
-	    								float max = Float.valueOf(valuerange.substring(valuerange.indexOf(" to ") + 4, valuerange.length()).trim()).floatValue();
-	    								if(floatValue < min  || floatValue > max) {
-	    									errs.add(labelText + " must be in the range of " + min + " to " + max);
-	    								}
-	    							}
-	    							
-	    						}catch(NumberFormatException e) {
-	    							errs.add(labelText + " must be an Float");
-	    						}
-	    					}
-	    				}
-	    				if(!size.equals("")) {
-	    					int intValue = Integer.valueOf(size.trim()).intValue();
-	    					if(!value.trim().equals("")) {
-	    						if(value.length() > intValue) {
-	    							errs.add(labelText + " must not exceed " + intValue + " in length");
-	    						}
-	    					}
-	    					
-	    				}
-	    				found = false;
-    				}
-    			}else {
-    				DataStruct ds3 = (DataStruct)o1;
-    				String n = ds3.getName();
-    				String v = ds3.getVersion();
-    				parseDataStructForValidation(ds3, imageFile, errs);
-    			}
-    		}
-    	}
-    	
-    	/**
-    	 * called after validation is done
-    	 */
-    	public void complete() {
-    		String value = "";
-			for(int i=0;i<labels.size();i++) {
-				if(labels.get(i).getName().equals("image_subject_id")) {
-					guid = ((JTextField)components.get(i)).getText().trim();
-					outputFileNameBaseTable.put(file, guid);
-				}
-				String key = labels.get(i).getName();
-				if(components.get(i) instanceof JTextField) {
-					value = ((JTextField)components.get(i)).getText().trim();
-				}else if(components.get(i) instanceof JComboBox) {
-					value = (String)(((JComboBox)components.get(i)).getSelectedItem());
-				}
-				infoMap.put(key, value);
-			}
-			infoTable.put(file, infoMap);
-			sourceTableModel.setValueAt("Yes", sourceTable.getSelectedRow(), 1);
-    	}
+                    qname = new QName("type");
+                    attr = childElement.getAttribute(qname);
+                    final String t = attr.getAttributeValue();
 
-		public void windowActivated(WindowEvent e) {
-			// TODO Auto-generated method stub
-			
-		}
+                    qname = new QName("size");
+                    attr = childElement.getAttribute(qname);
+                    final String s = attr.getAttributeValue();
 
-		public void windowClosed(WindowEvent e) {
-			// TODO Auto-generated method stub
-			
-		}
+                    qname = new QName("required");
+                    attr = childElement.getAttribute(qname);
+                    final String r = attr.getAttributeValue();
 
-		public void windowClosing(WindowEvent e) {
-			System.out.println("windowClosing");
-			//enableDisableCompleteDataElementsButton();
-			enableDisableFinishButton();
-           
-			
-		}
+                    qname = new QName("value_range");
+                    attr = childElement.getAttribute(qname);
+                    final String v = attr.getAttributeValue();
 
-		public void windowDeactivated(WindowEvent e) {
-			// TODO Auto-generated method stub
-			
-		}
+                    final String parentDataStruct = ds2.getName();
+                    final DataElement de = new DataElement(n, d, sh, t, s, r, v, parentDataStruct);
+                    ds2.add(de);
 
-		public void windowDeiconified(WindowEvent e) {
-			// TODO Auto-generated method stub
-			
-		}
+                    if ( ! (n.equals("image_file")
+                            || n.equals("image_thumbnail_file")
+                            || (origImage.is2DImage() && n.equals("image_extent3"))
+                            || ( (origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_extent4"))
+                            || ( (origImage.is2DImage() || origImage.is3DImage() || origImage.is4DImage()) && n
+                                    .equals("image_extent5"))
+                            || (origImage.is2DImage() && n.equals("image_resolution3"))
+                            || ( (origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_resolution4"))
+                            || ( (origImage.is2DImage() || origImage.is3DImage() || origImage.is4DImage()) && n
+                                    .equals("image_resolution5")) || (origImage.is2DImage() && n.equals("image_unit3"))
+                            || ( (origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_unit4")) || ( (origImage
+                            .is2DImage()
+                            || origImage.is3DImage() || origImage.is4DImage()) && n.equals("image_unit5")))) {
+                        final JLabel l = new JLabel(sh);
+                        l.setName(n);
+                        // if valuerange is enumeration, create a combo box...otherwise create a textfield
+                        if (v.contains(";")) {
+                            final JComboBox cb = new JComboBox();
+                            cb.setName(n);
+                            final String[] items = v.split(";");
+                            for (final String element : items) {
+                                final String item = element.trim();
+                                cb.addItem(item);
+                            }
+                            components.add(cb);
+                        } else {
+                            final JTextField tf = new JTextField(30);
+                            tf.setName(n);
+                            if (n.equals("image_num_dimensions")) {
+                                tf.setEnabled(false);
+                            } else if (n.equals("image_extent1")) {
+                                tf.setEnabled(false);
+                            } else if (n.equals("image_extent2")) {
+                                tf.setEnabled(false);
+                            } else if (n.equals("image_extent3")) {
+                                tf.setEnabled(false);
+                            } else if (n.equals("image_extent4")) {
+                                tf.setEnabled(false);
+                            } else if (n.equals("image_extent5")) {
+                                tf.setEnabled(false);
+                            }
+                            components.add(tf);
+                        }
+                        if (r.equals("Required")) {
+                            l.setForeground(Color.red);
+                        }
+                        labels.add(l);
+                    }
+                } else if (childElementName.equals("data_structure")) {
+                    qname = new QName("name");
+                    attr = childElement.getAttribute(qname);
+                    final String n = attr.getAttributeValue();
 
-		public void windowIconified(WindowEvent e) {
-			// TODO Auto-generated method stub
-			
-		}
+                    qname = new QName("short_name");
+                    attr = childElement.getAttribute(qname);
+                    final String s = attr.getAttributeValue();
 
-		public void windowOpened(WindowEvent e) {
-			// TODO Auto-generated method stub
-			
-		}
-    	
-    	
-    	
-    	
-    	
-    	
-   
-		
+                    qname = new QName("desc");
+                    attr = childElement.getAttribute(qname);
+                    final String d = attr.getAttributeValue();
+
+                    qname = new QName("version");
+                    attr = childElement.getAttribute(qname);
+                    final String v = attr.getAttributeValue();
+
+                    qname = new QName("type");
+                    attr = childElement.getAttribute(qname);
+                    final String t = attr.getAttributeValue();
+
+                    final DataStruct struct = new DataStruct(n, s, d, v, t);
+                    final JPanel panel = new JPanel(new GridBagLayout());
+                    tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+                    tabScrollPane.setPreferredSize(new Dimension(600, 200));
+                    tabbedPane.addTab(n, tabScrollPane);
+
+                    parse(childElement, struct);
+                    ds2.add(struct);
+                }
+            }
+        }
+
+        /**
+         * 
+         */
+        public void populateFieldsFromCompletedState() {
+            final LinkedHashMap<String, String> infoMap2 = infoTable.get(file);
+            final Set keySet = infoMap2.keySet();
+            final Iterator iter = keySet.iterator();
+            String key;
+            String value;
+            while (iter.hasNext()) {
+                key = (String) iter.next();
+                value = infoMap2.get(key);
+
+                for (int i = 0; i < components.size(); i++) {
+                    final String name = components.get(i).getName();
+                    if (name.equals(key)) {
+                        if (components.get(i) instanceof JTextField) {
+                            final JTextField t = (JTextField) components.get(i);
+                            t.setText(value);
+
+                        } else if (components.get(i) instanceof JComboBox) {
+                            final JComboBox c = (JComboBox) components.get(i);
+
+                            for (int k = 0; k < c.getItemCount(); k++) {
+                                final String item = (String) c.getItemAt(k);
+                                if (value.equals(item)) {
+                                    c.setSelectedIndex(k);
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        /**
+         * prepopulates some of the fields with info from image header
+         */
+        public void populateFields() {
+            final float[] res = origImage.getResolutions(0);
+            final int[] units = origImage.getUnitsOfMeasure();
+            final int exts[] = origImage.getExtents();
+            final int nDims = origImage.getNDims();
+            final int modality = origImage.getFileInfo(0).getModality();
+            final String modalityString = FileInfoBase.getModalityStr(modality);
+            final float sliceThickness = origImage.getFileInfo(0).getSliceThickness();
+            final int orient = origImage.getFileInfo(0).getImageOrientation();
+            final String orientation = FileInfoBase.getImageOrientationStr(orient);
+            // get index for extents
+            for (int i = 0; i < labels.size(); i++) {
+                final String l = labels.get(i).getName();
+                if (l.equals("image_num_dimensions")) {
+                    ((JTextField) components.get(i)).setText(String.valueOf(nDims));
+                } else if (l.equals("image_extent1")) {
+                    ((JTextField) components.get(i)).setText(String.valueOf(exts[0]));
+                } else if (l.equals("image_extent2")) {
+                    ((JTextField) components.get(i)).setText(String.valueOf(exts[1]));
+                } else if (l.equals("image_extent3")) {
+                    ((JTextField) components.get(i)).setText(String.valueOf(exts[2]));
+                } else if (l.equals("image_extent4")) {
+                    ((JTextField) components.get(i)).setText(String.valueOf(exts[3]));
+                } else if (l.equals("image_extent5")) {
+                    // for now...nothing
+                } else if (l.equals("image_unit1")) {
+                    final JComboBox jc = (JComboBox) components.get(i);
+                    for (int k = 0; k < jc.getItemCount(); k++) {
+                        final String item = (String) jc.getItemAt(k);
+                        if (FileInfoBase.getUnitsOfMeasureStr(units[0]).equals(item)) {
+                            jc.setSelectedIndex(k);
+                        }
+                    }
+                } else if (l.equals("image_unit2")) {
+                    final JComboBox jc = (JComboBox) components.get(i);
+                    for (int k = 0; k < jc.getItemCount(); k++) {
+                        final String item = (String) jc.getItemAt(k);
+                        if (FileInfoBase.getUnitsOfMeasureStr(units[1]).equals(item)) {
+                            jc.setSelectedIndex(k);
+                        }
+                    }
+                } else if (l.equals("image_unit3")) {
+                    final JComboBox jc = (JComboBox) components.get(i);
+                    for (int k = 0; k < jc.getItemCount(); k++) {
+                        final String item = (String) jc.getItemAt(k);
+                        if (FileInfoBase.getUnitsOfMeasureStr(units[2]).equals(item)) {
+                            jc.setSelectedIndex(k);
+                        }
+                    }
+                } else if (l.equals("image_unit4")) {
+                    final JComboBox jc = (JComboBox) components.get(i);
+                    for (int k = 0; k < jc.getItemCount(); k++) {
+                        final String item = (String) jc.getItemAt(k);
+                        if (FileInfoBase.getUnitsOfMeasureStr(units[3]).equals(item)) {
+                            jc.setSelectedIndex(k);
+                        }
+                    }
+                } else if (l.equals("image_unit5")) {
+                    // for now...nothing
+                } else if (l.equals("image_resolution1")) {
+                    ((JTextField) components.get(i)).setText(String.valueOf(res[0]));
+                } else if (l.equals("image_resolution2")) {
+                    ((JTextField) components.get(i)).setText(String.valueOf(res[1]));
+                } else if (l.equals("image_resolution3")) {
+                    ((JTextField) components.get(i)).setText(String.valueOf(res[2]));
+                } else if (l.equals("image_resolution4")) {
+                    ((JTextField) components.get(i)).setText(String.valueOf(res[3]));
+                } else if (l.equals("image_resolution5")) {
+                    // for now...nothing
+                } else if (l.equals("image_modality")) {
+                    final JComboBox jc = (JComboBox) components.get(i);
+                    for (int k = 0; k < jc.getItemCount(); k++) {
+                        final String item = (String) jc.getItemAt(k);
+                        if (modalityString.equals(item)) {
+                            jc.setSelectedIndex(k);
+                        }
+                    }
+                } else if (l.equals("image_slice_thickness")) {
+                    if (sliceThickness == 0) {
+                        ((JTextField) components.get(i)).setText("");
+                    } else {
+                        ((JTextField) components.get(i)).setText(String.valueOf(sliceThickness));
+                    }
+                } else if (l.equals("image_orientation")) {
+                    final JComboBox jc = (JComboBox) components.get(i);
+                    for (int k = 0; k < jc.getItemCount(); k++) {
+                        final String item = (String) jc.getItemAt(k);
+                        if (orientation.equals(item)) {
+                            jc.setSelectedIndex(k);
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * action performed
+         */
+        public void actionPerformed(final ActionEvent e) {
+            final String command = e.getActionCommand();
+            ArrayList<String> errs;
+            final StringBuffer errors = new StringBuffer();
+            ;
+            if (command.equals("ok3")) {
+                errs = validateFields();
+                if (errs.size() == 0) {
+                    complete();
+                    enableDisableFinishButton();
+                    dispose();
+                } else {
+                    for (int i = 0; i < errs.size(); i++) {
+                        errors.append(" - " + errs.get(i) + "\n");
+                    }
+                    MipavUtil.displayError("Please correct the following errors: \n" + errors.toString());
+                }
+            } else if (command.equals("cancel3")) {
+                // enableDisableCompleteDataElementsButton();
+                enableDisableFinishButton();
+                dispose();
+            }
+
+        }
+
+        /**
+         * validates fields
+         * 
+         * @return
+         */
+        public ArrayList<String> validateFields() {
+            final ArrayList<String> errs = new ArrayList<String>();
+            parseDataStructForValidation(imageDataStruct, file, errs);
+
+            return errs;
+
+        }
+
+        /**
+         * validates fields
+         * 
+         * @param ds2
+         * @param imageFile
+         * @param errs
+         */
+        public void parseDataStructForValidation(final DataStruct ds2, final File imageFile,
+                final ArrayList<String> errs) {
+            String value = "";
+            String key = "";
+            String labelText = "";
+            String required = "";
+            String valuerange = "";
+            String type = "";
+            String size = "";
+            boolean found = false;
+            for (int k = 0; k < ds2.size(); k++) {
+                final Object o1 = ds2.get(k);
+                if (o1 instanceof DataElement) {
+                    // data element
+                    final DataElement de = (DataElement) o1;
+                    final String name = de.getName();
+
+                    // need to get appropriat value
+                    for (int i = 0; i < labels.size(); i++) {
+                        key = labels.get(i).getName();
+                        labelText = labels.get(i).getText();
+                        if (components.get(i) instanceof JTextField) {
+                            value = ((JTextField) components.get(i)).getText().trim();
+                        } else if (components.get(i) instanceof JComboBox) {
+                            value = (String) ( ((JComboBox) components.get(i)).getSelectedItem());
+                        }
+                        if (key.equals(name)) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found) {
+                        // now we need to validate
+                        required = de.getRequired();
+                        type = de.getType();
+                        size = de.getSize();
+                        valuerange = de.getValuerange();
+                        if (required.equals("Required")) {
+                            if (value.trim().equals("")) {
+                                errs.add(labelText + " is a required field");
+                            } else {
+                                if (key.equals("image_subject_id")) {
+                                    if ( !value.trim().startsWith("NDAR")) {
+                                        errs.add(labelText + " must begin with NDAR");
+                                    }
+                                }
+                            }
+                        }
+                        if (type.equals("Integer")) {
+                            if ( !value.trim().equals("")) {
+                                try {
+                                    final int intValue = Integer.valueOf(value.trim()).intValue();
+                                    if (valuerange.contains("+")) {
+                                        // test int if its in valuerange
+                                        final int min = Integer.valueOf(
+                                                valuerange.substring(0, valuerange.indexOf("+")).trim()).intValue();
+                                        if (min == 0) {
+                                            if (intValue <= min) {
+                                                errs.add(labelText + " must be greater than 0");
+                                            }
+                                        } else {
+                                            if (intValue < min) {
+                                                errs.add(labelText + " must be greater than " + min);
+                                            }
+                                        }
+
+                                    } else if (valuerange.contains(" to ")) {
+                                        final int min = Integer.valueOf(
+                                                valuerange.substring(0, valuerange.indexOf(" to ")).trim()).intValue();
+                                        final int max = Integer.valueOf(
+                                                valuerange.substring(valuerange.indexOf(" to ") + 4,
+                                                        valuerange.length()).trim()).intValue();
+                                        if (intValue < min || intValue > max) {
+                                            errs.add(labelText + " must be in the range of " + min + " to " + max);
+                                        }
+                                    }
+                                } catch (final NumberFormatException e) {
+                                    errs.add(labelText + " must be an Integer");
+                                }
+                            }
+                        }
+                        if (type.equals("Float")) {
+                            if ( !value.trim().equals("")) {
+                                try {
+                                    final float floatValue = Float.valueOf(value.trim()).floatValue();
+                                    if (valuerange.contains("+")) {
+                                        // test int if its in valuerange
+                                        final float min = Float.valueOf(
+                                                valuerange.substring(0, valuerange.indexOf("+")).trim()).floatValue();
+                                        if (min == 0) {
+                                            if (floatValue <= min) {
+                                                errs.add(labelText + " must be greater than 0");
+                                            }
+                                        } else {
+                                            if (floatValue < min) {
+                                                errs.add(labelText + " must be greater than " + min);
+                                            }
+                                        }
+                                    } else if (valuerange.contains(" to ")) {
+                                        final float min = Float.valueOf(
+                                                valuerange.substring(0, valuerange.indexOf(" to ")).trim())
+                                                .floatValue();
+                                        final float max = Float.valueOf(
+                                                valuerange.substring(valuerange.indexOf(" to ") + 4,
+                                                        valuerange.length()).trim()).floatValue();
+                                        if (floatValue < min || floatValue > max) {
+                                            errs.add(labelText + " must be in the range of " + min + " to " + max);
+                                        }
+                                    }
+
+                                } catch (final NumberFormatException e) {
+                                    errs.add(labelText + " must be an Float");
+                                }
+                            }
+                        }
+                        if ( !size.equals("")) {
+                            final int intValue = Integer.valueOf(size.trim()).intValue();
+                            if ( !value.trim().equals("")) {
+                                if (value.length() > intValue) {
+                                    errs.add(labelText + " must not exceed " + intValue + " in length");
+                                }
+                            }
+
+                        }
+                        found = false;
+                    }
+                } else {
+                    final DataStruct ds3 = (DataStruct) o1;
+                    final String n = ds3.getName();
+                    final String v = ds3.getVersion();
+                    parseDataStructForValidation(ds3, imageFile, errs);
+                }
+            }
+        }
+
+        /**
+         * called after validation is done
+         */
+        public void complete() {
+            String value = "";
+            for (int i = 0; i < labels.size(); i++) {
+                if (labels.get(i).getName().equals("image_subject_id")) {
+                    guid = ((JTextField) components.get(i)).getText().trim();
+                    outputFileNameBaseTable.put(file, guid);
+                }
+                final String key = labels.get(i).getName();
+                if (components.get(i) instanceof JTextField) {
+                    value = ((JTextField) components.get(i)).getText().trim();
+                } else if (components.get(i) instanceof JComboBox) {
+                    value = (String) ( ((JComboBox) components.get(i)).getSelectedItem());
+                }
+                infoMap.put(key, value);
+            }
+            infoTable.put(file, infoMap);
+            sourceTableModel.setValueAt("Yes", sourceTable.getSelectedRow(), 1);
+        }
+
+        public void windowActivated(final WindowEvent e) {
+        // TODO Auto-generated method stub
+
+        }
+
+        public void windowClosed(final WindowEvent e) {
+        // TODO Auto-generated method stub
+
+        }
+
+        public void windowClosing(final WindowEvent e) {
+            System.out.println("windowClosing");
+            // enableDisableCompleteDataElementsButton();
+            enableDisableFinishButton();
+
+        }
+
+        public void windowDeactivated(final WindowEvent e) {
+        // TODO Auto-generated method stub
+
+        }
+
+        public void windowDeiconified(final WindowEvent e) {
+        // TODO Auto-generated method stub
+
+        }
+
+        public void windowIconified(final WindowEvent e) {
+        // TODO Auto-generated method stub
+
+        }
+
+        public void windowOpened(final WindowEvent e) {
+        // TODO Auto-generated method stub
+
+        }
 
     }
-    
-    
-    
-    //inner class
+
+    // inner class
     /**
      * represents the DataStructure of the xml
      */
     public class DataStruct extends Vector {
-		private String name;
-		private String shortname;
-		private String desc;
-		private String version;
-		private String type;
-		
-		public DataStruct(String name, String version) {
-			super();
-			this.name = name;
-			this.version = version;
-		}
-		
-		public DataStruct(String name, String shortname, String desc, String version,  String type) {
-			super();
-			this.name = name;
-			this.shortname = shortname;
-			this.desc = desc;
-			this.version = version;
-			this.shortname = shortname;
-			this.type = type;
-		}
-		
-		public String getName() {
-			return name;
-		}
-		
-		public String getVersion() {
-			return version;
-		}
-		
-		public String getShortname() {
-			return shortname;
-		}
-		
-		public String getType() {
-			return type;
-		}
+        private final String name;
 
-		public String getDesc() {
-			return desc;
-		}
-		
-		
-	}
-    
-    
+        private String shortname;
+
+        private String desc;
+
+        private final String version;
+
+        private String type;
+
+        public DataStruct(final String name, final String version) {
+            super();
+            this.name = name;
+            this.version = version;
+        }
+
+        public DataStruct(final String name, final String shortname, final String desc, final String version,
+                final String type) {
+            super();
+            this.name = name;
+            this.shortname = shortname;
+            this.desc = desc;
+            this.version = version;
+            this.shortname = shortname;
+            this.type = type;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public String getShortname() {
+            return shortname;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getDesc() {
+            return desc;
+        }
+
+    }
+
     /**
      * represents the DataElement of the XML
+     * 
      * @author pandyan
-     *
+     * 
      */
     public class DataElement {
-    	private String name;
-    	private String desc;
-    	private String shortDesc;
-    	private String type;
-    	private String size;
-    	private String required;
-    	private String valuerange;
-    	private String parentDataStruct;
-    	
-    	public DataElement(String name, String desc, String shortDesc, String type, String size, String required, String valuerange, String parentDataStruct) {
-    		this.name = name;
-    		this.desc = desc;
-    		this.shortDesc = shortDesc;
-    		this.type = type;
-    		this.size = size;
-    		this.required = required;
-    		this.valuerange = valuerange;
-    		this.parentDataStruct = parentDataStruct;
-    	}
+        private final String name;
 
-		public String getName() {
-			return name;
-		}
+        private final String desc;
 
-		public String getType() {
-			return type;
-		}
+        private final String shortDesc;
 
-		public String getSize() {
-			return size;
-		}
+        private final String type;
 
-		public String getRequired() {
-			return required;
-		}
-		
-		public String getValuerange() {
-			return valuerange;
-		}
+        private final String size;
 
-		public String getDesc() {
-			return desc;
-		}
+        private final String required;
 
-		public String getShortDesc() {
-			return shortDesc;
-		}
-		
-		public String getParentDataStruct() {
-			return parentDataStruct;
-		}
-		
-		
-		
-    	
-    	
-    	
-    	
-    	
+        private final String valuerange;
+
+        private final String parentDataStruct;
+
+        public DataElement(final String name, final String desc, final String shortDesc, final String type,
+                final String size, final String required, final String valuerange, final String parentDataStruct) {
+            this.name = name;
+            this.desc = desc;
+            this.shortDesc = shortDesc;
+            this.type = type;
+            this.size = size;
+            this.required = required;
+            this.valuerange = valuerange;
+            this.parentDataStruct = parentDataStruct;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getSize() {
+            return size;
+        }
+
+        public String getRequired() {
+            return required;
+        }
+
+        public String getValuerange() {
+            return valuerange;
+        }
+
+        public String getDesc() {
+            return desc;
+        }
+
+        public String getShortDesc() {
+            return shortDesc;
+        }
+
+        public String getParentDataStruct() {
+            return parentDataStruct;
+        }
+
     }
-    
+
     /**
      * Class used to store an xml tag's attribute (name and value)
-     *
+     * 
      */
     public class XMLAttributes {
-    	
-    	private String name;
-    	private String value;
-    	
-    	public XMLAttributes(String n, String v) {
-    		name = n;
-    		value = v;
-    	}
-    	
-    	public String getName() {
-    		return name;
-    	}
-    	public String getValue() {
-    		return value;
-    	}
-    	
+
+        private final String name;
+
+        private final String value;
+
+        public XMLAttributes(final String n, final String v) {
+            name = n;
+            value = v;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
     }
-    
-    
+
 }
