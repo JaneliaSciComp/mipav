@@ -170,15 +170,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** Whether to save .mnc files as selected by dialog or always as minc1 or minc2. */
     private JComboBox comboBoxSaveMncMethod;
 
-    /** Label before comboBoxGraphTimeAxis */
-    private JLabel graphLabel;
-
-    /**
-     * Whether to graph the time axis of 4D dicom as selected by dialog or always as 0, 1, 2, ... or frame reference
-     * times.
-     */
-    private JComboBox comboBoxGraphTimeAxis;
-
     /** DOCUMENT ME! */
     private JCheckBox savePromptOverwriteBox;
 
@@ -301,7 +292,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeSaveXMLThumbnailOptions(gbc, gbl);
         makeFrameRateOptions(gbc, gbl);
         makeFlipNIFTIReadOptions(gbc, gbl);
-        makeGraphImgOptions(gbc, gbl);
 
         fileMiscPanel.setLayout(gbl);
         fileMiscPanel.setBorder(buildTitledBorder("Misc"));
@@ -537,10 +527,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             if (fileTempDirField.getText().length() > 0) {
                 Preferences.setFileTempDir(fileTempDirField.getText());
             }
-            Preferences.setProperty(Preferences.PREF_ALWAYS_GRAPH_TIME_AS_0123, String.valueOf(comboBoxGraphTimeAxis
-                    .getSelectedIndex() == 1));
-            Preferences.setProperty(Preferences.PREF_ALWAYS_GRAPH_FRAME_REFERENCE_TIME, String
-                    .valueOf(comboBoxGraphTimeAxis.getSelectedIndex() == 2));
 
             Preferences.setProperty(Preferences.PREF_CLOSE_FRAME_CHECK, String.valueOf(checkOnFrameClose.isSelected()));
             Preferences.setProperty(Preferences.PREF_LAX_CHECK, String.valueOf(performLaxCheck.isSelected()));
@@ -1830,44 +1816,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices.
         flipNIFTIReadCheckBox.setSelected(Preferences.is(Preferences.PREF_FLIP_NIFTI_READ));
-    }
-
-    /**
-     * Makes the "Always graph time axis from dialog choice / as 0, 1, 2, .../ as frame reference times combo box in the
-     * fileSavePanel.
-     * 
-     * @param gbc the constraints used in the globalChangesPanel
-     * @param gbl the layout used in the globbalChangesPanel
-     */
-    protected void makeGraphImgOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        graphLabel = new JLabel("Always graph dicom time axis ");
-        graphLabel.setFont(MipavUtil.font12);
-        graphLabel.setForeground(Color.black);
-        gbc.insets = new Insets(0, 0, 0, 5);
-        gbc.gridwidth = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbl.setConstraints(graphLabel, gbc);
-        fileSavePanel.add(graphLabel);
-
-        comboBoxGraphTimeAxis = new JComboBox();
-        comboBoxGraphTimeAxis.setFont(MipavUtil.font12);
-        comboBoxGraphTimeAxis.setBackground(Color.white);
-        comboBoxGraphTimeAxis.addItem("from dialog choice");
-        comboBoxGraphTimeAxis.addItem("as 0, 1, 2, ...");
-        comboBoxGraphTimeAxis.addItem("as frame reference times");
-        comboBoxGraphTimeAxis.setSelectedIndex(0);
-        gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbl.setConstraints(comboBoxGraphTimeAxis, gbc);
-        fileSavePanel.add(comboBoxGraphTimeAxis);
-
-        // preset the choices.
-        if (Preferences.is(Preferences.PREF_ALWAYS_GRAPH_TIME_AS_0123)) {
-            comboBoxGraphTimeAxis.setSelectedIndex(1);
-        } else if (Preferences.is(Preferences.PREF_ALWAYS_GRAPH_FRAME_REFERENCE_TIME)) {
-            comboBoxGraphTimeAxis.setSelectedIndex(2);
-        }
     }
 
     /**
