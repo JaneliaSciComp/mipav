@@ -2188,6 +2188,16 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         saveFeaturesDialog.validate();
     }
 
+    public void testProstateFeaturesTrain() {
+    	JDialogBase trainFeaturesDialog = new JDialogProstateFeaturesTrain(this);
+    	trainFeaturesDialog.validate();
+    }
+    
+    public void testProstateFeaturesClassification() {
+    	JDialogBase classificationFeaturesDialog = new JDialogProstateFeaturesClassification(this);
+    	classificationFeaturesDialog.validate();
+    }
+    
     public void loadProstateMask() {
         final JDialogBase loadProstateMaskDialog = new JDialogLoadProstateMask(this, imageA);
         loadProstateMaskDialog.validate();
