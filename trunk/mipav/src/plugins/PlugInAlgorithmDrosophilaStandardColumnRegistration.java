@@ -1,22 +1,36 @@
+import java.awt.Cursor;
 import java.awt.Frame;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Curves.BSplineBasisDiscretef;
+import WildMagic.LibFoundation.Curves.BSplineBasisf;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmTPSpline;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.BSplineProcessing;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegLeastSquares;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.structures.BSplineLattice3Df;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
@@ -31,7 +45,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends AlgorithmBase {
 	
 	/** model images **/
-	private ModelImage standardColumnImage, neuronImage, neuronImage_grey, resultImage1, resultImage2;
+	private ModelImage standardColumnImage, neuronImage, neuronImage_grey, resultImage1, resultImage2, imageX, imageY, resultImage_minInterp;
 	
 	/** resolutions **/
 	private float[] resols;
@@ -101,6 +115,91 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     /** matrix for thin plate spline **/
     private String thinPlateSplineMatrixFileName;
     
+    /** least squares - rigid matrix **/
+    private TransMatrix lsMatrix;
+    
+    //private File retinalRegistrationInfoFile;
+    
+    //private boolean minimizeInterp;
+    
+    
+    
+    private String imageXPath;
+    private String imageYPath;
+    private String trans1Path;
+    private String trans2Path;
+    private String trans3Path;
+    private boolean doSqrRt = false;
+    private boolean doAverage = false;
+    private boolean doClosestZ = false;
+    private boolean doTrilin = false;
+    private boolean doRescale = false;
+    private boolean doAverageIgnore = false;
+    private float slopeR, slopeG, slopeB, bR, bG, bB;
+    /** coefficients need for b-spline **/
+    private float[][][] imageX_R_coeff;
+    
+    /** coefficients need for b-spline **/
+    private float[][][] imageX_G_coeff;
+    
+    /** coefficients need for b-spline **/
+    private float[][][] imageX_B_coeff;
+    
+    /** coefficients need for b-spline **/
+    private float[][][] imageY_R_coeff;
+    
+    /** coefficients need for b-spline **/
+    private float[][][] imageY_G_coeff;
+    
+    /** coefficients need for b-spline **/
+    private float[][][] imageY_B_coeff;
+    
+    /** num slices */
+    private int numberSlices;
+    
+    /** spline degree */
+    private int splineDegree;
+    
+    /** number control points */
+    private int numControlPoints;
+    
+    /** control matrix */
+    private float[][] controlMat;
+    
+    /** 2D and 3D B-Spline basis definitions. */
+    private BSplineBasisDiscretef m_kBSplineBasisX;
+
+    /** b spline */
+    private BSplineBasisDiscretef m_kBSplineBasisY;
+
+    /** b spline */
+    private BSplineBasisDiscretef m_kBSplineBasisZ;
+    
+    /** extents */
+    private int[] destExtents;
+    
+    /** b slpine */
+    private BSplineLattice3Df m_kBSpline3D;
+    
+    /** transform matrices **/
+    private TransMatrix matrixGreen, matrixAffine;
+    
+    /** 2.5 d */
+    private boolean have25D = false;
+    
+    /** num dims */
+    private int nDims;
+    
+    /** resolutions */
+    private float[] resolutions;
+
+
+    /** extents */
+    private int destMinExtent;
+
+    
+    /** control matrix */
+    private float[][][] controlMat25D;
     
     /**
      * constuctor
@@ -114,6 +213,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		createGreyImage();
 		this.pointsMap = pointsMap;
 		resols = neuronImage.getResolutions(0);
+		//this.minimizeInterp = minimizeInterp;
+		//this.retinalRegistrationInfoFile = retinalRegistrationInfoFile;
 		
 	}
 	
@@ -400,7 +501,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          }
      	standardColumnImage.notifyImageDisplayListeners();
 
-		new ViewJFrameImage(standardColumnImage);
+		//new ViewJFrameImage(standardColumnImage);
 
          VOIVector neuronVOIs = neuronImage_grey.getVOIs();
          voi = (VOI) neuronVOIs.elementAt(0);
@@ -432,7 +533,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
          neuronImage_grey.notifyImageDisplayListeners();
 		 
-         new ViewJFrameImage(neuronImage_grey);
+         //new ViewJFrameImage(neuronImage_grey);
          
          
          //call rigid least squares alg
@@ -446,7 +547,42 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          //apply transformation matrices to the original color image
          //applyMatricesOnColorImage();
 		 
+         if(standardColumnImage != null) {
+        	 standardColumnImage.disposeLocal();
+        	 standardColumnImage = null;
+         }
          
+         
+         
+         if(neuronImage != null) {
+        	 neuronImage.disposeLocal();
+        	 neuronImage = null;
+         }
+         
+         
+         
+         if(neuronImage_grey != null) {
+        	 neuronImage_grey.disposeLocal();
+        	 neuronImage_grey = null;
+         }
+         
+         
+         
+         if(resultImage1 != null) {
+        	 resultImage1.disposeLocal();
+        	 resultImage1 = null;
+         }
+         
+         
+         
+         
+         //if(minimizeInterp) {
+        	 //if(resultImage2 != null) {
+            	 //resultImage2.disposeLocal();
+            	 //resultImage2 = null;
+             //}
+        	 //minimizeInterp();
+         //}
          
 		 setCompleted(true);
 	}
@@ -567,8 +703,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
             // 0.0f for no smoothing, with smoothing interpolation is not exact
             try {
-                spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTar, yTar, zTar, 0.0f, standardColumnImage,
-                                               resultImage1);
+                //spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTar, yTar, zTar, 0.0f, standardColumnImage,resultImage1);
+                
+            	//testing the following because we need the inverse TPSpline transform so that we can get corresponding points
+            	
+            	spline = new AlgorithmTPSpline(xTar, yTar, zTar, xSource, ySource, zSource, 0.0f, resultImage1, standardColumnImage);
             } catch (OutOfMemoryError error) {
                 spline = null;
                 System.gc();
@@ -625,7 +764,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             resultImage2.getFileInfo(i).setOrigin(standardColumnImage.getFileInfo(i).getOrigin());
         }
 		
-		new ViewJFrameImage(resultImage2);
+		//if(!minimizeInterp)  {
+			//new ViewJFrameImage(resultImage2);
+		//}
+		
+		System.out.println("done");
 		
 	}
 	
@@ -726,9 +869,9 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 * alg performed for least squared alg
 	 */
 	private void leastSquaredAlgorithmPerformed() {
-		TransMatrix matrix = LSMatch.getTransformBtoA();
+		lsMatrix = LSMatch.getTransformBtoA();
 		leastSquaresMatrixFileName = "rigidLeastSquares-" + neuronImage_grey.getImageName() +"_To_" + standardColumnImage.getImageName() + ".mtx";
-		matrix.saveMatrix(dir + leastSquaresMatrixFileName);
+		lsMatrix.saveMatrix(dir + leastSquaresMatrixFileName);
 		System.out.println("Saving rigid least squares transformation matrix as " + dir + leastSquaresMatrixFileName);
 		LSMatch.calculateResiduals();
 		xdimA = standardColumnImage.getExtents()[0];
@@ -765,7 +908,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         int nCurves;
         Vector3f pt, tPt;
         
-        TransMatrix kTMInverse = matrix.clone();
+        TransMatrix kTMInverse = lsMatrix.clone();
         kTMInverse.Inverse();
         String label = "";
         VOIPoint point;
@@ -794,7 +937,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 				 pt2.Y = pt.Y * neuronImage_grey.getResolutions(0)[1];
 				 pt2.Z = pt.Z * neuronImage_grey.getResolutions(0)[2];
 				 tPt = new Vector3f();
-				 matrix.transformAsPoint3Df(pt2, tPt);
+				 lsMatrix.transformAsPoint3Df(pt2, tPt);
 				 xPt[0] = (float)MipavMath.round(tPt.X/neuronImage_grey.getResolutions(0)[0]);
 				 yPt[0] = (float)MipavMath.round(tPt.Y/neuronImage_grey.getResolutions(0)[1]);
 				 zPt[0] = (float)MipavMath.round(tPt.Z/neuronImage_grey.getResolutions(0)[2]);
@@ -855,11 +998,659 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         resultImage1.notifyImageDisplayListeners();
 
-        new ViewJFrameImage(resultImage1);
+        //new ViewJFrameImage(resultImage1);
 	}
 	
 	
 	
+	
+	/*private void minimizeInterp() {
+		FileReader fr;
+		BufferedReader br;
+		String line;
+		
+		
+		
+		try {
+	        fr = new FileReader(retinalRegistrationInfoFile);
+	        br = new BufferedReader(fr);
+	        
+	        line = br.readLine();
+	        imageXPath = line.substring(line.indexOf("imageH:")+7, line.length());
+	    	imageXPath = imageXPath.trim().replace("\\", File.separator);
+	    	
+	    	line = br.readLine();
+	    	imageYPath = line.substring(line.indexOf("imageF:")+7, line.length());
+	    	imageYPath = imageXPath.trim().replace("\\", File.separator);
+	    	
+	    	line = br.readLine();
+	    	trans1Path = line.substring(line.indexOf("trans1:")+7, line.length());
+	    	trans1Path = imageXPath.trim().replace("\\", File.separator);
+	    	
+	    	line = br.readLine();
+	    	trans2Path = line.substring(line.indexOf("trans2:")+7, line.length());
+	    	trans2Path = imageXPath.trim().replace("\\", File.separator);
+	    	
+	    	line = br.readLine();
+	    	trans3Path = line.substring(line.indexOf("trans3:")+7, line.length());
+	    	trans3Path = imageXPath.trim().replace("\\", File.separator);
+	    	
+	    	line = br.readLine();
+	    	if(line.trim().equals("sqrRt")) {
+	    		doSqrRt = true;
+	    	}else if(line.trim().equals("closestZ")) {
+	    		doClosestZ = true;
+	    	}else {
+	    		doAverage = true;
+	    		String avg = line.trim().substring(line.indexOf(":")+1, line.length());
+	    		if(line.equals("ignore")) {
+	    			doAverageIgnore = true;
+	    		}
+	    	}
+	    	
+	    	line = br.readLine();
+	    	if(line.trim().equals("trilinear")) {
+	    		doTrilin = true;
+	    	}
+	    	
+	    	line = br.readLine();
+	    	if(line.trim().startsWith("rescale")) {
+	    		doRescale = true;
+	    		String[] splits = line.split(":");
+	    		slopeR = new Float(splits[1].trim()).floatValue();
+	    		bR = new Float(splits[2].trim()).floatValue();
+	    		slopeG = new Float(splits[3].trim()).floatValue();
+	    		bG = new Float(splits[4].trim()).floatValue();
+	    		slopeB = new Float(splits[5].trim()).floatValue();
+	    		bB = new Float(splits[6].trim()).floatValue();
+	    	}
+
+	    	br.close();
+	    	
+	    	createFinalImage();
+
+    	}catch(Exception e) {
+    		e.printStackTrace();
+    		
+    	}
+	}*/
+	
+	
+	
+	private void createFinalImage() {
+		//read green matrix
+		File trans1File = new File(trans1Path);
+		readTransform1(trans1File);
+		
+		//read affine matrix
+		File trans2File = new File(trans2Path);
+		readTransform2(trans2File);
+		
+		//concatenate these and make into inverse
+		TransMatrix intermMatrix1 = new TransMatrix(4);
+		intermMatrix1.Mult(matrixAffine, matrixGreen);
+		intermMatrix1.Inverse();
+		 
+		
+		//read nlt file if there
+		if(!trans3Path.trim().equals("")){
+			File trans3File = new File(trans3Path);
+			boolean success = readNLTFile(trans3File);
+	    	if(!success) {
+	    		MipavUtil.displayError("Error reading nlt file");
+	    		return;
+	    	}
+		}
+		
+		//make LS MAtrix into inverse
+        lsMatrix.Inverse();
+        
+        
+        
+        //TPS Matrix????
+		
+		
+		
+		
+		FileIO fileIO = new FileIO();
+		String imageXName = imageXPath.substring(imageXPath.lastIndexOf(File.separator)+1, imageXPath.length());
+        imageX = fileIO.readImage(imageXName, imageXPath + File.separator, true, null);
+		
+        String imageYName = imageYPath.substring(imageYPath.lastIndexOf(File.separator)+1, imageYPath.length());
+        imageY = fileIO.readImage(imageYName, imageYPath + File.separator, true, null);
+		
+        //first do rescaling if necessary
+		if(doRescale) {
+			//now we go through imageX and rescale
+	         int length = imageX.getExtents()[0] * imageX.getExtents()[1] * imageX.getExtents()[2] * 4;
+	         float[] buffer = new float[length];
+	        
+	         try {
+	        	 imageX.exportData(0, length, buffer);
+	         } catch (IOException error) {
+	             System.out.println("IO exception");
+	             return;
+	         }
+	         float red,green,blue;
+	         float newRed, newGreen, newBlue;
+	         
+	         for(int i=0;i<buffer.length;i=i+4) {
+	        	 red = buffer[i+1];
+	        	 if(slopeR == 0 && bR == 0) {
+	        		 newRed = red;
+	        	 }else {
+		        	 newRed = getNewValue(red,slopeR,bR);
+		        	 if(newRed < 0) {
+		        		 newRed = 0;
+		        	 }else if(newRed > 255) {
+		        		 newRed = 255;
+		        	 }
+	        	 }
+	        	 buffer[i+1] = newRed;
+	        	 
+	        	 green = buffer[i+2];
+	        	 if(slopeG == 0 && bG == 0) {
+	        		 newGreen = green;
+	        	 }else {
+		        	 newGreen = getNewValue(green,slopeG,bG);
+		        	 if(newGreen < 0) {
+		        		 newGreen = 0;
+		        	 }else if(newGreen > 255) {
+		        		 newGreen = 255;
+		        	 }
+	        	 }
+	        	 buffer[i+2] = newGreen;
+	        	 
+	        	 blue = buffer[i+3];
+	        	 if(slopeB == 0 && bB == 0) {
+	        		 newBlue = blue;
+	        	 }else {
+		        	 newBlue = getNewValue(blue,slopeB,bB);
+		        	 if(newBlue < 0) {
+		        		 newBlue = 0;
+		        	 }else if(newBlue > 255) {
+		        		 newBlue = 255;
+		        	 }
+	        	 }
+	        	 buffer[i+3] = newBlue;           
+	         }
+	         
+	         try {
+	             imageX.importData(0, buffer, true);
+	         } catch (IOException error) {
+	             System.out.println("IO exception");
+	             return;
+	         }
+	         imageX.calcMinMax();
+		} //end rescale
+		
+		
+		int[] extents = {512,512,512};
+		resultImage_minInterp = new ModelImage(ModelImage.ARGB, extents,"resultImage");
+		float[] resultImageResols = new float[3];
+		resultImageResols[0] = imageY.getResolutions(0)[0];
+		resultImageResols[1] = imageY.getResolutions(0)[1];
+		resultImageResols[2] = imageY.getResolutions(0)[2]*imageY.getExtents()[2]/512;
+		for(int i=0;i<resultImage_minInterp.getExtents()[2];i++) {
+			resultImage_minInterp.setResolutions(i, resultImageResols);
+		}
+		byte[] resultBuffer = new byte[512*512*512*4];
+		int index = 0; //index into resultBuffer
+		double[] tPt1 = new double[3];
+		double[] tPt2 = new double[3];
+		
+		byte[] imageXBuffer;
+        int length1 = imageX.getExtents()[0] * imageX.getExtents()[1] * imageX.getExtents()[2] * 4;
+        imageXBuffer = new byte[length1];
+        try {
+       	 imageX.exportData(0, length1, imageXBuffer);
+        } catch (IOException error) {
+            System.out.println("IO exception");
+            return;
+        }
+        
+        
+        
+      //b-spline stuff in case b-spline interp was selected
+        imageX_R_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
+        imageX_G_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
+        imageX_B_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
+        for (int c = 0; c < 4; c++) {
+            for (int z = 0; z < imageX.getExtents()[2]; z++) {
+                for (int y = 0; y < imageX.getExtents()[1]; y++) {
+                    for (int x = 0; x < imageX.getExtents()[0]; x++) {
+                   	 if(c==1) {
+                   		 imageX_R_coeff[x][y][z] = (float)(imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX.getExtents()[0] * imageX.getExtents()[1] * z))) + c] & 0xff);
+                   	 }else if(c==2) {
+                   		 imageX_G_coeff[x][y][z] = (float)(imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX.getExtents()[0] * imageX.getExtents()[1] * z))) + c] & 0xff);
+                   	 }else if(c==3) {
+                   		 imageX_B_coeff[x][y][z] = (float)(imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX.getExtents()[0] * imageX.getExtents()[1] * z))) + c] & 0xff);
+                   	 }
+                        
+                    }
+                }
+            }
+        }
+        BSplineProcessing splineAlgX_R;
+        splineAlgX_R = new BSplineProcessing();
+        splineAlgX_R.samplesToCoefficients(imageX_R_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX.getExtents()[2], 3);
+        
+        BSplineProcessing splineAlgX_G;
+        splineAlgX_G = new BSplineProcessing();
+        splineAlgX_G.samplesToCoefficients(imageX_G_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX.getExtents()[2], 3);
+        
+        BSplineProcessing splineAlgX_B;
+        splineAlgX_B = new BSplineProcessing();
+        splineAlgX_B.samplesToCoefficients(imageX_B_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX.getExtents()[2], 3);
+        
+        
+        byte[] imageYBuffer;
+        int length2 = imageY.getExtents()[0] * imageY.getExtents()[1] * imageY.getExtents()[2] * 4;
+        imageYBuffer = new byte[length2];
+        try {
+       	 imageY.exportData(0, length2, imageYBuffer);
+        } catch (IOException error) {
+            System.out.println("IO exception");
+            return;
+        }
+        
+        imageY_R_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
+        imageY_G_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
+        imageY_B_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
+        for (int c = 0; c < 4; c++) {
+            for (int z = 0; z < imageY.getExtents()[2]; z++) {
+                for (int y = 0; y < imageY.getExtents()[1]; y++) {
+                    for (int x = 0; x < imageY.getExtents()[0]; x++) {
+                   	 if(c==1) {
+                   		 imageY_R_coeff[x][y][z] = (float)(imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY.getExtents()[0] * imageY.getExtents()[1] * z))) + c] & 0xff);
+                   		 
+                   	 }else if(c==2) {
+                   		 imageY_G_coeff[x][y][z] = (float)(imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY.getExtents()[0] * imageY.getExtents()[1] * z))) + c] & 0xff);
+                   	 }else if(c==3) {
+                   		 imageY_B_coeff[x][y][z] = (float)(imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY.getExtents()[0] * imageY.getExtents()[1] * z))) + c] & 0xff);
+                   	 }
+                        
+                    }
+                }
+            }
+        }
+        BSplineProcessing splineAlgY_R;
+        splineAlgY_R = new BSplineProcessing();
+        splineAlgY_R.samplesToCoefficients(imageY_R_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY.getExtents()[2], 3);
+        
+        BSplineProcessing splineAlgY_G;
+        splineAlgY_G = new BSplineProcessing();
+        splineAlgY_G.samplesToCoefficients(imageY_G_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY.getExtents()[2], 3);
+        
+        BSplineProcessing splineAlgY_B;
+        splineAlgY_B = new BSplineProcessing();
+        splineAlgY_B.samplesToCoefficients(imageY_B_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY.getExtents()[2], 3);
+        
+		
+        
+        //following is if nlt file is inputted also
+        ModelSimpleImage[] akSimpleImageSourceMap = null;
+        if(!trans3Path.trim().equals("")){
+       	 	//create the non-linear image-maps
+		        m_kBSplineBasisX = new BSplineBasisDiscretef(numControlPoints, splineDegree, destExtents[0]);
+		        m_kBSplineBasisY = new BSplineBasisDiscretef(numControlPoints, splineDegree, destExtents[1]);
+		        m_kBSplineBasisZ = new BSplineBasisDiscretef(numControlPoints, splineDegree, destExtents[2]);
+		        m_kBSpline3D = new BSplineLattice3Df(m_kBSplineBasisX, m_kBSplineBasisY, m_kBSplineBasisZ);
+
+		        Vector3f kPoint = new Vector3f();
+		
+		        int ind = 0;
+		
+		        for (int iControlX = 0; iControlX < numControlPoints; iControlX++) {
+		        		System.out.println("iControlX = " + iControlX);
+		            for (int iControlY = 0; iControlY < numControlPoints; iControlY++) {
+		                for (int iControlZ = 0; iControlZ < numControlPoints; iControlZ++) {
+		                    kPoint.X = controlMat[ind][0];
+		                    kPoint.Y = controlMat[ind][1];
+		                    kPoint.Z = controlMat[ind++][2];
+		                    m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kPoint);
+		                }
+		            }
+		        }
+		
+		        akSimpleImageSourceMap = m_kBSpline3D.createImageMap(destExtents[0], destExtents[1], destExtents[2]);
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	/**
+	 * reads the non-linear transform file
+	 * @param nltFile
+	 * @return
+	 */
+	private boolean readNLTFile(File nltFile) {
+		String directory;
+        RandomAccessFile in;
+        String str = null;
+        StringTokenizer stoken = null;
+        int i, j, k;
+        int srcMinExtent;
+        int iNumControlPointsMax;
+		try {
+            in = new RandomAccessFile(nltFile, "r");
+
+            // read number of dimensions
+            do {
+                str = in.readLine().trim();
+            } while (str.substring(0, 1).equals("#"));
+
+            float fDims = Float.valueOf(str).floatValue();
+
+            if (2.5f == fDims) {
+                nDims = 3;
+                have25D = true;
+            } else {
+                nDims = (int) fDims;
+                have25D = false;
+            }
+
+            if (imageY.getNDims() != nDims) {
+                MipavUtil.displayError("");
+                in.close();
+
+                return false;
+            }
+
+            // read resolutions for output image
+            do {
+                str = in.readLine().trim();
+            } while (str.substring(0, 1).equals("#"));
+
+            stoken = new StringTokenizer(str);
+            resolutions = new float[nDims];
+            srcMinExtent = Integer.MAX_VALUE;
+
+            for (i = 0; i < nDims; i++) {
+                resolutions[i] = Float.valueOf(stoken.nextToken()).floatValue();
+
+                if ((imageY.getExtents()[i] < srcMinExtent) && ((!have25D) || (i < 2))) {
+                    srcMinExtent = imageY.getExtents()[i];
+                }
+            }
+
+            // If 2D/3D, read dimensions for target image
+            if (!have25D) {
+
+                do {
+                    str = in.readLine().trim();
+                } while (str.substring(0, 1).equals("#"));
+
+                stoken = new StringTokenizer(str);
+                destExtents = new int[nDims];
+                destMinExtent = Integer.MAX_VALUE;
+
+                for (i = 0; i < nDims; i++) {
+                    destExtents[i] = Integer.valueOf(stoken.nextToken()).intValue();
+
+                    if (destExtents[i] < destMinExtent) {
+                        destMinExtent = destExtents[i];
+                    }
+                }
+            } else {
+                numberSlices = imageY.getExtents()[2];
+            }
+
+            // read B-spline degree
+            do {
+                str = in.readLine().trim();
+            } while (str.substring(0, 1).equals("#"));
+
+            stoken = new StringTokenizer(str);
+            splineDegree = Integer.valueOf(stoken.nextToken()).intValue();
+
+            if ((splineDegree < 1) || (splineDegree > 4)) {
+                MipavUtil.displayError("Error! Spline degree has an illegal value = " + splineDegree);
+                in.close();
+
+                return false;
+            }
+
+            // read number of control points
+            do {
+                str = in.readLine().trim();
+            } while (str.substring(0, 1).equals("#"));
+
+            stoken = new StringTokenizer(str);
+            numControlPoints = Integer.valueOf(stoken.nextToken()).intValue();
+
+            int iNumControlPointsMin = BSplineBasisf.GetMinNumControlPoints(splineDegree);
+
+            if (have25D) {
+                iNumControlPointsMax = srcMinExtent / 2;
+            } else {
+                iNumControlPointsMax = destMinExtent / 2;
+            }
+
+            if (numControlPoints < iNumControlPointsMin) {
+                MipavUtil.displayError("Error! The parameter file specifies " + numControlPoints +
+                                       " control points, but " + iNumControlPointsMin + " are required");
+                in.close();
+
+                return false;
+            }
+
+            if (numControlPoints > iNumControlPointsMax) {
+                MipavUtil.displayError("Error! The parameter file specifies " + numControlPoints +
+                                       " control points, but no more than " + iNumControlPointsMax +
+                                       " are allowed");
+                in.close();
+
+                return false;
+            }
+
+            if (!have25D) {
+                int allDimControlPoints = (nDims == 2) ? (numControlPoints * numControlPoints)
+                                                       : (numControlPoints * numControlPoints * numControlPoints);
+
+                controlMat = new float[allDimControlPoints][nDims];
+
+                for (i = 0; i < allDimControlPoints; i++) {
+
+                    do {
+                        str = in.readLine().trim();
+                    } while (str.substring(0, 1).equals("#"));
+
+                    stoken = new StringTokenizer(str);
+
+                    for (j = 0; j < nDims; j++) {
+                        controlMat[i][j] = Float.valueOf(stoken.nextToken()).floatValue();
+                    }
+                } // for (i = 0; i < allDimControlPoints; i++)
+            } // if (!have25D)
+            else { // have25D
+
+                int allDimControlPoints = numControlPoints * numControlPoints;
+                controlMat25D = new float[numberSlices][allDimControlPoints][2];
+
+                for (k = 0; k < numberSlices; k++) {
+
+                    for (i = 0; i < allDimControlPoints; i++) {
+
+                        do {
+                            str = in.readLine().trim();
+                        } while (str.substring(0, 1).equals("#"));
+
+                        stoken = new StringTokenizer(str);
+                        controlMat25D[k][i][0] = Float.valueOf(stoken.nextToken()).floatValue();
+                        controlMat25D[k][i][1] = Float.valueOf(stoken.nextToken()).floatValue();
+                    } // for (i = 0; i < allDimControlPoints; i++)
+                } // for (k = 0; k < numberSlices; k++)
+            } // else have25D
+
+            in.close();
+
+            return true;
+        } catch (IOException e) {
+            MipavUtil.displayError("Read Error reading nlt file : "  +   e.getMessage());
+
+            return false;
+        }
+	}
+	
+	/**
+	 * reads the transform file
+	 * @param transformFile
+	 */
+	private void readTransform1(File transform1File) {
+		try {
+            RandomAccessFile raFile = new RandomAccessFile(transform1File, "r");
+            String[] arr;
+            raFile.readLine(); //skip over num columns since we know it is 4
+            raFile.readLine(); //skip over num rows since we know it is 4
+            double[][] doubleArr = new double[4][4];
+            String line1 = raFile.readLine().trim();
+            arr = line1.split("\\s+");
+            if(arr.length == 4) {
+           	 doubleArr[0][0] = Double.valueOf(arr[0]).doubleValue();
+           	 doubleArr[0][1] = Double.valueOf(arr[1]).doubleValue();
+           	 doubleArr[0][2] = Double.valueOf(arr[2]).doubleValue();
+           	 doubleArr[0][3] = Double.valueOf(arr[3]).doubleValue();
+            }
+            String line2 = raFile.readLine().trim();
+            arr = line2.split("\\s+");
+            if(arr.length == 4) {
+           	 doubleArr[1][0] = Double.valueOf(arr[0]).doubleValue();
+           	 doubleArr[1][1] = Double.valueOf(arr[1]).doubleValue();
+           	 doubleArr[1][2] = Double.valueOf(arr[2]).doubleValue();
+           	 doubleArr[1][3] = Double.valueOf(arr[3]).doubleValue();
+            }
+            String line3 = raFile.readLine().trim();
+            arr = line3.split("\\s+");
+            if(arr.length == 4) {
+           	 doubleArr[2][0] = Double.valueOf(arr[0]).doubleValue();
+           	 doubleArr[2][1] = Double.valueOf(arr[1]).doubleValue();
+           	 doubleArr[2][2] = Double.valueOf(arr[2]).doubleValue();
+           	 doubleArr[2][3] = Double.valueOf(arr[3]).doubleValue();
+            }
+            String line4 = raFile.readLine().trim();
+            arr = line4.split("\\s+");
+            if(arr.length == 4) {
+           	 doubleArr[3][0] = Double.valueOf(arr[0]).doubleValue();
+           	 doubleArr[3][1] = Double.valueOf(arr[1]).doubleValue();
+           	 doubleArr[3][2] = Double.valueOf(arr[2]).doubleValue();
+           	 doubleArr[3][3] = Double.valueOf(arr[3]).doubleValue();
+            }
+            raFile.close(); 
+            
+            matrixGreen = new TransMatrix(4);
+            matrixGreen.setMatrix(doubleArr);
+            System.out.println("matrixGreen:");
+            System.out.println(matrixGreen.toString());
+
+            
+            //matrixGreen = new Matrix(doubleArr,4,4);
+   	 }catch(Exception ex) {
+   		 ex.printStackTrace();
+   	 }
+	}
+	
+	/**
+	 * reads the transform file
+	 * @param transformFile
+	 */
+	private void readTransform2(File transform2File){
+		try {
+            RandomAccessFile raFile = new RandomAccessFile(transform2File, "r");
+            String[] arr;
+            raFile.readLine(); //skip over num columns since we know it is 4
+            raFile.readLine(); //skip over num rows since we know it is 4
+            double[][] doubleArr = new double[4][4];
+            String line1 = raFile.readLine().trim();
+            arr = line1.split("\\s+");
+            if(arr.length == 4) {
+           	 doubleArr[0][0] = Double.valueOf(arr[0]).doubleValue();
+           	 doubleArr[0][1] = Double.valueOf(arr[1]).doubleValue();
+           	 doubleArr[0][2] = Double.valueOf(arr[2]).doubleValue();
+           	 doubleArr[0][3] = Double.valueOf(arr[3]).doubleValue();
+            }
+            String line2 = raFile.readLine().trim();
+            arr = line2.split("\\s+");
+            if(arr.length == 4) {
+           	 doubleArr[1][0] = Double.valueOf(arr[0]).doubleValue();
+           	 doubleArr[1][1] = Double.valueOf(arr[1]).doubleValue();
+           	 doubleArr[1][2] = Double.valueOf(arr[2]).doubleValue();
+           	 doubleArr[1][3] = Double.valueOf(arr[3]).doubleValue();
+            }
+            String line3 = raFile.readLine().trim();
+            arr = line3.split("\\s+");
+            if(arr.length == 4) {
+           	 doubleArr[2][0] = Double.valueOf(arr[0]).doubleValue();
+           	 doubleArr[2][1] = Double.valueOf(arr[1]).doubleValue();
+           	 doubleArr[2][2] = Double.valueOf(arr[2]).doubleValue();
+           	 doubleArr[2][3] = Double.valueOf(arr[3]).doubleValue();
+            }
+            String line4 = raFile.readLine().trim();
+            arr = line4.split("\\s+");
+            if(arr.length == 4) {
+           	 doubleArr[3][0] = Double.valueOf(arr[0]).doubleValue();
+           	 doubleArr[3][1] = Double.valueOf(arr[1]).doubleValue();
+           	 doubleArr[3][2] = Double.valueOf(arr[2]).doubleValue();
+           	 doubleArr[3][3] = Double.valueOf(arr[3]).doubleValue();
+            }
+            raFile.close(); 
+            matrixAffine = new TransMatrix(4);
+            matrixAffine.setMatrix(doubleArr);
+            System.out.println("matrixAffine:");
+            System.out.println(matrixAffine.toString());
+
+            //matrixAffine = new Matrix(doubleArr,4,4);
+   	 }catch(Exception ex) {
+   		 ex.printStackTrace();
+   	 }
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/**
+	 * gets new value based on slope and b-intercept
+	 * @param X
+	 * @param slope
+	 * @param b
+	 * @return
+	 */
+	private float getNewValue(float X, float slope, float b) {
+		float Y = 0;
+		float mx = slope * X;
+		Y = mx + b;
+		return Y;
+	}
+	
+	
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Inner class that has the three coordinates for the point
 	
 	private class AddVals {

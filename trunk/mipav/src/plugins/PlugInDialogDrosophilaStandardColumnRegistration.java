@@ -10,6 +10,7 @@ import java.io.RandomAccessFile;
 import java.util.TreeMap;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,16 +34,22 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	private JPanel mainPanel;
 	
 	/** image to register to standard column **/
-	private ModelImage neuronImage, resultImage;
+	private ModelImage neuronImage;
 	
 	/** points file **/
 	private File pointsFile;
 	
 	 /** textfields **/
-    private JTextField imageFilePathTextField, pointsFilePathTextField;
+    private JTextField imageFilePathTextField, pointsFilePathTextField, imageXFilePathTextField, imageYFilePathTextField;
     
     /** browse button **/
     private JButton imageBrowseButton, pointsBrowseButton;
+    
+    /** **/
+    private JLabel pointsLabel, imageLabel;
+    
+    /** **/
+    //private JCheckBox minimizeInterpCheckBox;
     
     /** current directory  **/
     private String currDir = null;
@@ -52,7 +59,11 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     
     /** points collection **/
     public TreeMap<Integer, float[]> pointsMap;
+    
+    
+	//private File retinalRegistrationInfoFile;
 	
+	//private boolean minimizeInterp = false;
 	
 	/**
 	 * constructor
@@ -73,11 +84,11 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v1.0");
+        setTitle("Drosophila Standard Column Registration v1.1");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
-        JLabel imageLabel = new JLabel("Image ");
+        imageLabel = new JLabel("Result Image ");
         imageFilePathTextField = new JTextField(35);
         imageFilePathTextField.setEditable(false);
         imageFilePathTextField.setBackground(Color.white);
@@ -85,13 +96,32 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         imageBrowseButton.addActionListener(this);
         imageBrowseButton.setActionCommand("imageBrowse");
         
-        JLabel pointsLabel = new JLabel("Points file ");
+        pointsLabel = new JLabel("Points file ");
         pointsFilePathTextField = new JTextField(35);
         pointsFilePathTextField.setEditable(false);
         pointsFilePathTextField.setBackground(Color.white);
         pointsBrowseButton = new JButton("Browse");
         pointsBrowseButton.addActionListener(this);
         pointsBrowseButton.setActionCommand("pointsBrowse");
+        
+        //minimizeInterpCheckBox = new JCheckBox("Minimize Interpolation");
+        //minimizeInterpCheckBox.setSelected(false);
+        //minimizeInterpCheckBox.setActionCommand("minimizeInterp");
+        //minimizeInterpCheckBox.addActionListener(this);
+        
+        //retinalRegistrationInfoLabel = new JLabel("Retinal Registration Info File");
+        //retinalRegistrationInfoPathTextField = new JTextField(35);
+        //retinalRegistrationInfoPathTextField.setEditable(false);
+        //retinalRegistrationInfoPathTextField.setBackground(Color.white);
+        //retinalRegistrationInfoBrowseButton = new JButton("Browse");
+        //retinalRegistrationInfoBrowseButton.addActionListener(this);
+        //retinalRegistrationInfoBrowseButton.setActionCommand("retinalRegistrationInfoBrowse");
+        
+
+        //retinalRegistrationInfoLabel.setEnabled(false);
+        //retinalRegistrationInfoPathTextField.setEnabled(false);
+        //retinalRegistrationInfoBrowseButton.setEnabled(false);
+        
         
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -110,6 +140,20 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         mainPanel.add(pointsFilePathTextField,gbc);
         gbc.gridx = 2;
         mainPanel.add(pointsBrowseButton,gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        //gbc.anchor = GridBagConstraints.CENTER;
+        //mainPanel.add(minimizeInterpCheckBox,gbc);
+        //gbc.anchor = GridBagConstraints.EAST;
+        //gbc.gridx = 0;
+        //gbc.gridy = 3;
+        //mainPanel.add(retinalRegistrationInfoLabel,gbc);
+        //gbc.gridx = 1;
+        //mainPanel.add(retinalRegistrationInfoPathTextField,gbc);
+        //gbc.gridx = 2;
+        //mainPanel.add(retinalRegistrationInfoBrowseButton,gbc);
+        
+        
         
         JPanel OKCancelPanel = new JPanel();
         buildOKButton();
@@ -174,9 +218,32 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 			 }else {
 				 MipavUtil.displayError("Input image and points file are required");
 			 }
-			 
-			 
-			 
+		 }/*else if(command.equals("minimizeInterp")) {
+			 if(minimizeInterpCheckBox.isSelected()) {
+				 minimizeInterp = true;
+				 retinalRegistrationInfoLabel.setEnabled(true);
+			     retinalRegistrationInfoPathTextField.setEnabled(true);
+			     retinalRegistrationInfoBrowseButton.setEnabled(true);
+			 }else {
+				 minimizeInterp = false;
+				 retinalRegistrationInfoLabel.setEnabled(false);
+			     retinalRegistrationInfoPathTextField.setEnabled(false);
+			     retinalRegistrationInfoPathTextField.setText("");
+			     retinalRegistrationInfoBrowseButton.setEnabled(false);
+			 }
+		 }*/else if(command.equals("retinalRegistrationInfoBrowse")) {
+			 JFileChooser chooser = new JFileChooser();
+		        if (currDir != null) {
+					chooser.setCurrentDirectory(new File(currDir));
+		        }
+		        chooser.setDialogTitle("Choose file");
+		        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		        int returnValue = chooser.showOpenDialog(this);
+		        if (returnValue == JFileChooser.APPROVE_OPTION) {
+		        	currDir = chooser.getSelectedFile().getAbsolutePath();
+		        	//retinalRegistrationInfoFile = new File(currDir);
+		        	//retinalRegistrationInfoPathTextField.setText(currDir);
+		        }
 		 }
 
 	}
