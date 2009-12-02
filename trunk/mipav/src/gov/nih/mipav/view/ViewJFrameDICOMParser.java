@@ -214,8 +214,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 // first we pares the directories and populate the fileInfoVecot list
                 parse(node.getFile());
 
-                // if there is 1 or less rows in study table, populate the series table
-                if (studyTableModel.getRowCount() <= 1) {
+                // if there is 1 row in study table, populate the series table
+                if (studyTableModel.getRowCount() == 1) {
                     String studyNo = (String) (studyTableModel.getValueAt(0, 2));
 
                     if (studyNo == null) {
