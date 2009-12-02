@@ -270,6 +270,7 @@ public class ViewMenuBar {
                                 false),
                         menuBuilder.buildMenuItem("Constrained optimized automatic registration", "COAR", 0, null,
                                 false),
+                        menuBuilder.buildMenuItem("Diffeomorphic demons", "diffDemons", 0, null, false),
                         menuBuilder.buildMenuItem("Display pixel similarity cost functions", "COSTS", 0, null, false),
                         menuBuilder.makeMenu("Landmark", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("Least squares", "LeastSquares", 0, "reglsq.gif", false),
@@ -1030,6 +1031,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
             menuBuilder.setMenuItemEnabled("Density based clustering", false);
+            menuBuilder.setMenuItemEnabled("Diffeomorphic demons", false);
             menuBuilder.setMenuItemEnabled("Edge detection", false);
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("FFT", false);
