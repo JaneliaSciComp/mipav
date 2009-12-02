@@ -78,10 +78,12 @@ public class JDialogLoadProstateMask extends JDialogBase
 			BufferedReader inputStream = new BufferedReader(fileReader);
 			
 			String line = null;
-			int value;
+			float value;
 			Vector mask = new Vector();
 			while ( (line = inputStream.readLine()) != null ) {
-				value = Integer.valueOf(line);
+			    
+				value = Float.valueOf(line);
+				
 				mask.add(value);
 				// System.err.println("value = " + value);
 			}
@@ -94,7 +96,7 @@ public class JDialogLoadProstateMask extends JDialogBase
 	        image.exportData(0, sliceSize, sourceBuffer);
 	        
 			for ( int i = 0; i < sourceBuffer.length; i++ ) {
-				value = (Integer)mask.get(i);
+				value = (Float)mask.get(i);
 				if ( value == 1 ) {
  					sourceBuffer[i] = 5000.0;
 				}
