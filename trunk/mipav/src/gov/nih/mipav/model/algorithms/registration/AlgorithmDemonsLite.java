@@ -1,8 +1,8 @@
 package gov.nih.mipav.model.algorithms.registration;
 
-//import edu.jhmi.rad.medic.dialogs.*;
-//import edu.jhmi.rad.medic.methods.*;
-//import edu.jhmi.rad.medic.utilities.*;
+//import edu.jhmi.rad.Mipav.dialogs.*;
+//import edu.jhmi.rad.Mipav.methods.*;
+//import edu.jhmi.rad.Mipav.utilities.*;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.structures.*;
@@ -76,10 +76,10 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
         
 		if (reg_.equals("diffusion-like")) {
 			regType = DemonsRegistrationLite.DIFFUSION;
-			//MedicUtil.displayMessage("regularization: diffusion-likee \n");
+			//MipavUtil.displayMessage("regularization: diffusion-likee \n");
 		} else {
 			regType = DemonsRegistrationLite.FLUID;
-			//MedicUtil.displayMessage("regularization: fluid-likee \n");
+			//MipavUtil.displayMessage("regularization: fluid-likee \n");
 		}
 		
 		levels = levels_;
