@@ -196,22 +196,22 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
         destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
         // copy all file infos.
+        
+        int sliceNumSrcImg;
+        float zStartLoc;
+        FileInfoBase fInfo;
         float[] resols = new float[4];
         int[] units = new int[4];
         float[] startLocs = new float[4];
-        int sliceNumSrcImg;
-        float zStartLoc;
-        FileInfoBase[] fInfo;
         
 
         fileInfo = srcImage.getFileInfo();
-        fInfo = ((FileInfoBase[]) (fileInfo.clone()));
 
         for (t = 0; t < tDim; t++) {
 
             for (z = 0; z < zDim; z++) {
                 sliceNumSrcImg = (t * zDim) + z;
-                destImage.setFileInfo(fInfo[sliceNumSrcImg], sliceNumSrcImg);
+                destImage.setFileInfo((FileInfoBase)fileInfo[sliceNumSrcImg].clone(), sliceNumSrcImg);
 
                 // Fix these because they are now 4D
 
