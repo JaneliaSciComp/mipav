@@ -597,7 +597,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 for (int i = 0; i < fileInfoVector.size(); i++) {
                     FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
                     String sliceStudyNo = (String) fileInfoDICOM.getTagTable().getValue("0020,0010");
-
+                    if(sliceStudyNo.length() > 0) {
+	                    char c = sliceStudyNo.charAt(sliceStudyNo.length() - 1);
+	                	if(c == '\0') {
+	                		sliceStudyNo = sliceStudyNo.substring(0, sliceStudyNo.indexOf(c));
+	                	}
+                    }
                     if (sliceStudyNo == null) {
                         sliceStudyNo = "";
                     }
@@ -628,7 +633,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                             if ( (key != null) && columnName.equals("Instance (formerly Image) Number")) {
                                 String instanceNumber = (String) fileInfoDICOM.getTagTable().getValue(key);
-
+                                if(instanceNumber.length() > 0) {
+            	                    char c = instanceNumber.charAt(instanceNumber.length() - 1);
+            	                	if(c == '\0') {
+            	                		instanceNumber = instanceNumber.substring(0, instanceNumber.indexOf(c));
+            	                	}
+                                }
                                 try {
                                     Integer integer = new Integer(Integer.parseInt(instanceNumber.trim()));
                                     newRow.addElement(integer);
@@ -1000,6 +1010,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         outerLoop: for (int i = 0; i < fileInfoVector.size(); i++) {
             FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
             String sliceStudyNo = (String) fileInfoDICOM.getTagTable().getValue("0020,0010");
+            if(sliceStudyNo.length() > 0) {
+                char c = sliceStudyNo.charAt(sliceStudyNo.length() - 1);
+            	if(c == '\0') {
+            		sliceStudyNo = sliceStudyNo.substring(0, sliceStudyNo.indexOf(c));
+            	}
+            }
 
             if (sliceStudyNo == null) {
                 sliceStudyNo = "";
@@ -1009,6 +1025,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 // Series number
                 data = (String) fileInfoDICOM.getTagTable().getValue("0020,0011");
+                if(data != null && data.length() > 0) {
+                    char c = data.charAt(data.length() - 1);
+                	if(c == '\0') {
+                		data = data.substring(0, data.indexOf(c));
+                	}
+                }
 
                 for (int k = 0; k < seriesTableModel.getRowCount(); k++) {
                     String seriesNo = (String) (seriesTableModel.getValueAt(k, 0));
@@ -1026,6 +1048,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 // Series Type (PET) - why ?
                 data = (String) fileInfoDICOM.getTagTable().getValue("0054,1000");
+                if(data != null && data.length() > 0) {
+                    char c = data.charAt(data.length() - 1);
+                	if(c == '\0') {
+                		data = data.substring(0, data.indexOf(c));
+                	}
+                }
 
                 if (data != null) {
                     seriesData[1] = data;
@@ -1044,6 +1072,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 // Modality
                 data = (String) fileInfoDICOM.getTagTable().getValue("0008,0060");
+                if(data != null && data.length() > 0) {
+                    char c = data.charAt(data.length() - 1);
+                	if(c == '\0') {
+                		data = data.substring(0, data.indexOf(c));
+                	}
+                }
 
                 if (data != null) {
                     seriesData[4] = data;
@@ -1053,6 +1087,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 // Series Description
                 data = (String) fileInfoDICOM.getTagTable().getValue("0008,103E");
+                if(data != null && data.length() > 0) {
+                    char c = data.charAt(data.length() - 1);
+                	if(c == '\0') {
+                		data = data.substring(0, data.indexOf(c));
+                	}
+                }
 
                 if (data != null) {
                     seriesData[5] = data;
@@ -1085,7 +1125,19 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         for (int i = 0; i < fileInfoVector.size(); i++) {
             FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
             String ser = (String) fileInfoDICOM.getTagTable().getValue("0020,0011");
+            if(ser != null && ser.length() > 0) {
+                char c = ser.charAt(ser.length() - 1);
+            	if(c == '\0') {
+            		ser = ser.substring(0, ser.indexOf(c));
+            	}
+            }
             String sliceStudyNo = (String) fileInfoDICOM.getTagTable().getValue("0020,0010");
+            if(sliceStudyNo != null && sliceStudyNo.length() > 0) {
+                char c = sliceStudyNo.charAt(sliceStudyNo.length() - 1);
+            	if(c == '\0') {
+            		sliceStudyNo = sliceStudyNo.substring(0, sliceStudyNo.indexOf(c));
+            	}
+            }
 
             if (ser == null) {
                 ser = "";
@@ -1122,6 +1174,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         // Study ID
         data = (String) fileInfo.getTagTable().getValue("0020,0010");
+        if(data != null && data.length() > 0) {
+            char c = data.charAt(data.length() - 1);
+        	if(c == '\0') {
+        		data = data.substring(0, data.indexOf(c));
+        	}
+        }
 
         for (int i = 0; i < studyTableModel.getRowCount(); i++) {
             String studyNo = (String) (studyTableModel.getValueAt(i, 2));
@@ -1135,6 +1193,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         // Patients name
         data = (String) fileInfo.getTagTable().getValue("0010,0010");
+        if(data != null && data.length() > 0) {
+            char c = data.charAt(data.length() - 1);
+        	if(c == '\0') {
+        		data = data.substring(0, data.indexOf(c));
+        	}
+        }
 
         if (data != null) {
             studyData[0] = data;
@@ -1144,6 +1208,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         // Patient ID
         data = (String) fileInfo.getTagTable().getValue("0010,0020");
+        if(data != null && data.length() > 0) {
+            char c = data.charAt(data.length() - 1);
+        	if(c == '\0') {
+        		data = data.substring(0, data.indexOf(c));
+        	}
+        }
 
         if (data != null) {
             studyData[1] = data;
@@ -1153,6 +1223,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         // Study ID
         data = (String) fileInfo.getTagTable().getValue("0020,0010");
+        if(data != null && data.length() > 0) {
+            char c = data.charAt(data.length() - 1);
+        	if(c == '\0') {
+        		data = data.substring(0, data.indexOf(c));
+        	}
+        }
 
         if (data != null) {
             studyData[2] = data;
@@ -1162,6 +1238,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         // Study Date
         data = (String) fileInfo.getTagTable().getValue("0008,0020");
+        if(data != null && data.length() > 0) {
+            char c = data.charAt(data.length() - 1);
+        	if(c == '\0') {
+        		data = data.substring(0, data.indexOf(c));
+        	}
+        }
 
         if (data != null) {
             studyData[3] = data;
@@ -1171,6 +1253,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         // Study Description
         data = (String) fileInfo.getTagTable().getValue("0008,1030");
+        if(data != null && data.length() > 0) {
+            char c = data.charAt(data.length() - 1);
+        	if(c == '\0') {
+        		data = data.substring(0, data.indexOf(c));
+        	}
+        }
 
         if (data != null) {
             studyData[4] = data;
@@ -1667,7 +1755,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                     if (fileInfoDICOM != null) {
                         String imageTableSeriesNumber = (String) fileInfoDICOM.getTagTable().getValue("0020,0011");
-
+                        if(imageTableSeriesNumber.length() > 0) {
+    	                    char c = imageTableSeriesNumber.charAt(imageTableSeriesNumber.length() - 1);
+    	                	if(c == '\0') {
+    	                		imageTableSeriesNumber = imageTableSeriesNumber.substring(0, imageTableSeriesNumber.indexOf(c));
+    	                	}
+                        }
                         if (imageTableSeriesNumber.equals(seriesNumber)) {
                             return;
                         }
