@@ -359,8 +359,8 @@ public class DemonsRegistrationLite {
         } else {
             for (int x=0;x<nfx;x++) for (int y=0;y<nfy;y++) {
                 int xy = x+nfx*y;
-                sn[X][xy] = transform[X][X]*x + transform[X][Y]*y + transform[X][T];
-                sn[Y][xy] = transform[Y][X]*x + transform[Y][Y]*y + transform[Y][T];
+                sn[X][xy] = transform[X][X]*x + transform[X][Y]*y + transform[X][2];
+                sn[Y][xy] = transform[Y][X]*x + transform[Y][Y]*y + transform[Y][2];
             }
         }
         
