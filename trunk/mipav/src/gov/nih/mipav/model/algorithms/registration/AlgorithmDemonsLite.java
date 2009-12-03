@@ -106,6 +106,7 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
     *   Starts the algorithm.
     */
 	public void runAlgorithm() {
+        int nDims;
 
         if (srcImage  == null) {
             displayError("Source Image is null");
@@ -122,9 +123,10 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
 		fireProgressStateChanged(10);
 		
 		// init dimensions
+        nDims = srcImage.getNDims();
 		nix = srcImage.getExtents()[0];
 		niy = srcImage.getExtents()[1];
-        if (srcImage.getNDims() > 2) {
+        if (nDims > 2) {
 		    niz = srcImage.getExtents()[2];
         }
         else {
@@ -133,7 +135,7 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
 
 		ntx = targetImage.getExtents()[0];
 		nty = targetImage.getExtents()[1];
-        if (targetImage.getNDims() > 2) {
+        if (nDims > 2) {
 		    ntz = targetImage.getExtents()[2];
         }
         else {
@@ -163,7 +165,7 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
 		// resolution
 		rix = srcImage.getFileInfo()[0].getResolutions()[0];
 		riy = srcImage.getFileInfo()[0].getResolutions()[1];
-        if (srcImage.getNDims() > 2) {
+        if (nDims > 2) {
 		    riz = srcImage.getFileInfo()[0].getResolutions()[2];
         }
         else {
@@ -172,7 +174,7 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
 		
 		rtx = targetImage.getFileInfo()[0].getResolutions()[0];
 		rty = targetImage.getFileInfo()[0].getResolutions()[1];
-        if (targetImage.getNDims() > 2) {
+        if (nDims > 2) {
 		    rtz = targetImage.getFileInfo()[0].getResolutions()[2];
         }
         else {
@@ -208,9 +210,9 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
 
 				destImage[0].importData(0, algorithm.exportTransformedImage(), true);
 			} else if  (output.equals("transformation_field")) {
-				int[] destExtents = new int[4];
-				for (int n=0;n<3;n++) destExtents[n] = targetImage.getExtents()[n];
-				destExtents[3] = 3;
+				int[] destExtents = new int[nDims+1];
+				for (int n=0;n<nDims;n++) destExtents[n] = targetImage.getExtents()[n];
+				destExtents[nDims] = nDims;
 				
 				// create the output array
 				destImage = new ModelImage[1];
@@ -232,9 +234,9 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
 				destImage[0].importData(0, algorithm.exportTransformedImage(), true);
 				
 				// transformation
-				destExtents = new int[4];
-				for (int n=0;n<3;n++) destExtents[n] = targetImage.getExtents()[n];
-				destExtents[3] = 3;
+				destExtents = new int[nDims+1];
+				for (int n=0;n<nDims;n++) destExtents[n] = targetImage.getExtents()[n];
+				destExtents[nDims] = nDims;
 				
 				destImage[1] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
 														JDialogBase.makeImageName(srcImage.getImageName(), "_DemonsLite_vec"));				
