@@ -205,7 +205,7 @@ public class DemonsRegistrationLite {
     		}
         } // else !do2D
 		isWorking = true;
-		//if (debug) MedicUtil.displayMessage("Demons:initialisation\n");
+		//if (debug) MipavUtil.displayMessage("Demons:initialisation\n");
 	}
 
 	final public void finalize() {
@@ -307,7 +307,7 @@ public class DemonsRegistrationLite {
         rfx = rtx*scale;
         rfy = rty*scale;
 
-        //if (debug) MedicUtil.displayMessage("scale "+(lvl+1)+": \n img ("+nmx+"x"+nmy+"x"+", "+rmx+"|"+rmy+") \n trg ("+nfx+"x"+nfy+"x", "+rfx+"|"+rfy+") \n");
+        //if (debug) MipavUtil.displayMessage("scale "+(lvl+1)+": \n img ("+nmx+"x"+nmy+"x"+", "+rmx+"|"+rmy+") \n trg ("+nfx+"x"+nfy+"x", "+rfx+"|"+rfy+") \n");
                     
     }
 	
@@ -342,7 +342,7 @@ public class DemonsRegistrationLite {
 		rfy = rty*scale;
 		rfz = rtz*scale;
 
-		//if (debug) MedicUtil.displayMessage("scale "+(lvl+1)+": \n img ("+nmx+"x"+nmy+"x"+nmz+", "+rmx+"|"+rmy+"|"+rmz+") \n trg ("+nfx+"x"+nfy+"x"+nfz+", "+rfx+"|"+rfy+"|"+rfz+") \n");
+		//if (debug) MipavUtil.displayMessage("scale "+(lvl+1)+": \n img ("+nmx+"x"+nmy+"x"+nmz+", "+rmx+"|"+rmy+"|"+rmz+") \n trg ("+nfx+"x"+nfy+"x"+nfz+", "+rfx+"|"+rfy+"|"+rfz+") \n");
 					
 	}
     
@@ -448,11 +448,11 @@ public class DemonsRegistrationLite {
 				
 				/* debug
 				if (xyz2>=nfx*nfy*nfz) {
-					MedicUtil.displayMessage("too big: ("+x+","+y+","+z+") -> "+xyz2+" ["+nfx+"|"+nfy+"|"+nfz+"]\n");
+					MipavUtil.displayMessage("too big: ("+x+","+y+","+z+") -> "+xyz2+" ["+nfx+"|"+nfy+"|"+nfz+"]\n");
 					return;
 				}
 				if (xyz>=ntx[lvl+1]*nty[lvl+1]*ntz[lvl+1]) {
-					MedicUtil.displayMessage("too big: ("+x+","+y+","+z+") -> "+xyz+" ["+ntx[lvl+1]+"|"+nty[lvl+1]+"|"+ntz[lvl+1]+"]\n");
+					MipavUtil.displayMessage("too big: ("+x+","+y+","+z+") -> "+xyz+" ["+ntx[lvl+1]+"|"+nty[lvl+1]+"|"+ntz[lvl+1]+"]\n");
 					return;
 				}
 				*/
@@ -521,7 +521,7 @@ public class DemonsRegistrationLite {
      */
     final public void registerImageToTarget2D(int lvl, int iterations) {
         
-        //if (debug) MedicUtil.displayMessage("initialize all parameters \n");
+        //if (debug) MipavUtil.displayMessage("initialize all parameters \n");
         initializeImages2D(lvl);
         initializeTransform2D(lvl);
         
@@ -625,15 +625,15 @@ public class DemonsRegistrationLite {
 	 */
     final public void registerImageToTarget(int lvl, int iterations) {
 		
-		//if (debug) MedicUtil.displayMessage("initialize all parameters \n");
+		//if (debug) MipavUtil.displayMessage("initialize all parameters \n");
         initializeImages(lvl);
 		initializeTransform(lvl);
 		
 		for (int t=0;t<iterations;t++) {
 			
-			//if (debug) MedicUtil.displayMessage("iteration "+(t+1)+"\n");
+			//if (debug) MipavUtil.displayMessage("iteration "+(t+1)+"\n");
 			
-			//if (debug) MedicUtil.displayMessage("update: ");
+			//if (debug) MipavUtil.displayMessage("update: ");
 			
 			float maxU = 0.0f;
 			for (int x=1;x<nfx-1;x++) for (int y=1;y<nfy-1;y++) for (int z=1;z<nfz-1;z++) {
@@ -700,10 +700,10 @@ public class DemonsRegistrationLite {
 				
 				//maxU = Math.max(maxU, u[X][xyz]*u[X][xyz]+u[Y][xyz]*u[Y][xyz]+u[Z][xyz]*u[Z][xyz]);
 			}
-			//if (debug) MedicUtil.displayMessage(""+maxU+"\n");
+			//if (debug) MipavUtil.displayMessage(""+maxU+"\n");
 			
 			if (regType==FLUID) {
-				//if (debug) MedicUtil.displayMessage("fluid regularization \n");
+				//if (debug) MipavUtil.displayMessage("fluid regularization \n");
 			
 				// smooth the result with a gaussian kernel
 				u[X] = separableConvolution(u[X],nfx,nfy,nfz,gaussKernel,kx,ky,kz);
@@ -750,7 +750,7 @@ public class DemonsRegistrationLite {
 	public final void runGaussianPyramid() {        
         // going down to 0
 		for (int l=levels-1;l>=0;l--) {
-			//if (debug) MedicUtil.displayMessage("gaussian pyramid : level"+(l+1)+"\n");
+			//if (debug) MipavUtil.displayMessage("gaussian pyramid : level"+(l+1)+"\n");
             if (do2D) {
                 registerImageToTarget2D(l,Niter);
             }
@@ -828,8 +828,8 @@ public class DemonsRegistrationLite {
         kx = (int)Math.ceil(Math.max(3.0f*sx-0.5f,0.0f));
         ky = (int)Math.ceil(Math.max(3.0f*sy-0.5f,0.0f));
         
-        //MedicUtil.displayMessage("kernel size: "+kx+"x"+ky+"x"+kz+"\n");
-        //MedicUtil.displayMessage("scale: "+sx+"x"+sy+"x"+sz+"\n");
+        //MipavUtil.displayMessage("kernel size: "+kx+"x"+ky+"x"+kz+"\n");
+        //MipavUtil.displayMessage("scale: "+sx+"x"+sy+"x"+sz+"\n");
         // create the kernel
         float[][] kernel = new float[2][];
         kernel[0] = new float[2*kx+1]; 
@@ -838,7 +838,7 @@ public class DemonsRegistrationLite {
         sum = 0.0f;
         for (int i=-kx;i<=kx;i++) {
             kernel[0][kx+i] = (float)Math.exp( - 0.5f*(i*i)/(sx*sx) );
-            //MedicUtil.displayMessage("exp("+( - 0.5f*(i*i)/(sx*sx) )+") = "+kernel[0][kx+i]+"\n");
+            //MipavUtil.displayMessage("exp("+( - 0.5f*(i*i)/(sx*sx) )+") = "+kernel[0][kx+i]+"\n");
             sum += kernel[0][kx+i];
         }
         for (int i=-kx;i<=kx;i++) kernel[0][kx+i] /= sum;
@@ -862,8 +862,8 @@ public class DemonsRegistrationLite {
 		ky = (int)Math.ceil(Math.max(3.0f*sy-0.5f,0.0f));
 		kz = (int)Math.ceil(Math.max(3.0f*sz-0.5f,0.0f));
 		
-		//MedicUtil.displayMessage("kernel size: "+kx+"x"+ky+"x"+kz+"\n");
-		//MedicUtil.displayMessage("scale: "+sx+"x"+sy+"x"+sz+"\n");
+		//MipavUtil.displayMessage("kernel size: "+kx+"x"+ky+"x"+kz+"\n");
+		//MipavUtil.displayMessage("scale: "+sx+"x"+sy+"x"+sz+"\n");
 		// create the kernel
 		float[][] kernel = new float[3][];
 		kernel[0] = new float[2*kx+1]; 
@@ -873,7 +873,7 @@ public class DemonsRegistrationLite {
 		sum = 0.0f;
 		for (int i=-kx;i<=kx;i++) {
 			kernel[0][kx+i] = (float)Math.exp( - 0.5f*(i*i)/(sx*sx) );
-			//MedicUtil.displayMessage("exp("+( - 0.5f*(i*i)/(sx*sx) )+") = "+kernel[0][kx+i]+"\n");
+			//MipavUtil.displayMessage("exp("+( - 0.5f*(i*i)/(sx*sx) )+") = "+kernel[0][kx+i]+"\n");
 			sum += kernel[0][kx+i];
 		}
 		for (int i=-kx;i<=kx;i++) kernel[0][kx+i] /= sum;
