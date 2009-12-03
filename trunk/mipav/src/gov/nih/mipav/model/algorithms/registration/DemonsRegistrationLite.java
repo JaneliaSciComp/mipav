@@ -901,7 +901,7 @@ public class DemonsRegistrationLite {
     private float[] subsample(float[] image, int nx, int ny, int factor) {
         int nsx,nsy;
         float[] sub;
-        float scale = factor*factor*factor;
+        float scale = factor*factor;
         
         nsx = (int)Math.floor(nx/(float)factor);
         nsy = (int)Math.floor(ny/(float)factor);
