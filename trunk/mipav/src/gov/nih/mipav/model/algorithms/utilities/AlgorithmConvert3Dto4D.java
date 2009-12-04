@@ -199,23 +199,60 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
         
         int sliceNumSrcImg;
         float zStartLoc;
-        FileInfoBase fInfo;
+        FileInfoBase destFileInfo[] = null;
         float[] resols = new float[4];
         int[] units = new int[4];
         float[] startLocs = new float[4];
+        int numInfos = zDim * tDim;
+        FileInfoDicom oldDicomInfo = null;
+        FileDicomTagTable[] childTagTables = null;
+        int i;
         
 
         fileInfo = srcImage.getFileInfo();
+        if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+            destFileInfo = new FileInfoBase[numInfos];
+            oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
+            childTagTables = new FileDicomTagTable[numInfos - 1];
+            for (t = 0; t < tDim; t++) {
+
+                for (z = 0; z < zDim; z++) {
+                   i = (t * zDim) + z;
+                   if (i == 0) {
+
+                       // create a new reference file info
+                       destFileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                       oldDicomInfo.getFileFormat());
+                       ((FileInfoDicom)destFileInfo[0]).vr_type = oldDicomInfo.vr_type;
+                   } else {
+
+                       // all other slices are children of the first file info..
+                       destFileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                       oldDicomInfo.getFileFormat(), (FileInfoDicom) destFileInfo[0]);
+                       
+                       ((FileInfoDicom)destFileInfo[i]).vr_type = oldDicomInfo.vr_type;
+                       childTagTables[i - 1] = ((FileInfoDicom) destFileInfo[i]).getTagTable();
+                   }
+                   ((FileInfoDicom) destFileInfo[i]).getTagTable().importTags((FileInfoDicom) fileInfo[i]);
+                }
+            }
+            ((FileInfoDicom) destFileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+        } // if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM)
 
         for (t = 0; t < tDim; t++) {
 
             for (z = 0; z < zDim; z++) {
                 sliceNumSrcImg = (t * zDim) + z;
-                destImage.setFileInfo((FileInfoBase)fileInfo[sliceNumSrcImg].clone(), sliceNumSrcImg);
+                if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
+                    destImage.setFileInfo(destFileInfo[sliceNumSrcImg], sliceNumSrcImg);
+                }
+                else {
+                    destImage.setFileInfo((FileInfoBase)fileInfo[sliceNumSrcImg].clone(), sliceNumSrcImg);
+                }
 
                 // Fix these because they are now 4D
 
-                for (int i = 0; i < 2; i++) {
+                for (i = 0; i < 2; i++) {
                     resols[i] = destImage.getFileInfo(0).getResolutions()[i];
                     units[i] = destImage.getFileInfo(0).getUnitsOfMeasure()[i];
                     startLocs[i] = destImage.getFileInfo(0).getOrigin(i);
