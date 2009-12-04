@@ -57,6 +57,9 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
 	
 	private boolean		verbose = true;
 	private     boolean		debug = true;
+    // Test images for 2D registration
+    private ModelImage circleImage;
+    private ModelImage cImage;
 	
     /**
     *	Constructor for 3D images in which changes are placed in a predetermined destination image.
@@ -107,6 +110,12 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
     */
 	public void runAlgorithm() {
         int nDims;
+        boolean testImages = false;
+        
+        if (testImages) {
+            generateTestImages();
+            return;
+        }
 
         if (srcImage  == null) {
             displayError("Source Image is null");
@@ -268,5 +277,71 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
        // compute the elapsed time
         computeElapsedTime();
     } // end runAlgorithm()
+    
+    /**
+     * A test of the diffeomorphic demons is to transform a circle image to a letter C image.
+     *
+     */
+    public void generateTestImages() {
+        int x, y;
+        int xDist;
+        int yDist;
+        int yDistSquared;
+        int radius = 128;
+        int yoff;
+        int radiusSquared = radius * radius;
+        int extents[] = new int[2];
+        int innerRad = 64;
+        int innerRadSquared = innerRad * innerRad;
+        int halfCOpen = (int)Math.round(innerRad/2.5);
+        extents[0] = 512;
+        extents[1] = 512;
+        int sliceSize = extents[0] * extents[1];
+        float buffer[] = new float[sliceSize];
+        for (y = 0; y < extents[1]; y ++) {
+            yoff = y * extents[0];
+            yDist = y - 256;
+            yDistSquared = yDist * yDist;
+            for (x = 0; x < extents[0]; x++) {
+                xDist = x - 256;
+                if ((xDist*xDist + yDistSquared) <= radiusSquared) {
+                    buffer[x + yoff] = 100.0f;
+                }
+            }
+        }
+        circleImage = new ModelImage(ModelStorageBase.FLOAT, extents, "circleImage");
+        try {
+            circleImage.importData(0, buffer, true);
+        }
+        catch (IOException e) {
+            displayError("IOException on circleImage.importData");
+            return;
+        }
+        new ViewJFrameImage(circleImage);
+        for (y = 0; y < extents[1]; y ++) {
+            yoff = y * extents[0];
+            yDist = y - 256;
+            yDistSquared = yDist * yDist;
+            for (x = 0; x < extents[0]; x++) {
+                xDist = x - 256;
+                if ((xDist*xDist + yDistSquared) <= innerRadSquared) {
+                    buffer[x + yoff] = 0.0f;
+                }
+                else if ((x > 256) && (Math.abs(y - 256) < halfCOpen)) {
+                    buffer[x + yoff] = 0.0f;
+                }
+            }
+        }
+        cImage = new ModelImage(ModelStorageBase.FLOAT, extents, "cImage");
+        try {
+            cImage.importData(0, buffer, true);
+        }
+        catch (IOException e) {
+            displayError("IOException on cImage.importData");
+            return;
+        }
+        new ViewJFrameImage(cImage);
+        return;
+    } // public void generateTestImages
 
 }
