@@ -163,6 +163,10 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         pack();
         MipavUtil.centerOnScreen(this);
         setVisible(true);
+        if (studyTableModel.getRowCount() == 0) {
+        	MipavUtil.displayError("No DICOM images were found in the directory");
+        	return;
+        }
     }
 
     // ~ Methods
@@ -213,6 +217,13 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 // first we pares the directories and populate the fileInfoVecot list
                 parse(node.getFile());
+                
+                if(this.isVisible()) {
+	                if (studyTableModel.getRowCount() == 0) {
+	                	MipavUtil.displayError("No DICOM images were found in the directory");
+	                	return;
+	                }
+                }
 
                 // if there is 1 row in study table, populate the series table
                 if (studyTableModel.getRowCount() == 1) {
