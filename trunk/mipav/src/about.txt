@@ -36,7 +36,6 @@ Current MIPAV contributors:
      Alexandra Bokinsky, Ph.D., Geometric Software
      Ruida Cheng, ISL, NIH
      William Gandler, ISL, NIH
-     Paul Hemler, Ph.D., Hampden-Sydney College
      Evan McCreedy, ISL, NIH
      Nish Pandya, SSAI
      Justin Senseney, ISL, NIH
