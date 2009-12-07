@@ -12,6 +12,13 @@ import java.util.Vector;
  * @author mccreedy
  */
 public abstract class PlugInBundle implements PlugIn {
+    
+    // ~ Static fields/initializers ------------------------------------------------------------------
+    
+    public static final String[] CATEGORY = {"Bundle"};
+    
+    //~ Methods --------------------------------------------------------------------------------------------------------
+    
     /**
      * Subclasses should override this method to return the list of plugins that they encompass.
      * 
@@ -21,5 +28,10 @@ public abstract class PlugInBundle implements PlugIn {
         return new Vector<BundledPlugInInfo>();
     }
 
+    /**
+     * Runs the plugin whose name is given by the location in the vector returned by <code>getBundledPlugIns()</code>.
+     * 
+     * @param pluginIndex the index of the vector returned by <code>getBundledPlugIns()</code>
+     */
     public abstract void run(int pluginIndex);
 }
