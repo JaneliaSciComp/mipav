@@ -280,6 +280,10 @@ public class FileTypeTable {
         
         FILE_EXT_TABLE.put(".jp2", FileUtility.JP2);
         FILE_EXT_TABLE.put(".JP2", FileUtility.JP2);
+        
+        FILE_TYPE_TABLE.put(FileUtility.ZVI, new FileTypeInfo("ZVI", ".zvi"));
+        FILE_EXT_TABLE.put(".zvi", FileUtility.ZVI);
+        FILE_EXT_TABLE.put(".ZVI", FileUtility.ZVI);
     }
 
     /**
