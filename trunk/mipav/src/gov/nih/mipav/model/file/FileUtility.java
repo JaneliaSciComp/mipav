@@ -242,6 +242,9 @@ public class FileUtility {
     /** Extension: .hdr for header, .img for data */
     public static final int SIEMENSTEXT = 67;
     
+    /** Zeiss ZVI has extension .zvi */
+    public static final int ZVI = 68;
+    
     public static final int JP2 = 100;
     
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi", "biorad", "bmp", "bruker", "cheshire",
@@ -250,7 +253,7 @@ public class FileUtility {
     	"Megnatom vision multifile", "map", "medivision", "mgh", "micro cat", "minc", "mipav", "mrc", "nifti", "nifti multifile",
     	"nrrd", "osm", "pcx", "pic", "pict", "png", "project", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml", "tga",
     	"tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "surfaceref xml", "minc hdf", 
-    	"liff", "bfloat", "jp2"};
+    	"liff", "bfloat", "siemens text", "zvi", "jp2"};
 
 
     
