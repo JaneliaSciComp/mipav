@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.plugins.BundledPlugInInfo;
 import gov.nih.mipav.plugins.PlugInGeneric;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -30,7 +31,17 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 */
 
-public class PlugInDESPOT1_MIPAV implements PlugInGeneric {
+public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
+
+    public static final String[] CATEGORY = {"DESPOT"};
+    
+    public String[] getCategory() {
+        return CATEGORY;
+    }
+
+    public String getName() {
+        return "Despot1";
+    }
 
     static String title = "DESPOT1 T1 Mapper";
 	double despotTR = 5.00;
