@@ -197,7 +197,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Retinal Registration v1.2");
+        setTitle("Drosophila Retinal Registration v1.3");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
 
@@ -254,7 +254,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         doAverageRadio.setSelected(true);
         processGroup.add(doAverageRadio);
         processGroup.add(doSqRtRadio);
-        processGroup.add(doClosestZRadio);
+        //processGroup.add(doClosestZRadio);
         
         interpGroup = new ButtonGroup();
         doTrilinearRadio = new JRadioButton("Trilinear");
@@ -299,8 +299,8 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         processPanel.add(doAverageRadio,gbc);
         gbc.gridy = 1;
         processPanel.add(doSqRtRadio,gbc);
-        gbc.gridy = 2;
-        processPanel.add(doClosestZRadio,gbc);
+        //gbc.gridy = 2;
+        //processPanel.add(doClosestZRadio,gbc);
         gbc.gridy = 0;
         interpPanel.add(doTrilinearRadio,gbc);
         gbc.gridy = 1;
@@ -455,8 +455,8 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 			ignoreBGRadio.setEnabled(true);
 			includeBGRadio.setEnabled(true);
 		}else if (command.equalsIgnoreCase("sqrRt")) { 
-			ignoreBGRadio.setEnabled(false);
-			includeBGRadio.setEnabled(false);
+			ignoreBGRadio.setEnabled(true);
+			includeBGRadio.setEnabled(true);
 		}else if (command.equalsIgnoreCase("closestZ")) { 
 			ignoreBGRadio.setEnabled(false);
 			includeBGRadio.setEnabled(false);
@@ -1057,7 +1057,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 							 byte avgR, avgG, avgB;
 							 
 							 if(doAverageRadio.isSelected()) {
-								 //dont do averaging if other point is all background
+								 //dont do combining if other point is all background
 								 if(ignoreBGRadio.isSelected()) {
 									 if(rgb1_short[0] == 0 && rgb1_short[1] == 0 && rgb1_short[2] == 0) {
 										 avgR = (byte)rgb2_short[0];
@@ -1080,10 +1080,28 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 									 avgB = (byte)Math.round(((rgb1_short[2] + rgb2_short[2])/2.0f));
 								 }
 							 }else {
-								 //doing Sqrt (Intensity X * Intensity Y)
-								 avgR = (byte)Math.sqrt(rgb1_short[0] * rgb2_short[0]);
-								 avgG = (byte)Math.sqrt(rgb1_short[1] * rgb2_short[1]);
-								 avgB = (byte)Math.sqrt(rgb1_short[2] * rgb2_short[2]); 
+								//dont do combining if other point is all background
+								 if(ignoreBGRadio.isSelected()) {
+									 if(rgb1_short[0] == 0 && rgb1_short[1] == 0 && rgb1_short[2] == 0) {
+										 avgR = (byte)rgb2_short[0];
+										 avgG = (byte)rgb2_short[1];
+										 avgB = (byte)rgb2_short[2];
+									 }else if (rgb2_short[0] == 0 && rgb2_short[1] == 0 && rgb2_short[2] == 0) {
+										 avgR = (byte)rgb1_short[0];
+										 avgG = (byte)rgb1_short[1];
+										 avgB = (byte)rgb1_short[2];
+									 }else {
+										//doing Sqrt (Intensity X * Intensity Y)
+										 avgR = (byte)Math.sqrt(rgb1_short[0] * rgb2_short[0]);
+										 avgG = (byte)Math.sqrt(rgb1_short[1] * rgb2_short[1]);
+										 avgB = (byte)Math.sqrt(rgb1_short[2] * rgb2_short[2]); 
+									 }
+								 }else {
+									//doing Sqrt (Intensity X * Intensity Y)
+									 avgR = (byte)Math.sqrt(rgb1_short[0] * rgb2_short[0]);
+									 avgG = (byte)Math.sqrt(rgb1_short[1] * rgb2_short[1]);
+									 avgB = (byte)Math.sqrt(rgb1_short[2] * rgb2_short[2]); 
+								 }
 							 }
 							 
 
@@ -1344,27 +1362,27 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		BufferedWriter bw;
 		FileWriter fw;
 		try {
-	    	File outputFile = new File(parentDir + outputFilename);
+	    	File outputFile = new File(parentDir + File.separator + outputFilename);
 	        fw = new FileWriter(outputFile);
 	        bw = new BufferedWriter(fw);
 	        bw.write("imageH:" + imageXFilePathTextField.getText());
 	        bw.newLine();
-	        bw.write("imageY:" + imageXFilePathTextField.getText());
+	        bw.write("imageF:" + imageYFilePathTextField.getText());
 	        bw.newLine();
-	        bw.write("transformation1:" + transform1FilePathTextField.getText());
+	        bw.write("trans1:" + transform1FilePathTextField.getText());
 	        bw.newLine();
-	        bw.write("transformation2:" + transform2FilePathTextField.getText());
+	        bw.write("trans2:" + transform2FilePathTextField.getText());
 	        bw.newLine();
-	        bw.write("transformation3:" + transform3FilePathTextField.getText());
+	        bw.write("trans3:" + transform3FilePathTextField.getText());
 	        bw.newLine();
 	        if(doAverageRadio.isSelected()) {
 	        	if(ignoreBGRadio.isSelected()) {
-	        		bw.write("doAverage:ignore");
+	        		bw.write("average:ignore");
 	        	}else {
-	        		bw.write("doAverage:include");
+	        		bw.write("average:include");
 	        	}
 	        }else if(doSqRtRadio.isSelected()) {
-	        	bw.write("doSqrRt");
+	        	bw.write("sqrRt");
 	        }else {
 	        	bw.write("closestZ");
 	        }
@@ -1376,7 +1394,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	        }
 	        bw.newLine();
 	        if(doRescaleRadio.isSelected()) {
-	        	bw.write("rescale");
+	        	bw.write("rescale:" + slopeR + ":" + bR + ":" + slopeG + ":" + bG + ":" + slopeB + ":" + bB);
 	        }else {
 	        	bw.write("noRescale");
 	        }
@@ -1568,7 +1586,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 	 * reads the transform file
 	 * @param transformFile
 	 */
-	private void readTransform1(File transformFile) {
+	private void readTransform1(File transform1File) {
 		try {
             RandomAccessFile raFile = new RandomAccessFile(transform1File, "r");
             String[] arr;
