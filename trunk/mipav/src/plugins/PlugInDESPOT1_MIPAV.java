@@ -35,14 +35,6 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 
     public static final String[] CATEGORY = {"DESPOT"};
     
-    public String[] getCategory() {
-        return CATEGORY;
-    }
-
-    public String getName() {
-        return "Despot1";
-    }
-
     static String title = "DESPOT1 T1 Mapper";
 	double despotTR = 5.00;
 	double irspgrTR = 5.00;
@@ -100,6 +92,14 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     
     String[] wList;
     private String[] titles;
+
+    public String[] getCategory() {
+        return CATEGORY;
+    }
+
+    public String getName() {
+        return "Despot1";
+    }
 
     public void run() {
     	Enumeration<String> imageEnum = ViewUserInterface.getReference().getRegisteredImageNames();
