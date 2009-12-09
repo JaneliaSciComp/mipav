@@ -41,14 +41,6 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 	
     public static final String[] CATEGORY = {"DESPOT"};
     
-    public String[] getCategory() {
-        return CATEGORY;
-    }
-
-    public String getName() {
-        return "Despot1";
-    }
-    
     static String title = "DESPOT2 T2 Mapper";
     static double despotTR = 5.00;
 	static double maxT2 = 1000;
@@ -98,6 +90,14 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     String[] wList;
     private String[] titles;
 	
+    public String[] getCategory() {
+        return CATEGORY;
+    }
+
+    public String getName() {
+        return "Despot1";
+    }
+
     public void run() {
     	System.out.println("This is the plugin result");
     	

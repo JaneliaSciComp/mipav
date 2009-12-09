@@ -1008,8 +1008,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     final String[] hier = (String[]) catField.get(plugin);
                     final Class<?>[] interList = plugin.getInterfaces();
                     String interName = new String();
+                    
+                    //find the interface name that determines the type of plugin
                     for (final Class<?> element : interList) {
-                        if (element.getName().contains("PlugIn")) {
+                        if (element.getName().contains("PlugIn") && !element.getName().contains("BundledPlugInInfo")) {
                             interName = element.getName().substring(element.getName().indexOf("PlugIn"));
                         }
                     }
