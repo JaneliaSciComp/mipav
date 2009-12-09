@@ -418,11 +418,11 @@ public class FileZVI extends FileBase {
                 Preferences.debug("dptProptType = " + dptPropType + " instead of the expected 0\n");
             }
             
-            int directorySector = 2;
-            while (directorySector < 33) {
+            int directoryEntry = 2;
+            while (directoryEntry < 33) {
             //while (childSID != directorySector) {
-                Preferences.debug("\nReading element " + directorySector + " of the directory array\n");
-                directorySector++;
+                Preferences.debug("\nReading element " + directoryEntry + " of the directory array\n");
+                directoryEntry++;
                 directoryStart = directoryStart + 128;
                 raFile.seek(directoryStart+64);
                 // Read the length of the element name in bytes.  Each Unicode character is 2 bytes
