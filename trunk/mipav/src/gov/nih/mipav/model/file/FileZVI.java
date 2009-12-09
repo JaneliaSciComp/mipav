@@ -11,6 +11,26 @@ import gov.nih.mipav.view.*;
  */
 
 public class FileZVI extends FileBase {
+    
+    private static final short VT_EMPTY = 0;
+    
+    private static final short VT_BOOL = 11;
+    
+    private static final short VT_UI2 = 18;
+    
+    private static final short VT_I4 = 3;
+    
+    private static final short VT_R8 = 5;
+    
+    private static final short VT_BSTR = 8;
+    
+    private static final short VT_STORED_OBJECT = 69;
+    
+    private static final short VT_DATE = 7;
+    
+    private static final short VT_DISPATCH = 9;
+    
+    private static final short VT_UNKNOWN = 13;
    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -41,6 +61,8 @@ public class FileZVI extends FileBase {
 
     /** DOCUMENT ME! */
     private ModelLUT LUT = null;
+    
+    boolean endianess;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -123,8 +145,15 @@ public class FileZVI extends FileBase {
      */
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         long fileLength;
-        boolean endianess;
         int i, j, k;
+        long contentsStartSect = 0;
+        long contentsStreamSize = 0;
+        long bytesToRead;
+        int dataType;
+        long contentsStart;
+        int startSect;
+        long streamSize;
+        long rootStart;
         
         try {
             
@@ -199,12 +228,12 @@ public class FileZVI extends FileBase {
             else {
                 Preferences.debug("Reserved2 = " + reserved2 + " instead of the expected zero\n");
             }
-            // Location 44 Length 4 bytes Number of sectors in the FAT chain
+            // Location 44 Length 4 bytes Number of sectors used for the sector allocation table
             long fatSectorNumber = getUInt(endianess);
-            Preferences.debug("Number of sectors in the FAT chain = " + fatSectorNumber + "\n");
+            Preferences.debug("Number of sectors used for the sector allocation table = " + fatSectorNumber + "\n");
             // Location 48 Length 4 bytes First sector in the directory chain
-            long directoryStartSector = getUInt(endianess);
-            if (directoryStartSector == 0xFFFFFFFEL) {
+            int directoryStartSector = readInt(endianess);
+            if (directoryStartSector == -2) {
                 Preferences.debug("First sector in the directory chain = END OF CHAIN\n");
             }
             else {
@@ -220,35 +249,48 @@ public class FileZVI extends FileBase {
                 Preferences.debug("The transactioning signature = " + signature + " instead of the expected zero\n");
             }
             // Location 56 Length 4 bytes Maximum size for mini-streams
+            // Streams with an actual size smaller than (and not equal to) this value are stored as mini-streams.
             long miniSectorCutoff = getUInt(endianess);
             Preferences.debug("The maximum byte size for mini-streams = " + miniSectorCutoff + "\n");
-            // Location 60 Length 4 bytes First sector in the mini-FAT chain
-            long miniFatStartSector = getUInt(endianess);
-            if (miniFatStartSector == 0xFFFFFFFEL) {
-                Preferences.debug("The first sector in the min-FAT chain = END OF CHAIN\n");    
+            // Location 60 Length 4 bytes First sector in the short sector allocation table
+            int shortStartSector = readInt(endianess);
+            if (shortStartSector == -2) {
+                Preferences.debug("The first sector in the short sector allocation table = END OF CHAIN\n");    
             }
             else {
-                Preferences.debug("The first sector in the mini-FAT chain = " + miniFatStartSector + "\n");
+                Preferences.debug("The first sector in the short sector allocation table = " + shortStartSector + "\n");
             }
-            // Location 64 Length 4 bytes Number of sectors in the mini-FAT chain
-            long miniFatSectors = getUInt(endianess);
-            Preferences.debug("Number of sectors in the mini-FAT chain = " + miniFatSectors + "\n");
-            // Location 68 Length 4 bytes First sector in the DIF chain
-            long difStartSector = getUInt(endianess);
-            if (difStartSector == 0xFFFFFFFEL) {
-                Preferences.debug("First sector in the DIF chain = END OF CHAIN\n");
+            // Location 64 Length 4 bytes Number of sectors in the short sector allocation table
+            long shortSectors = getUInt(endianess);
+            Preferences.debug("Number of sectors in the short sector allocation table = " + shortSectors + "\n");
+            // Location 68 Length 4 bytes First sector of the master sector allocation table
+            // End of chain if no additional sectors used.
+            int difStartSector = readInt(endianess);
+            if (difStartSector == -2) {
+                Preferences.debug("First sector of the master sector allocation table = END OF CHAIN\n");
             }
             else {
-                Preferences.debug("First sector in the DIF chain = " + difStartSector + "\n");
+                Preferences.debug("First sector of the master sector allocation table = " + difStartSector + "\n");
             }
-            // Location 72 Length 4 bytes Number of sectors in the DIF chain
+            // Location 72 Length 4 bytes Number of sectors used for the master sector allocation table
             long difSectors = getUInt(endianess);
-            Preferences.debug("The number of sectors in the DIF chain = " + difSectors + "\n");
-            // Location 76 Length 4*109 = 436 bytes Sectors of the first 109 FAT sectors
-            long fatSectors[] = new long[(int)Math.min(fatSectorNumber,109)];
-            for (i = 0; i < fatSectorNumber; i++) {
-                fatSectors[i] = getUInt(endianess);
-                Preferences.debug("FAT Sector " + (i + 1) + " = " + fatSectors[i] + "\n");
+            Preferences.debug("The number of sectors used for the master sector allocation table = " + difSectors + "\n");
+            // Location 76 Length 4*109 = 436 bytes First part of the master sector allocation table
+            // containing 109 FAT secIDs.
+            int fatSectors[] = new int[(int)Math.min(fatSectorNumber,109)];
+            for (i = 0; i < Math.min(fatSectorNumber,109); i++) {
+                fatSectors[i] = readInt(endianess);
+                Preferences.debug("FAT Sector " + i + " = " + fatSectors[i] + "\n");
+            }
+            
+            // Read short sector allocation table
+            Preferences.debug("\nReading the short sector allocation table\n");
+            long shortSectorTableAddress = (shortStartSector+1)*sectorSize;
+            raFile.seek(shortSectorTableAddress);
+            int shortSectorTable[] = new int[(int)shortSectors];
+            for (i = 0; i < shortSectors; i++) {
+                shortSectorTable[i] = readInt(endianess);
+                Preferences.debug("shortSectorTable[" + i + "] = " + shortSectorTable[i] + "\n");
             }
             
             // Read the first sector of the directory chain (also referred to as the first element of the 
@@ -310,24 +352,24 @@ public class FileZVI extends FileBase {
                 Preferences.debug("Node has illegal color value = " + color[0] + "\n");
             }
             // offset 68 length 4 bytes SID of the left sibling of this entry in the directory tree
-            long leftSID = getUInt(endianess);
-            if (leftSID == 0xFFFFFFFFL) {
+            int leftSID = readInt(endianess);
+            if (leftSID == -1) {
                 Preferences.debug("No left sibling for this entry\n");
             }
             else {
                 Preferences.debug("The SID of the left sibling of this entry in the directory tree = " + leftSID + "\n");
             }
             // offset 72 length 4 bytes SID of the right sibling of this entry in the directory tree
-            long rightSID = getUInt(endianess);
-            if (rightSID == 0xFFFFFFFFL) {
+            int rightSID = readInt(endianess);
+            if (rightSID == -1) {
                 Preferences.debug("No right sibling for this entry\n");
             }
             else {
                 Preferences.debug("The SID of the right sibling of this entry in the directory tree = " + rightSID + "\n");
             }
             // offset 76 length 4 bytes SID of the child of this entry in the directory tree
-            long childSID = getUInt(endianess);
-            if (childSID == 0xFFFFFFFFL) {
+            int childSID = readInt(endianess);
+            if (childSID == -1) {
                 Preferences.debug("No child for this entry\n");
             }
             else {
@@ -356,16 +398,16 @@ public class FileZVI extends FileBase {
                 Preferences.debug("Modification time stamp = " + modificationTimeStamp + "\n");
             }
             // offset 116 length 4 bytes starting sector of the stream
-            long startSect = getUInt(endianess);
+            int rootStartSect = readInt(endianess);
             // Offset 120 length 4 bytes Size of the stream in byes
-            long streamSize = getUInt(endianess);
-            if (streamSize <= miniSectorCutoff) {
-                Preferences.debug("Starting sector of the ministream = " + startSect + "\n");
-                Preferences.debug("Size of the ministream in bytes = " + streamSize + "\n");
+            long rootStreamSize = getUInt(endianess);
+            if (rootStreamSize < miniSectorCutoff) {
+                Preferences.debug("Starting sector of the ministream = " + rootStartSect + "\n");
+                Preferences.debug("Size of the ministream in bytes = " + rootStreamSize + "\n");
             }
             else {
-                Preferences.debug("Starting sector of the ministream = " + startSect + "\n");
-                Preferences.debug("Size of the ministream in bytes = " + streamSize + "\n");    
+                Preferences.debug("Starting sector of the stream = " + rootStartSect + "\n");
+                Preferences.debug("Size of the stream in bytes = " + rootStreamSize + "\n");    
             }
             // Offset 124 length 2 bytes dptPropType Reserved for future use.  Must be zero
             int dptPropType = getUnsignedShort(endianess);
@@ -377,7 +419,8 @@ public class FileZVI extends FileBase {
             }
             
             int directorySector = 2;
-            while (childSID != 0xFFFFFFFFL) {
+            while (directorySector < 33) {
+            //while (childSID != directorySector) {
                 Preferences.debug("\nReading element " + directorySector + " of the directory array\n");
                 directorySector++;
                 directoryStart = directoryStart + 128;
@@ -427,24 +470,24 @@ public class FileZVI extends FileBase {
                     Preferences.debug("Node has illegal color value = " + color[0] + "\n");
                 }
                 // offset 68 length 4 bytes SID of the left sibling of this entry in the directory tree
-                leftSID = getUInt(endianess);
-                if (leftSID == 0xFFFFFFFFL) {
+                leftSID = readInt(endianess);
+                if (leftSID == -1) {
                     Preferences.debug("No left sibling for this entry\n");
                 }
                 else {
                     Preferences.debug("The SID of the left sibling of this entry in the directory tree = " + leftSID + "\n");
                 }
                 // offset 72 length 4 bytes SID of the right sibling of this entry in the directory tree
-                rightSID = getUInt(endianess);
-                if (rightSID == 0xFFFFFFFFL) {
+                rightSID = readInt(endianess);
+                if (rightSID == -1) {
                     Preferences.debug("No right sibling for this entry\n");
                 }
                 else {
                     Preferences.debug("The SID of the right sibling of this entry in the directory tree = " + rightSID + "\n");
                 }
                 // offset 76 length 4 bytes SID of the child of this entry in the directory tree
-                childSID = getUInt(endianess);
-                if (childSID == 0xFFFFFFFFL) {
+                childSID = readInt(endianess);
+                if (childSID == -1) {
                     Preferences.debug("No child for this entry\n");
                 }
                 else {
@@ -473,7 +516,7 @@ public class FileZVI extends FileBase {
                     Preferences.debug("Modification time stamp = " + modificationTimeStamp + "\n");
                 }
                 // offset 116 length 4 bytes starting sector of the stream
-                startSect = getUInt(endianess);
+                startSect = readInt(endianess);
                 // Offset 120 length 4 bytes Size of the stream in byes
                 streamSize = getUInt(endianess);
                 if (streamSize <= miniSectorCutoff) {
@@ -481,8 +524,8 @@ public class FileZVI extends FileBase {
                     Preferences.debug("Size of the ministream in bytes = " + streamSize + "\n");
                 }
                 else {
-                    Preferences.debug("Starting sector of the ministream = " + startSect + "\n");
-                    Preferences.debug("Size of the ministream in bytes = " + streamSize + "\n");    
+                    Preferences.debug("Starting sector of the stream = " + startSect + "\n");
+                    Preferences.debug("Size of the stream in bytes = " + streamSize + "\n");    
                 }
                 // Offset 124 length 2 bytes dptPropType Reserved for future use.  Must be zero
                 dptPropType = getUnsignedShort(endianess);
@@ -492,7 +535,36 @@ public class FileZVI extends FileBase {
                 else {
                     Preferences.debug("dptProptType = " + dptPropType + " instead of the expected 0\n");
                 }
-            }
+                
+                if ((elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize > 0)) {
+                    contentsStartSect = startSect;
+                    contentsStreamSize = streamSize;
+                }
+            } // while (childSID != -2)
+            
+            if (rootStreamSize > 0) {
+                if (rootStreamSize < miniSectorCutoff) {
+                    rootStart = rootStartSect*miniSectorSize;   
+                }
+                else {
+                    rootStart = (rootStartSect+1)*sectorSize;
+                }
+                Preferences.debug("rootStart = " + rootStart + "\n");
+                readBlock(rootStart, rootStreamSize);
+            } // if (rootStreamSize > 0)
+            
+            if (contentsStreamSize > 0) {
+                // Read the Contents stream
+
+                if (contentsStreamSize < miniSectorCutoff) {
+                    contentsStart = contentsStartSect*miniSectorSize;    
+                }
+                else {
+                    contentsStart = (contentsStartSect+1)*sectorSize;    
+                }
+                Preferences.debug("contentsStart = " + contentsStart + "\n");
+                readBlock(contentsStart, contentsStreamSize);
+            } // if (contentsStreamSize > 0)
             //image.calcMinMax(); 
             fireProgressStateChanged(100);
             
@@ -510,7 +582,97 @@ public class FileZVI extends FileBase {
         return image;
     }
     
-    
+    private void readBlock(long startLocation, long bytesToRead) throws IOException {
+        short dataType;
+        boolean booleanValue;
+        short shortValue;
+        int intValue;
+        double doubleValue;
+        int stringBytes; // In Unicode including terminating null
+        byte[] b;
+        String str;
+        raFile.seek(startLocation);
+        while (bytesToRead > 0) {
+            dataType = readShort(endianess);
+            bytesToRead -= 2;
+            switch(dataType) {
+                case VT_EMPTY:
+                    Preferences.debug("Read VT_EMPTY\n");
+                    break;
+                case VT_BOOL:
+                    // 16-bit integer true if != 0, false otherwise
+                    shortValue = readShort(endianess);
+                    bytesToRead -= 2;
+                    if (shortValue != 0) {
+                        booleanValue = true;
+                    }
+                    else {
+                        booleanValue = false;
+                    }
+                    Preferences.debug("Read BOOLEAN = " + booleanValue + "\n");
+                    break;
+                case VT_UI2:
+                    intValue = getUnsignedShort(endianess);
+                    bytesToRead -=2;
+                    Preferences.debug("Read USHORT with value = " + intValue + "\n");
+                    break;
+                case VT_I4:
+                    intValue = readInt(endianess);
+                    bytesToRead -= 4;
+                    Preferences.debug("Read INT with value = " + intValue + "\n");
+                    break;
+                case VT_R8:
+                    doubleValue = readDouble(endianess);
+                    bytesToRead -= 8;
+                    Preferences.debug("Read DOUBLE with value = " + doubleValue + "\n");
+                    break;
+                case VT_DATE:
+                    doubleValue = readDouble(endianess);
+                    bytesToRead -= 8;
+                    Preferences.debug("Read VT_DATE with value = " + doubleValue + "\n");
+                    break;
+                case VT_BSTR:
+                    stringBytes = readInt(endianess);
+                    bytesToRead -= 4;
+                    b = new byte[stringBytes];
+                    raFile.readFully(b);
+                    bytesToRead -= stringBytes;
+                    str = new String(b, "UTF-16LE").trim();
+                    Preferences.debug("Read String = " + str + "\n");
+                    break;
+                case VT_STORED_OBJECT:
+                    stringBytes = getUnsignedShort(endianess);
+                    bytesToRead -= 2;
+                    b = new byte[stringBytes];
+                    raFile.readFully(b);
+                    bytesToRead -= stringBytes;
+                    str = new String(b, "UTF-16LE").trim();
+                    Preferences.debug("The name of sibling storage = " + str + "\n");
+                    // If desired use OleLoad to instantiate the object from storage
+                    // Can be ignored if the referenced object is of no importance
+                    // because stored objects use independent storage elements
+                    break;
+                case VT_DISPATCH:
+                    // This may impose problems because the objects must either be empty(CLSID_NULL)
+                    // or creatable via OldLoadFromStream, otherwise the stream cursor cannot be
+                    // positioned properly.
+                    Preferences.debug("Read VT_DISPATCH\n");
+                    break;
+                case VT_UNKNOWN:
+                    // This may impose problems because the objects must either be empty(CLSID_NULL)
+                    // or creatable via OldLoadFromStream, otherwise the stream cursor cannot be
+                    // positioned properly.
+                    Preferences.debug("Read VT_UNKNOWN\n");
+                    break;
+                default:
+                    Preferences.debug("Bytes left unread = " + bytesToRead + "\n");
+                    bytesToRead = 0;
+                    Preferences.debug("Unknown dataType = " + dataType + "\n");
+            } // switch(dataType)
+        } // while (bytesToRead > 0)
+        
+        
+    } // readBlock
 
     
 }
