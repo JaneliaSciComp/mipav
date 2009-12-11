@@ -2201,11 +2201,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
         userInterface.unregisterFrame(this);
 
-        if (m_kVolumeImageA.GetImage() != null) {
+        if (m_kVolumeImageA != null && m_kVolumeImageA.GetImage() != null) {
             m_kVolumeImageA.GetImage().removeImageDisplayListener(this);
         }
 
-        if (m_kVolumeImageB.GetImage() != null) {
+        if (m_kVolumeImageB != null && m_kVolumeImageB.GetImage() != null) {
             m_kVolumeImageB.GetImage().removeImageDisplayListener(this);
         }
 
