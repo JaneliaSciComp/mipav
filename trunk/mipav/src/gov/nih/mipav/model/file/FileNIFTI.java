@@ -2082,6 +2082,17 @@ public class FileNIFTI extends FileBase {
             }
         } // if (numDims == 2)
         
+        if ((qform_code > 0) && (sform_code > 0)) {
+            fileInfo.setMatrixQ(matrix);
+            fileInfo.setMatrixS(matrix2);
+        }
+        else if (qform_code > 0) {
+            fileInfo.setMatrixQ(matrix);
+        }
+        else if (sform_code > 0) {
+            fileInfo.setMatrixS(matrix);
+        }
+        
 
         intentName = (new String(bufferByte, 328, 16));
         Preferences.debug("Name or meaning of data = " + intentName + "\n");
