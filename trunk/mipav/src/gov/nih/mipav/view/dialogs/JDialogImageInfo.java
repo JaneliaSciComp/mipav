@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileInfoNIFTI;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileInfoXML;
 import gov.nih.mipav.model.file.FileUtility;
@@ -46,6 +47,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.Vector;
 import javax.swing.Box;
@@ -3042,7 +3044,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * Updates the image orientation.
      */
     private void updateImageOrientation() {
-        FileInfoBase[] fileInfo;
+        FileInfoBase[] fileInfo = null;
+        int originalOrientAxis[] = null;
+        originalOrientAxis = image.getFileInfo()[0].getAxisOrientation().clone();
 
         if (image.getNDims() == 2) {
             fileInfo = image.getFileInfo();
@@ -3070,6 +3074,36 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 fileInfo[i].setAxisOrientation(orientAxis);
             }
         }
+        
+        if (fileInfo[0] instanceof FileInfoNIFTI) {
+            MatrixHolder matHolder = null;
+            int i;
+            int j;
+            matHolder = image.getMatrixHolder();
+
+            if (matHolder != null) {
+                LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
+                Iterator<String> iter = matrixMap.keySet().iterator();
+                String nextKey = null;
+                
+                TransMatrix tempMatrix = null;
+                
+                while (iter.hasNext()) {
+                    nextKey = iter.next();
+                    tempMatrix = matrixMap.get(nextKey);
+                    if (tempMatrix.isNIFTI()) {
+                        for (i = 0; i < 3; i++) {
+                            if (originalOrientAxis[i] != orientAxis[i]) {
+                                for (j = 0; j < 4; j++) {
+                                    tempMatrix.set(i, j, -tempMatrix.get(i, j));
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            } // if (matHolder != null)    
+        } // if (fileInfo[0] instanceof FileInfoNIFTI)
 	
         // if script recording, show the change of image orientation/axis orientations
         ScriptRecorder.getReference().addLine(new ActionChangeOrientations(image));
