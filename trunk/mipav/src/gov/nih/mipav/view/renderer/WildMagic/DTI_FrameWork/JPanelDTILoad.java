@@ -262,7 +262,7 @@ public class JPanelDTILoad extends JInterfaceBase {
                 parentFrame.setDTIParamsActive();
                 setDTIimage();
                 parentFrame.getParamPanel().setTractParams(m_kTractFile, m_kTractsLimit, m_kTractsMin, m_kTractsMax, m_kTractPath, m_kDTIImage);
-		        // parentFrame.getParamPanel().processTractFile();
+		        parentFrame.getParamPanel().processTractFile();
         }
        
 
