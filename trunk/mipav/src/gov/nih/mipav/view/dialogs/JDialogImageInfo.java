@@ -3079,6 +3079,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             MatrixHolder matHolder = null;
             int i;
             int j;
+            boolean change = false;
             matHolder = image.getMatrixHolder();
 
             if (matHolder != null) {
@@ -3094,6 +3095,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     if (tempMatrix.isNIFTI()) {
                         for (i = 0; i < 3; i++) {
                             if (originalOrientAxis[i] != orientAxis[i]) {
+                                change = true;
                                 for (j = 0; j < 4; j++) {
                                     tempMatrix.set(i, j, -tempMatrix.get(i, j));
                                 }
@@ -3101,7 +3103,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                         }
                     }
                 }
-                
+                if (change) {
+                    updateMatrixBox(true);
+                }
             } // if (matHolder != null)    
         } // if (fileInfo[0] instanceof FileInfoNIFTI)
 	
@@ -3288,7 +3292,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * Gives the image new resolutions.
      */
     private void updateResolInfo() {
-        FileInfoBase[] fileInfo;
+        FileInfoBase[] fileInfo = null;
+        float originalResolutions[] = null;
+        originalResolutions = image.getFileInfo()[0].getResolutions().clone();
 
         if (image.getNDims() == 2) {
             fileInfo = image.getFileInfo();
@@ -3378,6 +3384,41 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 fileInfo[resIndex].setResolutions(resolutions);
             }
         }
+        
+        if (fileInfo[0] instanceof FileInfoNIFTI) {
+            MatrixHolder matHolder = null;
+            int i;
+            int j;
+            matHolder = image.getMatrixHolder();
+            boolean change = false;
+
+            if (matHolder != null) {
+                LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
+                Iterator<String> iter = matrixMap.keySet().iterator();
+                String nextKey = null;
+                
+                TransMatrix tempMatrix = null;
+                
+                while (iter.hasNext()) {
+                    nextKey = iter.next();
+                    tempMatrix = matrixMap.get(nextKey);
+                    if (tempMatrix.isNIFTI()) {
+                        for (i = 0; i < 3; i++) {
+                            if (originalResolutions[i] != resolutions[i]) {
+                                change = true;
+                                for (j = 0; j < 3; j++) {
+                                    tempMatrix.set(j, i, tempMatrix.get(j, i)*resolutions[i]/originalResolutions[i]);
+                                }
+                            }
+                        }
+                    }
+                }
+                if (change) {
+                    updateMatrixBox(true);
+                }
+                
+            } // if (matHolder != null)    
+        } // if (fileInfo[0] instanceof FileInfoNIFTI)
 
         // add the new script action
         ScriptRecorder.getReference().addLine(new ActionChangeResolutions(image, resolutionBox.isSelected(), resIndex,
