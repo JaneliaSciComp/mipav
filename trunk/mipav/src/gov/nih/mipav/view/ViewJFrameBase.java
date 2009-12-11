@@ -425,13 +425,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 } else {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
                 }
-            } else if (nifti) {
-
-                if (displayMode == ViewJFrameBase.IMAGE_A) {
-                    aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
-                } else {
-                    aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
-                }
             } else if (nrrd) {
 
                 if (displayMode == ViewJFrameBase.IMAGE_A) {
