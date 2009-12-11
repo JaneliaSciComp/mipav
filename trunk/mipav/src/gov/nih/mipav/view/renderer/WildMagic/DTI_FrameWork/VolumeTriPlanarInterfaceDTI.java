@@ -152,6 +152,7 @@ implements ChangeListener {
     	
     	constructRenderers();
         buildDTIParametersPanel();
+        getParamPanel().processDTI();
     }
     
     public String getParentDir() {

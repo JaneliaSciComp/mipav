@@ -815,7 +815,7 @@ implements ListSelectionListener, ChangeListener {
      */
     public void processTractFile() {
         if (m_kTractFile == null) {
-            MipavUtil.displayError("Tract file must be set.");
+            // MipavUtil.displayError("Tract file must be set.");
             return;
         }
 
