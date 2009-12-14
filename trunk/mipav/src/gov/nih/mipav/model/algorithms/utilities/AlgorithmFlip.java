@@ -196,6 +196,8 @@ public class AlgorithmFlip extends AlgorithmBase {
         }
 
         axisFlip[index] = true;
+        
+        FileInfoBase[] fileInfo = srcImage.getFileInfo();
 
         int tDim = 1;
         int volume = 1;
@@ -268,7 +270,7 @@ public class AlgorithmFlip extends AlgorithmBase {
 
             /* Update FileInfo for mapping into DICOM space: */
             if (changeOrientationOrigin) {
-                FileInfoBase[] fileInfo = srcImage.getFileInfo();
+                
                 float loc = fileInfo[0].getOrigin(index);
                 int orient = fileInfo[0].getAxisOrientation(index);
     
@@ -288,6 +290,55 @@ public class AlgorithmFlip extends AlgorithmBase {
                         fileInfo[i].setOrigin(loc + (fileInfo[0].getResolutions()[index] * i), index);
                     }
                 }
+                
+                if (fileInfo[0] instanceof FileInfoNIFTI) {
+                    MatrixHolder matHolder = null;
+                    int i;
+                    int j;
+                    matHolder = srcImage.getMatrixHolder();
+
+                    if (matHolder != null) {
+                        LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
+                        Iterator<String> iter = matrixMap.keySet().iterator();
+                        String nextKey = null;
+                        
+                        TransMatrix tempMatrix = null;
+                        
+                        while (iter.hasNext()) {
+                            nextKey = iter.next();
+                            tempMatrix = matrixMap.get(nextKey);
+                            if (tempMatrix.isNIFTI()) { 
+                                for (j = 0; j < 4; j++) {
+                                    tempMatrix.set(index, j, -tempMatrix.get(index, j));
+                                } 
+                                if (tempMatrix.isQform()) {
+                                    if (srcImage.getNDims() == 3) {
+                                        for (i = 0; i < srcImage.getExtents()[2]; i++) {
+                                            ((FileInfoNIFTI)fileInfo[i]).setMatrixQ(tempMatrix);
+                                        }
+                                    }
+                                    else if (srcImage.getNDims() == 4) {
+                                        for (i = 0; i < srcImage.getExtents()[2]*srcImage.getExtents()[3]; i++) {
+                                            ((FileInfoNIFTI)fileInfo[i]).setMatrixQ(tempMatrix);    
+                                        }
+                                    }
+                                } // if (tempMatrix.isQform())
+                                else { // tempMatrix is sform
+                                    if (srcImage.getNDims() == 3) {
+                                        for (i = 0; i < srcImage.getExtents()[2]; i++) {
+                                            ((FileInfoNIFTI)fileInfo[i]).setMatrixS(tempMatrix);
+                                        }
+                                    }
+                                    else if (srcImage.getNDims() == 4) {
+                                        for (i = 0; i < srcImage.getExtents()[2]*srcImage.getExtents()[3]; i++) {
+                                            ((FileInfoNIFTI)fileInfo[i]).setMatrixS(tempMatrix);    
+                                        }
+                                    }    
+                                } // else tempMatrix is sform
+                            }
+                        }
+                    } // if (matHolder != null)    
+                } // if (fileInfo[0] instanceof FileInfoNIFTI)
             } // if (changeOrientationOrigin)
 
             if (flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
@@ -424,6 +475,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                     compImage.getActiveImage().getParentFrame().updateImages(true);
                 }
             }
+            
         } else if (flipObject == AlgorithmFlip.VOI_TYPE) {
             boolean activeVoi = false;
             ViewVOIVector vec = srcImage.getVOIs();
