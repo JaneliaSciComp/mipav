@@ -3119,7 +3119,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                                 }
                             }
                         } // if (tempMatrix.isQform() && changeQ)
-                        ((FileInfoNIFTI)fileInfo[0]).setMatrixQ(tempMatrix); {
+                        else if ((!tempMatrix.isQform()) && changeS) {
                             if (image.getNDims() == 3) {
                                 for (i = 0; i < image.getExtents()[2]; i++) {
                                     ((FileInfoNIFTI)fileInfo[i]).setMatrixS(tempMatrix);
@@ -3130,7 +3130,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                                     ((FileInfoNIFTI)fileInfo[i]).setMatrixS(tempMatrix);    
                                 }
                             }    
-                        } // ((FileInfoNIFTI)fileInfo[0]).setMatrixQ(tempMatrix);
+                        } // else if ((!tempMatrix.isQform()) && changeS)
                     }
                 }
                 if (changeQ || changeS) {
@@ -3459,7 +3459,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                                 }
                             }
                         } // if (tempMatrix.isQform() && changeQ)
-                        ((FileInfoNIFTI)fileInfo[0]).setMatrixQ(tempMatrix); {
+                        else if ((!tempMatrix.isQform()) && changeS) {
                             if (image.getNDims() == 3) {
                                 for (i = 0; i < image.getExtents()[2]; i++) {
                                     ((FileInfoNIFTI)fileInfo[i]).setMatrixS(tempMatrix);
@@ -3470,7 +3470,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                                     ((FileInfoNIFTI)fileInfo[i]).setMatrixS(tempMatrix);    
                                 }
                             }    
-                        } // ((FileInfoNIFTI)fileInfo[0]).setMatrixQ(tempMatrix);
+                        } // else if ((!tempMatrix.isQform()) && changeS)
                     } // if (tempMatrix.isNIFTI())
                 } // while (iter.hasNext())
                 if (changeQ || changeS) {
