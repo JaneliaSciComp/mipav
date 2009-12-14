@@ -3079,7 +3079,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             MatrixHolder matHolder = null;
             int i;
             int j;
-            boolean change = false;
+            boolean changeQ = false;
+            boolean changeS = false;
             matHolder = image.getMatrixHolder();
 
             if (matHolder != null) {
@@ -3095,15 +3096,44 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     if (tempMatrix.isNIFTI()) {
                         for (i = 0; i < 3; i++) {
                             if (originalOrientAxis[i] != orientAxis[i]) {
-                                change = true;
+                                if (tempMatrix.isQform()) {
+                                    changeQ = true;    
+                                }
+                                else {
+                                    changeS = true;
+                                }
                                 for (j = 0; j < 4; j++) {
                                     tempMatrix.set(i, j, -tempMatrix.get(i, j));
                                 }
                             }
                         }
+                        if (tempMatrix.isQform() && changeQ) {
+                            if (image.getNDims() == 3) {
+                                for (i = 0; i < image.getExtents()[2]; i++) {
+                                    ((FileInfoNIFTI)fileInfo[i]).setMatrixQ(tempMatrix);
+                                }
+                            }
+                            else if (image.getNDims() == 4) {
+                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
+                                    ((FileInfoNIFTI)fileInfo[i]).setMatrixQ(tempMatrix);    
+                                }
+                            }
+                        } // if (tempMatrix.isQform() && changeQ)
+                        ((FileInfoNIFTI)fileInfo[0]).setMatrixQ(tempMatrix); {
+                            if (image.getNDims() == 3) {
+                                for (i = 0; i < image.getExtents()[2]; i++) {
+                                    ((FileInfoNIFTI)fileInfo[i]).setMatrixS(tempMatrix);
+                                }
+                            }
+                            else if (image.getNDims() == 4) {
+                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
+                                    ((FileInfoNIFTI)fileInfo[i]).setMatrixS(tempMatrix);    
+                                }
+                            }    
+                        } // ((FileInfoNIFTI)fileInfo[0]).setMatrixQ(tempMatrix);
                     }
                 }
-                if (change) {
+                if (changeQ || changeS) {
                     updateMatrixBox(true);
                 }
             } // if (matHolder != null)    
@@ -3390,7 +3420,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             int i;
             int j;
             matHolder = image.getMatrixHolder();
-            boolean change = false;
+            boolean changeQ = false;
+            boolean changeS = false;
 
             if (matHolder != null) {
                 LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
@@ -3405,15 +3436,44 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     if (tempMatrix.isNIFTI()) {
                         for (i = 0; i < 3; i++) {
                             if (originalResolutions[i] != resolutions[i]) {
-                                change = true;
+                                if (tempMatrix.isQform()) {
+                                    changeQ = true;    
+                                }
+                                else {
+                                    changeS = true;
+                                }
                                 for (j = 0; j < 3; j++) {
                                     tempMatrix.set(j, i, tempMatrix.get(j, i)*resolutions[i]/originalResolutions[i]);
                                 }
                             }
                         }
-                    }
-                }
-                if (change) {
+                        if (tempMatrix.isQform() && changeQ) {
+                            if (image.getNDims() == 3) {
+                                for (i = 0; i < image.getExtents()[2]; i++) {
+                                    ((FileInfoNIFTI)fileInfo[i]).setMatrixQ(tempMatrix);
+                                }
+                            }
+                            else if (image.getNDims() == 4) {
+                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
+                                    ((FileInfoNIFTI)fileInfo[i]).setMatrixQ(tempMatrix);    
+                                }
+                            }
+                        } // if (tempMatrix.isQform() && changeQ)
+                        ((FileInfoNIFTI)fileInfo[0]).setMatrixQ(tempMatrix); {
+                            if (image.getNDims() == 3) {
+                                for (i = 0; i < image.getExtents()[2]; i++) {
+                                    ((FileInfoNIFTI)fileInfo[i]).setMatrixS(tempMatrix);
+                                }
+                            }
+                            else if (image.getNDims() == 4) {
+                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
+                                    ((FileInfoNIFTI)fileInfo[i]).setMatrixS(tempMatrix);    
+                                }
+                            }    
+                        } // ((FileInfoNIFTI)fileInfo[0]).setMatrixQ(tempMatrix);
+                    } // if (tempMatrix.isNIFTI())
+                } // while (iter.hasNext())
+                if (changeQ || changeS) {
                     updateMatrixBox(true);
                 }
                 
