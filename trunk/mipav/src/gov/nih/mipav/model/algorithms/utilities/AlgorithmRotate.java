@@ -8,6 +8,8 @@ import gov.nih.mipav.model.structures.*;
 import java.io.*;
 
 import java.text.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 
 /**
@@ -130,6 +132,9 @@ public class AlgorithmRotate extends AlgorithmBase {
         ModelImage maskImage = null;
         short [] maskBuffer = null;
         float [] maskSliceBuffer = null;
+        // 2 NIFTI matrices
+        TransMatrix matrixQ = null;
+        TransMatrix matrixS = null;
         if ((srcImage.getVOIs() != null) && (!srcImage.getVOIs().isEmpty()) && (srcImage.getNDims() <= 3)) {
             doVOI = true;
         }
@@ -231,7 +236,8 @@ public class AlgorithmRotate extends AlgorithmBase {
 
         try {
             newDimExtents = new int[srcImage.getNDims()];
-            newAxisOrients = new int[srcImage.getNDims()];
+            // setAxisOrientation requires length 3
+            newAxisOrients = new int[3];
             newResolutions = new float[srcImage.getNDims()];
             newUnitsOfMeasure = new int[srcImage.getNDims()];
             newStartLocations = new float[srcImage.getNDims()];
@@ -540,55 +546,124 @@ public class AlgorithmRotate extends AlgorithmBase {
         }
 
         calcStartLocations(newStartLocations);
+        
+        if (srcImage.getFileInfo()[0] instanceof FileInfoNIFTI) {
+            int i, j;
+            MatrixHolder matHolder = null;
+            matHolder = srcImage.getMatrixHolder();
+
+            if (matHolder != null) {
+                LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
+                Iterator<String> iter = matrixMap.keySet().iterator();
+                String nextKey = null;
+                
+                TransMatrix tempMatrix = null;
+                
+                while (iter.hasNext()) {
+                    nextKey = iter.next();
+                    tempMatrix = matrixMap.get(nextKey);
+                    if (tempMatrix.isNIFTI()) { 
+                        
+                        if (tempMatrix.isQform()) {
+                            matrixQ = tempMatrix.clone();
+                            TransMatrix rotQ = rotMatrix.clone();
+                            rotQ.Mult(matrixQ);
+                            for (i = 0; i < 4; i++) {
+                                for (j = 0; j < 4; j++) {
+                                    matrixQ.set(i, j, rotQ.get(i, j));        
+                                }
+                            }
+                            rotQ = null;
+                        } // if (tempMatrix.isQform())
+                        else { // tempMatrix is sform
+                            matrixS = tempMatrix.clone();
+                            TransMatrix rotS = rotMatrix.clone();
+                            rotS.Mult(matrixS);
+                            for (i = 0; i < 4; i++) {
+                                for (j = 0; j < 4; j++) {
+                                    matrixS.set(i, j, rotS.get(i, j));        
+                                }
+                            }
+                            rotS = null;
+                        } // else tempMatrix is sform
+                    }
+                }
+            } // if (matHolder != null)    
+        } // if (fileInfo[0] instanceof FileInfoNIFTI)
 
         // Set the file info for the new rotated image identical to the original image,
         // and then adjusts the appropriate info.
         // For all image formats other than DICOM
         if (srcImage.getFileInfo(0).getFileFormat() != FileUtility.DICOM) {
+            int newZDimExtents;
+            int index;
             if (srcImage.getNDims() >= 3) {
-                newFileInfo = new FileInfoBase[newDimExtents[2]];
+                newFileInfo = new FileInfoBase[newDimExtents[2]*tDim];
+                newZDimExtents = newDimExtents[2];
             }
             else {
                 newFileInfo = new FileInfoBase[1];
+                newZDimExtents = 1;
             }
 
-            for (int i = 0; i < newFileInfo.length; i++) {
-                newFileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
-                newFileInfo[i].setExtents(newDimExtents);
-                newFileInfo[i].setImageOrientation(orientation);
-                newFileInfo[i].setAxisOrientation(newAxisOrients);
-                newFileInfo[i].setResolutions(newResolutions);
-                newFileInfo[i].setUnitsOfMeasure(newUnitsOfMeasure);
-                newFileInfo[i].setOrigin(newStartLocations[0], 0);
-                newFileInfo[i].setOrigin(newStartLocations[1], 1);
-
-                if (srcImage.getNDims() >= 3) {
-                    newFileInfo[i].setOrigin(newStartLocations[2] + (newResolutions[2] * i), 2);
-                    newFileInfo[i].setSliceThickness(newResolutions[2]);
-                }
-
-                if (newFileInfo[i].getFileFormat() == FileUtility.MINC) {
-                    newFileInfo[i].setRescaleSlope(FileInfoMinc.calculateSlope(min, max, 
-                    		newFileInfo[i].getMax(), newFileInfo[i].getMin()));
+            for (int t = 0; t < tDim; t++) {
+                for (int i = 0; i < newZDimExtents; i++) {
+                    index = i + t * newZDimExtents;
+                    newFileInfo[index] = (FileInfoBase) srcImage.getFileInfo(0).clone();
+                    newFileInfo[index].setExtents(newDimExtents);
+                    newFileInfo[index].setImageOrientation(orientation);
+                    newFileInfo[index].setAxisOrientation(newAxisOrients);
+                    newFileInfo[index].setResolutions(newResolutions);
+                    newFileInfo[index].setUnitsOfMeasure(newUnitsOfMeasure);
+                    newFileInfo[index].setOrigin(newStartLocations[0], 0);
+                    newFileInfo[index].setOrigin(newStartLocations[1], 1);
+    
+                    if (srcImage.getNDims() >= 3) {
+                        newFileInfo[index].setOrigin(newStartLocations[2] + (newResolutions[2] * i), 2);
+                        newFileInfo[index].setSliceThickness(newResolutions[2]);
+                    }
+    
+                    if (newFileInfo[index].getFileFormat() == FileUtility.MINC) {
+                        newFileInfo[index].setRescaleSlope(FileInfoMinc.calculateSlope(min, max, 
+                        		newFileInfo[index].getMax(), newFileInfo[index].getMin()));
+                        
+                        newFileInfo[index].setRescaleIntercept(FileInfoMinc.calculateIntercept(min, newFileInfo[index].getRescaleSlope(),
+                        		newFileInfo[index].getMin()));
+                    }
                     
-                    newFileInfo[i].setRescaleIntercept(FileInfoMinc.calculateIntercept(min, newFileInfo[i].getRescaleSlope(),
-                    		newFileInfo[i].getMin()));
+                    if (matrixQ != null) {
+                        ((FileInfoNIFTI)newFileInfo[index]).setMatrixQ(matrixQ);
+                    }
+                    if (matrixS != null) {
+                        ((FileInfoNIFTI)newFileInfo[index]).setMatrixS(matrixS);
+                    }
                 }
             }
 
             destImage.setFileInfo(newFileInfo);
-
             if (srcImage.getNDims() >= 3) {
                 System.err.println("doing new matrix operation");
-                destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
-
-                TransMatrix tMat = new TransMatrix(rotMatrix);
-                tMat.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
-                tMat.Set(0, 3, newFileInfo[0].getOrigin()[0]);
-                tMat.Set(1, 3, newFileInfo[0].getOrigin()[1]);
-                tMat.Set(2, 3, newFileInfo[0].getOrigin()[2]);
-                System.err.println("new matrix added: " + tMat);
-                destImage.getMatrixHolder().addMatrix(tMat);
+                if (srcImage.getFileInfo()[0] instanceof FileInfoNIFTI) {
+                    MatrixHolder matHolder = null;
+                    matHolder = destImage.getMatrixHolder();
+                    matHolder.clearMatrices();
+                    if (matrixQ != null) {
+                        matHolder.addMatrix(matrixQ);
+                    }
+                    if (matrixS != null) {
+                        matHolder.addMatrix(matrixS);
+                    }
+                } // if (fileInfo[0] instanceof FileInfoNIFTI)
+                else {
+                    destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
+                    TransMatrix tMat = new TransMatrix(rotMatrix);
+                    tMat.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                    tMat.Set(0, 3, newFileInfo[0].getOrigin()[0]);
+                    tMat.Set(1, 3, newFileInfo[0].getOrigin()[1]);
+                    tMat.Set(2, 3, newFileInfo[0].getOrigin()[2]);
+                    System.err.println("new matrix added: " + tMat);
+                    destImage.getMatrixHolder().addMatrix(tMat);
+                }
             }
         } else { // If file is DICOM...
 
