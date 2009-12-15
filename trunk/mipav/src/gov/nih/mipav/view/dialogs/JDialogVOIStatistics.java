@@ -330,7 +330,12 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      * Once all the necessary variables are set, call the VOI Props algorithm to run the statistic calculation.
      */
     protected void callAlgorithm() {
-        calculator = new AlgorithmVOIProps(image, processType, rangeFlag);
+        ViewVOIVector processList = new ViewVOIVector(selectedList.getModel().getSize());
+        for(int i=0; i<selectedList.getModel().getSize(); i++) {
+            processList.add((VOI)selectedList.getModel().getElementAt(i));
+        }
+        
+        calculator = new AlgorithmVOIProps(image, processType, rangeFlag, processList);
         calculator.setPrecisionDisplay(precision, doForce);
         calculator.addListener(this);
 

@@ -159,13 +159,13 @@ public class JDialogVOIStats extends JDialogBase
     /** DOCUMENT ME! */
     private boolean treeSelectionChange = false;
 
-    /** DOCUMENT ME! */
+    /** The selected VOI when the VOIStats dialogue was created */
     private VOI voi;
 
     /** DOCUMENT ME! */
     protected JScrollPane voiContourPane;
 
-    /** DOCUMENT ME! */
+    /** The tree of VOIs, composed of an image with children VOIs */
     private DefaultTreeModel voiModel;
 
     /** DOCUMENT ME! */
@@ -174,7 +174,7 @@ public class JDialogVOIStats extends JDialogBase
     /** DOCUMENT ME! */
     protected JTextField VOIThicknessField;
 
-    /** DOCUMENT ME! */
+    /** The graphical representation of voiModel */
     private JTree voiTree;
 
     /** DOCUMENT ME! */
@@ -378,9 +378,33 @@ public class JDialogVOIStats extends JDialogBase
 
             voi.setStatisticList(listPanel.getViewList());
 
+            //The VOIs to use for calculations
+            int numTotalVois = voiModel.getChildCount(voiModel.getRoot());
+            ViewVOIVector processList = new ViewVOIVector(numTotalVois);
+            TreePath[] tPaths = voiTree.getSelectionPaths();
+            TreePath currentPath;
+            Object[] currentObjects;
+            //adds any VOIs that have a component selected into the list of VOIs to be calculated
+            for (int i = 0; i < tPaths.length; i++) {
+                currentPath = tPaths[i];
+
+                currentObjects = currentPath.getPath();
+
+                for (int y = 0; y < currentObjects.length; y++) {
+
+                    // do nothing for root...
+
+                    if (currentObjects[y] instanceof VOIGroupNode && 
+                            !processList.contains(((VOIGroupNode) currentObjects[y]).getVOIgroup())) {
+                        processList.add(((VOIGroupNode) currentObjects[y]).getVOIgroup());
+                        
+                    } 
+                }
+            }
+            
             // only loading the image works because we have been changing
             // the thing held BY the image.
-            algoVOI = new AlgorithmVOIProps(image);
+            algoVOI = new AlgorithmVOIProps(image, processList);
             
             //only calculate these if appropriate box is checked for speed.
             algoVOI.setDistanceFlag(listPanel.getSelectedList(VOIStatisticList.largestDistanceDescription));
@@ -401,6 +425,7 @@ public class JDialogVOIStats extends JDialogBase
             ViewList[] statsList = voi.getStatisticList();
             FileInfoImageXML[] fInfoBase;
             
+          //TODO: Should report results of all VOIs
             // Save statistics in the header only if image format is XML.
             if (((image.getFileInfo(0).getFileFormat() == FileUtility.XML) ||
             		(image.getFileInfo(0).getFileFormat() == FileUtility.XML_MULTIFILE)) && checkboxSaveStats.isSelected()) {
@@ -809,12 +834,14 @@ public class JDialogVOIStats extends JDialogBase
             	FileInfoBase.copyCoreInfo(image.getFileInfo(), fInfoBase);
         		image.setFileInfo(fInfoBase);
            }
+            //TODO: Should report results of all VOIs
+            
             ViewUserInterface UI = ((ViewJFrameImage) (parentFrame)).getUserInterface();
             UI.setDataText("\n -----------------------------------------------------------------------------\n");
 
             // UI.setDataText("Image:     " + image.getFileInfo(0).getFileName() + "\n");
             UI.setDataText("Image:     " + image.getImageName() + "\n");
-            UI.setDataText("VOI  :     " + voi.getName() + "\n");
+            UI.setDataText("VOI  :     " + processList.get(0).getName() + "\n");
 
             int measure;
             
