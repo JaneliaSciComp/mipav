@@ -453,6 +453,16 @@ public class Preferences {
 
     /** The character that separates items (such as in the user file type definitions). */
     public static final String ITEM_SEPARATOR = ";";
+    
+    
+    public static final String PREF_LEVEL = "LevelValue";
+    
+    public static final String PREF_WINDOW = "WindowValue";
+    
+    public static final String PREF_MIN = "MinValue";
+    
+    public static final String PREF_MAX = "MaxValue";
+    
 
     /**
      * The character that separates an item from its value in a definition or mapping (such as in the user file type
