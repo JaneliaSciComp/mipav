@@ -288,7 +288,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         fireProgressStateChanged("Processing image ...");
         contourVOI.setActive(true);
         algoVOIProps = new AlgorithmVOIProps(srcImage, AlgorithmVOIProps.PROCESS_PER_VOI,
-                                             JDialogVOIStatistics.NO_RANGE);
+                                             JDialogVOIStatistics.NO_RANGE, getActiveVOIs(srcImage));
         algoVOIProps.run();
         VOIMin = algoVOIProps.getMinIntensity();
         Preferences.debug("VOI minimum = " + VOIMin + "\n");
@@ -1866,7 +1866,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
         contourVOI.setActive(true);
         algoVOIProps = new AlgorithmVOIProps(srcImage, AlgorithmVOIProps.PROCESS_PER_VOI,
-                                             JDialogVOIStatistics.NO_RANGE);
+                                             JDialogVOIStatistics.NO_RANGE, getActiveVOIs(srcImage));
         algoVOIProps.run();
         VOIMin = algoVOIProps.getMinIntensity();
         Preferences.debug("VOI minimum = " + VOIMin + "\n");
@@ -2386,7 +2386,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             sliceVOI = sliceImage.getVOIs().VOIAt(0);
             sliceVOI.setAllActive(true);
             algoVOIProps = new AlgorithmVOIProps(sliceImage, AlgorithmVOIProps.PROCESS_PER_VOI,
-                                                 JDialogVOIStatistics.NO_RANGE);
+                                                 JDialogVOIStatistics.NO_RANGE, getActiveVOIs(sliceImage));
             algoVOIProps.run();
             VOIMin = algoVOIProps.getMinIntensity();
             VOIMax = algoVOIProps.getMaxIntensity();
@@ -2647,7 +2647,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             sliceVOI = sliceImage.getVOIs().VOIAt(0);
             sliceVOI.setAllActive(true);
             algoVOIProps = new AlgorithmVOIProps(sliceImage, AlgorithmVOIProps.PROCESS_PER_VOI,
-                                                 JDialogVOIStatistics.NO_RANGE);
+                                                 JDialogVOIStatistics.NO_RANGE, getActiveVOIs(sliceImage));
             algoVOIProps.run();
             VOIMin = algoVOIProps.getMinIntensity();
             VOIMax = algoVOIProps.getMaxIntensity();
@@ -2839,6 +2839,46 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
             sliceIter++;
         } // while((sliceIter <= finalIter) && (!finished))
+    }
+    
+    
+    /**
+     * This legacy code returns all active vois for a given source image.  PlugIns should explicitly identify VOIs they would
+     * like to process using AlgorithmVOIProps, because the user may have already added other VOIs to srcImage, or VOIs
+     * may be created by the algorithm in an unexpected way.  This plugin relied on <code>AlgorithmVOIProp</code>'s 
+     * getActiveVOIs() code, so that code has been moved into this plugin.
+     * 
+     * Use of this method is discouraged, as shown by the old documentation for this method:
+     * not for use. should be moved to a better location. does NOT clone the VOIs that it find to be active, and inserts
+     * into a new ViewVOIVector. if no VOIs are active, the ViewVOIVector returned is <code>null</code>.
+     *
+     * @return  All the active VOIs for a given srcImage.
+     */
+    private ViewVOIVector getActiveVOIs(ModelImage srcImage) {
+        ViewVOIVector voiList;
+
+        voiList = new ViewVOIVector();
+
+        int i;
+
+        try {
+
+            for (i = 0; i < srcImage.getVOIs().size(); i++) {
+
+                if (srcImage.getVOIs().VOIAt(i).isActive()) {
+
+                    // voi at i is the active voi
+                    voiList.addElement(srcImage.getVOIs().VOIAt(i));
+                }
+            }
+        } catch (ArrayIndexOutOfBoundsException indexException) {
+
+            // got to the end of list and never found an active VOI.
+            // return an  empty VOI list.
+            return new ViewVOIVector();
+        }
+
+        return voiList;
     }
 
 }

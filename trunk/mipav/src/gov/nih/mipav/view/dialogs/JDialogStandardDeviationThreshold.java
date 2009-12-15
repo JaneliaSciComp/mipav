@@ -210,7 +210,7 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
 	
 	        srcVOI = VOIs.VOIAt(activeGroupNum);
 	        
-	        algoVOI = new AlgorithmVOIProps(srcImage);
+	        algoVOI = new AlgorithmVOIProps(srcImage, getActiveVOIs(srcImage));
 	        algoVOI.setDoOnlyActiveContours(true);
 	        algoVOI.setRunningInSeparateThread(false);
 	        algoVOI.run();
@@ -1188,4 +1188,43 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
         wholeImageThreshold = scriptParameters.getParams().getBoolean("wholeImageThreshold");
 
 	}
+	
+	/**
+     * This legacy code returns all active vois for a given source image.  PlugIns should explicitly identify VOIs they would
+     * like to process using AlgorithmVOIProps, because the user may have already added other VOIs to srcImage, or VOIs
+     * may be created by the algorithm in an unexpected way.  This plugin relied on <code>AlgorithmVOIProp</code>'s 
+     * getActiveVOIs() code, so that code has been moved into this plugin.
+     * 
+     * Use of this method is discouraged, as shown by the old documentation for this method:
+     * not for use. should be moved to a better location. does NOT clone the VOIs that it find to be active, and inserts
+     * into a new ViewVOIVector. if no VOIs are active, the ViewVOIVector returned is <code>null</code>.
+     *
+     * @return  All the active VOIs for a given srcImage.
+     */
+    private ViewVOIVector getActiveVOIs(ModelImage srcImage) {
+        ViewVOIVector voiList;
+
+        voiList = new ViewVOIVector();
+
+        int i;
+
+        try {
+
+            for (i = 0; i < srcImage.getVOIs().size(); i++) {
+
+                if (srcImage.getVOIs().VOIAt(i).isActive()) {
+
+                    // voi at i is the active voi
+                    voiList.addElement(srcImage.getVOIs().VOIAt(i));
+                }
+            }
+        } catch (ArrayIndexOutOfBoundsException indexException) {
+
+            // got to the end of list and never found an active VOI.
+            // return an  empty VOI list.
+            return new ViewVOIVector();
+        }
+
+        return voiList;
+    }
 }
