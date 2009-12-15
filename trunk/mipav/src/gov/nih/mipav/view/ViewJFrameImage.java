@@ -2682,6 +2682,26 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 windowLevel[0].setVisible(true);
                 windowLevel[0].toFront();
+                if(windowLevel[0].tabbedPane.getSelectedIndex() == 0) {
+                	int lev = windowLevel[0].levelSlider.getValue();
+                	int win = windowLevel[0].windowSlider.getValue();
+                	//needed this line below b/c otherwise the event was not getting invoked
+                	windowLevel[0].levelSlider.setValue(lev+1);
+
+                	windowLevel[0].levelSlider.setValue(lev);
+                	windowLevel[0].windowSlider.setValue(win);
+                }else if(windowLevel[0].tabbedPane.getSelectedIndex() == 1) {
+                	int min = windowLevel[0].minSlider.getValue();
+                	int max = windowLevel[0].maxSlider.getValue();
+                	
+                	//needed this line below b/c otherwise the event was not getting invoked
+                	windowLevel[0].minSlider.setValue(min+1);
+
+                	windowLevel[0].minSlider.setValue(min);
+                	windowLevel[0].maxSlider.setValue(max);
+                }
+                
+              
             } else {
 
                 if (windowLevel[1] == null) {
@@ -2690,6 +2710,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 windowLevel[1].setVisible(true);
                 windowLevel[1].toFront();
+                if(windowLevel[1].tabbedPane.getSelectedIndex() == 0) {
+                	windowLevel[1].levelSlider.setValue(windowLevel[1].levelSlider.getValue());
+                	windowLevel[1].windowSlider.setValue(windowLevel[1].windowSlider.getValue());
+                }else if(windowLevel[1].tabbedPane.getSelectedIndex() == 1) {
+                	windowLevel[1].minSlider.setValue(windowLevel[1].minSlider.getValue());
+                	windowLevel[1].maxSlider.setValue(windowLevel[1].maxSlider.getValue());
+                }
+                
+                
             }
         } else if (command.equals("invertLUT")) {
 
