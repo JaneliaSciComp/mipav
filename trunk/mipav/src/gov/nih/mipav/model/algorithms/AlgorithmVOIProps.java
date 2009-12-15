@@ -55,7 +55,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     private int processType = PROCESS_PER_VOI;
 
     /** Vector to hold all properties calculated within the algorithm for later access. */
-    private Vector propertyList;
+    private Vector<VOIStatisticalProperties> propertyList;
 
     /** Whether or not to exclude a range of values. */
     private int rangeFlag;
@@ -66,7 +66,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     /** Whether or not to calculate largest distance (only 3D), true by default */
     private boolean distanceFlag;
 
-    /** Vector of all Active VOIs. */
+    /** Vector of all VOIs that will have calculations performed. */
     private ViewVOIVector selectedVOIset;
 
     /** Whether or not to show totals for each calculation. */
@@ -85,9 +85,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * images as a volume of interest, rather than by slice.
      *
      * @param  srcImg  image model that contain the VOI
+     * @param  voiSet  The VOIs that will be calculated
      */
-    public AlgorithmVOIProps(ModelImage srcImg) {
-        this(srcImg, PROCESS_PER_VOI);
+    public AlgorithmVOIProps(ModelImage srcImg, ViewVOIVector voiSet) {
+        this(srcImg, PROCESS_PER_VOI, voiSet);
     }
 
     /**
@@ -95,20 +96,21 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      *
      * @param  srcImg       image model that contain the VOI
      * @param  processType  perform the property calculations for each slice, rather than for whole volume of interest
-     *                      (VOI).
+     * @param  voiSet     The VOIs that will be calculated
      */
-    public AlgorithmVOIProps(ModelImage srcImg, int processType) {
-        this(srcImg, processType, 0);
+    public AlgorithmVOIProps(ModelImage srcImg, int processType, ViewVOIVector voiSet) {
+        this(srcImg, processType, 0, voiSet);
     }
 
     /**
      * constructor. note that if there are no VOIs to act on, this constructor returns quietly.
      *
      * @param  srcImg     image model that contain the VOI
-     * @param  pType      list of items to perform the statistics operations on.
-     * @param  rangeFlag  DOCUMENT ME!
+     * @param  pType      list of items to perform the statistics operations on
+     * @param  rangeFlag  Whether the range of values specified by the statistics generator should be ignored
+     * @param  voiSet     The VOIs that will be calculated
      */
-    public AlgorithmVOIProps(ModelImage srcImg, int pType, int rangeFlag) {
+    public AlgorithmVOIProps(ModelImage srcImg, int pType, int rangeFlag, ViewVOIVector voiSet) {
         nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
         nf.setMinimumFractionDigits(0);
@@ -128,7 +130,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             pType = PROCESS_PER_SLICE;
         }
 
-        selectedVOIset = getActiveVOIs();
+        selectedVOIset = voiSet;
 
         if (selectedVOIset.size() == 0) {
             return;
@@ -156,7 +158,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getArea() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.areaDescription)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.areaDescription)).floatValue();
     } // {return area;}
 
     /**
@@ -165,7 +167,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getAvgInten() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.avgIntensity)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.avgIntensity)).floatValue();
     } // {return avgInten;}
 
     /**
@@ -175,7 +177,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getAvgIntenB() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.avgIntensity +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.avgIntensity +
                                                                                                   "Blue")).floatValue();
     } // {return avgIntenB;}
 
@@ -186,7 +188,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getAvgIntenG() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.avgIntensity +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.avgIntensity +
                                                                                                   "Green")).floatValue();
     } // {return avgIntenG;}
 
@@ -197,7 +199,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getAvgIntenR() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.avgIntensity +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.avgIntensity +
                                                                                                   "Red")).floatValue();
     } // {return avgIntenR;}
     
@@ -209,7 +211,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMedian() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.median)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.median)).floatValue();
     }
 
     /**
@@ -219,7 +221,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMedianB() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.median +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.median +
                                                                                                   "Blue")).floatValue();
     }
 
@@ -230,7 +232,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMedianG() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.median +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.median +
                                                                                                   "Green")).floatValue();
     } 
 
@@ -241,7 +243,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMedianR() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.median +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.median +
                                                                                                   "Red")).floatValue();
     } 
     
@@ -255,7 +257,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMode() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.mode)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.mode)).floatValue();
     }
 
     /**
@@ -265,7 +267,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getModeB() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.mode +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.mode +
                                                                                                   "Blue")).floatValue();
     }
 
@@ -276,7 +278,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getModeG() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.mode +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.mode +
                                                                                                   "Green")).floatValue();
     } 
 
@@ -287,7 +289,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getModeR() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.mode +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.mode +
                                                                                                   "Red")).floatValue();
     } 
     
@@ -301,7 +303,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public int getModeCount() {
-        return Integer.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.modeCount)).intValue();
+        return Integer.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.modeCount)).intValue();
     }
 
     /**
@@ -311,7 +313,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public int getModeCountB() {
-        return Integer.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.modeCount +
+        return Integer.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.modeCount +
                                                                                                   "Blue")).intValue();
     }
 
@@ -322,7 +324,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public int getModeCountG() {
-        return Integer.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.modeCount +
+        return Integer.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.modeCount +
                                                                                                   "Green")).intValue();
     } 
 
@@ -333,7 +335,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public int getModeCountR() {
-        return Integer.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.modeCount +
+        return Integer.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.modeCount +
                                                                                                   "Red")).intValue();
     }
     
@@ -347,8 +349,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      *
      * @return  DOCUMENT ME!
      */
+  //TODO: Should report results of all VOIs
     public String getGeometricCenter() {
-        return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.geometricCenterDescription);
+        VOIStatisticalProperties p = (VOIStatisticalProperties) propertyList.firstElement(); 
+        return (p).getProperty(VOIStatisticalProperties.geometricCenterDescription);
     } // {return gcPt;}
     
     /**
@@ -356,8 +360,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      *
      * @return  DOCUMENT ME!
      */
+  //TODO: Should report results of all VOIs
     public String getCenterOfMass() {
-        return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.massCenterDescription);
+        return propertyList.firstElement().getProperty(VOIStatisticalProperties.massCenterDescription);
     } // {return cenMassPt;}
     
     /**
@@ -365,8 +370,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      *
      * @return  DOCUMENT ME!
      */
+  //TODO: Should report results of all VOIs, etc.
     public String getCenterOfMassR() {
-        return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.massCenterDescription + "Red");
+        return propertyList.firstElement().getProperty(VOIStatisticalProperties.massCenterDescription + "Red");
     } // {return cenMassPtR;}
     
     /**
@@ -375,7 +381,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public String getCenterOfMassG() {
-        return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.massCenterDescription + "Green");
+        return propertyList.firstElement().getProperty(VOIStatisticalProperties.massCenterDescription + "Green");
     } // {return cenMassPtG;}
     
     /**
@@ -384,7 +390,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public String getCenterOfMassB() {
-        return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.massCenterDescription + "Blue");
+        return propertyList.firstElement().getProperty(VOIStatisticalProperties.massCenterDescription + "Blue");
     } // {return cenMassPtB;}
 
     /**
@@ -393,7 +399,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getEccentricity() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.eccentricityDescription)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.eccentricityDescription)).floatValue();
     } // {return eccentricity;}
 
     /**
@@ -402,7 +408,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMajorAxis() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.majorAxisDescription)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.majorAxisDescription)).floatValue();
     } // {return majorAxis;}
 
     /**
@@ -411,7 +417,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMaxIntensity() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.maxIntensity)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.maxIntensity)).floatValue();
     } // {return maxIntensity;}
 
     /**
@@ -420,7 +426,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMaxIntensityBlue() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.maxIntensity +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.maxIntensity +
                                                                                                   "Blue")).floatValue();
     } // {return maxIntenBlue;}
 
@@ -430,7 +436,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMaxIntensityGreen() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.maxIntensity +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.maxIntensity +
                                                                                                   "Green")).floatValue();
     } // {return maxIntenGreen;}
 
@@ -440,7 +446,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMaxIntensityRed() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.maxIntensity +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.maxIntensity +
                                                                                                   "Red")).floatValue();
     } // {return maxIntenRed;}
 
@@ -450,7 +456,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public double getMaxWidth() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.maxWidthDescription)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.maxWidthDescription)).floatValue();
     } // {return maxDistance;}
 
     /**
@@ -459,7 +465,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMinIntensity() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.minIntensity)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.minIntensity)).floatValue();
     } // {return minIntensity;}
 
     /**
@@ -468,7 +474,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMinIntensityBlue() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.minIntensity +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.minIntensity +
                                                                                                   "Blue")).floatValue();
     } // {return minIntenBlue;}
 
@@ -478,7 +484,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMinIntensityGreen() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.minIntensity +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.minIntensity +
                                                                                                   "Green")).floatValue();
     } // {return minIntenGreen;}
 
@@ -488,7 +494,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMinIntensityRed() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.minIntensity +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.minIntensity +
                                                                                                   "Red")).floatValue();
     } // {return minIntenRed;}
 
@@ -498,7 +504,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getMinorAxis() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.minorAxisDescription)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.minorAxisDescription)).floatValue();
     } // {return minorAxis;}
 
     /**
@@ -507,7 +513,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public int getNVoxels() {
-        return Integer.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.quantityDescription)).intValue();
+        return Integer.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.quantityDescription)).intValue();
     } // {return nVox;}
 
     /**
@@ -516,7 +522,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  String perimeter string
      */
     public String getPerimeter() {
-        return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.perimeterDescription);
+        return propertyList.firstElement().getProperty(VOIStatisticalProperties.perimeterDescription);
     } // {return perimeter;}
     
     /**
@@ -526,7 +532,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  String largest slice distance string
      */
     public String getLargestSliceDistance() {
-    	return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.largestSliceDistanceDescription);
+    	return propertyList.firstElement().getProperty(VOIStatisticalProperties.largestSliceDistanceDescription);
     } // {return largestSliceDistance;}
     
     /**
@@ -536,7 +542,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  String largest distance string
      */
     public String getLargestDistance() {
-        return ((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.largestDistanceDescription);
+        return propertyList.firstElement().getProperty(VOIStatisticalProperties.largestDistanceDescription);
     } // {return largestDistance;}
 
     /**
@@ -545,7 +551,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getPrincipalAxis() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.axisDescription)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.axisDescription)).floatValue();
     } // {return principalAxis;}
 
 
@@ -565,7 +571,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getStdDev() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.deviationDescription)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.deviationDescription)).floatValue();
     } // {return stdDev;}
 
     /**
@@ -575,7 +581,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getStdDevB() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.deviationDescription +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.deviationDescription +
                                                                                                   "Blue")).floatValue();
     } // {return stdDevB;}
 
@@ -586,7 +592,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getStdDevG() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.deviationDescription +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.deviationDescription +
                                                                                                   "Green")).floatValue();
     } // {return stdDevG;}
     
@@ -598,7 +604,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getStdDevR() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.deviationDescription +
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.deviationDescription +
                                                                                                   "Red")).floatValue();
     } // {return stdDevR;}
 
@@ -607,7 +613,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getSumIntensities() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.sumIntensities)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.sumIntensities)).floatValue();
     }
     
     /**
@@ -615,7 +621,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getSumIntensitiesR() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.sumIntensities + "Red")).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.sumIntensities + "Red")).floatValue();
     }
     
     /**
@@ -623,7 +629,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getSumIntensitiesG() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.sumIntensities + "Green")).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.sumIntensities + "Green")).floatValue();
     }
     
     /**
@@ -631,7 +637,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getSumIntensitiesB() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.sumIntensities + "Blue")).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.sumIntensities + "Blue")).floatValue();
     }
     
     
@@ -654,7 +660,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return  DOCUMENT ME!
      */
     public float getVolume() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.volumeDescription)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.volumeDescription)).floatValue();
     } // {return volume;}
     
     /**
@@ -662,7 +668,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getSkewness() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.skewnessDescription)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.skewnessDescription)).floatValue();
     }
     
     /**
@@ -670,7 +676,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getSkewnessR() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.skewnessDescription + "Red")).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.skewnessDescription + "Red")).floatValue();
     }
     
     /**
@@ -678,7 +684,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getSkewnessG() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.skewnessDescription + "Green")).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.skewnessDescription + "Green")).floatValue();
     }
     
     /**
@@ -686,7 +692,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getSkewnessB() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.skewnessDescription + "Blue")).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.skewnessDescription + "Blue")).floatValue();
     }
     
     /**
@@ -694,7 +700,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getKurtosis() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.kurtosisDescription)).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.kurtosisDescription)).floatValue();
     }
     
     /**
@@ -702,7 +708,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getKurtosisR() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.kurtosisDescription + "Red")).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.kurtosisDescription + "Red")).floatValue();
     }
     
     /**
@@ -710,7 +716,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getKurtosisG() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.kurtosisDescription + "Green")).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.kurtosisDescription + "Green")).floatValue();
     }
     
     /**
@@ -718,7 +724,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @return
      */
     public float getKurtosisB() {
-        return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.kurtosisDescription + "Blue")).floatValue();
+        return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticalProperties.kurtosisDescription + "Blue")).floatValue();
     }
 
     /**
@@ -922,10 +928,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
     private class Calc2D implements Runnable {
     	
-    	private VOI selectedVOI;
+        /** The VOI being used just for this calculation (may be a single curve of a single slice or entire VOI **/
+    	private VOI calcSelectedVOI;
     	
     	public Calc2D(VOI selectedVOI) {
-    		this.selectedVOI = selectedVOI;
+    		this.calcSelectedVOI = selectedVOI;
     	}
     	
     	public void run() {
@@ -1011,7 +1018,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             Vector[] contours;
             BitSet mask;
-            VOIStatisticalProperties statProperty = getVOIProperties(selectedVOI);
+            VOIStatisticalProperties statProperty = getVOIProperties(calcSelectedVOI);
 
             try {
                 int bufferFactor = 1;
@@ -1042,12 +1049,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             FileInfoBase[] fileInfo = srcImage.getFileInfo();
 
-            float ignoreMin = selectedVOI.getMinimumIgnore();
-            float ignoreMax = selectedVOI.getMaximumIgnore();
+            float ignoreMin = calcSelectedVOI.getMinimumIgnore();
+            float ignoreMax = calcSelectedVOI.getMaximumIgnore();
             float perimeter = 0f;
             double largestContourDistance = 0;
 
-            contours = selectedVOI.getCurves();
+            contours = calcSelectedVOI.getCurves();
             
             xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
             if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -1139,7 +1146,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 		                    largestSliceDistance = Math.max(largestContourDistance, largestSliceDistance);
                         }
                         
-                        totalC = selectedVOI.getGeometricCenter();
+                        totalC = calcSelectedVOI.getGeometricCenter();
 
                         ((VOIContour) (contours[q].elementAt(r))).setActive(true);
 
@@ -1148,7 +1155,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             mask.clear(m);
                         }
 
-                        selectedVOI.createActiveContourBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1]);
+                        calcSelectedVOI.createActiveContourBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1]);
                         ((VOIContour) (contours[q].elementAt(r))).setActive(false);
 
                         if (srcImage.isColorImage()) {
@@ -2036,7 +2043,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.majorAxisDescription + "0;", nf.format(tmpMajorAxis[0]));
                 statProperty.setProperty(VOIStatisticList.minorAxisDescription + "0;", nf.format(tmpMinorAxis[0]));
 
-                Vector3f selectedCOM = selectedVOI.getGeometricCenter();
+                Vector3f selectedCOM = calcSelectedVOI.getGeometricCenter();
 
                 selectedCOM.X *= srcImage.getFileInfo(0).getResolutions()[0];
                 selectedCOM.Y *= srcImage.getFileInfo(0).getResolutions()[1];
@@ -2051,11 +2058,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.geometricCenterDescription, comStr);
 
                 if (srcImage.getParentFrame() != null) {
-                    selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+                    calcSelectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
                                              srcImage.getParentFrame().useXOR(), false);
                 }
                 else {
-                    selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+                    calcSelectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
                             false, false);   
                 }
 
@@ -2559,10 +2566,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     
     private class Calc34D implements Runnable {
     	
-    	private VOI selectedVOI;
+    	/** The VOI being used just for this calculation (may be a single curve of a single slice or entire VOI **/
+        private VOI calcSelectedVOI;
     	
     	public Calc34D(VOI selectedVOI) {
-    		this.selectedVOI = selectedVOI;
+    		this.calcSelectedVOI = selectedVOI;
     	}
     	
     	public void run() {
@@ -2656,7 +2664,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             Vector[] contours;
             BitSet mask;
-            VOIStatisticalProperties statProperty = getVOIProperties(selectedVOI);
+            VOIStatisticalProperties statProperty = getVOIProperties(calcSelectedVOI);
 
             area = 0;
             volume = 0;
@@ -2699,16 +2707,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 return;
             }
 
-            selectedVOI.getBounds(xExtents, yExtents, zExtents);
+            calcSelectedVOI.getBounds(xExtents, yExtents, zExtents);
 
-            float ignoreMin = selectedVOI.getMinimumIgnore();
-            float ignoreMax = selectedVOI.getMaximumIgnore();
+            float ignoreMin = calcSelectedVOI.getMinimumIgnore();
+            float ignoreMax = calcSelectedVOI.getMaximumIgnore();
 
-            contours = selectedVOI.getCurves();
+            contours = calcSelectedVOI.getCurves();
             
             if(distanceFlag) {
 	            long time2 = System.currentTimeMillis();
-	            largestDistance = selectedVOI.calcLargestDistance(srcImage.getExtents()[0],
+	            largestDistance = calcSelectedVOI.calcLargestDistance(srcImage.getExtents()[0],
 	                    srcImage.getExtents()[1],
 	                    srcImage.getFileInfo(0).getResolutions()[0],
 	                    srcImage.getFileInfo(0).getResolutions()[1],
@@ -2809,7 +2817,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         totalAxis += tmpPAxis[0];
                         totalMajorAxis += tmpMajorAxis[0];
                         totalMinorAxis += tmpMinorAxis[0];
-                        totalC = selectedVOI.getGeometricCenter();
+                        totalC = calcSelectedVOI.getGeometricCenter();
 
                         perimeter = ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
                                                                                             srcImage.getFileInfo(0).getResolutions()[1]);
@@ -2836,7 +2844,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             ((VOIContour) (contours[q].elementAt(r))).setActive(true);
                         }
 
-                        selectedVOI.createActiveContourBinaryMask(srcImage.getExtents()[0], srcImage.getExtents()[1], q,
+                        calcSelectedVOI.createActiveContourBinaryMask(srcImage.getExtents()[0], srcImage.getExtents()[1], q,
                                                                   mask, true);
 
                         if (processType == PROCESS_PER_SLICE) {
@@ -2848,7 +2856,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             ((VOIContour) (contours[q].elementAt(r))).setActive(false);
                         }
 
-                        Vector3f[] pts = selectedVOI.maxWidth();
+                        Vector3f[] pts = calcSelectedVOI.maxWidth();
 
                         statProperty.setProperty(VOIStatisticList.maxWidthDescription + end,
                                                  nf.format(Math.sqrt(((pts[1].X - pts[0].X) *
@@ -3753,7 +3761,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.majorAxisDescription, nf.format(tmpMajorAxis[0]));
                 statProperty.setProperty(VOIStatisticList.minorAxisDescription, nf.format(tmpMinorAxis[0]));
 
-                Vector3f selectedCOM = selectedVOI.getGeometricCenter();
+                Vector3f selectedCOM = calcSelectedVOI.getGeometricCenter();
                 selectedCOM.X *= srcImage.getFileInfo(0).getResolutions()[0];
                 selectedCOM.Y *= srcImage.getFileInfo(0).getResolutions()[1];
                 unitStr = unit2DStr + "\tZ";
@@ -3772,11 +3780,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 mask = new BitSet(imgBuffer.length);
                 if (srcImage.getParentFrame() != null) {
-                    selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+                    calcSelectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
                                                  srcImage.getParentFrame().useXOR(), false);
                 }
                 else {
-                    selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+                    calcSelectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
                             false, false);    
                 }
 
@@ -4264,7 +4272,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
             }
             
-            System.out.println("Time required to calculate "+selectedVOI.getName()+": "+(System.currentTimeMillis() - time));
+            System.out.println("Time required to calculate "+calcSelectedVOI.getName()+": "+(System.currentTimeMillis() - time));
         }
     }
     
@@ -4307,7 +4315,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  numberOfVOIs  DOCUMENT ME!
      */
     private void initialiseDataHolders(int numberOfVOIs) {
-        propertyList = new Vector(numberOfVOIs);
+        propertyList = new Vector<VOIStatisticalProperties>(numberOfVOIs);
 
         for (int i = 0; i < numberOfVOIs; i++) {
             propertyList.add(new VOIStatisticalProperties());
