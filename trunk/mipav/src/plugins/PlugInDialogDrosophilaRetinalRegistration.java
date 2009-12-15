@@ -48,6 +48,7 @@ import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewVOIVector;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 
@@ -581,7 +582,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 				 }
 				 VOI VOIX = VOIsX.VOIAt(0);
 				 VOIX.setAllActive(true);
-		         algoVOIProps = new AlgorithmVOIProps(imageX, AlgorithmVOIProps.PROCESS_PER_VOI, JDialogVOIStatistics.NO_RANGE);
+		         algoVOIProps = new AlgorithmVOIProps(imageX, AlgorithmVOIProps.PROCESS_PER_VOI, JDialogVOIStatistics.NO_RANGE, getActiveVOIs(imageX));
 		         algoVOIProps.run();
 		         minR_X = algoVOIProps.getMinIntensityRed();
 		         maxR_X = algoVOIProps.getMaxIntensityRed();
@@ -598,7 +599,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 		         algoVOIProps = null;
 				 VOI VOIY = VOIsY.VOIAt(0);
 				 VOIY.setAllActive(true);
-		         algoVOIProps = new AlgorithmVOIProps(imageY, AlgorithmVOIProps.PROCESS_PER_VOI, JDialogVOIStatistics.NO_RANGE);
+		         algoVOIProps = new AlgorithmVOIProps(imageY, AlgorithmVOIProps.PROCESS_PER_VOI, JDialogVOIStatistics.NO_RANGE, getActiveVOIs(imageY));
 		         algoVOIProps.run();
 		         minR_Y = algoVOIProps.getMinIntensityRed();
 		         maxR_Y = algoVOIProps.getMaxIntensityRed();
@@ -1755,6 +1756,43 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 
 	}
 
-	
+	/**
+     * This legacy code returns all active vois for a given source image.  PlugIns should explicitly identify VOIs they would
+     * like to process using AlgorithmVOIProps, because the user may have already added other VOIs to srcImage, or VOIs
+     * may be created by the algorithm in an unexpected way.  This plugin relied on <code>AlgorithmVOIProp</code>'s 
+     * getActiveVOIs() code, so that code has been moved into this plugin.
+     * 
+     * Use of this method is discouraged, as shown by the old documentation for this method:
+     * not for use. should be moved to a better location. does NOT clone the VOIs that it find to be active, and inserts
+     * into a new ViewVOIVector. if no VOIs are active, the ViewVOIVector returned is <code>null</code>.
+     *
+     * @return  All the active VOIs for a given srcImage.
+     */
+    private ViewVOIVector getActiveVOIs(ModelImage srcImage) {
+        ViewVOIVector voiList;
+
+        voiList = new ViewVOIVector();
+
+        int i;
+
+        try {
+
+            for (i = 0; i < srcImage.getVOIs().size(); i++) {
+
+                if (srcImage.getVOIs().VOIAt(i).isActive()) {
+
+                    // voi at i is the active voi
+                    voiList.addElement(srcImage.getVOIs().VOIAt(i));
+                }
+            }
+        } catch (ArrayIndexOutOfBoundsException indexException) {
+
+            // got to the end of list and never found an active VOI.
+            // return an  empty VOI list.
+            return new ViewVOIVector();
+        }
+
+        return voiList;
+    }
 
 }
