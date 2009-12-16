@@ -209,11 +209,12 @@ public class FileZVI extends FileBase {
         int z;
         int c;
         byte byteBuffer[] = null;
+        byte byteBuffer2[] = null;
         short shortBuffer[] = null;
         int index;
         int b1 = 0;
         int b2 = 0;
-        int bufferSize;
+        int sliceSize;
         
         try {
             
@@ -252,7 +253,7 @@ public class FileZVI extends FileBase {
             for (i = 0; i < imageExtents.length; i++) {
                 Preferences.debug("extents[" + i + "] = " + imageExtents[i] + "\n");
             }
-            bufferSize = imageExtents[0] * imageExtents[1];
+            sliceSize = imageExtents[0] * imageExtents[1];
             
             channelNumber = maxC - minC + 1;
             Preferences.debug("Channel number = " + channelNumber + "\n");
@@ -272,20 +273,25 @@ public class FileZVI extends FileBase {
                 case UNSIGNED8:
                     dataType = ModelStorageBase.UBYTE;
                     Preferences.debug("Data type = UNSIGNED BYTE\n");
+                    byteBuffer = new byte[sliceSize];
                     break;
                 case UNSIGNED16:
                     dataType = ModelStorageBase.USHORT;
                     Preferences.debug("Data type = UNSIGNED SHORT\n");
+                    byteBuffer = new byte[2 * sliceSize];
+                    shortBuffer = new short[sliceSize];
                     break;
                 case BGR:
                     dataType = ModelStorageBase.ARGB;
                     Preferences.debug("Data type = ARGB\n");
+                    byteBuffer = new byte[sliceSize];
+                    byteBuffer2 = new byte[4 * sliceSize];
                     break;
                 case RGB48:
                     dataType = ModelStorageBase.ARGB_USHORT;
                     Preferences.debug("Data type = ARGB_USHORT\n");
-                    byteBuffer = new byte[2 * imageExtents[0] * imageExtents[1]];
-                    shortBuffer = new short[4 * imageExtents[0] * imageExtents[1]];
+                    byteBuffer = new byte[2 * sliceSize];
+                    shortBuffer = new short[4 * sliceSize];
                     break;
                 default:
                     dataType = ModelStorageBase.UBYTE;
@@ -306,11 +312,19 @@ public class FileZVI extends FileBase {
                                     case UNSIGNED8:
                                         break;
                                     case UNSIGNED16:
+                                        for (j = 0, index = 0; j < sliceSize; j++) {
+                                            b1 = byteBuffer[index++] & 0xff;
+                                            b2 = byteBuffer[index++] & 0xff;
+                                            shortBuffer[j] = (short) ((b2 << 8) | b1);
+                                        }
                                         break;
                                     case BGR:
+                                        for (j = 0; j < sliceSize; j++) {
+                                            byteBuffer2[4*j + 1 + (2 - (c - minC))] = byteBuffer[j];    
+                                        }
                                         break;
                                     case RGB48:
-                                        for (j = 0, index = 0; j < bufferSize; j++) {
+                                        for (j = 0, index = 0; j < sliceSize; j++) {
                                             b1 = byteBuffer[index++] & 0xff;
                                             b2 = byteBuffer[index++] & 0xff;
                                             shortBuffer[4*j + (c - minC + 1)] = (short) ((b2 << 8) | b1);
@@ -322,7 +336,21 @@ public class FileZVI extends FileBase {
                             }
                         } // for (i = 0; i < si.length; i++)
                     } // for (c = minC; c <= maxC; c++)
-                    image.importData(4*(t*zDim*bufferSize + z*bufferSize), shortBuffer, false);
+                    switch (si[0].dataType) {
+                        case UNSIGNED8:
+                            image.importData(t*zDim*sliceSize + z*sliceSize, byteBuffer, false);
+                            break;
+                        case UNSIGNED16:
+                            image.importData(t*zDim*sliceSize + z*sliceSize, shortBuffer, false);
+                            break;
+                        case BGR:
+                            image.importData(4*(t*zDim*sliceSize + z*sliceSize), byteBuffer2, false);
+                            break;
+                        case RGB48:
+                            image.importData(4*(t*zDim*sliceSize + z*sliceSize), shortBuffer, false);
+                            break;
+                    }
+                    
                 } // for (z = 0; z < zDim; z++)
             } // for (t = 0; t < tDim; t++)
             
