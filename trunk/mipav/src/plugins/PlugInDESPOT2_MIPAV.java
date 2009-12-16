@@ -489,9 +489,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		if (invertT2toR2) r2Values = new float[nSlices][width*height];
 		else r2Values = new float[1][1];
 		
-		ModelImage t2ResultStack = new ModelImage(image.getType(), image.getExtents(), "t2 Results");
-		ModelImage moResultStack = new ModelImage(image.getType(), image.getExtents(), "mo Results");
-		ModelImage r2ResultStack = new ModelImage(image.getType(), image.getExtents(), "r2 Results");
+		ModelImage t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2 Results");
+		ModelImage moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
+		ModelImage r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
 		
 		fa_phase0 = new double[Nfa_phase0];
 		scaledFA_phase0 = new double[Nfa_phase0];
@@ -711,9 +711,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		if (invertT2toR2) r2Values = new float[nSlices][width*height];
 		else r2Values = new float[1][1];
 		
-		ModelImage t2ResultStack = new ModelImage(image.getType(), image.getExtents(), "t2 Results");
-		ModelImage moResultStack = new ModelImage(image.getType(), image.getExtents(), "mo Results");
-		ModelImage r2ResultStack = new ModelImage(image.getType(), image.getExtents(), "r2 Results");
+		ModelImage t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2 Results");
+		ModelImage moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
+		ModelImage r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
 		
 		fa_phase180 = new double[Nfa_phase180];
 		scaledFA_phase180 = new double[Nfa_phase180];
@@ -939,9 +939,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		if (invertT2toR2) r2Values = new float[nSlices][width*height];
 		else r2Values = new float[1][1];
 		
-		ModelImage t2ResultStack = new ModelImage(image.getType(), image.getExtents(), "t2 Results");
-		ModelImage moResultStack = new ModelImage(image.getType(), image.getExtents(), "mo Results");
-		ModelImage r2ResultStack = new ModelImage(image.getType(), image.getExtents(), "r2 Results");
+		ModelImage t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2 Results");
+		ModelImage moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
+		ModelImage r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
 		
 		fa_phase0 = new double[Nfa_phase0];
 		fa_phase180 = new double[Nfa_phase180];
@@ -1273,10 +1273,10 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		if (includeB1Map) b1PixelValues = new double[width*height];
 		else b1PixelValues = new double[1];
 		
-		ModelImage t2ResultStack = new ModelImage(image.getType(), image.getExtents(), "t2 Results");
-		ModelImage moResultStack = new ModelImage(image.getType(), image.getExtents(), "mo Results");
-		ModelImage r2ResultStack = new ModelImage(image.getType(), image.getExtents(), "r2 Results");
-		ModelImage boResultStack = new ModelImage(image.getType(), image.getExtents(), "bo Results");
+		ModelImage t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2 Results");
+		ModelImage moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
+		ModelImage r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
+		ModelImage boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo Results");
 		
 		FA = new double[Nfa_phase0 + Nfa_phase180];
 		scaledFA = new double[Nfa_phase0 + Nfa_phase180];
