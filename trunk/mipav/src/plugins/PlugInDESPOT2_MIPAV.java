@@ -1166,9 +1166,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     		moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
     		r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
     		
-    		nearCloneImage(image, t2ResultStack);
-    		nearCloneImage(image, moResultStack);
-    		nearCloneImage(image, r2ResultStack);
+    		t2ResultStack = nearCloneImage(image, t2ResultStack);
+            moResultStack = nearCloneImage(image, moResultStack);
+            r2ResultStack = nearCloneImage(image, r2ResultStack);
     		
     		fa_phase0 = new double[Nfa_phase0];
     		scaledFA_phase0 = new double[Nfa_phase0];
@@ -1397,9 +1397,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     		moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
     		r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
     		
-    		nearCloneImage(image, t2ResultStack);
-    		nearCloneImage(image, moResultStack);
-    		nearCloneImage(image, r2ResultStack);
+    		t2ResultStack = nearCloneImage(image, t2ResultStack);
+    		moResultStack = nearCloneImage(image, moResultStack);
+    		r2ResultStack = nearCloneImage(image, r2ResultStack);
     		
     		fa_phase180 = new double[Nfa_phase180];
     		scaledFA_phase180 = new double[Nfa_phase180];
@@ -1634,9 +1634,9 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     		moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
     		r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
     		
-    		nearCloneImage(image, t2ResultStack);
-    		nearCloneImage(image, moResultStack);
-    		nearCloneImage(image, r2ResultStack);
+    		t2ResultStack = nearCloneImage(image, t2ResultStack);
+            moResultStack = nearCloneImage(image, moResultStack);
+            r2ResultStack = nearCloneImage(image, r2ResultStack);
     		
     		fa_phase0 = new double[Nfa_phase0];
     		fa_phase180 = new double[Nfa_phase180];
@@ -1978,10 +1978,10 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     		r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
     		boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo Results");
     		
-    		nearCloneImage(image, t2ResultStack);
-    		nearCloneImage(image, moResultStack);
-    		nearCloneImage(image, r2ResultStack);
-    		nearCloneImage(image, boResultStack);
+    		t2ResultStack = nearCloneImage(image, t2ResultStack);
+            moResultStack = nearCloneImage(image, moResultStack);
+            r2ResultStack = nearCloneImage(image, r2ResultStack);
+    		boResultStack = nearCloneImage(image, boResultStack);
     		
     		FA = new double[Nfa_phase0 + Nfa_phase180];
     		scaledFA = new double[Nfa_phase0 + Nfa_phase180];
