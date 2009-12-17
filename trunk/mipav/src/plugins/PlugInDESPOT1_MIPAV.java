@@ -17,6 +17,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.plugins.BundledPlugInInfo;
 import gov.nih.mipav.plugins.PlugInGeneric;
@@ -823,12 +824,110 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 	}
 	
    
+	public String itos(int num) {
+    	String str = new Integer(num).toString();
+	return str;
+    }
+	
+    /**
+     * This method gives <code>clo</code> most of the image attributes of <code>orig</code> besides
+     * data type to minimize rounding errors.
+     * 
+     * @param orig Original image
+     * @param clo Near clone image
+     */
+    public ModelImage nearCloneImage(ModelImage orig, ModelImage clo) {
+        FileInfoBase[] oArr = orig.getFileInfo();
+        FileInfoBase[] cArr = clo.getFileInfo();
+        if(cArr.length != oArr.length) {
+            MipavUtil.displayError("Images are not same length");
+            return clo;
+        }
+        for(int i=0; i<cArr.length; i++) {
+            if(cArr == null) {
+                return clo;
+            }
+            cArr[i].setOffset(oArr[i].getOffset());
+            cArr[i].setEndianess(oArr[i].getEndianess());
+            cArr[i].setResolutions(oArr[i].getResolutions().clone());
+            cArr[i].setUnitsOfMeasure(oArr[i].getUnitsOfMeasure().clone());
+            cArr[i].setOrigin(oArr[i].getOrigin().clone());
+            cArr[i].setImageOrientation(cArr[i].getImageOrientation());
+            cArr[i].setAxisOrientation(oArr[i].getAxisOrientation().clone());
+            cArr[i].setDataType(ModelImage.DOUBLE);
+        }
+        
+        return clo;
+    }
+    
+	public double signalResiduals(double x, double[] spgrData, double[] irspgrData, double Inversion, int Nfa, int Nti, double[] despotFA, double despotTR, double[] irspgrTr, double[] irspgrTI, double irspgrFA) {
+		
+		double sumX, sumY, sumXY, sumXX, slope, intercept, residuals;
+		double t1Guess, moGuess;
+		double[] despotGuess, irspgrGuess, guess;
+		
+		double MoScale;
+		
+		int p, pulse, i,j;
+		
+		
+		despotGuess = new double[Nfa];
+		irspgrGuess = new double[Nti];
+		
+		sumX = 0.00;
+		sumY = 0.00;
+		sumXY = 0.00;
+		sumXX = 0.00;
+		for (p=0; p<Nfa; p++) {
+			sumX += spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00);
+			sumY += spgrData[p]/Math.sin(x*despotFA[p]*3.14159265/180.00);
+			sumXY += spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00) * spgrData[p]/Math.sin(x*despotFA[p]*3.14159265/180.00);
+			sumXX += spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00) * spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00);
+		}
+		slope = (Nfa*sumXY - sumX*sumY) / (Nfa*sumXX - sumX*sumX);
+		intercept = (sumY - slope*sumX)/Nfa;
+		
+		if (slope > 0.00 && slope < 1.00) {
+			t1Guess = -despotTR/Math.log(slope);
+			moGuess = intercept/(1.00-slope);
+		}
+		else {
+			t1Guess = 0.00;
+			moGuess = 0.00;
+		}
+		
+		
+		if (t1Guess > 0) {
+			for (p=0; p<Nfa; p++) despotGuess[p] = moGuess*(1.00-Math.exp(-despotTR/t1Guess))*Math.sin(x*despotFA[p]*3.14159265/180.00)/(1.00-Math.exp(-despotTR/t1Guess)*Math.cos(x*despotFA[p]*3.14159265/180.00));
+		}
+		else {
+			for (p=0; p<Nfa; p++) despotGuess[p] = 0.00;
+		}
+		
+		if (t1Guess > 0) {
+			
+			MoScale = 0.975;
+			
+			for (p=0; p<Nti; p++) irspgrGuess[p] = Math.abs( MoScale*moGuess*Math.sin(x*irspgrFA*3.14159265/180.00) * (1.00-Inversion*Math.exp(-irspgrTI[p]/t1Guess) + Math.exp(-irspgrTr[p]/t1Guess)) );
+		}
+		else {
+			for (p=0; p<Nti; p++) irspgrGuess[p] = 0.00;
+		}
+		
+		
+		residuals = 0.00;
+		for (p=0; p<Nfa; p++) residuals += Math.pow( (spgrData[p]-despotGuess[p]), 2.00);
+		for (p=0; p<Nti; p++) residuals += Math.pow( (irspgrData[p]-irspgrGuess[p]), 2.00);
+		
+		return residuals;
+	}
+
 	private class DespotPerform extends Thread {
         private ModelImage t1ResultStack;
         private ModelImage moResultStack;
         private ModelImage r1ResultStack;
         private ModelImage b1ResultStack;
-
+    
         private boolean hardInterrupt = false;
         
         public void run() {
@@ -854,17 +953,17 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
                 if(moResultStack != null) {
                     moResultStack.disposeLocal();
                 }
-
+    
                 if(r1ResultStack != null) {
                     r1ResultStack.disposeLocal();
                 }
-
+    
                 if(b1ResultStack != null) {
                     b1ResultStack.disposeLocal();
                 }
             }
         }
-
+    
         public boolean calculateT1UsingDESPOT1HIFI() {
         	progressBar.setMessage("Prepping data..hang on");
         	progressBar.updateValue(5);
@@ -965,6 +1064,11 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
         	moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
         	r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1 Results");
         	b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1 Results");
+        	
+        	t1ResultStack = nearCloneImage(image, t1ResultStack);
+        	moResultStack = nearCloneImage(image, moResultStack);
+        	r1ResultStack = nearCloneImage(image, r1ResultStack);
+        	b1ResultStack = nearCloneImage(image, b1ResultStack);
         	
         	fa = new double[Nsa];
         	scaledFA = new double[Nsa];
@@ -1413,7 +1517,7 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
         	
         	return true;
         }
-
+    
         public boolean calculateT1UsingConventionalDESPOT1() {
         	ModelImage image, b1FieldImage = null;
         	float[] ctable, b1ctable;
@@ -1446,6 +1550,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
         	t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1 Results");
         	moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
         	r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1 Results");
+        	
+        	t1ResultStack = nearCloneImage(image, t1ResultStack);
+            moResultStack = nearCloneImage(image, moResultStack);
+            r1ResultStack = nearCloneImage(image, r1ResultStack);
         	
         	fa = new double[Nsa];
         	for (angle=0; angle<Nsa;angle++) {
@@ -1693,74 +1801,7 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
         }
     }
 
-    public String itos(int num) {
-    	String str = new Integer(num).toString();
-	return str;
-    }
-	
-	public double signalResiduals(double x, double[] spgrData, double[] irspgrData, double Inversion, int Nfa, int Nti, double[] despotFA, double despotTR, double[] irspgrTr, double[] irspgrTI, double irspgrFA) {
-		
-		double sumX, sumY, sumXY, sumXX, slope, intercept, residuals;
-		double t1Guess, moGuess;
-		double[] despotGuess, irspgrGuess, guess;
-		
-		double MoScale;
-		
-		int p, pulse, i,j;
-		
-		
-		despotGuess = new double[Nfa];
-		irspgrGuess = new double[Nti];
-		
-		sumX = 0.00;
-		sumY = 0.00;
-		sumXY = 0.00;
-		sumXX = 0.00;
-		for (p=0; p<Nfa; p++) {
-			sumX += spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00);
-			sumY += spgrData[p]/Math.sin(x*despotFA[p]*3.14159265/180.00);
-			sumXY += spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00) * spgrData[p]/Math.sin(x*despotFA[p]*3.14159265/180.00);
-			sumXX += spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00) * spgrData[p]/Math.tan(x*despotFA[p]*3.14159265/180.00);
-		}
-		slope = (Nfa*sumXY - sumX*sumY) / (Nfa*sumXX - sumX*sumX);
-		intercept = (sumY - slope*sumX)/Nfa;
-		
-		if (slope > 0.00 && slope < 1.00) {
-			t1Guess = -despotTR/Math.log(slope);
-			moGuess = intercept/(1.00-slope);
-		}
-		else {
-			t1Guess = 0.00;
-			moGuess = 0.00;
-		}
-		
-		
-		if (t1Guess > 0) {
-			for (p=0; p<Nfa; p++) despotGuess[p] = moGuess*(1.00-Math.exp(-despotTR/t1Guess))*Math.sin(x*despotFA[p]*3.14159265/180.00)/(1.00-Math.exp(-despotTR/t1Guess)*Math.cos(x*despotFA[p]*3.14159265/180.00));
-		}
-		else {
-			for (p=0; p<Nfa; p++) despotGuess[p] = 0.00;
-		}
-		
-		if (t1Guess > 0) {
-			
-			MoScale = 0.975;
-			
-			for (p=0; p<Nti; p++) irspgrGuess[p] = Math.abs( MoScale*moGuess*Math.sin(x*irspgrFA*3.14159265/180.00) * (1.00-Inversion*Math.exp(-irspgrTI[p]/t1Guess) + Math.exp(-irspgrTr[p]/t1Guess)) );
-		}
-		else {
-			for (p=0; p<Nti; p++) irspgrGuess[p] = 0.00;
-		}
-		
-		
-		residuals = 0.00;
-		for (p=0; p<Nfa; p++) residuals += Math.pow( (spgrData[p]-despotGuess[p]), 2.00);
-		for (p=0; p<Nti; p++) residuals += Math.pow( (irspgrData[p]-irspgrGuess[p]), 2.00);
-		
-		return residuals;
-	}
-
-	public enum ExitStatus {
+    public enum ExitStatus {
 		
 		/**Ok button pressed and listener conditions passed*/
 		OK_SUCCESS,

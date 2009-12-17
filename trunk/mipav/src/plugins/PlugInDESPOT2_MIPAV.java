@@ -18,6 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.plugins.BundledPlugInInfo;
 import gov.nih.mipav.plugins.PlugInGeneric;
@@ -900,6 +901,37 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		return;
 	}
 	
+	/**
+     * This method gives <code>clo</code> most of the image attributes of <code>orig</code> besides
+     * data type to minimize rounding errors.
+     * 
+     * @param orig Original image
+     * @param clo Near clone image
+     */
+    public ModelImage nearCloneImage(ModelImage orig, ModelImage clo) {
+        FileInfoBase[] oArr = orig.getFileInfo();
+        FileInfoBase[] cArr = clo.getFileInfo();
+        if(cArr.length != oArr.length) {
+            MipavUtil.displayError("Images are not same length");
+            return clo;
+        }
+        for(int i=0; i<cArr.length; i++) {
+            if(cArr == null) {
+                return clo;
+            }
+            cArr[i].setOffset(oArr[i].getOffset());
+            cArr[i].setEndianess(oArr[i].getEndianess());
+            cArr[i].setResolutions(oArr[i].getResolutions().clone());
+            cArr[i].setUnitsOfMeasure(oArr[i].getUnitsOfMeasure().clone());
+            cArr[i].setOrigin(oArr[i].getOrigin().clone());
+            cArr[i].setImageOrientation(cArr[i].getImageOrientation());
+            cArr[i].setAxisOrientation(oArr[i].getAxisOrientation().clone());
+            cArr[i].setDataType(ModelImage.DOUBLE);
+        }
+        
+        return clo;
+    }
+	
 	public void reduceBoField(double[][] boField, double resonancePeriod, int width, int height) {
 		int i,j;
 		double fraction, offResonanceMod;
@@ -1134,6 +1166,10 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     		moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
     		r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
     		
+    		nearCloneImage(image, t2ResultStack);
+    		nearCloneImage(image, moResultStack);
+    		nearCloneImage(image, r2ResultStack);
+    		
     		fa_phase0 = new double[Nfa_phase0];
     		scaledFA_phase0 = new double[Nfa_phase0];
     		for (angle=0; angle<Nfa_phase0; angle++) {
@@ -1360,6 +1396,10 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     		t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2 Results");
     		moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
     		r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
+    		
+    		nearCloneImage(image, t2ResultStack);
+    		nearCloneImage(image, moResultStack);
+    		nearCloneImage(image, r2ResultStack);
     		
     		fa_phase180 = new double[Nfa_phase180];
     		scaledFA_phase180 = new double[Nfa_phase180];
@@ -1593,6 +1633,10 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     		t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2 Results");
     		moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
     		r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
+    		
+    		nearCloneImage(image, t2ResultStack);
+    		nearCloneImage(image, moResultStack);
+    		nearCloneImage(image, r2ResultStack);
     		
     		fa_phase0 = new double[Nfa_phase0];
     		fa_phase180 = new double[Nfa_phase180];
@@ -1933,6 +1977,11 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     		moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
     		r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
     		boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo Results");
+    		
+    		nearCloneImage(image, t2ResultStack);
+    		nearCloneImage(image, moResultStack);
+    		nearCloneImage(image, r2ResultStack);
+    		nearCloneImage(image, boResultStack);
     		
     		FA = new double[Nfa_phase0 + Nfa_phase180];
     		scaledFA = new double[Nfa_phase0 + Nfa_phase180];
@@ -2375,6 +2424,8 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     	}
     }
 
+	
+	
     public enum ExitStatus {
 		
 		/**Ok button pressed and listener conditions passed*/
