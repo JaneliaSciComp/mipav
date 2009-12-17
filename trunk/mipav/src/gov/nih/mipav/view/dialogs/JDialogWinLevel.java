@@ -795,16 +795,16 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
         min = .25f * (maxImage - minImage);
-        minSlider = new JSlider(0, 1999,500);
+        minSlider = new JSlider(0, 7999,2000);
 
         // set slider attributes
         minSlider.setFont(serif12);
         minSlider.setEnabled(true);
 
         if ((image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE)) {
-        	minSlider.setMajorTickSpacing(500);
+        	minSlider.setMajorTickSpacing(2000);
         } else {
-        	minSlider.setMajorTickSpacing(500);
+        	minSlider.setMajorTickSpacing(2000);
         }
 
         minSlider.setPaintTicks(true);
@@ -855,7 +855,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         spanel.add(minValTextField, gbc);
         
         minMaxBInt = minImage;
-        minMaxSlope = (maxImage - minImage)/1999;
+        minMaxSlope = (maxImage - minImage)/7999;
         
     }
     
@@ -892,16 +892,16 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
         max = .75f * (maxImage - minImage);
-        maxSlider = new JSlider(0, 1999,1500);
+        maxSlider = new JSlider(0, 7999,6000);
 
         // set slider attributes
         maxSlider.setFont(serif12);
         maxSlider.setEnabled(true);
 
         if ((image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE)) {
-        	maxSlider.setMajorTickSpacing(500);
+        	maxSlider.setMajorTickSpacing(2000);
         } else {
-        	maxSlider.setMajorTickSpacing(500);
+        	maxSlider.setMajorTickSpacing(2000);
         }
 
         maxSlider.setPaintTicks(true);
