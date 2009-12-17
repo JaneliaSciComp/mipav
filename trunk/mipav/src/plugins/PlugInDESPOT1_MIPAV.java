@@ -12,7 +12,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -189,12 +188,6 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
                 if(e.getActionCommand().equalsIgnoreCase("cancel")) {
                     progressBar.dispose();
                     runLocal.interrupt();
-                    /*try {
-                        runLocal.stop();
-                    } catch (SecurityException se) {
-                        //just let thread run to completion
-                        se.printStackTrace();
-                    }*/
                 }
             }
 		});
@@ -858,15 +851,15 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
                     t1ResultStack.disposeLocal();
                 }
                 
-                if(t1ResultStack != null) {
+                if(moResultStack != null) {
                     moResultStack.disposeLocal();
                 }
 
-                if(t1ResultStack != null) {
+                if(r1ResultStack != null) {
                     r1ResultStack.disposeLocal();
                 }
 
-                if(t1ResultStack != null) {
+                if(b1ResultStack != null) {
                     b1ResultStack.disposeLocal();
                 }
             }
