@@ -1776,6 +1776,64 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
         return;
     }
+    
+    
+    
+    public float[] getCorrespondingSourcePoint(int xTar, int yTar, int zTar) {
+    	float[] srcPoints = new float[3];
+    	double dx, dy, dz;
+        double fT;
+        double U;
+    	
+    	
+    	srcPoints[0] = C[N][0] + (C[N + 1][0] * xTar) + (C[N + 2][0] * yTar) + (C[N + 3][0] * zTar);
+    	srcPoints[1] = C[N][1] + (C[N + 1][1] * xTar) + (C[N + 2][1] * yTar) + (C[N + 3][1] * zTar);
+    	srcPoints[2] = C[N][2] + (C[N + 1][2] * xTar) + (C[N + 2][2] * yTar) + (C[N + 3][2] * zTar);
+    	
+    	
+    	for (int m = 0; m < N; m++) {
+            dx = x[m] - xTar;
+            dy = y[m] - yTar;
+            dz = z[m] - zTar;
+            fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
+            U = kernel(fT);
+            srcPoints[0] += C[m][0] * U;
+            srcPoints[1] += C[m][1] * U;
+            srcPoints[2] += C[m][2] * U;
+        }
+    	
+    	
+    	return srcPoints;
+    }
+    
+    
+    public float[] getCorrespondingSourcePoint(float xTar, float yTar, float zTar) {
+    	float[] srcPoints = new float[3];
+    	double dx, dy, dz;
+        double fT;
+        double U;
+    	
+    	
+    	srcPoints[0] = C[N][0] + (C[N + 1][0] * xTar) + (C[N + 2][0] * yTar) + (C[N + 3][0] * zTar);
+    	srcPoints[1] = C[N][1] + (C[N + 1][1] * xTar) + (C[N + 2][1] * yTar) + (C[N + 3][1] * zTar);
+    	srcPoints[2] = C[N][2] + (C[N + 1][2] * xTar) + (C[N + 2][2] * yTar) + (C[N + 3][2] * zTar);
+    	
+    	
+    	for (int m = 0; m < N; m++) {
+            dx = x[m] - xTar;
+            dy = y[m] - yTar;
+            dz = z[m] - zTar;
+            fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
+            U = kernel(fT);
+            srcPoints[0] += C[m][0] * U;
+            srcPoints[1] += C[m][1] * U;
+            srcPoints[2] += C[m][2] * U;
+        }
+    	
+    	//System.out.println("getCorrespondingPt : " + xTar + "," + yTar + "," + zTar + " ---> " + srcPoints[0] + "," + srcPoints[1] + "," + srcPoints[2]);
+    	return srcPoints;
+    	
+    }
 
     /**
      * DOCUMENT ME!
@@ -1826,6 +1884,15 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         try {
             extents = new int[] { xDimA, yDimA, zDimA };
             resultImage = new ModelImage(matchImage.getType(), extents, name);
+            float[] resols;
+            if(baseImage == null) {
+            	resols = matchImage.getResolutions(0);
+            }else {
+            	resols = baseImage.getResolutions(0);
+            }
+            for(int w=0;w<resultImage.getExtents()[2];w++) {
+            	resultImage.setResolutions(w, resols);
+   		 	}
         } catch (OutOfMemoryError error) {
             extents = null;
 
