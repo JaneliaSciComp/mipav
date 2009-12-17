@@ -33,31 +33,47 @@ public class FileZVI extends FileBase {
     
     private static final short VT_UNKNOWN = 13;
     
+    private static final short VT_BLOB = 65;
+    
+    private static final short VT_CLSID = 72;
+    
     /** Memory buffer size in bytes, for reading from disk. */
     private static final int BUFFER_SIZE = 8192;
     
     /** Block identifying start of useful header information. */
+    // 65, 0 corresponds to VT_BLOB = 65 followed by a 4 byte integer specifying a length of 16.
+    // {m_PluginCLSID} in the <Contents> stream of the image item
+    // Mistakenly specified as VT_CLSID in documentation.
     private static final byte[] ZVI_MAGIC_BLOCK_1 = { // 41 00 10
       65, 0, 16
     };
     
     /** Block identifying second part of useful header information. */
+    // 65, 0 corresponds to VT_BLOB = 65 followed by a 4 byte integer specifying a length of 128.
+    // {Others} in <Contents> stream of the image item
     private static final byte[] ZVI_MAGIC_BLOCK_2 = { // 41 00 80
       65, 0, -128
     };
 
     /** Block identifying third part of useful header information. */
+    // Stream version ID
+    // Minor 0x2000 followed by major 0x1000
+    // This marks the start of the image header and data
     private static final byte[] ZVI_MAGIC_BLOCK_3 = { // 20 00 10
-      32, 0, 16
+      0, 32, 0, 16
     };
 
     private static final int UNSIGNED8 = 1;
     
     private static final int UNSIGNED16 = 2;
     
-    private static final int BGR = 3;
+    private static final int RGB = 3;
     
-    private static final int RGB48 = 4;
+    private static final int RGB_USHORT = 4;
+    
+    private static final int BGR = 5;
+    
+    private static final int BGR_USHORT = 6;
    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -256,13 +272,14 @@ public class FileZVI extends FileBase {
             sliceSize = imageExtents[0] * imageExtents[1];
             
             channelNumber = maxC - minC + 1;
+            Preferences.debug("minC = " + minC + " maxC = " + maxC + "\n");
             Preferences.debug("Channel number = " + channelNumber + "\n");
             if (channelNumber > 1) {
                 if (si[0].dataType == UNSIGNED8) {
-                    si[0].dataType = BGR;    
+                    si[0].dataType = RGB;    
                 }
                 else if (si[0].dataType == UNSIGNED16) {
-                    si[0].dataType = RGB48;
+                    si[0].dataType = RGB_USHORT;
                 }
             }
             
@@ -281,16 +298,28 @@ public class FileZVI extends FileBase {
                     byteBuffer = new byte[2 * sliceSize];
                     shortBuffer = new short[sliceSize];
                     break;
-                case BGR:
+                case RGB:
                     dataType = ModelStorageBase.ARGB;
                     Preferences.debug("Data type = ARGB\n");
                     byteBuffer = new byte[sliceSize];
                     byteBuffer2 = new byte[4 * sliceSize];
                     break;
-                case RGB48:
+                case RGB_USHORT:
                     dataType = ModelStorageBase.ARGB_USHORT;
                     Preferences.debug("Data type = ARGB_USHORT\n");
                     byteBuffer = new byte[2 * sliceSize];
+                    shortBuffer = new short[4 * sliceSize];
+                    break;
+                case BGR:
+                    dataType = ModelStorageBase.ARGB;
+                    Preferences.debug("Data type = ARGB\n");
+                    byteBuffer = new byte[3*sliceSize];
+                    byteBuffer2 = new byte[4 * sliceSize];
+                    break;
+                case BGR_USHORT:
+                    dataType = ModelStorageBase.ARGB_USHORT;
+                    Preferences.debug("Data type = ARGB_USHORT\n");
+                    byteBuffer = new byte[6 * sliceSize];
                     shortBuffer = new short[4 * sliceSize];
                     break;
                 default:
@@ -318,16 +347,36 @@ public class FileZVI extends FileBase {
                                             shortBuffer[j] = (short) ((b2 << 8) | b1);
                                         }
                                         break;
-                                    case BGR:
+                                    case RGB:
                                         for (j = 0; j < sliceSize; j++) {
-                                            byteBuffer2[4*j + 1 + (2 - (c - minC))] = byteBuffer[j];    
+                                            byteBuffer2[4*j + (c - minC + 1)] = byteBuffer[j];    
                                         }
                                         break;
-                                    case RGB48:
+                                    case RGB_USHORT:
                                         for (j = 0, index = 0; j < sliceSize; j++) {
                                             b1 = byteBuffer[index++] & 0xff;
                                             b2 = byteBuffer[index++] & 0xff;
                                             shortBuffer[4*j + (c - minC + 1)] = (short) ((b2 << 8) | b1);
+                                        }
+                                        break;
+                                    case BGR:
+                                        for (j = 0; j < sliceSize; j++) {
+                                            byteBuffer2[4*j + 3] = byteBuffer[3*j];
+                                            byteBuffer2[4*j + 2] = byteBuffer[3*j+1];
+                                            byteBuffer2[4*j + 1] = byteBuffer[3*j+2];
+                                        }
+                                        break;
+                                    case BGR_USHORT:
+                                        for (j = 0, index = 0; j < sliceSize; j++) {
+                                            b1 = byteBuffer[index++] & 0xff;
+                                            b2 = byteBuffer[index++] & 0xff;
+                                            shortBuffer[4*j + 3] = (short) ((b2 << 8) | b1);
+                                            b1 = byteBuffer[index++] & 0xff;
+                                            b2 = byteBuffer[index++] & 0xff;
+                                            shortBuffer[4*j + 2] = (short) ((b2 << 8) | b1);
+                                            b1 = byteBuffer[index++] & 0xff;
+                                            b2 = byteBuffer[index++] & 0xff;
+                                            shortBuffer[4*j + 1] = (short) ((b2 << 8) | b1);
                                         }
                                         break;
                                 }
@@ -343,10 +392,12 @@ public class FileZVI extends FileBase {
                         case UNSIGNED16:
                             image.importData(t*zDim*sliceSize + z*sliceSize, shortBuffer, false);
                             break;
+                        case RGB:
                         case BGR:
                             image.importData(4*(t*zDim*sliceSize + z*sliceSize), byteBuffer2, false);
                             break;
-                        case RGB48:
+                        case RGB_USHORT:
+                        case BGR_USHORT:
                             image.importData(4*(t*zDim*sliceSize + z*sliceSize), shortBuffer, false);
                             break;
                     }
@@ -816,6 +867,9 @@ public class FileZVI extends FileBase {
         int numC = 0; 
         while (true) {
             // search for start of next image header
+            // short VT_BLOB followed by int length specification of 16.
+            // This must be {m_PluginCLSID} which is mistakenly classified
+            // as VT_CLSID in the documentation.  It is not used.
             long header = findBlock(raFile, ZVI_MAGIC_BLOCK_1, pos);
 
             if (header < 0) {
@@ -831,6 +885,19 @@ public class FileZVI extends FileBase {
             pos += 19;
 
             // these bytes should match ZVI_MAGIC_BLOCK_2
+            // short VT_BLOB followed by int length specification of 128
+            // VT_BLOB is located as {Others} in Image Item's Contents stream
+            // followed by coordinate block with 8 VT_I4 values
+            // Dimension        Index               Info
+            // U                0                   Tile ID - currently always zero
+            // V                1                   Tile ID - currently always zero.
+            // Z                2                   Z ID
+            // C                3                   Channel ID
+            // T                4                   Time ID
+            // S                5                   Scene ID
+            // P                6                   Position ID
+            // A                7                   Not Used
+            // The coordinate block is followed by 96 bytes of zero.
             byte[] b = new byte[ZVI_MAGIC_BLOCK_2.length];
             raFile.readFully(b);
             boolean ok = true;
@@ -856,12 +923,19 @@ public class FileZVI extends FileBase {
             if (!ok) continue;
 
             // read potential header information
+            // Before Z have first 8 bytes of coordinate ID for image dimensions
+            // U Tile ID - currently always zero
+            // V tile ID - currently always zero
             int theZ = getInt(endianess);
             int theC = getInt(endianess);
             int theT = getInt(endianess);
             pos += 12;
 
             // these bytes should be 00
+            // After time ID have 12 more bytes in coordinate ID for image dimensions
+            // scene ID 4 byte int
+            // position ID 4 byte int
+            // A not used 4 byte int
             b = new byte[108];
             raFile.readFully(b);
             for (int i=0; i<b.length; i++) {
@@ -907,9 +981,12 @@ public class FileZVI extends FileBase {
             //-
             //+ new code
             // these bytes don't matter
-            raFile.skipBytes(89);
-            pos += 89;
+            raFile.skipBytes(88);
+            pos += 88;
 
+            // Stream version ID
+            // 2 byte minor 0x2000 followed by 2 byte major 0x1000
+            // This marks the start of the image header and data
             byte[] magic3 = new byte[ZVI_MAGIC_BLOCK_3.length];
             raFile.readFully(magic3);
             for (int i=0; i<magic3.length; i++) {
@@ -925,14 +1002,15 @@ public class FileZVI extends FileBase {
             // read more header information
             int w = getInt(endianess);
             int h = getInt(endianess);
-            int alwaysOne = getInt(endianess); // don't know what this is for
+            // Depth (Z-Size) of the image pixel matrix - currently not used.
+            int depth = getInt(endianess); 
             int bytesPerPixel = getInt(endianess);
-            int pixelType = getInt(endianess); // not clear what this value signifies
+            int pixelFormat = getInt(endianess); // 
             int bitDepth = getInt(endianess); // doesn't always equal bytesPerPixel * 8
             pos += 24;
 
             ZVIBlock zviBlock = new ZVIBlock(theZ, theC, theT,
-              w, h, alwaysOne, bytesPerPixel, pixelType, bitDepth, pos);
+              w, h, depth, bytesPerPixel, pixelFormat, bitDepth, pos);
             Preferences.debug("zviBlock = " + zviBlock.toString() + "\n");
 //      + (mb)
             //- original code removed
@@ -988,7 +1066,7 @@ public class FileZVI extends FileBase {
             }
             else if (zviBlock.numChannels == 3) {
               if (zviBlock.bytesPerChannel == 1) dataType = BGR;
-              else if (zviBlock.bytesPerChannel == 2) dataType = RGB48;
+              else if (zviBlock.bytesPerChannel == 2) dataType = BGR_USHORT;
             }
             if (dataType < 0) {
                 Preferences.debug("ZVI Reader Warning: unknown file type for image plane #" + (i + 1) + "\n");
@@ -1012,7 +1090,6 @@ public class FileZVI extends FileBase {
         private int height;
         private int offset;
         private int dataType;
-        private String info;
         private int theZ;
         private int theC;
         private int theT;
@@ -1022,9 +1099,9 @@ public class FileZVI extends FileBase {
     private class ZVIBlock {
       private int theZ, theC, theT;
       private int width, height;
-      private int alwaysOne;
+      private int depth;
       private int bytesPerPixel;
-      private int pixelType;
+      private int pixelFormat;
       private int bitDepth;
       private long imagePos;
 
@@ -1034,7 +1111,7 @@ public class FileZVI extends FileBase {
       private int bytesPerChannel;
 
       public ZVIBlock(int theZ, int theC, int theT, int width, int height,
-        int alwaysOne, int bytesPerPixel, int pixelType, int bitDepth,
+        int depth, int bytesPerPixel, int pixelFormat, int bitDepth,
         long imagePos)
       {
         this.theZ = theZ;
@@ -1042,21 +1119,29 @@ public class FileZVI extends FileBase {
         this.theT = theT;
         this.width = width;
         this.height = height;
-        this.alwaysOne = alwaysOne;
+        this.depth = depth;
         this.bytesPerPixel = bytesPerPixel;
-        this.pixelType = pixelType;
+        this.pixelFormat = pixelFormat;
         this.bitDepth = bitDepth;
         this.imagePos = imagePos;
 
         numPixels = width * height;
         imageSize = numPixels * bytesPerPixel;
 
-        numChannels = 1; 
-        // the second decision is redundant, but left there for further(?) pixel types 
-        if ((pixelType == 1) | (pixelType == 8)) {
-            numChannels = 3;} // 1 and 8 are RGB 8-bit and 16-bit
-        else if ((pixelType == 3) | (pixelType == 4)) {
-          numChannels = 1;} // 3 and 4 are GRAY 8-bit and 16-bit
+        numChannels = 1;  
+        if ((pixelFormat == 1) || (pixelFormat == 8) || (pixelFormat == 9)) {
+            numChannels = 3;} // 1 is BGR 8-bit
+                              // 8 is BGR 16-bit
+                              // 9 is BGR 32-bit
+        else if (pixelFormat == 2) {
+            numChannels = 4; // 8-bit BGRA
+        }
+        else if ((pixelFormat >= 3) && (pixelFormat <= 7)) {
+          numChannels = 1;} // 3 is 8-bit grayscale
+                            // 4 is 16-bit integer
+                            // 5 is 32-bit integer
+                            // 6 is 32-bit IEEE float
+                            // 7 is 64-bit IEEE double
 
         if (bytesPerPixel % numChannels != 0) {
           Preferences.debug("ZVI Reader Warning: incompatible bytesPerPixel (" +
@@ -1076,9 +1161,9 @@ public class FileZVI extends FileBase {
           "  theT = " + theT + "\n" +
           "  width = " + width + "\n" +
           "  height = " + height + "\n" +
-          "  alwaysOne = " + alwaysOne + "\n" +
+          "  depth = " + depth + "\n" +
           "  bytesPerPixel = " + bytesPerPixel + "\n" +
-          "  pixelType = " + pixelType + "\n" +
+          "  pixelFormat = " + pixelFormat + "\n" +
           "  bitDepth = " + bitDepth;
       }
     }
