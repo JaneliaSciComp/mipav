@@ -128,6 +128,14 @@ public class FileZVI extends FileBase {
     private int minC = Integer.MAX_VALUE;
     
     private int maxC = Integer.MIN_VALUE;
+    
+    private int minZ = Integer.MAX_VALUE;
+    
+    private int maxZ = Integer.MIN_VALUE;
+    
+    private int minT = Integer.MAX_VALUE;
+    
+    private int maxT = Integer.MIN_VALUE;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -248,6 +256,9 @@ public class FileZVI extends FileBase {
             
             si = readHeader();
             
+            zDim = maxZ - minZ + 1;
+            tDim = maxT - minT + 1;
+            
             if ((zDim > 1) && (tDim > 1)) {
                 imageExtents = new int[4];
                 imageExtents[2] = zDim;
@@ -329,9 +340,9 @@ public class FileZVI extends FileBase {
             
             image = new ModelImage(dataType, imageExtents, fileName);
             
-            for (t = 0; t < tDim; t++) {
-                for (z = 0; z < zDim; z++) {
-                    fireProgressStateChanged((t*zDim + z)*100/(tDim*zDim));
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    fireProgressStateChanged(((t-minT)*zDim + (z-minZ))*100/(tDim*zDim));
                     for (c = minC; c <= maxC; c++) {
                         for (i = 0; i < si.length; i++) {
                             if ((si[i].theC == c) && (si[i].theZ == z) && (si[i].theT == t)) {
@@ -387,23 +398,23 @@ public class FileZVI extends FileBase {
                     } // for (c = minC; c <= maxC; c++)
                     switch (si[0].dataType) {
                         case UNSIGNED8:
-                            image.importData(t*zDim*sliceSize + z*sliceSize, byteBuffer, false);
+                            image.importData((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize, byteBuffer, false);
                             break;
                         case UNSIGNED16:
-                            image.importData(t*zDim*sliceSize + z*sliceSize, shortBuffer, false);
+                            image.importData((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize, shortBuffer, false);
                             break;
                         case RGB:
                         case BGR:
-                            image.importData(4*(t*zDim*sliceSize + z*sliceSize), byteBuffer2, false);
+                            image.importData(4*((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize), byteBuffer2, false);
                             break;
                         case RGB_USHORT:
                         case BGR_USHORT:
-                            image.importData(4*(t*zDim*sliceSize + z*sliceSize), shortBuffer, false);
+                            image.importData(4*((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize), shortBuffer, false);
                             break;
                     }
                     
-                } // for (z = 0; z < zDim; z++)
-            } // for (t = 0; t < tDim; t++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
             
             if (image.getNDims() == 2) {
                 image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
@@ -865,6 +876,20 @@ public class FileZVI extends FileBase {
         int numZ = 0;
         int numT = 0;
         int numC = 0; 
+        
+        // {m_PluginCLSID} starts 0x34 or 52 bytes into the <Contents> stream of the image item
+        // Contents stream appears to start at the start of a sector - at a multiple of 4096 or 0x000.
+        // version location 0 VT_I4 followed by 0x1003 for minor followed by 0x3000 for major
+        // Type location 6 VT_I4 followed by 0
+        // TypeDescriptor location 12 or 0x0C VT_EMPTY
+        // FileName location 14 or 0x0E VT_EMPTY
+        // Width location 16 or 0x10 VT_I4 followed by 4 byte width
+        // Height location 22 or 0X16 VT_I4 followed by 4 byte height
+        // Depth location 28 or 0x1C VT_I4 followed by a 1
+        // Pixel format location 34 or 0X22 VT_I4 followed by a 4 byte value
+        // Count location 40 or 0x28 VT_I4 followed by 0
+        // Valid bits per pixel location 46 or 0x2E VT_I4 followed by a 4 byte value
+        // {m_plugInCLSID} location 52 or 0x34
         while (true) {
             // search for start of next image header
             // short VT_BLOB followed by int length specification of 16.
@@ -1006,11 +1031,25 @@ public class FileZVI extends FileBase {
             int depth = getInt(endianess); 
             int bytesPerPixel = getInt(endianess);
             int pixelFormat = getInt(endianess); // 
-            int bitDepth = getInt(endianess); // doesn't always equal bytesPerPixel * 8
+            /*   Original axquisition pixel range for 16 bit images (e.g 12, 14, 16)
+             * Important! There was a change in AxioVision 4.6 to support compressed
+             * zvi's.  If this value is 0 or 1, the PIXEL_BLOB contains either a
+             * lossless (LZW) compressed bitmap or a 8 bit RGB JPEG!
+             *   To distinguish between the lzw and jpeg compressed images, you have
+             * to read the first 4 bytes of the PIXEL_BLOB, which will contain
+             * "LZW" if it is compresed lossless.
+             *   In the case of jpeg compressed images, if the value is 0 the file
+             * was originally a 8 bit image, if it is 1 the image was a 16 bit image
+             * and data mappings have been applied when saving the raw image.  In the
+             * latter case the datamappings stored inside the tags collection are no
+             * longer valid and should be reset to ziTagIdImageDataMappingLow = 0.0,
+             * High = 1.0, Gamma = 1.0 upon loading!  
+             */
+            int validBitsPerPixel = getInt(endianess);
             pos += 24;
 
             ZVIBlock zviBlock = new ZVIBlock(theZ, theC, theT,
-              w, h, depth, bytesPerPixel, pixelFormat, bitDepth, pos);
+              w, h, depth, bytesPerPixel, pixelFormat, validBitsPerPixel, pos);
             Preferences.debug("zviBlock = " + zviBlock.toString() + "\n");
 //      + (mb)
             //- original code removed
@@ -1020,8 +1059,11 @@ public class FileZVI extends FileBase {
             //- if (theT >= numT) numT = theT + 1;
             //+ new code 
             // populate Z, C and T index collections
-            if ((theZ + 1) > zDim) {
-                zDim = theZ + 1;
+            if (theZ < minZ) {
+                minZ = theZ;
+            }
+            if (theZ > maxZ) {
+                maxZ = theZ;
             }
             Z_Set.add(new Integer(theZ));
             if (theC < minC) {
@@ -1031,8 +1073,11 @@ public class FileZVI extends FileBase {
                 maxC = theC;
             }
             C_Set.add(new Integer(theC));
-            if ((theT + 1) > tDim) {
-                tDim = theT + 1;
+            if (theT < minT) {
+                minT = theT;
+            }
+            if (theT > maxT) {
+                maxT = theT;
             }
             T_Set.add(new Integer(theT));    
 //      - (mb)
@@ -1102,7 +1147,7 @@ public class FileZVI extends FileBase {
       private int depth;
       private int bytesPerPixel;
       private int pixelFormat;
-      private int bitDepth;
+      private int validBitsPerPixel;
       private long imagePos;
 
       private int numPixels;
@@ -1111,7 +1156,7 @@ public class FileZVI extends FileBase {
       private int bytesPerChannel;
 
       public ZVIBlock(int theZ, int theC, int theT, int width, int height,
-        int depth, int bytesPerPixel, int pixelFormat, int bitDepth,
+        int depth, int bytesPerPixel, int pixelFormat, int validBitgsPerPixel,
         long imagePos)
       {
         this.theZ = theZ;
@@ -1122,7 +1167,7 @@ public class FileZVI extends FileBase {
         this.depth = depth;
         this.bytesPerPixel = bytesPerPixel;
         this.pixelFormat = pixelFormat;
-        this.bitDepth = bitDepth;
+        this.validBitsPerPixel = validBitsPerPixel;
         this.imagePos = imagePos;
 
         numPixels = width * height;
@@ -1164,7 +1209,7 @@ public class FileZVI extends FileBase {
           "  depth = " + depth + "\n" +
           "  bytesPerPixel = " + bytesPerPixel + "\n" +
           "  pixelFormat = " + pixelFormat + "\n" +
-          "  bitDepth = " + bitDepth;
+          "  validBitsPerPixel = " + validBitsPerPixel;
       }
     }
 
