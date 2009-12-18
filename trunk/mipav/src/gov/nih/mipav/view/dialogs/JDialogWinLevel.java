@@ -113,6 +113,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     /** b interecept for mapping of min/max sliders **/
     public float minMaxBInt;
     
+    public boolean keyTyped = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -253,10 +255,17 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         			
     				if(success == true) {
     					float val1 = Float.parseFloat(minString);
+    					minValTextField.setText(Float.toString(val1));
     					val1 = (val1 - minMaxBInt)/minMaxSlope;
+    					keyTyped = true;
+    					
     					minSlider.setValue((int)val1);
+    					
     					float val2 = Float.parseFloat(maxString);
+    					maxValTextField.setText(Float.toString(val2));
     					val2 = (val2 - minMaxBInt)/minMaxSlope;
+    					keyTyped = true;
+    					
     					maxSlider.setValue((int)val2);
     				}else {
     					MipavUtil.displayError("Min and max preference values are not valid with this dataset");
@@ -406,15 +415,23 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     		min = (minMaxSlope * min) + minMaxBInt;
     		max = (minMaxSlope * max) + minMaxBInt;
     		
-    		if(image.getType() == ModelImage.FLOAT || image.getType() == ModelImage.ARGB_FLOAT) {
-    			minValTextField.setText(Float.toString(min));
-    			maxValTextField.setText(Float.toString(max));
+    		if(keyTyped) {
+    			min = Float.parseFloat(minValTextField.getText());
+    			max = Float.parseFloat(maxValTextField.getText());
+    			keyTyped = false;
     		}else {
-    			min = Math.round(min);
-    			max = Math.round(max);
-    			minValTextField.setText(Float.toString(min));
-    			maxValTextField.setText(Float.toString(max));
+    			if(image.getType() == ModelImage.FLOAT || image.getType() == ModelImage.ARGB_FLOAT) {
+        			minValTextField.setText(Float.toString(min));
+        			maxValTextField.setText(Float.toString(max));
+        		}else {
+        			min = Math.round(min);
+        			max = Math.round(max);
+        			minValTextField.setText(Float.toString(min));
+        			maxValTextField.setText(Float.toString(max));
+        		}	
     		}
+    		
+    		
 	        
 	        y[1] = 255.0f;
             x[1] = min;
@@ -481,7 +498,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     	            updateHistoLUTFrame();
     	        }
     		}else if(tabbedPane.getSelectedIndex() == 1) {
-    			min = minSlider.getValue();
+    			/*min = minSlider.getValue();
         		max = maxSlider.getValue();
         		
     			min = (minMaxSlope * min) + minMaxBInt;
@@ -496,7 +513,11 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         			minValTextField.setText(Float.toString(min));
         			maxValTextField.setText(Float.toString(max));
         		}
-
+    			 */
+    			
+    			min = Float.parseFloat(minValTextField.getText());
+    			max = Float.parseFloat(maxValTextField.getText());
+    			
     	        y[1] = 255.0f;
                 x[1] = min;
                 
@@ -551,8 +572,10 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 				if(success == true) {
 					float val = Float.parseFloat(numStringMin);
 					val = (val - minMaxBInt)/minMaxSlope;
+					keyTyped = true;
 					minSlider.setValue((int)val);
 				}else {
+					System.out.println("here");
 					min = minSlider.getValue();
 	        		
 	    			min = (minMaxSlope * min) + minMaxBInt;
@@ -573,6 +596,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 				if(success == true) {
 					float val = Float.parseFloat(numStringMax);
 					val = (val - minMaxBInt)/minMaxSlope;
+					keyTyped = true;
 					maxSlider.setValue((int)val);
 				}else {
 
@@ -795,16 +819,16 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
         min = .25f * (maxImage - minImage);
-        minSlider = new JSlider(0, 7999,2000);
+        minSlider = new JSlider(0, 11999,3000);
 
         // set slider attributes
         minSlider.setFont(serif12);
         minSlider.setEnabled(true);
 
         if ((image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE)) {
-        	minSlider.setMajorTickSpacing(2000);
+        	minSlider.setMajorTickSpacing(3000);
         } else {
-        	minSlider.setMajorTickSpacing(2000);
+        	minSlider.setMajorTickSpacing(3000);
         }
 
         minSlider.setPaintTicks(true);
@@ -855,7 +879,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         spanel.add(minValTextField, gbc);
         
         minMaxBInt = minImage;
-        minMaxSlope = (maxImage - minImage)/7999;
+        minMaxSlope = (maxImage - minImage)/11999;
         
     }
     
@@ -892,16 +916,16 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
         max = .75f * (maxImage - minImage);
-        maxSlider = new JSlider(0, 7999,6000);
+        maxSlider = new JSlider(0, 11999,9000);
 
         // set slider attributes
         maxSlider.setFont(serif12);
         maxSlider.setEnabled(true);
 
         if ((image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE)) {
-        	maxSlider.setMajorTickSpacing(2000);
+        	maxSlider.setMajorTickSpacing(3000);
         } else {
-        	maxSlider.setMajorTickSpacing(2000);
+        	maxSlider.setMajorTickSpacing(3000);
         }
 
         maxSlider.setPaintTicks(true);
