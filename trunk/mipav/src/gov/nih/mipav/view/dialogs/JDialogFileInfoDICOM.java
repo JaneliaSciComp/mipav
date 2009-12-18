@@ -113,6 +113,11 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     public JDialogFileInfoDICOM(final Frame parent, final String title) {
         super(parent, false);
         setTitle(title);
+        try{
+        	setIconImage(MipavUtil.getIconImage("header.gif"));
+        }catch(Exception e) {
+        	
+        }
     }
 
     /**

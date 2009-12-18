@@ -305,7 +305,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      */
     public JDialogImageInfo(Frame theParentFrame, ModelImage im, int zSlice, int tSlice) {
         super(theParentFrame, false);
-
+        try{
+        	setIconImage(MipavUtil.getIconImage("attributes.gif"));
+        }catch(Exception e) {
+        	
+        }
         userInterface = ViewUserInterface.getReference();
 
         image = im;
