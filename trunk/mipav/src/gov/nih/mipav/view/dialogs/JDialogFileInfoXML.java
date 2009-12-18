@@ -156,6 +156,11 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
     public JDialogFileInfoXML(final Frame parent, final String title, final ModelImage img) {
         super(parent, false);
         setTitle(title);
+        try{
+        	setIconImage(MipavUtil.getIconImage("header.gif"));
+        }catch(Exception e) {
+        	
+        }
         image = img;
         primaryTypeHolder = new Hashtable(); // all editable lines in primary, keyed by location in Jtable
         primaryEditorHolder = new Hashtable(); // all editable lines in primary, keyed by location in Jtable
