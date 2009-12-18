@@ -37,7 +37,7 @@ public class JDialogOverlay extends JDialogBase {
 
     /** attribute string (for image attributes). */
     public static String[] attribStr = {
-        "Dimension 0", "Dimension 1", "Dimension 2", "Dimension 3", "Type", "Min", "Max", "Orientation",
+    	"Blank Overlay","Dimension 0", "Dimension 1", "Dimension 2", "Dimension 3", "Type", "Min", "Max", "Orientation",
         "Axis X Orientation", "Axis Y Orientation", "Axis Z Orientation", "Pixel resolution 0", "Pixel resolution 1",
         "Pixel resolution 2", "Pixel resolution 3", "Slice thickness", "Origin 0", "Origin 1", "Origin 2", "Origin 3",
         "Endianess"
@@ -103,7 +103,7 @@ public class JDialogOverlay extends JDialogBase {
             for (int i = 0; i < 16; i++) {
                 val = buttonArray[i].getText();
 
-                if (val.equals(BLANK_OVERLAY)) {
+                if (val.equals(BLANK_OVERLAY) || val.equals("Blank Overlay")) {
                     overlayValues[i] = new String("-");
                 } else if (!isDicom) {
                     overlayValues[i] = new String(val);
