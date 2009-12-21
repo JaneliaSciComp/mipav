@@ -219,13 +219,9 @@ public class FileZVI extends FileBase {
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         long fileLength;
         int i, j, k;
-        int contentsStartSect = 0;
-        long contentsStreamSize = 0;
         long bytesToRead;
         int dataType;
         long contentsStart;
-        int startSect;
-        long streamSize;
         long rootStart;
         byte[] readBuffer  = null;
         sliceInfo[] si;
@@ -431,391 +427,7 @@ public class FileZVI extends FileBase {
                 }
             }
             
-            /*
-            // Location 8 Length 16 bytes class id
-            getLong(endianess);
-            getLong(endianess);
-            // Location 24 Length 2 bytes Minor version of the format: 33 is written by reference implementation
-            int minorVersion = getUnsignedShort(endianess);
-            Preferences.debug("Minor version of OLE format = " + minorVersion + "\n");
-            // Location 26 Length 2 bytes Major version of the dll/format
-            int majorVersion = getUnsignedShort(endianess);
-            Preferences.debug("Major version of the OLE format = " + majorVersion + "\n");
-            // Location 28 Length 2 bytes ByteOrder Should be 0xfffe for intel or little endian
-            int byteOrder = getUnsignedShort(endianess);
-            if (byteOrder == 0xfffe) {
-                Preferences.debug("Byte order is the expected little endian\n");
-            }
-            else {
-                Preferences.debug("Unexpected byte order value = " + byteOrder + "\n");
-            }
-            // Location 30 Length 2 bytes Sector size in power of 2 (9 indicates 512 byte sectors)
-            sectorSize = getUnsignedShort(endianess);
-            sectorSize = (int)Math.round(Math.pow(2,sectorSize));
-            Preferences.debug("The sector byte length = " + sectorSize + "\n");
-            // Location 32 Length 2 bytes Mini-sector size in power of 2 (6 indicates 64 byte mini-sectors)
-            shortSectorSize = getUnsignedShort(endianess);
-            shortSectorSize = (int)Math.round(Math.pow(2, shortSectorSize));
-            Preferences.debug("The mini-sector byte length = " + shortSectorSize + "\n");
-            // Location 34 Length 2 bytes reserved must be zero
-            int reserved = getUnsignedShort(endianess);
-            if (reserved == 0) {
-                Preferences.debug("Reserved is the expected zero\n");
-            }
-            else {
-                Preferences.debug("Reserved = " + reserved + " instead of the expected zero\n");
-            }
-            // Location 36 Length 4 bytes reserved1 must be zero
-            long reserved1 = getUInt(endianess);
-            if (reserved1 == 0) {
-                Preferences.debug("Reserved1 is the expected zero\n");
-            }
-            else {
-                Preferences.debug("Reserved1 = " + reserved1 + " instead of the expected zero\n");
-            }
-            // Location 40 Length 4 bytes reserved2 must be zero
-            long reserved2 = getUInt(endianess);
-            if (reserved2 == 0) {
-                Preferences.debug("Reserved2 is the expected zero\n");
-            }
-            else {
-                Preferences.debug("Reserved2 = " + reserved2 + " instead of the expected zero\n");
-            }
-            // Location 44 Length 4 bytes Number of sectors used for the sector allocation table
-            long fatSectorNumber = getUInt(endianess);
-            Preferences.debug("Number of sectors used for the sector allocation table = " + fatSectorNumber + "\n");
-            // Location 48 Length 4 bytes First sector in the directory chain
-            int directoryStartSector = readInt(endianess);
-            if (directoryStartSector == -2) {
-                Preferences.debug("First sector in the directory chain = END OF CHAIN\n");
-            }
-            else {
-                Preferences.debug("First sector in the directory chain = " + directoryStartSector + "\n");
-            }
-            // Location 52 Length 4 bytes Signature used for transactioning: must be zero.  The
-            // reference implementation does not support transactioning.
-            long signature = getUInt(endianess);
-            if (signature == 0) {
-                Preferences.debug("The transactioning signature is the expected zero\n");
-            }
-            else {
-                Preferences.debug("The transactioning signature = " + signature + " instead of the expected zero\n");
-            }
-            // Location 56 Length 4 bytes Maximum size for mini-streams
-            // Streams with an actual size smaller than (and not equal to) this value are stored as mini-streams.
-            long miniSectorCutoff = getUInt(endianess);
-            Preferences.debug("The maximum byte size for mini-streams = " + miniSectorCutoff + "\n");
-            // Location 60 Length 4 bytes First sector in the short sector allocation table
-            int shortStartSector = readInt(endianess);
-            if (shortStartSector == -2) {
-                Preferences.debug("The first sector in the short sector allocation table = END OF CHAIN\n");    
-            }
-            else {
-                Preferences.debug("The first sector in the short sector allocation table = " + shortStartSector + "\n");
-            }
-            // Location 64 Length 4 bytes Number of sectors in the short sector allocation table
-            long shortSectors = getUInt(endianess);
-            Preferences.debug("Number of sectors in the short sector allocation table = " + shortSectors + "\n");
-            // Location 68 Length 4 bytes First sector of the master sector allocation table
-            // End of chain if no additional sectors used.
-            int difStartSector = readInt(endianess);
-            if (difStartSector == -2) {
-                Preferences.debug("First sector of the master sector allocation table = END OF CHAIN\n");
-            }
-            else {
-                Preferences.debug("First sector of the master sector allocation table = " + difStartSector + "\n");
-            }
-            // Location 72 Length 4 bytes Number of sectors used for the master sector allocation table
-            long difSectors = getUInt(endianess);
-            Preferences.debug("The number of sectors used for the master sector allocation table = " + difSectors + "\n");
-            // Location 76 Length 4*109 = 436 bytes First part of the master sector allocation table
-            // containing 109 FAT secIDs.
-            int fatSectors[] = new int[(int)Math.min(fatSectorNumber,109)];
-            for (i = 0; i < Math.min(fatSectorNumber,109); i++) {
-                fatSectors[i] = readInt(endianess);
-                Preferences.debug("FAT Sector " + i + " = " + fatSectors[i] + "\n");
-            }
             
-            // Read short sector allocation table
-            if (shortSectors > 0) {
-                Preferences.debug("\nReading the short sector allocation table\n");
-                long shortSectorTableAddress = (shortStartSector+1)*sectorSize;
-                int lastShortSector = shortStartSector;
-                raFile.seek(shortSectorTableAddress);
-                shortSectorTable = new int[(int)shortSectors*sectorSize/4];
-                for (i = 0; i < shortSectors*sectorSize/4; i++) {
-                    shortSectorTable[i] = readInt(endianess);
-                    Preferences.debug("shortSectorTable[" + i + "] = " + shortSectorTable[i] + "\n");
-                    if (((i+1) % (sectorSize/4) == 0)  && ((lastShortSector-1) < fatSectors.length)) {
-                         shortSectorTableAddress = (fatSectors[lastShortSector-1]+1)*sectorSize;
-                         raFile.seek(shortSectorTableAddress);
-                         lastShortSector = fatSectors[lastShortSector-1];
-                    }
-                }
-            } // if (shortSectors > 0)
-            
-            // Read the first sector of the directory chain (also referred to as the first element of the 
-            // Directory array, or SID 0) is known as the Root Directory Entry
-            Preferences.debug("\nReading the first sector of the directory chain\n");
-            long directoryStart = (directoryStartSector+1)*sectorSize;
-            raFile.seek(directoryStart+64);
-            // Read the length of the element name in bytes.  Each Unicode character is 2 bytes
-            int elementNameBytes = getUnsignedShort(endianess);
-            Preferences.debug("The element name has " + (elementNameBytes/2) + " unicode characters\n"); 
-            // Read the element name
-            raFile.seek(directoryStart);
-            byte[] b = new byte[elementNameBytes];
-            raFile.readFully(b);
-            String elementName = new String(b, "UTF-16LE").trim();
-            // The element name is typically Root Entry in Unicode, although
-            // some versions of structured storage (particularly the preliminary
-            // reference implementation and the Macintosh version) store only
-            // the first letter of this string "R".  This string is always
-            // ignored, since the Root Directory Entry is known by its position
-            // SID 0 rather than its name, and its name is not otherwise used.
-            Preferences.debug("The element name is " + elementName + "\n");
-            // Read the type of object
-            raFile.seek(directoryStart + 66);
-            byte objectType[] = new byte[1];
-            raFile.read(objectType);
-            if (objectType[0] == 5) {
-                Preferences.debug("Object type is root as expected\n");
-            }
-            else if (objectType[0] == 0) {
-                Preferences.debug("Object type is unexpectedly invalid\n");
-            }
-            else if (objectType[0] == 1) {
-                Preferences.debug("Object type is unexpectedly storage\n");
-            }
-            else if (objectType[0] == 2) {
-                Preferences.debug("Object type is unexpectedly stream\n");
-            }
-            else if (objectType[0] == 3) {
-                Preferences.debug("Object type is unexpectedly lockbytes\n");
-            }
-            else if (objectType[0] == 4) {
-                Preferences.debug("Object type is unexpectedly property\n");
-            }
-            else {
-                Preferences.debug("Object type is an illegal " + objectType[0] + "\n");
-            }
-            // offset 67 color.  Since the root directory does not have siblings, it's
-            // color is irrelevant and may therefore be either red or black.
-            byte color[] = new byte[1];
-            raFile.read(color);
-            if (color[0] == 0) {
-                Preferences.debug("Node is red\n");
-            }
-            else if (color[0] == 1) {
-                Preferences.debug("Node is black\n");
-            }
-            else {
-                Preferences.debug("Node has illegal color value = " + color[0] + "\n");
-            }
-            // offset 68 length 4 bytes SID of the left sibling of this entry in the directory tree
-            int leftSID = readInt(endianess);
-            if (leftSID == -1) {
-                Preferences.debug("No left sibling for this entry\n");
-            }
-            else {
-                Preferences.debug("The SID of the left sibling of this entry in the directory tree = " + leftSID + "\n");
-            }
-            // offset 72 length 4 bytes SID of the right sibling of this entry in the directory tree
-            int rightSID = readInt(endianess);
-            if (rightSID == -1) {
-                Preferences.debug("No right sibling for this entry\n");
-            }
-            else {
-                Preferences.debug("The SID of the right sibling of this entry in the directory tree = " + rightSID + "\n");
-            }
-            // offset 76 length 4 bytes SID of the child of this entry in the directory tree
-            int childSID = readInt(endianess);
-            if (childSID == -1) {
-                Preferences.debug("No child for this entry\n");
-            }
-            else {
-                Preferences.debug("The SID of the child of this entry in the directory tree = " + childSID + "\n");
-            }
-            // offset 80 length 16 bytes class id
-            getLong(endianess);
-            getLong(endianess);
-            // offset 96 length 4 bytes userFlags not applicable for root object
-            long userFlags = getUInt(endianess);
-            Preferences.debug("User flags = " + userFlags + "\n");
-            // offset 100 length 8 bytes creation time stamp
-            long creationTimeStamp = getLong(endianess);
-            if (creationTimeStamp == 0) {
-                Preferences.debug("Creation time stamp not set\n");
-            }
-            else {
-                Preferences.debug("Creation time stamp = " + creationTimeStamp + "\n");
-            }
-            // offset 108 length 8 bytes modification time stamp
-            long modificationTimeStamp = getLong(endianess);
-            if (creationTimeStamp == 0) {
-                Preferences.debug("Modification time stamp not set\n");
-            }
-            else {
-                Preferences.debug("Modification time stamp = " + modificationTimeStamp + "\n");
-            }
-            // offset 116 length 4 bytes first sector of short stream container stream
-            shortStreamStartSect = readInt(endianess);
-            Preferences.debug("First sector of the short stream container stream = " +
-                              shortStreamStartSect + "\n");
-            // Offset 120 length 4 bytes Total size of the short stream container stream
-            totalShortStreamSize = getUInt(endianess);
-                Preferences.debug("Total size of the short stream container stream = " +
-                                  totalShortStreamSize + "\n");
-            // Offset 124 length 2 bytes dptPropType Reserved for future use.  Must be zero
-            int dptPropType = getUnsignedShort(endianess);
-            if (dptPropType == 0) {
-                Preferences.debug("dptPropType = 0 as expected\n");
-            }
-            else {
-                Preferences.debug("dptProptType = " + dptPropType + " instead of the expected 0\n");
-            }
-            
-            int directoryEntry = 1;
-            directoryStart = directoryStart + 128;
-            int lastDirectorySector = directoryStartSector;
-            int maximumDirectoryEntriesPerSector = sectorSize/128;
-            while (true) {
-                Preferences.debug("\nReading element " + directoryEntry + " of the directory array\n");
-                directoryEntry++;
-                raFile.seek(directoryStart+64);
-                // Read the length of the element name in bytes.  Each Unicode character is 2 bytes
-                elementNameBytes = getUnsignedShort(endianess);
-                Preferences.debug("The element name has " + (elementNameBytes/2) + " unicode characters\n");
-                if (elementNameBytes <= 0) {
-                    break;
-                }
-                // Read the element name
-                raFile.seek(directoryStart);
-                b = new byte[elementNameBytes];
-                raFile.readFully(b);
-                String lastElementName = elementName;
-                elementName = new String(b, "UTF-16LE").trim();
-                Preferences.debug("The element name is " + elementName + "\n");
-                // Read the type of object
-                raFile.seek(directoryStart + 66);
-                raFile.read(objectType);
-                if (objectType[0] == 0) {
-                    Preferences.debug("Object type is invalid\n");
-                }
-                else if (objectType[0] == 1) {
-                    Preferences.debug("Object type is storage\n");
-                }
-                else if (objectType[0] == 2) {
-                    Preferences.debug("Object type is stream\n");
-                }
-                else if (objectType[0] == 3) {
-                    Preferences.debug("Object type is lockbytes\n");
-                }
-                else if (objectType[0] == 4) {
-                    Preferences.debug("Object type is property\n");
-                }
-                else if (objectType[0] == 5) {
-                    Preferences.debug("Object type is incorrectly root\n");
-                }
-                else {
-                    Preferences.debug("Object type is an illegal " + objectType[0] + "\n");
-                    break;
-                }
-                // offset 67 color.  
-                raFile.read(color);
-                if (color[0] == 0) {
-                    Preferences.debug("Node is red\n");
-                }
-                else if (color[0] == 1) {
-                    Preferences.debug("Node is black\n");
-                }
-                else {
-                    Preferences.debug("Node has illegal color value = " + color[0] + "\n");
-                    break;
-                }
-                // offset 68 length 4 bytes SID of the left sibling of this entry in the directory tree
-                leftSID = readInt(endianess);
-                if (leftSID == -1) {
-                    Preferences.debug("No left sibling for this entry\n");
-                }
-                else {
-                    Preferences.debug("The SID of the left sibling of this entry in the directory tree = " + leftSID + "\n");
-                }
-                // offset 72 length 4 bytes SID of the right sibling of this entry in the directory tree
-                rightSID = readInt(endianess);
-                if (rightSID == -1) {
-                    Preferences.debug("No right sibling for this entry\n");
-                }
-                else {
-                    Preferences.debug("The SID of the right sibling of this entry in the directory tree = " + rightSID + "\n");
-                }
-                // offset 76 length 4 bytes SID of the child of this entry in the directory tree
-                childSID = readInt(endianess);
-                if (childSID == -1) {
-                    Preferences.debug("No child for this entry\n");
-                }
-                else {
-                    Preferences.debug("The SID of the child of this entry in the directory tree = " + childSID + "\n");
-                }
-                // offset 80 length 16 bytes class id
-                getLong(endianess);
-                getLong(endianess);
-                // offset 96 length 4 bytes userFlags
-                userFlags = getUInt(endianess);
-                Preferences.debug("User flags = " + userFlags + "\n");
-                // offset 100 length 8 bytes creation time stamp
-                creationTimeStamp = getLong(endianess);
-                if (creationTimeStamp == 0) {
-                    Preferences.debug("Creation time stamp not set\n");
-                }
-                else {
-                    Preferences.debug("Creation time stamp = " + creationTimeStamp + "\n");
-                }
-                // offset 108 length 8 bytes modification time stamp
-                modificationTimeStamp = getLong(endianess);
-                if (creationTimeStamp == 0) {
-                    Preferences.debug("Modification time stamp not set\n");
-                }
-                else {
-                    Preferences.debug("Modification time stamp = " + modificationTimeStamp + "\n");
-                }
-                // offset 116 length 4 bytes starting sector of the stream
-                startSect = readInt(endianess);
-                // Offset 120 length 4 bytes Size of the stream in byes
-                streamSize = getUInt(endianess);
-                if (streamSize <= miniSectorCutoff) {
-                    Preferences.debug("Starting sector of the ministream = " + startSect + "\n");
-                    Preferences.debug("Size of the ministream in bytes = " + streamSize + "\n");
-                }
-                else {
-                    Preferences.debug("Starting sector of the stream = " + startSect + "\n");
-                    Preferences.debug("Size of the stream in bytes = " + streamSize + "\n");    
-                }
-                // Offset 124 length 2 bytes dptPropType Reserved for future use.  Must be zero
-                dptPropType = getUnsignedShort(endianess);
-                if (dptPropType == 0) {
-                    Preferences.debug("dptPropType = 0 as expected\n");
-                }
-                else {
-                    Preferences.debug("dptProptType = " + dptPropType + " instead of the expected 0\n");
-                    break;
-                }
-                
-                directoryStart = directoryStart + 128;
-                
-                if ((lastElementName.equals("Image")) &&
-                        (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize > 0)) {
-                    contentsStartSect = startSect;
-                    contentsStreamSize = streamSize;
-                }
-                
-                if (((directoryEntry % maximumDirectoryEntriesPerSector) == 0) &&
-                        ((lastDirectorySector - 1) < fatSectors.length)) {
-                    directoryStart =  (fatSectors[lastDirectorySector]+1)*sectorSize;
-                    lastDirectorySector = fatSectors[lastDirectorySector-1];
-                }
-                
-            } // while (true)*/
             
             /*if (rootStreamSize > 0) {
                 if (rootStreamSize < miniSectorCutoff) {
@@ -859,6 +471,13 @@ public class FileZVI extends FileBase {
     }
     
     private sliceInfo[] readHeader() throws IOException {
+        int i;
+        int j;
+        byte[] b;
+        int startSect;
+        long streamSize;
+        int contentsStartSect = 0;
+        long contentsStreamSize = 0;
         //      Start reading ole compound file structure
         // The header is always 512 bytes long and always located at offset zero.
         // Offset 0 Length 8 bytes olecf file signature
@@ -869,6 +488,428 @@ public class FileZVI extends FileBase {
         else {
             Preferences.debug("Instead of olecf file signature found = " + olecfFileSignature + "\n");
         }
+        
+        // Location 8 Length 16 bytes class id
+        getLong(endianess);
+        getLong(endianess);
+        // Location 24 Length 2 bytes Minor version of the format: 33 is written by reference implementation
+        int minorVersion = getUnsignedShort(endianess);
+        Preferences.debug("Minor version of OLE format = " + minorVersion + "\n");
+        // Location 26 Length 2 bytes Major version of the dll/format
+        int majorVersion = getUnsignedShort(endianess);
+        Preferences.debug("Major version of the OLE format = " + majorVersion + "\n");
+        // Location 28 Length 2 bytes ByteOrder Should be 0xfffe for intel or little endian
+        int byteOrder = getUnsignedShort(endianess);
+        if (byteOrder == 0xfffe) {
+            Preferences.debug("Byte order is the expected little endian\n");
+        }
+        else {
+            Preferences.debug("Unexpected byte order value = " + byteOrder + "\n");
+        }
+        // Location 30 Length 2 bytes Sector size in power of 2 (9 indicates 512 byte sectors)
+        sectorSize = getUnsignedShort(endianess);
+        sectorSize = (int)Math.round(Math.pow(2,sectorSize));
+        Preferences.debug("The sector byte length = " + sectorSize + "\n");
+        // Location 32 Length 2 bytes Mini-sector size in power of 2 (6 indicates 64 byte mini-sectors)
+        shortSectorSize = getUnsignedShort(endianess);
+        shortSectorSize = (int)Math.round(Math.pow(2, shortSectorSize));
+        Preferences.debug("The mini-sector byte length = " + shortSectorSize + "\n");
+        // Location 34 Length 2 bytes reserved must be zero
+        int reserved = getUnsignedShort(endianess);
+        if (reserved == 0) {
+            Preferences.debug("Reserved is the expected zero\n");
+        }
+        else {
+            Preferences.debug("Reserved = " + reserved + " instead of the expected zero\n");
+        }
+        // Location 36 Length 4 bytes reserved1 must be zero
+        long reserved1 = getUInt(endianess);
+        if (reserved1 == 0) {
+            Preferences.debug("Reserved1 is the expected zero\n");
+        }
+        else {
+            Preferences.debug("Reserved1 = " + reserved1 + " instead of the expected zero\n");
+        }
+        // Location 40 Length 4 bytes reserved2 must be zero
+        long reserved2 = getUInt(endianess);
+        if (reserved2 == 0) {
+            Preferences.debug("Reserved2 is the expected zero\n");
+        }
+        else {
+            Preferences.debug("Reserved2 = " + reserved2 + " instead of the expected zero\n");
+        }
+        // Location 44 Length 4 bytes Number of sectors used for the sector allocation table
+        int fatSectorNumber = getInt(endianess);
+        Preferences.debug("Number of sectors used for the sector allocation table = " + fatSectorNumber + "\n");
+        // Location 48 Length 4 bytes First sector in the directory chain
+        int directoryStartSector = readInt(endianess);
+        if (directoryStartSector == -2) {
+            Preferences.debug("First sector in the directory chain = END OF CHAIN\n");
+        }
+        else {
+            Preferences.debug("First sector in the directory chain = " + directoryStartSector + "\n");
+        }
+        // Location 52 Length 4 bytes Signature used for transactioning: must be zero.  The
+        // reference implementation does not support transactioning.
+        long signature = getUInt(endianess);
+        if (signature == 0) {
+            Preferences.debug("The transactioning signature is the expected zero\n");
+        }
+        else {
+            Preferences.debug("The transactioning signature = " + signature + " instead of the expected zero\n");
+        }
+        // Location 56 Length 4 bytes Maximum size for mini-streams
+        // Streams with an actual size smaller than (and not equal to) this value are stored as mini-streams.
+        long miniSectorCutoff = getUInt(endianess);
+        Preferences.debug("The maximum byte size for mini-streams = " + miniSectorCutoff + "\n");
+        // Location 60 Length 4 bytes First sector in the short sector allocation table
+        int shortStartSector = readInt(endianess);
+        if (shortStartSector == -2) {
+            Preferences.debug("The first sector in the short sector allocation table = END OF CHAIN\n");    
+        }
+        else {
+            Preferences.debug("The first sector in the short sector allocation table = " + shortStartSector + "\n");
+        }
+        // Location 64 Length 4 bytes Number of sectors in the short sector allocation table
+        long shortSectors = getUInt(endianess);
+        Preferences.debug("Number of sectors in the short sector allocation table = " + shortSectors + "\n");
+        // Location 68 Length 4 bytes First sector of the master sector allocation table
+        // End of chain if no additional sectors used.
+        int difStartSector = readInt(endianess);
+        if (difStartSector == -2) {
+            Preferences.debug("First sector of the master sector allocation table = END OF CHAIN\n");
+        }
+        else {
+            Preferences.debug("First sector of the master sector allocation table = " + difStartSector + "\n");
+        }
+        // Location 72 Length 4 bytes Number of sectors used for the master sector allocation table
+        long difSectors = getUInt(endianess);
+        Preferences.debug("The number of sectors used for the master sector allocation table = " + difSectors + "\n");
+        // Location 76 Length 4*109 = 436 bytes First part of the master sector allocation table
+        // containing 109 FAT secIDs.
+        int fatSectors[] = new int[fatSectorNumber];
+        // Entries in sector allocation table
+        // -1 freeSecID  Free sector, may exist in file, but is not part of any stream
+        // -2 End of Chain SecID Trailing SecID in a SecID chain
+        // -3 SAT SecID First entry in the sector allocation table.
+        int sat[] = new int[fatSectorNumber*sectorSize/4];
+        int sp = 0;
+        for (i = 0; i < Math.min(fatSectorNumber,109); i++) {
+            fatSectors[i] = readInt(endianess);
+            Preferences.debug("FAT Sector " + i + " = " + fatSectors[i] + "\n");
+            long pos = raFile.getFilePointer(); 
+            raFile.seek((fatSectors[i]+1)*sectorSize);
+            for (j = 0; j < sectorSize/4; j++) {
+                sat[sp]= getInt(endianess);
+                if (sp == 0) {
+                    if (sat[sp] == -3) {
+                        Preferences.debug("First sector specified for sector allocation table starts with expected -3\n");
+                    }
+                    else {
+                        Preferences.debug("first sector specifed for sector allocation table starts with " + sat[sp] + 
+                                      " instead of expected -3\n");
+                    }
+                }
+                Preferences.debug("sat[" + sp + "] = " + sat[sp] + "\n");
+                sp++;
+            }
+            raFile.seek(pos);
+        } // for (i = 0; i < Math.min(fatSectorNumber, 109); i++)
+        
+        // Read short sector allocation table
+        if (shortSectors > 0) {
+            Preferences.debug("\nReading the short sector allocation table\n");
+            long shortSectorTableAddress = (shortStartSector+1)*sectorSize;
+            int shortSector = shortStartSector;
+            raFile.seek(shortSectorTableAddress);
+            shortSectorTable = new int[(int)shortSectors*sectorSize/4];
+            for (i = 0; i < shortSectors*sectorSize/4; i++) {
+                shortSectorTable[i] = readInt(endianess);
+                Preferences.debug("shortSectorTable[" + i + "] = " + shortSectorTable[i] + "\n");
+                if (((i+1) % (sectorSize/4) == 0) && ((i+1) < shortSectors*sectorSize/4)) {
+                     shortSector = sat[shortSector];
+                     shortSectorTableAddress = (shortSector+1)*sectorSize;
+                     raFile.seek(shortSectorTableAddress);
+                }
+            }
+        } // if (shortSectors > 0)
+        
+        
+        // Determine the numbers of sectors in the directory chain
+        int directorySectors = 1;
+        int ds = directoryStartSector;
+        while (sat[ds] != -2) {
+            directorySectors++;
+            ds = sat[ds];
+        }
+        Preferences.debug("The number of directory sectors = " + directorySectors + "\n");
+        int directoryTable[] = new int[directorySectors];
+        directoryTable[0] = directoryStartSector;
+        Preferences.debug("directoryTable[0] = " + directoryTable[0] + "\n");
+        for (i = 1; i < directorySectors; i++) {
+            directoryTable[i] = sat[directoryTable[i-1]];
+            Preferences.debug("directoryTable[" + i + "] = " + directoryTable[i] + "\n");
+        }
+        // Read the first sector of the directory chain (also referred to as the first element of the 
+        // Directory array, or SID 0) is known as the Root Directory Entry
+        Preferences.debug("\nReading the first sector of the directory chain\n");
+        long directoryStart = (directoryTable[0]+1)*sectorSize;
+        raFile.seek(directoryStart+64);
+        // Read the length of the element name in bytes.  Each Unicode character is 2 bytes
+        int elementNameBytes = getUnsignedShort(endianess);
+        Preferences.debug("The element name has " + (elementNameBytes/2) + " unicode characters\n"); 
+        // Read the element name
+        raFile.seek(directoryStart);
+        b = new byte[elementNameBytes];
+        raFile.readFully(b);
+        String elementName = new String(b, "UTF-16LE").trim();
+        // The element name is typically Root Entry in Unicode, although
+        // some versions of structured storage (particularly the preliminary
+        // reference implementation and the Macintosh version) store only
+        // the first letter of this string "R".  This string is always
+        // ignored, since the Root Directory Entry is known by its position
+        // SID 0 rather than its name, and its name is not otherwise used.
+        Preferences.debug("The element name is " + elementName + "\n");
+        // Read the type of object
+        raFile.seek(directoryStart + 66);
+        byte objectType[] = new byte[1];
+        raFile.read(objectType);
+        if (objectType[0] == 5) {
+            Preferences.debug("Object type is root as expected\n");
+        }
+        else if (objectType[0] == 0) {
+            Preferences.debug("Object type is unexpectedly invalid\n");
+        }
+        else if (objectType[0] == 1) {
+            Preferences.debug("Object type is unexpectedly storage\n");
+        }
+        else if (objectType[0] == 2) {
+            Preferences.debug("Object type is unexpectedly stream\n");
+        }
+        else if (objectType[0] == 3) {
+            Preferences.debug("Object type is unexpectedly lockbytes\n");
+        }
+        else if (objectType[0] == 4) {
+            Preferences.debug("Object type is unexpectedly property\n");
+        }
+        else {
+            Preferences.debug("Object type is an illegal " + objectType[0] + "\n");
+        }
+        // offset 67 color.  Since the root directory does not have siblings, it's
+        // color is irrelevant and may therefore be either red or black.
+        byte color[] = new byte[1];
+        raFile.read(color);
+        if (color[0] == 0) {
+            Preferences.debug("Node is red\n");
+        }
+        else if (color[0] == 1) {
+            Preferences.debug("Node is black\n");
+        }
+        else {
+            Preferences.debug("Node has illegal color value = " + color[0] + "\n");
+        }
+        // offset 68 length 4 bytes SID of the left sibling of this entry in the directory tree
+        int leftSID = readInt(endianess);
+        if (leftSID == -1) {
+            Preferences.debug("No left sibling for this entry\n");
+        }
+        else {
+            Preferences.debug("The SID of the left sibling of this entry in the directory tree = " + leftSID + "\n");
+        }
+        // offset 72 length 4 bytes SID of the right sibling of this entry in the directory tree
+        int rightSID = readInt(endianess);
+        if (rightSID == -1) {
+            Preferences.debug("No right sibling for this entry\n");
+        }
+        else {
+            Preferences.debug("The SID of the right sibling of this entry in the directory tree = " + rightSID + "\n");
+        }
+        // offset 76 length 4 bytes SID of the child of this entry in the directory tree
+        int childSID = readInt(endianess);
+        if (childSID == -1) {
+            Preferences.debug("No child for this entry\n");
+        }
+        else {
+            Preferences.debug("The SID of the child of this entry in the directory tree = " + childSID + "\n");
+        }
+        // offset 80 length 16 bytes class id
+        getLong(endianess);
+        getLong(endianess);
+        // offset 96 length 4 bytes userFlags not applicable for root object
+        long userFlags = getUInt(endianess);
+        Preferences.debug("User flags = " + userFlags + "\n");
+        // offset 100 length 8 bytes creation time stamp
+        long creationTimeStamp = getLong(endianess);
+        if (creationTimeStamp == 0) {
+            Preferences.debug("Creation time stamp not set\n");
+        }
+        else {
+            Preferences.debug("Creation time stamp = " + creationTimeStamp + "\n");
+        }
+        // offset 108 length 8 bytes modification time stamp
+        long modificationTimeStamp = getLong(endianess);
+        if (creationTimeStamp == 0) {
+            Preferences.debug("Modification time stamp not set\n");
+        }
+        else {
+            Preferences.debug("Modification time stamp = " + modificationTimeStamp + "\n");
+        }
+        // offset 116 length 4 bytes first sector of short stream container stream
+        shortStreamStartSect = readInt(endianess);
+        Preferences.debug("First sector of the short stream container stream = " +
+                          shortStreamStartSect + "\n");
+        // Offset 120 length 4 bytes Total size of the short stream container stream
+        totalShortStreamSize = getUInt(endianess);
+            Preferences.debug("Total size of the short stream container stream = " +
+                              totalShortStreamSize + "\n");
+        // Offset 124 length 2 bytes dptPropType Reserved for future use.  Must be zero
+        int dptPropType = getUnsignedShort(endianess);
+        if (dptPropType == 0) {
+            Preferences.debug("dptPropType = 0 as expected\n");
+        }
+        else {
+            Preferences.debug("dptProptType = " + dptPropType + " instead of the expected 0\n");
+        }
+        
+        int directoryEntry = 1;
+        directoryStart = directoryStart + 128;
+        int maximumDirectoryEntriesPerSector = sectorSize/128;
+        int dp = 0;
+        while (dp < directorySectors) {
+            Preferences.debug("\nReading element " + directoryEntry + " of the directory array\n");
+            directoryEntry++;
+            raFile.seek(directoryStart+64);
+            // Read the length of the element name in bytes.  Each Unicode character is 2 bytes
+            elementNameBytes = getUnsignedShort(endianess);
+            Preferences.debug("The element name has " + (elementNameBytes/2) + " unicode characters\n");
+            if (elementNameBytes <= 0) {
+                break;
+            }
+            // Read the element name
+            raFile.seek(directoryStart);
+            b = new byte[elementNameBytes];
+            raFile.readFully(b);
+            String lastElementName = elementName;
+            elementName = new String(b, "UTF-16LE").trim();
+            Preferences.debug("The element name is " + elementName + "\n");
+            // Read the type of object
+            raFile.seek(directoryStart + 66);
+            raFile.read(objectType);
+            if (objectType[0] == 0) {
+                Preferences.debug("Object type is invalid\n");
+            }
+            else if (objectType[0] == 1) {
+                Preferences.debug("Object type is storage\n");
+            }
+            else if (objectType[0] == 2) {
+                Preferences.debug("Object type is stream\n");
+            }
+            else if (objectType[0] == 3) {
+                Preferences.debug("Object type is lockbytes\n");
+            }
+            else if (objectType[0] == 4) {
+                Preferences.debug("Object type is property\n");
+            }
+            else if (objectType[0] == 5) {
+                Preferences.debug("Object type is incorrectly root\n");
+            }
+            else {
+                Preferences.debug("Object type is an illegal " + objectType[0] + "\n");
+                break;
+            }
+            // offset 67 color.  
+            raFile.read(color);
+            if (color[0] == 0) {
+                Preferences.debug("Node is red\n");
+            }
+            else if (color[0] == 1) {
+                Preferences.debug("Node is black\n");
+            }
+            else {
+                Preferences.debug("Node has illegal color value = " + color[0] + "\n");
+                break;
+            }
+            // offset 68 length 4 bytes SID of the left sibling of this entry in the directory tree
+            leftSID = readInt(endianess);
+            if (leftSID == -1) {
+                Preferences.debug("No left sibling for this entry\n");
+            }
+            else {
+                Preferences.debug("The SID of the left sibling of this entry in the directory tree = " + leftSID + "\n");
+            }
+            // offset 72 length 4 bytes SID of the right sibling of this entry in the directory tree
+            rightSID = readInt(endianess);
+            if (rightSID == -1) {
+                Preferences.debug("No right sibling for this entry\n");
+            }
+            else {
+                Preferences.debug("The SID of the right sibling of this entry in the directory tree = " + rightSID + "\n");
+            }
+            // offset 76 length 4 bytes SID of the child of this entry in the directory tree
+            childSID = readInt(endianess);
+            if (childSID == -1) {
+                Preferences.debug("No child for this entry\n");
+            }
+            else {
+                Preferences.debug("The SID of the child of this entry in the directory tree = " + childSID + "\n");
+            }
+            // offset 80 length 16 bytes class id
+            getLong(endianess);
+            getLong(endianess);
+            // offset 96 length 4 bytes userFlags
+            userFlags = getUInt(endianess);
+            Preferences.debug("User flags = " + userFlags + "\n");
+            // offset 100 length 8 bytes creation time stamp
+            creationTimeStamp = getLong(endianess);
+            if (creationTimeStamp == 0) {
+                Preferences.debug("Creation time stamp not set\n");
+            }
+            else {
+                Preferences.debug("Creation time stamp = " + creationTimeStamp + "\n");
+            }
+            // offset 108 length 8 bytes modification time stamp
+            modificationTimeStamp = getLong(endianess);
+            if (creationTimeStamp == 0) {
+                Preferences.debug("Modification time stamp not set\n");
+            }
+            else {
+                Preferences.debug("Modification time stamp = " + modificationTimeStamp + "\n");
+            }
+            // offset 116 length 4 bytes starting sector of the stream
+            startSect = readInt(endianess);
+            // Offset 120 length 4 bytes Size of the stream in byes
+            streamSize = getUInt(endianess);
+            if (streamSize <= miniSectorCutoff) {
+                Preferences.debug("Starting sector of the ministream = " + startSect + "\n");
+                Preferences.debug("Size of the ministream in bytes = " + streamSize + "\n");
+            }
+            else {
+                Preferences.debug("Starting sector of the stream = " + startSect + "\n");
+                Preferences.debug("Size of the stream in bytes = " + streamSize + "\n");    
+            }
+            // Offset 124 length 2 bytes dptPropType Reserved for future use.  Must be zero
+            dptPropType = getUnsignedShort(endianess);
+            if (dptPropType == 0) {
+                Preferences.debug("dptPropType = 0 as expected\n");
+            }
+            else {
+                Preferences.debug("dptProptType = " + dptPropType + " instead of the expected 0\n");
+                break;
+            }
+            
+            directoryStart = directoryStart + 128;
+            
+            if ((lastElementName.equals("Image")) &&
+                    (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize > 0)) {
+                contentsStartSect = startSect;
+                contentsStreamSize = streamSize;
+            }
+            
+            if ((directoryEntry % maximumDirectoryEntriesPerSector) == 0) {
+                directoryStart =  (directoryTable[++dp]+1)*sectorSize;
+            }
+            
+        } // while (true)
         Set Z_Set = new HashSet(); // to hold Z plan index collection
         Set T_Set = new HashSet(); // to hold T time index collection
         long pos = 0;
@@ -923,10 +964,10 @@ public class FileZVI extends FileBase {
             // P                6                   Position ID
             // A                7                   Not Used
             // The coordinate block is followed by 96 bytes of zero.
-            byte[] b = new byte[ZVI_MAGIC_BLOCK_2.length];
+            b = new byte[ZVI_MAGIC_BLOCK_2.length];
             raFile.readFully(b);
             boolean ok = true;
-            for (int i=0; i<b.length; i++) {
+            for (i=0; i<b.length; i++) {
               if (b[i] != ZVI_MAGIC_BLOCK_2[i]) {
                 ok = false;
                 break;
@@ -938,7 +979,7 @@ public class FileZVI extends FileBase {
             // these bytes should be 00
             b = new byte[11];
             raFile.readFully(b);
-            for (int i=0; i<b.length; i++) {
+            for (i=0; i<b.length; i++) {
               if (b[i] != 0) {
                 ok = false;
                 break;
@@ -963,7 +1004,7 @@ public class FileZVI extends FileBase {
             // A not used 4 byte int
             b = new byte[108];
             raFile.readFully(b);
-            for (int i=0; i<b.length; i++) {
+            for (i=0; i<b.length; i++) {
               if (b[i] != 0) {
                 ok = false;
                 break;
@@ -1014,7 +1055,7 @@ public class FileZVI extends FileBase {
             // This marks the start of the image header and data
             byte[] magic3 = new byte[ZVI_MAGIC_BLOCK_3.length];
             raFile.readFully(magic3);
-            for (int i=0; i<magic3.length; i++) {
+            for (i=0; i<magic3.length; i++) {
               if (magic3[i] != ZVI_MAGIC_BLOCK_3[i]) {
                 ok = false;
                 break;
@@ -1102,7 +1143,7 @@ public class FileZVI extends FileBase {
 
           // convert ZVI blocks into single FileInfo object
           sliceInfo[] si = new sliceInfo[blockList.size()];
-          for (int i=0; i<si.length; i++) {
+          for (i=0; i<si.length; i++) {
             ZVIBlock zviBlock = (ZVIBlock) blockList.elementAt(i);
             int dataType = -1;
             if (zviBlock.numChannels == 1) {
