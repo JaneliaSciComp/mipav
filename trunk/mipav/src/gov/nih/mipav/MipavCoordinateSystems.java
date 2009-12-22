@@ -94,6 +94,11 @@ public class MipavCoordinateSystems {
         // axisFlip represents whether to invert the axes after they are reordered
         boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(image, orientation);
 
+        MipavCoordinateSystems.fileToPatient(pIn, pOut, image, orientation, bFlip, axisOrder, axisFlip);
+    }
+    
+    public static final void fileToPatient(Vector3f pIn, Vector3f pOut, ModelStorageBase image, int orientation,
+            boolean bFlip, int[] axisOrder, boolean[] axisFlip) {
         // extents gets the image extents re-mapped to PatientCoordinates
         int[] extents = image.getExtents(orientation);
 
@@ -134,7 +139,8 @@ public class MipavCoordinateSystems {
      * @param kImage the image for which the point is being transformed.
      */
     public static final void fileToScanner(Vector3f kInput, Vector3f kOutput, ModelImage kImage) {
-        float[] afAxialOrigin = kImage.getOrigin(0, FileInfoBase.AXIAL);
+        
+        Vector3f kOriginLPS = MipavCoordinateSystems.originLPS( kImage );
 
         if ( (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
                 || (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
@@ -148,34 +154,39 @@ public class MipavCoordinateSystems {
             dicomMatrix.transformAsPoint3Df(new Vector3f(kInput.X * afResolutions[0], kInput.Y * afResolutions[1],
                     kInput.Z * afResolutions[2]), kOutput);
         } else {
-            // System.err.println("not dicom");
-            float[] afAxialRes = kImage.getResolutions(0, FileInfoBase.AXIAL);
 
-            MipavCoordinateSystems.fileToPatient(kInput, kOutput, kImage, FileInfoBase.AXIAL, false);
+            int[] axisOrder = new int[]{0,1,2};
+            boolean[] axisFlip = new boolean[]{false,false,false};
+            toLPS( kImage, axisOrder, axisFlip );
+            
+            
+            float[] afRes = kImage.getResolutions(0);
+            float[] filePoint = new float[3];
+            filePoint[0] = kInput.X;
+            filePoint[1] = kInput.Y;
+            filePoint[2] = kInput.Z;
 
-            kOutput.X *= afAxialRes[0];
-            kOutput.Y *= afAxialRes[1];
-            kOutput.Z *= afAxialRes[2];
-
-            boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(kImage, FileInfoBase.AXIAL, true);
-
-            if (axisFlip[0]) {
-                kOutput.X = -kOutput.X;
+            float[] scannerPoint = new float[3];
+            // First reorder the point indices based on the axisOrder re-mapping
+            for (int i = 0; i < 3; i++) {
+                scannerPoint[i] = filePoint[axisOrder[i]];
             }
 
-            if (axisFlip[1]) {
-                kOutput.Y = -kOutput.Y;
+            int[] extents = kImage.getExtents();
+            // Then invert the point, using the appropriate extents
+            for (int i = 0; i < 3; i++) {
+                if (axisFlip[i]) {
+                    scannerPoint[i] = extents[axisOrder[i]] - scannerPoint[i] - 1;
+                }
             }
 
-            if (axisFlip[2]) {
-                kOutput.Z = -kOutput.Z;
-            }
+            kOutput.X = scannerPoint[0]*afRes[axisOrder[0]];
+            kOutput.Y = scannerPoint[1]*afRes[axisOrder[1]];
+            kOutput.Z = scannerPoint[2]*afRes[axisOrder[2]];
         }
 
         // Returned point represents the current position in coronal, sagittal, axial order (L/R, A/P, I/S axis space)
-        kOutput.X += afAxialOrigin[0];
-        kOutput.Y += afAxialOrigin[1];
-        kOutput.Z += afAxialOrigin[2];
+        kOutput.Add( kOriginLPS );
 
     }
 
@@ -499,13 +510,12 @@ public class MipavCoordinateSystems {
         // The input point kInput represents the current position in coronal, sagittal, axial order (L/R, A/P, I/S axis
         // space)
 
+        
         // subtract the scanner origin:
-        float[] afAxialOrigin = kImage.getOrigin(0, FileInfoBase.AXIAL);
+        Vector3f kOriginLPS = MipavCoordinateSystems.originLPS(kImage);
 
         Vector3f kTemp = new Vector3f();
-        kTemp.X = kInput.X - afAxialOrigin[0];
-        kTemp.Y = kInput.Y - afAxialOrigin[1];
-        kTemp.Z = kInput.Z - afAxialOrigin[2];
+        kTemp.Sub( kInput, kOriginLPS );
 
         if ( (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
                 || (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
@@ -523,27 +533,33 @@ public class MipavCoordinateSystems {
             kOutput.Y = kTemp.Y / afResolutions[1];
             kOutput.Z = kTemp.Z / afResolutions[2];
         } else {
-            float[] afAxialRes = kImage.getResolutions(0, FileInfoBase.AXIAL);
+            int[] axisOrder = new int[]{0,1,2};
+            boolean[] axisFlip = new boolean[]{false,false,false};
+            toLPS( kImage, axisOrder, axisFlip );
+            
+            float[] afAxialRes = kImage.getResolutions(0);
 
-            kTemp.X /= afAxialRes[0];
-            kTemp.Y /= afAxialRes[1];
-            kTemp.Z /= afAxialRes[2];
+            float[] tmpPoint = new float[3];
+            tmpPoint[0] = kTemp.X / afAxialRes[axisOrder[0]];
+            tmpPoint[1] = kTemp.Y / afAxialRes[axisOrder[1]];
+            tmpPoint[2] = kTemp.Z / afAxialRes[axisOrder[2]];
 
-            boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(kImage, FileInfoBase.AXIAL, true);
-
-            if (axisFlip[0]) {
-                kOutput.X = -kOutput.X;
+            fromLPS( kImage, axisOrder, axisFlip );
+            float[] filePoint = new float[3];
+            for (int i = 0; i < 3; i++) {
+                filePoint[i] = tmpPoint[axisOrder[i]];
             }
 
-            if (axisFlip[1]) {
-                kOutput.Y = -kOutput.Y;
+            int[] extents = kImage.getExtents();
+            // Then invert the point, using the appropriate extents
+            for (int i = 0; i < 3; i++) {
+                if (axisFlip[i]) {
+                    filePoint[i] = extents[i] - filePoint[i] - 1;
+                }
             }
-
-            if (axisFlip[2]) {
-                kOutput.Z = -kOutput.Z;
-            }
-
-            MipavCoordinateSystems.patientToFile(kTemp, kOutput, kImage, FileInfoBase.AXIAL, false);
+            kOutput.X = filePoint[0];
+            kOutput.Y = filePoint[1];
+            kOutput.Z = filePoint[2];
         }
     }
 
@@ -643,5 +659,162 @@ public class MipavCoordinateSystems {
             return filePoint[axialOrder[1]];
         return filePoint[axialOrder[0]];
     }
+
+    public static final int axisOrderToImageOrientation( int[] axisOrder )
+    {
+
+        int orientation = FileInfoBase.UNKNOWN_ORIENT;
+        if ( axisOrder.length < 3 )
+        {
+            return orientation;
+        }
+        if (axisOrder[2] == 0 )
+        {
+            orientation = FileInfoBase.SAGITTAL;
+        }        
+        else if (axisOrder[2] == 1 )
+        {
+            orientation = FileInfoBase.CORONAL;
+        }        
+        else if (axisOrder[2] == 2 )
+        {
+            orientation = FileInfoBase.AXIAL;
+        }            
+        return orientation;
+    }
+    
+    /**
+     * Returns the axisOrder and axisFlip mapping of the input image to LPS coordinates.
+     * @param kImage input image.
+     * @param axisOrder output mapping axis re-order.
+     * @param axisFlip output mapping axis flip.
+     * @return true if the image is not already LPS i.e the image would change to convert to LPS.
+     */
+    public static final boolean toLPS( ModelImage kImage, int[] axisOrder, boolean[] axisFlip )
+    {
+        int[] axisLPS = new int[]{ FileInfoBase.ORI_R2L_TYPE, FileInfoBase.ORI_A2P_TYPE, FileInfoBase.ORI_I2S_TYPE };
+        return matchOrientation( axisLPS, kImage.getAxisOrientation(), axisOrder, axisFlip );
+    }    
+    
+    /**
+     * Returns the axisOrder and axisFlip mapping of the input image from LPS coordinates.
+     * @param kImage input image.
+     * @param axisOrder output mapping axis re-order.
+     * @param axisFlip output mapping axis flip.
+     * @return true if the image is not already LPS i.e the image would change to convert to LPS.
+     */
+    public static final boolean fromLPS( ModelImage kImage, int[] axisOrder, boolean[] axisFlip )
+    {
+        int[] axisLPS = new int[]{ FileInfoBase.ORI_R2L_TYPE, FileInfoBase.ORI_A2P_TYPE, FileInfoBase.ORI_I2S_TYPE };
+        return matchOrientation( kImage.getAxisOrientation(), axisLPS, axisOrder, axisFlip );
+    }
+    
+    public static final boolean matchOrientation( int[] axisA, int[] axisB, int[] axisOrder, boolean[] axisFlip )
+    {
+        boolean bMatches = true;
+        for ( int i = 0; i < 3; i++ )
+        {
+            if (axisA[i] != axisB[i])
+            {
+                bMatches = false;
+                break;
+            }
+        }
+        if ( bMatches )
+        {
+            return false;
+        }
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( (axisA[i] == FileInfoBase.ORI_L2R_TYPE) || (axisA[i] == FileInfoBase.ORI_R2L_TYPE) )
+            {
+                for ( int j = 0; j < 3; j++ )
+                {
+                    if ( (axisB[j] == FileInfoBase.ORI_L2R_TYPE) || (axisB[j] == FileInfoBase.ORI_R2L_TYPE) )
+                    {
+                        axisOrder[i] = j;
+                        break;
+                    }
+                }
+            }
+            else if ( (axisA[i] == FileInfoBase.ORI_P2A_TYPE) || (axisA[i] == FileInfoBase.ORI_A2P_TYPE) )
+            {
+                for ( int j = 0; j < 3; j++ )
+                {
+                    if ( (axisB[j] == FileInfoBase.ORI_P2A_TYPE) || (axisB[j] == FileInfoBase.ORI_A2P_TYPE) )
+                    {
+                        axisOrder[i] = j;
+                        break;
+                    }
+                }
+            }
+            else if ( (axisA[i] == FileInfoBase.ORI_I2S_TYPE) || (axisA[i] == FileInfoBase.ORI_S2I_TYPE) )
+            {
+                for ( int j = 0; j < 3; j++ )
+                {
+                    if ( (axisB[j] == FileInfoBase.ORI_I2S_TYPE) || (axisB[j] == FileInfoBase.ORI_S2I_TYPE) )
+                    {
+                        axisOrder[i] = j;
+                        break;
+                    }
+                }
+            }
+        }
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( axisA[i] != axisB[axisOrder[i]] )
+            {
+                axisFlip[i] = true;
+            }
+            else
+            {
+                axisFlip[i] = false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Translates the input point into ScannerCoordinates, based on the input image, kImage.
+     * 
+     * @param kInput the input point in FileCoordinates
+     * @param kOutput the transformed point in ScannerCoordinates
+     * @param kImage the image for which the point is being transformed.
+     */
+    public static final Vector3f originLPS(ModelImage kImage) {
+        int[] axisOrient = kImage.getAxisOrientation();
+        int[] axisOrder = new int[]{0,1,2};
+        boolean[] axisFlip = new boolean[]{false,false,false};
+        toLPS( kImage, axisOrder, axisFlip );
+
+        float[] afUpperLeft = kImage.getOrigin();
+        float[] afLowerRight = new float[3];
+
+        int[] extents = kImage.getExtents();
+        float[] afRes = kImage.getResolutions(0);
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ((axisOrient[i] == 1) || (axisOrient[i] == 4) || (axisOrient[i] == 5))
+            {
+                afLowerRight[i] = afUpperLeft[i] + (extents[0] * afRes[i]);
+            }
+            else
+            {
+                afLowerRight[i] = afUpperLeft[i] - (extents[0] * afRes[i]);
+            }
+        }
+        System.err.println("");
+        System.err.println("");
+        System.err.println( "Upper Left " + afUpperLeft[0] + " " + afUpperLeft[1] + " " + afUpperLeft[2] );
+        System.err.println( "Lower Right " + afLowerRight[0] + " " + afLowerRight[1] + " " + afLowerRight[2] );
+
+        Vector3f kOutput = new Vector3f();
+        kOutput.X = axisFlip[0] ? afLowerRight[ axisOrder[0] ] : afUpperLeft[ axisOrder[0] ];
+        kOutput.Y = axisFlip[1] ? afLowerRight[ axisOrder[1] ] : afUpperLeft[ axisOrder[1] ];
+        kOutput.Z = axisFlip[2] ? afLowerRight[ axisOrder[2] ] : afUpperLeft[ axisOrder[2] ];
+        System.err.println( "--> LPS Origin " + kOutput.ToString() );
+        return kOutput;
+    }
+
 
 }

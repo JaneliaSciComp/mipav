@@ -715,7 +715,251 @@ public class ModelImage extends ModelStorageBase {
             System.gc();
         }
     }
+    
+    /**
+     * Exports data based on the mapping the current ModelImage to a new ModelImage oriented based on 
+     * the axisOrder and axisFlip arrays.
+     *
+     * @param   axisOrderOut  The mapping of current ModelImage to the new ModelImage axes.
+     * @param   axisFlip   Invert flags for the new axes.
+     *
+     * @return  A new ModelImage. Extents, resolutions, units, origins and orientations are all updated.
+     */
+    public final ModelImage export(int[] axisOrderOut, boolean[] axisFlipOut) {
 
+
+        int orientationIn = getImageOrientation();
+        int[] axisOrderIn = MipavCoordinateSystems.getAxisOrder(this, orientationIn);
+        
+        int orientationOut = MipavCoordinateSystems.axisOrderToImageOrientation( axisOrderOut );
+        
+        boolean bMatched = true;
+        for ( int i = 0; i < axisOrderIn.length; i++ )
+        {
+            if ( axisOrderIn[i] != axisOrderOut[i] )
+            {
+                bMatched = false;
+                break;
+            }
+            if ( axisFlipOut[i] == true )
+            {
+                bMatched = false;
+                break;
+            }
+        }
+        if ( bMatched )
+        {
+            return (ModelImage)this.clone();
+        }
+        int iDims = getNDims();
+        int[] extentsOut = new int[iDims];
+        float[] resolutionsOut = new float[iDims];
+        int[] unitsOfMeasureOut = new int[iDims];
+        float[] startLocationsOut = new float[iDims];
+        for (int i = 0; i < iDims; i++) {
+            extentsOut[i] = getExtents()[axisOrderOut[i]];
+            resolutionsOut[i] = getResolutions(0)[axisOrderOut[i]];
+            unitsOfMeasureOut[i] = getUnitsOfMeasure()[axisOrderOut[i]];
+            startLocationsOut[i] = getOrigin()[axisOrderOut[i]];
+        }
+
+        ModelImage kReturn = new ModelImage( getType(), extentsOut, "" );
+        if ( kReturn.fileInfo != null ) {
+            for (int i = 0; i < kReturn.getFileInfo().length; i++) {
+                kReturn.fileInfo[i].setResolutions( resolutionsOut );
+                kReturn.fileInfo[i].setUnitsOfMeasure(unitsOfMeasureOut);
+                kReturn.fileInfo[i].setOrigin( startLocationsOut );
+            }
+        }
+        try {
+            setLock(W_LOCKED);
+
+
+            /* Get the loop bounds, based on the coordinate-systems: transformation:  */
+            int iBound = (iDims > 0) ? getExtents()[axisOrderOut[0]] : 1;
+            int jBound = (iDims > 1) ? getExtents()[axisOrderOut[1]] : 1;
+            int kBound = (iDims > 2) ? getExtents()[axisOrderOut[2]] : 1;
+            int tBound = (iDims > 3) ? getExtents()[axisOrderOut[3]] : 1;
+
+            /* Get the loop multiplication factors for indexing into the 1D array
+             * with 3 index variables: based on the coordinate-systems:
+             * transformation:  */
+            int[] aiFactors = new int[3];
+            aiFactors[0] = 1;
+            aiFactors[1] = (iDims > 1) ? getExtents()[0] : 1;
+            aiFactors[2] = (iDims > 2) ? (getExtents()[0] * getExtents()[1]) : 1;
+
+            int iFactor = aiFactors[axisOrderOut[0]];
+            int jFactor = aiFactors[axisOrderOut[1]];
+            int kFactor = aiFactors[axisOrderOut[2]];
+
+
+            int tFactor = (iDims > 2)
+            ? (getExtents()[0] * getExtents()[1] * getExtents()[2])
+                    : ((iDims > 1) ? (getExtents()[0] * getExtents()[1])
+                            : ((iDims > 0) ? getExtents()[0] : 1));
+
+            boolean exportComplex = ((getType() == COMPLEX) || (getType() == DCOMPLEX))? true : false;
+            double real, imaginary, mag;
+
+            for (int t = 0; t < tBound; t++) {
+
+                for (int k = 0; k < kBound; k++) {
+
+                    for (int j = 0; j < jBound; j++) {
+
+                        for (int i = 0; i < iBound; i++) {
+
+                            /* calculate the ModelImage space index: */
+                            int iIndex = i;
+                            int jIndex = j;
+                            int kIndex = k;
+
+                            if (axisFlipOut[0]) {
+                                iIndex = (iBound - 1) - i;
+                            }
+                            if (axisFlipOut[1]) {
+                                jIndex = (jBound - 1) - j;
+                            }
+                            if (axisFlipOut[2]) {
+                                kIndex = (kBound - 1) - k;
+                            }
+
+                            int srcIndex = (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (t * tFactor);
+                            int dstIndex = t * (kBound * jBound * iBound) + k * (jBound * iBound) + j * (iBound) + i;
+
+                            /* if color: */
+                            if ((getType() == ARGB) || (getType() == ARGB_USHORT) || (getType() == ARGB_FLOAT)) {
+                                kReturn.set((dstIndex * 4) + 0, getFloat((srcIndex * 4) + 0));
+                                kReturn.set((dstIndex * 4) + 1, getFloat((srcIndex * 4) + 1));
+                                kReturn.set((dstIndex * 4) + 2, getFloat((srcIndex * 4) + 2));
+                                kReturn.set((dstIndex * 4) + 3, getFloat((srcIndex * 4) + 3));
+                            }
+                            /* if complex: */
+                            else if ((getType() == COMPLEX) || (getType() == DCOMPLEX)) {
+
+                                if (exportComplex) {
+                                    kReturn.set((dstIndex * 2) + 0, getFloat(srcIndex * 2));
+                                    kReturn.set((dstIndex * 2) + 1, getFloat((srcIndex * 2) + 1));
+                                } else {
+                                    real = getFloat(srcIndex * 2);
+                                    imaginary = getFloat((srcIndex * 2) + 1);
+
+                                    if (getLogMagDisplay() == true) {
+                                        mag = Math.sqrt((real * real) + (imaginary * imaginary));
+                                        kReturn.set(dstIndex, (float) (0.4342944819 * Math.log((1.0 + mag))));
+                                    } else {
+                                        kReturn.set(dstIndex, (float) Math.sqrt((real * real) + (imaginary * imaginary)));
+                                    }
+                                }
+                            }
+                            /* not color: */
+                            else {
+                                kReturn.set(dstIndex, getFloat(srcIndex));
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (IOException error) {
+            
+        } finally {
+            releaseLock();
+        }
+        
+
+        calcStartLocations(startLocationsOut, axisOrderOut, axisFlipOut);
+        int[] axisOrientationOut = new int[3];
+        calcAxisOrientation(axisOrientationOut, axisOrderOut, axisFlipOut);
+        kReturn.setImageOrientation(orientationOut);
+        if ( kReturn.fileInfo != null ) {
+            for (int i = 0; i < kReturn.getFileInfo().length; i++) {
+                kReturn.fileInfo[i].setAxisOrientation(axisOrientationOut);
+                kReturn.fileInfo[i].setOrigin(startLocationsOut);
+            }
+        }
+
+        return kReturn;
+    }
+
+
+    /**
+     * Calculates the new start locations based on image orientation.
+     *
+     * @param  newLoc  float[] buffer to store the new start locations
+     */
+    private void calcStartLocations(float[] newLoc, int[] axisOrder, boolean axisFlip[]) {
+
+        float[] oldLoc = getFileInfo()[0].getOrigin();
+        float[] oldRes = getFileInfo()[0].getResolutions();
+        int[] oldDims = getExtents();
+        
+        int[] direct = new int[getNDims()];
+        int[] axisOrient = fileInfo[0].getAxisOrientation();
+        for (int i = 0; i < getNDims(); i++) {
+            if ((axisOrient[i] == 1) || (axisOrient[i] == 4) || (axisOrient[i] == 5)) {
+                direct[i] = 1;
+            } else {
+                direct[i] = -1;
+            }
+        }
+        
+        for ( int i = 0; i < newLoc.length; i++ )
+        {
+            newLoc[i] = oldLoc[axisOrder[i]];
+            if ( axisFlip[i] )
+            {
+                int invert = direct[axisOrder[i]];
+                newLoc[i] = oldLoc[axisOrder[i]] + invert * ((oldDims[axisOrder[i]] - 1) * oldRes[axisOrder[i]]);
+            }
+            if (Math.abs(newLoc[i]) < .000001f) {
+                newLoc[i] = 0f;
+            }
+        }
+    }
+
+    /**
+     * Calculate the new image AxisOrientation, based on re-ordering the axes using axisOrder and axisFlip.
+     * @param newOrient  new image AxisOrientation (R2L or L2R, P2A or A2P, etc...)
+     * @param axisOrder re-ordering of axes
+     * @param axisFlip inverting new axes.
+     */
+    private void calcAxisOrientation(int[] newOrient, int[] axisOrder, boolean axisFlip[]) {
+
+        int[] oldOrient = getAxisOrientation();
+
+        for ( int i = 0; i < newOrient.length; i++ )
+        {
+            newOrient[i] = oldOrient[axisOrder[i]];
+            if ( axisFlip[i] )
+            {
+                if ( newOrient[i] == FileInfoBase.ORI_R2L_TYPE )
+                {
+                    newOrient[i] = FileInfoBase.ORI_L2R_TYPE;
+                }
+                else if ( newOrient[i] == FileInfoBase.ORI_L2R_TYPE )
+                {
+                    newOrient[i] = FileInfoBase.ORI_R2L_TYPE;
+                }
+                else if ( newOrient[i] == FileInfoBase.ORI_P2A_TYPE )
+                {
+                    newOrient[i] = FileInfoBase.ORI_A2P_TYPE;
+                }
+                else if ( newOrient[i] == FileInfoBase.ORI_A2P_TYPE )
+                {
+                    newOrient[i] = FileInfoBase.ORI_P2A_TYPE;
+                }
+                else if ( newOrient[i] == FileInfoBase.ORI_I2S_TYPE )
+                {
+                    newOrient[i] = FileInfoBase.ORI_S2I_TYPE;
+                }
+                else if ( newOrient[i] == FileInfoBase.ORI_S2I_TYPE )
+                {
+                    newOrient[i] = FileInfoBase.ORI_I2S_TYPE;
+                }
+            }
+        }
+    }
     /**
      * Forms a solid (without holes) binary image from all VOIs in the image.
      *

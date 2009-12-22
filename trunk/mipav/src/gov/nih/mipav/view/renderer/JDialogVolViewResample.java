@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer;
 
+import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -208,7 +209,7 @@ public class JDialogVolViewResample extends JDialogBase {
 
         // Checking to see if the image has all dimensions that are a power of 2.
         for (int i = 0; i < extents.length; i++) {
-            volExtents[i] = dimPowerOfTwo(extents[i]);
+            volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
             volSize *= volExtents[i];
             newRes[i] = (res[i] * extents[i]) / volExtents[i];
         }
@@ -256,9 +257,9 @@ public class JDialogVolViewResample extends JDialogBase {
 
             volExtents[0] = Integer.parseInt(extXOutput.getText());
 
-            if (!isPowerOfTwo(volExtents[0])) {
+            if (!MipavMath.isPowerOfTwo(volExtents[0])) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
-                volExtents[0] = dimPowerOfTwo(volExtents[0]);
+                volExtents[0] = MipavMath.dimPowerOfTwo(volExtents[0]);
             }
 
             if ( radioSurfaceView.isSelected() ) {
@@ -269,9 +270,9 @@ public class JDialogVolViewResample extends JDialogBase {
 
             volExtents[1] = Integer.parseInt(extYOutput.getText());
 
-            if (!isPowerOfTwo(volExtents[1])) {
+            if (!MipavMath.isPowerOfTwo(volExtents[1])) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
-                volExtents[1] = dimPowerOfTwo(volExtents[1]);
+                volExtents[1] = MipavMath.dimPowerOfTwo(volExtents[1]);
             }
 
             if ( radioSurfaceView.isSelected() ) {
@@ -283,9 +284,9 @@ public class JDialogVolViewResample extends JDialogBase {
             if (nDim >= 3) {
                 volExtents[2] = Integer.parseInt(extZOutput.getText());
 
-                if (!isPowerOfTwo(volExtents[2])) {
+                if (!MipavMath.isPowerOfTwo(volExtents[2])) {
                     MipavUtil.displayInfo("Reample to Power of 2.");
-                    volExtents[2] = dimPowerOfTwo(volExtents[2]);
+                    volExtents[2] = MipavMath.dimPowerOfTwo(volExtents[2]);
                 }
                 if ( radioSurfaceView.isSelected() ) {
                     volExtents[2] = 16;
@@ -312,13 +313,13 @@ public class JDialogVolViewResample extends JDialogBase {
             setVisible(false);
             exec();
         } else if (command.equals("Pad")) {
-            volExtents[0] = dimPowerOfTwo(Integer.parseInt(extXOutput.getText()));
+            volExtents[0] = MipavMath.dimPowerOfTwo(Integer.parseInt(extXOutput.getText()));
             newRes[0] = (float) (extents[0] * res[0]) / (float) volExtents[0];
-            volExtents[1] = dimPowerOfTwo(Integer.parseInt(extYOutput.getText()));
+            volExtents[1] = MipavMath.dimPowerOfTwo(Integer.parseInt(extYOutput.getText()));
             newRes[1] = (float) (extents[1] * res[1]) / (float) volExtents[1];
 
             if (nDim >= 3) {
-                volExtents[2] = dimPowerOfTwo(Integer.parseInt(extZOutput.getText()));
+                volExtents[2] = MipavMath.dimPowerOfTwo(Integer.parseInt(extZOutput.getText()));
                 newRes[2] = (float) (extents[2] * res[2]) / (float) volExtents[2];
             }
 
@@ -341,27 +342,27 @@ public class JDialogVolViewResample extends JDialogBase {
         } else if (command.equals("xChanged")) {
             int x = Integer.parseInt(extXOutput.getText());
 
-            if (!isPowerOfTwo(x)) {
+            if (!MipavMath.isPowerOfTwo(x)) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
-                x = dimPowerOfTwo(x);
+                x = MipavMath.dimPowerOfTwo(x);
             }
 
             extXOutput.setText(Integer.toString(x));
         } else if (command.equals("yChanged")) {
             int y = Integer.parseInt(extYOutput.getText());
 
-            if (!isPowerOfTwo(y)) {
+            if (!MipavMath.isPowerOfTwo(y)) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
-                y = dimPowerOfTwo(y);
+                y = MipavMath.dimPowerOfTwo(y);
             }
 
             extYOutput.setText(Integer.toString(y));
         } else if (command.equals("zChanged")) {
             int z = Integer.parseInt(extZOutput.getText());
 
-            if (!isPowerOfTwo(z)) {
+            if (!MipavMath.isPowerOfTwo(z)) {
                 MipavUtil.displayInfo("Reample to Power of 2.");
-                z = dimPowerOfTwo(z);
+                z = MipavMath.dimPowerOfTwo(z);
             }
 
             extZOutput.setText(Integer.toString(z));
@@ -996,69 +997,5 @@ public class JDialogVolViewResample extends JDialogBase {
         OKButton.setFont(serif12B);
 
         return OKButton;
-    }
-
-    /**
-     * Calculate the dimension value to power of 2.
-     *
-     * @param   dim  dimension value.
-     *
-     * @return  value dimension value in power of 2
-     */
-    private int dimPowerOfTwo(int dim) {
-
-        // 128^3 x 4 is 8MB
-        // 256^3 x 4 is 64MB
-        if (dim <=  16) {
-            return 16;
-        } else if (dim <= 32) {
-            return 32;
-        } else if (dim <= 64) {
-
-            if (dim > 40) {
-                return 64;
-            } else {
-                return 32;
-            } 
-        } else if (dim <= 128) {
-
-            if (dim > 80) {
-                return 128;
-            } else {
-                return 64;
-            }
-        } else if (dim <= 256) {
-
-            if (dim > 160) {
-                return 256;
-            } else {
-                return 128;
-            }
-        } else if (dim <= 512) {
-
-            if (dim > 448) {
-                return 512;
-            } else {
-                return 256;
-            }
-        } else {
-            return 512;
-        }
-    }
-
-    /**
-     * Check if given value is power of 2 withint the range 16 to 512.
-     *
-     * @param   value  given integer value.
-     *
-     * @return  true is power of 2, false not.
-     */
-    private boolean isPowerOfTwo(int value) {
-
-        if ( (value == 16) ||(value == 16) || (value == 32) || (value == 64) || (value == 128) || (value == 256) || (value == 512)) {
-            return true;
-        }
-
-        return false;
     }
 }

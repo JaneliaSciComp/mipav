@@ -1,6 +1,7 @@
 package gov.nih.mipav;
 
 
+import WildMagic.LibFoundation.Mathematics.BitHacks;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -226,8 +227,21 @@ public class MipavMath {
            return (float)Math.atan2(imaginary, real);
     }
     
-    
+    /**
+     * Determines if the input is an exact power of two. 
+     * @param value
+     * @return true if the input is an exact power of two, false otherwise.
+     */
+    public static final  boolean isPowerOfTwo(int value) {
+        return BitHacks.IsPowerOfTwo(value);
+    }
 
+    public static int nextPowerOfTwo( int value )
+    {
+        int exp = (int) Math.ceil( Math.log( value ) / Math.log( 2 ) );
+        return (int) Math.pow( 2, exp );
+    }
+    
     /**
      * Calculate the dimension value to power of 2.
      * 

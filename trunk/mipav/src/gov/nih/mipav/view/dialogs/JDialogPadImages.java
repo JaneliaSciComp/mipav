@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.*;
@@ -26,73 +27,56 @@ import javax.swing.*;
  */
 public class JDialogPadImages extends JDialogScriptableBase implements AlgorithmInterface {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 4451162492289524768L;
 
-    /** DOCUMENT ME! */
+    /** Pad the image by adding blank slices to the front: */
     public static final int PAD_FRONT = 0;
 
-    /** DOCUMENT ME! */
+    /** Pad the image by adding blank slices to the back: */
     public static final int PAD_BACK = 1;
 
-    /** DOCUMENT ME! */
+    /** Pad the image by adding blank slices to the front and back: */
     public static final int PAD_HALF = 2;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    /** Flag indicating if a new image is to be generated or if the source image is to be replaced */
+    private int displayLoc;
 
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
+    /** source image */
+    private ModelImage image; 
 
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    // or if the source image is to be replaced
-
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
-
-    /** DOCUMENT ME! */
+    /** generate new image */
     private JRadioButton newImage;
 
-    /** DOCUMENT ME! */
-    private int nSlices; // number of slices in image
+    /** number of slices in image */
+    private int nSlices; 
 
-    /** DOCUMENT ME! */
-    private int paddedSlices; // number of slices in padded image
+    /** number of slices in padded image */
+    private int paddedSlices; 
 
-    /** DOCUMENT ME! */
-    private ButtonGroup paddingGroup;
-
-    /** DOCUMENT ME! */
+    /** Padding mode, defaults to front. */
     private int padMode = PAD_FRONT;
 
-    /** DOCUMENT ME! */
-    private AlgorithmPadWithSlices padSlicesAlgo;
+    /** Algorithm that adds slices to front/back of image. */
+    private AlgorithmAddMargins padSlicesAlgo;
 
-    /** DOCUMENT ME! */
+    /** Select padding to the back: */
     private JRadioButton padToBack;
 
-    /** DOCUMENT ME! */
+    /** Select padding to the front: */
     private JRadioButton padToFront;
 
-    /** DOCUMENT ME! */
+    /** Select padding to the front and back: */
     private JRadioButton padToHalf;
 
-    /** DOCUMENT ME! */
+    /** Select replacing the current image */
     private JRadioButton replaceImage;
 
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
+    /** result image */
+    private ModelImage resultImage = null; 
 
-    /** DOCUMENT ME! */
-    private String[] titles; // title of the frame shown when image is NULL
-
-    /** DOCUMENT ME! */
+    /** Reference to the main user interface */
     private ViewUserInterface userInterface;
-
-    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
@@ -110,7 +94,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
         image = im; // set the image from the arguments to an image in this class
         userInterface = ViewUserInterface.getReference();
         nSlices = image.getExtents()[2];
-        paddedSlices = dimPowerOfTwo(nSlices);
+        paddedSlices = MipavMath.nextPowerOfTwo(nSlices);
 
         if (nSlices == paddedSlices) {
             MipavUtil.displayError(nSlices + " slices is already a power of 2");
@@ -120,8 +104,6 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
 
         init();
     }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
@@ -145,11 +127,6 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
         }
     }
 
-
-    // ************************************************************************
-    // ************************** Algorithm Events ****************************
-    // ************************************************************************
-
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
@@ -158,7 +135,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (algorithm instanceof AlgorithmPadWithSlices) {
+        if (algorithm instanceof AlgorithmAddMargins) {
 
             if (displayLoc == NEW) {
 
@@ -276,6 +253,26 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
 
         int[] destExtents = null;
 
+        int[] marginX = new int[]{0,0}; 
+        int[] marginY = new int[]{0,0}; 
+        int[] marginZ = new int[]{0,0}; 
+        if ( padMode == PAD_FRONT )
+        {
+            marginZ[0] = Math.abs(paddedSlices - nSlices);
+        }
+        else if ( padMode == PAD_BACK )
+        {
+            marginZ[1] = Math.abs(paddedSlices - nSlices);
+        }
+        else
+        {
+            marginZ[0] = Math.abs(paddedSlices - nSlices)/2;
+            marginZ[1] = Math.abs(paddedSlices - nSlices)/2;
+
+            if ((Math.abs(paddedSlices - nSlices) % 2) == 1) {
+                marginZ[1]++;
+            }
+        }
         if (displayLoc == NEW) {
 
             try {
@@ -283,19 +280,23 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                 destExtents[0] = image.getExtents()[0];
                 destExtents[1] = image.getExtents()[1];
                 destExtents[2] = paddedSlices;
-
-                // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
+                
                 resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
+                resultImage.getMatrixHolder().replaceMatrices(image.getMatrixHolder().getMatrices());
+                // preload this image with the minimum of the source image
+                // resultImage.
+                if (!image.isColorImage()) {
+                    padSlicesAlgo = new AlgorithmAddMargins(image, resultImage, image.getMin(), 
+                            marginX, marginY, marginZ );
+                } else {
+                    padSlicesAlgo = new AlgorithmAddMargins(image, resultImage, 
+                            image.getMinR(), image.getMinG(), image.getMinB(), 
+                            marginX, marginY, marginZ );
+                }
 
-
-                // Make algorithm:
-                padSlicesAlgo = new AlgorithmPadWithSlices(image, resultImage, padMode);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
+                // Listen to the algorithm so we get notified when it is succeeded or failed.
+                // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
                 padSlicesAlgo.addListener(this);
-
                 createProgressBar(image.getImageName(), padSlicesAlgo);
 
                 setVisible(false); // Hide dialog
@@ -304,9 +305,10 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (padSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
+                        MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
                     }
                 } else {
+
                     padSlicesAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -324,37 +326,32 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
         } else if (displayLoc == REPLACE) {
 
             try {
-                // No need to make new image space because the user has
-                // choosen to replace the source image
+                if (!image.isColorImage()) {
+                    padSlicesAlgo = new AlgorithmAddMargins(image, image.getMin(), 
+                            marginX, marginY, marginZ );
+                } else {
+                    padSlicesAlgo = new AlgorithmAddMargins(image, image.getMinR(), image.getMinG(), image.getMinB(), 
+                            marginX, marginY, marginZ );
+                }
 
-                // Make algorithm:
-                padSlicesAlgo = new AlgorithmPadWithSlices(image, padMode);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
                 padSlicesAlgo.addListener(this);
-
                 createProgressBar(image.getImageName(), padSlicesAlgo);
 
-                setVisible(false); // Hide dialog
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
 
                 // These next lines set the titles in all frames where the source image is displayed to
                 // "locked - " image name so as to indicate that the image is now read/write locked!
                 // The image frames are disabled and then unregisted from the userinterface until the
                 // algorithm has completed.
-                Vector imageFrames = image.getImageFrameVector();
-                titles = new String[imageFrames.size()];
-
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                }
+                /*Vector imageFrames = image.getImageFrameVector();
+                 *
+                 * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i]
+                 * = ( (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
+                 * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled(
+                 * false ); userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) ); }*/
 
                 if (isRunInSeparateThread()) {
-
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (padSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
@@ -392,7 +389,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
         parentFrame = image.getParentFrame();
 
         nSlices = image.getExtents()[2];
-        paddedSlices = dimPowerOfTwo(nSlices);
+        paddedSlices = MipavMath.nextPowerOfTwo(nSlices);
 
         if (nSlices == paddedSlices) {
             throw new ParameterException(AlgorithmParameters.getInputImageLabel(1),
@@ -419,48 +416,6 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * Calculate the dimension value to power of 2.
-     *
-     * @param   dim  dimension value.
-     *
-     * @return  value dimension value in power of 2
-     */
-    private int dimPowerOfTwo(int dim) {
-
-        if (dim <= 4) {
-            return 4;
-        } else if (dim <= 8) {
-            return 8;
-        } else if (dim <= 16) {
-            return 16;
-        } else if (dim <= 32) {
-            return 32;
-        } else if (dim <= 64) {
-            return 64;
-        } else if (dim <= 128) {
-            return 128;
-        } else if (dim <= 256) {
-            return 256;
-        } else if (dim <= 512) {
-            return 512;
-        } else if (dim <= 1024) {
-            return 1024;
-        } else if (dim <= 2048) {
-            return 2048;
-        } else if (dim <= 4096) {
-            return 4096;
-        } else if (dim <= 8192) {
-            return 8192;
-        } else if (dim <= 16384) {
-            return 16384;
-        } else if (dim <= 32768) {
-            return 32768;
-        } else {
-            return 65536;
-        }
-    }
-
-    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -480,7 +435,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
         checkPanel.setLayout(new BoxLayout(checkPanel, BoxLayout.Y_AXIS));
         checkPanel.setBorder(buildTitledBorder("Pad"));
 
-        paddingGroup = new ButtonGroup();
+        ButtonGroup paddingGroup = new ButtonGroup();
 
         padToFront = new JRadioButton("Pad to front", true);
         padToFront.setFont(serif12);
@@ -502,7 +457,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
         destinationPanel.setLayout(new BoxLayout(destinationPanel, BoxLayout.Y_AXIS));
         destinationPanel.setBorder(buildTitledBorder("Destination"));
 
-        destinationGroup = new ButtonGroup();
+        ButtonGroup destinationGroup = new ButtonGroup();
         newImage = new JRadioButton("New image", true);
         newImage.setFont(serif12);
         destinationGroup.add(newImage);

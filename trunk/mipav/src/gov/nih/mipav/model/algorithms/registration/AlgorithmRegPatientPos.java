@@ -518,8 +518,13 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             name = JDialogBase.makeImageName(imageB.getImageName(), "_shifted");
             shiftedImgB = new ModelImage(imageB.getType(), destExtentsA, imageB.getImageName());
 
-            AlgorithmAddMargins algoMargins = new AlgorithmAddMargins(resultImg, shiftedImgB, 0, add[0], 0, add[1],
-                                                                      add[2], 0);
+
+            int[] marginX = new int[]{0,add[0]};
+            int[] marginY = new int[]{0,add[1]};
+            int[] marginZ = new int[]{0,add[2]};
+            
+            AlgorithmAddMargins algoMargins = new AlgorithmAddMargins(resultImg, shiftedImgB, 0, 
+                    marginX, marginY, marginZ );
 
             /* constructor looks like:
              * AlgorithmAddMargins(ModelImage srcImage, ModelImage destImage, double n,             int leftWidth, int

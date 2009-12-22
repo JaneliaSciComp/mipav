@@ -576,6 +576,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         }
      
         MipavCoordinateSystems.fileToScanner(position, kOut, image);
+        Vector3f kTest = new Vector3f();
+        MipavCoordinateSystems.scannerToFile(kOut, kTest, image);
+        if ( kTest.X != position.X || kTest.Y != position.Y || kTest.Z != position.Z )
+        {
+            System.err.println( "scannerToFile broken" );
+            System.err.println( kTest.ToString() );
+            System.err.println( position.ToString() );
+            MipavCoordinateSystems.scannerToFile(kOut, kTest, image);
+        }
 
         float[] tCoord = new float[3];
         tCoord[0] = kOut.X;

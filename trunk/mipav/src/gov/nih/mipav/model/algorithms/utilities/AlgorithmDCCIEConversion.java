@@ -332,6 +332,10 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
                     newExtents[1] = extents[1] + topPadding;
                     newExtents[2] = extents[2];
 
+                    int[] marginX = new int[]{leftPadding,0};
+                    int[] marginY = new int[]{topPadding,0};
+                    int[] marginZ = new int[]{0,0};
+
                     ModelImage paddedImage = new ModelImage(inputImage.getType(), newExtents, "TEMPImage");
 
                     fireProgressStateChanged("Adding margins to image...");
@@ -339,10 +343,11 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
                     AlgorithmAddMargins algoMarg = null;
 
                     if (paddedImage.isColorImage()) {
-                        algoMarg = new AlgorithmAddMargins(inputImage, paddedImage, 0, 0, 0, leftPadding, topPadding, 0,
-                                                           0);
+                        algoMarg = new AlgorithmAddMargins(inputImage, paddedImage, 0, 0, 0, 
+                                marginX, marginY, marginZ );
                     } else {
-                        algoMarg = new AlgorithmAddMargins(inputImage, paddedImage, leftPadding, 0, topPadding, 0, 0);
+                        algoMarg = new AlgorithmAddMargins(inputImage, paddedImage, 0, 
+                                marginX, marginY, marginZ );
                     }
 
                     algoMarg.run();

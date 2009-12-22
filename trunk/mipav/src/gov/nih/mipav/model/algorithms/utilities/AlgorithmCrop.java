@@ -38,23 +38,6 @@ public class AlgorithmCrop extends AlgorithmBase {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates new algorithms to crop image using VOI. Stores in srcImg.
-     *
-     * @param  srcImg    source image model
-     * @param  _cushion  extra space around VOI in x and y dimensions.
-     * @param  _x        VOI xBounds: x[0] = min. bound and x[1] = max. bound
-     * @param  _y        VOI yBounds: y[0] = min. bound and y[1] = max. bound
-     * @param  _z        VOI zBounds: z[0] = min. bound and z[1] = max. bound
-     */
-    public AlgorithmCrop(ModelImage srcImg, int _cushion, int[] _x, int[] _y, int[] _z) {
-        super(null, srcImg);
-        cushion = _cushion;
-        x = _x;
-        y = _y;
-        z = _z;
-    }
-
-    /**
      * Creates new algorithms to crop image using VOI. Stores in destImg.
      *
      * @param  destImg   image model where result image is to stored
