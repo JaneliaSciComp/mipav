@@ -19,10 +19,17 @@ import java.util.*;
 public class AlgorithmMatchImages extends AlgorithmBase {
 
     private ModelImage srcImageB = null;
-    public AlgorithmMatchImages(ModelImage kImageA, ModelImage kImageB) 
+    private boolean doOrigins = true;
+    private boolean doOrients = true;
+    private float[] padValue = new float[]{0,0,0};
+    
+    public AlgorithmMatchImages(ModelImage kImageA, ModelImage kImageB,
+            final boolean doOrigins, final boolean doOrients ) 
     {
         srcImage = kImageA;
         srcImageB = kImageB;
+        this.doOrigins = doOrigins;
+        this.doOrients = doOrients;
     }
 
     public void disposeLocal() 
@@ -47,22 +54,36 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     {
         return srcImageB;
     }
+    
+    public void setPadValue( float value )
+    {
+        padValue[0] = value;
+    }
+    
+    public void setPadValue( float red, float green, float blue )
+    {
+        padValue[0] = red;
+        padValue[1] = green;
+        padValue[2] = blue;
+    }
 
     public void runAlgorithm() {
         
         int[] axisA = srcImage.getAxisOrientation();
         int[] axisB = srcImageB.getAxisOrientation();
 
-
-        int[] axisOrder = { 0, 1, 2, 3 };
-        boolean[] axisFlip = { false, false, false, false };
-        if ( MipavCoordinateSystems.matchOrientation( axisA, axisB, axisOrder, axisFlip ) )
+        if ( doOrients )
         {
-            AlgorithmRotate rotateAlgo = new AlgorithmRotate( srcImageB, axisOrder, axisFlip );
-            rotateAlgo.setRunningInSeparateThread(false);
-            rotateAlgo.run();
-            srcImageB = rotateAlgo.returnImage();
-            //new ViewJFrameImage((ModelImage)srcImageB.clone(), null, null, false);
+            int[] axisOrder = { 0, 1, 2, 3 };
+            boolean[] axisFlip = { false, false, false, false };
+            if ( MipavCoordinateSystems.matchOrientation( axisA, axisB, axisOrder, axisFlip ) )
+            {
+                AlgorithmRotate rotateAlgo = new AlgorithmRotate( srcImageB, axisOrder, axisFlip );
+                rotateAlgo.setRunningInSeparateThread(false);
+                rotateAlgo.run();
+                srcImageB = rotateAlgo.returnImage();
+                //new ViewJFrameImage((ModelImage)srcImageB.clone(), null, null, false);
+            }
         }
         matchUnits( srcImage, srcImageB );
         float[] afNewRes = matchResolutions( srcImage, srcImageB );
@@ -164,10 +185,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 transformFunct.run();
 
                 if (transformFunct.isCompleted() == false) {
-
-                    // What to do
-                        transformFunct.finalize();
-                        transformFunct = null;
+                    transformFunct.finalize();
+                    transformFunct = null;
                 }
 
                 kNewImage = transformFunct.getTransformedImage();
@@ -203,9 +222,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         }
         int[] padAFront = new int[]{0,0,0};
         int[] padBFront = new int[]{0,0,0};
-        if ( !bMatches )
+        if ( !bMatches && doOrigins )
         {
-
             int[] axisA = imageA.getAxisOrientation();            
             float[] afDiff = new float[iDims];
             for ( int i = 0; i < iDims; i++ )
@@ -312,31 +330,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         return (bPadA || bPadB);
     }
     
-
-    /**
-     * Calculates the new start locations based on image orientation.
-     *
-     * @param  newLoc  float[] buffer to store the new start locations
-     */
-    private void calcStartLocations(ModelImage kImage, float[] newLoc, float[] oldLoc, int[] axisOrder, boolean axisFlip[])
-    {
-        float[] oldRes = kImage.getResolutions(0);
-        int[] oldDims = kImage.getExtents();
-
-        for ( int i = 0; i < newLoc.length; i++ )
-        {
-            newLoc[i] = oldLoc[axisOrder[i]];
-            if ( axisFlip[i] )
-            {
-                int invert = (oldLoc[axisOrder[i]] > 0.0f) ? -1 : 1;
-                newLoc[i] = oldLoc[axisOrder[i]] + invert * ((oldDims[axisOrder[i]] - 1) * oldRes[axisOrder[i]]);
-            }
-            if (Math.abs(newLoc[i]) < .000001f) {
-                newLoc[i] = 0f;
-            }
-        }
-    }
-
     private ModelImage padImage( ModelImage kImage, int[] xBounds, int[] yBounds, int[] zBounds )
     {
         if ( (xBounds[0] == 0) && (xBounds[1] == 0) &&
@@ -363,7 +356,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                                      JDialogBase.makeImageName(kImage.getImageName(), "_pad"));
         
         resultImage.setAll(kImage.getMin());
-        AlgorithmAddMargins padAlgo = new AlgorithmAddMargins(kImage, resultImage, 0, xBounds, yBounds, zBounds);
+        AlgorithmAddMargins padAlgo = new AlgorithmAddMargins(kImage, resultImage, xBounds, yBounds, zBounds);
+        padAlgo.setPadValue( padValue );
         padAlgo.setRunningInSeparateThread(false);
         padAlgo.run();
         return resultImage;

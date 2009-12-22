@@ -911,7 +911,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      * @see JDialogLoadImage
      */
     public boolean loadImage(final Object obj, final ViewJComponentEditImage compImage, final boolean stackFlag,
-            final boolean doOrigins, final boolean doOrients) {
+            final boolean doOrigins, final boolean doOrients,
+            double defaultValue, double defaultRed, double defaultGreen, double defaultBlue) {
         boolean resample = false;
         int[] axisA;
         int[] axisB;
@@ -960,7 +961,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 return false;
             }
 
-            matchImages( imageA, imageB );
+            matchImages( imageA, imageB, doOrigins, doOrients, defaultValue, defaultRed, defaultGreen, defaultBlue );
             /*
 
             // If axis orientation information is available for each of the 3 axes of
@@ -1029,12 +1030,21 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         return success;
     }
     
-    private void matchImages( ModelImage imageA, ModelImage imageB )
+    private void matchImages( ModelImage imageA, ModelImage imageB,final boolean doOrigins, final boolean doOrients,
+            double defaultValue, double defaultRed, double defaultGreen, double defaultBlue )
     {
         ModelImage imageA_back = imageA;
         ModelImage imageB_back = imageB;
     
-        AlgorithmMatchImages algoMatch = new AlgorithmMatchImages( imageA, imageB );
+        AlgorithmMatchImages algoMatch = new AlgorithmMatchImages( imageA, imageB, doOrigins, doOrients );
+        if ( !imageB.isColorImage() )
+        {
+            algoMatch.setPadValue( (float)defaultValue );
+        }
+        else
+        {
+            algoMatch.setPadValue( (float)defaultRed, (float)defaultGreen, (float)defaultBlue );
+        }
         algoMatch.setRunningInSeparateThread(false);
         algoMatch.run();
         imageA = algoMatch.getImageA();

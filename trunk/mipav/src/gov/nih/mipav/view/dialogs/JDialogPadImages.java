@@ -286,11 +286,10 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                 // preload this image with the minimum of the source image
                 // resultImage.
                 if (!image.isColorImage()) {
-                    padSlicesAlgo = new AlgorithmAddMargins(image, resultImage, image.getMin(), 
+                    padSlicesAlgo = new AlgorithmAddMargins(image, resultImage,
                             marginX, marginY, marginZ );
                 } else {
                     padSlicesAlgo = new AlgorithmAddMargins(image, resultImage, 
-                            image.getMinR(), image.getMinG(), image.getMinB(), 
                             marginX, marginY, marginZ );
                 }
 
@@ -327,10 +326,10 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
 
             try {
                 if (!image.isColorImage()) {
-                    padSlicesAlgo = new AlgorithmAddMargins(image, image.getMin(), 
+                    padSlicesAlgo = new AlgorithmAddMargins(image,
                             marginX, marginY, marginZ );
                 } else {
-                    padSlicesAlgo = new AlgorithmAddMargins(image, image.getMinR(), image.getMinG(), image.getMinB(), 
+                    padSlicesAlgo = new AlgorithmAddMargins(image,
                             marginX, marginY, marginZ );
                 }
 

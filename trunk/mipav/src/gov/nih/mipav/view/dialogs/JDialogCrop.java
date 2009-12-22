@@ -38,7 +38,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 	private int borderSize;
 
 	/** DOCUMENT ME! */
-	private AlgorithmCrop cropAlgo;
+	private AlgorithmAddMargins cropAlgo;
 
 	/** DOCUMENT ME! */
 	private ModelImage image; // source image
@@ -212,7 +212,7 @@ public class JDialogCrop extends JDialogScriptableBase implements
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 
-		if (algorithm instanceof AlgorithmCrop) {
+		if (algorithm instanceof AlgorithmAddMargins) {
 
 			if ((cropAlgo.isCompleted() == true) && (resultImage != null)) { // in
 																				// StoreInDest;
@@ -330,8 +330,26 @@ public class JDialogCrop extends JDialogScriptableBase implements
 			resultImage = new ModelImage(image.getType(), destExtents,
 					makeImageName(image.getImageName(), "_crop"));
 
-			cropAlgo = new AlgorithmCrop(resultImage, image, borderSize,
-					xBounds, yBounds, zBounds);
+			int[] xCrop = new int[]{ 0, 0 };
+			int[] yCrop = new int[]{ 0, 0 };
+			int[] zCrop = new int[]{ 0, 0 };
+            if ( destExtents.length > 0 )
+            {
+                xCrop[0] = -1 * (xBounds[0] - borderSize);
+                xCrop[1] = -1 * (xBounds[1] - destExtents[0] - 1);
+            }
+            if ( destExtents.length > 1 )
+            {
+                yCrop[0] = -1 * (yBounds[0] - borderSize);
+                yCrop[1] = -1 * (yBounds[1] - destExtents[1] - 1);
+            }
+            if ( destExtents.length > 2 )
+            {
+                zCrop[0] = -1 * (zBounds[0]);
+                zCrop[1] = -1 * (zBounds[1] - destExtents[2] - 1);
+            }
+            cropAlgo = new AlgorithmAddMargins(image, resultImage, 
+                    xCrop, yCrop, zCrop);
 
 			// This is very important. Adding this object as a listener allows
 			// the algorithm to

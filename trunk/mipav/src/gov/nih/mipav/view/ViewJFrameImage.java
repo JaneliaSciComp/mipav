@@ -426,7 +426,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            if (loadImage(fil, componentImage, userInterface.getLastStackFlag(), doOrigins, doOrients)) {
+            if (loadImage(fil, componentImage, userInterface.getLastStackFlag(), doOrigins, doOrients, 0, 0, 0, 0)) {
 
                 if ( (imageA.getNDims() == 3) && (imageB.getNDims() == 4)) {
                     removeControls();
@@ -4388,7 +4388,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @return DOCUMENT ME!
      */
     public boolean setAndLoad(final ModelImage image2load) {
-        return setAndLoad(image2load, doOrigins, doOrients);
+        return setAndLoad(image2load, doOrigins, doOrients, 0, 0, 0, 0);
     }
 
     /**
@@ -4400,9 +4400,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @return DOCUMENT ME!
      */
-    public boolean setAndLoad(final ModelImage image2load, final boolean doOrigins, final boolean doOrients) {
+    public boolean setAndLoad(final ModelImage image2load, final boolean doOrigins, final boolean doOrients,
+            double defaultValue, double defaultRed, double defaultGreen, double defaultBlue )
+    {
 
-        if (loadImage(image2load, componentImage, false, doOrigins, doOrients)) {
+        if (loadImage(image2load, componentImage, false, doOrigins, doOrients, defaultValue, defaultRed, defaultGreen, defaultBlue )) {
 
             if ( (imageA.getNDims() == 3) && (imageB.getNDims() == 4)) {
                 removeControls();

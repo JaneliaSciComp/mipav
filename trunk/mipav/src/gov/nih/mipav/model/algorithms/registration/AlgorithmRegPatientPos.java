@@ -523,8 +523,9 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             int[] marginY = new int[]{0,add[1]};
             int[] marginZ = new int[]{0,add[2]};
             
-            AlgorithmAddMargins algoMargins = new AlgorithmAddMargins(resultImg, shiftedImgB, 0, 
+            AlgorithmAddMargins algoMargins = new AlgorithmAddMargins(resultImg, shiftedImgB, 
                     marginX, marginY, marginZ );
+            algoMargins.setPadValue( new float[]{0,0,0} );
 
             /* constructor looks like:
              * AlgorithmAddMargins(ModelImage srcImage, ModelImage destImage, double n,             int leftWidth, int

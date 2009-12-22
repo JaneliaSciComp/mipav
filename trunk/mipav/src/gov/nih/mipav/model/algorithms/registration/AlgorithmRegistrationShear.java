@@ -4343,8 +4343,9 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
                     int[] marginY = new int[]{rotpy,0};
                     int[] marginZ = new int[]{rotpz,rotpz};
                     
-                    AlgorithmAddMargins imageMarginsAlgo = new AlgorithmAddMargins(vol, vvv, 0.0, 
+                    AlgorithmAddMargins imageMarginsAlgo = new AlgorithmAddMargins(vol, vvv, 
                             marginX, marginY, marginZ );
+                    imageMarginsAlgo.setPadValue( new float[]{0,0,0} );
 
                     imageMarginsAlgo.setRunningInSeparateThread(runningInSeparateThread);
                     imageMarginsAlgo.run();

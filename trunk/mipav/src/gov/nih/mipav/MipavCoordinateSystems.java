@@ -97,6 +97,18 @@ public class MipavCoordinateSystems {
         MipavCoordinateSystems.fileToPatient(pIn, pOut, image, orientation, bFlip, axisOrder, axisFlip);
     }
     
+    /**
+     * FileToPatient transform. Transforms points that are in FileCoordinates into PatientCoordinates space, based on
+     * the ModelImage and the desired oriented view -- either FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL, or FileInfoBase.UNKNOWN_ORIENT:
+     * @param pIn input point in FileCoordinates
+     * @param pOut output point in PatientCoordinates
+     * @param image input image
+     * @param orientation patient orientation
+     * @param bFlip flag to use axisFlip for inverting axes
+     * @param axisOrder mapping of input and output image orientation axes.
+     * @param axisFlip invert flags for the output orientation axes.
+     */
     public static final void fileToPatient(Vector3f pIn, Vector3f pOut, ModelStorageBase image, int orientation,
             boolean bFlip, int[] axisOrder, boolean[] axisFlip) {
         // extents gets the image extents re-mapped to PatientCoordinates
@@ -660,6 +672,11 @@ public class MipavCoordinateSystems {
         return filePoint[axialOrder[0]];
     }
 
+    /**
+     * Calculates a new image orientation based on the input axisOrder.
+     * @param axisOrder maps x,y,z to the image extents 0, 1, 2. Determines image orientation.
+     * @return SAGITTAL, CORONAL, AXIAL, or UNKNOWN_ORIENT based on input axisOrder.
+     */
     public static final int axisOrderToImageOrientation( int[] axisOrder )
     {
 
@@ -709,6 +726,15 @@ public class MipavCoordinateSystems {
         return matchOrientation( kImage.getAxisOrientation(), axisLPS, axisOrder, axisFlip );
     }
     
+    /**
+     * Returns the axisOrder and axisFlip arrays for mapping axisB image orientation onto axisA image orientation.
+     * The returned arrays describe how to reorient axisB so that it is in the target orientation axisA. 
+     * @param axisA target image orientation (L2R, R2L, A2P, P2A, I2S, S2I, etc.)
+     * @param axisB image orientation to re-map so that it matches axisA
+     * @param axisOrder re-mapping of the axes.
+     * @param axisFlip invert flags for the new axes.
+     * @return false when the orientations already match, true when the axisOrder and axisFlip arrays are set.
+     */
     public static final boolean matchOrientation( int[] axisA, int[] axisB, int[] axisOrder, boolean[] axisFlip )
     {
         boolean bMatches = true;
@@ -775,11 +801,10 @@ public class MipavCoordinateSystems {
     }
     
     /**
-     * Translates the input point into ScannerCoordinates, based on the input image, kImage.
-     * 
-     * @param kInput the input point in FileCoordinates
-     * @param kOutput the transformed point in ScannerCoordinates
-     * @param kImage the image for which the point is being transformed.
+     * Returns the image origin in LPS space.
+     * Determines the mapping of the current image space to LPS (x = R2L, y = A2P, z = I2S) space.
+     * Returns the origin in the new coordinate space.
+     * @return image origin in LPS coordinate space.
      */
     public static final Vector3f originLPS(ModelImage kImage) {
         int[] axisOrient = kImage.getAxisOrientation();
@@ -803,16 +828,11 @@ public class MipavCoordinateSystems {
                 afLowerRight[i] = afUpperLeft[i] - (extents[0] * afRes[i]);
             }
         }
-        System.err.println("");
-        System.err.println("");
-        System.err.println( "Upper Left " + afUpperLeft[0] + " " + afUpperLeft[1] + " " + afUpperLeft[2] );
-        System.err.println( "Lower Right " + afLowerRight[0] + " " + afLowerRight[1] + " " + afLowerRight[2] );
 
         Vector3f kOutput = new Vector3f();
         kOutput.X = axisFlip[0] ? afLowerRight[ axisOrder[0] ] : afUpperLeft[ axisOrder[0] ];
         kOutput.Y = axisFlip[1] ? afLowerRight[ axisOrder[1] ] : afUpperLeft[ axisOrder[1] ];
         kOutput.Z = axisFlip[2] ? afLowerRight[ axisOrder[2] ] : afUpperLeft[ axisOrder[2] ];
-        System.err.println( "--> LPS Origin " + kOutput.ToString() );
         return kOutput;
     }
 

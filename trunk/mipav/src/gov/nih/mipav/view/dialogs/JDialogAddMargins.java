@@ -302,14 +302,18 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
                     resultImage.getMatrixHolder().replaceMatrices(image.getMatrixHolder().getMatrices());
 
+                    float[] padValue = new float[3];
                     // resultImage.
                     if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, defaultValue, 
-                                marginX, marginY, marginZ );
+                        padValue[0] = (float)defaultValue;
                     } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, redValue, greenValue, blueValue, 
-                                marginX, marginY, marginZ );
+                        padValue[0] = (float)redValue;
+                        padValue[0] = (float)greenValue;
+                        padValue[0] = (float)blueValue;
                     }
+                    imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, 
+                            marginX, marginY, marginZ );
+                    imageMarginsAlgo.setPadValue(padValue);
 
                     // Listen to the algorithm so we get notified when it is succeeded or failed.
                     // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
@@ -360,13 +364,19 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
                     // preload this image with the minimum of the source image
                     // resultImage.
+
+                    float[] padValue = new float[3];
+                    // resultImage.
                     if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, defaultValue, 
-                                marginX, marginY, marginZ );
+                        padValue[0] = (float)defaultValue;
                     } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, redValue, greenValue, blueValue, 
-                                marginX, marginY, marginZ );
+                        padValue[0] = (float)redValue;
+                        padValue[0] = (float)greenValue;
+                        padValue[0] = (float)blueValue;
                     }
+                    imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, 
+                            marginX, marginY, marginZ );
+                    imageMarginsAlgo.setPadValue(padValue);
 
                     // Listen to the algorithm so we get notified when it is succeeded or failed.
                     // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
@@ -404,13 +414,19 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
                 try {
 
+
+                    float[] padValue = new float[3];
+                    // resultImage.
                     if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, defaultValue, 
-                                marginX, marginY, marginZ );
+                        padValue[0] = (float)defaultValue;
                     } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, redValue, greenValue, blueValue, 
-                                marginX, marginY, marginZ );
+                        padValue[0] = (float)redValue;
+                        padValue[0] = (float)greenValue;
+                        padValue[0] = (float)blueValue;
                     }
+                    imageMarginsAlgo = new AlgorithmAddMargins(image, 
+                            marginX, marginY, marginZ );
+                    imageMarginsAlgo.setPadValue(padValue);
 
                     imageMarginsAlgo.addListener(this);
                     createProgressBar(image.getImageName(), imageMarginsAlgo);
@@ -449,13 +465,19 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
                 try {
 
+
+                    float[] padValue = new float[3];
+                    // resultImage.
                     if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, defaultValue, 
-                                marginX, marginY, marginZ );
+                        padValue[0] = (float)defaultValue;
                     } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, redValue, greenValue, blueValue, 
-                                marginX, marginY, marginZ );
+                        padValue[0] = (float)redValue;
+                        padValue[0] = (float)greenValue;
+                        padValue[0] = (float)blueValue;
                     }
+                    imageMarginsAlgo = new AlgorithmAddMargins(image, 
+                            marginX, marginY, marginZ );
+                    imageMarginsAlgo.setPadValue(padValue);
 
                     imageMarginsAlgo.addListener(this);
                     createProgressBar(image.getImageName(), imageMarginsAlgo);

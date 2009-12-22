@@ -108,6 +108,18 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private JRadioButton radioUShort;
 
+    /** DOCUMENT ME! */
+    private JTextField defaultBlueInput;
+
+    /** DOCUMENT ME! */
+    private JTextField defaultGreenInput;
+
+    /** DOCUMENT ME! */
+    private JTextField defaultRedInput;
+
+    /** DOCUMENT ME! */
+    private JTextField defaultValueInput;
+
     /** a cloned version of importImage that will be inserted into the source images's B slot. */
     private ModelImage resultImage;
 
@@ -314,12 +326,94 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             matchOrigins.setEnabled(true);
             matchOrigins.setSelected(true);
             doOrigins = matchOrigins.isSelected();
+            
+
+            // default margin value
+            JPanel defaultValuePanel = new JPanel();
+            defaultValuePanel.setBorder(buildTitledBorder("Select pad Value"));
+            if (image.isColorImage() == false) {
+
+                // set layout
+                GridBagLayout gbl = new GridBagLayout();
+                GridBagConstraints gbc = new GridBagConstraints();
+                defaultValuePanel.setLayout(gbl);
+                gbc.anchor = GridBagConstraints.NORTHWEST;
+
+                // make content, place into layout
+                JLabel defaultLabel = new JLabel("Pad value");
+                defaultLabel.setFont(serif12);
+                defaultLabel.setForeground(Color.black);
+                defaultLabel.setRequestFocusEnabled(false);
+                gbc.gridwidth = 2;
+                gbl.setConstraints(defaultLabel, gbc);
+                defaultValuePanel.add(defaultLabel);
+                defaultValuePanel.add(Box.createHorizontalStrut(10));
+                defaultValueInput = new JTextField(Double.toString(image.getMin()), 8);
+                defaultValueInput.addActionListener(this);
+                MipavUtil.makeNumericsOnly(defaultValueInput, true);
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                gbl.setConstraints(defaultValueInput, gbc);
+                defaultValuePanel.add(defaultValueInput);
+            } else { // color image
+                GridBagLayout gbl = new GridBagLayout();
+                GridBagConstraints gbc = new GridBagConstraints();
+                defaultValuePanel.setLayout(gbl);
+                gbc.anchor = GridBagConstraints.NORTHWEST;
+
+                // make content, place into layout
+                JLabel redLabel = new JLabel("Red pad value");
+                redLabel.setFont(serif12);
+                redLabel.setForeground(Color.black);
+                redLabel.setRequestFocusEnabled(false);
+                gbc.gridwidth = 2;
+                gbl.setConstraints(redLabel, gbc);
+                defaultValuePanel.add(redLabel);
+                defaultValuePanel.add(Box.createHorizontalStrut(10));
+                defaultRedInput = new JTextField(Double.toString(image.getMinR()), 8);
+                defaultRedInput.addActionListener(this);
+                MipavUtil.makeNumericsOnly(defaultRedInput, true);
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                gbl.setConstraints(defaultRedInput, gbc);
+                defaultValuePanel.add(defaultRedInput);
+
+                JLabel greenLabel = new JLabel("Green pad value");
+                greenLabel.setFont(serif12);
+                greenLabel.setForeground(Color.black);
+                greenLabel.setRequestFocusEnabled(false);
+                gbc.gridwidth = 2;
+                gbl.setConstraints(greenLabel, gbc);
+                defaultValuePanel.add(greenLabel);
+                defaultValuePanel.add(Box.createHorizontalStrut(10));
+                defaultGreenInput = new JTextField(Double.toString(image.getMinG()), 8);
+                defaultGreenInput.addActionListener(this);
+                MipavUtil.makeNumericsOnly(defaultGreenInput, true);
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                gbl.setConstraints(defaultGreenInput, gbc);
+                defaultValuePanel.add(defaultGreenInput);
+
+                JLabel blueLabel = new JLabel("Blue pad value");
+                blueLabel.setFont(serif12);
+                blueLabel.setForeground(Color.black);
+                blueLabel.setRequestFocusEnabled(false);
+                gbc.gridwidth = 2;
+                gbl.setConstraints(blueLabel, gbc);
+                defaultValuePanel.add(blueLabel);
+                defaultValuePanel.add(Box.createHorizontalStrut(10));
+                defaultBlueInput = new JTextField(Double.toString(image.getMinB()), 8);
+                defaultBlueInput.addActionListener(this);
+                MipavUtil.makeNumericsOnly(defaultBlueInput, true);
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                gbl.setConstraints(defaultBlueInput, gbc);
+                defaultValuePanel.add(defaultBlueInput);
+            }
+
 
             Box mainBox = new Box(BoxLayout.Y_AXIS);
             mainBox.setAlignmentX(Component.LEFT_ALIGNMENT);
             mainBox.add(picListingPanel);
             mainBox.add(matchOrients);
             mainBox.add(matchOrigins);
+            mainBox.add(defaultValuePanel);
             this.getContentPane().add(mainBox, BorderLayout.NORTH);
 
             JPanel okCancelPanel = new JPanel();
@@ -513,8 +607,17 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
                 setCompleted(true);
             } else {
                 resultImage = (ModelImage) importImage.clone();
-                
-                boolean comp = ((ViewJFrameImage) parentFrame).setAndLoad(resultImage, doOrigins, doOrients);
+
+                double defaultValue = 0, redValue = 0, greenValue = 0, blueValue = 0;
+                if (!resultImage.isColorImage()) {
+                    defaultValue = Double.parseDouble(defaultValueInput.getText());
+                } else {
+                    redValue = Double.parseDouble(defaultRedInput.getText());
+                    greenValue = Double.parseDouble(defaultGreenInput.getText());
+                    blueValue = Double.parseDouble(defaultBlueInput.getText());
+                }
+                boolean comp = ((ViewJFrameImage) parentFrame).setAndLoad(resultImage, doOrigins, doOrients,
+                        defaultValue, redValue, greenValue, blueValue );
                 if (comp) {
                 	if (importImage.isColorImage()) {
                 		((ViewJFrameImage) parentFrame).setRGBTB((ModelRGB)importRGB.clone());
