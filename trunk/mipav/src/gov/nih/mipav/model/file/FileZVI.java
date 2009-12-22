@@ -539,8 +539,8 @@ public class FileZVI extends FileBase {
             Preferences.debug("Reserved2 = " + reserved2 + " instead of the expected zero\n");
         }
         // Location 44 Length 4 bytes Number of sectors used for the sector allocation table
-        int fatSectorNumber = getInt(endianess);
-        Preferences.debug("Number of sectors used for the sector allocation table = " + fatSectorNumber + "\n");
+        int sectorNumber = getInt(endianess);
+        Preferences.debug("Number of sectors used for the sector allocation table = " + sectorNumber + "\n");
         // Location 48 Length 4 bytes First sector in the directory chain
         int directoryStartSector = readInt(endianess);
         if (directoryStartSector == -2) {
@@ -561,7 +561,7 @@ public class FileZVI extends FileBase {
         // Location 56 Length 4 bytes Maximum size for mini-streams
         // Streams with an actual size smaller than (and not equal to) this value are stored as mini-streams.
         long miniSectorCutoff = getUInt(endianess);
-        Preferences.debug("The maximum byte size for mini-streams = " + miniSectorCutoff + "\n");
+        Preferences.debug("The minimum byte size for standard-streams = " + miniSectorCutoff + "\n");
         // Location 60 Length 4 bytes First sector in the short sector allocation table
         int shortStartSector = readInt(endianess);
         if (shortStartSector == -2) {
@@ -571,8 +571,8 @@ public class FileZVI extends FileBase {
             Preferences.debug("The first sector in the short sector allocation table = " + shortStartSector + "\n");
         }
         // Location 64 Length 4 bytes Number of sectors in the short sector allocation table
-        long shortSectors = getUInt(endianess);
-        Preferences.debug("Number of sectors in the short sector allocation table = " + shortSectors + "\n");
+        long shortTableSectors = getUInt(endianess);
+        Preferences.debug("Number of sectors in the short sector allocation table = " + shortTableSectors + "\n");
         // Location 68 Length 4 bytes First sector of the master sector allocation table
         // End of chain if no additional sectors used.
         int difStartSector = readInt(endianess);
@@ -586,19 +586,19 @@ public class FileZVI extends FileBase {
         long difSectors = getUInt(endianess);
         Preferences.debug("The number of sectors used for the master sector allocation table = " + difSectors + "\n");
         // Location 76 Length 4*109 = 436 bytes First part of the master sector allocation table
-        // containing 109 FAT secIDs.
-        int fatSectors[] = new int[fatSectorNumber];
+        // containing 109 secIDs.
+        int sectors[] = new int[sectorNumber];
         // Entries in sector allocation table
         // -1 freeSecID  Free sector, may exist in file, but is not part of any stream
         // -2 End of Chain SecID Trailing SecID in a SecID chain
         // -3 SAT SecID First entry in the sector allocation table.
-        int sat[] = new int[fatSectorNumber*sectorSize/4];
+        int sat[] = new int[sectorNumber*sectorSize/4];
         int sp = 0;
-        for (i = 0; i < Math.min(fatSectorNumber,109); i++) {
-            fatSectors[i] = readInt(endianess);
-            Preferences.debug("FAT Sector " + i + " = " + fatSectors[i] + "\n");
+        for (i = 0; i < Math.min(sectorNumber,109); i++) {
+            sectors[i] = readInt(endianess);
+            Preferences.debug("Sector " + i + " = " + sectors[i] + "\n");
             long pos = raFile.getFilePointer(); 
-            raFile.seek((fatSectors[i]+1)*sectorSize);
+            raFile.seek((sectors[i]+1)*sectorSize);
             for (j = 0; j < sectorSize/4; j++) {
                 sat[sp]= getInt(endianess);
                 if (sp == 0) {
@@ -614,19 +614,19 @@ public class FileZVI extends FileBase {
                 sp++;
             }
             raFile.seek(pos);
-        } // for (i = 0; i < Math.min(fatSectorNumber, 109); i++)
+        } // for (i = 0; i < Math.min(sectorNumber, 109); i++)
         
         // Read short sector allocation table
-        if (shortSectors > 0) {
+        if (shortTableSectors > 0) {
             Preferences.debug("\nReading the short sector allocation table\n");
             long shortSectorTableAddress = (shortStartSector+1)*sectorSize;
             int shortSector = shortStartSector;
             raFile.seek(shortSectorTableAddress);
-            shortSectorTable = new int[(int)shortSectors*sectorSize/4];
-            for (i = 0; i < shortSectors*sectorSize/4; i++) {
+            shortSectorTable = new int[(int)shortTableSectors*sectorSize/4];
+            for (i = 0; i < shortTableSectors*sectorSize/4; i++) {
                 shortSectorTable[i] = readInt(endianess);
                 Preferences.debug("shortSectorTable[" + i + "] = " + shortSectorTable[i] + "\n");
-                if (((i+1) % (sectorSize/4) == 0) && ((i+1) < shortSectors*sectorSize/4)) {
+                if (((i+1) % (sectorSize/4) == 0) && ((i+1) < shortTableSectors*sectorSize/4)) {
                      shortSector = sat[shortSector];
                      shortSectorTableAddress = (shortSector+1)*sectorSize;
                      raFile.seek(shortSectorTableAddress);
@@ -649,6 +649,14 @@ public class FileZVI extends FileBase {
         for (i = 1; i < directorySectors; i++) {
             directoryTable[i] = sat[directoryTable[i-1]];
             Preferences.debug("directoryTable[" + i + "] = " + directoryTable[i] + "\n");
+        }
+        if (sat[directoryTable[directorySectors-1]] == -2) {
+            Preferences.debug("sat[directoryTable[directorySectors-1]] == -2 as expected\n");    
+        }
+        else {
+            Preferences.debug("sat[directoryTable[directorySectors-1]] == " + 
+                    sat[directoryTable[directorySectors-1]] + 
+                    " instead of expected -2\n");        
         }
         // Read the first sector of the directory chain (also referred to as the first element of the 
         // Directory array, or SID 0) is known as the Root Directory Entry
@@ -760,8 +768,29 @@ public class FileZVI extends FileBase {
                           shortStreamStartSect + "\n");
         // Offset 120 length 4 bytes Total size of the short stream container stream
         totalShortStreamSize = getUInt(endianess);
-            Preferences.debug("Total size of the short stream container stream = " +
+            Preferences.debug("Total byte size of the short stream container stream = " +
                               totalShortStreamSize + "\n");
+        int shortStreamSectorNumber = (int)(totalShortStreamSize/sectorSize);
+        if ((totalShortStreamSize % sectorSize) != 0) {
+            shortStreamSectorNumber++;
+        }
+        Preferences.debug("The number of bytes in the short stream container stream requires " +
+                           shortStreamSectorNumber + " sectors\n");
+        int shortSectors[] = new int[shortStreamSectorNumber];
+        shortSectors[0] = shortStreamStartSect;
+        Preferences.debug("shortSectors[0] = " + shortSectors[0] + "\n");
+        for (i = 1; i < shortStreamSectorNumber; i++) {
+            shortSectors[i] = sat[shortSectors[i-1]];
+            Preferences.debug("shortSectors[" + i + "] = " + shortSectors[i] + "\n");
+        }
+        if (sat[shortSectors[shortStreamSectorNumber-1]] == -2) {
+            Preferences.debug("sat[shortSectors[shortStreamSectorNumber-1]] == -2 as expected\n");    
+        }
+        else {
+            Preferences.debug("sat[shortSectors[shortStreamSectorNumber-1]] == " + 
+                    sat[shortSectors[shortStreamSectorNumber-1]] + 
+                    " instead of expected -2\n");        
+        }
         // Offset 124 length 2 bytes dptPropType Reserved for future use.  Must be zero
         int dptPropType = getUnsignedShort(endianess);
         if (dptPropType == 0) {
