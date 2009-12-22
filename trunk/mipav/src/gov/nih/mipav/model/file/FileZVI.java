@@ -478,6 +478,20 @@ public class FileZVI extends FileBase {
         long streamSize;
         int contentsStartSect = 0;
         long contentsStreamSize = 0;
+        long pos;
+        int sectorsIntoShortStream;
+        int presentShortSector;
+        int bytesToRead;
+        int presentSector;
+        int presentSectorOffset;
+        int bytesRead;
+        int bp;
+        short dType;
+        byte bf[];
+        int imageWidth = 0;
+        int imageHeight = 0;
+        int imageDepth = 0;
+        int imagePixelFormat = 0;
         //      Start reading ole compound file structure
         // The header is always 512 bytes long and always located at offset zero.
         // Offset 0 Length 8 bytes olecf file signature
@@ -597,7 +611,7 @@ public class FileZVI extends FileBase {
         for (i = 0; i < Math.min(sectorNumber,109); i++) {
             sectors[i] = readInt(endianess);
             Preferences.debug("Sector " + i + " = " + sectors[i] + "\n");
-            long pos = raFile.getFilePointer(); 
+            pos = raFile.getFilePointer(); 
             raFile.seek((sectors[i]+1)*sectorSize);
             for (j = 0; j < sectorSize/4; j++) {
                 sat[sp]= getInt(endianess);
@@ -716,29 +730,30 @@ public class FileZVI extends FileBase {
         else {
             Preferences.debug("Node has illegal color value = " + color[0] + "\n");
         }
-        // offset 68 length 4 bytes SID of the left sibling of this entry in the directory tree
-        int leftSID = readInt(endianess);
-        if (leftSID == -1) {
-            Preferences.debug("No left sibling for this entry\n");
+        // offset 68 length 4 bytes SID of the left child of this entry in the directory tree
+        int leftChild = readInt(endianess);
+        if (leftChild == -1) {
+            Preferences.debug("No left child for this entry\n");
         }
         else {
-            Preferences.debug("The SID of the left sibling of this entry in the directory tree = " + leftSID + "\n");
+            Preferences.debug("The SID of the left child of this entry in the directory tree = " + leftChild + "\n");
         }
-        // offset 72 length 4 bytes SID of the right sibling of this entry in the directory tree
-        int rightSID = readInt(endianess);
-        if (rightSID == -1) {
-            Preferences.debug("No right sibling for this entry\n");
-        }
-        else {
-            Preferences.debug("The SID of the right sibling of this entry in the directory tree = " + rightSID + "\n");
-        }
-        // offset 76 length 4 bytes SID of the child of this entry in the directory tree
-        int childSID = readInt(endianess);
-        if (childSID == -1) {
-            Preferences.debug("No child for this entry\n");
+        // offset 72 length 4 bytes SID of the right child of this entry in the directory tree
+        int rightChild = readInt(endianess);
+        if (rightChild == -1) {
+            Preferences.debug("No right child for this entry\n");
         }
         else {
-            Preferences.debug("The SID of the child of this entry in the directory tree = " + childSID + "\n");
+            Preferences.debug("The SID of the right child of this entry in the directory tree = " + rightChild + "\n");
+        }
+        // offset 76 length 4 bytes SID of the root node entry of the red-black tree of all storage members
+        // if this entry is storage, -1 otherwise
+        int rootNodeEntry = readInt(endianess);
+        if (rootNodeEntry == -1) {
+            Preferences.debug("No root node entry for this entry\n");
+        }
+        else {
+            Preferences.debug("The root node entry of the red-black tree of all storage members = " + rootNodeEntry + "\n");
         }
         // offset 80 length 16 bytes class id
         getLong(endianess);
@@ -858,30 +873,32 @@ public class FileZVI extends FileBase {
                 Preferences.debug("Node has illegal color value = " + color[0] + "\n");
                 break;
             }
-            // offset 68 length 4 bytes SID of the left sibling of this entry in the directory tree
-            leftSID = readInt(endianess);
-            if (leftSID == -1) {
-                Preferences.debug("No left sibling for this entry\n");
+            // offset 68 length 4 bytes SID of the left child of this entry in the directory tree
+            leftChild = readInt(endianess);
+            if (leftChild == -1) {
+                Preferences.debug("No left child for this entry\n");
             }
             else {
-                Preferences.debug("The SID of the left sibling of this entry in the directory tree = " + leftSID + "\n");
+                Preferences.debug("The SID of the left child of this entry in the directory tree = " + leftChild + "\n");
             }
-            // offset 72 length 4 bytes SID of the right sibling of this entry in the directory tree
-            rightSID = readInt(endianess);
-            if (rightSID == -1) {
-                Preferences.debug("No right sibling for this entry\n");
-            }
-            else {
-                Preferences.debug("The SID of the right sibling of this entry in the directory tree = " + rightSID + "\n");
-            }
-            // offset 76 length 4 bytes SID of the child of this entry in the directory tree
-            childSID = readInt(endianess);
-            if (childSID == -1) {
-                Preferences.debug("No child for this entry\n");
+            // offset 72 length 4 bytes SID of the right child of this entry in the directory tree
+            rightChild = readInt(endianess);
+            if (rightChild == -1) {
+                Preferences.debug("No right child for this entry\n");
             }
             else {
-                Preferences.debug("The SID of the child of this entry in the directory tree = " + childSID + "\n");
+                Preferences.debug("The SID of the right child of this entry in the directory tree = " + rightChild + "\n");
             }
+            // offset 76 length 4 bytes SID of the root node entry of the red-black tree of all storage members
+            // if this entry is storage, -1 otherwise
+            rootNodeEntry = readInt(endianess);
+            if (rootNodeEntry == -1) {
+                Preferences.debug("No root node entry for this entry\n");
+            }
+            else {
+                Preferences.debug("The root node entry of the red-black tree of all storage members = " + rootNodeEntry + "\n");
+            }    
+            
             // offset 80 length 16 bytes class id
             getLong(endianess);
             getLong(endianess);
@@ -930,9 +947,196 @@ public class FileZVI extends FileBase {
             
             if ((lastElementName.equals("Image")) &&
                     (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize > 0)) {
-                contentsStartSect = startSect;
-                contentsStreamSize = streamSize;
-            }
+                Preferences.debug("Reading the contents stream of the container image\n");
+                      
+                bytesToRead = (int)streamSize;
+                b = new byte[bytesToRead];
+                bytesRead = 0;
+                    if (streamSize < miniSectorCutoff) {
+                        presentShortSector = startSect;
+                        while (bytesToRead > 0) {
+                            sectorsIntoShortStream = presentShortSector*shortSectorSize/sectorSize;
+                            presentSector = shortSectors[sectorsIntoShortStream];
+                            presentSectorOffset = (presentShortSector*shortSectorSize) % sectorSize;
+                            raFile.seek((presentSector+1)*sectorSize + presentSectorOffset);
+                            raFile.read(b, bytesRead, Math.min(shortSectorSize, bytesToRead));
+                            bytesRead += Math.min(shortSectorSize, bytesToRead);
+                            bytesToRead -= Math.min(shortSectorSize, bytesToRead);
+                            presentShortSector = shortSectorTable[presentShortSector];
+                        }
+                } // if (streamSize < miniSectorCutoff)
+                else { // else streamSize >= miniSectorCutoff
+                    presentSector = startSect;
+                    while (bytesToRead > 0) {
+                        raFile.seek((presentSector+1)*sectorSize);
+                        raFile.read(b, bytesRead, Math.min(sectorSize, bytesToRead));
+                        bytesRead += Math.min(sectorSize, bytesToRead);
+                        bytesToRead -= Math.min(sectorSize, bytesToRead);
+                        presentSector = sat[presentSector];
+                    }    
+                } // else streamSize >= miniSectorCutoff
+                while (true) {
+                    bp = 0;
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for version\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for version\n");
+                        break;
+                    }
+                    minorVersion =  (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    Preferences.debug("Minor version is " + minorVersion + "\n");
+                    Preferences.debug("Current version is 4099\n");
+                    majorVersion =  (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    Preferences.debug("Major version is " + majorVersion + "\n");
+                    Preferences.debug("Current version is 12288\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for file type\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for file type\n");
+                        break;
+                    }
+                    // File type not used
+                    int fileType = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Unused file type = " + fileType + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_EMPTY) {
+                        Preferences.debug("Expected VT_EMPTY data type for unused type description\n");
+                    }
+                    else if (dType == VT_BSTR) {
+                        Preferences.debug("VT_BSTR for type description\n");
+                        int stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        bf = new byte[stringBytes];
+                        for (i = 0; i < stringBytes; i++) {
+                            bf[i] = b[bp++];
+                        }
+                        String typeDescription = new String(b, "UTF-16LE").trim();
+                        Preferences.debug("Type description = " + typeDescription + "\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + 
+                                " instead of expected VT_EMPTY or VT_BSTR for type description\n");
+                        break;
+                    }
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_EMPTY) {
+                        Preferences.debug("Expected VT_EMPTY data type for name of zvi file\n");
+                    }
+                    else if (dType == VT_BSTR) {
+                        Preferences.debug("VT_BSTR for name of zvi file\n");
+                        int stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        bf = new byte[stringBytes];
+                        for (i = 0; i < stringBytes; i++) {
+                            bf[i] = b[bp++];
+                        }
+                        String fileName = new String(b, "UTF-16LE").trim();
+                        Preferences.debug("Name of zvi file = " + fileName + "\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + 
+                                " instead of expected VT_EMPTY or VT_BSTR for name of zvi file\n");
+                        break;
+                    }
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for imageWidth\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for imageWidth\n");
+                        break;
+                    }
+                    imageWidth = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Image width = " + imageWidth + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for imageHeight\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for imageHeight\n");
+                        break;
+                    }
+                    imageHeight = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Image height = " + imageHeight + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for imageDepth\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for imageDepth\n");
+                        break;
+                    }
+                    imageDepth = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Unused image depth = " + imageDepth + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for imagePixelFormat\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for imagePixelFormat\n");
+                        break;
+                    }
+                    imagePixelFormat = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    switch(imagePixelFormat) {
+                        case 1:
+                            Preferences.debug("Image pixel format = 8-bit B, G, R - 3 bytes/pixel\n");
+                            break;
+                        case 2:
+                            Preferences.debug("Image pixel format = 8-bit B, G, R, A - 4 bytes/pixel\n");
+                            break;
+                        case 3:
+                            Preferences.debug("Image pixel format = 8-bit grayscale\n");
+                            break;
+                        case 4:
+                            Preferences.debug("Image pixel format = 16-bit integer\n");
+                            break;
+                        case 5:
+                            Preferences.debug("Image pixel format = 32-bit integer\n");
+                            break;
+                        case 6:
+                            Preferences.debug("Image pixel format = 32-bit IEEE float\n");
+                            break;
+                        case 7:
+                            Preferences.debug("Image pixel format = 64-bit IEEE double\n");
+                            break;
+                        case 8:
+                            Preferences.debug("Image pixel format = 16-bit B, G, R - 6 bytes/pixel\n");
+                            break;
+                        case 9:
+                            Preferences.debug("Image pixel format = 32-bit B, G, R = 12 bytes/pixel\n");
+                            break;
+                        default:
+                            Preferences.debug("imagePixelFormat has an unrecognized value = " + imagePixelFormat + "\n");
+                    }
+                    break;
+                } // while (true)
+            } // if ((lastElementName.equals("Image")) &&
             
             if ((directoryEntry % maximumDirectoryEntriesPerSector) == 0) {
                 directoryStart =  (directoryTable[++dp]+1)*sectorSize;
@@ -941,7 +1145,7 @@ public class FileZVI extends FileBase {
         } // while (true)
         Set Z_Set = new HashSet(); // to hold Z plan index collection
         Set T_Set = new HashSet(); // to hold T time index collection
-        long pos = 0;
+        pos = 0;
         Vector blockList = new Vector();
         int numZ = 0;
         int numT = 0;
