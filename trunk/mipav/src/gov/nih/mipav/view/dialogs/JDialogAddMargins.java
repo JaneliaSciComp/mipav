@@ -32,15 +32,8 @@ import javax.swing.*;
  */
 public class JDialogAddMargins extends JDialogScriptableBase implements AlgorithmInterface {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 8624253753510650511L;
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private int back;
 
     /** DOCUMENT ME! */
     private JTextField backInput;
@@ -50,9 +43,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
     /** DOCUMENT ME! */
     private JTextField bottomInput;
-
-    /** DOCUMENT ME! */
-    private int bottomSide;
 
     /** DOCUMENT ME! */
     private int colorFactor;
@@ -81,9 +71,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     // or if the source image is to be replaced
 
     /** DOCUMENT ME! */
-    private int front;
-
-    /** DOCUMENT ME! */
     private JTextField frontInput;
 
     /** DOCUMENT ME! */
@@ -94,9 +81,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
     /** DOCUMENT ME! */
     private AlgorithmAddMargins imageMarginsAlgo;
-
-    /** DOCUMENT ME! */
-    private int leftSide;
 
     /** DOCUMENT ME! */
     private JTextField leftSideInput;
@@ -119,8 +103,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
-    /** DOCUMENT ME! */
-    private int rightSide;
 
     /** DOCUMENT ME! */
     private JTextField rightSideInput;
@@ -128,11 +110,13 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     /** DOCUMENT ME! */
     private JTextField topInput;
 
-    /** DOCUMENT ME! */
-    private int topSide;
 
     /** DOCUMENT ME! */
     private JRadioButton usingBuffer;
+
+    private int[] marginX = new int[2];
+    private int[] marginY = new int[2];
+    private int[] marginZ = new int[2];
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -245,14 +229,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         return resultImage;
     }
 
-    /**
-     * Accessor that sets the back value.
-     *
-     * @param  x  Value to set back value to.
-     */
-    public void setBack(int x) {
-        back = x;
-    }
 
     /**
      * Accessor that sets the blue value.
@@ -263,14 +239,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         blueValue = x;
     }
 
-    /**
-     * Accessor that sets the bottom side value.
-     *
-     * @param  x  Value to set bottom side value to.
-     */
-    public void setBottom(int x) {
-        bottomSide = x;
-    }
 
     /**
      * Accessor that sets the default value.
@@ -297,30 +265,12 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     }
 
     /**
-     * Accessor that sets the front value.
-     *
-     * @param  x  Value to set front value to.
-     */
-    public void setFront(int x) {
-        front = x;
-    }
-
-    /**
      * Accessor that sets the green value.
      *
      * @param  x  Value to set green value to.
      */
     public void setGreen(double x) {
         greenValue = x;
-    }
-
-    /**
-     * Accessor that sets the left side value.
-     *
-     * @param  x  Value to set left side value to.
-     */
-    public void setLeft(int x) {
-        leftSide = x;
     }
 
     /**
@@ -332,23 +282,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         redValue = x;
     }
 
-    /**
-     * Accessor that sets the right side value.
-     *
-     * @param  x  Value to set right side value to.
-     */
-    public void setRight(int x) {
-        rightSide = x;
-    }
-
-    /**
-     * Accessor that sets the top side value.
-     *
-     * @param  x  Value to set top side value to.
-     */
-    public void setTop(int x) {
-        topSide = x;
-    }
 
     /**
      * Once all the necessary variables are set, call the Image Margins algorithm based on what type of image this is
@@ -363,24 +296,20 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
                 try {
                     destExtents = new int[2];
-                    destExtents[0] = image.getExtents()[0] + rightSide + leftSide;
-                    destExtents[1] = image.getExtents()[1] + topSide + bottomSide;
+                    destExtents[0] = image.getExtents()[0] + marginX[0] + marginX[1];
+                    destExtents[1] = image.getExtents()[1] + marginY[0] + marginY[1];
 
                     resultImage = new ModelImage(image.getType(), destExtents, image.getImageName());
                     resultImage.getMatrixHolder().replaceMatrices(image.getMatrixHolder().getMatrices());
 
                     // resultImage.
                     if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, defaultValue, leftSide,
-                                                                   rightSide, topSide);
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, defaultValue, 
+                                marginX, marginY, marginZ );
                     } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, redValue, greenValue, blueValue,
-                                                                   leftSide, rightSide, topSide);
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, redValue, greenValue, blueValue, 
+                                marginX, marginY, marginZ );
                     }
-
-                    // when using the local-buffer method of the algorithm.  false is default
-                    // imageMarginsAlgo.performCopiesWithBuffers(usingBuffer.isSelected());
-                    imageMarginsAlgo.performCopiesWithBuffers(false);
 
                     // Listen to the algorithm so we get notified when it is succeeded or failed.
                     // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
@@ -415,14 +344,14 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
                     if (image.getNDims() == 3) {
                         destExtents = new int[3];
-                        destExtents[0] = image.getExtents()[0] + rightSide + leftSide;
-                        destExtents[1] = image.getExtents()[1] + topSide + bottomSide;
-                        destExtents[2] = image.getExtents()[2] + front + back;
+                        destExtents[0] = image.getExtents()[0] + marginX[0] + marginX[1];
+                        destExtents[1] = image.getExtents()[1] + marginY[0] + marginY[1];
+                        destExtents[2] = image.getExtents()[2] + marginZ[0] + marginZ[1];
                     } else {
                         destExtents = new int[4];
-                        destExtents[0] = image.getExtents()[0] + rightSide + leftSide;
-                        destExtents[1] = image.getExtents()[1] + topSide + bottomSide;
-                        destExtents[2] = image.getExtents()[2] + front + back;
+                        destExtents[0] = image.getExtents()[0] + marginX[0] + marginX[1];
+                        destExtents[1] = image.getExtents()[1] + marginY[0] + marginY[1];
+                        destExtents[2] = image.getExtents()[2] + marginZ[0] + marginZ[1];
                         destExtents[3] = image.getExtents()[3];
                     }
 
@@ -432,16 +361,12 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     // preload this image with the minimum of the source image
                     // resultImage.
                     if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, defaultValue, leftSide,
-                                                                   rightSide, topSide, front, back);
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, defaultValue, 
+                                marginX, marginY, marginZ );
                     } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, redValue, greenValue, blueValue,
-                                                                   leftSide, rightSide, topSide, front, back);
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, redValue, greenValue, blueValue, 
+                                marginX, marginY, marginZ );
                     }
-
-                    // when using the local-buffer method of the algorithm,  false is default
-                    // imageMarginsAlgo.performCopiesWithBuffers(usingBuffer.isSelected());
-                    imageMarginsAlgo.performCopiesWithBuffers(false);
 
                     // Listen to the algorithm so we get notified when it is succeeded or failed.
                     // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
@@ -480,11 +405,11 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                 try {
 
                     if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, defaultValue, leftSide, rightSide, topSide,
-                                                                   bottomSide);
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, defaultValue, 
+                                marginX, marginY, marginZ );
                     } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, redValue, greenValue, blueValue, leftSide,
-                                                                   rightSide, topSide, bottomSide);
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, redValue, greenValue, blueValue, 
+                                marginX, marginY, marginZ );
                     }
 
                     imageMarginsAlgo.addListener(this);
@@ -525,11 +450,11 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                 try {
 
                     if (colorFactor == 1) {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, defaultValue, leftSide, rightSide, topSide,
-                                                                   bottomSide, front, back);
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, defaultValue, 
+                                marginX, marginY, marginZ );
                     } else {
-                        imageMarginsAlgo = new AlgorithmAddMargins(image, redValue, greenValue, blueValue, leftSide,
-                                                                   rightSide, topSide, bottomSide, front, back);
+                        imageMarginsAlgo = new AlgorithmAddMargins(image, redValue, greenValue, blueValue, 
+                                marginX, marginY, marginZ );
                     }
 
                     imageMarginsAlgo.addListener(this);
@@ -652,14 +577,12 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         } else {
             colorFactor = 4;
         }
-
-        rightSide = scriptParameters.getParams().getInt("right_side");
-        leftSide = scriptParameters.getParams().getInt("left_side");
-        topSide = scriptParameters.getParams().getInt("top_side");
-        bottomSide = scriptParameters.getParams().getInt("bottom_side");
-
-        front = scriptParameters.getParams().getInt("front");
-        back = scriptParameters.getParams().getInt("back");
+        marginX[0] = scriptParameters.getParams().getInt("left_side");
+        marginX[1] = scriptParameters.getParams().getInt("right_side");
+        marginY[0] = scriptParameters.getParams().getInt("top_side");
+        marginY[1] = scriptParameters.getParams().getInt("bottom_side");
+        marginZ[0] = scriptParameters.getParams().getInt("front");
+        marginZ[1] = scriptParameters.getParams().getInt("back");
 
         defaultValue = scriptParameters.getParams().getDouble("margin_value");
 
@@ -676,13 +599,13 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("left_side", leftSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("right_side", rightSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("top_side", topSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("bottom_side", bottomSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("left_side", marginX[0]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("right_side", marginX[1]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("top_side", marginY[0]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bottom_side", marginY[1]));
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("front", front));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("front", marginZ[0]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("back", marginZ[1]));
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value", defaultValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value_rgb",
@@ -972,12 +895,12 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     private boolean setVariables() {
 
         try {
-            rightSide = Integer.parseInt(rightSideInput.getText()); // in pixels
-            leftSide = Integer.parseInt(leftSideInput.getText()); // in pixels
-            topSide = Integer.parseInt(topInput.getText()); // in pixels
-            bottomSide = Integer.parseInt(bottomInput.getText()); // in pixels
-            front = Integer.parseInt(frontInput.getText()); // in slices
-            back = Integer.parseInt(backInput.getText()); // in slices
+            marginX[0] = Integer.parseInt(leftSideInput.getText()); // in pixels
+            marginX[1] = Integer.parseInt(rightSideInput.getText()); // in pixels
+            marginY[0] = Integer.parseInt(topInput.getText()); // in pixels
+            marginY[1] = Integer.parseInt(bottomInput.getText()); // in pixels
+            marginZ[0] = Integer.parseInt(frontInput.getText()); // in slices
+            marginZ[1] = Integer.parseInt(backInput.getText()); // in slices
 
             if (colorFactor == 1) {
                 defaultValue = Double.parseDouble(defaultValueInput.getText());

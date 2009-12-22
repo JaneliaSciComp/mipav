@@ -121,17 +121,14 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
         if (algorithm instanceof AlgorithmMatchImages) {
-            boolean isNewA = matchAlgo.isNewA();
-            boolean isNewB = matchAlgo.isNewB();
 
-            if (isNewA) {
-                resultImageA = matchAlgo.getResultA();
+            if (imageA != matchAlgo.getImageA()) {
+                resultImageA = matchAlgo.getImageA();
             }
 
-            if (isNewB) {
-                resultImageB = matchAlgo.getResultB();
+            if (imageB != matchAlgo.getImageB()) {
+                resultImageB = matchAlgo.getImageB();
             }
 
             if (matchAlgo.isCompleted() == true) {
@@ -140,12 +137,12 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
                 // Display new images
                 try {
 
-                    if (isNewA) {
+                    if (resultImageA != null) {
                         resultImageA.calcMinMax();
                         new ViewJFrameImage(resultImageA, null, new Dimension(25, 55));
                     }
 
-                    if (isNewB) {
+                    if (resultImageB != null) {
                         resultImageB.calcMinMax();
                         new ViewJFrameImage(resultImageB, null, new Dimension(35, 65));
                     }
@@ -227,8 +224,9 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
 
             // Make algorithm
             boolean resByRef = false;
-            matchAlgo = new AlgorithmMatchImages(imageA, imageB, doOrigins, doDimensions, resByRef);
-            matchAlgo.setPadValue(padValue);
+            //matchAlgo = new AlgorithmMatchImages(imageA, imageB, doOrigins, doDimensions);
+            matchAlgo = new AlgorithmMatchImages(imageA, imageB);
+            //matchAlgo.setPadValue(padValue);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.

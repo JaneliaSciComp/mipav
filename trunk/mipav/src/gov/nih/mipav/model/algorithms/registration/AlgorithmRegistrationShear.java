@@ -4339,12 +4339,12 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
                     vvv = new ModelImage(vol.getType(), destExtents, vol.getImageName());
 
-                    AlgorithmAddMargins imageMarginsAlgo = new AlgorithmAddMargins(vol, vvv, 0.0, rotpx, rotpy, rotpz,
-                                                                                   rotpz);
-
-                    // when using the local-buffer method of the algorithm,  false is default
-                    // imageMarginsAlgo.performCopiesWithBuffers(usingBuffer.isSelected());
-                    imageMarginsAlgo.performCopiesWithBuffers(false);
+                    int[] marginX = new int[]{rotpx,0};
+                    int[] marginY = new int[]{rotpy,0};
+                    int[] marginZ = new int[]{rotpz,rotpz};
+                    
+                    AlgorithmAddMargins imageMarginsAlgo = new AlgorithmAddMargins(vol, vvv, 0.0, 
+                            marginX, marginY, marginZ );
 
                     imageMarginsAlgo.setRunningInSeparateThread(runningInSeparateThread);
                     imageMarginsAlgo.run();

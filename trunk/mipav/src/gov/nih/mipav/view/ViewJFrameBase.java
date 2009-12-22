@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
@@ -959,8 +960,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 return false;
             }
 
-            axisA = imageA.getAxisOrientation();
-            axisB = imageB.getAxisOrientation();
+            matchImages( imageA, imageB );
+            /*
 
             // If axis orientation information is available for each of the 3 axes of
             // image A and image B and the orientations are not identical, then reorder image B
@@ -1000,7 +1001,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             } else {
                 setImageB(imageB);
             }
-
+            setImageB(imageB);
+*/
             if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
 
                 // load any luts
@@ -1026,6 +1028,38 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
         return success;
     }
+    
+    private void matchImages( ModelImage imageA, ModelImage imageB )
+    {
+        ModelImage imageA_back = imageA;
+        ModelImage imageB_back = imageB;
+    
+        AlgorithmMatchImages algoMatch = new AlgorithmMatchImages( imageA, imageB );
+        algoMatch.setRunningInSeparateThread(false);
+        algoMatch.run();
+        imageA = algoMatch.getImageA();
+        imageB = algoMatch.getImageB();
+
+        if (imageA != imageA_back) {
+            // Create new frame with imageA
+
+            final ViewJFrameImage newFrame = new ViewJFrameImage(imageA, null, null, false);
+            newFrame.setImageB(imageB);
+            newFrame.enableImageB(true);
+            enableCloseImageB = true;
+        } else {
+
+            // imgA is not new, so keep the same ViewJFrameImage, which is imgA's frame
+            // because image A was not changed, we will just set either the untouched
+            // or transformed image B and return
+            if (imageB != imageB_back) {
+                imageB_back.disposeLocal();
+                imageB_back = null;
+            }
+            setImageB(imageB);
+        }
+    }
+    
 
     /**
      * This method loads the LUT for the active image. If the image is not a color image then both the functions and the
@@ -3827,9 +3861,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     private boolean isImageResampleable(final ModelImage image) {
         final int minDims = Math.min(imageB.getNDims(), imageA.getNDims());
 
-        if ( (imageB.getNDims() == imageA.getNDims())
-                || ( ( (imageB.getNDims() == 3) || (imageB.getNDims() == 4)) && ( (imageA.getNDims() == 3) && (imageA
-                        .getNDims() == 4)))) {
+        if ( (imageB.getNDims() == imageA.getNDims()) || 
+                ( ((imageB.getNDims() == 3) || (imageB.getNDims() == 4)) && 
+                        ((imageA.getNDims() == 3) || (imageA.getNDims() == 4)))) {
 
             if (minDims == 4) {
 
@@ -3989,83 +4023,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         }
     }
 
-    /**
-     * Match an image against imageA. Resolutions and extents are always matched. Orientations and origins are optional.
-     * 
-     * @param image the image to match
-     * @param doOrigins whether to match the image origins
-     * @param doOrients whether to match the image orienations
-     * 
-     * @return true if the matching was successful, false otherwise
-     */
-    private boolean matchImages(ModelImage image, final boolean doOrigins, final boolean doOrients) {
-        AlgorithmMatchImages algoMatch = null;
 
-        try {
-
-            // will use algorithm MatchImages to align images to image A resolution and both image's field of view
-            if ( ( (image.getNDims() == 3) && (imageA.getNDims() == 3))
-                    || ( (image.getNDims() == 2) && (imageA.getNDims() == 2))) {
-
-                ModelImage imgA = imageA;
-                boolean isNewA = false, isNewB = false;
-                final boolean doDimensions = true, resByRef = true;
-
-                // doOrigins and doOrients are passed to loadImage
-                algoMatch = new AlgorithmMatchImages(imageA, image, doOrigins, doDimensions, resByRef);
-                algoMatch.setOrients(doOrients);
-                algoMatch.setRunningInSeparateThread(false);
-                algoMatch.run();
-
-                if ( !algoMatch.isCompleted()) {
-                    return false;
-                }
-
-                isNewA = algoMatch.isNewA();
-                isNewB = algoMatch.isNewB();
-
-                if (isNewA) {
-
-                    // Create new frame with imageA
-                    imgA = algoMatch.getResultA();
-
-                    final ViewJFrameImage newFrame = new ViewJFrameImage(imgA, null, null, false);
-
-                    if (isNewB) { // Get imageB, if it's new
-                        image.disposeLocal();
-                        image = null;
-                        image = algoMatch.getResultB();
-                    } // else imgB is image
-
-                    newFrame.setImageB(image);
-                    newFrame.enableImageB(true);
-                    enableCloseImageB = true;
-                } else {
-
-                    // imgA is not new, so keep the same ViewJFrameImage, which is imgA's frame
-                    // because image A was not changed, we will just set either the untouched
-                    // or transformed image B and return
-                    if (isNewB) {
-                        image.disposeLocal();
-                        image = null;
-                        image = algoMatch.getResultB();
-                    }
-
-                    setImageB(image);
-                }
-
-                return true;
-            } else {
-                return false;
-            }
-        } finally {
-
-            if (algoMatch != null) {
-                algoMatch.disposeLocal();
-                algoMatch = null;
-            }
-        }
-    }
 
     /**
      * Reorders the AFNI image based on the axis orientations. B0 to A1 indicates changing x to y; B0 to A2 indicates a

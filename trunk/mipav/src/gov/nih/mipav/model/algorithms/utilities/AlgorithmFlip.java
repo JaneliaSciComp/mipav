@@ -86,22 +86,6 @@ public class AlgorithmFlip extends AlgorithmBase {
     }
 
     /**
-     * Flips 2D, 3D or 4D grays scale or color dataset about X or Y axis.
-     *
-     * @param  srcImg      source image model
-     * @param  flipMode    flip about which axis
-     * @param  progress    mode of progress bar (see AlgorithmBase)
-     * @param  flipObject  DOCUMENT ME!
-     * @param  chnageOrientationOrigin
-     */
-    public AlgorithmFlip(ModelImage srcImg, int flipMode, int progress, int flipObject, boolean changeOrientationOrigin) {
-        this(srcImg, flipMode, flipObject, changeOrientationOrigin);
-        // progressMode = progress;
-    }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
-    /**
      * Prepares this class for destruction.
      */
     public void finalize() {

@@ -1847,16 +1847,25 @@ public class AlgorithmSubsample extends AlgorithmBase {
     	paddedImage = new ModelImage(kImage.getType(), padExtents,
                 makeImageName(kImage.getImageName(), "_pad"));
         
-    	paddedImage.setAll(0);
     	int[] extents = kImage.getExtents();
-    	AlgorithmPad algoPad = null;
     	int[] x = new int[2];
     	int[] y = new int[2];
     	int[] z = new int[2];
-        VOIVector VOIs = null;
-        VOIVector voiVector = null;
+        // Generate bounds for pad algorithm     
+        x[0] = 0;
+        x[1] = padExtents[0] - extents[0];      
+        y[0] = 0;
+        y[1] = padExtents[1] - extents[1];      
+        z[0] = 0;
+        z[1] = padExtents[2] - extents[2];
+        
+        AlgorithmAddMargins algoPad = new AlgorithmAddMargins(kImage, paddedImage, 0, x, y, z);        
+        algoPad.run();
+        algoPad.finalize();        
         
         if (transformVOI) {
+            VOIVector VOIs = null;
+            VOIVector voiVector = null;
             VOIs = kImage.getVOIs(); 
             voiVector = new VOIVector();
 
@@ -1865,38 +1874,8 @@ public class AlgorithmSubsample extends AlgorithmBase {
             for (int i = 0; i < nVOI; i++) {
                 voiVector.add((VOI)VOIs.VOIAt(i).clone());
             }
-        }
-    	    	
-    	// Generate bounds for pad algorithm
-    	
-    	// X bounds
-        x[0] = 0;
-        x[1] = padExtents[0];
-    	
-    	// Y bounds
-        y[0] = 0;
-        y[1] = padExtents[1];
-    	
-    	
-    	if (extents.length >= 3) {
-    		if ((extents[2] == padExtents[2]) || (processIndep)) {
-        		z[0] = 0;
-        		z[1] = extents[2];
-        	} else {
-        		z[0] = 0;
-        		z[1] = padExtents[2];
-        	}
-    	}
-    	
-    	algoPad = new AlgorithmPad(paddedImage, kImage, 0, x, y, z);
-    	
-    	algoPad.run();
-    	algoPad.finalize();
-        
-        if (transformVOI) {
             paddedImage.setVOIs(voiVector);
         }
-    	
     	return paddedImage;
                         	
     }

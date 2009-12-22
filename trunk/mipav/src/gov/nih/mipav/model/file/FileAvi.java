@@ -6992,6 +6992,10 @@ public class FileAvi extends FileBase {
                     newExtents[1] = imageA.getExtents()[1] + topPadding;
                     newExtents[2] = imageA.getExtents()[2];
 
+                    int[] marginX = new int[]{leftPadding,0};
+                    int[] marginY = new int[]{topPadding,0};
+                    int[] marginZ = new int[]{0,0};
+
                     // System.err.println("New extents: " + newExtents[0] + " by " + newExtents[1] + " by " +
                     // newExtents[2]);
 
@@ -7009,15 +7013,15 @@ public class FileAvi extends FileBase {
                     if (imageA.isColorImage()) {
 
                         // System.err.println("using color add image margins");
-                        algoMarg = new AlgorithmAddMargins(imageA, paddedImage, 0, 0, 0, leftPadding, 0, topPadding, 0,
-                                                           0);
+                        algoMarg = new AlgorithmAddMargins(imageA, paddedImage, 0, 0, 0, 
+                                marginX, marginY, marginZ );
                     } else {
 
                         // System.err.println("using b\\w add image margins");
-                        algoMarg = new AlgorithmAddMargins(imageA, paddedImage, 0, leftPadding, 0, topPadding, 0, 0);
+                        algoMarg = new AlgorithmAddMargins(imageA, paddedImage, 0, 
+                                marginX, marginY, marginZ );
                     }
 
-                    algoMarg.performCopiesWithBuffers(false);
                     algoMarg.setRunningInSeparateThread(false);
                     algoMarg.run();
                     algoMarg.finalize();

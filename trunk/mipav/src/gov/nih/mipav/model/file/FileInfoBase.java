@@ -188,6 +188,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** Array of time units: seconds, minutes, etc. */
     public static final String[] tUnits = {"nano seconds", "micro seconds", "milli seconds", "seconds", "minutes",
             "hours", "hertz", "part per million", "radians per second"};
+    
+
+    /** Converting between units. Conversion is to millimeters (the default).
+     *  Table converts to mm by multiplication. Converts from mm by division.
+     *  Example:
+     *  inches * 25.4f = mm
+     *  mm / 25.4f = inches.
+     *  */
+    public static final double[] conversionUnits = {1, 1, 25.4, 10, 1.0e-7, 1.0e-6, 1.0e-3, 1, 1.0e3, 1.0e6,
+        1609344 };
 
     /** Image modality unknown. */
     public static final int UNKNOWN_MODALITY = 0;
@@ -333,7 +343,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public static final int ORI_S2I_TYPE = 6;
 
     /** Array of axis orientation strings. */
-    private static final String[] axisOrientationStr = {"Unknown", "Right to Left", "Left to Right",
+    public static final String[] axisOrientationStr = {"Unknown", "Right to Left", "Left to Right",
             "Posterior to Anterior", "Anterior to Posterior", "Inferior to Superior", "Superior to Inferior"};
 
     /** Axial orientation. */

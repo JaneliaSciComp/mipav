@@ -56,7 +56,7 @@ public class JDialogCropPointParam extends JDialogScriptableBase implements Algo
     private int bottomSide;
 
     /** DOCUMENT ME! */
-    private AlgorithmCrop cropAlgo;
+    private AlgorithmAddMargins cropAlgo;
 
     /** DOCUMENT ME! */
     private ButtonGroup destinationGroup;
@@ -183,7 +183,7 @@ public class JDialogCropPointParam extends JDialogScriptableBase implements Algo
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (algorithm instanceof AlgorithmCrop) {
+        if (algorithm instanceof AlgorithmAddMargins) {
 
             if ((cropAlgo.isCompleted() == true) && (resultImage != null)) { // in StoreInDest; "new Image"
 
@@ -352,40 +352,35 @@ public class JDialogCropPointParam extends JDialogScriptableBase implements Algo
                     destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1;
                     destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1;
                 } else if (image.getNDims() == 3) {
+                    destExtents = new int[3];
+                    destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1;
+                    destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1;
+                    destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
 
-                    if (Math.abs(zBounds[1] - zBounds[0]) == 0) { // crop 3D image to 2D image
-                        destExtents = new int[2];
-                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1;
-                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1;
-                    } else {
-                        destExtents = new int[3];
-                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1;
-                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1;
-                        destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
-                    }
                 } else if (image.getNDims() == 4) {
-
-                    if (Math.abs(zBounds[1] - zBounds[0]) == 0) { // crop 4D image to 3D image
-                        destExtents = new int[3];
-                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1;
-                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1;
-                        destExtents[2] = image.getExtents()[3];
-                    } else {
-                        destExtents = new int[4];
-                        destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1;
-                        destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1;
-                        destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
-                        destExtents[3] = image.getExtents()[3];
-                    }
+                    destExtents = new int[4];
+                    destExtents[0] = Math.abs(xBounds[1] - xBounds[0]) + 1;
+                    destExtents[1] = Math.abs(yBounds[1] - yBounds[0]) + 1;
+                    destExtents[2] = Math.abs(zBounds[1] - zBounds[0] + 1);
+                    destExtents[3] = image.getExtents()[3];
                 } else {
                     return;
                 }
 
                 // Make result image
                 resultImage = new ModelImage(image.getType(), destExtents,
-                                             makeImageName(image.getImageName(), "_crop"));
-
-                cropAlgo = new AlgorithmCrop(resultImage, image, borderSize, xBounds, yBounds, zBounds);
+                        makeImageName(image.getImageName(), "_crop"));
+                if (image.getNDims() >= 2) {
+                    xBounds[0] *= -1;
+                    xBounds[1] = resultImage.getExtents()[0] - image.getExtents()[0];
+                    yBounds[0] *= -1;
+                    yBounds[1] = resultImage.getExtents()[1] - image.getExtents()[1];
+                }
+                if (image.getNDims() >= 3) {
+                    zBounds[0] *= -1;
+                    zBounds[1] = resultImage.getExtents()[2] - image.getExtents()[2];
+                }
+                cropAlgo = new AlgorithmAddMargins(image, resultImage, 0, xBounds, yBounds, zBounds);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -416,7 +411,17 @@ public class JDialogCropPointParam extends JDialogScriptableBase implements Algo
         else { // displayLoc == REPLACE
 
             try {
-                cropAlgo = new AlgorithmCrop(image, borderSize, xBounds, yBounds, zBounds);
+                if (image.getNDims() >= 2) {
+                    xBounds[0] *= -1;
+                    xBounds[1] = resultImage.getExtents()[0] - image.getExtents()[0];
+                    yBounds[0] *= -1;
+                    yBounds[1] = resultImage.getExtents()[1] - image.getExtents()[1];
+                }
+                if (image.getNDims() >= 3) {
+                    zBounds[0] *= -1;
+                    zBounds[1] = resultImage.getExtents()[2] - image.getExtents()[2];
+                }
+                cropAlgo = new AlgorithmAddMargins(image, 0, xBounds, yBounds, zBounds);
                 cropAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), cropAlgo);
