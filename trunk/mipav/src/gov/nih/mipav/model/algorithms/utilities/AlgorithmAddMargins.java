@@ -4,12 +4,6 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.*;
-
-import java.io.*;
-
-import WildMagic.LibFoundation.Mathematics.ColorRGBA;
-
 
 /**
  * Algorithm to place an image into the center of a larger image, as if the image was given margins or a border around
@@ -29,56 +23,33 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
     private double[] marginColor = new double[3];
 
-    /** Image position coordinates, start locations used in DICOM. */
-    private float[] imgOriginLPS;
 
-
-    public AlgorithmAddMargins(ModelImage srcImage, ModelImage destImage, double r, int[] x, int[] y, int[] z) {
+    public AlgorithmAddMargins(ModelImage srcImage, ModelImage destImage, int[] x, int[] y, int[] z) {
         super(destImage, srcImage);
-
-        marginColor[0] = r;
-        marginX = x;
-        marginY = y;
-        marginZ = z;
+        marginX = x.clone();
+        marginY = y.clone();
+        marginZ = z.clone();
+        
+        if ( !srcImage.isColorImage() )
+        {
+            marginColor[0] = srcImage.getMin();
+        }
+        else
+        {
+            marginColor[0] = srcImage.getMinR();
+            marginColor[1] = srcImage.getMinG();
+            marginColor[2] = srcImage.getMinB();
+        }
     }
 
-    public AlgorithmAddMargins(ModelImage srcImage, double r, int[] x, int[] y, int[] z) {
-        super(null, srcImage);
-
-        marginColor[0] = r;
-        marginX = x;
-        marginY = y;
-        marginZ = z;
+    public AlgorithmAddMargins(ModelImage srcImage, int[] x, int[] y, int[] z) {
+        this( srcImage, null, x, y, z );
     }
-
-    public AlgorithmAddMargins(ModelImage srcImage, ModelImage destImage, double r, double g, double b, int[] x, int[] y, int[] z) {
-        super(destImage, srcImage);
-
-        marginColor[0] = r;
-        marginColor[1] = g;
-        marginColor[2] = b;
-        marginX = x;
-        marginY = y;
-        marginZ = z;
-    }
-
-    public AlgorithmAddMargins(ModelImage srcImage, double r, double g, double b, int[] x, int[] y, int[] z) {
-        super(null, srcImage);
-
-        marginColor[0] = r;
-        marginColor[1] = g;
-        marginColor[2] = b;
-        marginX = x;
-        marginY = y;
-        marginZ = z;
-    }
-
 
     /**
      * Prepares this class for destruction.
      */
     public void finalize() {
-        imgOriginLPS = null;
         destImage = null;
         srcImage = null;
         marginX = null;
@@ -111,6 +82,14 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
 
 
+    
+    public void setPadValue( float[] value )
+    {
+        for ( int i = 0; i < Math.min( value.length, marginColor.length ); i++ )
+        {
+            marginColor[i] = value[i];
+        }
+    }
 
 
     /**

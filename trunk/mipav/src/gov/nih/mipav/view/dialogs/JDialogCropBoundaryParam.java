@@ -341,7 +341,7 @@ public class JDialogCropBoundaryParam extends JDialogScriptableBase implements A
                 yBounds[1] *= -1;
                 zBounds[0] *= -1;
                 zBounds[1] *= -1;
-                cropAlgo = new AlgorithmAddMargins(image, resultImage, 0, xBounds, yBounds, zBounds);
+                cropAlgo = new AlgorithmAddMargins(image, resultImage, xBounds, yBounds, zBounds);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -379,7 +379,7 @@ public class JDialogCropBoundaryParam extends JDialogScriptableBase implements A
                 yBounds[1] *= -1;
                 zBounds[0] *= -1;
                 zBounds[1] *= -1;
-                cropAlgo = new AlgorithmAddMargins(image, 0, xBounds, yBounds, zBounds);
+                cropAlgo = new AlgorithmAddMargins(image, xBounds, yBounds, zBounds);
                 cropAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), cropAlgo);

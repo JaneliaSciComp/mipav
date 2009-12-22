@@ -340,15 +340,9 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
 
                     fireProgressStateChanged("Adding margins to image...");
 
-                    AlgorithmAddMargins algoMarg = null;
-
-                    if (paddedImage.isColorImage()) {
-                        algoMarg = new AlgorithmAddMargins(inputImage, paddedImage, 0, 0, 0, 
+                    AlgorithmAddMargins algoMarg = new AlgorithmAddMargins(inputImage, paddedImage, 
                                 marginX, marginY, marginZ );
-                    } else {
-                        algoMarg = new AlgorithmAddMargins(inputImage, paddedImage, 0, 
-                                marginX, marginY, marginZ );
-                    }
+                    algoMarg.setPadValue( new float[]{0,0,0} );
 
                     algoMarg.run();
                     algoMarg.finalize();

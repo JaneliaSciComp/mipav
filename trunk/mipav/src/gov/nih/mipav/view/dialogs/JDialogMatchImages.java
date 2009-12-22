@@ -224,8 +224,7 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
 
             // Make algorithm
             boolean resByRef = false;
-            //matchAlgo = new AlgorithmMatchImages(imageA, imageB, doOrigins, doDimensions);
-            matchAlgo = new AlgorithmMatchImages(imageA, imageB);
+            matchAlgo = new AlgorithmMatchImages(imageA, imageB, doOrigins, doDimensions);
             //matchAlgo.setPadValue(padValue);
 
             // This is very important. Adding this object as a listener allows the algorithm to

@@ -897,7 +897,9 @@ public class ModelImage extends ModelStorageBase {
         int[] direct = new int[getNDims()];
         int[] axisOrient = fileInfo[0].getAxisOrientation();
         for (int i = 0; i < getNDims(); i++) {
-            if ((axisOrient[i] == 1) || (axisOrient[i] == 4) || (axisOrient[i] == 5)) {
+            if ((axisOrient[i] == FileInfoBase.ORI_R2L_TYPE) || 
+                    (axisOrient[i] == FileInfoBase.ORI_A2P_TYPE) || 
+                    (axisOrient[i] == FileInfoBase.ORI_I2S_TYPE)) {
                 direct[i] = 1;
             } else {
                 direct[i] = -1;

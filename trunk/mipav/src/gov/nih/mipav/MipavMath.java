@@ -236,6 +236,11 @@ public class MipavMath {
         return BitHacks.IsPowerOfTwo(value);
     }
 
+    /**
+     * Calculates and returns the integer >= input value that is an exact power of two.
+     * @param value number to calculate next power of two for.
+     * @return integer >= value that is an exact power of two.
+     */
     public static int nextPowerOfTwo( int value )
     {
         int exp = (int) Math.ceil( Math.log( value ) / Math.log( 2 ) );

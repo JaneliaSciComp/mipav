@@ -7008,19 +7008,9 @@ public class FileAvi extends FileBase {
                                                                        index);
                     }
 
-                    AlgorithmAddMargins algoMarg = null;
-
-                    if (imageA.isColorImage()) {
-
-                        // System.err.println("using color add image margins");
-                        algoMarg = new AlgorithmAddMargins(imageA, paddedImage, 0, 0, 0, 
+                    AlgorithmAddMargins algoMarg = new AlgorithmAddMargins(imageA, paddedImage,
                                 marginX, marginY, marginZ );
-                    } else {
-
-                        // System.err.println("using b\\w add image margins");
-                        algoMarg = new AlgorithmAddMargins(imageA, paddedImage, 0, 
-                                marginX, marginY, marginZ );
-                    }
+                    algoMarg.setPadValue( new float[]{0,0,0} );
 
                     algoMarg.setRunningInSeparateThread(false);
                     algoMarg.run();

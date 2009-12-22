@@ -380,7 +380,7 @@ public class JDialogCropPointParam extends JDialogScriptableBase implements Algo
                     zBounds[0] *= -1;
                     zBounds[1] = resultImage.getExtents()[2] - image.getExtents()[2];
                 }
-                cropAlgo = new AlgorithmAddMargins(image, resultImage, 0, xBounds, yBounds, zBounds);
+                cropAlgo = new AlgorithmAddMargins(image, resultImage, xBounds, yBounds, zBounds);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -421,7 +421,7 @@ public class JDialogCropPointParam extends JDialogScriptableBase implements Algo
                     zBounds[0] *= -1;
                     zBounds[1] = resultImage.getExtents()[2] - image.getExtents()[2];
                 }
-                cropAlgo = new AlgorithmAddMargins(image, 0, xBounds, yBounds, zBounds);
+                cropAlgo = new AlgorithmAddMargins(image, xBounds, yBounds, zBounds);
                 cropAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), cropAlgo);
