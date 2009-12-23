@@ -92,11 +92,18 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 //new ViewJFrameImage((ModelImage)srcImageB.clone(), null, null, false);
             }
         }
+        boolean bDeletePrevousA = false;
+        ModelImage imageA_back = srcImage;
         matchUnits( srcImage, srcImageB );
         float[] afNewRes = matchResolutions( srcImage, srcImageB );
         if ( afNewRes != null )
         {
             srcImage = changeResolutions( srcImage, afNewRes );
+            if ( imageA_back != srcImage )
+            {
+                imageA_back = srcImage;
+                bDeletePrevousA = true;
+            }
             srcImageB = changeResolutions( srcImageB, afNewRes );
             if ( imageB_back != srcImageB )
             {
@@ -104,7 +111,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 imageB_back = srcImageB;
             }
         }
-        ModelImage imageA_back = srcImage;
         int[] xBoundA = new int[]{0,0};
         int[] yBoundA = new int[]{0,0};
         int[] zBoundA = new int[]{0,0};
@@ -114,7 +120,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         if ( matchOriginsExtents( srcImage, srcImageB, xBoundA, yBoundA, zBoundA, xBoundB, yBoundB, zBoundB ) )
         {
             srcImage = padImage(srcImage, xBoundA, yBoundA, zBoundA );
-            if ( imageA_back != srcImage )
+            if ( imageA_back != srcImage && bDeletePrevousA )
             {
                 imageA_back.disposeLocal();
                 imageA_back = srcImage;
