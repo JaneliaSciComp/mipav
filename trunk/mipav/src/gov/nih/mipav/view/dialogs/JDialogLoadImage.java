@@ -307,7 +307,7 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             setTitle("Load ImageB onto " + image.getImageName());
             userInterface = ViewUserInterface.getReference();
             picListingPanel = new JPanel();
-            picListingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            //picListingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             JLabel loading = new JLabel("Set as ImageB: ");
             loading.setFont(MipavUtil.font12);
@@ -316,16 +316,21 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             imageChooser = buildImageComboBox(image);
             imageChooser.setToolTipText("On-screen images");
             picListingPanel.add(imageChooser);
+
+            JPanel matchPanel = new JPanel(new GridLayout(2,1) );
+            matchPanel.setBorder(buildTitledBorder("Match images"));
             matchOrients = new JCheckBox("Match orientations of two images.");
             matchOrients.setAlignmentX(Component.LEFT_ALIGNMENT);
             matchOrients.setEnabled(true);
             matchOrients.setSelected(true);
             doOrients = matchOrients.isSelected();
+            matchPanel.add(matchOrients);
             matchOrigins = new JCheckBox("Use image origin information to align images.");
             matchOrigins.setAlignmentX(Component.LEFT_ALIGNMENT);
             matchOrigins.setEnabled(true);
             matchOrigins.setSelected(true);
             doOrigins = matchOrigins.isSelected();
+            matchPanel.add(matchOrigins);
             
 
             // default margin value
@@ -411,8 +416,7 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             Box mainBox = new Box(BoxLayout.Y_AXIS);
             mainBox.setAlignmentX(Component.LEFT_ALIGNMENT);
             mainBox.add(picListingPanel);
-            mainBox.add(matchOrients);
-            mainBox.add(matchOrigins);
+            mainBox.add(matchPanel);
             mainBox.add(defaultValuePanel);
             this.getContentPane().add(mainBox, BorderLayout.NORTH);
 
