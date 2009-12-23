@@ -68,6 +68,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     }
 
     public void runAlgorithm() {
+
+        ModelImage imageB_back = srcImageB;
         
         int[] axisA = srcImage.getAxisOrientation();
         int[] axisB = srcImageB.getAxisOrientation();
@@ -82,6 +84,11 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 rotateAlgo.setRunningInSeparateThread(false);
                 rotateAlgo.run();
                 srcImageB = rotateAlgo.returnImage();
+                if ( imageB_back != srcImageB )
+                {
+                    imageB_back.disposeLocal();
+                    imageB_back = srcImageB;
+                }
                 //new ViewJFrameImage((ModelImage)srcImageB.clone(), null, null, false);
             }
         }
@@ -91,7 +98,13 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         {
             srcImage = changeResolutions( srcImage, afNewRes );
             srcImageB = changeResolutions( srcImageB, afNewRes );
+            if ( imageB_back != srcImageB )
+            {
+                imageB_back.disposeLocal();
+                imageB_back = srcImageB;
+            }
         }
+        ModelImage imageA_back = srcImage;
         int[] xBoundA = new int[]{0,0};
         int[] yBoundA = new int[]{0,0};
         int[] zBoundA = new int[]{0,0};
@@ -101,7 +114,17 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         if ( matchOriginsExtents( srcImage, srcImageB, xBoundA, yBoundA, zBoundA, xBoundB, yBoundB, zBoundB ) )
         {
             srcImage = padImage(srcImage, xBoundA, yBoundA, zBoundA );
+            if ( imageA_back != srcImage )
+            {
+                imageA_back.disposeLocal();
+                imageA_back = srcImage;
+            }
             srcImageB = padImage(srcImageB, xBoundB, yBoundB, zBoundB );
+            if ( imageB_back != srcImageB )
+            {
+                imageB_back.disposeLocal();
+                imageB_back = srcImageB;
+            }
         }
         
         fireProgressStateChanged(100);
