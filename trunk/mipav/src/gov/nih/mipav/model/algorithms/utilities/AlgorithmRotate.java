@@ -268,13 +268,8 @@ public class AlgorithmRotate extends AlgorithmBase {
             //}
 
             matrix = oldDicomInfo.getPatientOrientation();
-
             if (matrix != null) {
-                //if ( rotMatrix != null )
-                {
-                    //rotMatrix.Mult(matrix);
-                    //imageOrient = matrixToDICOMString(rotMatrix);
-                }
+                imageOrient = matrixToDICOMString(matrix);
             }
 
             FileDicomTagTable[] childTagTables = new FileDicomTagTable[newDimExtents[2] - 1];
@@ -343,7 +338,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                                                            newTagSliceSpc.length()); // spacing between slices
                 }
 
-                if (newDicomInfo[i].getTagTable().getValue("0020,0037") != null) {
+                if ((imageOrient != null) && (newDicomInfo[i].getTagTable().getValue("0020,0037") != null)) {
                     newDicomInfo[i].getTagTable().setValue("0020,0037", imageOrient, imageOrient.length());
                 }
 

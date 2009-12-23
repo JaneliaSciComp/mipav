@@ -578,7 +578,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase implements Mouse
         MipavCoordinateSystems.fileToScanner(position, kOut, image);
         Vector3f kTest = new Vector3f();
         MipavCoordinateSystems.scannerToFile(kOut, kTest, image);
-        if ( kTest.X != position.X || kTest.Y != position.Y || kTest.Z != position.Z )
+        if ( Math.round(kTest.X) != Math.round(position.X) 
+                || Math.round(kTest.Y) != Math.round(position.Y) 
+                || Math.round(kTest.Z) != Math.round(position.Z) )
         {
             System.err.println( "scannerToFile broken" );
             System.err.println( kTest.ToString() );

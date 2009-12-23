@@ -1049,7 +1049,11 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         algoMatch.run();
         imageA = algoMatch.getImageA();
         imageB = algoMatch.getImageB();
-
+        
+        if (imageB != imageB_back) {
+            imageB_back.disposeLocal();
+            imageB_back = null;
+        }
         if (imageA != imageA_back) {
             // Create new frame with imageA
 
@@ -1062,10 +1066,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             // imgA is not new, so keep the same ViewJFrameImage, which is imgA's frame
             // because image A was not changed, we will just set either the untouched
             // or transformed image B and return
-            if (imageB != imageB_back) {
-                imageB_back.disposeLocal();
-                imageB_back = null;
-            }
             setImageB(imageB);
         }
     }
