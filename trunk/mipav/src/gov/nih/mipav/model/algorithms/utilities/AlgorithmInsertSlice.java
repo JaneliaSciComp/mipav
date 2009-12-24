@@ -561,36 +561,42 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         }
 
                         if (z == 0) {
-                            nextPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z + 1))
-                                                                      .parseTagValue("0020,0032"));
-                            fileInfoBuffer.getTagTable().setValue("0020,0032",
-                                                                  ((2.0f * imagePositionCoords[0]) -
-                                                                   nextPositionCoords[0]) + "\\" +
-                                                                  ((2.0f * imagePositionCoords[1]) -
-                                                                   nextPositionCoords[1]) + "\\" +
-                                                                  ((2.0f * imagePositionCoords[2]) -
-                                                                   nextPositionCoords[2]),
-                                                                  fileInfoBuffer.getTagTable().get("0020,0032").getLength());
+                            if (((FileInfoDicom)(srcImage.getFileInfo(z+1))).getTagTable().getValue("0020,0032") != null) {
+                                nextPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z + 1))
+                                                                          .parseTagValue("0020,0032"));
+                                fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                                      ((2.0f * imagePositionCoords[0]) -
+                                                                       nextPositionCoords[0]) + "\\" +
+                                                                      ((2.0f * imagePositionCoords[1]) -
+                                                                       nextPositionCoords[1]) + "\\" +
+                                                                      ((2.0f * imagePositionCoords[2]) -
+                                                                       nextPositionCoords[2]),
+                                                                      fileInfoBuffer.getTagTable().get("0020,0032").getLength());
+                            } // if (((FileInfoDicom)(srcImage.getFileInfo(z+1))).getTagTable().getValue("0020,0032") != null
                         } else if (z == oldZdim) {
-                            lastPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z - 2))
-                                                                      .parseTagValue("0020,0032"));
-                            fileInfoBuffer.getTagTable().setValue("0020,0032",
-                                                                  ((2.0f * imagePositionCoords[0]) -
-                                                                   lastPositionCoords[0]) + "\\" +
-                                                                  ((2.0f * imagePositionCoords[1]) -
-                                                                   lastPositionCoords[1]) + "\\" +
-                                                                  ((2.0f * imagePositionCoords[2]) -
-                                                                   lastPositionCoords[2]),
-                                                                  fileInfoBuffer.getTagTable().get("0020,0032").getLength());
+                            if (((FileInfoDicom)(srcImage.getFileInfo(z-2))).getTagTable().getValue("0020,0032") != null) {
+                                lastPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z - 2))
+                                                                          .parseTagValue("0020,0032"));
+                                fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                                      ((2.0f * imagePositionCoords[0]) -
+                                                                       lastPositionCoords[0]) + "\\" +
+                                                                      ((2.0f * imagePositionCoords[1]) -
+                                                                       lastPositionCoords[1]) + "\\" +
+                                                                      ((2.0f * imagePositionCoords[2]) -
+                                                                       lastPositionCoords[2]),
+                                                                      fileInfoBuffer.getTagTable().get("0020,0032").getLength());
+                            } // if (((FileInfoDicom)(srcImage.getFileInfo(z-2))).getTagTable().getValue("0020,0032") != null)
                         } else {
-                            fileInfoBuffer.getTagTable().setValue("0020,0032",
-                                                                  ((imagePositionCoords[0] + lastPositionCoords[0]) /
+                            if (fileInfoBuffer.getTagTable().getValue("0020,0032") != null) {
+                                fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                                      ((imagePositionCoords[0] + lastPositionCoords[0]) /
                                                                        2.0f) + "\\" +
-                                                                  ((imagePositionCoords[1] + lastPositionCoords[1]) /
+                                                                      ((imagePositionCoords[1] + lastPositionCoords[1]) /
                                                                        2.0f) + "\\" +
-                                                                  ((imagePositionCoords[2] + lastPositionCoords[2]) /
+                                                                      ((imagePositionCoords[2] + lastPositionCoords[2]) /
                                                                        2.0f),
-                                                                  fileInfoBuffer.getTagTable().get("0020,0032").getLength());
+                                                                      fileInfoBuffer.getTagTable().get("0020,0032").getLength());
+                            } // if (fileInfoBuffer.getTagTable().getValue("0020,0032") != null)
                         }
 
                         float[] starts = new float[3];
@@ -619,81 +625,87 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         // same change as image position above:
                         // Do an average here
                         if (z == 0) {
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z + 1))).getTagTable().getValue("0020,1041");
-                            s = ((String) value).trim();
-
-                            try {
-                                nextSliceLocation = Float.valueOf(s).floatValue();
-                            } catch (NumberFormatException e) {
-                                MipavUtil.displayError("Number format error: Slice Location (a) " + (z + 1) + " = " +
-                                                       s);
-                                nextSliceLocation = 0;
-                            }
-
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z))).getTagTable().getValue("0020,1041");
-                            s = ((String) value).trim();
-
-                            try {
-                                sliceLocation = Float.valueOf(s).floatValue();
-                            } catch (NumberFormatException e) {
-                                MipavUtil.displayError("Number format error: Slice Location (b) " + z + " = " + s);
-                                sliceLocation = 0;
-                            }
-
-                            sliceLocation = (2.0f * sliceLocation) - nextSliceLocation;
-                            s = nf.format(sliceLocation);
-                            fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
+                            if (((FileInfoDicom) (srcImage.getFileInfo(z + 1))).getTagTable().getValue("0020,1041") != null) {
+                                value = ((FileInfoDicom) (srcImage.getFileInfo(z + 1))).getTagTable().getValue("0020,1041");
+                                s = ((String) value).trim();
+    
+                                try {
+                                    nextSliceLocation = Float.valueOf(s).floatValue();
+                                } catch (NumberFormatException e) {
+                                    MipavUtil.displayError("Number format error: Slice Location (a) " + (z + 1) + " = " +
+                                                           s);
+                                    nextSliceLocation = 0;
+                                }
+    
+                                value = ((FileInfoDicom) (srcImage.getFileInfo(z))).getTagTable().getValue("0020,1041");
+                                s = ((String) value).trim();
+    
+                                try {
+                                    sliceLocation = Float.valueOf(s).floatValue();
+                                } catch (NumberFormatException e) {
+                                    MipavUtil.displayError("Number format error: Slice Location (b) " + z + " = " + s);
+                                    sliceLocation = 0;
+                                }
+    
+                                sliceLocation = (2.0f * sliceLocation) - nextSliceLocation;
+                                s = nf.format(sliceLocation);
+                                fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
+                            } // if (((FileInfoDicom) (srcImage.getFileInfo(z + 1))).getTagTable().getValue("0020,1041") != null)
                         } else if (z == oldZdim) {
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z - 2))).getTagTable().getValue("0020,1041");
-                            s = ((String) value).trim();
-
-                            try {
-                                lastSliceLocation = Float.valueOf(s).floatValue();
-                            } catch (NumberFormatException e) {
-                                MipavUtil.displayError("Number format error: Slice Location (a) " + (z - 2) + " = " +
-                                                       s);
-                                lastSliceLocation = 0;
-                            }
-
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z - 1))).getTagTable().getValue("0020,1041");
-                            s = ((String) value).trim();
-
-                            try {
-                                sliceLocation = Float.valueOf(s).floatValue();
-                            } catch (NumberFormatException e) {
-                                MipavUtil.displayError("Number format error: Slice Location (b) " + (z - 1) + " = " +
-                                                       s);
-                                sliceLocation = 0;
-                            }
-
-                            sliceLocation = (2.0f * sliceLocation) - lastSliceLocation;
-                            s = nf.format(sliceLocation);
-                            fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
+                            if (((FileInfoDicom)(srcImage.getFileInfo(z-2))).getTagTable().getValue("0020,1041") != null) {
+                                value = ((FileInfoDicom) (srcImage.getFileInfo(z - 2))).getTagTable().getValue("0020,1041");
+                                s = ((String) value).trim();
+    
+                                try {
+                                    lastSliceLocation = Float.valueOf(s).floatValue();
+                                } catch (NumberFormatException e) {
+                                    MipavUtil.displayError("Number format error: Slice Location (a) " + (z - 2) + " = " +
+                                                           s);
+                                    lastSliceLocation = 0;
+                                }
+    
+                                value = ((FileInfoDicom) (srcImage.getFileInfo(z - 1))).getTagTable().getValue("0020,1041");
+                                s = ((String) value).trim();
+    
+                                try {
+                                    sliceLocation = Float.valueOf(s).floatValue();
+                                } catch (NumberFormatException e) {
+                                    MipavUtil.displayError("Number format error: Slice Location (b) " + (z - 1) + " = " +
+                                                           s);
+                                    sliceLocation = 0;
+                                }
+    
+                                sliceLocation = (2.0f * sliceLocation) - lastSliceLocation;
+                                s = nf.format(sliceLocation);
+                                fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
+                            } // if (((FileInfoDicom)(srcImage.getFileInfo(z-2))).getTagTable().getValue("0020,1041") != null)
                         } else {
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z - 1))).getTagTable().getValue("0020,1041");
-                            s = ((String) value).trim();
-
-                            try {
-                                lastSliceLocation = Float.valueOf(s).floatValue();
-                            } catch (NumberFormatException e) {
-                                MipavUtil.displayError("Number format error: Slice Location (a) " + (z - 1) + " = " +
-                                                       s);
-                                lastSliceLocation = 0;
-                            }
-
-                            value = ((FileInfoDicom) (srcImage.getFileInfo(z))).getTagTable().getValue("0020,1041");
-                            s = ((String) value).trim();
-
-                            try {
-                                sliceLocation = Float.valueOf(s).floatValue();
-                            } catch (NumberFormatException e) {
-                                MipavUtil.displayError("Number format error: Slice Location (b) " + z + " = " + s);
-                                sliceLocation = 0;
-                            }
-
-                            sliceLocation = (lastSliceLocation + sliceLocation) / 2.0f;
-                            s = nf.format(sliceLocation);
-                            fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
+                            if (((FileInfoDicom)(srcImage.getFileInfo(z-1))).getTagTable().getValue("0020,1041") != null) {
+                                value = ((FileInfoDicom) (srcImage.getFileInfo(z - 1))).getTagTable().getValue("0020,1041");
+                                s = ((String) value).trim();
+    
+                                try {
+                                    lastSliceLocation = Float.valueOf(s).floatValue();
+                                } catch (NumberFormatException e) {
+                                    MipavUtil.displayError("Number format error: Slice Location (a) " + (z - 1) + " = " +
+                                                           s);
+                                    lastSliceLocation = 0;
+                                }
+    
+                                value = ((FileInfoDicom) (srcImage.getFileInfo(z))).getTagTable().getValue("0020,1041");
+                                s = ((String) value).trim();
+    
+                                try {
+                                    sliceLocation = Float.valueOf(s).floatValue();
+                                } catch (NumberFormatException e) {
+                                    MipavUtil.displayError("Number format error: Slice Location (b) " + z + " = " + s);
+                                    sliceLocation = 0;
+                                }
+    
+                                sliceLocation = (lastSliceLocation + sliceLocation) / 2.0f;
+                                s = nf.format(sliceLocation);
+                                fileInfoBuffer.getTagTable().setValue("0020,1041", s, s.length());
+                            } // if (((FileInfoDicom)(srcImage.getFileInfo(z-1))).getTagTable().getValue("0020,1041") != null)
                         }
 
                         destImage.setFileInfo(fileInfoBuffer, z);
@@ -778,22 +790,26 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         // backward (to the Z position). So: the X&Y info for the z (the one not removed with the equal
                         // or one lower index) and we use the Z info from the index of the copy-to slice (which has an
                         // equal or one higher index).
-                        imagePositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z)).parseTagValue("0020,0032"));
+                        if (((FileInfoDicom)(srcImage.getFileInfo(z))).getTagTable().getValue("0020,0032") != null) {
+                            imagePositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z)).parseTagValue("0020,0032"));
 
-                        for (i = 0; i < 3; i++) {
-                            lastPositionCoords[i] = imagePositionCoords[i];
-                        }
-
-                        fileInfoBuffer.getTagTable().setValue("0020,0032",
-                                                              imagePositionCoords[0] + "\\" + imagePositionCoords[1] +
-                                                              "\\" + imagePositionCoords[2],
-                                                              fileInfoBuffer.getTagTable().get("0020,0032").getLength());
+                            for (i = 0; i < 3; i++) {
+                                lastPositionCoords[i] = imagePositionCoords[i];
+                            }
+    
+                            fileInfoBuffer.getTagTable().setValue("0020,0032",
+                                                                  imagePositionCoords[0] + "\\" + imagePositionCoords[1] +
+                                                                  "\\" + imagePositionCoords[2],
+                                                                  fileInfoBuffer.getTagTable().get("0020,0032").getLength());
+                        } // if (((FileInfoDicom)(srcImage.getFileInfo(z))).getTagTable().getValue("0020,0032") != null)
 
                         // readjust the slice location ("0020,1041")
                         // same change as image position above:
+                        if (((FileInfoDicom)(srcImage.getFileInfo(z))).getTagTable().getValue("0020,1041") != null) {
                         fileInfoBuffer.getTagTable().setValue("0020,1041",
                                                               ((FileInfoDicom) (srcImage.getFileInfo(z))).getTagTable().getValue("0020,1041"),
                                                               fileInfoBuffer.getTagTable().get("0020,1041").getLength());
+                        }
 
                         destImage.setFileInfo(fileInfoBuffer, Z);
                     } else { // not a DICOM image, so these can be processed similarly
