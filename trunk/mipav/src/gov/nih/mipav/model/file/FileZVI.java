@@ -1267,6 +1267,109 @@ public class FileZVI extends FileBase {
                     Preferences.debug("Valid bits per pixel in raw image data = " + imageValidBitsPerPixel + "\n");
                     dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 2;
+                    if (dType == VT_BLOB) {
+                        Preferences.debug("Expected VT_BLOB data type for {m_PluginCLSID}\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for {m_PluginCLSID}\n");
+                        break;
+                    }
+                    int pluginLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("The length of the {m_PluginCLSID} binary data = " + pluginLength + "\n");
+                    bp += pluginLength;
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_BLOB) {
+                        Preferences.debug("Expected VT_BLOB data type for {Others}\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for {Others}\n");
+                        break;
+                    }
+                    int othersLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("The length of the {Others} binary data = " + othersLength + "\n");
+                    bp += othersLength;
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_STORED_OBJECT) {
+                        Preferences.debug("Expected VT_STORED_OBJECT data type for {Layers}\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Layers}\n");
+                        break;
+                    }
+                    int layersLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Byte length of unicode string in Layers stored object = " + layersLength + "\n");
+                    byte obj[] = new byte[layersLength];
+                    for (i = 0; i < layersLength; i++) {
+                        obj[i] = b[bp++];
+                    }
+                    String str = new String(obj, "UTF-16LE").trim();
+                    Preferences.debug("Name of the storage containing the vector overlay layers = " + str + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_STORED_OBJECT) {
+                        Preferences.debug("Expected VT_STORED_OBJECT data type for {Tags}\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Tags}\n");
+                        break;
+                    }
+                    int tagsLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Byte length of unicode string in Tags stored object = " + tagsLength + "\n");
+                    obj = new byte[tagsLength];
+                    for (i = 0; i < tagsLength; i++) {
+                        obj[i] = b[bp++];
+                    }
+                    str = new String(obj, "UTF-16LE").trim();
+                    Preferences.debug("Name of the storage containing the Tags information = " + str + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_STORED_OBJECT) {
+                        Preferences.debug("Expected VT_STORED_OBJECT data type for {Scaling}\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Scaling}\n");
+                        break;
+                    }
+                    int scalingLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Byte length of unicode string in Scaling stored object = " + scalingLength + "\n");
+                    obj = new byte[scalingLength];
+                    for (i = 0; i < scalingLength; i++) {
+                        obj[i] = b[bp++];
+                    }
+                    str = new String(obj, "UTF-16LE").trim();
+                    Preferences.debug("Name of the storage containing the scaling information = " + str + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_STORED_OBJECT) {
+                        Preferences.debug("Expected VT_STORED_OBJECT data type for {RootFloder}\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {RootFolder}\n");
+                        break;
+                    }
+                    int rootFolderLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Byte length of unicode string in RootFolder stored object = " + rootFolderLength + "\n");
+                    obj = new byte[rootFolderLength];
+                    for (i = 0; i < rootFolderLength; i++) {
+                        obj[i] = b[bp++];
+                    }
+                    str = new String(obj, "UTF-16LE").trim();
+                    Preferences.debug("Name of the storage containing a ZiFolder object with advanced information = " 
+                                      + str + "\n");
                     break;
                 } // while (true)
             } // if ((lastElementName.equals("Image")) &&
@@ -1673,6 +1776,134 @@ public class FileZVI extends FileBase {
                     break;
                 } // while (true)
             } // if ((lastElementName.length() > 4) && (lastElementName.substring(0,4).equals("Item")) &&
+            
+            if ((lastElementName.equals("Scaling")) &&
+                    (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize > 0)) {
+                Preferences.debug("Reading the contents stream of the Scaling storage\n");
+                      
+                bytesToRead = (int)streamSize;
+                b = new byte[bytesToRead];
+                bytesRead = 0;
+                    if (streamSize < miniSectorCutoff) {
+                        presentShortSector = startSect;
+                        while (bytesToRead > 0) {
+                            sectorsIntoShortStream = presentShortSector*shortSectorSize/sectorSize;
+                            presentSector = shortSectors[sectorsIntoShortStream];
+                            presentSectorOffset = (presentShortSector*shortSectorSize) % sectorSize;
+                            raFile.seek((presentSector+1)*sectorSize + presentSectorOffset);
+                            raFile.read(b, bytesRead, Math.min(shortSectorSize, bytesToRead));
+                            bytesRead += Math.min(shortSectorSize, bytesToRead);
+                            bytesToRead -= Math.min(shortSectorSize, bytesToRead);
+                            presentShortSector = shortSectorTable[presentShortSector];
+                        }
+                } // if (streamSize < miniSectorCutoff)
+                else { // else streamSize >= miniSectorCutoff
+                    presentSector = startSect;
+                    while (bytesToRead > 0) {
+                        raFile.seek((presentSector+1)*sectorSize);
+                        raFile.read(b, bytesRead, Math.min(sectorSize, bytesToRead));
+                        bytesRead += Math.min(sectorSize, bytesToRead);
+                        bytesToRead -= Math.min(sectorSize, bytesToRead);
+                        presentSector = sat[presentSector];
+                    }    
+                } // else streamSize >= miniSectorCutoff
+                while (true) {
+                    bp = 0;
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for version\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for version\n");
+                        break;
+                    }
+                    minorVersion =  (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    Preferences.debug("Minor version is " + minorVersion + "\n");
+                    Preferences.debug("Current version is 4098\n");
+                    majorVersion =  (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    Preferences.debug("Major version is " + majorVersion + "\n");
+                    Preferences.debug("Current version is 8193\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_BSTR) {
+                        Preferences.debug("Expected VT_BSTR data type for original key name\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_BSTR for original key name\n");
+                        break;
+                    }
+                    int stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    bf = new byte[stringBytes];
+                    for (i = 0; i < stringBytes; i++) {
+                        bf[i] = b[bp++];
+                    }
+                    String originalKeyName = new String(b, "UTF-16LE").trim();
+                    Preferences.debug("Original key name = " + originalKeyName + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for unused scaling category\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for unused scaling category\n");
+                        break;
+                    }
+                    int scalingCategory = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Unused scaling category = " + scalingCategory + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_R8) {
+                        Preferences.debug("Expected VT_R8 data type for scaling factor(units per pixel)\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_R8 for unused scaling factor\n");
+                        break;
+                    }
+                    long tmpLong = (((long) b[bp+7] << 56) | ((long) b[bp+6] << 48) | ((long) b[bp+5] << 40) | ((long) b[bp+4] << 32) |
+                            ((long) b[bp+3] << 24) | ((long) b[bp+2] << 16) | ((long) b[bp+1] << 8) | (long) b[bp]);
+                    bp += 8;
+                    double scalingFactor = Double.longBitsToDouble(tmpLong);
+                    Preferences.debug("Scaling factor (units per pixel) = " + scalingFactor + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for scaling unit type\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for scaling unit type\n");
+                        break;
+                    }
+                    int scalingUnitType = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    switch (scalingUnitType) {
+                        case 0:
+                            Preferences.debug("Scaling unit type = no scaling\n");
+                            break;
+                        case 72:
+                            Preferences.debug("Scaling unit type = meter\n");
+                            break;
+                        case 76:
+                            Preferences.debug("Scaling unit type = micrometer\n");
+                            break;
+                        case 77:
+                            Preferences.debug("Scaling unit type = nanometer\n");
+                            break;
+                        case 84:
+                            Preferences.debug("Scaling unit type = mil (thousandth of an inch)\n");
+                            break;
+                    }
+                    
+                    break;
+                } // while (true)
+            } // if ((lastElementName.equals("Scaling")) &&
             
             if ((directoryEntry % maximumDirectoryEntriesPerSector) == 0) {
                 directoryStart =  (directoryTable[++dp]+1)*sectorSize;
