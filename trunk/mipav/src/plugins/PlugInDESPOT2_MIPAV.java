@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
+import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -16,6 +17,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -2488,6 +2490,16 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 			}
 			return list;
 		}
+		
+		public JRadioButton buildRadioButton(String label, Action a) {
+            FlowLayout f = new FlowLayout();
+            f.setAlignment(FlowLayout.LEFT);
+            JPanel radioPanel = new JPanel(f);
+            JRadioButton radioButton = new JRadioButton(label);
+            radioButton.setAction(a);
+            radioPanel.add(radioButton);
+            return radioButton;
+        }
 		
 		public JCheckBox buildCheckBox(String label, boolean selected) {
 			FlowLayout f = new FlowLayout();
