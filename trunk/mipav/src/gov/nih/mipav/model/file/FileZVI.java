@@ -36,44 +36,6 @@ public class FileZVI extends FileBase {
     private static final short VT_BLOB = 65;
     
     private static final short VT_CLSID = 72;
-    
-    /** Memory buffer size in bytes, for reading from disk. */
-    private static final int BUFFER_SIZE = 8192;
-    
-    /** Block identifying start of useful header information. */
-    // 65, 0 corresponds to VT_BLOB = 65 followed by a 4 byte integer specifying a length of 16.
-    // {m_PluginCLSID} in the <Contents> stream of the image item
-    // Mistakenly specified as VT_CLSID in documentation.
-    private static final byte[] ZVI_MAGIC_BLOCK_1 = { // 41 00 10
-      65, 0, 16
-    };
-    
-    /** Block identifying second part of useful header information. */
-    // 65, 0 corresponds to VT_BLOB = 65 followed by a 4 byte integer specifying a length of 128.
-    // {Others} in <Contents> stream of the image item
-    private static final byte[] ZVI_MAGIC_BLOCK_2 = { // 41 00 80
-      65, 0, -128
-    };
-
-    /** Block identifying third part of useful header information. */
-    // Stream version ID
-    // Minor 0x2000 followed by major 0x1000
-    // This marks the start of the image header and data
-    private static final byte[] ZVI_MAGIC_BLOCK_3 = { // 20 00 10
-      0, 32, 0, 16
-    };
-
-    private static final int UNSIGNED8 = 1;
-    
-    private static final int UNSIGNED16 = 2;
-    
-    private static final int RGB = 3;
-    
-    private static final int RGB_USHORT = 4;
-    
-    private static final int BGR = 5;
-    
-    private static final int BGR_USHORT = 6;
    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -117,13 +79,30 @@ public class FileZVI extends FileBase {
     
     private long totalShortStreamSize;
     
-    private Set C_Set = new HashSet(); // to hold C channel index collection
+    private int imageWidth = 0;
+    
+    private int imageHeight = 0;
+    
+    private int imageCount = 0;
+    
+    private int imagePixelFormat = 0;
     
     private int zDim = 1;
     
     private int tDim = 1;
     
     private int channelNumber = 1;
+    
+    private int zArray[] = null;
+    private int cArray[] = null;
+    private int tArray[] = null;
+    private int startSectorArray[] = null;
+    private int offsetArray[] = null;
+    // array pointer
+    private int ap = 0;
+    
+    // Sector allocation table
+    private int sat[] = null;
     
     private int minC = Integer.MAX_VALUE;
     
@@ -218,23 +197,33 @@ public class FileZVI extends FileBase {
      */
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         long fileLength;
-        int i, j, k;
-        long bytesToRead;
+        int i, j;
+        int sliceBytes;
+        int bytesToRead;
+        int bytesRead;
         int dataType;
-        long contentsStart;
-        long rootStart;
-        byte[] readBuffer  = null;
-        sliceInfo[] si;
         int t;
         int z;
         int c;
         byte byteBuffer[] = null;
         byte byteBuffer2[] = null;
         short shortBuffer[] = null;
+        int intBuffer[] = null;
+        float floatBuffer[] = null;
+        double doubleBuffer[] = null;
+        long tmpLong;
+        int tmpInt;
         int index;
         int b1 = 0;
         int b2 = 0;
+        int b3 = 0;
+        int b4 = 0;
+        int b5 = 0;
+        int b6 = 0;
+        int b7 = 0;
+        int b8 = 0;
         int sliceSize;
+        int presentSector;
         
         try {
             
@@ -250,8 +239,30 @@ public class FileZVI extends FileBase {
             fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
             endianess = FileBase.LITTLE_ENDIAN;
             
-            si = readHeader();
+            readHeader();
             
+            for (i = 0; i < imageCount; i++) {
+                if (cArray[i] < minC) {
+                    minC = cArray[i];
+                }
+                if (cArray[i] > maxC) {
+                    maxC = cArray[i];
+                }
+                if (zArray[i] < minZ) {
+                    minZ = zArray[i];
+                }
+                if (zArray[i] > maxZ) {
+                    maxZ = zArray[i];
+                }
+                if (tArray[i] < minT) {
+                    minT = tArray[i];
+                }
+                if (tArray[i] > maxT) {
+                    maxT = tArray[i];
+                }
+            }
+            
+            channelNumber = maxC - minC + 1;
             zDim = maxZ - minZ + 1;
             tDim = maxT - minT + 1;
             
@@ -271,66 +282,101 @@ public class FileZVI extends FileBase {
             else {
                 imageExtents = new int[2];
             }
-            imageExtents[0] = si[0].width;
-            imageExtents[1] = si[0].height;
+            imageExtents[0] = imageWidth;
+            imageExtents[1] = imageHeight;
             for (i = 0; i < imageExtents.length; i++) {
                 Preferences.debug("extents[" + i + "] = " + imageExtents[i] + "\n");
             }
             sliceSize = imageExtents[0] * imageExtents[1];
             
-            channelNumber = maxC - minC + 1;
             Preferences.debug("minC = " + minC + " maxC = " + maxC + "\n");
             Preferences.debug("Channel number = " + channelNumber + "\n");
-            if (channelNumber > 1) {
-                if (si[0].dataType == UNSIGNED8) {
-                    si[0].dataType = RGB;    
-                }
-                else if (si[0].dataType == UNSIGNED16) {
-                    si[0].dataType = RGB_USHORT;
-                }
-            }
-            
 
             fileInfo.setExtents(imageExtents);
             
-            switch (si[0].dataType) {
-                case UNSIGNED8:
-                    dataType = ModelStorageBase.UBYTE;
-                    Preferences.debug("Data type = UNSIGNED BYTE\n");
-                    byteBuffer = new byte[sliceSize];
-                    break;
-                case UNSIGNED16:
-                    dataType = ModelStorageBase.USHORT;
-                    Preferences.debug("Data type = UNSIGNED SHORT\n");
-                    byteBuffer = new byte[2 * sliceSize];
-                    shortBuffer = new short[sliceSize];
-                    break;
-                case RGB:
+            switch (imagePixelFormat) {
+                case 1: // 8-bit BGR 3 bytes/pixel
                     dataType = ModelStorageBase.ARGB;
                     Preferences.debug("Data type = ARGB\n");
-                    byteBuffer = new byte[sliceSize];
-                    byteBuffer2 = new byte[4 * sliceSize];
-                    break;
-                case RGB_USHORT:
-                    dataType = ModelStorageBase.ARGB_USHORT;
-                    Preferences.debug("Data type = ARGB_USHORT\n");
-                    byteBuffer = new byte[2 * sliceSize];
-                    shortBuffer = new short[4 * sliceSize];
-                    break;
-                case BGR:
-                    dataType = ModelStorageBase.ARGB;
-                    Preferences.debug("Data type = ARGB\n");
+                    sliceBytes = 3*sliceSize;
                     byteBuffer = new byte[3*sliceSize];
-                    byteBuffer2 = new byte[4 * sliceSize];
+                    byteBuffer2 = new byte[4*sliceSize];
                     break;
-                case BGR_USHORT:
+                case 2: // 8-bit BGRA 4 bytes/pixel
+                    dataType = ModelStorageBase.ARGB;
+                    Preferences.debug("Data type = ARGB\n");
+                    sliceBytes = 4*sliceSize;
+                    byteBuffer = new byte[4*sliceSize];
+                    byteBuffer2 = new byte[4*sliceSize];
+                    break;
+                case 3: // 8-bit grayscale
+                    if (channelNumber == 1) {
+                        dataType = ModelStorageBase.UBYTE;
+                        Preferences.debug("Data type = UBYTE\n");
+                        sliceBytes = sliceSize;
+                        byteBuffer = new byte[sliceSize];
+                    }
+                    else {
+                        dataType = ModelStorageBase.ARGB;
+                        Preferences.debug("Data type = ARGB\n");
+                        sliceBytes = sliceSize;
+                        byteBuffer = new byte[sliceSize];
+                        byteBuffer2 = new byte[4*sliceSize];
+                    }
+                    break;
+                case 4: // 16-bit integer
+                    if (channelNumber == 1) {
+                        dataType = ModelStorageBase.SHORT;
+                        Preferences.debug("Data type = SHORT\n");
+                        sliceBytes = 2*sliceSize;
+                        byteBuffer = new byte[2*sliceSize];
+                        shortBuffer = new short[sliceSize];
+                    }
+                    else {
+                        dataType = ModelStorageBase.ARGB_USHORT;
+                        Preferences.debug("Data type = ARGB_USHORT\n");
+                        sliceBytes = 2*sliceSize;
+                        byteBuffer = new byte[2*sliceSize];
+                        shortBuffer = new short[4*sliceSize];
+                    }
+                    break;
+                case 5: // 32-bit integer - 4 bytes/pixel
+                    dataType = ModelStorageBase.INTEGER;
+                    Preferences.debug("Data type = INTEGER\n");
+                    sliceBytes = 4*sliceSize;
+                    byteBuffer = new byte[4*sliceSize];
+                    intBuffer = new int[sliceSize];
+                    break;
+                case 6: // 32-bit IEEE float - 4 bytes/pixel
+                    dataType = ModelStorageBase.FLOAT;
+                    Preferences.debug("Data type = FLOAT\n");
+                    sliceBytes = 4*sliceSize;
+                    byteBuffer = new byte[4*sliceSize];
+                    floatBuffer = new float[sliceSize];
+                    break;
+                case 7: // 64-bit IEEE float - 8 bytes/pixel
+                    dataType = ModelStorageBase.DOUBLE;
+                    Preferences.debug("Data type = DOUBLE\n");
+                    sliceBytes = 8*sliceSize;
+                    byteBuffer = new byte[8*sliceSize];
+                    doubleBuffer = new double[sliceSize];
+                    break;
+                case 8: // 16-bit BGR - 6 bytes/pixel
                     dataType = ModelStorageBase.ARGB_USHORT;
                     Preferences.debug("Data type = ARGB_USHORT\n");
-                    byteBuffer = new byte[6 * sliceSize];
-                    shortBuffer = new short[4 * sliceSize];
+                    sliceBytes = 6*sliceSize;
+                    byteBuffer = new byte[6*sliceSize];
+                    shortBuffer = new short[4*sliceSize];
                     break;
+                /*case 9: // 32-bit integer triples (B, G, R) - 12 bytes/pixel
+                    Preferences.debug("Data type = ARGB_UINT\n");
+                    sliceBytes = 12*sliceSize;
+                    byteBuffer = new byte[12*sliceSize];
+                    intBuffer = new int[4*sliceSize];
+                    break;*/
                 default:
                     dataType = ModelStorageBase.UBYTE;
+                    sliceBytes = sliceSize;
             }
             fileInfo.setDataType(dataType);
             
@@ -340,40 +386,99 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     fireProgressStateChanged(((t-minT)*zDim + (z-minZ))*100/(tDim*zDim));
                     for (c = minC; c <= maxC; c++) {
-                        for (i = 0; i < si.length; i++) {
-                            if ((si[i].theC == c) && (si[i].theZ == z) && (si[i].theT == t)) {
-                                raFile.seek(si[i].offset);
-                                raFile.read(byteBuffer);
-                                switch (si[0].dataType) {
-                                    case UNSIGNED8:
-                                        break;
-                                    case UNSIGNED16:
-                                        for (j = 0, index = 0; j < sliceSize; j++) {
-                                            b1 = byteBuffer[index++] & 0xff;
-                                            b2 = byteBuffer[index++] & 0xff;
-                                            shortBuffer[j] = (short) ((b2 << 8) | b1);
-                                        }
-                                        break;
-                                    case RGB:
-                                        for (j = 0; j < sliceSize; j++) {
-                                            byteBuffer2[4*j + (c - minC + 1)] = byteBuffer[j];    
-                                        }
-                                        break;
-                                    case RGB_USHORT:
-                                        for (j = 0, index = 0; j < sliceSize; j++) {
-                                            b1 = byteBuffer[index++] & 0xff;
-                                            b2 = byteBuffer[index++] & 0xff;
-                                            shortBuffer[4*j + (c - minC + 1)] = (short) ((b2 << 8) | b1);
-                                        }
-                                        break;
-                                    case BGR:
+                        for (i = 0; i < imageCount; i++) {
+                            if ((cArray[i] == c) && (zArray[i] == z) && (tArray[i] == t)) {
+                                presentSector = startSectorArray[i];
+                                bytesToRead = sliceBytes;
+                                bytesRead = 0;
+                                raFile.seek((presentSector+1)*sectorSize + offsetArray[i]);
+                                raFile.read(byteBuffer, 0, Math.min(sectorSize-offsetArray[i], bytesToRead));
+                                bytesRead += Math.min(sectorSize-offsetArray[i], bytesToRead);
+                                bytesToRead -= Math.min(sectorSize-offsetArray[i], bytesToRead);
+                                presentSector = sat[presentSector];
+                                while (bytesToRead > 0) {
+                                    raFile.seek((presentSector+1)*sectorSize);
+                                    raFile.read(byteBuffer, bytesRead, Math.min(sectorSize, bytesToRead));
+                                    bytesRead += Math.min(sectorSize, bytesToRead);
+                                    bytesToRead -= Math.min(sectorSize, bytesToRead);
+                                    presentSector = sat[presentSector];
+                                }    
+                                
+                                switch (imagePixelFormat) {
+                                    case 1: // 8-bit BGR 3 bytes/pixel
                                         for (j = 0; j < sliceSize; j++) {
                                             byteBuffer2[4*j + 3] = byteBuffer[3*j];
                                             byteBuffer2[4*j + 2] = byteBuffer[3*j+1];
                                             byteBuffer2[4*j + 1] = byteBuffer[3*j+2];
                                         }
                                         break;
-                                    case BGR_USHORT:
+                                    case 2: // 8-bit BGRA 4 bytes/pixel
+                                        for (j = 0; j < sliceSize; j++) {
+                                            byteBuffer2[4*j+3] = byteBuffer[4*j];
+                                            byteBuffer2[4*j+2] = byteBuffer[4*j+1];
+                                            byteBuffer2[4*j+1] = byteBuffer[4*j+2];
+                                            byteBuffer2[4*j] = byteBuffer[4*j+3];
+                                        }
+                                        break;
+                                    case 3: // 8-bit grayscale
+                                        if (channelNumber > 1) {
+                                            for (j = 0; j < sliceSize; j++) {
+                                                byteBuffer2[4*j + (c - minC + 1)] = byteBuffer[j];    
+                                            }    
+                                        }
+                                        break;
+                                    case 4: // 16-bit integer
+                                        if (channelNumber == 1) {
+                                            for (j = 0, index = 0; j < sliceSize; j++) {
+                                                b1 = byteBuffer[index++] & 0xff;
+                                                b2 = byteBuffer[index++] & 0xff;
+                                                shortBuffer[j] = (short) ((b2 << 8) | b1);
+                                            }
+                                        }
+                                        else {
+                                            for (j = 0, index = 0; j < sliceSize; j++) {
+                                                b1 = byteBuffer[index++] & 0xff;
+                                                b2 = byteBuffer[index++] & 0xff;
+                                                shortBuffer[4*j + (c - minC + 1)] = (short) ((b2 << 8) | b1);
+                                            }    
+                                        }
+                                        break;
+                                    case 5: // 32-bit integer
+                                        for (j = 0, index = 0; j < sliceSize; j++) {
+                                            b1 = byteBuffer[index++] & 0xff;
+                                            b2 = byteBuffer[index++] & 0xff;
+                                            b3 = byteBuffer[index++] & 0xff;
+                                            b4 = byteBuffer[index++] & 0xff;
+                                            intBuffer[j] = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+                                        }
+                                        break;
+                                    case 6: // 32-bit IEEE float
+                                        for (j = 0, index = 0; j < sliceSize; j++) {
+                                            b1 = byteBuffer[index++] & 0xff;
+                                            b2 = byteBuffer[index++] & 0xff;
+                                            b3 = byteBuffer[index++] & 0xff;
+                                            b4 = byteBuffer[index++] & 0xff;
+                                            tmpInt = ((b4 << 24) | (b3 << 16) | (b2 << 8) | b1);
+
+                                            floatBuffer[j] = Float.intBitsToFloat(tmpInt);
+                                        }
+                                        break;
+                                    case 7: // 64-bit IEEE double
+                                        for (j = 0, index = 0; j < sliceSize; j++) {
+                                            b1 = byteBuffer[index++] & 0xff;
+                                            b2 = byteBuffer[index++] & 0xff;
+                                            b3 = byteBuffer[index++] & 0xff;
+                                            b4 = byteBuffer[index++] & 0xff;
+                                            b5 = byteBuffer[index++] & 0xff;
+                                            b6 = byteBuffer[index++] & 0xff;
+                                            b7 = byteBuffer[index++] & 0xff;
+                                            b8 = byteBuffer[index++] & 0xff;
+                                            tmpLong = (((long) b8 << 56) | ((long) b7 << 48) | ((long) b6 << 40) | ((long) b5 << 32) |
+                                                           ((long) b4 << 24) | ((long) b3 << 16) | ((long) b2 << 8) | (long) b1);
+                                            doubleBuffer[j] = Double.longBitsToDouble(tmpLong);
+                                        }
+                                        break;
+                                    case 8: // 16-bit BGR - 6 bytes/pixel
                                         for (j = 0, index = 0; j < sliceSize; j++) {
                                             b1 = byteBuffer[index++] & 0xff;
                                             b2 = byteBuffer[index++] & 0xff;
@@ -392,19 +497,26 @@ public class FileZVI extends FileBase {
                             }
                         } // for (i = 0; i < si.length; i++)
                     } // for (c = minC; c <= maxC; c++)
-                    switch (si[0].dataType) {
-                        case UNSIGNED8:
+                    switch (dataType) {
+                        case ModelStorageBase.UBYTE:
                             image.importData((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize, byteBuffer, false);
                             break;
-                        case UNSIGNED16:
+                        case ModelStorageBase.SHORT:
                             image.importData((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize, shortBuffer, false);
                             break;
-                        case RGB:
-                        case BGR:
+                        case ModelStorageBase.INTEGER:
+                            image.importData((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize, intBuffer, false);
+                            break;
+                        case ModelStorageBase.FLOAT:
+                            image.importData((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize, floatBuffer, false);
+                            break;
+                        case ModelStorageBase.DOUBLE:
+                            image.importData((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize, doubleBuffer, false);
+                            break;
+                        case ModelStorageBase.ARGB:
                             image.importData(4*((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize), byteBuffer2, false);
                             break;
-                        case RGB_USHORT:
-                        case BGR_USHORT:
+                        case ModelStorageBase.ARGB_USHORT:
                             image.importData(4*((t-minT)*zDim*sliceSize + (z-minZ)*sliceSize), shortBuffer, false);
                             break;
                     }
@@ -427,32 +539,6 @@ public class FileZVI extends FileBase {
                 }
             }
             
-            
-            
-            /*if (rootStreamSize > 0) {
-                if (rootStreamSize < miniSectorCutoff) {
-                    rootStart = rootStartSect*miniSectorSize;   
-                }
-                else {
-                    rootStart = (rootStartSect+1)*sectorSize;
-                }
-                Preferences.debug("rootStart = " + rootStart + "\n");
-                readBlock(rootStart, rootStreamSize);
-            } // if (rootStreamSize > 0)*/
-            
-            /*if (contentsStreamSize > 0) {
-                // Read the Contents stream
-
-                if (contentsStreamSize < miniSectorCutoff) {
-                    contentsStart = contentsStartSect*shortSectorSize; 
-                    readBuffer = readMiniStreamIntoBuffer(contentsStartSect, contentsStreamSize);
-                }
-                else {
-                    contentsStart = (contentsStartSect+1)*sectorSize;    
-                }
-                Preferences.debug("contentsStart = " + contentsStart + "\n");
-                readBlock(readBuffer);
-            } // if (contentsStreamSize > 0)*/
             image.calcMinMax(); 
             fireProgressStateChanged(100);
             
@@ -470,14 +556,12 @@ public class FileZVI extends FileBase {
         return image;
     }
     
-    private sliceInfo[] readHeader() throws IOException {
+    private void readHeader() throws IOException {
         int i;
         int j;
         byte[] b;
         int startSect;
         long streamSize;
-        int contentsStartSect = 0;
-        long contentsStreamSize = 0;
         long pos;
         int sectorsIntoShortStream;
         int presentShortSector;
@@ -488,10 +572,16 @@ public class FileZVI extends FileBase {
         int bp;
         short dType;
         byte bf[];
-        int imageWidth = 0;
-        int imageHeight = 0;
         int imageDepth = 0;
-        int imagePixelFormat = 0;
+        int imageValidBitsPerPixel = 0;
+        int sliceBytes = 0;
+        int validBitsPerPixel = 0;
+        int count = 0;
+        int pixelFormat = 0;
+        int depth = 0;
+        int width = 0;
+        int height = 0;
+        int pixelWidth = 0;
         //      Start reading ole compound file structure
         // The header is always 512 bytes long and always located at offset zero.
         // Offset 0 Length 8 bytes olecf file signature
@@ -606,7 +696,7 @@ public class FileZVI extends FileBase {
         // -1 freeSecID  Free sector, may exist in file, but is not part of any stream
         // -2 End of Chain SecID Trailing SecID in a SecID chain
         // -3 SAT SecID First entry in the sector allocation table.
-        int sat[] = new int[sectorNumber*sectorSize/4];
+        sat = new int[sectorNumber*sectorSize/4];
         int sp = 0;
         for (i = 0; i < Math.min(sectorNumber,109); i++) {
             sectors[i] = readInt(endianess);
@@ -1106,595 +1196,495 @@ public class FileZVI extends FileBase {
                     switch(imagePixelFormat) {
                         case 1:
                             Preferences.debug("Image pixel format = 8-bit B, G, R - 3 bytes/pixel\n");
+                            sliceBytes = 3 * imageWidth * imageHeight;
                             break;
                         case 2:
                             Preferences.debug("Image pixel format = 8-bit B, G, R, A - 4 bytes/pixel\n");
+                            sliceBytes = 4 * imageWidth * imageHeight;
                             break;
                         case 3:
                             Preferences.debug("Image pixel format = 8-bit grayscale\n");
+                            sliceBytes = imageWidth * imageHeight;
                             break;
                         case 4:
                             Preferences.debug("Image pixel format = 16-bit integer\n");
+                            sliceBytes = 2 * imageWidth * imageHeight;
                             break;
                         case 5:
                             Preferences.debug("Image pixel format = 32-bit integer\n");
+                            sliceBytes = 4 * imageWidth * imageHeight;
                             break;
                         case 6:
                             Preferences.debug("Image pixel format = 32-bit IEEE float\n");
+                            sliceBytes = 4 * imageWidth * imageHeight;
                             break;
                         case 7:
                             Preferences.debug("Image pixel format = 64-bit IEEE double\n");
+                            sliceBytes = 8 * imageWidth * imageHeight;
                             break;
                         case 8:
                             Preferences.debug("Image pixel format = 16-bit B, G, R - 6 bytes/pixel\n");
+                            sliceBytes = 6 * imageWidth * imageHeight;
                             break;
                         case 9:
                             Preferences.debug("Image pixel format = 32-bit B, G, R = 12 bytes/pixel\n");
+                            sliceBytes = 12 * imageWidth * imageHeight;
                             break;
                         default:
                             Preferences.debug("imagePixelFormat has an unrecognized value = " + imagePixelFormat + "\n");
                     }
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for imageCount\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for imageCount\n");
+                        break;
+                    }
+                    imageCount = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Total number of image item storages = " + imageCount + "\n");
+                    zArray = new int[imageCount];
+                    cArray = new int[imageCount];
+                    tArray = new int[imageCount];
+                    startSectorArray = new int[imageCount];
+                    offsetArray = new int[imageCount];
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for imageValidBitsPerPixel\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for imageValidBitsPerPixel\n");
+                        break;
+                    }
+                    // Valid bits per pixel in raw image data if 16 bit image (may be 12, 14, or 16)
+                    imageValidBitsPerPixel = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Valid bits per pixel in raw image data = " + imageValidBitsPerPixel + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
                     break;
                 } // while (true)
             } // if ((lastElementName.equals("Image")) &&
+            
+            if ((lastElementName.length() > 4) && (lastElementName.substring(0,4).equals("Item")) &&
+                    (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize >= sliceBytes)) {
+                Preferences.debug("Reading Contents of " + lastElementName + "\n");
+                startSectorArray[ap] = startSect;
+                bytesToRead = (int)streamSize;
+                b = new byte[bytesToRead];
+                bytesRead = 0;
+                    if (streamSize < miniSectorCutoff) {
+                        presentShortSector = startSect;
+                        while (bytesToRead > 0) {
+                            sectorsIntoShortStream = presentShortSector*shortSectorSize/sectorSize;
+                            presentSector = shortSectors[sectorsIntoShortStream];
+                            presentSectorOffset = (presentShortSector*shortSectorSize) % sectorSize;
+                            raFile.seek((presentSector+1)*sectorSize + presentSectorOffset);
+                            raFile.read(b, bytesRead, Math.min(shortSectorSize, bytesToRead));
+                            bytesRead += Math.min(shortSectorSize, bytesToRead);
+                            bytesToRead -= Math.min(shortSectorSize, bytesToRead);
+                            presentShortSector = shortSectorTable[presentShortSector];
+                        }
+                } // if (streamSize < miniSectorCutoff)
+                else { // else streamSize >= miniSectorCutoff
+                    // One sector is plenty to read for getting the data fields before the raw image data
+                    raFile.seek((startSect+1)*sectorSize);
+                    raFile.read(b, 0, Math.min(sectorSize, bytesToRead));
+                    /*presentSector = startSect;
+                    while (bytesToRead > 0) {
+                        raFile.seek((presentSector+1)*sectorSize);
+                        raFile.read(b, bytesRead, Math.min(sectorSize, bytesToRead));
+                        bytesRead += Math.min(sectorSize, bytesToRead);
+                        bytesToRead -= Math.min(sectorSize, bytesToRead);
+                        presentSector = sat[presentSector];
+                    } */   
+                } // else streamSize >= miniSectorCutoff
+                while (true) {
+                    bp = 0;
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for version\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for version\n");
+                        break;
+                    }
+                    minorVersion =  (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    Preferences.debug("Minor version is " + minorVersion + "\n");
+                    Preferences.debug("Current version is 4099\n");
+                    majorVersion =  (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    Preferences.debug("Major version is " + majorVersion + "\n");
+                    Preferences.debug("Current version is 12288\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for file type\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for file type\n");
+                        break;
+                    }
+                    // File type not used
+                    int fileType = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Unused file type = " + fileType + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_EMPTY) {
+                        Preferences.debug("Expected VT_EMPTY data type for unused type description\n");
+                    }
+                    else if (dType == VT_BSTR) {
+                        Preferences.debug("VT_BSTR for type description\n");
+                        int stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        bf = new byte[stringBytes];
+                        for (i = 0; i < stringBytes; i++) {
+                            bf[i] = b[bp++];
+                        }
+                        String typeDescription = new String(b, "UTF-16LE").trim();
+                        Preferences.debug("Type description = " + typeDescription + "\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + 
+                                " instead of expected VT_EMPTY or VT_BSTR for type description\n");
+                        break;
+                    }
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_EMPTY) {
+                        Preferences.debug("Expected VT_EMPTY data type for name of zvi file\n");
+                    }
+                    else if (dType == VT_BSTR) {
+                        Preferences.debug("VT_BSTR for name of zvi file\n");
+                        int stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        bf = new byte[stringBytes];
+                        for (i = 0; i < stringBytes; i++) {
+                            bf[i] = b[bp++];
+                        }
+                        String fileName = new String(b, "UTF-16LE").trim();
+                        Preferences.debug("Name of zvi file = " + fileName + "\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + 
+                                " instead of expected VT_EMPTY or VT_BSTR for name of zvi file\n");
+                        break;
+                    }
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for width\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for width\n");
+                        break;
+                    }
+                    width = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Width = " + width + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for height\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for height\n");
+                        break;
+                    }
+                    height = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Height = " + height + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for depth\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for depth\n");
+                        break;
+                    }
+                    depth = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Unused depth = " + depth + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for pixelFormat\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for pixelFormat\n");
+                        break;
+                    }
+                    pixelFormat = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    switch(pixelFormat) {
+                        case 1:
+                            Preferences.debug("Pixel format = 8-bit B, G, R - 3 bytes/pixel\n");
+                            break;
+                        case 2:
+                            Preferences.debug("Pixel format = 8-bit B, G, R, A - 4 bytes/pixel\n");
+                            break;
+                        case 3:
+                            Preferences.debug("Pixel format = 8-bit grayscale\n");
+                            break;
+                        case 4:
+                            Preferences.debug("Pixel format = 16-bit integer\n");
+                            break;
+                        case 5:
+                            Preferences.debug("Pixel format = 32-bit integer\n");
+                            break;
+                        case 6:
+                            Preferences.debug("Pixel format = 32-bit IEEE float\n");
+                            break;
+                        case 7:
+                            Preferences.debug("Pixel format = 64-bit IEEE double\n");
+                            break;
+                        case 8:
+                            Preferences.debug("Pixel format = 16-bit B, G, R - 6 bytes/pixel\n");
+                            break;
+                        case 9:
+                            Preferences.debug("Pixel format = 32-bit B, G, R = 12 bytes/pixel\n");
+                            break;
+                        default:
+                            Preferences.debug("pixelFormat has an unrecognized value = " + pixelFormat + "\n");
+                    }
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for count\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for count\n");
+                        break;
+                    }
+                    count = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    if (count == 0) {
+                        Preferences.debug("Count = 0 as expected\n");
+                    }
+                    else {
+                        Preferences.debug("Count = " + count + " instead of the expected 0\n");
+                    }
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for validBitsPerPixel\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for validBitsPerPixel\n");
+                        break;
+                    }
+                    // Valid bits per pixel in raw image data if 16 bit image (may be 12, 14, or 16)
+                    validBitsPerPixel = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Valid bits per pixel in raw image data = " + validBitsPerPixel + "\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    // Note that the ZVI Format Specification V 2.0.4 - June, 2009 incorrectly specifies a 
+                    // VT_CLSID for m_PluginCLSID.
+                    if (dType == VT_BLOB) {
+                        Preferences.debug("Expected VT_BLOB data type for m_PluginCSLID\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for m_pluginCLSID\n");
+                        break;
+                    }
+                    int pluginLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Length of binary data for m_pluginCLSID = " + pluginLength + "\n");
+                    // Skip over m_pluginCLSID data field
+                    bp += pluginLength;
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_BLOB) {
+                        Preferences.debug("Expected VT_BLOB data type for coordinate block stored as {Others}\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + 
+                                " instead of expected VT_BLOB for coordinate block stored as {Others}\n");
+                        break;
+                    }
+                    int othersLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("The {Others} length = " + othersLength + "\n");
+                    int U = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    if (U == 0) {
+                        Preferences.debug("The U tile ID is 0 as expected\n");
+                    }
+                    else {
+                        Preferences.debug("The U tile ID = " + U + " instead of the expected 0\n");
+                    }
+                    int V = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    if (V == 0) {
+                        Preferences.debug("The V tile ID is 0 as expected\n");
+                    }
+                    else {
+                        Preferences.debug("The V tile ID = " + V + " instead of the expected 0\n");
+                    }
+                    // Z ID
+                    zArray[ap] = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Z ID = " + zArray[ap] + "\n");
+                    // Channel ID
+                    cArray[ap] = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Channel ID = " + cArray[ap] + "\n");
+                    // Time ID
+                    tArray[ap] = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Time ID = " + tArray[ap] + "\n");
+                    int sceneID = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Scene ID = " + sceneID + "\n");
+                    int positionID = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Position ID = " + positionID + "\n");
+                    int A = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Unused A = " + A + "\n");
+                    // othersLength - 8 integers in coordinate block
+                    bp += othersLength - 32;
+                    int bytesToImageHeader = 88;
+                    while (bytesToImageHeader > 0) {
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        bytesToImageHeader -= 2;
+                        if (dType == VT_DISPATCH) {
+                            Preferences.debug("dType = VT_DISPATCH\n");
+                            bp += Math.min(bytesToImageHeader, 16);
+                            bytesToImageHeader -= Math.min(bytesToImageHeader, 16);
+                        }
+                        else if (dType == VT_STORED_OBJECT) {
+                            Preferences.debug("dType = VT_STORED_OBJECT\n");
+                            int objectLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                    ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                            bp += 4;
+                            bytesToImageHeader -= 4;
+                            Preferences.debug("Byte length of unicode string in stored object = " + objectLength + "\n");
+                            byte obj[] = new byte[Math.min(objectLength, bytesToImageHeader)];
+                            for (i = 0; i < Math.min(objectLength, bytesToImageHeader); i++) {
+                                obj[i] = b[bp++];
+                            }
+                            bytesToImageHeader -= Math.min(objectLength, bytesToImageHeader);
+                            String str = new String(obj, "UTF-16LE").trim();
+                            Preferences.debug("Object string = " + str + "\n");
+                        }
+                    } // while (bytesToImageHeader > 0)
+                    // Read the image header at 296 bytes from the stream beginning
+                    // Don't read dType any more
+                    Preferences.debug("Reading the image header\n");
+                    // Stream version ID
+                    // 2 byte minor 0x2000 followed by 2 byte major 0x1000
+                    minorVersion = (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    Preferences.debug("The minor version = " + minorVersion + "\n");
+                    Preferences.debug("The current minor version is 8192\n");
+                    majorVersion = (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    Preferences.debug("The major version = " + majorVersion + "\n");
+                    Preferences.debug("The current major version is 4096\n");
+                    width = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Width = " + width + "\n");
+                    height = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Height = " + height + "\n");
+                    depth = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Unused depth = " + depth + "\n");
+                    pixelWidth = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Size in bytes of an image pixel = " + pixelWidth + "\n");
+                    pixelFormat = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    switch(pixelFormat) {
+                        case 1:
+                            Preferences.debug("Pixel format = 8-bit B, G, R - 3 bytes/pixel\n");
+                            break;
+                        case 2:
+                            Preferences.debug("Pixel format = 8-bit B, G, R, A - 4 bytes/pixel\n");
+                            break;
+                        case 3:
+                            Preferences.debug("Pixel format = 8-bit grayscale\n");
+                            break;
+                        case 4:
+                            Preferences.debug("Pixel format = 16-bit integer\n");
+                            break;
+                        case 5:
+                            Preferences.debug("Pixel format = 32-bit integer\n");
+                            break;
+                        case 6:
+                            Preferences.debug("Pixel format = 32-bit IEEE float\n");
+                            break;
+                        case 7:
+                            Preferences.debug("Pixel format = 64-bit IEEE double\n");
+                            break;
+                        case 8:
+                            Preferences.debug("Pixel format = 16-bit B, G, R - 6 bytes/pixel\n");
+                            break;
+                        case 9:
+                            Preferences.debug("Pixel format = 32-bit B, G, R = 12 bytes/pixel\n");
+                            break;
+                        default:
+                            Preferences.debug("pixelFormat has an unrecognized value = " + pixelFormat + "\n");
+                    }
+                    // Valid bits per pixel in raw image data if 16 bit image (may be 12, 14, or 16)
+                    validBitsPerPixel = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Valid bits per pixel in raw image data = " + validBitsPerPixel + "\n");
+                    // Raw bytes for image slice are stored here
+                    // Store the offset into the starting sector
+                    offsetArray[ap++] = bp;
+                    break;
+                } // while (true)
+            } // if ((lastElementName.length() > 4) && (lastElementName.substring(0,4).equals("Item")) &&
             
             if ((directoryEntry % maximumDirectoryEntriesPerSector) == 0) {
                 directoryStart =  (directoryTable[++dp]+1)*sectorSize;
             }
             
         } // while (true)
-        Set Z_Set = new HashSet(); // to hold Z plan index collection
-        Set T_Set = new HashSet(); // to hold T time index collection
-        pos = 0;
-        Vector blockList = new Vector();
-        int numZ = 0;
-        int numT = 0;
-        int numC = 0; 
         
-        // {m_PluginCLSID} starts 0x34 or 52 bytes into the <Contents> stream of the image item
-        // Contents stream appears to start at the start of a sector - at a multiple of 4096 or 0x000.
-        // version location 0 VT_I4 followed by 0x1003 for minor followed by 0x3000 for major
-        // Type location 6 VT_I4 followed by 0
-        // TypeDescriptor location 12 or 0x0C VT_EMPTY
-        // FileName location 14 or 0x0E VT_EMPTY
-        // Width location 16 or 0x10 VT_I4 followed by 4 byte width
-        // Height location 22 or 0X16 VT_I4 followed by 4 byte height
-        // Depth location 28 or 0x1C VT_I4 followed by a 1
-        // Pixel format location 34 or 0X22 VT_I4 followed by a 4 byte value
-        // Count location 40 or 0x28 VT_I4 followed by 0
-        // Valid bits per pixel location 46 or 0x2E VT_I4 followed by a 4 byte value
-        // {m_plugInCLSID} location 52 or 0x34
-        while (true) {
-            // search for start of next image header
-            // short VT_BLOB followed by int length specification of 16.
-            // This must be {m_PluginCLSID} which is mistakenly classified
-            // as VT_CLSID in the documentation.  It is not used.
-            long header = findBlock(raFile, ZVI_MAGIC_BLOCK_1, pos);
-
-            if (header < 0) {
-              // no more potential headers found; we're done
-              break;
-            }
-            pos = header + ZVI_MAGIC_BLOCK_1.length;
-
-            Preferences.debug("Found potential image block: " + header + "\n");
-
-            // these bytes don't matter
-            raFile.skipBytes(19);
-            pos += 19;
-
-            // these bytes should match ZVI_MAGIC_BLOCK_2
-            // short VT_BLOB followed by int length specification of 128
-            // VT_BLOB is located as {Others} in Image Item's Contents stream
-            // followed by coordinate block with 8 VT_I4 values
-            // Dimension        Index               Info
-            // U                0                   Tile ID - currently always zero
-            // V                1                   Tile ID - currently always zero.
-            // Z                2                   Z ID
-            // C                3                   Channel ID
-            // T                4                   Time ID
-            // S                5                   Scene ID
-            // P                6                   Position ID
-            // A                7                   Not Used
-            // The coordinate block is followed by 96 bytes of zero.
-            b = new byte[ZVI_MAGIC_BLOCK_2.length];
-            raFile.readFully(b);
-            boolean ok = true;
-            for (i=0; i<b.length; i++) {
-              if (b[i] != ZVI_MAGIC_BLOCK_2[i]) {
-                ok = false;
-                break;
-              }
-              pos++;
-            }
-            if (!ok) continue;
-
-            // these bytes should be 00
-            b = new byte[11];
-            raFile.readFully(b);
-            for (i=0; i<b.length; i++) {
-              if (b[i] != 0) {
-                ok = false;
-                break;
-              }
-              pos++;
-            }
-            if (!ok) continue;
-
-            // read potential header information
-            // Before Z have first 8 bytes of coordinate ID for image dimensions
-            // U Tile ID - currently always zero
-            // V tile ID - currently always zero
-            int theZ = getInt(endianess);
-            int theC = getInt(endianess);
-            int theT = getInt(endianess);
-            pos += 12;
-
-            // these bytes should be 00
-            // After time ID have 12 more bytes in coordinate ID for image dimensions
-            // scene ID 4 byte int
-            // position ID 4 byte int
-            // A not used 4 byte int
-            b = new byte[108];
-            raFile.readFully(b);
-            for (i=0; i<b.length; i++) {
-              if (b[i] != 0) {
-                ok = false;
-                break;
-              }
-              pos++;
-            }
-            if (!ok) continue;
-            // everything checks out; looks like an image header to me
-
-//      + (mb) decoding strategy modification
-            //      Some zvi images have the following structure:
-            //        ZVI_SIG                    Decoding:
-            //        ZVI_MAGIC_BLOCK_1 
-            //        ZVI_MAGIC_BLOCK_2      <== Start of header information
-            //        - Z-slice (4 bytes)     -> theZ = 0
-            //        - channel (4 bytes)     -> theC = 0
-            //        - timestep (4 bytes)    -> theT = 0
-            //        ZVI_MAGIC_BLOCK_2      <==  Start of header information
-            //        - Z-slice (4 bytes)     -> theZ actual value
-            //        - channel (4 bytes)     -> theC actual value
-            //        - timestep (4 bytes)    -> theT actual value
-            //        ZVI_MAGIC_BLOCK_3      <== End of header information
-            //        ... 
-            //        
-            //        Two consecutive Start of header information ZVI_MAGIC_BLOCK_2
-            //        make test 3) of original decoding strategy fail. The first
-            //        null values are taken as theZ, theC and theT values, the
-            //        following actual values are ignored. 
-            //        Parsing the rest of the file appears to be ok.
-            //
-            //        New decoding strategy looks for the last header information
-            //        ZVI_MAGIC_BLOCK_2 / ZVI_MAGIC_BLOCK_3 to get proper image
-            //        slice theZ, theC and theT values.
-
-            //- original code removed
-            //- long magic3 = findBlock(in, ZVI_MAGIC_BLOCK_3, pos);
-            //- if (magic3 < 0) return null;
-            //- pos = magic3 + ZVI_MAGIC_BLOCK_3.length;
-            //- 
-            //-
-            //+ new code
-            // these bytes don't matter
-            raFile.skipBytes(88);
-            pos += 88;
-
-            // Stream version ID
-            // 2 byte minor 0x2000 followed by 2 byte major 0x1000
-            // This marks the start of the image header and data
-            byte[] magic3 = new byte[ZVI_MAGIC_BLOCK_3.length];
-            raFile.readFully(magic3);
-            for (i=0; i<magic3.length; i++) {
-              if (magic3[i] != ZVI_MAGIC_BLOCK_3[i]) {
-                ok = false;
-                break;
-              }
-            }
-            if (!ok) continue;
-            pos += ZVI_MAGIC_BLOCK_3.length;
-//      - (mb)
-
-            // read more header information
-            int w = getInt(endianess);
-            int h = getInt(endianess);
-            // Depth (Z-Size) of the image pixel matrix - currently not used.
-            int depth = getInt(endianess); 
-            int bytesPerPixel = getInt(endianess);
-            int pixelFormat = getInt(endianess); // 
-            /*   Original axquisition pixel range for 16 bit images (e.g 12, 14, 16)
-             * Important! There was a change in AxioVision 4.6 to support compressed
-             * zvi's.  If this value is 0 or 1, the PIXEL_BLOB contains either a
-             * lossless (LZW) compressed bitmap or a 8 bit RGB JPEG!
-             *   To distinguish between the lzw and jpeg compressed images, you have
-             * to read the first 4 bytes of the PIXEL_BLOB, which will contain
-             * "LZW" if it is compresed lossless.
-             *   In the case of jpeg compressed images, if the value is 0 the file
-             * was originally a 8 bit image, if it is 1 the image was a 16 bit image
-             * and data mappings have been applied when saving the raw image.  In the
-             * latter case the datamappings stored inside the tags collection are no
-             * longer valid and should be reset to ziTagIdImageDataMappingLow = 0.0,
-             * High = 1.0, Gamma = 1.0 upon loading!  
-             */
-            int validBitsPerPixel = getInt(endianess);
-            pos += 24;
-
-            ZVIBlock zviBlock = new ZVIBlock(theZ, theC, theT,
-              w, h, depth, bytesPerPixel, pixelFormat, validBitsPerPixel, pos);
-            Preferences.debug("zviBlock = " + zviBlock.toString() + "\n");
-//      + (mb)
-            //- original code removed
-            //- // perform some checks on the header info
-            //- if (theZ >= numZ) numZ = theZ + 1;
-            //- if (theC >= numC) numC = theC + 1;
-            //- if (theT >= numT) numT = theT + 1;
-            //+ new code 
-            // populate Z, C and T index collections
-            if (theZ < minZ) {
-                minZ = theZ;
-            }
-            if (theZ > maxZ) {
-                maxZ = theZ;
-            }
-            Z_Set.add(new Integer(theZ));
-            if (theC < minC) {
-                minC = theC;
-            }
-            if (theC > maxC) {
-                maxC = theC;
-            }
-            C_Set.add(new Integer(theC));
-            if (theT < minT) {
-                minT = theT;
-            }
-            if (theT > maxT) {
-                maxT = theT;
-            }
-            T_Set.add(new Integer(theT));    
-//      - (mb)
-           // save this image block's position
-            blockList.add(zviBlock);
-            pos += w * h * bytesPerPixel;
-          }
-
-          if (blockList.isEmpty()) return null;
-
-//      + (mb)
-          //+ new code
-          // number of Z, C and T index
-          numZ = Z_Set.size();    
-          numC = C_Set.size();
-          numT = T_Set.size();    
-//      - (mb)
-
-          if (numZ * numC * numT != blockList.size()) {
-            Preferences.debug("ZVI Reader Warning: image counts do not match.\n");
-          }
-
-          // convert ZVI blocks into single FileInfo object
-          sliceInfo[] si = new sliceInfo[blockList.size()];
-          for (i=0; i<si.length; i++) {
-            ZVIBlock zviBlock = (ZVIBlock) blockList.elementAt(i);
-            int dataType = -1;
-            if (zviBlock.numChannels == 1) {
-              if (zviBlock.bytesPerChannel == 1) dataType = UNSIGNED8;
-              else if (zviBlock.bytesPerChannel == 2) dataType = UNSIGNED16;
-            }
-            else if (zviBlock.numChannels == 3) {
-              if (zviBlock.bytesPerChannel == 1) dataType = BGR;
-              else if (zviBlock.bytesPerChannel == 2) dataType = BGR_USHORT;
-            }
-            if (dataType < 0) {
-                Preferences.debug("ZVI Reader Warning: unknown file type for image plane #" + (i + 1) + "\n");
-              dataType = UNSIGNED8; // better than nothing...
-            }
-            si[i] = new sliceInfo();
-            si[i].width = zviBlock.width;
-            si[i].height = zviBlock.height;
-            si[i].offset = (int) zviBlock.imagePos;
-            si[i].dataType = dataType;
-            si[i].theC = zviBlock.theC;
-            si[i].theZ = zviBlock.theZ;
-            si[i].theT = zviBlock.theT;
-          }
-          return si;
+          return;
 
     }
     
-    private class sliceInfo {
-        private int width;
-        private int height;
-        private int offset;
-        private int dataType;
-        private int theZ;
-        private int theC;
-        private int theT;
-    }
     
-    /** Contains information collected from a ZVI image header. */
-    private class ZVIBlock {
-      private int theZ, theC, theT;
-      private int width, height;
-      private int depth;
-      private int bytesPerPixel;
-      private int pixelFormat;
-      private int validBitsPerPixel;
-      private long imagePos;
-
-      private int numPixels;
-      private int imageSize;
-      private int numChannels;
-      private int bytesPerChannel;
-
-      public ZVIBlock(int theZ, int theC, int theT, int width, int height,
-        int depth, int bytesPerPixel, int pixelFormat, int validBitgsPerPixel,
-        long imagePos)
-      {
-        this.theZ = theZ;
-        this.theC = theC;
-        this.theT = theT;
-        this.width = width;
-        this.height = height;
-        this.depth = depth;
-        this.bytesPerPixel = bytesPerPixel;
-        this.pixelFormat = pixelFormat;
-        this.validBitsPerPixel = validBitsPerPixel;
-        this.imagePos = imagePos;
-
-        numPixels = width * height;
-        imageSize = numPixels * bytesPerPixel;
-
-        numChannels = 1;  
-        if ((pixelFormat == 1) || (pixelFormat == 8) || (pixelFormat == 9)) {
-            numChannels = 3;} // 1 is BGR 8-bit
-                              // 8 is BGR 16-bit
-                              // 9 is BGR 32-bit
-        else if (pixelFormat == 2) {
-            numChannels = 4; // 8-bit BGRA
-        }
-        else if ((pixelFormat >= 3) && (pixelFormat <= 7)) {
-          numChannels = 1;} // 3 is 8-bit grayscale
-                            // 4 is 16-bit integer
-                            // 5 is 32-bit integer
-                            // 6 is 32-bit IEEE float
-                            // 7 is 64-bit IEEE double
-
-        if (bytesPerPixel % numChannels != 0) {
-          Preferences.debug("ZVI Reader Warning: incompatible bytesPerPixel (" +
-            bytesPerPixel + ") and numChannels (" + numChannels +
-            "). Assuming grayscale data.\n");
-          numChannels = 1;
-        }
-        bytesPerChannel = bytesPerPixel / numChannels;
-        
-        // IJ.showMessage("ZVI Reader", "numChannels: " + numChannels + ", bytesPerPixel: " + bytesPerPixel + ", pixelType: " + pixelType + ", bitDepth: " + bitDepth + ", imagePos: " + imagePos);
-      }
-
-      public String toString() {
-        return "Image header block:\n" +
-          "  theZ = " + theZ + "\n" +
-          "  theC = " + theC + "\n" +
-          "  theT = " + theT + "\n" +
-          "  width = " + width + "\n" +
-          "  height = " + height + "\n" +
-          "  depth = " + depth + "\n" +
-          "  bytesPerPixel = " + bytesPerPixel + "\n" +
-          "  pixelFormat = " + pixelFormat + "\n" +
-          "  validBitsPerPixel = " + validBitsPerPixel;
-      }
-    }
-
-    
-    private byte[] readMiniStreamIntoBuffer(int startSector, long streamSize) throws IOException {
-        byte readBuffer[] = new byte[(int)streamSize];
-        int numWholeBuffers;
-        int numPartialBuffers;
-        int numBuffers;
-        int i;
-        int sectorArray[];
-        long startAddress;
-        
-        numWholeBuffers = (int)(streamSize/shortSectorSize);
-        if ((streamSize % shortSectorSize) == 0) {
-            numPartialBuffers = 0;
-        }
-        else {
-            numPartialBuffers = 1; 
-        }
-        numBuffers = numWholeBuffers + numPartialBuffers;
-        sectorArray = new int[numBuffers];
-        sectorArray[0] = startSector;
-        for (i = 1; i < numBuffers; i++) {
-            sectorArray[i] = shortSectorTable[sectorArray[i-1]];
-        }
-        for (i = 0; i < numWholeBuffers; i++) {
-            startAddress = shortSectorSize * sectorArray[i] + (shortStreamStartSect+1)*sectorSize;
-            raFile.seek(startAddress);
-            raFile.read(readBuffer, i*shortSectorSize, shortSectorSize);
-        }
-        if (numPartialBuffers > 1) {
-            startAddress = shortSectorSize * sectorArray[numWholeBuffers] + (shortStreamStartSect+1)*sectorSize;
-            raFile.seek(startAddress);
-            raFile.read(readBuffer, numWholeBuffers * shortSectorSize, (int)(streamSize % shortSectorSize));
-        }
-        return readBuffer;
-    }
-    
-    private void readBlock(byte buffer[]) throws IOException {
-        short dataType;
-        boolean booleanValue;
-        short shortValue;
-        int intValue;
-        double doubleValue;
-        int stringBytes; // In Unicode including terminating null
-        byte[] b;
-        String str;
-        int i;
-        long tmpLong;
-        int bytesToRead = buffer.length;
-        int pos = 0;
-        while (bytesToRead > 0) {
-            dataType = (short) (((buffer[pos+1] & 0xff) << 8) | (buffer[pos] & 0xff));
-            pos += 2;
-            bytesToRead -= 2;
-            switch(dataType) {
-                case VT_EMPTY:
-                    Preferences.debug("Read VT_EMPTY\n");
-                    break;
-                case VT_BOOL:
-                    // 16-bit integer true if != 0, false otherwise
-                    shortValue = (short) (((buffer[pos+1] & 0xff) << 8) | (buffer[pos] & 0xff));
-                    pos += 2;
-                    bytesToRead -= 2;
-                    if (shortValue != 0) {
-                        booleanValue = true;
-                    }
-                    else {
-                        booleanValue = false;
-                    }
-                    Preferences.debug("Read BOOLEAN = " + booleanValue + "\n");
-                    break;
-                case VT_UI2:
-                    intValue = (((buffer[pos + 1] & 0xff) << 8) | (buffer[pos] & 0xff));
-                    pos += 2;
-                    bytesToRead -=2;
-                    Preferences.debug("Read USHORT with value = " + intValue + "\n");
-                    break;
-                case VT_I4:
-                    intValue = (((buffer[pos + 3] & 0xff) << 24) | ((buffer[pos + 2] & 0xff) << 16) | 
-                                 ((buffer[pos + 1] & 0xff) << 8) | (buffer[pos] & 0xff));
-                    pos += 4;
-                    bytesToRead -= 4;
-                    Preferences.debug("Read INT with value = " + intValue + "\n");
-                    break;
-                case VT_R8:
-                    tmpLong = (((buffer[pos + 7] & 0xffL) << 56) | ((buffer[pos + 6] & 0xffL) << 48) 
-                            | ((buffer[pos + 5] & 0xffL) << 40) | ((buffer[pos + 4] & 0xffL) << 32) | 
-                            ((buffer[pos + 3] & 0xffL) << 24) | ((buffer[pos + 2] & 0xffL) << 16) |
-                            ((buffer[pos + 1] & 0xffL) << 8) | (buffer[pos] & 0xffL));
-
-
-                    doubleValue = Double.longBitsToDouble(tmpLong);
-                    pos += 8;
-                    bytesToRead -= 8;
-                    Preferences.debug("Read DOUBLE with value = " + doubleValue + "\n");
-                    break;
-                case VT_DATE:
-                    tmpLong = (((buffer[pos + 7] & 0xffL) << 56) | ((buffer[pos + 6] & 0xffL) << 48) 
-                            | ((buffer[pos + 5] & 0xffL) << 40) | ((buffer[pos + 4] & 0xffL) << 32) | 
-                            ((buffer[pos + 3] & 0xffL) << 24) | ((buffer[pos + 2] & 0xffL) << 16) |
-                            ((buffer[pos + 1] & 0xffL) << 8) | (buffer[pos] & 0xffL));
-
-
-                    doubleValue = Double.longBitsToDouble(tmpLong);
-                    pos += 8;
-                    bytesToRead -= 8;
-                    Preferences.debug("Read VT_DATE with value = " + doubleValue + "\n");
-                    break;
-                case VT_BSTR:
-                    stringBytes = (((buffer[pos + 3] & 0xff) << 24) | ((buffer[pos + 2] & 0xff) << 16) | 
-                                 ((buffer[pos + 1] & 0xff) << 8) | (buffer[pos] & 0xff));
-                    pos += 4;
-                    bytesToRead -= 4;
-                    b = new byte[stringBytes];
-                    for (i = 0; i < stringBytes; i++) {
-                        b[i] = buffer[pos++];
-                    }
-                    bytesToRead -= stringBytes;
-                    str = new String(b, "UTF-16LE").trim();
-                    Preferences.debug("Read String = " + str + "\n");
-                    break;
-                case VT_STORED_OBJECT:
-                    stringBytes = (((buffer[pos + 1] & 0xff) << 8) | (buffer[pos] & 0xff));
-                    pos += 2;
-                    bytesToRead -= 2;
-                    b = new byte[stringBytes];
-                    for (i = 0; i < stringBytes; i++) {
-                        b[i] = buffer[pos++];
-                    }
-                    bytesToRead -= stringBytes;
-                    str = new String(b, "UTF-16LE").trim();
-                    Preferences.debug("The name of sibling storage = " + str + "\n");
-                    // If desired use OleLoad to instantiate the object from storage
-                    // Can be ignored if the referenced object is of no importance
-                    // because stored objects use independent storage elements
-                    break;
-                case VT_DISPATCH:
-                    // This may impose problems because the objects must either be empty(CLSID_NULL)
-                    // or creatable via OldLoadFromStream, otherwise the stream cursor cannot be
-                    // positioned properly.
-                    Preferences.debug("Read VT_DISPATCH\n");
-                    break;
-                case VT_UNKNOWN:
-                    // This may impose problems because the objects must either be empty(CLSID_NULL)
-                    // or creatable via OldLoadFromStream, otherwise the stream cursor cannot be
-                    // positioned properly.
-                    Preferences.debug("Read VT_UNKNOWN\n");
-                    break;
-                default:
-                    Preferences.debug("Bytes left unread = " + bytesToRead + "\n");
-                    bytesToRead = 0;
-                    Preferences.debug("Unknown dataType = " + dataType + "\n");
-            } // switch(dataType)
-        } // while (bytesToRead > 0)
-        
-        
-    } // readBlock
-    
-    /**
-     * Finds the first occurrence of the given byte block within the file,
-     * starting from the given file position.
-     */
-    private long findBlock(RandomAccessFile in, byte[] block, long start)
-      throws IOException
-    {
-      long filePos = start;
-      long fileSize = in.length();
-      byte[] buf = new byte[BUFFER_SIZE];
-      long spot = -1;
-      int step = 0;
-      boolean found = false;
-      in.seek(start);
-
-      while (true) {
-        int len = (int) (fileSize - filePos);
-        if (len < 0) break;
-        if (len > buf.length) len = buf.length;
-        in.readFully(buf, 0, len);
-
-        for (int i=0; i<len; i++) {
-          if (buf[i] == block[step]) {
-            if (step == 0) {
-              // could be a match; flag this spot
-              spot = filePos + i;
-            }
-            step++;
-            if (step == block.length) {
-              // found complete match; done searching
-              found = true;
-              break;
-            }
-          }
-          else {
-            // no match; reset step indicator
-            spot = -1;
-            step = 0;
-          }
-        }
-        if (found) break; // found a match; we're done
-        if (len < buf.length) break; // EOF reached; we're done
-
-        filePos += len;
-      }
-
-      // set file pointer to byte immediately following pattern
-      if (spot >= 0) in.seek(spot + block.length);
-
-      return spot;
-    }
 
 
     
