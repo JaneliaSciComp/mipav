@@ -104,6 +104,8 @@ public class FileZVI extends FileBase {
     // Sector allocation table
     private int sat[] = null;
     
+    private boolean add128 = false;
+    
     private int minC = Integer.MAX_VALUE;
     
     private int maxC = Integer.MIN_VALUE;
@@ -148,6 +150,13 @@ public class FileZVI extends FileBase {
         imgBuffer = null;
         imgResols = null;
         LUT = null;
+        zArray = null;
+        cArray = null;
+        tArray = null;
+        shortSectorTable = null;
+        startSectorArray = null;
+        offsetArray = null;
+        sat = null;
         
         try {
             super.finalize();
@@ -391,13 +400,23 @@ public class FileZVI extends FileBase {
                                 presentSector = startSectorArray[i];
                                 bytesToRead = sliceBytes;
                                 bytesRead = 0;
-                                raFile.seek((presentSector+1)*sectorSize + offsetArray[i]);
+                                if (add128) {
+                                    raFile.seek((presentSector+1)*sectorSize + 128 + offsetArray[i]);
+                                }
+                                else {
+                                    raFile.seek((presentSector+1)*sectorSize + offsetArray[i]);   
+                                }
                                 raFile.read(byteBuffer, 0, Math.min(sectorSize-offsetArray[i], bytesToRead));
                                 bytesRead += Math.min(sectorSize-offsetArray[i], bytesToRead);
                                 bytesToRead -= Math.min(sectorSize-offsetArray[i], bytesToRead);
                                 presentSector = sat[presentSector];
                                 while (bytesToRead > 0) {
-                                    raFile.seek((presentSector+1)*sectorSize);
+                                    if (add128) {
+                                        raFile.seek((presentSector+1)*sectorSize + 128);
+                                    }
+                                    else {
+                                        raFile.seek((presentSector+1)*sectorSize);    
+                                    }
                                     raFile.read(byteBuffer, bytesRead, Math.min(sectorSize, bytesToRead));
                                     bytesRead += Math.min(sectorSize, bytesToRead);
                                     bytesToRead -= Math.min(sectorSize, bytesToRead);
@@ -582,15 +601,27 @@ public class FileZVI extends FileBase {
         int width = 0;
         int height = 0;
         int pixelWidth = 0;
+        long shortSectorTableAddress;
+        long directoryStart;
         //      Start reading ole compound file structure
-        // The header is always 512 bytes long and always located at offset zero.
+        // The header is always 512 bytes long and should be located at offset zero.
         // Offset 0 Length 8 bytes olecf file signature
         long olecfFileSignature = getLong(endianess);
         if (olecfFileSignature == 0xe11ab1a1e011cfd0L) {
-            Preferences.debug("Found olecf file signature\n");
+            Preferences.debug("Found olecf file signature at position 0\n");
         }
         else {
-            Preferences.debug("Instead of olecf file signature found = " + olecfFileSignature + "\n");
+            Preferences.debug("Instead of olecf file signature found = " + olecfFileSignature + " at position 0\n");
+            Preferences.debug("Look for file signature at position 128\n");
+            raFile.seek(128);
+            olecfFileSignature = getLong(endianess);
+            if (olecfFileSignature == 0xe11ab1a1e011cfd0L) {
+                add128 = true;
+                Preferences.debug("Found olecf file signature at position 128\n");
+            }
+            else {
+                Preferences.debug("Instead of olecf file signature found = " + olecfFileSignature + " at position 128\n");
+            }
         }
         
         // Location 8 Length 16 bytes class id
@@ -702,7 +733,12 @@ public class FileZVI extends FileBase {
             sectors[i] = readInt(endianess);
             Preferences.debug("Sector " + i + " = " + sectors[i] + "\n");
             pos = raFile.getFilePointer(); 
-            raFile.seek((sectors[i]+1)*sectorSize);
+            if (add128) {
+                raFile.seek((sectors[i]+1)*sectorSize + 128);    
+            }
+            else {
+                raFile.seek((sectors[i]+1)*sectorSize);
+            }
             for (j = 0; j < sectorSize/4; j++) {
                 sat[sp]= getInt(endianess);
                 if (sp == 0) {
@@ -719,11 +755,41 @@ public class FileZVI extends FileBase {
             }
             raFile.seek(pos);
         } // for (i = 0; i < Math.min(sectorNumber, 109); i++)
+        if (sectorNumber > 109) {
+            if (add128) {
+                raFile.seek((difStartSector+1)*sectorSize + 128);    
+            }
+            else {
+                raFile.seek((difStartSector+1)*sectorSize);
+            }
+            for (i = 109; i < sectorNumber; i++) {
+                sectors[i] = readInt(endianess);
+                Preferences.debug("Sector " + i + " = " + sectors[i] + "\n");
+                pos = raFile.getFilePointer(); 
+                if (add128) {
+                    raFile.seek((sectors[i]+1)*sectorSize + 128);    
+                }
+                else {
+                    raFile.seek((sectors[i]+1)*sectorSize);
+                }
+                for (j = 0; j < sectorSize/4; j++) {
+                    sat[sp]= getInt(endianess);
+                    Preferences.debug("sat[" + sp + "] = " + sat[sp] + "\n");
+                    sp++;
+                }
+                raFile.seek(pos);  
+            } // for (i = 109; i < sectorNumber; i++)
+        } // if (sectorNumber > 109)
         
         // Read short sector allocation table
         if (shortTableSectors > 0) {
             Preferences.debug("\nReading the short sector allocation table\n");
-            long shortSectorTableAddress = (shortStartSector+1)*sectorSize;
+            if (add128) {
+                shortSectorTableAddress = (shortStartSector+1)*sectorSize + 128;    
+            }
+            else {
+                shortSectorTableAddress = (shortStartSector+1)*sectorSize;
+            }
             int shortSector = shortStartSector;
             raFile.seek(shortSectorTableAddress);
             shortSectorTable = new int[(int)shortTableSectors*sectorSize/4];
@@ -732,7 +798,12 @@ public class FileZVI extends FileBase {
                 Preferences.debug("shortSectorTable[" + i + "] = " + shortSectorTable[i] + "\n");
                 if (((i+1) % (sectorSize/4) == 0) && ((i+1) < shortTableSectors*sectorSize/4)) {
                      shortSector = sat[shortSector];
-                     shortSectorTableAddress = (shortSector+1)*sectorSize;
+                     if (add128) {
+                         shortSectorTableAddress = (shortSector+1)*sectorSize + 128;
+                     }
+                     else {
+                         shortSectorTableAddress = (shortSector+1)*sectorSize;    
+                     }
                      raFile.seek(shortSectorTableAddress);
                 }
             }
@@ -762,10 +833,16 @@ public class FileZVI extends FileBase {
                     sat[directoryTable[directorySectors-1]] + 
                     " instead of expected -2\n");        
         }
+        
         // Read the first sector of the directory chain (also referred to as the first element of the 
         // Directory array, or SID 0) is known as the Root Directory Entry
         Preferences.debug("\nReading the first sector of the directory chain\n");
-        long directoryStart = (directoryTable[0]+1)*sectorSize;
+        if (add128) {
+            directoryStart = (directoryTable[0]+1)*sectorSize + 128;
+        }
+        else {
+            directoryStart = (directoryTable[0]+1)*sectorSize;    
+        }
         raFile.seek(directoryStart+64);
         // Read the length of the element name in bytes.  Each Unicode character is 2 bytes
         int elementNameBytes = getUnsignedShort(endianess);
@@ -1048,7 +1125,12 @@ public class FileZVI extends FileBase {
                             sectorsIntoShortStream = presentShortSector*shortSectorSize/sectorSize;
                             presentSector = shortSectors[sectorsIntoShortStream];
                             presentSectorOffset = (presentShortSector*shortSectorSize) % sectorSize;
-                            raFile.seek((presentSector+1)*sectorSize + presentSectorOffset);
+                            if (add128) {
+                                raFile.seek((presentSector+1)*sectorSize + 128 + presentSectorOffset);
+                            }
+                            else {
+                                raFile.seek((presentSector+1)*sectorSize + presentSectorOffset);    
+                            }
                             raFile.read(b, bytesRead, Math.min(shortSectorSize, bytesToRead));
                             bytesRead += Math.min(shortSectorSize, bytesToRead);
                             bytesToRead -= Math.min(shortSectorSize, bytesToRead);
@@ -1058,7 +1140,12 @@ public class FileZVI extends FileBase {
                 else { // else streamSize >= miniSectorCutoff
                     presentSector = startSect;
                     while (bytesToRead > 0) {
-                        raFile.seek((presentSector+1)*sectorSize);
+                        if (add128) {
+                            raFile.seek((presentSector+1)*sectorSize + 128);
+                        }
+                        else {
+                            raFile.seek((presentSector+1)*sectorSize);    
+                        }
                         raFile.read(b, bytesRead, Math.min(sectorSize, bytesToRead));
                         bytesRead += Math.min(sectorSize, bytesToRead);
                         bytesToRead -= Math.min(sectorSize, bytesToRead);
@@ -1387,7 +1474,12 @@ public class FileZVI extends FileBase {
                             sectorsIntoShortStream = presentShortSector*shortSectorSize/sectorSize;
                             presentSector = shortSectors[sectorsIntoShortStream];
                             presentSectorOffset = (presentShortSector*shortSectorSize) % sectorSize;
-                            raFile.seek((presentSector+1)*sectorSize + presentSectorOffset);
+                            if (add128) {
+                                raFile.seek((presentSector+1)*sectorSize + 128 + presentSectorOffset);
+                            }
+                            else {
+                                raFile.seek((presentSector+1)*sectorSize + presentSectorOffset);    
+                            }
                             raFile.read(b, bytesRead, Math.min(shortSectorSize, bytesToRead));
                             bytesRead += Math.min(shortSectorSize, bytesToRead);
                             bytesToRead -= Math.min(shortSectorSize, bytesToRead);
@@ -1396,7 +1488,12 @@ public class FileZVI extends FileBase {
                 } // if (streamSize < miniSectorCutoff)
                 else { // else streamSize >= miniSectorCutoff
                     // One sector is plenty to read for getting the data fields before the raw image data
-                    raFile.seek((startSect+1)*sectorSize);
+                    if (add128) {
+                        raFile.seek((startSect+1)*sectorSize + 128);
+                    }
+                    else {
+                        raFile.seek((startSect+1)*sectorSize);
+                    }
                     raFile.read(b, 0, Math.min(sectorSize, bytesToRead));
                     /*presentSector = startSect;
                     while (bytesToRead > 0) {
@@ -1790,7 +1887,12 @@ public class FileZVI extends FileBase {
                             sectorsIntoShortStream = presentShortSector*shortSectorSize/sectorSize;
                             presentSector = shortSectors[sectorsIntoShortStream];
                             presentSectorOffset = (presentShortSector*shortSectorSize) % sectorSize;
-                            raFile.seek((presentSector+1)*sectorSize + presentSectorOffset);
+                            if (add128) {
+                                raFile.seek((presentSector+1)*sectorSize + 128 + presentSectorOffset);
+                            }
+                            else {
+                                raFile.seek((presentSector+1)*sectorSize + presentSectorOffset);    
+                            }
                             raFile.read(b, bytesRead, Math.min(shortSectorSize, bytesToRead));
                             bytesRead += Math.min(shortSectorSize, bytesToRead);
                             bytesToRead -= Math.min(shortSectorSize, bytesToRead);
@@ -1800,7 +1902,12 @@ public class FileZVI extends FileBase {
                 else { // else streamSize >= miniSectorCutoff
                     presentSector = startSect;
                     while (bytesToRead > 0) {
-                        raFile.seek((presentSector+1)*sectorSize);
+                        if (add128) {
+                            raFile.seek((presentSector+1)*sectorSize + 128);
+                        }
+                        else {
+                            raFile.seek((presentSector+1)*sectorSize);   
+                        }
                         raFile.read(b, bytesRead, Math.min(sectorSize, bytesToRead));
                         bytesRead += Math.min(sectorSize, bytesToRead);
                         bytesToRead -= Math.min(sectorSize, bytesToRead);
@@ -1866,11 +1973,14 @@ public class FileZVI extends FileBase {
                         Preferences.debug("dType = " + dType + " instead of expected VT_R8 for unused scaling factor\n");
                         break;
                     }
-                    long tmpLong = (((long) b[bp+7] << 56) | ((long) b[bp+6] << 48) | ((long) b[bp+5] << 40) | ((long) b[bp+4] << 32) |
-                            ((long) b[bp+3] << 24) | ((long) b[bp+2] << 16) | ((long) b[bp+1] << 8) | (long) b[bp]);
+                    long tmpLong = (((b[bp+7] & 0xffL) << 56) | ((b[bp+6] & 0xffL) << 48) | ((b[bp+5] & 0xffL) << 40) | 
+                            ((b[bp+4] & 0xffL) << 32) | ((b[bp+3] & 0xffL) << 24) | ((b[bp+2] & 0xffL) << 16) |
+                            ((b[bp+1] & 0xffL) << 8) | (b[bp] & 0xffL));
                     bp += 8;
                     double scalingFactor = Double.longBitsToDouble(tmpLong);
                     Preferences.debug("Scaling factor (units per pixel) = " + scalingFactor + "\n");
+                    fileInfo.setResolutions((float)scalingFactor, 0);
+                    fileInfo.setResolutions((float)scalingFactor, 1);
                     dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 2;
                     if (dType == VT_I4) {
@@ -1883,30 +1993,70 @@ public class FileZVI extends FileBase {
                     int scalingUnitType = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
+                    int measureUnits;
                     switch (scalingUnitType) {
                         case 0:
                             Preferences.debug("Scaling unit type = no scaling\n");
+                            measureUnits = FileInfoBase.UNKNOWN_MEASURE;
                             break;
                         case 72:
                             Preferences.debug("Scaling unit type = meter\n");
+                            measureUnits = FileInfoBase.METERS;
                             break;
                         case 76:
                             Preferences.debug("Scaling unit type = micrometer\n");
+                            measureUnits = FileInfoBase.MICROMETERS;
                             break;
                         case 77:
                             Preferences.debug("Scaling unit type = nanometer\n");
+                            measureUnits = FileInfoBase.NANOMETERS;
                             break;
+                        case 81:
+                             Preferences.debug("Scaling unit type = inch\n");
+                             measureUnits = FileInfoBase.INCHES;
+                             break;
                         case 84:
                             Preferences.debug("Scaling unit type = mil (thousandth of an inch)\n");
+                            measureUnits = FileInfoBase.MILS;
                             break;
+                        case 136:
+                            Preferences.debug("Scaling unit type = second\n");
+                            measureUnits = FileInfoBase.SECONDS;
+                            break;
+                        case 139:
+                            Preferences.debug("Scaling unit type = millisecond\n");
+                            measureUnits = FileInfoBase.MILLISEC;
+                            break;
+                        case 140:
+                            Preferences.debug("Scaling unit type = microsecond\n");
+                            measureUnits = FileInfoBase.MICROSEC;
+                            break;
+                        case 145:
+                            Preferences.debug("Scaling unit type = minute\n");
+                            measureUnits = FileInfoBase.MINUTES;
+                            break;
+                        case 146:
+                            Preferences.debug("Scaling unit type = hour\n");
+                            measureUnits = FileInfoBase.HOURS;
+                            break;
+                        default:
+                            Preferences.debug("Scaling unit type is an unrecognized " + scalingUnitType + "\n");
+                            measureUnits = FileInfoBase.UNKNOWN_MEASURE;     
                     }
+                    fileInfo.setUnitsOfMeasure(measureUnits, 0);
+                    fileInfo.setUnitsOfMeasure(measureUnits, 1);
                     
                     break;
                 } // while (true)
             } // if ((lastElementName.equals("Scaling")) &&
             
             if ((directoryEntry % maximumDirectoryEntriesPerSector) == 0) {
-                directoryStart =  (directoryTable[++dp]+1)*sectorSize;
+                if (add128) {
+                    directoryStart =  (directoryTable[++dp]+1)*sectorSize + 128;
+                }
+                else {
+                    directoryStart =  (directoryTable[++dp]+1)*sectorSize;    
+                }
             }
             
         } // while (true)
