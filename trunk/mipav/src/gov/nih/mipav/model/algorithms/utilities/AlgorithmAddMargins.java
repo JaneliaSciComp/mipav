@@ -237,9 +237,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                 String stringForDicom = Float.toString(newOrigin[0]) + "\\" + Float.toString(newOrigin[1]) +
                 "\\" + Float.toString(newOrigin[2]);
-                if (fileInfoBuffer.getTagTable().getValue("0020,0032") != null) {
-                    fileInfoBuffer.getTagTable().setValue("0020,0032", stringForDicom, stringForDicom.length());
-                }
+                fileInfoBuffer.getTagTable().setValue("0020,0032", stringForDicom, stringForDicom.length());
                 fileInfoBuffer.setOrigin(newOrigin);
                 kWrite.setFileInfo(fileInfoBuffer, 0);
 
@@ -317,18 +315,14 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         stringForDicom = Float.toString(newOrigin[0]) + "\\" +
                         Float.toString(newOrigin[1]) + "\\" +
                         Float.toString(newOrigin[2]);
-                        if (fileInfoDicomBuffer[Z].getTagTable().getValue("0020,0032") != null) {
-                            fileInfoDicomBuffer[Z].getTagTable().setValue("0020,0032", stringForDicom,
+                        fileInfoDicomBuffer[Z].getTagTable().setValue("0020,0032", stringForDicom,
                                 stringForDicom.length());
-                        }
                         fileInfoDicomBuffer[Z].setOrigin(newOrigin);
 
                         // readjust the slice location ("0020,1041")
                         stringForDicom = String.valueOf(newOrigin[2]);
-                        if (fileInfoDicomBuffer[Z].getTagTable().getValue("0020,1041") != null) {
                             fileInfoDicomBuffer[Z].getTagTable().setValue("0020,1041", stringForDicom,
                                 stringForDicom.length());
-                        }
 
                         // set image columns ("0028,0011")
                         // stringForDicom = String.valueOf(destImage.getExtents()[0]);
@@ -392,7 +386,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             origin = fileInfoBuffer.getOrigin().clone();
         }
 
-        for (int i = 0; i < srcImg.getNDims(); i++) {
+        for (int i = 0; i < Math.min(3, srcImg.getNDims()); i++) {
             int axisOrient = fileInfoBuffer.getAxisOrientation(i);
 
             if ((axisOrient == FileInfoBase.ORI_A2P_TYPE) || (axisOrient == FileInfoBase.ORI_R2L_TYPE) ||
