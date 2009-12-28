@@ -237,7 +237,9 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                 String stringForDicom = Float.toString(newOrigin[0]) + "\\" + Float.toString(newOrigin[1]) +
                 "\\" + Float.toString(newOrigin[2]);
-                fileInfoBuffer.getTagTable().setValue("0020,0032", stringForDicom, stringForDicom.length());
+                if (fileInfoBuffer.getTagTable().getValue("0020,0032") != null) {
+                    fileInfoBuffer.getTagTable().setValue("0020,0032", stringForDicom, stringForDicom.length());
+                }
                 fileInfoBuffer.setOrigin(newOrigin);
                 kWrite.setFileInfo(fileInfoBuffer, 0);
 
@@ -315,14 +317,18 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         stringForDicom = Float.toString(newOrigin[0]) + "\\" +
                         Float.toString(newOrigin[1]) + "\\" +
                         Float.toString(newOrigin[2]);
-                        fileInfoDicomBuffer[Z].getTagTable().setValue("0020,0032", stringForDicom,
+                        if (fileInfoDicomBuffer[Z].getTagTable().getValue("0020,0032") != null) {
+                            fileInfoDicomBuffer[Z].getTagTable().setValue("0020,0032", stringForDicom,
                                 stringForDicom.length());
+                        }
                         fileInfoDicomBuffer[Z].setOrigin(newOrigin);
 
                         // readjust the slice location ("0020,1041")
                         stringForDicom = String.valueOf(newOrigin[2]);
-                        fileInfoDicomBuffer[Z].getTagTable().setValue("0020,1041", stringForDicom,
+                        if (fileInfoDicomBuffer[Z].getTagTable().getValue("0020,1041") != null) {
+                            fileInfoDicomBuffer[Z].getTagTable().setValue("0020,1041", stringForDicom,
                                 stringForDicom.length());
+                        }
 
                         // set image columns ("0028,0011")
                         // stringForDicom = String.valueOf(destImage.getExtents()[0]);
@@ -377,8 +383,9 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         FileInfoBase fileInfoBuffer = srcImg.getFileInfo()[0];
 
         float[] origin;
-
-        if (fileInfoBuffer.getFileFormat() == FileUtility.DICOM) {
+        
+        if ((fileInfoBuffer.getFileFormat() == FileUtility.DICOM) && 
+           (((FileInfoDicom)fileInfoBuffer).getTagTable().getValue("0020,0032") != null)) {
             FileInfoDicom fileDicom = (FileInfoDicom) fileInfoBuffer;
             origin = convertIntoFloat(fileDicom.parseTagValue("0020,0032"));
         } else {
