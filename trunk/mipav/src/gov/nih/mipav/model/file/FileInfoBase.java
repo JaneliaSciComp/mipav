@@ -41,65 +41,71 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /** Unit of measurement inches. */
     public static final int INCHES = 2;
+    
+    /** Units of measurement mil (thousandth of an inch) */
+    public static final int MILS = 3;
 
     /** Unit of measurement centimeters. */
-    public static final int CENTIMETERS = 3;
+    public static final int CENTIMETERS = 4;
 
     /** Unit of measurement angstroms. */
-    public static final int ANGSTROMS = 4;
+    public static final int ANGSTROMS = 5;
 
     /** Unit of measurement nanometers. */
-    public static final int NANOMETERS = 5;
+    public static final int NANOMETERS = 6;
 
     /** Unit of measurement micrometers. */
-    public static final int MICROMETERS = 6;
+    public static final int MICROMETERS = 7;
 
     /** Unit of measurement millimeters. */
-    public static final int MILLIMETERS = 7;
+    public static final int MILLIMETERS = 8;
 
     /** Unit of measurement meters. */
-    public static final int METERS = 8;
+    public static final int METERS = 9;
 
     /** Unit of measurement kilometers. */
-    public static final int KILOMETERS = 9;
+    public static final int KILOMETERS = 10;
 
     /** Unit of measurement miles. */
-    public static final int MILES = 10;
+    public static final int MILES = 11;
 
     /** Unit of measurement nanoseconds. */
-    public static final int NANOSEC = 11;
+    public static final int NANOSEC = 12;
 
     /** Unit of measurement microseconds. */
-    public static final int MICROSEC = 12;
+    public static final int MICROSEC = 13;
 
     /** Unit of measurement milliseconds. */
-    public static final int MILLISEC = 13;
+    public static final int MILLISEC = 14;
 
     /** Unit of measurement seconds. */
-    public static final int SECONDS = 14;
+    public static final int SECONDS = 15;
 
     /** Unit of measurement minutes. */
-    public static final int MINUTES = 15;
+    public static final int MINUTES = 16;
 
     /** Unit of measurement hours. */
-    public static final int HOURS = 16;
+    public static final int HOURS = 17;
 
     /** Unit of measurement hertz. */
-    public static final int HZ = 17;
+    public static final int HZ = 18;
 
     /** Unit of measurement part-per-million. */
-    public static final int PPM = 18;
+    public static final int PPM = 19;
 
     /** Radians per second. */
-    public static final int RADS = 19;
+    public static final int RADS = 20;
 
-    public static final int DEGREES = 20;
+    public static final int DEGREES = 21;
 
     /** String version of units of measurement - unknown. */
     public static final String UNKNOWN_STRING = "Unknown";
 
     /** String version of units of measurement - inches. */
     public static final String INCHES_STRING = "Inches";
+    
+    /** String version of units of measurement - mils. */
+    public static final String MILS_STRING = "Mils";
 
     /** String version of units of measurement - centimeters. */
     public static final String CENTIMETERS_STRING = "Centimeters";
@@ -159,7 +165,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * Array of all units --- the first value is unknown since all of the* static definitions start at 1 instead of 0.
      */
     private static final String[] allUnits = {FileInfoBase.UNKNOWN_STRING, FileInfoBase.UNKNOWN_STRING,
-            FileInfoBase.INCHES_STRING, FileInfoBase.CENTIMETERS_STRING, FileInfoBase.ANGSTROMS_STRING,
+            FileInfoBase.INCHES_STRING, FileInfoBase.MILS_STRING,
+            FileInfoBase.CENTIMETERS_STRING, FileInfoBase.ANGSTROMS_STRING,
             FileInfoBase.NANOMETERS_STRING, FileInfoBase.MICROMETERS_STRING, FileInfoBase.MILLIMETERS_STRING,
             FileInfoBase.METERS_STRING, FileInfoBase.KILOMETERS_STRING, FileInfoBase.MILES_STRING,
             FileInfoBase.NANOSEC_STRING, FileInfoBase.MICROSEC_STRING, FileInfoBase.MILLISEC_STRING,
@@ -171,18 +178,18 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * T - time (second) M - mass (kilogram) C - concentration (parts per million) A - angle (radians) F - frequency
      * (hertz) E - energy (joule) X - dimensionless (1)
      */
-    private static final char[] allUnitsConv = {'X', 'X', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'T', 'T', 'T',
+    private static final char[] allUnitsConv = {'X', 'X', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'T', 'T', 'T',
             'T', 'T', 'T', 'F', 'C', 'A', 'A'};
 
     /**
      * Array of all abbreviated units --- the first value is unknown since all of the* static definitions start at 1
      * instead of 0. Each string* can be no more than 4 characters.
      */
-    private static final String[] allAbbrevUnits = {"unk", "unk", "in", "cm", "A", "nm", "um", "mm", "m", "km", "mi",
+    private static final String[] allAbbrevUnits = {"unk", "unk", "in", "mil", "cm", "A", "nm", "um", "mm", "m", "km", "mi",
             "nsec", "usec", "msec", "sec", "min", "hr", "hz", "ppm", "rads", "deg"};
 
     /** Array of space units: inches, mm, etc. */
-    public static final String[] sUnits = {"Unknown", "Unknown", "Inches", "cm", "A", "nm", "um", "mm", "m", "km",
+    public static final String[] sUnits = {"Unknown", "Unknown", "Inches", "mil", "cm", "A", "nm", "um", "mm", "m", "km",
             "miles"};
 
     /** Array of time units: seconds, minutes, etc. */
@@ -196,7 +203,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      *  inches * 25.4f = mm
      *  mm / 25.4f = inches.
      *  */
-    public static final double[] conversionUnits = {1, 1, 25.4, 10, 1.0e-7, 1.0e-6, 1.0e-3, 1, 1.0e3, 1.0e6,
+    public static final double[] conversionUnits = {1, 1, 25.4, 2.54e-2, 10, 1.0e-7, 1.0e-6, 1.0e-3, 1, 1.0e3, 1.0e6,
         1609344 };
 
     /** Image modality unknown. */
