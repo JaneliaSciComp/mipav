@@ -17,6 +17,8 @@ public class FileZVI extends FileBase {
     
     private static final short VT_BOOL = 11;
     
+    private static final short VT_I2 = 2;
+    
     private static final short VT_UI2 = 18;
     
     private static final short VT_I4 = 3;
@@ -603,6 +605,14 @@ public class FileZVI extends FileBase {
         int pixelWidth = 0;
         long shortSectorTableAddress;
         long directoryStart;
+        int intValue = 0;
+        int stringBytes;
+        String stringValue;
+        double doubleValue = 0.0;
+        short shortValue;
+        long tmpLong;
+        boolean booleanValue;
+        int measureUnits;
         //      Start reading ole compound file structure
         // The header is always 512 bytes long and should be located at offset zero.
         // Offset 0 Length 8 bytes olecf file signature
@@ -731,7 +741,7 @@ public class FileZVI extends FileBase {
         int sp = 0;
         for (i = 0; i < Math.min(sectorNumber,109); i++) {
             sectors[i] = readInt(endianess);
-            Preferences.debug("Sector " + i + " = " + sectors[i] + "\n");
+            //Preferences.debug("Sector " + i + " = " + sectors[i] + "\n");
             pos = raFile.getFilePointer(); 
             if (add128) {
                 raFile.seek((sectors[i]+1)*sectorSize + 128);    
@@ -750,7 +760,7 @@ public class FileZVI extends FileBase {
                                       " instead of expected -3\n");
                     }
                 }
-                Preferences.debug("sat[" + sp + "] = " + sat[sp] + "\n");
+                //Preferences.debug("sat[" + sp + "] = " + sat[sp] + "\n");
                 sp++;
             }
             raFile.seek(pos);
@@ -764,7 +774,7 @@ public class FileZVI extends FileBase {
             }
             for (i = 109; i < sectorNumber; i++) {
                 sectors[i] = readInt(endianess);
-                Preferences.debug("Sector " + i + " = " + sectors[i] + "\n");
+                //Preferences.debug("Sector " + i + " = " + sectors[i] + "\n");
                 pos = raFile.getFilePointer(); 
                 if (add128) {
                     raFile.seek((sectors[i]+1)*sectorSize + 128);    
@@ -774,7 +784,7 @@ public class FileZVI extends FileBase {
                 }
                 for (j = 0; j < sectorSize/4; j++) {
                     sat[sp]= getInt(endianess);
-                    Preferences.debug("sat[" + sp + "] = " + sat[sp] + "\n");
+                    //Preferences.debug("sat[" + sp + "] = " + sat[sp] + "\n");
                     sp++;
                 }
                 raFile.seek(pos);  
@@ -795,7 +805,7 @@ public class FileZVI extends FileBase {
             shortSectorTable = new int[(int)shortTableSectors*sectorSize/4];
             for (i = 0; i < shortTableSectors*sectorSize/4; i++) {
                 shortSectorTable[i] = readInt(endianess);
-                Preferences.debug("shortSectorTable[" + i + "] = " + shortSectorTable[i] + "\n");
+                //Preferences.debug("shortSectorTable[" + i + "] = " + shortSectorTable[i] + "\n");
                 if (((i+1) % (sectorSize/4) == 0) && ((i+1) < shortTableSectors*sectorSize/4)) {
                      shortSector = sat[shortSector];
                      if (add128) {
@@ -1192,7 +1202,7 @@ public class FileZVI extends FileBase {
                     }
                     else if (dType == VT_BSTR) {
                         Preferences.debug("VT_BSTR for type description\n");
-                        int stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                        stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                                 ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                         bp += 4;
                         bf = new byte[stringBytes];
@@ -1214,7 +1224,7 @@ public class FileZVI extends FileBase {
                     }
                     else if (dType == VT_BSTR) {
                         Preferences.debug("VT_BSTR for name of zvi file\n");
-                        int stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                        stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                                 ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                         bp += 4;
                         bf = new byte[stringBytes];
@@ -1544,7 +1554,7 @@ public class FileZVI extends FileBase {
                     }
                     else if (dType == VT_BSTR) {
                         Preferences.debug("VT_BSTR for type description\n");
-                        int stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                        stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                                 ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                         bp += 4;
                         bf = new byte[stringBytes];
@@ -1566,7 +1576,7 @@ public class FileZVI extends FileBase {
                     }
                     else if (dType == VT_BSTR) {
                         Preferences.debug("VT_BSTR for name of zvi file\n");
-                        int stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                        stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                                 ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                         bp += 4;
                         bf = new byte[stringBytes];
@@ -1632,37 +1642,7 @@ public class FileZVI extends FileBase {
                     pixelFormat = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
-                    switch(pixelFormat) {
-                        case 1:
-                            Preferences.debug("Pixel format = 8-bit B, G, R - 3 bytes/pixel\n");
-                            break;
-                        case 2:
-                            Preferences.debug("Pixel format = 8-bit B, G, R, A - 4 bytes/pixel\n");
-                            break;
-                        case 3:
-                            Preferences.debug("Pixel format = 8-bit grayscale\n");
-                            break;
-                        case 4:
-                            Preferences.debug("Pixel format = 16-bit integer\n");
-                            break;
-                        case 5:
-                            Preferences.debug("Pixel format = 32-bit integer\n");
-                            break;
-                        case 6:
-                            Preferences.debug("Pixel format = 32-bit IEEE float\n");
-                            break;
-                        case 7:
-                            Preferences.debug("Pixel format = 64-bit IEEE double\n");
-                            break;
-                        case 8:
-                            Preferences.debug("Pixel format = 16-bit B, G, R - 6 bytes/pixel\n");
-                            break;
-                        case 9:
-                            Preferences.debug("Pixel format = 32-bit B, G, R = 12 bytes/pixel\n");
-                            break;
-                        default:
-                            Preferences.debug("pixelFormat has an unrecognized value = " + pixelFormat + "\n");
-                    }
+                    displayPixelFormat(pixelFormat);
                     dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 2;
                     if (dType == VT_I4) {
@@ -1831,37 +1811,7 @@ public class FileZVI extends FileBase {
                     pixelFormat = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
-                    switch(pixelFormat) {
-                        case 1:
-                            Preferences.debug("Pixel format = 8-bit B, G, R - 3 bytes/pixel\n");
-                            break;
-                        case 2:
-                            Preferences.debug("Pixel format = 8-bit B, G, R, A - 4 bytes/pixel\n");
-                            break;
-                        case 3:
-                            Preferences.debug("Pixel format = 8-bit grayscale\n");
-                            break;
-                        case 4:
-                            Preferences.debug("Pixel format = 16-bit integer\n");
-                            break;
-                        case 5:
-                            Preferences.debug("Pixel format = 32-bit integer\n");
-                            break;
-                        case 6:
-                            Preferences.debug("Pixel format = 32-bit IEEE float\n");
-                            break;
-                        case 7:
-                            Preferences.debug("Pixel format = 64-bit IEEE double\n");
-                            break;
-                        case 8:
-                            Preferences.debug("Pixel format = 16-bit B, G, R - 6 bytes/pixel\n");
-                            break;
-                        case 9:
-                            Preferences.debug("Pixel format = 32-bit B, G, R = 12 bytes/pixel\n");
-                            break;
-                        default:
-                            Preferences.debug("pixelFormat has an unrecognized value = " + pixelFormat + "\n");
-                    }
+                    displayPixelFormat(pixelFormat);
                     // Valid bits per pixel in raw image data if 16 bit image (may be 12, 14, or 16)
                     validBitsPerPixel = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
@@ -1942,7 +1892,7 @@ public class FileZVI extends FileBase {
                         Preferences.debug("dType = " + dType + " instead of expected VT_BSTR for original key name\n");
                         break;
                     }
-                    int stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                    stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
                     bf = new byte[stringBytes];
@@ -1973,7 +1923,7 @@ public class FileZVI extends FileBase {
                         Preferences.debug("dType = " + dType + " instead of expected VT_R8 for unused scaling factor\n");
                         break;
                     }
-                    long tmpLong = (((b[bp+7] & 0xffL) << 56) | ((b[bp+6] & 0xffL) << 48) | ((b[bp+5] & 0xffL) << 40) | 
+                    tmpLong = (((b[bp+7] & 0xffL) << 56) | ((b[bp+6] & 0xffL) << 48) | ((b[bp+5] & 0xffL) << 40) | 
                             ((b[bp+4] & 0xffL) << 32) | ((b[bp+3] & 0xffL) << 24) | ((b[bp+2] & 0xffL) << 16) |
                             ((b[bp+1] & 0xffL) << 8) | (b[bp] & 0xffL));
                     bp += 8;
@@ -1993,62 +1943,662 @@ public class FileZVI extends FileBase {
                     int scalingUnitType = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
-                    int measureUnits;
-                    switch (scalingUnitType) {
-                        case 0:
-                            Preferences.debug("Scaling unit type = no scaling\n");
-                            measureUnits = FileInfoBase.UNKNOWN_MEASURE;
-                            break;
-                        case 72:
-                            Preferences.debug("Scaling unit type = meter\n");
-                            measureUnits = FileInfoBase.METERS;
-                            break;
-                        case 76:
-                            Preferences.debug("Scaling unit type = micrometer\n");
-                            measureUnits = FileInfoBase.MICROMETERS;
-                            break;
-                        case 77:
-                            Preferences.debug("Scaling unit type = nanometer\n");
-                            measureUnits = FileInfoBase.NANOMETERS;
-                            break;
-                        case 81:
-                             Preferences.debug("Scaling unit type = inch\n");
-                             measureUnits = FileInfoBase.INCHES;
-                             break;
-                        case 84:
-                            Preferences.debug("Scaling unit type = mil (thousandth of an inch)\n");
-                            measureUnits = FileInfoBase.MILS;
-                            break;
-                        case 136:
-                            Preferences.debug("Scaling unit type = second\n");
-                            measureUnits = FileInfoBase.SECONDS;
-                            break;
-                        case 139:
-                            Preferences.debug("Scaling unit type = millisecond\n");
-                            measureUnits = FileInfoBase.MILLISEC;
-                            break;
-                        case 140:
-                            Preferences.debug("Scaling unit type = microsecond\n");
-                            measureUnits = FileInfoBase.MICROSEC;
-                            break;
-                        case 145:
-                            Preferences.debug("Scaling unit type = minute\n");
-                            measureUnits = FileInfoBase.MINUTES;
-                            break;
-                        case 146:
-                            Preferences.debug("Scaling unit type = hour\n");
-                            measureUnits = FileInfoBase.HOURS;
-                            break;
-                        default:
-                            Preferences.debug("Scaling unit type is an unrecognized " + scalingUnitType + "\n");
-                            measureUnits = FileInfoBase.UNKNOWN_MEASURE;     
-                    }
+                    measureUnits = zviToMipavMeasurementUnits(scalingUnitType);
                     fileInfo.setUnitsOfMeasure(measureUnits, 0);
                     fileInfo.setUnitsOfMeasure(measureUnits, 1);
                     
                     break;
                 } // while (true)
             } // if ((lastElementName.equals("Scaling")) &&
+            
+            if ((lastElementName.equals("Tags")) &&
+                    (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize > 0)) {
+                Preferences.debug("Reading the contents stream of Tags storage\n");
+                      
+                bytesToRead = (int)streamSize;
+                b = new byte[bytesToRead];
+                bytesRead = 0;
+                    if (streamSize < miniSectorCutoff) {
+                        presentShortSector = startSect;
+                        while (bytesToRead > 0) {
+                            sectorsIntoShortStream = presentShortSector*shortSectorSize/sectorSize;
+                            presentSector = shortSectors[sectorsIntoShortStream];
+                            presentSectorOffset = (presentShortSector*shortSectorSize) % sectorSize;
+                            if (add128) {
+                                raFile.seek((presentSector+1)*sectorSize + 128 + presentSectorOffset);
+                            }
+                            else {
+                                raFile.seek((presentSector+1)*sectorSize + presentSectorOffset);    
+                            }
+                            raFile.read(b, bytesRead, Math.min(shortSectorSize, bytesToRead));
+                            bytesRead += Math.min(shortSectorSize, bytesToRead);
+                            bytesToRead -= Math.min(shortSectorSize, bytesToRead);
+                            presentShortSector = shortSectorTable[presentShortSector];
+                        }
+                } // if (streamSize < miniSectorCutoff)
+                else { // else streamSize >= miniSectorCutoff
+                    presentSector = startSect;
+                    while (bytesToRead > 0) {
+                        if (add128) {
+                            raFile.seek((presentSector+1)*sectorSize + 128);
+                        }
+                        else {
+                            raFile.seek((presentSector+1)*sectorSize);   
+                        }
+                        raFile.read(b, bytesRead, Math.min(sectorSize, bytesToRead));
+                        bytesRead += Math.min(sectorSize, bytesToRead);
+                        bytesToRead -= Math.min(sectorSize, bytesToRead);
+                        presentSector = sat[presentSector];
+                    }    
+                } // else streamSize >= miniSectorCutoff
+                trueLoop:
+                while (true) {
+                    bp = 0;
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for version\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for version\n");
+                        break;
+                    }
+                    minorVersion =  (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    Preferences.debug("Minor version is " + minorVersion + "\n");
+                    Preferences.debug("Current version is 4096\n");
+                    majorVersion =  (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    Preferences.debug("Major version is " + majorVersion + "\n");
+                    Preferences.debug("Current version is 8192\n");
+                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 2;
+                    if (dType == VT_I4) {
+                        Preferences.debug("Expected VT_I4 data type for count of token triples\n");
+                    }
+                    else {
+                        Preferences.debug("dType = " + dType + " instead of expected VT_I4 for count of token triples\n");
+                        break;
+                    }
+                    int tokenCount = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    bp += 4;
+                    Preferences.debug("Count of token triples = " + tokenCount + "\n");
+                    for (i = 0; i < tokenCount && bp < b.length - 13; i++) {
+                        short valueDType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        switch(valueDType) {
+                            case VT_EMPTY:
+                                Preferences.debug("Data type of value is VT_EMPTY\n");
+                                break;
+                            case VT_BOOL:
+                                Preferences.debug("Data type of value is VT_BOOL\n");
+                                shortValue = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                                if (shortValue != 0) {
+                                    booleanValue = true;
+                                }
+                                else {
+                                    booleanValue = false;
+                                }
+                                Preferences.debug("Value = " + booleanValue + "\n");
+                                bp += 2;
+                                break;
+                            case VT_I2:
+                                Preferences.debug("Data type of value is VT_I2\n");
+                                shortValue = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                                Preferences.debug("Value = " + shortValue + "\n");
+                                bp += 2;
+                                break;
+                            case VT_I4:
+                                Preferences.debug("Data type of value is VT_I4\n");
+                                intValue = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                           ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                                Preferences.debug("Value = " + intValue + "\n");
+                                bp += 4;
+                                break;
+                            case VT_R8:
+                                Preferences.debug("Data type of value is VT_R8\n");
+                                tmpLong = (((b[bp+7] & 0xffL) << 56) | ((b[bp+6] & 0xffL) << 48) | ((b[bp+5] & 0xffL) << 40) | 
+                                        ((b[bp+4] & 0xffL) << 32) | ((b[bp+3] & 0xffL) << 24) | ((b[bp+2] & 0xffL) << 16) |
+                                        ((b[bp+1] & 0xffL) << 8) | (b[bp] & 0xffL));
+                                bp += 8;
+                                doubleValue = Double.longBitsToDouble(tmpLong);
+                                Preferences.debug("Value = " + doubleValue + "\n");
+                                break;
+                            case VT_BSTR:
+                                Preferences.debug("Data type of value is VT_BSTR\n");
+                                stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                        ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                                bp += 4;
+                                bf = new byte[stringBytes];
+                                for (i = 0; i < stringBytes; i++) {
+                                    bf[i] = b[bp++];
+                                }
+                                stringValue = new String(b, "UTF-16LE").trim();
+                                //Preferences.debug("Value = " + valueString + "\n");
+                                break;
+                            case VT_STORED_OBJECT:
+                                Preferences.debug("Data type of value is VT_STORED_OBJECT\n");
+                                stringBytes = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                        ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                                bp += 4;
+                                bf = new byte[stringBytes];
+                                for (i = 0; i < stringBytes; i++) {
+                                    bf[i] = b[bp++];
+                                }
+                                stringValue = new String(b, "UTF-16LE").trim();
+                                //Preferences.debug("Value = " + valueString + "\n");
+                                break;
+                            case VT_DISPATCH:
+                                Preferences.debug("Data type of value is VT_DISPATCH\n");
+                                bp += 16;
+                                break;
+                            case VT_DATE:
+                                Preferences.debug("Data type of value is VT_DATE\n");
+                                tmpLong = (((b[bp+7] & 0xffL) << 56) | ((b[bp+6] & 0xffL) << 48) | ((b[bp+5] & 0xffL) << 40) | 
+                                        ((b[bp+4] & 0xffL) << 32) | ((b[bp+3] & 0xffL) << 24) | ((b[bp+2] & 0xffL) << 16) |
+                                        ((b[bp+1] & 0xffL) << 8) | (b[bp] & 0xffL));
+                                bp += 8;
+                                doubleValue = Double.longBitsToDouble(tmpLong);
+                                Preferences.debug("Value = " + doubleValue + "\n");
+                                break;
+                            default:
+                                Preferences.debug("Unrecognized data type of value = " + valueDType + "\n");
+                                break trueLoop;
+                        } // switch(dType)
+                        
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_I4) {
+                            Preferences.debug("Expected VT_I4 data type for tagID\n");
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_I4 for tagID\n");
+                            break trueLoop;
+                        }
+                        int tagID = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        switch(tagID) {
+                            case 222:
+                                Preferences.debug("tagID = Compression\n");
+                                break;
+                            case 257:
+                                Preferences.debug("tagID = Date mapping table\n");
+                                break;
+                            case 258:
+                                Preferences.debug("tagID = Black value\n");
+                                break;
+                            case 259:
+                                Preferences.debug("tagID = White value\n");
+                                break;
+                            case 260:
+                                Preferences.debug("tagID = Image data mapping auto range\n");
+                                break;
+                            case 261:
+                                Preferences.debug("tagID = Image thumbnail\n");
+                                break;
+                            case 262:
+                                Preferences.debug("tagID = Gamma value\n");
+                                break;
+                            case 264:
+                                Preferences.debug("tagID = Image over exposure\n");
+                                break;
+                            case 265:
+                                Preferences.debug("tagID = Image relative time 1\n");
+                                break;
+                            case 266:
+                                Preferences.debug("tagID = Image relative time 2\n");
+                                break;
+                            case 267:
+                                Preferences.debug("tagID = Image relative time 3\n");
+                                break;
+                            case 268:
+                                Preferences.debug("tagID = Image relative time 4\n");
+                                break;
+                            case 300:
+                                Preferences.debug("tagID = Image relative time\n");
+                                break;
+                            case 301:
+                                Preferences.debug("tagID = Image base time 1\n");
+                                break;
+                            case 302:
+                                Preferences.debug("tagID = Image base time 2\n");
+                                break;
+                            case 303:
+                                Preferences.debug("tagID = Image base time 3\n");
+                                break;
+                            case 304:
+                                Preferences.debug("tagID = Image base time 4\n");
+                                break;
+                            case 515:
+                                Preferences.debug("tagID = Image width in pixels\n");
+                                break;
+                            case 516:
+                                Preferences.debug("tagID = Image height in pixels\n");
+                                break;
+                            case 517:
+                                Preferences.debug("tagID = Image count raw\n");
+                                break;
+                            case 518:
+                                Preferences.debug("tagID = Pixel type\n");
+                                if (valueDType == VT_I4) {
+                                    displayPixelFormat(intValue);
+                                }
+                                break;
+                            case 519:
+                                Preferences.debug("tagID = Number raw images\n");
+                                break;
+                            case 520:
+                                Preferences.debug("tagID = Image size\n");
+                                break;
+                            case 521:
+                                Preferences.debug("tagID = Compression factor for save\n");
+                                break;
+                            case 522:
+                                Preferences.debug("tagID = Document save flags\n");
+                                break;
+                            case 523:
+                                Preferences.debug("tagID = Acquisition pause annotation\n");
+                                break;
+                            case 530:
+                                Preferences.debug("tagID = Document subtype\n");
+                                break;
+                            case 531:
+                                Preferences.debug("tagID = Acquisition bit depth\n");
+                                break;
+                            case 534:
+                                Preferences.debug("tagID = Z-stack single representative\n");
+                                break;
+                            case 769:
+                                Preferences.debug("tagID = Scale factor for X\n");
+                                if ((valueDType == VT_R8) && (doubleValue != 1.0)) {
+                                    fileInfo.setResolutions((float)doubleValue, 0);
+                                }
+                                break;
+                            case 770:
+                                Preferences.debug("tagID = Scale unit for X\n");
+                                if (valueDType == VT_I4) {
+                                    measureUnits = zviToMipavMeasurementUnits(intValue);
+                                    if (measureUnits != FileInfoBase.UNKNOWN_MEASURE) {
+                                        fileInfo.setUnitsOfMeasure(measureUnits, 0);
+                                    }
+                                }
+                                break;
+                            case 771:
+                                Preferences.debug("tagID = Scale width\n");
+                                break;
+                            case 772:
+                                Preferences.debug("tagID = Scale factor for Y\n");
+                                if ((valueDType == VT_R8) && (doubleValue != 1.0)) {
+                                    fileInfo.setResolutions((float)doubleValue, 1);
+                                }
+                                break;
+                            case 773:
+                                Preferences.debug("tagID = Scale unit for Y\n");
+                                if (valueDType == VT_I4) {
+                                    measureUnits = zviToMipavMeasurementUnits(intValue);
+                                    if (measureUnits != FileInfoBase.UNKNOWN_MEASURE) {
+                                            fileInfo.setUnitsOfMeasure(measureUnits, 1);
+                                    }
+                                }
+                                break;
+                            case 774:
+                                Preferences.debug("tagID = Scale height\n");
+                                break;
+                            case 775:
+                                Preferences.debug("tagID = Scale factor for Z\n");
+                                if ((valueDType == VT_R8) && (doubleValue != 1.0)) {
+                                    fileInfo.setResolutions((float)doubleValue, 2);
+                                }
+                                break;
+                            case 776:
+                                Preferences.debug("tagID = Scale unit for Z\n");
+                                if (valueDType == VT_I4) {
+                                    measureUnits = zviToMipavMeasurementUnits(intValue);
+                                    if (measureUnits != FileInfoBase.UNKNOWN_MEASURE) {
+                                        fileInfo.setUnitsOfMeasure(measureUnits, 2);
+                                    }
+                                }
+                                break;
+                            case 777:
+                                Preferences.debug("tagID = Scale depth\n");
+                                break;
+                            case 778:
+                                Preferences.debug("tagID = Scaling parent\n");
+                                break;
+                            case 1001:
+                                Preferences.debug("tagID = Date\n");
+                                break;
+                            case 1002:
+                                Preferences.debug("tagID = Code\n");
+                                break;
+                            case 1003:
+                                Preferences.debug("tagID = Source\n");
+                                break;
+                            case 1004:
+                                Preferences.debug("tagID = Message\n");
+                                break;
+                            case 1025:
+                                Preferences.debug("tagID = Cmaera image acquisition time\n");
+                                break;
+                            case 1026:
+                                Preferences.debug("tagID = 8-bit acquisition\n");
+                                break;
+                            case 1027:
+                                Preferences.debug("tagID = Camera bit depth\n");
+                                break;
+                            case 1029:
+                                Preferences.debug("tagID = Mono reference low\n");
+                                break;
+                            case 1030:
+                                Preferences.debug("tagID = Mono reference high\n");
+                                break;
+                            case 1031:
+                                Preferences.debug("tagID = Red reference low\n");
+                                break;
+                            case 1032:
+                                Preferences.debug("tagID = Red reference high\n");
+                                break;
+                            case 1033:
+                                Preferences.debug("tagID = Green reference low\n");
+                                break;
+                            case 1034:
+                                Preferences.debug("tagID = Green reference high\n");
+                                break;
+                            case 1035:
+                                Preferences.debug("tagID = Blue reference low\n");
+                                break;
+                            case 1036:
+                                Preferences.debug("tagID = Blue reference high\n");
+                                break;
+                            case 1041:
+                                Preferences.debug("tagID = Framegrabber name\n");
+                                break;
+                            case 1042:
+                                Preferences.debug("tagID = Camera\n");
+                                break;
+                            case 1044:
+                                Preferences.debug("tagID = Camera trigger signal type\n");
+                                break;
+                            case 1045:
+                                Preferences.debug("tagID = Camera trigger enable\n");
+                                break;
+                            case 1046:
+                                Preferences.debug("tagID = Grabber timeout\n");
+                                break;
+                            case 1281:
+                                Preferences.debug("tagID = Multichannel enabled\n");
+                                break;
+                            case 1282:
+                                Preferences.debug("tagID = Multichannel color\n");
+                                break;
+                            case 1283:
+                                Preferences.debug("tagID = Multichannel weight\n");
+                                break;
+                            case 1284:
+                                Preferences.debug("tagID = Channel name\n");
+                                break;
+                            case 1536:
+                                Preferences.debug("tagID = Document information group\n");
+                                break;
+                            case 1537:
+                                Preferences.debug("tagID = Title\n");
+                                break;
+                            case 1538:
+                                Preferences.debug("tagID = Author\n");
+                                break;
+                            case 1539:
+                                Preferences.debug("tagID = Keywords\n");
+                                break;
+                            case 1540:
+                                Preferences.debug("tagID = Comments\n");
+                                break;
+                            case 1541:
+                                Preferences.debug("tagID = Sample ID\n");
+                                break;
+                            case 1542:
+                                Preferences.debug("tagID = Subject\n");
+                                break;
+                            case 1543:
+                                Preferences.debug("tagID = Revision number\n");
+                                break;
+                            case 1544:
+                                Preferences.debug("tagID = Save folder\n");
+                                break;
+                            case 1545:
+                                Preferences.debug("tagID = File link\n");
+                                break;
+                            case 1546:
+                                Preferences.debug("tagID = Document type\n");
+                                break;
+                            case 1547:
+                                Preferences.debug("tagID = Storage media\n");
+                                break;
+                            case 1548:
+                                Preferences.debug("tagID = File ID\n");
+                                break;
+                            case 1549:
+                                Preferences.debug("tagID = Reference\n");
+                                break;
+                            case 1550:
+                                Preferences.debug("tagID = File date\n");
+                                break;
+                            case 1551:
+                                Preferences.debug("tagID = File size\n");
+                                break;
+                            case 1553:
+                                Preferences.debug("tagID = Filename\n");
+                                break;
+                            case 1554:
+                                Preferences.debug("tagID = File attributes\n");
+                                break;
+                            case 1792:
+                                Preferences.debug("tagID = Project group\n");
+                                break;
+                            case 1793:
+                                Preferences.debug("tagID = Acquisition date\n");
+                                break;
+                            case 1794:
+                                Preferences.debug("tagID = Last modified by\n");
+                                break;
+                            case 1795:
+                                Preferences.debug("tagID = User company\n");
+                                break;
+                            case 1796:
+                                Preferences.debug("tagID = User company logo\n");
+                                break;
+                            case 1797:
+                                Preferences.debug("tagID = Image\n");
+                                break;
+                            case 1800:
+                                Preferences.debug("tagID = User ID\n");
+                                break;
+                            case 1801:
+                                Preferences.debug("tagID = User name\n");
+                                break;
+                            case 1802:
+                                Preferences.debug("tagID = User city\n");
+                                break;
+                            case 1803:
+                                Preferences.debug("tagID = User address\n");
+                                break;
+                            case 1804:
+                                Preferences.debug("tagID = User country\n");
+                                break;
+                            case 1805:
+                                Preferences.debug("tagID = User phone\n");
+                                break;
+                            case 1806:
+                                Preferences.debug("tagID = User fax\n");
+                                break;
+                            case 2049:
+                                Preferences.debug("tagID = Objective name\n");
+                                break;
+                            case 2050:
+                                Preferences.debug("tagID = Optovar\n");
+                                break;
+                            case 2051:
+                                Preferences.debug("tagID = Reflector\n");
+                                break;
+                            case 2052:
+                                Preferences.debug("tagID = Condneser contrast\n");
+                                break;
+                            case 2053:
+                                Preferences.debug("tagID = Transmitted light filter 1\n");
+                                break;
+                            case 2054:
+                                Preferences.debug("tagID = Transmitted light filter 2\n");
+                                break;
+                            case 2055:
+                                Preferences.debug("tagID = Reflected light shutter\n");
+                                break;
+                            case 2056:
+                                Preferences.debug("tagID = Condenser front lens\n");
+                                break;
+                            case 2057:
+                                Preferences.debug("tagID = Excitation filer name\n");
+                                break;
+                            case 2060:
+                                Preferences.debug("tagID = Transmitted light fieldstop aperture\n");
+                                break;
+                            case 2061:
+                                Preferences.debug("tagID = Reflected light aperture\n");
+                                break;
+                            case 2062:
+                                Preferences.debug("tagID = Condenser N.A.\n");
+                                break;
+                            case 2063:
+                                Preferences.debug("tagID = Light path\n");
+                                break;
+                            case 2064:
+                                Preferences.debug("tagID = Halogen lamp on\n");
+                                break;
+                            case 2065:
+                                Preferences.debug("tagID = Halogen lamp mode\n");
+                                break;
+                            case 2066:
+                                Preferences.debug("tagID = Halogen lamp voltage\n");
+                                break;
+                            case 2068:
+                                Preferences.debug("tagID = Fluorescence lamp level\n");
+                                break;
+                            case 2069:
+                                Preferences.debug("tagID = Fluorsecence lamp intensity\n");
+                                break;
+                            case 2070:
+                                Preferences.debug("tagID = Light manager is enabled\n");
+                                break;
+                            case 2072:
+                                Preferences.debug("tagID = Focus position\n");
+                                break;
+                            case 2073:
+                                Preferences.debug("tagID = Stage position X\n");
+                                break;
+                            case 2074:
+                                Preferences.debug("tagID = Stage position Y\n");
+                                break;
+                            case 2075:
+                                Preferences.debug("tagID = Microscope name\n");
+                                break;
+                            case 2076:
+                                Preferences.debug("tagID = Objective magnification\n");
+                                break;
+                            case 2077:
+                                Preferences.debug("tagID = Objective N.A.\n");
+                                break;
+                            case 2078:
+                                Preferences.debug("tagID = Microscope illumination\n");
+                                break;
+                            case 2079:
+                                Preferences.debug("tagID = External shutter 1\n");
+                                break;
+                            case 2080:
+                                Preferences.debug("tagID = External shutter 2\n");
+                                break;
+                            case 2081:
+                                Preferences.debug("tagID = External shutter 3\n");
+                                break;
+                            case 2082:
+                                Preferences.debug("tagID = External filter wheel 1 name\n");
+                                break;
+                            case 2083:
+                                Preferences.debug("tagID = External filter wheel 2 name\n");
+                                break;
+                            case 2084:
+                                Preferences.debug("tagID = Parfocal correction\n");
+                                break;
+                            case 2086:
+                                Preferences.debug("tagID = External shutter 4\n");
+                                break;
+                            case 2087:
+                                Preferences.debug("tagID = External shutter 5\n");
+                                break;
+                            case 2088:
+                                Preferences.debug("tagID = External shutter 6\n");
+                                break;
+                            case 2089:
+                                Preferences.debug("tagID = External filter wheel 3 name\n");
+                                break;
+                            case 2090:
+                                Preferences.debug("tagID = External filter wheel 4 name\n");
+                                break;
+                            case 2103:
+                                Preferences.debug("tagID = Objective turret position\n");
+                                break;
+                            case 2104:
+                                Preferences.debug("tagID = Objective contrast method\n");
+                                break;
+                            case 2105:
+                                Preferences.debug("tagID = Objective immersion type\n");
+                                break;
+                            case 2107:
+                                Preferences.debug("tagID = Reflector position\n");
+                                break;
+                            case 2109:
+                                Preferences.debug("tagID = Transmitted light filter 1 position\n");
+                                break;
+                            case 2110:
+                                Preferences.debug("tagID = Transmitted light filter 2 position\n");
+                                break;
+                            case 2112:
+                                Preferences.debug("tagID = Excitation filter position\n");
+                                break;
+                            case 2113:
+                                Preferences.debug("tagID = Lamp mirror position (ERSETZT DURCH 241!)\n");
+                                break;
+                            case 2114:
+                                Preferences.debug("tagID = External filter wheel 1 position\n");
+                                break;
+                            case 2115:
+                                Preferences.debug("tagID = External filter wheel 2 position\n");
+                                break;
+                            case 2116:
+                                Preferences.debug("tagID = External filter wheel 3 position\n");
+                                break;
+                            case 2117:
+                                Preferences.debug("tagID = External filter wheel 4 position\n");
+                                break;
+                            default: Preferences.debug("Unrecognized tagID value = " + tagID + "\n");
+                        }
+                        
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_I4) {
+                            Preferences.debug("Expected VT_I4 data type for unused attribute\n");
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_I4 for unused attribute\n");
+                            break trueLoop;
+                        }
+                        int attribute = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Ununsed attribute = " + attribute + "\n");
+                    } // for (i = 0; i < tokenCount  && bp < b.length - 13; i++)
+                    break;
+                } // while (true)
+            } // if ((lastElementName.equals("Tags")) &&
             
             if ((directoryEntry % maximumDirectoryEntriesPerSector) == 0) {
                 if (add128) {
@@ -2065,8 +2615,94 @@ public class FileZVI extends FileBase {
 
     }
     
+    private int zviToMipavMeasurementUnits (int zviScalingUnit){
+        int measureUnits;
+        switch (zviScalingUnit) {
+            case 0:
+                Preferences.debug("Scaling unit type = no scaling\n");
+                measureUnits = FileInfoBase.UNKNOWN_MEASURE;
+                break;
+            case 72:
+                Preferences.debug("Scaling unit type = meter\n");
+                measureUnits = FileInfoBase.METERS;
+                break;
+            case 76:
+                Preferences.debug("Scaling unit type = micrometer\n");
+                measureUnits = FileInfoBase.MICROMETERS;
+                break;
+            case 77:
+                Preferences.debug("Scaling unit type = nanometer\n");
+                measureUnits = FileInfoBase.NANOMETERS;
+                break;
+            case 81:
+                 Preferences.debug("Scaling unit type = inch\n");
+                 measureUnits = FileInfoBase.INCHES;
+                 break;
+            case 84:
+                Preferences.debug("Scaling unit type = mil (thousandth of an inch)\n");
+                measureUnits = FileInfoBase.MILS;
+                break;
+            case 136:
+                Preferences.debug("Scaling unit type = second\n");
+                measureUnits = FileInfoBase.SECONDS;
+                break;
+            case 139:
+                Preferences.debug("Scaling unit type = millisecond\n");
+                measureUnits = FileInfoBase.MILLISEC;
+                break;
+            case 140:
+                Preferences.debug("Scaling unit type = microsecond\n");
+                measureUnits = FileInfoBase.MICROSEC;
+                break;
+            case 145:
+                Preferences.debug("Scaling unit type = minute\n");
+                measureUnits = FileInfoBase.MINUTES;
+                break;
+            case 146:
+                Preferences.debug("Scaling unit type = hour\n");
+                measureUnits = FileInfoBase.HOURS;
+                break;
+            default:
+                Preferences.debug("Scaling unit type is an unrecognized " + zviScalingUnit + "\n");
+                measureUnits = FileInfoBase.UNKNOWN_MEASURE;     
+        }
+        return measureUnits;
+    } // private int zviToMipavMeasurementUnits (int zviScalingUnit)
     
-
+    
+    private void displayPixelFormat(int pixelFormat) {
+        switch(pixelFormat) {
+            case 1:
+                Preferences.debug("Pixel format = 8-bit B, G, R - 3 bytes/pixel\n");
+                break;
+            case 2:
+                Preferences.debug("Pixel format = 8-bit B, G, R, A - 4 bytes/pixel\n");
+                break;
+            case 3:
+                Preferences.debug("Pixel format = 8-bit grayscale\n");
+                break;
+            case 4:
+                Preferences.debug("Pixel format = 16-bit integer\n");
+                break;
+            case 5:
+                Preferences.debug("Pixel format = 32-bit integer\n");
+                break;
+            case 6:
+                Preferences.debug("Pixel format = 32-bit IEEE float\n");
+                break;
+            case 7:
+                Preferences.debug("Pixel format = 64-bit IEEE double\n");
+                break;
+            case 8:
+                Preferences.debug("Pixel format = 16-bit B, G, R - 6 bytes/pixel\n");
+                break;
+            case 9:
+                Preferences.debug("Pixel format = 32-bit B, G, R = 12 bytes/pixel\n");
+                break;
+            default:
+                Preferences.debug("pixelFormat has an unrecognized value = " + pixelFormat + "\n");
+        }    
+    } // private void displayPixelFormat(int pixelFormat)
 
     
 }
