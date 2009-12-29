@@ -1316,9 +1316,15 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
     			}
     			
     			try {
-    				if (calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], true);
-    				if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
-    				if (invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], true);
+    				if (calculateT2) {
+    				    t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], true);
+    				}
+    				if (calculateMo) {
+    				    moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
+    				}
+    				if (invertT2toR2) {
+    				    r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], true);
+    				}
     			} catch(IOException e) {
     				e.printStackTrace();
     				MipavUtil.displayError("Data could not be imported into result image");
@@ -2491,12 +2497,12 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 			return list;
 		}
 		
-		public JRadioButton buildRadioButton(String label, Action a) {
+		public JRadioButton buildRadioButton(String label, boolean selected) {
             FlowLayout f = new FlowLayout();
             f.setAlignment(FlowLayout.LEFT);
             JPanel radioPanel = new JPanel(f);
             JRadioButton radioButton = new JRadioButton(label);
-            radioButton.setAction(a);
+            radioButton.setSelected(selected);
             radioPanel.add(radioButton);
             return radioButton;
         }
