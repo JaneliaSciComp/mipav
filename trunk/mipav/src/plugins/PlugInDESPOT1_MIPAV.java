@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
-import javax.swing.Action;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -174,6 +174,7 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 			if (!showDESPOT1SpecificsDialog()) return;
 		}
 		
+		//note that smart/hard thresholding are not required methods
 		if (useSmartThresholding) {
 			if (!showSmartThresholdDialog()) return;
 		}
@@ -208,13 +209,18 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
 		panel.setLayout(panelLayout);
 		
-		JCheckBox box1 = guiHelp.buildCheckBox("Perform Conventional DESPOT1 Processing", performStraightDESPOT1);
-		JCheckBox box2 = guiHelp.buildCheckBox("Perform DESPOT1 with Pre-calculated B1 Map", performDESPOT1withPreCalculatedB1Map);
-		JCheckBox box3 = guiHelp.buildCheckBox("Perform DESPOT1-HIFI Processing", performDESPOT1HIFI);
+		JRadioButton button1 = guiHelp.buildRadioButton("Perform Conventional DESPOT1 Processing", performStraightDESPOT1);
+		JRadioButton button2 = guiHelp.buildRadioButton("Perform DESPOT1 with Pre-calculated B1 Map", performDESPOT1withPreCalculatedB1Map);
+		JRadioButton button3 = guiHelp.buildRadioButton("Perform DESPOT1-HIFI Processing", performDESPOT1HIFI);
 		
-		panel.add(box1.getParent(), panelLayout);
-		panel.add(box2.getParent(), panelLayout);
-		panel.add(box3.getParent(), panelLayout);
+		ButtonGroup processType = new ButtonGroup();
+		processType.add(button1);
+		processType.add(button2);
+		processType.add(button3);
+		
+		panel.add(button1.getParent(), panelLayout);
+		panel.add(button2.getParent(), panelLayout);
+		panel.add(button3.getParent(), panelLayout);
 		
 		dialog.add(panel, BorderLayout.CENTER);
 		dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
@@ -226,11 +232,16 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
 			return false;
 		}
-        
-		performStraightDESPOT1 = box1.isSelected();
-		performDESPOT1withPreCalculatedB1Map = box2.isSelected();
-		performDESPOT1HIFI = box3.isSelected();
 		
+		performStraightDESPOT1 = button1.isSelected();
+        performDESPOT1withPreCalculatedB1Map = button2.isSelected();
+        performDESPOT1HIFI = button3.isSelected();
+
+        if(processType.getSelection() == null) {
+		    MipavUtil.displayInfo("Please select a processing method");
+		    dialog.dispose();
+		    return showOpeningDialog();
+		}	
 		
 		if (performStraightDESPOT1 == true) {
 			performDESPOT1withPreCalculatedB1Map = false;
@@ -260,13 +271,17 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		
 		JTextField field1 = guiHelp.buildDecimalField("Number of SPGR Flip Angles:", Nsa);
 		JTextField field2 = guiHelp.buildDecimalField("Number of IR-SPGR TI Times:", Nti);
-		JCheckBox box1 = guiHelp.buildCheckBox("Scan Performed on a GE Scanner", geScanner);
-		JCheckBox box2 = guiHelp.buildCheckBox("Scan Performed on a Siemens Scanner", siemensScanner);
+		JRadioButton button1 = guiHelp.buildRadioButton("Scan Performed on a GE Scanner", geScanner);
+		JRadioButton button2 = guiHelp.buildRadioButton("Scan Performed on a Siemens Scanner", siemensScanner);
     	
+		ButtonGroup scannerType = new ButtonGroup();
+		scannerType.add(button1);
+		scannerType.add(button2);
+		
 		panel.add(field1.getParent(), panelLayout);
 		panel.add(field2.getParent(), panelLayout);
-		panel.add(box1.getParent(), panelLayout);
-		panel.add(box2.getParent(), panelLayout);
+		panel.add(button1.getParent(), panelLayout);
+		panel.add(button2.getParent(), panelLayout);
 		
 		dialog.add(panel, BorderLayout.CENTER);
 		dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
@@ -282,11 +297,21 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		Nsa = (int) Double.valueOf(field1.getText()).doubleValue();
 		Nti = (int) Double.valueOf(field2.getText()).doubleValue();
 	
-		geScanner = box1.isSelected();
-		siemensScanner = box2.isSelected();
+		geScanner = button1.isSelected();
+		siemensScanner = button2.isSelected();
 		
-		if (geScanner == true) siemensScanner = false;
-		if (siemensScanner == true) geScanner = false;
+		if(scannerType.getSelection() == null) {
+            MipavUtil.displayInfo("Please select a scanner type");
+            dialog.dispose();
+            return showHIFIDialog();
+        }
+		
+		if (geScanner == true) {
+		    siemensScanner = false;
+		}
+		if (siemensScanner == true) {
+		    geScanner = false;
+		}
 		
 		if (Nsa > wList.length) {
 			MipavUtil.displayError("Please import all nessesary images first.");
@@ -415,20 +440,28 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		JTextField field1 = guiHelp.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
 		JTextField field2 = guiHelp.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
 		JTextField field3 = guiHelp.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
-		JCheckBox box1 = guiHelp.buildCheckBox("Double Inversion Regime", doubleInversion);
-		JCheckBox box2 = guiHelp.buildCheckBox("Single Inversion Regime", singleInversion);
-		JCheckBox box3 = guiHelp.buildCheckBox("1.5T Field Strength", onefiveTField);
-		JCheckBox box4 = guiHelp.buildCheckBox("3.0T Field Strength", threeTField);
-		JCheckBox box5 = guiHelp.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
+		JRadioButton radio1 = guiHelp.buildRadioButton("Double Inversion Regime", doubleInversion);
+		JRadioButton radio2 = guiHelp.buildRadioButton("Single Inversion Regime", singleInversion);
+		JRadioButton radio3 = guiHelp.buildRadioButton("1.5T Field Strength", onefiveTField);
+		JRadioButton radio4 = guiHelp.buildRadioButton("3.0T Field Strength", threeTField);
+		JCheckBox box1 = guiHelp.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
+		
+		ButtonGroup inversion = new ButtonGroup();
+		inversion.add(radio1);
+		inversion.add(radio2);
+		
+		ButtonGroup fieldStrength = new ButtonGroup();
+		fieldStrength.add(radio3);
+		fieldStrength.add(radio4);
 		
 		panel.add(field1.getParent(), panelLayout);
 		panel.add(field2.getParent(), panelLayout);
 		panel.add(field3.getParent(), panelLayout);
+		panel.add(radio1.getParent(), panelLayout);
+		panel.add(radio2.getParent(), panelLayout);
+		panel.add(radio3.getParent(), panelLayout);
+		panel.add(radio4.getParent(), panelLayout);
 		panel.add(box1.getParent(), panelLayout);
-		panel.add(box2.getParent(), panelLayout);
-		panel.add(box3.getParent(), panelLayout);
-		panel.add(box4.getParent(), panelLayout);
-		panel.add(box5.getParent(), panelLayout);
 		
 		dialog.add(panel, BorderLayout.CENTER);
 		dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
@@ -448,15 +481,37 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		irspgrTR = Double.valueOf(field1.getText()).doubleValue();
 		irspgrFA = Double.valueOf(field2.getText()).doubleValue();
 		irspgrKy = Double.valueOf(field3.getText()).doubleValue();
-		doubleInversion = box1.isSelected();
-		singleInversion = box2.isSelected();
-		onefiveTField = box3.isSelected();
-		threeTField = box4.isSelected();
-		smoothB1Field = box5.isSelected();
-		if (doubleInversion == true) singleInversion = false;
-		if (singleInversion == true) doubleInversion = false;
-		if (onefiveTField == true) threeTField = false;
-		if (threeTField == true) onefiveTField = false;
+		doubleInversion = radio1.isSelected();
+		singleInversion = radio2.isSelected();
+		onefiveTField = radio3.isSelected();
+		threeTField = radio4.isSelected();
+		smoothB1Field = box1.isSelected();
+		
+		if(inversion.getSelection() == null) {
+            MipavUtil.displayInfo("Please choose either single or double inversion regime");
+            dialog.dispose();
+            return showIRSPGRDialogGE();
+        }
+		
+		if(fieldStrength.getSelection() == null) {
+            MipavUtil.displayInfo("Please choose field strength");
+            dialog.dispose();
+            return showIRSPGRDialogGE();
+        }
+		
+		if (doubleInversion == true) {
+		    singleInversion = false;
+		}
+		if (singleInversion == true) {
+		    doubleInversion = false;
+		}
+		
+		if (onefiveTField == true) {
+		    threeTField = false;
+		}
+		if (threeTField == true) {
+		    onefiveTField = false;
+		}
 		
 		if (threeTField == true) {
 			if (doubleInversion == true) {
@@ -508,20 +563,28 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		JTextField field1 = guiHelp.buildDecimalField("IR-SPGR Repetition Time (ms)", irspgrTR);
 		JTextField field2 = guiHelp.buildDecimalField("IR-SPGR Flip Angle", irspgrFA);
 		JTextField field3 = guiHelp.buildDecimalField("Total Number of Acquired Slices", irspgrKy);
-		JCheckBox box1 = guiHelp.buildCheckBox("Double Inversion Regime", doubleInversion);
-		JCheckBox box2 = guiHelp.buildCheckBox("Single Inversion Regime", singleInversion);
-		JCheckBox box3 = guiHelp.buildCheckBox("1.5T Field Strength", onefiveTField);
-		JCheckBox box4 = guiHelp.buildCheckBox("3.0T Field Strength", threeTField);
-		JCheckBox box5 = guiHelp.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
+		JRadioButton radio1 = guiHelp.buildRadioButton("Double Inversion Regime", doubleInversion);
+		JRadioButton radio2 = guiHelp.buildRadioButton("Single Inversion Regime", singleInversion);
+		JRadioButton radio3 = guiHelp.buildRadioButton("1.5T Field Strength", onefiveTField);
+		JRadioButton radio4 = guiHelp.buildRadioButton("3.0T Field Strength", threeTField);
+		JCheckBox box1 = guiHelp.buildCheckBox("Smooth B1 Field Prior to T1 Calculations", smoothB1Field);
+		
+		ButtonGroup inversion = new ButtonGroup();
+		inversion.add(radio1);
+		inversion.add(radio2);
+		
+		ButtonGroup fieldStrength = new ButtonGroup();
+		fieldStrength.add(radio3);
+		fieldStrength.add(radio4);
 		
 		panel.add(field1.getParent(), panelLayout);
 		panel.add(field2.getParent(), panelLayout);
 		panel.add(field3.getParent(), panelLayout);
+		panel.add(radio1.getParent(), panelLayout);
+		panel.add(radio2.getParent(), panelLayout);
+		panel.add(radio3.getParent(), panelLayout);
+		panel.add(radio4.getParent(), panelLayout);
 		panel.add(box1.getParent(), panelLayout);
-		panel.add(box2.getParent(), panelLayout);
-		panel.add(box3.getParent(), panelLayout);
-		panel.add(box4.getParent(), panelLayout);
-		panel.add(box5.getParent(), panelLayout);
 		
 		dialog.add(panel, BorderLayout.CENTER);
 		dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
@@ -541,15 +604,35 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		irspgrTR = Double.valueOf(field1.getText()).doubleValue();
 		irspgrFA = Double.valueOf(field2.getText()).doubleValue();
 		irspgrKy = Double.valueOf(field3.getText()).doubleValue();
-		doubleInversion = box1.isSelected();
-		singleInversion = box2.isSelected();
-		onefiveTField = box3.isSelected();
-		threeTField = box4.isSelected();
-		smoothB1Field = box5.isSelected();
-		if (doubleInversion == true) singleInversion = false;
-		if (singleInversion == true) doubleInversion = false;
-		if (onefiveTField == true) threeTField = false;
-		if (threeTField == true) onefiveTField = false;
+		doubleInversion = radio1.isSelected();
+		singleInversion = radio2.isSelected();
+		onefiveTField = radio3.isSelected();
+		threeTField = radio4.isSelected();
+		smoothB1Field = box1.isSelected();
+		
+		if(inversion.getSelection() == null) {
+            MipavUtil.displayInfo("Please choose either single or double inversion regime");
+            dialog.dispose();
+            return showIRSPGRDialogSiemens();
+        }
+		if(fieldStrength.getSelection() == null) {
+            MipavUtil.displayInfo("Please select a field strength");
+            dialog.dispose();
+            return showIRSPGRDialogSiemens();
+        }
+		
+		if (doubleInversion == true) {
+		    singleInversion = false;
+		}
+		if (singleInversion == true) {
+		    doubleInversion = false;
+		}
+		if (onefiveTField == true) {
+		    threeTField = false;
+		}
+		if (threeTField == true) {
+		    onefiveTField = false;
+		}
 		
 		if (threeTField == true) {
 			if (doubleInversion == true) {
@@ -749,7 +832,9 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		}
 		useSmartThresholding = check6.isSelected();
 		useHardThresholding = check7.isSelected();
-		if (useSmartThresholding) useHardThresholding = false;
+		if (useSmartThresholding) {
+		    useHardThresholding = false;
+		}
 		
 		return true;
 	}
@@ -872,7 +957,6 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		
 		int p, pulse, i,j;
 		
-		
 		despotGuess = new double[Nfa];
 		irspgrGuess = new double[Nti];
 		
@@ -898,7 +982,6 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 			moGuess = 0.00;
 		}
 		
-		
 		if (t1Guess > 0) {
 			for (p=0; p<Nfa; p++) despotGuess[p] = moGuess*(1.00-Math.exp(-despotTR/t1Guess))*Math.sin(x*despotFA[p]*3.14159265/180.00)/(1.00-Math.exp(-despotTR/t1Guess)*Math.cos(x*despotFA[p]*3.14159265/180.00));
 		}
@@ -915,7 +998,6 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		else {
 			for (p=0; p<Nti; p++) irspgrGuess[p] = 0.00;
 		}
-		
 		
 		residuals = 0.00;
 		for (p=0; p<Nfa; p++) residuals += Math.pow( (spgrData[p]-despotGuess[p]), 2.00);
@@ -1866,12 +1948,12 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 			return list;
 		}
 		
-		public JRadioButton buildRadioButton(String label, Action a) {
+		public JRadioButton buildRadioButton(String label, boolean selected) {
             FlowLayout f = new FlowLayout();
             f.setAlignment(FlowLayout.LEFT);
             JPanel radioPanel = new JPanel(f);
             JRadioButton radioButton = new JRadioButton(label);
-            radioButton.setAction(a);
+            radioButton.setSelected(selected);
             radioPanel.add(radioButton);
             return radioButton;
         }
