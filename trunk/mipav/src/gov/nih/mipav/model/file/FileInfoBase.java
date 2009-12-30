@@ -197,14 +197,28 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             "hours", "hertz", "part per million", "radians per second"};
     
 
-    /** Converting between units. Conversion is to millimeters (the default).
+
+    /** Converting between space units. Conversion is to millimeters (the default).
      *  Table converts to mm by multiplication. Converts from mm by division.
      *  Example:
      *  inches * 25.4f = mm
      *  mm / 25.4f = inches.
+     *  
+     *  Converting between time units. Conversion is to seconds(the default).
+     *  Table converts to seconds by multiplication. Converts from seconds by division.
+     *  Example:
+     *  minutes * 0.01667 = seconds
+     *  seconds / 0.01667 = minutes.
+     *  Hertz and radians per second convert to/from hz.
+     *  parts-per-million does not convert.
      *  */
-    public static final double[] conversionUnits = {1, 1, 25.4, 2.54e-2, 10, 1.0e-7, 1.0e-6, 1.0e-3, 1, 1.0e3, 1.0e6,
-        1609344 };
+    public static final double[] conversionSpaceTimeUnits = {1, 1,
+        // space units:
+        25.4, 2.54e-2, 10, 1.0e-7, 1.0e-6, 1.0e-3, 1, 1.0e3, 1.0e6, 1609344, 
+        // time units:
+        1.0e-9, 1.0e-6, 1.0e-3, 1, 1.0/60.0, 1.0/3600.0, 
+        // hertz, ppm, radians per second:
+        1, 1, 0.159154943274 };
 
     /** Image modality unknown. */
     public static final int UNKNOWN_MODALITY = 0;

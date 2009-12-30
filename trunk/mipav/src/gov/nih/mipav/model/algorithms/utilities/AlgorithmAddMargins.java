@@ -6,24 +6,38 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 /**
- * Algorithm to place an image into the center of a larger image, as if the image was given margins or a border around
- * its outside.
+ * Algorithm to add or remove margins around the image. Margins are defined in the screen-space coordinates.
+ * marginX is screen-space left,right.
+ * marginY is screen-space top,bottom.
+ * marginZ is screen-space front,back.
+ * Margins may be positive to add to the image, or negative to crop the image.
  */
 public class AlgorithmAddMargins extends AlgorithmBase {
 
 
-    /** xBounds indicating the number of pixels to be padded on left and the total length of X dimension */
+    /** marginX indicating the number of pixels to be padded on left and the right of X dimension */
     private int[] marginX = new int[]{0,0};
 
-    /** yBounds indicating the number of pixels to be padded on top and the total length of Y dimension */
+    /** marginY indicating the number of pixels to be padded on top and the bottom of Y dimension */
     private int[] marginY = new int[]{0,0};
 
-    /** xBounds indicating the number of slices to be padded in front and the total length of Z dimension*/
+    /** marginZ indicating the number of slices to be padded in front and the back of Z dimension*/
     private int[] marginZ = new int[]{0,0};
+
+    /** marginT indicating the number of slices to be padded in time at the start and end of T dimension*/
+    private int[] marginT = new int[]{0,0};
 
     private double[] marginColor = new double[3];
 
 
+    /**
+     * Add or remove margins from the srcImage and store the results in the destImage.
+     * @param srcImage original image
+     * @param destImage output modified image
+     * @param x margin in the screen-space x-direction to add or remove [left,right]
+     * @param y margin in the screen-space y-direction to add or remove [top,bottom]
+     * @param z margin in the screen-space z-direction to add or remove [front,back]
+     */
     public AlgorithmAddMargins(ModelImage srcImage, ModelImage destImage, int[] x, int[] y, int[] z) {
         super(destImage, srcImage);
         marginX = x.clone();
@@ -42,6 +56,13 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         }
     }
 
+    /**
+     * Add or remove margins from the srcImage.
+     * @param srcImage original image modified by this algorithm.
+     * @param x margin in the screen-space x-direction to add or remove [left,right]
+     * @param y margin in the screen-space y-direction to add or remove [top,bottom]
+     * @param z margin in the screen-space z-direction to add or remove [front,back]
+     */
     public AlgorithmAddMargins(ModelImage srcImage, int[] x, int[] y, int[] z) {
         this( srcImage, null, x, y, z );
     }
@@ -60,9 +81,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
     }
 
     /**
-     * Accessor returns srcImage.
-     *
-     * @return  DOCUMENT ME!
+     * Returns the source image.
+     * @return source image, may be modified.
      */
     public ModelImage getSrcImage() {
         return srcImage;
@@ -79,15 +99,28 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         }
         setCompleted(true);
     }
-
-
-
     
+    /**
+     * Sets the value for the added margins, for either grayscale or color images.
+     * @param value the image values to fill in the added margins.
+     */
     public void setPadValue( float[] value )
     {
         for ( int i = 0; i < Math.min( value.length, marginColor.length ); i++ )
         {
             marginColor[i] = value[i];
+        }
+    }
+    
+    /**
+     * Adds or removes margins in the 4th dimensions.
+     * @param tMargin margins in time to add or remove from the image.
+     */
+    public void setTMargins( int[] tMargin )
+    {
+        for ( int i = 0; i < Math.min( tMargin.length, marginT.length ); i++ )
+        {
+            marginT[i] = tMargin[i];
         }
     }
 
@@ -110,6 +143,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         int xShiftSrc = -1 * marginX[0]; 
         int yShiftSrc = -1 * marginY[0]; 
         int zShiftSrc = -1 * marginZ[0]; 
+        int tShiftSrc = -1 * marginT[0]; 
 
         int leftBound = ( marginX[0] < 0 ) ? 0 : marginX[0];
         int rightBound = 1;
@@ -131,6 +165,14 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         {
             backBound = ( marginZ[1] < 0 ) ? destImage.getExtents()[2] : srcImage.getExtents()[2] + marginZ[0];
         }
+
+        
+        int timeStartBound = ( marginT[0] < 0 ) ? 0 : marginT[0];
+        int timeEndBound = 1;
+        if ( destImage.getNDims() > 3 )
+        {
+            timeEndBound = ( marginT[1] < 0 ) ? destImage.getExtents()[3] : srcImage.getExtents()[3] + marginT[0];
+        }
                 
         for ( int t = 0; t < tDim; t++ )
         {
@@ -143,9 +185,10 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         int destIndex = t * (zDim * yDim * xDim) + z * (yDim * xDim) + y * xDim + x;
                         if ( (x >= leftBound) && (x < rightBound) &&
                              (y >= topBound) && (y < bottomBound) &&
-                             (z >= frontBound) && (z < backBound)    )
+                             (z >= frontBound) && (z < backBound) &&
+                             (t >= timeStartBound) && (t < timeEndBound)    )
                         {
-                            int srcIndex = t * (zDimSrc * yDimSrc * xDimSrc) + 
+                            int srcIndex = (t+tShiftSrc) * (zDimSrc * yDimSrc * xDimSrc) + 
                             (z+zShiftSrc) * (yDimSrc * xDimSrc) + 
                             (y+yShiftSrc) * xDimSrc + (x + xShiftSrc);
                             if ( iColorFactor == 1 )
@@ -217,6 +260,11 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         srcImage = destImage;
     }
 
+    /**
+     * Updates the fileInfo values for the kWrite image, uses the fileInfo values from kRead.
+     * @param kRead image to read fileInfo values from
+     * @param kWrite image to write fileInfo values to.
+     */
     private void updateFileInfo(ModelImage kRead, ModelImage kWrite)
     {
         int[] marginVector = new int[3];
@@ -260,24 +308,20 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         else
         {
 
-            int tDim = (kRead.getNDims() == 4) ? kRead.getExtents()[3] : 1;
-            // FILE INFO: add the file info for 3D images
-            if ((tDim == 1)) {
-                fireProgressStateChanged("Updating File Info...");
-                // int fillLength = Math.round((float)z/destDepth); int piece = (1 - fillLength);
-            }
-
+            int srcT = (kRead.getNDims() == 4) ? kRead.getExtents()[3] : 1;
+            int destT = (kWrite.getNDims() == 4) ? kRead.getExtents()[3] : 1;
+            
             int srcDepth = kRead.getExtents()[2];
             int destDepth = kWrite.getExtents()[2];
 
             FileInfoDicom[] fileInfoDicomBuffer = null; // buffer of type DICOM
             FileInfoBase[] fileInfoBuffer = null; // buffer of any old type
             if ((kRead.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                fileInfoDicomBuffer = new FileInfoDicom[destDepth * tDim];
+                fileInfoDicomBuffer = new FileInfoDicom[destDepth * destT];
             } else {
-                fileInfoBuffer = new FileInfoBase[destDepth * tDim];
+                fileInfoBuffer = new FileInfoBase[destDepth * destT];
             }
-            
+                        
             float[] newOrigin = calculateNewOrigin(kRead, marginVector);
             float delta = kRead.getFileInfo()[0].getResolutions()[2];
             int axisOrient = kRead.getFileInfo()[0].getAxisOrientation(2);
@@ -288,58 +332,50 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             float startLoc = newOrigin[2];
 
             // insert margin values into the blank slices
-            for (int t = 0; (t < tDim) && !threadStopped; t++) {
-                int z = 0;
-                for (int Z = 0; (Z < destDepth) && !threadStopped; Z++) {
+            int tRead = 0;
+            for (int tWrite = 0; (tWrite < destT) && !threadStopped; tWrite++) {
+                int zRead = 0;
+                for (int zWrite = 0; (zWrite < destDepth) && !threadStopped; zWrite++) {
 
-                    if ((tDim == 1)) {
-                        fireProgressStateChanged(Math.round((float) (Z) / destDepth * 100));
+                    if ((destT == 1)) {
+                        fireProgressStateChanged(Math.round((float) (zWrite) / destDepth * 100));
                     }
 
                     // DICOM
                     if ((kRead.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-                        fileInfoDicomBuffer[Z] = (FileInfoDicom) kRead.getFileInfo(z).clone();
-
-                        fileInfoDicomBuffer[Z].setExtents(kWrite.getExtents()); // modify extents to use the extents
-                        // of destImage img
+                        FileInfoDicom kCopy = (FileInfoDicom) kRead.getFileInfo(tRead*srcDepth + zRead).clone();
+                        kCopy.setExtents(kWrite.getExtents());
 
                         // change the slice number ("0020,0013"):
                         // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
                         // Reset the image (slice) number with the new number ordering
-                        String stringForDicom = Integer.toString(Z + 1);
-                        fileInfoDicomBuffer[Z].getTagTable().setValue("0020,0013", stringForDicom,
-                                stringForDicom.length());
+                        String stringForDicom = Integer.toString(zWrite + 1);
+                        kCopy.getTagTable().setValue("0020,0013", stringForDicom, stringForDicom.length());
 
-                        newOrigin[2] = startLoc + (delta * Z);
+                        newOrigin[2] = startLoc + (delta * zWrite);
 
-                        stringForDicom = Float.toString(newOrigin[0]) + "\\" +
-                        Float.toString(newOrigin[1]) + "\\" +
-                        Float.toString(newOrigin[2]);
-                        fileInfoDicomBuffer[Z].getTagTable().setValue("0020,0032", stringForDicom,
-                                stringForDicom.length());
-                        fileInfoDicomBuffer[Z].setOrigin(newOrigin);
+                        stringForDicom = Float.toString(newOrigin[0]) + "\\" + Float.toString(newOrigin[1]) + "\\" + Float.toString(newOrigin[2]);
+                        kCopy.getTagTable().setValue("0020,0032", stringForDicom, stringForDicom.length());
+                        kCopy.setOrigin(newOrigin);
 
                         // readjust the slice location ("0020,1041")
                         stringForDicom = String.valueOf(newOrigin[2]);
-                            fileInfoDicomBuffer[Z].getTagTable().setValue("0020,1041", stringForDicom,
-                                stringForDicom.length());
+                        kCopy.getTagTable().setValue("0020,1041", stringForDicom, stringForDicom.length());
 
                         // set image columns ("0028,0011")
-                        // stringForDicom = String.valueOf(destImage.getExtents()[0]);
-                        // fileInfoBuffer.setValue("0028,0011", stringForDicom);
-                        fileInfoDicomBuffer[Z].getTagTable().setValue("0028,0010",
-                                new Short((short) fileInfoDicomBuffer[Z].getExtents()[1]),
-                                2);
-                        fileInfoDicomBuffer[Z].getTagTable().setValue("0028,0011",
-                                new Short((short) fileInfoDicomBuffer[Z].getExtents()[0]),
-                                2);
+                        kCopy.getTagTable().setValue("0028,0010", new Short((short) kCopy.getExtents()[1]), 2);
+                        kCopy.getTagTable().setValue("0028,0011", new Short((short) kCopy.getExtents()[0]), 2);
+                        
+                        
+                        fileInfoDicomBuffer[tWrite*destDepth + zWrite] = kCopy;
                     } else { // NOT DICOM
-                        fileInfoBuffer[Z] = (FileInfoBase) kRead.getFileInfo((t * srcDepth) + z).clone();
-                        fileInfoBuffer[Z].setOrigin(newOrigin);
-                        fileInfoBuffer[Z].setExtents(kWrite.getExtents());
+                        FileInfoBase kCopy = (FileInfoBase) kRead.getFileInfo((tRead*srcDepth) + zRead).clone();
+                        kCopy.setOrigin(newOrigin);
+                        kCopy.setExtents(kWrite.getExtents());
+                        fileInfoBuffer[tWrite*destDepth + zWrite] = kCopy;
                     }
 
-                    if (!((Z < marginZ[0]) || (Z >= (srcDepth + marginZ[0] - 1)))) {
+                    if (!((zWrite < marginZ[0]) || (zWrite >= (srcDepth + marginZ[0] - 1)))) {
 
                         /* While the destImage slice offset is outside the range of the srcImage image,
                          * dont update the srcImage counter.  This way: For new slices before the start of the
@@ -347,12 +383,16 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                          * correspond to an existing image, copy that FileInfoBuffer and modify. For new slices
                          * after the end of the original image set, copy the last FileInfoBuffer and modify.
                          */
-                        z++; // goto the next slice in the source image
+                        zRead++; // goto the next slice in the source image
                     }
+                }
+
+                if (!((tWrite < marginT[0]) || (tWrite >= (srcT + marginT[0] - 1)))) {
+                    tRead++;
                 }
             }
 
-            for (int t = 0; t < tDim; t++) {
+            for (int t = 0; t < destT; t++) {
                 for (int Z = 0; Z < destDepth; Z++) {
                     if (fileInfoBuffer == null) {
                         kWrite.setFileInfo(fileInfoDicomBuffer[(t * destDepth) + Z], ((t * destDepth) + Z));
@@ -360,17 +400,16 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         kWrite.setFileInfo(fileInfoBuffer[(t * destDepth) + Z], ((t * destDepth) + Z));
                     }
                 }
-            } // for (t = 0; t < tDim; t++)
+            }
         }
     }
     
+
     /**
-     * Switch origin order from LPS order to Img order.
-     *
-     * @param   srcImg  DOCUMENT ME!
-     * @param   margin  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * Calculates the origin values for the modified image, based on the current origin values and the added margins.
+     * @param srcImg original image
+     * @param margin margins added or removed from the image
+     * @return new origins.
      */
     private float[] calculateNewOrigin(ModelImage srcImg, int[] margin) {
 
@@ -386,7 +425,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             origin = fileInfoBuffer.getOrigin().clone();
         }
 
-        for (int i = 0; i < Math.min(3, srcImg.getNDims()); i++) {
+        for (int i = 0; i < Math.min( 3,srcImg.getNDims() ); i++) {
             int axisOrient = fileInfoBuffer.getAxisOrientation(i);
 
             if ((axisOrient == FileInfoBase.ORI_A2P_TYPE) || (axisOrient == FileInfoBase.ORI_R2L_TYPE) ||

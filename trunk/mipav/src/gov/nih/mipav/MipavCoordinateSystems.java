@@ -736,7 +736,7 @@ public class MipavCoordinateSystems {
      * @return false when the orientations already match, true when the axisOrder and axisFlip arrays are set.
      */
     public static final boolean matchOrientation( int[] axisA, int[] axisB, int[] axisOrder, boolean[] axisFlip )
-    {
+    {        
         boolean bMatches = true;
         for ( int i = 0; i < 3; i++ )
         {
@@ -750,6 +750,25 @@ public class MipavCoordinateSystems {
         {
             return false;
         }
+        if ( axisA[0] == FileInfoBase.ORI_UNKNOWN_TYPE || 
+                axisA[1] == FileInfoBase.ORI_UNKNOWN_TYPE  || 
+                axisA[2] == FileInfoBase.ORI_UNKNOWN_TYPE )
+        {
+            return false;
+        } 
+        if ( axisB[0] == FileInfoBase.ORI_UNKNOWN_TYPE || 
+                axisB[1] == FileInfoBase.ORI_UNKNOWN_TYPE  || 
+                axisB[2] == FileInfoBase.ORI_UNKNOWN_TYPE )
+        {
+            axisOrder[0] = 0;
+            axisOrder[1] = 1;
+            axisOrder[2] = 2;
+            axisFlip[0] = false;
+            axisFlip[1] = false;
+            axisFlip[2] = false;
+            return true;
+        }
+        
         for ( int i = 0; i < 3; i++ )
         {
             if ( (axisA[i] == FileInfoBase.ORI_L2R_TYPE) || (axisA[i] == FileInfoBase.ORI_R2L_TYPE) )

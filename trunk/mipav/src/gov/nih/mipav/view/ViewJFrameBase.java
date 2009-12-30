@@ -953,10 +953,17 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 this.setRGBTB(rgb);
             }
 
-            if ( ( ( (imageA.isColorImage() == true) && (imageB.isColorImage() == false)) || ( (imageA.isColorImage() == false) && (imageB
-                    .isColorImage() == true)))) {
+            if ( imageA.isColorImage() != imageB.isColorImage() )
+            {
                 MipavUtil
                         .displayError("Image loading failed because the color space is different. Both images must be grayscale or both RGB.");
+
+                return false;
+            }
+            
+            if ( imageA.getNDims() != imageB.getNDims() )
+            {
+                MipavUtil.displayError("Image loading failed because the image dimensions do not match. Images must both be 2D, 3D or 4D.");
 
                 return false;
             }
