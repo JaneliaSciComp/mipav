@@ -117,9 +117,6 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private JTextField defaultRedInput;
 
-    /** DOCUMENT ME! */
-    private JTextField defaultValueInput;
-
     /** a cloned version of importImage that will be inserted into the source images's B slot. */
     private ModelImage resultImage;
 
@@ -353,12 +350,12 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
                 gbl.setConstraints(defaultLabel, gbc);
                 defaultValuePanel.add(defaultLabel);
                 defaultValuePanel.add(Box.createHorizontalStrut(10));
-                defaultValueInput = new JTextField(Double.toString(image.getMin()), 8);
-                defaultValueInput.addActionListener(this);
-                MipavUtil.makeNumericsOnly(defaultValueInput, true);
+                defaultRedInput = new JTextField(Double.toString(image.getMin()), 8);
+                defaultRedInput.addActionListener(this);
+                MipavUtil.makeNumericsOnly(defaultRedInput, true);
                 gbc.gridwidth = GridBagConstraints.REMAINDER;
-                gbl.setConstraints(defaultValueInput, gbc);
-                defaultValuePanel.add(defaultValueInput);
+                gbl.setConstraints(defaultRedInput, gbc);
+                defaultValuePanel.add(defaultRedInput);
             } else { // color image
                 GridBagLayout gbl = new GridBagLayout();
                 GridBagConstraints gbc = new GridBagConstraints();
@@ -614,11 +611,19 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
 
                 double defaultValue = 0, redValue = 0, greenValue = 0, blueValue = 0;
                 if (!resultImage.isColorImage()) {
-                    defaultValue = Double.parseDouble(defaultValueInput.getText());
+                    defaultValue = Double.parseDouble(defaultRedInput.getText());
                 } else {
                     redValue = Double.parseDouble(defaultRedInput.getText());
-                    greenValue = Double.parseDouble(defaultGreenInput.getText());
-                    blueValue = Double.parseDouble(defaultBlueInput.getText());
+                    greenValue = redValue;
+                    blueValue = redValue;
+                    if ( defaultGreenInput != null )
+                    {
+                        greenValue = Double.parseDouble(defaultGreenInput.getText());
+                    }
+                    if ( defaultBlueInput != null )
+                    {
+                        blueValue = Double.parseDouble(defaultBlueInput.getText());
+                    }
                 }
                 boolean comp = ((ViewJFrameImage) parentFrame).setAndLoad(resultImage, doOrigins, doOrients,
                         defaultValue, redValue, greenValue, blueValue );

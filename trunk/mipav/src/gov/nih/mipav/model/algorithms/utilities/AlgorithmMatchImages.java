@@ -5,24 +5,40 @@ import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import WildMagic.LibFoundation.Mathematics.Matrix3f;
-import WildMagic.LibFoundation.Mathematics.Matrix2f;
-
-import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
-import java.io.*;
-import java.util.*;
 
 
-
+/**
+ * Matches two ModelImages. 
+ * 
+ * The output of this Algorithm is two ModelImages that have the same units of measure, 
+ * the same resolutions, and the same extents. If the user chooses, the image orientations 
+ * (left-to-right, anterior-to-posterior, inferior-to-superior, etc) will be matched. If the 
+ * user chooses, the image origins will be matched.
+ * 
+ * Either imageA, imageB or sometimes neither will be different after the algorithm completes. 
+ * The result images are returned with the getImageA() and getImageB() functions.
+ *
+ */
 public class AlgorithmMatchImages extends AlgorithmBase {
 
+    /** srcImageB: image to match to srcImage */
     private ModelImage srcImageB = null;
+    /** flag for turning on/off using the image origins to match the images */
     private boolean doOrigins = true;
+    /** flag for turning on/off using the image orientations to match the images */
     private boolean doOrients = true;
+    /** image values to use for padding the images, if necessary */
     private float[] padValue = new float[]{0,0,0};
     
+    /**
+     * Create an AlgorithmMatchImages to match the two input images.
+     * @param kImageA  target image to match to
+     * @param kImageB  image that is changing to match to imageA
+     * @param doOrigins flag for turning on/off using the image origins to match the images
+     * @param doOrients flag for turning on/off using the image orientations to match the images
+     */
     public AlgorithmMatchImages(ModelImage kImageA, ModelImage kImageB,
             final boolean doOrigins, final boolean doOrients ) 
     {
@@ -32,9 +48,13 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         this.doOrients = doOrients;
     }
 
+    /**
+     * remove local memory
+     */
     public void disposeLocal() 
     {
         srcImageB = null;
+        padValue = null;
     }
 
     /**
@@ -45,21 +65,39 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         super.finalize();
     }
     
+    /**
+     * Returns imageA, which may have changed during the match.
+     * @return imageA
+     */
     public ModelImage getImageA()
     {
         return srcImage;
     }
 
+    /**
+     * Returns imageB, which may have changed during the match.
+     * @return imageB
+     */
     public ModelImage getImageB()
     {
         return srcImageB;
     }
     
+    /**
+     * Sets the pad value for single-channel images.
+     * @param value value used to pad images.
+     */
     public void setPadValue( float value )
     {
         padValue[0] = value;
     }
     
+    /**
+     * Sets the pad value for color images
+     * @param red red pad value
+     * @param green green pad value
+     * @param blue blue pad value
+     */
     public void setPadValue( float red, float green, float blue )
     {
         padValue[0] = red;
@@ -67,15 +105,17 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         padValue[2] = blue;
     }
 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.model.algorithms.AlgorithmBase#runAlgorithm()
+     */
     public void runAlgorithm() {
-
+        // back up imageB in case it changes.
         ModelImage imageB_back = srcImageB;
-        
-        int[] axisA = srcImage.getAxisOrientation();
-        int[] axisB = srcImageB.getAxisOrientation();
-
+        // if the orientations are used to match the orientations, match orientations first.
         if ( doOrients )
         {
+            int[] axisA = srcImage.getAxisOrientation();
+            int[] axisB = srcImageB.getAxisOrientation();
             int[] axisOrder = { 0, 1, 2, 3 };
             boolean[] axisFlip = { false, false, false, false };
             if ( MipavCoordinateSystems.matchOrientation( axisA, axisB, axisOrder, axisFlip ) )
@@ -92,42 +132,54 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 //new ViewJFrameImage((ModelImage)srcImageB.clone(), null, null, false);
             }
         }
+        // We don't want to deleted the original version of imageA
         boolean bDeletePrevousA = false;
+        // back up imageA in case it changes
         ModelImage imageA_back = srcImage;
+        // match the units for imageA and imageB: changes the internal fileInfo in imageB
         matchUnits( srcImage, srcImageB );
+        //  match the image resolutions for imageA and imageB
         float[] afNewRes = matchResolutions( srcImage, srcImageB );
         if ( afNewRes != null )
         {
+            // Change the resolutions for imageA
             srcImage = changeResolutions( srcImage, afNewRes );
             if ( imageA_back != srcImage )
             {
+                // if the image changes, set the back up version and flag for deleting the backup if imageA changes again.
                 imageA_back = srcImage;
                 bDeletePrevousA = true;
             }
+            // Change the resolutions for imageB
             srcImageB = changeResolutions( srcImageB, afNewRes );
             if ( imageB_back != srcImageB )
             {
+                // if imageB changes, deleted the backup copy.
                 imageB_back.disposeLocal();
                 imageB_back = srcImageB;
             }
         }
-        int[] xBoundA = new int[]{0,0};
-        int[] yBoundA = new int[]{0,0};
-        int[] zBoundA = new int[]{0,0};
-        int[] xBoundB = new int[]{0,0};
-        int[] yBoundB = new int[]{0,0};
-        int[] zBoundB = new int[]{0,0};
-        if ( matchOriginsExtents( srcImage, srcImageB, xBoundA, yBoundA, zBoundA, xBoundB, yBoundB, zBoundB ) )
+        // match the origins and extents of the two images
+        int iDim = srcImage.getNDims();
+        int[] padAFront = new int[iDim];
+        int[] padABack = new int[iDim];
+        int[] padBFront = new int[iDim];
+        int[] padBBack = new int[iDim];
+        if ( matchOriginsExtents( srcImage, srcImageB, padAFront, padABack, padBFront, padBBack ) )
         {
-            srcImage = padImage(srcImage, xBoundA, yBoundA, zBoundA );
+            // pad imageA if necessary
+            srcImage = padImage(srcImage, padAFront, padABack );
             if ( imageA_back != srcImage && bDeletePrevousA )
             {
+                // if the image changes and the backup is not the original, deleted the backup of imageA
                 imageA_back.disposeLocal();
                 imageA_back = srcImage;
             }
-            srcImageB = padImage(srcImageB, xBoundB, yBoundB, zBoundB );
+            // pad imageB if necessary
+            srcImageB = padImage(srcImageB, padBFront, padBBack );
             if ( imageB_back != srcImageB )
             {
+                // if imageB changes, delete the backup
                 imageB_back.disposeLocal();
                 imageB_back = srcImageB;
             }
@@ -139,6 +191,11 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     
 
     
+    /**
+     * Matches the units of measure for the two input images.
+     * @param imageA target image to match to.
+     * @param imageB image that is being changed.
+     */
     private void matchUnits(ModelImage imageA, ModelImage imageB)
     {
         if ( imageA.getNDims() != imageB.getNDims() )
@@ -151,8 +208,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             afResB[i] = imageB.getResolutions(0)[i];
             if ( imageA.getUnitsOfMeasure()[i] != imageB.getUnitsOfMeasure()[1] )
             {
-                afResB[i] = (float)((FileInfoBase.conversionUnits[ imageB.getUnitsOfMeasure()[i]] * imageB.getResolutions(0)[i])/
-                    FileInfoBase.conversionUnits[ imageA.getUnitsOfMeasure()[i]]);
+                afResB[i] = (float)((FileInfoBase.conversionSpaceTimeUnits[ imageB.getUnitsOfMeasure()[i]] * imageB.getResolutions(0)[i])/
+                        FileInfoBase.conversionSpaceTimeUnits[ imageA.getUnitsOfMeasure()[i]]);
             }
         }
         if ( imageB.getFileInfo() != null ) {
@@ -163,6 +220,13 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         }
     }
 
+    /**
+     * Match the resolutions of the two images. Determines the lowest resolution 
+     * of either image along each dimension.
+     * @param imageA
+     * @param imageB
+     * @return new resolutions that will be applied to both images.
+     */
     private float[] matchResolutions( ModelImage imageA, ModelImage imageB )
     {
 
@@ -185,6 +249,12 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         return afRes;
     }
 
+    /**
+     * Changes the resolutions of the input image. 
+     * @param kImage input image.
+     * @param afNewRes new resolutions.
+     * @return new ModelImage, or the input image if unchanged.
+     */
     private ModelImage changeResolutions( ModelImage kImage, float[] afNewRes )
     {
         ModelImage kNewImage = kImage;
@@ -228,10 +298,19 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         return kNewImage;
     }
     
+
+    /**
+     * Matches the origins and extents of the two input images. Matching origins is an option the user sets.
+     * @param imageA input image A.
+     * @param imageB input image B.
+     * @param padAFront output values for adding or removing voxels to the front of imageA [left,top,front,time]
+     * @param padABack output values for adding or removing voxels to the back of imageA [right,bottom,back,time]
+     * @param padBFront output values for adding or removing voxels to the front of imageB [left,top,front,time]
+     * @param padBBack output values for adding or removing voxels to the back of imageB [right,bottom,back,time]
+     * @return true if either image requires changing to match the two images, false if neither image requires changing.
+     */
     private boolean matchOriginsExtents(ModelImage imageA, ModelImage imageB, 
-            int[] xBoundsA, int[] yBoundsA, int[] zBoundsA,
-            int[] xBoundsB, int[] yBoundsB, int[] zBoundsB
-            )
+            int[] padAFront, int[] padABack, int[] padBFront, int[] padBBack )
     {
         float[] afOriginA = new float[imageA.getNDims()];
         float[] afOriginB = new float[imageB.getNDims()];
@@ -249,13 +328,16 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 break;
             }
         }
-        int[] padAFront = new int[]{0,0,0};
-        int[] padBFront = new int[]{0,0,0};
+        for ( int i = 0; i < iDims; i++ )
+        {
+            padAFront[i] = 0;
+            padBFront[i] = 0;
+        }
         if ( !bMatches && doOrigins )
         {
             int[] axisA = imageA.getAxisOrientation();            
             float[] afDiff = new float[iDims];
-            for ( int i = 0; i < iDims; i++ )
+            for ( int i = 0; i < Math.min( 3, iDims ); i++ )
             {
                 afDiff[i] = Math.abs( afOriginA[i] - afOriginB[i] );
 
@@ -286,10 +368,10 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 }
             }                       
         }
-        int[] padABack = new int[]{0,0,0};
-        int[] padBBack = new int[]{0,0,0};
         for ( int i = 0; i < iDims; i++ )
         {
+            padABack[i] = 0;
+            padBBack[i] = 0;
             int sizeA = padAFront[i] + imageA.getExtents()[i];
             int sizeB = padBFront[i] + imageB.getExtents()[i];
             if ( sizeA < sizeB )
@@ -314,56 +396,50 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 bPadB = true;
             }
         }
-        if ( bPadA )
-        {
-            //System.err.println( "Padding A" );
-            //System.err.println( "    front = " + padAFront[0] + " " + padAFront[1] + " " + padAFront[2] );
-            //System.err.println( "    back  = " + padABack[0] + " " + padABack[1] + " " + padABack[2] );
-            if ( padAFront.length > 0 )
-            {
-                xBoundsA[0] = padAFront[0];  
-                xBoundsA[1] = padABack[0];
-            }
-            if ( padAFront.length > 1 )
-            {
-                yBoundsA[0] = padAFront[1];  
-                yBoundsA[1] = padABack[1];
-            }
-            if ( padAFront.length > 2 )
-            {
-                zBoundsA[0] = padAFront[2];  
-                zBoundsA[1] = padABack[2];
-            }
-        }
-        if ( bPadB )
-        {
-            //System.err.println( "Padding B" );
-            //System.err.println( "    front = " + padBFront[0] + " " + padBFront[1] + " " + padBFront[2] );
-            //System.err.println( "    back  = " + padBBack[0] + " " + padBBack[1] + " " + padBBack[2] );
-            if ( padBFront.length > 0 )
-            {
-                xBoundsB[0] = padBFront[0];  
-                xBoundsB[1] = padBBack[0];
-            }
-            if ( padBFront.length > 1 )
-            {
-                yBoundsB[0] = padBFront[1];  
-                yBoundsB[1] = padBBack[1];
-            }
-            if ( padBFront.length > 2 )
-            {
-                zBoundsB[0] = padBFront[2];  
-                zBoundsB[1] = padBBack[2];
-            }
-        }
+
         return (bPadA || bPadB);
     }
     
-    private ModelImage padImage( ModelImage kImage, int[] xBounds, int[] yBounds, int[] zBounds )
+
+    /**
+     * Adds or removes margins to the input image.
+     * @param kImage input images.
+     * @param padFront margins to add or remove to the front of the image [left,top,front,time]
+     * @param padBack margins to add or remove to the end of the image [right,bottom,back,time]
+     * @return new image or the original input image if no change.
+     */
+    private ModelImage padImage( ModelImage kImage, int[] padFront, int[] padBack )
     {
+        int[] xBounds = new int[]{0,0};
+        int[] yBounds = new int[]{0,0};
+        int[] zBounds = new int[]{0,0};
+        int[] tBounds = new int[]{0,0};
+
+        if ( padFront.length > 0 )
+        {
+            xBounds[0] = padFront[0];  
+            xBounds[1] = padBack[0];
+        }
+        if ( padFront.length > 1 )
+        {
+            yBounds[0] = padFront[1];  
+            yBounds[1] = padBack[1];
+        }
+        if ( padFront.length > 2 )
+        {
+            zBounds[0] = padFront[2];  
+            zBounds[1] = padBack[2];
+        }
+        if ( padFront.length > 3 )
+        {
+            tBounds[0] = padFront[3];  
+            tBounds[1] = padBack[3];
+        }
+        
         if ( (xBounds[0] == 0) && (xBounds[1] == 0) &&
              (yBounds[0] == 0) && (yBounds[1] == 0) &&
-             (zBounds[0] == 0) && (zBounds[1] == 0)    )
+             (zBounds[0] == 0) && (zBounds[1] == 0) &&
+             (tBounds[0] == 0) && (tBounds[1] == 0)    )
         {
             return kImage;
         }
@@ -380,6 +456,10 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         {
             destExtents[2] = zBounds[0] + zBounds[1] + kImage.getExtents()[2];
         }
+        if ( kImage.getNDims() > 3 )
+        {
+            destExtents[3] = tBounds[0] + tBounds[1] + kImage.getExtents()[3];
+        }
         
         ModelImage resultImage = new ModelImage(kImage.getType(), destExtents,
                                      JDialogBase.makeImageName(kImage.getImageName(), "_pad"));
@@ -387,6 +467,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         resultImage.setAll(kImage.getMin());
         AlgorithmAddMargins padAlgo = new AlgorithmAddMargins(kImage, resultImage, xBounds, yBounds, zBounds);
         padAlgo.setPadValue( padValue );
+        padAlgo.setTMargins( tBounds );
         padAlgo.setRunningInSeparateThread(false);
         padAlgo.run();
         return resultImage;
