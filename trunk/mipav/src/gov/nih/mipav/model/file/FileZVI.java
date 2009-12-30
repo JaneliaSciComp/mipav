@@ -8,7 +8,48 @@ import java.util.*;
 import gov.nih.mipav.view.*;
 
 /**
- 
+   Documentation used was the ZVI Format Specification V 2.0.4 - June, 2009.
+   The following email was sent to Zeiss support:
+   Here are problems I spotted in ZVI Format Specification V 2.0.4 - June, 2009:
+2.1.1 <Contents> stream of the container image:
+TypeDescription is VT_EMPTY rather than VT_BSTR
+FileName is VT_EMPTY rather than VT_BSTR
+m_PluginCLSID is VT_BLOB rather than VT_CLSID
+The {Tags} VT_STORED_OBJECT that goes between the {Layers} and {Scaling} VT_STORED_OBJECTs is missing.
+
+2.2.1 <Contents> stream of the image item:
+Version is used rather than unused with minor = 1003 hex and major = 3000 hex.
+TypeDescription is VT_EMPTY rather than VT_BSTR.
+FileName is VT_EMPTY rather than VT_BSTR
+m_PluginCLSID is VT_BLOB rather than VT_CLSID
+Items after the {Others} VT_BLOB are completely different from what's listed.  I find:
+VT_DISPATCH
+VT_STORED_OBJECT with a string = Tags
+VT_DISPATCH
+VT_DISPATCH
+VT_DISPATCH
+RAW pixel data
+
+3.2 Scaling type:
+In the table both decimeter and meter have value 72.
+Info for Mil should be Thousandths of an inch rather than Micrometers.
+
+3.3 Coordinate ID for Image Dimensions:
+Index should be 0 1 2 3 4 5 6 7 instead of the existing 0 1 3 4 5 6 7 8.
+
+3.4 Tag IDs
+ID 301 is used for both ImageBaseTimeFirst and ImageBaseTime1.  I suspect the ImageBaseTimeFirst entry should be deleted.
+The following tags show up in .ZVI files but are not listed in your table:
+333, 334, 513, 532, 2071, 2261, 2262, 20478, 65651, 65652, 65657, 65658, 65661, 65662, 16777488, 16777489.  What is the info for these tags?
+
+Information for decoding the 64-bit VT_DATE structure is missing.  Is it available somewhere?
+
+Is it possible for me to obtain sample .ZVI files so I can improve the ZVI file read in the MIPAV image processing program?
+
+                                                                                           Sincerely,
+
+                                                                                       William Gandler
+
  */
 
 public class FileZVI extends FileBase {
@@ -2578,6 +2619,822 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2117:
                                 Preferences.debug("tagID = External filter wheel 4 position\n");
+                                break;
+                            case 2118:
+                                Preferences.debug("tagID = Lightmanager mode\n");
+                                break;
+                            case 2119:
+                                Preferences.debug("tagID = Halogen lamp calibration\n");
+                                break;
+                            case 2120:
+                                Preferences.debug("tagID = Condenser NA go speed\n");
+                                break;
+                            case 2121:
+                                Preferences.debug("tagID = Transmitted light field stop go speed\n");
+                                break;
+                            case 2122:
+                                Preferences.debug("tagID = Optovar  go speed\n");
+                                break;
+                            case 2123:
+                                Preferences.debug("tagID = Focus calibrated\n");
+                                break;
+                            case 2124:
+                                Preferences.debug("tagID = Focus basic position\n");
+                                break;
+                            case 2125:
+                                Preferences.debug("tagID = Focus power\n");
+                                break;
+                            case 2126:
+                                Preferences.debug("tagID = Focus backlash\n");
+                                break;
+                            case 2127:
+                                Preferences.debug("tagID = Focus measurement origin\n");
+                                break;
+                            case 2128:
+                                Preferences.debug("tagID = Focus measurement distance\n");
+                                break;
+                            case 2129:
+                                Preferences.debug("tagID = Focus speed\n");
+                                break;
+                            case 2130:
+                                Preferences.debug("tagID = Focus go speed\n");
+                                break;
+                            case 2131:
+                                Preferences.debug("tagID = Focus distance\n");
+                                break;
+                            case 2132:
+                                Preferences.debug("tagID = Focus init position\n");
+                                break;
+                            case 2133:
+                                Preferences.debug("tagID = Stage calibrated\n");
+                                break;
+                            case 2134:
+                                Preferences.debug("tagID = Stage power\n");
+                                break;
+                            case 2135:
+                                Preferences.debug("tagID = Stage X backlash\n");
+                                break;
+                            case 2136:
+                                Preferences.debug("tagID = Stage Y backlash\n");
+                                break;
+                            case 2137:
+                                Preferences.debug("tagID = Stage speed X\n");
+                                break;
+                            case 2138:
+                                Preferences.debug("tagID = Stage speed Y\n");
+                                break;
+                            case 2139:
+                                Preferences.debug("tagID = Stage speed\n");
+                                break;
+                            case 2140:
+                                Preferences.debug("tagID = Stage go speed X\n");
+                                break;
+                            case 2141:
+                                Preferences.debug("tagID = Stage go speed Y\n");
+                                break;
+                            case 2142:
+                                Preferences.debug("tagID = Stage step distance X\n");
+                                break;
+                            case 2143:
+                                Preferences.debug("tagID = Stage step distance Y\n");
+                                break;
+                            case 2144:
+                                Preferences.debug("tagID = Stage initialization position X\n");
+                                break;
+                            case 2145:
+                                Preferences.debug("tagID = Stage initialization position Y\n");
+                                break;
+                            case 2146:
+                                Preferences.debug("tagID = Microscope magnification\n");
+                                break;
+                            case 2147:
+                                Preferences.debug("tagID = Reflector magnification\n");
+                                break;
+                            case 2148:
+                                Preferences.debug("tagID = Lamp mirror position\n");
+                                break;
+                            case 2149:
+                                Preferences.debug("tagID = Focus depth\n");
+                                break;
+                            case 2150:
+                                Preferences.debug("tagID = Microscope type\n");
+                                break;
+                            case 2151:
+                                Preferences.debug("tagID = Objective working distance\n");
+                                break;
+                            case 2152:
+                                Preferences.debug("tagID = Reflected light aperture go speed\n");
+                                break;
+                            case 2153:
+                                Preferences.debug("tagID = External shutter\n");
+                                break;
+                            case 2154:
+                                Preferences.debug("tagID = Objective immersion stop\n");
+                                break;
+                            case 2155:
+                                Preferences.debug("tagID = Focus start speed\n");
+                                break;
+                            case 2156:
+                                Preferences.debug("tagID = Focus acceleration\n");
+                                break;
+                            case 2157:
+                                Preferences.debug("tagID = Reflected light fieldstop\n");
+                                break;
+                            case 2158:
+                                Preferences.debug("tagID = Reflected light fieldstop go speed\n");
+                                break;
+                            case 2159:
+                                Preferences.debug("tagID = Reflected light filter 1\n");
+                                break;
+                            case 2160:
+                                Preferences.debug("tagID = Reflector light filter 2\n");
+                                break;
+                            case 2161:
+                                Preferences.debug("tagID = Reflected light filter 1 position\n");
+                                break;
+                            case 2162:
+                                Preferences.debug("tagID = Reflected light filter 2 position\n");
+                                break;
+                            case 2163:
+                                Preferences.debug("tagID = Transmitted light attenuator\n");
+                                break;
+                            case 2164:
+                                Preferences.debug("tagID = Reflected light attenuator\n");
+                                break;
+                            case 2165:
+                                Preferences.debug("tagID = Transmitted light shutter\n");
+                                break;
+                            case 2166:
+                                Preferences.debug("tagID = Transmitted light attenuator go speed\n");
+                                break;
+                            case 2167:
+                                Preferences.debug("tagID = Reflected light attenuator go speed\n");
+                                break;
+                            case 2176:
+                                Preferences.debug("tagID = Transmitted light virtual filter position\n");
+                                break;
+                            case 2177:
+                                Preferences.debug("tagID = Transmitted light virtual filter\n");
+                                break;
+                            case 2178:
+                                Preferences.debug("tagID = Reflected light virtual filter position\n");
+                                break;
+                            case 2179:
+                                Preferences.debug("tagID = Reflected light virtual filter\n");
+                                break;
+                            case 2180:
+                                Preferences.debug("tagID = Reflected light halogen lamp mode\n");
+                                break;
+                            case 2181:
+                                Preferences.debug("tagID = Reflected light halogen lamp voltage\n");
+                                break;
+                            case 2182:
+                                Preferences.debug("tagID = Reflected light halogen lamp color temperature\n");
+                                break;
+                            case 2183:
+                                Preferences.debug("tagID = Contrast manager mode\n");
+                                break;
+                            case 2184:
+                                Preferences.debug("tagID = Dazzle protection acitve\n");
+                                break;
+                            case 2195:
+                                Preferences.debug("tagID = Zoom\n");
+                                break;
+                            case 2196:
+                                Preferences.debug("tagID = Zoom go speed\n");
+                                break;
+                            case 2197:
+                                Preferences.debug("tagID = Light zoom\n");
+                                break;
+                            case 2198:
+                                Preferences.debug("tagID = Light zoom go speed\n");
+                                break;
+                            case 2199:
+                                Preferences.debug("tagID = Light zoom coupled\n");
+                                break;
+                            case 2200:
+                                Preferences.debug("tagID = Transmitted light halogen lamp mode\n");
+                                break;
+                            case 2201:
+                                Preferences.debug("tagID = Transmitted light halogen lamp voltage\n");
+                                break;
+                            case 2202:
+                                Preferences.debug("tagID = Transmitted light halogen lamp color temperature\n");
+                                break;
+                            case 2203:
+                                Preferences.debug("tagID = Reflected cold light mode\n");
+                                break;
+                            case 2204:
+                                Preferences.debug("tagID = Reflected cold light intensity\n");
+                                break;
+                            case 2205:
+                                Preferences.debug("tagID = Reflected cold light color temperature\n");
+                                break;
+                            case 2206:
+                                Preferences.debug("tagID = Transmitted cold light mode\n");
+                                break;
+                            case 2207:
+                                Preferences.debug("tagID = Transmitted cold light intensity\n");
+                                break;
+                            case 2208:
+                                Preferences.debug("tagID = Transmitted cold light color temperature\n");
+                                break;
+                            case 2209:
+                                Preferences.debug("tagID = Infinity space port changer position\n");
+                                break;
+                            case 2210:
+                                Preferences.debug("tagID = Beam splitter infinity space\n");
+                                break;
+                            case 2211:
+                                Preferences.debug("tagID = Two TV vis cam changer position\n");
+                                break;
+                            case 2212:
+                                Preferences.debug("tagID = Beam splitter ocular\n");
+                                break;
+                            case 2213:
+                                Preferences.debug("tagID = Two TV cameras changer position\n");
+                                break;
+                            case 2214:
+                                Preferences.debug("tagID = Beam splitter cameras\n");
+                                break;
+                            case 2215:
+                                Preferences.debug("tagID = Ocular shutter\n");
+                                break;
+                            case 2216:
+                                Preferences.debug("tagID = Two TV cameras changer cube\n");
+                                break;
+                            case 2217:
+                                Preferences.debug("tagID = Light wavelength\n");
+                                break;
+                            case 2218:
+                                Preferences.debug("tagID = Ocular magnification\n");
+                                break;
+                            case 2219:
+                                Preferences.debug("tagID = Camera adapter magnification\n");
+                                break;
+                            case 2220:
+                                Preferences.debug("tagID = Microscope port\n");
+                                break;
+                            case 2221:
+                                Preferences.debug("tagID = Ocular total magnification\n");
+                                break;
+                            case 2222:
+                                Preferences.debug("tagID = Field of view\n");
+                                break;
+                            case 2223:
+                                Preferences.debug("tagID = Ocular\n");
+                                break;
+                            case 2224:
+                                Preferences.debug("tagID = Camera adapter\n");
+                                break;
+                            case 2225:
+                                Preferences.debug("tagID = Stage joystick enabled\n");
+                                break;
+                            case 2226:
+                                Preferences.debug("tagID = Contrast manager contrast method\n");
+                                break;
+                            case 2229:
+                                Preferences.debug("tagID = Cameras changer beam splitter type\n");
+                                break;
+                            case 2235:
+                                Preferences.debug("tagID = Rear port slider position\n");
+                                break;
+                            case 2236:
+                                Preferences.debug("tagID = Rear port source\n");
+                                break;
+                            case 2237:
+                                Preferences.debug("tagID = Beam splitter type infinity space\n");
+                                break;
+                            case 2238:
+                                Preferences.debug("tagID = Fluorescence attenuator\n");
+                                break;
+                            case 2239:
+                                Preferences.debug("tagID = Fluorescence attenuator position\n");
+                                break;
+                            case 2307:
+                                Preferences.debug("tagID = Camera frame start left\n");
+                                break;
+                            case 2308:
+                                Preferences.debug("tagID = Camera frame start top\n");
+                                break;
+                            case 2309:
+                                Preferences.debug("tagID = Camera frame width\n");
+                                break;
+                            case 2310:
+                                Preferences.debug("tagID = Camera frame height\n");
+                                break;
+                            case 2311:
+                                Preferences.debug("tagID = Camera binning\n");
+                                break;
+                            case 2312:
+                                Preferences.debug("tagID = Camera frame full\n");
+                                break;
+                            case 2313:
+                                Preferences.debug("tagID = Camera frame pixel distance\n");
+                                break;
+                            case 2318:
+                                Preferences.debug("tagID = Data format use scaling\n");
+                                break;
+                            case 2319:
+                                Preferences.debug("tagID = Camera frame image orientation\n");
+                                break;
+                            case 2320:
+                                Preferences.debug("tagID = Video monochrome signal type\n");
+                                break;
+                            case 2321:
+                                Preferences.debug("tagID = Video color signal type\n");
+                                break;
+                            case 2322:
+                                Preferences.debug("tagID = Meteor channel input\n");
+                                break;
+                            case 2323:
+                                Preferences.debug("tagID = Meteor channel sync\n");
+                                break;
+                            case 2324:
+                                Preferences.debug("tagID = White balance enabled\n");
+                                break;
+                            case 2325:
+                                Preferences.debug("tagID = Camera white balance red\n");
+                                break;
+                            case 2326:
+                                Preferences.debug("tagID = Camera white balance green\n");
+                                break;
+                            case 2327:
+                                Preferences.debug("tagID = Camera white balance blue\n");
+                                break;
+                            case 2331:
+                                Preferences.debug("tagID = Camera frame scaling factor\n");
+                                break;
+                            case 2562:
+                                Preferences.debug("tagID = Meteor camera type\n");
+                                break;
+                            case 2564:
+                                Preferences.debug("tagID = Exposure time in msec\n");
+                                break;
+                            case 2568:
+                                Preferences.debug("tagID = Camera exposure time auto calculate\n");
+                                break;
+                            case 2569:
+                                Preferences.debug("tagID = Meteor gain value\n");
+                                break;
+                            case 2571:
+                                Preferences.debug("tagID = Meteor gain automatic\n");
+                                break;
+                            case 2572:
+                                Preferences.debug("tagID = Meteor adjust hue\n");
+                                break;
+                            case 2573:
+                                Preferences.debug("tagID = Meteor adjust saturation\n");
+                                break;
+                            case 2574:
+                                Preferences.debug("tagID = Meteor adjust red low\n");
+                                break;
+                            case 2575:
+                                Preferences.debug("tagID = Meteor adjust green low\n");
+                                break;
+                            case 2576:
+                                Preferences.debug("tagID = Meteor adjust blue low\n");
+                                break;
+                            case 2577:
+                                Preferences.debug("tagID = Meteor adjust red high\n");
+                                break;
+                            case 2578:
+                                Preferences.debug("tagID = Meteor adjust green high\n");
+                                break;
+                            case 2579:
+                                Preferences.debug("tagID = Meteor adjust blue high\n");
+                                break;
+                            case 2582:
+                                Preferences.debug("tagID = Camera exposure time calculation control\n");
+                                break;
+                            case 2585:
+                                Preferences.debug("tagID = Axio cam fading correction enable\n");
+                                break;
+                            case 2587:
+                                Preferences.debug("tagID = Camera live image\n");
+                                break;
+                            case 2588:
+                                Preferences.debug("tagID = Camera live enabled\n");
+                                break;
+                            case 2589:
+                                Preferences.debug("tagID = Live image sync object name\n");
+                                break;
+                            case 2590:
+                                Preferences.debug("tagID = Camera live speed\n");
+                                break;
+                            case 2591:
+                                Preferences.debug("tagID = Camera image\n");
+                                break;
+                            case 2592:
+                                Preferences.debug("tagID = Camera image width\n");
+                                break;
+                            case 2593:
+                                Preferences.debug("tagID = Camera image height\n");
+                                break;
+                            case 2594:
+                                Preferences.debug("tagID = Camera image pixel type\n");
+                                break;
+                            case 2595:
+                                Preferences.debug("tagID = Camera image sh memory name\n");
+                                break;
+                            case 2596:
+                                Preferences.debug("tagID = Camera live image width\n");
+                                break;
+                            case 2597:
+                                Preferences.debug("tagID = Camera live image height\n");
+                                break;
+                            case 2598:
+                                Preferences.debug("tagID = Camera live image pixel type\n");
+                                break;
+                            case 2599:
+                                Preferences.debug("tagID = Camera live image sh memory name\n");
+                                break;
+                            case 2600:
+                                Preferences.debug("tagID = Camera live maximum speed\n");
+                                break;
+                            case 2601:
+                                Preferences.debug("tagID = Camera live binning\n");
+                                break;
+                            case 2602:
+                                Preferences.debug("tagID = Camera live gain value\n");
+                                break;
+                            case 2603:
+                                Preferences.debug("tagID = Camera live exposure time value\n");
+                                break;
+                            case 2604:
+                                Preferences.debug("tagID = Camera live scaling factor\n");
+                                break;
+                            case 2817:
+                                Preferences.debug("tagID = Image index U\n");
+                                break;
+                            case 2818:
+                                Preferences.debug("tagID = Image index V\n");
+                                break;
+                            case 2819:
+                                Preferences.debug("tagID = Image index Z\n");
+                                break;
+                            case 2820:
+                                Preferences.debug("tagID = Image index C\n");
+                                break;
+                            case 2821:
+                                Preferences.debug("tagID = Image index T\n");
+                                break;
+                            case 2822:
+                                Preferences.debug("tagID = Image tile index\n");
+                                break;
+                            case 2823:
+                                Preferences.debug("tagID = Image acquisition index\n");
+                                break;
+                            case 2824:
+                                Preferences.debug("tagID = Image count tiles\n");
+                                break;
+                            case 2825:
+                                Preferences.debug("tagID = Image count A\n");
+                                break;
+                            case 2827:
+                                Preferences.debug("tagID = Image index S\n");
+                                break;
+                            case 2828:
+                                Preferences.debug("tagID = Image index raw\n");
+                                break;
+                            case 2832:
+                                Preferences.debug("tagID = Image count Z\n");
+                                break;
+                            case 2833:
+                                Preferences.debug("tagID = Image count C\n");
+                                break;
+                            case 2834:
+                                Preferences.debug("tagID = Image count T\n");
+                                break;
+                            case 2838:
+                                Preferences.debug("tagID = Image count U\n");
+                                break;
+                            case 2839:
+                                Preferences.debug("tagID = Image count V\n");
+                                break;
+                            case 2840:
+                                Preferences.debug("tagID = Image count S\n");
+                                break;
+                            case 2841:
+                                Preferences.debug("tagiD = Original stage position X\n");
+                                break;
+                            case 2842:
+                                Preferences.debug("tagID = Original stage position Y\n");
+                                break;
+                            case 3088:
+                                Preferences.debug("tagID = Layer draw flags\n");
+                                break;
+                            case 3334:
+                                Preferences.debug("tagID = Remaining time\n");
+                                break;
+                            case 3585:
+                                Preferences.debug("tagID = User field 1\n");
+                                break;
+                            case 3586:
+                                Preferences.debug("tagID = User field 2\n");
+                                break;
+                            case 3587:
+                                Preferences.debug("tagID = User field 3\n");
+                                break;
+                            case 3588:
+                                Preferences.debug("tagID = User field 4\n");
+                                break;
+                            case 3589:
+                                Preferences.debug("tagID = User field 5\n");
+                                break;
+                            case 3590:
+                                Preferences.debug("tagID = User field 6\n");
+                                break;
+                            case 3591:
+                                Preferences.debug("tagID = User field 7\n");
+                                break;
+                            case 3592:
+                                Preferences.debug("tagID = User field 8\n");
+                                break;
+                            case 3593:
+                                Preferences.debug("tagID = User field 9\n");
+                                break;
+                            case 3594:
+                                Preferences.debug("tagID = User field 10\n");
+                                break;
+                            case 3840:
+                                Preferences.debug("tagID = ID\n");
+                                break;
+                            case 3841:
+                                Preferences.debug("tagID = Name\n");
+                                break;
+                            case 3842:
+                                Preferences.debug("tagiD = Value\n");
+                                break;
+                            case 5501:
+                                Preferences.debug("tagID = Pv cam clocking mode\n");
+                                break;
+                            case 8193:
+                                Preferences.debug("tagID = Autofocus status report\n");
+                                break;
+                            case 8194:
+                                Preferences.debug("tagID = Autofocus position\n");
+                                break;
+                            case 8195:
+                                Preferences.debug("tagID = Autofocus position offset\n");
+                                break;
+                            case 8196:
+                                Preferences.debug("tagID = Autofocus empty field threshold\n");
+                                break;
+                            case 8197:
+                                Preferences.debug("tagID = Autofocus calibration name\n");
+                                break;
+                            case 8198:
+                                Preferences.debug("tagID = Autofocus current calibration item\n");
+                                break;
+                            case 65537:
+                                Preferences.debug("tagID = Camera frame full width\n");
+                                break;
+                            case 65538:
+                                Preferences.debug("tagID = Camera frame full height\n");
+                                break;
+                            case 65541:
+                                Preferences.debug("tagID = Axio cam shutter signal\n");
+                                break;
+                            case 65542:
+                                Preferences.debug("tagID = Axio cam delay time\n");
+                                break;
+                            case 65543:
+                                Preferences.debug("tagid = Axio cam shuter control\n");
+                                break;
+                            case 65544:
+                                Preferences.debug("tagID = Axio cam black refls calculated\n");
+                                break;
+                            case 65545:
+                                Preferences.debug("tagID = Axio cam black reference\n");
+                                break;
+                            case 65547:
+                                Preferences.debug("tagID = Camera shading correction\n");
+                                break;
+                            case 65550:
+                                Preferences.debug("tagID = Axio cam enhance color\n");
+                                break;
+                            case 65551:
+                                Preferences.debug("tagID = Axio cam NIR mode\n");
+                                break;
+                            case 65552:
+                                Preferences.debug("tagID = Camera shutter close delay\n");
+                                break;
+                            case 65553:
+                                Preferences.debug("tagID = Camera white balance auto calculate\n");
+                                break;
+                            case 65556:
+                                Preferences.debug("tagID = Axio cam NIR mode available\n");
+                                break;
+                            case 65557:
+                                Preferences.debug("tagID = Axio cam fading correction available\n");
+                                break;
+                            case 65559:
+                                Preferences.debug("tagID = Axio cam enhance color available\n");
+                                break;
+                            case 65565:
+                                Preferences.debug("tagID = Meteor video norm\n");
+                                break;
+                            case 65566:
+                                Preferences.debug("tagID = Meteor adjust white reference\n");
+                                break;
+                            case 65567:
+                                Preferences.debug("tagID = Meteor black reference\n");
+                                break;
+                            case 65568:
+                                Preferences.debug("tagID = Meteor channel input count mono\n");
+                                break;
+                            case 65570:
+                                Preferences.debug("tagID = Meteor channel input count RGB\n");
+                                break;
+                            case 65571:
+                                Preferences.debug("tagID = Meteor enable VCR\n");
+                                break;
+                            case 65572:
+                                Preferences.debug("tagID = Meteor brightness\n");
+                                break;
+                            case 65573:
+                                Preferences.debug("tagID = Meteor contrast\n");
+                                break;
+                            case 65575:
+                                Preferences.debug("tagID = Axio cam selector\n");
+                                break;
+                            case 65576:
+                                Preferences.debug("tagID = Axio cam type\n");
+                                break;
+                            case 65577:
+                                Preferences.debug("tagID = Axio cam info\n");
+                                break;
+                            case 65580:
+                                Preferences.debug("tagID = Axio cam resolution\n");
+                                break;
+                            case 65581:
+                                Preferences.debug("tagID = Axio cam color model\n");
+                                break;
+                            case 65582:
+                                Preferences.debug("tagID = Axio cam micro scanning\n");
+                                break;
+                            case 65585:
+                                Preferences.debug("tagID = Amplification index\n");
+                                break;
+                            case 65586:
+                                Preferences.debug("tagID = Device command\n");
+                                break;
+                            case 65587:
+                                Preferences.debug("tagID = Beam location\n");
+                                break;
+                            case 65588:
+                                Preferences.debug("tagID = Component type\n");
+                                break;
+                            case 65589:
+                                Preferences.debug("tagID = Controller type\n");
+                                break;
+                            case 65590:
+                                Preferences.debug("tagID = Camera white balance calculation red paint\n");
+                                break;
+                            case 65591:
+                                Preferences.debug("tagID = Camera white balance calculation blue paint\n");
+                                break;
+                            case 65592:
+                                Preferences.debug("tagID= Camera white balance set red\n");
+                                break;
+                            case 65593:
+                                Preferences.debug("tagID = Camera white balance set green\n");
+                                break;
+                            case 65594:
+                                Preferences.debug("tagID = Camera white balance set blue\n");
+                                break;
+                            case 65595:
+                                Preferences.debug("tagID = Camera white balance set target red\n");
+                                break;
+                            case 65596:
+                                Preferences.debug("tagID = Camera white balance set target green\n");
+                                break;
+                            case 65597:
+                                Preferences.debug("tagID = Camera white balance set target blue\n");
+                                break;
+                            case 65598:
+                                Preferences.debug("tagID = Apotome cam calibration mode\n");
+                                break;
+                            case 65599:
+                                Preferences.debug("tagID = Apotome grid position\n");
+                                break;
+                            case 65600:
+                                Preferences.debug("tagID = Apotome cam scanner position\n");
+                                break;
+                            case 65601:
+                                Preferences.debug("tagID = Apotome full phase shift\n");
+                                break;
+                            case 65602:
+                                Preferences.debug("tagID = Apotome grid name\n");
+                                break;
+                            case 65603:
+                                Preferences.debug("tagID = Apotome staining\n");
+                                break;
+                            case 65604:
+                                Preferences.debug("tagID = Apotome processing mode\n");
+                                break;
+                            case 65605:
+                                Preferences.debug("tagID = Apotome cam live combine mode\n");
+                                break;
+                            case 65606:
+                                Preferences.debug("tagID = Apotome filter name\n");
+                                break;
+                            case 65607:
+                                Preferences.debug("tagID = Apotome file strength\n");
+                                break;
+                            case 65608:
+                                Preferences.debug("agID = Apotome cam filter harmonics\n");
+                                break;
+                            case 65609:
+                                Preferences.debug("tagID = Apotome grating period\n");
+                                break;
+                            case 65610:
+                                Preferences.debug("tagID = Apotome auto shutter used\n");
+                                break;
+                            case 65611:
+                                Preferences.debug("tagID = Apotome cam status\n");
+                                break;
+                            case 65612:
+                                Preferences.debug("tagID = Apotome cam normalize\n");
+                                break;
+                            case 65613:
+                                Preferences.debug("tagID = Apotome cam settings manager\n");
+                                break;
+                            case 65614:
+                                Preferences.debug("tagID = Deep view cam supervisor mode\n");
+                                break;
+                            case 65615:
+                                Preferences.debug("tagID = Deep view processing\n");
+                                break;
+                            case 65616:
+                                Preferences.debug("tagID = Deep view cam filter name\n");
+                                break;
+                            case 65617:
+                                Preferences.debug("tagID = Deep view cam status\n");
+                                break;
+                            case 65618:
+                                Preferences.debug("tagID = Deep view cam settings manager\n");
+                                break;
+                            case 65619:
+                                Preferences.debug("tagID = Device scaling name\n");
+                                break;
+                            case 65620:
+                                Preferences.debug("tagID = Camera shading is calculated\n");
+                                break;
+                            case 65621:
+                                Preferences.debug("tagID = Camera shading calculation name\n");
+                                break;
+                            case 65622:
+                                Preferences.debug("tagID = Camera shading autocalculate\n");
+                                break;
+                            case 65623:
+                                Preferences.debug("tagID = Camera trigger available\n");
+                                break;
+                            case 65626:
+                                Preferences.debug("tagID = Camera shutter available\n");
+                                break;
+                            case 65627:
+                                Preferences.debug("tagID = Axio cam shutter micro scanning enable\n");
+                                break;
+                            case 65628:
+                                Preferences.debug("tagID = Apotome cam live focus\n");
+                                break;
+                            case 65629:
+                                Preferences.debug("tagID = Device init status\n");
+                                break;
+                            case 65630:
+                                Preferences.debug("tagID = Device error status\n");
+                                break;
+                            case 65631:
+                                Preferences.debug("tagID = Apotome cam slider in grid position\n");
+                                break;
+                            case 65632:
+                                Preferences.debug("tagID = Orca NIR mode used\n");
+                                break;
+                            case 65633:
+                                Preferences.debug("tagID = Orca analog gain\n");
+                                break;
+                            case 65634:
+                                Preferences.debug("tagID = Orca analog offset\n");
+                                break;
+                            case 65635:
+                                Preferences.debug("tagID = Orca binning\n");
+                                break;
+                            case 65536:
+                                Preferences.debug("tagID = Orca bit depth\n");
+                                break;
+                            case 65637:
+                                Preferences.debug("tagID = Apotome averaging count\n");
+                                break;
+                            case 65638:
+                                Preferences.debug("tagID = Deep view DoF\n");
+                                break;
+                            case 65639:
+                                Preferences.debug("tagID = Deep view EDoF\n");
+                                break;
+                            case 65643:
+                                Preferences.debug("tagID = Deep view slider name\n");
                                 break;
                             default: Preferences.debug("Unrecognized tagID value = " + tagID + "\n");
                         }
