@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
-import javax.swing.Action;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -175,17 +175,22 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		
 		JTextField field1 = guiHelp.buildDecimalField("Number of SSFP Flip Angles (0 Phase Increment):", Nfa_phase0);
 		JTextField field2 = guiHelp.buildDecimalField("Number of SSFP Flip Angles (180 Phase Increment):", Nfa_phase180);
-		JCheckBox box1 = guiHelp.buildCheckBox("Perform Conventional DESPOT2 Modeling", performConventionalModelling);
-		JCheckBox box2 = guiHelp.buildCheckBox("Perform Approximate Modeling", performApproxModelling);
-		JCheckBox box3 = guiHelp.buildCheckBox("Perform Full Modelling of the Signal (slow but accurate)", performFullModelling);
-		JCheckBox box4 = guiHelp.buildCheckBox("Use Calculated B1 Map", includeB1Map);
+		JRadioButton button1 = guiHelp.buildRadioButton("Perform Conventional DESPOT2 Modeling", performConventionalModelling);
+		JRadioButton button2 = guiHelp.buildRadioButton("Perform Approximate Modeling", performApproxModelling);
+		JRadioButton button3 = guiHelp.buildRadioButton("Perform Full Modelling of the Signal (slow but accurate)", performFullModelling);
+		JCheckBox box1 = guiHelp.buildCheckBox("Use Calculated B1 Map", includeB1Map);
+		
+		ButtonGroup processType = new ButtonGroup();
+        processType.add(button1);
+        processType.add(button2);
+        processType.add(button3);
 		
 		panel.add(field1.getParent(), panelLayout);
 		panel.add(field2.getParent(), panelLayout);
+		panel.add(button1.getParent(), panelLayout);
+		panel.add(button2.getParent(), panelLayout);
+		panel.add(button3.getParent(), panelLayout);
 		panel.add(box1.getParent(), panelLayout);
-		panel.add(box2.getParent(), panelLayout);
-		panel.add(box3.getParent(), panelLayout);
-		panel.add(box4.getParent(), panelLayout);
 		
 		dialog.add(panel, BorderLayout.CENTER);
 		dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
@@ -200,11 +205,17 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		
 		Nfa_phase0 = (int) Double.valueOf(field1.getText()).doubleValue();
 		Nfa_phase180 = (int) Double.valueOf(field2.getText()).doubleValue();
-		performConventionalModelling = box1.isSelected();
-		performApproxModelling = box2.isSelected();
-		performFullModelling = box3.isSelected();
-		includeB1Map = box4.isSelected();
+		performConventionalModelling = button1.isSelected();
+		performApproxModelling = button2.isSelected();
+		performFullModelling = button3.isSelected();
+		includeB1Map = box1.isSelected();
 	
+		if(processType.getSelection() == null) {
+            MipavUtil.displayInfo("Please select a processing method");
+            dialog.dispose();
+            return showDialog();
+        }   
+		
 		if (performConventionalModelling == true) {
 			performApproxModelling = false;
 			performFullModelling = false;
@@ -287,10 +298,15 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 			panel.add(comboOpt.getParent(), panelLayout);
 		}
 		
-		JCheckBox box1 = guiHelp.buildCheckBox("Scan Performed on a GE Scanner", geScanner);
-		JCheckBox box2 = guiHelp.buildCheckBox("Scan Performed on a Siemens Scanner", siemensScanner);
-		panel.add(box1.getParent(), panelLayout);
-		panel.add(box2.getParent(), panelLayout);
+		JRadioButton button1 = guiHelp.buildRadioButton("Scan Performed on a GE Scanner", geScanner);
+		JRadioButton button2 = guiHelp.buildRadioButton("Scan Performed on a Siemens Scanner", siemensScanner);
+		
+		ButtonGroup scannerType = new ButtonGroup();
+        scannerType.add(button1);
+        scannerType.add(button2);
+		
+		panel.add(button1.getParent(), panelLayout);
+		panel.add(button2.getParent(), panelLayout);
 		
 		dialog.add(panel, BorderLayout.CENTER);
 		dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
@@ -318,11 +334,21 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 			b1ImageIndex = comboOpt.getSelectedIndex();
 		}
 		
-		geScanner = box1.isSelected();
-		siemensScanner = box2.isSelected();
+		geScanner = button1.isSelected();
+		siemensScanner = button2.isSelected();
 		
-		if (geScanner == true) siemensScanner = false;
-		if (siemensScanner == true) geScanner = false;
+		if(scannerType.getSelection() == null) {
+            MipavUtil.displayInfo("Please select a scanner type");
+            dialog.dispose();
+            return showLongDialog();
+        }
+		
+		if (geScanner == true) {
+		    siemensScanner = false;
+		}
+		if (siemensScanner == true) {
+		    geScanner = false;
+		}
 		
 		return true;
    }
