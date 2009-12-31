@@ -199,9 +199,10 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		Nfa_phase0 = (int) Double.valueOf(field1.getText()).doubleValue();
 		Nfa_phase180 = (int) Double.valueOf(field2.getText()).doubleValue();
@@ -315,9 +316,10 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		for (int i=0; i<Nfa_phase0; i++) {
 			ssfpImageIndex_phase0[i] = comboArr1[i].getSelectedIndex();
@@ -402,9 +404,10 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.pack();
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		if (performConventionalWith0Phase == true) {
 			for (int i=0; i<Nfa_phase0; i++) {
@@ -462,11 +465,10 @@ public class PlugInDESPOT2_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.pack();
 		dialog.setVisible(true);
 		
-		while(dialog.isVisible()) {}
-		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		maxT2 = Double.valueOf(field1.getText()).doubleValue();
 		maxMo = Double.valueOf(field2.getText()).doubleValue();

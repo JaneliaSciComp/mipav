@@ -229,7 +229,8 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+		        guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
 			return false;
 		}
 		
@@ -290,9 +291,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+		        guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		Nsa = (int) Double.valueOf(field1.getText()).doubleValue();
 		Nti = (int) Double.valueOf(field2.getText()).doubleValue();
@@ -350,9 +352,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+		        guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		Nsa = (int) Double.valueOf(field1.getText()).doubleValue();
 		
@@ -403,9 +406,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+		        guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		for(int i=0; i<Nsa; i++) {
 			spgrImageIndex[i] = comboArr[i].getSelectedIndex();
@@ -470,9 +474,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+		        guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		for (int i=0; i<Nti; i++) {
 			irspgrImageIndex[i] = comboArr[i].getSelectedIndex();
@@ -593,9 +598,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+		        guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		for (int i=0; i<Nti; i++) {
 			irspgrImageIndex[i] = comboArr[i].getSelectedIndex();
@@ -703,9 +709,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 	
 		if (performDESPOT1withPreCalculatedB1Map) {
 			b1ImageIndex = combo1.getSelectedIndex();
@@ -757,9 +764,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		maxT1 = Double.valueOf(field1.getText()).doubleValue();
 		maxMo = Double.valueOf(field2.getText()).doubleValue();
@@ -817,9 +825,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		maxT1 = Double.valueOf(field1.getText()).doubleValue();
 		maxMo = Double.valueOf(field2.getText()).doubleValue();
@@ -860,9 +869,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		hardNoiseThreshold = Float.valueOf(field1.getText()).floatValue();
 		
@@ -898,9 +908,10 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
 		dialog.setModal(true);
 		dialog.setVisible(true);
 		
-		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL)) {
-			return false;
-		}
+		if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
+                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
+            return false;
+        }
 		
 		noiseScale = Float.valueOf(field1.getText()).floatValue();
 		upperLeftCorner = box1.isSelected();
@@ -913,7 +924,7 @@ public class PlugInDESPOT1_MIPAV implements PlugInGeneric, BundledPlugInInfo {
    
 	public String itos(int num) {
     	String str = new Integer(num).toString();
-	return str;
+    	return str;
     }
 	
     /**
