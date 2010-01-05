@@ -155,7 +155,7 @@ public class VolumeImage implements Serializable
             for ( int i = 0; i < m_iTimeSteps; i++ )
             {
                 String kImageName = ModelImage.makeImageName( m_kImage.getFileInfo(0).getFileName(), "_Normal_" + i);
-                System.err.println( kImageName );
+                //System.err.println( kImageName );
                 ModelImage kNormal = ReadFromDisk( kImageName, m_kDir );
                 m_kNormal[i] = UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal.getImageName(), true );
                 kNormal.disposeLocal();
@@ -1308,7 +1308,7 @@ public class VolumeImage implements Serializable
             {
                 FileIO fileIO = new FileIO();
                 kImageGM = fileIO.readImage( kImageName + ".xml", kDir );
-                System.err.println( "Reading file " + kImageName );
+                //System.err.println( "Reading file " + kImageName );
             }
             if ( kImageGM == null )
             {
@@ -1329,7 +1329,7 @@ public class VolumeImage implements Serializable
                 kCalcMagnitude = null;     
                 if ( kImageGM != null )
                 {
-                    System.err.println( "...writing file " + kImageName );
+                    //System.err.println( "...writing file " + kImageName );
                     kImageGM.saveImage( kDir, kImageName, FileUtility.XML, false );
                 }
             }
@@ -1372,7 +1372,7 @@ public class VolumeImage implements Serializable
             {
                 FileIO fileIO = new FileIO();
                 kImageGMGM = fileIO.readImage( kImageName + ".xml", kDir );
-                System.err.println( "Reading file " + kImageName );
+                //System.err.println( "Reading file " + kImageName );
             }
             if ( kImageGMGM == null )
             {
@@ -1409,7 +1409,7 @@ public class VolumeImage implements Serializable
                     changeTypeAlgo.setRunningInSeparateThread(false);
                     changeTypeAlgo.run();
                     kImageGMGM.saveImage( kDir, kImageName, FileUtility.XML, false );
-                    System.err.println( "...writing file " + kImageName );
+                    //System.err.println( "...writing file " + kImageName );
                 }
             }
             if ( kImageGMGM != null )

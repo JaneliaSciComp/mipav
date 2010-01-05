@@ -315,7 +315,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         addWindowListener(this);
 
         try {
-            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+            setIconImage(MipavUtil.getIconImage("wm.gif"));
         } catch (FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
             ">.  Check that this file is available.\n");
@@ -334,7 +334,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         addWindowListener(this);
 
         try {
-            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+            setIconImage(MipavUtil.getIconImage("wm.gif"));
         } catch (FileNotFoundException error) {
             Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
             ">.  Check that this file is available.\n");
@@ -342,14 +342,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             ">.  Check that this file is available.\n");
         }
 
-        this.configureFrame();
         MipavInitGPU.InitGPU();
-
-        try {
-            setIconImage(MipavUtil.getIconImage("4plane_16x16.gif"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }        
 
         m_kVolumeImageA = new VolumeImage(  _imageA, "A", bCompute, kDir, iFilterType, aiExtents );
         if ( _imageB != null )
@@ -365,7 +358,14 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         if (m_kVolumeImageB.GetImage() != null) {
             m_kVolumeImageB.GetImage().setImageOrder(ModelImage.IMAGE_B);
         }
+        this.configureFrame();
         constructRenderers();
+
+        //pack();
+        //setVisible(true);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        gpuPanel.setVisible(true);
     }
 
 
@@ -908,7 +908,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         progressBar.updateValueImmed(100);
 
         progressBar.dispose();
-        
+
         pack();
         setVisible(true);
         raycastRenderWM.GetCanvas().display();
@@ -2680,13 +2680,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         mainPane.setContinuousLayout(true);
 
         getContentPane().add(mainPane, BorderLayout.CENTER);
-
-
-        pack();
-        setVisible(true);
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
-        gpuPanel.setVisible(true);
     }
 
     protected void create3DVOI( boolean bIntersection )

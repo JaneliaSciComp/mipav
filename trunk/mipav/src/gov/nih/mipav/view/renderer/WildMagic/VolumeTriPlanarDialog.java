@@ -246,6 +246,11 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      * Initializes the dialog user-interface.
      */
     public void init( boolean bUsePreComputedFiles ) {
+
+        try {
+            setIconImage(MipavUtil.getIconImage("wm.gif"));
+        } catch (Exception e) {}
+        
         setTitle("3D Volume & Surface Viewer");
 
         Box mainBox = new Box(BoxLayout.Y_AXIS);
