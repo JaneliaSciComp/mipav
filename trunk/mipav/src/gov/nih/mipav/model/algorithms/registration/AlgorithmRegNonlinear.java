@@ -988,7 +988,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
         if (doConvert) {
 
             // The units of measure were not identical.  Convert to millimeters
-            if ((sourceUnitsX == FileInfoBase.INCHES) || (sourceUnitsX == FileInfoBase.CENTIMETERS) ||
+            if ((sourceUnitsX == FileInfoBase.INCHES) || (sourceUnitsX == FileInfoBase.MILS) ||
+                    (sourceUnitsX == FileInfoBase.CENTIMETERS) ||
                     (sourceUnitsX == FileInfoBase.ANGSTROMS) || (sourceUnitsX == FileInfoBase.MICROMETERS) ||
                     (sourceUnitsX == FileInfoBase.MILLIMETERS) || (sourceUnitsX == FileInfoBase.METERS) ||
                     (sourceUnitsX == FileInfoBase.KILOMETERS) || (sourceUnitsX == FileInfoBase.MILES) ||
@@ -1008,6 +1009,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 if (sourceUnitsX == FileInfoBase.MILLIMETERS) { // leave unchanged
                 } else if (sourceUnitsX == FileInfoBase.INCHES) {
                     sourceVoxelX = 25.4f * sourceVoxelX;
+                } else if (sourceUnitsX == FileInfoBase.MILS) {
+                    sourceVoxelX = 2.54e-2f * sourceVoxelX;
                 } else if (sourceUnitsX == FileInfoBase.CENTIMETERS) {
                     sourceVoxelX = 10.0f * sourceVoxelX;
                 } else if (sourceUnitsX == FileInfoBase.ANGSTROMS) {
@@ -1025,7 +1028,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 }
             }
 
-            if ((sourceUnitsY == FileInfoBase.INCHES) || (sourceUnitsY == FileInfoBase.CENTIMETERS) ||
+            if ((sourceUnitsY == FileInfoBase.INCHES) || (sourceUnitsY == FileInfoBase.MILS) ||
+                    (sourceUnitsY == FileInfoBase.CENTIMETERS) ||
                     (sourceUnitsY == FileInfoBase.ANGSTROMS) || (sourceUnitsY == FileInfoBase.MICROMETERS) ||
                     (sourceUnitsY == FileInfoBase.MILLIMETERS) || (sourceUnitsY == FileInfoBase.METERS) ||
                     (sourceUnitsY == FileInfoBase.KILOMETERS) || (sourceUnitsY == FileInfoBase.MILES) ||
@@ -1045,6 +1049,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 if (sourceUnitsY == FileInfoBase.MILLIMETERS) { // leave unchanged
                 } else if (sourceUnitsY == FileInfoBase.INCHES) {
                     sourceVoxelY = 25.4f * sourceVoxelY;
+                } else if (sourceUnitsY == FileInfoBase.MILS) {
+                    sourceVoxelY = 2.54e-2f * sourceVoxelY;
                 } else if (sourceUnitsY == FileInfoBase.CENTIMETERS) {
                     sourceVoxelY = 10.0f * sourceVoxelY;
                 } else if (sourceUnitsY == FileInfoBase.ANGSTROMS) {
@@ -1064,7 +1070,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
             if (inPlane) {
                 sourceVoxelZ = sourceVoxelX;
-            } else if ((sourceUnitsZ == FileInfoBase.INCHES) || (sourceUnitsZ == FileInfoBase.CENTIMETERS) ||
+            } else if ((sourceUnitsZ == FileInfoBase.INCHES) || (sourceUnitsZ == FileInfoBase.MILS) ||
+                           (sourceUnitsZ == FileInfoBase.CENTIMETERS) ||
                            (sourceUnitsZ == FileInfoBase.ANGSTROMS) || (sourceUnitsZ == FileInfoBase.MICROMETERS) ||
                            (sourceUnitsZ == FileInfoBase.MILLIMETERS) || (sourceUnitsZ == FileInfoBase.METERS) ||
                            (sourceUnitsZ == FileInfoBase.KILOMETERS) || (sourceUnitsZ == FileInfoBase.MILES) ||
@@ -1084,6 +1091,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 if (sourceUnitsZ == FileInfoBase.MILLIMETERS) { // leave unchanged
                 } else if (sourceUnitsZ == FileInfoBase.INCHES) {
                     sourceVoxelZ = 25.4f * sourceVoxelZ;
+                } else if (sourceUnitsZ == FileInfoBase.MILS) {
+                    sourceVoxelZ = 2.54e-2f * sourceVoxelZ;
                 } else if (sourceUnitsZ == FileInfoBase.CENTIMETERS) {
                     sourceVoxelZ = 10.0f * sourceVoxelZ;
                 } else if (sourceUnitsZ == FileInfoBase.ANGSTROMS) {
@@ -1101,7 +1110,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 }
             }
 
-            if ((targetUnitsX == FileInfoBase.INCHES) || (targetUnitsX == FileInfoBase.CENTIMETERS) ||
+            if ((targetUnitsX == FileInfoBase.INCHES) || (targetUnitsX == FileInfoBase.MILS) ||
+                    (targetUnitsX == FileInfoBase.CENTIMETERS) ||
                     (targetUnitsX == FileInfoBase.ANGSTROMS) || (targetUnitsX == FileInfoBase.MICROMETERS) ||
                     (targetUnitsX == FileInfoBase.MILLIMETERS) || (targetUnitsX == FileInfoBase.METERS) ||
                     (targetUnitsX == FileInfoBase.KILOMETERS) || (targetUnitsX == FileInfoBase.MILES) ||
@@ -1122,6 +1132,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 if (targetUnitsX == FileInfoBase.MILLIMETERS) { // leave unchanged
                 } else if (targetUnitsX == FileInfoBase.INCHES) {
                     targetVoxelX = 25.4f * targetVoxelX;
+                } else if (targetUnitsX == FileInfoBase.MILS) {
+                    targetVoxelX = 2.54e-2f * targetVoxelX;
                 } else if (targetUnitsX == FileInfoBase.CENTIMETERS) {
                     targetVoxelX = 10.0f * targetVoxelX;
                 } else if (targetUnitsX == FileInfoBase.ANGSTROMS) {
@@ -1139,7 +1151,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 }
             }
 
-            if ((targetUnitsY == FileInfoBase.INCHES) || (targetUnitsY == FileInfoBase.CENTIMETERS) ||
+            if ((targetUnitsY == FileInfoBase.INCHES) || (targetUnitsY == FileInfoBase.MILS) ||
+                    (targetUnitsY == FileInfoBase.CENTIMETERS) ||
                     (targetUnitsY == FileInfoBase.ANGSTROMS) || (targetUnitsY == FileInfoBase.MICROMETERS) ||
                     (targetUnitsY == FileInfoBase.MILLIMETERS) || (targetUnitsY == FileInfoBase.METERS) ||
                     (targetUnitsY == FileInfoBase.KILOMETERS) || (targetUnitsY == FileInfoBase.MILES) ||
@@ -1160,6 +1173,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 if (targetUnitsY == FileInfoBase.MILLIMETERS) { // leave unchanged
                 } else if (targetUnitsY == FileInfoBase.INCHES) {
                     targetVoxelY = 25.4f * targetVoxelY;
+                } else if (targetUnitsY == FileInfoBase.MILS) {
+                    targetVoxelY = 2.54e-2f * targetVoxelY;
                 } else if (targetUnitsY == FileInfoBase.CENTIMETERS) {
                     targetVoxelY = 10.0f * targetVoxelY;
                 } else if (targetUnitsY == FileInfoBase.ANGSTROMS) {
@@ -1179,7 +1194,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
             if (inPlane) {
                 targetVoxelZ = targetVoxelX;
-            } else if ((targetUnitsZ == FileInfoBase.INCHES) || (targetUnitsZ == FileInfoBase.CENTIMETERS) ||
+            } else if ((targetUnitsZ == FileInfoBase.INCHES) || (targetUnitsZ == FileInfoBase.MILS) ||
+                           (targetUnitsZ == FileInfoBase.CENTIMETERS) ||
                            (targetUnitsZ == FileInfoBase.ANGSTROMS) || (targetUnitsZ == FileInfoBase.MICROMETERS) ||
                            (targetUnitsZ == FileInfoBase.MILLIMETERS) || (targetUnitsZ == FileInfoBase.METERS) ||
                            (targetUnitsZ == FileInfoBase.KILOMETERS) || (targetUnitsZ == FileInfoBase.MILES) ||
@@ -1200,6 +1216,8 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 if (targetUnitsZ == FileInfoBase.MILLIMETERS) { // leave unchanged
                 } else if (targetUnitsZ == FileInfoBase.INCHES) {
                     targetVoxelZ = 25.4f * targetVoxelZ;
+                } else if (targetUnitsZ == FileInfoBase.MILS) {
+                    targetVoxelZ = 2.54e-2f * targetVoxelZ;    
                 } else if (targetUnitsZ == FileInfoBase.CENTIMETERS) {
                     targetVoxelZ = 10.0f * targetVoxelZ;
                 } else if (targetUnitsZ == FileInfoBase.ANGSTROMS) {
