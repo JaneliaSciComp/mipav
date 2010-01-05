@@ -1010,7 +1010,8 @@ public class JDialogACPC extends JDialogBase {
 		// Get the original resolutions in millimeters
         for (int i = 0; i <= 2; i++) {
             int unit = image.getFileInfo(0).getUnitsOfMeasure(i);
-            if ((unit == FileInfoBase.INCHES)      || (unit == FileInfoBase.CENTIMETERS) ||
+            if ((unit == FileInfoBase.INCHES)      || (unit == FileInfoBase.MILS) ||
+                (unit == FileInfoBase.CENTIMETERS) ||
                 (unit == FileInfoBase.ANGSTROMS)   || (unit == FileInfoBase.NANOMETERS)  ||
                 (unit == FileInfoBase.MICROMETERS) || (unit == FileInfoBase.MILLIMETERS) ||
                 (unit == FileInfoBase.METERS)      || (unit == FileInfoBase.KILOMETERS)  ||
@@ -1024,6 +1025,7 @@ public class JDialogACPC extends JDialogBase {
                 // Be ready for conversions between different units.
                 if (unit == FileInfoBase.MILLIMETERS) 		origRes[i] = origRes[i];
                 else if (unit == FileInfoBase.INCHES) 		origRes[i] = 25.4f * origRes[i];
+                else if (unit == FileInfoBase.MILS)         origRes[i] = 2.54e-2f * origRes[i];
                 else if (unit == FileInfoBase.CENTIMETERS) 	origRes[i] = 10.0f * origRes[i];
                 else if (unit == FileInfoBase.ANGSTROMS) 	origRes[i] = 1.0e-7f * origRes[i];
                 else if (unit == FileInfoBase.NANOMETERS) 	origRes[i] = 1.0e-6f * origRes[i];
