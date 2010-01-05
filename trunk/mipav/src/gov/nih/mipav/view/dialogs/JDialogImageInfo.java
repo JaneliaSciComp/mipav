@@ -2274,6 +2274,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         cBox.setBackground(Color.white);
         cBox.addItem(" UNKNOWN");
         cBox.addItem(" INCHES ");
+        cBox.addItem(" MILS ");
         cBox.addItem(" CENTIMETERS ");
         cBox.addItem(" ANGSTROMS ");
         cBox.addItem(" NANOMETERS ");
@@ -2308,65 +2309,69 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             case FileInfoBase.INCHES:
                 comboBox.setSelectedIndex(1);
                 break;
-
-            case FileInfoBase.CENTIMETERS:
+                
+            case FileInfoBase.MILS:
                 comboBox.setSelectedIndex(2);
                 break;
 
-            case FileInfoBase.ANGSTROMS:
+            case FileInfoBase.CENTIMETERS:
                 comboBox.setSelectedIndex(3);
                 break;
 
-            case FileInfoBase.NANOMETERS:
+            case FileInfoBase.ANGSTROMS:
                 comboBox.setSelectedIndex(4);
                 break;
 
-            case FileInfoBase.MICROMETERS:
+            case FileInfoBase.NANOMETERS:
                 comboBox.setSelectedIndex(5);
                 break;
 
-            case FileInfoBase.MILLIMETERS:
+            case FileInfoBase.MICROMETERS:
                 comboBox.setSelectedIndex(6);
                 break;
 
-            case FileInfoBase.METERS:
+            case FileInfoBase.MILLIMETERS:
                 comboBox.setSelectedIndex(7);
                 break;
 
-            case FileInfoBase.KILOMETERS:
+            case FileInfoBase.METERS:
                 comboBox.setSelectedIndex(8);
                 break;
 
-            case FileInfoBase.MILES:
+            case FileInfoBase.KILOMETERS:
                 comboBox.setSelectedIndex(9);
                 break;
 
-            case FileInfoBase.NANOSEC:
+            case FileInfoBase.MILES:
                 comboBox.setSelectedIndex(10);
                 break;
 
-            case FileInfoBase.MICROSEC:
+            case FileInfoBase.NANOSEC:
                 comboBox.setSelectedIndex(11);
                 break;
 
-            case FileInfoBase.MILLISEC:
+            case FileInfoBase.MICROSEC:
                 comboBox.setSelectedIndex(12);
                 break;
 
-            case FileInfoBase.SECONDS:
+            case FileInfoBase.MILLISEC:
                 comboBox.setSelectedIndex(13);
                 break;
 
-            case FileInfoBase.MINUTES:
+            case FileInfoBase.SECONDS:
                 comboBox.setSelectedIndex(14);
                 break;
 
-            case FileInfoBase.HOURS:
+            case FileInfoBase.MINUTES:
                 comboBox.setSelectedIndex(15);
                 break;
 
-            case FileInfoBase.HZ:
+            case FileInfoBase.HOURS:
                 comboBox.setSelectedIndex(16);
+                break;
+
+            case FileInfoBase.HZ:
+                comboBox.setSelectedIndex(17);
                 break;
 
             default:
@@ -2532,64 +2537,68 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             case 1:
                 measure1 = FileInfoBase.INCHES;
                 break;
-
+                
             case 2:
-                measure1 = FileInfoBase.CENTIMETERS;
+                measure1 = FileInfoBase.MILS;
                 break;
 
             case 3:
-                measure1 = FileInfoBase.ANGSTROMS;
+                measure1 = FileInfoBase.CENTIMETERS;
                 break;
 
             case 4:
-                measure1 = FileInfoBase.NANOMETERS;
+                measure1 = FileInfoBase.ANGSTROMS;
                 break;
 
             case 5:
-                measure1 = FileInfoBase.MICROMETERS;
+                measure1 = FileInfoBase.NANOMETERS;
                 break;
 
             case 6:
-                measure1 = FileInfoBase.MILLIMETERS;
+                measure1 = FileInfoBase.MICROMETERS;
                 break;
 
             case 7:
-                measure1 = FileInfoBase.METERS;
+                measure1 = FileInfoBase.MILLIMETERS;
                 break;
 
             case 8:
-                measure1 = FileInfoBase.KILOMETERS;
+                measure1 = FileInfoBase.METERS;
                 break;
 
             case 9:
-                measure1 = FileInfoBase.MILES;
+                measure1 = FileInfoBase.KILOMETERS;
                 break;
 
             case 10:
-                measure1 = FileInfoBase.NANOSEC;
+                measure1 = FileInfoBase.MILES;
                 break;
 
             case 11:
-                measure1 = FileInfoBase.MICROSEC;
+                measure1 = FileInfoBase.NANOSEC;
                 break;
 
             case 12:
-                measure1 = FileInfoBase.MILLISEC;
+                measure1 = FileInfoBase.MICROSEC;
                 break;
 
             case 13:
-                measure1 = FileInfoBase.SECONDS;
+                measure1 = FileInfoBase.MILLISEC;
                 break;
 
             case 14:
-                measure1 = FileInfoBase.MINUTES;
+                measure1 = FileInfoBase.SECONDS;
                 break;
 
             case 15:
-                measure1 = FileInfoBase.HOURS;
+                measure1 = FileInfoBase.MINUTES;
                 break;
 
             case 16:
+                measure1 = FileInfoBase.HOURS;
+                break;
+
+            case 17:
                 measure1 = FileInfoBase.HZ;
                 break;
 
@@ -2608,64 +2617,68 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 case 1:
                     measure3 = FileInfoBase.INCHES;
                     break;
-
+                    
                 case 2:
-                    measure3 = FileInfoBase.CENTIMETERS;
+                    measure3 = FileInfoBase.MILS;
                     break;
 
                 case 3:
-                    measure3 = FileInfoBase.ANGSTROMS;
+                    measure3 = FileInfoBase.CENTIMETERS;
                     break;
 
                 case 4:
-                    measure3 = FileInfoBase.NANOMETERS;
+                    measure3 = FileInfoBase.ANGSTROMS;
                     break;
 
                 case 5:
-                    measure3 = FileInfoBase.MICROMETERS;
+                    measure3 = FileInfoBase.NANOMETERS;
                     break;
 
                 case 6:
-                    measure3 = FileInfoBase.MILLIMETERS;
+                    measure3 = FileInfoBase.MICROMETERS;
                     break;
 
                 case 7:
-                    measure3 = FileInfoBase.METERS;
+                    measure3 = FileInfoBase.MILLIMETERS;
                     break;
 
                 case 8:
-                    measure3 = FileInfoBase.KILOMETERS;
+                    measure3 = FileInfoBase.METERS;
                     break;
 
                 case 9:
-                    measure3 = FileInfoBase.MILES;
+                    measure3 = FileInfoBase.KILOMETERS;
                     break;
 
                 case 10:
-                    measure3 = FileInfoBase.NANOSEC;
+                    measure3 = FileInfoBase.MILES;
                     break;
 
                 case 11:
-                    measure3 = FileInfoBase.MICROSEC;
+                    measure3 = FileInfoBase.NANOSEC;
                     break;
 
                 case 12:
-                    measure3 = FileInfoBase.MILLISEC;
+                    measure3 = FileInfoBase.MICROSEC;
                     break;
 
                 case 13:
-                    measure3 = FileInfoBase.SECONDS;
+                    measure3 = FileInfoBase.MILLISEC;
                     break;
 
                 case 14:
-                    measure3 = FileInfoBase.MINUTES;
+                    measure3 = FileInfoBase.SECONDS;
                     break;
 
                 case 15:
-                    measure3 = FileInfoBase.HOURS;
+                    measure3 = FileInfoBase.MINUTES;
                     break;
 
                 case 16:
+                    measure3 = FileInfoBase.HOURS;
+                    break;
+
+                case 17:
                     measure3 = FileInfoBase.HZ;
                     break;
 
@@ -2684,64 +2697,68 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     case 1:
                         measure4 = FileInfoBase.INCHES;
                         break;
-
+                        
                     case 2:
-                        measure4 = FileInfoBase.CENTIMETERS;
+                        measure4 = FileInfoBase.MILS;
                         break;
 
                     case 3:
-                        measure4 = FileInfoBase.ANGSTROMS;
+                        measure4 = FileInfoBase.CENTIMETERS;
                         break;
 
                     case 4:
-                        measure4 = FileInfoBase.NANOMETERS;
+                        measure4 = FileInfoBase.ANGSTROMS;
                         break;
 
                     case 5:
-                        measure4 = FileInfoBase.MICROMETERS;
+                        measure4 = FileInfoBase.NANOMETERS;
                         break;
 
                     case 6:
-                        measure4 = FileInfoBase.MILLIMETERS;
+                        measure4 = FileInfoBase.MICROMETERS;
                         break;
 
                     case 7:
-                        measure4 = FileInfoBase.METERS;
+                        measure4 = FileInfoBase.MILLIMETERS;
                         break;
 
                     case 8:
-                        measure4 = FileInfoBase.KILOMETERS;
+                        measure4 = FileInfoBase.METERS;
                         break;
 
                     case 9:
-                        measure4 = FileInfoBase.MILES;
+                        measure4 = FileInfoBase.KILOMETERS;
                         break;
 
                     case 10:
-                        measure4 = FileInfoBase.NANOSEC;
+                        measure4 = FileInfoBase.MILES;
                         break;
 
                     case 11:
-                        measure4 = FileInfoBase.MICROSEC;
+                        measure4 = FileInfoBase.NANOSEC;
                         break;
 
                     case 12:
-                        measure4 = FileInfoBase.MILLISEC;
+                        measure4 = FileInfoBase.MICROSEC;
                         break;
 
                     case 13:
-                        measure4 = FileInfoBase.SECONDS;
+                        measure4 = FileInfoBase.MILLISEC;
                         break;
 
                     case 14:
-                        measure4 = FileInfoBase.MINUTES;
+                        measure4 = FileInfoBase.SECONDS;
                         break;
 
                     case 15:
-                        measure4 = FileInfoBase.HOURS;
+                        measure4 = FileInfoBase.MINUTES;
                         break;
 
                     case 16:
+                        measure4 = FileInfoBase.HOURS;
+                        break;
+
+                    case 17:
                         measure4 = FileInfoBase.HZ;
                         break;
 
@@ -2760,64 +2777,68 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                         case 1:
                             measure5 = FileInfoBase.INCHES;
                             break;
-
+                            
                         case 2:
-                            measure5 = FileInfoBase.CENTIMETERS;
+                            measure5 = FileInfoBase.MILS;
                             break;
 
                         case 3:
-                            measure5 = FileInfoBase.ANGSTROMS;
+                            measure5 = FileInfoBase.CENTIMETERS;
                             break;
 
                         case 4:
-                            measure5 = FileInfoBase.NANOMETERS;
+                            measure5 = FileInfoBase.ANGSTROMS;
                             break;
 
                         case 5:
-                            measure5 = FileInfoBase.MICROMETERS;
+                            measure5 = FileInfoBase.NANOMETERS;
                             break;
 
                         case 6:
-                            measure5 = FileInfoBase.MILLIMETERS;
+                            measure5 = FileInfoBase.MICROMETERS;
                             break;
 
                         case 7:
-                            measure5 = FileInfoBase.METERS;
+                            measure5 = FileInfoBase.MILLIMETERS;
                             break;
 
                         case 8:
-                            measure5 = FileInfoBase.KILOMETERS;
+                            measure5 = FileInfoBase.METERS;
                             break;
 
                         case 9:
-                            measure5 = FileInfoBase.MILES;
+                            measure5 = FileInfoBase.KILOMETERS;
                             break;
 
                         case 10:
-                            measure5 = FileInfoBase.NANOSEC;
+                            measure5 = FileInfoBase.MILES;
                             break;
 
                         case 11:
-                            measure5 = FileInfoBase.MICROSEC;
+                            measure5 = FileInfoBase.NANOSEC;
                             break;
 
                         case 12:
-                            measure5 = FileInfoBase.MILLISEC;
+                            measure5 = FileInfoBase.MICROSEC;
                             break;
 
                         case 13:
-                            measure5 = FileInfoBase.SECONDS;
+                            measure5 = FileInfoBase.MILLISEC;
                             break;
 
                         case 14:
-                            measure5 = FileInfoBase.MINUTES;
+                            measure5 = FileInfoBase.SECONDS;
                             break;
 
                         case 15:
-                            measure5 = FileInfoBase.HOURS;
+                            measure5 = FileInfoBase.MINUTES;
                             break;
 
                         case 16:
+                            measure5 = FileInfoBase.HOURS;
+                            break;
+
+                        case 17:
                             measure5 = FileInfoBase.HZ;
                             break;
 
