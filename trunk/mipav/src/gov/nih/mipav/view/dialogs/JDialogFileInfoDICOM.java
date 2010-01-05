@@ -1779,6 +1779,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
         if (measure == FileInfoBase.INCHES) {
             tagsModel.setValueAt("Inches per pixel", i, 3);
+        } else if (measure == FileInfoBase.MILS) {
+            tagsModel.setValueAt("Mils per pixel", i, 3);
         } else if (measure == FileInfoBase.MILLIMETERS) {
             tagsModel.setValueAt("Millimeters per pixel", i, 3);
         } else if (measure == FileInfoBase.CENTIMETERS) {
