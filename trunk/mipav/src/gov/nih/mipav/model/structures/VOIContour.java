@@ -1039,6 +1039,10 @@ public class VOIContour extends VOIBase {
 		case FileInfoBase.INCHES:
 			tmpString = tmpString + " in";
 			break;
+            
+        case FileInfoBase.MILS:
+            tmpString = tmpString + " mil";
+            break;
 
 		case FileInfoBase.ANGSTROMS:
 			tmpString = tmpString + " A";
