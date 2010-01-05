@@ -130,6 +130,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     public void runAlgorithm() {
         // back up imageB in case it changes.
         ModelImage imageB_back = srcImageB;
+        boolean bDeletePrevousB = false;
         // if the orientations are used to match the orientations, match orientations first.
         if ( doOrients )
         {
@@ -145,7 +146,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 srcImageB = rotateAlgo.returnImage();
                 if ( imageB_back != srcImageB )
                 {
-                    imageB_back.disposeLocal();
+                    bDeletePrevousB = true;
                     imageB_back = srcImageB;
                 }
                 //new ViewJFrameImage((ModelImage)srcImageB.clone(), null, null, false);
@@ -174,8 +175,12 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             if ( imageB_back != srcImageB )
             {
                 // if imageB changes, deleted the backup copy.
-                imageB_back.disposeLocal();
+                if ( bDeletePrevousB )
+                {
+                    imageB_back.disposeLocal();
+                }
                 imageB_back = srcImageB;
+                bDeletePrevousB = true;
             }
         }
         // match the origins and extents of the two images
@@ -192,15 +197,13 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             {
                 // if the image changes and the backup is not the original, deleted the backup of imageA
                 imageA_back.disposeLocal();
-                imageA_back = srcImage;
             }
             // pad imageB if necessary
             srcImageB = padImage(srcImageB, padBFront, padBBack );
-            if ( imageB_back != srcImageB )
+            if ( imageB_back != srcImageB && bDeletePrevousB )
             {
                 // if imageB changes, delete the backup
                 imageB_back.disposeLocal();
-                imageB_back = srcImageB;
             }
         }
         

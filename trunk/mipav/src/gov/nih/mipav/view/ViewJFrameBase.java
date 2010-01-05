@@ -1041,6 +1041,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             double defaultValue, double defaultRed, double defaultGreen, double defaultBlue )
     {
         ModelImage imageA_back = imageA;
+        ModelImage imageB_back = imageB;
     
         AlgorithmMatchImages algoMatch = new AlgorithmMatchImages( imageA, imageB, doOrigins, doOrients );
         if ( !imageB.isColorImage() )
@@ -1055,6 +1056,11 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         algoMatch.run();
         imageA = algoMatch.getImageA();
         imageB = algoMatch.getImageB();
+        if ( imageB_back != imageB )
+        {
+            imageB_back.disposeLocal();
+            imageB_back = null;
+        }
         
         if (imageA != imageA_back) {
             // Create new frame with imageA

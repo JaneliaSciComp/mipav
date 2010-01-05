@@ -147,7 +147,7 @@ implements ChangeListener {
             } catch (SecurityException e) {}
         }
 
-        m_kVolumeImageA = new VolumeImage( _m_kDTIColorImage, "A", !bDirExists, kRenderFilesDir, 0, null );
+        m_kVolumeImageA = new VolumeImage( _m_kDTIColorImage, "A", !bDirExists, kRenderFilesDir, 0, null, null, 0 );
         m_kVolumeImageB = new VolumeImage();
     	
     	constructRenderers();

@@ -343,11 +343,20 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
 
         MipavInitGPU.InitGPU();
+        /** Progress bar show up during the volume view frame loading */
+        ViewJProgressBar progressBar = 
+            new ViewJProgressBar("Creating Volume & Surface Renderer...", "Creating Volume & Surface Renderer...", 0, 100, false, null, null);
+        MipavUtil.centerOnScreen(progressBar);
+        progressBar.setVisible(true);
+        progressBar.updateValueImmed(0);
 
-        m_kVolumeImageA = new VolumeImage(  _imageA, "A", bCompute, kDir, iFilterType, aiExtents );
+        int iProgress = ( _imageB == null ) ? 10 : 5;
+        m_kVolumeImageA = new VolumeImage(  _imageA, "A", bCompute, kDir, iFilterType, aiExtents, progressBar, iProgress );
+        progressBar.updateValueImmed( progressBar.getValue() + iProgress );
         if ( _imageB != null )
         {
-            m_kVolumeImageB = new VolumeImage( _imageB, "B", bCompute, kDir, iFilterType, aiExtents  );
+            m_kVolumeImageB = new VolumeImage( _imageB, "B", bCompute, kDir, iFilterType, aiExtents, progressBar, iProgress  );
+            progressBar.updateValueImmed( progressBar.getValue() + iProgress );
         }
         else
         {
@@ -358,14 +367,15 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         if (m_kVolumeImageB.GetImage() != null) {
             m_kVolumeImageB.GetImage().setImageOrder(ModelImage.IMAGE_B);
         }
+        progressBar.setMessage("Configuring frame...");
         this.configureFrame();
-        constructRenderers();
+        constructRenderers(progressBar);
 
-        //pack();
-        //setVisible(true);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
         gpuPanel.setVisible(true);
+        
+        progressBar.updateValueImmed(100);
+        progressBar.dispose();
     }
 
 
@@ -877,38 +887,31 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * Construct the volume rendering methods based on the choices made from
      * the resample dialog. This method is called by the Resample dialog.
      */
-    protected void constructRenderers() {
+    protected void constructRenderers(ViewJProgressBar progressBar ) {
 
-        /** Progress bar show up during the volume view frame loading */
-        ViewJProgressBar progressBar = new ViewJProgressBar("Constructing renderers...", "Constructing renderers...", 0, 100, false,
-                null, null);
-        progressBar.updateValue(0, true);
-        MipavUtil.centerOnScreen(progressBar);
-        progressBar.setVisible(true);
-        progressBar.updateValueImmed(1);
-
-        progressBar.updateValueImmed(5);
+        int iStep = (progressBar != null ) ? (100 - progressBar.getValue())/5 : 0;
+        if ( progressBar != null ) { progressBar.setMessage("Creating Slice Views..."); }
 
         m_kAnimator = new Animator();
         m_akPlaneRender = new PlaneRender_WM[3];
         m_akPlaneRender[0] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
         m_akPlaneRender[1] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL);
         m_akPlaneRender[2] = new PlaneRender_WM(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL);
-
-        progressBar.setMessage("Constructing gpu renderer...");
-
+        
+        if ( progressBar != null ) { progressBar.updateValueImmed(progressBar.getValue() + iStep); }
+        if ( progressBar != null ) { progressBar.setMessage("Creating Volume & Surface Renderer..."); }
+        
         raycastRenderWM = new VolumeTriPlanarRender( this, m_kAnimator, m_kVolumeImageA,
                 m_kVolumeImageB);
 
-        progressBar.updateValueImmed(80);
-        progressBar.setMessage("Constructing Lookup Table...");
-
+        if ( progressBar != null ) { progressBar.updateValueImmed(progressBar.getValue() + iStep); }
+        if ( progressBar != null ) { progressBar.setMessage("Building interface..."); }
+        
         buildImageDependentComponents();
-
-        progressBar.updateValueImmed(100);
-
-        progressBar.dispose();
-
+        
+        if ( progressBar != null ) { progressBar.updateValueImmed(progressBar.getValue() + iStep); }
+        if ( progressBar != null ) { progressBar.setMessage("Display..."); }
+        
         pack();
         setVisible(true);
         raycastRenderWM.GetCanvas().display();
@@ -3132,8 +3135,15 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             m_kVolumeImageB.GetImage().setImageOrder(ModelImage.IMAGE_B);
             m_kVolumeImageB.UpdateImages(kState.LUTb);
             m_kVolumeImageB.SetRGBT(kState.RGBb);
-        }                
-        constructRenderers();
+        }           
+        /** Progress bar show up during the volume view frame loading */
+        ViewJProgressBar progressBar = 
+            new ViewJProgressBar("Creating Volume & Surface Renderer...", "Creating Volume & Surface Renderer...", 0, 100, false, null, null);
+        MipavUtil.centerOnScreen(progressBar);
+        progressBar.setVisible(true);
+        progressBar.updateValueImmed(0);     
+        constructRenderers(progressBar);
+        
         setBlendValue(kState.Blend);
         
         // Menu:
@@ -3352,6 +3362,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             raycastRenderWM.getSculpt().setSculptDrawn(kState.SculptDrawn);
             raycastRenderWM.getSculpt().setSculptImage(kState.SculptImage);
         }
+        
+        progressBar.updateValueImmed(100);
+        progressBar.dispose();
     }
 
     private void SaveTabs(VolumeRenderState kState)

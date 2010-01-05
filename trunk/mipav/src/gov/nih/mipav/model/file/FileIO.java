@@ -1930,7 +1930,7 @@ public class FileIO {
                     break;
 
                 case FileUtility.XML:
-                    image = readXML(fileName, fileDir, one);
+                    image = readXML(fileName, fileDir, one, true);
                     break;
 
                 case FileUtility.XML_MULTIFILE:
@@ -2474,6 +2474,8 @@ public class FileIO {
         }
 
     }
+    
+
 
     /**
      * Determines file type from the file name and calls different write functions based on the file type. Stores file
@@ -2484,6 +2486,19 @@ public class FileIO {
      * @param options Needed info to write this image.
      */
     public void writeImage(final ModelImage image, final FileWriteOptions options) {
+        writeImage(image,options,true);
+    }
+
+    /**
+     * Determines file type from the file name and calls different write functions based on the file type. Stores file
+     * in the specified file name and directory given by the options. Calls appropriate dialogs if necessary. Supports
+     * files of type raw, analyze, and DICOM.
+     * 
+     * @param image Image to write.
+     * @param options Needed info to write this image.
+     * @param bDisplayProgress when true display the progress bar for writing.
+     */
+    public void writeImage(final ModelImage image, final FileWriteOptions options, final boolean bDisplayProgress ) {
         int fileType;
         String suffix;
         int index;
@@ -2815,7 +2830,7 @@ public class FileIO {
                 break;
 
             case FileUtility.XML:
-                success = writeXML(image, options);
+                success = writeXML(image, options, bDisplayProgress );
                 break;
 
             case FileUtility.AVI:
@@ -8564,7 +8579,7 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    private ModelImage readXML(final String fileName, final String fileDir, final boolean one) {
+    public ModelImage readXML(final String fileName, final String fileDir, final boolean one, final boolean bDisplayProgress) {
         ModelImage image = null;
         FileImageXML imageFile;
         // don't show splash screen:
@@ -8573,7 +8588,10 @@ public class FileIO {
             imageFile = new FileImageXML(fileName, fileDir);
 
             if ( ! (fileName.equals("splash.xml") || (one == true))) {
-                createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+                if ( bDisplayProgress )
+                {
+                    createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+                }
             }
 
             image = imageFile.readImage(one);
@@ -8669,7 +8687,7 @@ public class FileIO {
         nImages = i; // total number of suspected files to import into an image
 
         if (nImages == 1) {
-            return readXML(fileName, fileDir, false);
+            return readXML(fileName, fileDir, false, true);
         }
 
         createProgressBar(null, FileUtility.trimNumbersAndSpecial(fileName) + FileUtility.getExtension(fileName),
@@ -10909,12 +10927,15 @@ public class FileIO {
      * 
      * @return True if the file was successfully saved to a file.
      */
-    private boolean writeXML(final ModelImage image, final FileWriteOptions options) {
+    private boolean writeXML(final ModelImage image, final FileWriteOptions options, final boolean bDisplayProgress ) {
         FileImageXML xmlFile;
 
         try {
             xmlFile = new FileImageXML(options.getFileName(), options.getFileDirectory());
-            createProgressBar(xmlFile, options.getFileName(), FileIO.FILE_WRITE);
+            if ( bDisplayProgress )
+            {
+                createProgressBar(xmlFile, options.getFileName(), FileIO.FILE_WRITE);
+            }
 
             /**
              * Set the LUT (for grayscale) and ModelRGB (for color) doesn't matter if either is null
