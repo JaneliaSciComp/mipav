@@ -185,11 +185,11 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * Array of all abbreviated units --- the first value is unknown since all of the* static definitions start at 1
      * instead of 0. Each string* can be no more than 4 characters.
      */
-    private static final String[] allAbbrevUnits = {"unk", "unk", "in", "mil", "cm", "A", "nm", "um", "mm", "m", "km", "mi",
+    private static final String[] allAbbrevUnits = {"unk", "unk", "in", "mils", "cm", "A", "nm", "um", "mm", "m", "km", "mi",
             "nsec", "usec", "msec", "sec", "min", "hr", "hz", "ppm", "rads", "deg"};
 
     /** Array of space units: inches, mm, etc. */
-    public static final String[] sUnits = {"Unknown", "Unknown", "Inches", "mil", "cm", "A", "nm", "um", "mm", "m", "km",
+    public static final String[] sUnits = {"Unknown", "Unknown", "Inches", "mils", "cm", "A", "nm", "um", "mm", "m", "km",
             "miles"};
 
     /** Array of time units: seconds, minutes, etc. */
