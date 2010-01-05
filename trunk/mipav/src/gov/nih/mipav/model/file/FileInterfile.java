@@ -2389,7 +2389,8 @@ public class FileInterfile extends FileBase {
 
             resXUnit = baseInfo.getUnitsOfMeasure(0);
 
-            if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.CENTIMETERS) ||
+            if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.MILS) ||
+                    (resXUnit == FileInfoBase.CENTIMETERS) ||
                     (resXUnit == FileInfoBase.ANGSTROMS) || (resXUnit == FileInfoBase.NANOMETERS) ||
                     (resXUnit == FileInfoBase.MICROMETERS) || (resXUnit == FileInfoBase.MILLIMETERS) ||
                     (resXUnit == FileInfoBase.METERS) || (resXUnit == FileInfoBase.KILOMETERS) ||
@@ -2400,6 +2401,8 @@ public class FileInterfile extends FileBase {
 
                 if (resXUnit == FileInfoBase.INCHES) {
                     xResol = 25.4f * xResol;
+                } else if (resXUnit == FileInfoBase.MILS) {
+                    xResol = 2.54e-2f * xResol;
                 } else if (resXUnit == FileInfoBase.CENTIMETERS) {
                     xResol = 10.0f * xResol;
                 } else if (resXUnit == FileInfoBase.ANGSTROMS) {
@@ -2422,7 +2425,8 @@ public class FileInterfile extends FileBase {
 
             resYUnit = baseInfo.getUnitsOfMeasure(1);
 
-            if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.CENTIMETERS) ||
+            if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.MILS) ||
+                    (resYUnit == FileInfoBase.CENTIMETERS) ||
                     (resYUnit == FileInfoBase.ANGSTROMS) || (resYUnit == FileInfoBase.NANOMETERS) ||
                     (resYUnit == FileInfoBase.MICROMETERS) || (resYUnit == FileInfoBase.MILLIMETERS) ||
                     (resYUnit == FileInfoBase.METERS) || (resYUnit == FileInfoBase.KILOMETERS) ||
@@ -2433,6 +2437,8 @@ public class FileInterfile extends FileBase {
 
                 if (resYUnit == FileInfoBase.INCHES) {
                     yResol = 25.4f * yResol;
+                } else if (resYUnit == FileInfoBase.MILS) {
+                    yResol = 2.54e-2f * yResol;
                 } else if (resYUnit == FileInfoBase.CENTIMETERS) {
                     yResol = 10.0f * yResol;
                 } else if (resYUnit == FileInfoBase.ANGSTROMS) {
@@ -2592,7 +2598,8 @@ public class FileInterfile extends FileBase {
             resZUnit = baseInfo.getUnitsOfMeasure(2);
 
             if ((zDim > 1) &&
-                    ((resZUnit == FileInfoBase.INCHES) || (resZUnit == FileInfoBase.CENTIMETERS) ||
+                    ((resZUnit == FileInfoBase.INCHES) || (resZUnit == FileInfoBase.MILS) ||
+                         (resZUnit == FileInfoBase.CENTIMETERS) ||
                          (resZUnit == FileInfoBase.ANGSTROMS) || (resZUnit == FileInfoBase.NANOMETERS) ||
                          (resZUnit == FileInfoBase.MICROMETERS) || (resZUnit == FileInfoBase.MILLIMETERS) ||
                          (resZUnit == FileInfoBase.METERS) || (resZUnit == FileInfoBase.KILOMETERS) ||
@@ -2603,6 +2610,8 @@ public class FileInterfile extends FileBase {
 
                 if (resZUnit == FileInfoBase.INCHES) {
                     zResol = 25.4f * zResol;
+                } else if (resZUnit == FileInfoBase.MILS) {
+                    zResol = 2.54e-2f * zResol;
                 } else if (resZUnit == FileInfoBase.CENTIMETERS) {
                     zResol = 10.0f * zResol;
                 } else if (resZUnit == FileInfoBase.ANGSTROMS) {
