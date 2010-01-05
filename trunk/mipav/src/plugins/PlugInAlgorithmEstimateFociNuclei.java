@@ -443,6 +443,8 @@ public class PlugInAlgorithmEstimateFociNuclei extends AlgorithmBase {
 
         if (measure == FileInfoBase.INCHES) {
             mStr = " inches^2";
+        } else if (measure == FileInfoBase.MILS) {
+            mStr = " mil^2";
         } else if (measure == FileInfoBase.ANGSTROMS) {
             mStr = " A^2";
         } else if (measure == FileInfoBase.NANOMETERS) {
