@@ -56,10 +56,12 @@ public class FileInfoZVI extends FileInfoBase {
     double objectiveMagnification = Double.NaN;
     double objectiveNA = Double.NaN;
     int objectiveContrastMethod = Integer.MIN_VALUE;
-    int objectiveImmersionType = Integer.MIN_VALUE;
+    String objectiveImmersionType = null;
     double objectiveWorkingDistance = Double.NaN;
     // One focusPosition for every z slice
     double focusPosition = Double.NaN;
+    double relFocusPosition1 = Double.NaN;
+    double relFocusPosition2 = Double.NaN;
     String focusCalibrated = null;
     String lightManagerEnabled = null;
     int lightManagerMode = Integer.MIN_VALUE;
@@ -109,7 +111,17 @@ public class FileInfoZVI extends FileInfoBase {
     double reflectedLightHalogenLampVoltage = Double.NaN;
     int reflectedLightHalogenLampMode = Integer.MIN_VALUE;
     int apotomeAutoShutterUsed = Integer.MIN_VALUE;
-    /** Use serialVersionUID for interoperability. */
+    int objectType = Integer.MIN_VALUE;
+    double imageMemoryUsage = Double.NaN;
+    int excitationWavelength0 = Integer.MIN_VALUE;
+    int excitationWavelength1 = Integer.MIN_VALUE;
+    int excitationWavelength2 = Integer.MIN_VALUE;
+    int excitationWavelength3 = Integer.MIN_VALUE;
+    int emissionWavelength0 = Integer.MIN_VALUE;
+    int emissionWavelength1 = Integer.MIN_VALUE;
+    int emissionWavelength2 = Integer.MIN_VALUE;
+    int emissionWavelength3 = Integer.MIN_VALUE;
+        /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
     
 
@@ -158,6 +170,38 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (!Double.isNaN(stagePositionY)) {
             dialog.append("Stage position Y = " + stagePositionY + "\n");
+        }
+        
+        if (excitationWavelength0 != Integer.MIN_VALUE) {
+            dialog.append("Channel 0 excitation wavelength = " + excitationWavelength0 + "\n");
+        }
+        
+        if (excitationWavelength1 != Integer.MIN_VALUE) {
+            dialog.append("Channel 1 excitation wavelength = " + excitationWavelength1 + "\n");
+        }
+        
+        if (excitationWavelength2 != Integer.MIN_VALUE) {
+            dialog.append("Channel 2 excitation wavelength = " + excitationWavelength2 + "\n");
+        }
+        
+        if (excitationWavelength3 != Integer.MIN_VALUE) {
+            dialog.append("Channel 3 excitation wavelength = " + excitationWavelength3 + "\n");
+        }
+        
+        if (emissionWavelength0 != Integer.MIN_VALUE) {
+            dialog.append("Channel 0 emission wavelength = " + emissionWavelength0 + "\n");
+        }
+        
+        if (emissionWavelength1 != Integer.MIN_VALUE) {
+            dialog.append("Channel 1 emission wavelength = " + emissionWavelength1 + "\n");
+        }
+        
+        if (emissionWavelength2 != Integer.MIN_VALUE) {
+            dialog.append("Channel 2 emission wavelength = " + emissionWavelength2 + "\n");
+        }
+        
+        if (emissionWavelength3 != Integer.MIN_VALUE) {
+            dialog.append("Channel 3 emission wavelength = " + emissionWavelength3 + "\n");
         }
         
         if (!Double.isNaN(blackValue0)) {
@@ -336,7 +380,7 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Objective contrast method = " + objectiveContrastMethod + "\n");
         }
         
-        if (objectiveImmersionType != Integer.MIN_VALUE) {
+        if (objectiveImmersionType != null) {
             dialog.append("Objective immersion type = " + objectiveImmersionType + "\n");
         }
         
@@ -346,6 +390,14 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (!Double.isNaN(focusPosition)) {
             dialog.append("Focus position = " + focusPosition + "\n");
+        }
+        
+        if (!Double.isNaN(relFocusPosition1)) {
+            dialog.append("Rel focus position 1 = " + relFocusPosition1 + "\n");
+        }
+        
+        if (!Double.isNaN(relFocusPosition2)) {
+            dialog.append("Rel focus position 2 = " + relFocusPosition2 + "\n");
         }
         
         if (focusCalibrated != null) {
@@ -494,6 +546,14 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (axioCamDelayTime != Integer.MIN_VALUE) {
             dialog.append("Axio cam delay time = " + axioCamDelayTime + "\n");
+        }
+        
+        if (objectType != Integer.MIN_VALUE) {
+            dialog.append("Object type = " + objectType + "\n");
+        }
+        
+        if (!Double.isNaN(imageMemoryUsage)) {
+            dialog.append("Image memory usage (RAM) = " + imageMemoryUsage + "\n");
         }
     }
     
@@ -649,7 +709,7 @@ public class FileInfoZVI extends FileInfoBase {
         this.objectiveContrastMethod = objectiveContrastMethod;
     }
     
-    public void setObjectiveImmersionType(int objectiveImmersionType) {
+    public void setObjectiveImmersionType(String objectiveImmersionType) {
         this.objectiveImmersionType = objectiveImmersionType;
     }
     
@@ -847,5 +907,53 @@ public class FileInfoZVI extends FileInfoBase {
     
     public void setApotomeAutoShutterUsed(int apotomeAutoShutterUsed) {
         this.apotomeAutoShutterUsed = apotomeAutoShutterUsed;
+    }
+    
+    public void setRelFocusPosition1(double relFocusPosition1) {
+        this.relFocusPosition1 = relFocusPosition1;
+    }
+    
+    public void setRelFocusPosition2(double relFocusPosition2) {
+        this.relFocusPosition2 = relFocusPosition2;
+    }
+    
+    public void setObjectType(int objectType) {
+        this.objectType = objectType;
+    }
+    
+    public void setImageMemoryUsage(double imageMemoryUsage) {
+        this.imageMemoryUsage = imageMemoryUsage;
+    }
+    
+    public void setExcitationWavelength0(int excitationWavelength0) {
+        this.excitationWavelength0 = excitationWavelength0;
+    }
+    
+    public void setExcitationWavelength1(int excitationWavelength1) {
+        this.excitationWavelength1 = excitationWavelength1;
+    }
+    
+    public void setExcitationWavelength2(int excitationWavelength2) {
+        this.excitationWavelength2 = excitationWavelength2;
+    }
+    
+    public void setExcitationWavelength3(int excitationWavelength3) {
+        this.excitationWavelength3 = excitationWavelength3;
+    }
+    
+    public void setEmissionWavelength0(int emissionWavelength0) {
+        this.emissionWavelength0 = emissionWavelength0;
+    }
+    
+    public void setEmissionWavelength1(int emissionWavelength1) {
+        this.emissionWavelength1 = emissionWavelength1;
+    }
+    
+    public void setEmissionWavelength2(int emissionWavelength2) {
+        this.emissionWavelength2 = emissionWavelength2;
+    }
+    
+    public void setEmissionWavelength3(int emissionWavelength3) {
+        this.emissionWavelength3 = emissionWavelength3;
     }
 }
