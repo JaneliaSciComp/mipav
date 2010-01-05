@@ -8,6 +8,7 @@ public class MipavConstants {
     public static final Unit MILES = new Unit("mi", "miles");
     public static final Unit KILOMETERS = new Unit("km", "kilometers");
     public static final Unit INCHES = new Unit("in", "inches");
+    public static final Unit MILS = new Unit("mil", "mils");
     public static final Unit METERS = new Unit("m", "meters");
     public static final Unit CENTIMETERS = new Unit("cm", "centimeters");
     public static final Unit MILLIMETERS = new Unit("mm", "millimeters");
