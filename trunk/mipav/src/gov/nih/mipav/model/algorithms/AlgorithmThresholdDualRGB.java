@@ -753,6 +753,9 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
                     case FileInfoBase.INCHES:
                         units = "  in^2";
                         break;
+                    case FileInfoBase.MILS:
+                        units = "  mil^2";
+                        break;
                     case FileInfoBase.CENTIMETERS:
                         units = "  cm^2";
                         break;
@@ -779,6 +782,9 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
                 switch (xUnits) {
                     case FileInfoBase.INCHES:
                         units = "  in^3";
+                        break;
+                    case FileInfoBase.MILS:
+                        units = "  mil^3";
                         break;
                     case FileInfoBase.CENTIMETERS:
                         units = "  cm^3";
