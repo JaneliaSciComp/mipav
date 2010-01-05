@@ -2804,6 +2804,9 @@ public class FileAfni extends FileBase {
             else if (units[i] == FileInfoBase.INCHES) {
                 resols[i] = 25.4f * resols[i];
                 origin[i] = 25.4f * origin[i];
+            } else if (units[i] == FileInfoBase.MILS) {
+                resols[i] = 2.54e-2f * resols[i];
+                origin[i] = 2.54e-2f * origin[i];
             } else if (units[i] == FileInfoBase.CENTIMETERS) {
                 resols[i] = 10.0f * resols[i];
                 origin[i] = 10.0f * origin[i];
