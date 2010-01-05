@@ -1671,6 +1671,9 @@ public class FileNRRD extends FileBase {
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("IN")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("INCHES"))) {
                             mipavUnits[i] = FileInfoBase.INCHES;
+                        } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MIL")) ||
+                                (nrrdUnits[i + 1].equalsIgnoreCase("MILS"))) {
+                            mipavUnits[i] = FileInfoBase.MILS;
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("CM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("CENTIMETERS"))) {
                             mipavUnits[i] = FileInfoBase.CENTIMETERS;
@@ -1764,6 +1767,8 @@ public class FileNRRD extends FileBase {
                             mipavUnits[i] = FileInfoBase.MILLIMETERS;
                         } else if ((nrrdUnits[i].equalsIgnoreCase("IN")) || (nrrdUnits[i].equalsIgnoreCase("INCHES"))) {
                             mipavUnits[i] = FileInfoBase.INCHES;
+                        } else if ((nrrdUnits[i].equalsIgnoreCase("MIL")) || (nrrdUnits[i].equalsIgnoreCase("MILS"))) {
+                            mipavUnits[i] = FileInfoBase.MILS;
                         } else if ((nrrdUnits[i].equalsIgnoreCase("CM")) ||
                                        (nrrdUnits[i].equalsIgnoreCase("CENTIMETERS"))) {
                             mipavUnits[i] = FileInfoBase.CENTIMETERS;
@@ -1852,6 +1857,9 @@ public class FileNRRD extends FileBase {
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("IN")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("INCHES"))) {
                             mipavUnits[i] = FileInfoBase.INCHES;
+                        } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MIL")) ||
+                                (nrrdUnits[i + 1].equalsIgnoreCase("MILS"))) {
+                            mipavUnits[i] = FileInfoBase.MILS;
                         } else if ((nrrdUnits[i + 1].equalsIgnoreCase("CM")) ||
                                        (nrrdUnits[i + 1].equalsIgnoreCase("CENTIMETERS"))) {
                             mipavUnits[i] = FileInfoBase.CENTIMETERS;
@@ -1964,6 +1972,9 @@ public class FileNRRD extends FileBase {
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("IN")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("INCHES"))) {
                         mipavUnits[i] = FileInfoBase.INCHES;
+                    } else if ((nrrdUnits[i + 1].equalsIgnoreCase("MIL")) ||
+                            (nrrdUnits[i + 1].equalsIgnoreCase("MILS"))) {
+                        mipavUnits[i] = FileInfoBase.MILS;
                     } else if ((nrrdUnits[i + 1].equalsIgnoreCase("CM")) ||
                                    (nrrdUnits[i + 1].equalsIgnoreCase("CENTIMETERS"))) {
                         mipavUnits[i] = FileInfoBase.CENTIMETERS;
@@ -2065,6 +2076,8 @@ public class FileNRRD extends FileBase {
                         mipavUnits[i] = FileInfoBase.MILLIMETERS;
                     } else if ((nrrdUnits[i].equalsIgnoreCase("IN")) || (nrrdUnits[i].equalsIgnoreCase("INCHES"))) {
                         mipavUnits[i] = FileInfoBase.INCHES;
+                    } else if ((nrrdUnits[i].equalsIgnoreCase("MIL")) || (nrrdUnits[i].equalsIgnoreCase("MILS"))) {
+                        mipavUnits[i] = FileInfoBase.MILS;
                     } else if ((nrrdUnits[i].equalsIgnoreCase("CM")) ||
                                    (nrrdUnits[i].equalsIgnoreCase("CENTIMETERS"))) {
                         mipavUnits[i] = FileInfoBase.CENTIMETERS;
@@ -3253,6 +3266,8 @@ public class FileNRRD extends FileBase {
 	    			s = "\"mm\"";
 	    		} else if (spaceUnitsOfMeas[i] == FileInfoBase.INCHES) {
 	    			s = "\"in\"";
+                }else if (spaceUnitsOfMeas[i] == FileInfoBase.MILS) {
+                    s = "\"mil\"";
 	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.CENTIMETERS) {
 	    			s = "\"cm\"";
 	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.ANGSTROMS) {
