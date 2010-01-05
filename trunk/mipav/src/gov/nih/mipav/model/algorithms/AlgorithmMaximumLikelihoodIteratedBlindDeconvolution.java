@@ -745,6 +745,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
             if (m_aiUnits[i] == FileInfoBase.INCHES) {
                 m_afResolutions[i] *= 2.54e7f; // 25400000f;
+            } else if (m_aiUnits[i] == FileInfoBase.MILS) {
+                m_afResolutions[i] *= 2.54e4f;
             } else if (m_aiUnits[i] == FileInfoBase.CENTIMETERS) {
                 m_afResolutions[i] *= 1e7f; // 10000000f;
             } else if (m_aiUnits[i] == FileInfoBase.ANGSTROMS) {
