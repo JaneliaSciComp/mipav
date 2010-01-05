@@ -143,6 +143,22 @@ public class FileZVI extends FileBase {
     private int offsetArray[] = null;
     // array pointer
     private int ap = 0;
+    private double imageFocusPositionArray[] = null;
+    private int imageZArray[] = null;
+    private int imageZ2Array[] = null;
+    private int imageC2Array[] = null;
+    private int imageT2Array[] = null;
+    private double imageBlackValueArray[] = null;
+    private int imageZ3Array[] = null;
+    private int imageC3Array[] = null;
+    private int imageT3Array[] = null;
+    private double imageWhiteValueArray[] = null;
+    // image count pointer for imageFocusPositionArray
+    private int icp = 0;
+    // image count pointer for imageBlackValueArray
+    private int icp2 = 0;
+    // image cout pointerr for imageWhiteValueArray 
+    private int icp3 = 0;
     
     // Sector allocation table
     private int sat[] = null;
@@ -196,6 +212,8 @@ public class FileZVI extends FileBase {
         zArray = null;
         cArray = null;
         tArray = null;
+        imageFocusPositionArray = null;
+        imageZArray = null;
         shortSectorTable = null;
         startSectorArray = null;
         offsetArray = null;
@@ -276,6 +294,25 @@ public class FileZVI extends FileBase {
         int b8 = 0;
         int sliceSize;
         int presentSector;
+        double processedFocusPositionArray[] = null;
+        double blackValue0Array[] = null;
+        double blackValue1Array[] = null;
+        double blackValue2Array[] = null;
+        double blackValue3Array[] = null;
+        double whiteValue0Array[] = null;
+        double whiteValue1Array[] = null;
+        double whiteValue2Array[] = null;
+        double whiteValue3Array[] = null;
+        int numberFocusPositions = 0;
+        int numberBlack0Values = 0;
+        int numberBlack1Values = 0;
+        int numberBlack2Values = 0;
+        int numberBlack3Values = 0;
+        int numberWhite0Values = 0;
+        int numberWhite1Values = 0;
+        int numberWhite2Values = 0;
+        int numberWhite3Values = 0;
+        FileInfoBase fInfo[] = null;
         
         try {
             
@@ -317,6 +354,122 @@ public class FileZVI extends FileBase {
             channelNumber = maxC - minC + 1;
             zDim = maxZ - minZ + 1;
             tDim = maxT - minT + 1;
+            
+            processedFocusPositionArray = new double[zDim];
+            numberFocusPositions = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < imageCount; i++) {
+                    if ((imageZArray[i] == z) && (!Double.isNaN(imageFocusPositionArray[i]))) {
+                        processedFocusPositionArray[numberFocusPositions++] = imageFocusPositionArray[i];    
+                    }
+                }
+            }
+            
+            blackValue0Array = new double[zDim*tDim];
+            blackValue1Array = new double[zDim*tDim];
+            blackValue2Array = new double[zDim*tDim];
+            blackValue3Array = new double[zDim*tDim];
+            
+            numberBlack0Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
+                           (imageC2Array[i] == 0) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                                blackValue0Array[numberBlack0Values++] = imageBlackValueArray[i];
+                        } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberBlack1Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
+                           (imageC2Array[i] == 1) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                                blackValue1Array[numberBlack1Values++] = imageBlackValueArray[i];
+                        } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberBlack2Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
+                           (imageC2Array[i] == 2) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                                blackValue2Array[numberBlack2Values++] = imageBlackValueArray[i];
+                        } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberBlack3Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
+                           (imageC2Array[i] == 3) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                                blackValue3Array[numberBlack3Values++] = imageBlackValueArray[i];
+                        } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            whiteValue0Array = new double[zDim*tDim];
+            whiteValue1Array = new double[zDim*tDim];
+            whiteValue2Array = new double[zDim*tDim];
+            whiteValue3Array = new double[zDim*tDim];
+            
+            numberWhite0Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
+                           (imageC3Array[i] == 0) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                                whiteValue0Array[numberWhite0Values++] = imageWhiteValueArray[i];
+                        } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberWhite1Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
+                           (imageC3Array[i] == 1) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                                whiteValue1Array[numberWhite1Values++] = imageWhiteValueArray[i];
+                        } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberWhite2Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
+                           (imageC3Array[i] == 2) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                                whiteValue2Array[numberWhite2Values++] = imageWhiteValueArray[i];
+                        } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberWhite3Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
+                           (imageC3Array[i] == 3) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                                whiteValue3Array[numberWhite3Values++] = imageWhiteValueArray[i];
+                        } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
             
             if ((zDim > 1) && (tDim > 1)) {
                 imageExtents = new int[4];
@@ -601,6 +754,88 @@ public class FileZVI extends FileBase {
                 }
             }
             
+            fInfo = image.getFileInfo();
+            if (numberFocusPositions == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setFocusPosition(processedFocusPositionArray[z]);
+                    }
+                }
+            }
+            
+            if (numberBlack0Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setBlackValue0(blackValue0Array[index]);
+                    }
+                }    
+            }
+            
+            if (numberBlack1Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setBlackValue1(blackValue1Array[index]);
+                    }
+                }    
+            }
+            
+            if (numberBlack2Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setBlackValue2(blackValue2Array[index]);
+                    }
+                }    
+            }
+            
+            if (numberBlack3Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setBlackValue3(blackValue3Array[index]);
+                    }
+                }    
+            }
+            
+            if (numberWhite0Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setWhiteValue0(whiteValue0Array[index]);
+                    }
+                }    
+            }
+            
+            if (numberWhite1Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setWhiteValue1(whiteValue1Array[index]);
+                    }
+                }    
+            }
+            
+            if (numberWhite2Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setWhiteValue2(whiteValue2Array[index]);
+                    }
+                }    
+            }
+            
+            if (numberWhite3Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setWhiteValue3(whiteValue3Array[index]);
+                    }
+                }    
+            }
+            
             image.calcMinMax(); 
             fireProgressStateChanged(100);
             
@@ -648,12 +883,22 @@ public class FileZVI extends FileBase {
         long directoryStart;
         int intValue = 0;
         int stringBytes;
-        String stringValue;
+        String stringValue = null;
         double doubleValue = 0.0;
         short shortValue;
         long tmpLong;
-        boolean booleanValue;
+        boolean booleanValue = false;
         int measureUnits;
+        double exposureTime = Double.NaN;;
+        int apotomeGridPosition = Integer.MIN_VALUE;
+        double focusPosition = Double.NaN;
+        int zValue = Integer.MIN_VALUE;
+        int cValue = Integer.MIN_VALUE;
+        int tValue = Integer.MIN_VALUE;
+        double blackValue = Double.NaN;
+        double whiteValue = Double.NaN;
+        int reflectorPosition = Integer.MIN_VALUE;
+        int multichannelColor = Integer.MIN_VALUE;
         //      Start reading ole compound file structure
         // The header is always 512 bytes long and should be located at offset zero.
         // Offset 0 Length 8 bytes olecf file signature
@@ -1389,6 +1634,28 @@ public class FileZVI extends FileBase {
                     tArray = new int[imageCount];
                     startSectorArray = new int[imageCount];
                     offsetArray = new int[imageCount];
+                    imageFocusPositionArray = new double[imageCount+10];
+                    imageZArray = new int[imageCount+10];
+                    imageZ2Array = new int[imageCount+10];
+                    imageC2Array = new int[imageCount+10];
+                    imageT2Array = new int[imageCount+10];
+                    imageBlackValueArray = new double[imageCount+10];
+                    imageZ3Array = new int[imageCount+10];
+                    imageC3Array = new int[imageCount+10];
+                    imageT3Array = new int[imageCount+10];
+                    imageWhiteValueArray = new double[imageCount+10];
+                    for (i = 0; i < imageCount+10; i++) {
+                        imageFocusPositionArray[i] = Double.NaN;
+                        imageZArray[i] = Integer.MIN_VALUE;
+                        imageZ2Array[i] = Integer.MIN_VALUE;
+                        imageC2Array[i] = Integer.MIN_VALUE;
+                        imageT2Array[i] = Integer.MIN_VALUE;
+                        imageBlackValueArray[i] = Double.NaN;
+                        imageZ3Array[i] = Integer.MIN_VALUE;
+                        imageC3Array[i] = Integer.MIN_VALUE;
+                        imageT3Array[i] = Integer.MIN_VALUE;
+                        imageWhiteValueArray[i] = Double.NaN;
+                    }
                     dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 2;
                     if (dType == VT_I4) {
@@ -1402,7 +1669,9 @@ public class FileZVI extends FileBase {
                     imageValidBitsPerPixel = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
+                    // Acquisition bit depth for tagID = 531 gave 12 while imageValidBitsPerPixel gave 16.
                     Preferences.debug("Valid bits per pixel in raw image data = " + imageValidBitsPerPixel + "\n");
+                    //fileInfo.setValidBitsPerPixel(imageValidBitsPerPixel);
                     dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 2;
                     if (dType == VT_BLOB) {
@@ -2065,6 +2334,16 @@ public class FileZVI extends FileBase {
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
                     Preferences.debug("Count of token triples = " + tokenCount + "\n");
+                   exposureTime = Double.NaN;
+                   apotomeGridPosition = Integer.MIN_VALUE;
+                   focusPosition = Double.NaN;
+                   zValue = Integer.MIN_VALUE;
+                   cValue = Integer.MIN_VALUE;
+                   tValue = Integer.MIN_VALUE;
+                   blackValue = Double.NaN;
+                   whiteValue = Double.NaN;
+                   reflectorPosition = Integer.MIN_VALUE;
+                   multichannelColor = Integer.MIN_VALUE;
                     for (i = 0; i < tokenCount && bp < b.length - 13; i++) {
                         short valueDType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                         bp += 2;
@@ -2169,9 +2448,17 @@ public class FileZVI extends FileBase {
                                 break;
                             case 258:
                                 Preferences.debug("tagID = Black value\n");
+                                // A different value for every channel and z slice
+                                if (valueDType == VT_R8) {
+                                    blackValue = doubleValue;
+                                }
                                 break;
                             case 259:
                                 Preferences.debug("tagID = White value\n");
+                                // A different value for every channel and z slice
+                                if (valueDType == VT_R8) {
+                                    whiteValue = doubleValue;
+                                }
                                 break;
                             case 260:
                                 Preferences.debug("tagID = Image data mapping auto range\n");
@@ -2181,6 +2468,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 262:
                                 Preferences.debug("tagID = Gamma value\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setGammaValue(doubleValue);
+                                }
                                 break;
                             case 264:
                                 Preferences.debug("tagID = Image over exposure\n");
@@ -2247,6 +2537,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 531:
                                 Preferences.debug("tagID = Acquisition bit depth\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAcquisitionBitDepth(intValue);
+                                }
                                 break;
                             case 534:
                                 Preferences.debug("tagID = Z-stack single representative\n");
@@ -2268,6 +2561,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 771:
                                 Preferences.debug("tagID = Scale width\n");
+                                if ((valueDType == VT_R8) && (doubleValue != imageWidth)){
+                                    fileInfo.setScaleWidth(doubleValue);
+                                }
                                 break;
                             case 772:
                                 Preferences.debug("tagID = Scale factor for Y\n");
@@ -2286,6 +2582,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 774:
                                 Preferences.debug("tagID = Scale height\n");
+                                if ((valueDType == VT_R8) && (doubleValue != imageHeight)) {
+                                    fileInfo.setScaleHeight(doubleValue);
+                                }
                                 break;
                             case 775:
                                 Preferences.debug("tagID = Scale factor for Z\n");
@@ -2321,7 +2620,7 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = Message\n");
                                 break;
                             case 1025:
-                                Preferences.debug("tagID = Cmaera image acquisition time\n");
+                                Preferences.debug("tagID = Camera image acquisition time\n");
                                 break;
                             case 1026:
                                 Preferences.debug("tagID = 8-bit acquisition\n");
@@ -2373,9 +2672,15 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1282:
                                 Preferences.debug("tagID = Multichannel color\n");
+                                if (valueDType == VT_I4) {
+                                    multichannelColor = intValue;
+                                }
                                 break;
                             case 1283:
                                 Preferences.debug("tagID = Multichannel weight\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setMultichannelWeight(doubleValue);
+                                }
                                 break;
                             case 1284:
                                 Preferences.debug("tagID = Channel name\n");
@@ -2493,6 +2798,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2055:
                                 Preferences.debug("tagID = Reflected light shutter\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setReflectedLightShutter(intValue);
+                                }
                                 break;
                             case 2056:
                                 Preferences.debug("tagID = Condenser front lens\n");
@@ -2529,27 +2837,54 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2070:
                                 Preferences.debug("tagID = Light manager is enabled\n");
+                                if (valueDType == VT_BOOL) {
+                                    if (booleanValue) {
+                                        fileInfo.setLightManagerEnabled("Light manager is enabled");
+                                    }
+                                    else {
+                                        fileInfo.setLightManagerEnabled("Light manager is not enabled");
+                                    }
+                                }
                                 break;
                             case 2072:
                                 Preferences.debug("tagID = Focus position\n");
+                                if (valueDType == VT_R8) {
+                                    // Different value for every z slice
+                                    focusPosition = doubleValue;
+                                }
                                 break;
                             case 2073:
                                 Preferences.debug("tagID = Stage position X\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setStagePositionX(doubleValue);
+                                }
                                 break;
                             case 2074:
                                 Preferences.debug("tagID = Stage position Y\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setStagePositionY(doubleValue);
+                                }
                                 break;
                             case 2075:
                                 Preferences.debug("tagID = Microscope name\n");
                                 break;
                             case 2076:
                                 Preferences.debug("tagID = Objective magnification\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setObjectiveMagnification(doubleValue);
+                                }
                                 break;
                             case 2077:
                                 Preferences.debug("tagID = Objective N.A.\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setObjectiveNA(doubleValue);
+                                }
                                 break;
                             case 2078:
                                 Preferences.debug("tagID = Microscope illumination\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setMicroscopeIllumination(intValue);
+                                }
                                 break;
                             case 2079:
                                 Preferences.debug("tagID = External shutter 1\n");
@@ -2568,6 +2903,14 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2084:
                                 Preferences.debug("tagID = Parfocal correction\n");
+                                if (valueDType == VT_BOOL) {
+                                    if (booleanValue) {
+                                        fileInfo.setParfocalCorrection("Parfocal correction is present");    
+                                    }
+                                    else {
+                                        fileInfo.setParfocalCorrection("Parfocal correction is not present");
+                                    }
+                                }
                                 break;
                             case 2086:
                                 Preferences.debug("tagID = External shutter 4\n");
@@ -2586,15 +2929,28 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2103:
                                 Preferences.debug("tagID = Objective turret position\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setObjectiveTurretPosition(intValue);
+                                }
                                 break;
                             case 2104:
                                 Preferences.debug("tagID = Objective contrast method\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setObjectiveContrastMethod(intValue);
+                                }
                                 break;
                             case 2105:
                                 Preferences.debug("tagID = Objective immersion type\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setObjectiveImmersionType(intValue);
+                                }
                                 break;
                             case 2107:
                                 Preferences.debug("tagID = Reflector position\n");
+                                // Different value for every channel
+                                if (valueDType == VT_I4) {
+                                    reflectorPosition = intValue;
+                                }
                                 break;
                             case 2109:
                                 Preferences.debug("tagID = Transmitted light filter 1 position\n");
@@ -2621,7 +2977,10 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = External filter wheel 4 position\n");
                                 break;
                             case 2118:
-                                Preferences.debug("tagID = Lightmanager mode\n");
+                                Preferences.debug("tagID = Light manager mode\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setLightManagerMode(intValue);
+                                }
                                 break;
                             case 2119:
                                 Preferences.debug("tagID = Halogen lamp calibration\n");
@@ -2637,6 +2996,14 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2123:
                                 Preferences.debug("tagID = Focus calibrated\n");
+                                if (valueDType == VT_BOOL) {
+                                    if (booleanValue) {
+                                        fileInfo.setFocusCalibrated("Focus is calibrated");
+                                    }
+                                    else {
+                                        fileInfo.setFocusCalibrated("Focus is not calibrated");
+                                    }
+                                }
                                 break;
                             case 2124:
                                 Preferences.debug("tagID = Focus basic position\n");
@@ -2706,21 +3073,36 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2146:
                                 Preferences.debug("tagID = Microscope magnification\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setMicroscopeMagnification(doubleValue);
+                                }
                                 break;
                             case 2147:
                                 Preferences.debug("tagID = Reflector magnification\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setReflectorMagnification(doubleValue);
+                                }
                                 break;
                             case 2148:
                                 Preferences.debug("tagID = Lamp mirror position\n");
                                 break;
                             case 2149:
                                 Preferences.debug("tagID = Focus depth\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setFocusDepth(doubleValue);
+                                }
                                 break;
                             case 2150:
                                 Preferences.debug("tagID = Microscope type\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setMicroscopeType(intValue);
+                                }
                                 break;
                             case 2151:
                                 Preferences.debug("tagID = Objective working distance\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setObjectiveWorkingDistance(doubleValue);
+                                }
                                 break;
                             case 2152:
                                 Preferences.debug("tagID = Reflected light aperture go speed\n");
@@ -2763,6 +3145,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2165:
                                 Preferences.debug("tagID = Transmitted light shutter\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setTransmittedLightShutter(intValue);
+                                }
                                 break;
                             case 2166:
                                 Preferences.debug("tagID = Transmitted light attenuator go speed\n");
@@ -2784,18 +3169,35 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2180:
                                 Preferences.debug("tagID = Reflected light halogen lamp mode\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setReflectedLightHalogenLampMode(intValue);
+                                }
                                 break;
                             case 2181:
                                 Preferences.debug("tagID = Reflected light halogen lamp voltage\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setReflectedLightHalogenLampVoltage(doubleValue);
+                                }
                                 break;
                             case 2182:
                                 Preferences.debug("tagID = Reflected light halogen lamp color temperature\n");
                                 break;
                             case 2183:
                                 Preferences.debug("tagID = Contrast manager mode\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setContrastManagerMode(intValue);
+                                }
                                 break;
                             case 2184:
                                 Preferences.debug("tagID = Dazzle protection acitve\n");
+                                if (valueDType == VT_BOOL) {
+                                    if (booleanValue) {
+                                        fileInfo.setDazzleProtection("Dazzle protection is active");
+                                    }
+                                    else {
+                                        fileInfo.setDazzleProtection("Dazzle protection is not active");
+                                    }
+                                }
                                 break;
                             case 2195:
                                 Preferences.debug("tagID = Zoom\n");
@@ -2814,9 +3216,15 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2200:
                                 Preferences.debug("tagID = Transmitted light halogen lamp mode\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setTransmittedLightHalogenLampMode(intValue);
+                                }
                                 break;
                             case 2201:
                                 Preferences.debug("tagID = Transmitted light halogen lamp voltage\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setTransmittedLightHalogenLampVoltage(doubleValue);
+                                }
                                 break;
                             case 2202:
                                 Preferences.debug("tagID = Transmitted light halogen lamp color temperature\n");
@@ -2871,12 +3279,21 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2219:
                                 Preferences.debug("tagID = Camera adapter magnification\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setCameraAdapterMagnification(doubleValue);
+                                }
                                 break;
                             case 2220:
                                 Preferences.debug("tagID = Microscope port\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setMicroscopePort(intValue);
+                                }
                                 break;
                             case 2221:
                                 Preferences.debug("tagID = Ocular total magnification\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setOcularTotalMagnification(doubleValue);
+                                }
                                 break;
                             case 2222:
                                 Preferences.debug("tagID = Field of view\n");
@@ -2913,30 +3330,51 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2307:
                                 Preferences.debug("tagID = Camera frame start left\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraFrameStartLeft(intValue);
+                                }
                                 break;
                             case 2308:
                                 Preferences.debug("tagID = Camera frame start top\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraFrameStartTop(intValue);
+                                }
                                 break;
                             case 2309:
                                 Preferences.debug("tagID = Camera frame width\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraFrameWidth(intValue);
+                                }
                                 break;
                             case 2310:
                                 Preferences.debug("tagID = Camera frame height\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraFrameHeight(intValue);
+                                }
                                 break;
                             case 2311:
                                 Preferences.debug("tagID = Camera binning\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraBinning(intValue);
+                                }
                                 break;
                             case 2312:
                                 Preferences.debug("tagID = Camera frame full\n");
                                 break;
                             case 2313:
                                 Preferences.debug("tagID = Camera frame pixel distance\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setCameraFramePixelDistance(doubleValue);
+                                }
                                 break;
                             case 2318:
                                 Preferences.debug("tagID = Data format use scaling\n");
                                 break;
                             case 2319:
                                 Preferences.debug("tagID = Camera frame image orientation\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraFrameImageOrientation(intValue);
+                                }
                                 break;
                             case 2320:
                                 Preferences.debug("tagID = Video monochrome signal type\n");
@@ -2970,6 +3408,10 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2564:
                                 Preferences.debug("tagID = Exposure time in msec\n");
+                                // A different exposure time seen for each channel
+                                if (valueDType == VT_R8) {
+                                    exposureTime = doubleValue;
+                                }
                                 break;
                             case 2568:
                                 Preferences.debug("tagID = Camera exposure time auto calculate\n");
@@ -3063,6 +3505,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2604:
                                 Preferences.debug("tagID = Camera live scaling factor\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setCameraLiveScalingFactor(doubleValue);
+                                }
                                 break;
                             case 2817:
                                 Preferences.debug("tagID = Image index U\n");
@@ -3072,12 +3517,21 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2819:
                                 Preferences.debug("tagID = Image index Z\n");
+                                if (valueDType == VT_I4) {
+                                    zValue = intValue;
+                                }
                                 break;
                             case 2820:
                                 Preferences.debug("tagID = Image index C\n");
+                                if (valueDType == VT_I4) {
+                                    cValue = intValue;
+                                }
                                 break;
                             case 2821:
                                 Preferences.debug("tagID = Image index T\n");
+                                if (valueDType == VT_I4) {
+                                    tValue = intValue;
+                                }
                                 break;
                             case 2822:
                                 Preferences.debug("tagID = Image tile index\n");
@@ -3195,27 +3649,48 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65541:
                                 Preferences.debug("tagID = Axio cam shutter signal\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamShutterSignal(intValue);
+                                }
                                 break;
                             case 65542:
                                 Preferences.debug("tagID = Axio cam delay time\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamDelayTime(intValue);
+                                }
                                 break;
                             case 65543:
-                                Preferences.debug("tagid = Axio cam shuter control\n");
+                                Preferences.debug("tagid = Axio cam shutter control\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamShutterControl(intValue);
+                                }
                                 break;
                             case 65544:
                                 Preferences.debug("tagID = Axio cam black refls calculated\n");
                                 break;
                             case 65545:
                                 Preferences.debug("tagID = Axio cam black reference\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamBlackReference(intValue);
+                                }
                                 break;
                             case 65547:
                                 Preferences.debug("tagID = Camera shading correction\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraShadingCorrection(intValue);
+                                }
                                 break;
                             case 65550:
                                 Preferences.debug("tagID = Axio cam enhance color\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamEnhanceColor(intValue);
+                                }
                                 break;
                             case 65551:
                                 Preferences.debug("tagID = Axio cam NIR mode\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamNIRMode(intValue);
+                                }
                                 break;
                             case 65552:
                                 Preferences.debug("tagID = Camera shutter close delay\n");
@@ -3258,24 +3733,42 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65575:
                                 Preferences.debug("tagID = Axio cam selector\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamSelector(intValue);
+                                }
                                 break;
                             case 65576:
                                 Preferences.debug("tagID = Axio cam type\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamType(intValue);
+                                }
                                 break;
                             case 65577:
                                 Preferences.debug("tagID = Axio cam info\n");
                                 break;
                             case 65580:
                                 Preferences.debug("tagID = Axio cam resolution\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamResolution(intValue);
+                                }
                                 break;
                             case 65581:
                                 Preferences.debug("tagID = Axio cam color model\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamColorModel(intValue);
+                                }
                                 break;
                             case 65582:
                                 Preferences.debug("tagID = Axio cam micro scanning\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamMicroScanning(intValue);
+                                }
                                 break;
                             case 65585:
                                 Preferences.debug("tagID = Amplification index\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAmplificationIndex(intValue);
+                                }
                                 break;
                             case 65586:
                                 Preferences.debug("tagID = Device command\n");
@@ -3318,12 +3811,19 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65599:
                                 Preferences.debug("tagID = Apotome grid position\n");
+                                if (valueDType == VT_I4) {
+                                    // A different value seen for each channel
+                                    apotomeGridPosition = intValue;
+                                }
                                 break;
                             case 65600:
                                 Preferences.debug("tagID = Apotome cam scanner position\n");
                                 break;
                             case 65601:
                                 Preferences.debug("tagID = Apotome full phase shift\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setApotomeFullPhaseShift(intValue);
+                                }
                                 break;
                             case 65602:
                                 Preferences.debug("tagID = Apotome grid name\n");
@@ -3333,6 +3833,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65604:
                                 Preferences.debug("tagID = Apotome processing mode\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setApotomeProcessingMode(intValue);
+                                }
                                 break;
                             case 65605:
                                 Preferences.debug("tagID = Apotome cam live combine mode\n");
@@ -3341,22 +3844,37 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = Apotome filter name\n");
                                 break;
                             case 65607:
-                                Preferences.debug("tagID = Apotome file strength\n");
+                                Preferences.debug("tagID = Apotome filter strength\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setApotomeFilterStrength(doubleValue);
+                                }
                                 break;
                             case 65608:
-                                Preferences.debug("agID = Apotome cam filter harmonics\n");
+                                Preferences.debug("tagID = Apotome cam filter harmonics\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setApotomeCamFilterHarmonics(intValue);
+                                }
                                 break;
                             case 65609:
                                 Preferences.debug("tagID = Apotome grating period\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setApotomeGratingPeriod(doubleValue);
+                                }
                                 break;
                             case 65610:
                                 Preferences.debug("tagID = Apotome auto shutter used\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setApotomeAutoShutterUsed(intValue);
+                                }
                                 break;
                             case 65611:
                                 Preferences.debug("tagID = Apotome cam status\n");
                                 break;
                             case 65612:
                                 Preferences.debug("tagID = Apotome cam normalize\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setApotomeCamNormalize(intValue);
+                                }
                                 break;
                             case 65613:
                                 Preferences.debug("tagID = Apotome cam settings manager\n");
@@ -3426,6 +3944,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65637:
                                 Preferences.debug("tagID = Apotome averaging count\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setApotomeAveragingCount(intValue);
+                                }
                                 break;
                             case 65638:
                                 Preferences.debug("tagID = Deep view DoF\n");
@@ -3453,9 +3974,129 @@ public class FileZVI extends FileBase {
                         bp += 4;
                         Preferences.debug("Ununsed attribute = " + attribute + "\n");
                     } // for (i = 0; i < tokenCount  && bp < b.length - 13; i++)
+                    
+                    if (!Double.isNaN(exposureTime)) {
+                        switch(cValue) {
+                            case 0:
+                                fileInfo.setExposureTime0(exposureTime);
+                                break;
+                            case 1:
+                                fileInfo.setExposureTime1(exposureTime);
+                                break;
+                            case 2:
+                                fileInfo.setExposureTime2(exposureTime);
+                                break;
+                            case 3:
+                                fileInfo.setExposureTime3(exposureTime);
+                                break;
+                            default:
+                        } // switch(cValue)
+                    } // if (!Double.isNaN(exposureTime)
+                    
+                    if (apotomeGridPosition != Integer.MIN_VALUE) {
+                        switch(cValue) {
+                            case 0:
+                                fileInfo.setApotomeGridPosition0(apotomeGridPosition);
+                                break;
+                            case 1:
+                                fileInfo.setApotomeGridPosition1(apotomeGridPosition);
+                                break;
+                            case 2:
+                                fileInfo.setApotomeGridPosition2(apotomeGridPosition);
+                                break;
+                            case 3:
+                                fileInfo.setApotomeGridPosition3(apotomeGridPosition);
+                                break;
+                            default:
+                        } // switch(cValue)
+                    } // if (apotomeGridPosition >= 0)
+                    
+                    if (reflectorPosition != Integer.MIN_VALUE) {
+                        switch(cValue) {
+                            case 0:
+                                fileInfo.setReflectorPosition0(reflectorPosition);
+                                break;
+                            case 1:
+                                fileInfo.setReflectorPosition1(reflectorPosition);
+                                break;
+                            case 2:
+                                fileInfo.setReflectorPosition2(reflectorPosition);
+                                break;
+                            case 3:
+                                fileInfo.setReflectorPosition3(reflectorPosition);
+                                break;
+                            default:
+                        } // switch(cValue)
+                    } // if (reflectorPosition != Integer.MIN_VALUE)
+                    
+                    if (multichannelColor != Integer.MIN_VALUE) {
+                        switch(cValue) {
+                            case 0:
+                                fileInfo.setMultichannelColor0(multichannelColor);
+                                break;
+                            case 1:
+                                fileInfo.setMultichannelColor1(multichannelColor);
+                                break;
+                            case 2:
+                                fileInfo.setMultichannelColor2(multichannelColor);
+                                break;
+                            case 3:
+                                fileInfo.setMultichannelColor3(multichannelColor);
+                                break;
+                            default:
+                        } // switch(cValue)
+                    } // if (multichannelColor != Integer.MIN_VALUE)
+                    
+                    if ((zValue != Integer.MIN_VALUE) && (!Double.isNaN(focusPosition))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icp; i++) {
+                            if (imageZArray[i] == zValue) {
+                                doFill = false;
+                            }
+                        }
+                        if (doFill) {
+                            imageZArray[icp] = zValue;
+                            imageFocusPositionArray[icp++] = focusPosition;
+                        }
+                    }
+                    
+                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
+                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(blackValue))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icp2; i++) {
+                            if ((imageZ2Array[i] == zValue) && (imageC2Array[i] == cValue) &&
+                                (imageT2Array[i] == tValue)) {
+                                doFill = false;
+                            }
+                        }
+                        if (doFill) {
+                            imageZ2Array[icp2] = zValue;
+                            imageC2Array[icp2] = cValue;
+                            imageT2Array[icp2] = tValue;
+                            imageBlackValueArray[icp2++] = blackValue;
+                        }
+                    }
+                    
+                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
+                            (tValue != Integer.MIN_VALUE) && (!Double.isNaN(whiteValue))) {
+                            boolean doFill = true;
+                            for (i = 0; i < icp3; i++) {
+                                if ((imageZ3Array[i] == zValue) && (imageC3Array[i] == cValue) &&
+                                    (imageT3Array[i] == tValue)) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZ3Array[icp3] = zValue;
+                                imageC3Array[icp3] = cValue;
+                                imageT3Array[icp3] = tValue;
+                                imageWhiteValueArray[icp3++] = whiteValue;
+                            }
+                        }
+                    
                     break;
                 } // while (true)
-            } // if ((lastElementName.equals("Tags")) &&
+            } // if ((lastElementName.equals("Tags"))
             
             if ((directoryEntry % maximumDirectoryEntriesPerSector) == 0) {
                 if (add128) {
