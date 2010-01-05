@@ -1299,6 +1299,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
                     case INCHES:
                         dialog.append("Inches \n");
                         break;
+                        
+                    case MILS:
+                        dialog.append("Mils \n");
+                        break;
 
                     case MILLIMETERS:
                         dialog.append("Millimeters \n");
@@ -1434,6 +1438,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         if (measure == FileInfoBase.INCHES) {
             mStr = " inches^2";
+        } else if (measure == FileInfoBase.MILS) {
+            mStr = "  mils^2";
         } else if (measure == FileInfoBase.ANGSTROMS) {
             mStr = " A^2";
         } else if (measure == FileInfoBase.NANOMETERS) {
@@ -1945,6 +1951,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         if (measure == FileInfoBase.INCHES) {
             mStr = " inches^3";
+        } else if (measure == FileInfoBase.MILS) {
+            mStr = " mils^3";
         } else if (measure == FileInfoBase.ANGSTROMS) {
             mStr = " A^3";
         } else if (measure == FileInfoBase.NANOMETERS) {
