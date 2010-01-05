@@ -937,6 +937,7 @@ public class JDialogRawIO extends JDialogBase {
         cBox.setBackground(Color.white);
         cBox.addItem(" UNKNOWN");
         cBox.addItem(" INCHES ");
+        cBox.addItem(" MILS ");
         cBox.addItem(" CENTIMETERS ");
         cBox.addItem(" ANGSTROMS ");
         cBox.addItem(" NANOMETERS ");
