@@ -855,6 +855,8 @@ public class FileFits extends FileBase {
                                 }
                                 else if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MILS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILS, dimNumber - 1);
                                 } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
                                 } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
@@ -920,6 +922,8 @@ public class FileFits extends FileBase {
                                 
                                 if (subS.toUpperCase().equals(FileInfoBase.INCHES_STRING.toUpperCase())) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, dimNumber - 1);
+                                } else if (subS.toUpperCase().equals(FileInfoBase.MILS_STRING.toUpperCase())) {
+                                    fileInfo.setUnitsOfMeasure(FileInfoBase.MILS, dimNumber - 1);
                                 } else if (subS.toUpperCase().equals(FileInfoBase.MILLIMETERS_STRING.toUpperCase())) {
                                     fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, dimNumber - 1);
                                 } else if (subS.toUpperCase().equals(FileInfoBase.CENTIMETERS_STRING.toUpperCase())) {
@@ -2035,6 +2039,10 @@ public class FileFits extends FileBase {
     
                         case FileInfoBase.INCHES:
                             mString = FileInfoBase.INCHES_STRING;
+                            break;
+                            
+                        case FileInfoBase.MILS:
+                            mString = FileInfoBase.MILS_STRING;
                             break;
     
                         case FileInfoBase.MILLIMETERS:
