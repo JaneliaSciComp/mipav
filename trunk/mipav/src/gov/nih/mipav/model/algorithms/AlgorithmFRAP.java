@@ -961,6 +961,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             newResX = 1.0e3f * resX;
         } else if (sourceUnitsX == FileInfoBase.INCHES) {
             newResX = 2.54e4f * resX;
+        } else if (sourceUnitsX == FileInfoBase.MILS) {
+            newResX = 2.54e1f * resX;
         } else if (sourceUnitsX == FileInfoBase.CENTIMETERS) {
             newResX = 1.0e4f * resX;
         } else if (sourceUnitsX == FileInfoBase.ANGSTROMS) {
@@ -987,6 +989,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             newResY = 1.0e3f * resY;
         } else if (sourceUnitsY == FileInfoBase.INCHES) {
             newResY = 2.54e4f * resY;
+        } else if (sourceUnitsY == FileInfoBase.MILS) {
+            newResY = 2.54e1f * resY;
         } else if (sourceUnitsY == FileInfoBase.CENTIMETERS) {
             newResY = 1.0e4f * resY;
         } else if (sourceUnitsY == FileInfoBase.ANGSTROMS) {
