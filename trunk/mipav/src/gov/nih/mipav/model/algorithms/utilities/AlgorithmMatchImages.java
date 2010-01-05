@@ -29,6 +29,8 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     private boolean doOrigins = true;
     /** flag for turning on/off using the image orientations to match the images */
     private boolean doOrients = true;
+    /**  When true resolution matching defaults to the reference image. */
+    private boolean useReferenceResolutions = false;
     /** image values to use for padding the images, if necessary */
     private float[] padValue = new float[]{0,0,0};
     
@@ -46,6 +48,23 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         srcImageB = kImageB;
         this.doOrigins = doOrigins;
         this.doOrients = doOrients;
+    }    
+    
+    /**
+     * Create an AlgorithmMatchImages to match the two input images.
+     * @param kImageA  target image to match to
+     * @param kImageB  image that is changing to match to imageA
+     * @param doOrigins flag for turning on/off using the image origins to match the images
+     * @param doOrients flag for turning on/off using the image orientations to match the images
+     */
+    public AlgorithmMatchImages(ModelImage kImageA, ModelImage kImageB,
+            final boolean doOrigins, final boolean doOrients, final boolean useReferenceResolutions ) 
+    {
+        srcImage = kImageA;
+        srcImageB = kImageB;
+        this.doOrigins = doOrigins;
+        this.doOrients = doOrients;
+        this.useReferenceResolutions = useReferenceResolutions;
     }
 
     /**
@@ -223,6 +242,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     /**
      * Match the resolutions of the two images. Determines the lowest resolution 
      * of either image along each dimension.
+     * If useReferenceResolutions is true, the reference image (imageA) resolutions are used.
      * @param imageA
      * @param imageB
      * @return new resolutions that will be applied to both images.
@@ -237,7 +257,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         float[] afRes = new float[imageA.getNDims()];
         for ( int i = 0; i < imageA.getNDims(); i++ )
         {
-            if ( imageA.getResolutions(0)[i] < imageB.getResolutions(0)[i] )
+            if ( (imageA.getResolutions(0)[i] < imageB.getResolutions(0)[i]) || useReferenceResolutions )
             {
                 afRes[i] = imageA.getResolutions(0)[i];
             }
