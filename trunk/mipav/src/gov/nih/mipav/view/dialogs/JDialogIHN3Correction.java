@@ -521,7 +521,9 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
         if (resXUnit == FileInfoBase.MILLIMETERS) {
             labelDistance = new JLabel("Field distance (mm.)");
         } else if (resXUnit == FileInfoBase.INCHES) {
-            labelDistance = new JLabel("Field distnace (in.)");
+            labelDistance = new JLabel("Field distance (in.)");
+        } else if (resXUnit == FileInfoBase.MILS) {
+            labelDistance = new JLabel("Field distance (mil.)");
         } else if (resXUnit == FileInfoBase.CENTIMETERS) {
             labelDistance = new JLabel("Field distance (cm.)");
         } else if (resXUnit == FileInfoBase.ANGSTROMS) {
@@ -724,7 +726,8 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
         orgResol = new float[image.getNDims()];
         resXUnit = image.getFileInfo(0).getUnitsOfMeasure(0);
 
-        if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.CENTIMETERS) ||
+        if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.MILS) ||
+                (resXUnit == FileInfoBase.CENTIMETERS) ||
                 (resXUnit == FileInfoBase.ANGSTROMS) || (resXUnit == FileInfoBase.NANOMETERS) ||
                 (resXUnit == FileInfoBase.MICROMETERS) || (resXUnit == FileInfoBase.MILLIMETERS) ||
                 (resXUnit == FileInfoBase.METERS) || (resXUnit == FileInfoBase.KILOMETERS) ||
@@ -739,6 +742,8 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
             // Be ready for conversions between different units.
             if (resXUnit == FileInfoBase.INCHES) {
                 convertTomm = 25.4f;
+            } else if (resXUnit == FileInfoBase.MILS) {
+                convertTomm = 2.54e-2f;
             } else if (resXUnit == FileInfoBase.CENTIMETERS) {
                 convertTomm = 10.0f;
             } else if (resXUnit == FileInfoBase.ANGSTROMS) {
@@ -762,7 +767,8 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
 
         resYUnit = image.getFileInfo(0).getUnitsOfMeasure(1);
 
-        if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.CENTIMETERS) ||
+        if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.MILS) ||
+                (resYUnit == FileInfoBase.CENTIMETERS) ||
                 (resYUnit == FileInfoBase.ANGSTROMS) || (resYUnit == FileInfoBase.NANOMETERS) ||
                 (resYUnit == FileInfoBase.MICROMETERS) || (resYUnit == FileInfoBase.MILLIMETERS) ||
                 (resYUnit == FileInfoBase.METERS) || (resYUnit == FileInfoBase.KILOMETERS) ||
@@ -780,6 +786,8 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
                     orgResol[1] = orgResol[1] / convertTomm;
                 } else if (resYUnit == FileInfoBase.INCHES) {
                     orgResol[1] = 25.4f * orgResol[1] / convertTomm;
+                } else if (resYUnit == FileInfoBase.MILS) {
+                    orgResol[1] = 2.54e-2f * orgResol[1] / convertTomm;
                 } else if (resYUnit == FileInfoBase.CENTIMETERS) {
                     orgResol[1] = 10.0f * orgResol[1] / convertTomm;
                 } else if (resYUnit == FileInfoBase.ANGSTROMS) {
@@ -805,7 +813,8 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
         if (image.getNDims() == 3) {
             resZUnit = image.getFileInfo(0).getUnitsOfMeasure(2);
 
-            if ((resZUnit == FileInfoBase.INCHES) || (resZUnit == FileInfoBase.CENTIMETERS) ||
+            if ((resZUnit == FileInfoBase.INCHES) || (resZUnit == FileInfoBase.MILS) ||
+                    (resZUnit == FileInfoBase.CENTIMETERS) ||
                     (resZUnit == FileInfoBase.ANGSTROMS) || (resZUnit == FileInfoBase.NANOMETERS) ||
                     (resZUnit == FileInfoBase.MICROMETERS) || (resZUnit == FileInfoBase.MILLIMETERS) ||
                     (resZUnit == FileInfoBase.METERS) || (resZUnit == FileInfoBase.KILOMETERS) ||
@@ -826,6 +835,8 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
 
                     if (resZUnit == FileInfoBase.INCHES) {
                         orgResol[2] = 25.4f * orgResol[2] / convertTomm;
+                    } else if (resZUnit == FileInfoBase.MILS) {
+                        orgResol[2] = 2.54e-2f * orgResol[2] / convertTomm;
                     } else if (resZUnit == FileInfoBase.CENTIMETERS) {
                         orgResol[2] = 10.0f * orgResol[2] / convertTomm;
                     } else if (resZUnit == FileInfoBase.ANGSTROMS) {
