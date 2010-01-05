@@ -3437,6 +3437,7 @@ public class FileNIFTI extends FileBase {
         for (i = 0; (i < unitsOfMeasure.length) && (!found); i++) {
 
             if ((unitsOfMeasure[i] == FileInfoBase.UNKNOWN_MEASURE) || (unitsOfMeasure[i] == FileInfoBase.INCHES) ||
+                    (unitsOfMeasure[i] == FileInfoBase.MILS) ||
                     (unitsOfMeasure[i] == FileInfoBase.CENTIMETERS) || (unitsOfMeasure[i] == FileInfoBase.ANGSTROMS) ||
                     (unitsOfMeasure[i] == FileInfoBase.NANOMETERS) || (unitsOfMeasure[i] == FileInfoBase.MICROMETERS) ||
                     (unitsOfMeasure[i] == FileInfoBase.MILLIMETERS) || (unitsOfMeasure[i] == FileInfoBase.METERS) ||
@@ -3472,6 +3473,7 @@ public class FileNIFTI extends FileBase {
                     break;
 
                 case FileInfoBase.INCHES:
+                case FileInfoBase.MILS:
                 case FileInfoBase.CENTIMETERS:
                 case FileInfoBase.MILLIMETERS:
 
@@ -3482,6 +3484,9 @@ public class FileNIFTI extends FileBase {
                         if (unitsOfMeasure[i] == FileInfoBase.INCHES) {
                             resols[i] = 25.4f * resols[i];
                             origin[i] = 25.4f * origin[i];
+                        } else if (unitsOfMeasure[i] == FileInfoBase.MILS) {
+                            resols[i] = 2.54e-2f * resols[i];
+                            origin[i] = 2.54e-2f * origin[i];
                         } else if (unitsOfMeasure[i] == FileInfoBase.CENTIMETERS) {
                             resols[i] = 10.0f * resols[i];
                             origin[i] = 10.0f * origin[i];
@@ -3519,6 +3524,9 @@ public class FileNIFTI extends FileBase {
                         if (unitsOfMeasure[i] == FileInfoBase.INCHES) {
                             resols[i] = 2.54e5f * resols[i];
                             origin[i] = 2.54e5f * origin[i];
+                        } else if (unitsOfMeasure[i] == FileInfoBase.MILS) {
+                            resols[i] = 2.54e2f * resols[i];
+                            origin[i] = 2.54e2f * origin[i];
                         } else if (unitsOfMeasure[i] == FileInfoBase.CENTIMETERS) {
                             resols[i] = 1.0e5f * resols[i];
                             origin[i] = 1.0e5f * origin[i];
@@ -3556,6 +3564,9 @@ public class FileNIFTI extends FileBase {
                         if (unitsOfMeasure[i] == FileInfoBase.INCHES) {
                             resols[i] = 2.54e-2f * resols[i];
                             origin[i] = 2.54e-2f * origin[i];
+                        } else if (unitsOfMeasure[i] == FileInfoBase.MILS) {
+                            resols[i] = 2.54e-5f * resols[i];
+                            origin[i] = 2.54e-5f * origin[i];
                         } else if (unitsOfMeasure[i] == FileInfoBase.CENTIMETERS) {
                             resols[i] = 1.0e-2f * resols[i];
                             origin[i] = 1.0e-2f * origin[i];
