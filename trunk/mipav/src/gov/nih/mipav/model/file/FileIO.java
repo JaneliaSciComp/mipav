@@ -9202,6 +9202,10 @@ public class FileIO {
                     case FileInfoBase.INCHES:
                         meterResols[i] = 0.0254f * image.getFileInfo()[0].getResolutions()[i];
                         break;
+                        
+                    case FileInfoBase.MILS:
+                        meterResols[i] = 2.54e-5f * image.getFileInfo()[0].getResolutions()[i];
+                        break;
 
                     case FileInfoBase.MICROMETERS:
                         meterResols[i] = 1.0e-6f * image.getFileInfo()[0].getResolutions()[i];
