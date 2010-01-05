@@ -390,6 +390,10 @@ public class VOI extends ModelSerialCloneable {
             case FileInfoBase.INCHES:
                 unitsStr = " in";
                 break;
+              
+            case FileInfoBase.MILS:
+                unitsStr = " mil";
+                break;
 
             case FileInfoBase.ANGSTROMS:
                 unitsStr = " A";
@@ -1663,6 +1667,10 @@ public class VOI extends ModelSerialCloneable {
 
                     case FileInfoBase.INCHES:
                         tmpString = tmpString + " in";
+                        break;
+                        
+                    case FileInfoBase.MILS:
+                        tmpString = tmpString + " mil";
                         break;
 
                     case FileInfoBase.ANGSTROMS:
