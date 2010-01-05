@@ -57,6 +57,7 @@
 									<xs:restriction base="xs:string">
 										<xs:enumeration value="Unknown"/>
 										<xs:enumeration value="Inches"/>
+                                        <xs:enumeration value="Mils"/>
 										<xs:enumeration value="Centimeters"/>
 										<xs:enumeration value="Angstroms"/>
 										<xs:enumeration value="Nanometers"/>
