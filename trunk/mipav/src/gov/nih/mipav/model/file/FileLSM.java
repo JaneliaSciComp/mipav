@@ -2848,6 +2848,10 @@ public class FileLSM extends FileBase {
                         fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, 0);
                         fileInfo.setUnitsOfMeasure(FileInfoBase.INCHES, 1);
                         Preferences.debug("FileTiff.openIFD: Resolution Unit = INCHES\n");
+                    } else if (valueArray[0] == FileInfoBase.MILS) {
+                        fileInfo.setUnitsOfMeasure(FileInfoBase.MILS, 0);
+                        fileInfo.setUnitsOfMeasure(FileInfoBase.MILS, 1);
+                        Preferences.debug("FileTiff.openIFD: Resolution Unit = MILS\n");
                     } else if (valueArray[0] == FileInfoBase.CENTIMETERS) {
                         fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 0);
                         fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 1);
