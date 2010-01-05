@@ -3780,6 +3780,7 @@ public class ModelImage extends ModelStorageBase {
         for (i = 0; i < nDims; i++) {
             switch(units[i]) {
                 case FileInfoBase.INCHES:
+                case FileInfoBase.MILS:
                 case FileInfoBase.CENTIMETERS:
                 case FileInfoBase.ANGSTROMS:
                 case FileInfoBase.NANOMETERS:
@@ -3915,6 +3916,40 @@ public class ModelImage extends ModelStorageBase {
                      
                 case FileInfoBase.MILES:
                     return 6.336E4;
+                   
+                case FileInfoBase.MILS:
+                    return 1.0E-3;
+                     
+            }
+            break;
+        case FileInfoBase.MILS:
+            switch(oldUnit) {
+                case FileInfoBase.CENTIMETERS:
+                    return 3.93700787E2;
+                    
+                case FileInfoBase.ANGSTROMS:
+                    return 3.93700787E-6;
+                     
+                case FileInfoBase.NANOMETERS:
+                    return 3.93700787E-5;
+                     
+                case FileInfoBase.MICROMETERS:
+                    return 3.93700787E-2;
+                     
+                case FileInfoBase.MILLIMETERS:
+                    return 3.93700787E+1;
+                     
+                case FileInfoBase.METERS:
+                    return 3.93700787E4;
+                     
+                case FileInfoBase.KILOMETERS:
+                    return 3.93700787E7;
+                     
+                case FileInfoBase.MILES:
+                    return 6.336E7;
+                   
+                case FileInfoBase.INCHES:
+                    return 1.0E+3;
                      
             }
             break;
@@ -3922,6 +3957,9 @@ public class ModelImage extends ModelStorageBase {
             switch(oldUnit) {
                 case FileInfoBase.INCHES:
                     return 2.54;
+                    
+                case FileInfoBase.MILS:
+                    return 2.54E-3;
                      
                 case FileInfoBase.ANGSTROMS:
                     return 1.0E-8;
@@ -3950,6 +3988,9 @@ public class ModelImage extends ModelStorageBase {
             switch(oldUnit) {
                 case FileInfoBase.INCHES:
                     return 2.54E8;
+                    
+                case FileInfoBase.MILS:
+                    return 2.54E5;
                      
                 case FileInfoBase.CENTIMETERS:
                     return 1.0E8;
@@ -3978,6 +4019,9 @@ public class ModelImage extends ModelStorageBase {
             switch(oldUnit) {
                 case FileInfoBase.INCHES:
                     return 2.54E7;
+                    
+                case FileInfoBase.MILS:
+                    return 2.54E4;
                      
                 case FileInfoBase.CENTIMETERS:
                     return 1.0E7;
@@ -4006,6 +4050,9 @@ public class ModelImage extends ModelStorageBase {
             switch(oldUnit) {
                 case FileInfoBase.INCHES:
                     return 2.54E4;
+                    
+                case FileInfoBase.MILS:
+                    return 2.54E1;
                      
                 case FileInfoBase.CENTIMETERS:
                     return 1.0E4;
@@ -4034,6 +4081,9 @@ public class ModelImage extends ModelStorageBase {
             switch(oldUnit) {
                 case FileInfoBase.INCHES:
                     return 25.4;
+                    
+                case FileInfoBase.MILS:
+                    return 2.54E-2;
                      
                 case FileInfoBase.CENTIMETERS:
                     return 10.0;
@@ -4062,6 +4112,9 @@ public class ModelImage extends ModelStorageBase {
             switch(oldUnit) {
                 case FileInfoBase.INCHES:
                     return 2.54E-2;
+                    
+                case FileInfoBase.MILS:
+                    return 2.54E-5;
                      
                 case FileInfoBase.CENTIMETERS:
                     return 1.0E-2;
@@ -4090,6 +4143,9 @@ public class ModelImage extends ModelStorageBase {
             switch(oldUnit) {
                 case FileInfoBase.INCHES:
                 	return 2.54E-5;
+                    
+                case FileInfoBase.MILS:
+                    return 2.54E-8;
                      
                 case FileInfoBase.CENTIMETERS:
                 	return 1.0E-5;
@@ -4118,6 +4174,9 @@ public class ModelImage extends ModelStorageBase {
             switch(oldUnit) {
                 case FileInfoBase.INCHES:
                 	return 1.57828283E-5;
+                    
+                case FileInfoBase.MILS:
+                    return 1.57828283E-8;
                      
                 case FileInfoBase.CENTIMETERS:
                 	return 6.21371192E-6;
