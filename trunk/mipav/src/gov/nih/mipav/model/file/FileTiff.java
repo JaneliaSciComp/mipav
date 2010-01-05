@@ -7227,6 +7227,13 @@ public class FileTiff extends FileBase {
                         if (debuggingFileIO) {
                             Preferences.debug("FileTiff.openIFD: Resolution Unit = INCHES\n", 2);
                         }
+                    } else if (valueArray[0] == FileInfoBase.MILS) {
+                        fileInfo.setUnitsOfMeasure(FileInfoBase.MILS, 0);
+                        fileInfo.setUnitsOfMeasure(FileInfoBase.MILS, 1);
+
+                        if (debuggingFileIO) {
+                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILS\n", 2);
+                        }
                     } else if (valueArray[0] == FileInfoBase.CENTIMETERS) {
                         fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 0);
                         fileInfo.setUnitsOfMeasure(FileInfoBase.CENTIMETERS, 1);
@@ -15974,6 +15981,7 @@ public class FileTiff extends FileBase {
         yResol = image.getFileInfo(index).getResolutions()[1];
 
         if ((resXYUnit != FileInfoBase.UNKNOWN_MEASURE) && (resXYUnit != FileInfoBase.INCHES) &&
+                (resXYUnit != FileInfoBase.MILS) &&
                 (resXYUnit != FileInfoBase.CENTIMETERS) && (resXYUnit != FileInfoBase.MILLIMETERS) &&
                 (resXYUnit != FileInfoBase.METERS) && (resXYUnit != FileInfoBase.ANGSTROMS) &&
                 (resXYUnit != FileInfoBase.NANOMETERS) && (resXYUnit != FileInfoBase.MICROMETERS) &&
@@ -16002,6 +16010,9 @@ public class FileTiff extends FileBase {
         } else if (resXYUnit == FileInfoBase.MILES) {
             resXYUnit = FileInfoBase.INCHES;
             xResol = 63360.0f * xResol;
+        } else if (resXYUnit == FileInfoBase.MILS) {
+            resXYUnit = FileInfoBase.INCHES;
+            xResol = 1.0e-3f * xResol;
         }
 
         if (resXYUnit == FileInfoBase.CENTIMETERS) {
@@ -16017,6 +16028,8 @@ public class FileTiff extends FileBase {
                 yResol = 0.1f * yResol;
             } else if (resYUnit == FileInfoBase.INCHES) {
                 yResol = 2.54f * yResol;
+            } else if (resYUnit == FileInfoBase.MILS) {
+                yResol = 2.54e-3f * yResol;
             } else if (resYUnit == FileInfoBase.METERS) {
                 yResol = 100.0f * yResol;
             } else if (resYUnit == FileInfoBase.KILOMETERS) {
@@ -16044,6 +16057,8 @@ public class FileTiff extends FileBase {
                 yResol = 3.937e4f * yResol;
             } else if (resYUnit == FileInfoBase.MILES) {
                 yResol = 63360.0f * yResol;
+            } else if (resYUnit == FileInfoBase.MILS) {
+                yResol = 1.0e-3f * yResol;
             }
         } // else if (resXYUnit == FileInfoBase.INCHES)
 
