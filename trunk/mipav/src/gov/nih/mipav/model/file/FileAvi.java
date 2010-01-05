@@ -6426,7 +6426,8 @@ public class FileAvi extends FileBase {
         // RGB bitmaps.
         resXUnit = imageA.getFileInfo(0).getUnitsOfMeasure(0);
 
-        if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.CENTIMETERS) ||
+        if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.MILS) || 
+                (resXUnit == FileInfoBase.CENTIMETERS) ||
                 (resXUnit == FileInfoBase.ANGSTROMS) || (resXUnit == FileInfoBase.NANOMETERS) ||
                 (resXUnit == FileInfoBase.MICROMETERS) || (resXUnit == FileInfoBase.MILLIMETERS) ||
                 (resXUnit == FileInfoBase.METERS) || (resXUnit == FileInfoBase.KILOMETERS) ||
@@ -6435,6 +6436,8 @@ public class FileAvi extends FileBase {
 
             if (resXUnit == FileInfoBase.INCHES) {
                 xResol = 0.0254f * xResol;
+            } else if (resXUnit == FileInfoBase.MILS) {
+                xResol = 2.54e-5f * xResol;
             } else if (resXUnit == FileInfoBase.CENTIMETERS) {
                 xResol = 0.01f * xResol;
             } else if (resXUnit == FileInfoBase.ANGSTROMS) {
@@ -6461,7 +6464,8 @@ public class FileAvi extends FileBase {
         // per meter
         resYUnit = imageA.getFileInfo(0).getUnitsOfMeasure(1);
 
-        if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.CENTIMETERS) ||
+        if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.MILS) ||
+                (resYUnit == FileInfoBase.CENTIMETERS) ||
                 (resYUnit == FileInfoBase.ANGSTROMS) || (resYUnit == FileInfoBase.NANOMETERS) ||
                 (resYUnit == FileInfoBase.MICROMETERS) || (resYUnit == FileInfoBase.MILLIMETERS) ||
                 (resYUnit == FileInfoBase.METERS) || (resYUnit == FileInfoBase.KILOMETERS) ||
@@ -6470,6 +6474,8 @@ public class FileAvi extends FileBase {
 
             if (resYUnit == FileInfoBase.INCHES) {
                 yResol = 0.0254f * yResol;
+            } else if (resYUnit == FileInfoBase.MILS) {
+                yResol = 2.54e-5f * yResol;
             } else if (resYUnit == FileInfoBase.CENTIMETERS) {
                 yResol = 0.01f * yResol;
             } else if (resYUnit == FileInfoBase.ANGSTROMS) {
@@ -7369,7 +7375,8 @@ public class FileAvi extends FileBase {
         // RGB bitmaps.
         resXUnit = imageA.getFileInfo(0).getUnitsOfMeasure(0);
 
-        if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.CENTIMETERS) ||
+        if ((resXUnit == FileInfoBase.INCHES) || (resXUnit == FileInfoBase.MILS) ||
+                (resXUnit == FileInfoBase.CENTIMETERS) ||
                 (resXUnit == FileInfoBase.ANGSTROMS) || (resXUnit == FileInfoBase.NANOMETERS) ||
                 (resXUnit == FileInfoBase.MICROMETERS) || (resXUnit == FileInfoBase.MILLIMETERS) ||
                 (resXUnit == FileInfoBase.METERS) || (resXUnit == FileInfoBase.KILOMETERS) ||
@@ -7378,6 +7385,8 @@ public class FileAvi extends FileBase {
 
             if (resXUnit == FileInfoBase.INCHES) {
                 xResol = 0.0254f * xResol;
+            } else if (resXUnit == FileInfoBase.MILS) {
+                xResol = 2.54e-5f * xResol;
             } else if (resXUnit == FileInfoBase.CENTIMETERS) {
                 xResol = 0.01f * xResol;
             } else if (resXUnit == FileInfoBase.ANGSTROMS) {
@@ -7404,7 +7413,8 @@ public class FileAvi extends FileBase {
         // per meter
         resYUnit = imageA.getFileInfo(0).getUnitsOfMeasure(1);
 
-        if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.CENTIMETERS) ||
+        if ((resYUnit == FileInfoBase.INCHES) || (resYUnit == FileInfoBase.MILS) ||
+                (resYUnit == FileInfoBase.CENTIMETERS) ||
                 (resYUnit == FileInfoBase.ANGSTROMS) || (resYUnit == FileInfoBase.NANOMETERS) ||
                 (resYUnit == FileInfoBase.MICROMETERS) || (resYUnit == FileInfoBase.MILLIMETERS) ||
                 (resYUnit == FileInfoBase.METERS) || (resYUnit == FileInfoBase.KILOMETERS) ||
@@ -7413,6 +7423,8 @@ public class FileAvi extends FileBase {
 
             if (resYUnit == FileInfoBase.INCHES) {
                 yResol = 0.0254f * yResol;
+            } else if (resYUnit == FileInfoBase.MILS) {
+                yResol = 2.54e-5f * yResol;
             } else if (resYUnit == FileInfoBase.CENTIMETERS) {
                 yResol = 0.01f * yResol;
             } else if (resYUnit == FileInfoBase.ANGSTROMS) {
