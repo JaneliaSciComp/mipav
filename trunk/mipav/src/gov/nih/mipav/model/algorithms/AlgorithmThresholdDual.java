@@ -600,7 +600,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
                         units = "  in^2";
                         break;
                     case FileInfoBase.MILS:
-                        units = " mil^2";
+                        units = "  mil^2";
                         break;
                     case FileInfoBase.CENTIMETERS:
                         units = "  cm^2";
