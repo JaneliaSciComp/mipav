@@ -2809,6 +2809,20 @@ public class ModelImage extends ModelStorageBase {
      * @return  true if succeeded in saving.
      */
     public boolean saveImage(String directory, String fileName, int fileType, boolean isActive) {
+        return saveImage(directory,fileName,fileType,isActive,true);
+    }
+    /**
+     * Save the image to a file. The file type the image is to be save in is passed into this method.
+     *
+     * @param   directory  location where the image is to stored.
+     * @param   fileName   the name of the file (without the extension).
+     * @param   fileType   The format of the image file (i.e. Analyze, XML, DICOM etc.)
+     * @param   isActive   Whether saving is being done in a separate thread
+     * @param bDisplayProgress when true display the progress bar for writing.
+     *
+     * @return  true if succeeded in saving.
+     */
+    public boolean saveImage(String directory, String fileName, int fileType, boolean isActive, final boolean bDisplayProgress) {
         FileWriteOptions options = new FileWriteOptions(false);
 
         if (this.getNDims() == 3) {
@@ -2849,7 +2863,7 @@ public class ModelImage extends ModelStorageBase {
         // like the number of images.
         FileIO fileIO = new FileIO();
 
-        fileIO.writeImage(this, options);
+        fileIO.writeImage(this, options, bDisplayProgress);
 
         return true;
     }
