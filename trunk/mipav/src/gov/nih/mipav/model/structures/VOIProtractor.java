@@ -370,6 +370,10 @@ public class VOIProtractor extends VOIBase {
                 case FileInfoBase.INCHES:
                     lengthString = lengthString + " in";
                     break;
+                    
+                case FileInfoBase.MILS:
+                    lengthString = lengthString + " mil";
+                    break;
 
                 case FileInfoBase.ANGSTROMS:
                     lengthString = lengthString + " A";
