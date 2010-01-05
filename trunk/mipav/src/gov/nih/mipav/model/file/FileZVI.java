@@ -153,12 +153,20 @@ public class FileZVI extends FileBase {
     private int imageC3Array[] = null;
     private int imageT3Array[] = null;
     private double imageWhiteValueArray[] = null;
+    private double imageRelFocusPosition1Array[] = null;
+    private int imageZ4Array[] = null;
+    private double imageRelFocusPosition2Array[] = null;
+    private int imageZ5Array[] = null;
     // image count pointer for imageFocusPositionArray
     private int icp = 0;
     // image count pointer for imageBlackValueArray
     private int icp2 = 0;
-    // image cout pointerr for imageWhiteValueArray 
+    // image count pointer for imageWhiteValueArray 
     private int icp3 = 0;
+    // image count pointer for imageRelFocusPosition1Array
+    private int icp4 = 0;
+    // image count pointer for imageRelFocusPosition2Array
+    private int icp5 = 0;
     
     // Sector allocation table
     private int sat[] = null;
@@ -217,6 +225,19 @@ public class FileZVI extends FileBase {
         shortSectorTable = null;
         startSectorArray = null;
         offsetArray = null;
+        imageZArray = null;
+        imageZ2Array = null;
+        imageC2Array = null;
+        imageT2Array = null;
+        imageBlackValueArray = null;
+        imageZ3Array = null;
+        imageC3Array = null;
+        imageT3Array = null;
+        imageWhiteValueArray = null;
+        imageZ4Array = null;
+        imageRelFocusPosition1Array = null;
+        imageZ5Array = null;
+        imageRelFocusPosition2Array = null;
         sat = null;
         
         try {
@@ -295,6 +316,8 @@ public class FileZVI extends FileBase {
         int sliceSize;
         int presentSector;
         double processedFocusPositionArray[] = null;
+        double processedRelFocusPosition1Array[] = null;
+        double processedRelFocusPosition2Array[] = null;
         double blackValue0Array[] = null;
         double blackValue1Array[] = null;
         double blackValue2Array[] = null;
@@ -304,6 +327,8 @@ public class FileZVI extends FileBase {
         double whiteValue2Array[] = null;
         double whiteValue3Array[] = null;
         int numberFocusPositions = 0;
+        int numberRelFocusPosition1s = 0;
+        int numberRelFocusPosition2s = 0;
         int numberBlack0Values = 0;
         int numberBlack1Values = 0;
         int numberBlack2Values = 0;
@@ -361,6 +386,26 @@ public class FileZVI extends FileBase {
                 for (i = 0; i < imageCount; i++) {
                     if ((imageZArray[i] == z) && (!Double.isNaN(imageFocusPositionArray[i]))) {
                         processedFocusPositionArray[numberFocusPositions++] = imageFocusPositionArray[i];    
+                    }
+                }
+            }
+            
+            processedRelFocusPosition1Array = new double[zDim];
+            numberRelFocusPosition1s = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < imageCount; i++) {
+                    if ((imageZ4Array[i] == z) && (!Double.isNaN(imageRelFocusPosition1Array[i]))) {
+                        processedRelFocusPosition1Array[numberRelFocusPosition1s++] = imageRelFocusPosition1Array[i];    
+                    }
+                }
+            }
+            
+            processedRelFocusPosition2Array = new double[zDim];
+            numberRelFocusPosition2s = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < imageCount; i++) {
+                    if ((imageZ5Array[i] == z) && (!Double.isNaN(imageRelFocusPosition2Array[i]))) {
+                        processedRelFocusPosition2Array[numberRelFocusPosition2s++] = imageRelFocusPosition2Array[i];    
                     }
                 }
             }
@@ -764,6 +809,24 @@ public class FileZVI extends FileBase {
                 }
             }
             
+            if (numberRelFocusPosition1s == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setRelFocusPosition1(processedRelFocusPosition1Array[z]);
+                    }
+                }
+            }
+            
+            if (numberRelFocusPosition2s == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setRelFocusPosition2(processedRelFocusPosition2Array[z]);
+                    }
+                }
+            }
+            
             if (numberBlack0Values == zDim * tDim) {
                 for (t = 0; t < tDim; t++) {
                     for (z = 0; z < zDim; z++) {
@@ -892,6 +955,8 @@ public class FileZVI extends FileBase {
         double exposureTime = Double.NaN;;
         int apotomeGridPosition = Integer.MIN_VALUE;
         double focusPosition = Double.NaN;
+        double relFocusPosition1 = Double.NaN;
+        double relFocusPosition2 = Double.NaN;
         int zValue = Integer.MIN_VALUE;
         int cValue = Integer.MIN_VALUE;
         int tValue = Integer.MIN_VALUE;
@@ -899,6 +964,8 @@ public class FileZVI extends FileBase {
         double whiteValue = Double.NaN;
         int reflectorPosition = Integer.MIN_VALUE;
         int multichannelColor = Integer.MIN_VALUE;
+        int excitationWavelength = Integer.MIN_VALUE;
+        int emissionWavelength = Integer.MIN_VALUE;
         //      Start reading ole compound file structure
         // The header is always 512 bytes long and should be located at offset zero.
         // Offset 0 Length 8 bytes olecf file signature
@@ -1644,6 +1711,10 @@ public class FileZVI extends FileBase {
                     imageC3Array = new int[imageCount+10];
                     imageT3Array = new int[imageCount+10];
                     imageWhiteValueArray = new double[imageCount+10];
+                    imageZ4Array = new int[imageCount+10];
+                    imageRelFocusPosition1Array = new double[imageCount+10];
+                    imageZ5Array = new int[imageCount+10];
+                    imageRelFocusPosition2Array = new double[imageCount+10];
                     for (i = 0; i < imageCount+10; i++) {
                         imageFocusPositionArray[i] = Double.NaN;
                         imageZArray[i] = Integer.MIN_VALUE;
@@ -1655,6 +1726,10 @@ public class FileZVI extends FileBase {
                         imageC3Array[i] = Integer.MIN_VALUE;
                         imageT3Array[i] = Integer.MIN_VALUE;
                         imageWhiteValueArray[i] = Double.NaN;
+                        imageZ4Array[i] = Integer.MIN_VALUE;
+                        imageRelFocusPosition1Array[i] = Double.NaN;
+                        imageZ5Array[i] = Integer.MIN_VALUE;
+                        imageRelFocusPosition2Array[i] = Double.NaN;
                     }
                     dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 2;
@@ -2337,6 +2412,8 @@ public class FileZVI extends FileBase {
                    exposureTime = Double.NaN;
                    apotomeGridPosition = Integer.MIN_VALUE;
                    focusPosition = Double.NaN;
+                   relFocusPosition1 = Double.NaN;
+                   relFocusPosition2 = Double.NaN;
                    zValue = Integer.MIN_VALUE;
                    cValue = Integer.MIN_VALUE;
                    tValue = Integer.MIN_VALUE;
@@ -2344,6 +2421,8 @@ public class FileZVI extends FileBase {
                    whiteValue = Double.NaN;
                    reflectorPosition = Integer.MIN_VALUE;
                    multichannelColor = Integer.MIN_VALUE;
+                   excitationWavelength = Integer.MIN_VALUE;
+                   emissionWavelength = Integer.MIN_VALUE;
                     for (i = 0; i < tokenCount && bp < b.length - 13; i++) {
                         short valueDType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                         bp += 2;
@@ -2502,6 +2581,26 @@ public class FileZVI extends FileBase {
                             case 304:
                                 Preferences.debug("tagID = Image base time 4\n");
                                 break;
+                            case 333:
+                                Preferences.debug("tagID = RelFocusPosition1\n");
+                                if (valueDType == VT_R8) {
+                                    // Different value for every z slice
+                                    relFocusPosition1 = doubleValue;
+                                }
+                                break;
+                            case 334:
+                                Preferences.debug("tagID = RelFocusPosition2\n");
+                                if (valueDType == VT_R8) {
+//                                  Different value for every z slice
+                                    relFocusPosition2 = doubleValue;    
+                                }
+                                break;
+                            case 513:
+                                Preferences.debug("tagID = Object type\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setObjectType(intValue);
+                                }
+                                break;
                             case 515:
                                 Preferences.debug("tagID = Image width in pixels\n");
                                 break;
@@ -2539,6 +2638,12 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = Acquisition bit depth\n");
                                 if (valueDType == VT_I4) {
                                     fileInfo.setAcquisitionBitDepth(intValue);
+                                }
+                                break;
+                            case 532:
+                                Preferences.debug("tagID = Image memory usage (RAM)\n");
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setImageMemoryUsage(doubleValue);
                                 }
                                 break;
                             case 534:
@@ -2942,7 +3047,19 @@ public class FileZVI extends FileBase {
                             case 2105:
                                 Preferences.debug("tagID = Objective immersion type\n");
                                 if (valueDType == VT_I4) {
-                                    fileInfo.setObjectiveImmersionType(intValue);
+                                    switch (intValue) {
+                                        case 1:
+                                            fileInfo.setObjectiveImmersionType("No immersion");
+                                            break;
+                                        case 2:
+                                            fileInfo.setObjectiveImmersionType("Oil");
+                                            break;
+                                        case 3:
+                                            fileInfo.setObjectiveImmersionType("Water");
+                                            break;
+                                        default:
+                                            fileInfo.setObjectiveImmersionType("Unknown");
+                                    }
                                 }
                                 break;
                             case 2107:
@@ -3327,6 +3444,12 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2239:
                                 Preferences.debug("tagID = Fluorescence attenuator position\n");
+                                break;
+                            case 2261:
+                                Preferences.debug("tagID = Objective ID\n");
+                                break;
+                            case 2262:
+                                Preferences.debug("tagID = Reflector ID\n");
                                 break;
                             case 2307:
                                 Preferences.debug("tagID = Camera frame start left\n");
@@ -3957,6 +4080,31 @@ public class FileZVI extends FileBase {
                             case 65643:
                                 Preferences.debug("tagID = Deep view slider name\n");
                                 break;
+                            case 65655:
+                                Preferences.debug("tagID = Deep view slider name\n");
+                                break;
+                            case 5439491:
+                                Preferences.debug("tag ID = Acquisition software\n");
+                                break;
+                            case 16777488:
+                                Preferences.debug("tagID = Excitation wavelength\n");
+                                if (valueDType == VT_I4) {
+                                    excitationWavelength = intValue;
+                                }
+                                break;
+                            case 16777489:
+                                Preferences.debug("tagID = Emission wavelength\n");
+                                if (valueDType == VT_I4) {
+                                    emissionWavelength = intValue;
+                                }
+                                break;
+                            case 101515267:
+                                Preferences.debug("tagID = File name\n");
+                                break;
+                            case 101253123:
+                            case 101777411:
+                                Preferences.debug("tagID = Image name\n");
+                                break;
                             default: Preferences.debug("Unrecognized tagID value = " + tagID + "\n");
                         }
                         
@@ -3972,7 +4120,7 @@ public class FileZVI extends FileBase {
                         int attribute = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                                 ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                         bp += 4;
-                        Preferences.debug("Ununsed attribute = " + attribute + "\n");
+                        Preferences.debug("Unused attribute = " + attribute + "\n");
                     } // for (i = 0; i < tokenCount  && bp < b.length - 13; i++)
                     
                     if (!Double.isNaN(exposureTime)) {
@@ -4010,6 +4158,40 @@ public class FileZVI extends FileBase {
                             default:
                         } // switch(cValue)
                     } // if (apotomeGridPosition >= 0)
+                    
+                    if (excitationWavelength != Integer.MIN_VALUE) {
+                        switch(cValue) {
+                            case 0:
+                                fileInfo.setExcitationWavelength0(excitationWavelength);
+                                break;
+                            case 1:
+                                fileInfo.setExcitationWavelength1(excitationWavelength);
+                                break;
+                            case 2:
+                                fileInfo.setExcitationWavelength2(excitationWavelength);
+                                break;
+                            case 3:
+                                fileInfo.setExcitationWavelength3(excitationWavelength);
+                                break;
+                        } // switch(cValue)
+                    } // if (excitationWavelength != Integer.MIN_VALUE)
+                    
+                    if (emissionWavelength != Integer.MIN_VALUE) {
+                        switch(cValue) {
+                            case 0:
+                                fileInfo.setEmissionWavelength0(emissionWavelength);
+                                break;
+                            case 1:
+                                fileInfo.setEmissionWavelength1(emissionWavelength);
+                                break;
+                            case 2:
+                                fileInfo.setEmissionWavelength2(emissionWavelength);
+                                break;
+                            case 3:
+                                fileInfo.setEmissionWavelength3(emissionWavelength);
+                                break;
+                        } // switch(cValue)
+                    } // if (emissionWavelength != Integer.MIN_VALUE)
                     
                     if (reflectorPosition != Integer.MIN_VALUE) {
                         switch(cValue) {
@@ -4057,6 +4239,32 @@ public class FileZVI extends FileBase {
                         if (doFill) {
                             imageZArray[icp] = zValue;
                             imageFocusPositionArray[icp++] = focusPosition;
+                        }
+                    }
+                    
+                    if ((zValue != Integer.MIN_VALUE) && (!Double.isNaN(relFocusPosition1))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icp4; i++) {
+                            if (imageZ4Array[i] == zValue) {
+                                doFill = false;
+                            }
+                        }
+                        if (doFill) {
+                            imageZ4Array[icp4] = zValue;
+                            imageRelFocusPosition1Array[icp4++] = relFocusPosition1;
+                        }
+                    }
+                    
+                    if ((zValue != Integer.MIN_VALUE) && (!Double.isNaN(relFocusPosition2))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icp5; i++) {
+                            if (imageZ5Array[i] == zValue) {
+                                doFill = false;
+                            }
+                        }
+                        if (doFill) {
+                            imageZ5Array[icp5] = zValue;
+                            imageRelFocusPosition2Array[icp5++] = relFocusPosition2;
                         }
                     }
                     
