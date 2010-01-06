@@ -2,11 +2,11 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.registration.*;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegTSOAR;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 
@@ -19,18 +19,20 @@ import javax.swing.*;
 /**
  * Dialog to get options for running the time series registration. Cost function, interpolation, mean or center volume,
  * etc.
- *
- * @author  Neva Cherniavsky
- * @see     gov.nih.mipav.model.algorithms.registration#AlgorithmRegistrationTSOAR
+ * 
+ * @author Neva Cherniavsky
+ * @see gov.nih.mipav.model.algorithms.registration#AlgorithmRegistrationTSOAR
  */
 public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements AlgorithmInterface {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 5174224884360217569L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private AlgorithmRegTSOAR algoReg;
@@ -51,7 +53,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
     private int cost, interp, interp2, DOF;
 
     /** DOCUMENT ME! */
-    private boolean displayTransform, reference;
+    private boolean displayTransform, useReferenceTimeSlice;
 
     /** DOCUMENT ME! */
     private boolean doGraph;
@@ -101,34 +103,36 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
     /** DOCUMENT ME! */
     private JCheckBox transformCheckbox;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogRegistrationTSOAR() { }
+    public JDialogRegistrationTSOAR() {}
 
     /**
      * Creates new dialog with given parent frame and image to register.
-     *
-     * @param  parent  Parent frame.
-     * @param  img     Image to register.
+     * 
+     * @param parent Parent frame.
+     * @param img Image to register.
      */
-    public JDialogRegistrationTSOAR(Frame parent, ModelImage img) {
+    public JDialogRegistrationTSOAR(final Frame parent, final ModelImage img) {
         super(parent, true);
         image = img;
         init();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * Sets up the variables and calls the algorithm.
-     *
-     * @param  evt  Event that triggered this function.
+     * 
+     * @param evt Event that triggered this function.
      */
-    public void actionPerformed(ActionEvent evt) {
-        String command = evt.getActionCommand();
+    public void actionPerformed(final ActionEvent evt) {
+        final String command = evt.getActionCommand();
 
         if (command.equals("OK")) {
 
@@ -145,10 +149,10 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to complete.
-     *
-     * @param  algorithm  Algorithm that caused the event.
+     * 
+     * @param algorithm Algorithm that caused the event.
      */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
+    public void algorithmPerformed(final AlgorithmBase algorithm) {
         float[][] rot = null;
         float[][] posR = null;
         float[][] trans = null;
@@ -160,7 +164,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
             if (algoReg.isCompleted()) {
 
                 if (displayTransform) {
-                    String name = makeImageName(image.getImageName(), "_register");
+                    final String name = JDialogBase.makeImageName(image.getImageName(), "_register");
 
                     resultImage = algoReg.getTransformedImage(interp2);
                     resultImage.calcMinMax();
@@ -170,7 +174,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
 
                         try {
                             new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                        } catch (OutOfMemoryError error) {
+                        } catch (final OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open new frame");
                         }
                     } else {
@@ -188,7 +192,8 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
                         posR[2][i] = i + 1.0f;
                     }
 
-                    ViewJFrameGraph rotGraph = new ViewJFrameGraph(posR, rot, "Rotations", "Volume number", "Degrees");
+                    final ViewJFrameGraph rotGraph = new ViewJFrameGraph(posR, rot, "Rotations", "Volume number",
+                            "Degrees");
                     rotGraph.makeRangeSymmetric();
                     rotGraph.showXYZLegends();
                     rotGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
@@ -202,9 +207,10 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
                         posT[2][i] = i + 1.0f;
                     }
 
-                    ViewJFrameGraph transGraph = new ViewJFrameGraph(posT, trans, "Translations", "Volume number",
-                                                                     "Translations in " +
-                                                                     FileInfoBase.getUnitsOfMeasureAbbrevStr(image.getFileInfo(0).getUnitsOfMeasure(0)));
+                    final ViewJFrameGraph transGraph = new ViewJFrameGraph(posT, trans, "Translations",
+                            "Volume number", "Translations in "
+                                    + FileInfoBase
+                                            .getUnitsOfMeasureAbbrevStr(image.getFileInfo(0).getUnitsOfMeasure(0)));
                     transGraph.makeRangeSymmetric();
                     transGraph.showXYZLegends();
                     transGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
@@ -261,8 +267,8 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
 
     /**
      * Accessor to get the result image.
-     *
-     * @return  Result image.
+     * 
+     * @return Result image.
      */
     public ModelImage getResultImage() {
         return resultImage;
@@ -270,10 +276,10 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
 
     /**
      * Changes the interpolation box to enabled or disabled depending on if the transform box is checked or not.
-     *
-     * @param  event  Event that triggered this function.
+     * 
+     * @param event Event that triggered this function.
      */
-    public void itemStateChanged(ItemEvent event) {
+    public void itemStateChanged(final ItemEvent event) {
 
         if (event.getSource() == transformCheckbox) {
             comboBoxInterp2.setEnabled(transformCheckbox.isSelected());
@@ -294,11 +300,10 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
                 graphCheckBox.setEnabled(false);
                 graphCheckBox.setSelected(false);
             }
-        } else if ((event.getSource() == meanButton) || (event.getSource() == referenceButton)) {
+        } else if ( (event.getSource() == meanButton) || (event.getSource() == referenceButton)) {
             if (referenceButton.isSelected()) {
                 refImageNumText.setEnabled(true);
-            }
-            else {
+            } else {
                 refImageNumText.setEnabled(false);
             }
         }
@@ -306,119 +311,118 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
 
     /**
      * Accessor to set the choice of cost function.
-     *
-     * @param  x  Cost function.
+     * 
+     * @param x Cost function.
      */
-    public void setCostChoice(int x) {
+    public void setCostChoice(final int x) {
         cost = x;
     }
 
     /**
      * Accessor to set whether or not the graph of the output should occur.
-     *
-     * @param  doDisplay  if true graph result of translations and rotations
+     * 
+     * @param doDisplay if true graph result of translations and rotations
      */
-    public void setDisplayResult(boolean doDisplay) {
+    public void setDisplayResult(final boolean doDisplay) {
         displayTransform = doDisplay;
     }
 
     /**
      * Accessor to set the degrees of freedom.
-     *
-     * @param  x  Degrees of freedom
+     * 
+     * @param x Degrees of freedom
      */
-    public void setDOF(int x) {
+    public void setDOF(final int x) {
         DOF = x;
     }
 
     /**
      * Accessor to set whether or not subsampling occurs.
-     *
-     * @param  doFinalXCorrSinc  if true subsample the image
+     * 
+     * @param doFinalXCorrSinc if true subsample the image
      */
-    public void setFinalCostXCorrSinc(boolean doFinalXCorrSinc) {
+    public void setFinalCostXCorrSinc(final boolean doFinalXCorrSinc) {
         sincNormalizedCrossCorrelation = doFinalXCorrSinc;
     }
 
     /**
      * Accessor to set whether or not subsampling occurs.
-     *
-     * @param  setFinalRegAtLevel2  DOCUMENT ME!
+     * 
+     * @param setFinalRegAtLevel2 DOCUMENT ME!
      */
-    public void setFinalRegistrationAtLevel2(boolean setFinalRegAtLevel2) {
+    public void setFinalRegistrationAtLevel2(final boolean setFinalRegAtLevel2) {
         this.finalRegistrationAtLevel2 = setFinalRegAtLevel2;
     }
 
     /**
      * Accessor to set whether or not the graph of the output should occur.
-     *
-     * @param  doGraph  if true graph result of translations and rotations
+     * 
+     * @param doGraph if true graph result of translations and rotations
      */
-    public void setGraph(boolean doGraph) {
+    public void setGraph(final boolean doGraph) {
         this.doGraph = doGraph;
     }
 
     /**
      * Accessor to set graphCheckBox.
-     *
-     * @param  doGraph  if true output graphs of rotations and translations
+     * 
+     * @param doGraph if true output graphs of rotations and translations
      */
-    public void setGraphCheckBox(boolean doGraph) {
+    public void setGraphCheckBox(final boolean doGraph) {
         this.doGraph = doGraph;
     }
 
     /**
      * Accessor to set the initial interpolation.
-     *
-     * @param  x  Interpolation
+     * 
+     * @param x Interpolation
      */
-    public void setInterp(int x) {
+    public void setInterp(final int x) {
         interp = x;
     }
 
     /**
      * Accessor to set the final interpolation.
-     *
-     * @param  x  Interpolation
+     * 
+     * @param x Interpolation
      */
-    public void setInterp2(int x) {
+    public void setInterp2(final int x) {
         interp2 = x;
     }
 
     /**
      * Accessor to set refImageNum.
-     *
-     * @param  refImageNumber  number of reference volume
+     * 
+     * @param refImageNumber number of reference volume
      */
-    public void setRefImageNum(int refImageNumber) {
+    public void setRefImageNum(final int refImageNumber) {
         refImageNum = refImageNumber;
     }
 
     /**
      * Accessor to set whether or not subsampling occurs.
-     *
-     * @param  doSubsample  if true subsample the image
+     * 
+     * @param doSubsample if true subsample the image
      */
-    public void setSubsample(boolean doSubsample) {
+    public void setSubsample(final boolean doSubsample) {
         this.doSubsample = doSubsample;
     }
 
     /**
      * Accessor to set whether or not to use average volume as a referece.
-     *
-     * @param  useAverageVolumeRef  if true use average volume as the referenc image
+     * 
+     * @param useAverageVolumeRef if true use average volume as the referenc image
      */
-    public void setUseAverageVolumeRef(boolean useAverageVolumeRef) {
-        this.reference = useAverageVolumeRef;
+    public void setUseAverageVolumeRef(final boolean useAverageVolumeRef) {
+        this.useReferenceTimeSlice = !useAverageVolumeRef;
     }
 
     /**
      * Calls the time series registration algorithm.
      */
     protected void callAlgorithm() {
-        algoReg = new AlgorithmRegTSOAR(image, cost, DOF, interp, reference, refImageNum,
-                                        sincNormalizedCrossCorrelation, doGraph, doSubsample,
-                                        finalRegistrationAtLevel2);
+        algoReg = new AlgorithmRegTSOAR(image, cost, DOF, interp, useReferenceTimeSlice, refImageNum,
+                sincNormalizedCrossCorrelation, doGraph, doSubsample, finalRegistrationAtLevel2);
         algoReg.addListener(this);
 
         createProgressBar(image.getImageName(), algoReg);
@@ -477,14 +481,15 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_avg_volume_as_reference", reference));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("do_use_avg_volume_as_reference", !useReferenceTimeSlice));
         scriptParameters.getParams().put(ParameterFactory.newParameter("reference_volume_num", refImageNum));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_norm_cross_correlation_sinc",
-                                                                       sincNormalizedCrossCorrelation));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("do_use_norm_cross_correlation_sinc", sincNormalizedCrossCorrelation));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_graph_transform", doGraph));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_final_reg_at_level_2",
-                                                                       finalRegistrationAtLevel2));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("do_final_reg_at_level_2", finalRegistrationAtLevel2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
     }
 
@@ -494,10 +499,10 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
     private void init() {
         setTitle("Time Series Registration");
 
-        JPanel panel = new JPanel(new GridBagLayout());
+        final JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(buildTitledBorder("Input Options"));
 
-        JLabel labelDOF = new JLabel("Degrees of freedom:");
+        final JLabel labelDOF = new JLabel("Degrees of freedom:");
         labelDOF.setForeground(Color.black);
         labelDOF.setFont(serif12);
         labelDOF.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -513,7 +518,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         comboBoxDOF.setSelectedIndex(0);
         comboBoxDOF.addItemListener(this);
 
-        JLabel labelCost = new JLabel("Cost function:");
+        final JLabel labelCost = new JLabel("Cost function:");
         labelCost.setForeground(Color.black);
         labelCost.setFont(serif12);
         labelCost.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -525,8 +530,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         if (image.isColorImage()) {
             comboBoxCostFunct.addItem("Least squares");
             comboBoxCostFunct.setSelectedIndex(0);
-        }
-        else {
+        } else {
             comboBoxCostFunct.addItem("Correlation ratio");
             comboBoxCostFunct.addItem("Least squares");
             comboBoxCostFunct.addItem("Normalized cross correlation");
@@ -535,7 +539,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         }
         comboBoxCostFunct.addItemListener(this);
 
-        JLabel labelInterp = new JLabel("Interpolation:");
+        final JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
         labelInterp.setFont(serif12);
         labelInterp.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -574,10 +578,10 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         sampleCheckBoxLevel2.setSelected(false);
         sampleCheckBoxLevel2.setEnabled(true);
 
-        ButtonGroup group = new ButtonGroup();
+        final ButtonGroup group = new ButtonGroup();
 
-        referenceButton = new JRadioButton("Register to reference volume(0-" + String.valueOf(image.getExtents()[3]-1) +
-                                           ")");
+        referenceButton = new JRadioButton("Register to reference volume(0-"
+                + String.valueOf(image.getExtents()[3] - 1) + ")");
         referenceButton.setSelected(true);
         referenceButton.setFont(serif12);
         referenceButton.setForeground(Color.black);
@@ -593,8 +597,8 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         meanButton.addItemListener(this);
         group.add(meanButton);
 
-        Insets insets = new Insets(0, 2, 0, 2);
-        GridBagConstraints gbc = new GridBagConstraints();
+        final Insets insets = new Insets(0, 2, 0, 2);
+        final GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = insets;
         gbc.anchor = GridBagConstraints.WEST;
 
@@ -659,7 +663,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         gbc.gridy = 7;
         panel.add(meanButton, gbc);
 
-        JPanel outPanel = new JPanel();
+        final JPanel outPanel = new JPanel();
         outPanel.setLayout(new GridBagLayout());
         outPanel.setBorder(buildTitledBorder("Output Options"));
 
@@ -715,7 +719,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(graphCheckBox, gbc);
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
+        final JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(panel);
         mainPanel.add(outPanel, BorderLayout.SOUTH);
 
@@ -727,8 +731,8 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
 
     /**
      * Sets the variables based on what was selected in the GUI. Returns flag indicating success.
-     *
-     * @return  <code>true</code> if successful.
+     * 
+     * @return <code>true</code> if successful.
      */
     private boolean setVariables() {
 
@@ -784,42 +788,41 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
             case 6:
                 interp = AlgorithmTransform.WSINC;
                 break;
-                // case 7:  interp = AlgorithmTransform.NEAREST_NEIGHBOR;   break;
+            // case 7: interp = AlgorithmTransform.NEAREST_NEIGHBOR; break;
 
             default:
                 interp = AlgorithmTransform.TRILINEAR;
                 break;
         }
-        
+
         if (image.isColorImage()) {
             switch (comboBoxCostFunct.getSelectedIndex()) {
 
                 case 0:
                     cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_COLOR;
                     break;
-                default: 
+                default:
                     cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_COLOR;
-            }    
-        }
-        else { // black and white image
+            }
+        } else { // black and white image
             switch (comboBoxCostFunct.getSelectedIndex()) {
-    
+
                 case 0:
                     cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
                     break;
-    
+
                 case 1:
                     cost = AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED;
                     break;
-    
+
                 case 2:
                     cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION;
                     break;
-    
+
                 case 3:
                     cost = AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED;
                     break;
-    
+
                 default:
                     cost = AlgorithmCostFunctions.NORMALIZED_XCORRELATION;
                     break;
@@ -868,13 +871,13 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         }
 
         displayTransform = transformCheckbox.isSelected();
-        reference = referenceButton.isSelected();
+        useReferenceTimeSlice = referenceButton.isSelected();
 
-        if (reference) {
-            if (!testParameter(refImageNumText.getText(), 0, image.getExtents()[3]-1)) {
+        if (useReferenceTimeSlice) {
+            if ( !JDialogBase.testParameter(refImageNumText.getText(), 0, image.getExtents()[3] - 1)) {
                 refImageNumText.requestFocus();
                 refImageNumText.selectAll();
-    
+
                 return false;
             } else {
                 refImageNum = Integer.valueOf(refImageNumText.getText()).intValue();
