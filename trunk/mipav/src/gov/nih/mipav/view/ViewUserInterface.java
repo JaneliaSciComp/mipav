@@ -2059,6 +2059,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         }
 
+        this.getFrameContainingImage(this.getRegisteredImageByName(name)).toFront();
     }
 
     /**
@@ -2534,18 +2535,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @param frame Frame to be set active (i.e. to the top of the list).
      */
-    public void setActiveFrame(final Frame frame) {
-        int index;
-
+    public void setActiveFrame(final Frame frame) {                
         if (imageFrameVector.size() == 0) {
             return;
         }
 
-        if (frame == (imageFrameVector.elementAt(0))) {
-            return;
-        }
+        //if (frame == (imageFrameVector.elementAt(0))) {
+        //    System.err.println( "frame = 0" );
+        //    return;
+        //}
 
-        index = imageFrameVector.indexOf(frame);
+        int index = imageFrameVector.indexOf(frame);
 
         if (index < 0) {
             return;
