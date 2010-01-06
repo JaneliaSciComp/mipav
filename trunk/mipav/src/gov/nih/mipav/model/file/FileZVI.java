@@ -1128,6 +1128,16 @@ public class FileZVI extends FileBase {
             for (i = 109; i < sectorNumber; i++) {
                 sectors[i] = readInt(endianess);
                 //Preferences.debug("Sector " + i + " = " + sectors[i] + "\n");
+                if (((i - 109 + 1) % (sectorSize/4)) == 0) {
+                    if (add128) {
+                        pos = (sectors[i]+1)*sectorSize + 128;
+                    }
+                    else {
+                        pos = (sectors[i]+1)*sectorSize;
+                    }
+                    raFile.seek(pos);
+                    sectors[i] = readInt(endianess);
+                }
                 pos = raFile.getFilePointer(); 
                 if (add128) {
                     raFile.seek((sectors[i]+1)*sectorSize + 128);    
