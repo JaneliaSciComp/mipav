@@ -402,7 +402,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
         cBox.setBackground(Color.white);
         cBox.addItem(" UNKNOWN");
         cBox.addItem(" INCHES ");
-        cBox.addItem(" MILS ");
+        cBox.addItem(" MILS (.001 INCH) ");
         cBox.addItem(" CENTIMETERS ");
         cBox.addItem(" ANGSTROMS ");
         cBox.addItem(" NANOMETERS ");
