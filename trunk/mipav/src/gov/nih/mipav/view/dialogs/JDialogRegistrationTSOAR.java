@@ -588,7 +588,7 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
         referenceButton.addItemListener(this);
         group.add(referenceButton);
 
-        refImageNumText = new JTextField(String.valueOf(image.getExtents()[3] / 2), 3);
+        refImageNumText = new JTextField("0", 3);
         refImageNumText.setEnabled(true);
 
         meanButton = new JRadioButton("Register to average volume");
