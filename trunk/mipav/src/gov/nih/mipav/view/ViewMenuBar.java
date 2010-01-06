@@ -279,10 +279,11 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Mosaic", "Mosaic", 0, null, false),
                         menuBuilder.buildMenuItem("Optimized automatic registration", "OAR", 0, null, false),
                         menuBuilder.buildMenuItem("Optimized automatic registration 2.5D", "OAR25D", 0, null, false),
-                        menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null, false),
+                        //Doesn't seem to work at the moment - should handle wider search range than TSOAR. 
+                        //menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null, false),
                         menuBuilder.buildMenuItem("Time series optimized automatic registration", "TSOAR", 0, null,
                                 false),
-                        menuBuilder.buildMenuItem("Registration Validation", "RegValidation", 0, null, false),
+                        menuBuilder.buildMenuItem("Registration validation", "RegValidation", 0, null, false),
 
                         // menuBuilder.buildMenuItem("Turbo", "Turbo", 0,
                         // null, false),
@@ -958,7 +959,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Denoising BLS GSM", false);
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
             menuBuilder.setMenuItemEnabled("Graph based", false);
-            menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
+            //menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
             menuBuilder.setMenuItemEnabled("Remove time volumes", false);
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
@@ -996,7 +997,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Manual 2D series", true);
             menuBuilder.setMenuItemEnabled("Constrained optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 2.5D", false);
-            menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
+            //menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
             menuBuilder.setMenuItemEnabled("B-Spline automatic registration 2.5D", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("X axis 180", false);
@@ -1168,7 +1169,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Convert 4D to 3D", true);
         menuBuilder.setMenuItemEnabled("Denoising BLS GSM", true);
         menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", true);
-        menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", true);
+        //menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", true);
         menuBuilder.setMenuItemEnabled("Remove time volumes", true);
         menuBuilder.setMenuItemEnabled("Swap dims 3<->4", true);
         menuBuilder.setMenuItemEnabled("Swap dims 1<->4", true);
