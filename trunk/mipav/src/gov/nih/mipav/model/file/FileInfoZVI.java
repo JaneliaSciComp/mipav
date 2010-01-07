@@ -26,6 +26,7 @@ public class FileInfoZVI extends FileInfoBase {
     // In one image acquisitionBitDepth = 12 while validBitsPerPixel = 16
     int acquisitionBitDepth = 0;
     int validBitsPerPixel = 0;
+    double cameraFrameScalingFactor = Double.NaN;
     double cameraLiveScalingFactor = Double.NaN;
     double cameraFramePixelDistance = Double.NaN;
     // Exposure time in milliseconds
@@ -121,6 +122,16 @@ public class FileInfoZVI extends FileInfoBase {
     int emissionWavelength1 = Integer.MIN_VALUE;
     int emissionWavelength2 = Integer.MIN_VALUE;
     int emissionWavelength3 = Integer.MIN_VALUE;
+    String cameraImageAcquisitionTime0 = null;
+    String cameraImageAcquisitionTime1 = null;
+    String cameraImageAcquisitionTime2 = null;
+    String cameraImageAcquisitionTime3 = null;
+    String imageRelativeTime0 = null;
+    String imageRelativeTime1 = null;
+    String imageRelativeTime2 = null;
+    String imageRelativeTime3 = null;
+    String fileDate = null;
+    int fileSize = Integer.MIN_VALUE;
         /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
     
@@ -262,6 +273,10 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (cameraBinning != Integer.MIN_VALUE) {
             dialog.append("Camera binning = " + cameraBinning + "\n");
+        }
+        
+        if (!Double.isNaN(cameraFrameScalingFactor)) {
+            dialog.append("Camera frame scaling factor = " + cameraFrameScalingFactor + "\n");
         }
         
         if (!Double.isNaN(cameraLiveScalingFactor)) {
@@ -555,6 +570,46 @@ public class FileInfoZVI extends FileInfoBase {
         if (!Double.isNaN(imageMemoryUsage)) {
             dialog.append("Image memory usage (RAM) = " + imageMemoryUsage + "\n");
         }
+        
+        if (cameraImageAcquisitionTime0 != null) {
+            dialog.append("Channel 0 camera image acquisition time = " + cameraImageAcquisitionTime0 + "\n");
+        }
+        
+        if (cameraImageAcquisitionTime1 != null) {
+            dialog.append("Channel 1 camera image acquisition time = " + cameraImageAcquisitionTime1 + "\n");
+        }
+        
+        if (cameraImageAcquisitionTime2 != null) {
+            dialog.append("Channel 2 camera image acquisition time = " + cameraImageAcquisitionTime2 + "\n");
+        }
+        
+        if (cameraImageAcquisitionTime3 != null) {
+            dialog.append("Channel 3 camera image acquisition time = " + cameraImageAcquisitionTime3 + "\n");
+        }
+        
+        if (imageRelativeTime0 != null) {
+            dialog.append("Channel 0 image relative time = " + imageRelativeTime0 + "\n");
+        }
+        
+        if (imageRelativeTime1 != null) {
+            dialog.append("Channel 1 image relative time = " + imageRelativeTime1 + "\n");
+        }
+        
+        if (imageRelativeTime2 != null) {
+            dialog.append("Channel 2 image relative time = " + imageRelativeTime2 + "\n");
+        }
+        
+        if (imageRelativeTime3 != null) {
+            dialog.append("Channel 3 image relative time = " + imageRelativeTime3 + "\n");
+        }
+        
+        if (fileDate != null) {
+            dialog.append("File date = " + fileDate + "\n");
+        }
+        
+        if (fileSize != Integer.MIN_VALUE) {
+            dialog.append("File size = " + fileSize + "\n");
+        }
     }
     
     public void setAcquisitionBitDepth(int acquisitionBitDepth) {
@@ -599,6 +654,10 @@ public class FileInfoZVI extends FileInfoBase {
     
     public void setGammaValue(double gammaValue) {
         this.gammaValue = gammaValue;
+    }
+    
+    public void setCameraFrameScalingFactor(double cameraFrameScalingFactor) {
+        this.cameraFrameScalingFactor = cameraFrameScalingFactor;
     }
     
     public void setCameraLiveScalingFactor(double cameraLiveScalingFactor) {
@@ -955,5 +1014,45 @@ public class FileInfoZVI extends FileInfoBase {
     
     public void setEmissionWavelength3(int emissionWavelength3) {
         this.emissionWavelength3 = emissionWavelength3;
+    }
+    
+    public void setCameraImageAcquisitionTime0(String cameraImageAcquisitionTime0) {
+        this.cameraImageAcquisitionTime0 = cameraImageAcquisitionTime0;
+    }
+    
+    public void setCameraImageAcquisitionTime1(String cameraImageAcquisitionTime1) {
+        this.cameraImageAcquisitionTime1 = cameraImageAcquisitionTime1;
+    }
+    
+    public void setCameraImageAcquisitionTime2(String cameraImageAcquisitionTime2) {
+        this.cameraImageAcquisitionTime2 = cameraImageAcquisitionTime2;
+    }
+    
+    public void setCameraImageAcquisitionTime3(String cameraImageAcquisitionTime3) {
+        this.cameraImageAcquisitionTime3 = cameraImageAcquisitionTime3;
+    }
+    
+    public void setImageRelativeTime0(String imageRelativeTime0) {
+        this.imageRelativeTime0 = imageRelativeTime0;
+    }
+    
+    public void setImageRelativeTime1(String imageRelativeTime1) {
+        this.imageRelativeTime1 = imageRelativeTime1;
+    }
+    
+    public void setImageRelativeTime2(String imageRelativeTime2) {
+        this.imageRelativeTime2 = imageRelativeTime2;
+    }
+    
+    public void setImageRelativeTime3(String imageRelativeTime3) {
+        this.imageRelativeTime3 = imageRelativeTime3;
+    }
+    
+    public void setFileDate(String fileDate) {
+        this.fileDate = fileDate;
+    }
+    
+    public void setFileSize(int fileSize) {
+        this.fileSize = fileSize;
     }
 }
