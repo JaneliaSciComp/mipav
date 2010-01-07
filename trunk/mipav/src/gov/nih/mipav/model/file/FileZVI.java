@@ -4425,7 +4425,7 @@ public class FileZVI extends FileBase {
     } // private void displayPixelFormat(int pixelFormat)
     
     String calculateTimeStampString(long timeStamp) {
-        // The time stamp field is an unsigned 64-bit integer value that constains the time elapsed since
+        // The time stamp field is an unsigned 64-bit integer value that contains the time elapsed since
         // 1601-Jan-01 00:00:00 (Gregorian calendar).  One unit of this value is equal to 100 nanoseconds.
         // This means each second the time stamp value will be increased by 10 million units.
         // When calculating a date from a time stamp, the correct rules of leap year handling have to be
