@@ -1307,7 +1307,8 @@ public class FileZVI extends FileBase {
             Preferences.debug("Creation time stamp not set\n");
         }
         else {
-            Preferences.debug("Creation time stamp = " + creationTimeStamp + "\n");
+            Preferences.debug("Creation time stamp = " + 
+                    calculateTimeStampString(creationTimeStamp) + "\n");
         }
         // offset 108 length 8 bytes modification time stamp
         long modificationTimeStamp = getLong(endianess);
@@ -1315,7 +1316,8 @@ public class FileZVI extends FileBase {
             Preferences.debug("Modification time stamp not set\n");
         }
         else {
-            Preferences.debug("Modification time stamp = " + modificationTimeStamp + "\n");
+            Preferences.debug("Modification time stamp = " + 
+                    calculateTimeStampString(modificationTimeStamp) + "\n");
         }
         // offset 116 length 4 bytes first sector of short stream container stream
         shortStreamStartSect = readInt(endianess);
@@ -1451,7 +1453,8 @@ public class FileZVI extends FileBase {
                 Preferences.debug("Creation time stamp not set\n");
             }
             else {
-                Preferences.debug("Creation time stamp = " + creationTimeStamp + "\n");
+                Preferences.debug("Creation time stamp = " + 
+                                   calculateTimeStampString(creationTimeStamp) + "\n");
             }
             // offset 108 length 8 bytes modification time stamp
             modificationTimeStamp = getLong(endianess);
@@ -1459,7 +1462,8 @@ public class FileZVI extends FileBase {
                 Preferences.debug("Modification time stamp not set\n");
             }
             else {
-                Preferences.debug("Modification time stamp = " + modificationTimeStamp + "\n");
+                Preferences.debug("Modification time stamp = " +
+                                  calculateTimeStampString(modificationTimeStamp) + "\n");
             }
             // offset 116 length 4 bytes starting sector of the stream
             startSect = readInt(endianess);
@@ -4419,6 +4423,112 @@ public class FileZVI extends FileBase {
                 Preferences.debug("pixelFormat has an unrecognized value = " + pixelFormat + "\n");
         }    
     } // private void displayPixelFormat(int pixelFormat)
+    
+    String calculateTimeStampString(long timeStamp) {
+        // The time stamp field is an unsigned 64-bit integer value that constains the time elapsed since
+        // 1601-Jan-01 00:00:00 (Gregorian calendar).  One unit of this value is equal to 100 nanoseconds.
+        // This means each second the time stamp value will be increased by 10 million units.
+        // When calculating a date from a time stamp, the correct rules of leap year handling have to be
+        // respected:
+        // a year divisible by 4 is a leap year.
+        // with the exception that a year divisible by 100 is not a leap year (e.g. 1900 was no leap year);
+        // with the exception that a year divisible by 400 is a leap year (e.g. 2000 was a leap year).
+        String timeStampString = null;
+        // Calcuate fractional amount of a second
+        String fractionalSecond = Double.toString((timeStamp % 10000000)/10000000);
+        int index = fractionalSecond.indexOf(".");
+        fractionalSecond = fractionalSecond.substring(index);
+        long remainingEntireSeconds = timeStamp/10000000;
+        String secondsInAMinute = Long.toString(remainingEntireSeconds % 60);
+        if ((remainingEntireSeconds % 60) < 10) {
+            secondsInAMinute = "0"+secondsInAMinute;
+        }
+        long remainingEntireMinutes = remainingEntireSeconds/60;
+        String minutesInAnHour = Long.toString(remainingEntireMinutes % 60);
+        if ((remainingEntireMinutes % 60) < 10) {
+            minutesInAnHour = "0"+minutesInAnHour;
+        }
+        long remainingEntireHours = remainingEntireMinutes/60;
+        String hoursInADay = Long.toString(remainingEntireHours % 24);
+        long remainingEntireDays = remainingEntireHours/24;
+        long currentYear = 1601;
+        long daysInYear = 365;
+        while (remainingEntireDays >= daysInYear) {
+            remainingEntireDays -= daysInYear;
+            currentYear++;
+            if ((currentYear % 4) != 0) {
+                daysInYear = 365;
+            }
+            else if (((currentYear % 100) == 0) && ((currentYear % 400) != 0)) {
+                daysInYear = 365;
+            }
+            else {
+                daysInYear = 366;
+            }
+        } // while (remainingEntireDays >= daysInYear)
+        String yearString = Long.toString(currentYear);
+        String monthString;
+        String dayString;
+        int addDay;
+        if (daysInYear == 366) {
+            addDay = 1;
+        }
+        else {
+            addDay = 0;
+        }
+        if (remainingEntireDays < 31) {
+            monthString = "January";
+            dayString = Long.toString(remainingEntireDays);
+        }
+        else if (remainingEntireDays < 59 + addDay) {
+            monthString = "February";
+            dayString = Long.toString(remainingEntireDays - 31);
+        }
+        else if (remainingEntireDays < 90 + addDay) {
+            monthString = "March";
+            dayString = Long.toString(remainingEntireDays - (59 + addDay));
+        }
+        else if (remainingEntireDays < 120 + addDay) {
+            monthString = "April";
+            dayString = Long.toString(remainingEntireDays - (90 + addDay));
+        }
+        else if (remainingEntireDays < 151 + addDay) {
+            monthString = "May";
+            dayString = Long.toString(remainingEntireDays - (120 + addDay));
+        }
+        else if (remainingEntireDays < 181 + addDay) {
+            monthString = "June";
+            dayString = Long.toString(remainingEntireDays - (151 + addDay));
+        }
+        else if (remainingEntireDays < 212 + addDay) {
+            monthString = "July";
+            dayString = Long.toString(remainingEntireDays - (181 + addDay));
+        }
+        else if (remainingEntireDays < 243 + addDay) {
+            monthString = "August";
+            dayString = Long.toString(remainingEntireDays - (212 + addDay));
+        }
+        else if (remainingEntireDays < 273 + addDay) {
+            monthString = "September";
+            dayString = Long.toString(remainingEntireDays - (243 + addDay));
+        }
+        else if (remainingEntireDays < 304 + addDay) {
+            monthString = "October";
+            dayString = Long.toString(remainingEntireDays - (273 + addDay));
+        }
+        else if (remainingEntireDays < 334 + addDay) {
+            monthString = "November";
+            dayString = Long.toString(remainingEntireDays - (304 + addDay));
+        }
+        else {
+            monthString = "December";
+            dayString = Long.toString(remainingEntireDays - (334 + addDay));
+        }
+        timeStampString = monthString + " " + dayString + ", " + yearString + " " + 
+                          hoursInADay + ":" + minutesInAnHour + ":" + secondsInAMinute +
+                          fractionalSecond;
+       return timeStampString;
+    }
 
     
 }
