@@ -157,6 +157,14 @@ public class FileZVI extends FileBase {
     private int imageZ4Array[] = null;
     private double imageRelFocusPosition2Array[] = null;
     private int imageZ5Array[] = null;
+    private double cameraImageAcquisitionTime[] = null;
+    private int imageZ6Array[] = null;
+    private int imageC6Array[] = null;
+    private int imageT6Array[] = null;
+    private double imageRelativeTime[] = null;
+    private int imageZ7Array[] = null;
+    private int imageC7Array[] = null;
+    private int imageT7Array[] = null;
     // image count pointer for imageFocusPositionArray
     private int icp = 0;
     // image count pointer for imageBlackValueArray
@@ -167,6 +175,10 @@ public class FileZVI extends FileBase {
     private int icp4 = 0;
     // image count pointer for imageRelFocusPosition2Array
     private int icp5 = 0;
+    // image count pointer for cameraImageAcquisitionTime
+    private int icp6 = 0;
+    // image count pointer for imageRelativeTime
+    private int icp7 = 0;
     
     // Sector allocation table
     private int sat[] = null;
@@ -238,6 +250,14 @@ public class FileZVI extends FileBase {
         imageRelFocusPosition1Array = null;
         imageZ5Array = null;
         imageRelFocusPosition2Array = null;
+        cameraImageAcquisitionTime = null;
+        imageZ6Array = null;
+        imageC6Array = null;
+        imageT6Array = null;
+        imageRelativeTime = null;
+        imageZ7Array = null;
+        imageC7Array = null;
+        imageT7Array = null;
         sat = null;
         
         try {
@@ -326,6 +346,14 @@ public class FileZVI extends FileBase {
         double whiteValue1Array[] = null;
         double whiteValue2Array[] = null;
         double whiteValue3Array[] = null;
+        double cameraImageAcquisitionTime0[] = null;
+        double cameraImageAcquisitionTime1[] = null;
+        double cameraImageAcquisitionTime2[] = null;
+        double cameraImageAcquisitionTime3[] = null;
+        double imageRelativeTime0[] = null;
+        double imageRelativeTime1[] = null;
+        double imageRelativeTime2[] = null;
+        double imageRelativeTime3[] = null;
         int numberFocusPositions = 0;
         int numberRelFocusPosition1s = 0;
         int numberRelFocusPosition2s = 0;
@@ -337,6 +365,14 @@ public class FileZVI extends FileBase {
         int numberWhite1Values = 0;
         int numberWhite2Values = 0;
         int numberWhite3Values = 0;
+        int numberAcqTime0Values = 0;
+        int numberAcqTime1Values = 0;
+        int numberAcqTime2Values = 0;
+        int numberAcqTime3Values = 0;
+        int numberImageRelativeTime0Values = 0;
+        int numberImageRelativeTime1Values = 0;
+        int numberImageRelativeTime2Values = 0;
+        int numberImageRelativeTime3Values = 0;
         FileInfoBase fInfo[] = null;
         
         try {
@@ -512,6 +548,112 @@ public class FileZVI extends FileBase {
                            (imageC3Array[i] == 3) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue3Array[numberWhite3Values++] = imageWhiteValueArray[i];
                         } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            cameraImageAcquisitionTime0 = new double[zDim * tDim];
+            cameraImageAcquisitionTime1 = new double[zDim * tDim];
+            cameraImageAcquisitionTime2 = new double[zDim * tDim];
+            cameraImageAcquisitionTime3 = new double[zDim * tDim];
+            
+            numberAcqTime0Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
+                           (imageC6Array[i] == 0) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                                cameraImageAcquisitionTime0[numberAcqTime0Values++] = cameraImageAcquisitionTime[i];
+                        } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberAcqTime1Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
+                           (imageC6Array[i] == 1) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                                cameraImageAcquisitionTime1[numberAcqTime1Values++] = cameraImageAcquisitionTime[i];
+                        } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberAcqTime2Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
+                           (imageC6Array[i] == 2) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                                cameraImageAcquisitionTime2[numberAcqTime2Values++] = cameraImageAcquisitionTime[i];
+                        } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberAcqTime3Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
+                           (imageC6Array[i] == 3) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                                cameraImageAcquisitionTime3[numberAcqTime3Values++] = cameraImageAcquisitionTime[i];
+                        } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            imageRelativeTime0 = new double[zDim * tDim];
+            imageRelativeTime1 = new double[zDim * tDim];
+            imageRelativeTime2 = new double[zDim * tDim];
+            imageRelativeTime3 = new double[zDim * tDim];
+            
+            numberImageRelativeTime0Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
+                           (imageC7Array[i] == 0) && (!Double.isNaN(imageRelativeTime[i]))) {
+                                imageRelativeTime0[numberImageRelativeTime0Values++] = imageRelativeTime[i];
+                        } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberImageRelativeTime1Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
+                           (imageC7Array[i] == 1) && (!Double.isNaN(imageRelativeTime[i]))) {
+                                imageRelativeTime1[numberImageRelativeTime1Values++] = imageRelativeTime[i];
+                        } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberImageRelativeTime2Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
+                           (imageC7Array[i] == 2) && (!Double.isNaN(imageRelativeTime[i]))) {
+                                imageRelativeTime2[numberImageRelativeTime2Values++] = imageRelativeTime[i];
+                        } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
+                    } // for (i = 0; i < imageCount; i++)
+                } // for (z = minZ; z <= maxZ; z++)
+            } // for (t = minT; t <= maxT; t++)
+            
+            numberImageRelativeTime3Values = 0;
+            for (t = minT; t <= maxT; t++) {
+                for (z = minZ; z <= maxZ; z++) {
+                    for (i = 0; i < imageCount; i++) {
+                        if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
+                           (imageC7Array[i] == 3) && (!Double.isNaN(imageRelativeTime[i]))) {
+                                imageRelativeTime3[numberImageRelativeTime3Values++] = imageRelativeTime[i];
+                        } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
                 } // for (z = minZ; z <= maxZ; z++)
             } // for (t = minT; t <= maxT; t++)
@@ -899,6 +1041,86 @@ public class FileZVI extends FileBase {
                 }    
             }
             
+            if (numberAcqTime0Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setCameraImageAcquisitionTime0
+                        (calculateVTDateTimeString(cameraImageAcquisitionTime0[index]));
+                    }
+                }    
+            }
+            
+            if (numberAcqTime1Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setCameraImageAcquisitionTime1
+                        (calculateVTDateTimeString(cameraImageAcquisitionTime1[index]));
+                    }
+                }    
+            }
+            
+            if (numberAcqTime2Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setCameraImageAcquisitionTime2
+                        (calculateVTDateTimeString(cameraImageAcquisitionTime2[index]));
+                    }
+                }    
+            }
+            
+            if (numberAcqTime3Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setCameraImageAcquisitionTime3
+                        (calculateVTDateTimeString(cameraImageAcquisitionTime3[index]));
+                    }
+                }    
+            }
+            
+            if (numberImageRelativeTime0Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setImageRelativeTime0
+                        (calculateRelativeTime(imageRelativeTime0[index]));
+                    }
+                }    
+            }
+            
+            if (numberImageRelativeTime1Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setImageRelativeTime1
+                        (calculateRelativeTime(imageRelativeTime1[index]));
+                    }
+                }    
+            }
+            
+            if (numberImageRelativeTime2Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setImageRelativeTime2
+                        (calculateRelativeTime(imageRelativeTime2[index]));
+                    }
+                }    
+            }
+            
+            if (numberImageRelativeTime3Values == zDim * tDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setImageRelativeTime3
+                        (calculateRelativeTime(imageRelativeTime3[index]));
+                    }
+                }    
+            }
+            
             image.calcMinMax(); 
             fireProgressStateChanged(100);
             
@@ -966,6 +1188,8 @@ public class FileZVI extends FileBase {
         int multichannelColor = Integer.MIN_VALUE;
         int excitationWavelength = Integer.MIN_VALUE;
         int emissionWavelength = Integer.MIN_VALUE;
+        double acqTime = Double.NaN;
+        double relTime = Double.NaN;
         //      Start reading ole compound file structure
         // The header is always 512 bytes long and should be located at offset zero.
         // Offset 0 Length 8 bytes olecf file signature
@@ -1729,6 +1953,14 @@ public class FileZVI extends FileBase {
                     imageRelFocusPosition1Array = new double[imageCount+10];
                     imageZ5Array = new int[imageCount+10];
                     imageRelFocusPosition2Array = new double[imageCount+10];
+                    imageZ6Array = new int[imageCount+10];
+                    imageC6Array = new int[imageCount+10];
+                    imageT6Array = new int[imageCount+10];
+                    cameraImageAcquisitionTime = new double[imageCount+10];
+                    imageZ7Array = new int[imageCount+10];
+                    imageC7Array = new int[imageCount+10];
+                    imageT7Array = new int[imageCount+10];
+                    imageRelativeTime = new double[imageCount+10];
                     for (i = 0; i < imageCount+10; i++) {
                         imageFocusPositionArray[i] = Double.NaN;
                         imageZArray[i] = Integer.MIN_VALUE;
@@ -1744,6 +1976,14 @@ public class FileZVI extends FileBase {
                         imageRelFocusPosition1Array[i] = Double.NaN;
                         imageZ5Array[i] = Integer.MIN_VALUE;
                         imageRelFocusPosition2Array[i] = Double.NaN;
+                        imageZ6Array[i] = Integer.MIN_VALUE;
+                        imageC6Array[i] = Integer.MIN_VALUE;
+                        imageT6Array[i] = Integer.MIN_VALUE;
+                        cameraImageAcquisitionTime[i] = Double.NaN;
+                        imageZ7Array[i] = Integer.MIN_VALUE;
+                        imageC7Array[i] = Integer.MIN_VALUE;
+                        imageT7Array[i] = Integer.MIN_VALUE;
+                        imageRelativeTime[i] = Double.NaN;
                     }
                     dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 2;
@@ -2437,6 +2677,8 @@ public class FileZVI extends FileBase {
                    multichannelColor = Integer.MIN_VALUE;
                    excitationWavelength = Integer.MIN_VALUE;
                    emissionWavelength = Integer.MIN_VALUE;
+                   acqTime = Double.NaN;
+                   relTime = Double.NaN;
                     for (i = 0; i < tokenCount && bp < b.length - 13; i++) {
                         short valueDType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                         bp += 2;
@@ -2568,6 +2810,9 @@ public class FileZVI extends FileBase {
                             case 264:
                                 Preferences.debug("tagID = Image over exposure\n");
                                 break;
+                            // Image relative times 1, 2, 3, and 4 are not implemented because in
+                            // every sample .ZVI file that I possess they had the same values as
+                            // image relative time.
                             case 265:
                                 Preferences.debug("tagID = Image relative time 1\n");
                                 break;
@@ -2582,6 +2827,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 300:
                                 Preferences.debug("tagID = Image relative time\n");
+                                if (valueDType == VT_DATE) {
+                                    relTime = doubleValue;
+                                }
                                 break;
                             case 301:
                                 Preferences.debug("tagID = Image base time 1\n");
@@ -2605,7 +2853,7 @@ public class FileZVI extends FileBase {
                             case 334:
                                 Preferences.debug("tagID = RelFocusPosition2\n");
                                 if (valueDType == VT_R8) {
-//                                  Different value for every z slice
+                                    // Different value for every z slice
                                     relFocusPosition2 = doubleValue;    
                                 }
                                 break;
@@ -2740,6 +2988,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1025:
                                 Preferences.debug("tagID = Camera image acquisition time\n");
+                                if (valueDType == VT_DATE) {
+                                    acqTime = doubleValue;
+                                }
                                 break;
                             case 1026:
                                 Preferences.debug("tagID = 8-bit acquisition\n");
@@ -2848,9 +3099,15 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1550:
                                 Preferences.debug("tagID = File date\n");
+                                if (valueDType == VT_DATE) {
+                                    fileInfo.setFileDate(calculateVTDateTimeString(doubleValue));
+                                }
                                 break;
                             case 1551:
                                 Preferences.debug("tagID = File size\n");
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setFileSize(intValue);
+                                }
                                 break;
                             case 1553:
                                 Preferences.debug("tagID = Filename\n");
@@ -3539,6 +3796,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2331:
                                 Preferences.debug("tagID = Camera frame scaling factor\n");
+                                if (valueDType == VT_R8) {
+                                   fileInfo.setCameraFrameScalingFactor(doubleValue);
+                                }
                                 break;
                             case 2562:
                                 Preferences.debug("tagID = Meteor camera type\n");
@@ -4300,21 +4560,55 @@ public class FileZVI extends FileBase {
                     }
                     
                     if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
-                            (tValue != Integer.MIN_VALUE) && (!Double.isNaN(whiteValue))) {
-                            boolean doFill = true;
-                            for (i = 0; i < icp3; i++) {
-                                if ((imageZ3Array[i] == zValue) && (imageC3Array[i] == cValue) &&
-                                    (imageT3Array[i] == tValue)) {
-                                    doFill = false;
-                                }
-                            }
-                            if (doFill) {
-                                imageZ3Array[icp3] = zValue;
-                                imageC3Array[icp3] = cValue;
-                                imageT3Array[icp3] = tValue;
-                                imageWhiteValueArray[icp3++] = whiteValue;
+                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(whiteValue))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icp3; i++) {
+                            if ((imageZ3Array[i] == zValue) && (imageC3Array[i] == cValue) &&
+                                (imageT3Array[i] == tValue)) {
+                                doFill = false;
                             }
                         }
+                        if (doFill) {
+                            imageZ3Array[icp3] = zValue;
+                            imageC3Array[icp3] = cValue;
+                            imageT3Array[icp3] = tValue;
+                            imageWhiteValueArray[icp3++] = whiteValue;
+                        }
+                    }
+                    
+                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
+                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(acqTime))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icp6; i++) {
+                            if ((imageZ6Array[i] == zValue) && (imageC6Array[i] == cValue) &&
+                                (imageT6Array[i] == tValue)) {
+                                doFill = false;
+                            }
+                        }
+                        if (doFill) {
+                            imageZ6Array[icp6] = zValue;
+                            imageC6Array[icp6] = cValue;
+                            imageT6Array[icp6] = tValue;
+                            cameraImageAcquisitionTime[icp6++] = acqTime;
+                        }
+                    }
+                    
+                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
+                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(relTime))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icp7; i++) {
+                            if ((imageZ7Array[i] == zValue) && (imageC7Array[i] == cValue) &&
+                                (imageT7Array[i] == tValue)) {
+                                doFill = false;
+                            }
+                        }
+                        if (doFill) {
+                            imageZ7Array[icp7] = zValue;
+                            imageC7Array[icp7] = cValue;
+                            imageT7Array[icp7] = tValue;
+                            imageRelativeTime[icp7++] = relTime;
+                        }
+                    }
                     
                     break;
                 } // while (true)
@@ -4529,6 +4823,126 @@ public class FileZVI extends FileBase {
                           fractionalSecond;
        return timeStampString;
     }
-
     
+    private String calculateVTDateTimeString(double dateTime) {
+        // The OLE automation date format is a floating point value, counting days since midnight 30 
+        // 1899.  Hours and minutes are represented as fractional days.  So what is 1.75? That's
+        // 6 PM, 31 dec 1899.
+        String dateTimeString = null;
+        long remainingEntireDays = (long)dateTime;
+        double fractionalDays = dateTime - remainingEntireDays;
+        double hours = (24 * fractionalDays);
+        String hourString = Long.toString((long)hours);
+        if (hours < 10.0) {
+            hourString = "0" + hourString;
+        }
+        double minutes = 60.0 * (hours - (long)hours);
+        String minuteString = Long.toString((long)minutes);
+        if (minutes < 10.0) {
+            minuteString = "0" + minuteString;
+        }
+        double seconds = 60.0 * (minutes - (long)minutes);
+        String secondString = Double.toString(seconds);
+        if (seconds < 10.0) {
+            secondString = "0" + secondString;
+        }
+        remainingEntireDays -= 2;
+        long currentYear = 1900;
+        long daysInYear = 365;
+        while (remainingEntireDays >= daysInYear) {
+            remainingEntireDays -= daysInYear;
+            currentYear++;
+            if ((currentYear % 4) != 0) {
+                daysInYear = 365;
+            }
+            else if (((currentYear % 100) == 0) && ((currentYear % 400) != 0)) {
+                daysInYear = 365;
+            }
+            else {
+                daysInYear = 366;
+            }
+        } // while (remainingEntireDays >= daysInYear)
+        String yearString = Long.toString(currentYear);
+        String monthString;
+        String dayString;
+        int addDay;
+        if (daysInYear == 366) {
+            addDay = 1;
+        }
+        else {
+            addDay = 0;
+        }
+        if (remainingEntireDays < 31) {
+            monthString = "January";
+            dayString = Long.toString(remainingEntireDays);
+        }
+        else if (remainingEntireDays < 59 + addDay) {
+            monthString = "February";
+            dayString = Long.toString(remainingEntireDays - 31);
+        }
+        else if (remainingEntireDays < 90 + addDay) {
+            monthString = "March";
+            dayString = Long.toString(remainingEntireDays - (59 + addDay));
+        }
+        else if (remainingEntireDays < 120 + addDay) {
+            monthString = "April";
+            dayString = Long.toString(remainingEntireDays - (90 + addDay));
+        }
+        else if (remainingEntireDays < 151 + addDay) {
+            monthString = "May";
+            dayString = Long.toString(remainingEntireDays - (120 + addDay));
+        }
+        else if (remainingEntireDays < 181 + addDay) {
+            monthString = "June";
+            dayString = Long.toString(remainingEntireDays - (151 + addDay));
+        }
+        else if (remainingEntireDays < 212 + addDay) {
+            monthString = "July";
+            dayString = Long.toString(remainingEntireDays - (181 + addDay));
+        }
+        else if (remainingEntireDays < 243 + addDay) {
+            monthString = "August";
+            dayString = Long.toString(remainingEntireDays - (212 + addDay));
+        }
+        else if (remainingEntireDays < 273 + addDay) {
+            monthString = "September";
+            dayString = Long.toString(remainingEntireDays - (243 + addDay));
+        }
+        else if (remainingEntireDays < 304 + addDay) {
+            monthString = "October";
+            dayString = Long.toString(remainingEntireDays - (273 + addDay));
+        }
+        else if (remainingEntireDays < 334 + addDay) {
+            monthString = "November";
+            dayString = Long.toString(remainingEntireDays - (304 + addDay));
+        }
+        else {
+            monthString = "December";
+            dayString = Long.toString(remainingEntireDays - (334 + addDay));
+        }
+        dateTimeString = monthString + " " + dayString + ", " + yearString + " " + 
+                          hourString + ":" + minuteString + ":" + secondString;
+        return dateTimeString;
+    }
+
+    private String calculateRelativeTime(double relativeTime) {
+        String timeString = null;
+        double hours = (24 * relativeTime);
+        String hourString = Long.toString((long)hours);
+        if (hours < 10.0) {
+            hourString = "0" + hourString;
+        }
+        double minutes = 60.0 * (hours - (long)hours);
+        String minuteString = Long.toString((long)minutes);
+        if (minutes < 10.0) {
+            minuteString = "0" + minuteString;
+        }
+        double seconds = 60.0 * (minutes - (long)minutes);
+        String secondString = Double.toString(seconds);
+        if (seconds < 10.0) {
+            secondString = "0" + secondString;
+        }
+        timeString = hourString + ":" + minuteString + ":" + secondString;
+        return timeString;
+    }
 }
