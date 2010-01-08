@@ -25,6 +25,8 @@ public interface ActionMetadata {
 
     public String[] getAffiliation();
 
+    public String[] getCitations();
+
     public String toString();
 
     public Set<ImageRequirements> getInputImageRequirements();

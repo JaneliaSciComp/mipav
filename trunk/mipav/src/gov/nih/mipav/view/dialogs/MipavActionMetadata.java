@@ -16,6 +16,11 @@ public abstract class MipavActionMetadata implements ActionMetadata {
         return new String[] {"National Institutes of Health"};
     }
 
+    public String[] getCitations() {
+        // returning null indicates no citations according to Bennett
+        return null;
+    }
+
     public abstract String getCategory();
 
     public String getShortLabel() {
@@ -59,6 +64,7 @@ public abstract class MipavActionMetadata implements ActionMetadata {
         str += "Website:\t\t" + getWebsite() + "\n";
         str += "Authors:\t\t" + getAuthorsString() + "\n";
         str += "Affiliation:\t\t" + getAffiliationString() + "\n";
+        str += "Citations:\t\t" + getCitationsString() + "\n";
         str += "Input Image Reqs:\t" + getInputImageRequirementsString() + "\n";
 
         return str;
@@ -76,6 +82,18 @@ public abstract class MipavActionMetadata implements ActionMetadata {
         String str = getAffiliation()[0];
         for (int i = 1; i < getAffiliation().length; i++) {
             str += ", " + getAffiliation()[i];
+        }
+        return str;
+    }
+
+    public String getCitationsString() {
+        if (getCitations() == null) {
+            return "";
+        }
+
+        String str = getCitations()[0];
+        for (int i = 1; i < getCitations().length; i++) {
+            str += ", " + getCitations()[i];
         }
         return str;
     }
