@@ -475,24 +475,36 @@ public class ViewMenuBar {
      */
     public JMenu makeHelpMenu() {
         return menuBuilder.makeMenu("Help", 'H', false, new JComponent[] {
-                menuBuilder.buildMenuItem("About MIPAV", "About", 0, null, true),
-                menuBuilder.buildMenuItem("JVM information", "AboutJava", 0, null, true),
-                menuBuilder.buildMenuItem("MIPAV license", "License", 0, null, true), ViewMenuBar.separator,
-                menuBuilder.buildMenuItem("MIPAV help topics", "Help", 0, null, true), ViewMenuBar.separator,
-                menuBuilder.buildMenuItem("Memory usage", "MemoryUsage", 0, null, true),
-                menuBuilder.buildMenuItem("Memory allocation", "MemoryAdjust", 0, null, true),
-                menuBuilder.buildMenuItem("Image registry monitor", "ImageRegistryMonitor", 0, null, true),
-                menuBuilder.buildMenuItem("MIPAV data provenance", "DataProvenance", 0, null, true),
-                ViewMenuBar.separator, menuBuilder.buildMenuItem("MIPAV options", "Options", 0, null, true),
-                menuBuilder.buildMenuItem("Shortcut editor", Preferences.PREF_SHORTCUTS, 0, null, true),});
+                menuBuilder.buildMenuItem("About MIPAV", "About", 0, null, false),
+                menuBuilder.buildMenuItem("JVM information", "AboutJava", 0, null, false),
+                menuBuilder.buildMenuItem("MIPAV license", "License", 0, null, false), ViewMenuBar.separator,
+                menuBuilder.buildMenuItem("MIPAV help topics", "Help", 0, null, false), ViewMenuBar.separator,
+                menuBuilder.buildMenuItem("Memory usage", "MemoryUsage", 0, null, false),
+                menuBuilder.buildMenuItem("Memory allocation", "MemoryAdjust", 0, null, false),
+                menuBuilder.buildMenuItem("Image registry monitor", "ImageRegistryMonitor", 0, null, false),
+                menuBuilder.buildMenuItem("MIPAV data provenance", "DataProvenance", 0, null, false), ViewMenuBar.separator, 
+                menuBuilder.buildMenuItem("MIPAV options", "Options", 0, null, false),
+                menuBuilder.buildMenuItem("Shortcut editor", Preferences.PREF_SHORTCUTS, 0, null, false),});
     }
 
     public JMenu makeSystemsAnalysisMenu() {
     	 return menuBuilder.makeMenu("Systems analysis", 'S', false, new JComponent[] {
-    			 menuBuilder.makeMenu("DTI", true, new JMenuItem[] {
-                         menuBuilder.buildMenuItem("Estimate tensor", "estimateTensor", 0, null, true),
-                         menuBuilder.buildMenuItem("Fiber tracking / Statistics", "fiberTracking", 0, null, true),
-                         menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, true)  
+    			 menuBuilder.makeMenu("DTI", false, new JMenuItem[] {
+                         menuBuilder.buildMenuItem("Estimate tensor", "estimateTensor", 0, null, false),
+                         menuBuilder.buildMenuItem("Fiber tracking / Statistics", "fiberTracking", 0, null, false),
+                         menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, false)  
+    			 }),
+    			 menuBuilder.makeMenu("Quantitative MRI", false, new JMenuItem[] {
+    			         menuBuilder.makeMenu("T1", false, new JMenuItem[] {
+    			                 menuBuilder.buildMenuItem("DespotT1", "despotT1", 0, null, false)
+    			         }),
+    			         menuBuilder.makeMenu("T2", false, new JMenuItem[] {
+    			                 menuBuilder.buildMenuItem("DespotT2", "despotT2", 0, null, false)
+    			         }),
+    			         menuBuilder.makeMenu("DCE", false, new JMenuItem[] {
+    			                 menuBuilder.buildMenuItem("T2M2", "t2m2", 0, null, false),
+    			                 menuBuilder.buildMenuItem("DBG", "dbg", 0, null, false)
+    			         })
     			 })
     	 });
     }
