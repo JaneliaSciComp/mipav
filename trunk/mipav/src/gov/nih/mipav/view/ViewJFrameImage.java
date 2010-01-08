@@ -3048,6 +3048,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogDTIFiberTracking();
         } else if (command.equals("dtiVisualization")) {
             userInterface.invokeDTIframe();
+        } else if (command.equals("despotT1")) {
+            new JDialogDespotT1();
+        } else if (command.equals("despotT2")) {
+            new JDialogDespotT2();
         }
 
     }

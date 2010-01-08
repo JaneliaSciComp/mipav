@@ -762,6 +762,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new JDialogDTIFiberTracking();
         } else if (command.equals("dtiVisualization")) {
             invokeDTIframe();
+        } else if (command.equals("despotT1")) {
+            new JDialogDespotT1();
+        } else if (command.equals("despotT2")) {
+            new JDialogDespotT2();
         }
 
     }
