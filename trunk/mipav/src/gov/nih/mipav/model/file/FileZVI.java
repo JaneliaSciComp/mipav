@@ -40,7 +40,7 @@ Index should be 0 1 2 3 4 5 6 7 instead of the existing 0 1 3 4 5 6 7 8.
 3.4 Tag IDs
 ID 301 is used for both ImageBaseTimeFirst and ImageBaseTime1.  I suspect the ImageBaseTimeFirst entry should be deleted.
 The following tags show up in .ZVI files but are not listed in your table:
-333, 334, 513, 532, 2071, 2261, 2262, 20478, 65651, 65652, 65657, 65658, 65661, 65662, 16777488, 16777489.  What is the info for these tags?
+2071, 20478, 65651, 65652, 65657, 65658, 65661, 65662.  What is the info for these tags?
 
 Information for decoding the 64-bit VT_DATE structure is missing.  Is it available somewhere?
 
