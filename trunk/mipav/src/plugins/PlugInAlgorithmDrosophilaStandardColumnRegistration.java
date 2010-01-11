@@ -21,6 +21,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmConvolver;
 import gov.nih.mipav.model.algorithms.AlgorithmTPSpline;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.BSplineProcessing;
@@ -28,6 +29,8 @@ import gov.nih.mipav.model.algorithms.registration.AlgorithmRegLeastSquares;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.BSplineLattice3Df;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
@@ -45,7 +48,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends AlgorithmBase {
 	
 	/** model images **/
-	private ModelImage standardColumnImage, neuronImage, neuronImage_grey, resultImage1, resultImage2, imageX, imageY, resultImage_minInterp;
+	private ModelImage standardColumnImage, neuronImage, neuronImage_grey, resultImage1, resultImage2, imageX, imageY, resultImage_minInterp, finalImage;
 	
 	/** resolutions **/
 	private float[] resols;
@@ -113,17 +116,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     private String leastSquaresMatrixFileName;
     
     /** matrix for thin plate spline **/
-    private String thinPlateSplineMatrixFileName;
+    private String thinPlateSplineMatrixFileName, reverseThinPlateSplineMatrixFileName;
     
     /** least squares - rigid matrix **/
     private TransMatrix lsMatrix;
-    
-    //private File retinalRegistrationInfoFile;
-    
-    //private boolean minimizeInterp;
-    
-    
-    
+
     private String imageXPath;
     private String imageYPath;
     private String trans1Path;
@@ -201,18 +198,49 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     /** control matrix */
     private float[][][] controlMat25D;
     
+    private ArrayList <ArrayList<int[]>> allFilamentCoords;
+    
+    private ArrayList <ArrayList<int[]>> allFilamentCoords_newCoords;
+    
     /**
      * constuctor
      * @param neuronImage
      * @param pointsMap
      */
-	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap) {
+	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<int[]>> allFilamentCoords) {
 		this.neuronImage = neuronImage;
 		dir = neuronImage.getImageDirectory();
 		//create neuron grey image
 		createGreyImage();
 		this.pointsMap = pointsMap;
 		resols = neuronImage.getResolutions(0);
+		this.allFilamentCoords = allFilamentCoords;
+		allFilamentCoords_newCoords = new ArrayList<ArrayList<int[]>>();
+		for(int i=0;i<allFilamentCoords.size();i++) {
+			ArrayList<int[]> al = allFilamentCoords.get(i);
+			int size = al.size();
+			ArrayList<int[]> al_new = new ArrayList<int[]>();
+			
+			for (int k=0;k<size;k++) {
+				al_new.add(k, null);
+			}
+			
+			allFilamentCoords_newCoords.add(al_new);
+		}
+		System.out.println(allFilamentCoords.size());
+		System.out.println(allFilamentCoords_newCoords.size());
+		
+		for(int i=0;i<allFilamentCoords_newCoords.size();i++) {
+         	//Vector<float[]> filCoords = allFilamentCoords.get(i);
+         	ArrayList<int[]> filCoords = allFilamentCoords_newCoords.get(i);
+         	
+         	
+         	//Vector<float[]> filNorms = allFilamentNorms.get(i);
+         	System.out.println(i);
+         	System.out.println("YYYY " + filCoords.size());
+		}
+		
+		
 		//this.minimizeInterp = minimizeInterp;
 		//this.retinalRegistrationInfoFile = retinalRegistrationInfoFile;
 		
@@ -229,6 +257,22 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		 for(int i=0;i<standardColumnImage.getExtents()[2];i++) {
 			 standardColumnImage.setResolutions(i, resols);
 		 }
+		 
+		 
+		 FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[standardColumnImage.getExtents()[2]];
+	        for (int i = 0; i < fileInfoBases.length; i++) {
+	            fileInfoBases[i] = new FileInfoImageXML(standardColumnImage.getImageName(), null, FileUtility.XML);
+	            fileInfoBases[i].setEndianess(neuronImage.getFileInfo()[0].getEndianess());
+	            fileInfoBases[i].setUnitsOfMeasure(neuronImage.getFileInfo()[0].getUnitsOfMeasure());
+	            fileInfoBases[i].setResolutions(neuronImage.getFileInfo()[0].getResolutions());
+	            fileInfoBases[i].setExtents(neuronImage.getExtents());
+	            fileInfoBases[i].setOrigin(neuronImage.getFileInfo()[0].getOrigin());
+
+	        }
+
+	        standardColumnImage.setFileInfo(fileInfoBases);
+		 
+		 
 		 VOI newPtVOI = null;
 		 float[] x = new float[1];
          float[] y = new float[1];
@@ -544,6 +588,8 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          thinPlateSplineAlg();
          thinPlateSplineAlgorithmPerformed();
          
+         createFinalImage();
+         
          //apply transformation matrices to the original color image
          //applyMatricesOnColorImage();
 		 
@@ -702,12 +748,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             }
 
             // 0.0f for no smoothing, with smoothing interpolation is not exact
+            
+       
             try {
-                //spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTar, yTar, zTar, 0.0f, standardColumnImage,resultImage1);
-                
-            	//testing the following because we need the inverse TPSpline transform so that we can get corresponding points
-            	
-            	spline = new AlgorithmTPSpline(xTar, yTar, zTar, xSource, ySource, zSource, 0.0f, resultImage1, standardColumnImage);
+                spline = new AlgorithmTPSpline(xSource, ySource, zSource, xTar, yTar, zTar, 0.0f, standardColumnImage,resultImage1);
             } catch (OutOfMemoryError error) {
                 spline = null;
                 System.gc();
@@ -717,7 +761,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             }
 
             spline.run();
-
 
 	}
 	
@@ -756,20 +799,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	 * alg performed for thin plate spline
 	 */
 	private void thinPlateSplineAlgorithmPerformed() {
-		resultImage2 = spline.getResultImage();
+		//resultImage2 = spline.getResultImage();
 		thinPlateSplineMatrixFileName = "nonlinearThinPlateSpline-" + resultImage1.getImageName() + "_To_" + standardColumnImage.getImageName() + ".tps";
 		spline.saveMatrix(dir + thinPlateSplineMatrixFileName, null);
 		System.out.println("Saving nonlinear thin plate spline transformation matrix as " + dir + thinPlateSplineMatrixFileName);
-		for (int i = 0; i < resultImage2.getExtents()[2]; i++) {
-            resultImage2.getFileInfo(i).setOrigin(standardColumnImage.getFileInfo(i).getOrigin());
-        }
-		
-		//if(!minimizeInterp)  {
-			//new ViewJFrameImage(resultImage2);
-		//}
-		
-		System.out.println("done");
-		
+
 	}
 	
 	/**
@@ -991,14 +1025,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	        }
         }
         
-
+        //new ViewJFrameImage(resultImage1);
+        
         standardColumnImage.notifyImageDisplayListeners();
         
         resultImage1.registerVOI(newVOI);
 
         resultImage1.notifyImageDisplayListeners();
 
-        //new ViewJFrameImage(resultImage1);
+        
+        //new ViewJFrameImage(standardColumnImage);
 	}
 	
 	
@@ -1078,252 +1114,204 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	
 	
 	private void createFinalImage() {
-		//read green matrix
-		File trans1File = new File(trans1Path);
-		readTransform1(trans1File);
-		
-		//read affine matrix
-		File trans2File = new File(trans2Path);
-		readTransform2(trans2File);
-		
-		//concatenate these and make into inverse
-		TransMatrix intermMatrix1 = new TransMatrix(4);
-		intermMatrix1.Mult(matrixAffine, matrixGreen);
-		intermMatrix1.Inverse();
-		 
-		
-		//read nlt file if there
-		if(!trans3Path.trim().equals("")){
-			File trans3File = new File(trans3Path);
-			boolean success = readNLTFile(trans3File);
-	    	if(!success) {
-	    		MipavUtil.displayError("Error reading nlt file");
-	    		return;
-	    	}
-		}
-		
+
 		//make LS MAtrix into inverse
         lsMatrix.Inverse();
         
+        int[] extents = {512,512,512};
+        finalImage = new ModelImage(ModelImage.ARGB, extents,"finalStandardizedImage");
         
         
-        //TPS Matrix????
-		
-		
-		
-		
-		FileIO fileIO = new FileIO();
-		String imageXName = imageXPath.substring(imageXPath.lastIndexOf(File.separator)+1, imageXPath.length());
-        imageX = fileIO.readImage(imageXName, imageXPath + File.separator, true, null);
-		
-        String imageYName = imageYPath.substring(imageYPath.lastIndexOf(File.separator)+1, imageYPath.length());
-        imageY = fileIO.readImage(imageYName, imageYPath + File.separator, true, null);
-		
-        //first do rescaling if necessary
-		if(doRescale) {
-			//now we go through imageX and rescale
-	         int length = imageX.getExtents()[0] * imageX.getExtents()[1] * imageX.getExtents()[2] * 4;
-	         float[] buffer = new float[length];
-	        
-	         try {
-	        	 imageX.exportData(0, length, buffer);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             return;
-	         }
-	         float red,green,blue;
-	         float newRed, newGreen, newBlue;
-	         
-	         for(int i=0;i<buffer.length;i=i+4) {
-	        	 red = buffer[i+1];
-	        	 if(slopeR == 0 && bR == 0) {
-	        		 newRed = red;
-	        	 }else {
-		        	 newRed = getNewValue(red,slopeR,bR);
-		        	 if(newRed < 0) {
-		        		 newRed = 0;
-		        	 }else if(newRed > 255) {
-		        		 newRed = 255;
-		        	 }
-	        	 }
-	        	 buffer[i+1] = newRed;
-	        	 
-	        	 green = buffer[i+2];
-	        	 if(slopeG == 0 && bG == 0) {
-	        		 newGreen = green;
-	        	 }else {
-		        	 newGreen = getNewValue(green,slopeG,bG);
-		        	 if(newGreen < 0) {
-		        		 newGreen = 0;
-		        	 }else if(newGreen > 255) {
-		        		 newGreen = 255;
-		        	 }
-	        	 }
-	        	 buffer[i+2] = newGreen;
-	        	 
-	        	 blue = buffer[i+3];
-	        	 if(slopeB == 0 && bB == 0) {
-	        		 newBlue = blue;
-	        	 }else {
-		        	 newBlue = getNewValue(blue,slopeB,bB);
-		        	 if(newBlue < 0) {
-		        		 newBlue = 0;
-		        	 }else if(newBlue > 255) {
-		        		 newBlue = 255;
-		        	 }
-	        	 }
-	        	 buffer[i+3] = newBlue;           
-	         }
-	         
-	         try {
-	             imageX.importData(0, buffer, true);
-	         } catch (IOException error) {
-	             System.out.println("IO exception");
-	             return;
-	         }
-	         imageX.calcMinMax();
-		} //end rescale
-		
-		
-		int[] extents = {512,512,512};
-		resultImage_minInterp = new ModelImage(ModelImage.ARGB, extents,"resultImage");
-		float[] resultImageResols = new float[3];
-		resultImageResols[0] = imageY.getResolutions(0)[0];
-		resultImageResols[1] = imageY.getResolutions(0)[1];
-		resultImageResols[2] = imageY.getResolutions(0)[2]*imageY.getExtents()[2]/512;
-		for(int i=0;i<resultImage_minInterp.getExtents()[2];i++) {
-			resultImage_minInterp.setResolutions(i, resultImageResols);
-		}
-		byte[] resultBuffer = new byte[512*512*512*4];
-		int index = 0; //index into resultBuffer
-		double[] tPt1 = new double[3];
-		double[] tPt2 = new double[3];
-		
-		byte[] imageXBuffer;
-        int length1 = imageX.getExtents()[0] * imageX.getExtents()[1] * imageX.getExtents()[2] * 4;
-        imageXBuffer = new byte[length1];
+        float[] finalImageResols = new float[3];
+        finalImageResols[0] = standardColumnImage.getResolutions(0)[0];
+        finalImageResols[1] = standardColumnImage.getResolutions(0)[1];
+        finalImageResols[2] = standardColumnImage.getResolutions(0)[2];
+		 for(int i=0;i<finalImage.getExtents()[2];i++) {
+			 finalImage.setResolutions(i, finalImageResols);
+		 }
+		 
+		 byte[] finalBuffer = new byte[512*512*512*4];
+		 int index = 0; //index into finalBuffer
+		 
+		 float[] tPt1 = new float[3];
+		 float[] tPt2 = new float[3];
+		 
+		 float xmm,ymm,zmm;
+		 
+		 short[] rgb_short = new short[3];
+		 byte[] rgb = new byte[3];
+		 
+		 byte[] neuronImageBuffer;
+         int length2 = neuronImage.getExtents()[0] * neuronImage.getExtents()[1] * neuronImage.getExtents()[2] * 4;
+         neuronImageBuffer = new byte[length2];
+         try {
+        	 neuronImage.exportData(0, length2, neuronImageBuffer);
+         } catch (IOException error) {
+             System.out.println("IO exception");
+             return;
+         }
+		 
+         byte r,g,b;
+         AlgorithmTPSpline spline2;
+         RandomAccessFile raFile2;
+         File f2;
         try {
-       	 imageX.exportData(0, length1, imageXBuffer);
-        } catch (IOException error) {
-            System.out.println("IO exception");
-            return;
+	        f2 = new File(dir + thinPlateSplineMatrixFileName);
+			raFile2 = new RandomAccessFile(f2, "r");
+			spline2 = new AlgorithmTPSpline();
+	        spline2.readMatrix(raFile2);
+        }catch(Exception e) {
+        	e.printStackTrace();
+        	return;
         }
-        
-        
-        
-      //b-spline stuff in case b-spline interp was selected
-        imageX_R_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
-        imageX_G_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
-        imageX_B_coeff = new float[imageX.getExtents()[0]][imageX.getExtents()[1]][imageX.getExtents()[2]];
-        for (int c = 0; c < 4; c++) {
-            for (int z = 0; z < imageX.getExtents()[2]; z++) {
-                for (int y = 0; y < imageX.getExtents()[1]; y++) {
-                    for (int x = 0; x < imageX.getExtents()[0]; x++) {
-                   	 if(c==1) {
-                   		 imageX_R_coeff[x][y][z] = (float)(imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX.getExtents()[0] * imageX.getExtents()[1] * z))) + c] & 0xff);
-                   	 }else if(c==2) {
-                   		 imageX_G_coeff[x][y][z] = (float)(imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX.getExtents()[0] * imageX.getExtents()[1] * z))) + c] & 0xff);
-                   	 }else if(c==3) {
-                   		 imageX_B_coeff[x][y][z] = (float)(imageXBuffer[ (4 * (x + (imageX.getExtents()[0] * y) + (imageX.getExtents()[0] * imageX.getExtents()[1] * z))) + c] & 0xff);
-                   	 }
-                        
-                    }
-                }
-            }
-        }
-        BSplineProcessing splineAlgX_R;
-        splineAlgX_R = new BSplineProcessing();
-        splineAlgX_R.samplesToCoefficients(imageX_R_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX.getExtents()[2], 3);
-        
-        BSplineProcessing splineAlgX_G;
-        splineAlgX_G = new BSplineProcessing();
-        splineAlgX_G.samplesToCoefficients(imageX_G_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX.getExtents()[2], 3);
-        
-        BSplineProcessing splineAlgX_B;
-        splineAlgX_B = new BSplineProcessing();
-        splineAlgX_B.samplesToCoefficients(imageX_B_coeff, imageX.getExtents()[0], imageX.getExtents()[1], imageX.getExtents()[2], 3);
-        
-        
-        byte[] imageYBuffer;
-        int length2 = imageY.getExtents()[0] * imageY.getExtents()[1] * imageY.getExtents()[2] * 4;
-        imageYBuffer = new byte[length2];
-        try {
-       	 imageY.exportData(0, length2, imageYBuffer);
-        } catch (IOException error) {
-            System.out.println("IO exception");
-            return;
-        }
-        
-        imageY_R_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
-        imageY_G_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
-        imageY_B_coeff = new float[imageY.getExtents()[0]][imageY.getExtents()[1]][imageY.getExtents()[2]];
-        for (int c = 0; c < 4; c++) {
-            for (int z = 0; z < imageY.getExtents()[2]; z++) {
-                for (int y = 0; y < imageY.getExtents()[1]; y++) {
-                    for (int x = 0; x < imageY.getExtents()[0]; x++) {
-                   	 if(c==1) {
-                   		 imageY_R_coeff[x][y][z] = (float)(imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY.getExtents()[0] * imageY.getExtents()[1] * z))) + c] & 0xff);
-                   		 
-                   	 }else if(c==2) {
-                   		 imageY_G_coeff[x][y][z] = (float)(imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY.getExtents()[0] * imageY.getExtents()[1] * z))) + c] & 0xff);
-                   	 }else if(c==3) {
-                   		 imageY_B_coeff[x][y][z] = (float)(imageYBuffer[ (4 * (x + (imageY.getExtents()[0] * y) + (imageY.getExtents()[0] * imageY.getExtents()[1] * z))) + c] & 0xff);
-                   	 }
-                        
-                    }
-                }
-            }
-        }
-        BSplineProcessing splineAlgY_R;
-        splineAlgY_R = new BSplineProcessing();
-        splineAlgY_R.samplesToCoefficients(imageY_R_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY.getExtents()[2], 3);
-        
-        BSplineProcessing splineAlgY_G;
-        splineAlgY_G = new BSplineProcessing();
-        splineAlgY_G.samplesToCoefficients(imageY_G_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY.getExtents()[2], 3);
-        
-        BSplineProcessing splineAlgY_B;
-        splineAlgY_B = new BSplineProcessing();
-        splineAlgY_B.samplesToCoefficients(imageY_B_coeff, imageY.getExtents()[0], imageY.getExtents()[1], imageY.getExtents()[2], 3);
-        
-		
-        
-        //following is if nlt file is inputted also
-        ModelSimpleImage[] akSimpleImageSourceMap = null;
-        if(!trans3Path.trim().equals("")){
-       	 	//create the non-linear image-maps
-		        m_kBSplineBasisX = new BSplineBasisDiscretef(numControlPoints, splineDegree, destExtents[0]);
-		        m_kBSplineBasisY = new BSplineBasisDiscretef(numControlPoints, splineDegree, destExtents[1]);
-		        m_kBSplineBasisZ = new BSplineBasisDiscretef(numControlPoints, splineDegree, destExtents[2]);
-		        m_kBSpline3D = new BSplineLattice3Df(m_kBSplineBasisX, m_kBSplineBasisY, m_kBSplineBasisZ);
+         
+         
+		 
+		//loop through each point in result image
+		 for(int z=0;z<512;z++) {
+			 	System.out.println("z is " +  z);
+			 for(int y=0;y<512;y++) {
+				 for(int x=0;x<512;x++) {
+					 
+					 tPt1 = spline2.getCorrespondingPoint(x, y, z);
 
-		        Vector3f kPoint = new Vector3f();
-		
-		        int ind = 0;
-		
-		        for (int iControlX = 0; iControlX < numControlPoints; iControlX++) {
-		        		System.out.println("iControlX = " + iControlX);
-		            for (int iControlY = 0; iControlY < numControlPoints; iControlY++) {
-		                for (int iControlZ = 0; iControlZ < numControlPoints; iControlZ++) {
-		                    kPoint.X = controlMat[ind][0];
-		                    kPoint.Y = controlMat[ind][1];
-		                    kPoint.Z = controlMat[ind++][2];
-		                    m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kPoint);
-		                }
-		            }
-		        }
-		
-		        akSimpleImageSourceMap = m_kBSpline3D.createImageMap(destExtents[0], destExtents[1], destExtents[2]);
-        }
-        
-        
-        
-        
-        
-        
-        
-        
-        
+					 
+					 xmm = tPt1[0] * finalImage.getResolutions(0)[0];
+					 ymm = tPt1[1] * finalImage.getResolutions(0)[1];
+					 zmm = tPt1[2] * finalImage.getResolutions(0)[2];
+					 
+					 lsMatrix.transform(xmm, ymm, zmm, tPt2);
+					 
+					 tPt2[0] = tPt2[0]/finalImage.getResolutions(0)[0];
+					 tPt2[1] = tPt2[1]/finalImage.getResolutions(0)[1];
+					 tPt2[2] = tPt2[2]/finalImage.getResolutions(0)[2];
+					 
+					 
+					 
+					 if(tPt2[0] < 0 || tPt2[1] < 0 || tPt2[2] < 0 || tPt2[0] > finalImage.getExtents()[0]-1 || tPt2[1] > finalImage.getExtents()[1]-1 || tPt2[2] > finalImage.getExtents()[2]-1) {
+						 rgb_short[0] = 0;
+						 rgb_short[1] = 0;
+						 rgb_short[2] = 0;
+						 
+					 }else {
+						 int floorPointIndex2=0;
+						 double tX2_floor = Math.floor(tPt2[0]);
+						 double tY2_floor = Math.floor(tPt2[1]);
+						 double tZ2_floor = Math.floor(tPt2[2]);
+						 float dx2 = (float)(tPt2[0] - tX2_floor);
+						 float dy2 = (float)(tPt2[1] - tY2_floor);
+						 float dz2 = (float)(tPt2[2] - tZ2_floor);
+						 int[] extents2 = neuronImage.getExtents();
+						 floorPointIndex2 = (int)(((tZ2_floor * (extents2[0] * extents2[1])) + (tY2_floor * extents2[0]) + tX2_floor) * 4);
+						 if(floorPointIndex2 < neuronImageBuffer.length) {
+							 rgb = AlgorithmConvolver.getTrilinearC(floorPointIndex2, dx2, dy2, dz2, extents2, neuronImageBuffer); 
+							 rgb_short[0] = (short)(rgb[0] & 0xff);
+							 rgb_short[1] = (short)(rgb[1] & 0xff);
+							 rgb_short[2] = (short)(rgb[2] & 0xff);
+							 
+							 //this is where we check to see if the rounded point coord is equal to any of the surface point coords
+							 int xRound = Math.round(tPt2[0]);
+							 int yRound = Math.round(tPt2[1]);
+							 int zRound = Math.round(tPt2[2]);
+							 //int[] newCoords = {xRound,yRound,zRound};
+							 
+							 int[] newSurfCoords = {x,y,z};
+							 for(int i=0;i<allFilamentCoords.size();i++) {
+								 ArrayList<int[]> al = allFilamentCoords.get(i);
+								 for(int k=0;k<al.size();k++) {
+									 int[] coords = al.get(k);
+									 if(xRound == coords[0] && yRound == coords[1] && zRound == coords[2]) {
+										 System.out.println("  i is " + i);
+										 ArrayList<int[]> al_new = allFilamentCoords_newCoords.get(i);
+										 al_new.set(k, newSurfCoords);
+									 } 
+								 } 
+							 }
+							  
+							 
+						 }else {
+							 rgb_short[0] = 0;
+							 rgb_short[1] = 0;
+							 rgb_short[2] = 0;
+						 }
+					}
+					 
+					r = (byte)rgb_short[0];
+					g = (byte)rgb_short[1];
+					b = (byte)rgb_short[2];
+					 
+					//alpha
+					finalBuffer[index] = (byte)255;
+					//r
+					index = index + 1;
+					finalBuffer[index] = r;
+					//g
+					index = index + 1;
+					finalBuffer[index] = g;
+					//b
+					index = index + 1;
+					finalBuffer[index] = b;
+					index = index + 1;
+				 }
+			 }
+		 }
+		 
+		 
+		 try {
+		    	finalImage.importData(0, finalBuffer, true);
+	     } catch (IOException error) {
+	            System.out.println("IO exception");
+	            error.printStackTrace();
+	            return;
+	     }
+		 
+	     
+	     FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[finalImage.getExtents()[2]];
+		 for (int i = 0; i < fileInfoBases.length; i++) {
+	            fileInfoBases[i] = new FileInfoImageXML(finalImage.getImageName(), null, FileUtility.XML);
+	            fileInfoBases[i].setUnitsOfMeasure(standardColumnImage.getFileInfo()[0].getUnitsOfMeasure());
+	            fileInfoBases[i].setResolutions(finalImageResols);
+	            fileInfoBases[i].setExtents(standardColumnImage.getExtents());
+	            fileInfoBases[i].setOrigin(standardColumnImage.getFileInfo()[0].getOrigin());
+	            fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
+
+	     }
+		 
+		 finalImage.setFileInfo(fileInfoBases);
+		 finalImage.calcMinMax();
+		 
+		 new ViewJFrameImage(finalImage);
+		 
+		 
+		 float tPt3[] = new float[3];
+		 //outout the new surface points
+		 for(int i=0;i<allFilamentCoords_newCoords.size();i++) {
+         	//Vector<float[]> filCoords = allFilamentCoords.get(i);
+         	ArrayList<int[]> filCoords = allFilamentCoords_newCoords.get(i);
+         	
+         	
+         	//Vector<float[]> filNorms = allFilamentNorms.get(i);
+         	System.out.println(i);
+         	System.out.println("ZZZZ " + filCoords.size());
+         	for(int k=0;k<filCoords.size();k++) {
+
+         		int[] filCoord = filCoords.get(k);
+
+         		if(filCoord != null) {
+	         		tPt3[0] = filCoord[0]*finalImage.getResolutions(0)[0];
+	         		tPt3[1] = filCoord[1]*finalImage.getResolutions(0)[1];
+	         		tPt3[2] = filCoord[2]*finalImage.getResolutions(0)[2];
+	
+	         		System.out.println("***** " + tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
+         		}
+         			
+         	}
+
+         	System.out.println();
+             System.out.println();
+
+         }
+		 
 	}
 	
 	
@@ -1508,7 +1496,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	}
 	
 	/**
-	 * reads the transform file
+	 * reads the green transform file
 	 * @param transformFile
 	 */
 	private void readTransform1(File transform1File) {
@@ -1565,7 +1553,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	}
 	
 	/**
-	 * reads the transform file
+	 * reads the affine transform file
 	 * @param transformFile
 	 */
 	private void readTransform2(File transform2File){

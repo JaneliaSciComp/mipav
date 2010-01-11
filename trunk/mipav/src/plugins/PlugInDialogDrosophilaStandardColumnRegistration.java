@@ -7,7 +7,9 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.TreeMap;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -37,16 +39,16 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	private ModelImage neuronImage;
 	
 	/** points file **/
-	private File pointsFile;
+	private File pointsFile, surfaceFile;
 	
 	 /** textfields **/
-    private JTextField imageFilePathTextField, pointsFilePathTextField, imageXFilePathTextField, imageYFilePathTextField;
+    private JTextField imageFilePathTextField, pointsFilePathTextField, surfaceFilePathTextField;
     
     /** browse button **/
-    private JButton imageBrowseButton, pointsBrowseButton;
+    private JButton imageBrowseButton, pointsBrowseButton, surfaceBrowseButton;
     
     /** **/
-    private JLabel pointsLabel, imageLabel;
+    private JLabel pointsLabel, imageLabel, surfaceLabel;
     
     /** **/
     //private JCheckBox minimizeInterpCheckBox;
@@ -59,6 +61,11 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     
     /** points collection **/
     public TreeMap<Integer, float[]> pointsMap;
+    
+    ArrayList <ArrayList<int[]>> allFilamentCoords = new ArrayList <ArrayList<int[]>>();
+    ArrayList <ArrayList<float[]>> allFilamentNorms = new ArrayList <ArrayList<float[]>>();
+    
+    private float[] resols;
     
     
 	//private File retinalRegistrationInfoFile;
@@ -84,7 +91,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v1.2");
+        setTitle("Drosophila Standard Column Registration v1.35");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -103,6 +110,14 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         pointsBrowseButton = new JButton("Browse");
         pointsBrowseButton.addActionListener(this);
         pointsBrowseButton.setActionCommand("pointsBrowse");
+        
+        surfaceLabel = new JLabel("Surface file ");
+        surfaceFilePathTextField = new JTextField(35);
+        surfaceFilePathTextField.setEditable(false);
+        surfaceFilePathTextField.setBackground(Color.white);
+        surfaceBrowseButton = new JButton("Browse");
+        surfaceBrowseButton.addActionListener(this);
+        surfaceBrowseButton.setActionCommand("surfaceBrowse");
         
         //minimizeInterpCheckBox = new JCheckBox("Minimize Interpolation");
         //minimizeInterpCheckBox.setSelected(false);
@@ -140,8 +155,13 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         mainPanel.add(pointsFilePathTextField,gbc);
         gbc.gridx = 2;
         mainPanel.add(pointsBrowseButton,gbc);
-        gbc.gridx = 1;
+        gbc.gridx = 0;
         gbc.gridy = 2;
+        mainPanel.add(surfaceLabel,gbc);
+        gbc.gridx = 1;
+        mainPanel.add(surfaceFilePathTextField,gbc);
+        gbc.gridx = 2;
+        mainPanel.add(surfaceBrowseButton,gbc);
         //gbc.anchor = GridBagConstraints.CENTER;
         //mainPanel.add(minimizeInterpCheckBox,gbc);
         //gbc.anchor = GridBagConstraints.EAST;
@@ -194,7 +214,8 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		        	currDir = chooser.getSelectedFile().getAbsolutePath();
 		        	FileIO fileIO = new FileIO();
 		        	neuronImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, true, null);
-		            imageFilePathTextField.setText(currDir);
+		        	resols = neuronImage.getResolutions(0);
+		        	imageFilePathTextField.setText(currDir);
 		        }
 		 }else if(command.equalsIgnoreCase("pointsBrowse")) {
 			 JFileChooser chooser = new JFileChooser();
@@ -231,7 +252,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 			     retinalRegistrationInfoPathTextField.setText("");
 			     retinalRegistrationInfoBrowseButton.setEnabled(false);
 			 }
-		 }*/else if(command.equals("retinalRegistrationInfoBrowse")) {
+		 }else if(command.equals("retinalRegistrationInfoBrowse")) {
 			 JFileChooser chooser = new JFileChooser();
 		        if (currDir != null) {
 					chooser.setCurrentDirectory(new File(currDir));
@@ -244,8 +265,129 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		        	//retinalRegistrationInfoFile = new File(currDir);
 		        	//retinalRegistrationInfoPathTextField.setText(currDir);
 		        }
+		 }*/
+		 else if(command.equalsIgnoreCase("surfaceBrowse")) {
+			 JFileChooser chooser = new JFileChooser();
+		        if (currDir != null) {
+					chooser.setCurrentDirectory(new File(currDir));
+		        }
+		        chooser.setDialogTitle("Choose surface file");
+		        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		        int returnValue = chooser.showOpenDialog(this);
+		        if (returnValue == JFileChooser.APPROVE_OPTION) {
+		        	currDir = chooser.getSelectedFile().getAbsolutePath();
+		        	surfaceFile = new File(currDir);
+		        	if(!readSurfaceFile(surfaceFile)) {
+		        		MipavUtil.displayError("Error parsing surface file");
+		        	}
+		        	surfaceFilePathTextField.setText(currDir);
+		        }
 		 }
+	}
+	
+	
+	
+	
+	private boolean readSurfaceFile(File surfaceFile) {
+		boolean success = true;
+		
+		try {
 
+			RandomAccessFile raFile = new RandomAccessFile(surfaceFile, "r");
+			
+			String line;
+			
+			
+			while((line=raFile.readLine())!= null) {
+				line = line.trim();
+				if(line.startsWith("Translate1Dragger")) {
+					break;
+				}
+				if(line.startsWith("Coordinate3")) {
+					System.out.println();
+					System.out.println();
+					ArrayList<int[]> filamentCoords = new ArrayList<int[]>();
+					while(!((line=raFile.readLine()).endsWith("}"))) {
+						line = line.trim();
+						if(!line.equals("")) {
+							if(line.startsWith("point [")) {
+								line = line.substring(line.indexOf("point [") + 7, line.length()).trim();
+							}
+							if(line.endsWith("]")) {
+								line = line.substring(0, line.indexOf("]")).trim();
+							}
+							if(line.endsWith(",")) {
+								line = line.substring(0, line.indexOf(",")).trim();
+							}
+							System.out.println(line);
+							String[] splits = line.split("\\s+");
+							float coord_x = new Float(splits[0]).floatValue();
+							float coord_y = new Float(splits[1]).floatValue();
+							float coord_z = new Float(splits[2]).floatValue();
+							
+							int x = Math.round(coord_x/resols[0]);
+							int y = Math.round(coord_y/resols[1]);
+							int z = Math.round(coord_z/resols[2]);
+							
+							int[] coords = {x,y,z};
+							filamentCoords.add(coords);
+						}
+					}
+					allFilamentCoords.add(filamentCoords);
+				}
+				
+				/*if(line.startsWith("Normal")) {
+					System.out.println();
+					System.out.println();
+					Vector<float[]> filamentNorms = new Vector<float[]>();
+					while(!((line=raFile.readLine()).endsWith("}"))) {
+						line = line.trim();
+						if(!line.equals("")) {
+							if(line.startsWith("vector [")) {
+								line = line.substring(line.indexOf("vector [") + 8, line.length()).trim();
+							}
+							if(line.endsWith("]")) {
+								line = line.substring(0, line.indexOf("]")).trim();
+							}
+							if(line.endsWith(",")) {
+								line = line.substring(0, line.indexOf(",")).trim();
+							}
+							System.out.println(line);
+							String[] splits = line.split("\\s+");
+							float norm_x = new Float(splits[0]).floatValue();
+							float norm_y = new Float(splits[1]).floatValue();
+							float norm_z = new Float(splits[2]).floatValue();
+							float[] norms = {norm_z,norm_y,norm_z};
+							filamentNorms.add(norms);
+						}
+					}
+					allFilamentNorms.add(filamentNorms);
+				}*/
+				
+				
+				
+				
+			}
+			for(int i=0;i<allFilamentCoords.size();i++) {
+	         	//Vector<float[]> filCoords = allFilamentCoords.get(i);
+	         	ArrayList<int[]> filCoords = allFilamentCoords.get(i);
+	         	System.out.println("XXXX " + filCoords.size());
+	         	
+	         	//Vector<float[]> filNorms = allFilamentNorms.get(i);
+	         	System.out.println(i);
+	         	for(int k=0;k<filCoords.size();k++) {
+	         		int[] filCoord = filCoords.get(k);
+	         		System.out.println("***** " + filCoord[0] + " " + filCoord[1] + " " + filCoord[2] + ",");
+	         	}
+			}
+			raFile.close();
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		return success;
 	}
 	
 	
@@ -270,7 +412,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 * call algorithm
 	 */
 	protected void callAlgorithm() {
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap);
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords);
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		
