@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+import java.awt.Frame;
 import java.io.IOException;
 
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -15,7 +16,6 @@ import gov.nih.mipav.view.ViewUserInterface;
  **/
 
 public class AlgorithmDespotT1 extends AlgorithmBase {
-
 
     private ModelImage t1ResultStack;
     private ModelImage moResultStack;
@@ -79,6 +79,12 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
     private String[] wList;
     private String[] titles;
     private boolean completed;
+    
+    /** The frames for result images (if null at end of algorithm src ModelImage is destroyed) */
+    private ViewJFrameImage t1ResultWindow = null;
+    private ViewJFrameImage moResultWindow = null;
+    private ViewJFrameImage r1ResultWindow = null;
+    private ViewJFrameImage b1ResultWindow = null;
     
     public AlgorithmDespotT1(double despotTR, double irspgrTR,
             double irspgrKy, double irspgrFA, double maxT1, double maxMo,
@@ -230,19 +236,19 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
-        if(t1ResultStack != null) {
+        if(t1ResultWindow == null && t1ResultStack != null) {
             t1ResultStack.disposeLocal();
         }
         
-        if(moResultStack != null) {
+        if(moResultWindow == null && moResultStack != null) {
             moResultStack.disposeLocal();
         }
 
-        if(r1ResultStack != null) {
+        if(r1ResultWindow == null && r1ResultStack != null) {
             r1ResultStack.disposeLocal();
         }
 
-        if(b1ResultStack != null) {
+        if(b1ResultWindow == null && b1ResultStack != null) {
             b1ResultStack.disposeLocal();
         }
     }
@@ -865,36 +871,28 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
         
         if (calculateT1) {
-            ViewJFrameImage t1ResultWindow = new ViewJFrameImage(t1ResultStack);
+            t1ResultWindow = new ViewJFrameImage(t1ResultStack);
             t1ResultWindow.setTitle("DESPOT1-HIFI_T1_Map");
             t1ResultWindow.setVisible(true);
-        } else if(t1ResultStack != null) {
-            t1ResultStack.disposeLocal();
-        }
+        } 
         
         if (calculateMo) {
-            ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
+            moResultWindow = new ViewJFrameImage(moResultStack);
             moResultWindow.setTitle("DESPOT1-HIFI_Mo_Map");
             moResultWindow.setVisible(true);
-        } else if(moResultStack != null) {
-            moResultStack.disposeLocal();
-        }
+        } 
         
         if (invertT1toR1) {
-            ViewJFrameImage r1ResultWindow = new ViewJFrameImage(r1ResultStack);
+            r1ResultWindow = new ViewJFrameImage(r1ResultStack);
             r1ResultWindow.setTitle("DESPOT1-HIFI_R1_Map");
             r1ResultWindow.setVisible(true);
-        } else if(r1ResultStack != null) {
-            r1ResultStack.disposeLocal();
-        }
+        } 
         
         if (showB1Map) {
-            ViewJFrameImage b1ResultWindow = new ViewJFrameImage(b1ResultStack);
+            b1ResultWindow = new ViewJFrameImage(b1ResultStack);
             b1ResultWindow.setTitle("DESPOT1-HIFI_B1_Map");
             b1ResultWindow.setVisible(true);
-        } else if(b1ResultStack != null) {
-            b1ResultStack.disposeLocal();
-        }
+        } 
         
         return true;
     }
@@ -1154,28 +1152,22 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
         
         if (calculateT1) {
-            ViewJFrameImage t1ResultWindow = new ViewJFrameImage(t1ResultStack);
+            t1ResultWindow = new ViewJFrameImage(t1ResultStack);
             t1ResultWindow.setTitle("DESPOT1_T1_Map");
             t1ResultWindow.setVisible(true);
-        } else if(t1ResultStack != null) {
-            t1ResultStack.disposeLocal();
-        }
+        } 
          
         if (calculateMo) {
-            ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
+            moResultWindow = new ViewJFrameImage(moResultStack);
             moResultWindow.setTitle("DESPOT1_Mo_Map");
             moResultWindow.setVisible(true);
-        } else if(moResultStack != null) {
-            moResultStack.disposeLocal();
-        }
+        } 
         
         if (invertT1toR1) {
-            ViewJFrameImage r1ResultWindow = new ViewJFrameImage(r1ResultStack);
+            r1ResultWindow = new ViewJFrameImage(r1ResultStack);
             r1ResultWindow.setTitle("DESPOT1_R1_Map");
             r1ResultWindow.setVisible(true);
-        } else if(r1ResultStack != null) {
-            r1ResultStack.disposeLocal();
-        }
+        } 
         
         return true;
     }
