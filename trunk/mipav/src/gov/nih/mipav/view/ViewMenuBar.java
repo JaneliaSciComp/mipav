@@ -503,7 +503,7 @@ public class ViewMenuBar {
     			         }),
     			         menuBuilder.makeMenu("DCE", false, new JMenuItem[] {
     			                 menuBuilder.buildMenuItem("T2M2", "t2m2", 0, null, false),
-    			                 menuBuilder.buildMenuItem("DBG", "dbg", 0, null, false)
+    			                 menuBuilder.buildMenuItem("DCEMRI-3", "dcemri3", 0, null, false)
     			         })
     			 })
     	 });
