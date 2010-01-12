@@ -33,6 +33,12 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
     
     private String[] wList;
     
+    /** The frames for result images (if null at end of algorithm src ModelImage is destroyed) */
+    private ViewJFrameImage t2ResultWindow;
+    private ViewJFrameImage moResultWindow;
+    private ViewJFrameImage r2ResultWindow;
+    private ViewJFrameImage boResultWindow;
+    
     
     
     public AlgorithmDespotT2(double[] despotFAPhase0,
@@ -118,19 +124,19 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
-        if(t2ResultStack != null) {
+        if(t2ResultWindow == null && t2ResultStack != null) {
             t2ResultStack.disposeLocal();
         }
         
-        if(moResultStack != null) {
+        if(moResultWindow == null && moResultStack != null) {
             moResultStack.disposeLocal();
         }
 
-        if(r2ResultStack != null) {
+        if(r2ResultWindow == null && r2ResultStack != null) {
             r2ResultStack.disposeLocal();
         }
 
-        if(boResultStack != null) {
+        if(boResultWindow == null && boResultStack != null) {
             boResultStack.disposeLocal();
         }
     }
@@ -358,28 +364,22 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         }
         
         if (JDialogDespotT2.calculateT2) {
-            ViewJFrameImage t2ResultWindow = new ViewJFrameImage(t2ResultStack);
+            t2ResultWindow = new ViewJFrameImage(t2ResultStack);
             t2ResultWindow.setTitle("DESPOT2-T2_Map");
             t2ResultWindow.setVisible(true);
-        } else if(t2ResultStack != null) {
-            t2ResultStack.disposeLocal();
-        }
+        } 
         
         if (JDialogDespotT2.calculateMo) {
-            ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
+            moResultWindow = new ViewJFrameImage(moResultStack);
             moResultWindow.setTitle("DESPOT2_MoMap");
             moResultWindow.setVisible(true);
-        } else if(moResultStack != null) {
-            moResultStack.disposeLocal();
-        }
+        } 
         
         if (JDialogDespotT2.invertT2toR2) {
-            ViewJFrameImage r2ResultWindow = new ViewJFrameImage(r2ResultStack);
+            r2ResultWindow = new ViewJFrameImage(r2ResultStack);
             r2ResultWindow.setTitle("DESPOT2-R2Map");
             r2ResultWindow.setVisible(true);
-        } else if(r2ResultStack != null) {
-            r2ResultStack.disposeLocal();
-        }
+        } 
         
     }
     
@@ -591,28 +591,22 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         }
         
         if (JDialogDespotT2.calculateT2) {
-            ViewJFrameImage t2ResultWindow = new ViewJFrameImage(t2ResultStack);
+            t2ResultWindow = new ViewJFrameImage(t2ResultStack);
             t2ResultWindow.setTitle("DESPOT2_T2_Map");
             t2ResultWindow.setVisible(true);
-        } else if(t2ResultStack != null) {
-            t2ResultStack.disposeLocal();
-        }
+        } 
         
         if (JDialogDespotT2.calculateMo) {
-            ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
+            moResultWindow = new ViewJFrameImage(moResultStack);
             moResultWindow.setTitle("DESPOT2_MoMap");
             moResultWindow.setVisible(true);
-        } else if(moResultStack != null) {
-            moResultStack.disposeLocal();
-        }
+        } 
         
         if (JDialogDespotT2.invertT2toR2) {
-            ViewJFrameImage r2ResultWindow = new ViewJFrameImage(r2ResultStack);
+            r2ResultWindow = new ViewJFrameImage(r2ResultStack);
             r2ResultWindow.setTitle("DESPOT2_R2Map");
             r2ResultWindow.setVisible(true);
-        } else if(r2ResultStack != null) {
-            r2ResultStack.disposeLocal();
-        }
+        } 
     }
     
     
@@ -922,28 +916,22 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         }
         
         if (JDialogDespotT2.calculateT2) {
-            ViewJFrameImage t2ResultWindow = new ViewJFrameImage(t2ResultStack);
+            t2ResultWindow = new ViewJFrameImage(t2ResultStack);
             t2ResultWindow.setTitle("CalculatedT2Map_AM");
             t2ResultWindow.setVisible(true);
-        } else if(t2ResultStack != null) {
-            t2ResultStack.disposeLocal();
-        }
+        } 
         
         if (JDialogDespotT2.calculateMo) {
-            ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
+            moResultWindow = new ViewJFrameImage(moResultStack);
             moResultWindow.setTitle("CalculatedMoMap_AM");
             moResultWindow.setVisible(true);
-        } else if(moResultStack != null) {
-            moResultStack.disposeLocal();
-        }
+        } 
         
         if (JDialogDespotT2.invertT2toR2) {
-            ViewJFrameImage r2ResultWindow = new ViewJFrameImage(r2ResultStack);
+            r2ResultWindow = new ViewJFrameImage(r2ResultStack);
             r2ResultWindow.setTitle("CalculatedR2Map_AM");
             r2ResultWindow.setVisible(true);
-        } else if(r2ResultStack != null) {
-            r2ResultStack.disposeLocal();
-        }
+        } 
     }
     
     public void calculateT2withFullModelling() {
@@ -1425,37 +1413,28 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         }
         
         if (JDialogDespotT2.calculateT2) {
-            ViewJFrameImage t2ResultWindow = new ViewJFrameImage(t2ResultStack);
+            t2ResultWindow = new ViewJFrameImage(t2ResultStack);
             t2ResultWindow.setTitle("CalculatedT2Map_FM");
             t2ResultWindow.setVisible(true);
-        } else if(t2ResultStack != null) {
-            t2ResultStack.disposeLocal();
-        }
+        } 
         
         if (JDialogDespotT2.calculateMo) {
-            ViewJFrameImage moResultWindow = new ViewJFrameImage(moResultStack);
+            moResultWindow = new ViewJFrameImage(moResultStack);
             moResultWindow.setTitle("CalculatedMoMap_FM");
             moResultWindow.setVisible(true);
-        } else if(moResultStack != null) {
-            moResultStack.disposeLocal();
-        }
+        } 
         
         if (JDialogDespotT2.invertT2toR2) {
-            ViewJFrameImage r2ResultWindow = new ViewJFrameImage(r2ResultStack);
+            r2ResultWindow = new ViewJFrameImage(r2ResultStack);
             r2ResultWindow.setTitle("CalculatedR2Map_FM");
             r2ResultWindow.setVisible(true);
-        } else if(r2ResultStack != null) {
-            r2ResultStack.disposeLocal();
-        }
-        
+        } 
         
         if (JDialogDespotT2.calculateBo) {
-            ViewJFrameImage boResultWindow = new ViewJFrameImage(boResultStack);
+            boResultWindow = new ViewJFrameImage(boResultStack);
             boResultWindow.setTitle("CalculatedOffResonanceMap_FM");
             boResultWindow.setVisible(true);
-        } else if(boResultStack != null) {
-            boResultStack.disposeLocal();
-        }
+        } 
     }
     
 public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, double Bo, double t1, double tr, double[] ssfpSampleData, double[] sina, double[] cosa, double[] phaseIncrements, int N) {
