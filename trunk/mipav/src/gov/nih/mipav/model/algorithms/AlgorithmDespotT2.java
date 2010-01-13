@@ -156,7 +156,6 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         ModelImage image;
         float[] ctable;
         
-        
         double[] fa_phase0;
         double[] scaledFA_phase0;
         
@@ -196,9 +195,9 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         if (JDialogDespotT2.invertT2toR2) r2Values = new float[nSlices][width*height];
         else r2Values = new float[1][1];
         
-        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2 Results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
-        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
+        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
         
         t2ResultStack = nearCloneImage(image, t2ResultStack);
         moResultStack = nearCloneImage(image, moResultStack);
@@ -427,9 +426,9 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         if (JDialogDespotT2.invertT2toR2) r2Values = new float[nSlices][width*height];
         else r2Values = new float[1][1];
         
-        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2 Results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
-        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
+        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
         
         t2ResultStack = nearCloneImage(image, t2ResultStack);
         moResultStack = nearCloneImage(image, moResultStack);
@@ -658,9 +657,9 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         if (JDialogDespotT2.invertT2toR2) r2Values = new float[nSlices][width*height];
         else r2Values = new float[1][1];
         
-        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2 Results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
-        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
+        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
         
         t2ResultStack = nearCloneImage(image, t2ResultStack);
         moResultStack = nearCloneImage(image, moResultStack);
@@ -995,10 +994,10 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         if (JDialogDespotT2.includeB1Map) b1PixelValues = new double[width*height];
         else b1PixelValues = new double[1];
         
-        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2 Results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
-        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2 Results");
-        boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo Results");
+        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+        boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo_results");
         
         t2ResultStack = nearCloneImage(image, t2ResultStack);
         moResultStack = nearCloneImage(image, moResultStack);

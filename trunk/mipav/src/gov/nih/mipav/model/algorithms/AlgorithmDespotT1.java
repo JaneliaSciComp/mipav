@@ -450,10 +450,10 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         Gaussian[4][3] = 0;
         Gaussian[4][4] = 0;
         
-        t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1 Results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
-        r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1 Results");
-        b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1 Results");
+        t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
+        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+        r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
+        b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
         
         t1ResultStack = nearCloneImage(image, t1ResultStack);
         moResultStack = nearCloneImage(image, moResultStack);
@@ -926,9 +926,9 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         moValues = new float[nSlices][width*height];
         r1Values = new float[nSlices][width*height];
         
-        t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1 Results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo Results");
-        r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1 Results");
+        t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
+        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+        r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
         
         t1ResultStack = nearCloneImage(image, t1ResultStack);
         moResultStack = nearCloneImage(image, moResultStack);
