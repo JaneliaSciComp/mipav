@@ -675,7 +675,8 @@ public class FileDicom extends FileDicomBase {
             name = convertGroupElement(groupWord, elementWord);
             final FileDicomKey key = new FileDicomKey(name);
             int tagVM;
-            final int dirLength;
+ // Should be removed           
+ //           final int dirLength;
 
             // Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " +
             // elementLength + "\n", Preferences.DEBUG_FILEIO);
@@ -1062,7 +1063,6 @@ public class FileDicom extends FileDicomBase {
                 fileInfo.photometricInterp = ((String) (tagTable.getValue("0028,0004"))).trim();
                 photometricInterp = fileInfo.photometricInterp.trim();
             }
-
             if (photometricInterp == null) { // Default to MONOCROME2 and hope for the best
                 photometricInterp = new String("MONOCHROME2");
             }
@@ -1200,7 +1200,7 @@ public class FileDicom extends FileDicomBase {
                 }
 
             } else {
-                Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation",
+                Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation" + "\n",
                         Preferences.DEBUG_FILEIO);
 
                 if (raFile != null) {
