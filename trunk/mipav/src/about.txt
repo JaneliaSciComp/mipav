@@ -18,7 +18,7 @@ This software may NOT be used for diagnostic purposes.
 	   Center for Information Technology (CIT) 
 	     National Institutes of Health (NIH)
 
-Version:	 4.3.1  (2009-09-04)
+Version:	 4.3.2  (2010-01-15)
 
 Project Leader:
 
@@ -36,6 +36,7 @@ Current MIPAV contributors:
      Alexandra Bokinsky, Ph.D., Geometric Software
      Ruida Cheng, ISL, NIH
      William Gandler, ISL, NIH
+     Paul Hemler, Ph.D., Hampden-Sydney College
      Evan McCreedy, ISL, NIH
      Nish Pandya, SSAI
      Justin Senseney, ISL, NIH
@@ -54,9 +55,24 @@ Current MIPAV contributors:
 ******************************************************************
 ******************************************************************
 
-This product includes software developed by
-The Apache Software Foundation (http://www.apache.org/).
-Portions Copyright 2006 International Business Machines Corp.
+
+  This package uses and includes code from the Legion of the 
+  Bouncy Castle (http://www.bouncycastle.org).  Permission to use 
+  this code requires the following: 
+Copyright (c) 2000 The Legion Of The Bouncy Castle 
+(http://www.bouncycastle.org)
+
+Permission is hereby granted, free of charge, to any person 
+obtaining a copy of this software and associated documentation 
+files (the "Software"), to deal in the Software without 
+restriction, including without limitation the rights to use, 
+copy, modify, merge, publish, distribute, sublicense, and/or 
+sell copies of the Software, and to permit persons to whom the 
+Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be 
+included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
 EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
@@ -66,38 +82,4 @@ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 OR OTHER DEALINGS IN THE SOFTWARE. 
-
-******************************************************************
-******************************************************************
-
-Copyright (c) 2000-2009 Chih-Chung Chang and Chih-Jen Lin
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-1. Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
-
-3. Neither name of copyright holders nor the names of its contributors
-may be used to endorse or promote products derived from this software
-without specific prior written permission.
-
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
