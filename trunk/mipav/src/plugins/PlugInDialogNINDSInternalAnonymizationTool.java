@@ -24,16 +24,16 @@ import javax.swing.border.LineBorder;
  *         parameters
  * 
  */
-public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
+public class PlugInDialogNINDSInternalAnonymizationTool extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
 
 	/**Action command for ok button**/
 	protected static final String OK = "ok";
 	
     /** textfields * */
-    protected JTextField inputDirectoryTextField, outputDirectoryTextField, inputBlindingFileTextField, csvFilePathTextField, csvDirTextField, csvNameTextField;
+    protected JTextField inputDirectoryTextField, outputDirectoryTextField, inputPatientListFileTextField, csvFilePathTextField, csvDirTextField, csvNameTextField;
 
     /** buttons * */
-    private JButton inputDirectoryBrowseButton, outputDirectoryBrowseButton, inputBlindingFileBrowseButton, selectCSVFileBrowseButton, selectCSVDirBrowseButton;
+    private JButton inputDirectoryBrowseButton, outputDirectoryBrowseButton, inputPatientListFileBrowseButton, selectCSVFileBrowseButton, selectCSVDirBrowseButton;
     
     /** radio buttons **/
     protected JRadioButton selectCSVFileRadioButton;
@@ -53,10 +53,10 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
     private String currDir = null;
 
     /** handle to algorithm * */
-    protected PlugInAlgorithmNINDSAnonymizationTool alg;
+    protected PlugInAlgorithmNINDSInternalAnonymizationTool alg;
 
     /** labels * */
-    private JLabel inputDirectoryLabel, inputBlindingFileLabel;
+    private JLabel inputDirectoryLabel, inputPatientListFileLabel;
 
 	protected JLabel outputMessageLabel, outputDirectoryLabel, errorMessageLabel;
 
@@ -68,22 +68,25 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
     /** GridBagLayout * */
     private GridBagLayout mainPanelGridBagLayout;
 
-    /** GridBagConstraints */
+    /** GridBagConstraints * */
     private GridBagConstraints mainPanelConstraints;
 
-    /** path to csv file **/
-    protected String csvFilePath, blindingCsvFilePath, parentBlindingCsvFilePath;
-
+    /** path to csv/txt file **/
+    protected String csvFilePath, patientListFilePath, parentPatientListFilePath;
+    
     /** boolean indicating if csv file is new **/
     protected boolean newCSVFile;
     
     /** Map of patient id and blinded patient id */
-    private HashMap<String, String> blindedPatientIdMap = new HashMap<String, String>();
+    private HashMap<String, String> patientListMap = new HashMap<String, String>();
+    
+    /* List of patient ids' (interim ids') */
+    //private String[] patientIdList;
     
     /**
      * default constructor
      */
-    public PlugInDialogNINDSAnonymizationTool() {
+    public PlugInDialogNINDSInternalAnonymizationTool() {
 
     }
 
@@ -93,7 +96,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
      * @param modal
      */
 
-    public PlugInDialogNINDSAnonymizationTool(boolean modal) {
+    public PlugInDialogNINDSInternalAnonymizationTool(boolean modal) {
         super(modal);
         init();
     }
@@ -103,7 +106,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
      */
     public void init() {
         setForeground(Color.black);
-        setTitle("NINDS Anonymization Tool (External)" + " v2.1");
+        setTitle("NINDS Anonymization Tool (Internal)" + " v0.1");
 
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
@@ -157,22 +160,22 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 2;
         mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
-        inputBlindingFileLabel = new JLabel("Input Blinding File (csv)");
-        mainPanel.add(inputBlindingFileLabel, mainPanelConstraints);
+        inputPatientListFileLabel = new JLabel("Input Patient List File  (txt)");
+        mainPanel.add(inputPatientListFileLabel, mainPanelConstraints);
         		
 		mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 2;
         mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
-        inputBlindingFileTextField = new JTextField(55);
-        mainPanel.add(inputBlindingFileTextField, mainPanelConstraints);
+        inputPatientListFileTextField = new JTextField(55);
+        mainPanel.add(inputPatientListFileTextField, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 2;
         mainPanelConstraints.gridy = 2;
         mainPanelConstraints.insets = new Insets(40, 5, 15, 5);
-        inputBlindingFileBrowseButton = new JButton("Browse");
-        inputBlindingFileBrowseButton.addActionListener(this);
-        inputBlindingFileBrowseButton.setActionCommand("inputBlindingFileBrowse");
-        mainPanel.add(inputBlindingFileBrowseButton, mainPanelConstraints);
+        inputPatientListFileBrowseButton = new JButton("Browse");
+        inputPatientListFileBrowseButton.addActionListener(this);
+        inputPatientListFileBrowseButton.setActionCommand("inputPatientListFileBrowse");
+        mainPanel.add(inputPatientListFileBrowseButton, mainPanelConstraints);
         
         //csv file
         mainPanelConstraints.gridx = 0;
@@ -347,7 +350,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
                 currDir = chooser.getSelectedFile().getAbsolutePath();
                 Preferences.setProperty(Preferences.PREF_NINDS_ANON_PLUGIN_OUTPUTDIR, currDir);
             }
-        } else if (command.equalsIgnoreCase("inputBlindingFileBrowse")) {
+        } else if (command.equalsIgnoreCase("inputPatientListFileBrowse")) {
         	String defaultBlindingCSVDirectory = Preferences.getProperty(Preferences.PREF_NINDS_ANON_PLUGIN_OUTPUTDIR);
         	JFileChooser chooser = new JFileChooser();
             if (defaultBlindingCSVDirectory != null) {
@@ -362,10 +365,10 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
                 chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             }
         	
-            chooser.setDialogTitle("Choose blinding CSV file");
+            chooser.setDialogTitle("Choose input patient list text file");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
-	        	inputBlindingFileTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+	        	inputPatientListFileTextField.setText(chooser.getSelectedFile().getAbsolutePath());
 	        	currDir = chooser.getSelectedFile().getAbsolutePath();
                 Preferences.setProperty(Preferences.PREF_NINDS_ANON_PLUGIN_OUTPUTDIR, currDir);
 	        }
@@ -464,9 +467,9 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
             	newCSVFile = true;
             }
             boolean successValidateFp = validateFilePaths();
-            boolean successParseCsv = parseBlindedCsv();
+            boolean successParseTxt = parsePatientListTxtFile();
             
-            if ( !successValidateFp || !successParseCsv) {
+            if ( !successValidateFp || !successParseTxt) {
                 return;
             }
                                    
@@ -487,8 +490,8 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         String inputDirectoryPath = inputDirectoryTextField.getText().trim();
         String outputDirectoryPath = outputDirectoryTextField.getText().trim();
                       
-        alg = new PlugInAlgorithmNINDSAnonymizationTool(inputDirectoryPath, outputDirectoryPath, parentBlindingCsvFilePath, blindedPatientIdMap, outputTextArea,
-                errorMessageLabel, this, csvFilePath,newCSVFile);
+        alg = new PlugInAlgorithmNINDSInternalAnonymizationTool(inputDirectoryPath, outputDirectoryPath, parentPatientListFilePath, patientListMap, outputTextArea,
+                errorMessageLabel, csvFilePath,newCSVFile);
 
         alg.addListener(this);
         
@@ -535,20 +538,20 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         	return false;
         }
         
-        File test3 = new File(inputBlindingFileTextField.getText().trim());
+        File test3 = new File(inputPatientListFileTextField.getText().trim());
         if (!test3.exists()) {
-        	errorMessageLabel.setText("ERROR: Blinding csv file " + test3.getAbsolutePath() + " does not exist!");
+        	errorMessageLabel.setText("ERROR: Patient list text file " + test3.getAbsolutePath() + " does not exist!");
         	return false;
         } else {
-        	blindingCsvFilePath = inputBlindingFileTextField.getText().trim();
+        	patientListFilePath = inputPatientListFileTextField.getText().trim();
         	if (test3.getParent().equalsIgnoreCase(test.getAbsolutePath())) {
-        		errorMessageLabel.setText("ERROR: The blinding csv file cannot be inside the input folder!");
+        		errorMessageLabel.setText("ERROR: The patient list file cannot be inside the input folder!");
         		return false;
         	}
         }
         
-        if (!(blindingCsvFilePath.endsWith(".csv") || blindingCsvFilePath.endsWith(".CSV"))) {
-        	errorMessageLabel.setText("ERROR: The blinding input csv file should have an extension of .csv!");
+        if (!(patientListFilePath.endsWith(".txt") || patientListFilePath.endsWith(".TXT"))) {
+        	errorMessageLabel.setText("ERROR: The patient list file should have an extension of .txt!");
             return false;
         }
         
@@ -561,7 +564,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
 	        }else {
 	        	csvFilePath = csvFilePathTextField.getText().trim();
 	        }
-        }else {
+        } else {
 	        String dir = csvDirTextField.getText().trim();
 	        if(dir.endsWith(File.separator)) {
 				dir = dir.substring(0,dir.length()-1);
@@ -588,36 +591,40 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
      * Reads blinding csv file, sets map of original and blinding patient ids.  
      */
     
-    public boolean parseBlindedCsv() {
+    public boolean parsePatientListTxtFile() {
     	
-    	File blindCsvFile = new File(blindingCsvFilePath);
+    	File patientListFile = new File(patientListFilePath);
     	
     	// Parent of blinding csv file to create a output log file. 
-    	parentBlindingCsvFilePath = blindCsvFile.getParent();
+    	parentPatientListFilePath = patientListFile.getParent();
     	try {
-    		BufferedReader reader = new BufferedReader(new FileReader(blindCsvFile));
+    		BufferedReader reader = new BufferedReader(new FileReader(patientListFile));
     		String line = "";
-        	int line_count = 0;    	
         	try {
         		while((line = reader.readLine()) != null) {
-            		line_count += 1;
-            		String[] patient_ids = line.split(",");
-            		if ((patient_ids[0] != null) && (patient_ids[1] != null)) {
-            			blindedPatientIdMap.put(patient_ids[0].trim(), patient_ids[1].trim());    			
-            		} else {
-            			errorMessageLabel.setText("Missing information on line number " + line_count);
-            			return false;
-            		}
+        			try {
+        				@SuppressWarnings("unused")
+						int id = Integer.valueOf(line.trim());
+        			} catch (NumberFormatException nfe) {
+        				errorMessageLabel.setText("Patient ID " + line.trim() + " is not numeric.");
+        				return false;
+        			}
+        			if (patientListMap.containsKey(line.trim())) {
+        				errorMessageLabel.setText("ERROR: Duplicate patient ids not allowed in the patient list file!!");
+        				return false;
+        			}
+            		patientListMap.put(line.trim(), "");    			
             	}
         	} catch (IOException ioe) {
-        		errorMessageLabel.setText("Unexpected I/O error occured");
+        		errorMessageLabel.setText("ERROR: Unexpected I/O error occured!!");
         		return false;
         	}
         	
     	} catch (FileNotFoundException fnf) {
-    		errorMessageLabel.setText(blindingCsvFilePath + " not found on the requested path");
+    		errorMessageLabel.setText(patientListFilePath + " not found on the requested path");
     		return false;
     	}
+    	
     	return true;
     }
 

@@ -13,8 +13,12 @@ import gov.nih.mipav.view.MipavUtil;
 
 import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.security.MessageDigest;
@@ -26,9 +30,9 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Random;
 import java.util.Vector;
 
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextArea;
 
@@ -36,7 +40,7 @@ import javax.swing.JTextArea;
  * @author pandyan
  *
  */
-public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase implements ActionListener, WindowListener {
+public class PlugInAlgorithmNINDSInternalAnonymizationTool extends AlgorithmBase implements ActionListener, WindowListener {
 	
 	/** input directory path **/
 	protected String inputDirectoryPath;
@@ -44,8 +48,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 	/** output top level directory path **/
 	protected String outputDirectoryPath;
 	
-	/** parent of blinding file path **/
-	protected String parentBlindingFilePath;
+	/** parent of patient list file path **/
+	protected String parentPatientListFilePath;
 	
 	/** output text area **/
 	protected JTextArea outputTextArea;
@@ -86,8 +90,8 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     
     /** boolean if alg was canceled **/
     private boolean algCanceled = false;
-    
-   /** tag table **/
+            
+    /** tag table **/
     protected FileDicomTagTable tagTable;
     
    /** newUID String **/
@@ -109,7 +113,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     protected HashMap<String, String> studyIdAndDOBHashMap = new HashMap<String, String>();
     
     /** hashmap of original and blinded patient id */
-    private HashMap<String, String> blindedPatientIdMap = new HashMap<String, String>();
+    private HashMap<String, String> patientListMap = new HashMap<String, String>();
     
     /** dates **/
     private Calendar dobCalendar, studyCalendar;
@@ -143,6 +147,9 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     
     /** Patient id of previous patient folder */
     private String previousPatientId = "";
+    
+    /** STIR patient id */
+    private String stirPatientId = "";
     
     /** File count in series, will be odd numbers 1,3,5,... */
     int fileCountInSeries = 1;
@@ -353,11 +360,11 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 	/**
 	 * constructor
 	 */
-	public PlugInAlgorithmNINDSAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, String parentBlindingFilePath, HashMap<String, String> blindedPatientIdMap, JTextArea outputTextArea, JLabel errorMessageLabel, JDialog parentDialog, String csvFilePath, boolean newCSVFile) {
+	public PlugInAlgorithmNINDSInternalAnonymizationTool(String inputDirectoryPath, String outputDirectoryPath, String parentPatientListFilePath, HashMap<String, String> patientListMap, JTextArea outputTextArea, JLabel errorMessageLabel, String csvFilePath, boolean newCSVFile) {
 		this.inputDirectoryPath = inputDirectoryPath;
 		this.outputDirectoryPath = outputDirectoryPath;
-		this.parentBlindingFilePath = parentBlindingFilePath;
-		this.blindedPatientIdMap = blindedPatientIdMap; 
+		this.parentPatientListFilePath = parentPatientListFilePath;
+		this.patientListMap = patientListMap; 
 		this.outputTextArea = outputTextArea;
 		this.errorMessageLabel = errorMessageLabel;
 		this.csvFilePath = csvFilePath;
@@ -366,7 +373,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 		fileIO = new FileIO();
 		fileIO.setQuiet(true);
 		
-		totalPatients = blindedPatientIdMap.size();
+		totalPatients = patientListMap.size();
 		
 		//remove last slash from input directory path if it has it
         if(String.valueOf(inputDirectoryPath.charAt(inputDirectoryPath.length() - 1)).equals(File.separator)) {
@@ -389,7 +396,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 
 		try {
 			outputTextFileName = "output_" + System.currentTimeMillis() + ".txt";
-			outputFile = new File(parentBlindingFilePath + File.separator + outputTextFileName);
+			outputFile = new File(parentPatientListFilePath + File.separator + outputTextFileName);
         	outputStream = new FileOutputStream(outputFile);
         	printStream = new PrintStream(outputStream);
         	csvFile = new File(csvFilePath);
@@ -617,9 +624,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 			}
 			outputDir = newName + File.separator + parentFile.getName() + File.separator + outputFile.getName(); 
 		}
-			
-		
-				
+						
 		FileWriteOptions opts = new FileWriteOptions(true);
         opts.setFileType(FileUtility.DICOM);
         opts.setFileDirectory(outputDir + File.separator);
@@ -669,17 +674,31 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     	
     	String patientID = "";
     	String dob = "";
-    	newUID = "";
+    	    	
     	if(tagTable.containsTag(patientIDKey)) {
     		patientID = ((String)tagTable.getValue(patientIDKey)).trim();
     		
     	}
     	
-    	//New patient is taken from blinded patient id map
+    	//Patient ID tag is replaced by STIR ID. 
     	
-    	if (blindedPatientIdMap.containsKey(patientID)) {
+    	if (patientListMap.containsKey(patientID)) {
     		skipPatient = false;
+    		
     		if (!patientID.equals(previousPatientId)) {
+    			boolean isIdUnique = false;
+        		while (!isIdUnique) {
+        			isIdUnique = generateStirId(patientID);
+        		}
+        		if (isIdUnique) {
+        			newUID = stirPatientId;
+        		} else {
+        			File skippedPatientFolder = new File(file.getParentFile().getParentFile().getParentFile().getAbsolutePath().replace(inputDirectoryPath, outputDirectoryPath));
+        			delete(skippedPatientFolder);
+        			setAlgCanceled(true);
+        			return false;
+        		}
+        		
     			previousPatientId = patientID;
     			currentPatient += 1;
     			progressMsg = "Processing Patient " + currentPatient + "/" + totalPatients + "  Study " + currentStudy + "/" + totalStudies + "  Series " + currentSeries + "/" + totalSeries;
@@ -687,7 +706,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
     		}
     		outputTextArea.append("Anonymizing " + inputImage.getImageFileName() + " from " + inputImage.getImageDirectory() + " \n");
     		printStream.println("Anonymizing " + inputImage.getImageFileName() + " from " + inputImage.getImageDirectory());
-			newUID = (String)blindedPatientIdMap.get(patientID);
+    	
 		} else {
 			skipPatient = true;
 			File skippedPatientFolder = new File(file.getParentFile().getParentFile().getParentFile().getAbsolutePath().replace(inputDirectoryPath, outputDirectoryPath));
@@ -748,6 +767,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
             return false;
 		}*/
 		
+		//if dob is there and in right format , create newUID using this field....otherwise if dob is not there
 		if(validDOB) {
 			String mmString = dob.substring(0, 2);
 			String ddString = dob.substring(2,4);
@@ -871,8 +891,7 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
         //Study Instance UID (0020,000D) and Series Instance UID (0002,000E) need MIPAV version and time in milliseconds
         String mipavVersion = MipavUtil.getVersion();
         mipavVersion = mipavVersion.replaceAll("\\.", "");
-        date.getTime();
-    	    	    		
+           	    	    		
     	//write out csvFile
     	String csvCheck = patientID + studyID + seriesNo;
     	if(!donePatientIDs.contains(csvCheck)) {
@@ -1183,6 +1202,100 @@ public class PlugInAlgorithmNINDSAnonymizationTool extends AlgorithmBase impleme
 		}
 	}
 	
+	/**
+	 * Generate randomized STIR ID. 
+	 * @return
+	 */
+	private boolean generateStirId(String interimId) {
+		
+		int id,month; 
+		String [] mmddyyyy = todaysDateString.split("/");
+		Random randomGenerator = new Random();
+		int randomInt;
+		
+		try {
+			month = Integer.valueOf(mmddyyyy[0]);
+		} catch (NumberFormatException nfe) {
+			return false;
+		}
+		
+		try {
+			id = Integer.valueOf(interimId);
+		} catch (NumberFormatException nfe) {
+			return false;
+		}
+		
+		randomInt = randomGenerator.nextInt(101);
+		
+		stirPatientId = (month * id) + mmddyyyy[1] + randomInt + mmddyyyy[2].substring(2, mmddyyyy[2].length());
+		boolean success = checkForUniqueId(stirPatientId);
+		if (!success) {
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Checks the generated stir id for uniqueness. 
+	 * @return
+	 */
+	private boolean checkForUniqueId(String id) {
+		
+		String idDbFileFolder = System.getProperty("user.home");
+		//String idDbFileFolder = "C:" + File.separator + "StirDBTemp";
+		String idDbFileName = idDbFileFolder + File.separator + "StirIdDb.txt";	
+		HashMap<String, String> existingIds = new HashMap<String, String>();
+		try {
+			File idDbFile = new File(idDbFileName);
+			
+			// Create file if it does not exist
+			boolean success = idDbFile.createNewFile();
+			
+			if (success) { 
+				// File did not exist and was created. 
+				try {
+			        BufferedWriter out = new BufferedWriter(new FileWriter(idDbFileName));
+			        out.write(id + System.getProperty("line.separator"));
+			        out.close();
+			    } catch (IOException e2) {
+			    	System.out.println("e2 exception occurred.");
+			    }
+			} else {
+				BufferedReader reader = new BufferedReader(new FileReader(idDbFileName));
+				String line = "";
+				try {
+	        		while((line = reader.readLine()) != null) {
+	            		existingIds.put(line.trim(), "");
+	            	}
+	        	} catch (IOException e4) {
+	        		System.out.println("e4 exception occurred.");
+	        	}
+	        	if (existingIds.containsKey(id)){
+	        		return false;
+	        	} else {
+	        		try {
+				        BufferedWriter out = new BufferedWriter(new FileWriter(idDbFileName, true));
+				        out.write(id + System.getProperty("line.separator"));
+				        out.close();
+				    } catch (IOException e3) {
+				    	System.out.println("e3 exception occurred.");
+				    }
+	        	}
+			}
+		} catch (IOException e1) {
+			System.out.println("e1 exception occurred.");
+		}
+		
+		return true;
+		
+		
+	}
+	
+	
+	/**
+	 * Deletes files and folders including sub folders. 
+	 * @return
+	 */
 	public boolean delete(File file) {
     	if(file.isDirectory()) {
     		File[] children = file.listFiles();
