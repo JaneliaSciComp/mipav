@@ -13,7 +13,9 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.util.*;
 
 import javax.swing.*;
@@ -139,7 +141,32 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     
     private File fileMp;
     
-    private RandomAccessFile raFile;
+    // Contents of Mp(t) file
+    private double mcp[] = null;
+    
+    private int nx;
+    
+    private int ny;
+    
+    private int mp_len;
+    
+    private JLabel labelNFirst;
+    
+    private JTextField textNFirst;
+    
+    private int nFirst;
+    
+    private int nFirstMin = 0;
+    
+    private int nFirstMax = 1000;
+    
+    private ButtonGroup secondParamGroup;
+    
+    private JRadioButton kepButton;
+    
+    private JRadioButton veButton;
+    
+    private boolean useVe = false;
 
     /** DOCUMENT ME! */
     private int backgroundIndex = -1;
@@ -157,7 +184,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
 
 
     /** DOCUMENT ME! */
-    private AlgorithmFRETAcceptorPhotobleach fretAlgo = null;
+    private AlgorithmDEMRI3 demri3Algo = null;
 
     /** DOCUMENT ME! */
     private ModelImage image; // prebleached image
@@ -339,7 +366,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
 
-        if (fretAlgo.isCompleted() == true) { }
+        if (demri3Algo.isCompleted() == true) { }
 
         dispose();
     }
@@ -388,16 +415,14 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
 
             // Make algorithm
 
-            fretAlgo = new AlgorithmFRETAcceptorPhotobleach(image, postImage, useRed, useGreen, useBlue, donorIndex,
-                                                            backgroundIndex, signalIndex, register, cost,
-                                                            createRegImage);
+            demri3Algo = new AlgorithmDEMRI3(r1, rib, rit, r1i, theta, tr, tf, perMin, mcp, mp_len, nFirst, useVe);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
-            fretAlgo.addListener(this);
+            demri3Algo.addListener(this);
 
-            createProgressBar(image.getImageName(), fretAlgo);
+            createProgressBar(image.getImageName(), demri3Algo);
 
             // Hide dialog
             setVisible(false);
@@ -405,16 +430,16 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (fretAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                if (demri3Algo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                fretAlgo.run();
+                demri3Algo.run();
             }
         } catch (OutOfMemoryError x) {
 
             System.gc();
-            MipavUtil.displayError("Dialog FRET: unable to allocate enough memory");
+            MipavUtil.displayError("Dialog DEMRI3: unable to allocate enough memory");
 
             return;
         }
@@ -665,7 +690,37 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
         mainPanel.add(textMpFile, gbc);
-
+        
+        labelNFirst = new JLabel("nfirst (injection TR) of input dataset (0 - 1000)");
+        labelNFirst.setForeground(Color.black);
+        labelNFirst.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 14;
+        mainPanel.add(labelNFirst, gbc);
+        
+        textNFirst = new JTextField(10);
+        textNFirst.setText("5");
+        textNFirst.setForeground(Color.black);
+        textNFirst.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textNFirst, gbc);
+        
+        secondParamGroup = new ButtonGroup();
+        kepButton = new JRadioButton("Second parameter is back-transfer rate (k_ep)", true);
+        kepButton.setFont(serif12);
+        kepButton.setForeground(Color.black);
+        secondParamGroup.add(kepButton);
+        gbc.gridx = 0;
+        gbc.gridy = 15;
+        mainPanel.add(kepButton, gbc);
+        
+        veButton = new JRadioButton("Second parameter is external celluar volume fraction (ve)", false);
+        veButton.setFont(serif12);
+        veButton.setForeground(Color.black);
+        secondParamGroup.add(veButton);
+        gbc.gridx = 0;
+        gbc.gridy = 16;
+        mainPanel.add(veButton, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -681,6 +736,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
      */
     private boolean setVariables() {
         String tmpStr;
+        BufferedReader br = null;
         
         tmpStr = textContrastRelaxivityRate.getText();
         r1 = Double.parseDouble(tmpStr);
@@ -843,20 +899,183 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         
         fileNameMp = textMpFile.getText();
         fileMp = new File(directoryMp + fileNameMp);
-
-        if (fileMp.exists() == false) {
-            MipavUtil.displayError(fileNameMp + " does not exist");
+        
+        try {
+            br = new BufferedReader(new InputStreamReader(new FileInputStream(fileMp)));
+        }
+        catch (FileNotFoundException e) {
+            MipavUtil.displayError((directoryMp + fileNameMp) + " was not found");
             return false;
         }
         
-        try {
-            raFile = new RandomAccessFile(fileMp, "r");
-        }
-        catch(FileNotFoundException e) {
-            MipavUtil.displayError("File not found exception on fileMp");
+        // Port of mri_read_1D_stdin
+        // Read lines until first character is not blank and not #
+        int ii = 0;
+        String line = null;
+        do {
+            try {
+                // Contains the contents of the line not including line termination characters
+                line = br.readLine();  
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on br.readLine");
+                return false;
+            }
+            // have reached end of stream
+            if (line == null) {
+                MipavUtil.displayError("Have reached end of stream on br.readLine");
+                return false;
+            }
+            for (ii = 0; ((ii < line.length()) && (Character.isSpaceChar(line.charAt(ii)))); ii++);
+        } while ((ii == line.length()) || (line.charAt(ii) == '#'));
+
+        int start = 0;
+        int end = 0;
+        double val[] = new double[10000];
+        int nval = 0;
+        while (true) {
+            for (; (Character.isSpaceChar(line.charAt(start))); start++);
+            end = start;
+            for (; ((Character.isDigit(line.charAt(end))) || (line.charAt(end) == '.') || 
+                           (line.charAt(end) == 'e') || (line.charAt(end) == 'E') ||
+                           (line.charAt(end) == '+') || (line.charAt(end) == '-')); end++);
+            if (start == end) {
+                break;
+            }
+            val[nval++] = Double.valueOf(line.substring(start, end)).doubleValue();
+            if (nval == 10000) {
+                break;
+            }
+            start = end;
+            if (line.charAt(start) == ',') {
+                start++;
+            }
+            if (start == line.length()) {
+                break;
+            }
+        } // while (true)
+        if (nval < 1) {
+            MipavUtil.displayError("No double values found in " + fileNameMp);
             return false;
         }
-
+        
+        nx = nval;
+        ny = 1;
+        double far[] = new double[nx];
+        for (ii = 0; ii < nx; ii++) {
+            far[ii] = val[ii];
+        }
+        double far2[] = null;
+        
+        while (true) {
+            try {
+                // Contains the contents of the line not including line termination characters
+                line = br.readLine();  
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on br.readLine");
+                return false;
+            }
+            // have reached end of stream
+            if (line == null) {
+                // done
+                break;
+            }
+            for (ii = 0; ((ii < line.length()) && (Character.isSpaceChar(line.charAt(ii)))); ii++); 
+            if ((ii == line.length()) || (line.charAt(ii) == '#')) {
+                continue;
+            }
+            
+            // Set input buffer to zero
+            for (ii = 0; ii < nx; ii++) {
+                val[ii] = 0.0;
+            }
+            nval = 0;
+            start = 0;
+            while (true) {
+                for (; (Character.isSpaceChar(line.charAt(start))); start++);
+                end = start;
+                for (; ((Character.isDigit(line.charAt(end))) || (line.charAt(end) == '.') || 
+                               (line.charAt(end) == 'e') || (line.charAt(end) == 'E') ||
+                               (line.charAt(end) == '+') || (line.charAt(end) == '-')); end++);
+                if (start == end) {
+                    break;
+                }
+                val[nval++] = Double.valueOf(line.substring(start, end)).doubleValue();
+                if (nval == nx) {
+                    break;
+                }
+                start = end;
+                if (line.charAt(start) == ',') {
+                    start++;
+                }
+                if (start == line.length()) {
+                    break;
+                }
+            } // while (true)
+            far2 = new double[far.length];
+            for (ii = 0; ii < far.length; ii++) {
+                far2[ii] = far[ii];
+            }
+            far = new double[(ny+1)*nx];
+            for (ii = 0; ii < far2.length; ii++) {
+                far[ii] = far2[ii];
+            }
+            for (ii = 0; ii < nx; ii++) {
+                far[ny*nx + ii] = val[ii];    
+            }
+            ny++;
+        } // while (true)
+        
+        int jj;
+        mcp = new double[far.length];
+        int temp;
+        if (ny > 1) {
+            // more than one row ==> transpose (the usual case)
+            for (jj = 0; jj < ny; jj++) {
+                for (ii = 0; ii < nx; ii++) {
+                    mcp[jj + ii * ny] = far[ii + jj * nx];
+                }
+            }
+            temp = nx;
+            nx = ny;
+            ny = temp;
+        } // if (ny > 1)
+        else {
+            for (ii = 0; ii < far.length; ii++) {
+                mcp[ii] = far[ii];
+            }
+        }
+        
+        mp_len = nx;
+        Preferences.debug("mcp array is : \n");
+        for (ii = 0; ii < mp_len; ii++) {
+            Preferences.debug("mcp[" + ii + "] = " + mcp[ii] + "\n");
+        }
+        Preferences.debug("\n");
+        
+        tmpStr = textNFirst.getText();
+        nFirst = Integer.parseInt(tmpStr);
+        
+        if (nFirst < nFirstMin) {
+            MipavUtil.displayError("nfirst must be >= " + nFirstMin);
+            textNFirst.requestFocus();
+            textNFirst.selectAll();
+            return false;
+        }
+        if (nFirst > nFirstMax) {
+            MipavUtil.displayError("nfirst must not exceed " + nFirstMax);
+            textNFirst.requestFocus();
+            textNFirst.selectAll();
+            return false;
+        }
+        
+        if (kepButton.isSelected()) {
+            useVe = false;
+        }
+        else {
+            useVe = true;
+        }
         return true;
     }
 
