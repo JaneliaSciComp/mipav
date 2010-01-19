@@ -62,7 +62,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     /** points collection **/
     public TreeMap<Integer, float[]> pointsMap;
     
-    ArrayList <ArrayList<int[]>> allFilamentCoords = new ArrayList <ArrayList<int[]>>();
+    ArrayList <ArrayList<float[]>> allFilamentCoords = new ArrayList <ArrayList<float[]>>();
     ArrayList <ArrayList<float[]>> allFilamentNorms = new ArrayList <ArrayList<float[]>>();
     
     private float[] resols;
@@ -91,7 +91,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v1.35");
+        setTitle("Drosophila Standard Column Registration v1.46");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -306,7 +306,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 				if(line.startsWith("Coordinate3")) {
 					System.out.println();
 					System.out.println();
-					ArrayList<int[]> filamentCoords = new ArrayList<int[]>();
+					ArrayList<float[]> filamentCoords = new ArrayList<float[]>();
 					while(!((line=raFile.readLine()).endsWith("}"))) {
 						line = line.trim();
 						if(!line.equals("")) {
@@ -325,11 +325,18 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 							float coord_y = new Float(splits[1]).floatValue();
 							float coord_z = new Float(splits[2]).floatValue();
 							
-							int x = Math.round(coord_x/resols[0]);
+							/*int x = Math.round(coord_x/resols[0]);
 							int y = Math.round(coord_y/resols[1]);
 							int z = Math.round(coord_z/resols[2]);
 							
-							int[] coords = {x,y,z};
+							int[] coords = {x,y,z};*/
+							
+							float x = coord_x/resols[0];
+							float y = coord_y/resols[1];
+							float z = coord_z/resols[2];
+							  
+							float[] coords = {x,y,z};
+							
 							filamentCoords.add(coords);
 						}
 					}
@@ -370,13 +377,13 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 			}
 			for(int i=0;i<allFilamentCoords.size();i++) {
 	         	//Vector<float[]> filCoords = allFilamentCoords.get(i);
-	         	ArrayList<int[]> filCoords = allFilamentCoords.get(i);
+	         	ArrayList<float[]> filCoords = allFilamentCoords.get(i);
 	         	System.out.println("XXXX " + filCoords.size());
 	         	
 	         	//Vector<float[]> filNorms = allFilamentNorms.get(i);
 	         	System.out.println(i);
 	         	for(int k=0;k<filCoords.size();k++) {
-	         		int[] filCoord = filCoords.get(k);
+	         		float[] filCoord = filCoords.get(k);
 	         		System.out.println("***** " + filCoord[0] + " " + filCoord[1] + " " + filCoord[2] + ",");
 	         	}
 			}
@@ -412,7 +419,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 * call algorithm
 	 */
 	protected void callAlgorithm() {
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords);
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile);
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		

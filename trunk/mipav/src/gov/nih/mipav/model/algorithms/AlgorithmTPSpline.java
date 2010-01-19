@@ -1807,7 +1807,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
     }
     
     
-    public float[] getCorrespondingPoint(float xTar, float yTar, float zTar) {
+    public final float[] getCorrespondingPoint(float xTar, float yTar, float zTar) {
     	float[] srcPoints = new float[3];
     	double dx, dy, dz;
         double fT;
