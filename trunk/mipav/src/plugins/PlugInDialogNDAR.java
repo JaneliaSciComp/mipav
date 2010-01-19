@@ -29,6 +29,14 @@ import WildMagic.LibFoundation.Mathematics.*;
 
 import com.sun.jimi.core.*;
 
+import org.apache.axiom.om.OMElement;
+import org.apache.axis2.AxisFault;
+
+
+
+import gov.nih.ndar.ws.accession.VToolSimpleAccessionClient;
+import gov.nih.ndar.ws.client.Startup;
+import org.apache.ws.commons.schema.resolver.*;
 
 public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener,
         TreeSelectionListener, MouseListener {
@@ -1098,7 +1106,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         private final JTabbedPane tabbedPane = new JTabbedPane();
 
-        private final String imageXMLFilePath;
+        private String imageXMLFilePath;
 
         private JPanel mainPanel;
 
@@ -1143,7 +1151,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 origImage = null;
             }
 
-            final URL xmlURL = getClass().getClassLoader().getResource("image_dictionary.xml");
+            /*final URL xmlURL = getClass().getClassLoader().getResource("image_dictionary.xml");
             if (xmlURL == null) {
                 MipavUtil.displayError("Unable to find XML : " + "image_dictionary.xml");
                 this.dispose();
@@ -1151,7 +1159,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 imageXMLFilePath = null;
                 return;
             }
-            imageXMLFilePath = xmlURL.getPath();
+            imageXMLFilePath = xmlURL.getPath();*/
             // in future....retrieve OMElement from web service
         }
 
@@ -1171,10 +1179,30 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             try {
                 this.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
 
-                inputStream = new FileInputStream(new File(imageXMLFilePath));
-                final StAXOMBuilder stAXOMBuilder = new StAXOMBuilder(inputStream);
-                final OMElement documentElement = stAXOMBuilder.getDocumentElement();
-                final Iterator<OMElement> iter = documentElement.getChildElements();
+                //inputStream = new FileInputStream(new File(imageXMLFilePath));
+                //final StAXOMBuilder stAXOMBuilder = new StAXOMBuilder(inputStream);
+                
+                
+                
+                VToolSimpleAccessionClient client = Startup.getClient("DEMO");
+        		
+        		if (client != null)
+        			System.out.println("hi");
+        		
+        		OMElement documentElement = null;
+        		try {
+        			
+        			String DataStructureNames = "image01";
+        			documentElement = client.getDataDictionary(DataStructureNames);
+        			
+        		} catch (AxisFault e) {
+        			// TODO Auto-generated catch block
+        			e.printStackTrace();
+        		}
+                
+                
+                //OMElement documentElement = stAXOMBuilder.getDocumentElement();
+                Iterator<OMElement> iter = documentElement.getChildElements();
 
                 OMElement childElement;
                 OMAttribute attr;
