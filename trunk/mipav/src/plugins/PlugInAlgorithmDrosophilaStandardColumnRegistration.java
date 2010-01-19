@@ -198,16 +198,20 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     /** control matrix */
     private float[][][] controlMat25D;
     
-    private ArrayList <ArrayList<int[]>> allFilamentCoords;
+    private ArrayList <ArrayList<float[]>> allFilamentCoords;
     
-    private ArrayList <ArrayList<int[]>> allFilamentCoords_newCoords;
+    private ArrayList <ArrayList<float[]>> allFilamentCoords_newCoords;
+    
+    private double tolerance;
+    
+    private File oldSurfaceFile;
     
     /**
      * constuctor
      * @param neuronImage
      * @param pointsMap
      */
-	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<int[]>> allFilamentCoords) {
+	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<float[]>> allFilamentCoords, File oldSurfaceFile) {
 		this.neuronImage = neuronImage;
 		dir = neuronImage.getImageDirectory();
 		//create neuron grey image
@@ -215,11 +219,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		this.pointsMap = pointsMap;
 		resols = neuronImage.getResolutions(0);
 		this.allFilamentCoords = allFilamentCoords;
-		allFilamentCoords_newCoords = new ArrayList<ArrayList<int[]>>();
+		allFilamentCoords_newCoords = new ArrayList<ArrayList<float[]>>();
 		for(int i=0;i<allFilamentCoords.size();i++) {
-			ArrayList<int[]> al = allFilamentCoords.get(i);
+			ArrayList<float[]> al = allFilamentCoords.get(i);
 			int size = al.size();
-			ArrayList<int[]> al_new = new ArrayList<int[]>();
+			ArrayList<float[]> al_new = new ArrayList<float[]>();
 			
 			for (int k=0;k<size;k++) {
 				al_new.add(k, null);
@@ -232,7 +236,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		
 		for(int i=0;i<allFilamentCoords_newCoords.size();i++) {
          	//Vector<float[]> filCoords = allFilamentCoords.get(i);
-         	ArrayList<int[]> filCoords = allFilamentCoords_newCoords.get(i);
+         	ArrayList<float[]> filCoords = allFilamentCoords_newCoords.get(i);
          	
          	
          	//Vector<float[]> filNorms = allFilamentNorms.get(i);
@@ -240,9 +244,14 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          	System.out.println("YYYY " + filCoords.size());
 		}
 		
+		double sqrRtThree = Math.sqrt(3);
 		
+		tolerance = (sqrRtThree/2)*(((resols[0]/resols[0]) + (resols[1]/resols[0]) + (resols[2]/resols[0]))/3);
+		System.out.println("tolerance is " + tolerance);
 		//this.minimizeInterp = minimizeInterp;
 		//this.retinalRegistrationInfoFile = retinalRegistrationInfoFile;
+		
+		this.oldSurfaceFile = oldSurfaceFile;
 		
 	}
 	
@@ -1168,10 +1177,17 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          
 		 
 		//loop through each point in result image
-		 for(int z=0;z<512;z++) {
-			 	System.out.println("z is " +  z);
-			 for(int y=0;y<512;y++) {
-				 for(int x=0;x<512;x++) {
+		 for(float z=0;z<512;z=z+.25f) {
+			 if((float)Math.floor(z) == z) {
+			 		System.out.println("z is " +  z);
+			 }
+			 for(float y=0;y<512;y=y+.25f) {
+
+				 for(float x=0;x<512;x=x+.25f) {
+
+					 float xFloor = (float)Math.floor(x);
+					 float yFloor = (float)Math.floor(y);
+					 float zFloor = (float)Math.floor(z);
 					 
 					 tPt1 = spline2.getCorrespondingPoint(x, y, z);
 
@@ -1204,30 +1220,51 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 						 int[] extents2 = neuronImage.getExtents();
 						 floorPointIndex2 = (int)(((tZ2_floor * (extents2[0] * extents2[1])) + (tY2_floor * extents2[0]) + tX2_floor) * 4);
 						 if(floorPointIndex2 < neuronImageBuffer.length) {
-							 rgb = AlgorithmConvolver.getTrilinearC(floorPointIndex2, dx2, dy2, dz2, extents2, neuronImageBuffer); 
-							 rgb_short[0] = (short)(rgb[0] & 0xff);
-							 rgb_short[1] = (short)(rgb[1] & 0xff);
-							 rgb_short[2] = (short)(rgb[2] & 0xff);
 							 
-							 //this is where we check to see if the rounded point coord is equal to any of the surface point coords
-							 int xRound = Math.round(tPt2[0]);
-							 int yRound = Math.round(tPt2[1]);
-							 int zRound = Math.round(tPt2[2]);
-							 //int[] newCoords = {xRound,yRound,zRound};
-							 
-							 int[] newSurfCoords = {x,y,z};
-							 for(int i=0;i<allFilamentCoords.size();i++) {
-								 ArrayList<int[]> al = allFilamentCoords.get(i);
-								 for(int k=0;k<al.size();k++) {
-									 int[] coords = al.get(k);
-									 if(xRound == coords[0] && yRound == coords[1] && zRound == coords[2]) {
-										 System.out.println("  i is " + i);
-										 ArrayList<int[]> al_new = allFilamentCoords_newCoords.get(i);
-										 al_new.set(k, newSurfCoords);
-									 } 
-								 } 
+							 if(xFloor == x && yFloor == y && zFloor == z) {
+								 rgb = AlgorithmConvolver.getTrilinearC(floorPointIndex2, dx2, dy2, dz2, extents2, neuronImageBuffer); 
+								 rgb_short[0] = (short)(rgb[0] & 0xff);
+								 rgb_short[1] = (short)(rgb[1] & 0xff);
+								 rgb_short[2] = (short)(rgb[2] & 0xff);
 							 }
-							  
+							 
+
+							 
+							 //Calculating new surface file points!!!!!
+							 float diffX,diffY,diffZ;
+							 float diffTotal;
+
+							 for(int i=0;i<allFilamentCoords.size();i++) {
+								 ArrayList<float[]> al = allFilamentCoords.get(i);
+								 for(int k=0;k<al.size();k++) {
+									 float[] coords = al.get(k);
+									 
+									 diffX = Math.abs(tPt2[0] - coords[0]);
+									 diffY = Math.abs(tPt2[1] - coords[1]);
+									 diffZ = Math.abs(tPt2[2] - coords[2]);
+									 
+									 diffTotal =(float) Math.sqrt((diffX * diffX) + (diffY * diffY) + (diffZ * diffZ));
+										
+									 if(diffTotal < tolerance) {
+										float[] newCoords = allFilamentCoords_newCoords.get(i).get(k);
+										if(newCoords == null) {
+											float[] nCoords = {x,y,z,diffTotal};
+											allFilamentCoords_newCoords.get(i).set(k, nCoords);
+											
+										}else {
+											float currentDiffTotal = newCoords[3];
+											if(diffTotal < currentDiffTotal) {
+												float[] nCoords = {x,y,z,diffTotal};
+												allFilamentCoords_newCoords.get(i).set(k, nCoords);
+											}
+										}
+									 } 
+								 }
+								 
+							 }
+							 
+							 
+							 
 							 
 						 }else {
 							 rgb_short[0] = 0;
@@ -1236,22 +1273,24 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 						 }
 					}
 					 
-					r = (byte)rgb_short[0];
-					g = (byte)rgb_short[1];
-					b = (byte)rgb_short[2];
-					 
-					//alpha
-					finalBuffer[index] = (byte)255;
-					//r
-					index = index + 1;
-					finalBuffer[index] = r;
-					//g
-					index = index + 1;
-					finalBuffer[index] = g;
-					//b
-					index = index + 1;
-					finalBuffer[index] = b;
-					index = index + 1;
+					if(xFloor == x && yFloor == y && zFloor == z) {
+						r = (byte)rgb_short[0];
+						g = (byte)rgb_short[1];
+						b = (byte)rgb_short[2];
+						 
+						//alpha
+						finalBuffer[index] = (byte)255;
+						//r
+						index = index + 1;
+						finalBuffer[index] = r;
+						//g
+						index = index + 1;
+						finalBuffer[index] = g;
+						//b
+						index = index + 1;
+						finalBuffer[index] = b;
+						index = index + 1;
+					}
 				 }
 			 }
 		 }
@@ -1283,11 +1322,11 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		 new ViewJFrameImage(finalImage);
 		 
 		 
-		 float tPt3[] = new float[3];
+		 /*float tPt3[] = new float[3];
 		 //outout the new surface points
 		 for(int i=0;i<allFilamentCoords_newCoords.size();i++) {
          	//Vector<float[]> filCoords = allFilamentCoords.get(i);
-         	ArrayList<int[]> filCoords = allFilamentCoords_newCoords.get(i);
+         	ArrayList<float[]> filCoords = allFilamentCoords_newCoords.get(i);
          	
          	
          	//Vector<float[]> filNorms = allFilamentNorms.get(i);
@@ -1295,7 +1334,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          	System.out.println("ZZZZ " + filCoords.size());
          	for(int k=0;k<filCoords.size();k++) {
 
-         		int[] filCoord = filCoords.get(k);
+         		float[] filCoord = filCoords.get(k);
 
          		if(filCoord != null) {
 	         		tPt3[0] = filCoord[0]*finalImage.getResolutions(0)[0];
@@ -1308,16 +1347,95 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          	}
 
          	System.out.println();
-             System.out.println();
+            System.out.println();
 
-         }
+         }*/
+		 
+		 writeSurfaceFile();
 		 
 	}
 	
 	
 	
 	
+	private boolean writeSurfaceFile() {
+		System.out.println("Writing out new surface file");
+		boolean success = true;
+		int index = 0;
+		
+		String parentDir = oldSurfaceFile.getParent();
+		String newName = oldSurfaceFile.getName().substring(0, oldSurfaceFile.getName().indexOf(".")) +  "_standardized.iv"; 
+		
+		try {
+			RandomAccessFile raFile = new RandomAccessFile(oldSurfaceFile, "r");
+			File newSurfaceFile = new File(parentDir + File.separator + newName);
+			FileWriter fw = new FileWriter(newSurfaceFile);
+			BufferedWriter bw = new BufferedWriter(fw);
+			
+			String line;
+			
+			
+			while((line=raFile.readLine())!= null) {
+				line = line.trim();
+
+				if(line.startsWith("point [")) {
+					if(index < allFilamentCoords_newCoords.size() ) {
+						
+						float tPt3[] = new float[3];
+						
+						ArrayList<float[]> filCoords = allFilamentCoords_newCoords.get(index);
+						bw.write("point [");
+						bw.newLine();
+			         	for(int k=0;k<filCoords.size();k++) {
+
+			         		float[] filCoord = filCoords.get(k);
+
+			         		if(filCoord != null) {
+				         		tPt3[0] = filCoord[0]*finalImage.getResolutions(0)[0];
+				         		tPt3[1] = filCoord[1]*finalImage.getResolutions(0)[1];
+				         		tPt3[2] = filCoord[2]*finalImage.getResolutions(0)[2];
+				
+				         		System.out.println("***** " + tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
+				         		
+				         		bw.write(tPt3[0] + " " + tPt3[1] + " " + tPt3[2] + ",");
+								bw.newLine();
+			         		}
+			         			
+			         	}
+						
+						
+			         	bw.write("]");
+						bw.newLine();
+						
+						
+						while(!(line=raFile.readLine()).endsWith("]")) {
+							
+						}
+						raFile.readLine();
+						index = index + 1;
+					}else {
+						bw.write(line);
+						bw.newLine();
+					}
 	
+				}else {
+					bw.write(line);
+					bw.newLine();
+					
+				}
+				
+			}
+
+			raFile.close();
+			bw.close();
+			fw.close();
+		}catch(Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		return success;
+	}
 	
 	
 	
