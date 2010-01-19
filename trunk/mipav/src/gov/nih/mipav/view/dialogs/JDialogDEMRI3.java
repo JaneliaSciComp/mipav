@@ -32,6 +32,14 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     //private static final long serialVersionUID;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    
+    private JLabel labelParamsToFit1;
+    
+    private JLabel labelParamsToFit2;
+    
+    private JLabel labelParamsToFit3;
+    
+    private JLabel labelParamsToFit4;
 
     /** DOCUMENT ME! */
     private JLabel labelContrastRelaxivityRate;
@@ -517,9 +525,33 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         gbc.gridy = 0;
         gbc.gridx = 0;
         
+        labelParamsToFit1 = new JLabel("3 model parameters to fit:");
+        labelParamsToFit1.setForeground(Color.black);
+        labelParamsToFit1.setFont(serif12);
+        mainPanel.add(labelParamsToFit1, gbc);
+        
+        labelParamsToFit2 = new JLabel("K_trans (plasma Gd -> tissue Gd) in [0, 0.05]");
+        labelParamsToFit2.setForeground(Color.black);
+        labelParamsToFit2.setFont(serif12);
+        gbc.gridy = 1;
+        mainPanel.add(labelParamsToFit2, gbc);
+        
+        labelParamsToFit3 = new JLabel("k_ep in [0, 0.05] or ve");
+        labelParamsToFit3.setForeground(Color.black);
+        labelParamsToFit3.setFont(serif12);
+        gbc.gridy = 2;
+        mainPanel.add(labelParamsToFit3, gbc);
+        
+        labelParamsToFit4 = new JLabel("f_vp in [0, 0.99]");
+        labelParamsToFit4.setForeground(Color.black);
+        labelParamsToFit4.setFont(serif12);
+        gbc.gridy = 3;
+        mainPanel.add(labelParamsToFit4, gbc);
+        
         labelContrastRelaxivityRate = new JLabel("Contrast relaxivity rate in 1/(mMol*sec) (0.0 - 1000.0)");
         labelContrastRelaxivityRate.setForeground(Color.black);
         labelContrastRelaxivityRate.setFont(serif12);
+        gbc.gridy = 4;
         mainPanel.add(labelContrastRelaxivityRate, gbc);
         
         textContrastRelaxivityRate = new JTextField(10);
@@ -533,7 +565,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelBloodIntrinsicRelaxivityRate.setForeground(Color.black);
         labelBloodIntrinsicRelaxivityRate.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 5;
         mainPanel.add(labelBloodIntrinsicRelaxivityRate, gbc);
         
         textBloodIntrinsicRelaxivityRate = new JTextField(10);
@@ -548,7 +580,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelBloodIntrinsicRelaxivityRate2.setForeground(Color.black);
         labelBloodIntrinsicRelaxivityRate2.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 6;
         gbc.gridheight = 1;
         mainPanel.add(labelBloodIntrinsicRelaxivityRate2, gbc);
         
@@ -559,7 +591,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         constantTissueRadioButton.addActionListener(this);
         tissueGroup.add(constantTissueRadioButton);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 7;
         mainPanel.add(constantTissueRadioButton, gbc);
         
         fileTissueRadioButton = new JRadioButton("File specified tissue intrinsic relaxivity rate", false);
@@ -568,7 +600,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         fileTissueRadioButton.addActionListener(this);
         tissueGroup.add(fileTissueRadioButton);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 8;
         mainPanel.add(fileTissueRadioButton, gbc);
         
         labelTissueIntrinsicRelaxivityRate = new JLabel("Tissue intrinsic relaxivity rate in 1/(mMol * sec)");
@@ -576,7 +608,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelTissueIntrinsicRelaxivityRate.setFont(serif12);
         labelTissueIntrinsicRelaxivityRate.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 9;
         mainPanel.add(labelTissueIntrinsicRelaxivityRate, gbc);
         
         textTissueIntrinsicRelaxivityRate = new JTextField(10);
@@ -593,7 +625,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelTissueIntrinsicRelaxivityRate2.setFont(serif12);
         labelTissueIntrinsicRelaxivityRate2.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 10;
         gbc.gridheight = 1;
         mainPanel.add(labelTissueIntrinsicRelaxivityRate2, gbc);
         
@@ -605,7 +637,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         buttonTissueFile.setActionCommand("TissueFile");
         buttonTissueFile.setPreferredSize(new Dimension(145, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 7;
+        gbc.gridy = 11;
         mainPanel.add(buttonTissueFile, gbc);
 
         textTissueFile = new JTextField();
@@ -619,7 +651,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelFlipAngle.setForeground(Color.black);
         labelFlipAngle.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 12;
         mainPanel.add(labelFlipAngle, gbc);
         
         textFlipAngle = new JTextField(10);
@@ -633,7 +665,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelTimeBetweenShots.setForeground(Color.black);
         labelTimeBetweenShots.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 13;
         mainPanel.add(labelTimeBetweenShots, gbc);
         
         textTimeBetweenShots = new JTextField(10);
@@ -647,7 +679,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelTimeBetweenFrames.setForeground(Color.black);
         labelTimeBetweenFrames.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 14;
         mainPanel.add(labelTimeBetweenFrames, gbc);
         
         textTimeBetweenFrames = new JTextField(10);
@@ -663,7 +695,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         secondButton.setForeground(Color.black);
         rateGroup.add(secondButton);
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 15;
         mainPanel.add(secondButton, gbc);
         
         minuteButton = new JRadioButton("K_trans and k_ep are per minute", false);
@@ -671,7 +703,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         minuteButton.setForeground(Color.black);
         rateGroup.add(minuteButton);
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 16;
         mainPanel.add(minuteButton, gbc);
         
         buttonMpFile = new JButton("Choose 1D Mp(t) data file");
@@ -681,7 +713,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         buttonMpFile.setActionCommand("MpFile");
         buttonMpFile.setPreferredSize(new Dimension(145, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 13;
+        gbc.gridy = 17;
         mainPanel.add(buttonMpFile, gbc);
 
         textMpFile = new JTextField();
@@ -691,11 +723,11 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         gbc.gridx = 1;
         mainPanel.add(textMpFile, gbc);
         
-        labelNFirst = new JLabel("nfirst (injection TR) of input dataset (0 - 1000)");
+        labelNFirst = new JLabel("nfirst injection TR index of input dataset (0 - 1000)");
         labelNFirst.setForeground(Color.black);
         labelNFirst.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy = 18;
         mainPanel.add(labelNFirst, gbc);
         
         textNFirst = new JTextField(10);
@@ -711,7 +743,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         kepButton.setForeground(Color.black);
         secondParamGroup.add(kepButton);
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy = 19;
         mainPanel.add(kepButton, gbc);
         
         veButton = new JRadioButton("Second parameter is external celluar volume fraction (ve)", false);
@@ -719,7 +751,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         veButton.setForeground(Color.black);
         secondParamGroup.add(veButton);
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy = 20;
         mainPanel.add(veButton, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
