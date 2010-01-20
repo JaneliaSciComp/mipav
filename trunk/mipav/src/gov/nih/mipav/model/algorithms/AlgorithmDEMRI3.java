@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import java.util.BitSet;
 
 import java.awt.*;
 
@@ -13,11 +14,14 @@ import java.text.*;
 
 
 /**
- * 3 model parameters are fit:
- * 1) K_trans in [0, 0.05]
- * 2) User choice of k_ep in [0, 0.05] or ve
+ * 3 model parameters are fit for each voxel in 3D:
+ * 1) K_trans in [0, 0.99]
+ * 2) User choice of k_ep in [0, 0.99] or ve
  * 3) f_pv in [0, 0.99]
  * K_trans and k_ep default to rates per second, but the user changed select rates per minute.
+ * srcImage is a dynamic "4D volume" of MRI signal (3D over time).
+ * An optional intrinsic relaxivity map may be obtained by acquiring two acquisition scans at low and high
+ * flip angles; otherwise, a single tissue relaxivity can be assumed for the whole brain.
  References:
  1.) "A Unified Magnetic Resonance Imaging Pharmacokinetic Theory: Intravascular and Extracellular Contrast
  Reagents" by Xin Li, William D. Rooney, and Charles S. Springer, Jr., Magnetic Resonance in Medicine,
@@ -62,11 +66,8 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
      */
     private boolean perMinute;
     
-    /** Array from 1D Mp(t) data file */
-    private double mcp[] = null;
-    
-    /** x dimension of Mp(t) data file */
-    private int mp_len;
+    /** 1D Mp(t) data from sagittal sinus VOI */
+    private double mp[] = null;
     
     /** nfirst injection TR index of input dataset (0 - 1000) 
      *  Number of TRs before Gd injection */
@@ -85,11 +86,10 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
      * Creates a new AlgorithmDEMRI3 object.
      
      */
-    public AlgorithmDEMRI3(double r1, double rib, double rit, double r1i[], double theta,
-                           double tr, double tf, boolean perMinute, double mcp[], int mp_len,
-                           int nFirst, boolean useVe) {
+    public AlgorithmDEMRI3(ModelImage srcImage, double r1, double rib, double rit, double r1i[], double theta,
+                           double tr, double tf, boolean perMinute, int nFirst, boolean useVe) {
 
-        //super(null, R1IImage);
+        super(null, srcImage);
         this.r1 = r1;
         this.rib = rib;
         this.rit = rit;
@@ -98,8 +98,6 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         this.tr = tr;
         this.tf = tf;
         this.perMinute = perMinute;
-        this.mcp = mcp;
-        this.mp_len = mp_len;
         this.nFirst = nFirst;
         this.useVe = useVe;
         
@@ -130,9 +128,79 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         double cos0 = Math.cos(theta * Math.PI/180.0);
         double min_constr[] = new double[3];
         double max_constr[] = new double[3];
-        double comp[] = new double[mp_len];
-        double elist[] = new double[mp_len];
+        double comp[];
+        double elist[];
         double dval;
+        ViewVOIVector VOIs;
+        int i;
+        int xDim;
+        int yDim;
+        int zDim;
+        int tDim;
+        BitSet mask;
+        double volume[];
+        int volSize;
+        int t;
+        
+        if (srcImage.getNDims() != 4) {
+            MipavUtil.displayError("srcImage must be 4D");
+            setCompleted(false);
+            return;
+        }
+        
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        zDim = srcImage.getExtents()[2];
+        tDim = srcImage.getExtents()[3];
+        volSize = xDim * yDim * zDim;
+        
+        comp = new double[tDim];
+        elist = new double[tDim];
+        mp = new double[tDim];
+        
+        VOIs = srcImage.getVOIs();
+        int nVOIs = VOIs.size();
+        int nBoundingVOIs = 0;
+
+        for (i = 0; i < nVOIs; i++) {
+
+            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+                nBoundingVOIs++;
+            }
+        }
+        
+        if (nBoundingVOIs == 0) {
+            MipavUtil.displayError("No bounding vois around sagittal sinus");
+            setCompleted(false);
+            return;
+        }
+        
+        if (nBoundingVOIs > 1) {
+            MipavUtil.displayError(nBoundingVOIs + " bounding vois around sagittal sinus instead of the expected 1");
+            setCompleted(false);
+            return;
+        }
+        
+        mask = srcImage.generateVOIMask();
+        volume = new double[volSize];
+        
+        for (t = 0; t < tDim; t++) {
+            try {
+                srcImage.exportData(t*volSize, volSize, volume);
+            }
+            catch (IOException e) {
+                MipavUtil.displayError("IOException on srcImage.exportData(t*volSize, volSize, volume");
+                setCompleted(false);
+                return;
+            }
+            
+            for (i = 0; i < volSize; i++) {
+                if (mask.get(i)) {
+                    mp[t] += volume[i];
+                }
+            }
+        } // for (t = 0; t < tDim; t++)
+        
         min_constr[0] = 0.0;
         min_constr[1] = 0.0;
         min_constr[2] = 0.0;
@@ -144,7 +212,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         /* Compute m0 equal to mean of first 'nFirst + 1' values */
         dval = 0.0;
         for (c = 0; c <= nFirst; c++) {
-            dval += mcp[c];
+            dval += mp[c];
         }
         m0 = dval /(nFirst + 1);
         
@@ -163,7 +231,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         ertr_c0 = 1 - Math.exp(-rib * tr) * cos0;
         c0_ertr_c0 = (1.0 - Math.exp(-rib * tr)) * cos0;
         
-        Preferences.debug("mp_len = " + mp_len + "\n");
+        Preferences.debug("tDim = " + tDim + "\n");
         Preferences.debug("m0 = " + m0 + "\n");
         Preferences.debug("rTR = " + rTR + "\n");
         Preferences.debug("R_r1 = " + R_r1 + "\n");
@@ -173,29 +241,29 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         
         /* start with setting the first nFirst + 1 terms to 0 */
         for (c = 0; c <= nFirst; c++) {
-            mcp[c] = 0.0;
+            mp[c] = 0.0;
         }
         
         /* and compute the remainder of the array */
-        for (; c < mp_len; c++) {
+        for (; c < tDim; c++) {
             /* start with ratio */
-            dval = (ertr_c0 - c0_ertr_c0 * mcp[c]/ m0)/ (ertr_c0 - ertr *mcp[c] / m0);
+            dval = (ertr_c0 - c0_ertr_c0 * mp[c]/ m0)/ (ertr_c0 - ertr *mp[c] / m0);
             
             if (dval < 1.0) {
-                mcp[c] = 0.0; // If ln < 0, then c < 0, so skip
+                mp[c] = 0.0; // If ln < 0, then c < 0, so skip
             }
             else {
-                mcp[c] = rTR * Math.log(dval) - R_r1;
+                mp[c] = rTR * Math.log(dval) - R_r1;
             }
             
-            if (mcp[c] < 0.0) {
-                mcp[c] = 0.0; /* Don't allow result < 0 */
+            if (mp[c] < 0.0) {
+                mp[c] = 0.0; /* Don't allow result < 0 */
             }
         }
         
         Preferences.debug("Cp = " + "\n");
-        for (c = 0; c < mp_len; c++) {
-            Preferences.debug("mcp[c] = " + mcp[c] + "\n");
+        for (c = 0; c < tDim; c++) {
+            Preferences.debug("mp[c] = " + mp[c] + "\n");
         }
         Preferences.debug("\n");
         
