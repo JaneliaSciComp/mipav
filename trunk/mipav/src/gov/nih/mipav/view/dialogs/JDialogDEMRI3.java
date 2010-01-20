@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -85,18 +86,32 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     
     double ritMax = 10000.0;
     
-    private JButton buttonTissueFile;
+    private JButton buttonLowFlipFile;
     
-    private JTextField textTissueFile;
+    private JTextField textLowFlipFile;
+    
+    private JButton buttonHighFlipFile;
+    
+    private JTextField textHighFlipFile;
     
     // non-uniform tissue intrinsic relaxivity map
     double r1i[] = null;
     
-    private String directoryTissue;
+    private String directoryLowFlip;
     
-    private String fileNameTissue;
+    private String fileNameLowFlip;
     
-    private ModelImage tissueImage = null;
+    private ModelImage lowFlipImage = null;
+    
+    private double lowFlip[] = null;
+    
+    private String directoryHighFlip;
+    
+    private String fileNameHighFlip;
+    
+    private ModelImage highFlipImage = null;
+    
+    private double highFlip[] = null;
     
     private JLabel labelFlipAngle;
     
@@ -139,6 +154,8 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     
     boolean perMin = false;
     
+    private JLabel labelMp;
+    
     private JButton buttonMpFile;
     
     private JTextField textMpFile;
@@ -176,19 +193,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     
     private boolean useVe = false;
 
-    /** DOCUMENT ME! */
-    private int backgroundIndex = -1;
-
-    /** DOCUMENT ME! */
-    private int cost;
-
-
-    /** DOCUMENT ME! */
-    private boolean createRegImage = false;
-
-
-    /** DOCUMENT ME! */
-    private int donorIndex = -1;
+    private ViewVOIVector VOIs;
 
 
     /** DOCUMENT ME! */
@@ -197,26 +202,9 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     /** DOCUMENT ME! */
     private ModelImage image; // prebleached image
 
-    /** DOCUMENT ME! */
-    private ModelImage postImage; // postbleached image
-
-    /** DOCUMENT ME! */
-    private boolean register;
-
-    /** DOCUMENT ME! */
-    private int signalIndex = -1;
-
+    
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
-    private boolean useBlue = false;
-
-    /** DOCUMENT ME! */
-    private boolean useGreen = false;
-
-    /** DOCUMENT ME! */
-    private boolean useRed = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -253,6 +241,8 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
      * @param  event  Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
+        FileVOI fileVOI;
+        VOI[] voi;
         String command = event.getActionCommand();
         Object source = event.getSource();
 
@@ -265,7 +255,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
             callAlgorithm();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
-        } else if (command.equals("TissueFile")) {
+        } else if (command.equals("LowFlipFile")) {
 
                 try {
                     JFileChooser chooser = new JFileChooser();
@@ -287,29 +277,74 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
                     chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
                     chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
 
-                    chooser.setDialogTitle("Open tissue intrinsic relaxivity rate file");
-                    directoryTissue = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                    chooser.setDialogTitle("Open low flip angle 3D image file");
+                    directoryLowFlip = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
 
                     int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
                     if (returnValue == JFileChooser.APPROVE_OPTION) {
-                        fileNameTissue = chooser.getSelectedFile().getName();
-                        directoryTissue = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                        UI.setDefaultDirectory(directoryTissue);
+                        fileNameLowFlip = chooser.getSelectedFile().getName();
+                        directoryLowFlip = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                        UI.setDefaultDirectory(directoryLowFlip);
                     } else {
-                        fileNameTissue = null;
+                        fileNameLowFlip = null;
 
                         return;
                     }
 
-                    if (fileNameTissue != null) {
-                        textTissueFile.setText(fileNameTissue);
+                    if (fileNameLowFlip != null) {
+                        textLowFlipFile.setText(fileNameLowFlip);
                     }
                 } catch (OutOfMemoryError e) {
                     MipavUtil.displayError("Out of memory in JDialogDEMRI3.");
 
                     return;
                 }
+        } else if (command.equals("HighFlipFile")) {
+
+            try {
+                JFileChooser chooser = new JFileChooser();
+
+                if (UI.getDefaultDirectory() != null) {
+                    File file = new File(UI.getDefaultDirectory());
+
+                    if (file != null) {
+                        chooser.setCurrentDirectory(file);
+                    } else {
+                        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                    }
+                } else {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                }
+
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+
+                chooser.setDialogTitle("Open high flip angle 4D image file");
+                directoryLowFlip = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+
+                int returnValue = chooser.showOpenDialog(UI.getMainFrame());
+
+                if (returnValue == JFileChooser.APPROVE_OPTION) {
+                    fileNameHighFlip = chooser.getSelectedFile().getName();
+                    directoryHighFlip = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                    UI.setDefaultDirectory(directoryHighFlip);
+                } else {
+                    fileNameHighFlip = null;
+
+                    return;
+                }
+
+                if (fileNameHighFlip != null) {
+                    textHighFlipFile.setText(fileNameHighFlip);
+                }
+            } catch (OutOfMemoryError e) {
+                MipavUtil.displayError("Out of memory in JDialogDEMRI3.");
+
+                return;
+            }
         } else if (command.equals("MpFile")) {
 
             try {
@@ -332,14 +367,14 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
 
-                chooser.setDialogTitle("Open 1D Mp(t) data file");
-                directoryMp = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                chooser.setDialogTitle("Open sagittal sinus VOI file");
+                directoryMp = String.valueOf(chooser.getCurrentDirectory());
 
                 int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     fileNameMp = chooser.getSelectedFile().getName();
-                    directoryMp = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                    directoryMp = String.valueOf(chooser.getCurrentDirectory());
                     UI.setDefaultDirectory(directoryMp);
                 } else {
                     fileNameMp = null;
@@ -348,8 +383,36 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
                 }
 
                 if (fileNameMp != null) {
-                    textMpFile.setText(fileNameMp);
+
+                    try {
+                        fileVOI = new FileVOI(fileNameMp, directoryMp, image);
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on new FileVOI(fileNameMp, directoryMp, image)");
+                        return;
+                    }
+
+                    try {
+                        voi = fileVOI.readVOI(false);
+                    }
+                    catch (IOException e) {
+                        MipavUtil.displayError("IOException on fileVOI.readVOI(false)");
+                        return;
+                    }
+                    
+                    if (voi.length > 1) {
+                        MipavUtil.displayError("Found " + voi.length + " vois in file instead of 1");
+                        return;
+                    }
+                    
+                    image.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
+                    image.registerVOI(voi[0]);
+
+                    //  when everything's done, notify the image listeners
+                    image.notifyImageDisplayListeners();   
                 }
+
+                
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory in JDialogDEMRI3.");
 
@@ -391,8 +454,8 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         Object source = event.getSource();
 
         if ((source == constantTissueRadioButton) || (source == fileTissueRadioButton)) {
-            buttonTissueFile.setEnabled(fileTissueRadioButton.isSelected());
-            textTissueFile.setEnabled(fileTissueRadioButton.isSelected());
+            buttonLowFlipFile.setEnabled(fileTissueRadioButton.isSelected());
+            textLowFlipFile.setEnabled(fileTissueRadioButton.isSelected());
             labelTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
             labelTissueIntrinsicRelaxivityRate2.setEnabled(constantTissueRadioButton.isSelected());
             textTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
@@ -423,7 +486,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
 
             // Make algorithm
 
-            demri3Algo = new AlgorithmDEMRI3(r1, rib, rit, r1i, theta, tr, tf, perMin, mcp, mp_len, nFirst, useVe);
+            demri3Algo = new AlgorithmDEMRI3(image, r1, rib, rit, r1i, theta, tr, tf, perMin, nFirst, useVe);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -525,18 +588,18 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         gbc.gridy = 0;
         gbc.gridx = 0;
         
-        labelParamsToFit1 = new JLabel("3 model parameters to fit:");
+        labelParamsToFit1 = new JLabel("3 model parameters to fit for each voxel in 3D:");
         labelParamsToFit1.setForeground(Color.black);
         labelParamsToFit1.setFont(serif12);
         mainPanel.add(labelParamsToFit1, gbc);
         
-        labelParamsToFit2 = new JLabel("K_trans (plasma Gd -> tissue Gd) in [0, 0.05]");
+        labelParamsToFit2 = new JLabel("K_trans (plasma Gd -> tissue Gd) in [0, 0.99]");
         labelParamsToFit2.setForeground(Color.black);
         labelParamsToFit2.setFont(serif12);
         gbc.gridy = 1;
         mainPanel.add(labelParamsToFit2, gbc);
         
-        labelParamsToFit3 = new JLabel("k_ep in [0, 0.05] or ve");
+        labelParamsToFit3 = new JLabel("k_ep in [0, 0.99] or ve");
         labelParamsToFit3.setForeground(Color.black);
         labelParamsToFit3.setFont(serif12);
         gbc.gridy = 2;
@@ -629,29 +692,47 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         gbc.gridheight = 1;
         mainPanel.add(labelTissueIntrinsicRelaxivityRate2, gbc);
         
-        buttonTissueFile = new JButton("Choose tissue file");
-        buttonTissueFile.setForeground(Color.black);
-        buttonTissueFile.setFont(serif12B);
-        buttonTissueFile.setEnabled(false);
-        buttonTissueFile.addActionListener(this);
-        buttonTissueFile.setActionCommand("TissueFile");
-        buttonTissueFile.setPreferredSize(new Dimension(145, 30));
+        buttonLowFlipFile = new JButton("Choose low flip-angle 3D image file");
+        buttonLowFlipFile.setForeground(Color.black);
+        buttonLowFlipFile.setFont(serif12B);
+        buttonLowFlipFile.setEnabled(false);
+        buttonLowFlipFile.addActionListener(this);
+        buttonLowFlipFile.setActionCommand("LowFlipFile");
+        buttonLowFlipFile.setPreferredSize(new Dimension(145, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridy = 11;
-        mainPanel.add(buttonTissueFile, gbc);
+        mainPanel.add(buttonLowFlipFile, gbc);
 
-        textTissueFile = new JTextField();
-        textTissueFile.setFont(serif12);
-        textTissueFile.setEnabled(false);
+        textLowFlipFile = new JTextField();
+        textLowFlipFile.setFont(serif12);
+        textLowFlipFile.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(textTissueFile, gbc);
+        mainPanel.add(textLowFlipFile, gbc);
+        
+        buttonHighFlipFile = new JButton("Choose high flip-angle 4D image file");
+        buttonHighFlipFile.setForeground(Color.black);
+        buttonHighFlipFile.setFont(serif12B);
+        buttonHighFlipFile.setEnabled(false);
+        buttonHighFlipFile.addActionListener(this);
+        buttonHighFlipFile.setActionCommand("HighFlipFile");
+        buttonHighFlipFile.setPreferredSize(new Dimension(145, 30));
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridy = 12;
+        mainPanel.add(buttonHighFlipFile, gbc);
+
+        textHighFlipFile = new JTextField();
+        textHighFlipFile.setFont(serif12);
+        textHighFlipFile.setEnabled(false);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        mainPanel.add(textHighFlipFile, gbc);
         
         labelFlipAngle = new JLabel("Flip angle in degrees (0.0 - 90.0)");
         labelFlipAngle.setForeground(Color.black);
         labelFlipAngle.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         mainPanel.add(labelFlipAngle, gbc);
         
         textFlipAngle = new JTextField(10);
@@ -665,7 +746,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelTimeBetweenShots.setForeground(Color.black);
         labelTimeBetweenShots.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         mainPanel.add(labelTimeBetweenShots, gbc);
         
         textTimeBetweenShots = new JTextField(10);
@@ -679,7 +760,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelTimeBetweenFrames.setForeground(Color.black);
         labelTimeBetweenFrames.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy = 15;
         mainPanel.add(labelTimeBetweenFrames, gbc);
         
         textTimeBetweenFrames = new JTextField(10);
@@ -695,7 +776,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         secondButton.setForeground(Color.black);
         rateGroup.add(secondButton);
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy = 16;
         mainPanel.add(secondButton, gbc);
         
         minuteButton = new JRadioButton("K_trans and k_ep are per minute", false);
@@ -703,31 +784,30 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         minuteButton.setForeground(Color.black);
         rateGroup.add(minuteButton);
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy = 17;
         mainPanel.add(minuteButton, gbc);
         
-        buttonMpFile = new JButton("Choose 1D Mp(t) data file");
+        labelMp = new JLabel("Draw a sagittal sinus VOI or open a VOI file");
+        labelMp.setForeground(Color.black);
+        labelMp.setFont(serif12);
+        gbc.gridy = 18;
+        mainPanel.add(labelMp, gbc);
+        
+        buttonMpFile = new JButton("Open a sagittal sinus VOI file");
         buttonMpFile.setForeground(Color.black);
         buttonMpFile.setFont(serif12B);
         buttonMpFile.addActionListener(this);
         buttonMpFile.setActionCommand("MpFile");
         buttonMpFile.setPreferredSize(new Dimension(145, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 17;
+        gbc.gridy = 19;
         mainPanel.add(buttonMpFile, gbc);
-
-        textMpFile = new JTextField();
-        textMpFile.setFont(serif12);
-        textMpFile.setEnabled(false);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 1;
-        mainPanel.add(textMpFile, gbc);
         
         labelNFirst = new JLabel("nfirst injection TR index of input dataset (0 - 1000)");
         labelNFirst.setForeground(Color.black);
         labelNFirst.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 18;
+        gbc.gridy = 20;
         mainPanel.add(labelNFirst, gbc);
         
         textNFirst = new JTextField(10);
@@ -743,7 +823,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         kepButton.setForeground(Color.black);
         secondParamGroup.add(kepButton);
         gbc.gridx = 0;
-        gbc.gridy = 19;
+        gbc.gridy = 21;
         mainPanel.add(kepButton, gbc);
         
         veButton = new JRadioButton("Second parameter is external celluar volume fraction (ve)", false);
@@ -751,7 +831,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         veButton.setForeground(Color.black);
         secondParamGroup.add(veButton);
         gbc.gridx = 0;
-        gbc.gridy = 20;
+        gbc.gridy = 22;
         mainPanel.add(veButton, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -826,43 +906,87 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         } // (constantTissueRadioButton.isSelected())
         
         if (fileTissueRadioButton.isSelected()) {
-            fileNameTissue = textTissueFile.getText();  
+            fileNameLowFlip = textLowFlipFile.getText();  
             try {
                 FileIO fileIO = new FileIO();
-                tissueImage = fileIO.readImage(fileNameTissue, directoryTissue, false, null);
+                lowFlipImage = fileIO.readImage(fileNameLowFlip, directoryLowFlip, false, null);
 
-                if (tissueImage == null) {
-                    MipavUtil.displayError("Tissue image is not valid.");
+                if (lowFlipImage == null) {
+                    MipavUtil.displayError("Low flip image is not valid.");
 
                     return false;
-                } else if (tissueImage.getNDims() != image.getNDims()) {
-                    MipavUtil.displayError("Dimensions of tissue image must match the source image.");
+                } else if (lowFlipImage.getNDims() != 3) {
+                    MipavUtil.displayError("Low flip image must be 3D");
 
                     return false;
                 }
 
-                for (int i = 0; i < tissueImage.getNDims(); i++) {
+                for (int i = 0; i < 3; i++) {
 
-                    if (image.getExtents()[i] != tissueImage.getExtents()[i]) {
-                        MipavUtil.displayError("Dimensions of tissue image must match the source image.");
+                    if (image.getExtents()[i] != lowFlipImage.getExtents()[i]) {
+                        MipavUtil.displayError("First 3 dimensions of source image must match the low flip image.");
 
                         return false;
                     }
                 }
-                int length = tissueImage.getExtents()[0];
-                for (int i = 1; i < tissueImage.getNDims(); i++) {
-                    length *= tissueImage.getExtents()[i];
+                int length = lowFlipImage.getExtents()[0];
+                for (int i = 1; i < lowFlipImage.getNDims(); i++) {
+                    length *= lowFlipImage.getExtents()[i];
                 }
-                r1i = new double[length];
+                lowFlip = new double[length];
                 try {
-                    tissueImage.exportData(0, length, r1i);
+                    lowFlipImage.exportData(0, length, lowFlip);
                 }
                 catch(IOException e) {
-                    MipavUtil.displayError("IOException on tissueImage.exportData(0, length, r1i)");
+                    MipavUtil.displayError("IOException on lowFlipImage.exportData(0, length, lowFlip)");
                     return false;
                 }
-                tissueImage.disposeLocal();
-                tissueImage = null;
+                lowFlipImage.disposeLocal();
+                lowFlipImage = null;
+
+            } catch (OutOfMemoryError e) {
+                MipavUtil.displayError("Out of memory in JDialogDEMRI3");
+
+                return false;
+            }
+            
+            fileNameHighFlip = textHighFlipFile.getText();  
+            try {
+                FileIO fileIO = new FileIO();
+                highFlipImage = fileIO.readImage(fileNameHighFlip, directoryHighFlip, false, null);
+
+                if (highFlipImage == null) {
+                    MipavUtil.displayError("High flip image is not valid.");
+
+                    return false;
+                } else if (highFlipImage.getNDims() != 4) {
+                    MipavUtil.displayError("High flip image must be 4D");
+
+                    return false;
+                }
+
+                for (int i = 0; i < 4; i++) {
+
+                    if (image.getExtents()[i] != highFlipImage.getExtents()[i]) {
+                        MipavUtil.displayError("Dimensions of source image must match the high flip image.");
+
+                        return false;
+                    }
+                }
+                int length = highFlipImage.getExtents()[0];
+                for (int i = 1; i < highFlipImage.getNDims(); i++) {
+                    length *= highFlipImage.getExtents()[i];
+                }
+                highFlip = new double[length];
+                try {
+                    highFlipImage.exportData(0, length, highFlip);
+                }
+                catch(IOException e) {
+                    MipavUtil.displayError("IOException on highFlipImage.exportData(0, length, highFlip)");
+                    return false;
+                }
+                highFlipImage.disposeLocal();
+                highFlipImage = null;
 
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory in JDialogDEMRI3");
@@ -929,7 +1053,28 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
             perMin = true;
         }
         
-        fileNameMp = textMpFile.getText();
+        VOIs = image.getVOIs();
+        int nVOIs = VOIs.size();
+        int nBoundingVOIs = 0;
+
+        for (int i = 0; i < nVOIs; i++) {
+
+            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+                nBoundingVOIs++;
+            }
+        }
+        
+        if (nBoundingVOIs == 0) {
+            MipavUtil.displayError("No bounding vois around sagittal sinus");
+            return false;
+        }
+        
+        if (nBoundingVOIs > 1) {
+            MipavUtil.displayError(nBoundingVOIs + " bounding vois around sagittal sinus instead of the expected 1");
+            return false;
+        }
+        
+        /*fileNameMp = textMpFile.getText();
         fileMp = new File(directoryMp + fileNameMp);
         
         try {
@@ -1084,7 +1229,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         for (ii = 0; ii < mp_len; ii++) {
             Preferences.debug("mcp[" + ii + "] = " + mcp[ii] + "\n");
         }
-        Preferences.debug("\n");
+        Preferences.debug("\n");*/
         
         tmpStr = textNFirst.getText();
         nFirst = Integer.parseInt(tmpStr);
