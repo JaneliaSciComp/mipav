@@ -1974,6 +1974,10 @@ public class FileImageXML extends FileXML {
             for (i = 0; i < 3; i++) {
                 closedTag("origDim", Integer.toString(talairach.getOrigDim()[i]));
             }
+            
+            for (i = 0; i < 3; i++) {
+                closedTag("origOrigin", Float.toString(talairach.getOrigOrigin()[i]));
+            }
 
             for (i = 0; i < 3; i++) {
                 closedTag("origRes", Float.toString(talairach.getOrigRes()[i]));
@@ -2923,6 +2927,10 @@ public class FileImageXML extends FileXML {
 
         /** DOCUMENT ME! */
         int origDimCount = -1;
+        
+        float[] origOrigin = null;
+        
+        int origOriginCount = -1;
 
         /** DOCUMENT ME! */
         float[] origOrientation = null;
@@ -3312,6 +3320,13 @@ public class FileImageXML extends FileXML {
                 if (origDimCount == 2) {
                     talairach.setOrigDim(origDim);
                 }
+            } else if (currentKey.equals("origOrigin")) {
+                origOriginCount++;
+                origOrigin[origOriginCount] = Float.parseFloat(elementBuffer);
+
+                if (origOriginCount == 2) {
+                    talairach.setOrigOrigin(origOrigin);
+                }
             } else if (currentKey.equals("origRes")) {
                 origResCount++;
                 origRes[origResCount] = Float.parseFloat(elementBuffer);
@@ -3486,6 +3501,7 @@ public class FileImageXML extends FileXML {
                 origPC = new float[3];
                 acpcPC = new float[3];
                 origDim = new int[3];
+                origOrigin = new float[3];
                 origRes = new float[3];
                 origOrientation = new float[9];
             } else if (currentKey.equals("tlrcInfo")) {
