@@ -23,13 +23,14 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmDespotT1;
 import gov.nih.mipav.model.algorithms.AlgorithmDespotT2;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 
-public class JDialogDespotT2 extends JDialogBase implements AlgorithmInterface {
+public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmInterface {
 
     private static String title = "DESPOT2 T2 Mapper";
     public static double despotTR = 5.00;
@@ -108,7 +109,61 @@ public class JDialogDespotT2 extends JDialogBase implements AlgorithmInterface {
         } 
     }
     
-    public void run() {
+    protected void setGUIFromParams() {
+        despotFA_phase0 = despotFA_phase0;
+        despotFA_phase180 = despotFA_phase180;
+        ssfpImageIndex_phase0 = ssfpImageIndex_phase0;
+        ssfpImageIndex_phase180 = ssfpImageIndex_phase180;
+        this.t1ImageIndex = t1ImageIndex;
+        this.b1ImageIndex = b1ImageIndex;
+        this.simplexLineValues = simplexLineValues;
+        this.simplexResiduals = simplexResiduals;
+        this.simplexCentre = simplexCentre;
+        this.reflection = reflection;
+        this.expansion = expansion;
+        this.contraction = contraction;
+        this.shrink = shrink;
+        this.simplex = simplex;
+        this.twoPSimplexLineValues = twoPSimplexLineValues;
+        this.twoPSimplexResiduals = twoPSimplexResiduals;
+        this.twoPSimplexCentre = twoPSimplexCentre;
+        this.twoPReflection = twoPReflection;
+        this.twoPExpansion = twoPExpansion;
+        this.twoPContraction = twoPContraction;
+        this.twoPShrink = twoPShrink;
+        this.twoPSimplex = twoPSimplex;
+        this.bestToWorst = bestToWorst;
+        this.wList = wList;
+    }
+
+    protected void storeParamsFromGUI() throws ParserException {
+        despotFA_phase0 = despotFA_phase0;
+        despotFA_phase180 = despotFA_phase180;
+        ssfpImageIndex_phase0 = ssfpImageIndex_phase0;
+        ssfpImageIndex_phase180 = ssfpImageIndex_phase180;
+        this.t1ImageIndex = t1ImageIndex;
+        this.b1ImageIndex = b1ImageIndex;
+        this.simplexLineValues = simplexLineValues;
+        this.simplexResiduals = simplexResiduals;
+        this.simplexCentre = simplexCentre;
+        this.reflection = reflection;
+        this.expansion = expansion;
+        this.contraction = contraction;
+        this.shrink = shrink;
+        this.simplex = simplex;
+        this.twoPSimplexLineValues = twoPSimplexLineValues;
+        this.twoPSimplexResiduals = twoPSimplexResiduals;
+        this.twoPSimplexCentre = twoPSimplexCentre;
+        this.twoPReflection = twoPReflection;
+        this.twoPExpansion = twoPExpansion;
+        this.twoPContraction = twoPContraction;
+        this.twoPShrink = twoPShrink;
+        this.twoPSimplex = twoPSimplex;
+        this.bestToWorst = bestToWorst;
+        this.wList = wList;
+    }
+
+    private void run() {
         
         Enumeration<String> imageEnum = ViewUserInterface.getReference().getRegisteredImageNames();
         ArrayList<String> imageList = new ArrayList<String>();
@@ -149,40 +204,7 @@ public class JDialogDespotT2 extends JDialogBase implements AlgorithmInterface {
         if (!showSpecificsDialog()) return;     
         
         try {  
-            // Make algorithm
-            cAlgo = new AlgorithmDespotT2(despotFA_phase0,
-                    despotFA_phase180, ssfpImageIndex_phase0,
-                    ssfpImageIndex_phase180, t1ImageIndex, b1ImageIndex,
-                    simplexLineValues, simplexResiduals,
-                    simplexCentre, reflection, expansion,
-                    contraction, shrink, simplex,
-                    twoPSimplexLineValues, twoPSimplexResiduals,
-                    twoPSimplexCentre, twoPReflection,
-                    twoPExpansion, twoPContraction,
-                    twoPShrink, twoPSimplex, bestToWorst,
-                    wList);
-    
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed of failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            cAlgo.addListener(this);
-            
-            createProgressBar(title, cAlgo);
-            progressBar.addActionListener(this);
-            
-            // Hide dialog
-            setVisible(false);
-    
-            if (isRunInSeparateThread()) {
-    
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (cAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-    
-                cAlgo.run();
-            }
+            callAlgorithm();
         } catch (OutOfMemoryError x) {
     
             System.gc();
@@ -191,6 +213,43 @@ public class JDialogDespotT2 extends JDialogBase implements AlgorithmInterface {
             return;
         }
         
+    }
+    
+    protected void callAlgorithm() {
+        // Make algorithm
+        cAlgo = new AlgorithmDespotT2(despotFA_phase0,
+                despotFA_phase180, ssfpImageIndex_phase0,
+                ssfpImageIndex_phase180, t1ImageIndex, b1ImageIndex,
+                simplexLineValues, simplexResiduals,
+                simplexCentre, reflection, expansion,
+                contraction, shrink, simplex,
+                twoPSimplexLineValues, twoPSimplexResiduals,
+                twoPSimplexCentre, twoPReflection,
+                twoPExpansion, twoPContraction,
+                twoPShrink, twoPSimplex, bestToWorst,
+                wList);
+
+        // This is very important. Adding this object as a listener allows the algorithm to
+        // notify this object when it has completed of failed. See algorithm performed event.
+        // This is made possible by implementing AlgorithmedPerformed interface
+        cAlgo.addListener(this);
+        
+        createProgressBar(title, cAlgo);
+        progressBar.addActionListener(this);
+        
+        // Hide dialog
+        setVisible(false);
+
+        if (isRunInSeparateThread()) {
+
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (cAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            cAlgo.run();
+        }
     }
     
     public boolean showDialog() {
