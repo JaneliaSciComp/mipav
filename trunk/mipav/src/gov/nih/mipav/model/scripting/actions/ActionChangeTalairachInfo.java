@@ -55,6 +55,8 @@ public class ActionChangeTalairachInfo extends ActionImageProcessorBase {
         	 parameters.put(ParameterFactory.newParameter("orig_pc", new float[]{tempPoint.X, tempPoint.Y, tempPoint.Z}));
         	
         	 parameters.put(ParameterFactory.newParameter("orig_dim", tInfo.getOrigDim()));
+             
+             parameters.put(ParameterFactory.newParameter("orig_origin", tInfo.getOrigOrigin()));
            
         	 parameters.put(ParameterFactory.newParameter("orig_res", tInfo.getOrigRes()));
         	 
@@ -122,6 +124,7 @@ public class ActionChangeTalairachInfo extends ActionImageProcessorBase {
         tInfo.setOrigPC(new Vector3f(origPC[0], origPC[1], origPC[2]));
         
         tInfo.setOrigDim(parameters.getList("orig_dim").getAsIntArray());
+        tInfo.setOrigOrigin(parameters.getList("orig_origin").getAsFloatArray());
         tInfo.setOrigRes(parameters.getList("orig_res").getAsFloatArray());
         
         float [] acpcPC = parameters.getList("acpc_pc").getAsFloatArray();
