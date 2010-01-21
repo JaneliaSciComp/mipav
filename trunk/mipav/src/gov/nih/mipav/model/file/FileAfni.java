@@ -1117,7 +1117,7 @@ public class FileAfni extends FileBase {
 
                 // Reading an orig file is not necessary for reading this particular image.
                 // However, it must be done to fill in certain fields of the TalairachTransformInfo
-                // structure - origAC, origPC, origDim, and origRes
+                // structure - origAC, origPC, origDim, origOrigin, and origRes
                 try {
                     origName = fileName.substring(0, s + 1) + "orig.HEAD";
                     file = new File(fileDir + origName);
@@ -7127,6 +7127,10 @@ public class FileAfni extends FileBase {
                             fileInfo.setOrigin(highestZ, 2);
                         }
                     }
+                }
+                
+                if (presentViewType == FileInfoAfni.AFNI_ORIG) {
+                    tInfo.setOrigOrigin(fileInfo.getOrigin());
                 }
 
                 fileInfo.setAFNIViewType(viewType);
