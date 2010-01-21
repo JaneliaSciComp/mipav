@@ -1142,6 +1142,7 @@ public class JDialogACPC extends JDialogBase {
         transform.setOrigPC(origPC);
         transform.setOrigRes(origRes);
         transform.setOrigDim(origDim);
+        transform.setOrigOrigin(image.getFileInfo()[0].getOrigin());
         transform.setAcpcRes(acpcRes);
 		Vector3f pt = new Vector3f();
         transform.origToAcpc(origPC, pt);
