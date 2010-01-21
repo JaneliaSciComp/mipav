@@ -218,6 +218,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private JTextField[] origDimFields;
+    
+    private JTextField[] origOriginFields;
 
     /** DOCUMENT ME! */
     private float[] origin;
@@ -749,6 +751,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             for (int i = 0; i < 3; i++) {
                 origDimFields[i].setText(Integer.toString(tInfo.getOrigDim()[i]));
+                origOriginFields[i].setText(Float.toString(tInfo.getOrigOrigin()[i]));
                 origResFields[i].setText(Float.toString(tInfo.getOrigRes()[i]));
             }
 
@@ -1853,6 +1856,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         JLabel origDimLabel = new JLabel("Orig Dim:");
         origDimLabel.setFont(serif12);
+        
+        JLabel origOriginLabel = new JLabel("Orig Origin:");
+        origOriginLabel.setFont(serif12);
 
         JLabel origResLabel = new JLabel("Orig Res:");
         origResLabel.setFont(serif12);
@@ -1875,6 +1881,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         origACFields = new JTextField[3];
         origPCFields = new JTextField[3];
         origDimFields = new JTextField[3];
+        origOriginFields = new JTextField[3];
         origResFields = new JTextField[3];
         acpcACFields = new JTextField[3];
         acpcPCFields = new JTextField[3];
@@ -1885,6 +1892,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             origACFields[i] = new JTextField("1.0", 3);
             origPCFields[i] = new JTextField("1.0", 3);
             origDimFields[i] = new JTextField("1", 3);
+            origOriginFields[i] = new JTextField("0.0", 3);
             origResFields[i] = new JTextField("1.0", 3);
             acpcACFields[i] = new JTextField("1.0", 3);
             acpcACFields[i].setEditable(false);
@@ -1944,6 +1952,19 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         for (int i = 0; i < 3; i++) {
             gbc.gridx++;
             acpcPanel.add(origDimFields[i], gbc);
+        }
+        
+        // orig Origin
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.weightx = 0;
+        acpcPanel.add(origOriginLabel, gbc);
+
+        gbc.weightx = 1;
+
+        for (int i = 0; i < 3; i++) {
+            gbc.gridx++;
+            acpcPanel.add(origOriginFields[i], gbc);
         }
 
         // orig Res
@@ -3538,14 +3559,17 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                                          Float.parseFloat(origPCFields[2].getText())));
 
             int[] origDim = new int[3];
+            float[] origOrigin = new float[3];
             float[] origRes = new float[3];
 
             for (int i = 0; i < 3; i++) {
                 origDim[i] = Integer.parseInt(origDimFields[i].getText());
+                origOrigin[i] = Float.parseFloat(origOriginFields[i].getText());
                 origRes[i] = Float.parseFloat(origResFields[i].getText());
             }
 
             tInfo.setOrigDim(origDim);
+            tInfo.setOrigOrigin(origOrigin);
             tInfo.setOrigRes(origRes);
 
             tInfo.setAcpcPC(new Vector3f(Float.parseFloat(acpcPCFields[0].getText()),
