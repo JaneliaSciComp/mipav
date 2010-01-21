@@ -23,13 +23,14 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCircleGeneration;
 import gov.nih.mipav.model.algorithms.AlgorithmDespotT1;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 
-public class JDialogDespotT1 extends JDialogBase implements AlgorithmInterface {
+public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmInterface {
 
     private static String title = "DESPOT1 T1 Mapper";
     private double despotTR = 5.00;
@@ -118,7 +119,7 @@ public class JDialogDespotT1 extends JDialogBase implements AlgorithmInterface {
         } 
     }
 
-    public void run() {
+    private void run() {
         Enumeration<String> imageEnum = ViewUserInterface.getReference().getRegisteredImageNames();
         ArrayList<String> imageList = new ArrayList<String>();
         while(imageEnum.hasMoreElements()) {
@@ -194,49 +195,7 @@ public class JDialogDespotT1 extends JDialogBase implements AlgorithmInterface {
         }
           
         try {  
-            // Make algorithm
-            cAlgo = new AlgorithmDespotT1(despotTR, irspgrTR,
-                    irspgrKy, irspgrFA, maxT1, maxMo,
-                    despotFA,  irspgrTr,  irspgrTI,
-                    spgrData,  irspgrData, scale,
-                    pointScale, scaleIncrement,  estimates,
-                    residuals,  direction,  spgrImageIndex,
-                    irspgrImageIndex,  b1ImageIndex, angleIncrement,
-                    Nsa,  Nti, maxAngle,  smoothB1Field,
-                    performStraightDESPOT1,
-                    performDESPOT1withPreCalculatedB1Map,
-                    performDESPOT1HIFI,  doubleInversion,
-                    singleInversion,  geScanner,  siemensScanner,
-                    threeTField,  onefiveTField,  calculateT1,
-                    showB1Map,  calculateMo,  invertT1toR1,
-                    useWeights,  uniformAngleSpacing,
-                    upperLeftCorner,  upperRightCorner,
-                    lowerLeftCorner,  lowerRightCorner,
-                    useSmartThresholding,  useHardThresholding,
-                    noiseScale, hardNoiseThreshold, wList,
-                    titles);
-    
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed of failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            cAlgo.addListener(this);
-            
-            createProgressBar(title, cAlgo);
-            progressBar.addActionListener(this);
-            
-            // Hide dialog
-            setVisible(false);
-    
-            if (isRunInSeparateThread()) {
-    
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (cAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-    
-                cAlgo.run();
-            }
+            callAlgorithm();
         } catch (OutOfMemoryError x) {
     
             System.gc();
@@ -246,6 +205,159 @@ public class JDialogDespotT1 extends JDialogBase implements AlgorithmInterface {
         }
     }
     
+    protected void callAlgorithm() {
+        // Make algorithm
+        cAlgo = new AlgorithmDespotT1(despotTR, irspgrTR,
+                irspgrKy, irspgrFA, maxT1, maxMo,
+                despotFA,  irspgrTr,  irspgrTI,
+                spgrData,  irspgrData, scale,
+                pointScale, scaleIncrement,  estimates,
+                residuals,  direction,  spgrImageIndex,
+                irspgrImageIndex,  b1ImageIndex, angleIncrement,
+                Nsa,  Nti, maxAngle,  smoothB1Field,
+                performStraightDESPOT1,
+                performDESPOT1withPreCalculatedB1Map,
+                performDESPOT1HIFI,  doubleInversion,
+                singleInversion,  geScanner,  siemensScanner,
+                threeTField,  onefiveTField,  calculateT1,
+                showB1Map,  calculateMo,  invertT1toR1,
+                useWeights,  uniformAngleSpacing,
+                upperLeftCorner,  upperRightCorner,
+                lowerLeftCorner,  lowerRightCorner,
+                useSmartThresholding,  useHardThresholding,
+                noiseScale, hardNoiseThreshold, wList,
+                titles);
+
+        // This is very important. Adding this object as a listener allows the algorithm to
+        // notify this object when it has completed of failed. See algorithm performed event.
+        // This is made possible by implementing AlgorithmedPerformed interface
+        cAlgo.addListener(this);
+        
+        createProgressBar(title, cAlgo);
+        progressBar.addActionListener(this);
+        
+        // Hide dialog
+        setVisible(false);
+
+        if (isRunInSeparateThread()) {
+
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (cAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            cAlgo.run();
+        }
+    }
+    
+    protected void setGUIFromParams() {
+        this.despotTR = despotTR;
+        this.irspgrTR = irspgrTR;
+        this.irspgrKy = irspgrKy;
+        this.irspgrFA = irspgrFA;
+        this.maxT1 = maxT1;
+        this.maxMo = maxMo;
+        this.despotFA = despotFA;
+        irspgrTr = irspgrTr;
+        this.irspgrTI = irspgrTI;
+        this.spgrData = spgrData;
+        this.irspgrData = irspgrData;
+        this.scale = scale;
+        this.pointScale = pointScale;
+        this.scaleIncrement = scaleIncrement;
+        this.estimates = estimates;
+        this.residuals = residuals;
+        this.direction = direction;
+        this.spgrImageIndex = spgrImageIndex;
+        this.irspgrImageIndex = irspgrImageIndex;
+        this.b1ImageIndex = b1ImageIndex;
+        this.angleIncrement = angleIncrement;
+        Nsa = Nsa;
+        Nti = Nti;
+        this.maxAngle = maxAngle;
+        this.smoothB1Field = smoothB1Field;
+        this.performStraightDESPOT1 = performStraightDESPOT1;
+        this.performDESPOT1withPreCalculatedB1Map = performDESPOT1withPreCalculatedB1Map;
+        this.performDESPOT1HIFI = performDESPOT1HIFI;
+        this.doubleInversion = doubleInversion;
+        this.singleInversion = singleInversion;
+        this.geScanner = geScanner;
+        this.siemensScanner = siemensScanner;
+        this.threeTField = threeTField;
+        this.onefiveTField = onefiveTField;
+        this.calculateT1 = calculateT1;
+        this.showB1Map = showB1Map;
+        this.calculateMo = calculateMo;
+        this.invertT1toR1 = invertT1toR1;
+        this.useWeights = useWeights;
+        this.uniformAngleSpacing = uniformAngleSpacing;
+        this.upperLeftCorner = upperLeftCorner;
+        this.upperRightCorner = upperRightCorner;
+        this.lowerLeftCorner = lowerLeftCorner;
+        this.lowerRightCorner = lowerRightCorner;
+        this.useSmartThresholding = useSmartThresholding;
+        this.useHardThresholding = useHardThresholding;
+        this.noiseScale = noiseScale;
+        this.hardNoiseThreshold = hardNoiseThreshold;
+        this.wList = wList;
+        this.titles = titles;
+        
+    }
+
+    protected void storeParamsFromGUI() throws ParserException {
+        this.despotTR = despotTR;
+        this.irspgrTR = irspgrTR;
+        this.irspgrKy = irspgrKy;
+        this.irspgrFA = irspgrFA;
+        this.maxT1 = maxT1;
+        this.maxMo = maxMo;
+        this.despotFA = despotFA;
+        irspgrTr = irspgrTr;
+        this.irspgrTI = irspgrTI;
+        this.spgrData = spgrData;
+        this.irspgrData = irspgrData;
+        this.scale = scale;
+        this.pointScale = pointScale;
+        this.scaleIncrement = scaleIncrement;
+        this.estimates = estimates;
+        this.residuals = residuals;
+        this.direction = direction;
+        this.spgrImageIndex = spgrImageIndex;
+        this.irspgrImageIndex = irspgrImageIndex;
+        this.b1ImageIndex = b1ImageIndex;
+        this.angleIncrement = angleIncrement;
+        Nsa = Nsa;
+        Nti = Nti;
+        this.maxAngle = maxAngle;
+        this.smoothB1Field = smoothB1Field;
+        this.performStraightDESPOT1 = performStraightDESPOT1;
+        this.performDESPOT1withPreCalculatedB1Map = performDESPOT1withPreCalculatedB1Map;
+        this.performDESPOT1HIFI = performDESPOT1HIFI;
+        this.doubleInversion = doubleInversion;
+        this.singleInversion = singleInversion;
+        this.geScanner = geScanner;
+        this.siemensScanner = siemensScanner;
+        this.threeTField = threeTField;
+        this.onefiveTField = onefiveTField;
+        this.calculateT1 = calculateT1;
+        this.showB1Map = showB1Map;
+        this.calculateMo = calculateMo;
+        this.invertT1toR1 = invertT1toR1;
+        this.useWeights = useWeights;
+        this.uniformAngleSpacing = uniformAngleSpacing;
+        this.upperLeftCorner = upperLeftCorner;
+        this.upperRightCorner = upperRightCorner;
+        this.lowerLeftCorner = lowerLeftCorner;
+        this.lowerRightCorner = lowerRightCorner;
+        this.useSmartThresholding = useSmartThresholding;
+        this.useHardThresholding = useHardThresholding;
+        this.noiseScale = noiseScale;
+        this.hardNoiseThreshold = hardNoiseThreshold;
+        this.wList = wList;
+        this.titles = titles;
+    }
+
     public boolean showOpeningDialog() {
         BorderLayout b = new BorderLayout();
         JDialog dialog = new JDialog();
