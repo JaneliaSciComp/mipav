@@ -95,6 +95,9 @@ public class TalairachTransformInfo implements Serializable {
 
     /** ACPC orientation in original image. */
     private float[][] origOrient;
+    
+    /** Original image origin */
+    private float[] origOrigin;
 
     /* acpc: ACPC aligned space */
 
@@ -151,6 +154,7 @@ public class TalairachTransformInfo implements Serializable {
             }
        }
         origOrient = null;
+        origOrigin = null;
         origPC = null;
         origRes = null;
         tlrcAC = null;
@@ -598,6 +602,10 @@ public class TalairachTransformInfo implements Serializable {
     public int[] getOrigDim() {
         return origDim;
     }
+    
+    public float[] getOrigOrigin() {
+        return origOrigin;
+    }
 
     /**
      * DOCUMENT ME!
@@ -981,6 +989,10 @@ public class TalairachTransformInfo implements Serializable {
                 // Dim
                 dims = parseIntParameters(br.readLine(), 3);
                 setOrigDim(dims);
+                
+                // Origin
+                params = parseFloatParameters(br.readLine(), 3);
+                setOrigOrigin(params);
 
                 // Orient
                 params = parseFloatParameters(br.readLine(), 9);
@@ -1014,6 +1026,7 @@ public class TalairachTransformInfo implements Serializable {
                 // Dim
                 dims = parseIntParameters(br.readLine(), 3);
                 // not used
+                
             }
 
             if (isTlrc) {
@@ -1120,6 +1133,10 @@ public class TalairachTransformInfo implements Serializable {
      */
     public void setOrigDim(int[] dim) {
         origDim = (int[]) dim.clone();
+    }
+    
+    public void setOrigOrigin(float[] origin) {
+        origOrigin = (float[]) origin.clone();
     }
 
     /**
@@ -1320,6 +1337,7 @@ public class TalairachTransformInfo implements Serializable {
                 pw.println("PC: (" + origPC.X + ", " + origPC.Y + ", " + origPC.Z + ")");
                 pw.println("Res: (" + origRes[0] + ", " + origRes[1] + ", " + origRes[2] + ")");
                 pw.println("Dim: (" + origDim[0] + ", " + origDim[1] + ", " + origDim[2] + ")");
+                pw.println("Origin: (" + origOrigin[0] + ", " + origOrigin[1] + ", " + origOrigin[2] + ")");
                 pw.println("Orient: (" + origOrient[0][0] + ", " + origOrient[0][1] + ", " + origOrient[0][2] + ", " +
                            origOrient[1][0] + ", " + origOrient[1][1] + ", " + origOrient[1][2] + ", " +
                            origOrient[2][0] + ", " + origOrient[2][1] + ", " + origOrient[2][2] + ")");
