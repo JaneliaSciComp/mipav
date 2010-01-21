@@ -1445,6 +1445,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             tInfo.setOrigRes(scriptParameters.getParams().getList("orig_res").getAsFloatArray());
             tInfo.setOrigDim(scriptParameters.getParams().getList("orig_dim").getAsIntArray());
+            tInfo.setOrigOrigin(scriptParameters.getParams().getList("orig_origin").getAsFloatArray());
 
             final float[][] origOrient = new float[3][3];
 
@@ -1687,6 +1688,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             scriptParameters.getParams().put(ParameterFactory.newParameter("orig_res", tInfo.getOrigRes()));
             scriptParameters.getParams().put(ParameterFactory.newParameter("orig_dim", tInfo.getOrigDim()));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("orig_origin", tInfo.getOrigOrigin()));
 
             final float[][] origOrient = tInfo.getOrigOrient();
 
@@ -2873,6 +2875,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     fileInfo[i].setUnitsOfMeasure(units);
                     fileInfo[i].setResolutions(tInfo.getOrigRes());
                     fileInfo[i].setExtents(tInfo.getOrigDim());
+                    fileInfo[i].setOrigin(tInfo.getOrigOrigin());
                     fileInfo[i].setAxisOrientation(tInfo.getOrigOrientLabels());
                     fileInfo[i].setImageOrientation(tInfo.getOrigImageOrientLabel());
 
