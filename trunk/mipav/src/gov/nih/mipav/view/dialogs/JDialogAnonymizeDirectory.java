@@ -1586,9 +1586,9 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
 
                             // create a unique filename using the anonymousName (a generic name
                             // concatonated with unique integer identifier)
-                            randomNumber = (int) (Math.random() * 10000);
+                            randomNumber = (int) (Math.random() * 1000000);
                             // come up with another name, can cause permenant lock if all available choices are made
-                            // (ie., more than 10000 imags are in the directory)
+                            // (ie., more than 1000000 imags are in the directory)
                         } while (exists(randomNumber, randomSuffixList, numberOfSuffices));
 
                         randomSuffixList[numberOfSuffices] = randomNumber;
