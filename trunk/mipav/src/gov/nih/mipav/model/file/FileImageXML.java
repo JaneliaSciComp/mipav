@@ -1960,7 +1960,7 @@ public class FileImageXML extends FileXML {
 
         // if the Talairach Transform Info is not null, write it
         // into the XML header
-        if (useTal && (talairach != null)) {
+        if (talairach != null) {
 
             openTag("Talairach", true);
             closedTag("origAC", Float.toString(talairach.getOrigAC().X));
