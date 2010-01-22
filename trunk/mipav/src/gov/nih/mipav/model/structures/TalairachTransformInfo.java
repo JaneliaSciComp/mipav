@@ -991,11 +991,23 @@ public class TalairachTransformInfo implements Serializable {
                 setOrigDim(dims);
                 
                 // Origin
-                params = parseFloatParameters(br.readLine(), 3);
-                setOrigOrigin(params);
+                boolean success = true;
+                line = br.readLine();
+                try {
+                    params = parseFloatParameters(line, 3);
+                }
+                catch (NumberFormatException e) {
+                    success = false;    	
+                }
+                if (success) {
+                    setOrigOrigin(params);
 
-                // Orient
-                params = parseFloatParameters(br.readLine(), 9);
+                    // Orient
+                    params = parseFloatParameters(br.readLine(), 9);
+                }
+                else {
+                	params = parseFloatParameters(line, 9);
+                }
 
                 float[][] R = new float[3][3];
 
