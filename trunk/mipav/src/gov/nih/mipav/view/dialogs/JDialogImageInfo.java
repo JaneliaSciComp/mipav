@@ -751,7 +751,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             for (int i = 0; i < 3; i++) {
                 origDimFields[i].setText(Integer.toString(tInfo.getOrigDim()[i]));
-                origOriginFields[i].setText(Float.toString(tInfo.getOrigOrigin()[i]));
+                if (tInfo.getOrigOrigin() != null) {
+                    origOriginFields[i].setText(Float.toString(tInfo.getOrigOrigin()[i]));
+                }
                 origResFields[i].setText(Float.toString(tInfo.getOrigRes()[i]));
             }
 
