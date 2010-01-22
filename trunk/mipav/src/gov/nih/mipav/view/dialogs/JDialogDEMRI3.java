@@ -135,17 +135,6 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     
     double trMax = 10000.0;
     
-    private JLabel labelTimeBetweenFrames;
-    
-    private JTextField textTimeBetweenFrames;
-    
-    // time between frames (volumes) in seconds
-    double tf;
-    
-    double tfMin = 0.1;
-    
-    double tfMax = 30.0;
-    
     private ButtonGroup rateGroup;
     
     private JRadioButton secondButton;
@@ -486,7 +475,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
 
             // Make algorithm
 
-            demri3Algo = new AlgorithmDEMRI3(image, r1, rib, rit, r1i, theta, tr, tf, perMin, nFirst, useVe);
+            demri3Algo = new AlgorithmDEMRI3(image, r1, rib, rit, r1i, theta, tr, perMin, nFirst, useVe);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -756,27 +745,13 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         gbc.gridx = 1;
         mainPanel.add(textTimeBetweenShots, gbc);
         
-        labelTimeBetweenFrames = new JLabel("Time between frames (volumes) in seconds (0.1 - 30.0)");
-        labelTimeBetweenFrames.setForeground(Color.black);
-        labelTimeBetweenFrames.setFont(serif12);
-        gbc.gridx = 0;
-        gbc.gridy = 15;
-        mainPanel.add(labelTimeBetweenFrames, gbc);
-        
-        textTimeBetweenFrames = new JTextField(10);
-        textTimeBetweenFrames.setText("20.0");
-        textTimeBetweenFrames.setForeground(Color.black);
-        textTimeBetweenFrames.setFont(serif12);
-        gbc.gridx = 1;
-        mainPanel.add(textTimeBetweenFrames, gbc);
-        
         rateGroup = new ButtonGroup();
         secondButton = new JRadioButton("K_trans and k_ep are per second", true);
         secondButton.setFont(serif12);
         secondButton.setForeground(Color.black);
         rateGroup.add(secondButton);
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy = 15;
         mainPanel.add(secondButton, gbc);
         
         minuteButton = new JRadioButton("K_trans and k_ep are per minute", false);
@@ -784,13 +759,13 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         minuteButton.setForeground(Color.black);
         rateGroup.add(minuteButton);
         gbc.gridx = 0;
-        gbc.gridy = 17;
+        gbc.gridy = 16;
         mainPanel.add(minuteButton, gbc);
         
         labelMp = new JLabel("Draw a sagittal sinus VOI or open a VOI file");
         labelMp.setForeground(Color.black);
         labelMp.setFont(serif12);
-        gbc.gridy = 18;
+        gbc.gridy = 17;
         mainPanel.add(labelMp, gbc);
         
         buttonMpFile = new JButton("Open a sagittal sinus VOI file");
@@ -800,14 +775,14 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         buttonMpFile.setActionCommand("MpFile");
         buttonMpFile.setPreferredSize(new Dimension(145, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 19;
+        gbc.gridy = 18;
         mainPanel.add(buttonMpFile, gbc);
         
         labelNFirst = new JLabel("nfirst injection TR index of input dataset (0 - 1000)");
         labelNFirst.setForeground(Color.black);
         labelNFirst.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 20;
+        gbc.gridy = 19;
         mainPanel.add(labelNFirst, gbc);
         
         textNFirst = new JTextField(10);
@@ -823,7 +798,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         kepButton.setForeground(Color.black);
         secondParamGroup.add(kepButton);
         gbc.gridx = 0;
-        gbc.gridy = 21;
+        gbc.gridy = 20;
         mainPanel.add(kepButton, gbc);
         
         veButton = new JRadioButton("Second parameter is external celluar volume fraction (ve)", false);
@@ -831,7 +806,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         veButton.setForeground(Color.black);
         secondParamGroup.add(veButton);
         gbc.gridx = 0;
-        gbc.gridy = 22;
+        gbc.gridy = 21;
         mainPanel.add(veButton, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -1026,23 +1001,6 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
             MipavUtil.displayError("Time between shots must not exceed " + Double.toString(trMax));
             textTimeBetweenShots.requestFocus();
             textTimeBetweenShots.selectAll(); 
-            return false;
-        }
-        
-        tmpStr = textTimeBetweenFrames.getText();
-        tf = Double.parseDouble(tmpStr);
-        
-        if (tf < tfMin) {
-            MipavUtil.displayError("Time between frames (volumes) must be at least " + Double.toString(tfMin));
-            textTimeBetweenFrames.requestFocus();
-            textTimeBetweenFrames.selectAll();
-            return false;
-        }
-        
-        if (tf > tfMax) {
-            MipavUtil.displayError("Time between frames (volumes) must not exceed " + Double.toString(tfMax));
-            textTimeBetweenFrames.requestFocus();
-            textTimeBetweenFrames.selectAll(); 
             return false;
         }
         
