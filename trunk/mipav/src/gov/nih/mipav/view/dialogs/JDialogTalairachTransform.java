@@ -584,7 +584,9 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 					fileInfo[i].setUnitsOfMeasure(image.getFileInfo(0).getUnitsOfMeasure());
 					fileInfo[i].setResolutions(transform.getOrigRes());
 					fileInfo[i].setExtents(transform.getOrigDim());
-                    fileInfo[i].setOrigin(transform.getOrigOrigin());
+					if (transform.getOrigOrigin() != null) {
+                        fileInfo[i].setOrigin(transform.getOrigOrigin());
+					}
 					fileInfo[i].setAxisOrientation(transform.getOrigOrientLabels());
 					fileInfo[i].setImageOrientation(transform.getOrigImageOrientLabel());
 				}
