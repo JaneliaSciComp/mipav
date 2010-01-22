@@ -332,8 +332,8 @@
 							<xs:element name="origAC" type="xs:float" minOccurs="3" maxOccurs="3"/>
 							<xs:element name="origPC" type="xs:float" minOccurs="3" maxOccurs="3"/>
 							<xs:element name="origDim" type="xs:int" minOccurs="3" maxOccurs="3"/>
+                                          <xs:element name="origOrigin" type="xs:float" minOccurs="3" maxOccurs="3"/>
 							<xs:element name="origRes" type="xs:float" minOccurs="3" maxOccurs="3"/>
-                            <xs:element name="origOrigin" type="xs:float" minOccurs="3" maxOccurs="3"/>
 							<xs:element name="origOrient" type="xs:float" minOccurs="9" maxOccurs="9"/>
 							<xs:element name="acpcPC" type="xs:float" minOccurs="3" maxOccurs="3"/>
 							<xs:element name="acpcRes" type="xs:float"/>
