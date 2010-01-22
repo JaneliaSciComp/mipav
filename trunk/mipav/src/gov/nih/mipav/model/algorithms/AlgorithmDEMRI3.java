@@ -1,4 +1,5 @@
 package gov.nih.mipav.model.algorithms;
+import gov.nih.mipav.model.file.FileInfoBase;
 
 
 import gov.nih.mipav.model.structures.*;
@@ -17,11 +18,12 @@ import java.text.*;
  * 3 model parameters are fit for each voxel in 3D:
  * 1) K_trans in [0, 0.99]
  * 2) User choice of k_ep in [0, 0.99] or ve
- * 3) f_pv in [0, 0.99]
+ * 3) f_vp in [0, 0.99]
  * K_trans and k_ep default to rates per second, but the user changed select rates per minute.
  * srcImage is a dynamic "4D volume" of MRI signal (3D over time).
  * An optional intrinsic relaxivity map may be obtained by acquiring two acquisition scans at low and high
  * flip angles; otherwise, a single tissue relaxivity can be assumed for the whole brain.
+ 
  References:
  1.) "A Unified Magnetic Resonance Imaging Pharmacokinetic Theory: Intravascular and Extracellular Contrast
  Reagents" by Xin Li, William D. Rooney, and Charles S. Springer, Jr., Magnetic Resonance in Medicine,
@@ -87,7 +89,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
      
      */
     public AlgorithmDEMRI3(ModelImage srcImage, double r1, double rib, double rit, double r1i[], double theta,
-                           double tr, double tf, boolean perMinute, int nFirst, boolean useVe) {
+                           double tr, boolean perMinute, int nFirst, boolean useVe) {
 
         super(null, srcImage);
         this.r1 = r1;
@@ -96,7 +98,6 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         this.r1i = r1i;
         this.theta = theta;
         this.tr = tr;
-        this.tf = tf;
         this.perMinute = perMinute;
         this.nFirst = nFirst;
         this.useVe = useVe;
@@ -141,6 +142,9 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         double volume[];
         int volSize;
         int t;
+        int timeUnits;
+        double ts_array[];
+        double x_array[][];
         
         if (srcImage.getNDims() != 4) {
             MipavUtil.displayError("srcImage must be 4D");
@@ -153,6 +157,69 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         zDim = srcImage.getExtents()[2];
         tDim = srcImage.getExtents()[3];
         volSize = xDim * yDim * zDim;
+        
+        tf = srcImage.getFileInfo()[0].getResolutions()[3];
+        timeUnits = srcImage.getFileInfo()[0].getUnitsOfMeasure()[3];
+        if (!perMinute) { // perSecond
+           switch (timeUnits) {
+               case FileInfoBase.NANOSEC:
+                   tf = 1.0E-9 * tf;
+                   break;
+               case FileInfoBase.MICROSEC:
+            	   tf = 1.0E-6 * tf;
+            	   break;
+               case FileInfoBase.MILLISEC:
+            	   tf = 1.0E-3 * tf;
+            	   break;
+               case FileInfoBase.SECONDS:
+               case FileInfoBase.UNKNOWN_MEASURE:
+            	   break;
+               case FileInfoBase.MINUTES:
+            	   tf = 60.0 * tf;
+            	   break;
+               case FileInfoBase.HOURS:
+            	   tf = 3600.0 * tf;
+            	   break;
+               default:
+            	   MipavUtil.displayError("Illegal time units = " + timeUnits);
+            	   setCompleted(false);
+            	   return;
+           }
+        }
+        else { // perMinute
+        	switch (timeUnits) {
+	            case FileInfoBase.NANOSEC:
+	                tf = 1.0E-9 * tf/60.0;
+	                break;
+	            case FileInfoBase.MICROSEC:
+	         	   tf = 1.0E-6 * tf/60.0;
+	         	   break;
+	            case FileInfoBase.MILLISEC:
+	         	   tf = 1.0E-3 * tf/60.0;
+	         	   break;
+	            case FileInfoBase.SECONDS:
+	            case FileInfoBase.UNKNOWN_MEASURE:
+	               tf = tf/60.0;
+	         	   break;
+	            case FileInfoBase.MINUTES:
+	         	   break;
+	            case FileInfoBase.HOURS:
+	         	   tf = 60.0 * tf;
+	         	   break;
+	            default:
+	         	   MipavUtil.displayError("Illegal time units = " + timeUnits);
+	         	   setCompleted(false);
+	         	   return;
+            }
+        }
+        
+        ts_array = new double[tDim];
+        x_array = new double[tDim][3];
+        for (t = 0; t < tDim; t++) {
+        	x_array[t][0] = 1.0;
+        	x_array[t][1] = t * tf;
+        	x_array[t][2] = (t * tf) * (t * tf);
+        }
         
         comp = new double[tDim];
         elist = new double[tDim];
