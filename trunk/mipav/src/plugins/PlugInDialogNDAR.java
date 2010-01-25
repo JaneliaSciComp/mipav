@@ -1489,8 +1489,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 
                 Set keySet2 = labelsAndComps.keySet();
                 Iterator iter2 = keySet2.iterator();
-                while(iter.hasNext()) {
-                    JLabel l = (JLabel)iter.next();
+                while(iter2.hasNext()) {
+                    JLabel l = (JLabel)iter2.next();
                     Component comp = labelsAndComps.get(l);
                     String name = comp.getName();
                     if (name.equals(key)) {
