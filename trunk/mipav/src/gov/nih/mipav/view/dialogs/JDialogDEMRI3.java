@@ -2,11 +2,16 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmBilateralFilter;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
+import gov.nih.mipav.view.components.JPanelSigmas;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -25,7 +30,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input for 3 parameter dynamic (contrast) enhanced MRI model or DEMRI model
  */
-public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, ItemListener, WindowListener {
+public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInterface, ItemListener, WindowListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -34,13 +39,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
-    private JLabel labelParamsToFit1;
-    
-    private JLabel labelParamsToFit2;
-    
-    private JLabel labelParamsToFit3;
-    
-    private JLabel labelParamsToFit4;
+    private JLabel labelParamsToFit;
 
     /** DOCUMENT ME! */
     private JLabel labelContrastRelaxivityRate;
@@ -68,6 +67,8 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     double ribMax = 10000.0;
     
     private ButtonGroup tissueGroup;
+    
+    private boolean useConstantTissue;
     
     private JRadioButton constantTissueRadioButton;
     
@@ -189,7 +190,36 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     private AlgorithmDEMRI3 demri3Algo = null;
 
     /** DOCUMENT ME! */
-    private ModelImage image; // prebleached image
+    private ModelImage image;
+    
+    private ModelImage resultImage;
+    
+    private JLabel labelMinConstr0;
+    
+    private JTextField textMinConstr0;
+    
+    private JLabel labelMaxConstr0;
+    
+    private JTextField textMaxConstr0;
+    
+    private JLabel labelMinConstr1;
+    
+    private JTextField textMinConstr1;
+    
+    private JLabel labelMaxConstr1;
+    
+    private JTextField textMaxConstr1;
+    
+    private JLabel labelMinConstr2;
+    
+    private JTextField textMinConstr2;
+    
+    private JLabel labelMaxConstr2;
+    
+    private JTextField textMaxConstr2;
+    
+    private double min_constr[] = new double[3];
+    private double max_constr[] = new double[3];
 
     
     /** DOCUMENT ME! */
@@ -357,13 +387,13 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
 
                 chooser.setDialogTitle("Open sagittal sinus VOI file");
-                directoryMp = String.valueOf(chooser.getCurrentDirectory());
+                directoryMp = String.valueOf(chooser.getCurrentDirectory()) + File.separator;
 
                 int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     fileNameMp = chooser.getSelectedFile().getName();
-                    directoryMp = String.valueOf(chooser.getCurrentDirectory());
+                    directoryMp = String.valueOf(chooser.getCurrentDirectory()) + File.separator;
                     UI.setDefaultDirectory(directoryMp);
                 } else {
                     fileNameMp = null;
@@ -424,11 +454,162 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+    	if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
+            saveDefaults();
+        }
 
+        if (algorithm instanceof AlgorithmDEMRI3) {
+            Preferences.debug("DEMRI3 elapsed: " + algorithm.getElapsedTime());
+            image.clearMask();
 
-        if (demri3Algo.isCompleted() == true) { }
+            if ((demri3Algo.isCompleted() == true) && (resultImage != null)) {
 
-        dispose();
+                resultImage.clearMask();
+
+                try {
+                	openNewFrame(resultImage);
+                 //   openNewFrame(resultImage);
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+                System.gc();
+
+            }
+
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
+        }
+    }
+    
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void saveDefaults() {
+        String delim = ",";
+        String defaultsString = min_constr[0] + delim;
+        defaultsString += max_constr[0] + delim;
+        defaultsString += min_constr[1] + delim;
+        defaultsString += max_constr[1] + delim;
+        defaultsString += min_constr[2] + delim;
+        defaultsString += max_constr[2] + delim;
+        defaultsString += r1 + delim;
+        defaultsString += rib + delim;
+        defaultsString += rit + delim;
+        defaultsString += theta + delim;
+        defaultsString += tr + delim;
+        defaultsString += perMin + delim;
+        defaultsString += nFirst + delim;
+        defaultsString += useVe;
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
+    }
+    
+    /**
+     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        UI = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        
+        min_constr[0] = scriptParameters.getParams().getDouble("min_constr0");
+        textMinConstr0.setText(String.valueOf(min_constr[0]));
+        max_constr[0] = scriptParameters.getParams().getDouble("max_constr0");
+        textMaxConstr0.setText(String.valueOf(max_constr[0]));
+        min_constr[1] = scriptParameters.getParams().getDouble("min_constr1");
+        textMinConstr1.setText(String.valueOf(min_constr[1]));
+        max_constr[1] = scriptParameters.getParams().getDouble("max_constr1");
+        textMaxConstr1.setText(String.valueOf(max_constr[1]));
+        min_constr[2] = scriptParameters.getParams().getDouble("min_constr2");
+        textMinConstr2.setText(String.valueOf(min_constr[2]));
+        max_constr[2] = scriptParameters.getParams().getDouble("max_constr2");
+        textMaxConstr2.setText(String.valueOf(max_constr[2]));
+        r1 = scriptParameters.getParams().getDouble("r1_");
+        textContrastRelaxivityRate.setText(String.valueOf(r1));
+        rib = scriptParameters.getParams().getDouble("rib_");
+        textBloodIntrinsicRelaxivityRate.setText(String.valueOf(1.0/rib));
+        useConstantTissue = scriptParameters.getParams().getBoolean("use_constant_tissue");
+        constantTissueRadioButton.setSelected(useConstantTissue);
+        fileTissueRadioButton.setSelected(!useConstantTissue);
+        buttonLowFlipFile.setEnabled(fileTissueRadioButton.isSelected());
+        textLowFlipFile.setEnabled(fileTissueRadioButton.isSelected());
+        buttonHighFlipFile.setEnabled(fileTissueRadioButton.isSelected());
+        textHighFlipFile.setEnabled(fileTissueRadioButton.isSelected());
+        labelTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
+        labelTissueIntrinsicRelaxivityRate2.setEnabled(constantTissueRadioButton.isSelected());
+        textTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
+        if (useConstantTissue) {
+            rit = scriptParameters.getParams().getDouble("rit_");
+            textTissueIntrinsicRelaxivityRate.setText(String.valueOf(1.0/rit));
+        }
+        else {
+        	lowFlipImage = scriptParameters.retrieveImage("low_flip_image");
+        	textLowFlipFile.setText(lowFlipImage.getImageName());
+            highFlipImage = scriptParameters.retrieveImage("high_flip_image");
+            textHighFlipFile.setText(highFlipImage.getImageName());
+        }
+        theta = scriptParameters.getParams().getDouble("theta_");
+        textFlipAngle.setText(String.valueOf(theta));
+        tr = scriptParameters.getParams().getDouble("tr_");
+        textTimeBetweenShots.setText(String.valueOf(tr));
+        perMin = scriptParameters.getParams().getBoolean("per_min");
+        secondButton.setSelected(!perMin);
+        minuteButton.setSelected(perMin);
+        nFirst = scriptParameters.getParams().getInt("n_first");
+        textNFirst.setText(String.valueOf(nFirst));
+        useVe = scriptParameters.getParams().getBoolean("use_ve");
+        kepButton.setSelected(!useVe);
+        veButton.setSelected(useVe);
+    }
+
+    /**
+     * Store the parameters from the dialog to record the execution of this algorithm.
+     *
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr0", min_constr[0]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr0", max_constr[0]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr1", min_constr[1]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr1", max_constr[1]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr2", min_constr[2]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr2", max_constr[2]));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("r1_", r1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_constant_tissue", useConstantTissue));
+        if (useConstantTissue) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("rit_", rit));
+        }
+        else {
+        	try {
+        	    scriptParameters.storeImage(lowFlipImage, "low_flip_image");
+        	}
+        	catch (ParserException e) {
+        		MipavUtil.displayError("Parser exception on scriptParameters.storeImage(lowFlipImage");
+        		return;
+        	}
+        	try {
+                scriptParameters.storeImage(highFlipImage, "high_flip_image");
+        	}
+        	catch (ParserException e) {
+        		MipavUtil.displayError("Parser exception on scriptParameters.storeImage(highFlipImage");
+        		return;
+        	}
+        }
+        scriptParameters.getParams().put(ParameterFactory.newParameter("theta_", theta));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("tr_", tr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("per_min", perMin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("n_first", nFirst));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_ve", useVe));
     }
 
     // ************************* Item Events ****************************
@@ -445,6 +626,8 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         if ((source == constantTissueRadioButton) || (source == fileTissueRadioButton)) {
             buttonLowFlipFile.setEnabled(fileTissueRadioButton.isSelected());
             textLowFlipFile.setEnabled(fileTissueRadioButton.isSelected());
+            buttonHighFlipFile.setEnabled(fileTissueRadioButton.isSelected());
+            textHighFlipFile.setEnabled(fileTissueRadioButton.isSelected());
             labelTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
             labelTissueIntrinsicRelaxivityRate2.setEnabled(constantTissueRadioButton.isSelected());
             textTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
@@ -470,12 +653,18 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
      * DOCUMENT ME!
      */
     protected void callAlgorithm() {
-
+        int i;
         try {
 
             // Make algorithm
-
-            demri3Algo = new AlgorithmDEMRI3(image, r1, rib, rit, r1i, theta, tr, perMin, nFirst, useVe);
+            int resultExtents[] = new int[4];
+            for (i = 0; i < 3; i++) {
+            	resultExtents[i] = image.getExtents()[i];
+            }
+            resultExtents[3] = 3;
+            resultImage = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_params");
+            demri3Algo = new AlgorithmDEMRI3(resultImage, image, min_constr, max_constr, r1,
+            		                         rib, rit, lowFlipImage, highFlipImage, theta, tr, perMin, nFirst, useVe);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -577,33 +766,99 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         gbc.gridy = 0;
         gbc.gridx = 0;
         
-        labelParamsToFit1 = new JLabel("3 model parameters to fit for each voxel in 3D:");
-        labelParamsToFit1.setForeground(Color.black);
-        labelParamsToFit1.setFont(serif12);
-        mainPanel.add(labelParamsToFit1, gbc);
+        labelParamsToFit = new JLabel("3 model parameters to fit for each voxel in 3D:");
+        labelParamsToFit.setForeground(Color.black);
+        labelParamsToFit.setFont(serif12);
+        mainPanel.add(labelParamsToFit, gbc);
         
-        labelParamsToFit2 = new JLabel("K_trans (plasma Gd -> tissue Gd) in [0, 0.99]");
-        labelParamsToFit2.setForeground(Color.black);
-        labelParamsToFit2.setFont(serif12);
+        labelMinConstr0 = new JLabel("K_trans minimum allowed value (0 - 0.99)");
+        labelMinConstr0.setForeground(Color.black);
+        labelMinConstr0.setFont(serif12);
         gbc.gridy = 1;
-        mainPanel.add(labelParamsToFit2, gbc);
+        mainPanel.add(labelMinConstr0, gbc);
         
-        labelParamsToFit3 = new JLabel("k_ep in [0, 0.99] or ve");
-        labelParamsToFit3.setForeground(Color.black);
-        labelParamsToFit3.setFont(serif12);
+        textMinConstr0 = new JTextField(10);
+        textMinConstr0.setText("0.0");
+        textMinConstr0.setForeground(Color.black);
+        textMinConstr0.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textMinConstr0, gbc);
+        
+        labelMaxConstr0 = new JLabel("K_trans maximum allowed value (0 - 0.99)");
+        labelMaxConstr0.setForeground(Color.black);
+        labelMaxConstr0.setFont(serif12);
+        gbc.gridx = 0;
         gbc.gridy = 2;
-        mainPanel.add(labelParamsToFit3, gbc);
+        mainPanel.add(labelMaxConstr0, gbc);
         
-        labelParamsToFit4 = new JLabel("f_vp in [0, 0.99]");
-        labelParamsToFit4.setForeground(Color.black);
-        labelParamsToFit4.setFont(serif12);
+        textMaxConstr0 = new JTextField(10);
+        textMaxConstr0.setText("0.99");
+        textMaxConstr0.setForeground(Color.black);
+        textMaxConstr0.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textMaxConstr0, gbc);
+        
+        labelMinConstr1 = new JLabel("k_ep or ve minimum allowed value (0 - 0.99)");
+        labelMinConstr1.setForeground(Color.black);
+        labelMinConstr1.setFont(serif12);
+        gbc.gridx = 0;
         gbc.gridy = 3;
-        mainPanel.add(labelParamsToFit4, gbc);
+        mainPanel.add(labelMinConstr1, gbc);
+        
+        textMinConstr1 = new JTextField(10);
+        textMinConstr1.setText("0.0");
+        textMinConstr1.setForeground(Color.black);
+        textMinConstr1.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textMinConstr1, gbc);
+        
+        labelMaxConstr1 = new JLabel("k_ep or ve maximum allowed value (0 - 0.99)");
+        labelMaxConstr1.setForeground(Color.black);
+        labelMaxConstr1.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        mainPanel.add(labelMaxConstr1, gbc);
+        
+        textMaxConstr1 = new JTextField(10);
+        textMaxConstr1.setText("0.99");
+        textMaxConstr1.setForeground(Color.black);
+        textMaxConstr1.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textMaxConstr1, gbc);
+        
+        labelMinConstr2 = new JLabel("f_vp minimum allowed value (0 - 0.99)");
+        labelMinConstr2.setForeground(Color.black);
+        labelMinConstr2.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        mainPanel.add(labelMinConstr2, gbc);
+        
+        textMinConstr2 = new JTextField(10);
+        textMinConstr2.setText("0.0");
+        textMinConstr2.setForeground(Color.black);
+        textMinConstr2.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textMinConstr2, gbc);
+        
+        labelMaxConstr2 = new JLabel("f_vp maximum allowed value (0 - 0.99)");
+        labelMaxConstr2.setForeground(Color.black);
+        labelMaxConstr2.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        mainPanel.add(labelMaxConstr2, gbc);
+        
+        textMaxConstr2 = new JTextField(10);
+        textMaxConstr2.setText("0.99");
+        textMaxConstr2.setForeground(Color.black);
+        textMaxConstr2.setFont(serif12);
+        gbc.gridx = 1;
+        mainPanel.add(textMaxConstr2, gbc);
         
         labelContrastRelaxivityRate = new JLabel("Contrast relaxivity rate in 1/(mMol*sec) (0.0 - 1000.0)");
         labelContrastRelaxivityRate.setForeground(Color.black);
         labelContrastRelaxivityRate.setFont(serif12);
-        gbc.gridy = 4;
+        gbc.gridx = 0;
+        gbc.gridy = 7;
         mainPanel.add(labelContrastRelaxivityRate, gbc);
         
         textContrastRelaxivityRate = new JTextField(10);
@@ -617,7 +872,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelBloodIntrinsicRelaxivityRate.setForeground(Color.black);
         labelBloodIntrinsicRelaxivityRate.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 8;
         mainPanel.add(labelBloodIntrinsicRelaxivityRate, gbc);
         
         textBloodIntrinsicRelaxivityRate = new JTextField(10);
@@ -632,7 +887,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelBloodIntrinsicRelaxivityRate2.setForeground(Color.black);
         labelBloodIntrinsicRelaxivityRate2.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 9;
         gbc.gridheight = 1;
         mainPanel.add(labelBloodIntrinsicRelaxivityRate2, gbc);
         
@@ -640,19 +895,19 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         constantTissueRadioButton = new JRadioButton("Constant tissue intrinsic relaxivity rate", true);
         constantTissueRadioButton.setFont(serif12);
         constantTissueRadioButton.setForeground(Color.black);
-        constantTissueRadioButton.addActionListener(this);
+        constantTissueRadioButton.addItemListener(this);
         tissueGroup.add(constantTissueRadioButton);
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 10;
         mainPanel.add(constantTissueRadioButton, gbc);
         
         fileTissueRadioButton = new JRadioButton("File specified tissue intrinsic relaxivity rate", false);
         fileTissueRadioButton.setFont(serif12);
         fileTissueRadioButton.setForeground(Color.black);
-        fileTissueRadioButton.addActionListener(this);
+        fileTissueRadioButton.addItemListener(this);
         tissueGroup.add(fileTissueRadioButton);
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 11;
         mainPanel.add(fileTissueRadioButton, gbc);
         
         labelTissueIntrinsicRelaxivityRate = new JLabel("Tissue intrinsic relaxivity rate in 1/(mMol * sec)");
@@ -660,7 +915,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelTissueIntrinsicRelaxivityRate.setFont(serif12);
         labelTissueIntrinsicRelaxivityRate.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 12;
         mainPanel.add(labelTissueIntrinsicRelaxivityRate, gbc);
         
         textTissueIntrinsicRelaxivityRate = new JTextField(10);
@@ -677,7 +932,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelTissueIntrinsicRelaxivityRate2.setFont(serif12);
         labelTissueIntrinsicRelaxivityRate2.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 13;
         gbc.gridheight = 1;
         mainPanel.add(labelTissueIntrinsicRelaxivityRate2, gbc);
         
@@ -689,7 +944,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         buttonLowFlipFile.setActionCommand("LowFlipFile");
         buttonLowFlipFile.setPreferredSize(new Dimension(145, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 11;
+        gbc.gridy = 14;
         mainPanel.add(buttonLowFlipFile, gbc);
 
         textLowFlipFile = new JTextField();
@@ -707,7 +962,8 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         buttonHighFlipFile.setActionCommand("HighFlipFile");
         buttonHighFlipFile.setPreferredSize(new Dimension(145, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 12;
+        gbc.gridx = 0;
+        gbc.gridy = 15;
         mainPanel.add(buttonHighFlipFile, gbc);
 
         textHighFlipFile = new JTextField();
@@ -721,7 +977,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelFlipAngle.setForeground(Color.black);
         labelFlipAngle.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy = 16;
         mainPanel.add(labelFlipAngle, gbc);
         
         textFlipAngle = new JTextField(10);
@@ -735,7 +991,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         labelTimeBetweenShots.setForeground(Color.black);
         labelTimeBetweenShots.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy = 17;
         mainPanel.add(labelTimeBetweenShots, gbc);
         
         textTimeBetweenShots = new JTextField(10);
@@ -751,7 +1007,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         secondButton.setForeground(Color.black);
         rateGroup.add(secondButton);
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy = 18;
         mainPanel.add(secondButton, gbc);
         
         minuteButton = new JRadioButton("K_trans and k_ep are per minute", false);
@@ -759,13 +1015,13 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         minuteButton.setForeground(Color.black);
         rateGroup.add(minuteButton);
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy = 19;
         mainPanel.add(minuteButton, gbc);
         
         labelMp = new JLabel("Draw a sagittal sinus VOI or open a VOI file");
         labelMp.setForeground(Color.black);
         labelMp.setFont(serif12);
-        gbc.gridy = 17;
+        gbc.gridy = 20;
         mainPanel.add(labelMp, gbc);
         
         buttonMpFile = new JButton("Open a sagittal sinus VOI file");
@@ -775,14 +1031,14 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         buttonMpFile.setActionCommand("MpFile");
         buttonMpFile.setPreferredSize(new Dimension(145, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 18;
+        gbc.gridy = 21;
         mainPanel.add(buttonMpFile, gbc);
         
         labelNFirst = new JLabel("nfirst injection TR index of input dataset (0 - 1000)");
         labelNFirst.setForeground(Color.black);
         labelNFirst.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 19;
+        gbc.gridy = 22;
         mainPanel.add(labelNFirst, gbc);
         
         textNFirst = new JTextField(10);
@@ -798,7 +1054,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         kepButton.setForeground(Color.black);
         secondParamGroup.add(kepButton);
         gbc.gridx = 0;
-        gbc.gridy = 20;
+        gbc.gridy = 23;
         mainPanel.add(kepButton, gbc);
         
         veButton = new JRadioButton("Second parameter is external celluar volume fraction (ve)", false);
@@ -806,7 +1062,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
         veButton.setForeground(Color.black);
         secondParamGroup.add(veButton);
         gbc.gridx = 0;
-        gbc.gridy = 21;
+        gbc.gridy = 24;
         mainPanel.add(veButton, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -824,6 +1080,84 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
     private boolean setVariables() {
         String tmpStr;
         BufferedReader br = null;
+        
+        tmpStr = textMinConstr0.getText();
+        min_constr[0] = Double.parseDouble(tmpStr);
+        
+        if (min_constr[0] < 0.0) {
+        	MipavUtil.displayError("Minimum K_trans must be at least 0.0");
+        	textMinConstr0.requestFocus();
+        	textMinConstr0.selectAll();
+        	return false;
+        }
+        
+        tmpStr = textMaxConstr0.getText();
+        max_constr[0] = Double.parseDouble(tmpStr);
+        
+        if (max_constr[0] < min_constr[0]) {
+        	MipavUtil.displayError("Maximum K_trans must be at least " + min_constr[0]);
+        	textMaxConstr0.requestFocus();
+        	textMaxConstr0.selectAll();
+        	return false;
+        }
+        else if (max_constr[0] > 0.99) {
+        	MipavUtil.displayError("Maximum K_trans must not exceed 0.99");
+        	textMaxConstr0.requestFocus();
+        	textMaxConstr0.selectAll();
+        	return false;	
+        }
+        
+        tmpStr = textMinConstr1.getText();
+        min_constr[1] = Double.parseDouble(tmpStr);
+        
+        if (min_constr[1] < 0.0) {
+        	MipavUtil.displayError("Minimum k_ep or ve must be at least 0.0");
+        	textMinConstr1.requestFocus();
+        	textMinConstr1.selectAll();
+        	return false;
+        }
+        
+        tmpStr = textMaxConstr1.getText();
+        max_constr[1] = Double.parseDouble(tmpStr);
+        
+        if (max_constr[1] < min_constr[1]) {
+        	MipavUtil.displayError("Maximum k_ep or ve must be at least " + min_constr[1]);
+        	textMaxConstr1.requestFocus();
+        	textMaxConstr1.selectAll();
+        	return false;
+        }
+        else if (max_constr[1] > 0.99) {
+        	MipavUtil.displayError("Maximum k_ep or ve must not exceed 0.99");
+        	textMaxConstr1.requestFocus();
+        	textMaxConstr1.selectAll();
+        	return false;	
+        }
+        
+        tmpStr = textMinConstr2.getText();
+        min_constr[2] = Double.parseDouble(tmpStr);
+        
+        if (min_constr[2] < 0.0) {
+        	MipavUtil.displayError("Minimum f_vp must be at least 0.0");
+        	textMinConstr2.requestFocus();
+        	textMinConstr2.selectAll();
+        	return false;
+        }
+        
+        tmpStr = textMaxConstr2.getText();
+        max_constr[2] = Double.parseDouble(tmpStr);
+        
+        if (max_constr[2] < min_constr[2]) {
+        	MipavUtil.displayError("Maximum f_vp must be at least " + min_constr[2]);
+        	textMaxConstr2.requestFocus();
+        	textMaxConstr2.selectAll();
+        	return false;
+        }
+        else if (max_constr[2] > 0.99) {
+        	MipavUtil.displayError("Maximum f_vp must not exceed 0.99");
+        	textMaxConstr2.requestFocus();
+        	textMaxConstr2.selectAll();
+        	return false;	
+        }
         
         tmpStr = textContrastRelaxivityRate.getText();
         r1 = Double.parseDouble(tmpStr);
@@ -904,7 +1238,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
                         return false;
                     }
                 }
-                int length = lowFlipImage.getExtents()[0];
+                /*int length = lowFlipImage.getExtents()[0];
                 for (int i = 1; i < lowFlipImage.getNDims(); i++) {
                     length *= lowFlipImage.getExtents()[i];
                 }
@@ -917,7 +1251,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
                     return false;
                 }
                 lowFlipImage.disposeLocal();
-                lowFlipImage = null;
+                lowFlipImage = null;*/
 
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory in JDialogDEMRI3");
@@ -948,7 +1282,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
                         return false;
                     }
                 }
-                int length = highFlipImage.getExtents()[0];
+                /*int length = highFlipImage.getExtents()[0];
                 for (int i = 1; i < highFlipImage.getNDims(); i++) {
                     length *= highFlipImage.getExtents()[i];
                 }
@@ -961,7 +1295,7 @@ public class JDialogDEMRI3 extends JDialogBase implements AlgorithmInterface, It
                     return false;
                 }
                 highFlipImage.disposeLocal();
-                highFlipImage = null;
+                highFlipImage = null;*/
 
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory in JDialogDEMRI3");
