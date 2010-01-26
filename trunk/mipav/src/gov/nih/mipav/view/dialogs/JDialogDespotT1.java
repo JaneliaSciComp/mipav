@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Frame;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,6 +26,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmDespotT1;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterList;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -93,8 +95,19 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 
     private AlgorithmDespotT1 cAlgo;
     
-    public JDialogDespotT1() {
-        System.out.println("Here");
+    /**
+     * Empty constructor needed for dynamic instantiation.
+     */
+    public JDialogDespotT1() { }
+
+    /**
+     * Construct the barrel/pin cushion correction dialog.
+     *
+     * @param  theParentFrame  Parent frame.
+     * @param  im              Source image.
+     */
+    public JDialogDespotT1(Frame theParentFrame, ModelImage im) {
+        super(theParentFrame, false);
         run();
     }
     
@@ -103,6 +116,10 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             Preferences.debug("DespotT1: " + algorithm.getElapsedTime());
         } 
 
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+        
         if (cAlgo != null) {
             cAlgo.finalize();
             cAlgo = null;
@@ -259,19 +276,44 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         irspgrFA = scriptParameters.getParams().getDouble("irspgr_FA");
         maxT1 = scriptParameters.getParams().getDouble("max_T1");
         maxMo = scriptParameters.getParams().getDouble("max_Mo");
-        despotFA = null;//scriptParameters.getParams().getList("despot_FA");
-        irspgrTr = null;//scriptParameters.getParams().getList("despot_FA");
-        irspgrTI = null;//scriptParameters.getParams().getList("despot_FA");
-        spgrData = null;//scriptParameters.getParams().getList("despot_FA");;
-        irspgrData = null;//scriptParameters.getParams().getList("despot_FA");
+        //double[], note all non-string arrays are stored as parameter lists
+        if(scriptParameters.getParams().containsParameter("despot_FA")) {
+            despotFA = scriptParameters.getParams().getList("despot_FA").getAsDoubleArray();
+        }
+        if(scriptParameters.getParams().containsParameter("irspgr_Tr")) {
+            irspgrTr = scriptParameters.getParams().getList("irspgr_Tr").getAsDoubleArray();
+        }
+        if(scriptParameters.getParams().containsParameter("irspgr_TI")) {
+            irspgrTI = scriptParameters.getParams().getList("irspgr_TI").getAsDoubleArray();
+        }
+        if(scriptParameters.getParams().containsParameter("spgr_Data")) {
+            spgrData = scriptParameters.getParams().getList("spgr_Data").getAsDoubleArray();
+        }
+        if(scriptParameters.getParams().containsParameter("irspgr_Data")) {
+            irspgrData = scriptParameters.getParams().getList("irspgr_Data").getAsDoubleArray();
+        }
+            
         scale = scriptParameters.getParams().getDouble("scale");
         pointScale = scriptParameters.getParams().getDouble("point_Scale");
         scaleIncrement = scriptParameters.getParams().getDouble("scale_Increment");
-        estimates = null;//scriptParameters.getParams().getList("despot_FA");
-        residuals = null;//scriptParameters.getParams().getList("despot_FA");
-        direction = null;//scriptParameters.getParams().getList("despot_FA");
-        spgrImageIndex = null;//scriptParameters.getParams().getList("despot_FA");
-        irspgrImageIndex = null;//scriptParameters.getParams().getList("despot_FA");
+        //double[]
+        if(scriptParameters.getParams().containsParameter("estimates")) {
+            estimates = scriptParameters.getParams().getList("estimates").getAsDoubleArray();
+        }
+        if(scriptParameters.getParams().containsParameter("residuals")) {
+            residuals = scriptParameters.getParams().getList("residuals").getAsDoubleArray();
+        }
+        //int[]
+        if(scriptParameters.getParams().containsParameter("direction")) {
+            direction = scriptParameters.getParams().getList("direction").getAsIntArray();
+        }
+        if(scriptParameters.getParams().containsParameter("spgr_Image_Index")) {
+            spgrImageIndex = scriptParameters.getParams().getList("spgr_Image_Index").getAsIntArray();
+        }
+        if(scriptParameters.getParams().containsParameter("irspgr_Image_Index")) {
+            irspgrImageIndex = scriptParameters.getParams().getList("irspgr_Image_Index").getAsIntArray();
+        }
+        
         b1ImageIndex = scriptParameters.getParams().getInt("b1_Image_Index");
         angleIncrement = scriptParameters.getParams().getDouble("angle_Increment");
         Nsa = scriptParameters.getParams().getInt("Nsa");
@@ -301,8 +343,31 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         useHardThresholding = scriptParameters.getParams().getBoolean("use_Hard_Thresholding");
         noiseScale = scriptParameters.getParams().getFloat("noise_Scale");
         hardNoiseThreshold = scriptParameters.getParams().getFloat("hard_Noise_Threshold");
-        wList = null;//scriptParameters.getParams().getList("despot_FA");
-        titles = null;//scriptParameters.getParams().getList("despot_FA");
+        
+        //String[], note is a difficult case for storeParams
+        ArrayList<String> wListArr = new ArrayList<String>();
+        
+        int count = 0;
+        String lastString = new String();
+        
+        while(scriptParameters.getParams().containsParameter("w_List_"+count)) {
+           lastString = scriptParameters.getParams().getString("w_List_"+count++);
+           wListArr.add(lastString);
+        }
+        
+        wList = wListArr.toArray(new String[0]);
+       
+        ArrayList<String> titlesArr = new ArrayList<String>();
+        
+        count = 0;
+        lastString = new String();
+        
+        while(scriptParameters.getParams().containsParameter("titles_"+count)) {
+            lastString = scriptParameters.getParams().getString("titles_"+count++);
+            titlesArr.add(lastString);
+        }
+        
+        titles = titlesArr.toArray(new String[0]);
         
     }
 
@@ -312,20 +377,45 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Ky", irspgrKy)); 
         scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_FA", irspgrFA));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_T1", maxT1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_Mo", maxMo)); 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("despot_FA", despotFA));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Tr", irspgrTr));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_TI", irspgrTI));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("spgr_Data", spgrData));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Data", irspgrData));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_Mo", maxMo));
+        //double[], note all non-string arrays are stored as parameter lists
+        if(despotFA != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("despot_FA", despotFA));
+        }
+        if(irspgrTr != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Tr", irspgrTr));
+        }
+        if(irspgrTI != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_TI", irspgrTI));
+        }
+        if(spgrData != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("spgr_Data", spgrData));
+        }
+        if(irspgrData != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Data", irspgrData));
+        }
+        
         scriptParameters.getParams().put(ParameterFactory.newParameter("scale", scale));
         scriptParameters.getParams().put(ParameterFactory.newParameter("point_Scale", pointScale));
         scriptParameters.getParams().put(ParameterFactory.newParameter("scale_Increment", scaleIncrement));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("estimates", estimates));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("residuals", residuals));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("direction", direction));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("spgr_Image_Index", spgrImageIndex));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Image_Index", irspgrImageIndex));
+        //double[]
+        if(estimates != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("estimates", estimates));
+        }
+        if(residuals != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("residuals", residuals));
+        }
+        //int[]
+        if(direction != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("direction", direction));
+        }
+        if(spgrImageIndex != null) {   
+            scriptParameters.getParams().put(ParameterFactory.newParameter("spgr_Image_Index", spgrImageIndex));
+        }
+        if(irspgrImageIndex != null) {   
+            scriptParameters.getParams().put(ParameterFactory.newParameter("irspgr_Image_Index", irspgrImageIndex));
+        }
+        
         scriptParameters.getParams().put(ParameterFactory.newParameter("b1_Image_Index", b1ImageIndex));
         scriptParameters.getParams().put(ParameterFactory.newParameter("angle_Increment", angleIncrement));
         scriptParameters.getParams().put(ParameterFactory.newParameter("Nsa", Nsa));
@@ -355,8 +445,17 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         scriptParameters.getParams().put(ParameterFactory.newParameter("use_Hard_Thresholding", useHardThresholding));
         scriptParameters.getParams().put(ParameterFactory.newParameter("noise_Scale", noiseScale));
         scriptParameters.getParams().put(ParameterFactory.newParameter("hard_Noise_Threshold", hardNoiseThreshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("w_List", wList));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("titles", titles));
+        //String[], need to be stored individually
+        if(wList != null) {
+            for(int i=0; i<wList.length; i++) {
+                scriptParameters.getParams().put(ParameterFactory.newParameter("w_List_"+i, wList[i]));
+            }
+        }
+        if(titles != null) {
+            for(int i=0; i<titles.length; i++) {
+                scriptParameters.getParams().put(ParameterFactory.newParameter("titles_"+i, titles[i]));
+            }
+        }
     }
 
     public boolean showOpeningDialog() {

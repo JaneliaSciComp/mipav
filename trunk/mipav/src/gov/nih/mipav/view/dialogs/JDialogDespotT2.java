@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Frame;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -84,7 +85,19 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     
     private AlgorithmDespotT2 cAlgo;
 
-    public JDialogDespotT2() {
+    /**
+     * Empty constructor needed for dynamic instantiation.
+     */
+    public JDialogDespotT2() { }
+
+    /**
+     * Construct the barrel/pin cushion correction dialog.
+     *
+     * @param  theParentFrame  Parent frame.
+     * @param  im              Source image.
+     */
+    public JDialogDespotT2(Frame theParentFrame, ModelImage im) {
+        super(theParentFrame, false);
         run();
     }
     
@@ -92,6 +105,10 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         if (algorithm instanceof AlgorithmDespotT2) {
             Preferences.debug("DespotT2: " + algorithm.getElapsedTime());
         } 
+        
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (cAlgo != null) {
             cAlgo.finalize();
