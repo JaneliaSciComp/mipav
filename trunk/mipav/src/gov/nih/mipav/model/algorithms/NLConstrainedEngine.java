@@ -623,6 +623,59 @@ public abstract class NLConstrainedEngine {
             covarMat = new double[nPts][covar2];
         } catch (OutOfMemoryError error) { }
     }
+    
+    /**
+     * NLConstrainedEngine - non-linear fit to a function.
+     *
+     * @param  nPts     number of points to fit to the function to
+     * @param  param    number of parameters of function
+     * @param  xSeries  DOCUMENT ME!
+     * @param  yData    DOCUMENT ME!
+     */
+    public NLConstrainedEngine(int nPts, int param, double[] xSeries, double[] yData) {
+
+        try {
+            this.nPts = nPts;
+            this.param = param;
+            this.xSeries = xSeries;
+            ySeries = new double[nPts];
+
+            for (int i = 0; i < nPts; i++) {
+                ySeries[i] = yData[i];
+            }
+
+            maxIterations = 20 * param;
+            bl = new double[param];
+            bu = new double[param];
+            residuals = new double[nPts];
+            pivit = new int[param];
+            aset = new int[param];
+            dx = new double[param];
+            g = new double[param];
+            w0 = new double[param];
+            w1 = new double[nPts];
+            w2 = new double[nPts];
+            w3 = new double[param];
+            v = new double[nPts];
+            gmat = new double[param][param];
+
+            // compute srelpr single relative precision
+            releps();
+            rootsp = Math.sqrt(srelpr);
+
+            mdg = param;
+            tolerance = rootsp;
+            relativeConvergence = 10.0 * rootsp;
+            absoluteConvergence = srelpr;
+            parameterConvergence = 10.0 * rootsp;
+
+            a = new double[param];
+            gues = new double[param];
+
+            int covar2 = Math.max(4, param);
+            covarMat = new double[nPts][covar2];
+        } catch (OutOfMemoryError error) { }
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
