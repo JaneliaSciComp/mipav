@@ -375,8 +375,10 @@ public class FileBRUKER extends FileBase {
         String lineString = null;
         String[] parseString;
 
-        float[] fov;
+        float[] fov = null;
+        int[] recoSize = null;
         int i;
+        float temp;
 
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
@@ -417,6 +419,11 @@ public class FileBRUKER extends FileBase {
                 lineString = readLine();
                 parseString = parse(lineString);
                 fileInfo.setRecoSize(parseString.length);
+                
+                recoSize = new int[parseString.length];
+                for (i = 0; i < parseString.length; i++) {
+                	recoSize[i] = Integer.valueOf(parseString[i]).intValue();
+                }
             } else if (parseString[0].equalsIgnoreCase("##$RECO_fov")) {
                 lineString = readLine();
                 parseString = parse(lineString);
@@ -424,11 +431,9 @@ public class FileBRUKER extends FileBase {
 
                 for (i = 0; i < parseString.length; i++) {
                     fov[i] = Float.valueOf(parseString[i]).floatValue();
-                    imgResols[i] = fov[i] * 10.0f / fileInfo.getExtents()[i];
                     fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, i);
                 }
 
-                fileInfo.setResolutions(imgResols);
 
                 if (parseString.length > 2) {
                     fileInfo.setHaveZResol(true);
@@ -437,6 +442,19 @@ public class FileBRUKER extends FileBase {
 
             lineString = readLine();
         } // while (lineString != null)
+        
+        if (fov != null) {
+        	if ((recoSize != null) && (fov.length >= 2) && (recoSize.length >= 2) && (recoSize[0] == fileInfo.getExtents()[1]) && 
+        	    (recoSize[1] == fileInfo.getExtents()[0])) {
+        		  temp = fov[0];
+        		  fov[0] = fov[1];
+        		  fov[1] = temp;
+        	}
+        	for (i = 0; i < fov.length; i++) {
+        		imgResols[i] = fov[i] * 10.0f / fileInfo.getExtents()[i];
+        	}
+        	fileInfo.setResolutions(imgResols);
+        } // if (fov != null)
 
         raFile.close();
     }
