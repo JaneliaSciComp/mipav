@@ -1,4 +1,5 @@
 package gov.nih.mipav.model.algorithms;
+import gov.nih.mipav.model.algorithms.AlgorithmFRAP.FitWholeNLConInt2;
 import gov.nih.mipav.model.file.FileInfoBase;
 
 
@@ -83,8 +84,8 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
     
     private double epsilon = 1.0E-4;
     
-    private double min_constr[] = new double[3];
-    private double max_constr[] = new double[3];
+    private double min_constr[];
+    private double max_constr[];
     private double comp[];
     private double elist[];
     private int i;
@@ -93,6 +94,10 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
     private int zDim;
     private int tDim;
     private double cos0;
+    double initial[] = new double[3];
+    
+    private ModelImage lowFlipImage;
+    private ModelImage highFlipImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -100,14 +105,18 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
      * Creates a new AlgorithmDEMRI3 object.
      
      */
-    public AlgorithmDEMRI3(ModelImage srcImage, double r1, double rib, double rit, double r1i[], double theta,
+    public AlgorithmDEMRI3(ModelImage destImage, ModelImage srcImage, double min_constr[], double max_constr[],
+    		               double r1, double rib, double rit, ModelImage lowFlipImage, ModelImage highFlipImage, double theta,
                            double tr, boolean perMinute, int nFirst, boolean useVe) {
 
-        super(null, srcImage);
+        super(destImage, srcImage);
+        this.min_constr = min_constr;
+        this.max_constr = max_constr;
         this.r1 = r1;
         this.rib = rib;
         this.rit = rit;
-        this.r1i = r1i;
+        this.lowFlipImage = lowFlipImage;
+        this.highFlipImage = highFlipImage;
         this.theta = theta;
         this.tr = tr;
         this.perMinute = perMinute;
@@ -124,6 +133,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
      */
     public void finalize() {
         srcImage = null;
+        destImage = null;
         super.finalize();
     }
 
@@ -146,9 +156,13 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         int t;
         int timeUnits;
         double ts_array[];
-        double x_array[][];
+        double x_array[];
         int size4D;
         double buf4D[];
+        FitDEMRI3ConstrainedModel dModel;
+        double[] params;
+        float destArray[];
+        int j;
         
         if (srcImage.getNDims() != 4) {
             MipavUtil.displayError("srcImage must be 4D");
@@ -163,6 +177,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         tDim = srcImage.getExtents()[3];
         volSize = xDim * yDim * zDim;
         size4D = volSize * tDim;
+        destArray = new float[3 * volSize];
         
         tf = srcImage.getFileInfo()[0].getResolutions()[3];
         timeUnits = srcImage.getFileInfo()[0].getUnitsOfMeasure()[3];
@@ -220,11 +235,9 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         }
         
         ts_array = new double[tDim];
-        x_array = new double[tDim][3];
+        x_array = new double[tDim];
         for (t = 0; t < tDim; t++) {
-        	x_array[t][0] = 1.0;
-        	x_array[t][1] = t * tf;
-        	x_array[t][2] = (t * tf) * (t * tf);
+        	x_array[t] = t * tf;
         }
         
         comp = new double[tDim];
@@ -352,12 +365,32 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             setCompleted(false);
             return;
         }
+        for (i = 0; i < 3; i++) {
+        	initial[i] = (min_constr[i] + max_constr[i])/2.0;
+        }
         
         for (i = 0; i < volSize; i++) {
+        	fireProgressStateChanged(i * 100/volSize);
             for (t = 0; t < tDim; t++) {
             	ts_array[t] = buf4D[t*volSize + i];
             }
+            dModel = new FitDEMRI3ConstrainedModel(tDim, x_array, ts_array, initial);
+            dModel.driver();
+            //dModel.dumpResults();
+            params = dModel.getParameters();
+            for (j = 0; j < 3; j++) {
+            	destArray[j*volSize + i] = (float)params[j];
+            }
         } // for (i = 0; i < volSize; i++)
+        
+        try {
+        	destImage.importData(0, destArray, true);
+        }
+        catch (IOException e) {
+        	MipavUtil.displayError("IOException on destImage.importData(0, destArray, true)");
+        	setCompleted(false);
+        	return;
+        }
         
         setCompleted(true);
     }
@@ -372,7 +405,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
          * @param  yData    DOCUMENT ME!
          * @param  initial  DOCUMENT ME!
          */
-        public FitDEMRI3ConstrainedModel(int nPoints, double[] xData, float[] yData,
+        public FitDEMRI3ConstrainedModel(int nPoints, double[] xData, double[] yData,
                                                            double[] initial) {
 
             // nPoints data points, 3 coefficients, and exponential fitting
@@ -407,11 +440,12 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             // To make internalScaling = true and have the columns of the
             // Jacobian scaled to have unit length include the following line.
             internalScaling = true;
+            // Suppress disgnostic messages
+            outputMes = false;
 
             gues[0] = initial[0];
             gues[1] = initial[1];
             gues[2] = initial[2];
-            gues[3] = initial[3];
         }
 
         /**
