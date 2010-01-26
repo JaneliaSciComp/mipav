@@ -1649,6 +1649,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogEntropyMinimization(this, getActiveImage());
         } else if (command.equals("MRICorrection")) {
             new JDialogMRIShadingCorrection(this, getActiveImage());
+        } else if (command.equals("dcemri3")) {
+        	new JDialogDEMRI3(this, getActiveImage());
         } else if (command.equals("graphBasedSeg")) {
             new JDialogGraphBasedSegmentation(this, getActiveImage());
         } else if (command.equals("evalSeg")) {
