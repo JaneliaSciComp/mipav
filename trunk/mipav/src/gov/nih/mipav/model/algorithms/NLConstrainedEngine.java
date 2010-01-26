@@ -568,6 +568,8 @@ public abstract class NLConstrainedEngine {
 
     /** DOCUMENT ME! */
     private double x1Minrm, x2Minrm, x3Minrm;
+    
+    protected boolean outputMes = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -732,7 +734,7 @@ public abstract class NLConstrainedEngine {
                 return;
             }
 
-            if ((exitStatus % 10) == 1) {
+            if (((exitStatus % 10) == 1) && outputMes) {
                 System.out.println("Pseudo-rank of the Jacobian is not full\n");
 
                 if (!internalScaling) {
@@ -1772,14 +1774,18 @@ mainLoop:
         reavuc();
 
         if (restart) {
-            Preferences.debug("In evreuc: restart\n");
+        	if (outputMes) {
+                Preferences.debug("In evreuc: restart\n");
+        	}
             itotal++;
             icount++;
             lattry = pseudoRank;
             philat = phi;
         } // if restart
         else if (errorStatus == -5) {
-            Preferences.debug("Undamped Newton  does not work: Try GN\n");
+        	if (outputMes) {
+                Preferences.debug("Undamped Newton  does not work: Try GN\n");
+        	}
             ifree = 5;
             indic = 3;
             iters++;
@@ -1900,10 +1906,12 @@ mainLoop:
         ctrlMat[0] = lctrl;
         fitToFunction(xnew, fnew, dummy);
         lctrl = ctrlMat[0];
-        Preferences.debug("xnew inside fsumsq\n");
-
-        for (i = 0; i < param; i++) {
-            Preferences.debug(xnew[i] + "\n");
+        if (outputMes) {
+	        Preferences.debug("xnew inside fsumsq\n");
+	
+	        for (i = 0; i < param; i++) {
+	            Preferences.debug(xnew[i] + "\n");
+            }
         }
 
         /*Preferences.debug("fnew inside fsumsq\n");
@@ -1915,7 +1923,9 @@ mainLoop:
                 fn_val = 0.5 * temp * temp;
             }
 
-            Preferences.debug("fn_val when ctrl = -1 = " + fn_val + "\n");
+            if (outputMes) {
+                Preferences.debug("fn_val when ctrl = -1 = " + fn_val + "\n");
+            }
 
             if (lctrl < -10) {
                 ctrl = lctrl;
@@ -1930,8 +1940,10 @@ mainLoop:
             temp = dnrm2(nPts, fnew, 1);
             fn_val = 0.5 * temp * temp;
         }
-
-        Preferences.debug("fn_val when ctrl= 1 = " + fn_val + "\n");
+      
+        if (outputMes) {
+            Preferences.debug("fn_val when ctrl= 1 = " + fn_val + "\n");
+        }
         ctrl = lctrl;
         phiMat[0] = fn_val;
 
@@ -1981,7 +1993,9 @@ mainLoop:
             ctrl = -1;
             fsumsq(x, gmod, residuals, phiMat);
             phix = phiMat[0];
-            Preferences.debug("In GAUC: phix = " + phix + " x = " + x + "\n");
+            if (outputMes) {
+                Preferences.debug("In GAUC: phix = " + phix + " x = " + x + "\n");
+            }
 
             // POSSIBLY THE USER CAN TERMINATE
 
@@ -2585,7 +2599,9 @@ mainLoop:
         ctrl = 1;
         fsumsq(alfk, gmod, fnew, phiMat);
         phik = phiMat[0];
-        Preferences.debug("In lineuc no. 1: phik = " + phik + " alfk = " + alfk + "\n");
+        if (outputMes) {
+            Preferences.debug("In lineuc no. 1: phik = " + phik + " alfk = " + alfk + "\n");
+        }
         k2++;
         iev = k2;
 
@@ -2698,7 +2714,9 @@ mainLoop:
         ctrl = -1;
         fsumsq(alfk, gmod, fnew, phiMat);
         phik = phiMat[0];
-        Preferences.debug("In LINEUC no.2: phik = " + phik + " alfk = " + alfk + "\n");
+        if (outputMes) {
+            Preferences.debug("In LINEUC no.2: phik = " + phik + " alfk = " + alfk + "\n");
+        }
 
         if (ctrl < -10) {
             k2 = ctrl;
@@ -3058,17 +3076,19 @@ mainLoop:
 
             // Analyze the past and sometimes recompute the search direction
             analuc();
-            Preferences.debug("POINT\n");
-
-            for (i = 0; i < param; i++) {
-                Preferences.debug(a[i] + "\n");
-            }
-
-            Preferences.debug("pseudorank = " + pseudoRank + "\n");
-            Preferences.debug("DIRECTION\n");
-
-            for (i = 0; i < param; i++) {
-                Preferences.debug(dx[i] + "\n");
+            if (outputMes) {
+	            Preferences.debug("POINT\n");
+	
+	            for (i = 0; i < param; i++) {
+	                Preferences.debug(a[i] + "\n");
+	            }
+	
+	            Preferences.debug("pseudorank = " + pseudoRank + "\n");
+	            Preferences.debug("DIRECTION\n");
+	
+	            for (i = 0; i < param; i++) {
+	                Preferences.debug(dx[i] + "\n");
+	            }
             }
 
             if (errorStatus < -10) {
@@ -3084,10 +3104,12 @@ mainLoop:
             // Check some abnormal termination criteria
             // ERROR = -3 if not positive definite Hessian
             if (errorStatus == -3) {
-                System.out.println("Hessian matrix not positive definite\n");
-                System.out.println("Try Gauss-Newton\n");
-                Preferences.debug("Hessian matrix not positive definite\n");
-                Preferences.debug("Try Gauss-Newton\n");
+            	if (outputMes) {
+                    System.out.println("Hessian matrix not positive definite\n");
+                    System.out.println("Try Gauss-Newton\n");
+                    Preferences.debug("Hessian matrix not positive definite\n");
+                    Preferences.debug("Try Gauss-Newton\n");
+            	}
                 ifree = 5;
                 indic = -3;
 
@@ -3533,25 +3555,27 @@ mainLoop:
         reduc = fsqkm1 - (2.0 * phi);
         ac = Math.min(1.0, aupkm1);
         pred = ac * (2.0 - ac) * d1km1;
-        Preferences.debug("Collected information for iteration steps\n");
-        Preferences.debug("itno = " + itno + "\n");
-        Preferences.debug("fsqkm1 = " + fsqkm1 + "\n");
-        Preferences.debug("gnorm = " + gnorm + "\n");
-        Preferences.debug("dxnkm1 = " + dxnkm1 + "\n");
-        Preferences.debug("kodkm1 = " + kodkm1 + "\n");
-        Preferences.debug("rngkm1 = " + rngkm1 + "\n");
-        Preferences.debug("alfkm1 = " + alfkm1 + "\n");
-        Preferences.debug("eval = " + eval + "\n");
-        Preferences.debug("pred = " + pred + "\n");
-        Preferences.debug("speed = " + speed + "\n");
-        Preferences.debug("phi = " + phi + "\n");
-        Preferences.debug("reduc = " + reduc + "\n");
-
-        if (paramAct > 0) {
-
-            for (i = 0; i < param; i++) {
-                Preferences.debug("aset[" + i + "] = " + aset[i] + "\n");
-            }
+        if (outputMes) {
+	        Preferences.debug("Collected information for iteration steps\n");
+	        Preferences.debug("itno = " + itno + "\n");
+	        Preferences.debug("fsqkm1 = " + fsqkm1 + "\n");
+	        Preferences.debug("gnorm = " + gnorm + "\n");
+	        Preferences.debug("dxnkm1 = " + dxnkm1 + "\n");
+	        Preferences.debug("kodkm1 = " + kodkm1 + "\n");
+	        Preferences.debug("rngkm1 = " + rngkm1 + "\n");
+	        Preferences.debug("alfkm1 = " + alfkm1 + "\n");
+	        Preferences.debug("eval = " + eval + "\n");
+	        Preferences.debug("pred = " + pred + "\n");
+	        Preferences.debug("speed = " + speed + "\n");
+	        Preferences.debug("phi = " + phi + "\n");
+	        Preferences.debug("reduc = " + reduc + "\n");
+	
+	        if (paramAct > 0) {
+	
+	            for (i = 0; i < param; i++) {
+	                Preferences.debug("aset[" + i + "] = " + aset[i] + "\n");
+	            }
+	        }
         }
 
         return;
@@ -3780,8 +3804,10 @@ mainLoop:
         // errorStatus  IS SET =-5 IF THE OBJECTIVE INCREASES
         // restart IS SET = TRUE IF THE LATEST STEPLENGTH IS TOO SHORT
 
-        Preferences.debug("In reavuc: alpha = " + alpha + "\n");
-        Preferences.debug("In reavuc: alphup = " + alphup + "\n");
+        if (outputMes) {
+    	    Preferences.debug("In reavuc: alpha = " + alpha + "\n");
+            Preferences.debug("In reavuc: alphup = " + alphup + "\n");
+        }
 
         if ((lattry == 0) && (bestpg > 0.0)) {
             return;
@@ -3846,7 +3872,9 @@ mainLoop:
         ctrl = -1;
         fsumsq(alfk, gmod, fnew, phiMat);
         phik = phiMat[0];
-        Preferences.debug("In REDUC: phik = " + phik + " alfk = " + alfk + "\n");
+        if (outputMes) {
+            Preferences.debug("In REDUC: phik = " + phik + " alfk = " + alfk + "\n");
+        }
 
         if (ctrl < -10) {
             k2 = ctrl;
@@ -4413,10 +4441,12 @@ mainLoop:
                 }
             }
 
-            Preferences.debug("The nonlinear part.Only the upper triangular.\n");
-            Preferences.debug("Row - wize written.I.e.the first 4values make\n");
-            Preferences.debug("up the 1st row.The following 3 values make up\n");
-            Preferences.debug("the 2nd row starting at the diagonal elem.\n");
+            if (outputMes) {
+	            Preferences.debug("The nonlinear part.Only the upper triangular.\n");
+	            Preferences.debug("Row - wize written.I.e.the first 4values make\n");
+	            Preferences.debug("up the 1st row.The following 3 values make up\n");
+	            Preferences.debug("the 2nd row starting at the diagonal elem.\n");
+            }
 
         } // if (internalScaling)
 
@@ -4508,10 +4538,12 @@ mainLoop:
         double[][] work2 = new double[param][1];
         double[] w2Part;
 
-        Preferences.debug("Current point in soliuc\n");
-
-        for (i = 0; i < param; i++) {
-            Preferences.debug(a[i] + "\n");
+        if (outputMes) {
+	        Preferences.debug("Current point in soliuc\n");
+	
+	        for (i = 0; i < param; i++) {
+	            Preferences.debug(a[i] + "\n");
+	        }
         }
 
         // Compute Jacobian at the current point and store in covarMat
@@ -4536,8 +4568,10 @@ mainLoop:
         // cnorm := length of the longest column in the Jacobian
         scaunc();
         gnorm = dnrm2(param, g, 1) / cnorm;
-        Preferences.debug("cnorm = " + cnorm + "\n");
-        Preferences.debug("gnorm = " + gnorm + "\n");
+        if (outputMes) {
+            Preferences.debug("cnorm = " + cnorm + "\n");
+            Preferences.debug("gnorm = " + gnorm + "\n");
+        }
 
         // MAKE A QR-DECOMPOSITION OF (POSSIBLY SCALED) JACOBIAN
         // I.E.                T
@@ -4557,10 +4591,12 @@ mainLoop:
         pseudoRankMat[0] = pseudoRank;
         d1sqs = gndunc(internalScaling, pseudoRankMat, work);
         pseudoRank = pseudoRankMat[0];
-        Preferences.debug("The right hand side\n");
-
-        for (i = 0; i < param; i++) {
-            Preferences.debug(w1[i] + "\n");
+        if (outputMes) {
+	        Preferences.debug("The right hand side\n");
+	
+	        for (i = 0; i < param; i++) {
+	            Preferences.debug(w1[i] + "\n");
+	        }
         }
 
         beta = dnrm2(param - paramAct, w1, 1);
@@ -4579,9 +4615,11 @@ mainLoop:
 
         // Delete the constraint that causes the largest predicted
         // reduction in the objective
-        Preferences.debug("paramAct = " + paramAct + "\n");
-        Preferences.debug("pseudoRank = " + pseudoRank + "\n");
-        Preferences.debug("imax = " + imax + "\n");
+        if (outputMes) {
+	        Preferences.debug("paramAct = " + paramAct + "\n");
+	        Preferences.debug("pseudoRank = " + pseudoRank + "\n");
+	        Preferences.debug("imax = " + imax + "\n");
+        }
 
         if ((paramAct == 0) || (imax != -1)) {
             return;
@@ -4613,7 +4651,9 @@ mainLoop:
             if (pseudoRank < (param - paramAct)) {
                 k = 0;
                 kk = 0;
-                Preferences.debug("Not full rank: pseudoRank = " + pseudoRank + "\n");
+                if (outputMes) {
+                    Preferences.debug("Not full rank: pseudoRank = " + pseudoRank + "\n");
+                }
                 inds = aset[i];
                 aset[i] = 0;
                 newunc();
@@ -4623,14 +4663,18 @@ mainLoop:
                 }
 
                 lprank = triunc(tol, paramAct - 1);
-                Preferences.debug("lprank = " + lprank + "\n");
+                if (outputMes) {
+                    Preferences.debug("lprank = " + lprank + "\n");
+                }
                 pseudoRankMat[0] = lprank;
                 d1new = gndunc(false, pseudoRankMat, work);
                 lprank = pseudoRankMat[0];
-                Preferences.debug("New search direction\n");
-
-                for (jj = 0; jj < param; jj++) {
-                    Preferences.debug(dx[jj] + "\n");
+                if (outputMes) {
+	                Preferences.debug("New search direction\n");
+	
+	                for (jj = 0; jj < param; jj++) {
+	                    Preferences.debug(dx[jj] + "\n");
+	                }
                 }
 
                 aset[i] = inds;
@@ -4682,20 +4726,24 @@ mainLoop:
                 } // if (k != kk)
 
                 // Determine the kkth element in dy
-                Preferences.debug("SOLIUC: work[kk] = " + work[kk] + "\n");
-                Preferences.debug("SOLIUC:tol = " + tol + "\n");
-                Preferences.debug("SOLIUC:covarMat[0][0] = " + covarMat[0][0] + "\n");
+                if (outputMes) {
+	                Preferences.debug("SOLIUC: work[kk] = " + work[kk] + "\n");
+	                Preferences.debug("SOLIUC:tol = " + tol + "\n");
+	                Preferences.debug("SOLIUC:covarMat[0][0] = " + covarMat[0][0] + "\n");
+                }
 
                 if (Math.abs(work[kk]) <= (tol * Math.abs(covarMat[0][0]))) {
                     continue;
                 }
 
                 dykk[0] = w2[kk] / work[kk];
-                Preferences.debug("In soliuc: dykk[0] = " + dykk[0] + "\n");
-                Preferences.debug("i = " + i + "\n");
-                Preferences.debug("aset[i] = " + aset[i] + "\n");
-                Preferences.debug("bu[i] = " + bu[i] + "\n");
-                Preferences.debug("bl[i] = " + bl[i] + "\n");
+                if (outputMes) {
+	                Preferences.debug("In soliuc: dykk[0] = " + dykk[0] + "\n");
+	                Preferences.debug("i = " + i + "\n");
+	                Preferences.debug("aset[i] = " + aset[i] + "\n");
+	                Preferences.debug("bu[i] = " + bu[i] + "\n");
+	                Preferences.debug("bl[i] = " + bl[i] + "\n");
+                }
 
                 if ((dykk[0] * aset[i] * (bu[i] - bl[i])) <= 0.0) {
                     continue;
@@ -4704,14 +4752,18 @@ mainLoop:
                 d1new = d1sqs + (w2[kk] * w2[kk]);
             } // else
 
-            Preferences.debug("In soliuc: d1new = " + d1new + "\n");
-            Preferences.debug("In soliuc: d1sqs = " + d1sqs + "\n");
+            if (outputMes) {
+                Preferences.debug("In soliuc: d1new = " + d1new + "\n");
+                Preferences.debug("In soliuc: d1sqs = " + d1sqs + "\n");
+            }
 
             if (d1new < (factor * d1sqs)) {
                 continue;
             }
 
-            Preferences.debug("Delete a fixed variable\n");
+            if (outputMes) {
+                Preferences.debug("Delete a fixed variable\n");
+            }
 
             if (d1new < d1max) {
                 continue;
@@ -4829,10 +4881,12 @@ mainLoop:
 
             // back transform
             btrunc(internalScaling, w2);
-            Preferences.debug("Full rank new search direction\n");
-
-            for (i = 0; i < param; i++) {
-                Preferences.debug(dx[i] + "\n");
+            if (outputMes) {
+	            Preferences.debug("Full rank new search direction\n");
+	
+	            for (i = 0; i < param; i++) {
+	                Preferences.debug(dx[i] + "\n");
+	            }
             }
         } // else if (kmax != 0)
 
@@ -5633,17 +5687,19 @@ mainLoop:
         }
 
         if (bounds != 0) {
-            Preferences.debug("aset\n");
-
-            for (i = 0; i < param; i++) {
-                Preferences.debug(aset[i] + "\n");
-            }
-
-            Preferences.debug("dx\n");
-
-            for (i = 0; i < param; i++) {
-                Preferences.debug(dx[i] + "\n");
-            }
+        	if (outputMes) {
+	            Preferences.debug("aset\n");
+	
+	            for (i = 0; i < param; i++) {
+	                Preferences.debug(aset[i] + "\n");
+	            }
+	
+	            Preferences.debug("dx\n");
+	
+	            for (i = 0; i < param; i++) {
+	                Preferences.debug(dx[i] + "\n");
+	            }
+        	}
 
             for (i = 0; i < param; i++) {
 
@@ -5680,9 +5736,11 @@ mainLoop:
             }
 
             alpha = Math.min(1.0, Math.min(magfy * alfkm1, alphup));
-            Preferences.debug("In stepuc: alpha = " + alpha + "\n");
-            Preferences.debug("In stepuc: alfkm1 = " + alfkm1 + "\n");
-            Preferences.debug("In stepuc: alphup = " + alphup + "\n");
+            if (outputMes) {
+	            Preferences.debug("In stepuc: alpha = " + alpha + "\n");
+	            Preferences.debug("In stepuc: alfkm1 = " + alfkm1 + "\n");
+	            Preferences.debug("In stepuc: alphup = " + alphup + "\n");
+            }
 
             if ((ifree > 0) && (indic < 0)) {
                 alpha = Math.min(10.0, alphup);
