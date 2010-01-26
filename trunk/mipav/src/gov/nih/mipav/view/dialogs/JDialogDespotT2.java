@@ -128,57 +128,157 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     }
     
     protected void setGUIFromParams() {
-        despotFA_phase0 = null;//scriptParameters.getParams().getList("despot_FA");
-        despotFA_phase180 = null;//scriptParameters.getParams().getList("despot_FA");
-        ssfpImageIndex_phase0 = null;//scriptParameters.getParams().getList("despot_FA");
-        ssfpImageIndex_phase180 = null;//scriptParameters.getParams().getList("despot_FA");
+        //souble[]
+        despotFA_phase0 = scriptParameters.getParams().getList("despot_FA_phase0").getAsDoubleArray();
+        despotFA_phase180 = scriptParameters.getParams().getList("despot_FA_phase180").getAsDoubleArray();
+        //int[]
+        ssfpImageIndex_phase0 = scriptParameters.getParams().getList("despot_FA_phase0").getAsIntArray();
+        ssfpImageIndex_phase180 = scriptParameters.getParams().getList("sspf_Image_Index_phase180").getAsIntArray();
+        
         t1ImageIndex = scriptParameters.getParams().getInt("t1_Image_Index");
         b1ImageIndex = scriptParameters.getParams().getInt("b1_Image_Index");
-        simplexLineValues = null;//scriptParameters.getParams().getList("despot_FA");
-        simplexResiduals = null;//scriptParameters.getParams().getList("despot_FA");
-        simplexCentre = null;//scriptParameters.getParams().getList("despot_FA");
-        reflection = null;//scriptParameters.getParams().getList("despot_FA");
-        expansion = null;//scriptParameters.getParams().getList("despot_FA");
-        contraction = null;//scriptParameters.getParams().getList("despot_FA");
-        shrink = null;//scriptParameters.getParams().getList("despot_FA");
-        simplex = null;//scriptParameters.getParams().getList("despot_FA");
-        twoPSimplexLineValues = null;//scriptParameters.getParams().getList("despot_FA");
-        twoPSimplexResiduals = null;//scriptParameters.getParams().getList("despot_FA");
-        twoPSimplexCentre = null;//scriptParameters.getParams().getList("despot_FA");
-        twoPReflection = null;//scriptParameters.getParams().getList("despot_FA");
-        twoPExpansion = null;//scriptParameters.getParams().getList("despot_FA");
-        twoPContraction = null;//scriptParameters.getParams().getList("despot_FA");
-        twoPShrink = null;//scriptParameters.getParams().getList("despot_FA");
-        twoPSimplex = null;//scriptParameters.getParams().getList("despot_FA");
-        bestToWorst = null;//scriptParameters.getParams().getList("despot_FA");
-        wList = null;//scriptParameters.getParams().getList("despot_FA");
+        //double[]
+        simplexLineValues = scriptParameters.getParams().getList("simplex_Line_Values").getAsDoubleArray();
+        simplexResiduals = scriptParameters.getParams().getList("simplex_Residuals").getAsDoubleArray();
+        simplexCentre = scriptParameters.getParams().getList("simplex_Centre").getAsDoubleArray();
+        reflection = scriptParameters.getParams().getList("reflection").getAsDoubleArray();
+        expansion = scriptParameters.getParams().getList("expansion").getAsDoubleArray();
+        contraction = scriptParameters.getParams().getList("contraction").getAsDoubleArray();
+        shrink = scriptParameters.getParams().getList("shrink").getAsDoubleArray();
+        //double[][]
+        ArrayList<double[]> simplexArr = new ArrayList<double[]>();
+        
+        int count = 0;
+        double[] lastDouble = new double[0];
+        
+        while(scriptParameters.getParams().containsParameter("simplex_"+count)) {
+            lastDouble = scriptParameters.getParams().getList("simplex_"+count++).getAsDoubleArray();
+            simplexArr.add(lastDouble);
+        }
+        
+        simplex = simplexArr.toArray(new double[0][]);
+        
+        //double[]
+        twoPSimplexLineValues = scriptParameters.getParams().getList("two_PSimplex_Line_Values").getAsDoubleArray();
+        twoPSimplexResiduals = scriptParameters.getParams().getList("despot_FA").getAsDoubleArray();
+        twoPSimplexCentre = scriptParameters.getParams().getList("two_PSimplex_Centre").getAsDoubleArray();
+        twoPReflection = scriptParameters.getParams().getList("two_PReflection").getAsDoubleArray();
+        twoPExpansion = scriptParameters.getParams().getList("two_PExpansion").getAsDoubleArray();
+        twoPContraction = scriptParameters.getParams().getList("two_PContraction").getAsDoubleArray();
+        twoPShrink = scriptParameters.getParams().getList("two_PShrink").getAsDoubleArray();
+        //double[][]
+        ArrayList<double[]> twoPSimplexArr = new ArrayList<double[]>();
+        
+        count = 0;
+        lastDouble = new double[0];
+        
+        while(scriptParameters.getParams().containsParameter("two_PSimplex_"+count)) {
+            lastDouble = scriptParameters.getParams().getList("two_PSimplex_"+count++).getAsDoubleArray();
+            twoPSimplexArr.add(lastDouble);
+        }
+        
+        twoPSimplex = twoPSimplexArr.toArray(new double[0][]);
+        
+        //int[]
+        bestToWorst = scriptParameters.getParams().getList("best_To_Worst").getAsIntArray();
+        //String[], note is a difficult case for storeParams
+        ArrayList<String> wListArr = new ArrayList<String>();
+        
+        count = 0;
+        String lastString = new String();
+        
+        while(scriptParameters.getParams().containsParameter("w_List_"+count)) {
+           lastString = scriptParameters.getParams().getString("w_List_"+count++);
+           wListArr.add(lastString);
+        }
+        
+        wList = wListArr.toArray(new String[0]);
     }
 
     protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.getParams().put(ParameterFactory.newParameter("despot_FA_phase0", despotFA_phase0));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("despot_FA_phase180", despotFA_phase180));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("sspf_Image_Index_phase0", ssfpImageIndex_phase0));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("sspf_Image_Index_phase180", ssfpImageIndex_phase180));
+        //double[]
+        if (despotFA_phase0 != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("despot_FA_phase0", despotFA_phase0));
+        }
+        if(despotFA_phase180 != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("despot_FA_phase180", despotFA_phase180));
+        }
+        //int[]
+        if(ssfpImageIndex_phase0 != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("sspf_Image_Index_phase0", ssfpImageIndex_phase0));
+        }
+        if(ssfpImageIndex_phase180 != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("sspf_Image_Index_phase180", ssfpImageIndex_phase180));
+        }
+        
         scriptParameters.getParams().put(ParameterFactory.newParameter("t1_Image_Index", t1ImageIndex));
         scriptParameters.getParams().put(ParameterFactory.newParameter("b1_Image_Index", b1ImageIndex));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Line_Values", simplexLineValues));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Residuals", simplexResiduals));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Centre", simplexCentre));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("reflection", reflection));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("expansion", expansion));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("contraction", contraction));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("shrink", shrink));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("simplex", simplex));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Line_Values", twoPSimplexLineValues));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Residuals", twoPSimplexResiduals));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Centre", twoPSimplexCentre));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("two_PReflection", twoPReflection));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("two_PExpansion", twoPExpansion));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("two_PContraction", twoPContraction));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("two_PShrink", twoPShrink));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex", twoPSimplex));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("best_To_Worst", bestToWorst));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("w_List", wList));
+        //double[]
+        if(simplexLineValues != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Line_Values", simplexLineValues));
+        }
+        if(simplexResiduals != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Residuals", simplexResiduals));
+        }
+        if(simplexCentre != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_Centre", simplexCentre));
+        }
+        if(reflection != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("reflection", reflection));
+        }
+        if(expansion != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("expansion", expansion));
+        }
+        if(contraction != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("contraction", contraction));
+        }
+        if(shrink != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("shrink", shrink));
+        }
+        //double[][], each double[] will need to be stored individually
+        if(simplex != null) {
+            for(int i=0; i<simplex.length; i++) {
+                scriptParameters.getParams().put(ParameterFactory.newParameter("simplex_"+i, simplex[i]));
+            }
+        }  
+        //double[]
+        if(twoPSimplexLineValues != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Line_Values", twoPSimplexLineValues));
+        }
+        if(twoPSimplexResiduals != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Residuals", twoPSimplexResiduals));
+        }
+        if(twoPSimplexCentre != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_Centre", twoPSimplexCentre));
+        }
+        if(twoPReflection != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PReflection", twoPReflection));
+        }
+        if(twoPExpansion != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PExpansion", twoPExpansion));
+        }
+        if(twoPContraction != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PContraction", twoPContraction));
+        }
+        if(twoPShrink != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("two_PShrink", twoPShrink));
+        }
+        //double[][], each double[] will need to be stored individually
+        if(twoPSimplex != null) {
+            for(int i=0; i<twoPSimplex.length; i++) {
+                scriptParameters.getParams().put(ParameterFactory.newParameter("two_PSimplex_"+i, twoPSimplex[i]));
+            }
+        }
+        //int[]
+        if(bestToWorst != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("best_To_Worst", bestToWorst));
+        }
+        //String[], need to be stored individually
+        if(wList != null) {
+            for(int i=0; i<wList.length; i++) {
+                scriptParameters.getParams().put(ParameterFactory.newParameter("w_List_"+i, wList[i]));
+            }
+        }
     }
 
     private void run() {
