@@ -444,8 +444,8 @@ public class FileBRUKER extends FileBase {
         } // while (lineString != null)
         
         if (fov != null) {
-        	if ((recoSize != null) && (fov.length >= 2) && (recoSize.length >= 2) && (recoSize[0] == fileInfo.getExtents()[1]) && 
-        	    (recoSize[1] == fileInfo.getExtents()[0])) {
+        	if ((recoSize != null) && (fov.length >= 2) && (recoSize.length >= 2) && (recoSize[0] != recoSize[1]) &&
+        	    (recoSize[0] == fileInfo.getExtents()[1]) && (recoSize[1] == fileInfo.getExtents()[0])) {
         		  temp = fov[0];
         		  fov[0] = fov[1];
         		  fov[1] = temp;
