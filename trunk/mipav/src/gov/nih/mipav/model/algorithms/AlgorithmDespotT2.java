@@ -171,8 +171,8 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         double[] possibleT2s, possibleMos;
         float noiseSum, threshold;
         
-        int width, height, nSlices;
-        int x,y,i,j,k,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
+        int width, height, nSlices, tSeries;
+        int x,y,i,j,k,t,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
         
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[0]]);
         width = image.getExtents()[0];
@@ -183,17 +183,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        ssfpPixelValues_phase0 = new double[JDialogDespotT2.Nfa_phase0][width*height];
-        t1PixelValues = new double[width*height];
-        if (JDialogDespotT2.includeB1Map) b1PixelValues = new double[width*height];
-        else b1PixelValues = new double[1];
-        
-        if (JDialogDespotT2.calculateT2) t2Values = new float[nSlices][width*height];
-        else t2Values = new float[1][1];
-        if (JDialogDespotT2.calculateMo) moValues = new float[nSlices][width*height];
-        else moValues = new float[1][1];
-        if (JDialogDespotT2.invertT2toR2) r2Values = new float[nSlices][width*height];
-        else r2Values = new float[1][1];
+        if(image.getNDims() > 3) {
+            tSeries = image.getExtents()[3];
+        } else {
+            tSeries = 1;
+        }
         
         t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
         moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
@@ -203,162 +197,217 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         moResultStack = nearCloneImage(image, moResultStack);
         r2ResultStack = nearCloneImage(image, r2ResultStack);
         
-        fa_phase0 = new double[JDialogDespotT2.Nfa_phase0];
-        scaledFA_phase0 = new double[JDialogDespotT2.Nfa_phase0];
-        for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
-            fa_phase0[angle] = Math.toRadians(despotFA_phase0[angle]);
-        }
-        
-        phase0Data = new double[JDialogDespotT2.Nfa_phase0];
-        
+        String prefix = new String();
         // Actually perform the T2 Calculations
-        for (k=0; k<nSlices; k++) {
-            fireProgressStateChanged("calculating T2 values on slice: "+k+" of "+nSlices);
-            fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*90.0));
-            if(interrupted()) {
-                hardInterrupt = true;
-                return;
+        for(t=0; t<tSeries; t++) {
+            if(image.getNDims() > 3) {
+                prefix = "Series "+t+": ";
+            } else {
+                prefix = "";
             }
-            // grab the ssfp pixel values from the phase = 0 data
+            
+            ssfpPixelValues_phase0 = new double[JDialogDespotT2.Nfa_phase0][width*height];
+            t1PixelValues = new double[width*height];
+            if (JDialogDespotT2.includeB1Map) { 
+                b1PixelValues = new double[width*height];
+            }
+            else {
+                b1PixelValues = new double[1];
+            }
+            
+            if (JDialogDespotT2.calculateT2) { 
+                t2Values = new float[nSlices][width*height];
+            }
+            else { 
+                t2Values = new float[1][1];
+            }
+            if (JDialogDespotT2.calculateMo) { 
+                moValues = new float[nSlices][width*height];
+            }
+            else { 
+                moValues = new float[1][1];
+            }
+            if (JDialogDespotT2.invertT2toR2) { 
+                r2Values = new float[nSlices][width*height];
+            }
+            else { 
+                r2Values = new float[1][1];
+            }
+            
+            
+            fa_phase0 = new double[JDialogDespotT2.Nfa_phase0];
+            scaledFA_phase0 = new double[JDialogDespotT2.Nfa_phase0];
             for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
-                        pixelIndex++;
+                fa_phase0[angle] = Math.toRadians(despotFA_phase0[angle]);
+            }
+            
+            phase0Data = new double[JDialogDespotT2.Nfa_phase0];
+            
+            for (k=0; k<nSlices; k++) {
+                fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*80.0));
+                if(interrupted()) {
+                    hardInterrupt = true;
+                    return;
+                }
+                // grab the ssfp pixel values from the phase = 0 data
+                for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
+                        }
                     }
                 }
-            }
             
-            // grab the T1 and B1 information
-            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[t1ImageIndex]);
-            
-            pixelIndex = 0;
-            for (y=0; y<height; y++) {
-                for (x=0; x<width; x++) {
-                    t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
-                    pixelIndex++;
-                }
-            }
-            
-            if (JDialogDespotT2.includeB1Map == true) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
+                // grab the T1 and B1 information
+                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[t1ImageIndex]);
                 
                 pixelIndex = 0;
                 for (y=0; y<height; y++) {
                     for (x=0; x<width; x++) {
-                        b1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
                         pixelIndex++;
                     }
                 }
-            }
-            
-            // now that we have all the information, perform the calculate pixel-wise
-            pixelIndex = 0;
-            for (x=0; x<width; x++) {
-                for (y=0; y<height; y++) {
+                
+                if (JDialogDespotT2.includeB1Map == true) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
                     
-                    if (t1PixelValues[pixelIndex] > 0.00) {
-                        
-                        e1 = Math.exp(-JDialogDespotT2.despotTR/t1PixelValues[pixelIndex]);
-                        
-                        // scale up (or down) the flip angles based on the calculated B1 if required
-                        if (JDialogDespotT2.includeB1Map == true) {
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) scaledFA_phase0[p] = fa_phase0[p]*b1PixelValues[pixelIndex];
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
                         }
-                        else {
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) scaledFA_phase0[p] = fa_phase0[p];
-                        }
+                    }
+                }
+            
+                // now that we have all the information, perform the calculate pixel-wise
+                pixelIndex = 0;
+                for (x=0; x<width; x++) {
+                    for (y=0; y<height; y++) {
                         
-                        // grab the SSFP values for this pixel
-                        for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) phase0Data[p] = ssfpPixelValues_phase0[p][pixelIndex];
-                        
-                        intercept = 1.00;
-                        denominator = 1.00;
-                        slope = 0.00;
-                        e2 = 1.00;
-                        t2 = 0.00;
-                        
-                        // calculate T2 first from the phase = 0 data
-                        sumX = 0.00;
-                        sumY = 0.00;
-                        sumXY = 0.00;
-                        sumXX = 0.00;
-                        
-                        for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
-                            sumX += phase0Data[p]/Math.tan(scaledFA_phase0[p]);
-                            sumY += phase0Data[p]/Math.sin(scaledFA_phase0[p]);
-                            sumXY += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.sin(scaledFA_phase0[p]));
-                            sumXX += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.tan(scaledFA_phase0[p]));
-                        }
-                        
-                        d = (JDialogDespotT2.Nfa_phase0*sumXX) - sumX*sumX;
-                        a = (JDialogDespotT2.Nfa_phase0*sumXY) - (sumX*sumY);
-                        
-                        if (d != 0) {
-                            slope = a/d;
-                            denominator = (e1-slope)/(1.00-slope*e1);
-                            intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase0;
+                        if (t1PixelValues[pixelIndex] > 0.00) {
                             
-                            if (denominator > 0.00 && denominator < 1.00) {
-                                t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
-                                e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
-                                mo = intercept*(1.00-e1*e2)/(1.00-e1);
+                            e1 = Math.exp(-JDialogDespotT2.despotTR/t1PixelValues[pixelIndex]);
+                            
+                            // scale up (or down) the flip angles based on the calculated B1 if required
+                            if (JDialogDespotT2.includeB1Map == true) {
+                                for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
+                                    scaledFA_phase0[p] = fa_phase0[p]*b1PixelValues[pixelIndex];
+                                }
+                            }
+                            else {
+                                for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
+                                    scaledFA_phase0[p] = fa_phase0[p];
+                                }
+                            }
+                            
+                            // grab the SSFP values for this pixel
+                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) phase0Data[p] = ssfpPixelValues_phase0[p][pixelIndex];
+                            
+                            intercept = 1.00;
+                            denominator = 1.00;
+                            slope = 0.00;
+                            e2 = 1.00;
+                            t2 = 0.00;
+                            
+                            // calculate T2 first from the phase = 0 data
+                            sumX = 0.00;
+                            sumY = 0.00;
+                            sumXY = 0.00;
+                            sumXX = 0.00;
+                            
+                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
+                                sumX += phase0Data[p]/Math.tan(scaledFA_phase0[p]);
+                                sumY += phase0Data[p]/Math.sin(scaledFA_phase0[p]);
+                                sumXY += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.sin(scaledFA_phase0[p]));
+                                sumXX += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.tan(scaledFA_phase0[p]));
+                            }
+                            
+                            d = (JDialogDespotT2.Nfa_phase0*sumXX) - sumX*sumX;
+                            a = (JDialogDespotT2.Nfa_phase0*sumXY) - (sumX*sumY);
+                            
+                            if (d != 0) {
+                                slope = a/d;
+                                denominator = (e1-slope)/(1.00-slope*e1);
+                                intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase0;
+                                
+                                if (denominator > 0.00 && denominator < 1.00) {
+                                    t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
+                                    e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
+                                    mo = intercept*(1.00-e1*e2)/(1.00-e1);
+                                }
+                                else {
+                                    mo = JDialogDespotT2.maxMo;
+                                    t2 = JDialogDespotT2.maxT2;
+                                }
                             }
                             else {
                                 mo = JDialogDespotT2.maxMo;
                                 t2 = JDialogDespotT2.maxT2;
                             }
+                            
+                            
+                            if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
+                                t2 = JDialogDespotT2.maxT2;
+                            }
+                            if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
+                                mo = JDialogDespotT2.maxMo;
+                            }
+                            
+                            // invert to r2
+                            if (t2 != 0.00) {
+                                r2 = 1.00/t2;
+                            }
+                            else {
+                                r2 = 0.00;
+                            }
+                        
+                        
+                            if (JDialogDespotT2.calculateT2) { 
+                                t2Values[k][pixelIndex] = (float) t2;
+                            }
+                            if (JDialogDespotT2.calculateMo) { 
+                                moValues[k][pixelIndex] = (float) mo;
+                            }
+                            if (JDialogDespotT2.invertT2toR2) { 
+                                r2Values[k][pixelIndex] = (float) r2;
+                            }
                         }
                         else {
-                            mo = JDialogDespotT2.maxMo;
-                            t2 = JDialogDespotT2.maxT2;
+                            if (JDialogDespotT2.calculateT2) { 
+                                t2Values[k][pixelIndex] = (float) 0.00;
+                            }
+                            if (JDialogDespotT2.calculateMo) { 
+                                moValues[k][pixelIndex] = (float) 0.00;
+                            }
+                            if (JDialogDespotT2.invertT2toR2) {
+                                r2Values[k][pixelIndex] = (float) 0.00;
+                            }
                         }
-                        
-                        
-                        if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
-                            t2 = JDialogDespotT2.maxT2;
-                        }
-                        if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
-                            mo = JDialogDespotT2.maxMo;
-                        }
-                        
-                        // invert to r2
-                        if (t2 != 0.00) {
-                            r2 = 1.00/t2;
-                        }
-                        else {
-                            r2 = 0.00;
-                        }
-                        
-                        
-                        if (JDialogDespotT2.calculateT2) t2Values[k][pixelIndex] = (float) t2;
-                        if (JDialogDespotT2.calculateMo) moValues[k][pixelIndex] = (float) mo;
-                        if (JDialogDespotT2.invertT2toR2) r2Values[k][pixelIndex] = (float) r2;
+                        pixelIndex++;
                     }
-                    else {
-                        if (JDialogDespotT2.calculateT2) t2Values[k][pixelIndex] = (float) 0.00;
-                        if (JDialogDespotT2.calculateMo) moValues[k][pixelIndex] = (float) 0.00;
-                        if (JDialogDespotT2.invertT2toR2) r2Values[k][pixelIndex] = (float) 0.00;
+                }
+                
+                try {
+                    int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
+                    if (JDialogDespotT2.calculateT2) {
+                        t2ResultStack.importData(startVal, t2Values[k], true);
                     }
-                    pixelIndex++;
+                    if (JDialogDespotT2.calculateMo) {
+                        moResultStack.importData(startVal, moValues[k], true);
+                    }
+                    if (JDialogDespotT2.invertT2toR2) {
+                        r2ResultStack.importData(startVal, r2Values[k], true);
+                    }
+                } catch(IOException e) {
+                    e.printStackTrace();
+                    MipavUtil.displayError("Data could not be imported into result image");
                 }
-            }
-            
-            try {
-                if (JDialogDespotT2.calculateT2) {
-                    t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], true);
-                }
-                if (JDialogDespotT2.calculateMo) {
-                    moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
-                }
-                if (JDialogDespotT2.invertT2toR2) {
-                    r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], true);
-                }
-            } catch(IOException e) {
-                e.printStackTrace();
-                MipavUtil.displayError("Data could not be imported into result image");
             }
         }
         
@@ -378,8 +427,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             r2ResultWindow = new ViewJFrameImage(r2ResultStack);
             r2ResultWindow.setTitle("DESPOT2-R2Map");
             r2ResultWindow.setVisible(true);
-        } 
-        
+        }   
     }
     
     public void calculateT2with180Phase() {
@@ -402,8 +450,8 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         double[] possibleT2s, possibleMos;
         float noiseSum, threshold;
         
-        int width, height, nSlices;
-        int x,y,i,j,k,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
+        int width, height, nSlices, tSeries;
+        int x,y,i,j,k,t,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
 
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[0]]);
         width = image.getExtents()[0];
@@ -414,17 +462,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        ssfpPixelValues_phase180 = new double[JDialogDespotT2.Nfa_phase180][width*height];
-        t1PixelValues = new double[width*height];
-        if (JDialogDespotT2.includeB1Map) b1PixelValues = new double[width*height];
-        else b1PixelValues = new double[1];
-        
-        if (JDialogDespotT2.calculateT2) t2Values = new float[nSlices][width*height];
-        else t2Values = new float[1][1];
-        if (JDialogDespotT2.calculateMo) moValues = new float[nSlices][width*height];
-        else moValues = new float[1][1];
-        if (JDialogDespotT2.invertT2toR2) r2Values = new float[nSlices][width*height];
-        else r2Values = new float[1][1];
+        if(image.getNDims() > 3) {
+            tSeries = image.getExtents()[3];
+        } else {
+            tSeries = 1;
+        }
         
         t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
         moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
@@ -433,159 +475,209 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         t2ResultStack = nearCloneImage(image, t2ResultStack);
         moResultStack = nearCloneImage(image, moResultStack);
         r2ResultStack = nearCloneImage(image, r2ResultStack);
-        
-        fa_phase180 = new double[JDialogDespotT2.Nfa_phase180];
-        scaledFA_phase180 = new double[JDialogDespotT2.Nfa_phase180];
-        for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
-            fa_phase180[angle] = Math.toRadians(despotFA_phase180[angle]);
-        }
-        
-        phase180Data = new double[JDialogDespotT2.Nfa_phase180];
-        
+
+        String prefix = new String();
         // Actually perform the T2 Calculations
-        for (k=0; k<nSlices; k++) {
-            fireProgressStateChanged("calculating T2 values on slice: "+k+" of "+nSlices);
-            fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*90.0));
-            if(interrupted()) {
-                hardInterrupt = true;
-                return;
+        for(t=0; t<tSeries; t++) {
+            if(image.getNDims() > 3) {
+                prefix = "Series "+t+": ";
+            } else {
+                prefix = "";
             }
-            // grab the ssfp pixel values from the phase = 180 data
+            
+            ssfpPixelValues_phase180 = new double[JDialogDespotT2.Nfa_phase180][width*height];
+            t1PixelValues = new double[width*height];
+            if (JDialogDespotT2.includeB1Map) { 
+                b1PixelValues = new double[width*height];
+            }
+            else { 
+                b1PixelValues = new double[1];
+            }
+            
+            if (JDialogDespotT2.calculateT2) { 
+                t2Values = new float[nSlices][width*height];
+            }
+            else { 
+                t2Values = new float[1][1];
+            }
+            if (JDialogDespotT2.calculateMo) { 
+                moValues = new float[nSlices][width*height];
+            }
+            else { 
+                moValues = new float[1][1];
+            }
+            if (JDialogDespotT2.invertT2toR2) { 
+                r2Values = new float[nSlices][width*height];
+            }
+            else { 
+                r2Values = new float[1][1];
+            }
+            
+            fa_phase180 = new double[JDialogDespotT2.Nfa_phase180];
+            scaledFA_phase180 = new double[JDialogDespotT2.Nfa_phase180];
             for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
-                
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x,y, k);
-                        pixelIndex++;
-                    }
-                }
+                fa_phase180[angle] = Math.toRadians(despotFA_phase180[angle]);
             }
             
-            // grab the T1 and B1 information
-            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[t1ImageIndex]);
+            phase180Data = new double[JDialogDespotT2.Nfa_phase180];
             
-            pixelIndex = 0;
-            for (y=0; y<height; y++) {
-                for (x=0; x<width; x++) {
-                    t1PixelValues[pixelIndex] = image.getDouble(x,y, k);
-                    pixelIndex++;
+            for (k=0; k<nSlices; k++) {
+                fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*80.0));
+                if(interrupted()) {
+                    hardInterrupt = true;
+                    return;
                 }
-            }
-            
-            if (JDialogDespotT2.includeB1Map == true) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
-                
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        b1PixelValues[pixelIndex] = image.getDouble(x,y, k);
-                        pixelIndex++;
-                    }
-                }
-            }
-            
-            // now that we have all the information, perform the calculate pixel-wise
-            pixelIndex = 0;
-            for (x=0; x<width; x++) {
-                for (y=0; y<height; y++) {
+                // grab the ssfp pixel values from the phase = 180 data
+                for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
                     
-                    if (t1PixelValues[pixelIndex] > 0.00) {
-                        
-                        e1 = Math.exp(-JDialogDespotT2.despotTR/t1PixelValues[pixelIndex]);
-                        
-                        // scale up (or down) the flip angles based on the calculated B1 if required
-                        if (JDialogDespotT2.includeB1Map == true) {
-                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) scaledFA_phase180[p] = fa_phase180[p]*b1PixelValues[pixelIndex];
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
                         }
-                        
-                        else {
-                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) scaledFA_phase180[p] = fa_phase180[p];
+                    }
+                }
+                
+                // grab the T1 and B1 information
+                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[t1ImageIndex]);
+                
+                pixelIndex = 0;
+                for (y=0; y<height; y++) {
+                    for (x=0; x<width; x++) {
+                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        pixelIndex++;
+                    }
+                }
+            
+                if (JDialogDespotT2.includeB1Map == true) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
+                    
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            b1PixelValues[pixelIndex] = image.getDouble(x,y, k, t);
+                            pixelIndex++;
                         }
+                    }
+                }
+            
+                // now that we have all the information, perform the calculate pixel-wise
+                pixelIndex = 0;
+                for (x=0; x<width; x++) {
+                    for (y=0; y<height; y++) {
                         
-                        // grab the SSFP values for this pixel
-                        for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) phase180Data[p] = ssfpPixelValues_phase180[p][pixelIndex];
-                        
-                        intercept = 1.00;
-                        denominator = 1.00;
-                        slope = 0.00;
-                        e2 = 1.00;
-                        t2 = 0.00;
-                        
-                        // calculate T2 first from the phase = 180 data
-                        sumX = 0.00;
-                        sumY = 0.00;
-                        sumXY = 0.00;
-                        sumXX = 0.00;
-                        
-                        for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) {
-                            sumX += phase180Data[p]/Math.tan(scaledFA_phase180[p]);
-                            sumY += phase180Data[p]/Math.sin(scaledFA_phase180[p]);
-                            sumXY += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.sin(scaledFA_phase180[p]));
-                            sumXX += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.tan(scaledFA_phase180[p]));
-                        }
-                        
-                        d = (JDialogDespotT2.Nfa_phase180*sumXX) - sumX*sumX;
-                        a = (JDialogDespotT2.Nfa_phase180*sumXY) - (sumX*sumY);
-                        
-                        if (d != 0) {
-                            slope = a/d;
-                            denominator = (slope-e1)/(slope*e1-1.00);
-                            intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase180;
+                        if (t1PixelValues[pixelIndex] > 0.00) {
                             
-                            if (denominator > 0.00 && denominator < 1.00) {
-                                t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
-                                e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
-                                mo = intercept*(1.00-e1*e2)/(1.00-e1);
+                            e1 = Math.exp(-JDialogDespotT2.despotTR/t1PixelValues[pixelIndex]);
+                            
+                            // scale up (or down) the flip angles based on the calculated B1 if required
+                            if (JDialogDespotT2.includeB1Map == true) {
+                                for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) { 
+                                    scaledFA_phase180[p] = fa_phase180[p]*b1PixelValues[pixelIndex];
+                                }
+                            }
+                            
+                            else {
+                                for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) { 
+                                    scaledFA_phase180[p] = fa_phase180[p];
+                                }
+                            }
+                            
+                            // grab the SSFP values for this pixel
+                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) { 
+                                phase180Data[p] = ssfpPixelValues_phase180[p][pixelIndex];
+                            }
+                            
+                            intercept = 1.00;
+                            denominator = 1.00;
+                            slope = 0.00;
+                            e2 = 1.00;
+                            t2 = 0.00;
+                            
+                            // calculate T2 first from the phase = 180 data
+                            sumX = 0.00;
+                            sumY = 0.00;
+                            sumXY = 0.00;
+                            sumXX = 0.00;
+                        
+                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) {
+                                sumX += phase180Data[p]/Math.tan(scaledFA_phase180[p]);
+                                sumY += phase180Data[p]/Math.sin(scaledFA_phase180[p]);
+                                sumXY += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.sin(scaledFA_phase180[p]));
+                                sumXX += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.tan(scaledFA_phase180[p]));
+                            }
+                            
+                            d = (JDialogDespotT2.Nfa_phase180*sumXX) - sumX*sumX;
+                            a = (JDialogDespotT2.Nfa_phase180*sumXY) - (sumX*sumY);
+                            
+                            if (d != 0) {
+                                slope = a/d;
+                                denominator = (slope-e1)/(slope*e1-1.00);
+                                intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase180;
+                                
+                                if (denominator > 0.00 && denominator < 1.00) {
+                                    t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
+                                    e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
+                                    mo = intercept*(1.00-e1*e2)/(1.00-e1);
+                                }
+                                else {
+                                    mo = JDialogDespotT2.maxMo;
+                                    t2 = JDialogDespotT2.maxT2;
+                                }
                             }
                             else {
                                 mo = JDialogDespotT2.maxMo;
                                 t2 = JDialogDespotT2.maxT2;
                             }
+                        
+                        
+                            if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
+                                t2 = JDialogDespotT2.maxT2;
+                            }
+                            if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
+                                mo = JDialogDespotT2.maxMo;
+                            }
+                                                    
+                            // invert to r2
+                            if (t2 != 0.00) {
+                                r2 = 1.00/t2;
+                            }
+                            else {
+                                r2 = 0.00;
+                            }
+                            
+                            
+                            if (JDialogDespotT2.calculateT2) t2Values[k][pixelIndex] = (float) t2;
+                            if (JDialogDespotT2.calculateMo) moValues[k][pixelIndex] = (float) mo;
+                            if (JDialogDespotT2.invertT2toR2) r2Values[k][pixelIndex] = (float) r2;
                         }
                         else {
-                            mo = JDialogDespotT2.maxMo;
-                            t2 = JDialogDespotT2.maxT2;
+                            if (JDialogDespotT2.calculateT2) t2Values[k][pixelIndex] = (float) 0.00;
+                            if (JDialogDespotT2.calculateMo) moValues[k][pixelIndex] = (float) 0.00;
+                            if (JDialogDespotT2.invertT2toR2) r2Values[k][pixelIndex] = (float) 0.00;
                         }
-                        
-                        
-                        if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
-                            t2 = JDialogDespotT2.maxT2;
-                        }
-                        if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
-                            mo = JDialogDespotT2.maxMo;
-                        }
-                                                
-                        // invert to r2
-                        if (t2 != 0.00) {
-                            r2 = 1.00/t2;
-                        }
-                        else {
-                            r2 = 0.00;
-                        }
-                        
-                        
-                        if (JDialogDespotT2.calculateT2) t2Values[k][pixelIndex] = (float) t2;
-                        if (JDialogDespotT2.calculateMo) moValues[k][pixelIndex] = (float) mo;
-                        if (JDialogDespotT2.invertT2toR2) r2Values[k][pixelIndex] = (float) r2;
+                        pixelIndex++;
                     }
-                    else {
-                        if (JDialogDespotT2.calculateT2) t2Values[k][pixelIndex] = (float) 0.00;
-                        if (JDialogDespotT2.calculateMo) moValues[k][pixelIndex] = (float) 0.00;
-                        if (JDialogDespotT2.invertT2toR2) r2Values[k][pixelIndex] = (float) 0.00;
-                    }
-                    pixelIndex++;
                 }
-            }
             
-            try {
-                if (JDialogDespotT2.calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], true);
-                if (JDialogDespotT2.calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
-                if (JDialogDespotT2.invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], true);
-            } catch(IOException e) {
-                e.printStackTrace();
-                MipavUtil.displayError("Data could not be imported into result image");
+                try {
+                    int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
+                    if (JDialogDespotT2.calculateT2) { 
+                        t2ResultStack.importData(startVal, t2Values[k], true);
+                    }
+                    if (JDialogDespotT2.calculateMo) { 
+                        moResultStack.importData(startVal, moValues[k], true);
+                    }
+                    if (JDialogDespotT2.invertT2toR2) { 
+                        r2ResultStack.importData(startVal, r2Values[k], true);
+                    }
+                } catch(IOException e) {
+                    e.printStackTrace();
+                    MipavUtil.displayError("Data could not be imported into result image");
+                }
             }
         }
         
@@ -632,8 +724,8 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         float Residuals, guessDiffence;
         float [] lastGuess, recentGuess;
         
-        int width, height, nSlices;
-        int x,y,i,j,k,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
+        int width, height, nSlices, tSeries;
+        int x,y,i,j,k,t,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
 
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[0]]);
         width = image.getExtents()[0];
@@ -644,19 +736,12 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        ssfpPixelValues_phase0 = new double[JDialogDespotT2.Nfa_phase0][width*height];
-        ssfpPixelValues_phase180 = new double[JDialogDespotT2.Nfa_phase180][width*height];
-        t1PixelValues = new double[width*height];
-        if (JDialogDespotT2.includeB1Map) b1PixelValues = new double[width*height];
-        else b1PixelValues = new double[1];
-        
-        if (JDialogDespotT2.calculateT2) t2Values = new float[nSlices][width*height];
-        else t2Values = new float[1][1];
-        if (JDialogDespotT2.calculateMo) moValues = new float[nSlices][width*height];
-        else moValues = new float[1][1];
-        if (JDialogDespotT2.invertT2toR2) r2Values = new float[nSlices][width*height];
-        else r2Values = new float[1][1];
-        
+        if(image.getNDims() > 3) {
+            tSeries = image.getExtents()[3];
+        } else {
+            tSeries = 1;
+        }
+
         t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
         moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
         r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
@@ -665,252 +750,303 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         moResultStack = nearCloneImage(image, moResultStack);
         r2ResultStack = nearCloneImage(image, r2ResultStack);
         
-        fa_phase0 = new double[JDialogDespotT2.Nfa_phase0];
-        fa_phase180 = new double[JDialogDespotT2.Nfa_phase180];
-        scaledFA_phase0 = new double[JDialogDespotT2.Nfa_phase0];
-        scaledFA_phase180 = new double[JDialogDespotT2.Nfa_phase180];
-        for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
-            fa_phase0[angle] = Math.toRadians(despotFA_phase0[angle]);
-        }
-        for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
-            fa_phase180[angle] = Math.toRadians(despotFA_phase180[angle]);
-        }
-        
-        phase0Data = new double[JDialogDespotT2.Nfa_phase0];
-        phase180Data = new double[JDialogDespotT2.Nfa_phase180];
-        
-        possibleT2s = new double[2];
-        possibleMos = new double[2];
-        
+        String prefix = new String();
         // Actually perform the T2 Calculations
-        for (k=0; k<nSlices; k++) {
-            fireProgressStateChanged("calculating T2 values on slice: "+k+" of "+nSlices);
-            fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*90.0));
-            if(interrupted()) {
-                hardInterrupt = true;
-                return;
+        for(t=0; t<tSeries; t++) {
+            if(image.getNDims() > 3) {
+                prefix = "Series "+t+": ";
+            } else {
+                prefix = "";
             }
-            // grab the ssfp pixel values from the phase = 0 data
+            
+            ssfpPixelValues_phase0 = new double[JDialogDespotT2.Nfa_phase0][width*height];
+            ssfpPixelValues_phase180 = new double[JDialogDespotT2.Nfa_phase180][width*height];
+            t1PixelValues = new double[width*height];
+            if (JDialogDespotT2.includeB1Map) { 
+                b1PixelValues = new double[width*height];
+            }
+            else { 
+                b1PixelValues = new double[1];
+            }
+            
+            if (JDialogDespotT2.calculateT2) { 
+                t2Values = new float[nSlices][width*height];
+            }
+            else t2Values = new float[1][1];
+            if (JDialogDespotT2.calculateMo) { 
+                moValues = new float[nSlices][width*height];
+            }
+            else moValues = new float[1][1];
+            if (JDialogDespotT2.invertT2toR2) { 
+                r2Values = new float[nSlices][width*height];
+            }
+            else { 
+                r2Values = new float[1][1];
+            }
+            
+            fa_phase0 = new double[JDialogDespotT2.Nfa_phase0];
+            fa_phase180 = new double[JDialogDespotT2.Nfa_phase180];
+            scaledFA_phase0 = new double[JDialogDespotT2.Nfa_phase0];
+            scaledFA_phase180 = new double[JDialogDespotT2.Nfa_phase180];
             for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
-                
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
-                        pixelIndex++;
-                    }
-                }
+                fa_phase0[angle] = Math.toRadians(despotFA_phase0[angle]);
             }
-            
-            // grab the ssfp pixel values from the phase = 180 data
             for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
+                fa_phase180[angle] = Math.toRadians(despotFA_phase180[angle]);
+            }
+            
+            phase0Data = new double[JDialogDespotT2.Nfa_phase0];
+            phase180Data = new double[JDialogDespotT2.Nfa_phase180];
+            
+            possibleT2s = new double[2];
+            possibleMos = new double[2];
+            
+            for (k=0; k<nSlices; k++) {
+                fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*80.0));
+                if(interrupted()) {
+                    hardInterrupt = true;
+                    return;
+                }
+                // grab the ssfp pixel values from the phase = 0 data
+                for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
+                    
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
+                        }
+                    }
+                }
+            
+                // grab the ssfp pixel values from the phase = 180 data
+                for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
+                    
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
+                        }
+                    }
+                }
+                
+                // grab the T1 and B1 information
+                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[t1ImageIndex]);
                 
                 pixelIndex = 0;
                 for (y=0; y<height; y++) {
                     for (x=0; x<width; x++) {
-                        ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
+                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
                         pixelIndex++;
                     }
                 }
-            }
             
-            // grab the T1 and B1 information
-            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[t1ImageIndex]);
-            
-            pixelIndex = 0;
-            for (y=0; y<height; y++) {
+                if (JDialogDespotT2.includeB1Map == true) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
+                    
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                            pixelIndex++;
+                        }
+                    }
+                }
+                
+                // now that we have all the information, perform the calculate pixel-wise
+                pixelIndex = 0;
                 for (x=0; x<width; x++) {
-                    t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
-                    pixelIndex++;
-                }
-            }
-            
-            if (JDialogDespotT2.includeB1Map == true) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
+                    for (y=0; y<height; y++) {
+                    
+                        if (t1PixelValues[pixelIndex] > 0.00) {
+                            
+                            e1 = Math.exp(-JDialogDespotT2.despotTR/t1PixelValues[pixelIndex]);
+                            
+                            // scale up (or down) the flip angles based on the calculated B1 if required
+                            if (JDialogDespotT2.includeB1Map == true) {
+                                for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) scaledFA_phase0[p] = fa_phase0[p]*b1PixelValues[pixelIndex];
+                                for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) scaledFA_phase180[p] = fa_phase180[p]*b1PixelValues[pixelIndex];
+                            }
+                            else {
+                                for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
+                                    scaledFA_phase0[p] = fa_phase0[p];
+                                    scaledFA_phase180[p] = fa_phase180[p];
+                                }
+                            }
+                        
+                            // grab the SSFP values for this pixel
+                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) phase0Data[p] = ssfpPixelValues_phase0[p][pixelIndex];
+                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) phase180Data[p] = ssfpPixelValues_phase180[p][pixelIndex];
+                            
+                            intercept = 1.00;
+                            denominator = 1.00;
+                            slope = 0.00;
+                            e2 = 1.00;
+                            t2 = 0.00;
+                            
+                            // calculate T2 first from the phase = 0 data
+                            sumX = 0.00;
+                            sumY = 0.00;
+                            sumXY = 0.00;
+                            sumXX = 0.00;
+                        
+                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
+                                sumX += phase0Data[p]/Math.tan(scaledFA_phase0[p]);
+                                sumY += phase0Data[p]/Math.sin(scaledFA_phase0[p]);
+                                sumXY += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.sin(scaledFA_phase0[p]));
+                                sumXX += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.tan(scaledFA_phase0[p]));
+                            }
+                            
+                            d = (JDialogDespotT2.Nfa_phase0*sumXX) - sumX*sumX;
+                            a = (JDialogDespotT2.Nfa_phase0*sumXY) - (sumX*sumY);
+                            
+                            if (d != 0) {
+                                slope = a/d;
+                                denominator = (e1-slope)/(1.00-slope*e1);
+                                intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase0;
+                                
+                                if (denominator > 0.00 && denominator < 1.00) {
+                                    t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
+                                    e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
+                                    mo = intercept*(1.00-e1*e2)/(1.00-e1);
+                                }
+                                else {
+                                    mo = 0.00;
+                                    t2 = 0.00;
+                                }
+                            }
+                            else {
+                                mo = 0.00;
+                                t2 = 0.00;
+                            }
+                            
+    
+                            if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
+                                t2 = JDialogDespotT2.maxT2;
+                            }
+                            if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
+                                mo = 0.00;
+                            }
+                        
                 
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        b1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                            possibleT2s[0] = t2;
+                            possibleMos[0] = mo;
+                            
+                            
+                            // calculate T2 first from the phase = 180 data
+                            sumX = 0.00;
+                            sumY = 0.00;
+                            sumXY = 0.00;
+                            sumXX = 0.00;
+                            
+                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) {
+                                sumX += phase180Data[p]/Math.tan(scaledFA_phase180[p]);
+                                sumY += phase180Data[p]/Math.sin(scaledFA_phase180[p]);
+                                sumXY += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.sin(scaledFA_phase180[p]));
+                                sumXX += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.tan(scaledFA_phase180[p]));
+                            }
+                            
+                            d = (JDialogDespotT2.Nfa_phase180*sumXX) - sumX*sumX;
+                            a = (JDialogDespotT2.Nfa_phase180*sumXY) - (sumX*sumY);
+                        
+                            if (d != 0) {
+                                slope = a/d;
+                                denominator = (slope-e1)/(slope*e1-1.00);
+                                intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase180;
+                                
+                                if (denominator > 0.00 && denominator < 1.00) {
+                                    t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
+                                    e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
+                                    mo = intercept*(1.00-e1*e2)/(1.00-e1);
+                                }
+                                else {
+                                    mo = 0.00;
+                                    t2 = 0.00;
+                                }
+                            }
+                            else {
+                                mo = 0.00;
+                                t2 = 0.00;
+                            }
+                            
+                            
+                            if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
+                                t2 = JDialogDespotT2.maxT2;
+                            }
+                            if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
+                                mo = 0.00;
+                            }
+                            
+                            possibleT2s[1] = t2;
+                            possibleMos[1] = mo;
+                        
+                            // now, choose the maximum T2 and the corresponding mo value
+                            if (possibleT2s[0] >= possibleT2s[1]) {
+                                t2 = possibleT2s[0];
+                                mo = possibleMos[0];
+                            }
+                            else {
+                                t2 = possibleT2s[1];
+                                mo = possibleMos[1];
+                            }
+                             
+                            
+                            //t2 = (possibleT2s[0]+possibleT2s[1])/2.00;
+                            //mo = (possibleMos[0]+possibleMos[1])/2.00;
+                        
+                        
+                            // invert to r2
+                            if (t2 != 0.00) {
+                                r2 = 1.00/t2;
+                            }
+                            else {
+                                r2 = 0.00;
+                            }
+                                            
+                            if (JDialogDespotT2.calculateT2) { 
+                                t2Values[k][pixelIndex] = (float) t2;
+                            }
+                            if (JDialogDespotT2.calculateMo) { 
+                                moValues[k][pixelIndex] = (float) mo;
+                            }
+                            if (JDialogDespotT2.invertT2toR2) { 
+                                r2Values[k][pixelIndex] = (float) r2;
+                            }
+                        }
+                        else {
+                            if (JDialogDespotT2.calculateT2) { 
+                                t2Values[k][pixelIndex] = (float) 0.00;
+                            }
+                            if (JDialogDespotT2.calculateMo) { 
+                                moValues[k][pixelIndex] = (float) 0.00;
+                            }
+                            if (JDialogDespotT2.invertT2toR2) { 
+                                r2Values[k][pixelIndex] = (float) 0.00;
+                            }
+                        }
                         pixelIndex++;
                     }
                 }
-            }
-            
-            // now that we have all the information, perform the calculate pixel-wise
-            pixelIndex = 0;
-            for (x=0; x<width; x++) {
-                for (y=0; y<height; y++) {
                 
-                    if (t1PixelValues[pixelIndex] > 0.00) {
-                        
-                        e1 = Math.exp(-JDialogDespotT2.despotTR/t1PixelValues[pixelIndex]);
-                        
-                        // scale up (or down) the flip angles based on the calculated B1 if required
-                        if (JDialogDespotT2.includeB1Map == true) {
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) scaledFA_phase0[p] = fa_phase0[p]*b1PixelValues[pixelIndex];
-                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) scaledFA_phase180[p] = fa_phase180[p]*b1PixelValues[pixelIndex];
-                        }
-                        else {
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
-                                scaledFA_phase0[p] = fa_phase0[p];
-                                scaledFA_phase180[p] = fa_phase180[p];
-                            }
-                        }
-                        
-                        // grab the SSFP values for this pixel
-                        for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) phase0Data[p] = ssfpPixelValues_phase0[p][pixelIndex];
-                        for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) phase180Data[p] = ssfpPixelValues_phase180[p][pixelIndex];
-                        
-                        intercept = 1.00;
-                        denominator = 1.00;
-                        slope = 0.00;
-                        e2 = 1.00;
-                        t2 = 0.00;
-                        
-                        // calculate T2 first from the phase = 0 data
-                        sumX = 0.00;
-                        sumY = 0.00;
-                        sumXY = 0.00;
-                        sumXX = 0.00;
-                    
-                        for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
-                            sumX += phase0Data[p]/Math.tan(scaledFA_phase0[p]);
-                            sumY += phase0Data[p]/Math.sin(scaledFA_phase0[p]);
-                            sumXY += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.sin(scaledFA_phase0[p]));
-                            sumXX += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.tan(scaledFA_phase0[p]));
-                        }
-                        
-                        d = (JDialogDespotT2.Nfa_phase0*sumXX) - sumX*sumX;
-                        a = (JDialogDespotT2.Nfa_phase0*sumXY) - (sumX*sumY);
-                        
-                        if (d != 0) {
-                            slope = a/d;
-                            denominator = (e1-slope)/(1.00-slope*e1);
-                            intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase0;
-                            
-                            if (denominator > 0.00 && denominator < 1.00) {
-                                t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
-                                e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
-                                mo = intercept*(1.00-e1*e2)/(1.00-e1);
-                            }
-                            else {
-                                mo = 0.00;
-                                t2 = 0.00;
-                            }
-                        }
-                        else {
-                            mo = 0.00;
-                            t2 = 0.00;
-                        }
-                        
-
-                        if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
-                            t2 = JDialogDespotT2.maxT2;
-                        }
-                        if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
-                            mo = 0.00;
-                        }
-                    
-            
-                        possibleT2s[0] = t2;
-                        possibleMos[0] = mo;
-                        
-                        
-                        // calculate T2 first from the phase = 180 data
-                        sumX = 0.00;
-                        sumY = 0.00;
-                        sumXY = 0.00;
-                        sumXX = 0.00;
-                        
-                        for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) {
-                            sumX += phase180Data[p]/Math.tan(scaledFA_phase180[p]);
-                            sumY += phase180Data[p]/Math.sin(scaledFA_phase180[p]);
-                            sumXY += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.sin(scaledFA_phase180[p]));
-                            sumXX += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.tan(scaledFA_phase180[p]));
-                        }
-                        
-                        d = (JDialogDespotT2.Nfa_phase180*sumXX) - sumX*sumX;
-                        a = (JDialogDespotT2.Nfa_phase180*sumXY) - (sumX*sumY);
-                        
-                        if (d != 0) {
-                            slope = a/d;
-                            denominator = (slope-e1)/(slope*e1-1.00);
-                            intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase180;
-                            
-                            if (denominator > 0.00 && denominator < 1.00) {
-                                t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
-                                e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
-                                mo = intercept*(1.00-e1*e2)/(1.00-e1);
-                            }
-                            else {
-                                mo = 0.00;
-                                t2 = 0.00;
-                            }
-                        }
-                        else {
-                            mo = 0.00;
-                            t2 = 0.00;
-                        }
-                        
-                        
-                        if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
-                            t2 = JDialogDespotT2.maxT2;
-                        }
-                        if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
-                            mo = 0.00;
-                        }
-                        
-                        possibleT2s[1] = t2;
-                        possibleMos[1] = mo;
-                    
-                        
-                        // now, choose the maximum T2 and the corresponding mo value
-                        if (possibleT2s[0] >= possibleT2s[1]) {
-                            t2 = possibleT2s[0];
-                            mo = possibleMos[0];
-                        }
-                        else {
-                            t2 = possibleT2s[1];
-                            mo = possibleMos[1];
-                        }
-                         
-                        
-                        //t2 = (possibleT2s[0]+possibleT2s[1])/2.00;
-                        //mo = (possibleMos[0]+possibleMos[1])/2.00;
-                        
-                        
-                        // invert to r2
-                        if (t2 != 0.00) {
-                            r2 = 1.00/t2;
-                        }
-                        else {
-                            r2 = 0.00;
-                        }
-                    
-                        
-                        if (JDialogDespotT2.calculateT2) t2Values[k][pixelIndex] = (float) t2;
-                        if (JDialogDespotT2.calculateMo) moValues[k][pixelIndex] = (float) mo;
-                        if (JDialogDespotT2.invertT2toR2) r2Values[k][pixelIndex] = (float) r2;
+                try {
+                    int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
+                    if (JDialogDespotT2.calculateT2) { 
+                        t2ResultStack.importData(startVal, t2Values[k], true);
                     }
-                    else {
-                        if (JDialogDespotT2.calculateT2) t2Values[k][pixelIndex] = (float) 0.00;
-                        if (JDialogDespotT2.calculateMo) moValues[k][pixelIndex] = (float) 0.00;
-                        if (JDialogDespotT2.invertT2toR2) r2Values[k][pixelIndex] = (float) 0.00;
+                    if (JDialogDespotT2.calculateMo) { 
+                        moResultStack.importData(startVal, moValues[k], true);
                     }
-                    pixelIndex++;
+                    if (JDialogDespotT2.invertT2toR2) { 
+                        r2ResultStack.importData(startVal, r2Values[k], true);
+                    }
+                } catch(IOException e) {
+                    e.printStackTrace();
+                    MipavUtil.displayError("Data could not be imported into result image");
                 }
-            }
-            
-            try {
-                if (JDialogDespotT2.calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Values[k], true);
-                if (JDialogDespotT2.calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
-                if (JDialogDespotT2.invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Values[k], true);
-            } catch(IOException e) {
-                e.printStackTrace();
-                MipavUtil.displayError("Data could not be imported into result image");
             }
         }
         
@@ -949,7 +1085,6 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         double[][] Gaussian;
         double smoothedBo;
         
-        
         double[] optimization, initialGuess;
         double[] twoPOptimization, twoPInitialGuess;
         double Residuals, guessDifference, lowestResiduals;
@@ -976,8 +1111,8 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         
         double t1, tr;
         
-        int width, height, nSlices;
-        int x,y,i,j,k,angle, p, pixelIndex, p1,p2;
+        int width, height, nSlices, tSeries;
+        int x,y,i,j,k,t,angle, p, pixelIndex, p1,p2;
         
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[0]]);
         width = image.getExtents()[0];
@@ -988,12 +1123,12 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        ssfpPixelValues_phase0 = new double[JDialogDespotT2.Nfa_phase0][width*height];
-        ssfpPixelValues_phase180 = new double[JDialogDespotT2.Nfa_phase180][width*height];
-        t1PixelValues = new double[width*height];
-        if (JDialogDespotT2.includeB1Map) b1PixelValues = new double[width*height];
-        else b1PixelValues = new double[1];
-        
+        if(image.getNDims() > 3) {
+            tSeries = image.getExtents()[3];
+        } else {
+            tSeries = 1;
+        }
+
         t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
         moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
         r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
@@ -1003,37 +1138,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         moResultStack = nearCloneImage(image, moResultStack);
         r2ResultStack = nearCloneImage(image, r2ResultStack);
         boResultStack = nearCloneImage(image, boResultStack);
-        
-        FA = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
-        scaledFA = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
-        phaseIncrements = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
-        sina = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
-        cosa = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
-        
-        for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
-            FA[angle] = Math.toRadians(despotFA_phase0[angle]);
-            phaseIncrements[angle] = 0.00;
-        }
-        for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
-            FA[angle+JDialogDespotT2.Nfa_phase0] = Math.toRadians(despotFA_phase180[angle]);
-            phaseIncrements[angle+JDialogDespotT2.Nfa_phase0] = 3.14159265;
-        }
-        
-        ssfpSampleData = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
-        
-        tr = JDialogDespotT2.despotTR;
-        resonancePeriod = 1000.00/tr;
-        
-        t2Values = new double[nSlices][height][width];
-        moValues = new double[nSlices][height][width];
-        boValues = new double[nSlices][height][width];
-        r2Values = new double[nSlices][height][width];
-        
-        boField = new float[nSlices][width*height];
-        moField = new float[nSlices][width*height];
-        t2Field = new float[nSlices][width*height];
-        r2Field = new float[nSlices][width*height];
-        
+
         Gaussian = new double[5][5];
         
         // define the Gaussian kernel
@@ -1062,353 +1167,415 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         Gaussian[4][2] = 1;
         Gaussian[4][3] = 0;
         Gaussian[4][4] = 0;
-        
-        
-        // simplex - specific parameters
-        numParams = 3;
-        numVertices = numParams+1;
-        simplex = new double[numVertices][numVertices];
-        simplexLineValues = new double[numParams];
-        simplexResiduals = new double[numVertices];
-        bestToWorst = new int[3];
-        
-        simplexCentre = new double[numParams];
-        reflection = new double[numVertices];
-        expansion = new double[numVertices];
-        contraction = new double[numVertices];
-        shrink = new double[numVertices];
-        
-        
-        numParams = 2;
-        numVertices = numParams+1;
-        twoPSimplex = new double[numVertices][numVertices];
-        twoPSimplexLineValues = new double[numParams];
-        twoPSimplexResiduals = new double[numVertices];
-        bestToWorst = new int[3];
-        
-        twoPSimplexCentre = new double[numParams];
-        twoPReflection = new double[numVertices];
-        twoPExpansion = new double[numVertices];
-        twoPContraction = new double[numVertices];
-        twoPShrink = new double[numVertices];
 
+        String prefix = new String();
         // Perform an initial T2 Calculation to get the rough Bo field
-        for (k=0; k<nSlices; k++) {
-            fireProgressStateChanged("calculating Initial Estimates for slice: "+k+" of "+nSlices);
-            fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*50.0));
-            if(interrupted()) {
-                hardInterrupt = true;
-                return;
+        for(t=0; t<tSeries; t++) {
+            if(image.getNDims() > 3) {
+                prefix = "Series "+t+": ";
+            } else {
+                prefix = "";
+            }   
+            
+            ssfpPixelValues_phase0 = new double[JDialogDespotT2.Nfa_phase0][width*height];
+            ssfpPixelValues_phase180 = new double[JDialogDespotT2.Nfa_phase180][width*height];
+            t1PixelValues = new double[width*height];
+            if (JDialogDespotT2.includeB1Map) { 
+                b1PixelValues = new double[width*height];
             }
-            // grab the ssfp pixel values from the phase = 0 data
+            else { 
+                b1PixelValues = new double[1];
+            }
+            
+            FA = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
+            scaledFA = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
+            phaseIncrements = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
+            sina = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
+            cosa = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
+            
             for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
-                
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
-                        pixelIndex++;
-                    }
-                }
+                FA[angle] = Math.toRadians(despotFA_phase0[angle]);
+                phaseIncrements[angle] = 0.00;
             }
-            
-            // grab the ssfp pixel values from the phase = 180 data
             for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
-                
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
-                        pixelIndex++;
-                    }
-                }
+                FA[angle+JDialogDespotT2.Nfa_phase0] = Math.toRadians(despotFA_phase180[angle]);
+                phaseIncrements[angle+JDialogDespotT2.Nfa_phase0] = 3.14159265;
             }
             
-            // grab the T1 and B1 information
-            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[t1ImageIndex]);
+            ssfpSampleData = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
             
-            pixelIndex = 0;
-            for (y=0; y<height; y++) {
-                for (x=0; x<width; x++) {
-                    t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
-                    pixelIndex++;
-                }
-            }
+            tr = JDialogDespotT2.despotTR;
+            resonancePeriod = 1000.00/tr;
             
-            if (JDialogDespotT2.includeB1Map == true) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
-                
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        b1PixelValues[pixelIndex] = image.getDouble(x, y, k);
-                        pixelIndex++;
-                    }
-                }
-            }
+            t2Values = new double[nSlices][height][width];
+            moValues = new double[nSlices][height][width];
+            boValues = new double[nSlices][height][width];
+            r2Values = new double[nSlices][height][width];
             
-            // now that we have all the information, perform the calculate the initial estimates of B1, T2 and Mo pixel-wise
-            pixelIndex = 0;
+            boField = new float[nSlices][width*height];
+            moField = new float[nSlices][width*height];
+            t2Field = new float[nSlices][width*height];
+            r2Field = new float[nSlices][width*height];
             
-            for (y=0; y<height; y++) {
-                for (x=0; x<width; x++) {
-                    
-                    t1 = t1PixelValues[pixelIndex];
-                    
-                    if (t1 > 10.00) {
-                        /*
-                        if (t1 > 2500) {
-                            boValues[k-1][y][x] = 0.00;
-                            moValues[k-1][y][x] = maxMo;
-                            t2Values[k-1][y][x] = maxT2;
-                            r2Values[k-1][y][x] = 1.00/maxT2;
-                            
-                        }
-                         
-                        else {
-                         */
-                        
-                        // scale up (or down) the flip angles based on the calculated B1 if required
-                        if (JDialogDespotT2.includeB1Map == true) {
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) scaledFA[p] = FA[p]*b1PixelValues[pixelIndex];
-                        }
-                        else {
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) scaledFA[p] = FA[p];
-                        }
-                        
-                        // calculate the sina and cosa matrices
-                        for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) {
-                            sina[p] = Math.sin(scaledFA[p]);
-                            cosa[p] = Math.cos(scaledFA[p]);
-                        }
-                        
-                        // grab the SSFP values for this pixel
-                        for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) ssfpSampleData[p] = ssfpPixelValues_phase0[p][pixelIndex];
-                        for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) ssfpSampleData[p+JDialogDespotT2.Nfa_phase0] = ssfpPixelValues_phase180[p][pixelIndex];
-                        
-                        // begin with the downhill simplex
-                    
-                        // calculate an initial guess for Mo, T2 and Bo
-                        if (JDialogDespotT2.geScanner) {
-                            initialGuess[0] = 10000.00; // initial guess for mo
-                            initialGuess[1] = 100.00;   // initial guess for t2
-                            initialGuess[2] = 500.0;    // initial guess for off-resonance (Hz)
-                        }
-                        else {
-                            initialGuess[0] = 1000.00;
-                            initialGuess[1] = 100.00;
-                            initialGuess[2] = 500.0;
-                        }
-                            
-                        
-                        threePDownHillSimplex(optimization, initialGuess, t1, 
-                                tr, ssfpSampleData, sina, cosa, phaseIncrements, JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180);
-                        
-                        
-                        mo = optimization[0];
-                        t2 = optimization[1];
-                        bo = optimization[2];
-                        r2 = 0.00;
-                        
-                        if (mo < 0.00) mo = -1.00*mo;
-                        if (t2 < 0.00) t2 = -1.00*t2;
-                        if (bo < 0.00) bo = -1.00*bo;
-                        
-                        if (t2 > JDialogDespotT2.maxT2) {
-                            t2 = JDialogDespotT2.maxT2;
-                        }
-                        
-                        // invert to r2
-                        if (t2 != 0.00) {
-                            r2 = 1.00/t2;
-                        }
-                        else {
-                            r2 = 0.00;
-                        }
-                        
-                        
-                        boValues[k][y][x] = bo;
-                        moValues[k][y][x] = mo;
-                        t2Values[k][y][x] = t2;
-                        if (t1 > 0) r2Values[k][y][x] = 1.00/t2;
-                        else r2Values[k][y][x] = 0.00;
-                        //}
-                    }
-                    else {
-                        boValues[k][y][x] = 0.00;
-                        moValues[k][y][x] = 0.00;
-                        t2Values[k][y][x] = 0.00;
-                        r2Values[k][y][x] = 0.00;
-                    }
-                    
-                    pixelIndex++;
-                    
-                } // close y (height) loop
-            } // close x (width) loop
-        } // close the k (slice) loop
-
-
-        // now, go back through and smooth the Bo field 
-        for (k=0; k<nSlices; k++) {
-            fireProgressStateChanged("smoothing B0 field on slice: "+k+" of "+nSlices);
-            fireProgressStateChanged(50+(int)(((float)k+1.0)/(float)nSlices*25.0));
-            if(interrupted()) {
-                hardInterrupt = true;
-                return;
-            }
-            pixelIndex = 0;
-            for (y=0; y<height; y++) {
-                for (x=0; x<width; x++) {
-                    
-                    if (y>2 && y<height-2 && x>2 && x<width-2) {
-                        
-                        smoothedBo = 0.00;
-                        for (p1=0; p1<5; p1++) {
-                            for (p2=0; p2<5; p2++) smoothedBo += boValues[k][y-2+p2][x-2+p1]*Gaussian[p1][p2];
-                        }
-                        smoothedBo = smoothedBo / 34.00;
-                        
-                        boField[k][pixelIndex] = (float) smoothedBo;
-                    }
-                    else boField[k][pixelIndex] = (float) boValues[k][y][x];
-                    
-                    pixelIndex ++;
-                }
-            }
+            // simplex - specific parameters
+            numParams = 3;
+            numVertices = numParams+1;
+            simplex = new double[numVertices][numVertices];
+            simplexLineValues = new double[numParams];
+            simplexResiduals = new double[numVertices];
+            bestToWorst = new int[3];
             
-        }
+            simplexCentre = new double[numParams];
+            reflection = new double[numVertices];
+            expansion = new double[numVertices];
+            contraction = new double[numVertices];
+            shrink = new double[numVertices];
+            
+            
+            numParams = 2;
+            numVertices = numParams+1;
+            twoPSimplex = new double[numVertices][numVertices];
+            twoPSimplexLineValues = new double[numParams];
+            twoPSimplexResiduals = new double[numVertices];
+            bestToWorst = new int[3];
+            
+            twoPSimplexCentre = new double[numParams];
+            twoPReflection = new double[numVertices];
+            twoPExpansion = new double[numVertices];
+            twoPContraction = new double[numVertices];
+            twoPShrink = new double[numVertices];
         
-        // now, go back through and calculate T2 and Mo again using the smoothed Bo value
-        for (k=0; k<nSlices; k++) {
-            fireProgressStateChanged("recalculating values on slice: "+k+" of "+nSlices);
-            fireProgressStateChanged(75+(int)(((float)k+1.0)/(float)nSlices*15.0));
-            if(interrupted()) {
-                hardInterrupt = true;
-                return;
-            }
-            // grab the ssfp pixel values from the phase = 0 data
-            for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
-                
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
-                        pixelIndex++;
-                    }
+            for (k=0; k<nSlices; k++) {
+                fireProgressStateChanged(prefix+"calculating Initial Estimates for slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*40.0));
+                if(interrupted()) {
+                    hardInterrupt = true;
+                    return;
                 }
-            }
-            
-            // grab the ssfp pixel values from the phase = 180 data
-            for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
-                
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
-                        pixelIndex++;
-                    }
-                }
-            }
-            
-            // grab the T1 and B1 information
-            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[t1ImageIndex]);
-            
-            pixelIndex = 0;
-            for (y=0; y<height; y++) {
-                for (x=0; x<width; x++) {
-                    t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
-                    pixelIndex++;
-                }
-            }
-            
-            if (JDialogDespotT2.includeB1Map == true) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
-                
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        b1PixelValues[pixelIndex] = image.getDouble(x, y, k);
-                        pixelIndex++;
-                    }
-                }
-            }
-            
-            
-            pixelIndex = 0;
-            for (y=0; y<height; y++) {
-                for (x=0; x<width; x++) {
+                // grab the ssfp pixel values from the phase = 0 data
+                for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
                     
-                    if (boField[k][pixelIndex] > 0.00) {
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
+                        }
+                    }
+                }
             
+                // grab the ssfp pixel values from the phase = 180 data
+                for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
                     
-                        bo = boField[k][pixelIndex];
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
+                        }
+                    }
+                }
+                
+                // grab the T1 and B1 information
+                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[t1ImageIndex]);
+                
+                pixelIndex = 0;
+                for (y=0; y<height; y++) {
+                    for (x=0; x<width; x++) {
+                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        pixelIndex++;
+                    }
+                }
+                
+                if (JDialogDespotT2.includeB1Map == true) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
+                    
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
+                        }
+                    }
+                }
+            
+                // now that we have all the information, perform the calculate the initial estimates of B1, T2 and Mo pixel-wise
+                pixelIndex = 0;
+                
+                for (y=0; y<height; y++) {
+                    for (x=0; x<width; x++) {
+                        
                         t1 = t1PixelValues[pixelIndex];
                         
+                        if (t1 > 10.00) {
+                            /*
+                            if (t1 > 2500) {
+                                boValues[k-1][y][x] = 0.00;
+                                moValues[k-1][y][x] = maxMo;
+                                t2Values[k-1][y][x] = maxT2;
+                                r2Values[k-1][y][x] = 1.00/maxT2;
                                 
-                        // scale up (or down) the flip angles based on the calculated B1 if required
-                        if (JDialogDespotT2.includeB1Map == true) {
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) scaledFA[p] = FA[p]*b1PixelValues[pixelIndex];
+                            }
+                             
+                            else {
+                             */
+                            
+                            // scale up (or down) the flip angles based on the calculated B1 if required
+                            if (JDialogDespotT2.includeB1Map == true) {
+                                for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) { 
+                                    scaledFA[p] = FA[p]*b1PixelValues[pixelIndex];
+                                }
+                            }
+                            else {
+                                for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) { 
+                                    scaledFA[p] = FA[p];
+                                }
+                            }
+                            
+                            // calculate the sina and cosa matrices
+                            for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) {
+                                sina[p] = Math.sin(scaledFA[p]);
+                                cosa[p] = Math.cos(scaledFA[p]);
+                            }
+                            
+                            // grab the SSFP values for this pixel
+                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) { 
+                                ssfpSampleData[p] = ssfpPixelValues_phase0[p][pixelIndex];
+                            }
+                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) { 
+                                ssfpSampleData[p+JDialogDespotT2.Nfa_phase0] = ssfpPixelValues_phase180[p][pixelIndex];
+                            }
+                            
+                            // begin with the downhill simplex
+                        
+                            // calculate an initial guess for Mo, T2 and Bo
+                            if (JDialogDespotT2.geScanner) {
+                                initialGuess[0] = 10000.00; // initial guess for mo
+                                initialGuess[1] = 100.00;   // initial guess for t2
+                                initialGuess[2] = 500.0;    // initial guess for off-resonance (Hz)
+                            }
+                            else {
+                                initialGuess[0] = 1000.00;
+                                initialGuess[1] = 100.00;
+                                initialGuess[2] = 500.0;
+                            }
+                            
+                            threePDownHillSimplex(optimization, initialGuess, t1, 
+                                    tr, ssfpSampleData, sina, cosa, phaseIncrements, JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180);
+                            
+                            
+                            mo = optimization[0];
+                            t2 = optimization[1];
+                            bo = optimization[2];
+                            r2 = 0.00;
+                            
+                            if (mo < 0.00) mo = -1.00*mo;
+                            if (t2 < 0.00) t2 = -1.00*t2;
+                            if (bo < 0.00) bo = -1.00*bo;
+                            
+                            if (t2 > JDialogDespotT2.maxT2) {
+                                t2 = JDialogDespotT2.maxT2;
+                            }
+                            
+                            // invert to r2
+                            if (t2 != 0.00) {
+                                r2 = 1.00/t2;
+                            }
+                            else {
+                                r2 = 0.00;
+                            }
+                        
+                            boValues[k][y][x] = bo;
+                            moValues[k][y][x] = mo;
+                            t2Values[k][y][x] = t2;
+                            if (t1 > 0) r2Values[k][y][x] = 1.00/t2;
+                            else r2Values[k][y][x] = 0.00;
+                            //}
                         }
                         else {
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) scaledFA[p] = FA[p];
+                            boValues[k][y][x] = 0.00;
+                            moValues[k][y][x] = 0.00;
+                            t2Values[k][y][x] = 0.00;
+                            r2Values[k][y][x] = 0.00;
                         }
                         
-                        // calculate the sina and cosa matrices
-                        for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) {
-                            sina[p] = Math.sin(scaledFA[p]);
-                            cosa[p] = Math.cos(scaledFA[p]);
+                        pixelIndex++;
+                        
+                    } // close the x (width) loop
+                } // close the y (height) loop
+            } // close the k (slice) loop
+
+
+            // now, go back through and smooth the Bo field 
+            for (k=0; k<nSlices; k++) {
+                fireProgressStateChanged(prefix+"smoothing B0 field on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(40+(int)(((float)k+1.0)/(float)nSlices*20.0));
+                if(interrupted()) {
+                    hardInterrupt = true;
+                    return;
+                }
+                pixelIndex = 0;
+                for (y=0; y<height; y++) {
+                    for (x=0; x<width; x++) {
+                        
+                        if (y>2 && y<height-2 && x>2 && x<width-2) {
+                            
+                            smoothedBo = 0.00;
+                            for (p1=0; p1<5; p1++) {
+                                for (p2=0; p2<5; p2++) smoothedBo += boValues[k][y-2+p2][x-2+p1]*Gaussian[p1][p2];
+                            }
+                            smoothedBo = smoothedBo / 34.00;
+                            
+                            boField[k][pixelIndex] = (float) smoothedBo;
                         }
+                        else boField[k][pixelIndex] = (float) boValues[k][y][x];
                         
-                        // grab the SSFP values for this pixel
-                        for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) ssfpSampleData[p] = ssfpPixelValues_phase0[p][pixelIndex];
-                        for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) ssfpSampleData[p+JDialogDespotT2.Nfa_phase0] = ssfpPixelValues_phase180[p][pixelIndex];
-                        
-                        
-                        twoPInitialGuess[0] = moValues[k][y][x];
-                        twoPInitialGuess[1] = t2Values[k][y][x];
-                        
-                        twoPDownHillSimplex(twoPOptimization, twoPInitialGuess, bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180);
-                        
-                        mo = twoPOptimization[0];
-                        t2 = twoPOptimization[1];
-                        
-                        if (mo < 0.00) mo = -1.00*mo;
-                        if (t2 < 0.00) t2 = -1.00*t2;
-                        
-                        if (t2 > JDialogDespotT2.maxT2) t2 = JDialogDespotT2.maxT2;
-                        
-                        if (t2 > 0.00) r2 = 1.00/t2;
-                        else r2 = 0.00;
-                        
-                        t2Field[k][pixelIndex] = (float) t2;
-                        moField[k][pixelIndex] = (float) mo;
-                        r2Field[k][pixelIndex] = (float) r2;
+                        pixelIndex ++;
                     }
-                    else {
-                        t2Field[k][pixelIndex] = (float) 0.00;
-                        moField[k][pixelIndex] = (float) 0.00;
-                        r2Field[k][pixelIndex] = (float) 0.00;
+                }
+                
+            }
+        
+            // now, go back through and calculate T2 and Mo again using the smoothed Bo value
+            for (k=0; k<nSlices; k++) {
+                fireProgressStateChanged(prefix+"recalculating values on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(60+(int)(((float)k+1.0)/(float)nSlices*15.0));
+                if(interrupted()) {
+                    hardInterrupt = true;
+                    return;
+                }
+                // grab the ssfp pixel values from the phase = 0 data
+                for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
+                    
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
+                        }
                     }
-                    
-                    pixelIndex++;
-                    
-                } // close y (height) loop
-            } // close x (widht) loop
+                }
             
-            try {
-                // add data to the final stacks
-                if (JDialogDespotT2.calculateT2) t2ResultStack.importData(image.getSliceSize()*k, t2Field[k], true);
-                if (JDialogDespotT2.calculateMo) moResultStack.importData(image.getSliceSize()*k, moField[k], true);
-                if (JDialogDespotT2.invertT2toR2) r2ResultStack.importData(image.getSliceSize()*k, r2Field[k], true);
-                if (JDialogDespotT2.calculateBo) boResultStack.importData(image.getSliceSize()*k, boField[k], true);
-            } catch(IOException e) {
-                e.printStackTrace();
-                MipavUtil.displayError("Data could not be imported into result image");
-            }// end the k (slice) loop 
+                // grab the ssfp pixel values from the phase = 180 data
+                for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
+                    
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
+                        }
+                    }
+                }
+                
+                // grab the T1 and B1 information
+                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[t1ImageIndex]);
+                
+                pixelIndex = 0;
+                for (y=0; y<height; y++) {
+                    for (x=0; x<width; x++) {
+                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        pixelIndex++;
+                    }
+                }
+                
+                if (JDialogDespotT2.includeB1Map == true) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
+                    
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                            pixelIndex++;
+                        }
+                    }
+                }
+            
+                pixelIndex = 0;
+                for (y=0; y<height; y++) {
+                    for (x=0; x<width; x++) {
+                        
+                        if (boField[k][pixelIndex] > 0.00) {
+                
+                        
+                            bo = boField[k][pixelIndex];
+                            t1 = t1PixelValues[pixelIndex];
+                            
+                                    
+                            // scale up (or down) the flip angles based on the calculated B1 if required
+                            if (JDialogDespotT2.includeB1Map == true) {
+                                for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) scaledFA[p] = FA[p]*b1PixelValues[pixelIndex];
+                            }
+                            else {
+                                for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) scaledFA[p] = FA[p];
+                            }
+                            
+                            // calculate the sina and cosa matrices
+                            for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) {
+                                sina[p] = Math.sin(scaledFA[p]);
+                                cosa[p] = Math.cos(scaledFA[p]);
+                            }
+                            
+                            // grab the SSFP values for this pixel
+                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) ssfpSampleData[p] = ssfpPixelValues_phase0[p][pixelIndex];
+                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) ssfpSampleData[p+JDialogDespotT2.Nfa_phase0] = ssfpPixelValues_phase180[p][pixelIndex];
+                            
+                            
+                            twoPInitialGuess[0] = moValues[k][y][x];
+                            twoPInitialGuess[1] = t2Values[k][y][x];
+                            
+                            twoPDownHillSimplex(twoPOptimization, twoPInitialGuess, bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180);
+                            
+                            mo = twoPOptimization[0];
+                            t2 = twoPOptimization[1];
+                            
+                            if (mo < 0.00) mo = -1.00*mo;
+                            if (t2 < 0.00) t2 = -1.00*t2;
+                            
+                            if (t2 > JDialogDespotT2.maxT2) t2 = JDialogDespotT2.maxT2;
+                            
+                            if (t2 > 0.00) r2 = 1.00/t2;
+                            else r2 = 0.00;
+                            
+                            t2Field[k][pixelIndex] = (float) t2;
+                            moField[k][pixelIndex] = (float) mo;
+                            r2Field[k][pixelIndex] = (float) r2;
+                        }
+                        else {
+                            t2Field[k][pixelIndex] = (float) 0.00;
+                            moField[k][pixelIndex] = (float) 0.00;
+                            r2Field[k][pixelIndex] = (float) 0.00;
+                        }
+                        
+                        pixelIndex++;
+                        
+                    } // close x (width) loop
+                } // close y (height) loop
+            
+                try {
+                    // add data to the final stacks
+                    int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
+                    if (JDialogDespotT2.calculateT2) { 
+                        t2ResultStack.importData(startVal, t2Field[k], true);
+                    }
+                    if (JDialogDespotT2.calculateMo) { 
+                        moResultStack.importData(startVal, moField[k], true);
+                    }
+                    if (JDialogDespotT2.invertT2toR2) { 
+                        r2ResultStack.importData(startVal, r2Field[k], true);
+                    }
+                    if (JDialogDespotT2.calculateBo) { 
+                        boResultStack.importData(startVal, boField[k], true);
+                    }
+                } catch(IOException e) {
+                    e.printStackTrace();
+                    MipavUtil.displayError("Data could not be imported into result image");
+                }// end the k (slice) loop 
+            }
         }
         
         if (JDialogDespotT2.calculateT2) {

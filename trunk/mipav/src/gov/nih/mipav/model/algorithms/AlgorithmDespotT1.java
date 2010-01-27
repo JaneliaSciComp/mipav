@@ -331,20 +331,28 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
         
         if (t1Guess > 0) {
-            for (p=0; p<Nfa; p++) despotGuess[p] = moGuess*(1.00-Math.exp(-despotTR/t1Guess))*Math.sin(x*despotFA[p]*3.14159265/180.00)/(1.00-Math.exp(-despotTR/t1Guess)*Math.cos(x*despotFA[p]*3.14159265/180.00));
+            for (p=0; p<Nfa; p++) {
+                despotGuess[p] = moGuess*(1.00-Math.exp(-despotTR/t1Guess))*Math.sin(x*despotFA[p]*3.14159265/180.00)/(1.00-Math.exp(-despotTR/t1Guess)*Math.cos(x*despotFA[p]*3.14159265/180.00));
+            }
         }
         else {
-            for (p=0; p<Nfa; p++) despotGuess[p] = 0.00;
+            for (p=0; p<Nfa; p++) {
+                despotGuess[p] = 0.00;
+            }
         }
         
         if (t1Guess > 0) {
             
             MoScale = 0.975;
             
-            for (p=0; p<Nti; p++) irspgrGuess[p] = Math.abs( MoScale*moGuess*Math.sin(x*irspgrFA*3.14159265/180.00) * (1.00-Inversion*Math.exp(-irspgrTI[p]/t1Guess) + Math.exp(-irspgrTr[p]/t1Guess)) );
+            for (p=0; p<Nti; p++) {
+                irspgrGuess[p] = Math.abs( MoScale*moGuess*Math.sin(x*irspgrFA*3.14159265/180.00) * (1.00-Inversion*Math.exp(-irspgrTI[p]/t1Guess) + Math.exp(-irspgrTr[p]/t1Guess)) );
+            }
         }
         else {
-            for (p=0; p<Nti; p++) irspgrGuess[p] = 0.00;
+            for (p=0; p<Nti; p++) {
+                irspgrGuess[p] = 0.00;
+            }
         }
         
         residuals = 0.00;
@@ -380,9 +388,9 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
         float noiseSum, threshold;
         
-        int width, height, nSlices, irspgrSlices;
+        int width, height, nSlices, tSeries, irspgrSlices, irspgrSeries;
         int irwidth, irheight;
-        int x,y,i,j,k,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
+        int x,y,i,j,k,t,angle, p, ti, p1, p2, pixelIndex, noiseIndex;
         int calculateB1 = 1;
         
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
@@ -394,11 +402,23 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             nSlices = 1;
         }
         
+        if(image.getNDims() > 3) {
+            tSeries = image.getExtents()[3];
+        } else {
+            tSeries = 1;
+        }
+        
         irspgrImage = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[0]]);
         if(image.getNDims() > 2) {
             irspgrSlices = irspgrImage.getExtents()[2];
         } else {
             irspgrSlices = 1;
+        }
+        
+        if(image.getNDims() > 3) {
+            irspgrSeries = image.getExtents()[3];
+        } else {
+            irspgrSeries = 1;
         }
         
         // check to make sure the IR-SPGR and SPGR data have the same size
@@ -409,17 +429,6 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             MipavUtil.displayError("IR-SPGR and SPGR data must have the same image dimensions.");
             return false;
         }
-        
-        spgrPixelValues = new double[Nsa][width*height];
-        irspgrPixelValues = new double[Nsa][width*height];
-        if (calculateT1) t1Values = new float[irspgrSlices][width*height];
-        else t1Values = new float[1][1];
-        if (calculateMo) moValues = new float[irspgrSlices][width*height];
-        else moValues = new float[1][1];
-        if (invertT1toR1) r1Values = new float[irspgrSlices][width*height];
-        else r1Values = new float[1][1];
-        b1field = new float[irspgrSlices][width*height];
-        b1Values = new double[irspgrSlices][height][width];
         
         Gaussian = new double[5][5];
         
@@ -460,413 +469,467 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         r1ResultStack = nearCloneImage(image, r1ResultStack);
         b1ResultStack = nearCloneImage(image, b1ResultStack);
         
-        fa = new double[Nsa];
-        scaledFA = new double[Nsa];
-        for (angle=0; angle<Nsa;angle++) {
-            fa[angle] = Math.toRadians(despotFA[angle]);
-        }
-        double irFA = Math.toRadians(irspgrFA);
-        
         // start by calculaing the B1 field
-        for (k=0; k<irspgrSlices; k++) {
+        String prefix = new String();
+        for(t=0; t<irspgrSeries; t++) {
+            if(image.getNDims() > 3) {
+                prefix = "Series "+t+": ";
+            } else {
+                prefix = "";
+            }
             
-            noiseSum = (float) 0.00;
-            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
+            spgrPixelValues = new double[Nsa][width*height];
+            irspgrPixelValues = new double[Nsa][width*height];
+            if (calculateT1) { 
+                t1Values = new float[irspgrSlices][width*height];
+            }
+            else { 
+                t1Values = new float[1][1];
+            }
+            if (calculateMo) { 
+                moValues = new float[irspgrSlices][width*height];
+            }
+            else { 
+                moValues = new float[1][1];
+            }
+            if (invertT1toR1) { 
+                r1Values = new float[irspgrSlices][width*height];
+            }
+            else { 
+                r1Values = new float[1][1];
+            }
             
-            threshold = hardNoiseThreshold;
-            if (useSmartThresholding) {
+            b1field = new float[irspgrSlices][width*height];
+            b1Values = new double[irspgrSlices][height][width];
+            
+            fa = new double[Nsa];
+            scaledFA = new double[Nsa];
+            for (angle=0; angle<Nsa;angle++) {
+                fa[angle] = Math.toRadians(despotFA[angle]);
+            }
+            double irFA = Math.toRadians(irspgrFA);
+            
+            for (k=0; k<irspgrSlices; k++) {
+            
                 noiseSum = (float) 0.00;
-                noiseIndex = 0;
-                if (upperLeftCorner) {
-                    for (y=20; y<30; y++) {
-                        for (x=20; x<30; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
-                if (upperRightCorner) {
-                    for (y=20; y<30; y++) {
-                        for (x=width-30; x<width-20; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
-                if (lowerLeftCorner) {
-                    for (y=height-30; y<height-20; y++) {
-                        for (x=20; x<30; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
-                if (lowerRightCorner) {
-                    for (y=height-30; y<height-20; y++) {
-                        for (x=width-30; x<width-20; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
+                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
                 
-                threshold = (float) ( (noiseSum/noiseIndex + 1)*noiseScale );
-            }
-            else {
-                threshold = (float) hardNoiseThreshold;
-            }
-            fireProgressStateChanged("calculating B1 field for slice: "+k+" of "+nSlices);
-            fireProgressStateChanged(5+(int)(((float)k+1.0)/(float)nSlices*60.0));
-            if(interrupted()) {
-                return false;
-            }
-            // grab the ir-spgr pixel values
-            for (ti=0; ti<Nti; ti++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[ti]]);             
+                threshold = hardNoiseThreshold;
+                if (useSmartThresholding) {
+                    noiseSum = (float) 0.00;
+                    noiseIndex = 0;
+                    if (upperLeftCorner) {
+                        for (y=20; y<30; y++) {
+                            for (x=20; x<30; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
+                    }
+                    if (upperRightCorner) {
+                        for (y=20; y<30; y++) {
+                            for (x=width-30; x<width-20; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
+                    }
+                    if (lowerLeftCorner) {
+                        for (y=height-30; y<height-20; y++) {
+                            for (x=20; x<30; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
+                    }
+                    if (lowerRightCorner) {
+                        for (y=height-30; y<height-20; y++) {
+                            for (x=width-30; x<width-20; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
+                    }
+                    
+                    threshold = (float) ( (noiseSum/noiseIndex + 1)*noiseScale );
+                }
+                else {
+                    threshold = (float) hardNoiseThreshold;
+                }
+                fireProgressStateChanged(prefix+"calculating B1 field for slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(5+(int)(((float)k+1.0)/(float)nSlices*60.0));
+                if(interrupted()) {
+                    return false;
+                }
+                // grab the ir-spgr pixel values
+                for (ti=0; ti<Nti; ti++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[ti]]);             
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            irspgrPixelValues[ti][pixelIndex] = image.getFloat(x, y, k, t);
+                            pixelIndex++;
+                        }
+                    }
+                }
+                // grab the spgr pixel values 
+                for (angle=0; angle<Nsa; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k, t);
+                            pixelIndex++;
+                        }
+                    }
+                }
                 pixelIndex = 0;
                 for (y=0; y<height; y++) {
                     for (x=0; x<width; x++) {
-                        irspgrPixelValues[ti][pixelIndex] = image.getFloat(x, y, k);
-                        pixelIndex++;
-                    }
-                }
-            }
-            // grab the spgr pixel values 
-            for (angle=0; angle<Nsa; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k);
-                        pixelIndex++;
-                    }
-                }
-            }
-            pixelIndex = 0;
-            for (y=0; y<height; y++) {
-                for (x=0; x<width; x++) {
-                    if (spgrPixelValues[0][pixelIndex] > (threshold)) {
-                        
-                        // group the spgr and ir-spagr data
-                        for (p=0; p<Nsa; p++) spgrData[p] = spgrPixelValues[p][pixelIndex];
-                        for (p=0; p<Nti; p++) irspgrData[p] = irspgrPixelValues[p][pixelIndex];
-                        
-                        // define the initial fitting points
-                        ax = 0.3; // lower bound
-                        cx = 1.5; // upper bound
-                        fax = signalResiduals(ax, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
-                        fcx = signalResiduals(cx, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
-                        
-                        // choose bx such that ax < bx < cx and f(bx) < f(ax) and f(bx) < f(cx)
-                        if (fax < fcx) bx = ax + 0.2;
-                        else bx = cx - 0.2;
-                        fbx = signalResiduals(bx, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
-                        
-                        x0 = ax;
-                        x3 = cx;
-                        if ( Math.abs(cx-bx) > Math.abs(bx-ax) ) {
-                            x1 = bx;
-                            x2 = bx + C*(cx-bx);
-                        }
-                        else {
-                            x2 = bx;
-                            x1 = bx - C*(bx-ax);
-                        }
-                        
-                        f1 = signalResiduals(x1, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
-                        f2 = signalResiduals(x2, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
-                        
-                        while ( Math.abs(x3-x0) > precision*(Math.abs(x1)+Math.abs(x2)) ) {
-                            if (f2 < f1) {
-                                x0 = x1;
-                                x1 = x2;
-                                x2 = R*x1 + C*x3;
-                                f1 = f2;
-                                f2 = signalResiduals(x2, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                        if (spgrPixelValues[0][pixelIndex] > (threshold)) {
+                            
+                            // group the spgr and ir-spagr data
+                            for (p=0; p<Nsa; p++) spgrData[p] = spgrPixelValues[p][pixelIndex];
+                            for (p=0; p<Nti; p++) irspgrData[p] = irspgrPixelValues[p][pixelIndex];
+                            
+                            // define the initial fitting points
+                            ax = 0.3; // lower bound
+                            cx = 1.5; // upper bound
+                            fax = signalResiduals(ax, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                            fcx = signalResiduals(cx, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                            
+                            // choose bx such that ax < bx < cx and f(bx) < f(ax) and f(bx) < f(cx)
+                            if (fax < fcx) bx = ax + 0.2;
+                            else bx = cx - 0.2;
+                            fbx = signalResiduals(bx, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                            
+                            x0 = ax;
+                            x3 = cx;
+                            if ( Math.abs(cx-bx) > Math.abs(bx-ax) ) {
+                                x1 = bx;
+                                x2 = bx + C*(cx-bx);
                             }
                             else {
-                                x3 = x2;
-                                x2 = x1;
-                                x1 = R*x2 + C*x0;
-                                f2 = f1;
-                                f1 = signalResiduals(x1, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                                x2 = bx;
+                                x1 = bx - C*(bx-ax);
                             }
-                        }
-                        
-                        if (f1 < f2) xmin = x1;
-                        else xmin = x2;
-                        
-                        b1Values[k][y][x] = xmin;
-                    }
-                    pixelIndex ++;
-                }
-            }
-        }
-        
-        // go back through and apply a single gaussian kernel to smooth the calculated B1 field
-        if (smoothB1Field) {
-            int baseVal = getProgressChangeListener().getValue();
-            for (k=0; k<irspgrSlices; k++) {
-                fireProgressStateChanged("smoothing B1 field on slice: "+k+" of "+nSlices);
-                fireProgressStateChanged(baseVal+(int)(((float)k+1.0)/(float)nSlices*10.0));
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        
-                        if (y>2 && y<height-2 && x>2 && x<width-2) {
                             
-                            smoothedB1 = 0.00;
-                            for (p1=0; p1<5; p1++) {
-                                for (p2=0; p2<5; p2++) smoothedB1 += b1Values[k][y-2+p2][x-2+p1]*Gaussian[p1][p2];
+                            f1 = signalResiduals(x1, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                            f2 = signalResiduals(x2, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                            
+                            while ( Math.abs(x3-x0) > precision*(Math.abs(x1)+Math.abs(x2)) ) {
+                                if (f2 < f1) {
+                                    x0 = x1;
+                                    x1 = x2;
+                                    x2 = R*x1 + C*x3;
+                                    f1 = f2;
+                                    f2 = signalResiduals(x2, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                                }
+                                else {
+                                    x3 = x2;
+                                    x2 = x1;
+                                    x1 = R*x2 + C*x0;
+                                    f2 = f1;
+                                    f1 = signalResiduals(x1, spgrData, irspgrData, Inversion, Nsa, Nti, despotFA, despotTR, irspgrTr, irspgrTI, irspgrFA);
+                                }
                             }
-                            smoothedB1 = smoothedB1 / 34.00;
                             
-                            b1field[k][pixelIndex] = (float) smoothedB1;
+                            if (f1 < f2) xmin = x1;
+                            else xmin = x2;
+                            
+                            b1Values[k][y][x] = xmin;
                         }
-                        else b1field[k][pixelIndex] = (float) b1Values[k][y][x];
-                        
                         pixelIndex ++;
                     }
                 }
             }
-        }
-        else { // no smoothing option
-            for (k=0; k<irspgrSlices; k++) {
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        b1field[k][pixelIndex] = (float) b1Values[k][y][x];
-                        pixelIndex ++;
+        
+            // go back through and apply a single gaussian kernel to smooth the calculated B1 field
+            if (smoothB1Field) {
+                int baseVal = getProgressChangeListener().getValue();
+                for (k=0; k<irspgrSlices; k++) {
+                    fireProgressStateChanged(prefix+"smoothing B1 field on slice: "+k+" of "+nSlices);
+                    fireProgressStateChanged(baseVal+(int)(((float)k+1.0)/(float)nSlices*10.0));
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            
+                            if (y>2 && y<height-2 && x>2 && x<width-2) {
+                                
+                                smoothedB1 = 0.00;
+                                for (p1=0; p1<5; p1++) {
+                                    for (p2=0; p2<5; p2++) smoothedB1 += b1Values[k][y-2+p2][x-2+p1]*Gaussian[p1][p2];
+                                }
+                                smoothedB1 = smoothedB1 / 34.00;
+                                
+                                b1field[k][pixelIndex] = (float) smoothedB1;
+                            }
+                            else b1field[k][pixelIndex] = (float) b1Values[k][y][x];
+                            
+                            pixelIndex ++;
+                        }
                     }
                 }
             }
-            
-        }
-    
-        if(interrupted()) {
-            return false;
-        }
-        
-        // clear the b1Values matrix
-        
-        // finally, calculate the corrected T1 estimates, changed slice start 
-        int baseVal = getProgressChangeListener().getValue();
-        for (k=0; k<irspgrSlices; k++) {
-            
-            // first, recalculate the noise threshold
-            noiseSum = (float) 0.00;
-            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
-            
-            threshold = hardNoiseThreshold;
-            if (useSmartThresholding) {
-                noiseSum = (float) 0.00;
-                noiseIndex = 0;
-                if (upperLeftCorner) {
-                    for (y=20; y<30; y++) {
-                        for (x=20; x<30; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
-                if (upperRightCorner) {
-                    for (y=20; y<30; y++) {
-                        for (x=width-30; x<width-20; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
-                if (lowerLeftCorner) {
-                    for (y=height-30; y<height-20; y++) {
-                        for (x=20; x<30; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
-                if (lowerRightCorner) {
-                    for (y=height-30; y<height-20; y++) {
-                        for (x=width-30; x<width-20; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
+            else { // no smoothing option
+                for (k=0; k<irspgrSlices; k++) {
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            b1field[k][pixelIndex] = (float) b1Values[k][y][x];
+                            pixelIndex ++;
                         }
                     }
                 }
                 
-                threshold = (float) ( (noiseSum/noiseIndex + 1)*noiseScale );
             }
-            else {
-                threshold = (float) hardNoiseThreshold;
-            }
-            
-            
-            fireProgressStateChanged("calculating T1 values on slice: "+k+" of "+nSlices);
-            fireProgressStateChanged(baseVal+(int)(((float)k+1.0)/(float)nSlices*25.0));
+        
             if(interrupted()) {
                 return false;
             }
-            // grab the spgr pixel values 
-            for (angle=0; angle<Nsa; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
+        
+            // clear the b1Values matrix
+            
+            // finally, calculate the corrected T1 estimates, changed slice start 
+            int baseVal = getProgressChangeListener().getValue();
+            for (k=0; k<irspgrSlices; k++) {
                 
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k);
-                        pixelIndex++;
+                // first, recalculate the noise threshold
+                noiseSum = (float) 0.00;
+                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
+                
+                threshold = hardNoiseThreshold;
+                if (useSmartThresholding) {
+                    noiseSum = (float) 0.00;
+                    noiseIndex = 0;
+                    if (upperLeftCorner) {
+                        for (y=20; y<30; y++) {
+                            for (x=20; x<30; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
+                    }
+                    if (upperRightCorner) {
+                        for (y=20; y<30; y++) {
+                            for (x=width-30; x<width-20; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
+                    }
+                    if (lowerLeftCorner) {
+                        for (y=height-30; y<height-20; y++) {
+                            for (x=20; x<30; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
+                    }
+                    if (lowerRightCorner) {
+                        for (y=height-30; y<height-20; y++) {
+                            for (x=width-30; x<width-20; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
+                    }
+                    
+                    threshold = (float) ( (noiseSum/noiseIndex + 1)*noiseScale );
+                }
+                else {
+                    threshold = (float) hardNoiseThreshold;
+                }
+            
+            
+                fireProgressStateChanged(prefix+"calculating T1 values on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(baseVal+(int)(((float)k+1.0)/(float)nSlices*20.0));
+                if(interrupted()) {
+                    return false;
+                }
+                // grab the spgr pixel values 
+                for (angle=0; angle<Nsa; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
+                    
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k, t);
+                            pixelIndex++;
+                        }
                     }
                 }
-            }
-            
-            pixelIndex = 0;
-            //for (x=0; x<width; x++) {
-            //  for (y=0; y<height; y++) {
-            for (y=0; y<height; y++) {
-                for (x=0; x<width; x++) {
+                
+                pixelIndex = 0;
+                //for (x=0; x<width; x++) {
+                //  for (y=0; y<height; y++) {
+                for (y=0; y<height; y++) {
+                    for (x=0; x<width; x++) {
+                        
                     
-                    
-                    if (b1field[k][pixelIndex] > 0.00 && spgrPixelValues[0][pixelIndex] > threshold) {
+                        if (b1field[k][pixelIndex] > 0.00 && spgrPixelValues[0][pixelIndex] > threshold) {
+                            
+                            // scale up (or down) the flip angles based on the calculated B1
+                            for (p=0; p<Nsa; p++) scaledFA[p] = fa[p]*b1field[k][pixelIndex];
+                            
+                            // grab the SPGR values for this pixel
+                            for (p=0; p<Nsa; p++) spgrData[p] = spgrPixelValues[p][pixelIndex];
+                            
+                            // calculate T1
+                            sumX = 0.00;
+                            sumY = 0.00;
+                            sumXY = 0.00;
+                            sumXX = 0.00;
                         
-                        // scale up (or down) the flip angles based on the calculated B1
-                        for (p=0; p<Nsa; p++) scaledFA[p] = fa[p]*b1field[k][pixelIndex];
-                        
-                        // grab the SPGR values for this pixel
-                        for (p=0; p<Nsa; p++) spgrData[p] = spgrPixelValues[p][pixelIndex];
-                        
-                        // calculate T1
-                        sumX = 0.00;
-                        sumY = 0.00;
-                        sumXY = 0.00;
-                        sumXX = 0.00;
-                    
-                        for (p=0; p<Nsa; p++) {
-                            sumX += spgrData[p]/Math.tan(scaledFA[p]);
-                            sumY += spgrData[p]/Math.sin(scaledFA[p]);
-                            sumXY += (spgrData[p]/Math.tan(scaledFA[p]))*(spgrData[p]/Math.sin(scaledFA[p]));
-                            sumXX += (spgrData[p]/Math.tan(scaledFA[p]))*(spgrData[p]/Math.tan(scaledFA[p]));
-                        }
-                        
-                        d = (Nsa*sumXX) - sumX*sumX;
-                        a = (Nsa*sumXY) - (sumX*sumY);
-                        
-                        if (d != 0) {
-                            slope = a/d;
-                            intercept = (sumY-slope*sumX)/Nsa;
-                            lnslope = -1.00*Math.log(slope);
-                            if (lnslope > 0.00 && lnslope < 1.00) {
-                                t1 = despotTR/lnslope;
-                                mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                            for (p=0; p<Nsa; p++) {
+                                sumX += spgrData[p]/Math.tan(scaledFA[p]);
+                                sumY += spgrData[p]/Math.sin(scaledFA[p]);
+                                sumXY += (spgrData[p]/Math.tan(scaledFA[p]))*(spgrData[p]/Math.sin(scaledFA[p]));
+                                sumXX += (spgrData[p]/Math.tan(scaledFA[p]))*(spgrData[p]/Math.tan(scaledFA[p]));
+                            }
+                            
+                            d = (Nsa*sumXX) - sumX*sumX;
+                            a = (Nsa*sumXY) - (sumX*sumY);
+                            
+                            if (d != 0) {
+                                slope = a/d;
+                                intercept = (sumY-slope*sumX)/Nsa;
+                                lnslope = -1.00*Math.log(slope);
+                                if (lnslope > 0.00 && lnslope < 1.00) {
+                                    t1 = despotTR/lnslope;
+                                    mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                                }
+                                else {
+                                    mo = maxMo;
+                                    t1 = maxT1;
+                                }
                             }
                             else {
                                 mo = maxMo;
                                 t1 = maxT1;
                             }
-                        }
-                        else {
-                            mo = maxMo;
-                            t1 = maxT1;
-                        }
                         
     
-                        if (t1 < 0.00 || t1 > maxT1) {
-                            t1 = maxT1;
-                        }
-                        if (mo < 0.00 || mo > maxMo) {
-                            mo = maxMo;
-                        }
+                            if (t1 < 0.00 || t1 > maxT1) {
+                                t1 = maxT1;
+                            }
+                            if (mo < 0.00 || mo > maxMo) {
+                                mo = maxMo;
+                            }
+                            
                         
-                    
-                        if (t1 != 0.00) {
-                            r1 = 1.00/t1;
-                        }
-                        else {
-                            r1 = 0.00;
-                        }
-                    
-                        // if they wish to use weights, re-calculate using our non-linear weighting scheme
-                        if (useWeights || Nsa > 3) {
-                            sumX = 0.00;
-                            sumY = 0.00;
-                            sumXY = 0.00;
-                            sumXX = 0.00;
-                            sumWeights = 0.00;
-                            if (t1 == 0) {
-                                t1 = 0;
-                                mo = 0;
-                                r1 = 0;
+                            if (t1 != 0.00) {
+                                r1 = 1.00/t1;
                             }
                             else {
-                                e1 = Math.exp(-1.00*despotTR/t1);
-                                ernstAngle = Math.acos(e1);
-                                ernstSignal = (1.00-e1)*Math.sin(ernstAngle)/(1.00-e1*Math.cos(ernstAngle));
-                                for (angle=0; angle<Nsa; angle++) {
-                                    collectedSignal = (1.00-e1)*Math.sin(scaledFA[angle])/(1.00-e1*Math.cos(scaledFA[angle]));
-                                    weight = collectedSignal/ernstSignal;
-                                    sumX+=weight * spgrPixelValues[angle][pixelIndex]/Math.tan(scaledFA[angle]);
-                                    sumY+=weight * spgrPixelValues[angle][pixelIndex]/Math.sin(scaledFA[angle]);
-                                    sumXY+=weight * spgrPixelValues[angle][pixelIndex]/Math.tan(scaledFA[angle]) * spgrPixelValues[angle][pixelIndex]/Math.sin(scaledFA[angle]);
-                                    sumXX+=weight* spgrPixelValues[angle][pixelIndex]/Math.tan(scaledFA[angle]) * spgrPixelValues[angle][pixelIndex]/Math.tan(scaledFA[angle]);
-                                    sumWeights+=weight;
+                                r1 = 0.00;
+                            }
+                        
+                            // if they wish to use weights, re-calculate using our non-linear weighting scheme
+                            if (useWeights || Nsa > 3) {
+                                sumX = 0.00;
+                                sumY = 0.00;
+                                sumXY = 0.00;
+                                sumXX = 0.00;
+                                sumWeights = 0.00;
+                                if (t1 == 0) {
+                                    t1 = 0;
+                                    mo = 0;
+                                    r1 = 0;
                                 }
-                                d = (sumWeights*sumXX) - sumX*sumX;
-                                a = (sumWeights*sumXY)-(sumX*sumY);
-                                
-                                if (d != 0) {
-                                    slope = a/d;
-                                    intercept = (sumY - slope*sumX)/sumWeights;
-                                    lnslope = -1.00*Math.log(slope);
-                                    if (lnslope > 0.00 && lnslope < 1.00) {
-                                        t1 = despotTR/lnslope;
-                                        mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                                else {
+                                    e1 = Math.exp(-1.00*despotTR/t1);
+                                    ernstAngle = Math.acos(e1);
+                                    ernstSignal = (1.00-e1)*Math.sin(ernstAngle)/(1.00-e1*Math.cos(ernstAngle));
+                                    for (angle=0; angle<Nsa; angle++) {
+                                        collectedSignal = (1.00-e1)*Math.sin(scaledFA[angle])/(1.00-e1*Math.cos(scaledFA[angle]));
+                                        weight = collectedSignal/ernstSignal;
+                                        sumX+=weight * spgrPixelValues[angle][pixelIndex]/Math.tan(scaledFA[angle]);
+                                        sumY+=weight * spgrPixelValues[angle][pixelIndex]/Math.sin(scaledFA[angle]);
+                                        sumXY+=weight * spgrPixelValues[angle][pixelIndex]/Math.tan(scaledFA[angle]) * spgrPixelValues[angle][pixelIndex]/Math.sin(scaledFA[angle]);
+                                        sumXX+=weight* spgrPixelValues[angle][pixelIndex]/Math.tan(scaledFA[angle]) * spgrPixelValues[angle][pixelIndex]/Math.tan(scaledFA[angle]);
+                                        sumWeights+=weight;
+                                    }
+                                    d = (sumWeights*sumXX) - sumX*sumX;
+                                    a = (sumWeights*sumXY)-(sumX*sumY);
+                                    
+                                    if (d != 0) {
+                                        slope = a/d;
+                                        intercept = (sumY - slope*sumX)/sumWeights;
+                                        lnslope = -1.00*Math.log(slope);
+                                        if (lnslope > 0.00 && lnslope < 1.00) {
+                                            t1 = despotTR/lnslope;
+                                            mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                                        }
+                                        else {
+                                            mo = maxMo;
+                                            t1 = maxT1;
+                                        }
                                     }
                                     else {
                                         mo = maxMo;
                                         t1 = maxT1;
                                     }
-                                }
-                                else {
-                                    mo = maxMo;
-                                    t1 = maxT1;
-                                }
-                                
-                                
-                                if (t1 < 0.00 || t1 > maxT1) {
-                                    t1 = maxT1;
-                                } 
-                                if (mo < 0.00 || mo > maxMo) {
-                                    mo = maxMo;
-                                }
-                                if (t1 != 0.00) {
-                                    r1 = 1.00/t1;
-                                }
-                                else {
-                                    r1 = 0.00;
+                                    
+                                    
+                                    if (t1 < 0.00 || t1 > maxT1) {
+                                        t1 = maxT1;
+                                    } 
+                                    if (mo < 0.00 || mo > maxMo) {
+                                        mo = maxMo;
+                                    }
+                                    if (t1 != 0.00) {
+                                        r1 = 1.00/t1;
+                                    }
+                                    else {
+                                        r1 = 0.00;
+                                    }
                                 }
                             }
+                            if (calculateT1) {
+                                t1Values[k][pixelIndex] = (float) t1;
+                            }
+                            if (calculateMo) {
+                                moValues[k][pixelIndex] = (float) mo;
+                            }
+                            if (invertT1toR1) {
+                                r1Values[k][pixelIndex] = (float) r1;
+                            }
                         }
-                        if (calculateT1) t1Values[k][pixelIndex] = (float) t1;
-                        if (calculateMo) moValues[k][pixelIndex] = (float) mo;
-                        if (invertT1toR1) r1Values[k][pixelIndex] = (float) r1;
+                        else {
+                            if (calculateT1) {
+                                t1Values[k][pixelIndex] = 0;
+                            }
+                            if (calculateMo) {
+                                moValues[k][pixelIndex] = 0;
+                            }
+                            if (invertT1toR1) {
+                                r1Values[k][pixelIndex] = 0;
+                            }
+                        }
+                        pixelIndex++;
                     }
-                    else {
-                        if (calculateT1) t1Values[k][pixelIndex] = 0;
-                        if (calculateMo) moValues[k][pixelIndex] = 0;
-                        if (invertT1toR1) r1Values[k][pixelIndex] = 0;
-                    }
-                    pixelIndex++;
                 }
-            }
             
-            //adds data to the end of an image
-            try {
-                if (calculateT1) t1ResultStack.importData(image.getSliceSize()*k, t1Values[k], true);
-                if (calculateMo) moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
-                if (invertT1toR1) r1ResultStack.importData(image.getSliceSize()*k, r1Values[k], true);
-                if (showB1Map) b1ResultStack.importData(image.getSliceSize()*k, b1field[k], true);
-            } catch(IOException e) {
-                e.printStackTrace();
-                MipavUtil.displayError("Data could not be imported into result image");
+                //adds data to the end of an image
+                try {
+                    int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
+                    if (calculateT1) {
+                        t1ResultStack.importData(startVal, t1Values[k], true);
+                    }
+                    if (calculateMo) {
+                        moResultStack.importData(startVal, moValues[k], true);
+                    }
+                    if (invertT1toR1) {
+                        r1ResultStack.importData(startVal, r1Values[k], true);
+                    }
+                    if (showB1Map) {
+                        b1ResultStack.importData(startVal, b1field[k], true);
+                    }
+                } catch(IOException e) {
+                    e.printStackTrace();
+                    MipavUtil.displayError("Data could not be imported into result image");
+                }
             }
         }
         
@@ -909,8 +972,8 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
         float noiseSum, threshold;
         
-        int width, height, nSlices;
-        int x,y,i,j,k,angle, pixelIndex, noiseIndex;
+        int width, height, nSlices, tSeries;
+        int x,y,i,j,k,t,angle, pixelIndex, noiseIndex;
         
         image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
         width = image.getExtents()[0];
@@ -921,10 +984,11 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        pixelValues = new double[Nsa][width*height];
-        t1Values = new float[nSlices][width*height];
-        moValues = new float[nSlices][width*height];
-        r1Values = new float[nSlices][width*height];
+        if(image.getNDims() > 3) {
+            tSeries = image.getExtents()[3];
+        } else {
+            tSeries = 1;
+        }
         
         t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
         moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
@@ -934,217 +998,232 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         moResultStack = nearCloneImage(image, moResultStack);
         r1ResultStack = nearCloneImage(image, r1ResultStack);
         
-        fa = new double[Nsa];
-        for (angle=0; angle<Nsa;angle++) {
-            fa[angle] = Math.toRadians(despotFA[angle]);
-        }
+        String prefix = new String();
+        for(t=0; t<tSeries; t++) {
+            if(image.getNDims() > 3) {
+                prefix = "Series "+t+": ";
+            } else {
+                prefix = "";
+            }
         
-        for (k=0; k<nSlices; k++) { //changed slice size
-            noiseSum = (float) 0.00;
-            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
+            pixelValues = new double[Nsa][width*height];
+            t1Values = new float[nSlices][width*height];
+            moValues = new float[nSlices][width*height];
+            r1Values = new float[nSlices][width*height];
             
-            threshold = hardNoiseThreshold;
-            if (useSmartThresholding) {
+            fa = new double[Nsa];
+            for (angle=0; angle<Nsa;angle++) {
+                fa[angle] = Math.toRadians(despotFA[angle]);
+            }
+            
+            for (k=0; k<nSlices; k++) { //changed slice size
                 noiseSum = (float) 0.00;
-                noiseIndex = 0;
-                if (upperLeftCorner) {
-                    for (y=20; y<30; y++) {
-                        for (x=20; x<30; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
-                if (upperRightCorner) {
-                    for (y=20; y<30; y++) {
-                        for (x=width-30; x<width-20; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
-                if (lowerLeftCorner) {
-                    for (y=height-30; y<height-20; y++) {
-                        for (x=20; x<30; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
-                if (lowerRightCorner) {
-                    for (y=height-30; y<height-20; y++) {
-                        for (x=width-30; x<width-20; x++) {
-                            noiseSum += image.getFloat(x, y, k);
-                            noiseIndex++;
-                        }
-                    }
-                }
-                
-                threshold = (float) ( (noiseSum/noiseIndex)*noiseScale );
-            }
-            else {
-                threshold = (float) hardNoiseThreshold;
-            }
-            fireProgressStateChanged("working on slice: "+k+" of "+nSlices+". Noise Threshold = "+threshold);
-            fireProgressStateChanged(5+(int)((float)k+1.0/(float)nSlices*85.0));
-            
-            if(interrupted()) {
-                return false;
-            }
-            
-            if (performDESPOT1withPreCalculatedB1Map) {
-                b1FieldImage = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
-                
-                b1Values = new double[width*height]; 
-            }
-            else { // need to initialize something
                 image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
                 
-                b1Values = new double[1];
-            }
-            
-            for (angle=0; angle<Nsa; angle++) {
-                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
-                
-                pixelIndex = 0;
-                for (y=0; y<height; y++) {
-                    for (x=0; x<width; x++) {
-                        pixelValues[angle][pixelIndex] = image.getDouble(x, y, k);
-                        if (performDESPOT1withPreCalculatedB1Map) b1Values[pixelIndex] = b1FieldImage.getDouble(x, y, k);
-                        pixelIndex++;
-                    }
-                }
-            }
-            
-            for (pixelIndex=0; pixelIndex<width*height; pixelIndex++) {
-                if (pixelValues[0][pixelIndex] > (threshold)) {
-                    sumX = 0.00;
-                    sumY = 0.00;
-                    sumXY = 0.00;
-                    sumXX = 0.00;
-                    
-                    if (performDESPOT1withPreCalculatedB1Map) {
-                        b1 = b1Values[pixelIndex];
-                        if (b1 == 0) b1 = 1.00;
-                    }
-                    else b1 = 1.00;
-                    
-                    for (angle=0; angle<Nsa; angle++) {
-                        sumX+=(pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]));
-                        sumY+=(pixelValues[angle][pixelIndex]/Math.sin(b1*fa[angle]));
-                        sumXY+=(pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle])) * (pixelValues[angle][pixelIndex]/Math.sin(b1*fa[angle]));
-                        sumXX+=(pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle])) * (pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]));
-                    }
-                    
-                    d = (Nsa*sumXX) - (sumX*sumX);
-                    a = (Nsa*sumXY) - (sumX*sumY);
-                    
-                    if (d != 0) {
-                        slope = a/d;
-                        intercept = (sumY-slope*sumX)/Nsa;
-                        lnslope = -1.00*Math.log(slope);
-                        if (lnslope > 0.00 && lnslope < 1.00) {
-                            t1 = despotTR/lnslope;
-                            mo = intercept/(1.00-Math.exp(-despotTR/t1));
-                        } 
-                        else {
-                            mo = maxMo;
-                            t1 = maxT1;
+                threshold = hardNoiseThreshold;
+                if (useSmartThresholding) {
+                    noiseSum = (float) 0.00;
+                    noiseIndex = 0;
+                    if (upperLeftCorner) {
+                        for (y=20; y<30; y++) {
+                            for (x=20; x<30; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
                         }
                     }
-                    else {
-                        mo = maxMo;
-                        t1 = maxT1;
+                    if (upperRightCorner) {
+                        for (y=20; y<30; y++) {
+                            for (x=width-30; x<width-20; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
                     }
+                    if (lowerLeftCorner) {
+                        for (y=height-30; y<height-20; y++) {
+                            for (x=20; x<30; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
+                    }
+                    if (lowerRightCorner) {
+                        for (y=height-30; y<height-20; y++) {
+                            for (x=width-30; x<width-20; x++) {
+                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseIndex++;
+                            }
+                        }
+                    }
+                
+                    threshold = (float) ( (noiseSum/noiseIndex)*noiseScale );
+                }
+                else {
+                    threshold = (float) hardNoiseThreshold;
+                }
+                fireProgressStateChanged(prefix+"working on slice: "+k+" of "+nSlices+". Noise Threshold = "+threshold);
+                fireProgressStateChanged(5+(int)((float)k+1.0/(float)nSlices*80.0));
+                
+                if(interrupted()) {
+                    return false;
+                }
+                
+                if (performDESPOT1withPreCalculatedB1Map) {
+                    b1FieldImage = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
                     
-                    if (t1 < 0 || t1 > maxT1) {
-                        t1 = maxT1;
-                    }
-                    if (mo < 0 || mo > maxMo) {
-                        mo = maxMo;
-                    }
-                    if (t1 != 0) {
-                        r1 = 1/t1;
-                    }
-                    else {
-                        r1 = 0;
-                    }
+                    b1Values = new double[width*height]; 
+                }
+                else { // need to initialize something
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[0]]);
                     
-                    if (useWeights) {
+                    b1Values = new double[1];
+                }
+            
+                for (angle=0; angle<Nsa; angle++) {
+                    image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
+                    
+                    pixelIndex = 0;
+                    for (y=0; y<height; y++) {
+                        for (x=0; x<width; x++) {
+                            pixelValues[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            if (performDESPOT1withPreCalculatedB1Map) b1Values[pixelIndex] = b1FieldImage.getDouble(x, y, k, t);
+                            pixelIndex++;
+                        }
+                    }
+                }
+            
+                for (pixelIndex=0; pixelIndex<width*height; pixelIndex++) {
+                    if (pixelValues[0][pixelIndex] > (threshold)) {
                         sumX = 0.00;
                         sumY = 0.00;
                         sumXY = 0.00;
                         sumXX = 0.00;
-                        sumWeights = 0.00;
-                        if (t1 == 0) {
-                            t1 = 0;
-                            mo = 0;
-                            r1 = 0;
+                        
+                        if (performDESPOT1withPreCalculatedB1Map) {
+                            b1 = b1Values[pixelIndex];
+                            if (b1 == 0) b1 = 1.00;
+                        }
+                        else b1 = 1.00;
+                        
+                        for (angle=0; angle<Nsa; angle++) {
+                            sumX+=(pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]));
+                            sumY+=(pixelValues[angle][pixelIndex]/Math.sin(b1*fa[angle]));
+                            sumXY+=(pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle])) * (pixelValues[angle][pixelIndex]/Math.sin(b1*fa[angle]));
+                            sumXX+=(pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle])) * (pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]));
+                        }
+                        
+                        d = (Nsa*sumXX) - (sumX*sumX);
+                        a = (Nsa*sumXY) - (sumX*sumY);
+                        
+                        if (d != 0) {
+                            slope = a/d;
+                            intercept = (sumY-slope*sumX)/Nsa;
+                            lnslope = -1.00*Math.log(slope);
+                            if (lnslope > 0.00 && lnslope < 1.00) {
+                                t1 = despotTR/lnslope;
+                                mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                            } 
+                            else {
+                                mo = maxMo;
+                                t1 = maxT1;
+                            }
                         }
                         else {
-                            e1 = Math.exp(-1.00*despotTR/t1);
-                            ernstAngle = Math.acos(e1);
-                            ernstSignal = (1.00-e1)*Math.sin(ernstAngle)/(1.00-e1*Math.cos(ernstAngle));
-                            for (angle=0; angle<Nsa; angle++) {
-                                collectedSignal = (1.00-e1)*Math.sin(b1*fa[angle])/(1.00-e1*Math.cos(b1*fa[angle]));
-                                weight = collectedSignal/ernstSignal;
-                                sumX+=weight * pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]);
-                                sumY+=weight * pixelValues[angle][pixelIndex]/Math.sin(b1*fa[angle]);
-                                sumXY+=weight * pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]) * pixelValues[angle][pixelIndex]/Math.sin(b1*fa[angle]);
-                                sumXX+=weight* pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]) * pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]);
-                                sumWeights+=weight;
+                            mo = maxMo;
+                            t1 = maxT1;
+                        }
+                        
+                        if (t1 < 0 || t1 > maxT1) {
+                            t1 = maxT1;
+                        }
+                        if (mo < 0 || mo > maxMo) {
+                            mo = maxMo;
+                        }
+                        if (t1 != 0) {
+                            r1 = 1/t1;
+                        }
+                        else {
+                            r1 = 0;
+                        }
+                    
+                        if (useWeights) {
+                            sumX = 0.00;
+                            sumY = 0.00;
+                            sumXY = 0.00;
+                            sumXX = 0.00;
+                            sumWeights = 0.00;
+                            if (t1 == 0) {
+                                t1 = 0;
+                                mo = 0;
+                                r1 = 0;
                             }
-                            d = (sumWeights*sumXX) - (sumX*sumX);
-                            a = (sumWeights*sumXY)-(sumX*sumY);
-                            
-                            if (d != 0) {
-                                slope = a/d;
-                                intercept = (sumY - slope*sumX)/sumWeights;
-                                lnslope = -1.00*Math.log(slope);
-                                if (lnslope > 0.00 && lnslope < 1.00) {
-                                    t1 = despotTR/lnslope;
-                                    mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                            else {
+                                e1 = Math.exp(-1.00*despotTR/t1);
+                                ernstAngle = Math.acos(e1);
+                                ernstSignal = (1.00-e1)*Math.sin(ernstAngle)/(1.00-e1*Math.cos(ernstAngle));
+                                for (angle=0; angle<Nsa; angle++) {
+                                    collectedSignal = (1.00-e1)*Math.sin(b1*fa[angle])/(1.00-e1*Math.cos(b1*fa[angle]));
+                                    weight = collectedSignal/ernstSignal;
+                                    sumX+=weight * pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]);
+                                    sumY+=weight * pixelValues[angle][pixelIndex]/Math.sin(b1*fa[angle]);
+                                    sumXY+=weight * pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]) * pixelValues[angle][pixelIndex]/Math.sin(b1*fa[angle]);
+                                    sumXX+=weight* pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]) * pixelValues[angle][pixelIndex]/Math.tan(b1*fa[angle]);
+                                    sumWeights+=weight;
+                                }
+                                d = (sumWeights*sumXX) - (sumX*sumX);
+                                a = (sumWeights*sumXY)-(sumX*sumY);
+                                
+                                if (d != 0) {
+                                    slope = a/d;
+                                    intercept = (sumY - slope*sumX)/sumWeights;
+                                    lnslope = -1.00*Math.log(slope);
+                                    if (lnslope > 0.00 && lnslope < 1.00) {
+                                        t1 = despotTR/lnslope;
+                                        mo = intercept/(1.00-Math.exp(-despotTR/t1));
+                                    }
+                                    else {
+                                        mo = maxMo;
+                                        t1 = maxT1;
+                                    }
                                 }
                                 else {
                                     mo = maxMo;
                                     t1 = maxT1;
                                 }
-                            }
-                            else {
-                                mo = maxMo;
-                                t1 = maxT1;
-                            }
                             
-                            if (t1 < 0 || t1 > maxT1) {
-                                t1 = maxT1;
-                            } 
-                            if (mo < 0 || mo > maxMo) {
-                                mo = maxMo;
-                            }
-                            if (t1 != 0) {
-                                r1 = 1/t1;
-                            }
-                            else {
-                                r1 = 0;
+                                if (t1 < 0 || t1 > maxT1) {
+                                    t1 = maxT1;
+                                } 
+                                if (mo < 0 || mo > maxMo) {
+                                    mo = maxMo;
+                                }
+                                if (t1 != 0) {
+                                    r1 = 1/t1;
+                                }
+                                else {
+                                    r1 = 0;
+                                }
                             }
                         }
+                        
+                        t1Values[k][pixelIndex] = (float) t1;
+                        moValues[k][pixelIndex] = (float) mo;
+                        r1Values[k][pixelIndex] = (float) r1;
                     }
-                    
-                    t1Values[k][pixelIndex] = (float) t1;
-                    moValues[k][pixelIndex] = (float) mo;
-                    r1Values[k][pixelIndex] = (float) r1;
-                }
-                else {
-                    t1Values[k][pixelIndex] = 0;
-                    moValues[k][pixelIndex] = 0;
-                    r1Values[k][pixelIndex] = 0;
+                    else {
+                        t1Values[k][pixelIndex] = 0;
+                        moValues[k][pixelIndex] = 0;
+                        r1Values[k][pixelIndex] = 0;
+                    }
                 }
             }
             
             try {
-                t1ResultStack.importData(image.getSliceSize()*k, t1Values[k], true);
-                moResultStack.importData(image.getSliceSize()*k, moValues[k], true);
-                r1ResultStack.importData(image.getSliceSize()*k, r1Values[k], true);
+                int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
+                t1ResultStack.importData(startVal, t1Values[k], true);
+                moResultStack.importData(startVal, moValues[k], true);
+                r1ResultStack.importData(startVal, r1Values[k], true);
             } catch (IOException e) {
                 e.printStackTrace();
                 MipavUtil.displayError("Could not import result image data.");
