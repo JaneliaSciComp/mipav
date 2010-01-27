@@ -29,6 +29,7 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.ViewJComponentEditImage;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -3527,6 +3528,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 
             } // if (matHolder != null)    
         } // if (fileInfo[0] instanceof FileInfoNIFTI)
+        image.getParentFrame().initResolutions();
+        image.getParentFrame().updateImageExtents();
+        image.getParentFrame().componentResized(null);
 
         // add the new script action
         ScriptRecorder.getReference().addLine(new ActionChangeResolutions(image, resolutionBox.isSelected(), resIndex,
@@ -3538,6 +3542,29 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         ProvenanceRecorder.getReference().addLine(new ActionChangeResolutions(image, resolutionBox.isSelected(), resIndex,
                 sliceThickness));
         ProvenanceRecorder.getReference().addLine(new ActionChangeUnits(image));
+    }
+    
+    /**
+     * Get the resolution correction needed for non-isotropic images.
+     * 
+     * @param imgResols the image resolution
+     * @param imgUnits the image units of measure
+     * @return the resolution correction factor in the x (the first element) and y (the second element) dimensions
+     */
+    protected static float[] initResFactor(float[] imgResols, int[] imgUnits) {
+        float[] resFactor = new float[2];
+
+        resFactor[0] = 1.0f;
+        resFactor[1] = 1.0f;
+
+        if ( (imgResols[1] >= imgResols[0]) && (imgResols[1] < (20.0f * imgResols[0])) && (imgUnits[0] == imgUnits[1])) {
+            resFactor[1] = imgResols[1] / imgResols[0];
+        } else if ( (imgResols[0] > imgResols[1]) && (imgResols[0] < (20.0f * imgResols[1]))
+                && (imgUnits[0] == imgUnits[1])) {
+            resFactor[0] = imgResols[0] / imgResols[1];
+        }
+
+        return resFactor;
     }
 
     /**
