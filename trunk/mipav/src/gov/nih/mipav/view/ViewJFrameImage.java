@@ -3303,8 +3303,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // System.err.println("Width is less than compImage.width, height is greater than compImage.height");
 
             height = componentImage.getSize(null).height + scrollPane.getHorizontalScrollBar().getHeight();
+            width = componentImage.getSize(null).width + scrollPane.getVerticalScrollBar().getWidth();
         } else if ( (width >= componentImage.getSize(null).width) && (height < componentImage.getSize(null).height)) {
             width = componentImage.getSize(null).width + scrollPane.getVerticalScrollBar().getWidth();
+            height = componentImage.getSize(null).height + scrollPane.getHorizontalScrollBar().getHeight();
 
             // System.err.println("Height is less than compImage.height, width is greater than compImage.width");
 
@@ -3312,15 +3314,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // +=
             // fudgeFactor;
 
-            // System.err.println("either width is less than component width or height is less than component height...
-            // returning\n\n");
+            // System.err.println("either width is less than component width or height is less than component height...returning\n\n");
             addComponentListener(this);
 
             return;
         } else if ( (width > componentImage.getSize(null).width) || (height > componentImage.getSize(null).height)) {
 
-            // System.err.println("Width or height is greater than compImage width/height, setting to compImage width
-            // and height");
+            // System.err.println("Width or height is greater than compImage width/height, setting to compImage width and height");
 
             if (width > componentImage.getSize(null).width) {
                 width = componentImage.getSize(null).width;
@@ -3330,8 +3330,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 height = componentImage.getSize(null).height;
             }
         } else {
-            // System.err.println("apparently width and height are set okay (comparing to
-            // compeditimage)...returning\n\n");
+            // System.err.println("apparently width and height are set okay (comparing to compeditimage)...returning\n\n");
 
             addComponentListener(this);
 
@@ -5207,7 +5206,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /**
      * Initializes the resolutions and units from the image.
      */
-    protected void initResolutions() {
+    public void initResolutions() {
         resols = ViewJFrameBase.initResolutions(imageA);
         units = ViewJFrameBase.initUnits(imageA);
 
@@ -5220,11 +5219,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /**
      * Initializes the zoom variables for the first image (imageA).
      */
-    protected void initZoom() {
+    public void initZoom() {
         zoom = ViewJFrameBase.initZoom(imageA, widthResFactor, heightResFactor, ViewJFrameImage.xScreen,
                 ViewJFrameImage.yScreen);
     } // end initZoom()
-
+    
     /**
      * Constructs the title of the frame with the image name and the slice location.
      * 
