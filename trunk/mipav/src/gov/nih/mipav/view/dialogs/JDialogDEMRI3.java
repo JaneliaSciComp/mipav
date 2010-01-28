@@ -950,7 +950,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         buttonLowFlipFile.setEnabled(false);
         buttonLowFlipFile.addActionListener(this);
         buttonLowFlipFile.setActionCommand("LowFlipFile");
-        buttonLowFlipFile.setPreferredSize(new Dimension(145, 30));
+        buttonLowFlipFile.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridy = 14;
         mainPanel.add(buttonLowFlipFile, gbc);
@@ -968,7 +968,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         buttonHighFlipFile.setEnabled(false);
         buttonHighFlipFile.addActionListener(this);
         buttonHighFlipFile.setActionCommand("HighFlipFile");
-        buttonHighFlipFile.setPreferredSize(new Dimension(145, 30));
+        buttonHighFlipFile.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy = 15;
@@ -1037,7 +1037,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         buttonMpFile.setFont(serif12B);
         buttonMpFile.addActionListener(this);
         buttonMpFile.setActionCommand("MpFile");
-        buttonMpFile.setPreferredSize(new Dimension(145, 30));
+        buttonMpFile.setPreferredSize(new Dimension(205, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridy = 21;
         mainPanel.add(buttonMpFile, gbc);
