@@ -6082,7 +6082,9 @@ mainLoop:
             return;
         }
 
-        Preferences.debug("In TERMUC:\n");
+        if (outputMes) {
+            Preferences.debug("In TERMUC:\n");
+        }
 
         // CRITERIUM NO. 1
 
@@ -6130,10 +6132,12 @@ mainLoop:
 
         // CHECK LAGRANGE MULTIPLIERS
 
-        Preferences.debug("Checking Lagrange mult. in TERMUC\n");
-
-        for (i = 0; i < param; i++) {
-            Preferences.debug(g[i] + "\n");
+        if (outputMes) {
+	        Preferences.debug("Checking Lagrange mult. in TERMUC\n");
+	
+	        for (i = 0; i < param; i++) {
+	            Preferences.debug(g[i] + "\n");
+	        }
         }
 
         if (paramAct != 0) {
