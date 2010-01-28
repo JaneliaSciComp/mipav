@@ -34,6 +34,15 @@ public class DICOM_Constants {
 
     /** MR Storage UID =  1.2.840.10008.5.1.4.1.1.4 */
     public static final String UID_MRStorage = "1.2.840.10008.5.1.4.1.1.4";
+    
+    /** Enhanced MR Storage UID = 1.2.840.10008.5.1.4.1.1.4.1 */
+    public static final String UID_EnhancedMRStorage = "1.2.840.10008.5.1.4.1.1.4.1";
+    
+    /** Enhanced CT Storage UID = 1.2.840.10008.5.1.4.1.1.4.1 */
+    public static final String UID_EnhancedCTStorage = "1.2.840.10008.5.1.4.1.1.2.1";
+    
+    /** Enhanced XRAY Storage UID = 1.2.840.10008.5.1.4.1.1.4.1 */
+    public static final String UID_EnhancedXAStorage = "1.2.840.10008.5.1.4.1.1.12.1.1";
 
     /** Old NM Storage UID = 1.2.840.10008.5.1.4.1.1.5 */
     public static final String UID_OldNMStorage = "1.2.840.10008.5.1.4.1.1.5";
