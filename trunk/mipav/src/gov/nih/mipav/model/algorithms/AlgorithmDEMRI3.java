@@ -1,4 +1,5 @@
 package gov.nih.mipav.model.algorithms;
+import gov.nih.mipav.model.algorithms.AlgorithmFRAP.Fit24DModel;
 import gov.nih.mipav.model.algorithms.AlgorithmFRAP.FitWholeNLConInt2;
 import gov.nih.mipav.model.file.FileInfoBase;
 
@@ -134,6 +135,21 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
     public void finalize() {
         srcImage = null;
         destImage = null;
+        r1i = null;
+        mp = null;
+        min_constr = null;
+        max_constr = null;
+        if (lowFlipImage != null) {
+        	lowFlipImage.disposeLocal();
+        	lowFlipImage = null;
+        }
+        if (highFlipImage != null) {
+        	highFlipImage.disposeLocal();
+        	highFlipImage = null;
+        }
+        comp = null;
+        elist = null;
+        initial = null;
         super.finalize();
     }
 
@@ -163,6 +179,36 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         double[] params;
         float destArray[];
         int j;
+        boolean test = false;
+        
+        if (test) {
+        	// Below is an example used to fit y = alpha - beta*(rho**x)
+        	// This example implements the solution of problem D of chapter 24 of Applied Regression Analysis, Third Edition by
+        	// Norman R. Draper and Harry Smith */
+        	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
+            double[] xSeries = new double[5];
+            float[] ySeries = new float[5];
+            double[] initial = new double[3];
+            int nPoints = 5;
+            Fit24DModel fmod;
+            xSeries[0] = 0.0;
+            xSeries[1] = 1.0;
+            xSeries[2] = 2.0;
+            xSeries[3] = 3.0;
+            xSeries[4] = 4.0;
+            ySeries[0] = 44.4f;
+            ySeries[1] = 54.6f;
+            ySeries[2] = 63.8f;
+            ySeries[3] = 65.7f;
+            ySeries[4] = 68.9f;
+            initial[0] = 0.0;
+            initial[1] = 10.0;
+            initial[2] = 0.2;
+            fmod = new Fit24DModel(nPoints, xSeries, ySeries, initial);
+            fmod.driver();
+            fmod.dumpResults();
+            return;
+        }
         
         if (srcImage.getNDims() != 4) {
             MipavUtil.displayError("srcImage must be 4D");
@@ -289,14 +335,17 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         mask = null;
         volume = null;
         
-        min_constr[0] = 0.0;
-        min_constr[1] = 0.0;
-        min_constr[2] = 0.0;
-        
-        max_constr[0] = 0.99;
-        max_constr[1] = 0.99;
-        max_constr[2] = 0.99;
-        
+        /*  convert Mp array to Cp(t) array
+
+        Cp(t) =   1    * ln[ 1-exp(-RIB*TR)cos0 - (1-exp(-RIB*TR))cos0*Mp(t)/Mp(0) ]
+                -----      [ ----------------------------------------------------  ]
+                r1*TR      [  1-exp(-RIB*TR)cos0 - (1-exp(-RIB*TR))*Mp(t)/Mp(0)    ]
+
+                       - RIB/r1
+
+        subject to Cp(t) >= 0
+    */
+
         /* Compute m0 equal to mean of first 'nFirst + 1' values */
         dval = 0.0;
         for (c = 0; c <= nFirst; c++) {
@@ -316,7 +365,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         
         /* exponential terms */
         ertr = 1.0 - Math.exp(-rib * tr);
-        ertr_c0 = 1 - Math.exp(-rib * tr) * cos0;
+        ertr_c0 = 1.0 - Math.exp(-rib * tr) * cos0;
         c0_ertr_c0 = (1.0 - Math.exp(-rib * tr)) * cos0;
         
         Preferences.debug("tDim = " + tDim + "\n");
@@ -424,12 +473,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             bu[0] = max_constr[0];
 
             // Constrain parameter 1
-            if (useVe) {
-                bl[1] = Math.max(1.0E-5,min_constr[1]);
-            }
-            else {
-            	bl[1] = min_constr[1];
-            }
+            bl[1] = min_constr[1];
             bu[1] = max_constr[1];
 
             // Constrain parameter 2
@@ -456,10 +500,10 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         }
 
         /**
-         * Display results of displaying exponential fitting parameters.
+         * Display results of displaying DEMRI3 fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitDoubleExponential ********* \n\n");
+            Preferences.debug(" ******* FitDEMRI3ConstrainedModel ********* \n\n");
             Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
             Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
             Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
@@ -468,7 +512,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         }
 
         /**
-         * Fit to function - a3 + (1-a3)*[1 - ao*exp(a1*x) - (1 - a0)*exp(a2*x)].
+         * 
          *
          * @param  a          The best guess parameter values.
          * @param  residuals  ymodel - yData.
@@ -523,7 +567,34 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             	    }
             	} // if (r1i != null)
             	
-            	// Compute Ct from Cp and params
+            	/*----------------------------------------------------------------------
+            	  compute Ct from Cp and params
+
+            	    Ct[n] = Ktrans * ( sum [ Cp[k] * exp( -kep(n-k)*TF )
+            	            ------                 * ( exp(kep*TF/2) - exp(-kep*TF/2) ) ]
+            	             kep
+            	                       + (Cp[m] + Cp[n]) * (1 - exp(-kep*TF/2)) )
+
+            	    where sum is over k=m+1..n-1 (m is nfirst), and n is over m..len-1
+            	    note: Cp[n] = Ct[n] = 0, for n in {0..m}  (m also, since that is time=0)
+            	    note: (Cp[m]+Cp[n])*... reflects the first and last half intervals,
+            	          while the sum reflects all the interior, full intervals
+
+            	        Let P1  = Ktrans / kep
+            	            P2  = exp(kep*TF/2) - exp(-kep*TF/2)
+            	                = exp(-P3/2) - exp(P3/2)
+            	            P3  = -kep*TF
+            	            P4  = 1 - exp(-kep*TF/2)
+            	                = 1 - exp(P3/2)
+
+            	    Ct[n] = P1*P2 * sum [ Cp[k] * exp(P3*(n-k)) ] + P1*P4 * (Cp[m]+Cp[n])
+            	    note: in exp_list, max power is (P3*(len-1-m)), m is nfirst
+            	    note: Ct is stored in P->comp
+            	    
+            	    ** This is the only place that the dataset TR (which we label as TF,
+            	       the inter-frame TR) is used in this model.
+            	*/
+
             	/* init first elements to 0 */
             	for (n = 0; n < nFirst; n++) {
             		comp[n] = 0.0;
@@ -550,13 +621,49 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             		comp[n] = P12 * dval + P14 * (mp[n] + mp[nFirst]);
             	}
             	
+            	/*----------------------------------------------------------------------
+                C[n] = { 0, for n < nfirst
+                       { Ct[n] + fpv * Cp[n], n = nfirst..len-1
+
+                note: C will replace Ct in P->comp
+               */
+
             	for (n = nFirst; n < tDim; n++) {
             		comp[n] += fvp * mp[n];
             	}
             	
+            	/*----------------------------------------------------------------------
+                R1[n] = RIT + r1 * C[n]
+
+                note: R1 will replace C in P->comp
+                      R1[i] will be constant P->RIT over i=0..nfirst-1
+                */
+
+            	
             	for (n = nFirst; n < tDim; n++) {
             		comp[n] = rit + r1 * comp[n];
             	}
+            	
+            	/*----------------------------------------------------------------------
+            	  compute the final time series, M_transpose, from the R1 array
+
+            	    Mx[n] = 1 * (1 - exp(-R1[n] * TR)) * (1 - exp(-RIT*TR)cos0)
+            	                ---------------------------------------------
+            	                (1 - exp(-R1[n] * TR)cos0) * (1 - exp(-RIT*TR))
+
+            	          =     (1 - e[n]) * P1c) / [(1 - cos0*e[n]) * P1]
+
+            	        where P1   = 1 - exp(-RIT*TR)
+            	              P1c  = 1 - exp(-RIT*TR)*cos0
+            	              e[n] = exp(-R1[n] * TR)
+
+            	    notes:  R1 is in P->comp
+            	            The '1' is a placeholder for Mx(t=0), which should have
+            	              been factored out of the input time series.
+            	            Mx[i] is identically 1, for i = 0..nfirst-1 .
+            	            I can see no speed-up for e[n].  :'(
+            	*/
+
             	
             	P1 = Math.exp(-rit * tr);
             	P1c = 1.0 - P1 * cos0;
@@ -574,30 +681,130 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
 
                 if ((ctrl == -1) || (ctrl == 1)) {
 
-                    // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                    // evaluate the residuals[j] = ymodel[j] - ySeries[j]
                     for (j = 0; j < nPts; j++) {
-                        /*ymodel = a[3] +
-                                 ((1.0 - a[3]) *
-                                      (1 - (a[0] * Math.exp(a[1] * xSeries[i])) -
-                                           ((1.0 - a[0]) * Math.exp(a[2] * xSeries[i]))));*/
-                    	
                         residuals[j] = ymodel[j] - ySeries[j];
+                    }
+                } // if ((ctrl == -1) || (ctrl == 1))
+                // Calculate the Jacobian numerically
+                else if (ctrl == 2) {
+                    ctrlMat[0] = 0;
+                }
+            } catch (Exception exc) {
+                Preferences.debug("function error: " + exc.getMessage() + "\n");
+            }
+
+            return;
+        }
+    }
+    
+    /**
+     * DOCUMENT ME!
+     */
+    class Fit24DModel extends NLConstrainedEngine {
+
+        /**
+         * Creates a new Fit24DModel object.
+         *
+         * @param  nPoints  DOCUMENT ME!
+         * @param  xData    DOCUMENT ME!
+         * @param  yData    DOCUMENT ME!
+         * @param  initial  DOCUMENT ME!
+         */
+        public Fit24DModel(int nPoints, double[] xData, float[] yData, double[] initial) {
+
+            // nPoints data points, 3 coefficients, and exponential fitting
+            super(nPoints, 3, xData, yData);
+
+            int i;
+
+            bounds = 2; // bounds = 0 means unconstrained
+
+            // bounds = 1 means same lower and upper bounds for
+            // all parameters
+            // bounds = 2 means different lower and upper bounds
+            // for all parameters
+            // Constrain alpha
+            bl[0] = -1000.0;
+            bu[0] = 1000.0;
+
+            // Constrain beta
+            bl[1] = -1000.0;
+            bu[1] = 1000.0;
+
+            // Constrain rho
+            bl[2] = 0.0;
+            bu[2] = 1.0;
+
+            // The default is internalScaling = false
+            // To make internalScaling = true and have the columns of the
+            // Jacobian scaled to have unit length include the following line.
+            // internalScaling = true;
+
+            gues[0] = initial[0];
+            gues[1] = initial[1];
+            gues[2] = initial[2];
+        }
+
+        /**
+         * Starts the analysis.
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * Display results of displaying exponential fitting parameters.
+         */
+        public void dumpResults() {
+            Preferences.debug(" ******* FitDoubleExponential ********* \n\n");
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
+        }
+
+        /**
+         * Fit to function - a0 - a1*(a2**x).
+         *
+         * @param  a          The x value of the data point.
+         * @param  residuals  The best guess parameter values.
+         * @param  covarMat   The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
+            int ctrl;
+            int i;
+            double ymodel = 0.0;
+            double e1, e2;
+
+            try {
+                ctrl = ctrlMat[0];
+
+                if ((ctrl == -1) || (ctrl == 1)) {
+
+                    // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                    for (i = 0; i < nPts; i++) {
+                        ymodel = a[0] - (a[1] * Math.pow(a[2], xSeries[i]));
+                        residuals[i] = ymodel - ySeries[i];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
 
                     // Calculate the Jacobian analytically
-                    /*for (j = 0; j < nPts; j++) {
+                    for (i = 0; i < nPts; i++) {
                         e1 = Math.exp(a[1] * xSeries[i]);
                         e2 = Math.exp(a[2] * xSeries[i]);
-                        covarMat[i][0] = (1.0 - a[3]) * (-e1 + e2);
-                        covarMat[i][1] = -(1.0 - a[3]) * a[0] * xSeries[i] * e1;
-                        covarMat[i][2] = -(1.0 - a[3]) * (1.0 - a[0]) * xSeries[i] * e2;
-                        covarMat[i][3] = (a[0] * e1) + ((1.0 - a[0]) * e2);
-                    }*/
+                        covarMat[i][0] = 1.0;
+                        covarMat[i][1] = -Math.pow(a[2], xSeries[i]);
+                        covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
+                    }
                 } // else if (ctrl == 2)
-            } catch (Exception exc) {
-                Preferences.debug("function error: " + exc.getMessage() + "\n");
+                // If the user wishes to calculate the Jacobian numerically
+                /* else if (ctrl == 2) {
+                 * ctrlMat[0] = 0; } */
+            } catch (Exception e) {
+                Preferences.debug("function error: " + e.getMessage() + "\n");
             }
 
             return;
