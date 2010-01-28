@@ -1012,8 +1012,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     final String[] hier = (String[]) catField.get(plugin);
                     final Class<?>[] interList = plugin.getInterfaces();
                     String interName = new String();
-                    
-                    //find the interface name that determines the type of plugin
+
+                    // find the interface name that determines the type of plugin
                     for (final Class<?> element : interList) {
                         if (element.getName().contains("PlugIn") && !element.getName().contains("BundledPlugInInfo")) {
                             interName = element.getName().substring(element.getName().indexOf("PlugIn"));
@@ -2265,11 +2265,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         // otherwise try to find the image under user.dir property
                         // if still not there, print usage and exit...since file was not found
                         if (providedUserDefaultDir) {
-                            checkFile = new File(userDefaultDir + imgName);
+                            checkFile = new File(userDefaultDir + File.separator + imgName);
                             if (checkFile.exists()) {
                                 setDefaultDirectory(userDefaultDir);
                             } else {
-                                checkFile = new File(System.getProperty("user.dir") + imgName);
+                                checkFile = new File(System.getProperty("user.dir") + File.separator + imgName);
                                 if (checkFile.exists()) {
                                     setDefaultDirectory(System.getProperty("user.dir"));
                                 } else {
@@ -2279,7 +2279,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                 }
                             }
                         } else {
-                            checkFile = new File(System.getProperty("user.dir") + imgName);
+                            checkFile = new File(System.getProperty("user.dir") + File.separator + imgName);
                             if (checkFile.exists()) {
                                 setDefaultDirectory(System.getProperty("user.dir"));
                             } else {
@@ -2304,10 +2304,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             }
                         } else {
                             if (providedUserDefaultDir) {
-                                checkFile = new File(userDefaultDir + imgName);
+                                checkFile = new File(userDefaultDir + File.separator + imgName);
                                 if (checkFile.exists()) {
                                     setDefaultDirectory(userDefaultDir);
-                                    imageList.add(new OpenFileInfo(userDefaultDir + dir, name, isMulti));
+                                    imageList
+                                            .add(new OpenFileInfo(userDefaultDir + File.separator + dir, name, isMulti));
                                 } else {
                                     checkFile = new File(imgName);
                                     if (checkFile.exists()) {
@@ -2539,17 +2540,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @param frame Frame to be set active (i.e. to the top of the list).
      */
-    public void setActiveFrame(final Frame frame) {                
+    public void setActiveFrame(final Frame frame) {
         if (imageFrameVector.size() == 0) {
             return;
         }
 
-        //if (frame == (imageFrameVector.elementAt(0))) {
-        //    System.err.println( "frame = 0" );
-        //    return;
-        //}
+        // if (frame == (imageFrameVector.elementAt(0))) {
+        // System.err.println( "frame = 0" );
+        // return;
+        // }
 
-        int index = imageFrameVector.indexOf(frame);
+        final int index = imageFrameVector.indexOf(frame);
 
         if (index < 0) {
             return;
