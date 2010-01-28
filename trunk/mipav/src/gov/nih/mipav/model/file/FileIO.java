@@ -394,6 +394,8 @@ public class FileIO {
         String studyIDMaster;
         String seriesNoMaster;
         String acqNoMaster;
+        
+        FileDicomTagTable[] childrenTagTables;
 
         int orientation = FileInfoBase.UNKNOWN_ORIENT;
 
@@ -502,6 +504,9 @@ public class FileIO {
 
             if (nImages > 1) {
                 refFileInfo.multiFrame = true;
+                
+                
+                
             }
 
             Preferences.debug("0028,0008 (nImages) == " + nImages + "\n", Preferences.DEBUG_FILEIO);
@@ -717,7 +722,7 @@ public class FileIO {
             }
 
             // need to let the reference tag table know about the tag tables which refer to it
-            final FileDicomTagTable[] childrenTagTables = new FileDicomTagTable[savedFileInfos.length - 1];
+            childrenTagTables = new FileDicomTagTable[savedFileInfos.length - 1];
 
             for (int i = 0, j = 0; i < savedFileInfos.length; i++) {
                 if (savedFileInfos[i] != refFileInfo && childrenTagTables.length != 0) {
@@ -1039,9 +1044,14 @@ public class FileIO {
 
         // loop through files, place them in image array
         pBarVal = 0;
-
+        //need to determine if it is enhanced dicom
+        boolean isEnhanced = imageFile.isEnhanced();
+        FileInfoDicom[] enhancedFileInfos = null;
+        if(isEnhanced) {
+        	enhancedFileInfos = imageFile.getEnhancedFileInfos();
+        }
+        
         for (int i = 0; i < nImages; i++) {
-
             if (multiframe) {
                 filename = fileList[0];
                 start = i;
@@ -1120,7 +1130,19 @@ public class FileIO {
                 }
 
                 curFileInfo.setOrigin(newOriginPt);
-                image.setFileInfo(curFileInfo, location);
+                //If it is enhanced dicom, attach all the fileinfos to the image
+                if(isEnhanced && enhancedFileInfos != null) {
+                	if(location == 0) {
+                		image.setFileInfo(curFileInfo, location);
+                	}else {
+                		FileInfoDicom[] enhancedFileInfo = {enhancedFileInfos[location-1]};
+                		FileInfoDicom[] origFileInfo = {curFileInfo};
+                		FileInfoBase.copyCoreInfo(origFileInfo, enhancedFileInfo);
+                		image.setFileInfo(enhancedFileInfos[location-1], location);
+                	}
+                }else {
+                	image.setFileInfo(curFileInfo, location);
+                }
 
                 if (image.getType() == ModelStorageBase.FLOAT) {
                     image.importData(location * length, bufferFloat, false);

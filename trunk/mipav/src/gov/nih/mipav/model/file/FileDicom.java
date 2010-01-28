@@ -162,6 +162,12 @@ public class FileDicom extends FileDicomBase {
 
     /** Whether MIPAV should be written to this dicom file as the secondary stamp * */
     private boolean stampSecondary = true;
+    
+    private boolean isEnhanced = true;
+    
+    private FileDicomTagTable[] childrenTagTables;
+    
+    private FileInfoDicom[] enhancedFileInfos;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -677,6 +683,8 @@ public class FileDicom extends FileDicomBase {
             int tagVM;
  // Should be removed           
  //           final int dirLength;
+            
+            
 
             // Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " +
             // elementLength + "\n", Preferences.DEBUG_FILEIO);
@@ -706,6 +714,8 @@ public class FileDicom extends FileDicomBase {
                     tagTable.putPrivateTagValue(info);
                     tagVM = info.getValueMultiplicity();
                     tagTable.get(key).setValueRepresentation(new String(vr));
+                    
+                    
                 }
             }
 
@@ -730,13 +740,46 @@ public class FileDicom extends FileDicomBase {
             }
 
             try {
+            	
+            	 if(name.equals("5200,9230")) {
+            		 //System.out.println("blah");
+            		 
+            	 }
 
                 if (type.equals(FileDicomBase.TYPE_STRING)) {
                     strValue = getString(elementLength);
+
                     tagTable.setValue(key, strValue, elementLength);
 
                     Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t" + type + "; value = "
                             + strValue + "; element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
+                    
+                    
+                    //need to determine if this is enhanced dicom
+                    //if it is, set up all the additional fileinfos needed and attach
+                    //the childTagTables to the main tagTable
+                    if(name.equals("0002,0002")) {
+                    	if(strValue.trim().equals(DICOM_Constants.UID_EnhancedMRStorage) || 
+                    			strValue.trim().equals(DICOM_Constants.UID_EnhancedCTStorage) ||
+                    			strValue.trim().equals(DICOM_Constants.UID_EnhancedXAStorage)) {
+                    		isEnhanced = true;
+                    	}
+                    }
+                    if(name.equals("0028,0008") && isEnhanced) {
+                    	int nImages = Integer.valueOf(strValue).intValue();
+                    	if(nImages > 1) {
+	                    	childrenTagTables =  new FileDicomTagTable[nImages - 1];
+	                    	enhancedFileInfos = new FileInfoDicom[nImages - 1];
+	                    	for(int i=0;i<nImages-1;i++) {
+	                    		String s = String.valueOf(i+1);
+	                    		FileInfoDicom f = new FileInfoDicom(fileName + s , fileDir, FileUtility.DICOM, fileInfo);
+	                    		childrenTagTables[i] = f.getTagTable();
+	                    		enhancedFileInfos[i] = f;
+	                    	}
+	                    	tagTable.attachChildTagTables(childrenTagTables);
+                    	}
+                    }
+                    
                 } else if (type.equals(FileDicomBase.OTHER_BYTE_STRING)) {
 
                     if ( !name.equals(FileDicom.IMAGE_TAG)) {
@@ -765,6 +808,7 @@ public class FileDicom extends FileDicomBase {
 
                 } else if (type.equals(FileDicomBase.TYPE_INT)) {
                     data = getInteger(tagVM, elementLength, endianess);
+                    
                     tagTable.setValue(key, data, elementLength);
 
                     Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t (int) value = " + data
@@ -790,13 +834,92 @@ public class FileDicom extends FileDicomBase {
                         || ( (type == FileDicomBase.TYPE_UNKNOWN) && (elementLength == -1))) {
                     final int len = elementLength;
 
+                    
+                    
+                   
+                    
                     // save these values because they'll change as the sequence is read in below.
                     Preferences
                             .debug("Sequence Tags: (" + name + "); length = " + len + "\n", Preferences.DEBUG_FILEIO);
 
                     Object sq;
+                    
+                   
 
-                    if (name.equals("0004,1220")) {
+                    //enhanced dicom per frame stuff
+                    if(name.equals("5200,9230")) {
+                    	sq = getSequence(endianess, len);
+                    	Vector<FileDicomItem> v = ((FileDicomSQ)sq).getSequence();
+                    	int elemLength;
+                    	FileDicomKey fdKey;
+                    	for(int i=0;i<v.size();i++) {
+                    		FileDicomItem item = v.get(i);
+                    		TreeMap<String, FileDicomTag> dataSet = item.getDataSet();
+                    		Set keySet = dataSet.keySet();
+                    		Iterator<String> iter = keySet.iterator();
+                    		String value;
+                    			while(iter.hasNext()) {
+                    	        	String k = iter.next();
+                    	        	FileDicomTag entry = dataSet.get(k);
+                    	        	String vr = entry.getValueRepresentation();
+                    	        	String  t = FileDicomTagInfo.getType(vr);
+                    	        	if (t.equals(FileDicomBase.TYPE_SEQUENCE)) {
+                    	                elemLength = entry.getLength();
+                    	                Vector<FileDicomItem> vSeq = ((FileDicomSQ) entry.getValue(true)).getSequence();
+                    	                for(int m=0;m<vSeq.size();m++) {
+                                    		FileDicomItem subItem = vSeq.get(m);
+                                    		TreeMap<String, FileDicomTag> subDataSet = subItem.getDataSet();
+                                    		Set subKeySet = subDataSet.keySet();
+                                    		Iterator<String> subIter = subKeySet.iterator();
+                                    		while(subIter.hasNext()) {
+                                    			String kSub = subIter.next();
+                                	        	FileDicomTag subEntry = subDataSet.get(kSub);
+                                	        	elemLength = subEntry.getLength();
+                                	        	fdKey = new FileDicomKey(kSub);
+                            	                if(i==0) {
+                            	                	tagTable.setValue(fdKey, subEntry.getValue(), elemLength);
+                            	                }else {
+                            	                	childrenTagTables[i-1].setValue(fdKey, subEntry.getValue(), elemLength);
+                            	                }
+                                    		}
+                    	                }
+                    	        	} else {
+                    	                elemLength = entry.getLength();
+                    	                fdKey = new FileDicomKey(k);
+                    	                if(i==0) {
+                    	                	tagTable.setValue(fdKey, entry.getValue(), elemLength);
+                    	                }else {
+                    	                	childrenTagTables[i-1].setValue(fdKey, entry.getValue(), elemLength);
+                    	                }
+                    	            }
+                    			}
+                    	}
+                    	//remove tag 5200,9230 if its there
+                    	FileDicomTag removeTag = tagTable.get(key);
+                    	if(removeTag!= null) {
+                    		tagTable.removeTag(key);
+                    	}
+                    }else {
+                    	if (name.equals("0004,1220")) {
+                            dirInfo = (FileDicomSQ) getSequence(endianess, len);
+                            sq = new FileDicomSQ();
+                        } else {
+                            sq = getSequence(endianess, len);
+
+                        }
+                        // System.err.print( "SEQUENCE DONE: Sequence Tags: (" + name + "); length = " +
+                        // Integer.toString(len, 0x10) + "\n");
+
+                        try {
+                            tagTable.setValue(key, sq, elementLength);
+                        } catch (final NullPointerException e) {
+                            System.err.println("Null pointer exception while setting value.  Trying to put new tag.");
+                        }
+                		
+                	}
+                    
+                    
+                    /*if (name.equals("0004,1220")) {
                         dirInfo = (FileDicomSQ) getSequence(endianess, len);
                         sq = new FileDicomSQ();
                     } else {
@@ -810,7 +933,8 @@ public class FileDicom extends FileDicomBase {
                         tagTable.setValue(key, sq, elementLength);
                     } catch (final NullPointerException e) {
                         System.err.println("Null pointer exception while setting value.  Trying to put new tag.");
-                    }
+                    }*/
+                    
 
                     // fileInfo.setLength(name, len);
                     Preferences.debug("Finished sequence tags.\n\n", Preferences.DEBUG_FILEIO);
@@ -1007,7 +1131,6 @@ public class FileDicom extends FileDicomBase {
                 fileInfo.setExtents(extents);
                 flag = false; // break loop
             } else if (type.equals(FileDicomBase.TYPE_UNKNOWN)) { // Private tag, may not be reading in correctly.
-
                 try {
 
                     // set the value if the tag is in the dictionary (which means it isn't private..) or has already
@@ -1634,8 +1757,21 @@ public class FileDicom extends FileDicomBase {
     public final void setFileName(final String fName, final FileInfoDicom refInfo) throws IOException {
         this.setFileName(new File(fileDir + fName), refInfo);
     }
+    
+    
 
-    /**
+    public boolean isEnhanced() {
+		return isEnhanced;
+	}
+    
+    
+    
+
+	public FileInfoDicom[] getEnhancedFileInfos() {
+		return enhancedFileInfos;
+	}
+
+	/**
      * Accessor that sets the file name and allocates new FileInfo, File and RandomAccess file objects based on the new
      * image file based on the new filename and the new directory. This method sets the filename property of the
      * FileDicom, recreates a raw file for random access file to read the image file pointed to by the filename (the
@@ -3171,6 +3307,17 @@ public class FileDicom extends FileDicomBase {
         }
 
         return sq;
+    }
+    
+    
+    
+    
+    private void setPerFrameEnhancedSequenceTags(final boolean endianess) {
+    	try {
+    		getNextElement(endianess); // gets the first ITEM tag
+    	}catch(Exception e) {
+    		e.printStackTrace();
+    	}
     }
 
     /**

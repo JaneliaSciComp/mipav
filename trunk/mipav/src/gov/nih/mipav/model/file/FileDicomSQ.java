@@ -165,4 +165,10 @@ public class FileDicomSQ extends ModelSerialCloneable {
     public String toString() {
         return "Sequence";
     }
+
+	public Vector<FileDicomItem> getSequence() {
+		return sequence;
+	}
+    
+    
 }

@@ -361,8 +361,16 @@ public class FileDicomTag extends ModelSerialCloneable {
 
         return returnValue;
     }
+    
+    
+    
+    
 
-    /**
+    public Object getValue() {
+		return value;
+	}
+
+	/**
      * Returns the value(s) as an array so that each tag with a value multiplicity of more than 1 -- ie, TypeString
      * items separated by '\' -- is its own element in the array. This method will be so much simpler when (if) the tags
      * are seperated out as individual classes.
