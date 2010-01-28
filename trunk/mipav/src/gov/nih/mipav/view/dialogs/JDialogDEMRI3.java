@@ -575,6 +575,14 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         useVe = scriptParameters.getParams().getBoolean("use_ve");
         kepButton.setSelected(!useVe);
         veButton.setSelected(useVe);
+        if (kepButton.isSelected()) {
+    	    labelMinConstr1.setText("k_ep minimum allowed value (0 - 0.99)");
+    	    labelMaxConstr1.setText("k_ep maximum allowed value (0 - 0.99)");
+    	}
+    	else {
+    		labelMinConstr1.setText("ve minimum allowed value (1.0E-5 - 0.99)");
+    	    labelMaxConstr1.setText("ve maximum allowed value (1.0E-5 - 0.99)");
+    	}
     }
 
     /**
@@ -639,6 +647,20 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
             labelTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
             labelTissueIntrinsicRelaxivityRate2.setEnabled(constantTissueRadioButton.isSelected());
             textTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
+        }
+        else if ((source == kepButton) || (source == veButton)) {
+        	if (kepButton.isSelected()) {
+        	    labelMinConstr1.setText("k_ep minimum allowed value (0 - 0.99)");
+        	    textMinConstr1.setText("0.0");
+        	    labelMaxConstr1.setText("k_ep maximum allowed value (0 - 0.99)");
+        	    textMaxConstr1.setText("0.99");
+        	}
+        	else {
+        		labelMinConstr1.setText("ve minimum allowed value (1.0E-5 - 0.99)");
+        	    textMinConstr1.setText("1.0E-5");
+        	    labelMaxConstr1.setText("ve maximum allowed value (1.0E-5 - 0.99)");
+        	    textMaxConstr1.setText("0.99");	
+        	}
         }
 
 
@@ -806,11 +828,30 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 1;
         mainPanel.add(textMaxConstr0, gbc);
         
-        labelMinConstr1 = new JLabel("k_ep or ve minimum allowed value (0 - 0.99)");
+        secondParamGroup = new ButtonGroup();
+        kepButton = new JRadioButton("Second parameter is back-transfer rate (k_ep)", true);
+        kepButton.setFont(serif12);
+        kepButton.setForeground(Color.black);
+        kepButton.addItemListener(this);
+        secondParamGroup.add(kepButton);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        mainPanel.add(kepButton, gbc);
+        
+        veButton = new JRadioButton("Second parameter is external celluar volume fraction (ve)", false);
+        veButton.setFont(serif12);
+        veButton.setForeground(Color.black);
+        veButton.addItemListener(this);
+        secondParamGroup.add(veButton);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        mainPanel.add(veButton, gbc);
+        
+        labelMinConstr1 = new JLabel("k_ep minimum allowed value (0 - 0.99)");
         labelMinConstr1.setForeground(Color.black);
         labelMinConstr1.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 5;
         mainPanel.add(labelMinConstr1, gbc);
         
         textMinConstr1 = new JTextField(10);
@@ -820,11 +861,11 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 1;
         mainPanel.add(textMinConstr1, gbc);
         
-        labelMaxConstr1 = new JLabel("k_ep or ve maximum allowed value (0 - 0.99)");
+        labelMaxConstr1 = new JLabel("k_ep maximum allowed value (0 - 0.99)");
         labelMaxConstr1.setForeground(Color.black);
         labelMaxConstr1.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 6;
         mainPanel.add(labelMaxConstr1, gbc);
         
         textMaxConstr1 = new JTextField(10);
@@ -838,7 +879,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelMinConstr2.setForeground(Color.black);
         labelMinConstr2.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 7;
         mainPanel.add(labelMinConstr2, gbc);
         
         textMinConstr2 = new JTextField(10);
@@ -852,7 +893,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelMaxConstr2.setForeground(Color.black);
         labelMaxConstr2.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 8;
         mainPanel.add(labelMaxConstr2, gbc);
         
         textMaxConstr2 = new JTextField(10);
@@ -866,7 +907,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelContrastRelaxivityRate.setForeground(Color.black);
         labelContrastRelaxivityRate.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 9;
         mainPanel.add(labelContrastRelaxivityRate, gbc);
         
         textContrastRelaxivityRate = new JTextField(10);
@@ -880,7 +921,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelBloodIntrinsicRelaxivityRate.setForeground(Color.black);
         labelBloodIntrinsicRelaxivityRate.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 10;
         mainPanel.add(labelBloodIntrinsicRelaxivityRate, gbc);
         
         textBloodIntrinsicRelaxivityRate = new JTextField(10);
@@ -895,7 +936,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelBloodIntrinsicRelaxivityRate2.setForeground(Color.black);
         labelBloodIntrinsicRelaxivityRate2.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 11;
         gbc.gridheight = 1;
         mainPanel.add(labelBloodIntrinsicRelaxivityRate2, gbc);
         
@@ -906,7 +947,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         constantTissueRadioButton.addItemListener(this);
         tissueGroup.add(constantTissueRadioButton);
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 12;
         mainPanel.add(constantTissueRadioButton, gbc);
         
         fileTissueRadioButton = new JRadioButton("File specified tissue intrinsic relaxivity rate", false);
@@ -915,7 +956,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         fileTissueRadioButton.addItemListener(this);
         tissueGroup.add(fileTissueRadioButton);
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 13;
         mainPanel.add(fileTissueRadioButton, gbc);
         
         labelTissueIntrinsicRelaxivityRate = new JLabel("Tissue intrinsic relaxivity rate in 1/(mMol * sec)");
@@ -923,7 +964,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelTissueIntrinsicRelaxivityRate.setFont(serif12);
         labelTissueIntrinsicRelaxivityRate.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 14;
         mainPanel.add(labelTissueIntrinsicRelaxivityRate, gbc);
         
         textTissueIntrinsicRelaxivityRate = new JTextField(10);
@@ -940,7 +981,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelTissueIntrinsicRelaxivityRate2.setFont(serif12);
         labelTissueIntrinsicRelaxivityRate2.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy = 15;
         gbc.gridheight = 1;
         mainPanel.add(labelTissueIntrinsicRelaxivityRate2, gbc);
         
@@ -952,7 +993,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         buttonLowFlipFile.setActionCommand("LowFlipFile");
         buttonLowFlipFile.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 14;
+        gbc.gridy = 16;
         mainPanel.add(buttonLowFlipFile, gbc);
 
         textLowFlipFile = new JTextField();
@@ -971,7 +1012,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         buttonHighFlipFile.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy = 17;
         mainPanel.add(buttonHighFlipFile, gbc);
 
         textHighFlipFile = new JTextField();
@@ -985,7 +1026,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelFlipAngle.setForeground(Color.black);
         labelFlipAngle.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy = 18;
         mainPanel.add(labelFlipAngle, gbc);
         
         textFlipAngle = new JTextField(10);
@@ -999,7 +1040,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelTimeBetweenShots.setForeground(Color.black);
         labelTimeBetweenShots.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 17;
+        gbc.gridy = 19;
         mainPanel.add(labelTimeBetweenShots, gbc);
         
         textTimeBetweenShots = new JTextField(10);
@@ -1015,7 +1056,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         secondButton.setForeground(Color.black);
         rateGroup.add(secondButton);
         gbc.gridx = 0;
-        gbc.gridy = 18;
+        gbc.gridy = 20;
         mainPanel.add(secondButton, gbc);
         
         minuteButton = new JRadioButton("K_trans and k_ep are per minute", false);
@@ -1023,13 +1064,13 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         minuteButton.setForeground(Color.black);
         rateGroup.add(minuteButton);
         gbc.gridx = 0;
-        gbc.gridy = 19;
+        gbc.gridy = 21;
         mainPanel.add(minuteButton, gbc);
         
         labelMp = new JLabel("Draw a sagittal sinus VOI or open a VOI file");
         labelMp.setForeground(Color.black);
         labelMp.setFont(serif12);
-        gbc.gridy = 20;
+        gbc.gridy = 22;
         mainPanel.add(labelMp, gbc);
         
         buttonMpFile = new JButton("Open a sagittal sinus VOI file");
@@ -1039,14 +1080,14 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         buttonMpFile.setActionCommand("MpFile");
         buttonMpFile.setPreferredSize(new Dimension(205, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 21;
+        gbc.gridy = 23;
         mainPanel.add(buttonMpFile, gbc);
         
         labelNFirst = new JLabel("nfirst injection TR index of input dataset (0 - 1000)");
         labelNFirst.setForeground(Color.black);
         labelNFirst.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 22;
+        gbc.gridy = 24;
         mainPanel.add(labelNFirst, gbc);
         
         textNFirst = new JTextField(10);
@@ -1055,23 +1096,6 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         textNFirst.setFont(serif12);
         gbc.gridx = 1;
         mainPanel.add(textNFirst, gbc);
-        
-        secondParamGroup = new ButtonGroup();
-        kepButton = new JRadioButton("Second parameter is back-transfer rate (k_ep)", true);
-        kepButton.setFont(serif12);
-        kepButton.setForeground(Color.black);
-        secondParamGroup.add(kepButton);
-        gbc.gridx = 0;
-        gbc.gridy = 23;
-        mainPanel.add(kepButton, gbc);
-        
-        veButton = new JRadioButton("Second parameter is external celluar volume fraction (ve)", false);
-        veButton.setFont(serif12);
-        veButton.setForeground(Color.black);
-        secondParamGroup.add(veButton);
-        gbc.gridx = 0;
-        gbc.gridy = 24;
-        mainPanel.add(veButton, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -1115,30 +1139,63 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         	return false;	
         }
         
+        if (kepButton.isSelected()) {
+            useVe = false;
+        }
+        else {
+            useVe = true;
+        }
+        
         tmpStr = textMinConstr1.getText();
         min_constr[1] = Double.parseDouble(tmpStr);
         
-        if (min_constr[1] < 0.0) {
-        	MipavUtil.displayError("Minimum k_ep or ve must be at least 0.0");
-        	textMinConstr1.requestFocus();
-        	textMinConstr1.selectAll();
-        	return false;
+        if (useVe) {
+        	if (min_constr[1] < 1.0E-5) {
+	        	MipavUtil.displayError("Minimum ve must be at least 1.0E-5");
+	        	textMinConstr1.requestFocus();
+	        	textMinConstr1.selectAll();
+	        	return false;
+	        }
+	        
+	        tmpStr = textMaxConstr1.getText();
+	        max_constr[1] = Double.parseDouble(tmpStr);
+	        
+	        if (max_constr[1] < min_constr[1]) {
+	        	MipavUtil.displayError("Maximum ve must be at least " + min_constr[1]);
+	        	textMaxConstr1.requestFocus();
+	        	textMaxConstr1.selectAll();
+	        	return false;
+	        }
+	        else if (max_constr[1] > 0.99) {
+	        	MipavUtil.displayError("Maximum ve must not exceed 0.99");
+	        	textMaxConstr1.requestFocus();
+	        	textMaxConstr1.selectAll();
+	        	return false;	
+	        }	
         }
-        
-        tmpStr = textMaxConstr1.getText();
-        max_constr[1] = Double.parseDouble(tmpStr);
-        
-        if (max_constr[1] < min_constr[1]) {
-        	MipavUtil.displayError("Maximum k_ep or ve must be at least " + min_constr[1]);
-        	textMaxConstr1.requestFocus();
-        	textMaxConstr1.selectAll();
-        	return false;
-        }
-        else if (max_constr[1] > 0.99) {
-        	MipavUtil.displayError("Maximum k_ep or ve must not exceed 0.99");
-        	textMaxConstr1.requestFocus();
-        	textMaxConstr1.selectAll();
-        	return false;	
+        else { // use k_ep
+	        if (min_constr[1] < 0.0) {
+	        	MipavUtil.displayError("Minimum k_ep must be at least 0.0");
+	        	textMinConstr1.requestFocus();
+	        	textMinConstr1.selectAll();
+	        	return false;
+	        }
+	        
+	        tmpStr = textMaxConstr1.getText();
+	        max_constr[1] = Double.parseDouble(tmpStr);
+	        
+	        if (max_constr[1] < min_constr[1]) {
+	        	MipavUtil.displayError("Maximum k_ep must be at least " + min_constr[1]);
+	        	textMaxConstr1.requestFocus();
+	        	textMaxConstr1.selectAll();
+	        	return false;
+	        }
+	        else if (max_constr[1] > 0.99) {
+	        	MipavUtil.displayError("Maximum k_ep must not exceed 0.99");
+	        	textMaxConstr1.requestFocus();
+	        	textMaxConstr1.selectAll();
+	        	return false;	
+	        }
         }
         
         tmpStr = textMinConstr2.getText();
@@ -1549,12 +1606,6 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
             return false;
         }
         
-        if (kepButton.isSelected()) {
-            useVe = false;
-        }
-        else {
-            useVe = true;
-        }
         return true;
     }
 
