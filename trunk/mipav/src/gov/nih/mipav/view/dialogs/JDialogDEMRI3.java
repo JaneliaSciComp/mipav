@@ -342,7 +342,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
 
                 chooser.setDialogTitle("Open high flip angle 4D image file");
-                directoryLowFlip = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                directoryHighFlip = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
 
                 int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
@@ -501,7 +501,14 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         defaultsString += max_constr[2] + delim;
         defaultsString += r1 + delim;
         defaultsString += rib + delim;
-        defaultsString += rit + delim;
+        defaultsString += useConstantTissue + delim;
+        if (useConstantTissue) {
+            defaultsString += rit + delim;
+        }
+        else {
+        	defaultsString += lowFlipImage.getImageFileName();
+        	defaultsString += highFlipImage.getImageFileName();
+        }
         defaultsString += theta + delim;
         defaultsString += tr + delim;
         defaultsString += perMin + delim;
@@ -552,9 +559,9 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         }
         else {
         	lowFlipImage = scriptParameters.retrieveImage("low_flip_image");
-        	textLowFlipFile.setText(lowFlipImage.getImageName());
+        	textLowFlipFile.setText(lowFlipImage.getImageFileName());
             highFlipImage = scriptParameters.retrieveImage("high_flip_image");
-            textHighFlipFile.setText(highFlipImage.getImageName());
+            textHighFlipFile.setText(highFlipImage.getImageFileName());
         }
         theta = scriptParameters.getParams().getDouble("theta_");
         textFlipAngle.setText(String.valueOf(theta));
@@ -585,6 +592,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr2", min_constr[2]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr2", max_constr[2]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("r1_", r1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rib_", rib));
         scriptParameters.getParams().put(ParameterFactory.newParameter("use_constant_tissue", useConstantTissue));
         if (useConstantTissue) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("rit_", rit));
@@ -1193,6 +1201,8 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
             return false;
         }
         rib = 1.0/rib;
+        
+        useConstantTissue = constantTissueRadioButton.isSelected();
         
         if (constantTissueRadioButton.isSelected()) {
             tmpStr = textTissueIntrinsicRelaxivityRate.getText();
