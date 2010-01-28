@@ -39,9 +39,10 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
     private ViewJFrameImage r2ResultWindow;
     private ViewJFrameImage boResultWindow;
     
+    /** The dialog for accessing GUI specific information, also set during scripting. **/
+    private JDialogDespotT2 dialog;
     
-    
-    public AlgorithmDespotT2(double[] despotFAPhase0,
+    public AlgorithmDespotT2(JDialogDespotT2 dialog, double[] despotFAPhase0,
             double[] despotFAPhase180, int[] ssfpImageIndexPhase0,
             int[] ssfpImageIndexPhase180, int t1ImageIndex, int b1ImageIndex,
             double[] simplexLineValues, double[] simplexResiduals,
@@ -53,6 +54,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             double[] twoPShrink, double[][] twoPSimplex, int[] bestToWorst,
             String[] wList) {
         super();
+        this.dialog = dialog;
         despotFA_phase0 = despotFAPhase0;
         despotFA_phase180 = despotFAPhase180;
         ssfpImageIndex_phase0 = ssfpImageIndexPhase0;
@@ -79,8 +81,8 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         this.wList = wList;
     }
 
-    public AlgorithmDespotT2(ModelImage destImage, ModelImage srcImage,
-            double[] despotFAPhase0, double[] despotFAPhase180,
+    public AlgorithmDespotT2(ModelImage destImage, ModelImage srcImage, 
+            JDialogDespotT2 dialog, double[] despotFAPhase0, double[] despotFAPhase180,
             int[] ssfpImageIndexPhase0, int[] ssfpImageIndexPhase180,
             int t1ImageIndex, int b1ImageIndex, double[] simplexLineValues,
             double[] simplexResiduals, double[] simplexCentre,
@@ -92,6 +94,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             double[] twoPShrink, double[][] twoPSimplex, int[] bestToWorst,
             String[] wList) {
         super(destImage, srcImage);
+        this.dialog = dialog;
         despotFA_phase0 = despotFAPhase0;
         despotFA_phase180 = despotFAPhase180;
         ssfpImageIndex_phase0 = ssfpImageIndexPhase0;
@@ -142,12 +145,12 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
     }
     
     public void runAlgorithm() {
-        if (JDialogDespotT2.performFullModelling == true || JDialogDespotT2.performApproxModelling == true) {
-            if (JDialogDespotT2.performFullModelling == true) calculateT2withFullModelling();
+        if (dialog.performFullModelling == true || dialog.performApproxModelling == true) {
+            if (dialog.performFullModelling == true) calculateT2withFullModelling();
             else calculateT2withApproximateModelling();
         }
         else {
-            if (JDialogDespotT2.performConventionalWith0Phase == true) calculateT2with0Phase();
+            if (dialog.performConventionalWith0Phase == true) calculateT2with0Phase();
             else calculateT2with180Phase();
         }
     }
@@ -206,28 +209,28 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 prefix = "";
             }
             
-            ssfpPixelValues_phase0 = new double[JDialogDespotT2.Nfa_phase0][width*height];
+            ssfpPixelValues_phase0 = new double[dialog.Nfa_phase0][width*height];
             t1PixelValues = new double[width*height];
-            if (JDialogDespotT2.includeB1Map) { 
+            if (dialog.includeB1Map) { 
                 b1PixelValues = new double[width*height];
             }
             else {
                 b1PixelValues = new double[1];
             }
             
-            if (JDialogDespotT2.calculateT2) { 
+            if (dialog.calculateT2) { 
                 t2Values = new float[nSlices][width*height];
             }
             else { 
                 t2Values = new float[1][1];
             }
-            if (JDialogDespotT2.calculateMo) { 
+            if (dialog.calculateMo) { 
                 moValues = new float[nSlices][width*height];
             }
             else { 
                 moValues = new float[1][1];
             }
-            if (JDialogDespotT2.invertT2toR2) { 
+            if (dialog.invertT2toR2) { 
                 r2Values = new float[nSlices][width*height];
             }
             else { 
@@ -235,13 +238,13 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             }
             
             
-            fa_phase0 = new double[JDialogDespotT2.Nfa_phase0];
-            scaledFA_phase0 = new double[JDialogDespotT2.Nfa_phase0];
-            for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+            fa_phase0 = new double[dialog.Nfa_phase0];
+            scaledFA_phase0 = new double[dialog.Nfa_phase0];
+            for (angle=0; angle<dialog.Nfa_phase0; angle++) {
                 fa_phase0[angle] = Math.toRadians(despotFA_phase0[angle]);
             }
             
-            phase0Data = new double[JDialogDespotT2.Nfa_phase0];
+            phase0Data = new double[dialog.Nfa_phase0];
             
             for (k=0; k<nSlices; k++) {
                 fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+nSlices);
@@ -251,7 +254,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     return;
                 }
                 // grab the ssfp pixel values from the phase = 0 data
-                for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+                for (angle=0; angle<dialog.Nfa_phase0; angle++) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
@@ -273,7 +276,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     }
                 }
                 
-                if (JDialogDespotT2.includeB1Map == true) {
+                if (dialog.includeB1Map == true) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
                     
                     pixelIndex = 0;
@@ -292,22 +295,22 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                         
                         if (t1PixelValues[pixelIndex] > 0.00) {
                             
-                            e1 = Math.exp(-JDialogDespotT2.despotTR/t1PixelValues[pixelIndex]);
+                            e1 = Math.exp(-dialog.despotTR/t1PixelValues[pixelIndex]);
                             
                             // scale up (or down) the flip angles based on the calculated B1 if required
-                            if (JDialogDespotT2.includeB1Map == true) {
-                                for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
+                            if (dialog.includeB1Map == true) {
+                                for (p=0; p<dialog.Nfa_phase0; p++) {
                                     scaledFA_phase0[p] = fa_phase0[p]*b1PixelValues[pixelIndex];
                                 }
                             }
                             else {
-                                for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
+                                for (p=0; p<dialog.Nfa_phase0; p++) {
                                     scaledFA_phase0[p] = fa_phase0[p];
                                 }
                             }
                             
                             // grab the SSFP values for this pixel
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) phase0Data[p] = ssfpPixelValues_phase0[p][pixelIndex];
+                            for (p=0; p<dialog.Nfa_phase0; p++) phase0Data[p] = ssfpPixelValues_phase0[p][pixelIndex];
                             
                             intercept = 1.00;
                             denominator = 1.00;
@@ -321,42 +324,42 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             sumXY = 0.00;
                             sumXX = 0.00;
                             
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
+                            for (p=0; p<dialog.Nfa_phase0; p++) {
                                 sumX += phase0Data[p]/Math.tan(scaledFA_phase0[p]);
                                 sumY += phase0Data[p]/Math.sin(scaledFA_phase0[p]);
                                 sumXY += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.sin(scaledFA_phase0[p]));
                                 sumXX += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.tan(scaledFA_phase0[p]));
                             }
                             
-                            d = (JDialogDespotT2.Nfa_phase0*sumXX) - sumX*sumX;
-                            a = (JDialogDespotT2.Nfa_phase0*sumXY) - (sumX*sumY);
+                            d = (dialog.Nfa_phase0*sumXX) - sumX*sumX;
+                            a = (dialog.Nfa_phase0*sumXY) - (sumX*sumY);
                             
                             if (d != 0) {
                                 slope = a/d;
                                 denominator = (e1-slope)/(1.00-slope*e1);
-                                intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase0;
+                                intercept = (sumY-slope*sumX)/dialog.Nfa_phase0;
                                 
                                 if (denominator > 0.00 && denominator < 1.00) {
-                                    t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
-                                    e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
+                                    t2 = -dialog.despotTR/Math.log(denominator);
+                                    e2 = Math.exp(-dialog.despotTR/t2);
                                     mo = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
-                                    mo = JDialogDespotT2.maxMo;
-                                    t2 = JDialogDespotT2.maxT2;
+                                    mo = dialog.maxMo;
+                                    t2 = dialog.maxT2;
                                 }
                             }
                             else {
-                                mo = JDialogDespotT2.maxMo;
-                                t2 = JDialogDespotT2.maxT2;
+                                mo = dialog.maxMo;
+                                t2 = dialog.maxT2;
                             }
                             
                             
-                            if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
-                                t2 = JDialogDespotT2.maxT2;
+                            if (t2 < 0.00 || t2 > dialog.maxT2) {
+                                t2 = dialog.maxT2;
                             }
-                            if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
-                                mo = JDialogDespotT2.maxMo;
+                            if (mo < 0.00 || mo > dialog.maxMo) {
+                                mo = dialog.maxMo;
                             }
                             
                             // invert to r2
@@ -368,24 +371,24 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             }
                         
                         
-                            if (JDialogDespotT2.calculateT2) { 
+                            if (dialog.calculateT2) { 
                                 t2Values[k][pixelIndex] = (float) t2;
                             }
-                            if (JDialogDespotT2.calculateMo) { 
+                            if (dialog.calculateMo) { 
                                 moValues[k][pixelIndex] = (float) mo;
                             }
-                            if (JDialogDespotT2.invertT2toR2) { 
+                            if (dialog.invertT2toR2) { 
                                 r2Values[k][pixelIndex] = (float) r2;
                             }
                         }
                         else {
-                            if (JDialogDespotT2.calculateT2) { 
+                            if (dialog.calculateT2) { 
                                 t2Values[k][pixelIndex] = (float) 0.00;
                             }
-                            if (JDialogDespotT2.calculateMo) { 
+                            if (dialog.calculateMo) { 
                                 moValues[k][pixelIndex] = (float) 0.00;
                             }
-                            if (JDialogDespotT2.invertT2toR2) {
+                            if (dialog.invertT2toR2) {
                                 r2Values[k][pixelIndex] = (float) 0.00;
                             }
                         }
@@ -395,13 +398,13 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 
                 try {
                     int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
-                    if (JDialogDespotT2.calculateT2) {
+                    if (dialog.calculateT2) {
                         t2ResultStack.importData(startVal, t2Values[k], true);
                     }
-                    if (JDialogDespotT2.calculateMo) {
+                    if (dialog.calculateMo) {
                         moResultStack.importData(startVal, moValues[k], true);
                     }
-                    if (JDialogDespotT2.invertT2toR2) {
+                    if (dialog.invertT2toR2) {
                         r2ResultStack.importData(startVal, r2Values[k], true);
                     }
                 } catch(IOException e) {
@@ -411,19 +414,19 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             }
         }
         
-        if (JDialogDespotT2.calculateT2) {
+        if (dialog.calculateT2) {
             t2ResultWindow = new ViewJFrameImage(t2ResultStack);
             t2ResultWindow.setTitle("DESPOT2-T2_Map");
             t2ResultWindow.setVisible(true);
         } 
         
-        if (JDialogDespotT2.calculateMo) {
+        if (dialog.calculateMo) {
             moResultWindow = new ViewJFrameImage(moResultStack);
             moResultWindow.setTitle("DESPOT2_MoMap");
             moResultWindow.setVisible(true);
         } 
         
-        if (JDialogDespotT2.invertT2toR2) {
+        if (dialog.invertT2toR2) {
             r2ResultWindow = new ViewJFrameImage(r2ResultStack);
             r2ResultWindow.setTitle("DESPOT2-R2Map");
             r2ResultWindow.setVisible(true);
@@ -485,41 +488,41 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 prefix = "";
             }
             
-            ssfpPixelValues_phase180 = new double[JDialogDespotT2.Nfa_phase180][width*height];
+            ssfpPixelValues_phase180 = new double[dialog.Nfa_phase180][width*height];
             t1PixelValues = new double[width*height];
-            if (JDialogDespotT2.includeB1Map) { 
+            if (dialog.includeB1Map) { 
                 b1PixelValues = new double[width*height];
             }
             else { 
                 b1PixelValues = new double[1];
             }
             
-            if (JDialogDespotT2.calculateT2) { 
+            if (dialog.calculateT2) { 
                 t2Values = new float[nSlices][width*height];
             }
             else { 
                 t2Values = new float[1][1];
             }
-            if (JDialogDespotT2.calculateMo) { 
+            if (dialog.calculateMo) { 
                 moValues = new float[nSlices][width*height];
             }
             else { 
                 moValues = new float[1][1];
             }
-            if (JDialogDespotT2.invertT2toR2) { 
+            if (dialog.invertT2toR2) { 
                 r2Values = new float[nSlices][width*height];
             }
             else { 
                 r2Values = new float[1][1];
             }
             
-            fa_phase180 = new double[JDialogDespotT2.Nfa_phase180];
-            scaledFA_phase180 = new double[JDialogDespotT2.Nfa_phase180];
-            for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
+            fa_phase180 = new double[dialog.Nfa_phase180];
+            scaledFA_phase180 = new double[dialog.Nfa_phase180];
+            for (angle=0; angle<dialog.Nfa_phase180; angle++) {
                 fa_phase180[angle] = Math.toRadians(despotFA_phase180[angle]);
             }
             
-            phase180Data = new double[JDialogDespotT2.Nfa_phase180];
+            phase180Data = new double[dialog.Nfa_phase180];
             
             for (k=0; k<nSlices; k++) {
                 fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+nSlices);
@@ -529,7 +532,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     return;
                 }
                 // grab the ssfp pixel values from the phase = 180 data
-                for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
+                for (angle=0; angle<dialog.Nfa_phase180; angle++) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
                     
                     pixelIndex = 0;
@@ -552,7 +555,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     }
                 }
             
-                if (JDialogDespotT2.includeB1Map == true) {
+                if (dialog.includeB1Map == true) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
                     
                     pixelIndex = 0;
@@ -571,23 +574,23 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                         
                         if (t1PixelValues[pixelIndex] > 0.00) {
                             
-                            e1 = Math.exp(-JDialogDespotT2.despotTR/t1PixelValues[pixelIndex]);
+                            e1 = Math.exp(-dialog.despotTR/t1PixelValues[pixelIndex]);
                             
                             // scale up (or down) the flip angles based on the calculated B1 if required
-                            if (JDialogDespotT2.includeB1Map == true) {
-                                for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) { 
+                            if (dialog.includeB1Map == true) {
+                                for (p=0; p<dialog.Nfa_phase180; p++) { 
                                     scaledFA_phase180[p] = fa_phase180[p]*b1PixelValues[pixelIndex];
                                 }
                             }
                             
                             else {
-                                for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) { 
+                                for (p=0; p<dialog.Nfa_phase180; p++) { 
                                     scaledFA_phase180[p] = fa_phase180[p];
                                 }
                             }
                             
                             // grab the SSFP values for this pixel
-                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) { 
+                            for (p=0; p<dialog.Nfa_phase180; p++) { 
                                 phase180Data[p] = ssfpPixelValues_phase180[p][pixelIndex];
                             }
                             
@@ -603,42 +606,42 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             sumXY = 0.00;
                             sumXX = 0.00;
                         
-                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) {
+                            for (p=0; p<dialog.Nfa_phase180; p++) {
                                 sumX += phase180Data[p]/Math.tan(scaledFA_phase180[p]);
                                 sumY += phase180Data[p]/Math.sin(scaledFA_phase180[p]);
                                 sumXY += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.sin(scaledFA_phase180[p]));
                                 sumXX += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.tan(scaledFA_phase180[p]));
                             }
                             
-                            d = (JDialogDespotT2.Nfa_phase180*sumXX) - sumX*sumX;
-                            a = (JDialogDespotT2.Nfa_phase180*sumXY) - (sumX*sumY);
+                            d = (dialog.Nfa_phase180*sumXX) - sumX*sumX;
+                            a = (dialog.Nfa_phase180*sumXY) - (sumX*sumY);
                             
                             if (d != 0) {
                                 slope = a/d;
                                 denominator = (slope-e1)/(slope*e1-1.00);
-                                intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase180;
+                                intercept = (sumY-slope*sumX)/dialog.Nfa_phase180;
                                 
                                 if (denominator > 0.00 && denominator < 1.00) {
-                                    t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
-                                    e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
+                                    t2 = -dialog.despotTR/Math.log(denominator);
+                                    e2 = Math.exp(-dialog.despotTR/t2);
                                     mo = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
-                                    mo = JDialogDespotT2.maxMo;
-                                    t2 = JDialogDespotT2.maxT2;
+                                    mo = dialog.maxMo;
+                                    t2 = dialog.maxT2;
                                 }
                             }
                             else {
-                                mo = JDialogDespotT2.maxMo;
-                                t2 = JDialogDespotT2.maxT2;
+                                mo = dialog.maxMo;
+                                t2 = dialog.maxT2;
                             }
                         
                         
-                            if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
-                                t2 = JDialogDespotT2.maxT2;
+                            if (t2 < 0.00 || t2 > dialog.maxT2) {
+                                t2 = dialog.maxT2;
                             }
-                            if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
-                                mo = JDialogDespotT2.maxMo;
+                            if (mo < 0.00 || mo > dialog.maxMo) {
+                                mo = dialog.maxMo;
                             }
                                                     
                             // invert to r2
@@ -650,14 +653,14 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             }
                             
                             
-                            if (JDialogDespotT2.calculateT2) t2Values[k][pixelIndex] = (float) t2;
-                            if (JDialogDespotT2.calculateMo) moValues[k][pixelIndex] = (float) mo;
-                            if (JDialogDespotT2.invertT2toR2) r2Values[k][pixelIndex] = (float) r2;
+                            if (dialog.calculateT2) t2Values[k][pixelIndex] = (float) t2;
+                            if (dialog.calculateMo) moValues[k][pixelIndex] = (float) mo;
+                            if (dialog.invertT2toR2) r2Values[k][pixelIndex] = (float) r2;
                         }
                         else {
-                            if (JDialogDespotT2.calculateT2) t2Values[k][pixelIndex] = (float) 0.00;
-                            if (JDialogDespotT2.calculateMo) moValues[k][pixelIndex] = (float) 0.00;
-                            if (JDialogDespotT2.invertT2toR2) r2Values[k][pixelIndex] = (float) 0.00;
+                            if (dialog.calculateT2) t2Values[k][pixelIndex] = (float) 0.00;
+                            if (dialog.calculateMo) moValues[k][pixelIndex] = (float) 0.00;
+                            if (dialog.invertT2toR2) r2Values[k][pixelIndex] = (float) 0.00;
                         }
                         pixelIndex++;
                     }
@@ -665,13 +668,13 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             
                 try {
                     int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
-                    if (JDialogDespotT2.calculateT2) { 
+                    if (dialog.calculateT2) { 
                         t2ResultStack.importData(startVal, t2Values[k], true);
                     }
-                    if (JDialogDespotT2.calculateMo) { 
+                    if (dialog.calculateMo) { 
                         moResultStack.importData(startVal, moValues[k], true);
                     }
-                    if (JDialogDespotT2.invertT2toR2) { 
+                    if (dialog.invertT2toR2) { 
                         r2ResultStack.importData(startVal, r2Values[k], true);
                     }
                 } catch(IOException e) {
@@ -681,19 +684,19 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             }
         }
         
-        if (JDialogDespotT2.calculateT2) {
+        if (dialog.calculateT2) {
             t2ResultWindow = new ViewJFrameImage(t2ResultStack);
             t2ResultWindow.setTitle("DESPOT2_T2_Map");
             t2ResultWindow.setVisible(true);
         } 
         
-        if (JDialogDespotT2.calculateMo) {
+        if (dialog.calculateMo) {
             moResultWindow = new ViewJFrameImage(moResultStack);
             moResultWindow.setTitle("DESPOT2_MoMap");
             moResultWindow.setVisible(true);
         } 
         
-        if (JDialogDespotT2.invertT2toR2) {
+        if (dialog.invertT2toR2) {
             r2ResultWindow = new ViewJFrameImage(r2ResultStack);
             r2ResultWindow.setTitle("DESPOT2_R2Map");
             r2ResultWindow.setVisible(true);
@@ -759,44 +762,44 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 prefix = "";
             }
             
-            ssfpPixelValues_phase0 = new double[JDialogDespotT2.Nfa_phase0][width*height];
-            ssfpPixelValues_phase180 = new double[JDialogDespotT2.Nfa_phase180][width*height];
+            ssfpPixelValues_phase0 = new double[dialog.Nfa_phase0][width*height];
+            ssfpPixelValues_phase180 = new double[dialog.Nfa_phase180][width*height];
             t1PixelValues = new double[width*height];
-            if (JDialogDespotT2.includeB1Map) { 
+            if (dialog.includeB1Map) { 
                 b1PixelValues = new double[width*height];
             }
             else { 
                 b1PixelValues = new double[1];
             }
             
-            if (JDialogDespotT2.calculateT2) { 
+            if (dialog.calculateT2) { 
                 t2Values = new float[nSlices][width*height];
             }
             else t2Values = new float[1][1];
-            if (JDialogDespotT2.calculateMo) { 
+            if (dialog.calculateMo) { 
                 moValues = new float[nSlices][width*height];
             }
             else moValues = new float[1][1];
-            if (JDialogDespotT2.invertT2toR2) { 
+            if (dialog.invertT2toR2) { 
                 r2Values = new float[nSlices][width*height];
             }
             else { 
                 r2Values = new float[1][1];
             }
             
-            fa_phase0 = new double[JDialogDespotT2.Nfa_phase0];
-            fa_phase180 = new double[JDialogDespotT2.Nfa_phase180];
-            scaledFA_phase0 = new double[JDialogDespotT2.Nfa_phase0];
-            scaledFA_phase180 = new double[JDialogDespotT2.Nfa_phase180];
-            for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+            fa_phase0 = new double[dialog.Nfa_phase0];
+            fa_phase180 = new double[dialog.Nfa_phase180];
+            scaledFA_phase0 = new double[dialog.Nfa_phase0];
+            scaledFA_phase180 = new double[dialog.Nfa_phase180];
+            for (angle=0; angle<dialog.Nfa_phase0; angle++) {
                 fa_phase0[angle] = Math.toRadians(despotFA_phase0[angle]);
             }
-            for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
+            for (angle=0; angle<dialog.Nfa_phase180; angle++) {
                 fa_phase180[angle] = Math.toRadians(despotFA_phase180[angle]);
             }
             
-            phase0Data = new double[JDialogDespotT2.Nfa_phase0];
-            phase180Data = new double[JDialogDespotT2.Nfa_phase180];
+            phase0Data = new double[dialog.Nfa_phase0];
+            phase180Data = new double[dialog.Nfa_phase180];
             
             possibleT2s = new double[2];
             possibleMos = new double[2];
@@ -809,7 +812,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     return;
                 }
                 // grab the ssfp pixel values from the phase = 0 data
-                for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+                for (angle=0; angle<dialog.Nfa_phase0; angle++) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
                     
                     pixelIndex = 0;
@@ -822,7 +825,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 }
             
                 // grab the ssfp pixel values from the phase = 180 data
-                for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
+                for (angle=0; angle<dialog.Nfa_phase180; angle++) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
                     
                     pixelIndex = 0;
@@ -845,7 +848,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     }
                 }
             
-                if (JDialogDespotT2.includeB1Map == true) {
+                if (dialog.includeB1Map == true) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
                     
                     pixelIndex = 0;
@@ -864,23 +867,23 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     
                         if (t1PixelValues[pixelIndex] > 0.00) {
                             
-                            e1 = Math.exp(-JDialogDespotT2.despotTR/t1PixelValues[pixelIndex]);
+                            e1 = Math.exp(-dialog.despotTR/t1PixelValues[pixelIndex]);
                             
                             // scale up (or down) the flip angles based on the calculated B1 if required
-                            if (JDialogDespotT2.includeB1Map == true) {
-                                for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) scaledFA_phase0[p] = fa_phase0[p]*b1PixelValues[pixelIndex];
-                                for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) scaledFA_phase180[p] = fa_phase180[p]*b1PixelValues[pixelIndex];
+                            if (dialog.includeB1Map == true) {
+                                for (p=0; p<dialog.Nfa_phase0; p++) scaledFA_phase0[p] = fa_phase0[p]*b1PixelValues[pixelIndex];
+                                for (p=0; p<dialog.Nfa_phase180; p++) scaledFA_phase180[p] = fa_phase180[p]*b1PixelValues[pixelIndex];
                             }
                             else {
-                                for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
+                                for (p=0; p<dialog.Nfa_phase0; p++) {
                                     scaledFA_phase0[p] = fa_phase0[p];
                                     scaledFA_phase180[p] = fa_phase180[p];
                                 }
                             }
                         
                             // grab the SSFP values for this pixel
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) phase0Data[p] = ssfpPixelValues_phase0[p][pixelIndex];
-                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) phase180Data[p] = ssfpPixelValues_phase180[p][pixelIndex];
+                            for (p=0; p<dialog.Nfa_phase0; p++) phase0Data[p] = ssfpPixelValues_phase0[p][pixelIndex];
+                            for (p=0; p<dialog.Nfa_phase180; p++) phase180Data[p] = ssfpPixelValues_phase180[p][pixelIndex];
                             
                             intercept = 1.00;
                             denominator = 1.00;
@@ -894,24 +897,24 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             sumXY = 0.00;
                             sumXX = 0.00;
                         
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) {
+                            for (p=0; p<dialog.Nfa_phase0; p++) {
                                 sumX += phase0Data[p]/Math.tan(scaledFA_phase0[p]);
                                 sumY += phase0Data[p]/Math.sin(scaledFA_phase0[p]);
                                 sumXY += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.sin(scaledFA_phase0[p]));
                                 sumXX += (phase0Data[p]/Math.tan(scaledFA_phase0[p]))*(phase0Data[p]/Math.tan(scaledFA_phase0[p]));
                             }
                             
-                            d = (JDialogDespotT2.Nfa_phase0*sumXX) - sumX*sumX;
-                            a = (JDialogDespotT2.Nfa_phase0*sumXY) - (sumX*sumY);
+                            d = (dialog.Nfa_phase0*sumXX) - sumX*sumX;
+                            a = (dialog.Nfa_phase0*sumXY) - (sumX*sumY);
                             
                             if (d != 0) {
                                 slope = a/d;
                                 denominator = (e1-slope)/(1.00-slope*e1);
-                                intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase0;
+                                intercept = (sumY-slope*sumX)/dialog.Nfa_phase0;
                                 
                                 if (denominator > 0.00 && denominator < 1.00) {
-                                    t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
-                                    e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
+                                    t2 = -dialog.despotTR/Math.log(denominator);
+                                    e2 = Math.exp(-dialog.despotTR/t2);
                                     mo = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
@@ -925,10 +928,10 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             }
                             
     
-                            if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
-                                t2 = JDialogDespotT2.maxT2;
+                            if (t2 < 0.00 || t2 > dialog.maxT2) {
+                                t2 = dialog.maxT2;
                             }
-                            if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
+                            if (mo < 0.00 || mo > dialog.maxMo) {
                                 mo = 0.00;
                             }
                         
@@ -943,24 +946,24 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             sumXY = 0.00;
                             sumXX = 0.00;
                             
-                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) {
+                            for (p=0; p<dialog.Nfa_phase180; p++) {
                                 sumX += phase180Data[p]/Math.tan(scaledFA_phase180[p]);
                                 sumY += phase180Data[p]/Math.sin(scaledFA_phase180[p]);
                                 sumXY += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.sin(scaledFA_phase180[p]));
                                 sumXX += (phase180Data[p]/Math.tan(scaledFA_phase180[p]))*(phase180Data[p]/Math.tan(scaledFA_phase180[p]));
                             }
                             
-                            d = (JDialogDespotT2.Nfa_phase180*sumXX) - sumX*sumX;
-                            a = (JDialogDespotT2.Nfa_phase180*sumXY) - (sumX*sumY);
+                            d = (dialog.Nfa_phase180*sumXX) - sumX*sumX;
+                            a = (dialog.Nfa_phase180*sumXY) - (sumX*sumY);
                         
                             if (d != 0) {
                                 slope = a/d;
                                 denominator = (slope-e1)/(slope*e1-1.00);
-                                intercept = (sumY-slope*sumX)/JDialogDespotT2.Nfa_phase180;
+                                intercept = (sumY-slope*sumX)/dialog.Nfa_phase180;
                                 
                                 if (denominator > 0.00 && denominator < 1.00) {
-                                    t2 = -JDialogDespotT2.despotTR/Math.log(denominator);
-                                    e2 = Math.exp(-JDialogDespotT2.despotTR/t2);
+                                    t2 = -dialog.despotTR/Math.log(denominator);
+                                    e2 = Math.exp(-dialog.despotTR/t2);
                                     mo = intercept*(1.00-e1*e2)/(1.00-e1);
                                 }
                                 else {
@@ -974,10 +977,10 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             }
                             
                             
-                            if (t2 < 0.00 || t2 > JDialogDespotT2.maxT2) {
-                                t2 = JDialogDespotT2.maxT2;
+                            if (t2 < 0.00 || t2 > dialog.maxT2) {
+                                t2 = dialog.maxT2;
                             }
-                            if (mo < 0.00 || mo > JDialogDespotT2.maxMo) {
+                            if (mo < 0.00 || mo > dialog.maxMo) {
                                 mo = 0.00;
                             }
                             
@@ -1007,24 +1010,24 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                                 r2 = 0.00;
                             }
                                             
-                            if (JDialogDespotT2.calculateT2) { 
+                            if (dialog.calculateT2) { 
                                 t2Values[k][pixelIndex] = (float) t2;
                             }
-                            if (JDialogDespotT2.calculateMo) { 
+                            if (dialog.calculateMo) { 
                                 moValues[k][pixelIndex] = (float) mo;
                             }
-                            if (JDialogDespotT2.invertT2toR2) { 
+                            if (dialog.invertT2toR2) { 
                                 r2Values[k][pixelIndex] = (float) r2;
                             }
                         }
                         else {
-                            if (JDialogDespotT2.calculateT2) { 
+                            if (dialog.calculateT2) { 
                                 t2Values[k][pixelIndex] = (float) 0.00;
                             }
-                            if (JDialogDespotT2.calculateMo) { 
+                            if (dialog.calculateMo) { 
                                 moValues[k][pixelIndex] = (float) 0.00;
                             }
-                            if (JDialogDespotT2.invertT2toR2) { 
+                            if (dialog.invertT2toR2) { 
                                 r2Values[k][pixelIndex] = (float) 0.00;
                             }
                         }
@@ -1034,13 +1037,13 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 
                 try {
                     int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
-                    if (JDialogDespotT2.calculateT2) { 
+                    if (dialog.calculateT2) { 
                         t2ResultStack.importData(startVal, t2Values[k], true);
                     }
-                    if (JDialogDespotT2.calculateMo) { 
+                    if (dialog.calculateMo) { 
                         moResultStack.importData(startVal, moValues[k], true);
                     }
-                    if (JDialogDespotT2.invertT2toR2) { 
+                    if (dialog.invertT2toR2) { 
                         r2ResultStack.importData(startVal, r2Values[k], true);
                     }
                 } catch(IOException e) {
@@ -1050,19 +1053,19 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             }
         }
         
-        if (JDialogDespotT2.calculateT2) {
+        if (dialog.calculateT2) {
             t2ResultWindow = new ViewJFrameImage(t2ResultStack);
             t2ResultWindow.setTitle("CalculatedT2Map_AM");
             t2ResultWindow.setVisible(true);
         } 
         
-        if (JDialogDespotT2.calculateMo) {
+        if (dialog.calculateMo) {
             moResultWindow = new ViewJFrameImage(moResultStack);
             moResultWindow.setTitle("CalculatedMoMap_AM");
             moResultWindow.setVisible(true);
         } 
         
-        if (JDialogDespotT2.invertT2toR2) {
+        if (dialog.invertT2toR2) {
             r2ResultWindow = new ViewJFrameImage(r2ResultStack);
             r2ResultWindow.setTitle("CalculatedR2Map_AM");
             r2ResultWindow.setVisible(true);
@@ -1177,34 +1180,34 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 prefix = "";
             }   
             
-            ssfpPixelValues_phase0 = new double[JDialogDespotT2.Nfa_phase0][width*height];
-            ssfpPixelValues_phase180 = new double[JDialogDespotT2.Nfa_phase180][width*height];
+            ssfpPixelValues_phase0 = new double[dialog.Nfa_phase0][width*height];
+            ssfpPixelValues_phase180 = new double[dialog.Nfa_phase180][width*height];
             t1PixelValues = new double[width*height];
-            if (JDialogDespotT2.includeB1Map) { 
+            if (dialog.includeB1Map) { 
                 b1PixelValues = new double[width*height];
             }
             else { 
                 b1PixelValues = new double[1];
             }
             
-            FA = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
-            scaledFA = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
-            phaseIncrements = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
-            sina = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
-            cosa = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
+            FA = new double[dialog.Nfa_phase0 + dialog.Nfa_phase180];
+            scaledFA = new double[dialog.Nfa_phase0 + dialog.Nfa_phase180];
+            phaseIncrements = new double[dialog.Nfa_phase0 + dialog.Nfa_phase180];
+            sina = new double[dialog.Nfa_phase0 + dialog.Nfa_phase180];
+            cosa = new double[dialog.Nfa_phase0 + dialog.Nfa_phase180];
             
-            for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+            for (angle=0; angle<dialog.Nfa_phase0; angle++) {
                 FA[angle] = Math.toRadians(despotFA_phase0[angle]);
                 phaseIncrements[angle] = 0.00;
             }
-            for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
-                FA[angle+JDialogDespotT2.Nfa_phase0] = Math.toRadians(despotFA_phase180[angle]);
-                phaseIncrements[angle+JDialogDespotT2.Nfa_phase0] = 3.14159265;
+            for (angle=0; angle<dialog.Nfa_phase180; angle++) {
+                FA[angle+dialog.Nfa_phase0] = Math.toRadians(despotFA_phase180[angle]);
+                phaseIncrements[angle+dialog.Nfa_phase0] = 3.14159265;
             }
             
-            ssfpSampleData = new double[JDialogDespotT2.Nfa_phase0 + JDialogDespotT2.Nfa_phase180];
+            ssfpSampleData = new double[dialog.Nfa_phase0 + dialog.Nfa_phase180];
             
-            tr = JDialogDespotT2.despotTR;
+            tr = dialog.despotTR;
             resonancePeriod = 1000.00/tr;
             
             t2Values = new double[nSlices][height][width];
@@ -1253,7 +1256,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     return;
                 }
                 // grab the ssfp pixel values from the phase = 0 data
-                for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+                for (angle=0; angle<dialog.Nfa_phase0; angle++) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
                     
                     pixelIndex = 0;
@@ -1266,7 +1269,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 }
             
                 // grab the ssfp pixel values from the phase = 180 data
-                for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
+                for (angle=0; angle<dialog.Nfa_phase180; angle++) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
                     
                     pixelIndex = 0;
@@ -1289,7 +1292,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     }
                 }
                 
-                if (JDialogDespotT2.includeB1Map == true) {
+                if (dialog.includeB1Map == true) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
                     
                     pixelIndex = 0;
@@ -1323,35 +1326,35 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                              */
                             
                             // scale up (or down) the flip angles based on the calculated B1 if required
-                            if (JDialogDespotT2.includeB1Map == true) {
-                                for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) { 
+                            if (dialog.includeB1Map == true) {
+                                for (p=0; p<dialog.Nfa_phase0+dialog.Nfa_phase180; p++) { 
                                     scaledFA[p] = FA[p]*b1PixelValues[pixelIndex];
                                 }
                             }
                             else {
-                                for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) { 
+                                for (p=0; p<dialog.Nfa_phase0+dialog.Nfa_phase180; p++) { 
                                     scaledFA[p] = FA[p];
                                 }
                             }
                             
                             // calculate the sina and cosa matrices
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) {
+                            for (p=0; p<dialog.Nfa_phase0+dialog.Nfa_phase180; p++) {
                                 sina[p] = Math.sin(scaledFA[p]);
                                 cosa[p] = Math.cos(scaledFA[p]);
                             }
                             
                             // grab the SSFP values for this pixel
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) { 
+                            for (p=0; p<dialog.Nfa_phase0; p++) { 
                                 ssfpSampleData[p] = ssfpPixelValues_phase0[p][pixelIndex];
                             }
-                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) { 
-                                ssfpSampleData[p+JDialogDespotT2.Nfa_phase0] = ssfpPixelValues_phase180[p][pixelIndex];
+                            for (p=0; p<dialog.Nfa_phase180; p++) { 
+                                ssfpSampleData[p+dialog.Nfa_phase0] = ssfpPixelValues_phase180[p][pixelIndex];
                             }
                             
                             // begin with the downhill simplex
                         
                             // calculate an initial guess for Mo, T2 and Bo
-                            if (JDialogDespotT2.geScanner) {
+                            if (dialog.geScanner) {
                                 initialGuess[0] = 10000.00; // initial guess for mo
                                 initialGuess[1] = 100.00;   // initial guess for t2
                                 initialGuess[2] = 500.0;    // initial guess for off-resonance (Hz)
@@ -1363,7 +1366,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             }
                             
                             threePDownHillSimplex(optimization, initialGuess, t1, 
-                                    tr, ssfpSampleData, sina, cosa, phaseIncrements, JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180);
+                                    tr, ssfpSampleData, sina, cosa, phaseIncrements, dialog.Nfa_phase0+dialog.Nfa_phase180);
                             
                             
                             mo = optimization[0];
@@ -1375,8 +1378,8 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             if (t2 < 0.00) t2 = -1.00*t2;
                             if (bo < 0.00) bo = -1.00*bo;
                             
-                            if (t2 > JDialogDespotT2.maxT2) {
-                                t2 = JDialogDespotT2.maxT2;
+                            if (t2 > dialog.maxT2) {
+                                t2 = dialog.maxT2;
                             }
                             
                             // invert to r2
@@ -1447,7 +1450,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     return;
                 }
                 // grab the ssfp pixel values from the phase = 0 data
-                for (angle=0; angle<JDialogDespotT2.Nfa_phase0; angle++) {
+                for (angle=0; angle<dialog.Nfa_phase0; angle++) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
                     
                     pixelIndex = 0;
@@ -1460,7 +1463,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 }
             
                 // grab the ssfp pixel values from the phase = 180 data
-                for (angle=0; angle<JDialogDespotT2.Nfa_phase180; angle++) {
+                for (angle=0; angle<dialog.Nfa_phase180; angle++) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
                     
                     pixelIndex = 0;
@@ -1483,7 +1486,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     }
                 }
                 
-                if (JDialogDespotT2.includeB1Map == true) {
+                if (dialog.includeB1Map == true) {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[b1ImageIndex]);
                     
                     pixelIndex = 0;
@@ -1507,28 +1510,28 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             
                                     
                             // scale up (or down) the flip angles based on the calculated B1 if required
-                            if (JDialogDespotT2.includeB1Map == true) {
-                                for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) scaledFA[p] = FA[p]*b1PixelValues[pixelIndex];
+                            if (dialog.includeB1Map == true) {
+                                for (p=0; p<dialog.Nfa_phase0+dialog.Nfa_phase180; p++) scaledFA[p] = FA[p]*b1PixelValues[pixelIndex];
                             }
                             else {
-                                for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) scaledFA[p] = FA[p];
+                                for (p=0; p<dialog.Nfa_phase0+dialog.Nfa_phase180; p++) scaledFA[p] = FA[p];
                             }
                             
                             // calculate the sina and cosa matrices
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180; p++) {
+                            for (p=0; p<dialog.Nfa_phase0+dialog.Nfa_phase180; p++) {
                                 sina[p] = Math.sin(scaledFA[p]);
                                 cosa[p] = Math.cos(scaledFA[p]);
                             }
                             
                             // grab the SSFP values for this pixel
-                            for (p=0; p<JDialogDespotT2.Nfa_phase0; p++) ssfpSampleData[p] = ssfpPixelValues_phase0[p][pixelIndex];
-                            for (p=0; p<JDialogDespotT2.Nfa_phase180; p++) ssfpSampleData[p+JDialogDespotT2.Nfa_phase0] = ssfpPixelValues_phase180[p][pixelIndex];
+                            for (p=0; p<dialog.Nfa_phase0; p++) ssfpSampleData[p] = ssfpPixelValues_phase0[p][pixelIndex];
+                            for (p=0; p<dialog.Nfa_phase180; p++) ssfpSampleData[p+dialog.Nfa_phase0] = ssfpPixelValues_phase180[p][pixelIndex];
                             
                             
                             twoPInitialGuess[0] = moValues[k][y][x];
                             twoPInitialGuess[1] = t2Values[k][y][x];
                             
-                            twoPDownHillSimplex(twoPOptimization, twoPInitialGuess, bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, JDialogDespotT2.Nfa_phase0+JDialogDespotT2.Nfa_phase180);
+                            twoPDownHillSimplex(twoPOptimization, twoPInitialGuess, bo, t1, tr, ssfpSampleData, sina, cosa, phaseIncrements, dialog.Nfa_phase0+dialog.Nfa_phase180);
                             
                             mo = twoPOptimization[0];
                             t2 = twoPOptimization[1];
@@ -1536,7 +1539,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                             if (mo < 0.00) mo = -1.00*mo;
                             if (t2 < 0.00) t2 = -1.00*t2;
                             
-                            if (t2 > JDialogDespotT2.maxT2) t2 = JDialogDespotT2.maxT2;
+                            if (t2 > dialog.maxT2) t2 = dialog.maxT2;
                             
                             if (t2 > 0.00) r2 = 1.00/t2;
                             else r2 = 0.00;
@@ -1559,16 +1562,16 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 try {
                     // add data to the final stacks
                     int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
-                    if (JDialogDespotT2.calculateT2) { 
+                    if (dialog.calculateT2) { 
                         t2ResultStack.importData(startVal, t2Field[k], true);
                     }
-                    if (JDialogDespotT2.calculateMo) { 
+                    if (dialog.calculateMo) { 
                         moResultStack.importData(startVal, moField[k], true);
                     }
-                    if (JDialogDespotT2.invertT2toR2) { 
+                    if (dialog.invertT2toR2) { 
                         r2ResultStack.importData(startVal, r2Field[k], true);
                     }
-                    if (JDialogDespotT2.calculateBo) { 
+                    if (dialog.calculateBo) { 
                         boResultStack.importData(startVal, boField[k], true);
                     }
                 } catch(IOException e) {
@@ -1578,25 +1581,25 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             }
         }
         
-        if (JDialogDespotT2.calculateT2) {
+        if (dialog.calculateT2) {
             t2ResultWindow = new ViewJFrameImage(t2ResultStack);
             t2ResultWindow.setTitle("CalculatedT2Map_FM");
             t2ResultWindow.setVisible(true);
         } 
         
-        if (JDialogDespotT2.calculateMo) {
+        if (dialog.calculateMo) {
             moResultWindow = new ViewJFrameImage(moResultStack);
             moResultWindow.setTitle("CalculatedMoMap_FM");
             moResultWindow.setVisible(true);
         } 
         
-        if (JDialogDespotT2.invertT2toR2) {
+        if (dialog.invertT2toR2) {
             r2ResultWindow = new ViewJFrameImage(r2ResultStack);
             r2ResultWindow.setTitle("CalculatedR2Map_FM");
             r2ResultWindow.setVisible(true);
         } 
         
-        if (JDialogDespotT2.calculateBo) {
+        if (dialog.calculateBo) {
             boResultWindow = new ViewJFrameImage(boResultStack);
             boResultWindow.setTitle("CalculatedOffResonanceMap_FM");
             boResultWindow.setVisible(true);
