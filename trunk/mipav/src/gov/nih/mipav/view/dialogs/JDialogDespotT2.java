@@ -35,9 +35,9 @@ import gov.nih.mipav.view.ViewUserInterface;
 public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmInterface {
 
     private static String title = "DESPOT2 T2 Mapper";
-    public static double despotTR = 5.00;
-    public static double maxT2 = 1000;
-    public static double maxMo = 10000;
+    public double despotTR = 5.00;
+    public double maxT2 = 1000;
+    public double maxMo = 10000;
     private double[] despotFA_phase0;
     private double[] despotFA_phase180;
     
@@ -52,33 +52,33 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     private double[][] twoPSimplex;
     private int[] bestToWorst;
     
-    public static int Nfa_phase0 = 0;
-    public static int Nfa_phase180 = 2;
+    public int Nfa_phase0 = 0;
+    public int Nfa_phase180 = 2;
     
-    public static boolean calculateT2 = true;
-    public static boolean includeB1Map = false;
-    public static boolean performConventionalModelling = true;
-    public static boolean performApproxModelling = false;
-    public static boolean performFullModelling = false;
-    public static boolean calculateMo = true;
-    public static boolean invertT2toR2 = false;
-    public static boolean calculateBo = false;
+    public boolean calculateT2 = true;
+    public boolean includeB1Map = false;
+    public boolean performConventionalModelling = true;
+    public boolean performApproxModelling = false;
+    public boolean performFullModelling = false;
+    public boolean calculateMo = true;
+    public boolean invertT2toR2 = false;
+    public boolean calculateBo = false;
     
-    public static boolean performConventionalWith180Phase = true;
-    public static boolean performConventionalWith0Phase = false;
+    public boolean performConventionalWith180Phase = true;
+    public boolean performConventionalWith0Phase = false;
     
-    public static boolean geScanner = true;
-    public static boolean siemensScanner = false;
+    public boolean geScanner = true;
+    public boolean siemensScanner = false;
     
-    public static boolean upperLeftCorner = true;
-    public static boolean upperRightCorner = false;
-    public static boolean lowerLeftCorner = false;
-    public static boolean lowerRightCorner = false;
+    public boolean upperLeftCorner = true;
+    public boolean upperRightCorner = false;
+    public boolean lowerLeftCorner = false;
+    public boolean lowerRightCorner = false;
     
-    public static boolean useSmartThresholding = true;
-    public static boolean useHardThresholding = false;
-    public static float noiseScale = (float) 1.00;
-    public static float hardNoiseThreshold = (float) 0.00;
+    public boolean useSmartThresholding = true;
+    public boolean useHardThresholding = false;
+    public float noiseScale = (float) 1.00;
+    public float hardNoiseThreshold = (float) 0.00;
     
     private String[] wList;
     private String[] titles;
@@ -335,7 +335,7 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     
     protected void callAlgorithm() {
         // Make algorithm
-        cAlgo = new AlgorithmDespotT2(despotFA_phase0,
+        cAlgo = new AlgorithmDespotT2(this, despotFA_phase0,
                 despotFA_phase180, ssfpImageIndex_phase0,
                 ssfpImageIndex_phase180, t1ImageIndex, b1ImageIndex,
                 simplexLineValues, simplexResiduals,
@@ -370,6 +370,106 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         }
     }
     
+    public double getDespotTR() {
+        return despotTR;
+    }
+
+    public double getMaxT2() {
+        return maxT2;
+    }
+
+    public double getMaxMo() {
+        return maxMo;
+    }
+
+    public int getNfa_phase0() {
+        return Nfa_phase0;
+    }
+
+    public int getNfa_phase180() {
+        return Nfa_phase180;
+    }
+
+    public boolean isCalculateT2() {
+        return calculateT2;
+    }
+
+    public boolean isIncludeB1Map() {
+        return includeB1Map;
+    }
+
+    public boolean isPerformConventionalModelling() {
+        return performConventionalModelling;
+    }
+
+    public boolean isPerformApproxModelling() {
+        return performApproxModelling;
+    }
+
+    public boolean isPerformFullModelling() {
+        return performFullModelling;
+    }
+
+    public boolean isCalculateMo() {
+        return calculateMo;
+    }
+
+    public boolean isInvertT2toR2() {
+        return invertT2toR2;
+    }
+
+    public boolean isCalculateBo() {
+        return calculateBo;
+    }
+
+    public boolean isPerformConventionalWith180Phase() {
+        return performConventionalWith180Phase;
+    }
+
+    public boolean isPerformConventionalWith0Phase() {
+        return performConventionalWith0Phase;
+    }
+
+    public boolean isGeScanner() {
+        return geScanner;
+    }
+
+    public boolean isSiemensScanner() {
+        return siemensScanner;
+    }
+
+    public boolean isUpperLeftCorner() {
+        return upperLeftCorner;
+    }
+
+    public boolean isUpperRightCorner() {
+        return upperRightCorner;
+    }
+
+    public boolean isLowerLeftCorner() {
+        return lowerLeftCorner;
+    }
+
+    public boolean isLowerRightCorner() {
+        return lowerRightCorner;
+    }
+
+    public boolean isUseSmartThresholding() {
+        return useSmartThresholding;
+    }
+
+    public boolean isUseHardThresholding() {
+        return useHardThresholding;
+    }
+
+    public float getNoiseScale() {
+        return noiseScale;
+    }
+
+    public float getHardNoiseThreshold() {
+        return hardNoiseThreshold;
+    }
+
     public boolean showDialog() {
         BorderLayout b = new BorderLayout();
         JDialog dialog = new JDialog();
