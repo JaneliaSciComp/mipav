@@ -288,6 +288,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     /** If true change matrix to the world coordinate system. */
     private boolean wcSystem = false;
 
+    private boolean resizeOnClose = false;
     
     /** text area showing the */
     private JTextArea provenanceArea;
@@ -597,6 +598,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                                                                                  "   Translate Y: " + trans.Y +
                                                                                  "   Translate Z: " + trans.Z);
         } else if (command.equals("Close")) {
+            if ( resizeOnClose )
+            {
+                image.getParentFrame().initResolutions();
+                image.getParentFrame().updateImageExtents();
+                image.getParentFrame().componentResized(null);
+            }
             dispose();
         } else if (command.equals("addReplaceMatrix")) {
 
@@ -3528,9 +3535,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 
             } // if (matHolder != null)    
         } // if (fileInfo[0] instanceof FileInfoNIFTI)
-        image.getParentFrame().initResolutions();
-        image.getParentFrame().updateImageExtents();
-        image.getParentFrame().componentResized(null);
+        resizeOnClose = true;
 
         // add the new script action
         ScriptRecorder.getReference().addLine(new ActionChangeResolutions(image, resolutionBox.isSelected(), resIndex,
