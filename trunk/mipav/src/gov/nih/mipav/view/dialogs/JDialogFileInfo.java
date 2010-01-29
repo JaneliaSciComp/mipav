@@ -2,13 +2,12 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -16,27 +15,35 @@ import javax.swing.*;
 
 /**
  * This class shows the dialog which conatains the file-info header information as used in the FileInfoBase class.
- *
- * <p>it builds two tables, and any row can be made editable when supplied with the appropriate editor to use. Entries
- * that are edited okay, reports updates to file info.</p>
- *
- * <p>It merely brings up a JDalogEditor when "edit" button is clicked.</p>
- *
- * <p><i>17 January 2002</i>: Right now, this class is set up to handle <i>only</i> FileInfoAnalyze edits. This is
- * because the</p>
- *
- * @author   parsonsd;
- * @version  0.2
+ * 
+ * <p>
+ * it builds two tables, and any row can be made editable when supplied with the appropriate editor to use. Entries that
+ * are edited okay, reports updates to file info.
+ * </p>
+ * 
+ * <p>
+ * It merely brings up a JDalogEditor when "edit" button is clicked.
+ * </p>
+ * 
+ * <p>
+ * <i>17 January 2002</i>: Right now, this class is set up to handle <i>only</i> FileInfoAnalyze edits. This is
+ * because the
+ * </p>
+ * 
+ * @author parsonsd;
+ * @version 0.2
  */
 
 public class JDialogFileInfo extends JDialogBase implements ActionListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
+    // ~ Static fields/initializers
+    // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 1629395651992086059L;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private JButton edit;
@@ -51,7 +58,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
     private FileInfoBase fileinfo;
 
     /** DOCUMENT ME! */
-    private ModelImage image;
+    private final ModelImage image;
 
     /** DOCUMENT ME! */
     private ListSelectionModel listSelector;
@@ -63,7 +70,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
     private JTable primaryTable;
 
     /** tpe holds the type of editor to be used; editor holds the editor dialog. */
-    private Hashtable primaryTypeHolder, primaryEditorHolder;
+    private final Hashtable primaryTypeHolder, primaryEditorHolder;
 
     /** DOCUMENT ME! */
     private JScrollPane scrollPane;
@@ -75,30 +82,32 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
     private JTable secondaryTable;
 
     /** DOCUMENT ME! */
-    private Hashtable secondaryTypeHolder, secondaryEditorHolder;
+    private final Hashtable secondaryTypeHolder, secondaryEditorHolder;
 
     /** DOCUMENT ME! */
     private int selectedRow;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * This method displays all the valid variables, that is, the ones that are no longer equal to their default values.
      * It calls parseDate and parseTime when needed and translates other strings. However, this method does not yet
      * translate every single DICOM tag, only those most used. The others it outputs as strings.
-     *
-     * @param  parent  the number of columns an editable table should have (either 2 or 3 is allowed).
-     * @param  title   DOCUMENT ME!
-     * @param  img     DOCUMENT ME!
+     * 
+     * @param parent the number of columns an editable table should have (either 2 or 3 is allowed).
+     * @param title DOCUMENT ME!
+     * @param img DOCUMENT ME!
      */
-    public JDialogFileInfo(Frame parent, String title, ModelImage img) {
+    public JDialogFileInfo(final Frame parent, final String title, final ModelImage img) {
         super(parent, false);
         setTitle(title);
-        try{
-        	setIconImage(MipavUtil.getIconImage("header.gif"));
-        }catch(Exception e) {
-        	
+        try {
+            setIconImage(MipavUtil.getIconImage("header.gif"));
+        } catch (final Exception e) {
+            // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
         }
+
         image = img;
         primaryTypeHolder = new Hashtable(); // all editable lines in primary, keyed by location in Jtable
         secondaryTypeHolder = new Hashtable(); // all editable lines in secondary, keyed by location in Jtable
@@ -106,17 +115,18 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
         secondaryEditorHolder = new Hashtable(); // all editable lines in secondary, keyed by location in Jtable
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * permits the caller to get a value out of the primary table by using the name given to the fileInfo.
-     *
-     * @param   name  DOCUMENT ME!
-     *
-     * @return  the value returned is the first value which keys to this name; any other instances of the name will be
-     *          ignored. <code>Null</code> is returned if the name cannot be found
+     * 
+     * @param name DOCUMENT ME!
+     * 
+     * @return the value returned is the first value which keys to this name; any other instances of the name will be
+     *         ignored. <code>Null</code> is returned if the name cannot be found
      */
-    public String accessPrimaryData(String name) {
+    public String accessPrimaryData(final String name) {
         String possibleValue = null;
 
         for (int i = 0; i < primaryModel.getRowCount(); i++) {
@@ -132,27 +142,33 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
 
     /**
      * closes the dialog when the user clicks close.
-     *
-     * <p>Creates editor dialogs to allow changing the value-field of a tag when user clicks "Edit Tag" button. This
+     * 
+     * <p>
+     * Creates editor dialogs to allow changing the value-field of a tag when user clicks "Edit Tag" button. This
      * implmentation supports virtually any number of tag editors, bringing forward any previously opened editor. Most
-     * processing occurs when this class hears an editor window close;</p>
-     *
-     * <p>will alert any open window (frame) to set title as that information may have changed.</p>
-     *
-     * <p>to make this more FileInfoBase friendly, add a public static void stateChanged(Vector) to FileInfoBase. Then
+     * processing occurs when this class hears an editor window close;
+     * </p>
+     * 
+     * <p>
+     * will alert any open window (frame) to set title as that information may have changed.
+     * </p>
+     * 
+     * <p>
+     * to make this more FileInfoBase friendly, add a public static void stateChanged(Vector) to FileInfoBase. Then
      * remove the references to the cast. Otherwise, using the editors with other varieties of FileInfo will throw
      * ClassCastExceptions. Also suggest that a distinct datatype (other than Vector) be created to handle the special
-     * needs.</p>
-     *
-     * @param  e  event that triggered this action
+     * needs.
+     * </p>
+     * 
+     * @param e event that triggered this action
      */
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(final ActionEvent e) {
         JDialogEditor editor;
 
         if (e.getActionCommand().equals("Close")) { // close
 
             // clear out the editor dialog boxes
-            for (Enumeration en = editorDialogTable.elements(); en.hasMoreElements();) {
+            for (final Enumeration en = editorDialogTable.elements(); en.hasMoreElements();) {
                 editor = (JDialogEditor) en.nextElement();
                 editor.dispose();
             }
@@ -187,7 +203,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                         objs = (Vector) primaryTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
-                                                         // foresee
+                        // foresee
 
                         if (objs.size() > 1) { // assume seperate words mean something special
 
@@ -197,7 +213,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                             values[0] = (String) primaryTable.getValueAt(rows[i], 1);
                         }
 
-                        int[] editors = new int[objs.size()];
+                        final int[] editors = new int[objs.size()];
 
                         for (int j = 0; j < objs.size(); j++) {
                             editors[j] = ((Integer) (objs.elementAt(j))).intValue(); // what the user asked for
@@ -208,57 +224,56 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                         editor.setVisible(true);
                         editor.addWindowListener(new WindowAdapter() {
 
-                                //  when windowClosed: check to see if dialog closed by OKbutton (if it did then there
-                                //    were no problems with user inputted values); if it closed by okbutton, then
-                                // modify all slices if user so desired.      In addition, when the change was applied
-                                // to all slices, notify the image frames      in the image frame vector to reset the
-                                // title (title changes only for name,      @see ModelImage#setTitle(String)
-                                public void windowClosed(WindowEvent e) {
-                                    JDialogEditor ed;
-                                    ed = (JDialogEditor) e.getSource();
+                            // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
+                            // were no problems with user inputted values); if it closed by okbutton, then
+                            // modify all slices if user so desired. In addition, when the change was applied
+                            // to all slices, notify the image frames in the image frame vector to reset the
+                            // title (title changes only for name, @see ModelImage#setTitle(String)
+                            public void windowClosed(final WindowEvent e) {
+                                JDialogEditor ed;
+                                ed = (JDialogEditor) e.getSource();
 
-                                    Integer edID = (Integer) ed.getKey();
-                                    Vector changed = new Vector(5);
-                                    changed.add(0, new Integer(1)); // table
-                                    changed.add(1, edID); // line
-                                    changed.add(2, primaryModel.getValueAt(edID.intValue(), 0));
-                                    changed.add(3, ed.getValue());
-                                    changed.add(4, ed.getDisplayValue());
+                                final Integer edID = (Integer) ed.getKey();
+                                Vector changed = new Vector(5);
+                                changed.add(0, new Integer(1)); // table
+                                changed.add(1, edID); // line
+                                changed.add(2, primaryModel.getValueAt(edID.intValue(), 0));
+                                changed.add(3, ed.getValue());
+                                changed.add(4, ed.getDisplayValue());
 
-                                    if (ed.wasDialogOkay()) {
+                                if (ed.wasDialogOkay()) {
 
-                                        // to make this more FileInfoBase friendly, add a
-                                        // public static void stateChanged(Vector)
-                                        // to FileInfoBase.  Then remove the references to
-                                        // the cast.  Otherwise, using the editors with other
-                                        // varieties of FileInfo will throw ClassCastExceptions.
-                                        // Also suggest that a distinct datatype (other than Vector)
-                                        // be created to handle the special needs.
-                                        ((FileInfoAnalyze) fileinfo).stateChanged(changed); // what to do to update
-                                                                                            // fileinfo!?!?!
-                                        primaryModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
-                                        primaryEditorHolder.remove(edID);
+                                    // to make this more FileInfoBase friendly, add a
+                                    // public static void stateChanged(Vector)
+                                    // to FileInfoBase. Then remove the references to
+                                    // the cast. Otherwise, using the editors with other
+                                    // varieties of FileInfo will throw ClassCastExceptions.
+                                    // Also suggest that a distinct datatype (other than Vector)
+                                    // be created to handle the special needs.
+                                    ((FileInfoAnalyze) fileinfo).stateChanged(changed); // what to do to update
+                                    // fileinfo!?!?!
+                                    primaryModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
+                                    primaryEditorHolder.remove(edID);
 
-                                        // a really nice idea: add an option (default ON, of course)
-                                        // for fileInfo propogation, that this would do in a local
-                                        // fileInfo friendly way--ie., the fileInfo knows which
-                                        // values should be propogated.
-                                        // Loop through other fileinfos from image.
-                                        for (int q = 0; q < image.getFileInfo().length; q++) {
-                                            ((FileInfoAnalyze) fileinfo).updateFileInfos((FileInfoAnalyze)
-                                                                                             image.getFileInfo(q));
-                                        }
-                                    } else {
-                                        primaryEditorHolder.remove(edID);
-                                        changed = null; // forget it
+                                    // a really nice idea: add an option (default ON, of course)
+                                    // for fileInfo propogation, that this would do in a local
+                                    // fileInfo friendly way--ie., the fileInfo knows which
+                                    // values should be propogated.
+                                    // Loop through other fileinfos from image.
+                                    for (int q = 0; q < image.getFileInfo().length; q++) {
+                                        ((FileInfoAnalyze) fileinfo).updateFileInfos((FileInfoAnalyze) image
+                                                .getFileInfo(q));
                                     }
-
-
+                                } else {
+                                    primaryEditorHolder.remove(edID);
+                                    changed = null; // forget it
                                 }
-                            });
+
+                            }
+                        });
                         primaryEditorHolder.put(named, editor);
                     }
-                } else { }
+                } else {}
             }
 
             // go through secondary table, editing highlighted (selected) rows
@@ -281,7 +296,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                         objs = (Vector) secondaryTypeHolder.get(named);
 
                         String[] values = new String[1]; // this is unclean design now to cover something i didn't
-                                                         // foresee
+                        // foresee
 
                         if (objs.size() > 1) { // assume seperate words mean something special
 
@@ -291,8 +306,9 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                             values[0] = (String) secondaryTable.getValueAt(rows[i], 1);
                         }
 
-                        int[] editors = new int[objs.size()]; // because we tell an editor to do something based on an
-                                                              // int code
+                        final int[] editors = new int[objs.size()]; // because we tell an editor to do something based
+                                                                    // on an
+                        // int code
 
                         for (int j = 0; j < objs.size(); j++) {
                             editors[j] = ((Integer) (objs.elementAt(j))).intValue(); // what the user asked for
@@ -303,61 +319,60 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                         editor.setVisible(true);
                         editor.addWindowListener(new WindowAdapter() {
 
-                                //  when windowClosed: check to see if dialog closed by OKbutton (if it did then there
-                                //    were no problems with user inputted values); if it closed by okbutton, then
-                                // modify all slices if user so desired.      In addition, when the change was applied
-                                // to all slices, notify the image frames      in the image frame vector to reset the
-                                // title (title changes only for name,      @see ModelImage#setTitle(String)
-                                public void windowClosed(WindowEvent e) {
+                            // when windowClosed: check to see if dialog closed by OKbutton (if it did then there
+                            // were no problems with user inputted values); if it closed by okbutton, then
+                            // modify all slices if user so desired. In addition, when the change was applied
+                            // to all slices, notify the image frames in the image frame vector to reset the
+                            // title (title changes only for name, @see ModelImage#setTitle(String)
+                            public void windowClosed(final WindowEvent e) {
 
-                                    JDialogEditor ed;
-                                    ed = (JDialogEditor) e.getSource();
+                                JDialogEditor ed;
+                                ed = (JDialogEditor) e.getSource();
 
-                                    Integer edID = (Integer) ed.getKey();
-                                    Vector changed = new Vector(4);
-                                    changed.add(0, new Integer(1)); // table
-                                    changed.add(1, edID); // line
-                                    changed.add(2, secondaryModel.getValueAt(edID.intValue(), 0));
-                                    changed.add(3, ed.getValue());
-                                    changed.add(4, ed.getDisplayValue());
+                                final Integer edID = (Integer) ed.getKey();
+                                Vector changed = new Vector(4);
+                                changed.add(0, new Integer(1)); // table
+                                changed.add(1, edID); // line
+                                changed.add(2, secondaryModel.getValueAt(edID.intValue(), 0));
+                                changed.add(3, ed.getValue());
+                                changed.add(4, ed.getDisplayValue());
 
-                                    if (ed.wasDialogOkay()) {
+                                if (ed.wasDialogOkay()) {
 
-                                        // to make this more FileInfoBase friendly, add a
-                                        // public static void stateChanged(Vector)
-                                        // to FileInfoBase.  Then remove the references to
-                                        // the cast.  Otherwise, using the editors with other
-                                        // varieties of FileInfo will throw ClassCastExceptions.
-                                        // Also suggest that a distinct datatype (other than Vector)
-                                        // be created to handle the special needs.
-                                        ((FileInfoAnalyze) fileinfo).stateChanged(changed); // what to do to update
-                                                                                            // fileinfo!?!?!
-                                        secondaryModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
-                                        secondaryEditorHolder.remove(edID);
+                                    // to make this more FileInfoBase friendly, add a
+                                    // public static void stateChanged(Vector)
+                                    // to FileInfoBase. Then remove the references to
+                                    // the cast. Otherwise, using the editors with other
+                                    // varieties of FileInfo will throw ClassCastExceptions.
+                                    // Also suggest that a distinct datatype (other than Vector)
+                                    // be created to handle the special needs.
+                                    ((FileInfoAnalyze) fileinfo).stateChanged(changed); // what to do to update
+                                    // fileinfo!?!?!
+                                    secondaryModel.setValueAt(ed.getDisplayValue(), edID.intValue(), 1);
+                                    secondaryEditorHolder.remove(edID);
 
-                                        // a really nice idea: add an option (default ON, of course)
-                                        // for fileInfo propogation, that this would do in a local
-                                        // fileInfo friendly way--ie., the fileInfo knows which
-                                        // values should be propogated.
-                                        // Loop through other fileinfos from image.
-                                        if ((image != null) && (image.getFileInfo() != null)) {
+                                    // a really nice idea: add an option (default ON, of course)
+                                    // for fileInfo propogation, that this would do in a local
+                                    // fileInfo friendly way--ie., the fileInfo knows which
+                                    // values should be propogated.
+                                    // Loop through other fileinfos from image.
+                                    if ( (image != null) && (image.getFileInfo() != null)) {
 
-                                            for (int q = 0; q < image.getFileInfo().length; q++) {
-                                                ((FileInfoAnalyze) fileinfo).updateFileInfos((FileInfoAnalyze)
-                                                                                                 image.getFileInfo(q));
-                                            }
+                                        for (int q = 0; q < image.getFileInfo().length; q++) {
+                                            ((FileInfoAnalyze) fileinfo).updateFileInfos((FileInfoAnalyze) image
+                                                    .getFileInfo(q));
                                         }
-                                    } else {
-                                        secondaryEditorHolder.remove(edID);
-                                        changed = null; // forget it
                                     }
+                                } else {
+                                    secondaryEditorHolder.remove(edID);
+                                    changed = null; // forget it
                                 }
+                            }
 
-
-                            });
+                        });
                         secondaryEditorHolder.put(named, editor);
                     }
-                } else { }
+                } else {}
             }
         }
 
@@ -365,26 +380,26 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
 
     /**
      * appends a row to the end of the editable table.
-     *
-     * @param  name   name file info parameter (ie., dimensions, extents, &c).
-     * @param  value  value value assigned to a fileinfo parameter
+     * 
+     * @param name name file info parameter (ie., dimensions, extents, &c).
+     * @param value value value assigned to a fileinfo parameter
      */
-    public void appendPrimaryData(String name, String value) {
+    public void appendPrimaryData(final String name, final String value) {
 
         if (value.indexOf('\n') == -1) { // \n doesn't occur in the value
 
-            String[] rose = { name, value };
+            final String[] rose = {name, value};
             primaryModel.addRow(rose);
         } else {
-            StringTokenizer stok = new StringTokenizer(value, "\n");
-            String[] values = new String[stok.countTokens()];
+            final StringTokenizer stok = new StringTokenizer(value, "\n");
+            final String[] values = new String[stok.countTokens()];
             int i = 0;
 
             while (stok.hasMoreTokens()) {
                 values[i++] = stok.nextToken();
             }
 
-            String[] rose = { name, values[0] };
+            final String[] rose = {name, values[0]};
             primaryModel.addRow(rose);
             i = 1;
             rose[0] = "";
@@ -399,27 +414,27 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
     /**
      * appends a row to the end of the primary info table. assigns this name/value pair to be editable and adds the
      * fileinfo to listen for this name.
-     *
-     * @param  name    file info parameter (ie., dimensions, extents, &c).
-     * @param  value   value assigned to a fileinfo parameter
-     * @param  editor  The value of editor is the editor interface to be used. Eg., a JPanelEditDefault. Specified by
-     *
-     *                 <ul>
-     *                   <li>JDialogFileInfo#IntString</li>
-     *                   <li>JDialogFileInfo#FloatString</li>
-     *                   <li>JDialogFileInfo#AnalyzeDataType</li>
-     *                   <li>JDialogFileInfo#AnalyzeDescription</li>
-     *                   <li>JDialogFileInfo#AnalyzeOrientation</li>
-     *                 </ul>
+     * 
+     * @param name file info parameter (ie., dimensions, extents, &c).
+     * @param value value assigned to a fileinfo parameter
+     * @param editor The value of editor is the editor interface to be used. Eg., a JPanelEditDefault. Specified by
+     * 
+     * <ul>
+     * <li>JDialogFileInfo#IntString</li>
+     * <li>JDialogFileInfo#FloatString</li>
+     * <li>JDialogFileInfo#AnalyzeDataType</li>
+     * <li>JDialogFileInfo#AnalyzeDescription</li>
+     * <li>JDialogFileInfo#AnalyzeOrientation</li>
+     * </ul>
      */
-    public void appendPrimaryData(String name, String value, int[] editor) {
-        String[] rose = { name, value };
+    public void appendPrimaryData(final String name, final String value, final int[] editor) {
+        final String[] rose = {name, value};
         primaryModel.addRow(rose);
 
-        Vector editorInts = new Vector();
+        final Vector editorInts = new Vector();
 
-        for (int i = 0; i < editor.length; i++) { // set the list of editors to use
-            editorInts.addElement(new Integer(editor[i]));
+        for (final int element : editor) { // set the list of editors to use
+            editorInts.addElement(new Integer(element));
         }
 
         primaryTypeHolder.put(new Integer(primaryModel.getRowCount() - 1), editorInts);
@@ -427,26 +442,26 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
 
     /**
      * appends a row to the end of the Secondary Info table. For non-editable data.
-     *
-     * @param  name   name file info parameter (ie., dimensions, extents, &c).
-     * @param  value  ring value value assigned to a fileinfo parameter
+     * 
+     * @param name name file info parameter (ie., dimensions, extents, &c).
+     * @param value ring value value assigned to a fileinfo parameter
      */
-    public void appendSecondaryData(String name, String value) {
+    public void appendSecondaryData(final String name, final String value) {
 
         if (value.indexOf('\n') == -1) { // \n doesn't occur in the value
 
-            String[] rose = { name, value };
+            final String[] rose = {name, value};
             secondaryModel.addRow(rose);
         } else {
-            StringTokenizer stok = new StringTokenizer(value, "\n");
-            String[] values = new String[stok.countTokens()];
+            final StringTokenizer stok = new StringTokenizer(value, "\n");
+            final String[] values = new String[stok.countTokens()];
             int i = 0;
 
             while (stok.hasMoreTokens()) {
                 values[i++] = stok.nextToken();
             }
 
-            String[] rose = { name, values[0] };
+            final String[] rose = {name, values[0]};
             secondaryModel.addRow(rose);
             i = 1;
             rose[0] = "";
@@ -460,33 +475,33 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
 
     /**
      * appends a row to the end of the editable table.
-     *
-     * @param  String  name file info parameter (ie., dimensions, extents, &c).
-     * @param  String  value value assigned to a fileinfo parameter
-     * @param  editor  The value of editor is the editor interface to be used. Eg., a JPanelEditDefault. For example,
-     *                 specified by
-     *
-     *                 <ul>
-     *                   <li>JDialogEditor#STRING</li>
-     *                   <li>JDialogEditor#INT_STRING</li>
-     *                   <li>JDialogEditor#FLOAT_STRING</li>
-     *                   <li>JDialogEditor#ANALYZE_DATATYPE</li>
-     *                   <li>JDialogEditor#ANALYZE_DESCRIPTION</li>
-     *                   <li>JDialogEditor#ANALYZE_ORIENTATION</li>
-     *                   <li>JDialogEditor#ANALYZE_AXIS_ORIENTATION</li>
-     *                 </ul>
-     *                 as a partial list.
-     *
-     * @see    JPanelEdit
+     * 
+     * @param String name file info parameter (ie., dimensions, extents, &c).
+     * @param String value value assigned to a fileinfo parameter
+     * @param editor The value of editor is the editor interface to be used. Eg., a JPanelEditDefault. For example,
+     *            specified by
+     * 
+     * <ul>
+     * <li>JDialogEditor#STRING</li>
+     * <li>JDialogEditor#INT_STRING</li>
+     * <li>JDialogEditor#FLOAT_STRING</li>
+     * <li>JDialogEditor#ANALYZE_DATATYPE</li>
+     * <li>JDialogEditor#ANALYZE_DESCRIPTION</li>
+     * <li>JDialogEditor#ANALYZE_ORIENTATION</li>
+     * <li>JDialogEditor#ANALYZE_AXIS_ORIENTATION</li>
+     * </ul>
+     * as a partial list.
+     * 
+     * @see JPanelEdit
      */
-    public void appendSecondaryData(String name, String value, int[] editor) {
-        String[] rose = { name, value };
+    public void appendSecondaryData(final String name, final String value, final int[] editor) {
+        final String[] rose = {name, value};
         secondaryModel.addRow(rose);
 
-        Vector editorInts = new Vector();
+        final Vector editorInts = new Vector();
 
-        for (int i = 0; i < editor.length; i++) { // set the list of editors to use
-            editorInts.addElement(new Integer(editor[i]));
+        for (final int element : editor) { // set the list of editors to use
+            editorInts.addElement(new Integer(element));
         }
 
         secondaryTypeHolder.put(new Integer(secondaryModel.getRowCount() - 1), editorInts);
@@ -494,12 +509,12 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
 
     /**
      * makes the display frame. builds the layout.
-     *
-     * @param  fileInfo  DOCUMENT ME!
+     * 
+     * @param fileInfo DOCUMENT ME!
      */
-    public void displayAboutInfo(FileInfoBase fileInfo) {
+    public void displayAboutInfo(final FileInfoBase fileInfo) {
         Box scrollingBox;
-        String[] columnNames = { "Name", "Value" };
+        final String[] columnNames = {"Name", "Value"};
 
         try {
             this.fileinfo = fileInfo;
@@ -513,11 +528,11 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
             secondaryTable = new JTable(secondaryModel);
 
             editorDialogTable = new Hashtable(); // hastable to hold editing dialogs
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("ViewFileInfo reports: Out of memory!");
 
             return;
-        } catch (IllegalArgumentException ex) {
+        } catch (final IllegalArgumentException ex) {
             MipavUtil.displayError("ViewFileInfo reports: Editing table too small!");
 
             return;
@@ -544,24 +559,24 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
         secondaryTable.getColumn("Value").setMinWidth(50);
         secondaryTable.getColumn("Value").setMaxWidth(1000);
 
-        JLabel priLabel = new JLabel("Essential Image Information");
+        final JLabel priLabel = new JLabel("Essential Image Information");
         priLabel.setForeground(Color.black);
         scrollingBox.add(priLabel);
         scrollingBox.add(primaryTable);
 
-        JLabel secLabel = new JLabel("Other Image Information");
+        final JLabel secLabel = new JLabel("Other Image Information");
         secLabel.setForeground(Color.black);
         scrollingBox.add(secLabel);
         scrollingBox.add(secondaryTable);
 
         try {
-            scrollPane = new JScrollPane(scrollingBox, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane = new JScrollPane(scrollingBox, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setPreferredSize(new Dimension(200, 200));
             scrollPane.setMinimumSize(new Dimension(150, 100));
             scrollPane.getVerticalScrollBar().setUnitIncrement(14);
             this.setSize(new Dimension(600, 400));
-        } catch (OutOfMemoryError error) {
+        } catch (final OutOfMemoryError error) {
             MipavUtil.displayError("ViewFileInfo reports: Out of memory!");
 
             return;
@@ -571,7 +586,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
 
         getContentPane().add(scrollPane);
 
-        JButton close = new JButton("Close");
+        final JButton close = new JButton("Close");
         close.setActionCommand("Close");
         close.addActionListener(this);
         close.setPreferredSize(MipavUtil.defaultButtonSize);
@@ -585,7 +600,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
         edit.setPreferredSize(MipavUtil.defaultButtonSize);
         edit.setFont(serif12B);
 
-        JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new JPanel();
         buttonPanel.add(edit);
         buttonPanel.add(close);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
@@ -594,23 +609,23 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  ke  DOCUMENT ME!
+     * 
+     * @param ke DOCUMENT ME!
      */
-    public void keyTyped(KeyEvent ke) {
+    public void keyTyped(final KeyEvent ke) {
         edit.doClick();
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   incoming  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param incoming DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
-    protected String[] separateValues(String incoming) {
-        StringTokenizer stok = new StringTokenizer(incoming, " ");
-        String[] outgoing = new String[stok.countTokens()];
+    protected String[] separateValues(final String incoming) {
+        final StringTokenizer stok = new StringTokenizer(incoming, " ");
+        final String[] outgoing = new String[stok.countTokens()];
         int i = 0;
 
         while (stok.hasMoreTokens()) {
@@ -620,16 +635,15 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
         return outgoing;
     }
 
-
     /**
      * checks whether or not the dialog exists; if it does, it brings the dialog to front.
-     *
-     * @param   tagKey  the tag's Key. Used to dtermine if this tag already has an editor associated with it.
-     * @param   model   DOCUMENT ME!
-     *
-     * @return  true if both a tag with the tagkey existed in the list and the associated dialog was brought to front.
+     * 
+     * @param tagKey the tag's Key. Used to dtermine if this tag already has an editor associated with it.
+     * @param model DOCUMENT ME!
+     * 
+     * @return true if both a tag with the tagkey existed in the list and the associated dialog was brought to front.
      */
-    private boolean bringToFront(String tagKey, Hashtable model) {
+    private boolean bringToFront(final String tagKey, final Hashtable model) {
         JDialogEditor editor; // temporary tag editor dialog
 
         // list is empty
@@ -646,7 +660,7 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                 editor.toFront();
 
                 return true;
-            } catch (ClassCastException cce) {
+            } catch (final ClassCastException cce) {
                 return false;
             }
         } else {

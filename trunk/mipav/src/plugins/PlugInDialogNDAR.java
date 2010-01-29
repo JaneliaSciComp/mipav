@@ -8,11 +8,13 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
 
+import gov.nih.ndar.ws.accession.VToolSimpleAccessionClient;
+import gov.nih.ndar.ws.client.Startup;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.MemoryImageSource;
 import java.io.*;
-import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.zip.*;
@@ -23,21 +25,12 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.xml.namespace.QName;
 
 import org.apache.axiom.om.*;
-import org.apache.axiom.om.impl.builder.StAXOMBuilder;
-import org.apache.axiom.om.impl.llom.OMAttributeImpl;
+import org.apache.axis2.AxisFault;
 
 import WildMagic.LibFoundation.Mathematics.*;
 
 import com.sun.jimi.core.*;
 
-import org.apache.axiom.om.OMElement;
-import org.apache.axis2.AxisFault;
-
-
-
-import gov.nih.ndar.ws.accession.VToolSimpleAccessionClient;
-import gov.nih.ndar.ws.client.Startup;
-import org.apache.ws.commons.schema.resolver.*;
 
 public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener,
         TreeSelectionListener, MouseListener {
@@ -85,9 +78,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
     /** XML encoding string. */
     protected static final String XML_ENCODING = "UTF-8";
-    
-    private OMElement documentElement,dataStructElement;
-    
+
+    private OMElement documentElement, dataStructElement;
+
     private String namespace;
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
@@ -120,10 +113,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         final int response = JOptionPane.showConfirmDialog(this, PlugInDialogNDAR.NDAR_PRIVACY_NOTICE,
                 "NDAR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
-        
-        
-        
-        
         if (response == JOptionPane.YES_OPTION) {
             init();
             setVisible(true);
@@ -131,12 +120,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         } else {
             return;
         }
-        
-        Thread thread = new WebServiceThread(this);
+
+        final Thread thread = new WebServiceThread(this);
         thread.start();
-       
-       
-       
 
     }
 
@@ -305,7 +291,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 outputDirTextField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
 
                 outputDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
-
 
             }
         }
@@ -1115,8 +1100,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         private final File file;
 
-        private TreeMap<JLabel,JComponent> labelsAndComps = new TreeMap<JLabel,JComponent>(new JLabelComparator());
-        
+        private final TreeMap<JLabel, JComponent> labelsAndComps = new TreeMap<JLabel, JComponent>(
+                new JLabelComparator());
+
         private final JTabbedPane tabbedPane = new JTabbedPane();
 
         private JPanel mainPanel;
@@ -1141,9 +1127,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         private JLabel requiredLabel;
 
-        
         /**
          * constructor
+         * 
          * @param owner
          * @param file
          * @param launchedFromCompletedState
@@ -1182,34 +1168,37 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             gbc = new GridBagConstraints();
 
             try {
-                this.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+                setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+            } catch (final Exception e) {
+                // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
+            }
 
+            try {
                 OMAttribute attr;
                 QName qname;
 
-                qname = new QName(namespace,"name");
+                qname = new QName(namespace, "name");
                 attr = dataStructElement.getAttribute(qname);
                 final String n = attr.getAttributeValue();
 
-                qname = new QName(namespace,"short_name");
+                qname = new QName(namespace, "short_name");
                 attr = dataStructElement.getAttribute(qname);
                 final String s = attr.getAttributeValue();
 
-                qname = new QName(namespace,"desc");
+                qname = new QName(namespace, "desc");
                 attr = dataStructElement.getAttribute(qname);
                 final String d = attr.getAttributeValue();
 
-                qname = new QName(namespace,"version");
+                qname = new QName(namespace, "version");
                 attr = dataStructElement.getAttribute(qname);
                 final String v = attr.getAttributeValue();
 
-                qname = new QName(namespace,"type");
+                qname = new QName(namespace, "type");
                 attr = dataStructElement.getAttribute(qname);
                 final String t = attr.getAttributeValue();
 
                 imageDataStruct = new DataStruct(n, s, d, v, t);
                 parse(dataStructElement, imageDataStruct);
-   
 
             } catch (final Exception e) {
                 e.printStackTrace();
@@ -1268,37 +1257,37 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          * @param ds2
          */
         private void parseForInitLabelsAndComponents(final DataStruct ds2) {
-        	JPanel panel;
+            JPanel panel;
             JScrollPane sp;
-        	Set keySet = labelsAndComps.keySet();
-            Iterator iter = keySet.iterator();
-            while(iter.hasNext()) {
-            	JLabel l = (JLabel)iter.next();
-            	JComponent t = labelsAndComps.get(l);
-            	for (int k = 0; k < ds2.size(); k++) {
-                    Object o1 = ds2.get(k);
+            final Set keySet = labelsAndComps.keySet();
+            final Iterator iter = keySet.iterator();
+            while (iter.hasNext()) {
+                final JLabel l = (JLabel) iter.next();
+                final JComponent t = labelsAndComps.get(l);
+                for (int k = 0; k < ds2.size(); k++) {
+                    final Object o1 = ds2.get(k);
                     if (o1 instanceof DataElement) {
-                        String parentDataStruct = ((DataElement) o1).getParentDataStruct();
+                        final String parentDataStruct = ((DataElement) o1).getParentDataStruct();
                         if (parentDataStruct.equals("Image")) {
-                        	 if (l.getName().equals( ((DataElement) o1).getName())) {
+                            if (l.getName().equals( ((DataElement) o1).getName())) {
 
-                                 gbc.fill = GridBagConstraints.HORIZONTAL;
-                                 gbc.anchor = GridBagConstraints.EAST;
-                                 gbc.weightx = 0;
-                                 
-                                 mainPanel.add(l, gbc);
-                                 gbc.weightx = 1;
-                                 gbc.gridx = 1;
-                                 gbc.anchor = GridBagConstraints.WEST;
-                                 mainPanel.add(t, gbc);
-                                 gridYCounter = gridYCounter + 1;
-                                 gbc.gridy = gridYCounter;
-                                 gbc.gridx = 0;
-                                 break;
+                                gbc.fill = GridBagConstraints.HORIZONTAL;
+                                gbc.anchor = GridBagConstraints.EAST;
+                                gbc.weightx = 0;
 
-                             }
-                        }else {
-                        	for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                                mainPanel.add(l, gbc);
+                                gbc.weightx = 1;
+                                gbc.gridx = 1;
+                                gbc.anchor = GridBagConstraints.WEST;
+                                mainPanel.add(t, gbc);
+                                gridYCounter = gridYCounter + 1;
+                                gbc.gridy = gridYCounter;
+                                gbc.gridx = 0;
+                                break;
+
+                            }
+                        } else {
+                            for (int i = 0; i < tabbedPane.getTabCount(); i++) {
                                 final String title = tabbedPane.getTitleAt(i);
                                 if (parentDataStruct.equals(title)) {
                                     sp = (JScrollPane) (tabbedPane.getComponentAt(i));
@@ -1316,14 +1305,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                         gbc.gridy = gridYCounter;
                                         gbc.gridx = 0;
                                         break;
-                                    } 
+                                    }
                                 }
-                        	}
-                        }  
-                    }else {
+                            }
+                        }
+                    } else {
                         parseForInitLabelsAndComponents((DataStruct) o1);
                     }
-            	}
+                }
             }
         }
 
@@ -1342,43 +1331,43 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 childElement = (OMElement) iter.next();
                 childElementName = childElement.getLocalName();
                 if (childElementName.equals("data_element")) {
-                    qname = new QName(namespace,"name");
+                    qname = new QName(namespace, "name");
                     attr = childElement.getAttribute(qname);
                     final String n = attr.getAttributeValue();
-                    //System.out.println();
-                    //System.out.println("n is " + n);
-                    qname = new QName(namespace,"desc");
+                    // System.out.println();
+                    // System.out.println("n is " + n);
+                    qname = new QName(namespace, "desc");
                     attr = childElement.getAttribute(qname);
                     final String d = attr.getAttributeValue();
-                    //System.out.println("d is " + d);
-                    
-                    qname = new QName(namespace,"short_desc");
-                    attr = childElement.getAttribute(qname);
-                    String sh = attr.getAttributeValue();
-                    //System.out.println("sh is " + sh);
+                    // System.out.println("d is " + d);
 
-                    qname = new QName(namespace,"type");
+                    qname = new QName(namespace, "short_desc");
                     attr = childElement.getAttribute(qname);
-                    String t = attr.getAttributeValue();
-                    //System.out.println("t is " + t);
+                    final String sh = attr.getAttributeValue();
+                    // System.out.println("sh is " + sh);
 
-                    qname = new QName(namespace,"size");
+                    qname = new QName(namespace, "type");
                     attr = childElement.getAttribute(qname);
-                    String s = attr.getAttributeValue();
-                    //System.out.println("s is " + s);
+                    final String t = attr.getAttributeValue();
+                    // System.out.println("t is " + t);
 
-                    qname = new QName(namespace,"required");
+                    qname = new QName(namespace, "size");
                     attr = childElement.getAttribute(qname);
-                    String r = attr.getAttributeValue();
-                    //System.out.println("r is " + r);
+                    final String s = attr.getAttributeValue();
+                    // System.out.println("s is " + s);
 
-                    qname = new QName(namespace,"value_range");
+                    qname = new QName(namespace, "required");
                     attr = childElement.getAttribute(qname);
-                    String v = attr.getAttributeValue();
-                    //System.out.println("v is " + v);
+                    final String r = attr.getAttributeValue();
+                    // System.out.println("r is " + r);
 
-                    String parentDataStruct = ds2.getName();
-                    DataElement de = new DataElement(n, d, sh, t, s, r, v, parentDataStruct);
+                    qname = new QName(namespace, "value_range");
+                    attr = childElement.getAttribute(qname);
+                    final String v = attr.getAttributeValue();
+                    // System.out.println("v is " + v);
+
+                    final String parentDataStruct = ds2.getName();
+                    final DataElement de = new DataElement(n, d, sh, t, s, r, v, parentDataStruct);
                     ds2.add(de);
 
                     if ( ! (n.equals("image_file")
@@ -1394,23 +1383,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             || ( (origImage.is2DImage() || origImage.is3DImage()) && n.equals("image_unit4")) || ( (origImage
                             .is2DImage()
                             || origImage.is3DImage() || origImage.is4DImage()) && n.equals("image_unit5")))) {
-                    	
-                    	JLabel l;
-                    	if(sh == null || sh.equals("")) {
-                    		l = new JLabel(n);
-                    	}else {
-                    		l = new JLabel(sh);
-                    	}
-                    	
-                         
+
+                        JLabel l;
+                        if (sh == null || sh.equals("")) {
+                            l = new JLabel(n);
+                        } else {
+                            l = new JLabel(sh);
+                        }
+
                         l.setName(n);
                         // if valuerange is enumeration, create a combo box...otherwise create a textfield
                         if (v.contains(";")) {
-                            JComboBox cb = new JComboBox();
+                            final JComboBox cb = new JComboBox();
                             cb.setName(n);
-                            String[] items = v.split(";");
-                            for (String element : items) {
-                                String item = element.trim();
+                            final String[] items = v.split(";");
+                            for (final String element : items) {
+                                final String item = element.trim();
                                 cb.addItem(item);
                             }
                             if (r.equals("Required")) {
@@ -1418,7 +1406,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             }
                             labelsAndComps.put(l, cb);
                         } else {
-                            JTextField tf = new JTextField(30);
+                            final JTextField tf = new JTextField(30);
                             tf.setName(n);
                             if (n.equals("image_num_dimensions")) {
                                 tf.setEnabled(false);
@@ -1440,23 +1428,23 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         }
                     }
                 } else if (childElementName.equals("data_structure")) {
-                    qname = new QName(namespace,"name");
+                    qname = new QName(namespace, "name");
                     attr = childElement.getAttribute(qname);
                     final String n = attr.getAttributeValue();
 
-                    qname = new QName(namespace,"short_name");
+                    qname = new QName(namespace, "short_name");
                     attr = childElement.getAttribute(qname);
                     final String s = attr.getAttributeValue();
 
-                    qname = new QName(namespace,"desc");
+                    qname = new QName(namespace, "desc");
                     attr = childElement.getAttribute(qname);
                     final String d = attr.getAttributeValue();
 
-                    qname = new QName(namespace,"version");
+                    qname = new QName(namespace, "version");
                     attr = childElement.getAttribute(qname);
                     final String v = attr.getAttributeValue();
 
-                    qname = new QName(namespace,"type");
+                    qname = new QName(namespace, "type");
                     attr = childElement.getAttribute(qname);
                     final String t = attr.getAttributeValue();
 
@@ -1474,7 +1462,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         }
 
         /**
-         *  populates dialog from completed state
+         * populates dialog from completed state
          */
         public void populateFieldsFromCompletedState() {
             final LinkedHashMap<String, String> infoMap2 = infoTable.get(file);
@@ -1486,16 +1474,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 key = (String) iter.next();
                 value = infoMap2.get(key);
 
-                
-                Set keySet2 = labelsAndComps.keySet();
-                Iterator iter2 = keySet2.iterator();
-                while(iter2.hasNext()) {
-                    JLabel l = (JLabel)iter2.next();
-                    Component comp = labelsAndComps.get(l);
-                    String name = comp.getName();
+                final Set keySet2 = labelsAndComps.keySet();
+                final Iterator iter2 = keySet2.iterator();
+                while (iter2.hasNext()) {
+                    final JLabel l = (JLabel) iter2.next();
+                    final Component comp = labelsAndComps.get(l);
+                    final String name = comp.getName();
                     if (name.equals(key)) {
                         if (comp instanceof JTextField) {
-                            JTextField t = (JTextField) comp;
+                            final JTextField t = (JTextField) comp;
                             t.setText(value);
 
                         } else if (comp instanceof JComboBox) {
@@ -1528,12 +1515,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             final int orient = origImage.getFileInfo(0).getImageOrientation();
             final String orientation = FileInfoBase.getImageOrientationStr(orient);
             // get index for extents
-            Set keySet = labelsAndComps.keySet();
-            Iterator iter = keySet.iterator();
-            while(iter.hasNext()) {
-                JLabel label = (JLabel)iter.next();
-                String l = label.getName();
-                JComponent comp = labelsAndComps.get(label);
+            final Set keySet = labelsAndComps.keySet();
+            final Iterator iter = keySet.iterator();
+            while (iter.hasNext()) {
+                final JLabel label = (JLabel) iter.next();
+                final String l = label.getName();
+                final JComponent comp = labelsAndComps.get(label);
                 if (l.equals("image_num_dimensions")) {
                     ((JTextField) comp).setText(String.valueOf(nDims));
                 } else if (l.equals("image_extent1")) {
@@ -1547,7 +1534,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 } else if (l.equals("image_extent5")) {
                     // for now...nothing
                 } else if (l.equals("image_unit1")) {
-                    JComboBox jc = (JComboBox) comp;
+                    final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
                         if (FileInfoBase.getUnitsOfMeasureStr(units[0]).equals(item)) {
@@ -1555,7 +1542,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         }
                     }
                 } else if (l.equals("image_unit2")) {
-                    JComboBox jc = (JComboBox) comp;
+                    final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
                         if (FileInfoBase.getUnitsOfMeasureStr(units[1]).equals(item)) {
@@ -1563,7 +1550,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         }
                     }
                 } else if (l.equals("image_unit3")) {
-                    JComboBox jc = (JComboBox) comp;
+                    final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
                         if (FileInfoBase.getUnitsOfMeasureStr(units[2]).equals(item)) {
@@ -1571,7 +1558,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         }
                     }
                 } else if (l.equals("image_unit4")) {
-                    JComboBox jc = (JComboBox) comp;
+                    final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
                         if (FileInfoBase.getUnitsOfMeasureStr(units[3]).equals(item)) {
@@ -1591,7 +1578,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 } else if (l.equals("image_resolution5")) {
                     // for now...nothing
                 } else if (l.equals("image_modality")) {
-                    JComboBox jc = (JComboBox) comp;
+                    final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
                         if (modalityString.equals(item)) {
@@ -1605,7 +1592,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         ((JTextField) comp).setText(String.valueOf(sliceThickness));
                     }
                 } else if (l.equals("image_orientation")) {
-                    JComboBox jc = (JComboBox) comp;
+                    final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
                         if (orientation.equals(item)) {
@@ -1682,11 +1669,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     final String name = de.getName();
 
                     // need to get appropriat value
-                    Set keySet = labelsAndComps.keySet();
-                    Iterator iter = keySet.iterator();
-                    while(iter.hasNext()) {
-                        JLabel label = (JLabel)iter.next();
-                        JComponent comp = labelsAndComps.get(label);
+                    final Set keySet = labelsAndComps.keySet();
+                    final Iterator iter = keySet.iterator();
+                    while (iter.hasNext()) {
+                        final JLabel label = (JLabel) iter.next();
+                        final JComponent comp = labelsAndComps.get(label);
                         key = label.getName();
                         labelText = label.getText();
                         if (comp instanceof JTextField) {
@@ -1809,11 +1796,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          */
         public void complete() {
             String value = "";
-            Set keySet = labelsAndComps.keySet();
-            Iterator iter = keySet.iterator();
-            while(iter.hasNext()) {
-                JLabel label = (JLabel)iter.next();
-                JComponent comp = labelsAndComps.get(label);
+            final Set keySet = labelsAndComps.keySet();
+            final Iterator iter = keySet.iterator();
+            while (iter.hasNext()) {
+                final JLabel label = (JLabel) iter.next();
+                final JComponent comp = labelsAndComps.get(label);
                 if (label.getName().equals("image_subject_id")) {
                     guid = ((JTextField) comp).getText().trim();
                     outputFileNameBaseTable.put(file, guid);
@@ -1866,21 +1853,19 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         // TODO Auto-generated method stub
 
         }
-        
-        
+
         /**
-    	 * This inner class is used to sort
-    	 * the list by instance number
-    	 */
-    	private class JLabelComparator implements Comparator {
-    		public int compare(Object oA, Object oB) {
-    			JLabel lA = (JLabel) oA;
-    			JLabel lB = (JLabel) oB;
-    			String aText = lA.getText();
-    			String bText = lB.getText();
-    			return aText.compareTo(bText);
-    		}
-    	}
+         * This inner class is used to sort the list by instance number
+         */
+        private class JLabelComparator implements Comparator {
+            public int compare(final Object oA, final Object oB) {
+                final JLabel lA = (JLabel) oA;
+                final JLabel lB = (JLabel) oB;
+                final String aText = lA.getText();
+                final String bText = lB.getText();
+                return aText.compareTo(bText);
+            }
+        }
 
     }
 
@@ -2029,61 +2014,56 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         public String getValue() {
             return value;
         }
-        
-        
-        
-       
 
     }
-    
+
     /**
      * Class that connects to NDAR data dictionary web service
+     * 
      * @author pandyan
-     *
+     * 
      */
     public class WebServiceThread extends Thread {
-    	
-    	PlugInDialogNDAR dial;
-    	
-    	WebServiceThread(PlugInDialogNDAR dial) {
-    		super();
-    		this.dial = dial;
-    	}
-    	
-    	public void run() {
-    		try {
-	    		//get OMElement from web service
-	    		progressBar = new ViewJProgressBar("NDAR", "Connecting to NDAR data dictionary web service...", 0, 100, true);
-	    		progressBar.setVisible(true);
-	    		progressBar.updateValue(20);
-	    		VToolSimpleAccessionClient client = Startup.getClient("DEMO");
-	    		try {
-	    			String DataStructureNames = "image01";
-	    			progressBar.updateValue(60);
-	    			documentElement = client.getDataDictionary(DataStructureNames);
-	    		} catch (AxisFault e) {
-	    			e.printStackTrace();
-	    		}
-	    		progressBar.updateValue(80);
-	            Iterator<OMElement> iter = documentElement.getChildElements();
-	            // should only be 1 top level Data_Structure tag
-	            dataStructElement = iter.next();
-	            namespace = dataStructElement.getNamespace().getNamespaceURI();
-	            progressBar.updateValue(100);
-	            progressBar.setVisible(false);
-	    	    progressBar.dispose();
-    		}catch(Exception e) {
-    			if(progressBar != null) {
-    				progressBar.setVisible(false);
-    	    	    progressBar.dispose();
-    	    	    MipavUtil.displayError("Error in connecting to web service");
-    	    	    dial.dispose();
-    			}
-    		}
-    	}
+
+        PlugInDialogNDAR dial;
+
+        WebServiceThread(final PlugInDialogNDAR dial) {
+            super();
+            this.dial = dial;
+        }
+
+        public void run() {
+            try {
+                // get OMElement from web service
+                progressBar = new ViewJProgressBar("NDAR", "Connecting to NDAR data dictionary web service...", 0, 100,
+                        true);
+                progressBar.setVisible(true);
+                progressBar.updateValue(20);
+                final VToolSimpleAccessionClient client = Startup.getClient("DEMO");
+                try {
+                    final String DataStructureNames = "image01";
+                    progressBar.updateValue(60);
+                    documentElement = client.getDataDictionary(DataStructureNames);
+                } catch (final AxisFault e) {
+                    e.printStackTrace();
+                }
+                progressBar.updateValue(80);
+                final Iterator<OMElement> iter = documentElement.getChildElements();
+                // should only be 1 top level Data_Structure tag
+                dataStructElement = iter.next();
+                namespace = dataStructElement.getNamespace().getNamespaceURI();
+                progressBar.updateValue(100);
+                progressBar.setVisible(false);
+                progressBar.dispose();
+            } catch (final Exception e) {
+                if (progressBar != null) {
+                    progressBar.setVisible(false);
+                    progressBar.dispose();
+                    MipavUtil.displayError("Error in connecting to web service");
+                    dial.dispose();
+                }
+            }
+        }
     }
-    
-    
-    
 
 }
