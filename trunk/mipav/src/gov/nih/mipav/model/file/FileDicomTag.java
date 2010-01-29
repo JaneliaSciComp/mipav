@@ -361,14 +361,6 @@ public class FileDicomTag extends ModelSerialCloneable {
 
         return returnValue;
     }
-    
-    
-    
-    
-
-    public Object getValue() {
-		return value;
-	}
 
 	/**
      * Returns the value(s) as an array so that each tag with a value multiplicity of more than 1 -- ie, TypeString
