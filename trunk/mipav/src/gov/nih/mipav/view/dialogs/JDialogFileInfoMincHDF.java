@@ -42,7 +42,7 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
      * @param  title   Title of the dialog.
      */
 
-    public JDialogFileInfoMincHDF(final Frame parent, final String title) {
+    public JDialogFileInfoMincHDF(Frame parent, String title) {
 	super(parent, false);
 	setTitle(title);
     }
@@ -59,36 +59,36 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
      * Recursively parse and display (to JDialogText) the nodes
      * @throws Exception
      */
-    private static void displayNodes(final DefaultMutableTreeNode rNode, final ViewTableModel model) throws Exception {
+    private static void displayNodes(DefaultMutableTreeNode rNode, ViewTableModel model) throws Exception {
 	long [] dataDims;
-	final int children = rNode.getChildCount();
+	int children = rNode.getChildCount();
 	DefaultMutableTreeNode node;
-	final Object [] rowData = { "" , "", "" };
+	Object [] rowData = { "" , "", "" };
 
 	String val;
 	for (int i = 0; i < children; i++) {
 	    node = (DefaultMutableTreeNode)rNode.getChildAt(i);
 	    if (node.isLeaf()) {
-		final HObject userObject = (HObject)node.getUserObject();
+		HObject userObject = (HObject)node.getUserObject();
 
-		final String nodeName = userObject.toString();
+		String nodeName = userObject.toString();
 		if (nodeName.startsWith(FileMincHDF.DICOM_GROUP_PREFIX)) {
 		    //do nothing, dicom tags displayed elsewhere
 		} else {
 		    rowData[0] = nodeName;
 
 		    //	dialog.append(userObject + "\n");
-		    final List<Attribute> metaData = userObject.getMetadata();
-		    final Iterator<Attribute> it = metaData.iterator();
+		    List<Attribute> metaData = userObject.getMetadata();
+		    Iterator<Attribute> it = metaData.iterator();
 		    while(it.hasNext()) {
-			final Attribute currentAttribute = it.next();
+			Attribute currentAttribute = it.next();
 			dataDims = currentAttribute.getDataDims();
-			final String name = currentAttribute.getName();
+			String name = currentAttribute.getName();
 			if (!name.equals("varid") && !name.equals("vartype") && !name.equals("version")) {
 			    rowData[1] = name;
 
 			    val = "";
-			    final Object value = currentAttribute.getValue();
+			    Object value = currentAttribute.getValue();
 			    for (int j = 0; j < dataDims[0]; j++) {
 				//System.err.println("dataDims:\t" + i + "\t" + dataDims[i]);
 
@@ -130,8 +130,8 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
      * @param  reverse       whether or not to sort in reverse order.
      * @param  isInfoDialog  DOCUMENT ME!
      */
-    public static void sort(final ViewTableModel model, final int col, final boolean reverse, final boolean isInfoDialog) {
-	final int begin = 1;
+    public static void sort(ViewTableModel model, int col, boolean reverse, boolean isInfoDialog) {
+	int begin = 1;
 
 
 
@@ -171,7 +171,7 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
      *
      * @param  e  event that triggered this action
      */
-    public void actionPerformed(final ActionEvent e) {
+    public void actionPerformed(ActionEvent e) {
 
 	if (e.getActionCommand().equals("Close")) { // close
 	    dispose(); // remove self
@@ -188,7 +188,7 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
      * @param  _image  The image being displayed.
      * @param  _info   The fileInfo to be displayed, of type FileInfoDicom.
      */
-    public void displayAboutInfo(final ModelImage _image, final FileInfoMincHDF _info, final int sIndex) {
+    public void displayAboutInfo(ModelImage _image, FileInfoMincHDF _info, int sIndex) {
 	mincInfo = _info; // set the input var
 	imageA = _image; // set the input var
 	
@@ -196,11 +196,11 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 
 	try {
 	    mainBox = new Box(BoxLayout.Y_AXIS);
-	} catch (final OutOfMemoryError error) {
+	} catch (OutOfMemoryError error) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
 
 	    return;
-	} catch (final IllegalArgumentException ex) {
+	} catch (IllegalArgumentException ex) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
 
 	    return;
@@ -208,40 +208,40 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	
 	// essential image info display
 	mainBox.add(new JLabel("Essential image information"));
-	final JTable essentialsTable = makeEssentialImageInfoTable();
+	JTable essentialsTable = makeEssentialImageInfoTable();
 	//mainBox.add(essentialsTable.getTableHeader());
 	mainBox.add(essentialsTable);
 
 	// dimension node display
 	mainBox.add(new JLabel("Dimension node"));
-	final JTable dimensionTable = makeDimensionNodeTable();
+	JTable dimensionTable = makeDimensionNodeTable();
 	mainBox.add(dimensionTable.getTableHeader());
 	mainBox.add(dimensionTable);
 	
 	// image node display
 	mainBox.add(new JLabel("Image node"));
-	final JTable imageTable = makeImageNodeTable();
+	JTable imageTable = makeImageNodeTable();
 	mainBox.add(imageTable.getTableHeader());
 	mainBox.add(imageTable);
 
 	// info node display
 	mainBox.add(new JLabel("Information node"));
-	final JTable informationTable = makeInformationNodeTable();
+	JTable informationTable = makeInformationNodeTable();
 	mainBox.add(informationTable.getTableHeader());
 	mainBox.add(informationTable);
 
 	// dicom tag display
 	mainBox.add(new JLabel("Dicom tags stored in Information node"));
-	final JTable dicomTable = makeDicomNodeTable();
+	JTable dicomTable = makeDicomNodeTable();
 	mainBox.add(dicomTable.getTableHeader());
 	mainBox.add(dicomTable);
 
 	try {
-	    scrollPaneDicom = new JScrollPane(mainBox, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-		    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+	    scrollPaneDicom = new JScrollPane(mainBox, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+		    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 	    scrollPaneDicom.setPreferredSize(new Dimension(200, 200));
 	    scrollPaneDicom.setMinimumSize(new Dimension(150, 100));
-	} catch (final OutOfMemoryError error) {
+	} catch (OutOfMemoryError error) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
 	    return;
 	}
@@ -260,11 +260,11 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	try {
 	    tableModel = new ViewTableModel();
 	    nodeTable = new JTable(tableModel);
-	} catch (final OutOfMemoryError error) {
+	} catch (OutOfMemoryError error) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
 	    error.printStackTrace();
 	    return null;
-	} catch (final IllegalArgumentException ex) {
+	} catch (IllegalArgumentException ex) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
 	    ex.printStackTrace();
 	    return null;
@@ -286,13 +286,13 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	nodeTable.getColumn("Value").setMaxWidth(1000);
 	
 	// info node display
-	final int[] extents = mincInfo.getExtents();
+	int[] extents = mincInfo.getExtents();
 
 	for (int i = 0; i < extents.length; i++) {
 	    tableModel.addRow(new Object[]{"", "Dimension " + i, new Integer(extents[i])});
 	}
 
-	final int dataType = mincInfo.getDataType();
+	int dataType = mincInfo.getDataType();
 
 	tableModel.addRow(new Object[]{"", "Type", ModelStorageBase.getBufferTypeStr(dataType)});
 
@@ -301,19 +301,19 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	
 	tableModel.addRow(new Object[]{"", "Orientation", FileInfoBase.getImageOrientationStr(mincInfo.getImageOrientation())});
 
-	final float[] resolutions = mincInfo.getResolutions();
+	float[] resolutions = mincInfo.getResolutions();
 	for (int i = 0; i < extents.length; i++) {
 	    tableModel.addRow(new Object[]{"", "Pixel resolution " + i, new Float(resolutions[i])});
 	}
 
-	final int[] measure = mincInfo.getUnitsOfMeasure();
+	int[] measure = mincInfo.getUnitsOfMeasure();
 	for (int i = 0; i < extents.length; i++) {
 	    tableModel.addRow(new Object[]{"", "Unit of measure " + i, FileInfoBase.getUnitsOfMeasureStr(measure[i])});
 	}
 	
 	tableModel.addRow(new Object[]{"", "Transformation matrix", });
 	
-	final String matrixString = imageA.getMatrix().matrixToString(8, 4);
+	String matrixString = imageA.getMatrix().matrixToString(8, 4);
 	int nextIndex = 0, index = 0;
 	String subStr = new String();
 
@@ -340,11 +340,11 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	try {
 	    tableModel = new ViewTableModel();
 	    nodeTable = new JTable(tableModel);
-	} catch (final OutOfMemoryError error) {
+	} catch (OutOfMemoryError error) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
 	    error.printStackTrace();
 	    return null;
-	} catch (final IllegalArgumentException ex) {
+	} catch (IllegalArgumentException ex) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
 	    ex.printStackTrace();
 	    return null;
@@ -368,8 +368,8 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	// dimension node display
 	if (mincInfo.getDimensionNode() != null) {
 	    try {
-		JDialogFileInfoMincHDF.displayNodes(mincInfo.getDimensionNode(), tableModel);
-	    } catch (final Exception e) {
+		displayNodes(mincInfo.getDimensionNode(), tableModel);
+	    } catch (Exception e) {
 		e.printStackTrace();
 		return null;
 	    }
@@ -385,11 +385,11 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	try {
 	    tableModel = new ViewTableModel();
 	    nodeTable = new JTable(tableModel);
-	} catch (final OutOfMemoryError error) {
+	} catch (OutOfMemoryError error) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
 	    error.printStackTrace();
 	    return null;
-	} catch (final IllegalArgumentException ex) {
+	} catch (IllegalArgumentException ex) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
 	    ex.printStackTrace();
 	    return null;
@@ -413,8 +413,8 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	// image node display
 	if (mincInfo.getInfoNode() != null) {
 	    try {
-		JDialogFileInfoMincHDF.displayNodes(mincInfo.getImageNode(), tableModel);
-	    } catch (final Exception e) {
+		displayNodes(mincInfo.getImageNode(), tableModel);
+	    } catch (Exception e) {
 		e.printStackTrace();
 		return null;
 	    }
@@ -430,11 +430,11 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	try {
 	    tableModel = new ViewTableModel();
 	    nodeTable = new JTable(tableModel);
-	} catch (final OutOfMemoryError error) {
+	} catch (OutOfMemoryError error) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
 	    error.printStackTrace();
 	    return null;
-	} catch (final IllegalArgumentException ex) {
+	} catch (IllegalArgumentException ex) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
 	    ex.printStackTrace();
 	    return null;
@@ -458,8 +458,8 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	// info node display
 	if (mincInfo.getInfoNode() != null) {
 	    try {
-		JDialogFileInfoMincHDF.displayNodes(mincInfo.getInfoNode(), tableModel);
-	    } catch (final Exception e) {
+		displayNodes(mincInfo.getInfoNode(), tableModel);
+	    } catch (Exception e) {
 		e.printStackTrace();
 		return null;
 	    }
@@ -475,11 +475,11 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	try {
 	    tableModel = new ViewTableModel();
 	    nodeTable = new JTable(tableModel);
-	} catch (final OutOfMemoryError error) {
+	} catch (OutOfMemoryError error) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Out of memory!");
 	    error.printStackTrace();
 	    return null;
-	} catch (final IllegalArgumentException ex) {
+	} catch (IllegalArgumentException ex) {
 	    MipavUtil.displayError("JDialogFileInfoMincHDF reports: Editing table too small!");
 	    ex.printStackTrace();
 	    return null;
@@ -501,22 +501,20 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
 	nodeTable.getColumn("Value").setMaxWidth(1000);
 	
 	// dicom tag display (technically part of info node)
-	String keyString;
 	FileDicomKey key;
-	final Hashtable<String, String> dicomTagList = mincInfo.getDicomTable();
-	final Enumeration<String> keyList = dicomTagList.keys();
+	Hashtable<FileDicomKey,FileDicomTag> dicomTagList = mincInfo.getDicomTable();
+	Enumeration<FileDicomKey> keyList = dicomTagList.keys();
 	
 	if (dicomTagList.size() > 0) {
 	    try {
 		while (keyList.hasMoreElements()) {
-		    keyString = keyList.nextElement();
-		    key = new FileDicomKey(keyString);
+		    key = keyList.nextElement();
 		    
-		    tableModel.addRow(new Object[]{"(" + key + ")", DicomDictionary.getName(key), dicomTagList.get(keyString)});
+		    tableModel.addRow(new Object[]{"(" + key + ")", dicomTagList.get(key).getName(), dicomTagList.get(key).getValue(true)});
 		}
 		
-		JDialogFileInfoMincHDF.sort(tableModel, 0, false, true);
-	    } catch (final Exception e) {
+		sort(tableModel, 0, false, true);
+	    } catch (Exception e) {
 		e.printStackTrace();
 		return null;
 	    }
