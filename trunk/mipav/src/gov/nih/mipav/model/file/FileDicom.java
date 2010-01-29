@@ -740,11 +740,6 @@ public class FileDicom extends FileDicomBase {
             }
 
             try {
-            	
-            	 if(name.equals("5200,9230")) {
-            		 //System.out.println("blah");
-            		 
-            	 }
 
                 if (type.equals(FileDicomBase.TYPE_STRING)) {
                     strValue = getString(elementLength);
@@ -858,6 +853,7 @@ public class FileDicom extends FileDicomBase {
                     		Set keySet = dataSet.keySet();
                     		Iterator<String> iter = keySet.iterator();
                     		String value;
+                    		int vm;
                     			while(iter.hasNext()) {
                     	        	String k = iter.next();
                     	        	FileDicomTag entry = dataSet.get(k);
@@ -875,11 +871,12 @@ public class FileDicom extends FileDicomBase {
                                     			String kSub = subIter.next();
                                 	        	FileDicomTag subEntry = subDataSet.get(kSub);
                                 	        	elemLength = subEntry.getLength();
+                                	        	vm = subEntry.getValueMultiplicity();
                                 	        	fdKey = new FileDicomKey(kSub);
                             	                if(i==0) {
-                            	                	tagTable.setValue(fdKey, subEntry.getValue(), elemLength);
+                            	                	tagTable.setValue(fdKey, subEntry.getValue(true), elemLength);
                             	                }else {
-                            	                	childrenTagTables[i-1].setValue(fdKey, subEntry.getValue(), elemLength);
+                            	                	childrenTagTables[i-1].setValue(fdKey, subEntry.getValue(true), elemLength);
                             	                }
                                     		}
                     	                }
@@ -887,9 +884,9 @@ public class FileDicom extends FileDicomBase {
                     	                elemLength = entry.getLength();
                     	                fdKey = new FileDicomKey(k);
                     	                if(i==0) {
-                    	                	tagTable.setValue(fdKey, entry.getValue(), elemLength);
+                    	                	tagTable.setValue(fdKey, entry.getValue(true), elemLength);
                     	                }else {
-                    	                	childrenTagTables[i-1].setValue(fdKey, entry.getValue(), elemLength);
+                    	                	childrenTagTables[i-1].setValue(fdKey, entry.getValue(true), elemLength);
                     	                }
                     	            }
                     			}
