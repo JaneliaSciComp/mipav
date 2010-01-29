@@ -850,46 +850,43 @@ public class FileDicom extends FileDicomBase {
                     	for(int i=0;i<v.size();i++) {
                     		FileDicomItem item = v.get(i);
                     		TreeMap<String, FileDicomTag> dataSet = item.getDataSet();
-                    		Set keySet = dataSet.keySet();
+                    		Set<String> keySet = dataSet.keySet();
                     		Iterator<String> iter = keySet.iterator();
-                    		String value;
-                    		int vm;
-                    			while(iter.hasNext()) {
-                    	        	String k = iter.next();
-                    	        	FileDicomTag entry = dataSet.get(k);
-                    	        	String vr = entry.getValueRepresentation();
-                    	        	String  t = FileDicomTagInfo.getType(vr);
-                    	        	if (t.equals(FileDicomBase.TYPE_SEQUENCE)) {
-                    	                elemLength = entry.getLength();
-                    	                Vector<FileDicomItem> vSeq = ((FileDicomSQ) entry.getValue(true)).getSequence();
-                    	                for(int m=0;m<vSeq.size();m++) {
-                                    		FileDicomItem subItem = vSeq.get(m);
-                                    		TreeMap<String, FileDicomTag> subDataSet = subItem.getDataSet();
-                                    		Set subKeySet = subDataSet.keySet();
-                                    		Iterator<String> subIter = subKeySet.iterator();
-                                    		while(subIter.hasNext()) {
-                                    			String kSub = subIter.next();
-                                	        	FileDicomTag subEntry = subDataSet.get(kSub);
-                                	        	elemLength = subEntry.getLength();
-                                	        	vm = subEntry.getValueMultiplicity();
-                                	        	fdKey = new FileDicomKey(kSub);
-                            	                if(i==0) {
-                            	                	tagTable.setValue(fdKey, subEntry.getValue(true), elemLength);
-                            	                }else {
-                            	                	childrenTagTables[i-1].setValue(fdKey, subEntry.getValue(true), elemLength);
-                            	                }
-                                    		}
-                    	                }
-                    	        	} else {
-                    	                elemLength = entry.getLength();
-                    	                fdKey = new FileDicomKey(k);
-                    	                if(i==0) {
-                    	                	tagTable.setValue(fdKey, entry.getValue(true), elemLength);
-                    	                }else {
-                    	                	childrenTagTables[i-1].setValue(fdKey, entry.getValue(true), elemLength);
-                    	                }
-                    	            }
-                    			}
+                			while(iter.hasNext()) {
+                	        	String k = iter.next();
+                	        	FileDicomTag entry = dataSet.get(k);
+                	        	String vr = entry.getValueRepresentation();
+                	        	String  t = FileDicomTagInfo.getType(vr);
+                	        	if (t.equals(FileDicomBase.TYPE_SEQUENCE)) {
+                	                elemLength = entry.getLength();
+                	                Vector<FileDicomItem> vSeq = ((FileDicomSQ) entry.getValue(true)).getSequence();
+                	                for(int m=0;m<vSeq.size();m++) {
+                                		FileDicomItem subItem = vSeq.get(m);
+                                		TreeMap<String, FileDicomTag> subDataSet = subItem.getDataSet();
+                                		Set<String> subKeySet = subDataSet.keySet();
+                                		Iterator<String> subIter = subKeySet.iterator();
+                                		while(subIter.hasNext()) {
+                                			String kSub = subIter.next();
+                            	        	FileDicomTag subEntry = subDataSet.get(kSub);
+                            	        	elemLength = subEntry.getLength();
+                            	        	fdKey = new FileDicomKey(kSub);
+                        	                if(i==0) {
+                        	                	tagTable.setValue(fdKey, subEntry.getValue(true), elemLength);
+                        	                }else {
+                        	                	childrenTagTables[i-1].setValue(fdKey, subEntry.getValue(true), elemLength);
+                        	                }
+                                		}
+                	                }
+                	        	} else {
+                	                elemLength = entry.getLength();
+                	                fdKey = new FileDicomKey(k);
+                	                if(i==0) {
+                	                	tagTable.setValue(fdKey, entry.getValue(true), elemLength);
+                	                }else {
+                	                	childrenTagTables[i-1].setValue(fdKey, entry.getValue(true), elemLength);
+                	                }
+                	            }
+                			}
                     	}
                     	//remove tag 5200,9230 if its there
                     	FileDicomTag removeTag = tagTable.get(key);
