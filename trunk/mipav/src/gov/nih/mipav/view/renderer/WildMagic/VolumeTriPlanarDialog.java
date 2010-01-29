@@ -2,40 +2,25 @@ package gov.nih.mipav.view.renderer.WildMagic;
 
 
 import gov.nih.mipav.MipavMath;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.ModelRGB;
-import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
+
+import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
-import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
+import javax.swing.*;
+import javax.swing.border.*;
 
 import WildMagic.LibFoundation.Mathematics.BitHacks;
 
 
 /**
  * @author Alexandra
- *
+ * 
  */
 public class VolumeTriPlanarDialog extends JInterfaceBase {
 
@@ -64,7 +49,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     private ModelImage imageA, imageB;
 
     /** Lookup table of the imageA, B. */
-    private ModelLUT LUTa = null, LUTb = null;
+    private final ModelLUT LUTa = null, LUTb = null;
 
     /** Resample filter type, default: Trilinear Interpoloation. */
     private int m_iFilter = 0;
@@ -73,11 +58,10 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     private JComboBox m_kFilterType;
 
     /** Number of available dimension. */
-    private int nDim;
+    private final int nDim;
 
     /** Resample resolution corresponding to Power of 2. */
     private float[] newRes = new float[3];
-
 
     /** Original resolution array. */
     private float[] res;
@@ -86,11 +70,12 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     private int[] volExtents = new int[3];
 
     /** Volume size X*Y*Z. */
-    private int volSize = 1;
-    
+    private final int volSize = 1;
+
     private String m_kParentDir = null;
+
     private JRadioButton m_kCompute = null;
-    
+
     /**
      * Creates the dialog, using the input parameters to place it on the screen.
      * 
@@ -98,8 +83,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      * @param _imageB Model image B.
      * @param kCommand the re-sample command.
      */
-    public VolumeTriPlanarDialog(ModelImage _imageA, ModelImage _imageB)
-    { 
+    public VolumeTriPlanarDialog(final ModelImage _imageA, final ModelImage _imageB) {
         extents = _imageA.getExtents();
         res = _imageA.getFileInfo(0).getResolutions();
         nDim = extents.length;
@@ -109,28 +93,28 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
             return;
         }
         boolean bDirExists = true;
-        String kImageName = ModelImage.makeImageName( _imageA.getFileInfo(0).getFileName(), "");
-        m_kParentDir = _imageA.getFileInfo()[0].getFileDirectory().concat( kImageName + "_RenderFiles" + File.separator);
-        //System.err.println( m_kParentDir );
-        File kDir = new File( m_kParentDir );
-        if ( !kDir.exists() )
-        {
+        final String kImageName = ModelImage.makeImageName(_imageA.getFileInfo(0).getFileName(), "");
+        m_kParentDir = _imageA.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
+        // System.err.println( m_kParentDir );
+        final File kDir = new File(m_kParentDir);
+        if ( !kDir.exists()) {
             bDirExists = false;
             try {
                 kDir.mkdir();
-            } catch (SecurityException e) {}
+            } catch (final SecurityException e) {}
         }
-        init( bDirExists );     
+        init(bDirExists);
         imageA = _imageA;
         imageB = _imageB;
     }
 
-
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
+    public void actionPerformed(final ActionEvent event) {
+        final String command = event.getActionCommand();
 
         if (command.equals("OK")) {
 
@@ -227,13 +211,14 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     public void exec() {
 
         try {
-                VolumeTriPlanarInterface kWM = new VolumeTriPlanarInterface(imageA, imageB, m_iFilter, m_kCompute.isSelected(), m_kParentDir, volExtents );
-        } catch (NoClassDefFoundError notAvailableError) {
+            final VolumeTriPlanarInterface kWM = new VolumeTriPlanarInterface(imageA, imageB, m_iFilter, m_kCompute
+                    .isSelected(), m_kParentDir, volExtents);
+        } catch (final NoClassDefFoundError notAvailableError) {
             Preferences.debug("ViewJFrameSurfaceRenderer cannot be called; encountered "
                     + "a NoClassDefFoundError.  \nIt is likely that JOGL is "
                     + "not available on this system.  The error is: \n" + notAvailableError.getLocalizedMessage());
             MipavUtil.displayError("The surface renderer requires JOGL and it cannot be found.");
-        } catch (OutOfMemoryError notEnoughError) {
+        } catch (final OutOfMemoryError notEnoughError) {
             Preferences.debug("ViewJFrameSurfaceRenderer cannot be called as there was "
                     + "not enough memory allocated.  \n" + "The error is: \n" + notEnoughError.getLocalizedMessage());
             MipavUtil.displayError("The surface renderer requires more memory " + "than is currently available;\n"
@@ -245,39 +230,41 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
     /**
      * Initializes the dialog user-interface.
      */
-    public void init( boolean bUsePreComputedFiles ) {
+    public void init(boolean bUsePreComputedFiles) {
 
         try {
             setIconImage(MipavUtil.getIconImage("wm.gif"));
-        } catch (Exception e) {}
-        
+        } catch (final Exception e) {
+            // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
+        }
+
         setTitle("3D Volume & Surface Viewer");
 
-        Box mainBox = new Box(BoxLayout.Y_AXIS);
-        Box kReuseBox = new Box(BoxLayout.X_AXIS);
-        JRadioButton kReuse = new JRadioButton( "Reuse PreComputed Files" );
-        kReuse.setEnabled( bUsePreComputedFiles );
-        kReuse.setSelected( bUsePreComputedFiles );
+        final Box mainBox = new Box(BoxLayout.Y_AXIS);
+        final Box kReuseBox = new Box(BoxLayout.X_AXIS);
+        final JRadioButton kReuse = new JRadioButton("Reuse PreComputed Files");
+        kReuse.setEnabled(bUsePreComputedFiles);
+        kReuse.setSelected(bUsePreComputedFiles);
         kReuse.addActionListener(this);
-        kReuse.setActionCommand( "ReuseFiles" );
+        kReuse.setActionCommand("ReuseFiles");
         kReuseBox.add(kReuse);
-        m_kCompute = new JRadioButton( "Compute Render Files" );
-        m_kCompute.setEnabled( true );
-        m_kCompute.setSelected( !bUsePreComputedFiles );
+        m_kCompute = new JRadioButton("Compute Render Files");
+        m_kCompute.setEnabled(true);
+        m_kCompute.setSelected( !bUsePreComputedFiles);
         m_kCompute.addActionListener(this);
-        m_kCompute.setActionCommand( "ComputeFiles" );
+        m_kCompute.setActionCommand("ComputeFiles");
         kReuseBox.add(m_kCompute);
-        ButtonGroup kGroup = new ButtonGroup();
-        kGroup.add( kReuse );
-        kGroup.add( m_kCompute );
+        final ButtonGroup kGroup = new ButtonGroup();
+        kGroup.add(kReuse);
+        kGroup.add(m_kCompute);
         mainBox.add(kReuseBox);
-        
-        Box contentBox = new Box(BoxLayout.X_AXIS);
-        JPanel leftPanel = new JPanel();
-        JPanel rightPanel = new JPanel();
+
+        final Box contentBox = new Box(BoxLayout.X_AXIS);
+        final JPanel leftPanel = new JPanel();
+        final JPanel rightPanel = new JPanel();
 
         // make border
-        leftPanel.setBorder(buildTitledBorder("Original Extents"));
+        leftPanel.setBorder(JInterfaceBase.buildTitledBorder("Original Extents"));
         contentBox.add(leftPanel);
 
         // set layout
@@ -289,7 +276,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         // extent X
         leftPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extXLabel = new JLabel("extent X:");
+        final JLabel extXLabel = new JLabel("extent X:");
 
         extXLabel.setFont(MipavUtil.font12);
         extXLabel.setForeground(Color.black);
@@ -308,7 +295,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         // extent Y
         leftPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extYLabel = new JLabel("extent Y:");
+        final JLabel extYLabel = new JLabel("extent Y:");
 
         extYLabel.setFont(MipavUtil.font12);
         extYLabel.setForeground(Color.black);
@@ -327,7 +314,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         // extent Z
         leftPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extZLabel = new JLabel("extent Z:");
+        final JLabel extZLabel = new JLabel("extent Z:");
 
         extZLabel.setFont(MipavUtil.font12);
         extZLabel.setForeground(Color.black);
@@ -344,7 +331,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         leftPanel.add(extZInput);
 
         // make border
-        rightPanel.setBorder(buildTitledBorder("Expected Extents"));
+        rightPanel.setBorder(JInterfaceBase.buildTitledBorder("Expected Extents"));
         contentBox.add(rightPanel);
 
         // set layout
@@ -355,7 +342,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         // extent X expected
         rightPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extXNewLabel = new JLabel("extent X:");
+        final JLabel extXNewLabel = new JLabel("extent X:");
 
         extXNewLabel.setFont(MipavUtil.font12);
         extXNewLabel.setForeground(Color.black);
@@ -365,12 +352,11 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         rightPanel.add(extXNewLabel);
         rightPanel.add(Box.createHorizontalStrut(10));
 
-
         // Checking to see if the image has all dimensions that are a power of 2.
         for (int i = 0; i < 3; i++) {
             volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
         }
-        
+
         extXOutput = new JTextField(Integer.toString(volExtents[0]), 3);
         extXOutput.addActionListener(this);
         extXOutput.setActionCommand("xChanged");
@@ -382,7 +368,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         // extent Y expected
         rightPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extYNewLabel = new JLabel("extent Y:");
+        final JLabel extYNewLabel = new JLabel("extent Y:");
 
         extYNewLabel.setFont(MipavUtil.font12);
         extYNewLabel.setForeground(Color.black);
@@ -403,7 +389,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         // extent Z expected
         rightPanel.add(Box.createHorizontalStrut(10));
 
-        JLabel extZNewLabel = new JLabel("extent Z:");
+        final JLabel extZNewLabel = new JLabel("extent Z:");
 
         extZNewLabel.setFont(MipavUtil.font12);
         extZNewLabel.setForeground(Color.black);
@@ -424,8 +410,8 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         mainBox.add(contentBox);
 
         /* Filter selection: */
-        JPanel filterPanel = new JPanel();
-        filterPanel.setBorder(buildTitledBorder("Select Resampling Filter"));
+        final JPanel filterPanel = new JPanel();
+        filterPanel.setBorder(JInterfaceBase.buildTitledBorder("Select Resampling Filter"));
         m_kFilterType = new JComboBox();
         m_kFilterType.addItem(new String("Trilinear Interpolation"));
         m_kFilterType.addItem(new String("Nearest Neighbor"));
@@ -445,7 +431,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
         gbc = new GridBagConstraints();
         gbc.gridwidth = 2;
 
-        JPanel OKCancelPanel = new JPanel(new FlowLayout());
+        final JPanel OKCancelPanel = new JPanel(new FlowLayout());
         OKCancelPanel.add(buildOKButton());
         OKCancelPanel.add(buildCancelButton());
 
@@ -467,14 +453,14 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      * @param event
      */
     public synchronized void itemStateChanged(@SuppressWarnings("unused")
-    ItemEvent event) {}
+    final ItemEvent event) {}
 
     /**
      * Makes the dialog visible in center of screen.
      * 
      * @param status Flag indicating if the dialog should be visible.
      */
-    public void setVisible(boolean status) {
+    public void setVisible(final boolean status) {
 
         if ( (status == true) && (isVisible() == false)) {
 
@@ -497,7 +483,7 @@ public class VolumeTriPlanarDialog extends JInterfaceBase {
      * 
      * @return The titled border.
      */
-    protected TitledBorder buildTitledBorder(String title, Border _border) {
+    protected TitledBorder buildTitledBorder(final String title, final Border _border) {
         return new TitledBorder(_border, title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B, Color.black);
     }
 

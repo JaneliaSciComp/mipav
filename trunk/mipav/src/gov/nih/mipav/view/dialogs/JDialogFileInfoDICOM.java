@@ -60,7 +60,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
     /** DOCUMENT ME! */
     private boolean showPrivate = Preferences.is(Preferences.PREF_SHOW_PRIVATE_TAGS); // if this class shows private
-                                                                                        // tags (priv)
+
+    // tags (priv)
 
     /** DOCUMENT ME! */
     private ViewTableModel tagsModel;
@@ -113,10 +114,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     public JDialogFileInfoDICOM(final Frame parent, final String title) {
         super(parent, false);
         setTitle(title);
-        try{
-        	setIconImage(MipavUtil.getIconImage("header.gif"));
-        }catch(Exception e) {
-        	
+        try {
+            setIconImage(MipavUtil.getIconImage("header.gif"));
+        } catch (final Exception e) {
+            // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
         }
     }
 
@@ -220,13 +221,13 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 rowData[2] = st.nextToken();
 
                                 if (st.hasMoreTokens()) {
-                                	String s = st.nextToken();
-                                	if(s.length() > 0) {
-	                                	char c = s.charAt(s.length() - 1);
-	                                	if(c == '\0') {
-	                                		s = s.substring(0, s.indexOf(c));
-	                                	}
-                                	}
+                                    String s = st.nextToken();
+                                    if (s.length() > 0) {
+                                        final char c = s.charAt(s.length() - 1);
+                                        if (c == '\0') {
+                                            s = s.substring(0, s.indexOf(c));
+                                        }
+                                    }
                                     rowData[3] = s;
                                 }
                             } else {
@@ -263,11 +264,11 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 }
                             }
                         }
-                        if(dispString.length() > 0) {
-	                        char c = dispString.charAt(dispString.length() - 1);
-	                    	if(c == '\0') {
-	                    		dispString = dispString.substring(0, dispString.indexOf(c));
-	                    	}
+                        if (dispString.length() > 0) {
+                            final char c = dispString.charAt(dispString.length() - 1);
+                            if (c == '\0') {
+                                dispString = dispString.substring(0, dispString.indexOf(c));
+                            }
                         }
                         rowData[3] = dispString;
                     }
@@ -293,12 +294,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 else if (vr.equals("PN")) {
                     String s = (String) ((FileDicomTag) tagsList.get(key)).getValue(true);
                     s = s.replace('^', ',');
-                    
-                    if(s.length() > 0) {
-	                    char c = s.charAt(s.length() - 1);
-	                	if(c == '\0') {
-	                		s = s.substring(0, s.indexOf(c));
-	                	}
+
+                    if (s.length() > 0) {
+                        final char c = s.charAt(s.length() - 1);
+                        if (c == '\0') {
+                            s = s.substring(0, s.indexOf(c));
+                        }
                     }
                     rowData[3] = s;
                 } else if (name.equals("0008,0060")) {
@@ -447,11 +448,11 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     }
                 } else if (name.equals("0008,0064")) {
                     String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
-                    if(s.length() > 0) {
-	                    char c = s.charAt(s.length() - 1);
-	                	if(c == '\0') {
-	                		s = s.substring(0, s.indexOf(c));
-	                	}
+                    if (s.length() > 0) {
+                        final char c = s.charAt(s.length() - 1);
+                        if (c == '\0') {
+                            s = s.substring(0, s.indexOf(c));
+                        }
                     }
 
                     if (s.equals("DV")) {
@@ -465,11 +466,11 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     }
                 } else if (name.equals("0018,5100")) {
                     String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
-                    if(s.length() > 0) {
-	                    char c = s.charAt(s.length() - 1);
-	                	if(c == '\0') {
-	                		s = s.substring(0, s.indexOf(c));
-	                	}
+                    if (s.length() > 0) {
+                        final char c = s.charAt(s.length() - 1);
+                        if (c == '\0') {
+                            s = s.substring(0, s.indexOf(c));
+                        }
                     }
                     if (s.equals("HFP")) {
                         rowData[3] = "Head First-Prone";
@@ -507,13 +508,13 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                             rowData[2] = st.nextToken();
 
                             if (st.hasMoreTokens()) {
-                            	String s = st.nextToken();
-                            	if(s.length() > 0) {
-	                            	char c = s.charAt(s.length() - 1);
-	                            	if(c == '\0') {
-	                            		s = s.substring(0, s.indexOf(c));
-	                            	}
-                            	}
+                                String s = st.nextToken();
+                                if (s.length() > 0) {
+                                    final char c = s.charAt(s.length() - 1);
+                                    if (c == '\0') {
+                                        s = s.substring(0, s.indexOf(c));
+                                    }
+                                }
                                 rowData[3] = s;
                             }
                         } else {
@@ -548,11 +549,11 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                             dispString += ", ";
                         }
                     }
-                    if(dispString.length() > 0) {
-	                    char c = dispString.charAt(dispString.length() - 1);
-	                	if(c == '\0') {
-	                		dispString = dispString.substring(0, dispString.indexOf(c));
-	                	}
+                    if (dispString.length() > 0) {
+                        final char c = dispString.charAt(dispString.length() - 1);
+                        if (c == '\0') {
+                            dispString = dispString.substring(0, dispString.indexOf(c));
+                        }
                     }
                     rowData[3] = dispString;
                 }
@@ -647,13 +648,13 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 rowData[1] = st.nextToken();
 
                                 if (st.hasMoreTokens()) {
-                                	String s = st.nextToken();
-                                	if(s.length() > 0) {
-	                                	char c = s.charAt(s.length() - 1);
-	                                	if(c == '\0') {
-	                                		s = s.substring(0, s.indexOf(c));
-	                                	}
-                                	}
+                                    String s = st.nextToken();
+                                    if (s.length() > 0) {
+                                        final char c = s.charAt(s.length() - 1);
+                                        if (c == '\0') {
+                                            s = s.substring(0, s.indexOf(c));
+                                        }
+                                    }
                                     rowData[2] = s;
                                 }
                             } else {
@@ -691,12 +692,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                             }
                         }
 
-                    	if(dispString.length() > 0) {
-                        	char c = dispString.charAt(dispString.length() - 1);
-                        	if(c == '\0') {
-                        		dispString = dispString.substring(0, dispString.indexOf(c));
-                        	}
-                    	}
+                        if (dispString.length() > 0) {
+                            final char c = dispString.charAt(dispString.length() - 1);
+                            if (c == '\0') {
+                                dispString = dispString.substring(0, dispString.indexOf(c));
+                            }
+                        }
                         rowData[2] = dispString;
                     }
                     // // vm = 2 for patient orientation
@@ -721,13 +722,13 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 else if (vr.equals("PN")) {
                     String s = (String) ((FileDicomTag) tagsList.get(key)).getValue(true);
                     s = s.replace('^', ',');
-                    if(s.length() > 0) {
-                    	char c = s.charAt(s.length() - 1);
-                    	if(c == '\0') {
-                    		s = s.substring(0, s.indexOf(c));
-                    	}
-                	}
-                    
+                    if (s.length() > 0) {
+                        final char c = s.charAt(s.length() - 1);
+                        if (c == '\0') {
+                            s = s.substring(0, s.indexOf(c));
+                        }
+                    }
+
                     rowData[2] = s;
                 } else if (name.equals("0008,0060")) {
 
@@ -958,12 +959,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                             dispString += ", ";
                         }
                     }
-                    if(dispString.length() > 0) {
-                    	char c = dispString.charAt(dispString.length() - 1);
-                    	if(c == '\0') {
-                    		dispString = dispString.substring(0, dispString.indexOf(c));
-                    	}
-                	}
+                    if (dispString.length() > 0) {
+                        final char c = dispString.charAt(dispString.length() - 1);
+                        if (c == '\0') {
+                            dispString = dispString.substring(0, dispString.indexOf(c));
+                        }
+                    }
                     rowData[2] = dispString;
                 }
 
@@ -1056,13 +1057,13 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 rowData[1] = st.nextToken();
 
                                 if (st.hasMoreTokens()) {
-                                	String s = st.nextToken();
-                                	if(s.length() > 0) {
-	                                	char c = s.charAt(s.length() - 1);
-	                                	if(c == '\0') {
-	                                		s = s.substring(0, s.indexOf(c));
-	                                	}
-                                	}
+                                    String s = st.nextToken();
+                                    if (s.length() > 0) {
+                                        final char c = s.charAt(s.length() - 1);
+                                        if (c == '\0') {
+                                            s = s.substring(0, s.indexOf(c));
+                                        }
+                                    }
                                     rowData[2] = s;
                                 }
                             } else {
@@ -1099,12 +1100,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 }
                             }
                         }
-                        if(dispString.length() > 0) {
-                        	char c = dispString.charAt(dispString.length() - 1);
-                        	if(c == '\0') {
-                        		dispString = dispString.substring(0, dispString.indexOf(c));
-                        	}
-                    	}
+                        if (dispString.length() > 0) {
+                            final char c = dispString.charAt(dispString.length() - 1);
+                            if (c == '\0') {
+                                dispString = dispString.substring(0, dispString.indexOf(c));
+                            }
+                        }
                         rowData[2] = dispString;
                     }
                     // // vm = 2 for patient orientation
@@ -1129,12 +1130,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 else if (vr.equals("PN")) {
                     String s = (String) (tagsList.get(key)).getValue(true);
                     s = s.replace('^', ',');
-                    if(s.length() > 0) {
-                    	char c = s.charAt(s.length() - 1);
-                    	if(c == '\0') {
-                    		s = s.substring(0, s.indexOf(c));
-                    	}
-                	}
+                    if (s.length() > 0) {
+                        final char c = s.charAt(s.length() - 1);
+                        if (c == '\0') {
+                            s = s.substring(0, s.indexOf(c));
+                        }
+                    }
                     rowData[2] = s;
                 } else if (name.equals("0008,0060")) {
                     rowData[2] = DicomInfo.getTag("0008,0060");
@@ -1189,13 +1190,13 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                             rowData[1] = st.nextToken();
 
                             if (st.hasMoreTokens()) {
-                            	String s = st.nextToken();
-                            	if(s.length() > 0) {
-                                	char c = s.charAt(s.length() - 1);
-                                	if(c == '\0') {
-                                		s = s.substring(0, s.indexOf(c));
-                                	}
-                            	}
+                                String s = st.nextToken();
+                                if (s.length() > 0) {
+                                    final char c = s.charAt(s.length() - 1);
+                                    if (c == '\0') {
+                                        s = s.substring(0, s.indexOf(c));
+                                    }
+                                }
                                 rowData[2] = s;
                             }
                         } else {
@@ -1231,12 +1232,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         }
                     }
 
-                	if(dispString.length() > 0) {
-                    	char c = dispString.charAt(dispString.length() - 1);
-                    	if(c == '\0') {
-                    		dispString = dispString.substring(0, dispString.indexOf(c));
-                    	}
-                	}
+                    if (dispString.length() > 0) {
+                        final char c = dispString.charAt(dispString.length() - 1);
+                        if (c == '\0') {
+                            dispString = dispString.substring(0, dispString.indexOf(c));
+                        }
+                    }
                     rowData[2] = dispString;
                 }
 
@@ -1381,7 +1382,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             }
 
             JDialogFileInfoDICOM.showTags(tagsModel, DicomInfo, showPrivate); // display whatever the current
-                                                                                // showPrivate status
+            // showPrivate status
 
         } else if (e.getActionCommand().equals("AnonymizeImage")) { // anonymize image
             new JDialogAnonymizeImage(this, imageA); // changes the image internally,
@@ -1440,12 +1441,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 }
 
                 editorDialogDicom = new JDialogDICOMTagEditor(this, tagKey, DicomInfo.getTagTable(), false); // make
-                                                                                                                // a
-                                                                                                                // dialog
-                                                                                                                // that
-                                                                                                                // edits
-                                                                                                                // that
-                                                                                                                // particular
+                // a
+                // dialog
+                // that
+                // edits
+                // that
+                // particular
                 editorDialogDicom.addButtonListener(this);
                 editorDialogDicom.addWindowListener(new WindowAdapter() { // listen for when the dialog comes alive
                             public void windowActivated(final WindowEvent e) {
@@ -1509,7 +1510,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
                                         setTitle(imageA.getImageName());
                                     } else { // do not apply this change to all image-info. Apply this change to only
-                                                // this
+                                        // this
                                         // slice.
 
                                         // place the tag back into the DicomInfo
@@ -1537,8 +1538,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                     }
 
                                     JDialogFileInfoDICOM.showTags(tagsModel, DicomInfo, showPrivate); // update the
-                                                                                                        // displayed
-                                                                                                        // table
+                                    // displayed
+                                    // table
                                 } else {}
                             }
 
