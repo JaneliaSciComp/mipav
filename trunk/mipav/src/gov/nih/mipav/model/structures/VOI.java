@@ -4801,7 +4801,7 @@ System.err.println("curves size: " );
      */
     public void setActive(boolean act) {
         this.active = act;
-        fireVOIselection();
+        //fireVOIselection();
     }
 
     /**
