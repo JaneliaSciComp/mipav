@@ -89,6 +89,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
     private double max_constr[];
     private double comp[];
     private double elist[];
+    private double ymodel[];
     private int i;
     private int xDim;
     private int yDim;
@@ -179,13 +180,15 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         double[] params;
         float destArray[];
         int j;
-        boolean test = false;
+        boolean testDraper = false;
+        boolean testHock25 = false;
         
-        if (test) {
+        if (testDraper) {
         	// Below is an example used to fit y = alpha - beta*(rho**x)
         	// This example implements the solution of problem D of chapter 24 of Applied Regression Analysis, Third Edition by
         	// Norman R. Draper and Harry Smith */
         	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
+        	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
             double[] xSeries = new double[5];
             float[] ySeries = new float[5];
             double[] initial = new double[3];
@@ -210,6 +213,29 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             return;
         }
         
+        if (testHock25) {
+        	// Below is an example used to fit y = (-50.0 * log(0.01*i)**(2.0/3.0) + 25.0
+        	// where a0 = -50, a1 = 2.0/3.0, a3 = 25.0
+        	// Variant of test example 25 from Hock and Schittkowski
+        	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
+        	double xSeries[] = new double[99];
+        	double ySeries[] = new double[99];
+        	double initial[] = new double[3];
+        	int nPoints = 99;
+        	Fit25HModel fmod;
+        	for (i = 1; i <= 99; i++) {
+        		xSeries[i-1] = 0.01 * i;
+        		ySeries[i-1] = Math.pow((-50.0 * Math.log(xSeries[i-1])),2.0/3.0) + 25.0;
+        	}
+        	initial[0] = -100.0;
+        	initial[1] = 1.0/3.0;
+        	initial[2] = 12.5;
+        	fmod = new Fit25HModel(nPoints, xSeries, ySeries, initial);
+        	fmod.driver();
+            fmod.dumpResults();
+            return;
+        }
+        
         if (srcImage.getNDims() != 4) {
             MipavUtil.displayError("srcImage must be 4D");
             setCompleted(false);
@@ -222,7 +248,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         zDim = srcImage.getExtents()[2];
         tDim = srcImage.getExtents()[3];
         volSize = xDim * yDim * zDim;
-        size4D = volSize * tDim;
+        size4D = volSize * (tDim - nFirst);
         destArray = new float[3 * volSize];
         
         tf = srcImage.getFileInfo()[0].getResolutions()[3];
@@ -280,10 +306,11 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             }
         }
         
-        ts_array = new double[tDim];
-        x_array = new double[tDim];
-        for (t = 0; t < tDim; t++) {
-        	x_array[t] = t * tf;
+        ts_array = new double[tDim-nFirst];
+        x_array = new double[tDim-nFirst];
+        ymodel = new double[tDim-nFirst];
+        for (t = nFirst; t < tDim; t++) {
+        	x_array[t-nFirst] = (t-nFirst) * tf;
         }
         
         comp = new double[tDim];
@@ -407,10 +434,10 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         buf4D = new double[size4D];
         
         try {
-            srcImage.exportData(0, size4D, buf4D);
+            srcImage.exportData(nFirst*volSize, size4D, buf4D);
         }
         catch (IOException e) {
-            MipavUtil.displayError("IOException on srcImage.exportData(0, size4D, buf4D");
+            MipavUtil.displayError("IOException on srcImage.exportData(nFirst*volSize, size4D, buf4D");
             setCompleted(false);
             return;
         }
@@ -420,10 +447,10 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         
         for (i = 0; i < volSize; i++) {
         	fireProgressStateChanged(i * 100/volSize);
-            for (t = 0; t < tDim; t++) {
-            	ts_array[t] = buf4D[t*volSize + i];
+            for (t = nFirst; t < tDim; t++) {
+            	ts_array[t-nFirst] = buf4D[(t-nFirst)*volSize + i];
             }
-            dModel = new FitDEMRI3ConstrainedModel(tDim, x_array, ts_array, initial);
+            dModel = new FitDEMRI3ConstrainedModel(tDim-nFirst, x_array, ts_array, initial);
             dModel.driver();
             //dModel.dumpResults();
             params = dModel.getParameters();
@@ -483,8 +510,8 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             // The default is internalScaling = false
             // To make internalScaling = true and have the columns of the
             // Jacobian scaled to have unit length include the following line.
-            internalScaling = true;
-            // Suppress disgnostic messages
+            //internalScaling = true;
+            // Suppress diagnostic messages
             outputMes = false;
 
             gues[0] = initial[0];
@@ -521,8 +548,6 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
             int ctrl;
             int j;
-            double ymodel[] = new double[tDim];
-            double e1, e2;
             double K;
             double fvp;
             double ve;
@@ -669,13 +694,13 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             	P1c = 1.0 - P1 * cos0;
             	P1 = 1.0 - P1;
             	
-            	for (n = 0; n < nFirst; n++) {
+            	/*for (n = 0; n < nFirst; n++) {
             		ymodel[n] = 1.0;
-            	}
+            	}*/
             	
             	for (n = nFirst; n < tDim; n++) {
             		e = Math.exp(-comp[n] * tr);
-            		ymodel[n] = (1 - e)*P1c / ((1 - cos0*e) * P1);
+            		ymodel[n-nFirst] = (1 - e)*P1c / ((1 - cos0*e) * P1);
             	}
                 ctrl = ctrlMat[0];
 
@@ -739,7 +764,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             // The default is internalScaling = false
             // To make internalScaling = true and have the columns of the
             // Jacobian scaled to have unit length include the following line.
-            // internalScaling = true;
+            internalScaling = true;
 
             gues[0] = initial[0];
             gues[1] = initial[1];
@@ -776,7 +801,6 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             int ctrl;
             int i;
             double ymodel = 0.0;
-            double e1, e2;
 
             try {
                 ctrl = ctrlMat[0];
@@ -793,12 +817,122 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
 
                     // Calculate the Jacobian analytically
                     for (i = 0; i < nPts; i++) {
-                        e1 = Math.exp(a[1] * xSeries[i]);
-                        e2 = Math.exp(a[2] * xSeries[i]);
                         covarMat[i][0] = 1.0;
                         covarMat[i][1] = -Math.pow(a[2], xSeries[i]);
                         covarMat[i][2] = -xSeries[i] * a[1] * Math.pow(a[2], xSeries[i] - 1.0);
                     }
+                } // else if (ctrl == 2)
+                // If the user wishes to calculate the Jacobian numerically
+                /* else if (ctrl == 2) {
+                 * ctrlMat[0] = 0; } */
+            } catch (Exception e) {
+                Preferences.debug("function error: " + e.getMessage() + "\n");
+            }
+
+            return;
+        }
+    }
+    
+    /**
+     * DOCUMENT ME!
+     */
+    class Fit25HModel extends NLConstrainedEngine {
+
+        /**
+         * Creates a new Fit25HModel object.
+         *
+         * @param  nPoints  DOCUMENT ME!
+         * @param  xData    DOCUMENT ME!
+         * @param  yData    DOCUMENT ME!
+         * @param  initial  DOCUMENT ME!
+         */
+        public Fit25HModel(int nPoints, double[] xData, double[] yData, double[] initial) {
+
+            // nPoints data points, 3 coefficients, and exponential fitting
+            super(nPoints, 3, xData, yData);
+
+            int i;
+
+            bounds = 2; // bounds = 0 means unconstrained
+
+            // bounds = 1 means same lower and upper bounds for
+            // all parameters
+            // bounds = 2 means different lower and upper bounds
+            // for all parameters
+            // Constrain a[0]
+            bl[0] = -100.0;
+            bu[0] = -0.1;
+
+            // Constrain a[1]
+            bl[1] = 0.0;
+            bu[1] = 5.0;
+
+            // Constrain a[2]
+            bl[2] = 0.0;
+            bu[2] = 25.6;
+
+            // The default is internalScaling = false
+            // To make internalScaling = true and have the columns of the
+            // Jacobian scaled to have unit length include the following line.
+            //internalScaling = true;
+
+            gues[0] = initial[0];
+            gues[1] = initial[1];
+            gues[2] = initial[2];
+        }
+
+        /**
+         * Starts the analysis.
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * Display results of displaying exponential fitting parameters.
+         */
+        public void dumpResults() {
+            Preferences.debug(" ******* FitDoubleExponential ********* \n\n");
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
+        }
+
+        /**
+         * Fit to function - Math.pow((a[0] * Math.log(xSeries[i])),a[1]) + a[2]
+         *
+         * @param  a          The x value of the data point.
+         * @param  residuals  The best guess parameter values.
+         * @param  covarMat   The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
+            int ctrl;
+            int i;
+            double ymodel = 0.0;
+
+            try {
+                ctrl = ctrlMat[0];
+
+                if ((ctrl == -1) || (ctrl == 1)) {
+
+                    // evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                    for (i = 0; i < nPts; i++) {
+                        ymodel = Math.pow((a[0] * Math.log(xSeries[i])),a[1]) + a[2];
+                        residuals[i] = ymodel - ySeries[i];
+                    }
+                } // if ((ctrl == -1) || (ctrl == 1))
+                else if (ctrl == 2) {
+
+                    // Calculate the Jacobian analytically
+                    for (i = 0; i < nPts; i++) {
+                        covarMat[i][0] = a[1]*Math.pow((a[0] * Math.log(xSeries[i])),a[1]-1.0) * Math.log(xSeries[i]);
+                        covarMat[i][1] = Math.log(a[0] * Math.log(xSeries[i])) * Math.pow((a[0] * Math.log(xSeries[i])),a[1]);
+                        covarMat[i][2] = 1.0;
+                    }
+                	// Calculate the Jacobian numerically
+                	//ctrlMat[0] = 0;
                 } // else if (ctrl == 2)
                 // If the user wishes to calculate the Jacobian numerically
                 /* else if (ctrl == 2) {
