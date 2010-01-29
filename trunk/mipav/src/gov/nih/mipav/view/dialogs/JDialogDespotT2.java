@@ -35,9 +35,9 @@ import gov.nih.mipav.view.ViewUserInterface;
 public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmInterface {
 
     private static String title = "DESPOT2 T2 Mapper";
-    public double despotTR = 5.00;
-    public double maxT2 = 1000;
-    public double maxMo = 10000;
+    private double despotTR = 5.00;
+    private double maxT2 = 1000;
+    private double maxMo = 10000;
     private double[] despotFA_phase0;
     private double[] despotFA_phase180;
     
@@ -52,33 +52,33 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     private double[][] twoPSimplex;
     private int[] bestToWorst;
     
-    public int Nfa_phase0 = 0;
-    public int Nfa_phase180 = 2;
+    private int Nfa_phase0 = 0;
+    private int Nfa_phase180 = 2;
     
-    public boolean calculateT2 = true;
-    public boolean includeB1Map = false;
-    public boolean performConventionalModelling = true;
-    public boolean performApproxModelling = false;
-    public boolean performFullModelling = false;
-    public boolean calculateMo = true;
-    public boolean invertT2toR2 = false;
-    public boolean calculateBo = false;
+    private boolean calculateT2 = true;
+    private boolean includeB1Map = false;
+    private boolean performConventionalModelling = true;
+    private boolean performApproxModelling = false;
+    private boolean performFullModelling = false;
+    private boolean calculateMo = true;
+    private boolean invertT2toR2 = false;
+    private boolean calculateBo = false;
     
-    public boolean performConventionalWith180Phase = true;
-    public boolean performConventionalWith0Phase = false;
+    private boolean performConventionalWith180Phase = true;
+    private boolean performConventionalWith0Phase = false;
     
-    public boolean geScanner = true;
-    public boolean siemensScanner = false;
+    private boolean geScanner = true;
+    private boolean siemensScanner = false;
     
-    public boolean upperLeftCorner = true;
-    public boolean upperRightCorner = false;
-    public boolean lowerLeftCorner = false;
-    public boolean lowerRightCorner = false;
+    private boolean upperLeftCorner = true;
+    private boolean upperRightCorner = false;
+    private boolean lowerLeftCorner = false;
+    private boolean lowerRightCorner = false;
     
-    public boolean useSmartThresholding = true;
-    public boolean useHardThresholding = false;
-    public float noiseScale = (float) 1.00;
-    public float hardNoiseThreshold = (float) 0.00;
+    private boolean useSmartThresholding = true;
+    private boolean useHardThresholding = false;
+    private float noiseScale = (float) 1.00;
+    private float hardNoiseThreshold = (float) 0.00;
     
     private String[] wList;
     private String[] titles;
@@ -128,6 +128,32 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     }
     
     protected void setGUIFromParams() {
+        despotTR = scriptParameters.getParams().getDouble("despot_TR");
+        maxT2 = scriptParameters.getParams().getDouble("max_T2");
+        maxMo = scriptParameters.getParams().getDouble("max_Mo");
+        
+        Nfa_phase0 = scriptParameters.getParams().getInt("Nfa_phase_0");
+        Nfa_phase180 = scriptParameters.getParams().getInt("Nfa_phase_180");
+        
+        calculateT2 = scriptParameters.getParams().getBoolean("calculate_T2");
+        includeB1Map = scriptParameters.getParams().getBoolean("include_B1Map");
+        performConventionalModelling = scriptParameters.getParams().getBoolean("perform_Conventional_Modelling");
+        performApproxModelling = scriptParameters.getParams().getBoolean("perform_Approx_Modelling");
+        performFullModelling = scriptParameters.getParams().getBoolean("perform_Full_Modelling");
+        calculateMo = scriptParameters.getParams().getBoolean("calculate_Mo");
+        invertT2toR2 = scriptParameters.getParams().getBoolean("invert_T2toR2");
+        calculateBo = scriptParameters.getParams().getBoolean("calculate_Bo");
+        performConventionalWith180Phase = scriptParameters.getParams().getBoolean("perform_ConventionalWith180Phase");
+        performConventionalWith0Phase = scriptParameters.getParams().getBoolean("perform_ConventionalWith0Phase");
+        geScanner = scriptParameters.getParams().getBoolean("ge_Scanner");
+        siemensScanner = scriptParameters.getParams().getBoolean("siemens_Scanner");
+        upperLeftCorner = scriptParameters.getParams().getBoolean("upper_LeftCorner");
+        upperRightCorner = scriptParameters.getParams().getBoolean("upper_RightCorner");
+        lowerLeftCorner = scriptParameters.getParams().getBoolean("lower_LeftCorner");
+        lowerRightCorner = scriptParameters.getParams().getBoolean("lower_RightCorner");
+        useSmartThresholding = scriptParameters.getParams().getBoolean("use_SmartThresholding");
+        useHardThresholding = scriptParameters.getParams().getBoolean("use_HardThresholding");
+        
         //souble[]
         despotFA_phase0 = scriptParameters.getParams().getList("despot_FA_phase0").getAsDoubleArray();
         despotFA_phase180 = scriptParameters.getParams().getList("despot_FA_phase180").getAsDoubleArray();
@@ -196,6 +222,32 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
     }
 
     protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.getParams().put(ParameterFactory.newParameter("despot_TR", despotTR));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_T2", maxT2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_Mo", maxMo));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("Nfa_phase_0", Nfa_phase0));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("Nfa_phase_180", Nfa_phase180));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_T2", calculateT2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("include_B1Map", includeB1Map));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Conventional_Modelling", performConventionalModelling));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Approx_Modelling", performApproxModelling));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_Full_Modelling", performFullModelling));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_Mo", calculateMo));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("invert_T2toR2", invertT2toR2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("calculate_Bo", calculateBo));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_ConventionalWith180Phase", performConventionalWith180Phase));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("perform_ConventionalWith0Phase", performConventionalWith0Phase));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("ge_Scanner", geScanner));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("siemens_Scanner", siemensScanner));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("upper_LeftCorner", upperLeftCorner));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("upper_RightCorner", upperRightCorner));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("lower_LeftCorner", lowerLeftCorner));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("lower_RightCorner", lowerRightCorner));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_SmartThresholding", useSmartThresholding));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_HardThresholding", useHardThresholding));
+        
         //double[]
         if (despotFA_phase0 != null) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("despot_FA_phase0", despotFA_phase0));
