@@ -735,7 +735,7 @@ public class FileDicom extends FileDicomBase {
                 }
 
                 // System.err.println("name: "+ name + " , len: " + Integer.toString(elementLength, 0x10));
-                System.err.println("ERROR CAUSED BY READING IMAGE ON ODD BYTE");
+                Preferences.debug("ERROR CAUSED BY READING IMAGE ON ODD BYTE" + "\n", Preferences.DEBUG_FILEIO);
                 throw new IOException("Error while reading header");
             }
 
@@ -766,7 +766,7 @@ public class FileDicom extends FileDicomBase {
                     	}
                     }
                     if(name.equals("0028,0008") && isEnhanced) {
-                    	int nImages = Integer.valueOf(strValue).intValue();
+                    	int nImages = Integer.valueOf(strValue.trim()).intValue();
                     	if(nImages > 1) {
 	                    	childrenTagTables =  new FileDicomTagTable[nImages - 1];
 	                    	enhancedFileInfos = new FileInfoDicom[nImages - 1];
@@ -913,7 +913,7 @@ public class FileDicom extends FileDicomBase {
                         try {
                             tagTable.setValue(key, sq, elementLength);
                         } catch (final NullPointerException e) {
-                            System.err.println("Null pointer exception while setting value.  Trying to put new tag.");
+                        	Preferences.debug("Null pointer exception while setting value.  Trying to put new tag." + "\n", Preferences.DEBUG_FILEIO);
                         }
                 		
                 	}
@@ -1163,9 +1163,7 @@ public class FileDicom extends FileDicomBase {
 
                     throw new IOException("Out of memory storing unknown tags in FileDicom.readHeader");
                 } catch (final NullPointerException npe) {
-                    System.err.println("name: " + name);
-                    System.err.print("no hashtable? ");
-                    System.err.println(tagTable == null);
+                	Preferences.debug("name: " + name + "\n" + "no hashtable? " + (tagTable == null) + "\n", Preferences.DEBUG_FILEIO);
                     throw npe;
                 }
             }
@@ -1434,7 +1432,7 @@ public class FileDicom extends FileDicomBase {
                     rawFile.raFile = null;
                 }
             } catch (final IOException error) {
-                System.err.println("ReadDICOM IOexception error");
+                //System.err.println("ReadDICOM IOexception error");
                 MipavUtil.displayError("FileDicom: " + error);
                 throw (error);
             }
@@ -1613,7 +1611,7 @@ public class FileDicom extends FileDicomBase {
                 }
             } catch (final IOException error) {
                 error.printStackTrace();
-                System.err.println("ReadDICOM IOexception error");
+                //System.err.println("ReadDICOM IOexception error");
                 MipavUtil.displayError("FileDicom: " + error);
                 throw (error);
             }

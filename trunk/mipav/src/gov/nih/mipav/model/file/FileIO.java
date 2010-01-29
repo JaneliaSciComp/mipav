@@ -1340,7 +1340,7 @@ public class FileIO {
 
             // see if we found z-res somewhere
             if ( (sliceThickness == -1) && (sliceDifference == -1)) {
-                System.err.println("error calculating z-resolution in FileIO.readDicom()");
+            	Preferences.debug("error calculating z-resolution in FileIO.readDicom()", Preferences.DEBUG_FILEIO);
             }
         }
 
