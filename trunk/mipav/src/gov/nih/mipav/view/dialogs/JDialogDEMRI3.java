@@ -53,6 +53,14 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
     
     double r1Max = 1000.0;
     
+    private ButtonGroup bloodGroup;
+    
+    private boolean userSpecifiedBlood;
+    
+    private JRadioButton userBloodRadioButton;
+    
+    private JRadioButton voiBloodRadioButton;
+    
     private JLabel labelBloodIntrinsicRelaxivityRate;
     
     private JLabel labelBloodIntrinsicRelaxivityRate2;
@@ -68,11 +76,19 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
     
     private ButtonGroup tissueGroup;
     
-    private boolean useConstantTissue;
+    private int CONSTANT_TISSUE = 1;
+    
+    private int FIRST_VOLUME_TISSUE = 2;
+    
+    private int SEPARATE_VOLUME_TISSUE = 3;
+    
+    private int tissueSource = CONSTANT_TISSUE;
     
     private JRadioButton constantTissueRadioButton;
     
-    private JRadioButton fileTissueRadioButton;
+    private JRadioButton firstVolumeTissueRadioButton;
+    
+    private JRadioButton separateVolumeTissueRadioButton;
     
     private JLabel labelTissueIntrinsicRelaxivityRate;
     
@@ -87,32 +103,20 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
     
     double ritMax = 10000.0;
     
-    private JButton buttonLowFlipFile;
+    private JButton buttonTissueFile;
     
-    private JTextField textLowFlipFile;
-    
-    private JButton buttonHighFlipFile;
-    
-    private JTextField textHighFlipFile;
+    private JTextField textTissueFile;
     
     // non-uniform tissue intrinsic relaxivity map
     double r1i[] = null;
     
-    private String directoryLowFlip;
+    private String directoryTissue;
     
-    private String fileNameLowFlip;
+    private String fileNameTissue;
     
-    private ModelImage lowFlipImage = null;
+    private ModelImage tissueImage = null;
     
-    private double lowFlip[] = null;
-    
-    private String directoryHighFlip;
-    
-    private String fileNameHighFlip;
-    
-    private ModelImage highFlipImage = null;
-    
-    private double highFlip[] = null;
+    private double tissue[] = null;
     
     private JLabel labelFlipAngle;
     
@@ -274,7 +278,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
             callAlgorithm();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
-        } else if (command.equals("LowFlipFile")) {
+        } else if (command.equals("TissueFile")) {
 
                 try {
                     JFileChooser chooser = new JFileChooser();
@@ -296,74 +300,29 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
                     chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
                     chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
 
-                    chooser.setDialogTitle("Open low flip angle 3D image file");
-                    directoryLowFlip = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                    chooser.setDialogTitle("Open 3D tissue instrinsic realxivity rate image file");
+                    directoryTissue = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
 
                     int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
                     if (returnValue == JFileChooser.APPROVE_OPTION) {
-                        fileNameLowFlip = chooser.getSelectedFile().getName();
-                        directoryLowFlip = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                        UI.setDefaultDirectory(directoryLowFlip);
+                        fileNameTissue = chooser.getSelectedFile().getName();
+                        directoryTissue = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                        UI.setDefaultDirectory(directoryTissue);
                     } else {
-                        fileNameLowFlip = null;
+                        fileNameTissue = null;
 
                         return;
                     }
 
-                    if (fileNameLowFlip != null) {
-                        textLowFlipFile.setText(fileNameLowFlip);
+                    if (fileNameTissue != null) {
+                        textTissueFile.setText(fileNameTissue);
                     }
                 } catch (OutOfMemoryError e) {
                     MipavUtil.displayError("Out of memory in JDialogDEMRI3.");
 
                     return;
                 }
-        } else if (command.equals("HighFlipFile")) {
-
-            try {
-                JFileChooser chooser = new JFileChooser();
-
-                if (UI.getDefaultDirectory() != null) {
-                    File file = new File(UI.getDefaultDirectory());
-
-                    if (file != null) {
-                        chooser.setCurrentDirectory(file);
-                    } else {
-                        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-                    }
-                } else {
-                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-                }
-
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
-
-                chooser.setDialogTitle("Open high flip angle 4D image file");
-                directoryHighFlip = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-
-                int returnValue = chooser.showOpenDialog(UI.getMainFrame());
-
-                if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    fileNameHighFlip = chooser.getSelectedFile().getName();
-                    directoryHighFlip = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                    UI.setDefaultDirectory(directoryHighFlip);
-                } else {
-                    fileNameHighFlip = null;
-
-                    return;
-                }
-
-                if (fileNameHighFlip != null) {
-                    textHighFlipFile.setText(fileNameHighFlip);
-                }
-            } catch (OutOfMemoryError e) {
-                MipavUtil.displayError("Out of memory in JDialogDEMRI3.");
-
-                return;
-            }
         } else if (command.equals("MpFile")) {
 
             try {
@@ -500,14 +459,16 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         defaultsString += min_constr[2] + delim;
         defaultsString += max_constr[2] + delim;
         defaultsString += r1 + delim;
-        defaultsString += rib + delim;
-        defaultsString += useConstantTissue + delim;
-        if (useConstantTissue) {
+        defaultsString += userSpecifiedBlood + delim;
+        if (userSpecifiedBlood) {
+            defaultsString += rib + delim;
+        }
+        defaultsString += tissueSource + delim;
+        if (tissueSource == CONSTANT_TISSUE) {
             defaultsString += rit + delim;
         }
-        else {
-        	defaultsString += lowFlipImage.getImageFileName();
-        	defaultsString += highFlipImage.getImageFileName();
+        else if (tissueSource == SEPARATE_VOLUME_TISSUE){
+        	defaultsString += tissueImage.getImageFileName();
         }
         defaultsString += theta + delim;
         defaultsString += tr + delim;
@@ -541,27 +502,39 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         textMaxConstr2.setText(String.valueOf(max_constr[2]));
         r1 = scriptParameters.getParams().getDouble("r1_");
         textContrastRelaxivityRate.setText(String.valueOf(r1));
-        rib = scriptParameters.getParams().getDouble("rib_");
-        textBloodIntrinsicRelaxivityRate.setText(String.valueOf(1.0/rib));
-        useConstantTissue = scriptParameters.getParams().getBoolean("use_constant_tissue");
-        constantTissueRadioButton.setSelected(useConstantTissue);
-        fileTissueRadioButton.setSelected(!useConstantTissue);
-        buttonLowFlipFile.setEnabled(fileTissueRadioButton.isSelected());
-        textLowFlipFile.setEnabled(fileTissueRadioButton.isSelected());
-        buttonHighFlipFile.setEnabled(fileTissueRadioButton.isSelected());
-        textHighFlipFile.setEnabled(fileTissueRadioButton.isSelected());
+        userSpecifiedBlood = scriptParameters.getParams().getBoolean("user_specified_blood");
+        if (userSpecifiedBlood) {
+            rib = scriptParameters.getParams().getDouble("rib_");
+            textBloodIntrinsicRelaxivityRate.setText(String.valueOf(1.0/rib));
+            textBloodIntrinsicRelaxivityRate.setEnabled(true);
+            labelBloodIntrinsicRelaxivityRate.setEnabled(true);
+            labelBloodIntrinsicRelaxivityRate2.setEnabled(true);
+            userBloodRadioButton.setSelected(true);
+            voiBloodRadioButton.setSelected(false);
+        }
+        else {
+        	textBloodIntrinsicRelaxivityRate.setEnabled(false);
+            labelBloodIntrinsicRelaxivityRate.setEnabled(false);
+            labelBloodIntrinsicRelaxivityRate2.setEnabled(false);
+            userBloodRadioButton.setSelected(false);
+            voiBloodRadioButton.setSelected(true);
+        }
+        tissueSource = scriptParameters.getParams().getInt("tissue_source");
+        constantTissueRadioButton.setSelected(tissueSource == CONSTANT_TISSUE);
+        firstVolumeTissueRadioButton.setSelected(tissueSource == FIRST_VOLUME_TISSUE);
+        separateVolumeTissueRadioButton.setSelected(tissueSource == SEPARATE_VOLUME_TISSUE);
+        buttonTissueFile.setEnabled(separateVolumeTissueRadioButton.isSelected());
+        textTissueFile.setEnabled(separateVolumeTissueRadioButton.isSelected());
         labelTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
         labelTissueIntrinsicRelaxivityRate2.setEnabled(constantTissueRadioButton.isSelected());
         textTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
-        if (useConstantTissue) {
+        if (tissueSource == CONSTANT_TISSUE) {
             rit = scriptParameters.getParams().getDouble("rit_");
             textTissueIntrinsicRelaxivityRate.setText(String.valueOf(1.0/rit));
         }
         else {
-        	lowFlipImage = scriptParameters.retrieveImage("low_flip_image");
-        	textLowFlipFile.setText(lowFlipImage.getImageFileName());
-            highFlipImage = scriptParameters.retrieveImage("high_flip_image");
-            textHighFlipFile.setText(highFlipImage.getImageFileName());
+        	tissueImage = scriptParameters.retrieveImage("tissue_image");
+        	textTissueFile.setText(tissueImage.getImageFileName());
         }
         theta = scriptParameters.getParams().getDouble("theta_");
         textFlipAngle.setText(String.valueOf(theta));
@@ -600,24 +573,20 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_constr2", min_constr[2]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_constr2", max_constr[2]));
         scriptParameters.getParams().put(ParameterFactory.newParameter("r1_", r1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rib_", rib));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("use_constant_tissue", useConstantTissue));
-        if (useConstantTissue) {
+        scriptParameters.getParams().put(ParameterFactory.newParameter("user_specified_blood",userSpecifiedBlood));
+        if (userSpecifiedBlood) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("rib_", rib));
+        }
+        scriptParameters.getParams().put(ParameterFactory.newParameter("tissue_source", tissueSource));
+        if (tissueSource == CONSTANT_TISSUE) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("rit_", rit));
         }
-        else {
+        else if (tissueSource == SEPARATE_VOLUME_TISSUE){
         	try {
-        	    scriptParameters.storeImage(lowFlipImage, "low_flip_image");
+        	    scriptParameters.storeImage(tissueImage, "tissue_image");
         	}
         	catch (ParserException e) {
-        		MipavUtil.displayError("Parser exception on scriptParameters.storeImage(lowFlipImage");
-        		return;
-        	}
-        	try {
-                scriptParameters.storeImage(highFlipImage, "high_flip_image");
-        	}
-        	catch (ParserException e) {
-        		MipavUtil.displayError("Parser exception on scriptParameters.storeImage(highFlipImage");
+        		MipavUtil.displayError("Parser exception on scriptParameters.storeImage(tissueImage");
         		return;
         	}
         }
@@ -639,11 +608,9 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
 
-        if ((source == constantTissueRadioButton) || (source == fileTissueRadioButton)) {
-            buttonLowFlipFile.setEnabled(fileTissueRadioButton.isSelected());
-            textLowFlipFile.setEnabled(fileTissueRadioButton.isSelected());
-            buttonHighFlipFile.setEnabled(fileTissueRadioButton.isSelected());
-            textHighFlipFile.setEnabled(fileTissueRadioButton.isSelected());
+        if ((source == constantTissueRadioButton) || (source == firstVolumeTissueRadioButton) || (source == separateVolumeTissueRadioButton)) {
+            buttonTissueFile.setEnabled(separateVolumeTissueRadioButton.isSelected());
+            textTissueFile.setEnabled(separateVolumeTissueRadioButton.isSelected());
             labelTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
             labelTissueIntrinsicRelaxivityRate2.setEnabled(constantTissueRadioButton.isSelected());
             textTissueIntrinsicRelaxivityRate.setEnabled(constantTissueRadioButton.isSelected());
@@ -660,6 +627,18 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         	    textMinConstr1.setText("1.0E-5");
         	    labelMaxConstr1.setText("ve maximum allowed value (1.0E-5 - 0.99)");
         	    textMaxConstr1.setText("0.99");	
+        	}
+        }
+        else if ((source == userBloodRadioButton) || (source == voiBloodRadioButton)) {
+        	if (userBloodRadioButton.isSelected()) {
+        		textBloodIntrinsicRelaxivityRate.setEnabled(true);
+                labelBloodIntrinsicRelaxivityRate.setEnabled(true);
+                labelBloodIntrinsicRelaxivityRate2.setEnabled(true);
+        	}
+        	else {
+        		textBloodIntrinsicRelaxivityRate.setEnabled(false);
+                labelBloodIntrinsicRelaxivityRate.setEnabled(false);
+                labelBloodIntrinsicRelaxivityRate2.setEnabled(false);
         	}
         }
 
@@ -693,8 +672,8 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
             }
             resultExtents[3] = 3;
             resultImage = new ModelImage(ModelStorageBase.FLOAT, resultExtents, image.getImageName() + "_params");
-            demri3Algo = new AlgorithmDEMRI3(resultImage, image, min_constr, max_constr, r1,
-            		                         rib, rit, lowFlipImage, highFlipImage, theta, tr, perMin, nFirst, useVe);
+            demri3Algo = new AlgorithmDEMRI3(resultImage, image, min_constr, max_constr, r1, userSpecifiedBlood, 
+            		                         rib, tissueSource, rit, tissueImage, theta, tr, perMin, nFirst, useVe);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -917,11 +896,30 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 1;
         mainPanel.add(textContrastRelaxivityRate, gbc);
         
+        bloodGroup = new ButtonGroup();
+        userBloodRadioButton = new JRadioButton("User specified blood intrinsic relaxivity rate", true);
+        userBloodRadioButton.setFont(serif12);
+        userBloodRadioButton.setForeground(Color.black);
+        userBloodRadioButton.addItemListener(this);
+        bloodGroup.add(userBloodRadioButton);
+        gbc.gridx = 0;
+        gbc.gridy = 10;
+        mainPanel.add(userBloodRadioButton, gbc);
+        
+        voiBloodRadioButton = new JRadioButton("Sagittal sinus voi specified blood intrinsic relaxivity rate", false);
+        voiBloodRadioButton.setFont(serif12);
+        voiBloodRadioButton.setForeground(Color.black);
+        voiBloodRadioButton.addItemListener(this);
+        bloodGroup.add(voiBloodRadioButton);
+        gbc.gridx = 0;
+        gbc.gridy = 11;
+        mainPanel.add(voiBloodRadioButton, gbc);
+        
         labelBloodIntrinsicRelaxivityRate = new JLabel("Blood intrinsic relaxivity rate in 1/(mMol * sec)");
         labelBloodIntrinsicRelaxivityRate.setForeground(Color.black);
         labelBloodIntrinsicRelaxivityRate.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 12;
         mainPanel.add(labelBloodIntrinsicRelaxivityRate, gbc);
         
         textBloodIntrinsicRelaxivityRate = new JTextField(10);
@@ -936,7 +934,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelBloodIntrinsicRelaxivityRate2.setForeground(Color.black);
         labelBloodIntrinsicRelaxivityRate2.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 13;
         gbc.gridheight = 1;
         mainPanel.add(labelBloodIntrinsicRelaxivityRate2, gbc);
         
@@ -947,24 +945,33 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         constantTissueRadioButton.addItemListener(this);
         tissueGroup.add(constantTissueRadioButton);
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 14;
         mainPanel.add(constantTissueRadioButton, gbc);
         
-        fileTissueRadioButton = new JRadioButton("File specified tissue intrinsic relaxivity rate", false);
-        fileTissueRadioButton.setFont(serif12);
-        fileTissueRadioButton.setForeground(Color.black);
-        fileTissueRadioButton.addItemListener(this);
-        tissueGroup.add(fileTissueRadioButton);
+        firstVolumeTissueRadioButton = new JRadioButton("First volume of 4D image tissue intrinsic relaxivity rate", false);
+        firstVolumeTissueRadioButton.setFont(serif12);
+        firstVolumeTissueRadioButton.setForeground(Color.black);
+        firstVolumeTissueRadioButton.addItemListener(this);
+        tissueGroup.add(firstVolumeTissueRadioButton);
         gbc.gridx = 0;
-        gbc.gridy = 13;
-        mainPanel.add(fileTissueRadioButton, gbc);
+        gbc.gridy = 15;
+        mainPanel.add(firstVolumeTissueRadioButton, gbc);
+        
+        separateVolumeTissueRadioButton = new JRadioButton("Separate 3D image tissue intrinsic relaxivity rate", false);
+        separateVolumeTissueRadioButton.setFont(serif12);
+        separateVolumeTissueRadioButton.setForeground(Color.black);
+        separateVolumeTissueRadioButton.addItemListener(this);
+        tissueGroup.add(separateVolumeTissueRadioButton);
+        gbc.gridx = 0;
+        gbc.gridy = 16;
+        mainPanel.add(separateVolumeTissueRadioButton, gbc);
         
         labelTissueIntrinsicRelaxivityRate = new JLabel("Tissue intrinsic relaxivity rate in 1/(mMol * sec)");
         labelTissueIntrinsicRelaxivityRate.setForeground(Color.black);
         labelTissueIntrinsicRelaxivityRate.setFont(serif12);
         labelTissueIntrinsicRelaxivityRate.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy = 17;
         mainPanel.add(labelTissueIntrinsicRelaxivityRate, gbc);
         
         textTissueIntrinsicRelaxivityRate = new JTextField(10);
@@ -981,52 +988,33 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelTissueIntrinsicRelaxivityRate2.setFont(serif12);
         labelTissueIntrinsicRelaxivityRate2.setEnabled(true);
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy = 18;
         gbc.gridheight = 1;
         mainPanel.add(labelTissueIntrinsicRelaxivityRate2, gbc);
         
-        buttonLowFlipFile = new JButton("Choose low flip-angle 3D image file");
-        buttonLowFlipFile.setForeground(Color.black);
-        buttonLowFlipFile.setFont(serif12B);
-        buttonLowFlipFile.setEnabled(false);
-        buttonLowFlipFile.addActionListener(this);
-        buttonLowFlipFile.setActionCommand("LowFlipFile");
-        buttonLowFlipFile.setPreferredSize(new Dimension(235, 30));
+        buttonTissueFile = new JButton("Choose 3D tissue relaxivity rate file");
+        buttonTissueFile.setForeground(Color.black);
+        buttonTissueFile.setFont(serif12B);
+        buttonTissueFile.setEnabled(false);
+        buttonTissueFile.addActionListener(this);
+        buttonTissueFile.setActionCommand("TissueFile");
+        buttonTissueFile.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 16;
-        mainPanel.add(buttonLowFlipFile, gbc);
+        gbc.gridy = 19;
+        mainPanel.add(buttonTissueFile, gbc);
 
-        textLowFlipFile = new JTextField();
-        textLowFlipFile.setFont(serif12);
-        textLowFlipFile.setEnabled(false);
+        textTissueFile = new JTextField();
+        textTissueFile.setFont(serif12);
+        textTissueFile.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(textLowFlipFile, gbc);
-        
-        buttonHighFlipFile = new JButton("Choose high flip-angle 4D image file");
-        buttonHighFlipFile.setForeground(Color.black);
-        buttonHighFlipFile.setFont(serif12B);
-        buttonHighFlipFile.setEnabled(false);
-        buttonHighFlipFile.addActionListener(this);
-        buttonHighFlipFile.setActionCommand("HighFlipFile");
-        buttonHighFlipFile.setPreferredSize(new Dimension(235, 30));
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.gridx = 0;
-        gbc.gridy = 17;
-        mainPanel.add(buttonHighFlipFile, gbc);
-
-        textHighFlipFile = new JTextField();
-        textHighFlipFile.setFont(serif12);
-        textHighFlipFile.setEnabled(false);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 1;
-        mainPanel.add(textHighFlipFile, gbc);
+        mainPanel.add(textTissueFile, gbc);
         
         labelFlipAngle = new JLabel("Flip angle in degrees (0.0 - 90.0)");
         labelFlipAngle.setForeground(Color.black);
         labelFlipAngle.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 18;
+        gbc.gridy = 20;
         mainPanel.add(labelFlipAngle, gbc);
         
         textFlipAngle = new JTextField(10);
@@ -1040,7 +1028,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         labelTimeBetweenShots.setForeground(Color.black);
         labelTimeBetweenShots.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 19;
+        gbc.gridy = 21;
         mainPanel.add(labelTimeBetweenShots, gbc);
         
         textTimeBetweenShots = new JTextField(10);
@@ -1056,7 +1044,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         secondButton.setForeground(Color.black);
         rateGroup.add(secondButton);
         gbc.gridx = 0;
-        gbc.gridy = 20;
+        gbc.gridy = 22;
         mainPanel.add(secondButton, gbc);
         
         minuteButton = new JRadioButton("K_trans and k_ep are per minute", false);
@@ -1064,13 +1052,13 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         minuteButton.setForeground(Color.black);
         rateGroup.add(minuteButton);
         gbc.gridx = 0;
-        gbc.gridy = 21;
+        gbc.gridy = 23;
         mainPanel.add(minuteButton, gbc);
         
         labelMp = new JLabel("Draw a sagittal sinus VOI or open a VOI file");
         labelMp.setForeground(Color.black);
         labelMp.setFont(serif12);
-        gbc.gridy = 22;
+        gbc.gridy = 24;
         mainPanel.add(labelMp, gbc);
         
         buttonMpFile = new JButton("Open a sagittal sinus VOI file");
@@ -1080,14 +1068,14 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         buttonMpFile.setActionCommand("MpFile");
         buttonMpFile.setPreferredSize(new Dimension(205, 30));
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 23;
+        gbc.gridy = 25;
         mainPanel.add(buttonMpFile, gbc);
         
         labelNFirst = new JLabel("nfirst injection TR index of input dataset (0 - 1000)");
         labelNFirst.setForeground(Color.black);
         labelNFirst.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 24;
+        gbc.gridy = 26;
         mainPanel.add(labelNFirst, gbc);
         
         textNFirst = new JTextField(10);
@@ -1259,9 +1247,17 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
         }
         rib = 1.0/rib;
         
-        useConstantTissue = constantTissueRadioButton.isSelected();
-        
         if (constantTissueRadioButton.isSelected()) {
+        	tissueSource = CONSTANT_TISSUE;
+        }
+        else if (firstVolumeTissueRadioButton.isSelected()) {
+        	tissueSource = FIRST_VOLUME_TISSUE;
+        }
+        else {
+        	tissueSource = SEPARATE_VOLUME_TISSUE;
+        }
+        
+        if (tissueSource == CONSTANT_TISSUE) {
             tmpStr = textTissueIntrinsicRelaxivityRate.getText();
             rit = Double.parseDouble(tmpStr);
             
@@ -1279,46 +1275,32 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
                 return false;
             }
             rit = 1.0/rit;    
-        } // (constantTissueRadioButton.isSelected())
+        } // if (tissueSource == CONSTANT_TISSUE)
         
-        if (fileTissueRadioButton.isSelected()) {
-            fileNameLowFlip = textLowFlipFile.getText();  
+        if (tissueSource == SEPARATE_VOLUME_TISSUE) {
+            fileNameTissue = textTissueFile.getText();  
             try {
                 FileIO fileIO = new FileIO();
-                lowFlipImage = fileIO.readImage(fileNameLowFlip, directoryLowFlip, false, null);
+                tissueImage = fileIO.readImage(fileNameTissue, directoryTissue, false, null);
 
-                if (lowFlipImage == null) {
-                    MipavUtil.displayError("Low flip image is not valid.");
+                if (tissueImage == null) {
+                    MipavUtil.displayError("Tissue image is not valid.");
 
                     return false;
-                } else if (lowFlipImage.getNDims() != 3) {
-                    MipavUtil.displayError("Low flip image must be 3D");
+                } else if (tissueImage.getNDims() != 3) {
+                    MipavUtil.displayError("Tissue image must be 3D");
 
                     return false;
                 }
 
                 for (int i = 0; i < 3; i++) {
 
-                    if (image.getExtents()[i] != lowFlipImage.getExtents()[i]) {
-                        MipavUtil.displayError("First 3 dimensions of source image must match the low flip image.");
+                    if (image.getExtents()[i] != tissueImage.getExtents()[i]) {
+                        MipavUtil.displayError("First 3 dimensions of source image must match the tissue image.");
 
                         return false;
                     }
                 }
-                /*int length = lowFlipImage.getExtents()[0];
-                for (int i = 1; i < lowFlipImage.getNDims(); i++) {
-                    length *= lowFlipImage.getExtents()[i];
-                }
-                lowFlip = new double[length];
-                try {
-                    lowFlipImage.exportData(0, length, lowFlip);
-                }
-                catch(IOException e) {
-                    MipavUtil.displayError("IOException on lowFlipImage.exportData(0, length, lowFlip)");
-                    return false;
-                }
-                lowFlipImage.disposeLocal();
-                lowFlipImage = null;*/
 
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory in JDialogDEMRI3");
@@ -1326,50 +1308,8 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
                 return false;
             }
             
-            fileNameHighFlip = textHighFlipFile.getText();  
-            try {
-                FileIO fileIO = new FileIO();
-                highFlipImage = fileIO.readImage(fileNameHighFlip, directoryHighFlip, false, null);
-
-                if (highFlipImage == null) {
-                    MipavUtil.displayError("High flip image is not valid.");
-
-                    return false;
-                } else if (highFlipImage.getNDims() != 4) {
-                    MipavUtil.displayError("High flip image must be 4D");
-
-                    return false;
-                }
-
-                for (int i = 0; i < 4; i++) {
-
-                    if (image.getExtents()[i] != highFlipImage.getExtents()[i]) {
-                        MipavUtil.displayError("Dimensions of source image must match the high flip image.");
-
-                        return false;
-                    }
-                }
-                /*int length = highFlipImage.getExtents()[0];
-                for (int i = 1; i < highFlipImage.getNDims(); i++) {
-                    length *= highFlipImage.getExtents()[i];
-                }
-                highFlip = new double[length];
-                try {
-                    highFlipImage.exportData(0, length, highFlip);
-                }
-                catch(IOException e) {
-                    MipavUtil.displayError("IOException on highFlipImage.exportData(0, length, highFlip)");
-                    return false;
-                }
-                highFlipImage.disposeLocal();
-                highFlipImage = null;*/
-
-            } catch (OutOfMemoryError e) {
-                MipavUtil.displayError("Out of memory in JDialogDEMRI3");
-
-                return false;
-            }
-        } // if (fileTissueRadioButton.isSelected())
+            
+        } // if (tissueSource == SEPARATE_VOLUME_TISSUE)
 
         tmpStr = textFlipAngle.getText();
         theta = Double.parseDouble(tmpStr);
