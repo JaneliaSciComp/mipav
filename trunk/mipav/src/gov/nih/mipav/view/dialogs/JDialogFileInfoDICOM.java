@@ -159,6 +159,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
         for (ii = 0, e = tagsList.keys(); e.hasMoreElements(); ii++) {
             key = (FileDicomKey) e.nextElement();
+            
             name = key.getKey();
 
             if ( ((FileDicomTag) tagsList.get(key)).getValue(true) != null) {
@@ -173,6 +174,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         }
                     }
                 }
+
                 rowData[1] = tagName;
                 rowData[2] = ((FileDicomTag) tagsList.get(key)).getName();
 
@@ -503,7 +505,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         if (JDialogFileInfoDICOM.addRow(rowData, show)) {
                             tagsModel.addRow(rowData);
 
-                            final StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+                           StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
 
                             rowData[2] = st.nextToken();
 
@@ -518,7 +520,11 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 rowData[3] = s;
                             }
                         } else {
-                            f.nextElement();
+                           // f.nextElement();
+                            
+                            StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+
+                            rowData[2] = st.nextToken();
                         }
                     }
                 } // standard tag. add tag.get(key).getValue(true) as-is to the table
