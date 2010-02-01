@@ -646,7 +646,6 @@ public class FileIO {
                     }
 
                     if (performSort) {
-
                         if (seriesNo.equals(seriesNoMaster) && studyID.equals(studyIDMaster)) { // &&
                             // acqNo.equals(acqNoMaster))
                             // {
@@ -926,7 +925,6 @@ public class FileIO {
 
             // if (matrix != null && valid == true) {
             if (matrix != null) {
-
                 // get back to original matrix
                 xCos = Math.abs(matrix.get(2, 0));
                 yCos = Math.abs(matrix.get(2, 1));
@@ -1012,11 +1010,31 @@ public class FileIO {
             }
         }
 
+       
+        
+        //need to determine if it is ENHANCED DICOM and if its 4D
+        boolean isEnhanced = imageFile.isEnhanced();
+        boolean isEnhanced4D = imageFile.isEnhanced4D();
+        int enhancedNumSlices = 1;
+        FileInfoDicom[] enhancedFileInfos = null;
+        if(isEnhanced) {
+        	enhancedFileInfos = imageFile.getEnhancedFileInfos();
+        	enhancedNumSlices = imageFile.getEnhancedNumSlices();
+        }
+        
+        
         if (nImages > 1) {
-            extents = new int[3];
-            extents[2] = nImages;
+        	if(isEnhanced4D) {
+        		extents = new int[4];
+        		extents[2] = enhancedNumSlices;
+        		extents[3] = nImages/enhancedNumSlices;
+        	}else {
+        		extents = new int[3];
+        		extents[2] = nImages;
+        	}
         } else {
             extents = new int[2];
+            
         }
 
         extents[0] = refFileInfo.getExtents()[0];
@@ -1044,12 +1062,66 @@ public class FileIO {
 
         // loop through files, place them in image array
         pBarVal = 0;
-        //need to determine if it is enhanced dicom
-        boolean isEnhanced = imageFile.isEnhanced();
-        FileInfoDicom[] enhancedFileInfos = null;
+        
+        
+        //ENHANCED DICOM is multiframe...so we need to do matrix/orientation stuff here
         if(isEnhanced) {
-        	enhancedFileInfos = imageFile.getEnhancedFileInfos();
+        	matrix = refFileInfo.getPatientOrientation();
+
+            if (matrix != null) {
+                matrix.transform(refFileInfo.xLocation, refFileInfo.yLocation,
+                        refFileInfo.zLocation, tPt);
+            }
+            
+            if (matrix != null) {
+            	
+            	// get back to original matrix
+           	 float xCos = 0, yCos = 0, zCos = 0;
+               xCos = Math.abs(matrix.get(2, 0));
+               yCos = Math.abs(matrix.get(2, 1));
+               zCos = Math.abs(matrix.get(2, 2));
+
+               for (int j = 0; j < orient.length; j++) {
+                   final int index = absBiggest(matrix.get(j, 0), matrix.get(j, 1), matrix.get(j, 2));
+
+                   if (index == 0) {
+
+                       if (matrix.get(j, 0) > 0) {
+                           orient[j] = FileInfoBase.ORI_R2L_TYPE;
+                       } else {
+                           orient[j] = FileInfoBase.ORI_L2R_TYPE;
+                       }
+                   } else if (index == 1) {
+
+                       if (matrix.get(j, 1) > 0) {
+                           orient[j] = FileInfoBase.ORI_A2P_TYPE;
+                       } else {
+                           orient[j] = FileInfoBase.ORI_P2A_TYPE;
+                       }
+                   } else { // index == 2
+
+                       if (matrix.get(j, 2) > 0) {
+                           orient[j] = FileInfoBase.ORI_I2S_TYPE;
+                       } else {
+                           orient[j] = FileInfoBase.ORI_S2I_TYPE;
+                       }
+                   }
+               }if ( (xCos > yCos) && (xCos > zCos)) {
+                   orientation = FileInfoBase.SAGITTAL;
+               } else if ( (yCos > xCos) && (yCos > zCos)) {
+                   orientation = FileInfoBase.CORONAL;
+               } else if ( (zCos > xCos) && (zCos > yCos)) {
+                   orientation = FileInfoBase.AXIAL;
+               } 
+           
+           
+           
+                
+
+            }
+            
         }
+        
         
         for (int i = 0; i < nImages; i++) {
             if (multiframe) {
@@ -1091,6 +1163,7 @@ public class FileIO {
 
                 imageFile.setFileInfo(curFileInfo);
 
+
                 // Read the image
                 if (image.getType() == ModelStorageBase.FLOAT) {
                     imageFile.readImage(bufferFloat, curFileInfo.getDataType(), start);
@@ -1102,8 +1175,15 @@ public class FileIO {
                 } else {
                     imageFile.readImage(bufferShort, curFileInfo.getDataType(), start);
                 }
-
-                curFileInfo.setExtents(extents);
+                if(!isEnhanced4D) {
+                	curFileInfo.setExtents(extents);
+                }else {
+                	curFileInfo.setExtents(extents);
+                	float[] res = curFileInfo.getResolutions();
+                	float[] newRes = {res[0],res[1],res[2],1};
+        			curFileInfo.setResolutions(newRes);
+                }
+                
                 curFileInfo.setAxisOrientation(orient);
                 curFileInfo.setImageOrientation(orientation);
 
@@ -1129,7 +1209,17 @@ public class FileIO {
                     }
                 }
 
-                curFileInfo.setOrigin(newOriginPt);
+                if(!isEnhanced4D) {
+                	curFileInfo.setOrigin(newOriginPt);
+                }else {
+                	float[] newOriginPt4D = new float[4];
+                	newOriginPt4D[0] = newOriginPt[0];
+                	newOriginPt4D[1] = newOriginPt[1];
+                	newOriginPt4D[2] = newOriginPt[2];
+                	newOriginPt4D[3] = 0;
+                	curFileInfo.setOrigin(newOriginPt4D);
+                }
+
                 //If it is enhanced dicom, attach all the fileinfos to the image
                 if(isEnhanced && enhancedFileInfos != null) {
                 	if(location == 0) {
@@ -1189,6 +1279,8 @@ public class FileIO {
                 return null;
             }
         }
+        
+
 
         // Save the DICOM tag 0020,0037 Image Orientation to the image transformation matrix.
         if (matrix != null) {
@@ -1265,7 +1357,6 @@ public class FileIO {
             // finally, if slice spacing and slice location failed to produce a z-res,
             // check for image position
             if (firstSliceTagTable.get("0020,0032") != null) {
-
                 double xLoc0 = ((FileInfoDicom) image.getFileInfo(0)).xLocation;
                 double yLoc0 = ((FileInfoDicom) image.getFileInfo(0)).yLocation;
                 double zLoc0 = ((FileInfoDicom) image.getFileInfo(0)).zLocation;
@@ -1359,6 +1450,7 @@ public class FileIO {
         // refFileInfo = null;
         bufferShort = null;
         bufferFloat = null;
+
 
         return image;
     }

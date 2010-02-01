@@ -168,6 +168,10 @@ public class FileDicom extends FileDicomBase {
     private FileDicomTagTable[] childrenTagTables;
     
     private FileInfoDicom[] enhancedFileInfos;
+    
+    private boolean isEnhanced4D = false;
+    
+    private int enhancedNumSlices;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -841,8 +845,9 @@ public class FileDicom extends FileDicomBase {
                     
                    
 
-                    //enhanced dicom per frame stuff
+                    //ENHANCED DICOM per frame stuff
                     if(name.equals("5200,9230")) {
+                    	int numSlices = 0;
                     	sq = getSequence(endianess, len);
                     	Vector<FileDicomItem> v = ((FileDicomSQ)sq).getSequence();
                     	int elemLength;
@@ -870,6 +875,24 @@ public class FileDicom extends FileDicomBase {
                             	        	FileDicomTag subEntry = subDataSet.get(kSub);
                             	        	elemLength = subEntry.getLength();
                             	        	fdKey = new FileDicomKey(kSub);
+                            	        	if(kSub.equals("0020,9057")) {
+                            	        		//OK...so we should be relying on 0020,9056 (Stack ID)
+                            	        		//to tell us the number of volumes in the dataet
+                            	        		//but we find that it is not being implemented in the dataset we have
+                            	        		//Thefore, we will look at 0020.9057 (In-Stack Pos ID).
+                            	        		//These should all be unique for 1 volume.  If we find that there
+                            	        		//are duplicates, then that means we are dealing with a 4D datset
+                            	        		//we will get the number of slices in a volumne.  Then determine
+                            	        		//number of volumes by taking total num slices / num slices per volume
+                            	        		//ftp://medical.nema.org/medical/dicom/final/cp583_ft.pdf
+                            	        		int currNum = ((Integer)subEntry.getValue(true)).intValue();
+                            	        		if(currNum == numSlices) {
+                            	        			isEnhanced4D = true;
+                            	        		}
+                            	        		if(currNum > numSlices) {
+                            	        			numSlices = currNum;
+                            	        		}
+                            	        	}
                         	                if(i==0) {
                         	                	tagTable.setValue(fdKey, subEntry.getValue(true), elemLength);
                         	                }else {
@@ -888,6 +911,7 @@ public class FileDicom extends FileDicomBase {
                 	            }
                 			}
                     	}
+                    	enhancedNumSlices = numSlices;
                     	//remove tag 5200,9230 if its there
                     	FileDicomTag removeTag = tagTable.get(key);
                     	if(removeTag!= null) {
@@ -1759,6 +1783,14 @@ public class FileDicom extends FileDicomBase {
     
     
 
+	public boolean isEnhanced4D() {
+		return isEnhanced4D;
+	}
+
+	public int getEnhancedNumSlices() {
+		return enhancedNumSlices;
+	}
+
 	public FileInfoDicom[] getEnhancedFileInfos() {
 		return enhancedFileInfos;
 	}
@@ -1899,7 +1931,7 @@ public class FileDicom extends FileDicomBase {
             rawChunkFile = new FileRawChunk(raFile, fileInfo);
 
             if (saveAsEncapJP2) {
-                System.out.println("here");
+
 
                 ByteArrayOutputStream buff;
                 final String outfile = fileDir + fileName;
@@ -1939,7 +1971,6 @@ public class FileDicom extends FileDicomBase {
                     buff = encRAW.run1Slice(slice);
                 }
 
-                System.out.println("aaaaaaaaaaaaaaaaaaaaa " + buff.size());
                 final byte[] theData = buff.toByteArray();
                 final int size = theData.length;
 
@@ -2195,7 +2226,7 @@ public class FileDicom extends FileDicomBase {
         inSQ = true;
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
-        System.out.println("aa name is " + name);
+
         int[] tableOffsets;
 
         if (elementLength > 0) {
@@ -2209,11 +2240,11 @@ public class FileDicom extends FileDicomBase {
 
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
-        System.out.println("bb  name is " + name);
+
         final Vector<byte[]> v = new Vector<byte[]>();
         byte[] imageFrag = null;
         while (name.equals(FileDicom.SEQ_ITEM_BEGIN)) {
-            System.out.println("cc name is " + name);
+
             imageFrag = new byte[elementLength]; // temp buffer
 
             for (int i = 0; i < imageFrag.length; i++) {
@@ -2224,16 +2255,16 @@ public class FileDicom extends FileDicomBase {
             getNextElement(endianess);
             name = convertGroupElement(groupWord, elementWord);
         }
-        System.out.println("dd name is " + name);
+
         if ( !name.equals(FileDicom.SEQ_ITEM_END) && !name.equals(FileDicom.SEQ_ITEM_UNDEF_END)) {
-            System.out.println("ee name is  " + name);
+
             if ( !isQuiet()) {
                 MipavUtil.displayWarning("End tag not present.  Image may have been corrupted.");
             }
         }
 
         raFile.close();
-        System.out.println("imageFrag size is " + imageFrag.length);
+
 
         final FileJP2 fileJP2 = new FileJP2();
 
@@ -2289,7 +2320,7 @@ public class FileDicom extends FileDicomBase {
         inSQ = true;
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
-        System.out.println("aa name is " + name);
+
         int[] tableOffsets;
 
         if (elementLength > 0) {
@@ -2303,11 +2334,11 @@ public class FileDicom extends FileDicomBase {
 
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
-        System.out.println("bb  name is " + name);
+
         final Vector<byte[]> v = new Vector<byte[]>();
 
         while (name.equals(FileDicom.SEQ_ITEM_BEGIN)) {
-            System.out.println("cc name is " + name);
+
             final byte[] imageFrag = new byte[elementLength]; // temp buffer
 
             for (int i = 0; i < imageFrag.length; i++) {
@@ -2318,9 +2349,9 @@ public class FileDicom extends FileDicomBase {
             getNextElement(endianess);
             name = convertGroupElement(groupWord, elementWord);
         }
-        System.out.println("dd name is " + name);
+
         if ( !name.equals(FileDicom.SEQ_ITEM_END) && !name.equals(FileDicom.SEQ_ITEM_UNDEF_END)) {
-            System.out.println("ee name is  " + name);
+
             if ( !isQuiet()) {
                 MipavUtil.displayWarning("End tag not present.  Image may have been corrupted.");
             }
