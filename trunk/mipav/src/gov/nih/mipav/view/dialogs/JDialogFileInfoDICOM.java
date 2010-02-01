@@ -520,10 +520,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 rowData[3] = s;
                             }
                         } else {
-                           // f.nextElement();
-                            
+                           // f.nextElement();   
                             StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
-
                             rowData[2] = st.nextToken();
                         }
                     }
@@ -1206,7 +1204,9 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 rowData[2] = s;
                             }
                         } else {
-                            f.nextElement();
+                            // f.nextElement();   
+                            StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
+                            rowData[2] = st.nextToken();
                         }
                     }
                 } // standard tag. add tag.get(key).getValue(true) as-is to the table
@@ -2100,7 +2100,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 isEmpty = false;
                 break;
             }
-
         }
 
         if (isEmpty) {
