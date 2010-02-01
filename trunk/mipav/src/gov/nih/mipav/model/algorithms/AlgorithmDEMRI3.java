@@ -37,6 +37,12 @@ import java.text.*;
  Geoff J. M. Parker and Anwar R. Padhani.
  */
 public class AlgorithmDEMRI3 extends AlgorithmBase {
+	
+    private int CONSTANT_TISSUE = 1;
+    
+    private int FIRST_VOLUME_TISSUE = 2;
+    
+    private int SEPARATE_VOLUME_TISSUE = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -46,9 +52,14 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
     /** Contrast relaxivity rate in 1/(mMol*sec) (0.0 - 1000.0) */
     private double r1;
     
+    /** If true, user specifed rib, otherwise, voi specified rib */
+    private boolean userSpecifiedBlood;
+    
     /** blood intrinsic relaxivity rate in 1/(mMol * sec)
      *  input as reciprocal, in seconds (0.001 - 10000.0)*/
     private double rib;
+    
+    private int tissueSource;
     
     /** tissue intrinsic relaxivity rate in 1/(mMol * sec)
      *  specified as reciprocal, in seconds (0.001 - 10000.0)*/
@@ -98,8 +109,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
     private double cos0;
     double initial[] = new double[3];
     
-    private ModelImage lowFlipImage;
-    private ModelImage highFlipImage;
+    private ModelImage tissueImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -108,17 +118,18 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
      
      */
     public AlgorithmDEMRI3(ModelImage destImage, ModelImage srcImage, double min_constr[], double max_constr[],
-    		               double r1, double rib, double rit, ModelImage lowFlipImage, ModelImage highFlipImage, double theta,
+    		               double r1, boolean userSpecifiedBlood, double rib, int tissueSource, double rit, ModelImage tissueImage, double theta,
                            double tr, boolean perMinute, int nFirst, boolean useVe) {
 
         super(destImage, srcImage);
         this.min_constr = min_constr;
         this.max_constr = max_constr;
         this.r1 = r1;
+        this.userSpecifiedBlood = userSpecifiedBlood;
         this.rib = rib;
+        this.tissueSource = tissueSource;
         this.rit = rit;
-        this.lowFlipImage = lowFlipImage;
-        this.highFlipImage = highFlipImage;
+        this.tissueImage = tissueImage;
         this.theta = theta;
         this.tr = tr;
         this.perMinute = perMinute;
@@ -140,13 +151,9 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         mp = null;
         min_constr = null;
         max_constr = null;
-        if (lowFlipImage != null) {
-        	lowFlipImage.disposeLocal();
-        	lowFlipImage = null;
-        }
-        if (highFlipImage != null) {
-        	highFlipImage.disposeLocal();
-        	highFlipImage = null;
+        if (tissueImage != null) {
+        	tissueImage.disposeLocal();
+        	tissueImage = null;
         }
         comp = null;
         elist = null;
@@ -182,6 +189,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         int j;
         boolean testDraper = false;
         boolean testHock25 = false;
+        int voiCount;
         
         if (testDraper) {
         	// Below is an example used to fit y = alpha - beta*(rho**x)
@@ -250,6 +258,34 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         volSize = xDim * yDim * zDim;
         size4D = volSize * (tDim - nFirst);
         destArray = new float[3 * volSize];
+        
+        if ((tissueSource  == FIRST_VOLUME_TISSUE) || (tissueSource == SEPARATE_VOLUME_TISSUE)) {
+        	r1i = new double[volSize];
+        }
+        
+        if (tissueSource == FIRST_VOLUME_TISSUE) {
+        	try {
+        	    srcImage.exportData(0, volSize, r1i);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException on srcImage.exportData(0, volSize, r1i)");
+        		setCompleted(false);
+        		return;
+        	}
+        }
+        
+        if (tissueSource == SEPARATE_VOLUME_TISSUE) {
+        	try {
+        	    tissueImage.exportData(0, volSize, r1i);
+        	}
+        	catch(IOException e) {
+        		MipavUtil.displayError("IOException on tissueImage.exportData(0, volSize, r1i)");
+        		setCompleted(false);
+        		return;
+        	}
+        	tissueImage.disposeLocal();
+        	tissueImage = null;
+        }
         
         tf = srcImage.getFileInfo()[0].getResolutions()[3];
         timeUnits = srcImage.getFileInfo()[0].getUnitsOfMeasure()[3];
@@ -343,6 +379,7 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
         mask = srcImage.generateVOIMask();
         volume = new double[volSize];
         
+        voiCount = 0;
         for (t = 0; t < tDim; t++) {
             try {
                 srcImage.exportData(t*volSize, volSize, volume);
@@ -356,9 +393,16 @@ public class AlgorithmDEMRI3 extends AlgorithmBase {
             for (i = 0; i < volSize; i++) {
                 if (mask.get(i)) {
                     mp[t] += volume[i];
-                }
+                    if (t == 0  && (!userSpecifiedBlood)) {
+                        voiCount++;	
+                    }
+                }  
             }
         } // for (t = 0; t < tDim; t++)
+        
+        if (!userSpecifiedBlood) {
+        	rib = mp[0]/voiCount;
+        }
         mask = null;
         volume = null;
         
