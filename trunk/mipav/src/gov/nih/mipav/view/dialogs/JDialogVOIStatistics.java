@@ -359,9 +359,17 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         calculator.setShowTotals(showTotals);
         // da.addTextUpdateListener(this); // unimplemented -- meant to permit messaging between running thread and
         // this' logging pane.
+        
+        if (isRunInSeparateThread()) {
 
-        calculator.setRunningInSeparateThread(false);
-        calculator.run();
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (calculator.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            calculator.run();
+        }
     }
 
     /**
