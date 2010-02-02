@@ -4275,39 +4275,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             System.out.println("Time required to calculate "+calcSelectedVOI.getName()+": "+(System.currentTimeMillis() - time));
         }
     }
-    
-    /**
-     * not for use. should be moved to a better location. does NOT clone the VOIs that it find to be active, and inserts
-     * into a new ViewVOIVector. if no VOIs are active, the ViewVOIVector returned is <code>null</code>.
-     *
-     * @return  DOCUMENT ME!
-     */
-    private ViewVOIVector getActiveVOIs() {
-        ViewVOIVector voiList;
-
-        voiList = new ViewVOIVector();
-
-        int i;
-
-        try {
-
-            for (i = 0; i < srcImage.getVOIs().size(); i++) {
-
-                if (srcImage.getVOIs().VOIAt(i).isActive()) {
-
-                    // voi at i is the active voi
-                    voiList.addElement(srcImage.getVOIs().VOIAt(i));
-                }
-            }
-        } catch (ArrayIndexOutOfBoundsException indexException) {
-
-            // got to the end of list and never found an active VOI.
-            // return an  empty VOI list.
-            return new ViewVOIVector();
-        }
-
-        return voiList;
-    }
 
     /**
      * DOCUMENT ME!
