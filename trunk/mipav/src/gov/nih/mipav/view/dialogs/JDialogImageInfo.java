@@ -2198,10 +2198,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         applyButton.addActionListener(this);
         buttonPanel.add(applyButton);
 
-        buildOKButton();
+        //buildOKButton();
         buildCancelButton();
         cancelButton.setText("Close");
-        buttonPanel.add(OKButton);
+        //buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
         mainDialogPanel.add(buttonPanel, "South");
 
