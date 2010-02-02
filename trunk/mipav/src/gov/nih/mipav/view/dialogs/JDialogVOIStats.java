@@ -33,7 +33,8 @@ import java.text.SimpleDateFormat;
  *           6:20p $</p>
  */
 public class JDialogVOIStats extends JDialogBase
-        implements ItemListener, ChangeListener, FocusListener, UpdateVOISelectionListener, TreeSelectionListener {
+        implements ItemListener, ChangeListener, FocusListener, 
+                    UpdateVOISelectionListener, TreeSelectionListener, AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -180,6 +181,8 @@ public class JDialogVOIStats extends JDialogBase
     /** DOCUMENT ME! */
     protected JScrollPane voiTreePane;
 
+    private ViewVOIVector processList;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -211,15 +214,7 @@ public class JDialogVOIStats extends JDialogBase
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
         String tmpStr;
-        int xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
-        int yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
-        int zUnits = FileInfoBase.UNKNOWN_MEASURE;
-
-        if (image.getNDims() > 2) {
-            zUnits = image.getFileInfo(0).getUnitsOfMeasure()[2];
-        }
-
-        String unitsString = null;
+        
 
         if (source == colorButton) {
             colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", new OkColorListener(),
@@ -380,7 +375,7 @@ public class JDialogVOIStats extends JDialogBase
 
             //The VOIs to use for calculations
             int numTotalVois = voiModel.getChildCount(voiModel.getRoot());
-            ViewVOIVector processList = new ViewVOIVector(numTotalVois);
+            processList = new ViewVOIVector(numTotalVois);
             TreePath[] tPaths = voiTree.getSelectionPaths();
             TreePath currentPath;
             Object[] currentObjects;
@@ -406,19 +401,54 @@ public class JDialogVOIStats extends JDialogBase
             // the thing held BY the image.
             algoVOI = new AlgorithmVOIProps(image, processList);
             
+            algoVOI.addListener(this);
             //only calculate these if appropriate box is checked for speed.
             algoVOI.setDistanceFlag(listPanel.getSelectedList(VOIStatisticList.largestDistanceDescription));
             algoVOI.setSliceDistanceFlag(listPanel.getSelectedList(VOIStatisticList.largestSliceDistanceDescription));
             
-            algoVOI.setRunningInSeparateThread(false);
-            algoVOI.run();
+            createProgressBar(image.getImageName(), algoVOI);
+            
+            if (isRunInSeparateThread()) {
 
-            if (!algoVOI.isCompleted()) {
-                MipavUtil.displayError("Please make sure VOI is selected.");
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (algoVOI.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
 
-                return;
+                algoVOI.run();
+            }
+ 
+        } else if (source == checkboxExclude) {
+            boolean flag = checkboxExclude.isSelected();
+            labelMax.setEnabled(flag);
+            labelMin.setEnabled(flag);
+            textMin.setEnabled(flag);
+            textMax.setEnabled(flag);
+        } else if (source == cancelButton) {
+            cancelFlag = true;
+            setVisible(false);
+        }
+    }
+   
+
+
+    // *******************************************************************
+    // ************************* Focus Events ****************************
+    // *******************************************************************
+
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+        if(algorithm instanceof AlgorithmVOIProps && algoVOI.isCompleted()) {
+            int xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
+            int yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
+            int zUnits = FileInfoBase.UNKNOWN_MEASURE;
+
+            if (image.getNDims() > 2) {
+                zUnits = image.getFileInfo(0).getUnitsOfMeasure()[2];
             }
 
+            String unitsString = null;
+            
             voi.setActive(true);
 
             String str = new String();
@@ -428,228 +458,228 @@ public class JDialogVOIStats extends JDialogBase
           //TODO: Should report results of all VOIs
             // Save statistics in the header only if image format is XML.
             if (((image.getFileInfo(0).getFileFormat() == FileUtility.XML) ||
-            		(image.getFileInfo(0).getFileFormat() == FileUtility.XML_MULTIFILE)) && checkboxSaveStats.isSelected()) {
-            	
-            	if (image.getNDims() > 2) {
-            		fInfoBase = new FileInfoImageXML[image.getExtents()[2]];
-            	} else {
-            		fInfoBase = new FileInfoImageXML[image.getExtents()[1]];
-            	}
-            	
-            	String pSetDesc = voi.getName();
-            	String name;
-            	String value;
-            	SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd");
-            	SimpleDateFormat tFormat = new SimpleDateFormat("HH:mm:ss");
-            	Date date = new Date();
-            	String dateStr = dFormat.format(date);
-            	String timeStr = tFormat.format(date);
-            	
-            	
-            	for (int i = 0; i < fInfoBase.length; i++) {
-            		fInfoBase[i] = new FileInfoImageXML(image.getImageName(), null, FileUtility.XML);
-            		fInfoBase[i].createPSet(pSetDesc);
-            		
-            		for (int j = 0; j < statsList.length; j++) {
-            			if (statsList[j].getState() == true) {
-            				
-            				if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[0])) {
-            					name = statsList[j].getString();
-            					value = Integer.toString(algoVOI.getNVoxels());
-            					fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("int");
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[1])) {
-            		       		
-            		       		if ((xUnits == yUnits) && (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-            		       			str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
-            		       			name = statsList[j].getString();
-            		       			value = Float.toString(algoVOI.getVolume()) + " " + str;
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		} else {
-            		       			name = statsList[j].getString();
-            		       			value = Float.toString(algoVOI.getVolume());
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		}
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[2])) {
-            		       		
-            		       		if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-            		       			str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
-            		       			name = statsList[j].getString();
-            		       			value = Float.toString(algoVOI.getArea()) + " " + str;
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		} else {
-            		       			name = statsList[j].getString();
-            		       			value = Float.toString(algoVOI.getArea());
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		}
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[3])) {
-            		       		
-            		       		if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-            		       			str = FileInfoBase.getUnitsOfMeasureAbbrevStr(image.getFileInfo(0).getUnitsOfMeasure(0));
-            		       			name = statsList[j].getString();
-            		       			value = algoVOI.getPerimeter() + " " + str;
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		} else {
-            		       			name = statsList[j].getString();
-            		       			value = algoVOI.getPerimeter();
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		}
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[4])) {
-            		       		
-            		       		if (image.isColorImage()) {
-            		       			name = "Red Min";
-            		       			value = Float.toString(algoVOI.getMinIntensityRed());
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       			
-                		       	 	name = "Green Min";
-                		       	 	value = Float.toString(algoVOI.getMinIntensityGreen());
-                		       	 	fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-             		       	 	
-                		       	 	name = "Blue Min";
-                		       	 	value = Float.toString(algoVOI.getMinIntensityBlue());
-                		       	 	fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		} else {
-            		       			name = statsList[j].getString();
-            		       			value = Float.toString(algoVOI.getMinIntensity());
-                		       	 	fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		}
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[5])) {
-            		       		
-            		       		if (image.isColorImage()) {
-            		       			name = "Red Max";
-            		       			value = Float.toString(algoVOI.getMaxIntensityRed());
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       			
-                		       	 	name = "Green Max";
-                		       	 	value = Float.toString(algoVOI.getMaxIntensityGreen());
-                		       	 	fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-             		       	 	
-                		       	 	name = "Blue Max";
-                		       	 	value = Float.toString(algoVOI.getMaxIntensityBlue());
-                		       	 	fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		} else {
-            		       			name = statsList[j].getString();
-            		       			value = Float.toString(algoVOI.getMinIntensity());
-                		       	 	fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		}
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[6])) {
-            		       		if (image.isColorImage()) {
-            		       			name = statsList[j].getString();
-            		       			value = Float.toString(algoVOI.getAvgIntenR()) + "R" + Float.toString(algoVOI.getAvgIntenG()) +
-            		       				"G" + Float.toString(algoVOI.getAvgIntenB()) +  "B";
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		} else {
-                		       		name = statsList[j].getString();
-                		       		value = Float.toString(algoVOI.getAvgInten());
-                		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-                		       	 
-            		       		}
-            		       	} else if (statsList[j].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[7])) {
-            		       		if (image.isColorImage()) {
-            		       			name = statsList[j].getString();
-            		       			value = Float.toString(algoVOI.getStdDevR()) + "R" + Float.toString(algoVOI.getStdDevG()) +
-            		       				"G" + Float.toString(algoVOI.getStdDevB()) +  "B";
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		} else {
-                		       		name = statsList[j].getString();
-                		       		value = Float.toString(algoVOI.getStdDev());
-                		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		}
-            				
-            		       	} else if(statsList[j].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[8])) {
-            		       		if (image.isColorImage()) {
-            		       			name = statsList[j].getString();
-            		       			value = Float.toString(algoVOI.getSumIntensitiesR()) + "R" + Float.toString(algoVOI.getSumIntensitiesG()) +
-        		       				"G" + Float.toString(algoVOI.getSumIntensitiesB()) +  "B";
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);	
-            		       		} else {
-            		       			name = statsList[j].getString();
-            		       			value = Float.toString(algoVOI.getSumIntensities());
-            		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       		}
+                    (image.getFileInfo(0).getFileFormat() == FileUtility.XML_MULTIFILE)) && checkboxSaveStats.isSelected()) {
+                
+                if (image.getNDims() > 2) {
+                    fInfoBase = new FileInfoImageXML[image.getExtents()[2]];
+                } else {
+                    fInfoBase = new FileInfoImageXML[image.getExtents()[1]];
+                }
+                
+                String pSetDesc = voi.getName();
+                String name;
+                String value;
+                SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd");
+                SimpleDateFormat tFormat = new SimpleDateFormat("HH:mm:ss");
+                Date date = new Date();
+                String dateStr = dFormat.format(date);
+                String timeStr = tFormat.format(date);
+                
+                
+                for (int i = 0; i < fInfoBase.length; i++) {
+                    fInfoBase[i] = new FileInfoImageXML(image.getImageName(), null, FileUtility.XML);
+                    fInfoBase[i].createPSet(pSetDesc);
+                    
+                    for (int j = 0; j < statsList.length; j++) {
+                        if (statsList[j].getState() == true) {
+                            
+                            if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[0])) {
+                                name = statsList[j].getString();
+                                value = Integer.toString(algoVOI.getNVoxels());
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("int");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                            } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[1])) {
+                                
+                                if ((xUnits == yUnits) && (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                                    str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getVolume()) + " " + str;
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                } else {
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getVolume());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                }
+                            } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[2])) {
+                                
+                                if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                                    str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getArea()) + " " + str;
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                } else {
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getArea());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                }
+                            } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[3])) {
+                                
+                                if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(image.getFileInfo(0).getUnitsOfMeasure(0));
+                                    name = statsList[j].getString();
+                                    value = algoVOI.getPerimeter() + " " + str;
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                } else {
+                                    name = statsList[j].getString();
+                                    value = algoVOI.getPerimeter();
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                }
+                            } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[4])) {
+                                
+                                if (image.isColorImage()) {
+                                    name = "Red Min";
+                                    value = Float.toString(algoVOI.getMinIntensityRed());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                    
+                                    name = "Green Min";
+                                    value = Float.toString(algoVOI.getMinIntensityGreen());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                
+                                    name = "Blue Min";
+                                    value = Float.toString(algoVOI.getMinIntensityBlue());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                } else {
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getMinIntensity());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                }
+                            } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[5])) {
+                                
+                                if (image.isColorImage()) {
+                                    name = "Red Max";
+                                    value = Float.toString(algoVOI.getMaxIntensityRed());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                    
+                                    name = "Green Max";
+                                    value = Float.toString(algoVOI.getMaxIntensityGreen());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                
+                                    name = "Blue Max";
+                                    value = Float.toString(algoVOI.getMaxIntensityBlue());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                } else {
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getMinIntensity());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                }
+                            } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[6])) {
+                                if (image.isColorImage()) {
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getAvgIntenR()) + "R" + Float.toString(algoVOI.getAvgIntenG()) +
+                                        "G" + Float.toString(algoVOI.getAvgIntenB()) +  "B";
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                } else {
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getAvgInten());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                 
+                                }
+                            } else if (statsList[j].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[7])) {
+                                if (image.isColorImage()) {
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getStdDevR()) + "R" + Float.toString(algoVOI.getStdDevG()) +
+                                        "G" + Float.toString(algoVOI.getStdDevB()) +  "B";
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                } else {
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getStdDev());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                }
+                            
+                            } else if(statsList[j].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[8])) {
+                                if (image.isColorImage()) {
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getSumIntensitiesR()) + "R" + Float.toString(algoVOI.getSumIntensitiesG()) +
+                                    "G" + Float.toString(algoVOI.getSumIntensitiesB()) +  "B";
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr); 
+                                } else {
+                                    name = statsList[j].getString();
+                                    value = Float.toString(algoVOI.getSumIntensities());
+                                    fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                    fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                                }
                             }else if (statsList[j].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[9])) {
                                 name = statsList[j].getString();
                                 value = algoVOI.getGeometricCenter();
@@ -658,68 +688,68 @@ public class JDialogVOIStats extends JDialogBase
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	}else if (statsList[j].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[10])) {
-            		       		name = statsList[j].getString();
+                            }else if (statsList[j].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[10])) {
+                                name = statsList[j].getString();
                                 if (image.isColorImage()) {
                                     value = algoVOI.getCenterOfMassR() + "R" + algoVOI.getCenterOfMassG() + "G" +
                                             algoVOI.getCenterOfMassB() + "B";
                                 }
                                 else {
-            		       		    value = algoVOI.getCenterOfMass();
+                                    value = algoVOI.getCenterOfMass();
                                 }
-            		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            				
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[11])) {
-            		       		name = statsList[j].getString();
-            		       		value = Float.toString(algoVOI.getPrincipalAxis());
-            		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[12])) {
-            		       		name = statsList[j].getString();
-            		       		value = Float.toString(algoVOI.getEccentricity());
-            		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[13])) {
-            		       		if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-            		       			unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
-            		       		}
-            		       		name = statsList[j].getString();
-            		       		if (unitsString != null) {
-            		       			value = Float.toString(algoVOI.getMajorAxis()) + " " + unitsString;
-            		       		} else {
-            		       			value = Float.toString(algoVOI.getMajorAxis());
-            		       		}
-            		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[14])) {
-            		       		if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-            		       			unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
-            		       		}
-            		       		name = statsList[j].getString();
-            		       		if (unitsString != null) {
-            		       			value = Float.toString(algoVOI.getMinorAxis()) + " " + unitsString;
-            		       		} else {
-            		       			value = Float.toString(algoVOI.getMinorAxis());
-            		       		}
-            		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-            		       		fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	}
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("string");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                            
+                            } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[11])) {
+                                name = statsList[j].getString();
+                                value = Float.toString(algoVOI.getPrincipalAxis());
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                            } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[12])) {
+                                name = statsList[j].getString();
+                                value = Float.toString(algoVOI.getEccentricity());
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                            } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[13])) {
+                                if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                                    unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+                                }
+                                name = statsList[j].getString();
+                                if (unitsString != null) {
+                                    value = Float.toString(algoVOI.getMajorAxis()) + " " + unitsString;
+                                } else {
+                                    value = Float.toString(algoVOI.getMajorAxis());
+                                }
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                            } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[14])) {
+                                if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                                    unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+                                }
+                                name = statsList[j].getString();
+                                if (unitsString != null) {
+                                    value = Float.toString(algoVOI.getMinorAxis()) + " " + unitsString;
+                                } else {
+                                    value = Float.toString(algoVOI.getMinorAxis());
+                                }
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                            }
                         } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[15])) {
                             name = statsList[j].getString();
                             if (image.isColorImage()) {
@@ -789,50 +819,50 @@ public class JDialogVOIStats extends JDialogBase
                                 fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
                             }
                         }  else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[19])) {
-        		       		if (image.isColorImage()) {
-        		       			name = statsList[j].getString();
-        		       			value = Float.toString(algoVOI.getMedianR()) + "R" + Float.toString(algoVOI.getMedianG()) +
-        		       				"G" + Float.toString(algoVOI.getMedianB()) +  "B";
-        		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-        		       		} else {
-            		       		name = statsList[j].getString();
-            		       		value = Float.toString(algoVOI.getMedian());
-            		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	 
-        		       		}
-        		       	} else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[20])) {
-        		       		if (image.isColorImage()) {
-        		       			name = statsList[j].getString();
-        		       			value = Float.toString(algoVOI.getModeR()) + "R" + Float.toString(algoVOI.getModeG()) +
-        		       				"G" + Float.toString(algoVOI.getModeB()) +  "B";
-        		       			fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-        		       		} else {
-            		       		name = statsList[j].getString();
-            		       		value = Float.toString(algoVOI.getMode());
-            		       		fInfoBase[i].getPSet(pSetDesc).addParameter(name);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-            		       	 	fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
-            		       	 
-        		       		}
-        		       	} 
-            		}
+                            if (image.isColorImage()) {
+                                name = statsList[j].getString();
+                                value = Float.toString(algoVOI.getMedianR()) + "R" + Float.toString(algoVOI.getMedianG()) +
+                                    "G" + Float.toString(algoVOI.getMedianB()) +  "B";
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                            } else {
+                                name = statsList[j].getString();
+                                value = Float.toString(algoVOI.getMedian());
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                             
+                            }
+                        } else if (statsList[j].getString().equals(algoVOI.makeStatisticListDescriptions()[20])) {
+                            if (image.isColorImage()) {
+                                name = statsList[j].getString();
+                                value = Float.toString(algoVOI.getModeR()) + "R" + Float.toString(algoVOI.getModeG()) +
+                                    "G" + Float.toString(algoVOI.getModeB()) +  "B";
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                            } else {
+                                name = statsList[j].getString();
+                                value = Float.toString(algoVOI.getMode());
+                                fInfoBase[i].getPSet(pSetDesc).addParameter(name);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValue(value);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setValueType("float");
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setDate(dateStr);
+                                fInfoBase[i].getPSet(pSetDesc).getParameter(name).setTime(timeStr);
+                             
+                            }
+                        } 
+                    }
                 }
-            	FileInfoBase.copyCoreInfo(image.getFileInfo(), fInfoBase);
-        		image.setFileInfo(fInfoBase);
+                FileInfoBase.copyCoreInfo(image.getFileInfo(), fInfoBase);
+                image.setFileInfo(fInfoBase);
            }
             //TODO: Should report results of all VOIs
             
@@ -933,7 +963,7 @@ public class JDialogVOIStats extends JDialogBase
                             UI.setDataText("  Std. dev. of voxel intensity \t= " + algoVOI.getStdDev() + "\n");
                         }
                     } else if(statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[8])) {
-                    	if (image.isColorImage()) {
+                        if (image.isColorImage()) {
                             UI.setDataText("  Sum Intensities \t= " + algoVOI.getSumIntensitiesR() + " R, " +
                                            algoVOI.getSumIntensitiesG() + " G, " + algoVOI.getSumIntensitiesB() + " B, " + "\n");
                         } else {
@@ -1040,23 +1070,9 @@ public class JDialogVOIStats extends JDialogBase
                     } 
                 }
             }
-        } else if (source == checkboxExclude) {
-            boolean flag = checkboxExclude.isSelected();
-            labelMax.setEnabled(flag);
-            labelMin.setEnabled(flag);
-            textMin.setEnabled(flag);
-            textMax.setEnabled(flag);
-        } else if (source == cancelButton) {
-            cancelFlag = true;
-            setVisible(false);
         }
+        
     }
-   
-
-
-    // *******************************************************************
-    // ************************* Focus Events ****************************
-    // *******************************************************************
 
     /**
      * Test the seed value and if appropriate, sets it.
