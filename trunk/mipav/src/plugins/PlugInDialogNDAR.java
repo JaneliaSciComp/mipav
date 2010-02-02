@@ -999,6 +999,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     public void mouseClicked(final MouseEvent e) {
         final Component c = e.getComponent();
         if (c instanceof JTable) {
+        	if(sourceTable.getSelectedRow() == -1) {
+        		completeDataElementsButton.setEnabled(false);
+        		removeSourceButton.setEnabled(false);
+        		return;
+        	}else {
+        		completeDataElementsButton.setEnabled(true);
+        		removeSourceButton.setEnabled(true);
+        	}
             final File f = (File) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
 
             if (e.getClickCount() == 2) {
@@ -1105,7 +1113,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         private final JTabbedPane tabbedPane = new JTabbedPane();
 
-        private JPanel mainPanel;
+        private JPanel infoPanel, mainPanel;
 
         private GridBagConstraints gbc;
 
@@ -1161,7 +1169,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             setTitle("Edit Data Elements for " + file.getName());
             addWindowListener(this);
             mainPanel = new JPanel(new GridBagLayout());
-            scrollPane = new JScrollPane(mainPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+            infoPanel = new JPanel(new GridBagLayout());
+            scrollPane = new JScrollPane(infoPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             scrollPane.setPreferredSize(new Dimension(600, 300));
 
@@ -1227,17 +1236,32 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             } else {
                 populateFields();
             }
-
-            topPanel = new JPanel(new BorderLayout());
-            requiredLabel = new JLabel("* Required Data Elements are in red");
-            topPanel.add(requiredLabel, BorderLayout.NORTH);
-            topPanel.add(scrollPane, BorderLayout.CENTER);
-
-            getContentPane().add(topPanel, BorderLayout.NORTH);
+            requiredLabel = new JLabel("<html>* Required Data Elements are in <font color=\"red\">red</font></html>");
+            
+            gbc.fill = GridBagConstraints.BOTH;
+            gbc.anchor = GridBagConstraints.EAST;
+            gbc.weightx = 0;
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            mainPanel.add(requiredLabel,gbc);
+            gbc.gridy = 1;
+            gbc.weightx = 1;
+            gbc.weighty = 1;
+            mainPanel.add(scrollPane,gbc);
+            gbc.weightx = 0;
+            gbc.weighty = 0;
             if (tabbedPane.getTabCount() > 0) {
-                getContentPane().add(tabbedPane, BorderLayout.CENTER);
+            	gbc.gridy = 2;
+            	mainPanel.add(tabbedPane,gbc);
+            	gbc.gridy = 3;
+                mainPanel.add(OKPanel,gbc);
+            }else {
+            	gbc.gridy = 2;
+                mainPanel.add(OKPanel,gbc);
             }
-            getContentPane().add(OKPanel, BorderLayout.SOUTH);
+            
+            getContentPane().add(mainPanel);
+            
             pack();
             MipavUtil.centerInWindow(owner, this);
             this.setMinimumSize(this.getSize());
@@ -1275,11 +1299,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 gbc.anchor = GridBagConstraints.EAST;
                                 gbc.weightx = 0;
 
-                                mainPanel.add(l, gbc);
+                                infoPanel.add(l, gbc);
                                 gbc.weightx = 1;
                                 gbc.gridx = 1;
                                 gbc.anchor = GridBagConstraints.WEST;
-                                mainPanel.add(t, gbc);
+                                infoPanel.add(t, gbc);
                                 gridYCounter = gridYCounter + 1;
                                 gbc.gridy = gridYCounter;
                                 gbc.gridx = 0;
