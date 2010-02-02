@@ -402,11 +402,22 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        if(image.getNDims() > 3) {
-            tSeries = image.getExtents()[3];
+        boolean do4D = false;
+        int dimT = 0;
+        for (angle=0; angle<Nsa; angle++) {
+            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
+            if(image.getNDims() > 3) {
+                do4D = true;
+                dimT = image.getExtents()[3];
+            }
+        }
+        
+        if(do4D) {
+            tSeries = dimT;
         } else {
             tSeries = 1;
         }
+        
         
         irspgrImage = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[0]]);
         if(image.getNDims() > 2) {
@@ -415,8 +426,18 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             irspgrSlices = 1;
         }
         
-        if(image.getNDims() > 3) {
-            irspgrSeries = image.getExtents()[3];
+        do4D = false;
+        dimT = 0;
+        for (ti=0; ti<Nti; ti++) {
+            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[ti]]);  
+            if(image.getNDims() > 3) {
+                do4D = true;
+                dimT = image.getExtents()[3];
+            }
+        }
+        
+        if(do4D) {
+            irspgrSeries = dimT;
         } else {
             irspgrSeries = 1;
         }
@@ -521,7 +542,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (upperLeftCorner) {
                         for (y=20; y<30; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -529,7 +550,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (upperRightCorner) {
                         for (y=20; y<30; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -537,7 +558,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (lowerLeftCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -545,7 +566,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (lowerRightCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -567,7 +588,11 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            irspgrPixelValues[ti][pixelIndex] = image.getFloat(x, y, k, t);
+                            if(ti == 0) {
+                                irspgrPixelValues[ti][pixelIndex] = image.getFloat(x, y, k);
+                            } else {
+                                irspgrPixelValues[ti][pixelIndex] = image.getFloat(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -578,7 +603,11 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k, t);
+                            if(angle == 0) {
+                                spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k);
+                            } else {
+                                spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -705,7 +734,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (upperLeftCorner) {
                         for (y=20; y<30; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -713,7 +742,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (upperRightCorner) {
                         for (y=20; y<30; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -721,7 +750,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (lowerLeftCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -729,7 +758,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (lowerRightCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -754,7 +783,11 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k, t);
+                            if(angle == 0) {
+                                spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k);
+                            } else {
+                                spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -984,8 +1017,18 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        if(image.getNDims() > 3) {
-            tSeries = image.getExtents()[3];
+        boolean do4D = false;
+        int dimT = 0;
+        for (angle=0; angle<Nsa; angle++) {
+            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
+            if(image.getNDims() > 3) {
+                do4D = true;
+                dimT = image.getExtents()[3];
+            }
+        }
+        
+        if(do4D) {
+            tSeries = dimT;
         } else {
             tSeries = 1;
         }
@@ -1027,7 +1070,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (upperLeftCorner) {
                         for (y=20; y<30; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -1035,7 +1078,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (upperRightCorner) {
                         for (y=20; y<30; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -1043,7 +1086,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (lowerLeftCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=20; x<30; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -1051,7 +1094,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     if (lowerRightCorner) {
                         for (y=height-30; y<height-20; y++) {
                             for (x=width-30; x<width-20; x++) {
-                                noiseSum += image.getFloat(x, y, k, t);
+                                noiseSum += image.getFloat(x, y, k);
                                 noiseIndex++;
                             }
                         }
@@ -1086,8 +1129,14 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            pixelValues[angle][pixelIndex] = image.getDouble(x, y, k, t);
-                            if (performDESPOT1withPreCalculatedB1Map) b1Values[pixelIndex] = b1FieldImage.getDouble(x, y, k, t);
+                            if(angle == 0) {
+                                pixelValues[angle][pixelIndex] = image.getDouble(x, y, k);
+                            } else {
+                                pixelValues[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            }
+                            if (performDESPOT1withPreCalculatedB1Map) {
+                                b1Values[pixelIndex] = b1FieldImage.getDouble(x, y, k, t); 
+                            }
                             pixelIndex++;
                         }
                     }

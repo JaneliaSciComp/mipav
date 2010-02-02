@@ -186,7 +186,15 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        if(image.getNDims() > 3) {
+        boolean do4D = false;
+        for (angle=0; angle<dialog.getNfa_phase0(); angle++) {
+            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
+            if(image.getNDims() > 3) {
+                do4D = true;
+            }
+        }
+        
+        if(do4D) {
             tSeries = image.getExtents()[3];
         } else {
             tSeries = 1;
@@ -259,7 +267,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            if(angle == 0) {
+                                ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
+                            } else {
+                                ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -271,7 +283,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 pixelIndex = 0;
                 for (y=0; y<height; y++) {
                     for (x=0; x<width; x++) {
-                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
                         pixelIndex++;
                     }
                 }
@@ -282,7 +294,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k);
                             pixelIndex++;
                         }
                     }
@@ -465,7 +477,15 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        if(image.getNDims() > 3) {
+        boolean do4D = false;
+        for (angle=0; angle<dialog.getNfa_phase180(); angle++) {
+            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
+            if(image.getNDims() > 3) {
+                do4D = true;
+            }
+        }
+        
+        if(do4D) {
             tSeries = image.getExtents()[3];
         } else {
             tSeries = 1;
@@ -538,7 +558,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            if(angle == 0) {
+                                ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
+                            } else {
+                                ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -739,7 +763,16 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        if(image.getNDims() > 3) {
+        //if instance of 4D at 0, then also expected at 180
+        boolean do4D = false;
+        for (angle=0; angle<dialog.getNfa_phase180(); angle++) {
+            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
+            if(image.getNDims() > 3) {
+                do4D = true;
+            }
+        }
+        
+        if(do4D) {
             tSeries = image.getExtents()[3];
         } else {
             tSeries = 1;
@@ -818,7 +851,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            if(angle == 0) {
+                                ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
+                            } else {
+                                ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -831,7 +868,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            if(angle == 0) {
+                                ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
+                            } else {
+                                ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -854,7 +895,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
                             pixelIndex++;
                         }
                     }
@@ -1126,7 +1167,16 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        if(image.getNDims() > 3) {
+        //if instance of 4D at 0, then also expected at 180
+        boolean do4D = false;
+        for (angle=0; angle<dialog.getNfa_phase180(); angle++) {
+            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
+            if(image.getNDims() > 3) {
+                do4D = true;
+            }
+        }
+        
+        if(do4D) {
             tSeries = image.getExtents()[3];
         } else {
             tSeries = 1;
@@ -1262,7 +1312,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            if(angle == 0) {
+                                ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
+                            } else {
+                                ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -1275,7 +1329,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            if(angle == 0) {
+                                ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
+                            } else {
+                                ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -1456,7 +1514,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            if(angle == 0) {
+                                ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
+                            } else {
+                                ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -1469,7 +1531,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            if(angle == 0) {
+                                ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
+                            } else {
+                                ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
