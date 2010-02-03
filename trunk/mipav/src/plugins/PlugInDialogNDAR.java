@@ -33,7 +33,7 @@ import com.sun.jimi.core.*;
 
 
 public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener,
-        TreeSelectionListener, MouseListener {
+        TreeSelectionListener, MouseListener, PreviewImageContainer {
 
     /** Scrolling text area for log output */
     private WidgetFactory.ScrollTextArea logOutputArea;
@@ -47,6 +47,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private JButton addSourceButton, finishButton, removeSourceButton, completeDataElementsButton, outputDirButton;
 
     private JPanel outputDirPanel;
+    
+    private JPanel previewPanel;
 
     private JTextField outputDirTextField;
 
@@ -82,6 +84,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private OMElement documentElement, dataStructElement;
 
     private String namespace;
+    
+    private ArrayList<ViewJComponentPreviewImage> previewImages = new ArrayList<ViewJComponentPreviewImage>();
+    
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
     public static final String NDAR_PRIVACY_NOTICE = "MIPAV is a collaborative environment with privacy rules that pertain to the collection\n"
@@ -193,6 +198,35 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount() - 1, sourceTableModel
                                 .getRowCount() - 1);
                         multiFileTable.put(files[i], new Boolean(isMultiFile));
+                        
+                        final FileIO fileIO = new FileIO();
+                        fileIO.setQuiet(true);
+                        File imageFile = files[i];
+                        ModelImage srcImage = fileIO.readImage(imageFile.getName(), imageFile.getParent() + File.separator,
+                                multiFileTable.get(imageFile), null);
+                        
+                        
+                        int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
+
+                        ViewJComponentPreviewImage previewImg = new ViewJComponentPreviewImage(srcImage, extents, this);
+                        int slice = 0;
+                        if(!srcImage.is2DImage()) {
+                        	slice = (int)(srcImage.getExtents()[2]/2);
+                        }
+                        previewImg.createImg(slice);
+                        previewImages.add(previewImg);
+                        
+                        previewPanel.removeAll();
+                        previewPanel.repaint();
+                        
+                        previewPanel.add(previewImg);
+
+                        previewPanel.validate();
+                        previewPanel.repaint();
+                        
+                        srcImage.disposeLocal();
+                        srcImage = null;
+                        
                         new InfoDialog(this, files[i], false);
                     }
                 }
@@ -202,19 +236,33 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " image(s) "));
 
         } else if (command.equals("RemoveSource")) {
-            final int[] selected = sourceTable.getSelectedRows();
-            for (int i = selected.length - 1; i >= 0; i--) {
-                final File f = (File) sourceTableModel.getValueAt(selected[i], 0);
-                sourceTableModel.removeRow(selected[i]);
-                multiFileTable.remove(f);
-                infoTable.remove(f);
-                outputFileNameBaseTable.remove(f);
-            }
+            int selected = sourceTable.getSelectedRow();
+
+        	final File f = (File) sourceTableModel.getValueAt(selected, 0);
+            sourceTableModel.removeRow(selected);
+            multiFileTable.remove(f);
+            infoTable.remove(f);
+            outputFileNameBaseTable.remove(f);
+            
+            previewImages.remove(selected);
+            previewPanel.removeAll();
+            previewPanel.repaint();
 
             removeSourceButton.setEnabled(sourceTableModel.getRowCount() > 0);
             completeDataElementsButton.setEnabled(sourceTableModel.getRowCount() > 0);
             if (sourceTableModel.getRowCount() > 0) {
                 enableDisableFinishButton();
+                
+                if(selected >= sourceTableModel.getRowCount()) {
+                	sourceTable.setRowSelectionInterval(sourceTableModel.getRowCount()-1, sourceTableModel.getRowCount()-1);
+                }else {
+                	sourceTable.setRowSelectionInterval(selected,selected);
+                }
+                System.out.println(sourceTable.getSelectedRow());
+                previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
+
+                previewPanel.validate();
+                previewPanel.repaint();
             } else {
                 finishButton.setEnabled(false);
             }
@@ -310,15 +358,34 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         multiFileTable = new Hashtable<File, Boolean>();
         infoTable = new Hashtable<File, LinkedHashMap<String, String>>();
         outputFileNameBaseTable = new Hashtable<File, String>();
+        JPanel topPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.NORTHWEST;
 
-        getContentPane().add(buildSourcePanel(), BorderLayout.NORTH);
+        
+        
+        previewPanel = new JPanel();
+        previewPanel.setBorder(buildTitledBorder("Preview image"));
+        previewPanel.setPreferredSize(new Dimension(200, 350));
+        gbc2.gridy = 0;
+        gbc2.gridx = 0;
+        gbc2.fill = GridBagConstraints.BOTH;
+        gbc2.weightx = 0;
+        gbc2.weighty = 0;
+        topPanel.add(previewPanel,gbc2);
+        gbc2.gridx = 1;
+        gbc2.weightx = 1;
+        gbc2.weighty = 1;
+        topPanel.add(buildSourcePanel(),gbc2);
+        
+        getContentPane().add(topPanel, BorderLayout.NORTH);
 
         getContentPane().add(buildLogPanel(), BorderLayout.CENTER);
         getContentPane().add(buildButtonPanel(), BorderLayout.SOUTH);
         pack();
         validate();
-        this.setMinimumSize(new Dimension(610, 537));
-        this.setSize(new Dimension(610, 537));
+        this.setMinimumSize(this.getSize());
+        //this.setSize(new Dimension(610, 537));
     }
 
     /**
@@ -327,7 +394,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private JPanel buildLogPanel() {
         final JPanel destPanel = new JPanel(new GridBagLayout());
 
-        final GridBagConstraints gbc2 = new GridBagConstraints();
+        GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.CENTER;
 
         gbc2.gridy = 0;
@@ -336,7 +403,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         logOutputArea = WidgetFactory.buildScrollTextArea(Color.white);
         logOutputArea.setBorder(buildTitledBorder("Output log"));
         logOutputArea.getTextArea().setEditable(false);
-
+        logOutputArea.getTextArea().setRows(10);
         outputDirPanel = new JPanel();
         outputDirLabel = new JLabel("Output Directory ");
         outputDirTextField = new JTextField(30);
@@ -366,12 +433,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     }
 
     private JScrollPane buildSourcePanel() {
-        final GridBagConstraints gbc = new GridBagConstraints();
+        //final GridBagConstraints gbc = new GridBagConstraints();
 
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.BOTH;
+        //gbc.anchor = GridBagConstraints.NORTHWEST;
+        //gbc.weightx = 1;
+        //gbc.weighty = 1;
+        //gbc.fill = GridBagConstraints.BOTH;
 
         sourceTableModel = new ViewTableModel();
         sourceTableModel.addColumn("Image Name");
@@ -379,7 +446,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         sourceTable = new JTable(sourceTableModel);
         sourceTable.addMouseListener(this);
-        sourceTable.setPreferredScrollableViewportSize(new Dimension(610, 200));
+        sourceTable.setPreferredScrollableViewportSize(new Dimension(500, 350));
         sourceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         sourceTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
@@ -441,6 +508,133 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         return false;
     }
+    
+    
+    private ModelImage createThumbnailImage(ModelImage origImage) {
+    	ModelImage thumbnailImage = null;
+    	
+    	// create a thumbnail image...4 colums, 2 rows
+        // grab the middle 8 slices from the image for the thumbnail
+        // need to determine by what percentage...so...need to figure out by what percebtahe the xdim will go down
+        // to 128
+        // startSLice will be 3 less than middle slice
+        // endSlice will be 4 more than middle slixe
+        final int xDim = origImage.getExtents()[0];
+        int percentage = 100;
+        if (xDim > 128) {
+            final float perc = 128f / xDim * 100;
+            percentage = (int) Math.floor(perc);
+        }
+        final int columns = 4;
+        final int rows = 2;
+        final int rBorderVal = 255;
+        final int gBorderVal = 0;
+        final int bBorderVal = 0;
+        final int borderThick = 1;
+        int startSlice = 0;
+        int endSlice = 0;
+        int numSlices = 0;
+        int middleSlice = 0;
+        LightboxGenerator lightGen;
+        
+        if (origImage.is2DImage()) {
+            // Creating a blank TransMatrix for resampling
+            final TransMatrix percentSizer = new TransMatrix(4);
+            percentSizer.Set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+            // Resample image size based on percent inputted
+            final AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1,
+                    (float) (origImage.getResolutions(0)[0] / (percentage * .01)), (float) (origImage
+                            .getResolutions(0)[1] / (percentage * .01)), (int) (origImage.getExtents()[0]
+                            * percentage * .01), (int) (origImage.getExtents()[1] * percentage * .01), origImage
+                            .getUnitsOfMeasure(), false, true, false, true, origImage.getImageCentermm(false));
+            transformer.runAlgorithm();
+            thumbnailImage = transformer.getTransformedImage();
+            thumbnailImage.calcMinMax();
+            // convert this image to color image if it is not
+            if ( !thumbnailImage.isColorImage()) {
+                final ModelImage newRGB = new ModelImage(ModelStorageBase.ARGB, thumbnailImage.getExtents(),
+                        thumbnailImage.getImageName());
+                final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage,
+                        thumbnailImage, newRGB, true, true, 255.0f, true);
+                mathAlgo.run();
+                thumbnailImage.disposeLocal();
+                thumbnailImage = null;
+                thumbnailImage = newRGB;
+            }
+        } else if (origImage.is3DImage()) {
+            numSlices = origImage.getExtents()[2];
+            numSlices = numSlices - 1; // its 0 based
+            middleSlice = numSlices / 2;
+            startSlice = middleSlice - 3;
+            if (startSlice < 0) {
+                startSlice = 0;
+            }
+            endSlice = middleSlice + 4;
+            if (endSlice > numSlices - 1) {
+                endSlice = numSlices - 1;
+            }
+
+            try {
+                // Make algorithm
+                lightGen = new LightboxGenerator(origImage, startSlice, endSlice, percentage, rows, columns,
+                        rBorderVal, gBorderVal, bBorderVal, false, borderThick);
+                lightGen.run();
+                thumbnailImage = lightGen.getImage();
+                thumbnailImage.calcMinMax();
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+        } else if (origImage.is4DImage()) {
+            // get middle time volume
+            final int[] destExtents = new int[3];
+            final int xSlices = origImage.getExtents()[0];
+            final int ySlices = origImage.getExtents()[1];
+            final int zSlices = origImage.getExtents()[2];
+            destExtents[0] = xSlices;
+            destExtents[1] = ySlices;
+            destExtents[2] = zSlices;
+
+            ModelImage timeImage = new ModelImage(origImage.getType(), destExtents, "");
+
+            final int tSlices = origImage.getExtents()[3];
+            int middleVol = (int) Math.floor(tSlices / 2);
+            if (middleVol > 0) {
+                middleVol = middleVol - 1; // 0 based
+            }
+            final AlgorithmSubset subsetAlgo = new AlgorithmSubset(origImage, timeImage, AlgorithmSubset.REMOVE_T,
+                    middleVol);
+            subsetAlgo.run();
+
+            numSlices = timeImage.getExtents()[2];
+            numSlices = numSlices - 1; // its 0 based
+            middleSlice = numSlices / 2;
+            startSlice = middleSlice - 3;
+            if (startSlice < 0) {
+                startSlice = 0;
+            }
+            endSlice = middleSlice + 4;
+            if (endSlice > numSlices - 1) {
+                endSlice = numSlices - 1;
+            }
+            try {
+                // Make algorithm
+                lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns,
+                        rBorderVal, gBorderVal, bBorderVal, false, borderThick);
+                lightGen.run();
+                thumbnailImage = lightGen.getImage();
+                thumbnailImage.calcMinMax();
+                if (timeImage != null) {
+                    timeImage.disposeLocal();
+                    timeImage = null;
+                }
+            } catch (final Exception e) {
+
+            }
+        }
+    	
+    	return thumbnailImage;
+    }
 
     /**
      * Create the ZIP(s) containing the original image files and the XML meta-data for each image dataset.
@@ -465,125 +659,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             final List<String> origFiles = FileUtility.getFileNameList(origImage);
 
-            // create a thumbnail image...4 colums, 2 rows
-            // grab the middle 8 slices from the image for the thumbnail
-            // need to determine by what percentage...so...need to figure out by what percebtahe the xdim will go down
-            // to 128
-            // startSLice will be 3 less than middle slice
-            // endSlice will be 4 more than middle slixe
-            final int xDim = origImage.getExtents()[0];
-            int percentage = 100;
-            if (xDim > 128) {
-                final float perc = 128f / xDim * 100;
-                percentage = (int) Math.floor(perc);
-            }
-            final int columns = 4;
-            final int rows = 2;
-            final int rBorderVal = 255;
-            final int gBorderVal = 0;
-            final int bBorderVal = 0;
-            final int borderThick = 1;
-            int startSlice = 0;
-            int endSlice = 0;
-            int numSlices = 0;
-            int middleSlice = 0;
-            LightboxGenerator lightGen;
-            ModelImage thumbnailImage = null;
-            if (origImage.is2DImage()) {
-                // Creating a blank TransMatrix for resampling
-                final TransMatrix percentSizer = new TransMatrix(4);
-                percentSizer.Set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-
-                // Resample image size based on percent inputted
-                final AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1,
-                        (float) (origImage.getResolutions(0)[0] / (percentage * .01)), (float) (origImage
-                                .getResolutions(0)[1] / (percentage * .01)), (int) (origImage.getExtents()[0]
-                                * percentage * .01), (int) (origImage.getExtents()[1] * percentage * .01), origImage
-                                .getUnitsOfMeasure(), false, true, false, true, origImage.getImageCentermm(false));
-                transformer.runAlgorithm();
-                thumbnailImage = transformer.getTransformedImage();
-                thumbnailImage.calcMinMax();
-                // convert this image to color image if it is not
-                if ( !thumbnailImage.isColorImage()) {
-                    final ModelImage newRGB = new ModelImage(ModelStorageBase.ARGB, thumbnailImage.getExtents(),
-                            thumbnailImage.getImageName());
-                    final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage,
-                            thumbnailImage, newRGB, true, true, 255.0f, true);
-                    mathAlgo.run();
-                    thumbnailImage.disposeLocal();
-                    thumbnailImage = null;
-                    thumbnailImage = newRGB;
-                }
-            } else if (origImage.is3DImage()) {
-                numSlices = origImage.getExtents()[2];
-                numSlices = numSlices - 1; // its 0 based
-                middleSlice = numSlices / 2;
-                startSlice = middleSlice - 3;
-                if (startSlice < 0) {
-                    startSlice = 0;
-                }
-                endSlice = middleSlice + 4;
-                if (endSlice > numSlices - 1) {
-                    endSlice = numSlices - 1;
-                }
-
-                try {
-                    // Make algorithm
-                    lightGen = new LightboxGenerator(origImage, startSlice, endSlice, percentage, rows, columns,
-                            rBorderVal, gBorderVal, bBorderVal, false, borderThick);
-                    lightGen.run();
-                    thumbnailImage = lightGen.getImage();
-                    thumbnailImage.calcMinMax();
-                } catch (final Exception e) {
-                    e.printStackTrace();
-                }
-            } else if (origImage.is4DImage()) {
-                // get middle time volume
-                final int[] destExtents = new int[3];
-                final int xSlices = origImage.getExtents()[0];
-                final int ySlices = origImage.getExtents()[1];
-                final int zSlices = origImage.getExtents()[2];
-                destExtents[0] = xSlices;
-                destExtents[1] = ySlices;
-                destExtents[2] = zSlices;
-
-                ModelImage timeImage = new ModelImage(origImage.getType(), destExtents, "");
-
-                final int tSlices = origImage.getExtents()[3];
-                int middleVol = (int) Math.floor(tSlices / 2);
-                if (middleVol > 0) {
-                    middleVol = middleVol - 1; // 0 based
-                }
-                final AlgorithmSubset subsetAlgo = new AlgorithmSubset(origImage, timeImage, AlgorithmSubset.REMOVE_T,
-                        middleVol);
-                subsetAlgo.run();
-
-                numSlices = timeImage.getExtents()[2];
-                numSlices = numSlices - 1; // its 0 based
-                middleSlice = numSlices / 2;
-                startSlice = middleSlice - 3;
-                if (startSlice < 0) {
-                    startSlice = 0;
-                }
-                endSlice = middleSlice + 4;
-                if (endSlice > numSlices - 1) {
-                    endSlice = numSlices - 1;
-                }
-                try {
-                    // Make algorithm
-                    lightGen = new LightboxGenerator(timeImage, startSlice, endSlice, percentage, rows, columns,
-                            rBorderVal, gBorderVal, bBorderVal, false, borderThick);
-                    lightGen.run();
-                    thumbnailImage = lightGen.getImage();
-                    thumbnailImage.calcMinMax();
-                    if (timeImage != null) {
-                        timeImage.disposeLocal();
-                        timeImage = null;
-                    }
-                } catch (final Exception e) {
-
-                }
-            }
+            
 
             final int modality = origImage.getFileInfo(0).getModality();
             final String modalityString = FileInfoBase.getModalityStr(modality).replaceAll("\\s+", "");
@@ -597,6 +673,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             final String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
 
+            
+            ModelImage thumbnailImage = createThumbnailImage(origImage);
+            
             // write out thumbnail image
             final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
             writeThumbnailJIMI(thumbnailImage, opts);
@@ -903,7 +982,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         return buttonPanel1;
     }
 
-    /**
+    @Override
+	public Dimension getPanelSize() {
+    	return new Dimension(previewPanel.getBounds().width, previewPanel.getBounds().height);
+	}
+
+	/**
      * Writes a JIMI file to store the image.
      * 
      * @param image The image to write.
@@ -1002,12 +1086,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         	if(sourceTable.getSelectedRow() == -1) {
         		completeDataElementsButton.setEnabled(false);
         		removeSourceButton.setEnabled(false);
+        		previewPanel.removeAll();
+                previewPanel.repaint();
         		return;
         	}else {
         		completeDataElementsButton.setEnabled(true);
         		removeSourceButton.setEnabled(true);
         	}
             final File f = (File) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
+            
+            previewPanel.removeAll();
+            previewPanel.repaint();
+            
+            previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
+
+            previewPanel.validate();
+            previewPanel.repaint();
 
             if (e.getClickCount() == 2) {
                 final String completed = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 1);
@@ -1236,7 +1330,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             } else {
                 populateFields();
             }
-            requiredLabel = new JLabel("<html>* Required Data Elements are in <font color=\"red\">red</font></html>");
+            requiredLabel = new JLabel("<html>* Required data elements are in <font color=\"red\">red</font></html>");
             
             gbc.fill = GridBagConstraints.BOTH;
             gbc.anchor = GridBagConstraints.EAST;

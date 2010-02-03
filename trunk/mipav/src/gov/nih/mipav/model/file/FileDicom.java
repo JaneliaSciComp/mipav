@@ -766,12 +766,14 @@ public class FileDicom extends FileDicomBase {
                     }
                     if(name.equals("0028,0008") && isEnhanced) {
                     	int nImages = Integer.valueOf(strValue.trim()).intValue();
+                    	fileInfo.setIsEnhancedDicom(true);
                     	if(nImages > 1) {
 	                    	childrenTagTables =  new FileDicomTagTable[nImages - 1];
 	                    	enhancedFileInfos = new FileInfoDicom[nImages - 1];
 	                    	for(int i=0;i<nImages-1;i++) {
 	                    		String s = String.valueOf(i+1);
 	                    		FileInfoDicom f = new FileInfoDicom(fileName + s , fileDir, FileUtility.DICOM, fileInfo);
+	                    		f.setIsEnhancedDicom(true);
 	                    		childrenTagTables[i] = f.getTagTable();
 	                    		enhancedFileInfos[i] = f;
 	                    	}

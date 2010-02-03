@@ -1750,7 +1750,22 @@ public class FileUtility {
             case FileUtility.SURFACEREF_XML:
                 fileNameList = null;
                 break;
-
+            case FileUtility.DICOM:
+            	boolean isEnhancedDicom = ((FileInfoDicom)fileInfoList[0]).isEnhancedDicom();
+            	if(isEnhancedDicom) {
+            		String file = fileInfo.getFileDirectory() + File.separator + fileInfoList[0].getFileName();
+            		fileNameList.add(file);
+            		
+            	}else {
+            		String file;
+                    for (int i = 0; i < fileInfoList.length; i++) {
+                        file = fileInfo.getFileDirectory() + File.separator + fileInfoList[i].getFileName();
+                        if (file != null && !fileNameList.contains(file)) {
+                            fileNameList.add(file);
+                        }
+                    }
+            	}
+            	break;
             default:
                 String file;
                 for (int i = 0; i < fileInfoList.length; i++) {
