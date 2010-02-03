@@ -695,6 +695,17 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         final JPanel statPanel = new JPanel(new BorderLayout());
         checkBoxPanel = new JPanelStatisticsList();
+        
+        try {
+            checkBoxPanel.setSliceCount(image.getExtents()[2]);
+        } catch (ArrayIndexOutOfBoundsException aioobe) {
+
+            // otherwise, this must be a 2d image.
+            checkBoxPanel.setSliceCount(1);
+        } finally {
+            checkBoxPanel.setCheckBoxesEnabled();
+        }
+        
         outputOptionsPanel = new JPanelStatisticsOptions();
 
         if (ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage().getNDims() == 2) {

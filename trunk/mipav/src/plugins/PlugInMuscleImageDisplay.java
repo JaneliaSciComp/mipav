@@ -4858,6 +4858,17 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 
 	        JPanel statPanel = new JPanel(new BorderLayout());
 	        checkBoxPanel = new PlugInStatisticsList();
+	        
+	        try {
+	            checkBoxPanel.setSliceCount(image.getExtents()[2]);
+	        } catch (ArrayIndexOutOfBoundsException aioobe) {
+
+	            // otherwise, this must be a 2d image.
+	            checkBoxPanel.setSliceCount(1);
+	        } finally {
+	            checkBoxPanel.setCheckBoxesEnabled();
+	        }
+	        
 	        outputOptionsPanel = new JPanelStatisticsOptions();
 
 	        if (ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage().getNDims() ==
