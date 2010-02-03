@@ -90,7 +90,7 @@ public abstract class Integration {
     private double ss;
 
     /** DOCUMENT ME! */
-    private double upper;
+    protected double upper;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
