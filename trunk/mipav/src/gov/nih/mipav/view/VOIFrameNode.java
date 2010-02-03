@@ -25,7 +25,7 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** The slice number of the VOI component */
     private int frameNumber;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
      * Creates a new VOIFrameNode object.
      *
      * @param  node     File for tree leaf.
-     * @param  fNumber  The slice number of this VOI
+     * @param  fNumber  The slice number of this VOI component
      */
     public VOIFrameNode(Vector node, int fNumber) {
         setUserObject(node);
