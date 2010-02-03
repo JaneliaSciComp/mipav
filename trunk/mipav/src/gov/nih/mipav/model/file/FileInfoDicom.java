@@ -183,6 +183,9 @@ public class FileInfoDicom extends FileInfoBase {
 
     /** Stores all the information about the DICOM tags. */
     private FileDicomTagTable tagTable;
+    
+    /** whether it is enhanced dicom or not **/
+    private boolean isEnhancedDicom = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -908,7 +911,15 @@ public class FileInfoDicom extends FileInfoBase {
         }
     }
 
-    /**
+    public boolean isEnhancedDicom() {
+		return isEnhancedDicom;
+	}
+
+	public void setIsEnhancedDicom(boolean isEnhancedDicom) {
+		this.isEnhancedDicom = isEnhancedDicom;
+	}
+
+	/**
      * Uses the DICOM tag value to set the Image modality field.
      *
      * @param  value  Object used is the value of DICOM tag (0008,0060)
