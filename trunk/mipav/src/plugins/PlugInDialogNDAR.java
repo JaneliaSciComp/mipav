@@ -982,7 +982,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         return buttonPanel1;
     }
 
-    @Override
+  
 	public Dimension getPanelSize() {
     	return new Dimension(previewPanel.getBounds().width, previewPanel.getBounds().height);
 	}
