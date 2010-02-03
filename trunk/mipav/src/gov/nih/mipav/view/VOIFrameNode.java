@@ -9,8 +9,8 @@ import javax.swing.tree.*;
 
 
 /**
- * This class is used to represent a ... in a tree. This is a node of the .... . It has a gov.nih.mipav.structure.VOI as
- * its object.
+ * This class is used to represent a VOIContour, VOIPoint, or other two-dimensional VOI object in a tree. 
+ * This is a node of the overall VOI. It has a gov.nih.mipav.structure.VOI as its object.
  *
  * <p>Nodes in the tree are expanded by calling this class's explore method.</p>
  *
@@ -34,7 +34,7 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
      * Creates a new VOIFrameNode object.
      *
      * @param  node     File for tree leaf.
-     * @param  fNumber  Flag indicating if this is a root.
+     * @param  fNumber  The slice number of this VOI
      */
     public VOIFrameNode(Vector node, int fNumber) {
         setUserObject(node);
@@ -65,7 +65,7 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
     }
 
     /**
-     * DOCUMENT ME!
+     * Gets the slice number of this VOI.  Note that slice number is zero based
      *
      * @return  DOCUMENT ME!
      */
@@ -77,11 +77,11 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
      * the string returned is the name of the VOI returns the name of the VOI if the VOI exists, or <code>null</code> if
      * it doesn't.
      *
-     * @return  The File's name.
+     * @return  The slice number of this VOI.
      */
     public String getName() {
 
-        return " " + Integer.toString(frameNumber + 1);
+        return " " + Integer.toString(frameNumber);
     }
 
 
