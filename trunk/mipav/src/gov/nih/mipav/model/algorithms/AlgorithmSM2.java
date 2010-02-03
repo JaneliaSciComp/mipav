@@ -1,4 +1,5 @@
 package gov.nih.mipav.model.algorithms;
+import gov.nih.mipav.model.algorithms.AlgorithmFRAP.IntModel;
 import gov.nih.mipav.model.file.FileInfoBase;
 
 
@@ -82,7 +83,11 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private int zDim;
     private int tDim;
     private double cos0;
-    double initial[] = new double[3];
+    private double initial[] = new double[3];
+    private double trapezoidSlope[];
+    private double trapezoidConstant[];
+    private int trapezoidIndex;
+    private double ktransDivVe;
     
     private ModelImage tissueImage;
 
@@ -131,24 +136,12 @@ public class AlgorithmSM2 extends AlgorithmBase {
      * starts the algorithm.
      */
     public void runAlgorithm() {
-        int c;
-        double m0;
-        double rTR;
-        double R_r1;
-        double ertr;
-        double ertr_c0;
-        double c0_ertr_c0;
-        double dval;
         ViewVOIVector VOIs;
         BitSet mask;
-        double volume[];
         int volSize;
         int t;
-        int timeUnits;
-        double ts_array[];
-        double x_array[];
+        double y_array[];
         int size4D;
-        double buf4D[];
         FitSM2ConstrainedModel dModel;
         double[] params;
         float destArray[];
@@ -156,6 +149,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         boolean testDraper = false;
         boolean testHock25 = false;
         int voiCount;
+        double delT;
         
         if (testDraper) {
         	// Below is an example used to fit y = alpha - beta*(rho**x)
@@ -301,22 +295,34 @@ public class AlgorithmSM2 extends AlgorithmBase {
         } // for (t = 0; t < tDim; t++)
         r1t0 = null;
         
+        trapezoidSlope = new double[tDim-1];
+        trapezoidConstant = new double[tDim-1];
+        for (t = 0; t < tDim - 1; t++) {
+        	delT = timeVals[t+1] - timeVals[t];
+        	trapezoidSlope[t] = (r1ptj[t+1]-r1ptj[t])/delT;
+        	trapezoidConstant[t] = (r1ptj[t]*timeVals[t+1] - r1ptj[t+1]*timeVals[t])/delT;
+        }
+        
         for (i = 0; i < 3; i++) {
         	initial[i] = (min_constr[i] + max_constr[i])/2.0;
         }
         
+        y_array = new double[tDim-1];
+        ymodel = new double[tDim-1];
+        
         for (i = 0; i < volSize; i++) {
         	fireProgressStateChanged(i * 100/volSize);
-            /*for (t = 0; t < tDim; t++) {
-            	ts_array[t] = buf4D[t*volSize + i];
+            for (t = 1; t < tDim; t++) {
+            	y_array[t-1] = r1tj[t*volSize + i];
             }
-            dModel = new FitSM2ConstrainedModel(tDim, x_array, ts_array, initial);
+            // Note that the nPts, tDim-1, is the number of points in the y_array.
+            dModel = new FitSM2ConstrainedModel(tDim-1, r1ptj, y_array, initial);
             dModel.driver();
             //dModel.dumpResults();
             params = dModel.getParameters();
             for (j = 0; j < 3; j++) {
             	destArray[j*volSize + i] = (float)params[j];
-            }*/
+            }
         } // for (i = 0; i < volSize; i++)
         
         try {
@@ -387,10 +393,10 @@ public class AlgorithmSM2 extends AlgorithmBase {
         }
 
         /**
-         * Display results of displaying DEMRI3 fitting parameters.
+         * Display results of displaying SM2 fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitDEMRI3ConstrainedModel ********* \n\n");
+            Preferences.debug(" ******* FitSM2ConstrainedModel ********* \n\n");
             Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
             Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
             Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
@@ -408,142 +414,36 @@ public class AlgorithmSM2 extends AlgorithmBase {
         public void fitToFunction(double[] a, double[] residuals, double[][] covarMat) {
             int ctrl;
             int j;
-            double K;
-            double fvp;
+            double ktrans;
             double ve;
-            double kep;
-            int n;
-            double P12;
-            double P3;
-            double dval;
-            double P14;
-            double P1;
-            double P1c;
-            double e;
+            double vp;
+            int m;
+            IntModel imod;
+            int steps;
+            double eps = 1.0e-8;
+            double intSum;
 
             try {
-            	K = a[0];
-            	fvp = a[2];
             	
-            	
-            		ve = a[1];
-            		kep = K/ve;
-            		if (kep > 10.0) {
-            			Preferences.debug("Warning: Voxel = " + i + " ve = " + ve + " K = " + K + " kep = " + kep + "\n");
-            			return;
-            		}
-            	
-            	
-            	
-            	
-            	/*----------------------------------------------------------------------
-            	  compute Ct from Cp and params
-
-            	    Ct[n] = Ktrans * ( sum [ Cp[k] * exp( -kep(n-k)*TF )
-            	            ------                 * ( exp(kep*TF/2) - exp(-kep*TF/2) ) ]
-            	             kep
-            	                       + (Cp[m] + Cp[n]) * (1 - exp(-kep*TF/2)) )
-
-            	    where sum is over k=m+1..n-1 (m is nfirst), and n is over m..len-1
-            	    note: Cp[n] = Ct[n] = 0, for n in {0..m}  (m also, since that is time=0)
-            	    note: (Cp[m]+Cp[n])*... reflects the first and last half intervals,
-            	          while the sum reflects all the interior, full intervals
-
-            	        Let P1  = Ktrans / kep
-            	            P2  = exp(kep*TF/2) - exp(-kep*TF/2)
-            	                = exp(-P3/2) - exp(P3/2)
-            	            P3  = -kep*TF
-            	            P4  = 1 - exp(-kep*TF/2)
-            	                = 1 - exp(P3/2)
-
-            	    Ct[n] = P1*P2 * sum [ Cp[k] * exp(P3*(n-k)) ] + P1*P4 * (Cp[m]+Cp[n])
-            	    note: in exp_list, max power is (P3*(len-1-m)), m is nfirst
-            	    note: Ct is stored in P->comp
-            	    
-            	    ** This is the only place that the dataset TR (which we label as TF,
-            	       the inter-frame TR) is used in this model.
-            	*/
-
-            	/* init first elements to 0 */
-            	
-            	
-            	// Assign P*, and then fill elist[] from P3 */
-            	P12 = K/kep;
-            	P3 = -kep * tf;
-            	dval = Math.exp(P3/2.0);
-            	P14 = P12 * (1.0 - dval);
-            	P12 = P12 * (1.0/dval - dval);
-            	
-            	elist[0] = 1.0;
-            	dval = Math.exp(P3);
-            	for (j = 1; j < tDim; j++) {
-            	    elist[j] = dval * elist[j-1];	
-            	}
-            	
-            	for (n = 0; n < tDim; n++) {
-            		dval = 0.0;
-            		for (j = 1; j < n; j++) {
-            			dval += mp[j] * elist[n-j];
-            		}
-            		comp[n] = P12 * dval + P14 * (mp[n] + mp[0]);
-            	}
-            	
-            	/*----------------------------------------------------------------------
-                C[n] = { 0, for n < nfirst
-                       { Ct[n] + fpv * Cp[n], n = nfirst..len-1
-
-                note: C will replace Ct in P->comp
-               */
-
-            	for (n = 0; n < tDim; n++) {
-            		comp[n] += fvp * mp[n];
-            	}
-            	
-            	/*----------------------------------------------------------------------
-                R1[n] = RIT + r1 * C[n]
-
-                note: R1 will replace C in P->comp
-                      R1[i] will be constant P->RIT over i=0..nfirst-1
-                */
-
-            	
-            	
-            	
-            	/*----------------------------------------------------------------------
-            	  compute the final time series, M_transpose, from the R1 array
-
-            	    Mx[n] = 1 * (1 - exp(-R1[n] * TR)) * (1 - exp(-RIT*TR)cos0)
-            	                ---------------------------------------------
-            	                (1 - exp(-R1[n] * TR)cos0) * (1 - exp(-RIT*TR))
-
-            	          =     (1 - e[n]) * P1c) / [(1 - cos0*e[n]) * P1]
-
-            	        where P1   = 1 - exp(-RIT*TR)
-            	              P1c  = 1 - exp(-RIT*TR)*cos0
-            	              e[n] = exp(-R1[n] * TR)
-
-            	    notes:  R1 is in P->comp
-            	            The '1' is a placeholder for Mx(t=0), which should have
-            	              been factored out of the input time series.
-            	            Mx[i] is identically 1, for i = 0..nfirst-1 .
-            	            I can see no speed-up for e[n].  :'(
-            	*/
-
-            	
-            	
-            	
-            	/*for (n = 0; n < nFirst; n++) {
-            		ymodel[n] = 1.0;
-            	}*/
-            	
-            	for (n = 0; n < tDim; n++) {
-            		e = Math.exp(-comp[n]);
-            		ymodel[n] = (1 - e)/ ((1 - cos0*e));
-            	}
                 ctrl = ctrlMat[0];
 
                 if ((ctrl == -1) || (ctrl == 1)) {
-
+                	ktrans = a[0];
+                	ve = a[1];
+                	vp = a[2];
+                	ktransDivVe = ktrans/ve;
+                	
+                	for (m = 2; m <= tDim; m++) {
+                		intSum = 0.0;
+                		for (j = 2; j <= m; j++) {
+	                        imod = new IntModel(timeVals[j-2], timeVals[j-1], Integration.TRAPZD, eps);
+	                        imod.driver();
+	                        //steps = imod.getStepsUsed();
+	                        intSum += imod.getIntegral();
+	                        //Preferences.debug("Numerical Integral = " + numInt + " after " + steps + " steps used\n");
+                		} // for (j = 2; j <= m; j++)
+                		ymodel[m-2] = ktrans * intSum + vp * r1ptj[m-1];
+                	} // for (m = 2; m <= tDim; m++)
                     // evaluate the residuals[j] = ymodel[j] - ySeries[j]
                     for (j = 0; j < nPts; j++) {
                         residuals[j] = ymodel[j] - ySeries[j];
@@ -558,6 +458,84 @@ public class AlgorithmSM2 extends AlgorithmBase {
             }
 
             return;
+        }
+    }
+    
+    class IntModel extends Integration {
+    
+        /**
+         * Creates a new IntModel object.
+         *
+         * @param  lower    DOCUMENT ME!
+         * @param  upper    DOCUMENT ME!
+         * @param  routine  DOCUMENT ME!
+         * @param  eps      DOCUMENT ME!
+         */
+        public IntModel(double lower, double upper, int routine, double eps) {
+            super(lower, upper, routine, eps);
+        }
+
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double function;
+            function = (trapezoidSlope[trapezoidIndex]*x + trapezoidConstant[trapezoidIndex]) * 
+                       Math.exp(-ktransDivVe*(upper - x));
+
+            return function;
+        }
+
+    }
+    
+    class IntModel2 extends Integration2 {
+
+        /**
+         * Creates a new IntModel2 object.
+         *
+         * @param  lower    DOCUMENT ME!
+         * @param  upper    DOCUMENT ME!
+         * @param  routine  DOCUMENT ME!
+         * @param  key      DOCUMENT ME!
+         * @param  epsabs   DOCUMENT ME!
+         * @param  epsrel   DOCUMENT ME!
+         * @param  limit    DOCUMENT ME!
+         */
+        public IntModel2(double lower, double upper, int routine, int key, double epsabs, double epsrel, int limit) {
+            super(lower, upper, routine, key, epsabs, epsrel, limit);
+        }
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   x  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double intFunc(double x) {
+            double function;
+            function = 2.0 / (2.0 + Math.sin(10.0 * Math.PI * x));
+
+            return function;
         }
     }
     
