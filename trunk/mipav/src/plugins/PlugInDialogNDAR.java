@@ -258,7 +258,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 }else {
                 	sourceTable.setRowSelectionInterval(selected,selected);
                 }
-                System.out.println(sourceTable.getSelectedRow());
                 previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
 
                 previewPanel.validate();
