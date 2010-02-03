@@ -439,7 +439,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
                         // first: set up row title:
                         logRowData[0] = list.getElementAt(i).toString() + ", " + // VOI name
-                                (slice + 1) + ", " + // slice #, irrellevent to where contour is in image
+                                (slice) + ", " + // slice #, irrellevent to where contour is in image
                                 ((VOIBase) contours[slice].get(num)).getLabel(); // contour #, held in label
                         logTotalData[0] = "Totals:";
 
@@ -1317,7 +1317,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
                         // first: set up row title:
                         rowData[0] = list.getElementAt(i).toString() + ", " + // VOI name
-                                (slice + 1) + ", " + // slice #, irrellevent to where contour is in image
+                                (slice) + ", " + // slice #, irrellevent to where contour is in image
                                 ((VOIBase) contours[slice].get(num)).getLabel(); // contour #, held in label
                         totalData[0] = "Totals:";
 
