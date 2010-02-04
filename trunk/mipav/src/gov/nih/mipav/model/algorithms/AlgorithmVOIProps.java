@@ -3576,10 +3576,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     String comStr = unitStr + "\n\t\t" + nf.format(totalC.X) + "\t" + nf.format(totalC.Y) + "\t" + nf.format(totalC.Z);
                     comStr = addScannerLabels(comStr, totalC);
 
-                    statProperty.setProperty(VOIStatisticList.axisDescription + "Total", nf.format(totalAxis));
-                    statProperty.setProperty(VOIStatisticList.eccentricityDescription + "Total", nf.format(totalEcc));
-                    statProperty.setProperty(VOIStatisticList.majorAxisDescription + "Total", nf.format(totalMajorAxis));
-                    statProperty.setProperty(VOIStatisticList.minorAxisDescription + "Total", nf.format(totalMinorAxis));
+                    //these do not have meaning on a 2.5D basis
+                    statProperty.setProperty(VOIStatisticList.axisDescription + "Total", "\t");
+                    statProperty.setProperty(VOIStatisticList.eccentricityDescription + "Total", "\t");
+                    statProperty.setProperty(VOIStatisticList.majorAxisDescription + "Total", "\t");
+                    statProperty.setProperty(VOIStatisticList.minorAxisDescription + "Total", "\t");
+                    
                     statProperty.setProperty(VOIStatisticList.geometricCenterDescription + "Total", comStr);
                     statProperty.setProperty(VOIStatisticList.areaDescription + "Total", nf.format(totalArea));
                     statProperty.setProperty(VOIStatisticList.volumeDescription + "Total", nf.format(totalVolume));
@@ -3589,12 +3591,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty(VOIStatisticList.largestDistanceDescription + "Total", nf.format(largestDistance));
 
                     if (srcImage.isColorImage()) {
+                      //these do not have meaning on a 2.5D basis
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "Total",
-                                                 nf.format((float) Math.sqrt(totalSumR2 / (totalNVox-1))));
+                                                 "\t");
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "Green" + "Total",
-                                                 nf.format((float) Math.sqrt(totalSumG2 / (totalNVox-1))));
+                                                 "\t");
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue" + "Total",
-                                                 nf.format((float) Math.sqrt(totalSumB2 / (totalNVox-1))));
+                                                 "\t");
                         moment2R = totalSumR2/totalNVox;
                         moment2G = totalSumG2/totalNVox;
                         moment2B = totalSumB2/totalNVox;
@@ -3605,17 +3608,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         moment4G = totalSumG4/totalNVox;
                         moment4B = totalSumB4/totalNVox;
                         statProperty.setProperty(VOIStatisticList.skewnessDescription + "Red" + "Total",
-                                                 nf.format((float) (moment3R/Math.pow(moment2R, 1.5))));
+                                "\t");
                         statProperty.setProperty(VOIStatisticList.skewnessDescription + "Green" + "Total",
-                                                 nf.format((float) (moment3G/Math.pow(moment2G, 1.5))));
+                                "\t");
                         statProperty.setProperty(VOIStatisticList.skewnessDescription + "Blue" + "Total",
-                                                 nf.format((float) (moment3B/Math.pow(moment2B, 1.5))));
+                                "\t");
                         statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Red" + "Total",
-                                                 nf.format(moment4R/(moment2R * moment2R)));
+                                "\t");
                         statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Green" + "Total",
-                                                 nf.format(moment4G/(moment2G * moment2G)));
+                                "\t");
                         statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Blue" + "Total",
-                                                 nf.format(moment4B/(moment2B * moment2B)));
+                                "\t");
+                        
                         statProperty.setProperty(VOIStatisticList.minIntensity + "Red" + "Total",
                                                  nf.format(totalMinIntenRed));
                         statProperty.setProperty(VOIStatisticList.maxIntensity + "Red" + "Total",
@@ -3640,17 +3644,20 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                 nf.format(totalSumG));
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "Blue" + "Total",
                                 nf.format(totalSumB));
-                        statProperty.setProperty(VOIStatisticList.mode + "Red" + "Total", nf.format(totalModeR));
-                        statProperty.setProperty(VOIStatisticList.mode + "Green" + "Total", nf.format(totalModeG));
-                        statProperty.setProperty(VOIStatisticList.mode + "Blue" + "Total", nf.format(totalModeB));
+                        //this statistic is being calculated on a per-slice basis, refer to total VOI calculations for accurate mode
+                        statProperty.setProperty(VOIStatisticList.mode + "Red" + "Total", "\t");
+                        statProperty.setProperty(VOIStatisticList.mode + "Green" + "Total", "\t");
+                        statProperty.setProperty(VOIStatisticList.mode + "Blue" + "Total", "\t");
                         
-                        statProperty.setProperty(VOIStatisticList.modeCount + "Red" + "Total", nf.format(totalMaxCountR));
-                        statProperty.setProperty(VOIStatisticList.modeCount + "Green" + "Total", nf.format(totalMaxCountG));
-                        statProperty.setProperty(VOIStatisticList.modeCount + "Blue" + "Total", nf.format(totalMaxCountB));
+                        //this statistic is being calculated on a per-slice basis, refer to total VOI calculations for accurate mode count
+                        statProperty.setProperty(VOIStatisticList.modeCount + "Red" + "Total", "\t");
+                        statProperty.setProperty(VOIStatisticList.modeCount + "Green" + "Total", "\t");
+                        statProperty.setProperty(VOIStatisticList.modeCount + "Blue" + "Total", "\t");
                         
-                        statProperty.setProperty(VOIStatisticList.median + "Red" + "Total", nf.format(totalMedianR));
-                        statProperty.setProperty(VOIStatisticList.median + "Green" + "Total", nf.format(totalMedianG));
-                        statProperty.setProperty(VOIStatisticList.median + "Blue" + "Total", nf.format(totalMedianB));
+                        //this statistic is being calculated over the entire image, refer to total VOI calculations for accurate median
+                        statProperty.setProperty(VOIStatisticList.median + "Red" + "Total", "\t");
+                        statProperty.setProperty(VOIStatisticList.median + "Green" + "Total", "\t");
+                        statProperty.setProperty(VOIStatisticList.median + "Blue" + "Total", "\t");
                         // Centers of mass
                         xCOMR = totalXMassR * srcImage.getFileInfo(0).getResolutions()[0]/totalSumR;
                         yCOMR = totalYMassR * srcImage.getFileInfo(0).getResolutions()[1]/totalSumR;
@@ -3705,19 +3712,24 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         statProperty.setProperty(VOIStatisticList.minIntensity + "Total", nf.format(totalMinIntensity));
                         statProperty.setProperty(VOIStatisticList.maxIntensity + "Total", nf.format(totalMaxIntensity));
                         statProperty.setProperty(VOIStatisticList.avgIntensity + "Total", nf.format(totalSum / totalNVox));
+                        
+                        //These do not have meaning on a 2.5D basis
                         statProperty.setProperty(VOIStatisticList.deviationDescription + "Total",
-                                                 nf.format((float) Math.sqrt(totalSum2 / (totalNVox-1))));
+                                "\t");
                         moment2 = totalSum2/totalNVox;
                         moment3 = totalSum3/totalNVox;
                         moment4 = totalSum4/totalNVox;
                         statProperty.setProperty(VOIStatisticList.skewnessDescription + "Total",
-                                                 nf.format((float) (moment3/Math.pow(moment2, 1.5))));
+                                "\t");
                         statProperty.setProperty(VOIStatisticList.kurtosisDescription + "Total",
-                                                 nf.format(moment4/(moment2 * moment2)));
+                                "\t");
+                        
                         statProperty.setProperty(VOIStatisticList.sumIntensities + "Total", nf.format(totalSum));
-                        statProperty.setProperty(VOIStatisticList.mode + "Total", nf.format(totalMode));
-                        statProperty.setProperty(VOIStatisticList.modeCount + "Total", nf.format(totalMaxCount));
-                        statProperty.setProperty(VOIStatisticList.median + "Total", nf.format(totalMedian));
+                        //this statistic is being calculated on a per-slice basis, refer to total VOI calculations for accurate mode/mode count
+                        statProperty.setProperty(VOIStatisticList.mode + "Total", "\t");
+                        statProperty.setProperty(VOIStatisticList.modeCount + "Total", "\t");
+                        //this statistic is being calculated over the entire image, refer to total VOI calculations for accurate median
+                        statProperty.setProperty(VOIStatisticList.median + "Total", "\t");
                         // Center of mass
                         xCOM = totalXMass * srcImage.getFileInfo(0).getResolutions()[0]/totalSum;
                         yCOM = totalYMass * srcImage.getFileInfo(0).getResolutions()[1]/totalSum;

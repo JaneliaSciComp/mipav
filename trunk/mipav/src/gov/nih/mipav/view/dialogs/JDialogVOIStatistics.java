@@ -706,6 +706,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             checkBoxPanel.setCheckBoxesEnabled();
         }
         
+        
         outputOptionsPanel = new JPanelStatisticsOptions();
 
         if (ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage().getNDims() == 2) {
