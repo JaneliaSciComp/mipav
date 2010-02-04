@@ -344,6 +344,12 @@ public class JDialogVOIStats extends JDialogBase
         	if (image.getVOIs().size() == 0) {
             	return;
             }
+        	
+        	if(voi == null) {
+        		MipavUtil.displayError("Please select a VOI.");
+        		return;
+        	}
+        	
             if (textMin.isEnabled()) {
                 String tempStr = textMin.getText();
 
