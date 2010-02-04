@@ -1266,17 +1266,16 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                         r1Values[k][pixelIndex] = 0;
                     }
                 }
-            }
-            
-            try {
-                int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
-                t1ResultStack.importData(startVal, t1Values[k], true);
-                moResultStack.importData(startVal, moValues[k], true);
-                r1ResultStack.importData(startVal, r1Values[k], true);
-            } catch (IOException e) {
-                e.printStackTrace();
-                MipavUtil.displayError("Could not import result image data.");
-            }
+                try {
+                    int startVal = image.getSliceSize()*nSlices*t + image.getSliceSize()*k;
+                    t1ResultStack.importData(startVal, t1Values[k], true);
+                    moResultStack.importData(startVal, moValues[k], true);
+                    r1ResultStack.importData(startVal, r1Values[k], true);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    MipavUtil.displayError("Could not import result image data.");
+                }
+            } 
         }
         
         if (calculateT1) {
