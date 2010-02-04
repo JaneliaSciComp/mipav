@@ -763,9 +763,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("dtiVisualization")) {
             invokeDTIframe();
         } else if (command.equals("despotT1")) {
-            new JDialogDespotT1(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
+        	if(getActiveImageFrame() != null) {
+        		new JDialogDespotT1(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
+        	} else {
+        		MipavUtil.displayError("Images required for DESPOT were not found.");
+        	} 	
         } else if (command.equals("despotT2")) {
-            new JDialogDespotT2(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
+            if(getActiveImageFrame() != null) {
+        		new JDialogDespotT2(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
+            } else {
+        		MipavUtil.displayError("Images required for DESPOT were not found.");
+        	}
         }
 
     }
