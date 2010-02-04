@@ -88,6 +88,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private double trapezoidConstant[];
     private int trapezoidIndex;
     private double ktransDivVe;
+    private double expjarray[];
     
     private ModelImage tissueImage;
 
@@ -309,6 +310,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         
         y_array = new double[tDim-1];
         ymodel = new double[tDim-1];
+        expjarray = new double[tDim];
         
         for (i = 0; i < volSize; i++) {
         	fireProgressStateChanged(i * 100/volSize);
@@ -418,31 +420,30 @@ public class AlgorithmSM2 extends AlgorithmBase {
             double ve;
             double vp;
             int m;
-            IntModel imod;
-            int steps;
-            double eps = 1.0e-8;
             double intSum;
+            double expmminus1;
 
             try {
             	
                 ctrl = ctrlMat[0];
-
                 if ((ctrl == -1) || (ctrl == 1)) {
                 	ktrans = a[0];
                 	ve = a[1];
                 	vp = a[2];
                 	ktransDivVe = ktrans/ve;
+                	for (j = 0; j <= tDim-1; j++) {
+                	    expjarray[j] = Math.exp(timeVals[j]*ktransDivVe);
+                	}
                 	
                 	for (m = 2; m <= tDim; m++) {
                 		intSum = 0.0;
+                		expmminus1 = Math.exp(-ktransDivVe*timeVals[m-1]);
                 		for (j = 2; j <= m; j++) {
-	                        imod = new IntModel(timeVals[j-2], timeVals[j-1], Integration.TRAPZD, eps);
-	                        imod.driver();
-	                        //steps = imod.getStepsUsed();
-	                        intSum += imod.getIntegral();
-	                        //Preferences.debug("Numerical Integral = " + numInt + " after " + steps + " steps used\n");
+                			intSum += trapezoidConstant[j-2]*(expjarray[j-1] - expjarray[j-2]);
+	                        intSum += trapezoidSlope[j-2]* ((expjarray[j-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
+	                                                                (expjarray[j-2]*(timeVals[j-2] - 1.0/ktransDivVe)));
                 		} // for (j = 2; j <= m; j++)
-                		ymodel[m-2] = ktrans * intSum + vp * r1ptj[m-1];
+                		ymodel[m-2] = expmminus1 * (intSum + vp * r1ptj[m-1] / ktransDivVe);
                 	} // for (m = 2; m <= tDim; m++)
                     // evaluate the residuals[j] = ymodel[j] - ySeries[j]
                     for (j = 0; j < nPts; j++) {
@@ -458,84 +459,6 @@ public class AlgorithmSM2 extends AlgorithmBase {
             }
 
             return;
-        }
-    }
-    
-    class IntModel extends Integration {
-    
-        /**
-         * Creates a new IntModel object.
-         *
-         * @param  lower    DOCUMENT ME!
-         * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
-         * @param  eps      DOCUMENT ME!
-         */
-        public IntModel(double lower, double upper, int routine, double eps) {
-            super(lower, upper, routine, eps);
-        }
-
-
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
-        }
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param   x  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
-         */
-        public double intFunc(double x) {
-            double function;
-            function = (trapezoidSlope[trapezoidIndex]*x + trapezoidConstant[trapezoidIndex]) * 
-                       Math.exp(-ktransDivVe*(upper - x));
-
-            return function;
-        }
-
-    }
-    
-    class IntModel2 extends Integration2 {
-
-        /**
-         * Creates a new IntModel2 object.
-         *
-         * @param  lower    DOCUMENT ME!
-         * @param  upper    DOCUMENT ME!
-         * @param  routine  DOCUMENT ME!
-         * @param  key      DOCUMENT ME!
-         * @param  epsabs   DOCUMENT ME!
-         * @param  epsrel   DOCUMENT ME!
-         * @param  limit    DOCUMENT ME!
-         */
-        public IntModel2(double lower, double upper, int routine, int key, double epsabs, double epsrel, int limit) {
-            super(lower, upper, routine, key, epsabs, epsrel, limit);
-        }
-
-        /**
-         * DOCUMENT ME!
-         */
-        public void driver() {
-            super.driver();
-        }
-
-        /**
-         * DOCUMENT ME!
-         *
-         * @param   x  DOCUMENT ME!
-         *
-         * @return  DOCUMENT ME!
-         */
-        public double intFunc(double x) {
-            double function;
-            function = 2.0 / (2.0 + Math.sin(10.0 * Math.PI * x));
-
-            return function;
         }
     }
     
