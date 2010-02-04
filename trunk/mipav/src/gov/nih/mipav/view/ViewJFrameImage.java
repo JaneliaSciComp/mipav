@@ -902,16 +902,24 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
             // It appears JButtons don't pass key modifiers
             // if((event.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {}
+            int oldSlice = componentImage.getSlice();
             if (componentImage.getVOIHandler().propVOI(1, false) == true) {
-                incSlice();
+                if(oldSlice == componentImage.getSlice()) { 
+                	//means some other handler has not already updated to the new slice
+            		incSlice();
+                }
             }
         } else if (command.equals("PropVOIDown")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
             }
+            int oldSlice = componentImage.getSlice();
             if (componentImage.getVOIHandler().propVOI( -1, false) == true) {
-                decSlice();
+            	if(oldSlice == componentImage.getSlice()) { 
+                	//means some other handler has not already updated to the new slice
+            		decSlice();
+            	}
             }
         } else if (command.equals("PropVOIActiveUp")) {
             if ( !checkForActiveVOIs()) {
