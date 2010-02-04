@@ -2092,16 +2092,25 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         public JPanelStatisticsOptions() {
             setBorder(buildTitledBorder("Statistics options"));
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+            StatisticsOptionsActionListener statOptionsListener = new StatisticsOptionsActionListener();
             byContour = new JRadioButton("By contour & slice");
             byContour.setFont(MipavUtil.font12);
+            byContour.addActionListener(statOptionsListener);
             bySlice = new JRadioButton("By slice only");
             bySlice.setFont(MipavUtil.font12);
-            byTotalVOI = new JRadioButton("By total VOI");
-            byTotalVOI.setFont(MipavUtil.font12);
-            byTotalVOI.setSelected(true);
+            bySlice.addActionListener(statOptionsListener);
+
             showTotals = new JCheckBox("Show all totals");
             showTotals.setFont(MipavUtil.font12);
 
+            byTotalVOI = new JRadioButton("By total VOI");
+            byTotalVOI.setFont(MipavUtil.font12);
+            byTotalVOI.addActionListener(statOptionsListener);
+            
+            //setting initial appearance
+            byTotalVOI.setSelected(true);
+            showTotals.setEnabled(false);
+            
             final String[] precisionStr = new String[11];
 
             for (int i = 0; i < precisionStr.length; i++) {
@@ -2132,6 +2141,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             add(showTotals);
             add(precisionPanel);
             add(excluder);
+            
         }
 
         /**
@@ -2293,6 +2303,31 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         public void setShowTotals(final boolean flag) {
             showTotals.setSelected(flag);
         }
+        
+        /**
+         * An action listener for the statistics options that also controls which statistics can
+         * be calculated.  (Some statistics should not be reported in a 3D setting)
+         * 
+         * @author senseneyj
+         *
+         */
+        private class StatisticsOptionsActionListener implements ActionListener {
+
+			public void actionPerformed(ActionEvent e) {
+				int num = 1;
+				if(byTotalVOI.isSelected()) {
+					showTotals.setSelected(false);
+					showTotals.setEnabled(false);
+					if(image.getNDims() > 2) {
+						num = image.getExtents()[2];
+					}
+				} else if(bySlice.isSelected() || byContour.isSelected()) {
+					showTotals.setEnabled(true);
+				}
+
+		        checkBoxPanel.setSliceCount(num);
+			}
+        }        
 
     }
 
