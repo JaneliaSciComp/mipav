@@ -102,13 +102,21 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
                 voiHandler.setGraphVisible();
             } else if (event.getActionCommand().equals("PropVOIUp")) {
 
+            	int oldSlice = voiHandler.getComponentImage().getSlice();
                 if (voiHandler.propVOI(1, false) == true) {
-                    ((ViewJFrameImage) voiHandler.getComponentImage().getFrame()).incSlice();
+                	if(oldSlice == voiHandler.getComponentImage().getSlice()) { 
+                    	//means some other handler has not already updated to the new slice
+                		((ViewJFrameImage) voiHandler.getComponentImage().getFrame()).incSlice();
+                	}
                 }
             } else if (event.getActionCommand().equals("PropVOIDown")) {
 
+            	int oldSlice = voiHandler.getComponentImage().getSlice();
                 if (voiHandler.propVOI(-1, false) == true) {
-                    ((ViewJFrameImage) voiHandler.getComponentImage().getFrame()).decSlice();
+                	if(oldSlice == voiHandler.getComponentImage().getSlice()) { 
+                    	//means some other handler has not already updated to the new slice
+                		((ViewJFrameImage) voiHandler.getComponentImage().getFrame()).decSlice();
+                	}
                 }
             } else if (event.getActionCommand().equals("PropVOIAll")) {
                 voiHandler.propVOIAll();
