@@ -89,6 +89,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private int trapezoidIndex;
     private double ktransDivVe;
     private double expjarray[];
+    private double expmminus1[];
+    private int[] exitStatus;
     
     private ModelImage tissueImage;
 
@@ -311,6 +313,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
         y_array = new double[tDim-1];
         ymodel = new double[tDim-1];
         expjarray = new double[tDim];
+        expmminus1 = new double[tDim];
+        exitStatus = new int[10020];
         
         for (i = 0; i < volSize; i++) {
         	fireProgressStateChanged(i * 100/volSize);
@@ -319,13 +323,113 @@ public class AlgorithmSM2 extends AlgorithmBase {
             }
             // Note that the nPts, tDim-1, is the number of points in the y_array.
             dModel = new FitSM2ConstrainedModel(tDim-1, r1ptj, y_array, initial);
-            dModel.driver();
-            //dModel.dumpResults();
+            //dModel.driver();
+            dModel.dumpResults();
             params = dModel.getParameters();
             for (j = 0; j < 3; j++) {
             	destArray[j*volSize + i] = (float)params[j];
             }
+            exitStatus[(dModel.getExitStatus() + 11)]++;
         } // for (i = 0; i < volSize; i++)
+        
+        if (exitStatus[10011] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 = "
+        			           + exitStatus[10011]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 = "
+        			           + exitStatus[10011] + "\n");
+        }
+        
+        if (exitStatus[2011] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 = " + exitStatus[2011]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 = " + exitStatus[2011] + "\n");
+        }
+        
+        if (exitStatus[311] > 0) {
+        	System.out.println("Normal terminations because the relative change in x is less than epsx = " + exitStatus[311]);
+        	Preferences.debug("Normal terminations because the relative change in x is less than epsx = " + exitStatus[311] + "\n");
+        }
+        
+        if (exitStatus[51] > 0) {
+        	System.out.println("Normal terminations because we are computing at noise level no problem (Gauss-Newton the last 3 steps) = "
+        			            + exitStatus[51]);
+        	Preferences.debug("Normal terminations because we are computing at noise level no problem (Gauss-Newton the last 3 steps) = "
+        			            + exitStatus[51] + "\n");
+        }
+        
+        if (exitStatus[52] > 0) {
+        	System.out.println("Normal terminations because we are computing at noise level prank < n at the termination point = "
+        			            + exitStatus[52]);
+        	Preferences.debug("Normal terminations because we are computing at noise level prank < n at the termination point = "
+        			            + exitStatus[52] + "\n");
+        }
+        
+        if (exitStatus[53] > 0) {
+        	System.out.println("Normal terminations because we are computing at noise level the method of Newton was used (at least) in the last step = "
+        			            + exitStatus[53]);
+        	Preferences.debug("Normal terminations because we are computing at noise level the method of Newton was used (at least) in the last step = "
+        			            + exitStatus[53] + "\n");
+        }
+        
+        if (exitStatus[54] > 0) {
+        	System.out.println("Normal terminations because we are computing at noise level the 2nd but last step was subspace minimization but");
+        	System.out.println("the last two were Gauss-Newton steps = " + exitStatus[54]);
+        	Preferences.debug("Normal terminations because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+            Preferences.debug("the last two were Gauss-Newton steps = " + exitStatus[54] + "\n");
+        }
+        
+        if (exitStatus[55] > 0) {
+        	System.out.println("Normal terminations because we are computing at noise level the steplength was not unit in both the last two steps = "
+        			            + exitStatus[55]);
+        	Preferences.debug("Normal terminations because we are computing at noise level the steplenght was not unit in both the last two steps = "
+        			            + exitStatus[55] + "\n");
+        }
+        
+        if (exitStatus[10] > 0) {
+        	System.out.println("Abnormal terminations because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or");
+            System.out.println("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry = " + exitStatus[10]);
+            Preferences.debug("Abnormal terminations because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or\n");
+            Preferences.debug("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry = " + exitStatus[10] + "\n");
+        }
+        
+        if (exitStatus[9] > 0) {
+        	System.out.println("Abnormal terminations because the number of iterations has exceeded the maximum allowed iterations = "
+        			           + exitStatus[9]);
+        	Preferences.debug("Abnormal terminations because the number of iterations has exceeded the maximum allowed iterations = "
+        			           + exitStatus[9] + "\n");
+        }
+        
+        if (exitStatus[8] > 0) {
+        	System.out.println("Abnormal terminations because the Hessian emanating from the 2nd order method is not positive definite = "
+        			            + exitStatus[8]);
+        	Preferences.debug("Abnormal terminations because the Hessian emanating from the 2nd order method is not positive definite = "
+        			            + exitStatus[8] + "\n");
+        }
+        
+        if (exitStatus[7] > 0) {
+        	System.out.println("Abnormal terminations because the algorithm would like to use 2nd derivatives but is not allowed to do that = "
+        			           + exitStatus[7]);
+        	Preferences.debug("Abnormal terminations because the algorithm would like to use 2nd derivatives but is not allowed to do that = "
+        			           + exitStatus[7] + "\n");
+        }
+        
+        if (exitStatus[6] > 0) {
+        	System.out.println("Abnormal terminations because an undamped step with Newtons method is a failure = " + exitStatus[6]);
+        	Preferences.debug("Abnormal terminations because an undamped step with Newtons method is a failure = " + exitStatus[6] + "\n");
+        }
+        
+        if (exitStatus[5] > 0) {
+        	System.out.println("Abnormal terminations because the latest search direction computed using subspace minimization");
+        	System.out.println("was not a descent direction (probably caused by a wrongly computed Jacobian) = " + exitStatus[5]);
+        	Preferences.debug("Abnormal terminations because the latest search direction computed using subspace minimization\n");
+        	Preferences.debug("was not a descent direction (probably caused by a wrongly computed Jacobian) = " + exitStatus[5] + "\n");
+        }
+        
+        if (exitStatus[4] > 0) {
+        	System.out.println("Abnormal terminations because there is only one feasible point,");
+        	System.out.println("namely X(I) = BL(I) = BU(I), I = 1,2,...,N = " + exitStatus[4]);
+        	Preferences.debug("Abnormal terminations because there is only one feasible point,\n");
+        	Preferences.debug("namely X(I) = BL(I) = BU(I), I = 1,2,...,N = " + exitStatus[4] + "\n");
+        }
         
         try {
         	destImage.importData(0, destArray, true);
@@ -421,7 +525,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
             double vp;
             int m;
             double intSum;
-            double expmminus1;
+            double intSumDerivKtrans;
+            double intSumDerivVe;
 
             try {
             	
@@ -433,23 +538,55 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 	ktransDivVe = ktrans/ve;
                 	for (j = 0; j <= tDim-1; j++) {
                 	    expjarray[j] = Math.exp(timeVals[j]*ktransDivVe);
+                	    expmminus1[j] = 1.0/expjarray[j];
                 	}
                 	
                 	for (m = 2; m <= tDim; m++) {
                 		intSum = 0.0;
-                		expmminus1 = Math.exp(-ktransDivVe*timeVals[m-1]);
                 		for (j = 2; j <= m; j++) {
                 			intSum += trapezoidConstant[j-2]*(expjarray[j-1] - expjarray[j-2]);
 	                        intSum += trapezoidSlope[j-2]* ((expjarray[j-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
 	                                                                (expjarray[j-2]*(timeVals[j-2] - 1.0/ktransDivVe)));
                 		} // for (j = 2; j <= m; j++)
-                		ymodel[m-2] = expmminus1 * (intSum + vp * r1ptj[m-1] / ktransDivVe);
+                		ymodel[m-2] = expmminus1[m-1] * intSum + vp * r1ptj[m-1];
                 	} // for (m = 2; m <= tDim; m++)
                     // evaluate the residuals[j] = ymodel[j] - ySeries[j]
                     for (j = 0; j < nPts; j++) {
                         residuals[j] = ymodel[j] - ySeries[j];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
+                /*else if (ctrl == 2) {
+                	// Calculate the Jacobian analytically
+                	ktrans = a[0];
+                	ve = a[1];
+                	vp = a[2];
+                	ktransDivVe = ktrans/ve;
+                	for (j = 0; j <= tDim-1; j++) {
+                	    expjarray[j] = Math.exp(timeVals[j]*ktransDivVe);
+                	    expmminus1[j] = 1.0/expjarray[j];
+                	}
+                	for (m = 2; m <= tDim; m++) {
+                		intSum = 0.0;
+                		intSumDerivKtrans = 0.0;
+                		intSumDerivVe = 0.0;
+                		for (j = 2; j <= m; j++) {
+                			intSum += trapezoidConstant[j-2]*(expjarray[j-1] - expjarray[j-2]);
+	                        intSum += trapezoidSlope[j-2]* ((expjarray[j-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
+	                                                                (expjarray[j-2]*(timeVals[j-2] - 1.0/ktransDivVe)));
+	                        intSumDerivKtrans += trapezoidConstant[j-2]*(timeVals[j-1]*expjarray[j-1] - timeVals[j-2]*expjarray[j-2])/ve;
+	                        intSumDerivKtrans += trapezoidSlope[j-2]*((expjarray[j-1]*timeVals[j-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
+	                        		                                  (expjarray[j-2]*timeVals[j-2]*(timeVals[j-2] - 1.0/ktransDivVe)))/ve;
+	                        intSumDerivKtrans += trapezoidSlope[j-2]*(expjarray[j-1] - expjarray[j-2])*ve/(ktrans*ktrans);
+	                        intSumDerivVe += trapezoidConstant[j-2]*(timeVals[j-1]*expjarray[j-1] - timeVals[j-2]*expjarray[j-2])*(-ktrans/(ve*ve));
+	                        intSumDerivVe += trapezoidSlope[j-2]*((expjarray[j-1]*timeVals[j-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
+	                                  (expjarray[j-2]*timeVals[j-2]*(timeVals[j-2] - 1.0/ktransDivVe)))*(-ktrans/(ve*ve));
+	                        intSumDerivVe += trapezoidSlope[j-2]*(expjarray[j-1] - expjarray[j-2])*(-1.0/ktrans);
+                		} // for (j = 2; j <= m; j++)
+                		covarMat[m-1][0] = expmminus1[m-1] * intSumDerivKtrans + (-timeVals[m-1]/ve) * expmminus1[m-1] * intSum;
+                		covarMat[m-1][1] = expmminus1[m-1] * intSumDerivVe + ktrans* timeVals[m-1]/(ve * ve) * expmminus1[m-1] * intSum;
+                		covarMat[m-2][2] = r1ptj[m-1];
+                	}
+                }*/
                 // Calculate the Jacobian numerically
                 else if (ctrl == 2) {
                     ctrlMat[0] = 0;
