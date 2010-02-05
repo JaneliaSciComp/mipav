@@ -718,20 +718,20 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         labelParamsToFit.setFont(serif12);
         mainPanel.add(labelParamsToFit, gbc);
         
-        labelMinConstr0 = new JLabel("K_trans minimum allowed value (0 - 0.99)");
+        labelMinConstr0 = new JLabel("K_trans minimum allowed value (1.0E-5 - 0.99)");
         labelMinConstr0.setForeground(Color.black);
         labelMinConstr0.setFont(serif12);
         gbc.gridy = 1;
         mainPanel.add(labelMinConstr0, gbc);
         
         textMinConstr0 = new JTextField(10);
-        textMinConstr0.setText("0.0");
+        textMinConstr0.setText("1.0E-5");
         textMinConstr0.setForeground(Color.black);
         textMinConstr0.setFont(serif12);
         gbc.gridx = 1;
         mainPanel.add(textMinConstr0, gbc);
         
-        labelMaxConstr0 = new JLabel("K_trans maximum allowed value (0 - 0.99)");
+        labelMaxConstr0 = new JLabel("K_trans maximum allowed value (1.0E-5 - 0.99)");
         labelMaxConstr0.setForeground(Color.black);
         labelMaxConstr0.setFont(serif12);
         gbc.gridx = 0;
@@ -892,8 +892,8 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
         tmpStr = textMinConstr0.getText();
         min_constr[0] = Double.parseDouble(tmpStr);
         
-        if (min_constr[0] < 0.0) {
-        	MipavUtil.displayError("Minimum K_trans must be at least 0.0");
+        if (min_constr[0] < 1.0E-5) {
+        	MipavUtil.displayError("Minimum K_trans must be at least 1.0E-5");
         	textMinConstr0.requestFocus();
         	textMinConstr0.selectAll();
         	return false;
