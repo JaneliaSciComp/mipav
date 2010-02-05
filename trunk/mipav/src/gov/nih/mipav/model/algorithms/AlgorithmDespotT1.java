@@ -577,7 +577,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 else {
                     threshold = (float) hardNoiseThreshold;
                 }
-                fireProgressStateChanged(prefix+"calculating B1 field for slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(prefix+"calculating B1 field for slice: "+k+" of "+(nSlices-1));
                 fireProgressStateChanged(5+(int)(((float)k+1.0)/(float)nSlices*60.0));
                 if(interrupted()) {
                     return false;
@@ -677,7 +677,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
             if (smoothB1Field) {
                 int baseVal = getProgressChangeListener().getValue();
                 for (k=0; k<irspgrSlices; k++) {
-                    fireProgressStateChanged(prefix+"smoothing B1 field on slice: "+k+" of "+nSlices);
+                    fireProgressStateChanged(prefix+"smoothing B1 field on slice: "+k+" of "+(nSlices-1));
                     fireProgressStateChanged(baseVal+(int)(((float)k+1.0)/(float)nSlices*10.0));
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
@@ -771,7 +771,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 }
             
             
-                fireProgressStateChanged(prefix+"calculating T1 values on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(prefix+"calculating T1 values on slice: "+k+" of "+(nSlices-1));
                 fireProgressStateChanged(baseVal+(int)(((float)k+1.0)/(float)nSlices*20.0));
                 if(interrupted()) {
                     return false;
@@ -1105,7 +1105,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                 else {
                     threshold = (float) hardNoiseThreshold;
                 }
-                fireProgressStateChanged(prefix+"working on slice: "+k+" of "+nSlices+". Noise Threshold = "+threshold);
+                fireProgressStateChanged(prefix+"working on slice: "+k+" of "+(nSlices-1)+". Noise Threshold = "+threshold);
                 fireProgressStateChanged(5+(int)((float)k+1.0/(float)nSlices*80.0));
                 
                 if(interrupted()) {

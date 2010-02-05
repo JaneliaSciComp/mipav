@@ -255,7 +255,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             phase0Data = new double[dialog.getNfa_phase0()];
             
             for (k=0; k<nSlices; k++) {
-                fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+(nSlices-1));
                 fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*80.0));
                 if(interrupted()) {
                     hardInterrupt = true;
@@ -545,7 +545,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             phase180Data = new double[dialog.getNfa_phase180()];
             
             for (k=0; k<nSlices; k++) {
-                fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+(nSlices-1));
                 fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*80.0));
                 if(interrupted()) {
                     hardInterrupt = true;
@@ -838,7 +838,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             possibleMos = new double[2];
             
             for (k=0; k<nSlices; k++) {
-                fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(prefix+"calculating T2 values on slice: "+k+" of "+(nSlices-1));
                 fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*80.0));
                 if(interrupted()) {
                     hardInterrupt = true;
@@ -1299,7 +1299,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             twoPShrink = new double[numVertices];
         
             for (k=0; k<nSlices; k++) {
-                fireProgressStateChanged(prefix+"calculating Initial Estimates for slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(prefix+"calculating Initial Estimates for slice: "+k+" of "+(nSlices-1));
                 fireProgressStateChanged(0+(int)(((float)k+1.0)/(float)nSlices*40.0));
                 if(interrupted()) {
                     hardInterrupt = true;
@@ -1501,7 +1501,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         
             // now, go back through and calculate T2 and Mo again using the smoothed Bo value
             for (k=0; k<nSlices; k++) {
-                fireProgressStateChanged(prefix+"recalculating values on slice: "+k+" of "+nSlices);
+                fireProgressStateChanged(prefix+"recalculating values on slice: "+k+" of "+(nSlices-1));
                 fireProgressStateChanged(60+(int)(((float)k+1.0)/(float)nSlices*15.0));
                 if(interrupted()) {
                     hardInterrupt = true;
