@@ -25,6 +25,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmCircleGeneration;
 import gov.nih.mipav.model.algorithms.AlgorithmDespotT1;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.Parameter;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.scripting.parameters.ParameterList;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -61,6 +62,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     private double maxAngle = 20;
     
     private boolean smoothB1Field = true;
+    /**The following GUI choices change algorithm operation in binary ways*/
     private boolean performStraightDESPOT1 = true;
     private boolean performDESPOT1withPreCalculatedB1Map = false;
     private boolean performDESPOT1HIFI = false;
@@ -71,6 +73,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     private boolean threeTField = true;
     private boolean onefiveTField = false;
     
+    /**The list of possible maps that can be calculated*/
     private boolean calculateT1 = true;
     private boolean showB1Map = true;
     private boolean calculateMo = false;
@@ -80,6 +83,7 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     
     private boolean uniformAngleSpacing = true;
     
+    /**Whether, during "smart-thresholding", noise should be calculated from a given corner */
     private boolean upperLeftCorner = true;
     private boolean upperRightCorner = false;
     private boolean lowerLeftCorner = false;
@@ -90,7 +94,10 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
     private float noiseScale = (float) 4.00;
     private float hardNoiseThreshold = (float) 0.00;
     
+    /**The ordered list of images that the algorithm is dependent on. */
     private String[] wList;
+    
+    /**The GUI list of images */
     private String[] titles;
 
     private AlgorithmDespotT1 cAlgo;
@@ -344,31 +351,28 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         noiseScale = scriptParameters.getParams().getFloat("noise_Scale");
         hardNoiseThreshold = scriptParameters.getParams().getFloat("hard_Noise_Threshold");
         
-        //String[], note is a difficult case for storeParams
+        //These are ModelImage names, one finds they are in a useful order
         ArrayList<String> wListArr = new ArrayList<String>();
         
-        int count = 0;
-        String lastString = new String();
-        
-        while(scriptParameters.getParams().containsParameter("w_List_"+count)) {
-           lastString = scriptParameters.getParams().getString("w_List_"+count++);
-           wListArr.add(lastString);
+        //get the list of possible images
+        ArrayList<Parameter> parImageArr = new ArrayList<Parameter>();
+        Parameter[] parTotal = scriptParameters.getParams().getParameters();
+        for(int i=0; i<parTotal.length; i++) {
+        	if(parTotal[i].getType() == Parameter.PARAM_EXTERNAL_IMAGE) {
+        		parImageArr.add(parTotal[i]);
+        	}
         }
         
+        ModelImage result = null;
+        //only way of getting number of images without  throwing uncatchable NullPointer
+        int numInputImages = scriptParameters.getParams().getInt("number_of_input_images");
+        for(int imageNum=0; imageNum < numInputImages; imageNum++) {
+        	result = scriptParameters.retrieveImage(parImageArr.get(imageNum).getLabel());
+        	wListArr.add(result.getImageName());
+        }
+
         wList = wListArr.toArray(new String[0]);
-       
-        ArrayList<String> titlesArr = new ArrayList<String>();
-        
-        count = 0;
-        lastString = new String();
-        
-        while(scriptParameters.getParams().containsParameter("titles_"+count)) {
-            lastString = scriptParameters.getParams().getString("titles_"+count++);
-            titlesArr.add(lastString);
-        }
-        
-        titles = titlesArr.toArray(new String[0]);
-        
+        titles = wListArr.toArray(new String[0]);      
     }
 
     protected void storeParamsFromGUI() throws ParserException {
@@ -445,15 +449,12 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         scriptParameters.getParams().put(ParameterFactory.newParameter("use_Hard_Thresholding", useHardThresholding));
         scriptParameters.getParams().put(ParameterFactory.newParameter("noise_Scale", noiseScale));
         scriptParameters.getParams().put(ParameterFactory.newParameter("hard_Noise_Threshold", hardNoiseThreshold));
-        //String[], need to be stored individually
+        //need a count of wList
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_input_images", wList.length));
+        //String[], are in fact ModelImage identifiers need to be stored in order, titles is presumed to be identical for scripting
         if(wList != null) {
             for(int i=0; i<wList.length; i++) {
-                scriptParameters.getParams().put(ParameterFactory.newParameter("w_List_"+i, wList[i]));
-            }
-        }
-        if(titles != null) {
-            for(int i=0; i<titles.length; i++) {
-                scriptParameters.getParams().put(ParameterFactory.newParameter("titles_"+i, titles[i]));
+            	scriptParameters.storeImage(ViewUserInterface.getReference().getRegisteredImageByName(wList[i]), wList[i]);
             }
         }
     }
