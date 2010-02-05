@@ -389,10 +389,6 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         zSlices = image.getExtents()[2];
         tSlices = image.getExtents()[3];
 
-        int max = (xSlices < ySlices) ? ySlices : xSlices;
-        max = (zSlices < max) ? max : zSlices;
-        max = (tSlices < max) ? max : tSlices;
-
         final JPanel removePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         final ButtonGroup removeGroup = new ButtonGroup();
@@ -434,7 +430,8 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         textSlice.addFocusListener(this);
         textPanel.add(textSlice);
 
-        labelSlice = new JLabel("Select index from 0 to " + (max - 1));
+        //default is tButton selected
+        labelSlice = new JLabel("Select index from 0 to " + (tSlices - 1));
         labelSlice.setForeground(Color.black);
         labelSlice.setFont(serif12);
         labelSlice.setEnabled(true);
@@ -462,7 +459,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
 
         getContentPane().add(panel);
         pack();
-        labelSlice.setText("Select index from 0 to " + (zSlices - 1));
+        labelSlice.setText("Select index from 0 to " + (tSlices - 1));
         setVisible(true);
     }
 
