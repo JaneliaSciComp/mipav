@@ -88,8 +88,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private double trapezoidConstant[];
     private int trapezoidIndex;
     private double ktransDivVe;
-    private double expjarray[];
-    private double expmminus1[];
+    private double exparray[][];
     private int[] exitStatus;
     
     private ModelImage tissueImage;
@@ -312,8 +311,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         
         y_array = new double[tDim-1];
         ymodel = new double[tDim-1];
-        expjarray = new double[tDim];
-        expmminus1 = new double[tDim];
+        exparray = new double[tDim][tDim];
         exitStatus = new int[10020];
         
         for (i = 0; i < volSize; i++) {
@@ -530,67 +528,66 @@ public class AlgorithmSM2 extends AlgorithmBase {
 
             try {
                 ctrl = ctrlMat[0];
-                //Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
                 if ((ctrl == -1) || (ctrl == 1)) {
                 	ktrans = a[0];
                 	ve = a[1];
                 	vp = a[2];
                 	ktransDivVe = ktrans/ve;
                 	for (j = 0; j <= tDim-1; j++) {
-                	    expjarray[j] = Math.exp(timeVals[j]*ktransDivVe);
-                	    expmminus1[j] = 1.0/expjarray[j];
+                		for (m = 0; m <= tDim-1; m++) {
+                	        exparray[j][m] = Math.exp((timeVals[j] - timeVals[m])*ktransDivVe);
+                		}
                 	}
                 	
                 	for (m = 2; m <= tDim; m++) {
                 		intSum = 0.0;
                 		for (j = 2; j <= m; j++) {
-                			intSum += trapezoidConstant[j-2]*(expjarray[j-1] - expjarray[j-2]);
-	                        intSum += trapezoidSlope[j-2]* ((expjarray[j-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
-	                                                                (expjarray[j-2]*(timeVals[j-2] - 1.0/ktransDivVe)));
+                			intSum += trapezoidConstant[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1]);
+	                        intSum += trapezoidSlope[j-2]* ((exparray[j-1][m-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
+	                                                                (exparray[j-2][m-1]*(timeVals[j-2] - 1.0/ktransDivVe)));
                 		} // for (j = 2; j <= m; j++)
-                		ymodel[m-2] = expmminus1[m-1] * intSum + vp * r1ptj[m-1];
+                		ymodel[m-2] = intSum + vp * r1ptj[m-1];
                 	} // for (m = 2; m <= tDim; m++)
                     // evaluate the residuals[j] = ymodel[j] - ySeries[j]
                     for (j = 0; j < nPts; j++) {
                         residuals[j] = ymodel[j] - ySeries[j];
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
-                /*else if (ctrl == 2) {
+                else if (ctrl == 2) {
                 	// Calculate the Jacobian analytically
                 	ktrans = a[0];
                 	ve = a[1];
                 	vp = a[2];
                 	ktransDivVe = ktrans/ve;
                 	for (j = 0; j <= tDim-1; j++) {
-                	    expjarray[j] = Math.exp(timeVals[j]*ktransDivVe);
-                	    expmminus1[j] = 1.0/expjarray[j];
+                		for (m = 0; m <= tDim-1; m++) {
+                	        exparray[j][m] = Math.exp((timeVals[j] - timeVals[m])*ktransDivVe);
+                		}
                 	}
                 	for (m = 2; m <= tDim; m++) {
-                		intSum = 0.0;
                 		intSumDerivKtrans = 0.0;
                 		intSumDerivVe = 0.0;
                 		for (j = 2; j <= m; j++) {
-                			intSum += trapezoidConstant[j-2]*(expjarray[j-1] - expjarray[j-2]);
-	                        intSum += trapezoidSlope[j-2]* ((expjarray[j-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
-	                                                                (expjarray[j-2]*(timeVals[j-2] - 1.0/ktransDivVe)));
-	                        intSumDerivKtrans += trapezoidConstant[j-2]*(timeVals[j-1]*expjarray[j-1] - timeVals[j-2]*expjarray[j-2])/ve;
-	                        intSumDerivKtrans += trapezoidSlope[j-2]*((expjarray[j-1]*timeVals[j-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
-	                        		                                  (expjarray[j-2]*timeVals[j-2]*(timeVals[j-2] - 1.0/ktransDivVe)))/ve;
-	                        intSumDerivKtrans += trapezoidSlope[j-2]*(expjarray[j-1] - expjarray[j-2])*ve/(ktrans*ktrans);
-	                        intSumDerivVe += trapezoidConstant[j-2]*(timeVals[j-1]*expjarray[j-1] - timeVals[j-2]*expjarray[j-2])*(-ktrans/(ve*ve));
-	                        intSumDerivVe += trapezoidSlope[j-2]*((expjarray[j-1]*timeVals[j-1]*(timeVals[j-1] - 1.0/ktransDivVe)) -
-	                                  (expjarray[j-2]*timeVals[j-2]*(timeVals[j-2] - 1.0/ktransDivVe)))*(-ktrans/(ve*ve));
-	                        intSumDerivVe += trapezoidSlope[j-2]*(expjarray[j-1] - expjarray[j-2])*(-1.0/ktrans);
+	                        intSumDerivKtrans += trapezoidConstant[j-2]*((timeVals[j-1]-timeVals[m-1])*exparray[j-1][m-1] 
+	                                                                   - (timeVals[j-2] - timeVals[m-1])*exparray[j-2][m-1])/ve;
+	                        intSumDerivKtrans += trapezoidSlope[j-2]*((exparray[j-1][m-1]*(timeVals[j-1]-timeVals[m-1])*(timeVals[j-1] - 1.0/ktransDivVe)) -
+	                        		                                  (exparray[j-2][m-1]*(timeVals[j-2]-timeVals[m-1])*(timeVals[j-2] - 1.0/ktransDivVe)))/ve;
+	                        intSumDerivKtrans += trapezoidSlope[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*ve/(ktrans*ktrans);
+	                        intSumDerivVe += trapezoidConstant[j-2]*((timeVals[j-1]-timeVals[m-1])*exparray[j-1][m-1] 
+	                                                              - (timeVals[j-2]-timeVals[m-1])*exparray[j-2][m-1])*(-ktrans/(ve*ve));
+	                        intSumDerivVe += trapezoidSlope[j-2]*((exparray[j-1][m-1]*(timeVals[j-1]-timeVals[m-1])*(timeVals[j-1] - 1.0/ktransDivVe)) -
+	                                  (exparray[j-2][m-1]*(timeVals[j-2]-timeVals[m-1])*(timeVals[j-2] - 1.0/ktransDivVe)))*(-ktrans/(ve*ve));
+	                        intSumDerivVe += trapezoidSlope[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*(-1.0/ktrans);
                 		} // for (j = 2; j <= m; j++)
-                		covarMat[m-1][0] = expmminus1[m-1] * intSumDerivKtrans + (-timeVals[m-1]/ve) * expmminus1[m-1] * intSum;
-                		covarMat[m-1][1] = expmminus1[m-1] * intSumDerivVe + ktrans* timeVals[m-1]/(ve * ve) * expmminus1[m-1] * intSum;
+                		covarMat[m-1][0] = intSumDerivKtrans;
+                		covarMat[m-1][1] = intSumDerivVe;
                 		covarMat[m-2][2] = r1ptj[m-1];
                 	}
-                }*/
-                // Calculate the Jacobian numerically
-                else if (ctrl == 2) {
-                    ctrlMat[0] = 0;
                 }
+                // Calculate the Jacobian numerically
+                //else if (ctrl == 2) {
+                    //ctrlMat[0] = 0;
+                //}
             } catch (Exception exc) {
                 Preferences.debug("function error: " + exc.getMessage() + "\n");
             }
