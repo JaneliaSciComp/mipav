@@ -323,8 +323,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
             }
             // Note that the nPts, tDim-1, is the number of points in the y_array.
             dModel = new FitSM2ConstrainedModel(tDim-1, r1ptj, y_array, initial);
-            //dModel.driver();
-            dModel.dumpResults();
+            dModel.driver();
+            //dModel.dumpResults();
             params = dModel.getParameters();
             for (j = 0; j < 3; j++) {
             	destArray[j*volSize + i] = (float)params[j];
@@ -529,8 +529,8 @@ public class AlgorithmSM2 extends AlgorithmBase {
             double intSumDerivVe;
 
             try {
-            	
                 ctrl = ctrlMat[0];
+                //Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
                 if ((ctrl == -1) || (ctrl == 1)) {
                 	ktrans = a[0];
                 	ve = a[1];
