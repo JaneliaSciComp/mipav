@@ -2263,9 +2263,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         }
 
         origin = originlocat.clone();
-        for (int i = 0; i < origin.length; i++) {
-        	Preferences.debug("origin[" + i + "] = " + origin[i] + "\n");
-        }
     }
 
     /**
