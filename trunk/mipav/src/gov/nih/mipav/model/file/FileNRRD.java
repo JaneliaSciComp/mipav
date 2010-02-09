@@ -1624,9 +1624,16 @@ public class FileNRRD extends FileBase {
         }
 
         if (spaceUnitsString != null) {
-            nrrdSpaceUnits = new String[numSpaceKinds];
+        	int numQuote = 0;
+        	for (j = 0; j < spaceUnitsString.length(); j++) {
+        		if (spaceUnitsString.substring(j, j+ 1).equals("\"")) {
+        			numQuote++;
+        		}
+        	}
+        	int numSpaceUnits = numQuote/2;
+            nrrdSpaceUnits = new String[numSpaceUnits];
 
-            for (i = 0, j = 0; i < numSpaceKinds;) {
+            for (i = 0, j = 0; i < numSpaceUnits;) {
 
                 if (!spaceUnitsString.substring(j, j + 1).equals("\"")) {
                     j++;
@@ -1641,7 +1648,7 @@ public class FileNRRD extends FileBase {
                 }
             } // for (i = 0, j = 0; i < numSpaceKinds;)
 
-            for (i = 0; i < numSpaceKinds; i++) {
+            for (i = 0; i < numSpaceUnits; i++) {
                 nrrdSpaceUnits[i] = spaceUnitsString.substring(startQuote[i] + 1, finishQuote[i]);
                 Preferences.debug("NRRD space units[ " + i + "] = " + nrrdSpaceUnits[i] + "\n");
             }
@@ -1651,8 +1658,7 @@ public class FileNRRD extends FileBase {
             }
 
             for (i = 0, j = 0; i < nrrdDimensions; i++) {
-
-                if ((kindsString[i] != null) && (kindsString[i].equalsIgnoreCase("SPACE"))) {
+                if ((kindsString[i] != null) && ((kindsString[i].equalsIgnoreCase("SPACE")) || (kindsString[i].equalsIgnoreCase("TIME")))) {
                     nrrdUnits[i] = nrrdSpaceUnits[j++];
                 }
             }
@@ -1731,6 +1737,9 @@ public class FileNRRD extends FileBase {
                     else if (spaceDirections != null) {
                         if (i < 3) {
                             resols[i] = (float)Math.abs(matrix.get(i,i));
+                        }
+                        else if (spaceDirections[3] != null) {
+                        	resols[i] = (float)spaceDirections[3][3];
                         }
                     }
                     else { // spacings == null
@@ -1829,6 +1838,9 @@ public class FileNRRD extends FileBase {
                         if (i < 3) {
                             resols[i] = (float)Math.abs(matrix.get(i,i));
                         }
+                        else if (spaceDirections[3] != null) {
+                        	resols[i] = (float)spaceDirections[3][3];
+                        }
                     }
                     else { // spacings == null
                         resols[i] = 1.0f;
@@ -1917,6 +1929,9 @@ public class FileNRRD extends FileBase {
                     else if (spaceDirections != null) {
                         if (i < 3) {
                             resols[i] = (float)Math.abs(matrix.get(i,i));
+                        }
+                        else if (spaceDirections[3] != null) {
+                        	resols[i] = (float)spaceDirections[3][3];
                         }
                     }
                     else { // spacings == null
@@ -2033,6 +2048,9 @@ public class FileNRRD extends FileBase {
                     if (i < 3) {
                         resols[i] = (float)Math.abs(matrix.get(i,i));
                     }
+                    else if (spaceDirections[3] != null) {
+                    	resols[i] = (float)spaceDirections[3][3];
+                    }
                 }
                 else { // spacings == null
                     resols[i] = 1.0f;
@@ -2138,6 +2156,9 @@ public class FileNRRD extends FileBase {
                 else if (spaceDirections != null) {
                     if (i < 3) {
                         resols[i] = (float)Math.abs(matrix.get(i,i));
+                    }
+                    else if (spaceDirections[3] != null) {
+                    	resols[3] = (float)spaceDirections[3][3];
                     }
                 }
                 else { // spacings == null
