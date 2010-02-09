@@ -1322,7 +1322,18 @@ public class FileNRRD extends FileBase {
                         } // else if (fieldDescriptorString.equalsIgnoreCase("3D-LEFT-HANDED-TIME"))
                     } // else if (fieldIDString.equalsIgnoreCase("SPACE"))
                     else if (fieldIDString.equalsIgnoreCase("SPACE DIRECTIONS")) {
-                        spaceDirections = new double[nrrdDimensions][3];
+                    	int numComma = 0;
+                    	for (j = 0; j < fieldDescriptorString.length(); j++) {
+                    		if (fieldDescriptorString.substring(j, j+ 1).equalsIgnoreCase(",")) {
+                    			numComma++;
+                    		}
+                    	}
+                    	if (numComma == 6) {
+                            spaceDirections = new double[nrrdDimensions][3];
+                    	}
+                    	else {
+                    		spaceDirections = new double[nrrdDimensions][4];
+                    	}
 
                         for (i = 0, j = 0, m = 0; i < nrrdDimensions;) {
 
@@ -1351,7 +1362,9 @@ public class FileNRRD extends FileBase {
                                 }
 
                                 spaceDirections[i][0] = Double.valueOf(fieldDescriptorString.substring(startNum, j++)).doubleValue();
-                                matrix.set(0, m, spaceDirections[i][0]);
+                                if (m < 3) {
+                                    matrix.set(0, m, spaceDirections[i][0]);
+                                }
 
                                 while (fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(" ")) {
                                     j++;
@@ -1364,7 +1377,9 @@ public class FileNRRD extends FileBase {
                                 }
 
                                 spaceDirections[i][1] = Double.valueOf(fieldDescriptorString.substring(startNum, j++)).doubleValue();
-                                matrix.set(1, m, spaceDirections[i][1]);
+                                if (m < 3) {
+                                    matrix.set(1, m, spaceDirections[i][1]);
+                                }
 
                                 while (fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(" ")) {
                                     j++;
@@ -1372,14 +1387,42 @@ public class FileNRRD extends FileBase {
 
                                 startNum = j;
 
-                                while (!fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(")")) {
-                                    j++;
+                                if (numComma == 6) {
+	                                while (!fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(")")) {
+	                                    j++;
+	                                }
+                                }
+                                else {
+                                	while (!fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(",")) {
+                                        j++;
+                                    }	
                                 }
 
                                 spaceDirections[i][2] = Double.valueOf(fieldDescriptorString.substring(startNum, j++)).doubleValue();
-                                matrix.set(2, m, spaceDirections[i][2]);
-                                Preferences.debug("space directions[" + i + " ] = (" + spaceDirections[i][0] + "," +
-                                                  spaceDirections[i][1] + "," + spaceDirections[i][2] + ")\n");
+                                if (m < 3) {
+                                    matrix.set(2, m, spaceDirections[i][2]);
+                                }
+                                if (numComma == 6) {
+	                                Preferences.debug("space directions[" + i + " ] = (" + spaceDirections[i][0] + "," +
+	                                                  spaceDirections[i][1] + "," + spaceDirections[i][2] + ")\n");
+                                }
+                                else {
+                                	while (fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(" ")) {
+                                        j++;
+                                    }
+
+                                    startNum = j;
+                                    
+                                    while (!fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(")")) {
+	                                    j++;
+	                                }
+                                    
+                                    spaceDirections[i][3] = Double.valueOf(fieldDescriptorString.substring(startNum, j++)).doubleValue();
+                                    
+                                    Preferences.debug("space directions[" + i + " ] = (" + spaceDirections[i][0] + "," +
+                                            spaceDirections[i][1] + "," + spaceDirections[i][2] + "," + 
+                                            spaceDirections[i][3] + ")\n");
+                                }
                                 i++;
                                 m++;
                             }
@@ -1388,11 +1431,17 @@ public class FileNRRD extends FileBase {
                     else if (fieldIDString.equalsIgnoreCase("SPACE ORIGIN")) {
 
                         // This always refers to the center of the first sample in the array regardless of
-                        // cell or node centering of the data is specified.  This field coveys the same
+                        // cell or node centering of the data is specified.  This field conveys the same
                         // information as the "Image Position" (0020,0032) field of a DICOM file, except
                         // that the space in which the vector coordinates are given need not be the
                         // DICOM-specific LPS space.
-                        spaceOrigin = new double[3];
+                    	int numComma = 0;
+                    	for (j = 0; j < fieldDescriptorString.length(); j++) {
+                    		if (fieldDescriptorString.substring(j, j+ 1).equalsIgnoreCase(",")) {
+                    			numComma++;
+                    		}
+                    	}
+                        spaceOrigin = new double[numComma+1];
                         j = 0;
 
                         while (fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(" ")) {
@@ -1432,17 +1481,45 @@ public class FileNRRD extends FileBase {
 
                             startNum = j;
 
-                            while (!fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(")")) {
-                                j++;
+                            if (numComma == 2) {
+	                            while (!fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(")")) {
+	                                j++;
+	                            }
+                            }
+                            else {
+                            	while (!fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(",")) {
+                                    j++;
+                                }	
                             }
 
                             spaceOrigin[2] = Double.valueOf(fieldDescriptorString.substring(startNum, j++)).doubleValue();
-                            Preferences.debug("space origin = (" + spaceOrigin[0] + "," + spaceOrigin[1] + "," +
-                                              spaceOrigin[2] + ")\n");
-                            origin = new float[3];
+                            if (numComma == 2) {
+                                Preferences.debug("space origin = (" + spaceOrigin[0] + "," + spaceOrigin[1] + "," +
+                                                  spaceOrigin[2] + ")\n");
+                            }
+                            else {
+                            	while (fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(" ")) {
+                                    j++;
+                                }
+
+                                startNum = j;
+                                
+                                while (!fieldDescriptorString.substring(j, j + 1).equalsIgnoreCase(")")) {
+	                                j++;
+	                            }
+                                
+                                spaceOrigin[3] = Double.valueOf(fieldDescriptorString.substring(startNum, j++)).doubleValue();
+                                
+                                Preferences.debug("space origin = (" + spaceOrigin[0] + "," + spaceOrigin[1] + "," +
+                                        spaceOrigin[2] + "," + spaceOrigin[3] + ")\n");
+                            }
+                            origin = new float[numComma+1];
                             origin[0] = (float) spaceOrigin[0];
                             origin[1] = (float) spaceOrigin[1];
                             origin[2] = (float) spaceOrigin[2];
+                            if (numComma == 3) {
+                            	origin[3] = (float) spaceOrigin[3];
+                            }
                             fileInfo.setOrigin(origin);
                             matrix.set(0, 3, spaceOrigin[0]);
                             matrix.set(1, 3, spaceOrigin[1]);
