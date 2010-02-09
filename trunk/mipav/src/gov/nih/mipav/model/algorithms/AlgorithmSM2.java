@@ -32,13 +32,19 @@ import java.text.*;
  2.) Erratum: Magnetic Resonance in Medicine, Vol. 55, 2006, p.1217.
  3.) Quantitative MRI of the Brain, Edited by Paul Tofts, 2003, John Wiley & Sons, Ltd.,
  ISBN: 0-47084721-2, Chapter 10, T1-w DCE-MRI: T1-weighted Dynamic Contrast-enhanced MRI by
- Geoff J. M. Parker and Anwar R. Padhani.
+ Geoff J. M. Parker and Anwar R. Padhani, pp. 341-364.
  4.) Larsson HBW, Courivaud F, Rostrup E, Hansen AE.  Measurement of brain perfusion, blood volume, and 
  blood-brain barrier permeability, using dynamic contrast-enhanced T1-weighted MRI at 3 tesla.
  Magnetic Resonance in Medicine 2009; 62(5):1270-1281.
  5.) Li X, Rooney WD, Springer CS.  A unified magnetic resonance imaging pharmacokinetic theory:
  intravascular and extracellular contrast reagents.  Magnetic Resonance in Medicine
  2005 Dec; 54(6): 1351-1359.
+ 6.) Tofts PS, Modeling tracer kinetics in dynamic Gd-DPTA MR imaging.  Journal of Magnetic
+ Resonance Imaging, 1997, 7(1), pp. 91-101.
+ 7.) Tofts PS, Brix G, Buckley DL, Evelhoch JL, Henderson E, Knopp MV, Larsson HB, Mayr NA,
+ Parker GJ, Port RE, Taylor J, Weisskoff RM.  Estimating kinetic parameters from dynamic 
+ contrast-enhanced T(1)-weighted MRI of a diffusable tracer: standardized quantitites and
+ symbols.  J. Magn. Reson Imaging 1999 Sep; 10(3), pp. 223-232. 
  */
 public class AlgorithmSM2 extends AlgorithmBase {
 
@@ -90,6 +96,10 @@ public class AlgorithmSM2 extends AlgorithmBase {
     private double ktransDivVe;
     private double exparray[][];
     private int[] exitStatus;
+    private int[] paramNaN = new int[3];
+    private int[] paramInf = new int[3];
+    private double[] paramMin = new double[3];
+    private double[] paramMax = new double[3];
     
     private ModelImage tissueImage;
 
@@ -314,6 +324,11 @@ public class AlgorithmSM2 extends AlgorithmBase {
         exparray = new double[tDim][tDim];
         exitStatus = new int[10020];
         
+        for (i = 0; i < 3; i++) {
+        	paramMin[i] = Double.MAX_VALUE;
+        	paramMax[i] = -Double.MAX_VALUE;
+        }
+        
         for (i = 0; i < volSize; i++) {
         	fireProgressStateChanged(i * 100/volSize);
             for (t = 1; t < tDim; t++) {
@@ -326,9 +341,68 @@ public class AlgorithmSM2 extends AlgorithmBase {
             params = dModel.getParameters();
             for (j = 0; j < 3; j++) {
             	destArray[j*volSize + i] = (float)params[j];
+            	if (Double.isNaN(params[j])) {
+            	    paramNaN[j]++;	
+            	}
+            	else if (Double.isInfinite(params[j])) {
+            		paramInf[j]++;
+            	}
+            	else {
+	            	if (params[j] < paramMin[j]) {
+	            		paramMin[j] = params[j];
+	            	}
+	            	if (params[j] > paramMax[j]) {
+	            		paramMax[j] = params[j];
+	            	}
+            	}
             }
             exitStatus[(dModel.getExitStatus() + 11)]++;
         } // for (i = 0; i < volSize; i++)
+        
+        if (paramNaN[0] > 0) {
+        	System.out.println(paramNaN[0] + " of ktrans values are NaN");
+        	Preferences.debug(paramNaN[0] + " of ktrans values are NaN\n");
+        }
+        
+        if (paramNaN[1] > 0) {
+        	System.out.println(paramNaN[1] + " of ve values are NaN");
+        	Preferences.debug(paramNaN[1] + " of ve values are NaN\n");
+        }
+        
+        if (paramNaN[2] > 0) {
+        	System.out.println(paramNaN[2] + " of vp values are NaN");
+        	Preferences.debug(paramNaN[2] + " of vp values are NaN\n");
+        }
+        
+        if (paramInf[0] > 0) {
+        	System.out.println(paramInf[0] + " of ktrans values are infinite");
+        	Preferences.debug(paramInf[0] + " of ktrans values are infinite\n");
+        }
+        
+        if (paramInf[1] > 0) {
+        	System.out.println(paramInf[1] + " of ve values are infinite");
+        	Preferences.debug(paramInf[1] + " of ve values are infinite\n");
+        }
+        
+        if (paramInf[2] > 0) {
+        	System.out.println(paramInf[2] + " of vp values are infinite");
+        	Preferences.debug(paramInf[2] + " of vp values are infinite\n");
+        }
+        
+        System.out.println("ktrans minimum value = " + paramMin[0]);
+        Preferences.debug("ktrans minimum value = " + paramMin[0] + "\n");
+        System.out.println("ktrans maximum value = " + paramMax[0]);
+        Preferences.debug("ktrans maximum value = " + paramMax[0] + "\n");
+        
+        System.out.println("ve minimum value = " + paramMin[1]);
+        Preferences.debug("ve minimum value = " + paramMin[1] + "\n");
+        System.out.println("ve maximum value = " + paramMax[1]);
+        Preferences.debug("ve maximum value = " + paramMax[1] + "\n");
+        
+        System.out.println("vp minimum value = " + paramMin[2]);
+        Preferences.debug("vp minimum value = " + paramMin[2] + "\n");
+        System.out.println("vp maximum value = " + paramMax[2]);
+        Preferences.debug("vp maximum value = " + paramMax[2] + "\n");
         
         if (exitStatus[10011] > 0) {
         	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 = "
@@ -528,6 +602,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
 
             try {
                 ctrl = ctrlMat[0];
+                //Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
                 if ((ctrl == -1) || (ctrl == 1)) {
                 	ktrans = a[0];
                 	ve = a[1];
@@ -551,6 +626,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                     // evaluate the residuals[j] = ymodel[j] - ySeries[j]
                     for (j = 0; j < nPts; j++) {
                         residuals[j] = ymodel[j] - ySeries[j];
+                        //Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
@@ -579,15 +655,18 @@ public class AlgorithmSM2 extends AlgorithmBase {
 	                                  (exparray[j-2][m-1]*(timeVals[j-2]-timeVals[m-1])*(timeVals[j-2] - 1.0/ktransDivVe)))*(-ktrans/(ve*ve));
 	                        intSumDerivVe += trapezoidSlope[j-2]*(exparray[j-1][m-1] - exparray[j-2][m-1])*(-1.0/ktrans);
                 		} // for (j = 2; j <= m; j++)
-                		covarMat[m-1][0] = intSumDerivKtrans;
-                		covarMat[m-1][1] = intSumDerivVe;
+                		covarMat[m-2][0] = intSumDerivKtrans;
+                		covarMat[m-2][1] = intSumDerivVe;
                 		covarMat[m-2][2] = r1ptj[m-1];
+                		//Preferences.debug("covarMat[" + (m-2) + "][0] = " + covarMat[m-2][0] + "\n");
+                		//Preferences.debug("covarMat[" + (m-2) + "][1] = " + covarMat[m-2][1] + "\n");
+                		//Preferences.debug("covarMat[" + (m-2) + "][2] = " + covarMat[m-2][2] + "\n");
                 	}
                 }
                 // Calculate the Jacobian numerically
-                //else if (ctrl == 2) {
-                    //ctrlMat[0] = 0;
-                //}
+                else if (ctrl == 2) {
+                    ctrlMat[0] = 0;
+                }
             } catch (Exception exc) {
                 Preferences.debug("function error: " + exc.getMessage() + "\n");
             }
