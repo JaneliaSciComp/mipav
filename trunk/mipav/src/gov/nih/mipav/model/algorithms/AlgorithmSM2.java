@@ -664,9 +664,9 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 	}
                 }
                 // Calculate the Jacobian numerically
-                else if (ctrl == 2) {
-                    ctrlMat[0] = 0;
-                }
+                //else if (ctrl == 2) {
+                    //ctrlMat[0] = 0;
+                //}
             } catch (Exception exc) {
                 Preferences.debug("function error: " + exc.getMessage() + "\n");
             }
