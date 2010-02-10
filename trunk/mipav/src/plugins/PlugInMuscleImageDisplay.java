@@ -4318,8 +4318,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			VOI v = calculateVOI;
 			double wholeMultiplier = 0.0, sliceMultiplier = 0.0;
 			
-			//multiply x and y resolutions
+			//multiply x and y resolutions, notice the .1 refers to conversion factor for standard resolution
+			//TODO: convert the .1 for other choices of units
 			wholeMultiplier = sliceMultiplier = getActiveImage().getResolutions(0)[0]*0.1*getActiveImage().getResolutions(0)[1]*0.1;
+			//for 3D images, also need to include z-resolution
 			if(multipleSlices)
 				wholeMultiplier *= (getActiveImage().getResolutions(0)[2]*0.1);
 			System.out.println("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier);
@@ -4371,6 +4373,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			performCalculations(v, PlugInSelectableVOI.WHOLE_VOLUME_SLICE_NUMBER, wholeMultiplier);
 			
 			System.out.println("Number of slices: "+temp.getZDim());
+			//in the case of a 3D image, each VOI is cloned for a particular slice, relevant statistics are caluclated
+			//for that slice only
 			for(int k=0; k<temp.getZDim(); k++) {
 				//progressBar.setMessage("Calculating "+name.toLowerCase()+" slice "+k+"...");
 				VOI v2 = (VOI)v.clone();
