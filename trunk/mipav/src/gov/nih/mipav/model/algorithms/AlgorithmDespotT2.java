@@ -558,7 +558,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
                             } else {
                                 ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
@@ -851,7 +851,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
                             } else {
                                 ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
@@ -868,7 +868,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
                             } else {
                                 ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
@@ -1312,7 +1312,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
                             } else {
                                 ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
@@ -1329,7 +1329,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
                             } else {
                                 ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
@@ -1514,7 +1514,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
                             } else {
                                 ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
@@ -1531,7 +1531,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k);
                             } else {
                                 ssfpPixelValues_phase180[angle][pixelIndex] = image.getDouble(x, y, k, t);
