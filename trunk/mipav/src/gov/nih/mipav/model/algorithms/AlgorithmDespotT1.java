@@ -407,7 +407,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         for (angle=0; angle<Nsa; angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
             if(image.getNDims() > 3) {
-                do4D = true;
+            	do4D = true;
                 dimT = image.getExtents()[3];
             }
         }
@@ -588,7 +588,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(ti == 0) {
+                            if(image.getNDims() < 4) {
                                 irspgrPixelValues[ti][pixelIndex] = image.getFloat(x, y, k);
                             } else {
                                 irspgrPixelValues[ti][pixelIndex] = image.getFloat(x, y, k, t);
@@ -603,7 +603,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k);
                             } else {
                                 spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k, t);
@@ -783,7 +783,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k);
                             } else {
                                 spgrPixelValues[angle][pixelIndex] = image.getFloat(x, y, k, t);
@@ -1022,7 +1022,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         for (angle=0; angle<Nsa; angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
             if(image.getNDims() > 3) {
-                do4D = true;
+            	do4D = true;
                 dimT = image.getExtents()[3];
             }
         }
@@ -1129,7 +1129,7 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 pixelValues[angle][pixelIndex] = image.getDouble(x, y, k);
                             } else {
                                 pixelValues[angle][pixelIndex] = image.getDouble(x, y, k, t);
