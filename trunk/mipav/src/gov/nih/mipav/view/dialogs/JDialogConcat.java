@@ -196,7 +196,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                 // These next lines set the titles in all frames where the source image is displayed to
                 // image name so as to indicate that the image is now unlocked!
                 // The image frames are enabled and then registered to the userinterface.
-                Vector imageFrames = imageA.getImageFrameVector();
+                /*Vector imageFrames = imageA.getImageFrameVector();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
@@ -206,7 +206,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                         userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
 
                     }
-                }
+                }*/
 
                 if (parentFrame != null) {
                     userInterface.registerFrame(parentFrame);

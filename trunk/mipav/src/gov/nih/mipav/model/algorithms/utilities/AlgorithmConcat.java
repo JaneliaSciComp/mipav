@@ -90,22 +90,61 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        
+        float[] resols1 = srcImage1.getResolutions(0);
+        float[] resols2 = srcImage2.getResolutions(0);
 
         if ((srcImage1.getNDims() == 2) && (srcImage2.getNDims() == 2)) {
-            cat2D_2D_3D();
+        	if(resols1[0] == resols2[0] && resols1[1] == resols2[1]) {
+        		cat2D_2D_3D();
+        	}else {
+        		displayError("Resolutions must match up");
+                setCompleted(false);
+                return;
+        	}
+        	
         } else if (((srcImage1.getNDims() == 2) && (srcImage2.getNDims() == 3)) ||
                        ((srcImage1.getNDims() == 3) && (srcImage2.getNDims() == 2))) {
-            cat2D_3D_3D();
+        	if(resols1[0] == resols2[0] && resols1[1] == resols2[1]) {
+        		cat2D_3D_3D();
+        	}else {
+        		displayError("Resolutions must match up");
+                setCompleted(false);
+                return;
+        	}
         } else if ((srcImage1.getNDims() == 3) && (srcImage2.getNDims() == 3) && (destImage.getNDims() == 3)) {
-            cat3D_3D_3D();
+        	if(resols1[0] == resols2[0] && resols1[1] == resols2[1] && resols1[2] == resols2[2]) {
+        		cat3D_3D_3D();
+        	}else {
+        		displayError("Resolutions must match up");
+                setCompleted(false);
+                return;
+        	}
         } else if ((srcImage1.getNDims() == 3) && (srcImage2.getNDims() == 3) && (destImage.getNDims() == 4)) {
-            cat3D_3D_4D();
+        	if(resols1[0] == resols2[0] && resols1[1] == resols2[1] && resols1[2] == resols2[2]) {
+        		cat3D_3D_4D();
+        	}else {
+        		displayError("Resolutions must match up");
+                setCompleted(false);
+                return;
+        	}
         } else if (((srcImage1.getNDims() == 3) && (srcImage2.getNDims() == 4)) ||
                        ((srcImage1.getNDims() == 4) && (srcImage2.getNDims() == 3))) {
-            cat3D_4D_4D();
+        	if(resols1[0] == resols2[0] && resols1[1] == resols2[1] && resols1[2] == resols2[2]) {
+        		cat3D_4D_4D();
+        	}else {
+        		displayError("Resolutions must match up");
+                setCompleted(false);
+                return;
+        	}
+            
         } else if ((srcImage1.getNDims() == 4) && (srcImage2.getNDims() == 4)) {
-            cat4D_4D_4D();
+        	if(resols1[0] == resols2[0] && resols1[1] == resols2[1] && resols1[2] == resols2[2] && resols1[3] == resols2[3]) {
+        		cat4D_4D_4D();
+        	}else {
+        		displayError("Resolutions must match up");
+                setCompleted(false);
+                return;
+        	}
         } else {
             displayError("Source Image(s) dimensionality not supported.");
         }
@@ -181,6 +220,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
                 fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
                 fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
+                fileInfo[i].setAxisOrientation(srcImage1.getAxisOrientation());
             }
 
             if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
@@ -343,6 +383,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
                 fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
                 fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
+                fileInfo[i].setAxisOrientation(srcImage1.getAxisOrientation());
             }
 
             if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
@@ -513,6 +554,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
                 fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
                 fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
+                fileInfo[i].setAxisOrientation(srcImage1.getAxisOrientation());
             }
 
             if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
@@ -675,6 +717,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
                 fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
                 fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
+                fileInfo[i].setAxisOrientation(srcImage1.getAxisOrientation());
             }
 
             if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
@@ -718,7 +761,7 @@ public class AlgorithmConcat extends AlgorithmBase {
      * cat.
      */
     private void cat3D_4D_4D() {
-    	System.out.println("in here");
+
         int length;
         int xDim, yDim;
         float[] buffer;
@@ -887,6 +930,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
                 fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
                 fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
+                fileInfo[i].setAxisOrientation(srcImage1.getAxisOrientation());
             }
 
             if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
@@ -1073,6 +1117,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
                 fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
                 fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
+                fileInfo[i].setAxisOrientation(srcImage1.getAxisOrientation());
             }
 
             srcALength = srcImage1.getExtents()[2] * srcImage1.getExtents()[3];
