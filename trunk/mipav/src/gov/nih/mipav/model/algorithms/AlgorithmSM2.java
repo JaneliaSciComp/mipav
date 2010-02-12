@@ -1,6 +1,4 @@
 package gov.nih.mipav.model.algorithms;
-import gov.nih.mipav.model.algorithms.AlgorithmFRAP.IntModel;
-import gov.nih.mipav.model.file.FileInfoBase;
 
 
 import gov.nih.mipav.model.structures.*;
@@ -322,7 +320,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         y_array = new double[tDim-1];
         ymodel = new double[tDim-1];
         exparray = new double[tDim][tDim];
-        exitStatus = new int[10020];
+        exitStatus = new int[12356];
         
         for (i = 0; i < 3; i++) {
         	paramMin[i] = Double.MAX_VALUE;
@@ -404,6 +402,170 @@ public class AlgorithmSM2 extends AlgorithmBase {
         System.out.println("vp maximum value = " + paramMax[2]);
         Preferences.debug("vp maximum value = " + paramMax[2] + "\n");
         
+        if (exitStatus[12351] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level no problem (Gauss-Newton the last 3 steps) = " + exitStatus[12351]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step) = " + exitStatus[12351] + "\n");
+        }
+        
+        if (exitStatus[12352] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level prank < n at the termination point = " + exitStatus[12352]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level prank < n at the termination point = " + exitStatus[12352] + "\n");	
+        }
+        
+        if (exitStatus[12353] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[12353]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[12353] + "\n");	
+        }
+        
+        if (exitStatus[12354] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the 2nd but last step was subspace minimization but");
+            System.out.println("the last two were Gauss-Newton steps = " + exitStatus[12354]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+        	Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+            Preferences.debug("the last two were Gauss-Newton steps = " + exitStatus[12354] + "\n");
+        }
+        
+        if (exitStatus[12355] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[12355]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[12355] + "\n");	
+        }
+        
+        if (exitStatus[12311] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx = " + exitStatus[12311]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx = " + exitStatus[12311] + "\n");
+        }
+        
+        if (exitStatus[12011] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the sum of squares is less than epsabs**2 = " + exitStatus[12011]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the sum of squares is less than epsabs**2 = " + exitStatus[12011] + "\n");
+        }
+        
+        if (exitStatus[10351] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level no problem (Gauss-Newton the last 3 steps) = " + exitStatus[10351]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step) = " + exitStatus[10351] + "\n");
+        }
+        
+        if (exitStatus[10352] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level prank < n at the termination point = " + exitStatus[10352]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level prank < n at the termination point = " + exitStatus[10352] + "\n");	
+        }
+        
+        if (exitStatus[10353] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[10353]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[10353] + "\n");	
+        }
+        
+        if (exitStatus[10354] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the 2nd but last step was subspace minimization but");
+            System.out.println("the last two were Gauss-Newton steps = " + exitStatus[10354]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+        	Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+            Preferences.debug("the last two were Gauss-Newton steps = " + exitStatus[10354] + "\n");
+        }
+        
+        if (exitStatus[10355] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[10355]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[10355] + "\n");	
+        }
+        
+        if (exitStatus[10311] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+        	System.out.println("because the relative change in x is less than epsx = " + exitStatus[10311]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx = " + exitStatus[10311] + "\n");
+        }
+        
+        if (exitStatus[10051] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+            System.out.println("because we are computing at noise level no problem (Gauss-Newton the last 3 steps) = " + exitStatus[10051]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step) = " + exitStatus[10051] + "\n");
+        }
+        
+        if (exitStatus[10052] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+            System.out.println("because we are computing at noise level prank < n at the termination point = " + exitStatus[10052]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            Preferences.debug("because we are computing at noise level prank < n at the termination point = " + exitStatus[10052] + "\n");	
+        }
+        
+        if (exitStatus[10053] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+            System.out.println("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[10053]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[10053] + "\n");	
+        }
+        
+        if (exitStatus[10054] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+            System.out.println("because we are computing at noise level the 2nd but last step was subspace minimization but");
+            System.out.println("the last two were Gauss-Newton steps = " + exitStatus[10054]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+        	Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+            Preferences.debug("the last two were Gauss-Newton steps = " + exitStatus[10054] + "\n");
+        }
+        
+        if (exitStatus[10055] > 0) {
+        	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and");
+            System.out.println("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[10055]);
+        	Preferences.debug("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
+            Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[10055] + "\n");	
+        }
+        
         if (exitStatus[10011] > 0) {
         	System.out.println("Normal terminations because the relative predicted reduction in the objective function is less than epsrel**2 = "
         			           + exitStatus[10011]);
@@ -411,9 +573,137 @@ public class AlgorithmSM2 extends AlgorithmBase {
         			           + exitStatus[10011] + "\n");
         }
         
+        if (exitStatus[2351] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level no problem (Gauss-Newton the last 3 steps) = " + exitStatus[2351]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step) = " + exitStatus[2351] + "\n");
+        }
+        
+        if (exitStatus[2352] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level prank < n at the termination point = " + exitStatus[2352]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2  and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level prank < n at the termination point = " + exitStatus[2352] + "\n");	
+        }
+        
+        if (exitStatus[2353] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[2353]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[2353] + "\n");	
+        }
+        
+        if (exitStatus[2354] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the 2nd but last step was subspace minimization but");
+            System.out.println("the last two were Gauss-Newton steps = " + exitStatus[2354]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+        	Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+            Preferences.debug("the last two were Gauss-Newton steps = " + exitStatus[2354] + "\n");
+        }
+        
+        if (exitStatus[2355] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[2355]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[2355] + "\n");	
+        }
+        
+        if (exitStatus[2311] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+        	System.out.println("because the relative change in x is less than epsx = " + exitStatus[2311]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because the relative change in x is less than epsx = " + exitStatus[2311] + "\n");	
+        }
+        
+        if (exitStatus[2051] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+            System.out.println("because we are computing at noise level no problem (Gauss-Newton the last 3 steps) = " + exitStatus[2051]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+            Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step) = " + exitStatus[2051] + "\n");
+        }
+        
+        if (exitStatus[2052] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+            System.out.println("because we are computing at noise level prank < n at the termination point = " + exitStatus[2052]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2  and\n");
+            Preferences.debug("because we are computing at noise level prank < n at the termination point = " + exitStatus[2052] + "\n");	
+        }
+        
+        if (exitStatus[2053] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+            System.out.println("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[2053]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+            Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[2053] + "\n");	
+        }
+        
+        if (exitStatus[2054] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+            System.out.println("because we are computing at noise level the 2nd but last step was subspace minimization but");
+            System.out.println("the last two were Gauss-Newton steps = " + exitStatus[2054]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+        	Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+            Preferences.debug("the last two were Gauss-Newton steps = " + exitStatus[2054] + "\n");
+        }
+        
+        if (exitStatus[2055] > 0) {
+        	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 and");
+            System.out.println("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[2055]);
+        	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 and\n");
+            Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[2055] + "\n");	
+        }
+        
         if (exitStatus[2011] > 0) {
         	System.out.println("Normal terminations because the sum of squares is less than epsabs**2 = " + exitStatus[2011]);
         	Preferences.debug("Normal terminations because the sum of squares is less than epsabs**2 = " + exitStatus[2011] + "\n");
+        }
+        
+        if (exitStatus[351] > 0) {
+        	System.out.println("Normal terminations because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level no problem (Gauss-Newton the last 3 steps) = " + exitStatus[351]);
+        	Preferences.debug("Normal terminations because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level no problem (Gauss-Newton the last 3 step) = " + exitStatus[351] + "\n");
+        }
+        
+        if (exitStatus[352] > 0) {
+        	System.out.println("Normal terminations because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level prank < n at the termination point = " + exitStatus[352]);
+        	Preferences.debug("Normal terminations because the relative change in x is less than epsx  and\n");
+            Preferences.debug("because we are computing at noise level prank < n at the termination point = " + exitStatus[352] + "\n");	
+        }
+        
+        if (exitStatus[353] > 0) {
+        	System.out.println("Normal terminations because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[353]);
+        	Preferences.debug("Normal terminations because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level the method of Newton was used (at least) in the last step = " + exitStatus[353] + "\n");	
+        }
+        
+        if (exitStatus[354] > 0) {
+        	System.out.println("Normal terminations because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the 2nd but last step was subspace minimization but");
+            System.out.println("the last two were Gauss-Newton steps = " + exitStatus[354]);
+        	Preferences.debug("Normal terminations because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level the 2nd but last step was subspace minimization but\n");
+            Preferences.debug("the last two were Gauss-Newton steps = " + exitStatus[354] + "\n");
+        }
+        
+        if (exitStatus[355] > 0) {
+        	System.out.println("Normal terminations because the relative change in x is less than epsx and");
+            System.out.println("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[355]);
+        	Preferences.debug("Normal terminations because the relative change in x is less than epsx and\n");
+            Preferences.debug("because we are computing at noise level the steplength was not unit in both the last two steps = " + exitStatus[355] + "\n");	
         }
         
         if (exitStatus[311] > 0) {
@@ -502,6 +792,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
         	Preferences.debug("Abnormal terminations because there is only one feasible point,\n");
         	Preferences.debug("namely X(I) = BL(I) = BU(I), I = 1,2,...,N = " + exitStatus[4] + "\n");
         }
+       
         
         try {
         	destImage.importData(0, destArray, true);
