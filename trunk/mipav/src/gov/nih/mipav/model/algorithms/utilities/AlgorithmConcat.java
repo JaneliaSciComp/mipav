@@ -718,7 +718,7 @@ public class AlgorithmConcat extends AlgorithmBase {
      * cat.
      */
     private void cat3D_4D_4D() {
-
+    	System.out.println("in here");
         int length;
         int xDim, yDim;
         float[] buffer;
@@ -828,14 +828,14 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        resols[0] = destImage.getFileInfo()[0].getResolutions()[0];
-        resols[1] = destImage.getFileInfo()[0].getResolutions()[1];
-        resols[2] = destImage.getFileInfo()[0].getResolutions()[2];
-        resols[3] = destImage.getFileInfo()[0].getResolutions()[3];
-        origins[0] = destImage.getFileInfo()[0].getOrigin()[0];
-        origins[1] = destImage.getFileInfo()[0].getOrigin()[1];
-        origins[2] = destImage.getFileInfo()[0].getOrigin()[2];
-        origins[3] = destImage.getFileInfo()[0].getOrigin()[3];
+        resols[0] = srcImage1.getFileInfo()[0].getResolutions()[0];
+        resols[1] = srcImage1.getFileInfo()[0].getResolutions()[1];
+        resols[2] = srcImage1.getFileInfo()[0].getResolutions()[2];
+        resols[3] = srcImage1.getFileInfo()[0].getResolutions()[3];
+        origins[0] = srcImage1.getFileInfo()[0].getOrigin()[0];
+        origins[1] = srcImage1.getFileInfo()[0].getOrigin()[1];
+        origins[2] = srcImage1.getFileInfo()[0].getOrigin()[2];
+        origins[3] = srcImage1.getFileInfo()[0].getOrigin()[3];
 
         if ((srcImage1.getFileInfo()[0] instanceof FileInfoDicom) &&
                 (srcImage2.getFileInfo()[0] instanceof FileInfoDicom)) {
