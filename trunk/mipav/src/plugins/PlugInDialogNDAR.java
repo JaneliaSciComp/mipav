@@ -2172,6 +2172,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 progressBar.updateValue(100);
                 progressBar.setVisible(false);
                 progressBar.dispose();
+                printlnToLog("Successful connection to NDAR data dictionary web service");
             } catch (final Exception e) {
                 if (progressBar != null) {
                     progressBar.setVisible(false);
