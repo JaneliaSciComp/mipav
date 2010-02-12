@@ -774,7 +774,7 @@ public abstract class NLConstrainedEngine {
 
             return;
         } catch (Exception e) {
-            Preferences.debug("driver error: " + e.getMessage());
+            Preferences.debug("driver error: " + e.getMessage() + "\n");
         }
     }
 
