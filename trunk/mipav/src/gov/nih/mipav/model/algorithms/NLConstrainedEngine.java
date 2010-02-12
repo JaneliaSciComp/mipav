@@ -2276,10 +2276,10 @@ mainLoop:
         // WHERE G   IS THE HESSIAN OF residuals (a)
         // K                             K
 
-        double[] c1Mat = new double[param];
-        double[] c2Mat = new double[param];
-        double[] c3Mat = new double[param];
-        double[] c4Mat = new double[param];
+        double[] c1Mat = new double[nPts];
+        double[] c2Mat = new double[nPts];
+        double[] c3Mat = new double[nPts];
+        double[] c4Mat = new double[nPts];
         double[][] dummy = new double[1][1];
         int j, k, ll;
         double athird, eps1, eps2, epsk, epsj, ak, aj, term, sum;
