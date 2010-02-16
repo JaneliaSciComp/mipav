@@ -337,13 +337,13 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     {
         float[] afOriginA = new float[imageA.getNDims()];
         float[] afOriginB = new float[imageB.getNDims()];
-        int iDims = imageA.getNDims();
+        int iDims = Math.min( imageA.getNDims(), imageB.getNDims() );
         for (int i = 0; i < iDims; i++) {
             afOriginA[i] = imageA.getOrigin()[i];
             afOriginB[i] = imageB.getOrigin()[i];
         }
         boolean bMatches = true;
-        for ( int i = 0; i < Math.min(afOriginA.length, afOriginB.length); i++ )
+        for ( int i = 0; i < iDims; i++ )
         {
             if ( afOriginA[i] != afOriginB[i] )
             {
@@ -484,16 +484,22 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             destExtents[3] = tBounds[0] + tBounds[1] + kImage.getExtents()[3];
         }
         
-        ModelImage resultImage = new ModelImage(kImage.getType(), destExtents,
-                                     JDialogBase.makeImageName(kImage.getImageName(), "_pad"));
-        
-        resultImage.setAll(kImage.getMin());
-        AlgorithmAddMargins padAlgo = new AlgorithmAddMargins(kImage, resultImage, xBounds, yBounds, zBounds);
-        padAlgo.setPadValue( padValue );
-        padAlgo.setTMargins( tBounds );
-        padAlgo.setRunningInSeparateThread(false);
-        padAlgo.run();
-        return resultImage;
+        try {
+            ModelImage resultImage = new ModelImage(kImage.getType(), destExtents,
+                    JDialogBase.makeImageName(kImage.getImageName(), "_pad"));
+
+            resultImage.setAll(kImage.getMin());
+            AlgorithmAddMargins padAlgo = new AlgorithmAddMargins(kImage, resultImage, xBounds, yBounds, zBounds);
+            padAlgo.setPadValue( padValue );
+            padAlgo.setTMargins( tBounds );
+            padAlgo.setRunningInSeparateThread(false);
+            padAlgo.run();
+            return resultImage;
+        } catch ( OutOfMemoryError e )
+        {
+            System.err.println( destExtents[0] + " " + destExtents[1] + " " + destExtents[2] );
+        }
+        return null;
     }
 
 }
