@@ -961,14 +961,18 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 return false;
             }
             
-            if ( imageA.getNDims() != imageB.getNDims() )
+            if ( (imageA.getNDims() == imageB.getNDims()) ||
+                    ((imageA.getNDims() == 4) && (imageB.getNDims() == 3)) )
             {
-                MipavUtil.displayError("Image loading failed because the image dimensions do not match. Images must both be 2D, 3D or 4D.");
+                matchImages( imageA, imageB, doOrigins, doOrients, defaultValue, defaultRed, defaultGreen, defaultBlue );
+            }
+            else
+            {
+                MipavUtil.displayError("Image loading failed because the image dimensions do not match. Images must both be 2D, 3D or 4D. Or ImageA must be 4D and imageB 3D.");
 
                 return false;
             }
 
-            matchImages( imageA, imageB, doOrigins, doOrients, defaultValue, defaultRed, defaultGreen, defaultBlue );
             /*
 
             // If axis orientation information is available for each of the 3 axes of
@@ -1061,7 +1065,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             imageB_back.disposeLocal();
             imageB_back = null;
         }
-        
+
         if (imageA != imageA_back) {
             // Create new frame with imageA
 
@@ -1069,7 +1073,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             newFrame.setImageB(imageB);
             newFrame.enableImageB(true);
             enableCloseImageB = true;
-        } else {
+        } 
+        else {
 
             // imgA is not new, so keep the same ViewJFrameImage, which is imgA's frame
             // because image A was not changed, we will just set either the untouched
