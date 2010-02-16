@@ -13,6 +13,7 @@ import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -48,7 +49,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     private JButton imageBrowseButton, pointsBrowseButton, surfaceBrowseButton;
     
     /** **/
-    private JLabel pointsLabel, imageLabel, surfaceLabel;
+    private JLabel pointsLabel, imageLabel, surfaceLabel, surfaceSamplingLabel;
     
     /** **/
     //private JCheckBox minimizeInterpCheckBox;
@@ -66,6 +67,8 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     ArrayList <ArrayList<float[]>> allFilamentNorms = new ArrayList <ArrayList<float[]>>();
     
     private float[] resols;
+    
+    private JComboBox surfaceFileSamplingCB;
     
     
 	//private File retinalRegistrationInfoFile;
@@ -91,7 +94,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v1.46");
+        setTitle("Drosophila Standard Column Registration v1.5");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -118,6 +121,14 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         surfaceBrowseButton = new JButton("Browse");
         surfaceBrowseButton.addActionListener(this);
         surfaceBrowseButton.setActionCommand("surfaceBrowse");
+        
+        surfaceSamplingLabel = new JLabel("Surface sampling ");
+        surfaceFileSamplingCB = new JComboBox();
+        surfaceFileSamplingCB.addItem("1.0");
+        surfaceFileSamplingCB.addItem("0.5");
+        surfaceFileSamplingCB.addItem("0.25");
+        surfaceFileSamplingCB.setSelectedIndex(1);
+        
         
         //minimizeInterpCheckBox = new JCheckBox("Minimize Interpolation");
         //minimizeInterpCheckBox.setSelected(false);
@@ -162,6 +173,12 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         mainPanel.add(surfaceFilePathTextField,gbc);
         gbc.gridx = 2;
         mainPanel.add(surfaceBrowseButton,gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        mainPanel.add(surfaceSamplingLabel,gbc);
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        mainPanel.add(surfaceFileSamplingCB,gbc);
         //gbc.anchor = GridBagConstraints.CENTER;
         //mainPanel.add(minimizeInterpCheckBox,gbc);
         //gbc.anchor = GridBagConstraints.EAST;
@@ -419,7 +436,8 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 * call algorithm
 	 */
 	protected void callAlgorithm() {
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile);
+		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate);
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		

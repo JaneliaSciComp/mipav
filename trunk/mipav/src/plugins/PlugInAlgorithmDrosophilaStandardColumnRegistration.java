@@ -206,12 +206,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     
     private File oldSurfaceFile;
     
+    private float samplingRate;
+    
+    
+    
     /**
      * constuctor
      * @param neuronImage
      * @param pointsMap
      */
-	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<float[]>> allFilamentCoords, File oldSurfaceFile) {
+	public PlugInAlgorithmDrosophilaStandardColumnRegistration(ModelImage neuronImage, TreeMap<Integer, float[]> pointsMap, ArrayList <ArrayList<float[]>> allFilamentCoords, File oldSurfaceFile, float samplingRate) {
 		this.neuronImage = neuronImage;
 		dir = neuronImage.getImageDirectory();
 		//create neuron grey image
@@ -252,6 +256,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		//this.retinalRegistrationInfoFile = retinalRegistrationInfoFile;
 		
 		this.oldSurfaceFile = oldSurfaceFile;
+		this.samplingRate = samplingRate;
 		
 	}
 	
@@ -1177,13 +1182,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
          
 		 
 		//loop through each point in result image
-		 for(float z=0;z<512;z=z+.25f) {
+		 for(float z=0;z<512;z=z+samplingRate) {
 			 if((float)Math.floor(z) == z) {
 			 		System.out.println("z is " +  z);
 			 }
-			 for(float y=0;y<512;y=y+.25f) {
+			 for(float y=0;y<512;y=y+samplingRate) {
 
-				 for(float x=0;x<512;x=x+.25f) {
+				 for(float x=0;x<512;x=x+samplingRate) {
 
 					 float xFloor = (float)Math.floor(x);
 					 float yFloor = (float)Math.floor(y);
