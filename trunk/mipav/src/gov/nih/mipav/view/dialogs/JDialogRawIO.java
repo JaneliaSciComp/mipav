@@ -42,13 +42,13 @@ public class JDialogRawIO extends JDialogBase {
     private static final int DEFAULT_DATA_OFFSET = 0;
 
     /** DOCUMENT ME! */
-    private static final String DEFAULT_EXTENTS = "256,256,0,0,0";
+    private static final String DEFAULT_EXTENTS = "256,256,2,0,0";
 
     /** DOCUMENT ME! */
     private static final String DEFAULT_RES = "1.0,1.0,0,0,0";
 
     /** DOCUMENT ME! */
-    private static final String DEFAULT_UNIT_INDEX = "6,6,6,6";
+    private static final String DEFAULT_UNIT_INDEX = "7,7,7,7";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -124,8 +124,6 @@ public class JDialogRawIO extends JDialogBase {
     /** DOCUMENT ME! */
     private JRadioButton radioUShort;
 
-    /** DOCUMENT ME! */
-    private JLabel resolution;
 
     /** DOCUMENT ME! */
     private float[] resolutions = new float[5];
@@ -317,6 +315,7 @@ public class JDialogRawIO extends JDialogBase {
                 dimExtents[i] = extents[i];
             }
 
+            
             unitsOfMeasure[0] = comboBoxUnitOfMeasure1.getSelectedIndex() + 1; // See FileInfoBase
             unitsOfMeasure[1] = comboBoxUnitOfMeasure1.getSelectedIndex() + 1;
 
@@ -450,7 +449,7 @@ public class JDialogRawIO extends JDialogBase {
      */
     public void extractUnitIndeces(String commas) {
         StringTokenizer st;
-
+System.out.println("string units " + commas);
         try {
             st = new StringTokenizer(commas, ",");
         } catch (NullPointerException npe) {
@@ -474,7 +473,7 @@ public class JDialogRawIO extends JDialogBase {
     }
 
     /**
-     * Qccessor that returns the endianess.
+     * Accessor that returns the endianess.
      *
      * @return  boolean indicating the endianess
      */
@@ -828,7 +827,7 @@ public class JDialogRawIO extends JDialogBase {
 
         JPanel panelUnits = new JPanel(new GridBagLayout());
         panelUnits.setBorder(buildTitledBorder("Units of measure"));
-
+        System.out.println("Hey00");
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -838,7 +837,7 @@ public class JDialogRawIO extends JDialogBase {
 
         comboBoxUnitOfMeasure1 = new JComboBox();
         setComboBox(comboBoxUnitOfMeasure1);
-        comboBoxUnitOfMeasure1.setSelectedIndex(5);
+        comboBoxUnitOfMeasure1.setSelectedIndex(7);
         comboBoxUnitOfMeasure1.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent ae) {
                     comboBoxUnitOfMeasure2.setSelectedIndex(comboBoxUnitOfMeasure1.getSelectedIndex());
@@ -848,26 +847,26 @@ public class JDialogRawIO extends JDialogBase {
 
         comboBoxUnitOfMeasure2 = new JComboBox();
         setComboBox(comboBoxUnitOfMeasure2);
-        comboBoxUnitOfMeasure2.setSelectedIndex(5);
+        comboBoxUnitOfMeasure2.setSelectedIndex(7);
         comboBoxUnitOfMeasure2.setEnabled(false);
         gbc.gridy = 1;
         panelUnits.add(comboBoxUnitOfMeasure2, gbc);
 
         comboBoxUnitOfMeasure3 = new JComboBox();
         setComboBox(comboBoxUnitOfMeasure3);
-        comboBoxUnitOfMeasure3.setSelectedIndex(5);
+        comboBoxUnitOfMeasure3.setSelectedIndex(7);
         gbc.gridy = 2;
         panelUnits.add(comboBoxUnitOfMeasure3, gbc);
 
         comboBoxUnitOfMeasure4 = new JComboBox();
         setComboBox(comboBoxUnitOfMeasure4);
-        comboBoxUnitOfMeasure4.setSelectedIndex(5);
+        comboBoxUnitOfMeasure4.setSelectedIndex(7);
         gbc.gridy = 3;
         panelUnits.add(comboBoxUnitOfMeasure4, gbc);
 
         comboBoxUnitOfMeasure5 = new JComboBox();
         setComboBox(comboBoxUnitOfMeasure5);
-        comboBoxUnitOfMeasure5.setSelectedIndex(5);
+        comboBoxUnitOfMeasure5.setSelectedIndex(7);
         gbc.gridy = 4;
         panelUnits.add(comboBoxUnitOfMeasure5, gbc);
 
@@ -905,6 +904,7 @@ public class JDialogRawIO extends JDialogBase {
         if (Preferences.getProperty(Preferences.PREF_RAW_BIG_ENDIAN) != null) {
             boolean b = (Preferences.getProperty(Preferences.PREF_RAW_BIG_ENDIAN).equalsIgnoreCase("true")) ? true : false;
             //            setBigEndian(Boolean.getBoolean(Preferences.getProperty(Preferences.PREF_RAW_BIG_ENDIAN)));
+            System.out.println("Hey1");
             setBigEndian(b);
             setDataOffset(Preferences.getProperty(Preferences.PREF_RAW_DATA_OFFSET));
             setDataType(Integer.parseInt(Preferences.getProperty(Preferences.PREF_RAW_TYPE)));
@@ -913,6 +913,7 @@ public class JDialogRawIO extends JDialogBase {
             extractUnitIndeces(Preferences.getProperty(Preferences.PREF_RAW_UNITS));
         } else { // we'll tell the properties that we want to remember these preferences. (use defaults or flag values
                  // here!)
+        	System.out.println("Hey2");
             Preferences.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, new Boolean(DEFAULT_BIG_ENDIAN_BYTE_ORDER).toString());
             Preferences.setProperty(Preferences.PREF_RAW_DATA_OFFSET, new Integer(DEFAULT_DATA_OFFSET).toString());
             Preferences.setProperty(Preferences.PREF_RAW_TYPE, new Integer(DEFAULT_IMAGE_TYPE).toString());

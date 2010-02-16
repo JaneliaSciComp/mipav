@@ -543,7 +543,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_EXTENTS, "256,256,0,0,0");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_RESOLUTIONS, "1.0,1.0,1.0,1.0,1.0");
-        Preferences.defaultProps.setProperty(Preferences.PREF_RAW_UNITS, "6,6,6,6"); // 6 = millimeters
+        Preferences.defaultProps.setProperty(Preferences.PREF_RAW_UNITS, "7,7,7,7"); // 7 = millimeters
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_TYPE, "3"); // 3 = ModelStorageBase.SHORT
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_DATA_OFFSET, "0");
         Preferences.defaultProps.setProperty(Preferences.PREF_APP_TITLE, "MIPAV: ");
