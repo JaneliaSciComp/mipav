@@ -26,6 +26,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
     private int[] bestToWorst;
     
     private boolean hardInterrupt = false;
+    
     private ModelImage t2ResultStack;
     private ModelImage moResultStack;
     private ModelImage r2ResultStack;
@@ -2289,6 +2290,22 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
         
         return;
     }
+
+	public ModelImage getT2ResultStack() {
+		return t2ResultStack;
+	}
+
+	public ModelImage getMoResultStack() {
+		return moResultStack;
+	}
+
+	public ModelImage getR2ResultStack() {
+		return r2ResultStack;
+	}
+
+	public ModelImage getBoResultStack() {
+		return boResultStack;
+	}
 }
 
 

@@ -1298,5 +1298,20 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         
         return true;
     }
-    
+
+	public ModelImage getT1ResultStack() {
+		return t1ResultStack;
+	}
+
+	public ModelImage getMoResultStack() {
+		return moResultStack;
+	}
+
+	public ModelImage getR1ResultStack() {
+		return r1ResultStack;
+	}
+
+	public ModelImage getB1ResultStack() {
+		return b1ResultStack;
+	}
 }
