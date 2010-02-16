@@ -457,6 +457,24 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             	scriptParameters.storeImage(ViewUserInterface.getReference().getRegisteredImageByName(wList[i]), wList[i]);
             }
         }
+        
+        if(cAlgo != null) {
+        	if(showB1Map && cAlgo.getB1ResultStack() != null) {
+        		scriptParameters.storeImageInRecorder(cAlgo.getB1ResultStack());
+        	}
+        	
+        	if(calculateMo && cAlgo.getMoResultStack() != null) {
+        		scriptParameters.storeImageInRecorder(cAlgo.getMoResultStack());
+        	}
+        	
+        	if(invertT1toR1 && cAlgo.getR1ResultStack() != null) {
+        		scriptParameters.storeImageInRecorder(cAlgo.getR1ResultStack());
+        	}
+        	
+        	if(calculateT1 && cAlgo.getT1ResultStack() != null) {
+        		scriptParameters.storeImageInRecorder(cAlgo.getT1ResultStack());
+        	}
+        }
     }
 
     public boolean showOpeningDialog() {
