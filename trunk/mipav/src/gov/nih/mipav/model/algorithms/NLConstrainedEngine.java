@@ -2073,7 +2073,7 @@ mainLoop:
 
         // CONDITION 1
 
-        if ((!restart) && ((k == 0) || (imax != -1))) {
+        if ((!restart) && ((iters == 0) || (imax != -1))) {
             return;
         }
 
