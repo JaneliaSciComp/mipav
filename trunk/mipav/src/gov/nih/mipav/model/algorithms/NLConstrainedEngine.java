@@ -737,13 +737,13 @@ public abstract class NLConstrainedEngine {
             }
 
             if (((exitStatus % 10) == 1) && outputMes) {
-                System.out.println("Pseudo-rank of the Jacobian is not full\n");
+                System.out.println("Pseudo-rank of the Jacobian is not full < (param - paramAct)\n");
 
                 if (!internalScaling) {
                     System.out.println("A run with internalScaling = true might " + "give another solution\n");
                 }
 
-                Preferences.debug("Pseudo-rank of the Jacobian is not full\n");
+                Preferences.debug("Pseudo-rank of the Jacobian is not full < (param - paramAct)\n");
 
                 if (!internalScaling) {
                     Preferences.debug("A run with internalScaling = true might " + "give another solution\n");
@@ -1178,7 +1178,7 @@ public abstract class NLConstrainedEngine {
         // FORM THE INVERSE OF covarMat IN THE FULL UPPER TRIANGLE OF covarMat.
 
         tolr = tolerance * Math.abs(covarMat[0][0]);
-        l = 0;
+        l = -1;
 
         for (k = 0; k < param; k++) {
 
