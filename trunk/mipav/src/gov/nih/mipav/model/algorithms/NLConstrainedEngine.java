@@ -728,8 +728,10 @@ public abstract class NLConstrainedEngine {
             // call lsunc to minimize
             lsunc();
 
-            if (exitStatus < 0  && outputMes) {
-                Preferences.debug("exitStatus after lsunc() call = " + exitStatus + "\n");
+            if (exitStatus < 0) {
+            	if (outputMes) {
+                    Preferences.debug("exitStatus after lsunc() call = " + exitStatus + "\n");
+            	}
 
                 return;
             }
