@@ -449,7 +449,6 @@ public class JDialogRawIO extends JDialogBase {
      */
     public void extractUnitIndeces(String commas) {
         StringTokenizer st;
-System.out.println("string units " + commas);
         try {
             st = new StringTokenizer(commas, ",");
         } catch (NullPointerException npe) {
@@ -827,7 +826,6 @@ System.out.println("string units " + commas);
 
         JPanel panelUnits = new JPanel(new GridBagLayout());
         panelUnits.setBorder(buildTitledBorder("Units of measure"));
-        System.out.println("Hey00");
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -904,7 +902,6 @@ System.out.println("string units " + commas);
         if (Preferences.getProperty(Preferences.PREF_RAW_BIG_ENDIAN) != null) {
             boolean b = (Preferences.getProperty(Preferences.PREF_RAW_BIG_ENDIAN).equalsIgnoreCase("true")) ? true : false;
             //            setBigEndian(Boolean.getBoolean(Preferences.getProperty(Preferences.PREF_RAW_BIG_ENDIAN)));
-            System.out.println("Hey1");
             setBigEndian(b);
             setDataOffset(Preferences.getProperty(Preferences.PREF_RAW_DATA_OFFSET));
             setDataType(Integer.parseInt(Preferences.getProperty(Preferences.PREF_RAW_TYPE)));
@@ -913,7 +910,6 @@ System.out.println("string units " + commas);
             extractUnitIndeces(Preferences.getProperty(Preferences.PREF_RAW_UNITS));
         } else { // we'll tell the properties that we want to remember these preferences. (use defaults or flag values
                  // here!)
-        	System.out.println("Hey2");
             Preferences.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, new Boolean(DEFAULT_BIG_ENDIAN_BYTE_ORDER).toString());
             Preferences.setProperty(Preferences.PREF_RAW_DATA_OFFSET, new Integer(DEFAULT_DATA_OFFSET).toString());
             Preferences.setProperty(Preferences.PREF_RAW_TYPE, new Integer(DEFAULT_IMAGE_TYPE).toString());
