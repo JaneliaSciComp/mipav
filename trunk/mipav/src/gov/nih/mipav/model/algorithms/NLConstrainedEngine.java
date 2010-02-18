@@ -4729,6 +4729,10 @@ mainLoop:
                     for (jj = 0; jj < mr; jj++) {
                         work[kk + jj] = work2[jj][0];
                     }
+                    
+                    for (jj = 0; jj < (w2.length - kk); jj++) {
+                        w2[jj + kk] = w2Part[jj];
+                    }
                 } // if (k != kk)
 
                 // Determine the kkth element in dy
@@ -4894,7 +4898,7 @@ mainLoop:
 	                Preferences.debug(dx[i] + "\n");
 	            }
             }
-        } // else if (kmax != 0)
+        } // else if (kmax != -1)
 
         return;
     }
