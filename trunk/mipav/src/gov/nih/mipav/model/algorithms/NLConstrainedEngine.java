@@ -2395,21 +2395,22 @@ mainLoop:
 
         int i, j;
         double delta, xtemp, deltaj;
+        int jacCtrl;
 
-        errorStatus = 0;
+        ctrl = 0;
         delta = Math.sqrt(srelpr);
 
         for (j = 0; j < param; j++) {
             xtemp = a[j];
             deltaj = Math.max(Math.abs(xtemp), 1.0) * delta;
             a[j] = xtemp + deltaj;
-            ctrl = -1;
-            ctrlMat[0] = ctrl;
+            jacCtrl = -1;
+            ctrlMat[0] = jacCtrl;
             fitToFunction(a, w1, covarMat);
-            ctrl = ctrlMat[0];
+            jacCtrl = ctrlMat[0];
 
-            if (ctrl < -10) {
-                errorStatus = ctrl;
+            if (jacCtrl < -10) {
+                ctrl = jacCtrl;
 
                 return;
             }
