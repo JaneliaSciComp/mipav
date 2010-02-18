@@ -15,6 +15,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.MemoryImageSource;
 import java.io.*;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.util.zip.*;
@@ -48,7 +49,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
     private JPanel outputDirPanel;
     
-    private JPanel previewPanel;
+    private JPanel previewPanel, leftPanel;
 
     private JTextField outputDirTextField;
 
@@ -86,6 +87,31 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private String namespace;
     
     private ArrayList<ViewJComponentPreviewImage> previewImages = new ArrayList<ViewJComponentPreviewImage>();
+    
+    private ArrayList<float[]> previewImagesWinLevs = new ArrayList<float[]>();
+    
+    /** DOCUMENT ME! */
+    private int origBrightness = 0;
+    
+    private JLabel current, current2;
+    
+    private JSlider brightnessSlider, contrastSlider;
+    
+    /** DOCUMENT ME! */
+    private NumberFormat nfc;
+    
+    /** DOCUMENT ME! */
+    private float origContrast = 1;
+    
+    private JPanel brightnessContrastPanel;
+    
+    private ViewJComponentPreviewImage previewImg;
+    
+    /** DOCUMENT ME! */
+    private float contrast = 1;
+    
+    /** DOCUMENT ME! */
+    private int brightness = 0;
     
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
@@ -208,18 +234,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         
                         int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
 
-                        ViewJComponentPreviewImage previewImg = new ViewJComponentPreviewImage(srcImage, extents, this);
+                        previewImg = new ViewJComponentPreviewImage(srcImage, extents, this);
                         int slice = 0;
                         if(!srcImage.is2DImage()) {
                         	slice = (int)(srcImage.getExtents()[2]/2);
                         }
                         previewImg.createImg(slice);
+                        
+                        
                         previewImages.add(previewImg);
                         
                         previewPanel.removeAll();
                         previewPanel.repaint();
                         
                         previewPanel.add(previewImg);
+                        
+                        previewImg.setSliceBrightness(brightness, contrast);
 
                         previewPanel.validate();
                         previewPanel.repaint();
@@ -259,11 +289,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 	sourceTable.setRowSelectionInterval(selected,selected);
                 }
                 previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
-
+                previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
                 previewPanel.validate();
                 previewPanel.repaint();
             } else {
                 finishButton.setEnabled(false);
+                
             }
             listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " image(s) "));
         } else if (command.equals("Help")) {
@@ -343,9 +374,34 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         }
     }
 
-    public void stateChanged(final ChangeEvent e) {
+    /**
+     * Sets values based on knob along slider.
+     * 
+     * @param e Event that triggered this function
+     */
+    public void stateChanged(ChangeEvent e) {
+        Object source = e.getSource();
 
+        if (source == brightnessSlider) {
+            brightness = brightnessSlider.getValue();
+            current.setText(String.valueOf(brightness));
+
+            // Change only the brightness and contrast of the current slice
+            if (previewImg != null) {
+            	previewImg.setSliceBrightness(brightness, contrast);
+            }
+        } else if (source == contrastSlider) {
+            contrast = (float) Math.pow(10.0, contrastSlider.getValue() / 200.0);
+            current2.setText(String.valueOf(nfc.format(contrast)));
+
+            // Change only the brightness and contrast of the current slice
+            if (previewImg != null) {
+            	previewImg.setSliceBrightness(brightness, contrast);
+            }
+        }
     }
+    
+    
 
     public void itemStateChanged(final ItemEvent e) {
 
@@ -359,22 +415,45 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         outputFileNameBaseTable = new Hashtable<File, String>();
         JPanel topPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc2 = new GridBagConstraints();
+        GridBagConstraints gbc3 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.NORTHWEST;
 
+        buildBrightnessContrastPanel();
+        
+        /*leftPanel = new JPanel(new GridBagLayout());
+        leftPanel.setBorder(buildTitledBorder("Preview image"));
+        leftPanel.setPreferredSize(new Dimension(200, 350)); */
+        
+        
         
         
         previewPanel = new JPanel();
         previewPanel.setBorder(buildTitledBorder("Preview image"));
-        previewPanel.setPreferredSize(new Dimension(200, 350));
+        previewPanel.setPreferredSize(new Dimension(200, 300));
+        /*gbc3.gridy = 0;
+        gbc3.gridx = 0;
+        gbc3.fill = GridBagConstraints.BOTH;
+        leftPanel.add(previewPanel, gbc3);
+        gbc3.gridy = 1;
+        leftPanel.add(brightnessContrastPanel, gbc3);*/
+        
+        
+        
         gbc2.gridy = 0;
         gbc2.gridx = 0;
         gbc2.fill = GridBagConstraints.BOTH;
         gbc2.weightx = 0;
         gbc2.weighty = 0;
         topPanel.add(previewPanel,gbc2);
+        gbc2.gridy = 1;
+        topPanel.add(brightnessContrastPanel,gbc2);
+        
+        
+        gbc2.gridy = 0;
         gbc2.gridx = 1;
         gbc2.weightx = 1;
         gbc2.weighty = 1;
+        gbc2.gridheight = 2;
         topPanel.add(buildSourcePanel(),gbc2);
         
         getContentPane().add(topPanel, BorderLayout.NORTH);
@@ -1098,7 +1177,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             previewPanel.repaint();
             
             previewPanel.add(previewImages.get(sourceTable.getSelectedRow()));
-
+            previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
             previewPanel.validate();
             previewPanel.repaint();
 
@@ -1164,6 +1243,158 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         }
 
     }
+    
+    
+    
+    
+    private void buildBrightnessContrastPanel() {
+        brightnessSlider = new JSlider(JSlider.HORIZONTAL, -255, 255, origBrightness);
+
+        brightnessSlider.setMajorTickSpacing(102);
+        brightnessSlider.setPaintTicks(true);
+        brightnessSlider.setEnabled(true);
+        brightnessSlider.addChangeListener(this);
+
+        JLabel maximum = new JLabel(String.valueOf(255));
+
+        maximum.setForeground(Color.black);
+        maximum.setFont(serif12);
+
+        current = new JLabel(String.valueOf(origBrightness));
+        current.setForeground(Color.black);
+        current.setFont(serif12B);
+
+        JLabel minimum = new JLabel(String.valueOf( -255));
+
+        minimum.setForeground(Color.black);
+        minimum.setFont(serif12);
+
+        JPanel sliderPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 3;
+        gbc.weightx = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        sliderPanel.add(brightnessSlider, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+
+        sliderPanel.add(minimum, gbc);
+
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weightx = .5;
+
+        sliderPanel.add(current, gbc);
+
+        gbc.gridx = 2;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.weightx = 0;
+
+        sliderPanel.add(maximum, gbc);
+        sliderPanel.setBorder(buildTitledBorder("Level"));
+
+        contrastSlider = new JSlider(JSlider.HORIZONTAL, -200, 200, (int) (Math.round(86.85889638 * Math
+                .log(origContrast))));
+
+        contrastSlider.setMajorTickSpacing(80);
+        contrastSlider.setPaintTicks(true);
+        contrastSlider.setEnabled(true);
+        contrastSlider.addChangeListener(this);
+
+        JLabel maximum2 = new JLabel(String.valueOf(10));
+
+        maximum2.setForeground(Color.black);
+        maximum2.setFont(serif12);
+
+        nfc = NumberFormat.getNumberInstance();
+        nfc.setMaximumFractionDigits(3);
+
+        current2 = new JLabel(String.valueOf(nfc.format(origContrast)));
+        current2.setForeground(Color.black);
+        current2.setFont(serif12B);
+
+        JLabel minimum2 = new JLabel(String.valueOf(0.100));
+
+        minimum2.setForeground(Color.black);
+        minimum2.setFont(serif12);
+
+        JPanel sliderPanel2 = new JPanel(new GridBagLayout());
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 3;
+        gbc.weightx = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        sliderPanel2.add(contrastSlider, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+
+        sliderPanel2.add(minimum2, gbc);
+
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weightx = .5;
+
+        sliderPanel2.add(current2, gbc);
+
+        gbc.gridx = 2;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.weightx = 0;
+
+        sliderPanel2.add(maximum2, gbc);
+        sliderPanel2.setBorder(buildTitledBorder("Window"));
+
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+
+        GridBagConstraints gbc2 = new GridBagConstraints();
+
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.fill = GridBagConstraints.BOTH;
+        gbc2.weightx = 1;
+        gbc2.gridheight = 2;
+        centerPanel.add(sliderPanel2, gbc2);
+
+        gbc2.gridy = 2;
+        centerPanel.add(sliderPanel, gbc2);
+
+        gbc2.gridheight = 1;
+        gbc2.gridy = 4;
+
+        brightnessContrastPanel = new JPanel(new BorderLayout());
+        brightnessContrastPanel.add(centerPanel);
+        brightnessContrastPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /**
      * 
