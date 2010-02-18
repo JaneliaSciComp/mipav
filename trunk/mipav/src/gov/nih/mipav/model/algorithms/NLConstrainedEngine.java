@@ -413,7 +413,7 @@ public abstract class NLConstrainedEngine {
     /** DOCUMENT ME! */
     private int ifree, indic;
 
-    /** DOCUMENT ME! */
+    /** Consistently use 1 base indexing rather than 0 based indexing */
     private int info;
 
     /**
@@ -2226,7 +2226,7 @@ mainLoop:
         temp = dnrm2(pseudoRank, w1, 1);
         d1sqs = temp * temp;
 
-        if (info == -1) {
+        if (info == 0) {
             btrunc(internalScaling, work);
             pseudoRankMat[0] = pseudoRank;
 
@@ -2234,10 +2234,10 @@ mainLoop:
         }
 
         // SQRSL HAS DETECTED EXACT SINGULARITY OF MATRIX R
-        // INFO = INDEX OF THE FIRST ZERO DIAGONAL ELEMENT OF R
+        // INFO = INDEX OF THE FIRST ZERO DIAGONAL ELEMENT OF R+1
         // SOLVE UPPER TRIANGULAR SYSTEM
 
-        pseudoRank = info;
+        pseudoRank = info-1;
 
         for (j = 0; j < param; j++) {
             dx[j] = w1[j];
@@ -4097,12 +4097,12 @@ mainLoop:
          * JPVT   JPVT(J) CONTAINS THE INDEX OF THE DIAGONAL ELEMENT    OF covarMat THAT WAS MOVED INTO THE J-TH POSITION,
          *    PROVIDED PIVOTING WAS REQUESTED.
          *
-         * INFO   CONTAINS THE INDEX OF THE LAST POSITIVE DIAGONAL    ELEMENT OF THE CHOLESKY FACTOR.
+         * INFO   CONTAINS THE (INDEX+1) OF THE LAST POSITIVE DIAGONAL    ELEMENT OF THE CHOLESKY FACTOR.
          *
-         * FOR POSITIVE DEFINITE MATRICES INFO = nn-1 IS THE NORMAL RETURN. FOR PIVOTING WITH POSITIVE SEMIDEFINITE
-         * MATRICES INFO WILL IN GENERAL BE LESS THAN nn-1.  HOWEVER, INFO MAY BE GREATER THAN THE RANK OF covarMat-1,
+         * FOR POSITIVE DEFINITE MATRICES INFO = nn IS THE NORMAL RETURN. FOR PIVOTING WITH POSITIVE SEMIDEFINITE
+         * MATRICES INFO WILL IN GENERAL BE LESS THAN nn.  HOWEVER, INFO MAY BE GREATER THAN THE RANK OF covarMat,
          * SINCE ROUNDING ERROR CAN CAUSE AN OTHERWISE ZERO ELEMENT TO BE POSITIVE. INDEFINITE SYSTEMS WILL ALWAYS
-         * CAUSEINFO TO BE LESS THAN nn-1. */
+         * CAUSE INFO TO BE LESS THAN nn. */
 
         int pu, pl, plp1, j, jp, jt, k, kb, km1, kp1, l, maxl;
         double temp;
@@ -4116,7 +4116,7 @@ mainLoop:
 
         pl = 0;
         pu = -1;
-        info = nn - 1;
+        info = nn;
 
         if (job != 0) {
 
@@ -4260,7 +4260,7 @@ mainLoop:
             // QUIT IF THE PIVOT ELEMENT IS NOT POSITIVE.
 
             if (maxdia <= 0.0) {
-                info = k - 1;
+                info = k;
 
                 break;
             } // if (maxdia <= 0.0)
@@ -5349,8 +5349,8 @@ mainLoop:
         // THE ORTHOGONAL PROJECTION OF Y ONTO THE COLUMN SPACE OF X.
 
         // INFO   INTEGER.
-        // INFO IS -1 UNLESS THE COMPUTATION OF B HAS BEEN REQUESTED AND
-        // R IS EXACTLY SINGULAR.  IN THIS CASE, INFO IS THE INDEX OF THE
+        // INFO IS 0 UNLESS THE COMPUTATION OF B HAS BEEN REQUESTED AND
+        // R IS EXACTLY SINGULAR.  IN THIS CASE, INFO IS THE (INDEX+1) OF THE
         // THE FIRST ZERO DIAGONAL ELEMENT OF R AND B IS LEFT UNALTERED.
 
         // THE PARAMETERS QY, QTY, B, RSD, AND XB ARE NOT REFERENCED IF THEIR
@@ -5390,7 +5390,7 @@ mainLoop:
 
         // SET INFO FLAG.
 
-        info = -1;
+        info = 0;
 
         // DETERMINE WHAT IS TO BE COMPUTED.
 
@@ -5420,7 +5420,7 @@ mainLoop:
             if (cb) {
 
                 if (x[0][0] == 0.0) {
-                    info = 0;
+                    info = 1;
                 } else {
                     b[0] = y[0] / x[0][0];
                 }
@@ -5548,7 +5548,7 @@ mainLoop:
                 j = k - jj;
 
                 if (x[j][j] == 0.0) {
-                    info = j;
+                    info = j+1;
 
                     break;
                 }
@@ -5843,12 +5843,12 @@ mainLoop:
 
         // ON RETURN
 
-        // B         B CONTAINS THE SOLUTION, IF INFO .EQ. -1.
+        // B         B CONTAINS THE SOLUTION, IF INFO .EQ. 0.
         // OTHERWISE B IS UNALTERED.
 
         // INFO      INTEGER
-        // INFO CONTAINS -1 IF THE SYSTEM IS NONSINGULAR.
-        // OTHERWISE INFO CONTAINS THE INDEX OF
+        // INFO CONTAINS 0 IF THE SYSTEM IS NONSINGULAR.
+        // OTHERWISE INFO CONTAINS THE (INDEX+1) OF
         // THE FIRST ZERO DIAGONAL ELEMENT OF T.
 
         double temp;
@@ -5857,11 +5857,12 @@ mainLoop:
         for (info = 0; info < pseudoRank; info++) {
 
             if (covarMat[info][info] == 0.0) {
+            	info++;
                 return;
             }
         }
 
-        info = -1;
+        info = 0;
 
 
         // SOLVE covarMat*X=B FOR covarMat UPPER TRIANGULAR.
