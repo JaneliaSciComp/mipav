@@ -4829,9 +4829,9 @@ mainLoop:
 
                 sqrdc(work2, mr, 1, scaqr, ip, 0);
                 w2[kk] = ymax;
-                // w2 := H*(D1)
-                // ( 0)
             } // if (kmax != kk)
+            // w2 := H*(D1)
+            // ( 0)
 
             ip[0] = kk + 1;
 
@@ -4847,6 +4847,10 @@ mainLoop:
                 }
 
                 sqrsl(work2, mr, 1, scaqr, w2Part, w2Part, dummy, dummy, dummy, dummy, 10000);
+                
+                for (jj = 0; jj < (w2.length - kk); jj++) {
+                    w2[jj + kk] = w2Part[jj];
+                }
             } // if (kmax != kk)
 
             for (jj = 0; jj < mr; jj++) {
