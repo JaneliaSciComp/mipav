@@ -249,7 +249,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         
                         previewPanel.add(previewImg);
                         
-                        previewImg.setSliceBrightness(brightness, contrast);
+                        previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
 
                         previewPanel.validate();
                         previewPanel.repaint();
@@ -388,7 +388,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             // Change only the brightness and contrast of the current slice
             if (previewImg != null) {
-            	previewImg.setSliceBrightness(brightness, contrast);
+            	previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
             }
         } else if (source == contrastSlider) {
             contrast = (float) Math.pow(10.0, contrastSlider.getValue() / 200.0);
@@ -396,7 +396,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             // Change only the brightness and contrast of the current slice
             if (previewImg != null) {
-            	previewImg.setSliceBrightness(brightness, contrast);
+            	previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
             }
         }
     }
