@@ -2285,8 +2285,9 @@ mainLoop:
         double[][] dummy = new double[1][1];
         int j, k, ll;
         double athird, eps1, eps2, epsk, epsj, ak, aj, term, sum;
+        int hessCtrl;
 
-        ctrl = -1;
+        hessCtrl = -1;
         athird = 1.0 / 3.0;
         eps2 = Math.pow(srelpr, athird);
         eps1 = eps2;
@@ -2300,12 +2301,12 @@ mainLoop:
                 epsj = Math.max(Math.abs(aj), 1.0) * eps1;
                 a[k] = ak + epsk;
                 a[j] = a[j] + epsj;
-                ctrlMat[0] = ctrl;
+                ctrlMat[0] = hessCtrl;
                 fitToFunction(a, c1Mat, dummy);
-                ctrl = ctrlMat[0];
+                hessCtrl = ctrlMat[0];
 
-                if (ctrl < -10) {
-                    errorStatus = ctrl;
+                if (hessCtrl < -10) {
+                    errorStatus = hessCtrl;
 
                     return;
                 }
@@ -2314,12 +2315,12 @@ mainLoop:
                 a[j] = aj;
                 a[k] = ak + epsk;
                 a[j] = a[j] - epsj;
-                ctrlMat[0] = ctrl;
+                ctrlMat[0] = hessCtrl;
                 fitToFunction(a, c2Mat, dummy);
-                ctrl = ctrlMat[0];
+                hessCtrl = ctrlMat[0];
 
-                if (ctrl < -10) {
-                    errorStatus = ctrl;
+                if (hessCtrl < -10) {
+                    errorStatus = hessCtrl;
 
                     return;
                 }
@@ -2328,12 +2329,12 @@ mainLoop:
                 a[j] = aj;
                 a[k] = ak - epsk;
                 a[j] = a[j] + epsj;
-                ctrlMat[0] = ctrl;
+                ctrlMat[0] = hessCtrl;
                 fitToFunction(a, c3Mat, dummy);
-                ctrl = ctrlMat[0];
+                hessCtrl = ctrlMat[0];
 
-                if (ctrl < -10) {
-                    errorStatus = ctrl;
+                if (hessCtrl < -10) {
+                    errorStatus = hessCtrl;
 
                     return;
                 }
@@ -2342,12 +2343,12 @@ mainLoop:
                 a[j] = aj;
                 a[k] = ak - epsk;
                 a[j] = a[j] - epsj;
-                ctrlMat[0] = ctrl;
+                ctrlMat[0] = hessCtrl;
                 fitToFunction(a, c4Mat, dummy);
-                ctrl = ctrlMat[0];
+                hessCtrl = ctrlMat[0];
 
-                if (ctrl < -10) {
-                    errorStatus = ctrl;
+                if (hessCtrl < -10) {
+                    errorStatus = hessCtrl;
 
                     return;
                 }
