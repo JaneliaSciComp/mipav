@@ -2440,6 +2440,7 @@ mainLoop:
         // AND STORE IN THE LOWER PART OF covarMat
 
         int i, j, k;
+        double sum;
 
         for (j = 0; j < nn; j++) {
 
@@ -2448,11 +2449,12 @@ mainLoop:
             }
 
             for (k = j; k < nn; k++) {
-                covarMat[k][j] = 0.0;
+                sum = 0.0;
 
                 for (i = 0; i <= j; i++) {
-                    covarMat[k][j] = covarMat[k][j] + (covarMat[i][k] * w0[i]);
+                    sum = sum + (covarMat[i][k] * w0[i]);
                 }
+                covarMat[k][j] = sum;
             } // for (k = j; k < nn; k++)
         } // for (j = 0; j < nn; j++)
 
