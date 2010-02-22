@@ -1445,19 +1445,19 @@ public class TransMatrix extends Matrix4f
      */
     public final void transform(float x, float y, float z, float[] tPt) {
 
-        tPt[0] = (float) (((double) x * M00) +
-                          ((double) y * M01) +
-                          ((double) z * M02) +
+        tPt[0] =  (( x * M00) +
+                          ( y * M01) +
+                          ( z * M02) +
                           M03);
 
-        tPt[1] = (float) (((double) x * M10) +
-                          ((double) y * M11) +
-                          ((double) z * M12) +
+        tPt[1] = (( x * M10) +
+                          ( y * M11) +
+                          ( z * M12) +
                           M13);
 
-        tPt[2] = (float) (((double) x * M20) +
-                          ((double) y * M21) +
-                          ((double) z * M22) +
+        tPt[2] = (( x * M20) +
+                          ( y * M21) +
+                          ( z * M22) +
                           M23);
 
         return;

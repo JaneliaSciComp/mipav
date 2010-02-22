@@ -323,7 +323,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    public double kernel(double fT) {
+    public final double kernel(double fT) {
         double fT2;
 
         if (fT > 0.0) {
