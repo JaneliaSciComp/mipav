@@ -1085,15 +1085,16 @@ public abstract class NLConstrainedEngine {
         double phimk, dphifo, dphiba, dphice, maxdif;
         double[] xnew = new double[param];
         double[] fnew = new double[nPts];
+        int chderCtrl[] = new int[1];
 
         // COMPUTE phi(-alfk)
 
-        ctrl = -1;
-        fsumsq(-alfk, xnew, fnew, phiMat);
+        chderCtrl[0] = -1;
+        fsumsq(-alfk, xnew, fnew, phiMat, chderCtrl);
         phimk = phiMat[0];
 
-        if (ctrl < -10) {
-            k2 = ctrl;
+        if (chderCtrl[0] < -10) {
+            k2 = chderCtrl[0];
         }
 
         if (k2 < 0) {
@@ -1771,6 +1772,7 @@ mainLoop:
         double c2, dsqrel;
         double[][] dummy = new double[1][1];
         double temp;
+        int evreucCtrl;
 
         restart = false;
         dsqrel = Math.sqrt(srelpr);
@@ -1862,15 +1864,15 @@ mainLoop:
             a[i] = w3[i];
         }
 
-        ctrl = -1;
+        evreucCtrl = -1;
 
         // EVALUATE THE FUNCTIONS AT PREVIOUS POINT
-        ctrlMat[0] = ctrl;
+        ctrlMat[0] = evreucCtrl;
         fitToFunction(a, residuals, dummy);
-        ctrl = ctrlMat[0];
+        evreucCtrl = ctrlMat[0];
 
-        if (ctrl < -10) {
-            errorStatus = ctrl;
+        if (evreucCtrl < -10) {
+            errorStatus = evreucCtrl;
 
             return;
         }
@@ -1892,7 +1894,7 @@ mainLoop:
      * @param  fnew    DOCUMENT ME!
      * @param  phiMat  DOCUMENT ME!
      */
-    private void fsumsq(double alfk, double[] xnew, double[] fnew, double[] phiMat) {
+    private void fsumsq(double alfk, double[] xnew, double[] fnew, double[] phiMat, int ctrl[]) {
         // EVALUATE FUNCTION VALUES AT THE POINT a+alfk*dx . POSSIBLY THE USER CAN SIGNAL UNCOMPUTABILTY ON RETURN FROM
         // THE USER WRITTEN ROUTINE fitToFunction
 
@@ -1908,7 +1910,7 @@ mainLoop:
             xnew[i] = a[i] + (alfk * dx[i]);
         }
 
-        lctrl = ctrl;
+        lctrl = ctrl[0];
         ctrlMat[0] = lctrl;
         fitToFunction(xnew, fnew, dummy);
         lctrl = ctrlMat[0];
@@ -1922,7 +1924,7 @@ mainLoop:
 
         /*Preferences.debug("fnew inside fsumsq\n");
          * for (i = 0; i < nPts; i++) { Preferences.debug(fnew[i] + "\n");}*/
-        if (ctrl != 1) {
+        if (ctrl[0] != 1) {
 
             if (lctrl == -1) {
                 temp = dnrm2(nPts, fnew, 1);
@@ -1934,7 +1936,7 @@ mainLoop:
             }
 
             if (lctrl < -10) {
-                ctrl = lctrl;
+                ctrl[0] = lctrl;
             }
 
             phiMat[0] = fn_val;
@@ -1950,7 +1952,7 @@ mainLoop:
         if (outputMes) {
             Preferences.debug("fn_val when ctrl= 1 = " + fn_val + "\n");
         }
-        ctrl = lctrl;
+        ctrl[0] = lctrl;
         phiMat[0] = fn_val;
 
         return;
@@ -1977,6 +1979,7 @@ mainLoop:
         // TEST IF CONDITION  (1) IS SATISFIED FOR x=alfk
 
         double phix, sqreps, x;
+        int gaucCtrl[] = new int[1];
 
         sqreps = Math.sqrt(srelpr);
         phix = phi;
@@ -1996,8 +1999,8 @@ mainLoop:
             }
 
             x = 0.5 * x;
-            ctrl = -1;
-            fsumsq(x, gmod, residuals, phiMat);
+            gaucCtrl[0] = -1;
+            fsumsq(x, gmod, residuals, phiMat, gaucCtrl);
             phix = phiMat[0];
             if (outputMes) {
                 Preferences.debug("In GAUC: phix = " + phix + " x = " + x + "\n");
@@ -2005,8 +2008,8 @@ mainLoop:
 
             // POSSIBLY THE USER CAN TERMINATE
 
-            if (ctrl < -10) {
-                k2 = ctrl;
+            if (gaucCtrl[0] < -10) {
+                k2 = gaucCtrl[0];
             }
 
             if (k2 < 0) {
@@ -2378,7 +2381,7 @@ mainLoop:
     /**
      * DOCUMENT ME!
      */
-    private void jacdif() {
+    private void jacdif(int ctrl[]) {
         // COMPUTE THE nPts*param JACOBIAN OF residuals[a] AT THE CURRENT POINT BY
         // USING FORWARD DIFFERENCES
 
@@ -2396,23 +2399,22 @@ mainLoop:
 
         int i, j;
         double delta, xtemp, deltaj;
-        int jacCtrl;
+        int jacCtrl[] = new int[1];
 
-        ctrl = 0;
+        ctrl[0] = 0;
         delta = Math.sqrt(srelpr);
 
         for (j = 0; j < param; j++) {
             xtemp = a[j];
             deltaj = Math.max(Math.abs(xtemp), 1.0) * delta;
             a[j] = xtemp + deltaj;
-            jacCtrl = -1;
-            ctrlMat[0] = jacCtrl;
+            jacCtrl[0] = -1;
+            ctrlMat[0] = jacCtrl[0];
             fitToFunction(a, w1, covarMat);
-            jacCtrl = ctrlMat[0];
+            jacCtrl[0] = ctrlMat[0];
 
-            if (jacCtrl < -10) {
-                ctrl = jacCtrl;
-
+            if (jacCtrl[0] < -10) {
+                ctrl[0] = jacCtrl[0];
                 return;
             }
 
@@ -2572,6 +2574,7 @@ mainLoop:
         double[] v2 = new double[nPts];
         boolean loop;
         boolean doMinrn = true;
+        int lineucCtrl[] = new int[1];
 
         k2 = 0;
         aDiff = 0.0;
@@ -2606,8 +2609,8 @@ mainLoop:
 
         // COMPUTE PHIK=PHI(ALF0) AND TEST UNCOMPUTABILITY AT aOld
 
-        ctrl = 1;
-        fsumsq(alfk, gmod, fnew, phiMat);
+        lineucCtrl[0] = 1;
+        fsumsq(alfk, gmod, fnew, phiMat, lineucCtrl);
         phik = phiMat[0];
         if (outputMes) {
             Preferences.debug("In lineuc no. 1: phik = " + phik + " alfk = " + alfk + "\n");
@@ -2615,7 +2618,7 @@ mainLoop:
         k2++;
         iev = k2;
 
-        if (ctrl == -1) {
+        if (lineucCtrl[0] == -1) {
             errorStatus = -3;
         }
 
@@ -2623,8 +2626,8 @@ mainLoop:
             errorStatus = -2;
         }
 
-        if (ctrl < -10) {
-            errorStatus = ctrl;
+        if (lineucCtrl[0] < -10) {
+            errorStatus = lineucCtrl[0];
         }
 
         if (errorStatus < 0) {
@@ -2721,15 +2724,15 @@ mainLoop:
 
         // COMPUTE phik = phi(alf1)
 
-        ctrl = -1;
-        fsumsq(alfk, gmod, fnew, phiMat);
+        lineucCtrl[0] = -1;
+        fsumsq(alfk, gmod, fnew, phiMat,lineucCtrl);
         phik = phiMat[0];
         if (outputMes) {
             Preferences.debug("In LINEUC no.2: phik = " + phik + " alfk = " + alfk + "\n");
         }
 
-        if (ctrl < -10) {
-            k2 = ctrl;
+        if (lineucCtrl[0] < -10) {
+            k2 = lineucCtrl[0];
         }
 
         if (k2 < 0) {
@@ -3441,36 +3444,36 @@ mainLoop:
         // jacobianEval CONTAINS NO. OF FUNCTION EVALUATIONS CAUSED BY COMPUTING
         // THE JACOBIAN WITH DIFFERENCE METHODS
         // errorStatus CONTAINS A USER STOP INDICATION <-10 OR UNCHANGED
+        int newuncCtrl[] = new int[1];;
 
-
-        ctrl = 2;
+        newuncCtrl[0] = 2;
 
         // IF CTRL=2 ON ENTRY TO fitToFunction THE JACOBIAN MATRIX IS REQUESTED.
         // HOWEVER, IF THE ANALYTICAL JACOBIAN IS NOT AVAILABLE THE USER
         // SIGNALS THAT BY SETTING CTRL TO ZERO ON RETURN
 
-        ctrlMat[0] = ctrl;
+        ctrlMat[0] = newuncCtrl[0];
         fitToFunction(a, residuals, covarMat);
-        ctrl = ctrlMat[0];
+        newuncCtrl[0] = ctrlMat[0];
 
-        if (ctrl == 2) {
+        if (newuncCtrl[0] == 2) {
             return;
         }
 
-        if (ctrl < -10) {
-            errorStatus = ctrl;
+        if (newuncCtrl[0] < -10) {
+            errorStatus = newuncCtrl[0];
 
             return;
         }
 
         // COMPUTE THE JACOBIAN USING FORWARD DIFFERENCES
 
-        if (ctrl == 0) {
-            jacdif();
+        if (newuncCtrl[0] == 0) {
+            jacdif(newuncCtrl);
         }
 
-        if (ctrl < -10) {
-            errorStatus = ctrl;
+        if (newuncCtrl[0] < -10) {
+            errorStatus = newuncCtrl[0];
 
             return;
         }
@@ -3861,6 +3864,7 @@ mainLoop:
         double c1, delta;
         int i;
         delta = 0.2;
+        int reducCtrl[] = new int[1];
 
         c1 = nPts * Math.sqrt(srelpr);
 
@@ -3879,15 +3883,15 @@ mainLoop:
             residuals[i] = fnew[i];
         }
 
-        ctrl = -1;
-        fsumsq(alfk, gmod, fnew, phiMat);
+        reducCtrl[0] = -1;
+        fsumsq(alfk, gmod, fnew, phiMat, reducCtrl);
         phik = phiMat[0];
         if (outputMes) {
             Preferences.debug("In REDUC: phik = " + phik + " alfk = " + alfk + "\n");
         }
 
-        if (ctrl < -10) {
-            k2 = ctrl;
+        if (reducCtrl[0] < -10) {
+            k2 = reducCtrl[0];
         }
 
         if (k2 < 0) {
@@ -5689,6 +5693,7 @@ mainLoop:
         double alplow, ael, magfy, dphize;
         double[][] dummy = new double[1][1];
         double temp;
+        int stepucCtrl;
 
         // IF ABS(kod)=2
         // THEN TAKE AN UNDAMPED STEP
@@ -5808,26 +5813,26 @@ mainLoop:
 
         // COMPUTE THE VECTOR OF RESIDUALS AT THE NEW POINT
 
-        ctrl = 1;
-        ctrlMat[0] = ctrl;
+        stepucCtrl = 1;
+        ctrlMat[0] = stepucCtrl;
         fitToFunction(a, residuals, dummy);
-        ctrl = ctrlMat[0];
+        stepucCtrl = ctrlMat[0];
         eval = 1;
 
         // INDICATE A LARGER VALUE OF THE OBJECTIVE IF THE RESIDUALS ARE
         // UNCOMPUTABLE  (I.E. CTRL=-1 )
 
-        if (ctrl == -1) {
+        if (stepucCtrl == -1) {
             phi = 2.0 * phi;
         }
 
-        if (ctrl == 1) {
+        if (stepucCtrl == 1) {
             temp = dnrm2(nPts, residuals, 1);
             phi = 0.5 * temp * temp;
         }
 
-        if (ctrl < -10) {
-            errorStatus = ctrl;
+        if (stepucCtrl < -10) {
+            errorStatus = stepucCtrl;
         }
 
         return;
