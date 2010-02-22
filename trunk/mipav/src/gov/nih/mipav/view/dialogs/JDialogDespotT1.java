@@ -127,12 +127,14 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
             insertScriptLine();
         }
         
-        if (cAlgo != null) {
-            cAlgo.finalize();
-            cAlgo = null;
+        if(!runningScriptFlag) {
+            if (cAlgo != null) {
+                cAlgo.finalize();
+                cAlgo = null;
+            }
+    
+            dispose();
         }
-
-        dispose();
     }
 
     public void actionPerformed(ActionEvent event) {
@@ -274,6 +276,38 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
 
             cAlgo.run();
         }
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        
+        if(cAlgo != null) {
+            if(showB1Map && cAlgo.getB1ResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getB1ResultStack());
+            }
+            
+            if(calculateMo && cAlgo.getMoResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getMoResultStack());
+            }
+            
+            if(invertT1toR1 && cAlgo.getR1ResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getR1ResultStack());
+            }
+            
+            if(calculateT1 && cAlgo.getT1ResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getT1ResultStack());
+            }
+        }
+        
+        //algorithm was not disposed of during algorithm performed since script is running
+        if (cAlgo != null) {
+            cAlgo.finalize();
+            cAlgo = null;
+        }
+
+        dispose();
     }
     
     protected void setGUIFromParams() {
@@ -460,19 +494,23 @@ public class JDialogDespotT1 extends JDialogScriptableBase implements AlgorithmI
         
         if(cAlgo != null) {
         	if(showB1Map && cAlgo.getB1ResultStack() != null) {
-        		scriptParameters.storeImageInRecorder(cAlgo.getB1ResultStack());
+        		//scriptParameters.storeImageInRecorder(cAlgo.getB1ResultStack());
+        		scriptParameters.storeOutputImageParams(cAlgo.getB1ResultStack(), true);
         	}
         	
         	if(calculateMo && cAlgo.getMoResultStack() != null) {
-        		scriptParameters.storeImageInRecorder(cAlgo.getMoResultStack());
+        		//scriptParameters.storeImageInRecorder(cAlgo.getMoResultStack());
+        		scriptParameters.storeOutputImageParams(cAlgo.getMoResultStack(), true);
         	}
         	
         	if(invertT1toR1 && cAlgo.getR1ResultStack() != null) {
-        		scriptParameters.storeImageInRecorder(cAlgo.getR1ResultStack());
+        		//scriptParameters.storeImageInRecorder(cAlgo.getR1ResultStack());
+        		scriptParameters.storeOutputImageParams(cAlgo.getR1ResultStack(), true);
         	}
         	
         	if(calculateT1 && cAlgo.getT1ResultStack() != null) {
-        		scriptParameters.storeImageInRecorder(cAlgo.getT1ResultStack());
+        		//scriptParameters.storeImageInRecorder(cAlgo.getT1ResultStack());
+        		scriptParameters.storeOutputImageParams(cAlgo.getT1ResultStack(), true);
         	}
         }
     }
