@@ -188,31 +188,36 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         }
         
         boolean do4D = false;
+        tSeries = 1;
         for (angle=0; angle<dialog.getNfa_phase0(); angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
-            if(image.getNDims() > 3) {
+            if(image.getNDims() > 3 && !do4D) { //clause is only entered once
                 do4D = true;
+                tSeries = image.getExtents()[3];
+                t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+                
+                t2ResultStack = nearCloneImage(image, t2ResultStack);
+                moResultStack = nearCloneImage(image, moResultStack);
+                r2ResultStack = nearCloneImage(image, r2ResultStack);
             }
         }
         
-        if(do4D) {
-            tSeries = image.getExtents()[3];
-        } else {
-            tSeries = 1;
+        if(!do4D) {
+            t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+            
+            t2ResultStack = nearCloneImage(image, t2ResultStack);
+            moResultStack = nearCloneImage(image, moResultStack);
+            r2ResultStack = nearCloneImage(image, r2ResultStack);
         }
-        
-        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
-        
-        t2ResultStack = nearCloneImage(image, t2ResultStack);
-        moResultStack = nearCloneImage(image, moResultStack);
-        r2ResultStack = nearCloneImage(image, r2ResultStack);
         
         String prefix = new String();
         // Actually perform the T2 Calculations
         for(t=0; t<tSeries; t++) {
-            if(image.getNDims() > 3) {
+            if(do4D) {
                 prefix = "Series "+t+": ";
             } else {
                 prefix = "";
@@ -268,7 +273,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            if(angle == 0) {
+                            if(image.getNDims() < 4) {
                                 ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k);
                             } else {
                                 ssfpPixelValues_phase0[angle][pixelIndex] = image.getDouble(x, y, k, t);
@@ -284,7 +289,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 pixelIndex = 0;
                 for (y=0; y<height; y++) {
                     for (x=0; x<width; x++) {
-                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                        if(image.getNDims() < 4) {
+                            t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                        } else {
+                            t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        }
                         pixelIndex++;
                     }
                 }
@@ -295,7 +304,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                            if(image.getNDims() < 4) {    
+                                b1PixelValues[pixelIndex] = image.getDouble(x,y, k);
+                            } else {
+                                b1PixelValues[pixelIndex] = image.getDouble(x,y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -477,33 +490,38 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         } else {
             nSlices = 1;
         }
-        
+
         boolean do4D = false;
+        tSeries = 1;
         for (angle=0; angle<dialog.getNfa_phase180(); angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
-            if(image.getNDims() > 3) {
+            if(image.getNDims() > 3 && !do4D) { //clause is only entered once
                 do4D = true;
+                tSeries = image.getExtents()[3];
+                t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+                
+                t2ResultStack = nearCloneImage(image, t2ResultStack);
+                moResultStack = nearCloneImage(image, moResultStack);
+                r2ResultStack = nearCloneImage(image, r2ResultStack);
             }
         }
         
-        if(do4D) {
-            tSeries = image.getExtents()[3];
-        } else {
-            tSeries = 1;
+        if(!do4D) {
+            t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+            
+            t2ResultStack = nearCloneImage(image, t2ResultStack);
+            moResultStack = nearCloneImage(image, moResultStack);
+            r2ResultStack = nearCloneImage(image, r2ResultStack);
         }
         
-        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
-        
-        t2ResultStack = nearCloneImage(image, t2ResultStack);
-        moResultStack = nearCloneImage(image, moResultStack);
-        r2ResultStack = nearCloneImage(image, r2ResultStack);
-
         String prefix = new String();
         // Actually perform the T2 Calculations
         for(t=0; t<tSeries; t++) {
-            if(image.getNDims() > 3) {
+            if(do4D) {
                 prefix = "Series "+t+": ";
             } else {
                 prefix = "";
@@ -575,7 +593,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 pixelIndex = 0;
                 for (y=0; y<height; y++) {
                     for (x=0; x<width; x++) {
-                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        if(image.getNDims() < 4) {
+                            t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                        } else {
+                            t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        }
                         pixelIndex++;
                     }
                 }
@@ -586,7 +608,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            b1PixelValues[pixelIndex] = image.getDouble(x,y, k, t);
+                            if(image.getNDims() < 4) {    
+                                b1PixelValues[pixelIndex] = image.getDouble(x,y, k);
+                            } else {
+                                b1PixelValues[pixelIndex] = image.getDouble(x,y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -764,33 +790,54 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        //if instance of 4D at 0, then also expected at 180
         boolean do4D = false;
-        for (angle=0; angle<dialog.getNfa_phase180(); angle++) {
+        tSeries = 1;
+        for (angle=0; angle<dialog.getNfa_phase0(); angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
-            if(image.getNDims() > 3) {
+            if(image.getNDims() > 3 && !do4D) { //clause is only entered once
                 do4D = true;
+                tSeries = image.getExtents()[3];
+                t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+                
+                t2ResultStack = nearCloneImage(image, t2ResultStack);
+                moResultStack = nearCloneImage(image, moResultStack);
+                r2ResultStack = nearCloneImage(image, r2ResultStack);
             }
         }
         
-        if(do4D) {
-            tSeries = image.getExtents()[3];
-        } else {
-            tSeries = 1;
+        if(!do4D) {
+            for (angle=0; angle<dialog.getNfa_phase180(); angle++) {
+                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
+                if(image.getNDims() > 3 && !do4D) { //clause is only entered once
+                    do4D = true;
+                    tSeries = image.getExtents()[3];
+                    t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+                    moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                    r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+                    
+                    t2ResultStack = nearCloneImage(image, t2ResultStack);
+                    moResultStack = nearCloneImage(image, moResultStack);
+                    r2ResultStack = nearCloneImage(image, r2ResultStack);
+                }
+            }
         }
-
-        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
         
-        t2ResultStack = nearCloneImage(image, t2ResultStack);
-        moResultStack = nearCloneImage(image, moResultStack);
-        r2ResultStack = nearCloneImage(image, r2ResultStack);
+        if(!do4D) {
+            t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+            
+            t2ResultStack = nearCloneImage(image, t2ResultStack);
+            moResultStack = nearCloneImage(image, moResultStack);
+            r2ResultStack = nearCloneImage(image, r2ResultStack);
+        }
         
         String prefix = new String();
         // Actually perform the T2 Calculations
         for(t=0; t<tSeries; t++) {
-            if(image.getNDims() > 3) {
+            if(do4D) {
                 prefix = "Series "+t+": ";
             } else {
                 prefix = "";
@@ -885,7 +932,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 pixelIndex = 0;
                 for (y=0; y<height; y++) {
                     for (x=0; x<width; x++) {
-                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        if(image.getNDims() < 4) {
+                            t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                        } else {
+                            t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        }
                         pixelIndex++;
                     }
                 }
@@ -896,7 +947,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                            if(image.getNDims() < 4) {    
+                                b1PixelValues[pixelIndex] = image.getDouble(x,y, k);
+                            } else {
+                                b1PixelValues[pixelIndex] = image.getDouble(x,y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
@@ -1168,31 +1223,56 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
             nSlices = 1;
         }
         
-        //if instance of 4D at 0, then also expected at 180
         boolean do4D = false;
+        tSeries = 1;
         for (angle=0; angle<dialog.getNfa_phase180(); angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase180[angle]]);
-            if(image.getNDims() > 3) {
+            if(image.getNDims() > 3 && !do4D) { //clause is only entered once
                 do4D = true;
+                tSeries = image.getExtents()[3];
+                t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+                boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo_results");
+                
+                t2ResultStack = nearCloneImage(image, t2ResultStack);
+                moResultStack = nearCloneImage(image, moResultStack);
+                r2ResultStack = nearCloneImage(image, r2ResultStack);
+                boResultStack = nearCloneImage(image, boResultStack);
             }
         }
         
-        if(do4D) {
-            tSeries = image.getExtents()[3];
-        } else {
-            tSeries = 1;
+        if(!do4D) {
+            for (angle=0; angle<dialog.getNfa_phase0(); angle++) {
+                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[ssfpImageIndex_phase0[angle]]);
+                if(image.getNDims() > 3 && !do4D) { //clause is only entered once
+                    do4D = true;
+                    tSeries = image.getExtents()[3];
+                    t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+                    moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                    r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+                    boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo_results");
+                    
+                    t2ResultStack = nearCloneImage(image, t2ResultStack);
+                    moResultStack = nearCloneImage(image, moResultStack);
+                    r2ResultStack = nearCloneImage(image, r2ResultStack);
+                    boResultStack = nearCloneImage(image, boResultStack);
+                }
+            }
         }
 
-        t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-        r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
-        boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo_results");
+        if(!do4D) {
+            t2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t2_results");
+            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
+            boResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "bo_results");
+            
+            t2ResultStack = nearCloneImage(image, t2ResultStack);
+            moResultStack = nearCloneImage(image, moResultStack);
+            r2ResultStack = nearCloneImage(image, r2ResultStack);
+            boResultStack = nearCloneImage(image, boResultStack);
+        }
         
-        t2ResultStack = nearCloneImage(image, t2ResultStack);
-        moResultStack = nearCloneImage(image, moResultStack);
-        r2ResultStack = nearCloneImage(image, r2ResultStack);
-        boResultStack = nearCloneImage(image, boResultStack);
-
         Gaussian = new double[5][5];
         
         // define the Gaussian kernel
@@ -1225,7 +1305,7 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
         String prefix = new String();
         // Perform an initial T2 Calculation to get the rough Bo field
         for(t=0; t<tSeries; t++) {
-            if(image.getNDims() > 3) {
+            if(do4D) {
                 prefix = "Series "+t+": ";
             } else {
                 prefix = "";
@@ -1346,7 +1426,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                 pixelIndex = 0;
                 for (y=0; y<height; y++) {
                     for (x=0; x<width; x++) {
-                        t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        if(image.getNDims() < 4) {
+                            t1PixelValues[pixelIndex] = image.getDouble(x, y, k);
+                        } else {
+                            t1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                        }
                         pixelIndex++;
                     }
                 }
@@ -1357,7 +1441,11 @@ public class AlgorithmDespotT2 extends AlgorithmBase {
                     pixelIndex = 0;
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
-                            b1PixelValues[pixelIndex] = image.getDouble(x, y, k, t);
+                            if(image.getNDims() < 4) {    
+                                b1PixelValues[pixelIndex] = image.getDouble(x,y, k);
+                            } else {
+                                b1PixelValues[pixelIndex] = image.getDouble(x,y, k, t);
+                            }
                             pixelIndex++;
                         }
                     }
