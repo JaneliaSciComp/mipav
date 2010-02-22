@@ -403,43 +403,60 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
         
         boolean do4D = false;
-        int dimT = 0;
+        tSeries = 1;
         for (angle=0; angle<Nsa; angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
-            if(image.getNDims() > 3) {
-            	do4D = true;
-                dimT = image.getExtents()[3];
+            if(image.getNDims() > 3 && !do4D) { //clause is only entered once per program operation
+                do4D = true;
+                tSeries = image.getExtents()[3];
+                t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
+                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
+                b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
+                
+                t1ResultStack = nearCloneImage(image, t1ResultStack);
+                moResultStack = nearCloneImage(image, moResultStack);
+                r1ResultStack = nearCloneImage(image, r1ResultStack);
+                b1ResultStack = nearCloneImage(image, b1ResultStack);
             }
         }
         
-        if(do4D) {
-            tSeries = dimT;
-        } else {
-            tSeries = 1;
+        if(!do4D) {
+            for (ti=0; ti<Nti; ti++) {
+                image = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[ti]]);  
+                if(image.getNDims() > 3 && !do4D) { //clause is only entered once per program operation
+                    do4D = true;
+                    tSeries = image.getExtents()[3];
+                    t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
+                    moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                    r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
+                    b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
+                    
+                    t1ResultStack = nearCloneImage(image, t1ResultStack);
+                    moResultStack = nearCloneImage(image, moResultStack);
+                    r1ResultStack = nearCloneImage(image, r1ResultStack);
+                    b1ResultStack = nearCloneImage(image, b1ResultStack);
+                }
+            }
         }
         
+        if(!do4D) {
+            t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
+            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
+            b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
+            
+            t1ResultStack = nearCloneImage(image, t1ResultStack);
+            moResultStack = nearCloneImage(image, moResultStack);
+            r1ResultStack = nearCloneImage(image, r1ResultStack);
+            b1ResultStack = nearCloneImage(image, b1ResultStack);
+        }
         
         irspgrImage = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[0]]);
         if(image.getNDims() > 2) {
             irspgrSlices = irspgrImage.getExtents()[2];
         } else {
             irspgrSlices = 1;
-        }
-        
-        do4D = false;
-        dimT = 0;
-        for (ti=0; ti<Nti; ti++) {
-            image = ViewUserInterface.getReference().getRegisteredImageByName(wList[irspgrImageIndex[ti]]);  
-            if(image.getNDims() > 3) {
-                do4D = true;
-                dimT = image.getExtents()[3];
-            }
-        }
-        
-        if(do4D) {
-            irspgrSeries = dimT;
-        } else {
-            irspgrSeries = 1;
         }
         
         // check to make sure the IR-SPGR and SPGR data have the same size
@@ -480,20 +497,10 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         Gaussian[4][3] = 0;
         Gaussian[4][4] = 0;
         
-        t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-        r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
-        b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
-        
-        t1ResultStack = nearCloneImage(image, t1ResultStack);
-        moResultStack = nearCloneImage(image, moResultStack);
-        r1ResultStack = nearCloneImage(image, r1ResultStack);
-        b1ResultStack = nearCloneImage(image, b1ResultStack);
-        
         // start by calculaing the B1 field
         String prefix = new String();
-        for(t=0; t<irspgrSeries; t++) {
-            if(image.getNDims() > 3) {
+        for(t=0; t<tSeries; t++) {
+            if(do4D) {
                 prefix = "Series "+t+": ";
             } else {
                 prefix = "";
@@ -1018,32 +1025,35 @@ public class AlgorithmDespotT1 extends AlgorithmBase {
         }
         
         boolean do4D = false;
-        int dimT = 0;
+        tSeries = 1;
         for (angle=0; angle<Nsa; angle++) {
             image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
-            if(image.getNDims() > 3) {
+            if(image.getNDims() > 3 && !do4D) { //clause is only entered once
             	do4D = true;
-                dimT = image.getExtents()[3];
+                tSeries = image.getExtents()[3];
+                t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
+                moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+                r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
+                
+                t1ResultStack = nearCloneImage(image, t1ResultStack);
+                moResultStack = nearCloneImage(image, moResultStack);
+                r1ResultStack = nearCloneImage(image, r1ResultStack);
             }
         }
         
-        if(do4D) {
-            tSeries = dimT;
-        } else {
-            tSeries = 1;
+        if(!do4D) {
+            t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
+            moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
+            r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
+            
+            t1ResultStack = nearCloneImage(image, t1ResultStack);
+            moResultStack = nearCloneImage(image, moResultStack);
+            r1ResultStack = nearCloneImage(image, r1ResultStack);
         }
-        
-        t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
-        moResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "mo_results");
-        r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
-        
-        t1ResultStack = nearCloneImage(image, t1ResultStack);
-        moResultStack = nearCloneImage(image, moResultStack);
-        r1ResultStack = nearCloneImage(image, r1ResultStack);
-        
+
         String prefix = new String();
         for(t=0; t<tSeries; t++) {
-            if(image.getNDims() > 3) {
+            if(do4D) {
                 prefix = "Series "+t+": ";
             } else {
                 prefix = "";
