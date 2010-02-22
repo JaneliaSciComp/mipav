@@ -110,13 +110,15 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-
-        if (cAlgo != null) {
-            cAlgo.finalize();
-            cAlgo = null;
+        
+        if(!runningScriptFlag) {
+            if (cAlgo != null) {
+                cAlgo.finalize();
+                cAlgo = null;
+            }
+    
+            dispose();
         }
-
-        dispose();
     }
 
     public void actionPerformed(ActionEvent event) {
@@ -126,6 +128,38 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         if (command.equals("Cancel")) {
             cAlgo.interrupt();
         } 
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        
+        if(cAlgo != null) {
+            if(includeB1Map && cAlgo.getBoResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getBoResultStack());
+            }
+            
+            if(calculateMo && cAlgo.getMoResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getMoResultStack());
+            }
+            
+            if(invertT2toR2 && cAlgo.getR2ResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getR2ResultStack());
+            }
+            
+            if(calculateT2 && cAlgo.getT2ResultStack() != null) {
+                AlgorithmParameters.storeImageInRunner(cAlgo.getT2ResultStack());
+            }
+        }
+        
+        //algorithm was not disposed of during algorithm performed since script is running
+        if (cAlgo != null) {
+            cAlgo.finalize();
+            cAlgo = null;
+        }
+
+        dispose();
     }
     
     protected void setGUIFromParams() {
@@ -348,19 +382,19 @@ public class JDialogDespotT2 extends JDialogScriptableBase implements AlgorithmI
         
         if(cAlgo != null) {
         	if(includeB1Map && cAlgo.getBoResultStack() != null) {
-        		scriptParameters.storeImageInRecorder(cAlgo.getBoResultStack());
+        		scriptParameters.storeOutputImageParams(cAlgo.getBoResultStack(), true);
         	}
         	
         	if(calculateMo && cAlgo.getMoResultStack() != null) {
-        		scriptParameters.storeImageInRecorder(cAlgo.getMoResultStack());
+        		scriptParameters.storeOutputImageParams(cAlgo.getMoResultStack(), true);
         	}
         	
         	if(invertT2toR2 && cAlgo.getR2ResultStack() != null) {
-        		scriptParameters.storeImageInRecorder(cAlgo.getR2ResultStack());
+        		scriptParameters.storeOutputImageParams(cAlgo.getR2ResultStack(), true);
         	}
         	
         	if(calculateT2 && cAlgo.getT2ResultStack() != null) {
-        		scriptParameters.storeImageInRecorder(cAlgo.getT2ResultStack());
+        		scriptParameters.storeOutputImageParams(cAlgo.getT2ResultStack(), true);
         	}
         }
     }
