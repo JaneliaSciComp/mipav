@@ -114,7 +114,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         pointsBrowseButton.addActionListener(this);
         pointsBrowseButton.setActionCommand("pointsBrowse");
         
-        surfaceLabel = new JLabel("Surface file ");
+        surfaceLabel = new JLabel("Filament file ");
         surfaceFilePathTextField = new JTextField(35);
         surfaceFilePathTextField.setEditable(false);
         surfaceFilePathTextField.setBackground(Color.white);
@@ -122,7 +122,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         surfaceBrowseButton.addActionListener(this);
         surfaceBrowseButton.setActionCommand("surfaceBrowse");
         
-        surfaceSamplingLabel = new JLabel("Surface sampling ");
+        surfaceSamplingLabel = new JLabel("Filament sampling ");
         surfaceFileSamplingCB = new JComboBox();
         surfaceFileSamplingCB.addItem("1.0");
         surfaceFileSamplingCB.addItem("0.5");
@@ -247,8 +247,10 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		        	pointsFile = new File(currDir);
 		        	if(!readPointsFile(pointsFile)) {
 		        		MipavUtil.displayError("Error parsing points file");
+		        	}else {
+		        		pointsFilePathTextField.setText(currDir);
 		        	}
-		        	pointsFilePathTextField.setText(currDir);
+		        	
 		        }
 		 }else if(command.equalsIgnoreCase("ok")) {
 			 if(setVariables()) {
@@ -296,9 +298,17 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		        	surfaceFile = new File(currDir);
 		        	if(!readSurfaceFile(surfaceFile)) {
 		        		MipavUtil.displayError("Error parsing surface file");
+		        	}else {
+		        		surfaceFilePathTextField.setText(currDir);
 		        	}
-		        	surfaceFilePathTextField.setText(currDir);
+		        	
 		        }
+		 }else if(command.equalsIgnoreCase("cancel")) {
+			 if(neuronImage != null) {
+				 neuronImage.disposeLocal();
+				 neuronImage = null;
+			 }
+			 dispose();
 		 }
 	}
 	
@@ -320,9 +330,9 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 				if(line.startsWith("Translate1Dragger")) {
 					break;
 				}
-				if(line.startsWith("Coordinate3")) {
-					System.out.println();
-					System.out.println();
+				if(line.contains("Coordinate3")) {
+					//System.out.println();
+					//System.out.println();
 					ArrayList<float[]> filamentCoords = new ArrayList<float[]>();
 					while(!((line=raFile.readLine()).endsWith("}"))) {
 						line = line.trim();
@@ -336,7 +346,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 							if(line.endsWith(",")) {
 								line = line.substring(0, line.indexOf(",")).trim();
 							}
-							System.out.println(line);
+							//System.out.println(line);
 							String[] splits = line.split("\\s+");
 							float coord_x = new Float(splits[0]).floatValue();
 							float coord_y = new Float(splits[1]).floatValue();
@@ -352,7 +362,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 							float y = coord_y/resols[1];
 							float z = coord_z/resols[2];
 							  
-							float[] coords = {x,y,z};
+							float[] coords = {x,y,z,0};
 							
 							filamentCoords.add(coords);
 						}
@@ -392,7 +402,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 				
 				
 			}
-			for(int i=0;i<allFilamentCoords.size();i++) {
+			/*for(int i=0;i<allFilamentCoords.size();i++) {
 	         	//Vector<float[]> filCoords = allFilamentCoords.get(i);
 	         	ArrayList<float[]> filCoords = allFilamentCoords.get(i);
 	         	System.out.println("XXXX " + filCoords.size());
@@ -403,7 +413,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	         		float[] filCoord = filCoords.get(k);
 	         		System.out.println("***** " + filCoord[0] + " " + filCoord[1] + " " + filCoord[2] + ",");
 	         	}
-			}
+			}*/
 			raFile.close();
 			
 		}catch(Exception e) {
