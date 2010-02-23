@@ -263,27 +263,6 @@ public abstract class NLConstrainedEngine {
     private double aDiff;
 
     /** DOCUMENT ME! */
-    private double alfk;
-
-    /**
-     * The orginal code introduces a alfkm1 and alfkm2 in the common block preunc and another alfkm1 and alfkm2 in the
-     * subroutine lineuc. Here the alfkm1 and alfkm2 in lineuc are called alfkm1a and alfkm2a.
-     */
-    private double alfkm1a;
-
-    /** DOCUMENT ME! */
-    private double alfkm2a;
-
-    /** DOCUMENT ME! */
-    private double alfkp1;
-
-    /** DOCUMENT ME! */
-    private double alfmax;
-
-    /** DOCUMENT ME! */
-    private double alfmin;
-
-    /** DOCUMENT ME! */
     private double alfnoi;
 
     /** DOCUMENT ME! */
@@ -304,14 +283,8 @@ public abstract class NLConstrainedEngine {
      */
     private double beta;
 
-    /**
-     * The original code introudces a beta in lsunc and another beta in subroutine lineuc. Here the beta in lineuc is
-     * called beta2
-     */
-    private double beta2;
-
     /** DOCUMENT ME! */
-    private double betkm2, d1km2, fsqkm2, dxnkm2, alfkm2, aupkm2, betkm1, d1km1, fsqkm1, dxnkm1, alfkm1, aupkm1;
+    private double betkm2, alfkm2, betkm1, d1km1, fsqkm1, dxnkm1, alfkm1, aupkm1;
 
     /** DOCUMENT ME! */
     private double bn;
@@ -337,9 +310,6 @@ public abstract class NLConstrainedEngine {
      * true. Otherwise, undefined.
      */
     private double[] diag;
-
-    /** DOCUMENT ME! */
-    private double diff;
 
     /** double working areas 1D array of length param containing the solution of J * dx = -residuals. */
     private double[] dx;
@@ -423,9 +393,6 @@ public abstract class NLConstrainedEngine {
     private int jacobianEval;
 
     /** DOCUMENT ME! */
-    private int k2;
-
-    /** DOCUMENT ME! */
     private int kod;
 
     /** integer scalar containing the number of function evaluations caused by the linesearch algorithm. */
@@ -441,9 +408,6 @@ public abstract class NLConstrainedEngine {
     private int paramAct;
 
     /** DOCUMENT ME! */
-    private double pbeta;
-
-    /** DOCUMENT ME! */
     private double pgb1;
 
     /** DOCUMENT ME! */
@@ -453,28 +417,16 @@ public abstract class NLConstrainedEngine {
     private double phi;
 
     /** DOCUMENT ME! */
-    private double phik;
-
-    /** DOCUMENT ME! */
-    private double phikm1;
-
-    /** DOCUMENT ME! */
     private double phikp1;
 
     /** DOCUMENT ME! */
     private double philat, bestpg;
-
-    /** DOCUMENT ME! */
-    private double[] phiMat = new double[1];
 
     /**
      * array of integers of dimension param containing the permutation matrix E in the decomposition QTranspose * J * D
      * E = (R) (0) pivit[i] contains the index of the column that was moved into column i.
      */
     private int[] pivit;
-
-    /** DOCUMENT ME! */
-    private double pk;
 
     /** DOCUMENT ME! */
     private double pMinrm, qMinrm, deltaMinrm, a1div3;
@@ -501,9 +453,6 @@ public abstract class NLConstrainedEngine {
     private int rank;
 
     /** DOCUMENT ME! */
-    private boolean reduce;
-
-    /** DOCUMENT ME! */
     private boolean restart;
 
     /** DOCUMENT ME! */
@@ -516,7 +465,7 @@ public abstract class NLConstrainedEngine {
      * The suffices km2 and km1 in the names of the variables represent time step k-2 and k-1 respectively. These
      * variables are updated only inside the routine evreuc.
      */
-    private int rngkm2, kodkm2, rngkm1, kodkm1;
+    private int kodkm2, rngkm1, kodkm1;
 
     /** DOCUMENT ME! */
     private double rootsp, bl0, bu0;
@@ -1052,7 +1001,7 @@ public abstract class NLConstrainedEngine {
      *
      * @param  dphize  DOCUMENT ME!
      */
-    private void chder(double dphize) {
+    private void chder(double dphize, int[] k, double[] alfk, double[] phik) {
         // MAKE A CONSISTENCY CHECK OF THE DERIVATIVE APPROXIMATION
         // BASED ON THE JACOBIAN MATRIX
         // THE FUNCTION UNDER CONCERN IS
@@ -1082,7 +1031,8 @@ public abstract class NLConstrainedEngine {
         // xnew[param]
         // fnew[nPts]
 
-        double phimk, dphifo, dphiba, dphice, maxdif;
+        double phimk[] = new double[1]; 
+        double dphifo, dphiba, dphice, maxdif;
         double[] xnew = new double[param];
         double[] fnew = new double[nPts];
         int chderCtrl[] = new int[1];
@@ -1090,31 +1040,30 @@ public abstract class NLConstrainedEngine {
         // COMPUTE phi(-alfk)
 
         chderCtrl[0] = -1;
-        fsumsq(-alfk, xnew, fnew, phiMat, chderCtrl);
-        phimk = phiMat[0];
+        fsumsq(-alfk[0], xnew, fnew, phimk, chderCtrl);
 
         if (chderCtrl[0] < -10) {
-            k2 = chderCtrl[0];
+            k[0] = chderCtrl[0];
         }
 
-        if (k2 < 0) {
+        if (k[0] < 0) {
             return;
         }
 
-        k2++;
+        k[0]++;
 
         // COMPUTE APPROXIMATIONS OF THE DERIVATIVE BY USING FORWARD,
         // BACKWARD AND CENTRAL DIFFERENCES
 
-        if (alfk <= 0.0) {
+        if (alfk[0] <= 0.0) {
             errorStatus = -1;
 
             return;
         }
 
-        dphifo = (phik - phi) / alfk;
-        dphiba = (phi - phimk) / alfk;
-        dphice = (phik - phimk) / 2.0 / alfk;
+        dphifo = (phik[0] - phi) / alfk[0];
+        dphiba = (phi - phimk[0]) / alfk[0];
+        dphice = (phik[0] - phimk[0]) / 2.0 / alfk[0];
         maxdif = Math.abs(dphifo - dphiba);
         maxdif = Math.max(maxdif, Math.abs(dphifo - dphice));
         maxdif = Math.max(maxdif, Math.abs(dphiba - dphice));
@@ -1132,7 +1081,7 @@ public abstract class NLConstrainedEngine {
      * @param  xmin  DOCUMENT ME!
      * @param  v2    DOCUMENT ME!
      */
-    private void choose(double xmin, double[] v2) {
+    private void choose(double xmin, double[] v2, double[] root1, double[] root2, double[] proot2) {
         // X1Minrm, X2Minrm AND X3Minrm ARE THREE REAL ROOTS OF A 3:RD DEGREE POLYNOMIAL WHICH TENDS TO MINUS INFINITY
         // WHEN X TENDS TO MINUS INFINITY. CHOOSE ONE OF THE OUTER ROOTS FOR alfkp1. beta2 = THE OTHER OUTER ONE. pbeta
         // = THE VALUE OF THE CORRESPONDING 4:TH DEGREE POLYNOMIAL AT beta2.
@@ -1156,14 +1105,14 @@ public abstract class NLConstrainedEngine {
         }
 
         if (xmin <= y) {
-            alfkp1 = x;
-            beta2 = z;
+            root1[0] = x;
+            root2[0] = z;
         } else {
-            alfkp1 = z;
-            beta2 = x;
+            root1[0] = z;
+            root2[0] = x;
         }
 
-        pbeta = pol4(v2, beta2);
+        proot2[0] = pol4(v2, root2[0]);
 
         return;
     }
@@ -1804,12 +1753,7 @@ mainLoop:
             icount = 0;
             lattry = pseudoRank;
             betkm2 = betkm1;
-            d1km2 = d1km1;
-            fsqkm2 = fsqkm1;
-            dxnkm2 = dxnkm1;
             alfkm2 = alfkm1;
-            aupkm2 = aupkm1;
-            rngkm2 = rngkm1;
             kodkm2 = kodkm1;
             betkm1 = beta;
             d1km1 = d1sqs;
@@ -1966,7 +1910,7 @@ mainLoop:
      * @param  tau     DOCUMENT ME!
      * @param  pmax    DOCUMENT ME!
      */
-    private void gauc(double[] gmod, double dphize, double tau, double pmax) {
+    private void gauc(int k[], double alfmin, double[] gmod, double dphize, double u[], double[] phiu, double tau, double pmax) {
         // THIS IS A ROUTINE FOR UNCONSTRAINED LEAST SQUARES PROBLEMS THAT HALVES THE VALUE OF alfk UNTIL A
         // GOLDSTEIN-ARMIJO CONDITION IS SATISFIED OR UNTIL THE NORM OF THE SEARCH DIRECTION TIMES THE THE STEPLENGTH IS
         // REDUCED BELOW SQRT(RELATIVE PRECISION) OR UNTIL THE STEPLENGTH IS SMALLER THAN ALFMIN
@@ -1978,12 +1922,13 @@ mainLoop:
         // THE SIMPLEST WE CAN DO IS TO SET   alfk=alfk*0.5 AND
         // TEST IF CONDITION  (1) IS SATISFIED FOR x=alfk
 
-        double phix, sqreps, x;
+        double phix[] = new double[1];
+        double sqreps, x;
         int gaucCtrl[] = new int[1];
 
         sqreps = Math.sqrt(srelpr);
-        phix = phi;
-        x = alfk;
+        phix[0] = phi;
+        x = u[0];
 
         do {
 
@@ -1992,35 +1937,34 @@ mainLoop:
             }
 
             if (errorStatus == -2) {
-                alfk = x;
-                phik = phix;
+                u[0] = x;
+                phiu[0] = phix[0];
 
                 return;
             }
 
             x = 0.5 * x;
             gaucCtrl[0] = -1;
-            fsumsq(x, gmod, residuals, phiMat, gaucCtrl);
-            phix = phiMat[0];
+            fsumsq(x, gmod, residuals, phix, gaucCtrl);
             if (outputMes) {
-                Preferences.debug("In GAUC: phix = " + phix + " x = " + x + "\n");
+                Preferences.debug("In GAUC: phix[0] = " + phix[0] + " x = " + x + "\n");
             }
 
             // POSSIBLY THE USER CAN TERMINATE
 
             if (gaucCtrl[0] < -10) {
-                k2 = gaucCtrl[0];
+                k[0] = gaucCtrl[0];
             }
 
-            if (k2 < 0) {
+            if (k[0] < 0) {
                 return;
             }
 
-            k2++;
-        } while (phix > (phi + (tau * x * dphize)));
+            k[0]++;
+        } while (phix[0] > (phi + (tau * x * dphize)));
 
-        alfk = x;
-        phik = phix;
+        u[0] = x;
+        phiu[0] = phix[0];
 
         return;
     }
@@ -2569,17 +2513,30 @@ mainLoop:
         // v2[nPts] double ARRAY OF LENGTH nPts
 
         int i;
+        int k[] = new int[1];
         double eta, tau, gamma, pmax, phikm2, xmin;
+        double alfmax;
+        double alfmin;
+        double alfk[] = new double[1];
+        double alfkm1[] = new double[1];
+        double alfkm2;
+        double alfkp1[] = new double[1];
+        double beta[] = new double[1];
+        double diff;
+        double pbeta[] = new double[1];
+        double phik[] = new double[1];
+        double phikm1[] = new double[1];
+        double pk[] = new double[1];
         double[] fnew = new double[nPts];
         double[] v2 = new double[nPts];
         boolean loop;
-        boolean doMinrn = true;
         int lineucCtrl[] = new int[1];
+        boolean reduce[] = new boolean[1];
 
-        k2 = 0;
+        k[0] = 0;
         aDiff = 0.0;
-        alfkm1a = 0.0;
-        phikm1 = phi;
+        alfkm1[0] = 0.0;
+        phikm1[0] = phi;
 
         // SET VALUES OF THE CONSTANTS ETA,TAU AND GAMMA.
         // COMPUTE ALFMIN,ALFMAX,ALFK AND PMAX= THE EUCLIDEAN NORM OF dx
@@ -2589,8 +2546,8 @@ mainLoop:
         gamma = 0.4;
         alfmax = alphup;
         alfmin = alplow;
-        alfk = Math.min(alpha, alfmax);
-        alfk = Math.max(alfk, alfmin);
+        alfk[0] = Math.min(alpha, alfmax);
+        alfk[0] = Math.max(alfk[0], alfmin);
         pmax = dnrm2(param, dx, 1);
 
         // dx MUST BE A DESCENT DIRECTION
@@ -2598,9 +2555,9 @@ mainLoop:
         errorStatus = -1;
 
         if (dphize >= 0.0) {
-            alpha = alfkm1a;
-            phikp1 = phikm1;
-            iev = k2;
+            alpha = alfkm1[0];
+            phikp1 = phikm1[0];
+            iev = k[0];
 
             return;
         }
@@ -2610,19 +2567,18 @@ mainLoop:
         // COMPUTE PHIK=PHI(ALF0) AND TEST UNCOMPUTABILITY AT aOld
 
         lineucCtrl[0] = 1;
-        fsumsq(alfk, gmod, fnew, phiMat, lineucCtrl);
-        phik = phiMat[0];
+        fsumsq(alfk[0], gmod, fnew, phik, lineucCtrl);
         if (outputMes) {
-            Preferences.debug("In lineuc no. 1: phik = " + phik + " alfk = " + alfk + "\n");
+            Preferences.debug("In lineuc no. 1: phik[0] = " + phik[0] + " alfk[0] = " + alfk[0] + "\n");
         }
-        k2++;
-        iev = k2;
+        k[0]++;
+        iev = k[0];
 
         if (lineucCtrl[0] == -1) {
             errorStatus = -3;
         }
 
-        if (alfk <= 0.0) {
+        if (alfk[0] <= 0.0) {
             errorStatus = -2;
         }
 
@@ -2637,13 +2593,13 @@ mainLoop:
         // COMPUTE THE VECTOR v2 SO THAT A ONE DIMENSIONAL
         // MINIMIZATION IN R[nPts] CAN BE DONE
 
-        linuc2(fnew, v2);
-        diff = phi - phik;
+        linuc2(fnew, alfk[0], v2);
+        diff = phi - phik[0];
 
         // SET XMIN = THE BEST OF THE POINTS 0 AND ALF0
 
         if (diff >= 0.0) {
-            xmin = alfk;
+            xmin = alfk[0];
         } else {
             xmin = 0.0;
         }
@@ -2652,59 +2608,59 @@ mainLoop:
         // NEW SUGGESTION OF STEPLENGTH IS ALFKP1
         // PK IS THE VALUE OF THE APPROXIMATING FUNCTION AT ALFKP1
 
-        minrm(v2, xmin);
+        minrm(v2, alfmin, alfmax, xmin, alfkp1, pk, beta, pbeta);
 
         // POSSIBLY THE OTHER ROOT IS CHOSEN
 
-        if ((alfkp1 != beta2) && (pk > pbeta) && (beta2 <= alfk)) {
-            alfkp1 = beta2;
-            pk = pbeta;
+        if ((alfkp1[0] != beta[0]) && (pk[0] > pbeta[0]) && (beta[0] <= alfk[0])) {
+            alfkp1[0] = beta[0];
+            pk[0] = pbeta[0];
         }
 
-        alfkm1a = 0.0;
-        phikm1 = phi;
-        alfkm2a = alfkm1a;
-        phikm2 = phikm1;
-        alfkm1a = alfk;
-        phikm1 = phik;
-        alfk = alfkp1;
+        alfkm1[0] = 0.0;
+        phikm1[0] = phi;
+        alfkm2 = alfkm1[0];
+        phikm2 = phikm1[0];
+        alfkm1[0] = alfk[0];
+        phikm1[0] = phik[0];
+        alfk[0] = alfkp1[0];
 
         // TEST TERMINATION CONDITION AT alpha = alf0
         loop = true;
 
-        if (!((-diff <= (tau * dphize * alfkm1a)) || (phikm1 < (gamma * phi)))) {
+        if (!((-diff <= (tau * dphize * alfkm1[0])) || (phikm1[0] < (gamma * phi)))) {
             loop = false;
         }
 
         // TERMINATION CONDITION SATISFIED AT alpha = alf0
         while (loop) {
-            diff = phi - phik;
+            diff = phi - phik[0];
 
             // CHECK IF ESSENTIAL REDUCTION IS LIKELY
 
-            reduc(pk, eta, gmod, fnew);
+            reduc(alfkm1, phikm1, alfk[0], pk[0], diff, eta, gmod, fnew, k, phik, reduce);
 
-            if (k2 < -10) {
-                errorStatus = k2;
+            if (k[0] < -10) {
+                errorStatus = k[0];
 
                 return;
             }
 
-            if (!reduce) {
+            if (!reduce[0]) {
 
                 for (i = 0; i < param; i++) {
                     gmod[i] = a[i];
-                    a[i] = a[i] + (alfkm1a * dx[i]);
+                    a[i] = a[i] + (alfkm1[0] * dx[i]);
                     gmod[i] = gmod[i] - a[i];
                 }
 
                 aDiff = dnrm2(param, gmod, 1);
-                alpha = alfkm1a;
-                phikp1 = phikm1;
-                iev = k2;
+                alpha = alfkm1[0];
+                phikp1 = phikm1[0];
+                iev = k[0];
 
                 return;
-            } // if (!reduce)
+            } // if (!reduce[0])
 
             // THE VALUE OF THE OBJECTIVE FUNCTION CAN MOST LIKELY BE REDUCED
 
@@ -2712,12 +2668,12 @@ mainLoop:
             // NEW SUGGESTION OF THE STEPLENGTH IS alfkp1
             // pk IS THE VALUE OF THE APPROXIMATING FUNCTION AT alfkp1
 
-            minrn(phikm2, pmax);
-            alfkm2a = alfkm1a;
-            phikm2 = phikm1;
-            alfkm1a = alfk;
-            phikm1 = phik;
-            alfk = alfkp1;
+            minrn(alfk[0], phik[0], alfkm1[0], phikm1[0], alfkm2, phikm2, alfmin, alfmax, pmax, alfkp1, pk);
+            alfkm2 = alfkm1[0];
+            phikm2 = phikm1[0];
+            alfkm1[0] = alfk[0];
+            phikm1[0] = phik[0];
+            alfk[0] = alfkp1[0];
         } // while (loop)
 
         // TERMINATION CONDITION NOT SATISFIED AT alpha = alf0
@@ -2725,114 +2681,111 @@ mainLoop:
         // COMPUTE phik = phi(alf1)
 
         lineucCtrl[0] = -1;
-        fsumsq(alfk, gmod, fnew, phiMat,lineucCtrl);
-        phik = phiMat[0];
+        fsumsq(alfk[0], gmod, fnew, phik,lineucCtrl);
         if (outputMes) {
-            Preferences.debug("In LINEUC no.2: phik = " + phik + " alfk = " + alfk + "\n");
+            Preferences.debug("In LINEUC no.2: phik[0] = " + phik[0] + " alfk[0] = " + alfk[0] + "\n");
         }
 
         if (lineucCtrl[0] < -10) {
-            k2 = lineucCtrl[0];
+            k[0] = lineucCtrl[0];
         }
 
-        if (k2 < 0) {
-            errorStatus = k2;
+        if (k[0] < 0) {
+            errorStatus = k[0];
 
             return;
         }
 
         // TEST TERMINATION CONDITION AT ALPHA = ALF1
 
-        diff = phi - phik;
+        diff = phi - phik[0];
 
-        if ((-diff <= (tau * dphize * alfk)) || (phik < (gamma * phi))) {
+        if ((-diff <= (tau * dphize * alfk[0])) || (phik[0] < (gamma * phi))) {
             // TERMINATION CONDITION SATISFIED AT ALPHA = ALF1
 
             // CHECK IF ALF0 IS SOMEWHAT GOOD
 
-            if (phi <= phikm1) {
+            if (phi <= phikm1[0]) {
 
                 // SINCE PHI[0] <= PHI[ALF0], ALF0 IS NO GOOD GUESS AND WE TRY
                 // AN OTHER MINIMIZATION IN R[nPts].USE TWO POINTS:0 AND ALF1.
                 // THE NEW SUGGESTION OF STEPLENGTH IS ALFKP1.
                 // PK IS THE VALUE OF THE APPROXIMATING FUNCTION AT ALFKP1
 
-                xmin = alfk;
-                linuc2(fnew, v2);
-                minrm(v2, xmin);
+                xmin = alfk[0];
+                linuc2(fnew, alfk[0], v2);
+                minrm(v2, alfmin, alfmax, xmin, alfkp1, pk, beta, pbeta);
 
                 // POSSIBLY THE OTHER ROOT IS CHOSEN
 
-                if ((alfkp1 != beta2) && (pk > pbeta) && (beta2 <= alfk)) {
-                    alfkp1 = beta2;
-                    pk = pbeta;
+                if ((alfkp1[0] != beta[0]) && (pk[0] > pbeta[0]) && (beta[0] <= alfk[0])) {
+                    alfkp1[0] = beta[0];
+                    pk[0] = pbeta[0];
                 }
 
-                alfkm1a = 0.0;
-                phikm1 = phi;
-                doMinrn = false;
+                alfkm1[0] = 0.0;
+                phikm1[0] = phi;
             } // if (phi <= phikm1)
-
-            if (doMinrn) {
+            else {
                 // MINIMIZE IN R[param].USE THREE POINTS:0, ALF0 AND ALF1.
                 // THE NEW SUGGESTION OF THE STEPLENGTH IS ALFKP1.
                 // PK IS THE VALUE OF THE APPROXIMATING FUNCTION AT ALFKP1
 
-                minrn(phikm2, pmax);
-            } // if (doMinrn)
+            	minrn(alfk[0], phik[0], alfkm1[0], phikm1[0], alfkm2, phikm2, alfmin, alfmax, pmax, alfkp1, pk);
+            } // else
 
-            k2++;
+            k[0]++;
             loop = true;
 
             while (loop) {
-                diff = phi - phik;
-                alfkm2a = alfkm1a;
-                phikm2 = phikm1;
-                alfkm1a = alfk;
-                phikm1 = phik;
-                alfk = alfkp1;
+                diff = phi - phik[0];
+                alfkm2 = alfkm1[0];
+                phikm2 = phikm1[0];
+                alfkm1[0] = alfk[0];
+                phikm1[0] = phik[0];
+                alfk[0] = alfkp1[0];
 
                 // CHECK IF ESSENTIAL REDUCTION IS LIKELY
 
-                reduc(pk, eta, gmod, fnew);
+                reduc(alfkm1, phikm1, alfk[0], pk[0], diff, eta, gmod, fnew, k, phik, reduce);
 
-                if (k2 < -10) {
-                    errorStatus = k2;
+                if (k[0] < -10) {
+                    errorStatus = k[0];
 
                     return;
                 }
 
-                if (!reduce) {
+                if (!reduce[0]) {
 
                     for (i = 0; i < param; i++) {
                         gmod[i] = a[i];
-                        a[i] = a[i] + (alfkm1a * dx[i]);
+                        a[i] = a[i] + (alfkm1[0] * dx[i]);
                         gmod[i] = gmod[i] - a[i];
                     }
 
                     aDiff = dnrm2(param, gmod, 1);
-                    alpha = alfkm1a;
-                    phikp1 = phikm1;
-                    iev = k2;
+                    alpha = alfkm1[0];
+                    phikp1 = phikm1[0];
+                    iev = k[0];
 
                     return;
-                } // if (!reduce)
+                } // if (!reduce[0])
 
                 // MINIMIZE IN R[param].USE THREE POINTS:ALFKM2a, ALFKM1a AND ALFK.
                 // THE NEW SUGGESTION OF STEPLENGTH IS ALFKP1.
                 // PK IS THE VALUE OF THE APPROXIMATING FUNCTION AT ALFKP1
 
-                minrn(phikm2, pmax);
+                minrn(alfk[0], phik[0], alfkm1[0], phikm1[0], alfkm2, phikm2, alfmin, alfmax, pmax, alfkp1, pk);
             } // while (loop)
         } // if ((-diff <= tau*dphize*alfk) || (phik < gamma*phi))
 
         // TAKE A PURE GOLDSTEIN-ARMIJO STEP
 
-        k2++;
-        gauc(gmod, dphize, tau, pmax);
+        k[0]++;
+        gauc(k, alfmin, gmod, dphize, alfk, phik, tau, pmax);
 
-        if (k2 < -10) {
-            errorStatus = k2;
+        if (k[0] < -10) {
+            errorStatus = k[0];
 
             return;
         }
@@ -2841,30 +2794,30 @@ mainLoop:
         // AT ALPHA=0. IF INCONSISTENCY IS DETECTED K2 IS SET=-1 ON RETURN.
 
         if (errorStatus == -2) {
-            chder(dphize);
+            chder(dphize, k, alfk, phik);
         }
 
-        if (k2 < -10) {
-            errorStatus = k2;
+        if (k[0] < -10) {
+            errorStatus = k[0];
 
             return;
         }
 
-        alfkm1a = alfk;
-        phikm1 = phik;
+        alfkm1[0] = alfk[0];
+        phikm1[0] = phik[0];
 
         // COMPUTE THE NEW POINT AND THE DIFFERENCE II aOld-aNew II
 
         for (i = 0; i < param; i++) {
             gmod[i] = a[i];
-            a[i] = a[i] + (alfkm1a * dx[i]);
+            a[i] = a[i] + (alfkm1[0] * dx[i]);
             gmod[i] = gmod[i] - a[i];
         }
 
         aDiff = dnrm2(param, gmod, 1);
-        alpha = alfkm1a;
-        phikp1 = phikm1;
-        iev = k2;
+        alpha = alfkm1[0];
+        phikp1 = phikm1[0];
+        iev = k[0];
 
         return;
     }
@@ -2875,7 +2828,7 @@ mainLoop:
      * @param  fnew  DOCUMENT ME!
      * @param  v2    DOCUMENT ME!
      */
-    private void linuc2(double[] fnew, double[] v2) {
+    private void linuc2(double[] fnew, double alfk, double[] v2) {
 
         // Form the vector v2 as the divided difference vector of
         // second order
@@ -3177,7 +3130,7 @@ mainLoop:
      * @param  v2    DOCUMENT ME!
      * @param  xmin  DOCUMENT ME!
      */
-    private void minrm(double[] v2, double xmin) {
+    private void minrm(double[] v2, double alfmin, double alfmax, double xmin, double x[], double px[], double y[], double py[]) {
         // A SUBROUTINE WHICH FINDS THE POINT a WHERE THE FUNCTION P(X)= 0.5*II residuals+V*X+V2*X**2 II**2  IS
         // MINIMIZED. residuals, v AND v2 BELONG TO R[nPts] AND X IS A SCALAR. THE VALUES OF residuals, v AND v2 ARE
         // BASED ON TW0 FUNCTION VALUES :  F(0) AND F(ALPHA). THE FUNCTION P(X) IS ALWAYS >=0 AND IT IS A POLYNOMIAL OF
@@ -3227,16 +3180,20 @@ mainLoop:
 
                 // DELTA >= 0 ONE INTERESTING ROOT.X
 
-                oner();
-                beta2 = alfkp1;
+                oner(x);
+                y[0] = x[0];
                 // MAKE THE MINIMUM POINT alfkp1 LIE IN THE INTERVAL
                 // (ALFMIN,ALFMAX) AND EVALUATE F(alfkp1) AT THE MINIMUM POINT
 
-                alfkp1 = Math.min(alfkp1, alfmax);
-                alfkp1 = Math.max(alfkp1, alfmin);
-                pk = pol4(v2, alfkp1);
-                beta2 = alfkp1;
-                pbeta = pk;
+                x[0] = Math.min(x[0], alfmax);
+                x[0] = Math.max(x[0], alfmin);
+                px[0] = pol4(v2, x[0]);
+                y[0] = Math.min(y[0], alfmax);
+                y[0] = Math.max(y[0], alfmin);
+                if (deltaMinrm >= 0.0) {
+                    y[0] = x[0];
+                    py[0] = px[0];
+                }
 
                 return;
             } // if (deltaMinrm >= 0.0)
@@ -3246,19 +3203,19 @@ mainLoop:
 
             // CHOOSE alfkp1 = x1Minrm OR x2Minrm OR x3Minrm
 
-            choose(xmin, v2);
+            choose(xmin, v2, x, y, py);
             // MAKE THE MINIMUM POINT alfkp1 LIE IN THE INTERVALL
             // (ALFMIN,ALFMAX) AND EVALUATE F(alfkp1) AT THE MINIMUM POINT
 
-            alfkp1 = Math.min(alfkp1, alfmax);
-            alfkp1 = Math.max(alfkp1, alfmin);
-            pk = pol4(v2, alfkp1);
-            beta2 = Math.min(beta2, alfmax);
-            beta2 = Math.max(beta2, alfmin);
+            x[0] = Math.min(x[0], alfmax);
+            x[0] = Math.max(x[0], alfmin);
+            px[0] = pol4(v2, x[0]);
+            y[0] = Math.min(y[0], alfmax);
+            y[0] = Math.max(y[0], alfmin);
 
             if (deltaMinrm >= 0.0) {
-                beta2 = alfkp1;
-                pbeta = pk;
+                y[0] = x[0];
+                py[0] = px[0];
             }
 
             return;
@@ -3275,26 +3232,26 @@ mainLoop:
             pprim = pol3(x0);
             pbiss = (6.0 * x0 * x0 * v2norm * v2norm) + (6.0 * x0 * scv1v2) + (2.0 * scv0v2) + (v1norm * v1norm);
             d = -pprim / pbiss;
-            alfkp1 = x0 + d;
+            x[0] = x0 + d;
             errorVar = 2.0 * dm * d * d / Math.abs(pbiss);
-            x0 = alfkp1;
+            x0 = x[0];
             k++;
         } while ((errorVar > eps) && (k < 3));
 
-        beta2 = alfkp1;
+        y[0] = x[0];
 
         // MAKE THE MINIMUM POINT alfkp1 LIE IN THE INTERVALL
         // (ALFMIN,ALFMAX) AND EVALUATE F(alfkp1) AT THE MINIMUM POINT
 
-        alfkp1 = Math.min(alfkp1, alfmax);
-        alfkp1 = Math.max(alfkp1, alfmin);
-        pk = pol4(v2, alfkp1);
-        beta2 = Math.min(beta2, alfmax);
-        beta2 = Math.max(beta2, alfmin);
+        x[0] = Math.min(x[0], alfmax);
+        x[0] = Math.max(x[0], alfmin);
+        px[0] = pol4(v2, x[0]);
+        y[0] = Math.min(y[0], alfmax);
+        y[0] = Math.max(y[0], alfmin);
 
         if (deltaMinrm >= 0.0) {
-            beta2 = alfkp1;
-            pbeta = pk;
+            y[0] = x[0];
+            py[0] = px[0];
         }
 
         return;
@@ -3396,7 +3353,8 @@ mainLoop:
      * @param  phikm2  DOCUMENT ME!
      * @param  pmax    DOCUMENT ME!
      */
-    private void minrn(double phikm2, double pmax) {
+    private void minrn(double x, double fx, double w, double fw, double v, double fv, double alfmin, double alfmax, 
+    		           double pmax, double[] u , double[] pu) {
         // PROVIDED THE POINTS alfk, alfkm2a AND alfkm1a ARE NOT TOO CLOSE, THE QUADRATIC PASSING THROUGH (alfk,phik),
         // (alfkm2a,phikm2) AND (alfkm1a,phikm1) IS DETERMINED. alfkp1 = THE MINIMUM POINT OF THIS QUADRATIC. pk = THE
         // VALUE OF THE QUADRATIC AT alfkp1
@@ -3404,21 +3362,21 @@ mainLoop:
         double eps, t1, t2, t3;
 
         eps = Math.sqrt(srelpr) / pmax;
-        alfkp1 = alfk;
-        pk = phik;
+        u[0] = x;
+        pu[0] = fx;
 
-        if ((Math.abs(alfkm2a - alfk) < eps) || (Math.abs(alfkm1a - alfk) < eps) ||
-                (Math.abs(alfkm1a - alfkm2a) < eps)) {
+        if ((Math.abs(v - x) < eps) || (Math.abs(w - x) < eps) ||
+                (Math.abs(w - v) < eps)) {
             return;
         }
 
-        quamin(phikm2);
-        alfkp1 = Math.min(alfkp1, alfmax);
-        alfkp1 = Math.max(alfkp1, alfmin);
-        t1 = (alfkp1 - alfk) * (alfkp1 - alfkm2a) * phikm1 / (alfkm1a - alfk) / (alfkm1a - alfkm2a);
-        t2 = (alfkp1 - alfkm1a) * (alfkp1 - alfkm2a) * phik / (alfk - alfkm1a) / (alfk - alfkm2a);
-        t3 = (alfkp1 - alfkm1a) * (alfkp1 - alfk) * phikm2 / (alfkm2a - alfk) / (alfkm2a - alfkm1a);
-        pk = t1 + t2 + t3;
+        quamin(x, fx, w, fw, v, fv, u);
+        u[0] = Math.min(u[0], alfmax);
+        u[0] = Math.max(u[0], alfmin);
+        t1 = (u[0] - x) * (u[0] - v) * fw / (w - x) / (w - v);
+        t2 = (u[0] - w) * (u[0] - v) * fx / (x - w) / (x - v);
+        t3 = (u[0] - w) * (u[0] - x) * fv / (v - x) / (v - w);
+        pu[0] = t1 + t2 + t3;
 
         return;
     }
@@ -3487,7 +3445,7 @@ mainLoop:
     /**
      * DOCUMENT ME!
      */
-    private void oner() {
+    private void oner(double x[]) {
         // COMPUTE THE ROOT OF A THIRD DEGREE POLYNOMIAL WHEN THERE
         // IS ONLY ONE REAL ROOT
 
@@ -3512,7 +3470,7 @@ mainLoop:
 
         a3rd = 1.0 / 3.0;
         t = (s1 * Math.pow(Math.abs(arg1), a3rd)) + (s2 * Math.pow(Math.abs(arg2), a3rd));
-        alfkp1 = t - a1div3;
+        x[0] = t - a1div3;
 
         return;
     }
@@ -3771,17 +3729,17 @@ mainLoop:
      *
      * @param  phikm2  DOCUMENT ME!
      */
-    private void quamin(double phikm2) {
+    private void quamin(double x, double fx, double w, double fw, double v, double fv, double u[]) {
         // COMPUTE THE MINIMUM POINT U OF A QUADRATIC POLYNOMIAL PASSING
         // THROUGH (alfkm2a,phikm2), (alfkm1a,phikm1), and (alfk,phik)
 
         double d1, d2, s, q;
 
-        d1 = phikm2 - phik;
-        d2 = phikm1 - phik;
-        s = ((alfkm1a - alfk) * (alfkm1a - alfk) * d1) - ((alfkm2a - alfk) * (alfkm2a - alfk) * d2);
-        q = 2.0 * (((alfkm2a - alfk) * d2) - ((alfkm1a - alfk) * d1));
-        alfkp1 = alfk - (s / q);
+        d1 = fv - fx;
+        d2 = fw - fx;
+        s = ((w - x) * (w - x) * d1) - ((v - x) * (v - x) * d2);
+        q = 2.0 * (((v - x) * d2) - ((w - x) * d1));
+        u[0] = x - (s / q);
 
         return;
     }
@@ -3857,7 +3815,8 @@ mainLoop:
      * @param  gmod  DOCUMENT ME!
      * @param  fnew  DOCUMENT ME!
      */
-    private void reduc(double pk, double eta, double[] gmod, double[] fnew) {
+    private void reduc(double alf[], double phialf[], double alfk, double pk, double diff, double eta, double[] gmod, double[] fnew,
+    		           int k[], double phik[], boolean reduce[]) {
         // REDUCE IS SET TO TRUE IF ESSENTIAL REDUCTION OF THE OBJECTIVE FUNCTION IS LIKELY. OTHERWISE REDUCE IS SET TO
         // FALSE
 
@@ -3868,13 +3827,13 @@ mainLoop:
 
         c1 = nPts * Math.sqrt(srelpr);
 
-        if (!(((phikm1 - pk) > (eta * diff)) || ((pk + c1) < (delta * phikm1)))) {
+        if (!(((phialf[0] - pk) > (eta * diff)) || ((pk + c1) < (delta * phialf[0])))) {
 
             for (i = 0; i < nPts; i++) {
                 residuals[i] = fnew[i];
             }
 
-            reduce = false;
+            reduce[0] = false;
 
             return;
         } // if (!((phikm1-pk > eta*diff) || (pk+c1 < delta*phikm1)))
@@ -3884,43 +3843,42 @@ mainLoop:
         }
 
         reducCtrl[0] = -1;
-        fsumsq(alfk, gmod, fnew, phiMat, reducCtrl);
-        phik = phiMat[0];
+        fsumsq(alfk, gmod, fnew, phik, reducCtrl);
         if (outputMes) {
-            Preferences.debug("In REDUC: phik = " + phik + " alfk = " + alfk + "\n");
+            Preferences.debug("In REDUC: phik[0] = " + phik[0] + " alfk = " + alfk + "\n");
         }
 
         if (reducCtrl[0] < -10) {
-            k2 = reducCtrl[0];
+            k[0] = reducCtrl[0];
         }
 
-        if (k2 < 0) {
+        if (k[0] < 0) {
             return;
         }
 
-        k2++;
-        reduce = true;
+        k[0]++;
+        reduce[0] = true;
 
-        if (((phikm1 - phik) > (eta * diff)) || (phik < (delta * phikm1))) {
+        if (((phialf[0] - phik[0]) > (eta * diff)) || (phik[0] < (delta * phialf[0]))) {
             return;
         }
 
         // TERMINATE BUT CHOOSE THE BEST POINT OUT OF alfkm1a AND ALFK
 
-        if (phikm1 <= phik) {
-            reduce = false;
+        if (phialf[0] <= phik[0]) {
+            reduce[0] = false;
 
             return;
         }
 
-        alfkm1a = alfk;
-        phikm1 = phik;
+        alf[0] = alfk;
+        phialf[0] = phik[0];
 
         for (i = 0; i < nPts; i++) {
             residuals[i] = fnew[i];
         }
 
-        reduce = false;
+        reduce[0] = false;
 
         return;
     }
