@@ -3217,8 +3217,7 @@ public class FileNRRD extends FileBase {
     	if(image.getAxisOrientation()[0] != FileInfoBase.ORI_UNKNOWN_TYPE) {
     		spaceString = "left-posterior-superior";
     		if(image.getNDims() == 4) {
-    			int[] orients = image.getAxisOrientation();
-    			if(orients.length == 4) {
+    			if(image.getUnitsOfMeasure().length >= 4) {
 	    			if(image.getUnitsOfMeasure(3) == FileInfoBase.HOURS || 
 	    					image.getUnitsOfMeasure(3) == FileInfoBase.HZ ||
 	    					image.getUnitsOfMeasure(3) == FileInfoBase.MICROSEC ||
@@ -3254,7 +3253,12 @@ public class FileNRRD extends FileBase {
  					   value = -value;
  				   }
  			   	}
-            	sb.append("(" + value + ",0,0) ");
+            	if (image.getNDims() == 3) {
+            	    sb.append("(" + value + ",0,0) ");
+            	}
+            	else {
+            		sb.append("(" + value + ",0,0,0) ");	
+            	}
         		if(axisOrients[1] == FileInfoBase.ORI_A2P_TYPE) {
  				   value = Math.abs(res[1]);
  			    }else if (axisOrients[1] == FileInfoBase.ORI_P2A_TYPE) {
@@ -3263,7 +3267,12 @@ public class FileNRRD extends FileBase {
 					   value = -value;
 				   }
  			    }
-        		sb.append("(0," + value + ",0) ");
+        		if (image.getNDims() == 3) {
+        		    sb.append("(0," + value + ",0) ");
+        		}
+        		else {
+        			sb.append("(0," + value + ",0,0) ");	
+        		}
 
         		if(axisOrients[2] == FileInfoBase.ORI_I2S_TYPE) {
         			value = Math.abs(res[2]);
@@ -3273,11 +3282,17 @@ public class FileNRRD extends FileBase {
   					   value = -value;
   				   }
         		}
-        		sb.append("(0,0," + value + ") ");
+        		if (image.getNDims() == 3) {
+        		    sb.append("(0,0," + value + ") ");
+        		}
+        		else {
+        			sb.append("(0,0," + value + ",0) ");	
+        		}
         	
         		if(image.getNDims() == 4) {
         			if(!options.isMultiFile()) {
-        				sb.append("none");
+        				value = Math.abs(res[3]);
+        				sb.append("(0,0,0," + value + ") ");
         			}
         		}
 
@@ -3306,7 +3321,7 @@ public class FileNRRD extends FileBase {
 
             sb = new StringBuffer();
             sb.append("(");
-            for (int i = 0; (i < image.getNDims()) && (i < 3); i++) {
+            for (int i = 0; (i < image.getNDims()); i++) {
             	if(i == 0) {
             		sb.append(new Float(origin[i]).toString());
             	}else {
@@ -3359,7 +3374,7 @@ public class FileNRRD extends FileBase {
     	StringBuffer sb = new StringBuffer();
     	String s = "";
     	if(spaceUnitsOfMeas[0] != FileInfoBase.UNKNOWN_MEASURE) {
-	    	for(int i=0;i<spaceUnitsOfMeas.length && (i < 3);i++) {
+	    	for(int i=0;(i<spaceUnitsOfMeas.length) && (i < image.getNDims());i++) {
 	    		if(spaceUnitsOfMeas[i] == FileInfoBase.MILLIMETERS) {
 	    			s = "\"mm\"";
 	    		} else if (spaceUnitsOfMeas[i] == FileInfoBase.INCHES) {
@@ -3380,6 +3395,20 @@ public class FileNRRD extends FileBase {
 	    			s = "\"km\"";
 	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MILES) {
 	    			s = "\"mi\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.SECONDS) {
+	    			s = "\"sec\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.NANOSEC) {
+	    			s = "\"nsec\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MICROSEC) {
+	    			s = "\"usec\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MILLISEC) {
+	    			s = "\"msec\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.MINUTES) {
+	    			s = "\"min\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.HOURS) {
+	    			s = "\"hr\"";
+	    		}else if (spaceUnitsOfMeas[i] == FileInfoBase.HZ) {
+	    			s = "\"hz\"";
 	    		}
 	    		sb.append(s);
 	    		sb.append(" ");
@@ -3580,7 +3609,6 @@ public class FileNRRD extends FileBase {
                 rawFile.close();
             	rawFile.finalize();
         	}else {
-                System.out.println("in here");
                 FileRaw rawFile;
                 rawFile = new FileRaw(fhName + ".raw", fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
                 linkProgress(rawFile);
